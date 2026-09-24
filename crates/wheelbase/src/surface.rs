@@ -7,30 +7,35 @@ pub enum SurfaceType {
     /// Standard dry asphalt track: optimal grip and tire smoke on slip.
     #[default]
     Asphalt,
-    /// Playable compacted dirt / gravel rally track: good controllable slide grip.
-    Dirt,
+    /// Solid cast or poured concrete: high grip, smooth pavement, and grandstand/stadium aprons.
+    Concrete,
     /// Kerb / rumble strip: high grip with slight vibration and higher rolling resistance.
     Curb,
+    /// Playable compacted dirt / gravel rally track: good controllable slide grip.
+    Dirt,
+    /// Loose stone gravel track / rally runoff: moderate grip, high stone debris roost.
+    Gravel,
     /// Grassy run-off area: significantly reduced grip and high rolling resistance.
     Grass,
-    /// Deep sand / gravel trap: heavy rolling resistance and very low grip (obstacle/trap only).
-    Sand,
+    /// Compacted desert sand/dune ribbon: drivable racing line for desert circuits.
+    PackedSand,
+    /// Deep loose sand arrestor bed / runaway gravel trap: heavy rolling resistance and low grip.
+    DeepSand,
+    /// Compacted dirt/mud rallycross track ribbon: good controllable slide grip on wet courses.
+    MudTrack,
+    /// Deep viscous mud bog / swamp hazard: high rolling resistance, low lateral slide friction, heavy spray plumes.
+    DeepMud,
+    /// Compacted snow rally ribbon: moderate rolling resistance, low traction, powder roost trails.
+    PackedSnow,
+    /// Deep snowbank barrier / off-track snow: high rolling resistance, low friction, gentle deceleration.
+    DeepSnow,
+    /// Glacial mirror sheet ice: near-zero friction, requires studded tires for directional control.
+    SheetIce,
     /// Water puddle / wet patch hazard: very low friction, high drag, aquaplaning/hydroplaning.
     Water,
     /// Oil slick hazard: extremely low friction, vehicle spins easily.
     Oil,
-    /// Frozen icy patch: near zero friction, almost zero stopping power.
-    Ice,
-    /// Deep viscous mud: high rolling resistance, low lateral slide friction, heavy spray plumes.
-    Mud,
-    /// Loose / packed snow: moderate rolling resistance, low traction, powder roost trails.
-    Snow,
-    /// Loose stone gravel track / rally runoff: moderate grip, high stone debris roost.
-    Gravel,
-    /// Solid cast or poured concrete: high grip, smooth pavement, and grandstand/stadium aprons.
-    Concrete,
 }
-
 
 impl SurfaceType {
     /// Friction coefficient (mu) scaling available tire traction.
@@ -42,13 +47,16 @@ impl SurfaceType {
             Self::Curb => 0.88,
             Self::Dirt => 0.78,
             Self::Gravel => 0.70,
-            Self::Mud => 0.52,
+            Self::PackedSand => 0.62,
+            Self::MudTrack => 0.58,
+            Self::PackedSnow => 0.48,
             Self::Grass => 0.45,
-            Self::Snow => 0.34,
-            Self::Sand => 0.30,
+            Self::DeepMud => 0.40,
+            Self::DeepSand => 0.30,
+            Self::DeepSnow => 0.28,
             Self::Water => 0.22,
             Self::Oil => 0.12,
-            Self::Ice => 0.08,
+            Self::SheetIce => 0.08,
         }
     }
 
@@ -56,18 +64,21 @@ impl SurfaceType {
     #[inline]
     pub const fn rolling_resistance_multiplier(self) -> f32 {
         match self {
+            Self::SheetIce => 0.4,
+            Self::Oil => 0.8,
             Self::Asphalt => 1.0,
             Self::Concrete => 1.05,
-            Self::Curb => 1.3,
             Self::Dirt => 1.2,
+            Self::Curb => 1.3,
+            Self::PackedSnow => 2.2,
             Self::Gravel => 2.5,
-            Self::Grass => 18.0,
-            Self::Sand => 30.0,
-            Self::Mud => 6.5,
-            Self::Snow => 3.0,
             Self::Water => 3.5,
-            Self::Oil => 0.8,
-            Self::Ice => 0.4,
+            Self::MudTrack => 5.0,
+            Self::PackedSand => 5.2,
+            Self::DeepSnow => 12.0,
+            Self::DeepMud => 14.0,
+            Self::Grass => 18.0,
+            Self::DeepSand => 30.0,
         }
     }
 
@@ -75,18 +86,21 @@ impl SurfaceType {
     #[inline]
     pub const fn surface_drag_multiplier(self) -> f32 {
         match self {
+            Self::SheetIce => 0.90,
+            Self::Oil => 0.95,
             Self::Asphalt => 1.0,
             Self::Concrete => 1.00,
             Self::Curb => 1.05,
             Self::Dirt => 1.10,
             Self::Gravel => 1.25,
-            Self::Grass => 2.2,
-            Self::Sand => 4.5,
-            Self::Mud => 3.2,
-            Self::Snow => 1.6,
+            Self::PackedSnow => 1.40,
             Self::Water => 2.0,
-            Self::Oil => 0.95,
-            Self::Ice => 0.90,
+            Self::PackedSand => 2.10,
+            Self::Grass => 2.2,
+            Self::MudTrack => 2.50,
+            Self::DeepSnow => 3.80,
+            Self::DeepSand => 4.5,
+            Self::DeepMud => 5.00,
         }
     }
 
@@ -101,7 +115,15 @@ impl SurfaceType {
     pub const fn produces_debris_particles(self) -> bool {
         matches!(
             self,
-            Self::Grass | Self::Sand | Self::Dirt | Self::Mud | Self::Snow | Self::Gravel
+            Self::Grass
+                | Self::PackedSand
+                | Self::DeepSand
+                | Self::Dirt
+                | Self::MudTrack
+                | Self::DeepMud
+                | Self::PackedSnow
+                | Self::DeepSnow
+                | Self::Gravel
         )
     }
 
@@ -111,7 +133,14 @@ impl SurfaceType {
     pub const fn is_loose_deformable(self) -> bool {
         matches!(
             self,
-            Self::Gravel | Self::Sand | Self::Dirt | Self::Mud | Self::Snow
+            Self::Gravel
+                | Self::PackedSand
+                | Self::DeepSand
+                | Self::Dirt
+                | Self::MudTrack
+                | Self::DeepMud
+                | Self::PackedSnow
+                | Self::DeepSnow
         )
     }
 
@@ -127,7 +156,15 @@ impl SurfaceType {
     pub const fn leaves_rolling_rut(self) -> bool {
         matches!(
             self,
-            Self::Gravel | Self::Sand | Self::Dirt | Self::Mud | Self::Snow | Self::Grass
+            Self::Gravel
+                | Self::PackedSand
+                | Self::DeepSand
+                | Self::Dirt
+                | Self::MudTrack
+                | Self::DeepMud
+                | Self::PackedSnow
+                | Self::DeepSnow
+                | Self::Grass
         )
     }
 
@@ -141,35 +178,69 @@ impl SurfaceType {
     /// that sits on top of the road ribbon and overrides the underlying surface.
     #[inline]
     pub const fn is_on_track_hazard(self) -> bool {
-        matches!(self, Self::Water | Self::Oil | Self::Ice | Self::Mud | Self::Snow)
+        matches!(
+            self,
+            Self::Water | Self::Oil | Self::SheetIce | Self::DeepMud | Self::DeepSand | Self::DeepSnow
+        )
     }
 
-    /// All 12 supported surface types.
-    pub const ALL: [SurfaceType; 12] = [
+    /// Returns true if this surface is any form of sand (packed ribbon or deep trap).
+    #[inline]
+    pub const fn is_sand(self) -> bool {
+        matches!(self, Self::PackedSand | Self::DeepSand)
+    }
+
+    /// Returns true if this surface is any form of mud (track ribbon or deep bog).
+    #[inline]
+    pub const fn is_mud(self) -> bool {
+        matches!(self, Self::MudTrack | Self::DeepMud)
+    }
+
+    /// Returns true if this surface is any form of snow (packed ribbon or deep snowbank).
+    #[inline]
+    pub const fn is_snow(self) -> bool {
+        matches!(self, Self::PackedSnow | Self::DeepSnow)
+    }
+
+    /// Returns true if this surface is sheet ice.
+    #[inline]
+    pub const fn is_ice(self) -> bool {
+        matches!(self, Self::SheetIce)
+    }
+
+    /// All 15 supported surface types.
+    pub const ALL: [SurfaceType; 15] = [
         SurfaceType::Asphalt,
         SurfaceType::Concrete,
         SurfaceType::Curb,
         SurfaceType::Dirt,
         SurfaceType::Gravel,
-        SurfaceType::Mud,
         SurfaceType::Grass,
-        SurfaceType::Snow,
-        SurfaceType::Sand,
+        SurfaceType::PackedSand,
+        SurfaceType::DeepSand,
+        SurfaceType::MudTrack,
+        SurfaceType::DeepMud,
+        SurfaceType::PackedSnow,
+        SurfaceType::DeepSnow,
+        SurfaceType::SheetIce,
         SurfaceType::Water,
         SurfaceType::Oil,
-        SurfaceType::Ice,
     ];
 
     /// All valid global off-track terrain types that can be selected as a track's default surface.
-    pub const OFF_TRACK_TYPES: [SurfaceType; 8] = [
+    pub const OFF_TRACK_TYPES: [SurfaceType; 12] = [
         SurfaceType::Grass,
-        SurfaceType::Sand,
+        SurfaceType::DeepSand,
+        SurfaceType::PackedSand,
         SurfaceType::Dirt,
         SurfaceType::Asphalt,
         SurfaceType::Concrete,
-        SurfaceType::Mud,
-        SurfaceType::Snow,
+        SurfaceType::DeepMud,
+        SurfaceType::MudTrack,
+        SurfaceType::DeepSnow,
+        SurfaceType::PackedSnow,
         SurfaceType::Gravel,
+        SurfaceType::SheetIce,
     ];
 
     /// Whether this surface can serve as a global off-track default terrain.
@@ -177,7 +248,18 @@ impl SurfaceType {
     pub const fn is_valid_off_track(self) -> bool {
         matches!(
             self,
-            Self::Grass | Self::Sand | Self::Dirt | Self::Asphalt | Self::Concrete | Self::Mud | Self::Snow | Self::Gravel
+            Self::Grass
+                | Self::DeepSand
+                | Self::PackedSand
+                | Self::Dirt
+                | Self::Asphalt
+                | Self::Concrete
+                | Self::DeepMud
+                | Self::MudTrack
+                | Self::DeepSnow
+                | Self::PackedSnow
+                | Self::Gravel
+                | Self::SheetIce
         )
     }
 
@@ -189,12 +271,15 @@ impl SurfaceType {
             Self::Dirt => "Dirt",
             Self::Curb => "Curb",
             Self::Grass => "Grass",
-            Self::Sand => "Sand",
+            Self::PackedSand => "Packed Sand",
+            Self::DeepSand => "Deep Sand",
+            Self::MudTrack => "Mud Track",
+            Self::DeepMud => "Deep Mud",
+            Self::PackedSnow => "Packed Snow",
+            Self::DeepSnow => "Deep Snow",
+            Self::SheetIce => "Sheet Ice",
             Self::Water => "Water",
             Self::Oil => "Oil",
-            Self::Ice => "Ice",
-            Self::Mud => "Mud",
-            Self::Snow => "Snow",
             Self::Gravel => "Gravel",
         }
     }
@@ -285,13 +370,19 @@ mod tests {
         assert!(SurfaceType::Gravel.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
         assert!(SurfaceType::Gravel.produces_debris_particles());
         assert!(SurfaceType::Grass.friction_coefficient() > SurfaceType::Water.friction_coefficient());
-        assert!(SurfaceType::Water.friction_coefficient() > SurfaceType::Ice.friction_coefficient());
-        assert!(SurfaceType::Sand.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
+        assert!(SurfaceType::Water.friction_coefficient() > SurfaceType::SheetIce.friction_coefficient());
+        assert!(SurfaceType::PackedSand.friction_coefficient() > SurfaceType::DeepSand.friction_coefficient());
+        assert!(SurfaceType::MudTrack.friction_coefficient() > SurfaceType::DeepMud.friction_coefficient());
+        assert!(SurfaceType::PackedSnow.friction_coefficient() > SurfaceType::DeepSnow.friction_coefficient());
+        assert!(SurfaceType::DeepSand.rolling_resistance_multiplier() > SurfaceType::PackedSand.rolling_resistance_multiplier());
+        assert!(SurfaceType::DeepMud.rolling_resistance_multiplier() > SurfaceType::MudTrack.rolling_resistance_multiplier());
+        assert!(SurfaceType::DeepSnow.rolling_resistance_multiplier() > SurfaceType::PackedSnow.rolling_resistance_multiplier());
+        assert!(SurfaceType::PackedSand.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
         assert!(SurfaceType::Asphalt.produces_tire_smoke());
         assert!(SurfaceType::Concrete.produces_tire_smoke());
         assert!(SurfaceType::Asphalt.friction_coefficient() >= SurfaceType::Concrete.friction_coefficient());
         assert!(SurfaceType::Concrete.friction_coefficient() > SurfaceType::Curb.friction_coefficient());
-        assert!(!SurfaceType::Ice.produces_tire_smoke());
+        assert!(!SurfaceType::SheetIce.produces_tire_smoke());
         assert!(SurfaceType::Grass.produces_debris_particles());
         assert!(SurfaceType::Dirt.produces_debris_particles());
         assert!(SurfaceType::Water.produces_water_splash());
@@ -310,10 +401,13 @@ mod tests {
     #[test]
     fn test_surface_taxonomy_and_properties() {
         assert!(SurfaceType::Gravel.is_loose_deformable());
-        assert!(SurfaceType::Sand.is_loose_deformable());
+        assert!(SurfaceType::PackedSand.is_loose_deformable());
+        assert!(SurfaceType::DeepSand.is_loose_deformable());
         assert!(SurfaceType::Dirt.is_loose_deformable());
-        assert!(SurfaceType::Mud.is_loose_deformable());
-        assert!(SurfaceType::Snow.is_loose_deformable());
+        assert!(SurfaceType::MudTrack.is_loose_deformable());
+        assert!(SurfaceType::DeepMud.is_loose_deformable());
+        assert!(SurfaceType::PackedSnow.is_loose_deformable());
+        assert!(SurfaceType::DeepSnow.is_loose_deformable());
         assert!(!SurfaceType::Asphalt.is_loose_deformable());
         assert!(!SurfaceType::Concrete.is_loose_deformable());
 
@@ -324,12 +418,29 @@ mod tests {
         assert!(!SurfaceType::Grass.is_rigid_pavement());
 
         assert!(SurfaceType::Gravel.leaves_rolling_rut());
-        assert!(SurfaceType::Sand.leaves_rolling_rut());
+        assert!(SurfaceType::PackedSand.leaves_rolling_rut());
+        assert!(SurfaceType::DeepSand.leaves_rolling_rut());
         assert!(SurfaceType::Dirt.leaves_rolling_rut());
-        assert!(SurfaceType::Mud.leaves_rolling_rut());
-        assert!(SurfaceType::Snow.leaves_rolling_rut());
+        assert!(SurfaceType::MudTrack.leaves_rolling_rut());
+        assert!(SurfaceType::DeepMud.leaves_rolling_rut());
+        assert!(SurfaceType::PackedSnow.leaves_rolling_rut());
+        assert!(SurfaceType::DeepSnow.leaves_rolling_rut());
         assert!(SurfaceType::Grass.leaves_rolling_rut());
         assert!(!SurfaceType::Asphalt.leaves_rolling_rut());
         assert!(!SurfaceType::Concrete.leaves_rolling_rut());
+
+        assert!(SurfaceType::PackedSand.is_sand());
+        assert!(SurfaceType::DeepSand.is_sand());
+        assert!(!SurfaceType::Dirt.is_sand());
+
+        assert!(SurfaceType::MudTrack.is_mud());
+        assert!(SurfaceType::DeepMud.is_mud());
+        assert!(!SurfaceType::Water.is_mud());
+
+        assert!(SurfaceType::PackedSnow.is_snow());
+        assert!(SurfaceType::DeepSnow.is_snow());
+        assert!(!SurfaceType::SheetIce.is_snow());
+
+        assert!(SurfaceType::SheetIce.is_ice());
     }
 }

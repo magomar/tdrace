@@ -736,6 +736,10 @@ impl Car {
             // Surface properties
             let surf = surfaces[i];
             let mut mu = surf.friction_coefficient();
+            if surf == SurfaceType::SheetIce {
+                let alpha = self.config.terrain.ice_grip_multiplier.clamp(0.50, 10.0);
+                mu = (mu * alpha).min(1.20);
+            }
             let prev_dirt = self.state.wheels[i].dirt_contamination;
             let prev_dirt_surface = self.state.wheels[i].dirt_surface;
 
@@ -875,7 +879,17 @@ impl Car {
             }
 
             // Rolling resistance opposes wheel forward motion
-            let rr_coeff = self.config.rolling_resistance_coefficient * surf.rolling_resistance_multiplier();
+            let base_rr_mult = surf.rolling_resistance_multiplier();
+            let effective_rr_mult = if surf.is_sand() {
+                let gamma = self.config.terrain.sand_flotation.clamp(0.10, 1.0);
+                1.0 + (base_rr_mult - 1.0) * gamma
+            } else if surf.is_mud() {
+                let gamma = self.config.terrain.mud_flotation.clamp(0.10, 1.0);
+                1.0 + (base_rr_mult - 1.0) * gamma
+            } else {
+                base_rr_mult
+            };
+            let rr_coeff = self.config.rolling_resistance_coefficient * effective_rr_mult;
             let rr_force = -rr_coeff * fz * (w_v_long / 0.5).tanh();
             fx_demand += rr_force;
 
@@ -1693,12 +1707,64 @@ mod tests {
         car_ice.state.road_bank_angle = 15.0;
         car_ice.state.track_right = Vec2::new(0.0, 1.0);
         for _ in 0..10 {
-            car_ice.step(&ctrl, SurfaceType::Ice, dt);
+            car_ice.step(&ctrl, SurfaceType::SheetIce, dt);
         }
         assert!(
             car_ice.state.velocity.y < 0.0,
             "Car on icy banking exceeding friction limit must slide downhill (-Y), got {:?}",
             car_ice.state.velocity
+        );
+    }
+
+    #[test]
+    fn test_terrain_interaction_flotation_and_ice_studs() {
+        let dt = 1.0 / 60.0;
+        let ctrl = CarControls::accelerate();
+
+        // 1. Sand Flotation: Sand Rail Buggy (gamma = 0.30) vs Sports Car (gamma = 1.00) on PackedSand
+        let mut buggy = Car::new(CarConfig::sand_rail());
+        let mut sports = Car::new(CarConfig::sports_car());
+
+        for _ in 0..120 {
+            buggy.step(&ctrl, SurfaceType::PackedSand, dt);
+            sports.step(&ctrl, SurfaceType::PackedSand, dt);
+        }
+
+        assert!(
+            buggy.speed_kmh() > sports.speed_kmh() * 1.3,
+            "Sand Rail Buggy speed ({:.1} km/h) should exceed Sports Car ({:.1} km/h) by at least 30% on PackedSand",
+            buggy.speed_kmh(),
+            sports.speed_kmh()
+        );
+
+        // 2. Studded Ice Racer (alpha = 8.125) vs Unstudded Sports Car (alpha = 1.00) on SheetIce
+        let mut ice_racer_cfg = CarConfig::sports_car();
+        ice_racer_cfg.terrain.ice_grip_multiplier = 8.125;
+        let mut ice_racer = Car::new(ice_racer_cfg);
+        let mut unstudded = Car::new(CarConfig::sports_car());
+
+        let steer_ctrl = CarControls {
+            throttle: 0.5,
+            steer: 0.5,
+            brake: 0.0,
+            handbrake: false,
+            reverse: false,
+        };
+        ice_racer.state.velocity = Vec2::new(50.0 / 3.6, 0.0);
+        ice_racer.state.speed = 50.0 / 3.6;
+        unstudded.state.velocity = Vec2::new(50.0 / 3.6, 0.0);
+        unstudded.state.speed = 50.0 / 3.6;
+
+        for _ in 0..60 {
+            ice_racer.step(&steer_ctrl, SurfaceType::SheetIce, dt);
+            unstudded.step(&steer_ctrl, SurfaceType::SheetIce, dt);
+        }
+
+        assert!(
+            ice_racer.state.angular_velocity.abs() > unstudded.state.angular_velocity.abs() * 1.8,
+            "Studded ice racer yaw rate ({:.2}) must exceed unstudded ({:.2}) by at least 1.8x",
+            ice_racer.state.angular_velocity.abs(),
+            unstudded.state.angular_velocity.abs()
         );
     }
 }

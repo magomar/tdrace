@@ -974,11 +974,12 @@ pub fn run_braking_surface_battery(
     let split_targets = [
         SurfaceType::Concrete,
         SurfaceType::Gravel,
-        SurfaceType::Mud,
+        SurfaceType::PackedSand,
+        SurfaceType::MudTrack,
         SurfaceType::Grass,
-        SurfaceType::Snow,
+        SurfaceType::PackedSnow,
         SurfaceType::Water,
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
     ];
     let mut split_mu = Vec::with_capacity(split_targets.len());
     for &low_s in &split_targets {

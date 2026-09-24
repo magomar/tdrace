@@ -66,7 +66,7 @@ mod tests {
     fn test_protocol_b_braking() {
         let config = CarConfig::sports_car();
         let res_asphalt = run_protocol_b(&config, SurfaceType::Asphalt, 100.0, DEFAULT_SIMULATION_DT);
-        let res_ice = run_protocol_b(&config, SurfaceType::Ice, 100.0, DEFAULT_SIMULATION_DT);
+        let res_ice = run_protocol_b(&config, SurfaceType::SheetIce, 100.0, DEFAULT_SIMULATION_DT);
         assert!(res_asphalt.stopping_distance_m < res_ice.stopping_distance_m);
         assert!(res_asphalt.avg_decel_g > res_ice.avg_decel_g);
     }
@@ -75,7 +75,7 @@ mod tests {
     fn test_protocol_c_skidpad() {
         let config = CarConfig::sports_car();
         let res_asphalt = run_protocol_c(&config, SurfaceType::Asphalt, 30.0, DEFAULT_SIMULATION_DT);
-        let res_ice = run_protocol_c(&config, SurfaceType::Ice, 30.0, DEFAULT_SIMULATION_DT);
+        let res_ice = run_protocol_c(&config, SurfaceType::SheetIce, 30.0, DEFAULT_SIMULATION_DT);
         assert!(res_asphalt.peak_lateral_accel_g > 0.8, "Asphalt lateral g: {:.2}", res_asphalt.peak_lateral_accel_g);
         assert!(res_asphalt.peak_lateral_accel_g > res_ice.peak_lateral_accel_g * 2.0);
     }
@@ -84,7 +84,7 @@ mod tests {
     fn test_protocol_e_coast_down() {
         let config = CarConfig::sports_car();
         let res_asphalt = run_protocol_e(&config, SurfaceType::Asphalt, 120.0, DEFAULT_SIMULATION_DT);
-        let res_sand = run_protocol_e(&config, SurfaceType::Sand, 120.0, DEFAULT_SIMULATION_DT);
+        let res_sand = run_protocol_e(&config, SurfaceType::DeepSand, 120.0, DEFAULT_SIMULATION_DT);
         assert!(res_asphalt.coast_distance_m > res_sand.coast_distance_m);
     }
 
@@ -92,7 +92,7 @@ mod tests {
     fn test_braking_straight_line_simulation() {
         let config = CarConfig::sports_car();
         let res_asphalt = run_braking_straight_line(&config, SurfaceType::Asphalt, 120.0, true, DEFAULT_SIMULATION_DT);
-        let res_ice = run_braking_straight_line(&config, SurfaceType::Ice, 120.0, true, DEFAULT_SIMULATION_DT);
+        let res_ice = run_braking_straight_line(&config, SurfaceType::SheetIce, 120.0, true, DEFAULT_SIMULATION_DT);
         assert!(res_asphalt.stopping_distance_m < res_ice.stopping_distance_m);
         assert!(res_asphalt.avg_decel_g > res_ice.avg_decel_g);
         assert_eq!(res_asphalt.stability_rating, BrakingStabilityRating::Stable);
@@ -206,9 +206,9 @@ mod tests {
         assert_eq!(res_dirt.status, PathSimulationStatus::Completed);
         assert!(res_dirt.peak_speed_kmh > 60.0);
 
-        // 3. Sand: evaluate why it is unplayable!
-        let res_sand = run_path_simulation(&config, SurfaceType::Sand, &path, 30.0, DEFAULT_SIMULATION_DT);
-        println!("\n=== SAND STRAIGHT-WITH-TURNS SIMULATION ===");
+        // 3. Deep Sand: sports car is trapped in runaway arrestor sand trap
+        let res_sand = run_path_simulation(&config, SurfaceType::DeepSand, &path, 30.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== DEEP SAND STRAIGHT-WITH-TURNS SIMULATION ===");
         println!("Status: {:?}", res_sand.status);
         println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_sand.completion_pct, res_sand.distance_traveled_m, res_sand.path_length_m, res_sand.elapsed_time_s);
         println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_sand.avg_speed_kmh, res_sand.peak_speed_kmh);
@@ -218,9 +218,19 @@ mod tests {
             res_sand.peak_traction_force_n, res_sand.avg_traction_force_n);
         println!("Failure Reason: {:?}", res_sand.failure_reason);
 
-        // On Sand, the car either gets stuck or severely fails to gain speed
-        assert!(res_sand.peak_speed_kmh < 15.0, "Car on Sand should have severe speed handicap, got {:.1} km/h", res_sand.peak_speed_kmh);
-        assert!(res_sand.avg_rolling_resistance_n > res_sand.avg_traction_force_n * 0.9, "Rolling resistance dominates traction on Sand");
+        // On DeepSand, the car either gets stuck or severely fails to gain speed
+        assert!(res_sand.peak_speed_kmh < 15.0, "Car on DeepSand should have severe speed handicap, got {:.1} km/h", res_sand.peak_speed_kmh);
+        assert!(res_sand.avg_rolling_resistance_n > res_sand.avg_traction_force_n * 0.9, "Rolling resistance dominates traction on DeepSand");
+
+        // 4. Packed Sand: Sand Rail Buggy with paddle tires skims across dune ribbon
+        let buggy_cfg = CarConfig::sand_rail();
+        let res_buggy = run_path_simulation(&buggy_cfg, SurfaceType::PackedSand, &path, 35.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== PACKED SAND BUGGY SIMULATION ===");
+        println!("Status: {:?}", res_buggy.status);
+        println!("Completed: {:.1}% in {:.2}s, Avg Spd: {:.1} km/h, Peak: {:.1} km/h",
+            res_buggy.completion_pct, res_buggy.elapsed_time_s, res_buggy.avg_speed_kmh, res_buggy.peak_speed_kmh);
+        assert_eq!(res_buggy.status, PathSimulationStatus::Completed);
+        assert!(res_buggy.peak_speed_kmh > 70.0);
     }
 
     #[test]
@@ -235,8 +245,8 @@ mod tests {
         println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_asphalt.avg_speed_kmh, res_asphalt.peak_speed_kmh);
         assert_eq!(res_asphalt.status, PathSimulationStatus::Completed);
 
-        let res_sand = run_path_simulation(&config, SurfaceType::Sand, &circuit, 30.0, DEFAULT_SIMULATION_DT);
-        println!("\n=== SAND HYPOTHETICAL CIRCUIT SIMULATION ===");
+        let res_sand = run_path_simulation(&config, SurfaceType::DeepSand, &circuit, 30.0, DEFAULT_SIMULATION_DT);
+        println!("\n=== DEEP SAND HYPOTHETICAL CIRCUIT SIMULATION ===");
         println!("Status: {:?}", res_sand.status);
         println!("Completed: {:.1}% ({:.1}m / {:.1}m) in {:.2}s", res_sand.completion_pct, res_sand.distance_traveled_m, res_sand.path_length_m, res_sand.elapsed_time_s);
         println!("Speed: Avg {:.1} km/h, Peak {:.1} km/h", res_sand.avg_speed_kmh, res_sand.peak_speed_kmh);

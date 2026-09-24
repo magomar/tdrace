@@ -772,13 +772,16 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
             SurfaceType::Curb => "Rumble strips with slight vibration, 12% reduced grip",
             SurfaceType::Dirt => "Playable loose surface, progressive controllable drift slides",
             SurfaceType::Gravel => "Loose crushed stone, 2.5x rolling drag, high debris roost",
-            SurfaceType::Mud => "Viscous sludge, 6.5x rolling resistance, heavy spray plumes",
             SurfaceType::Grass => "Run-off terrain, 18x rolling resistance, high understeer",
-            SurfaceType::Snow => "Cold packed powder, low friction, long stopping distances",
-            SurfaceType::Sand => "Heavy trap, 30x rolling resistance, rapid speed bleed",
+            SurfaceType::PackedSand => "Compacted dune ribbon, 5.2x rolling drag, high-speed desert drift line",
+            SurfaceType::DeepSand => "Runaway arrestor trap, 30x rolling resistance, stops vehicles rapidly",
+            SurfaceType::MudTrack => "Compacted mud ribbon, 5.0x rolling drag, high rooster spray",
+            SurfaceType::DeepMud => "Viscous sludge bog, 14x rolling resistance, heavy deceleration drag",
+            SurfaceType::PackedSnow => "Cold packed powder ribbon, 2.2x rolling drag, controllable slip",
+            SurfaceType::DeepSnow => "Deep snowbank barrier, 12x rolling resistance, gentle kinetic cushion",
+            SurfaceType::SheetIce => "Glacial mirror sheet, 0.08 mu, requires tungsten studs for lateral authority",
             SurfaceType::Water => "Hydroplaning hazard, severe loss of braking & steering",
             SurfaceType::Oil => "Viscous low-friction hazard, vehicle breaks into uncontrollable spins",
-            SurfaceType::Ice => "Frozen near-zero friction, stopping distance exceeds 10x asphalt",
         };
 
         let bar_class = if avg_stop < 1.3 {
@@ -1371,11 +1374,12 @@ pub fn generate_braking_simulation_markdown_report(
     let split_surfaces = [
         SurfaceType::Concrete,
         SurfaceType::Gravel,
-        SurfaceType::Mud,
+        SurfaceType::PackedSand,
+        SurfaceType::MudTrack,
         SurfaceType::Grass,
-        SurfaceType::Snow,
+        SurfaceType::PackedSnow,
         SurfaceType::Water,
-        SurfaceType::Ice,
+        SurfaceType::SheetIce,
     ];
 
     write!(out, "| Vehicle |").unwrap();

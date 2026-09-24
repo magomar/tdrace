@@ -306,7 +306,7 @@ impl SimPlayground {
                 name: "Sector 5: Banked Sweeper".to_string(),
                 start_dist: s_len * 4.0,
                 end_dist: s_len * 5.0,
-                surface: SurfaceType::Snow,
+                surface: SurfaceType::PackedSnow,
                 banking_rad: 0.25, // ~14.3 degrees banking
                 left_wall: Some(SimWallBarrier::armco(7.0)),
                 right_wall: Some(SimWallBarrier::armco(7.0)),
@@ -315,7 +315,7 @@ impl SimPlayground {
                 name: "Sector 6: Mud Bog & Obstacles".to_string(),
                 start_dist: s_len * 5.0,
                 end_dist: total_len + 10.0,
-                surface: SurfaceType::Mud,
+                surface: SurfaceType::MudTrack,
                 banking_rad: 0.0,
                 left_wall: Some(SimWallBarrier::tire_wall(6.0)),
                 right_wall: Some(SimWallBarrier::tire_wall(6.0)),
@@ -975,7 +975,7 @@ mod tests {
         let s2_dist = gauntlet.sectors[1].start_dist + 5.0;
         assert_eq!(gauntlet.surface_at_distance(s2_dist), SurfaceType::Dirt);
         let s5_dist = gauntlet.sectors[4].start_dist + 5.0;
-        assert_eq!(gauntlet.surface_at_distance(s5_dist), SurfaceType::Snow);
+        assert_eq!(gauntlet.surface_at_distance(s5_dist), SurfaceType::PackedSnow);
         assert!(gauntlet.banking_at_distance(s5_dist) > 0.20);
     }
 

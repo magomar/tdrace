@@ -192,6 +192,30 @@ impl AssistProfile {
     }
 }
 
+/// Vehicle-specific terrain interaction parameters (tire flotation, paddle thrust, and ice stud penetration).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct TerrainInteractionConfig {
+    /// Sand flotation factor gamma_sand in [0.10, 1.00].
+    /// Scales rolling resistance increase on sand: 1.0 = standard road tires, 0.30 = paddle tires / lightweight dune buggy.
+    pub sand_flotation: f32,
+    /// Mud flotation factor gamma_mud in [0.10, 1.00].
+    /// Scales rolling resistance increase on mud: 1.0 = standard tires, 0.25 = chevron tractor paddles / mud bogger.
+    pub mud_flotation: f32,
+    /// Ice grip multiplier alpha_ice in [0.50, 10.00].
+    /// Scales available friction on ice: 1.0 = unstudded road tire (mu=0.08), 8.125 = tungsten-studded ice racer (mu=0.65).
+    pub ice_grip_multiplier: f32,
+}
+
+impl Default for TerrainInteractionConfig {
+    fn default() -> Self {
+        Self {
+            sand_flotation: 1.0,
+            mud_flotation: 1.0,
+            ice_grip_multiplier: 1.0,
+        }
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct CarConfig {
@@ -259,6 +283,8 @@ pub struct CarConfig {
     pub tire: TireConfig,
     /// Driver electronic stability and traction assistance settings.
     pub assists: DriverAssistsConfig,
+    /// Terrain interaction modifiers (sand flotation, mud paddles, ice studs).
+    pub terrain: TerrainInteractionConfig,
 }
 
 impl Default for CarConfig {
@@ -306,6 +332,7 @@ impl CarConfig {
 
             tire: TireConfig::default(),
             assists: DriverAssistsConfig::arcade(),
+            terrain: TerrainInteractionConfig::default(),
         }
     }
 
@@ -375,6 +402,11 @@ impl CarConfig {
                 skid_full_threshold: 0.28,
             },
             assists: DriverAssistsConfig::arcade(),
+            terrain: TerrainInteractionConfig {
+                sand_flotation: 1.0,
+                mud_flotation: 1.0,
+                ice_grip_multiplier: 0.80,
+            },
         }
     }
 
@@ -389,6 +421,11 @@ impl CarConfig {
         cfg.downforce_coefficient = 0.70;
         cfg.tire.stiffness_b = 8.0;
         cfg.tire.drift_slide_friction = 0.90;
+        cfg.terrain = TerrainInteractionConfig {
+            sand_flotation: 0.70,
+            mud_flotation: 0.70,
+            ice_grip_multiplier: 3.50,
+        };
         cfg
     }
 
@@ -444,6 +481,7 @@ impl CarConfig {
                 skid_full_threshold: 0.28,
             },
             assists: DriverAssistsConfig::sport(),
+            terrain: TerrainInteractionConfig::default(),
         }
     }
 
@@ -500,6 +538,11 @@ impl CarConfig {
                 skid_full_threshold: 0.28,
             },
             assists: DriverAssistsConfig::sport(),
+            terrain: TerrainInteractionConfig {
+                sand_flotation: 0.30,
+                mud_flotation: 0.65,
+                ice_grip_multiplier: 1.50,
+            },
         }
     }
 }
