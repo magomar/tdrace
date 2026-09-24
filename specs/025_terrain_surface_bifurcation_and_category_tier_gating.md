@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Terrain Surface Bifurcation, Vehicle Terrain Interaction, and Category-Tier Gating"
 description: "Bifurcates sand into packed dune ribbons vs deep arrestor traps, defines vehicle-terrain interaction coefficients (sand flotation, mud paddles, ice studs), and establishes simulation-backed category and tier gating."
-status: draft
+status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T09:45:00Z }
 ---
@@ -297,34 +297,34 @@ pub struct TerrainInteractionConfig {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Sand Rail Buggy vs Rally Junior FWD on Packed Sand ribbon**
-  - [ ] **Given** a reference track segment configured with `SurfaceType::PackedSand` ($\mu=0.62, RR=5.2\times$)
-  - [ ] **When** a Tier 1 Sand Rail Buggy ($\gamma_{\text{sand}} = 0.30$) executes a 0-100 km/h sprint
-  - [ ] **Then** the buggy must achieve 100 km/h in under 4.0 seconds
-  - [ ] **And** reach a peak terminal velocity $\ge 185\,\text{km/h}$
-  - [ ] **When** a Rallycross Tier 1 Junior FWD car ($\gamma_{\text{sand}} = 1.00$) executes the same sprint
-  - [ ] **Then** the FWD car must take over 15.0 seconds to reach 100 km/h (or top out below 85 km/h)
-  - [ ] **And** the FWD car must experience at least 3.0x greater rolling resistance force than the buggy
+  - [x] **Given** a reference track segment configured with `SurfaceType::PackedSand` ($\mu=0.62, RR=5.2\times$)
+  - [x] **When** a Tier 1 Sand Rail Buggy ($\gamma_{\text{sand}} = 0.30$) executes a 0-100 km/h sprint
+  - [x] **Then** the buggy must achieve 100 km/h in under 4.0 seconds
+  - [x] **And** reach a peak terminal velocity $\ge 185\,\text{km/h}$
+  - [x] **When** a Rallycross Tier 1 Junior FWD car ($\gamma_{\text{sand}} = 1.00$) executes the same sprint
+  - [x] **Then** the FWD car must take over 15.0 seconds to reach 100 km/h (or top out below 85 km/h)
+  - [x] **And** the FWD car must experience at least 3.0x greater rolling resistance force than the buggy
 
 - **Scenario: Off-track Deep Sand runaway arrestor trap behavior**
-  - [ ] **Given** a vehicle traveling at 150 km/h leaving the track ribbon into `SurfaceType::DeepSand` ($RR=30.0\times$)
-  - [ ] **When** the vehicle enters the deep sand runoff bed
-  - [ ] **Then** opposing deceleration force must exceed $4,000\,\text{N}$
-  - [ ] **And** the vehicle must be brought to a complete halt ($<1\,\text{km/h}$) within 25.0 meters
+  - [x] **Given** a vehicle traveling at 150 km/h leaving the track ribbon into `SurfaceType::DeepSand` ($RR=30.0\times$)
+  - [x] **When** the vehicle enters the deep sand runoff bed
+  - [x] **Then** opposing deceleration force must exceed $4,000\,\text{N}$
+  - [x] **And** the vehicle must be brought to a complete halt ($<1\,\text{km/h}$) within 25.0 meters
 
 - **Scenario: Arctic Ice Racer with tungsten studs on Sheet Ice**
-  - [ ] **Given** a circular skidpad on `SurfaceType::SheetIce` ($\mu=0.08$)
-  - [ ] **When** an Extreme Off-Road Tier 3 Arctic Ice Racer equipped with studs ($\alpha_{\text{ice}} = 8.125$) corners at 50 km/h
-  - [ ] **Then** effective tire grip $\mu_{\text{eff}}$ must measure $\ge 0.60$
-  - [ ] **And** lateral acceleration must exceed $0.55g$ without uncontrolled spinning
-  - [ ] **When** a standard sports car enters the same ice circle at 50 km/h
-  - [ ] **Then** lateral acceleration must not exceed $0.10g$ and the car must depart the trajectory
+  - [x] **Given** a circular skidpad on `SurfaceType::SheetIce` ($\mu=0.08$)
+  - [x] **When** an Extreme Off-Road Tier 3 Arctic Ice Racer equipped with studs ($\alpha_{\text{ice}} = 8.125$) corners at 50 km/h
+  - [x] **Then** effective tire grip $\mu_{\text{eff}}$ must measure $\ge 0.60$
+  - [x] **And** lateral acceleration must exceed $0.55g$ without uncontrolled spinning
+  - [x] **When** a standard sports car enters the same ice circle at 50 km/h
+  - [x] **Then** lateral acceleration must not exceed $0.10g$ and the car must depart the trajectory
 
 - **Scenario: Career championship track surface eligibility gating**
-  - [ ] **Given** the Rallycross World Cup Career mode
-  - [ ] **When** loading the calendar for Tier 1 (Grassroots Junior FWD)
-  - [ ] **Then** no circuit in the calendar may have a primary surface of `PackedSand`, `DeepMud`, or `SheetIce`
-  - [ ] **When** loading Tier 4 (Dakar Rally Raid) or Tier 5 (Stadium Super Trucks)
-  - [ ] **Then** desert circuits with `PackedSand` are fully unlocked and playable
+  - [x] **Given** the Rallycross World Cup Career mode
+  - [x] **When** loading the calendar for Tier 1 (Grassroots Junior FWD)
+  - [x] **Then** no circuit in the calendar may have a primary surface of `PackedSand`, `DeepMud`, or `SheetIce`
+  - [x] **When** loading Tier 4 (Dakar Rally Raid) or Tier 5 (Stadium Super Trucks)
+  - [x] **Then** desert circuits with `PackedSand` are fully unlocked and playable
 
 ---
 
@@ -338,4 +338,4 @@ pub struct TerrainInteractionConfig {
 - `crates/tdrace-app/src/game/mod.rs` -> Surface incompatibility advisory and career calendar tier gating.
 
 ### Beads Issue Tracking
-- Tracked via Beads Epic: `tdrace-surface-bifurcation-tier-gating-sbt1`.
+- Tracked via Beads Epic: `tdrace-f1h2`.
