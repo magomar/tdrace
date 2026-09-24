@@ -917,6 +917,8 @@ pub fn render_track_select_menu(
     filter_counts: (usize, usize),
     career_progress: Option<&ModuleCareerProgress>,
     dev_mode: bool,
+    active_track_id: Option<&str>,
+    is_career_mode: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -936,7 +938,11 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
-    let sub_str = format!("{} • [ESC] Return to Grand Hub", module_subtitle);
+    let sub_str = if is_career_mode {
+        format!("{} • Career Event Circuit Explorer • [ESC] Return to Starting Grid", module_subtitle)
+    } else {
+        format!("{} • [ESC] Return to Grand Hub", module_subtitle)
+    };
     fonts.draw_ui_regular_centered(
         &sub_str,
         sw * 0.5,
@@ -1117,6 +1123,7 @@ pub fn render_track_select_menu(
             if i < total_tracks {
                 let track_opt = &available_tracks[i];
                 let loaded_track = resolve_track_for_menu(track_opt);
+                let is_active_track = active_track_id.map_or(false, |aid| aid == track_opt.track_id());
                 let is_locked = if let Some(cp) = career_progress {
                     !cp.is_track_unlocked(track_opt.track_id(), dev_mode)
                 } else {
@@ -1129,6 +1136,12 @@ pub fn render_track_select_menu(
                     } else {
                         Color::new(0.08, 0.04, 0.04, 0.85)
                     }
+                } else if is_active_track {
+                    if is_sel {
+                        Color::new(0.12, 0.25, 0.18, 0.95)
+                    } else {
+                        Color::new(0.06, 0.16, 0.10, 0.90)
+                    }
                 } else if is_sel {
                     Palette::UI_CARD_BG_HOVER
                 } else {
@@ -1140,13 +1153,15 @@ pub fn render_track_select_menu(
                     } else {
                         Color::new(0.45, 0.15, 0.15, 0.70)
                     }
+                } else if is_active_track {
+                    Palette::NEON_GOLD
                 } else if is_sel {
                     module_accent
                 } else {
                     Palette::UI_CARD_BORDER
                 };
 
-                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel { 2.2 } else { 1.2 });
+                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel || is_active_track { 2.2 } else { 1.2 });
 
                 // Small Track Vector Thumbnail on right side of card
                 let thumb_w = scaler.s(58.0);
@@ -1160,7 +1175,22 @@ pub fn render_track_select_menu(
 
                 // Tag pill & metrics badge (Length + Surface breakdown)
                 let is_custom = track_opt.is_user_custom();
-                let (tag_label, tag_col) = if is_locked {
+                let (tag_label, tag_col) = if is_active_track {
+                    let active_tag = if is_career_mode { "★ ACTIVE CAREER CIRCUIT" } else { "★ ACTIVE CIRCUIT" };
+                    let lbl = if let Some(ref tr) = loaded_track {
+                        format!("{} • {:.0}m • {}", active_tag, tr.total_length_m(), tr.surface_summary_string())
+                    } else {
+                        active_tag.to_string()
+                    };
+                    (lbl, Palette::NEON_GOLD)
+                } else if is_career_mode {
+                    let lbl = if let Some(ref tr) = loaded_track {
+                        format!("🔒 CAREER LOCKED • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                    } else {
+                        "🔒 CAREER LOCKED • OTHER CIRCUIT".to_string()
+                    };
+                    (lbl, Palette::UI_TEXT_MUTED)
+                } else if is_locked {
                     ("🔒 LOCKED • ADVANCE CAREER LEVEL".to_string(), Palette::RED)
                 } else if is_custom {
                     let lbl = if let Some(ref tr) = loaded_track {
@@ -1185,7 +1215,17 @@ pub fn render_track_select_menu(
                     scaler.font_s(10.0),
                     tag_col,
                 );
-                if let Some(ref tr) = loaded_track {
+                if is_active_track {
+                    let badge_text = if is_career_mode { "ACTIVE EVENT" } else { "ACTIVE" };
+                    let bw = fonts.measure_ui_bold(badge_text, scaler.font_s(9.0)).width;
+                    fonts.draw_ui_bold(
+                        badge_text,
+                        col1_x + col_w - thumb_w - bw - scaler.s(16.0),
+                        curr_y + scaler.s(16.0),
+                        scaler.font_s(9.0),
+                        Palette::NEON_GOLD,
+                    );
+                } else if let Some(ref tr) = loaded_track {
                     let mut extra_tags = Vec::new();
                     if tr.is_inspired {
                         extra_tags.push("INSPIRED".to_string());
@@ -1272,7 +1312,7 @@ pub fn render_track_select_menu(
     }
 
 
-    // Right Column: Circuit Dossier & Predefined Vehicle Specs
+    // Right Column: Circuit Dossier, Geometry & Timing Telemetry
     let mut c2_y = menu_content_y;
 
     let is_sel_locked = if selected_track_idx < total_tracks {
@@ -1289,7 +1329,6 @@ pub fn render_track_select_menu(
     if selected_track_idx < total_tracks {
         let track_opt = &available_tracks[selected_track_idx];
         let loaded_track = resolve_track_for_menu(track_opt);
-        let predefined_car = resolve_predefined_car_for_track(loaded_track.as_ref(), active_module_id);
         let tr_ref = loaded_track.as_ref();
 
         // Section 1 Header: Circuit Dossier & Vector Telemetry
@@ -1302,7 +1341,29 @@ pub fn render_track_select_menu(
         );
         c2_y += scaler.s(22.0);
 
-        if is_sel_locked {
+        let is_sel_active = active_track_id.map_or(false, |aid| aid == track_opt.track_id());
+        if is_career_mode {
+            if is_sel_active {
+                scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.06, 0.22, 0.14, 0.90), Palette::NEON_GREEN, 1.2);
+                fonts.draw_ui_bold_centered(
+                    "★ ACTIVE EVENT CIRCUIT FOR CURRENT ROUND ★",
+                    col2_x + col_w * 0.5,
+                    c2_y + scaler.s(15.0),
+                    scaler.font_s(11.0),
+                    Palette::NEON_GOLD,
+                );
+            } else {
+                scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.24, 0.08, 0.08, 0.90), Palette::RED, 1.2);
+                fonts.draw_ui_bold_centered(
+                    "🔒 CAREER EVENT LOCKED — CANNOT SWITCH TO THIS CIRCUIT",
+                    col2_x + col_w * 0.5,
+                    c2_y + scaler.s(15.0),
+                    scaler.font_s(11.0),
+                    Palette::WHITE,
+                );
+            }
+            c2_y += scaler.s(26.0);
+        } else if is_sel_locked {
             scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.30, 0.08, 0.08, 0.90), Palette::RED, 1.2);
             fonts.draw_ui_bold_centered(
                 "🔒 CIRCUIT LOCKED — ADVANCE CAREER LEVEL TO UNLOCK",
@@ -1312,10 +1373,33 @@ pub fn render_track_select_menu(
                 Palette::WHITE,
             );
             c2_y += scaler.s(26.0);
+        } else if is_sel_active {
+            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.06, 0.22, 0.14, 0.90), Palette::NEON_GREEN, 1.2);
+            fonts.draw_ui_bold_centered(
+                "★ ACTIVE CIRCUIT SELECTED FOR RACE ★",
+                col2_x + col_w * 0.5,
+                c2_y + scaler.s(15.0),
+                scaler.font_s(11.0),
+                Palette::NEON_GOLD,
+            );
+            c2_y += scaler.s(26.0);
         }
 
-        // Detailed Vector Map Preview Card
-        let preview_h = scaler.s(145.0);
+        // Detailed Vector Map Preview Card (Expanded to maximize circuit geometry visibility)
+        let footer_btn_y = sh - scaler.s(40.0) - scaler.s(14.0);
+        let max_card_y = if track_opt.is_user_custom() {
+            footer_btn_y - scaler.s(32.0)
+        } else {
+            footer_btn_y - scaler.s(8.0)
+        };
+
+        let card1_h = scaler.s(60.0);
+        let card2_h = scaler.s(64.0);
+        let card3_h = scaler.s(50.0);
+        let gaps_h = scaler.s(24.0);
+        let fixed_cards_h = card1_h + card2_h + card3_h + gaps_h;
+        let preview_h = (max_card_y - c2_y - fixed_cards_h).clamp(scaler.s(180.0), scaler.s(285.0));
+
         if let Some(tr) = tr_ref {
             super::track_preview::render_track_detailed_preview(fonts, &scaler, col2_x, c2_y, col_w, preview_h, tr);
         } else {
@@ -1330,16 +1414,15 @@ pub fn render_track_select_menu(
         }
         c2_y += preview_h + scaler.s(8.0);
 
-        // Circuit Specs & Metrics Glass Card
-        let metrics_h = scaler.s(66.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, metrics_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        // 1. Circuit Overview & Classification Glass Card
+        scaler.draw_glass_card(col2_x, c2_y, col_w, card1_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
         // Circuit Name & Tag
         fonts.draw_ui_bold(
             track_opt.title(),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(16.0),
-            scaler.font_s(15.0),
+            scaler.font_s(15.5),
             Palette::WHITE,
         );
         let right_tag = if track_opt.is_user_custom() {
@@ -1354,7 +1437,7 @@ pub fn render_track_select_menu(
         };
         fonts.draw_ui_bold(
             right_tag,
-            col2_x + col_w - scaler.s(135.0),
+            col2_x + col_w - scaler.s(140.0),
             c2_y + scaler.s(16.0),
             scaler.font_s(10.0),
             right_tag_col,
@@ -1369,131 +1452,134 @@ pub fn render_track_select_menu(
             Palette::UI_TEXT_MUTED,
         );
 
-        // Circuit Metrics Summary Row
-        let len_str = if let Some(tr) = tr_ref {
-            format!("{:.0}m", tr.total_length_m())
+        // Circuit Classification Badges Row
+        let mut tag_items = Vec::new();
+        if let Some(tr) = tr_ref {
+            if let Some(ref c) = tr.country_name {
+                tag_items.push(c.clone());
+            }
+            if tr.is_inspired {
+                tag_items.push("INSPIRED".to_string());
+            }
+            if tr.scale() != "1:1" {
+                tag_items.push(format!("Scale: {}", tr.scale()));
+            }
+            tag_items.push(match &tr.kind {
+                tdrace_core::TrackKind::Circuit => {
+                    if tr.spline.closed {
+                        "Closed Circuit".to_string()
+                    } else {
+                        "Sprint Stage".to_string()
+                    }
+                }
+                tdrace_core::TrackKind::Arena { .. } => "Stunt Arena".to_string(),
+                tdrace_core::TrackKind::Hybrid { .. } => "Stadium Supercross".to_string(),
+            });
+        }
+        if !tag_items.is_empty() {
+            let tag_summary = tag_items.join(" • ");
+            fonts.draw_ui_bold(
+                &tag_summary,
+                col2_x + scaler.s(14.0),
+                c2_y + scaler.s(48.0),
+                scaler.font_s(9.5),
+                Palette::NEON_CYAN,
+            );
+        }
+        c2_y += card1_h + scaler.s(8.0);
+
+        // 2. Circuit Timing & Best Lap Records Glass Card
+        scaler.draw_glass_card(col2_x, c2_y, col_w, card2_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+        fonts.draw_ui_bold(
+            "CIRCUIT TIMING & RECORDS",
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(14.0),
+            scaler.font_s(10.0),
+            Palette::NEON_GOLD,
+        );
+
+        let best_lap = active_stats.best_times.get(track_opt.track_id()).copied();
+        let best_circuit = active_stats.best_circuit_times.get(track_opt.track_id()).copied();
+
+        let sub_card_w = (col_w - scaler.s(36.0)) * 0.5;
+        let sub_card_y = c2_y + scaler.s(20.0);
+        let sub_card_h = scaler.s(36.0);
+        let lap_box_x = col2_x + scaler.s(14.0);
+        let circ_box_x = lap_box_x + sub_card_w + scaler.s(8.0);
+
+        // Left Sub-card: Personal Best Lap Time
+        let (pb_val_str, pb_val_col, pb_status_str) = if let Some(lap) = best_lap {
+            (format_lap_time(lap), Palette::NEON_CYAN, "RECORD SET")
         } else {
-            "N/A".to_string()
+            ("--:--.--".to_string(), Palette::UI_TEXT_MUTED, "NO RECORD")
         };
-        let laps_str = if let Some(tr) = tr_ref {
-            format!("{} Laps", tr.default_laps)
+
+        scaler.draw_glass_card(lap_box_x, sub_card_y, sub_card_w, sub_card_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold("PERSONAL BEST LAP", lap_box_x + scaler.s(8.0), sub_card_y + scaler.s(13.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&pb_val_str, lap_box_x + scaler.s(8.0), sub_card_y + scaler.s(29.0), scaler.font_s(13.5), pb_val_col);
+        fonts.draw_ui_bold(pb_status_str, lap_box_x + sub_card_w - scaler.s(72.0), sub_card_y + scaler.s(13.0), scaler.font_s(8.5), if best_lap.is_some() { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED });
+
+        // Right Sub-card: Best Race Time / Circuit Completion
+        let (circ_val_str, circ_val_col, circ_status_str) = if let Some(tot) = best_circuit {
+            (format_lap_time(tot), Palette::WHITE, "RACE RECORD")
         } else {
-            "3 Laps".to_string()
+            let race_laps = tr_ref.map(|t| t.default_laps).unwrap_or(3);
+            ("--:--.--".to_string(), Palette::UI_TEXT_MUTED, if race_laps == 1 { "1 LAP" } else { "3 LAPS" })
         };
-        let width_str = if let Some(tr) = tr_ref {
+
+        scaler.draw_glass_card(circ_box_x, sub_card_y, sub_card_w, sub_card_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold("BEST RACE TIME", circ_box_x + scaler.s(8.0), sub_card_y + scaler.s(13.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(&circ_val_str, circ_box_x + scaler.s(8.0), sub_card_y + scaler.s(29.0), scaler.font_s(13.5), circ_val_col);
+        fonts.draw_ui_bold(circ_status_str, circ_box_x + sub_card_w - scaler.s(72.0), sub_card_y + scaler.s(13.0), scaler.font_s(8.5), if best_circuit.is_some() { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED });
+
+        c2_y += card2_h + scaler.s(8.0);
+
+        // 3. Technical Specifications & Geometry Grid (4 Telemetry Chips)
+        let spec_chip_w = (col_w - scaler.s(36.0)) * 0.5;
+        let spec_chip_h = scaler.s(22.0);
+        let chip_base_x = col2_x + scaler.s(14.0);
+        let chip_y1 = c2_y + scaler.s(2.0);
+        let chip_y2 = c2_y + scaler.s(27.0);
+
+        let len_text = if let Some(tr) = tr_ref {
+            format!("{:.0}m Track Length", tr.total_length_m())
+        } else {
+            "N/A Length".to_string()
+        };
+        let width_text = if let Some(tr) = tr_ref {
             format!("Width: {}", tr.width_summary_string())
         } else {
             "Width: 12.0m".to_string()
         };
-        let cps_str = if let Some(tr) = tr_ref {
-            format!("{} Checkpoints", tr.checkpoints.len())
+        let laps_text = if let Some(tr) = tr_ref {
+            format!("{} Laps • {} Checkpoints", tr.default_laps, tr.checkpoints.len())
         } else {
-            "Checkpoints".to_string()
+            "3 Laps • Checkpoints".to_string()
         };
-        let grid_str = if let Some(tr) = tr_ref {
-            format!("{} Grid Slots", tr.grid_positions.len())
+        let grid_text = if let Some(tr) = tr_ref {
+            format!("{} Grid Slots • Off: {}", tr.grid_positions.len(), tr.default_surface.name())
         } else {
             "10 Slots".to_string()
         };
-        let scale_str = if let Some(tr) = tr_ref {
-            if tr.scale() != "1:1" {
-                format!(" • {}", tr.scale())
-            } else {
-                String::new()
-            }
-        } else {
-            String::new()
-        };
 
-        let metrics_summary = format!("{} • {} • {} • {} • {}{}", len_str, width_str, laps_str, cps_str, grid_str, scale_str);
-        fonts.draw_ui_bold(
-            &metrics_summary,
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(53.0),
-            scaler.font_s(11.0),
-            Palette::NEON_CYAN,
-        );
+        // Chip 1: Track Length
+        scaler.draw_glass_card(chip_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(&len_text, chip_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
 
-        c2_y += metrics_h + scaler.s(12.0);
+        // Chip 2: Width
+        scaler.draw_glass_card(chip_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(&width_text, chip_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
 
-        // Section 2 Header: Predefined Vehicle Specifications (Informational preview)
-        fonts.draw_ui_bold(
-            "PREDEFINED VEHICLE SPECIFICATIONS",
-            col2_x,
-            c2_y + scaler.s(13.0),
-            scaler.font_s(15.0),
-            module_accent,
-        );
-        fonts.draw_ui_regular(
-            "Circuit default vehicle • Select car & mode in Race Setup [Enter]",
-            col2_x,
-            c2_y + scaler.s(28.0),
-            scaler.font_s(10.5),
-            Palette::UI_TEXT_MUTED,
-        );
-        c2_y += scaler.s(34.0);
+        // Chip 3: Race Laps & Gates
+        scaler.draw_glass_card(chip_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(&laps_text, chip_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
 
-        // Predefined Car Glass Card
-        let car_card_h = scaler.s(182.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, car_card_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.3);
+        // Chip 4: Starting Grid & Off-Track Surface
+        scaler.draw_glass_card(chip_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
+        fonts.draw_ui_bold(&grid_text, chip_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
 
-        // Car Tag & Title
-        fonts.draw_ui_bold(
-            predefined_car.tag(),
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(16.0),
-            scaler.font_s(10.5),
-            Palette::NEON_GOLD,
-        );
-        fonts.draw_ui_bold(
-            predefined_car.title(),
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(34.0),
-            scaler.font_s(16.5),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_regular(
-            predefined_car.description(),
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(49.0),
-            scaler.font_s(11.0),
-            Palette::UI_TEXT_MUTED,
-        );
-
-        // Performance Stat Bars (Speed, Acceleration, Grip, Drift)
-        let (spd, acc, grip, drift) = predefined_car.stats();
-        let stat_bar_w = col_w - scaler.s(28.0);
-        let stat_base_x = col2_x + scaler.s(14.0);
-
-        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(64.0), stat_bar_w, "SPEED", spd, Palette::NEON_CYAN);
-        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(79.0), stat_bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(94.0), stat_bar_w, "GRIP", grip, Palette::NEON_GREEN);
-        render_stat_bar_full(scaler, fonts, stat_base_x, c2_y + scaler.s(109.0), stat_bar_w, "DRIFT", drift, Palette::NEON_MAGENTA);
-
-        // Telemetry / Engineering Specs Badges
-        let (spec1, spec2, spec3, spec4) = predefined_car.specs();
-        let spec_chip_w = (col_w - scaler.s(36.0)) * 0.5;
-        let spec_chip_h = scaler.s(22.0);
-        let chip_y1 = c2_y + scaler.s(128.0);
-        let chip_y2 = c2_y + scaler.s(153.0);
-
-        // Chip 1 (Drivetrain)
-        scaler.draw_glass_card(stat_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(spec1, stat_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
-
-        // Chip 2 (Mass)
-        scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(spec2, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
-
-        // Chip 3 (Top Speed)
-        scaler.draw_glass_card(stat_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(spec3, stat_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
-
-        // Chip 4 (Aero / Dynamics)
-        scaler.draw_glass_card(stat_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(spec4, stat_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
         if track_opt.is_user_custom() {
-            let footer_btn_y = sh - scaler.s(40.0) - scaler.s(14.0);
             fonts.draw_ui_bold(
                 "[T] Circuit Manager",
                 col2_x,
@@ -1535,7 +1621,7 @@ pub fn render_track_select_menu(
             "• Spline CAD editor with elevation & banking bridges",
             "• Multi-surface painting (Asphalt, Dirt, Sand, Water, Ice)",
             "• Jump ramps, obstacles & custom checkpoint gates",
-            "• Predefined car assignment & lap balancing",
+            "• Target lap balancing & checkpoint configuration",
             "• Press [Enter / Space] or [T] to launch Circuit Manager",
         ];
         let mut feat_y = c2_y + scaler.s(86.0);
@@ -1616,17 +1702,39 @@ pub fn render_track_select_menu(
 
     // Footer Launch prompt button
     let is_tm_selected = has_tm_entry && selected_track_idx == total_tracks;
+    let is_sel_active = selected_track_idx < total_tracks
+        && active_track_id.map_or(false, |aid| aid == available_tracks[selected_track_idx].track_id());
     let (btn_bg, btn_border, start_prompt) = if is_tm_selected {
         (
             Color::new(0.32, 0.12, 0.52, 0.95),
             Palette::NEON_MAGENTA,
             "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
         )
+    } else if is_career_mode {
+        if is_sel_active {
+            (
+                Color::new(0.08, 0.44, 0.22, 0.92),
+                Palette::NEON_GREEN,
+                "▶ ACTIVE CAREER CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
+            )
+        } else {
+            (
+                Color::new(0.20, 0.08, 0.08, 0.90),
+                Palette::RED,
+                "🔒 CAREER EVENT LOCKED • CANNOT SWITCH CIRCUIT [ESC: RETURN]".to_string(),
+            )
+        }
     } else if is_sel_locked {
         (
             Color::new(0.35, 0.10, 0.10, 0.95),
             Palette::RED,
             "🔒 CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
+        )
+    } else if is_sel_active {
+        (
+            Color::new(0.08, 0.44, 0.22, 0.92),
+            Palette::NEON_GREEN,
+            "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
         )
     } else if total_tracks > 0 {
         (
@@ -1646,7 +1754,9 @@ pub fn render_track_select_menu(
     let btn_x = (sw - btn_w) * 0.5;
     let btn_y = sh - btn_h - scaler.s(14.0);
 
-    let footer_text = if crate::storage::is_dev_mode() {
+    let footer_text = if is_career_mode {
+        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [ESC] Return to Starting Grid"
+    } else if crate::storage::is_dev_mode() {
         "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
     } else {
         "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [X] Settings  •  [K] Controls  •  [ESC] Back"
@@ -1672,27 +1782,6 @@ pub fn render_track_select_menu(
     );
 }
 
-fn render_stat_bar_full(
-    scaler: UiScaler,
-    fonts: &Fonts,
-    x: f32,
-    y: f32,
-    w: f32,
-    label: &str,
-    val: f32,
-    color: Color,
-) {
-    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
-    let bar_x = x + scaler.s(44.0);
-    let bar_w = (w - scaler.s(84.0)).max(30.0);
-    let bar_h = scaler.s(6.0);
-
-    draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.1, 0.12, 0.16, 0.9));
-    draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
-
-    let pct_str = format!("{:.0}%", (val * 100.0).clamp(0.0, 100.0));
-    fonts.draw_ui_bold(&pct_str, bar_x + bar_w + scaler.s(8.0), y + scaler.s(7.0), scaler.font_s(9.5), color);
-}
 
 /// Bounding rectangles for interactive Pause Menu action buttons.
 #[derive(Debug, Clone, Copy, PartialEq)]

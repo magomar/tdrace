@@ -72,6 +72,7 @@ pub use ui::profile_ui::{
 pub use ui::career_hub::CareerHubFocus;
 pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::starting_grid::{
-    render_starting_grid_screen, starting_grid_garage_button_rect, starting_grid_grid_button_rect,
-    starting_grid_launch_button_rect, starting_grid_player_card_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_circuit_card_rect, starting_grid_garage_button_rect,
+    starting_grid_grid_button_rect, starting_grid_launch_button_rect, starting_grid_player_card_rect,
+    StartingGridFocus,
 };

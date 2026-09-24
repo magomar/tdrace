@@ -1,5 +1,5 @@
 use tdrace_app::game::{GameState, ProfileOrigin, RaceSession, StartingGridFocus};
-use tdrace_app::ui::menu::{CarChoice, TrackChoice};
+use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 use tdrace_core::track::presets::{
     classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway,
     ramp_raceway,
@@ -423,43 +423,55 @@ fn test_starting_grid_player_card_selection_and_profile_flow() {
     assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
     assert_eq!(session.starting_grid_card_idx, 0);
 
-    // 1. Navigate UP from Garage (0) -> selects Player Profile Card (3)
+    // 1. Navigate UP from Garage (0) -> selects Circuit Explorer Card (4)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.starting_grid_card_idx, 4);
+
+    // 2. Navigate UP from Circuit Card (4) -> selects Player Profile Card (3)
     session.input.gamepad.snapshot.nav_up = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_up = false;
     assert_eq!(session.starting_grid_card_idx, 3);
 
-    // 2. Navigate UP from Player Card (3) -> wraps around to Launch Race (2)
+    // 3. Navigate UP from Player Card (3) -> wraps around to Launch Race (2)
     session.input.gamepad.snapshot.nav_up = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_up = false;
     assert_eq!(session.starting_grid_card_idx, 2);
 
-    // 3. Navigate UP from Launch Race (2) -> moves to Garage (0)
+    // 4. Navigate UP from Launch Race (2) -> moves to Garage (0)
     session.input.gamepad.snapshot.nav_up = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_up = false;
     assert_eq!(session.starting_grid_card_idx, 0);
 
-    // 4. Navigate DOWN from Garage (0) -> moves to Launch Race (2)
+    // 5. Navigate DOWN from Garage (0) -> moves to Launch Race (2)
     session.input.gamepad.snapshot.nav_down = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_down = false;
     assert_eq!(session.starting_grid_card_idx, 2);
 
-    // 5. Navigate DOWN from Launch Race (2) -> wraps around to Player Card (3)
+    // 6. Navigate DOWN from Launch Race (2) -> wraps around to Player Card (3)
     session.input.gamepad.snapshot.nav_down = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_down = false;
     assert_eq!(session.starting_grid_card_idx, 3);
 
-    // 6. Navigate DOWN from Player Card (3) -> moves to Garage (0)
+    // 7. Navigate DOWN from Player Card (3) -> moves to Circuit Card (4)
+    session.input.gamepad.snapshot.nav_down = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_down = false;
+    assert_eq!(session.starting_grid_card_idx, 4);
+
+    // 8. Navigate DOWN from Circuit Card (4) -> moves to Garage (0)
     session.input.gamepad.snapshot.nav_down = true;
     session.update_starting_grid();
     session.input.gamepad.snapshot.nav_down = false;
     assert_eq!(session.starting_grid_card_idx, 0);
 
-    // 7. Select Player Card (3) and hit Enter/Confirm -> loads ProfileManager
+    // 9. Select Player Card (3) and hit Enter/Confirm -> loads ProfileManager
     session.starting_grid_card_idx = 3;
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_starting_grid();
@@ -468,7 +480,7 @@ fn test_starting_grid_player_card_selection_and_profile_flow() {
     assert!(matches!(session.state, GameState::ProfileManager { .. }));
     assert_eq!(session.profile_origin, ProfileOrigin::StartingGrid);
 
-    // 8. Return from ProfileManager with Cancel (Escape/Gamepad B) -> returns to StartingGrid
+    // 10. Return from ProfileManager with Cancel (Escape/Gamepad B) -> returns to StartingGrid
     session.input.gamepad.snapshot.btn_cancel_pressed = true;
     let sel_idx = match session.state {
         GameState::ProfileManager { selected_idx } => selected_idx,
@@ -478,10 +490,82 @@ fn test_starting_grid_player_card_selection_and_profile_flow() {
     session.input.gamepad.snapshot.btn_cancel_pressed = false;
     assert_eq!(session.state, GameState::StartingGrid);
 
-    // 9. Verify open_profile_from_starting_grid directly
+    // 11. Verify open_profile_from_starting_grid directly
     session.open_profile_from_starting_grid();
     assert!(matches!(session.state, GameState::ProfileManager { .. }));
     assert_eq!(session.profile_origin, ProfileOrigin::StartingGrid);
+}
+
+#[test]
+fn test_starting_grid_circuit_card_and_selector_flow() {
+    let (cx, cy, cw, ch) = tdrace_app::ui::starting_grid_circuit_card_rect(1280.0, 720.0);
+    assert!(cw > 200.0);
+    assert!(ch > 40.0);
+    assert!(cx > 0.0);
+    assert!(cy > 0.0);
+
+    let (px, py, _pw, ph) = tdrace_app::ui::starting_grid_player_card_rect(1280.0, 720.0);
+    assert_eq!(cx, px);
+    assert!(cy >= py + ph);
+
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.init_race();
+
+    // 1. Select Circuit Card (4) and confirm -> opens Menu with MenuOrigin::StartingGrid
+    session.starting_grid_card_idx = 4;
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.menu_origin, tdrace_app::game::MenuOrigin::StartingGrid);
+
+    // 2. Escape from Menu returns to StartingGrid
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // 3. Career mode blocking: open circuit selector while in Career mode
+    session.game_mode = GameMode::Career;
+    session.open_circuit_selector_from_starting_grid();
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.menu_origin, tdrace_app::game::MenuOrigin::StartingGrid);
+
+    // Select a different circuit in the menu
+    let tracks = session.filtered_menu_tracks();
+    let other_idx = tracks.iter().position(|t| t.track_id() != session.track_choice.track_id()).unwrap_or(1);
+    session.menu_track_idx = other_idx;
+    let initial_track_id = session.track_choice.track_id().to_string();
+
+    // In Career mode, pressing Confirm on another circuit is blocked (stays in Menu, track unchanged)
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.track_choice.track_id(), initial_track_id.as_str());
+
+    // In Career mode, pressing Confirm on the active circuit returns to StartingGrid
+    let active_idx = tracks.iter().position(|t| t.track_id() == initial_track_id.as_str()).unwrap_or(0);
+    session.menu_track_idx = active_idx;
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.track_choice.track_id(), initial_track_id.as_str());
+
+    // 4. Non-career mode: switching circuit works and re-inits into StartingGrid with new circuit
+    session.game_mode = GameMode::StandardRace;
+    session.open_circuit_selector_from_starting_grid();
+    session.menu_track_idx = other_idx;
+    let target_choice = tracks[other_idx].clone();
+
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.track_choice.track_id(), target_choice.track_id());
 }
 
 

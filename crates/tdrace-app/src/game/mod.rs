@@ -176,6 +176,14 @@ pub enum EditorOrigin {
     Menu,
 }
 
+/// Source screen that launched the Track Selection Menu / Circuit Explorer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MenuOrigin {
+    #[default]
+    ModalitySelect,
+    StartingGrid,
+}
+
 /// High-level game flow state machine.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameState {
@@ -471,6 +479,7 @@ pub struct RaceSession {
     pub last_xp_receipt: Option<XpAwardReceipt>,
 
     // Menu selection cursor & 2D navigation state
+    pub menu_origin: MenuOrigin,
     pub menu_focused_panel: MenuPanelFocus,
     pub menu_track_filter: TrackCatalogFilter,
     pub menu_track_idx: usize,
@@ -759,6 +768,7 @@ impl RaceSession {
             player_race_stats: PlayerRaceTelemetry::default(),
             last_xp_receipt: None,
 
+            menu_origin: MenuOrigin::ModalitySelect,
             menu_focused_panel: MenuPanelFocus::LeftTracks,
             menu_track_filter: TrackCatalogFilter::Presets,
             menu_track_idx: 0,
@@ -1455,6 +1465,22 @@ impl RaceSession {
         self.state = GameState::ProfileManager {
             selected_idx: current_idx,
         };
+    }
+
+    /// Transitions from Starting Grid to Track Selection Menu / Circuit Explorer.
+    pub fn open_circuit_selector_from_starting_grid(&mut self) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        self.menu_origin = MenuOrigin::StartingGrid;
+        if self.track_choice.is_user_custom() {
+            self.menu_track_filter = TrackCatalogFilter::Custom;
+        } else {
+            self.menu_track_filter = TrackCatalogFilter::Presets;
+        }
+        let tracks = self.filtered_menu_tracks();
+        if let Some(pos) = tracks.iter().position(|t| t.track_id() == self.track_choice.track_id()) {
+            self.menu_track_idx = pos;
+        }
+        self.state = GameState::Menu;
     }
 
     /// Returns available circuits for the active motorsport game module (including both presets and custom circuits).
@@ -4936,6 +4962,7 @@ impl RaceSession {
         let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
         let (grid_btn_x, grid_btn_y, grid_btn_w, grid_btn_h) = crate::ui::starting_grid_grid_button_rect(sw, sh);
         let (p_btn_x, p_btn_y, p_btn_w, p_btn_h) = crate::ui::starting_grid_player_card_rect(sw, sh);
+        let (c_btn_x, c_btn_y, c_btn_w, c_btn_h) = crate::ui::starting_grid_circuit_card_rect(sw, sh);
         let (mx, my) = mouse_position_safe();
         let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
         let launch_btn_clicked = mouse_clicked
@@ -4958,11 +4985,23 @@ impl RaceSession {
             && mx <= p_btn_x + p_btn_w
             && my >= p_btn_y
             && my <= p_btn_y + p_btn_h;
+        let circuit_card_clicked = mouse_clicked
+            && mx >= c_btn_x
+            && mx <= c_btn_x + c_btn_w
+            && my >= c_btn_y
+            && my <= c_btn_y + c_btn_h;
 
         if player_card_clicked {
             self.starting_grid_focus = StartingGridFocus::LeftSetup;
             self.starting_grid_card_idx = 3;
             self.open_profile_from_starting_grid();
+            return;
+        }
+
+        if circuit_card_clicked {
+            self.starting_grid_focus = StartingGridFocus::LeftSetup;
+            self.starting_grid_card_idx = 4;
+            self.open_circuit_selector_from_starting_grid();
             return;
         }
 
@@ -5016,7 +5055,7 @@ impl RaceSession {
         // 2. Navigation & Actions within Active Panel
         match self.starting_grid_focus {
             StartingGridFocus::LeftSetup => {
-                // Up / Down to navigate between setup cards (Player Card vs Garage vs Launch Race button)
+                // Up / Down to navigate between setup cards (Player Card vs Circuit Card vs Garage vs Launch Race button)
                 if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::W)
                     || self.input.gamepad.snapshot.dpad_up_pressed
@@ -5024,9 +5063,10 @@ impl RaceSession {
                 {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.starting_grid_card_idx = match self.starting_grid_card_idx {
-                        0 => 3, // From Garage up to Player Card
-                        3 => 2, // From Player Card up (wrap) to Launch Button
                         2 => 0, // From Launch Button up to Garage
+                        0 => 4, // From Garage up to Circuit Card
+                        4 => 3, // From Circuit Card up to Player Card
+                        3 => 2, // From Player Card up (wrap) to Launch Button
                         _ => 0,
                     };
                 }
@@ -5037,7 +5077,8 @@ impl RaceSession {
                 {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.starting_grid_card_idx = match self.starting_grid_card_idx {
-                        3 => 0, // From Player Card down to Garage
+                        3 => 4, // From Player Card down to Circuit Card
+                        4 => 0, // From Circuit Card down to Garage
                         0 => 2, // From Garage down to Launch Button
                         2 => 3, // From Launch Button down (wrap) to Player Card
                         _ => 2,
@@ -5162,6 +5203,17 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.btn_a_pressed
                         {
                             self.open_profile_from_starting_grid();
+                            return;
+                        }
+                    }
+                    4 => {
+                        // Card 4: Circuit Explorer / Selector Card
+                        if is_key_pressed(KeyCode::Enter)
+                            || is_key_pressed(KeyCode::KpEnter)
+                            || self.input.gamepad.snapshot.btn_confirm_pressed
+                            || self.input.gamepad.snapshot.btn_a_pressed
+                        {
+                            self.open_circuit_selector_from_starting_grid();
                             return;
                         }
                     }
@@ -5325,6 +5377,12 @@ impl RaceSession {
         // View Player Profile direct key shortcut (P key)
         if is_key_pressed(KeyCode::P) {
             self.open_profile_from_starting_grid();
+            return;
+        }
+
+        // View Circuit Explorer direct key shortcut (C key)
+        if is_key_pressed(KeyCode::C) {
+            self.open_circuit_selector_from_starting_grid();
             return;
         }
 
@@ -8136,7 +8194,7 @@ impl RaceSession {
             return;
         }
 
-        // Return to Modality Selection Screen (Escape key or Gamepad B / Cancel / Back / Tab)
+        // Return to Modality Selection Screen or Starting Grid (Escape key or Gamepad B / Cancel / Back / Tab)
         if is_key_pressed(KeyCode::Escape)
             || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.btn_cancel_pressed
@@ -8144,6 +8202,10 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
+            if self.menu_origin == MenuOrigin::StartingGrid {
+                self.state = GameState::StartingGrid;
+                return;
+            }
             let initial_category = match self.game_mode {
                 GameMode::SplitScreen => ModalityCategory::Multiplayer,
                 _ => ModalityCategory::SinglePlayer,
@@ -8396,6 +8458,19 @@ impl RaceSession {
             if self.menu_track_idx < available_tracks.len() {
                 let track_choice = &available_tracks[self.menu_track_idx];
                 let track_id = track_choice.track_id();
+                if self.game_mode == GameMode::Career && self.menu_origin == MenuOrigin::StartingGrid {
+                    let active_id = self.championship_session.as_ref()
+                        .and_then(|c| c.current_track_id())
+                        .unwrap_or_else(|| self.track_choice.track_id());
+                    if track_id == active_id {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.state = GameState::StartingGrid;
+                        return;
+                    } else {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        return;
+                    }
+                }
                 if !self.is_track_unlocked(track_id) {
                     self.audio.play_sfx(SfxType::UiMove);
                     return;
@@ -10618,6 +10693,14 @@ impl RaceSession {
                 } else {
                     None
                 };
+                let active_track_id = if self.game_mode == GameMode::Career {
+                    self.championship_session.as_ref().and_then(|c| c.current_track_id()).or(Some(self.track_choice.track_id()))
+                } else if self.menu_origin == MenuOrigin::StartingGrid {
+                    Some(self.track_choice.track_id())
+                } else {
+                    None
+                };
+                let is_career = self.game_mode == GameMode::Career;
                 render_track_select_menu(
                     &self.fonts,
                     self.active_module_id,
@@ -10632,6 +10715,8 @@ impl RaceSession {
                     filter_counts,
                     cp_ref,
                     self.is_dev_mode(),
+                    active_track_id,
+                    is_career,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {

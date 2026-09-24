@@ -53,9 +53,9 @@ pub use profile_ui::{
 };
 pub use scaler::UiScaler;
 pub use starting_grid::{
-    render_starting_grid_screen, starting_grid_footer_prompt, starting_grid_footer_prompt_with_mode,
-    starting_grid_garage_button_rect, starting_grid_grid_button_rect, starting_grid_launch_button_rect,
-    starting_grid_player_card_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_circuit_card_rect, starting_grid_footer_prompt,
+    starting_grid_footer_prompt_with_mode, starting_grid_garage_button_rect, starting_grid_grid_button_rect,
+    starting_grid_launch_button_rect, starting_grid_player_card_rect, StartingGridFocus,
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,

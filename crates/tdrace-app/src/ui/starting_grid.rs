@@ -27,8 +27,20 @@ pub fn starting_grid_player_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) 
     let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
-    let p1_h = scaler.s(88.0);
+    let p1_h = scaler.s(52.0);
     (col1_x, panel_y, col_w, p1_h)
+}
+
+/// Returns the rectangle (x, y, w, h) of the Circuit Explorer / Selector card on the Starting Grid.
+pub fn starting_grid_circuit_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
+    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let panel_y = scaler.s(60.0);
+    let p1_h = scaler.s(52.0);
+    let c_y = panel_y + p1_h + scaler.s(6.0);
+    let c_h = scaler.s(50.0);
+    (col1_x, c_y, col_w, c_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the Garage access card on the Starting Grid.
@@ -37,9 +49,10 @@ pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
-    let p1_h = scaler.s(88.0);
-    let garage_card_h = scaler.s(420.0);
-    let curr_y = panel_y + p1_h + scaler.s(8.0);
+    let p1_h = scaler.s(52.0);
+    let c_h = scaler.s(50.0);
+    let garage_card_h = scaler.s(408.0);
+    let curr_y = panel_y + p1_h + scaler.s(6.0) + c_h + scaler.s(8.0);
     (col1_x, curr_y, col_w, garage_card_h)
 }
 
@@ -50,11 +63,12 @@ pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
     let panel_y = scaler.s(60.0);
 
-    let p1_h = scaler.s(88.0);
-    let garage_card_h = scaler.s(420.0);
+    let p1_h = scaler.s(52.0);
+    let c_h = scaler.s(50.0);
+    let garage_card_h = scaler.s(408.0);
     let launch_h = scaler.s(48.0);
 
-    let curr_y = panel_y + p1_h + scaler.s(8.0) + garage_card_h + scaler.s(10.0);
+    let curr_y = panel_y + p1_h + scaler.s(6.0) + c_h + scaler.s(8.0) + garage_card_h + scaler.s(10.0);
     (col1_x, curr_y, col_w, launch_h)
 }
 
@@ -154,10 +168,10 @@ pub fn render_starting_grid_screen(
     let mut curr_y = panel_y;
     let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
 
-    // Card 1 (Index 3): Player Profile & Circuit Dossier Card
-    let p1_h = scaler.s(88.0);
+    // Card 1 (Index 3): Player Profile Card
+    let player_h = scaler.s(52.0);
     let is_player_active = is_left_focused && active_card_idx == 3;
-    let is_player_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + p1_h;
+    let is_player_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + player_h;
     let is_player_highlighted = is_player_active || is_player_hovered;
 
     let player_border = if is_player_highlighted {
@@ -170,15 +184,15 @@ pub fn render_starting_grid_screen(
     } else {
         Palette::UI_CARD_BG
     };
-    scaler.draw_glass_card(col1_x, curr_y, col_w, p1_h, player_bg, player_border, if is_player_highlighted { 2.4 } else { 1.2 });
+    scaler.draw_glass_card(col1_x, curr_y, col_w, player_h, player_bg, player_border, if is_player_highlighted { 2.4 } else { 1.2 });
 
-    // Line 1: Player Profile info
+    // Player Profile info
     let flag_w = scaler.s(32.0);
     let flag_h = scaler.s(18.0);
     draw_country_banner(
         player_profile.country.as_deref(),
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(10.0),
+        curr_y + scaler.s(17.0),
         flag_w,
         flag_h,
         None,
@@ -189,16 +203,16 @@ pub fn render_starting_grid_screen(
     fonts.draw_ui_bold(
         &p_name_str,
         col1_x + scaler.s(52.0),
-        curr_y + scaler.s(23.0),
+        curr_y + scaler.s(30.0),
         scaler.font_s(14.0),
         if is_player_highlighted { Palette::NEON_GOLD } else { Palette::WHITE },
     );
 
     // Team Livery Swatches on right of player row
     let swatch_w = scaler.s(13.0);
-    let swatch_h = scaler.s(10.0);
+    let swatch_h = scaler.s(11.0);
     let swatch_x = col1_x + col_w - scaler.s(58.0);
-    let swatch_y = curr_y + scaler.s(12.0);
+    let swatch_y = curr_y + scaler.s(20.0);
     draw_rectangle(swatch_x, swatch_y, swatch_w, swatch_h, player_scheme.primary);
     draw_rectangle_lines(swatch_x, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
     draw_rectangle(swatch_x + swatch_w + scaler.s(2.0), swatch_y, swatch_w, swatch_h, player_scheme.secondary);
@@ -206,44 +220,104 @@ pub fn render_starting_grid_screen(
     draw_rectangle(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, player_scheme.helmet);
     draw_rectangle_lines(swatch_x + (swatch_w + scaler.s(2.0)) * 2.0, swatch_y, swatch_w, swatch_h, 1.0, Palette::WHITE);
 
-    // Divider Line
-    draw_rectangle(col1_x + scaler.s(12.0), curr_y + scaler.s(38.0), col_w - scaler.s(24.0), 1.0, Color::new(0.20, 0.30, 0.45, 0.40));
-
-    // Line 2: Track Information & Profile Action Hint
-    fonts.draw_ui_bold(
-        &format!("CIRCUIT: {}", track.name.to_uppercase()),
-        col1_x + scaler.s(12.0),
-        curr_y + scaler.s(56.0),
-        scaler.font_s(12.5),
-        Palette::NEON_GOLD,
-    );
-
     let profile_hint = if is_player_highlighted {
         "OPEN PROFILE [ENTER]"
     } else {
         "PROFILE [P]"
     };
+    let prof_hint_w = fonts.measure_ui_bold(profile_hint, scaler.font_s(10.0)).width;
     fonts.draw_ui_bold(
         profile_hint,
-        col1_x + col_w - scaler.s(135.0),
-        curr_y + scaler.s(56.0),
+        swatch_x - prof_hint_w - scaler.s(14.0),
+        curr_y + scaler.s(29.0),
         scaler.font_s(10.0),
         if is_player_highlighted { Palette::NEON_GOLD } else { Palette::NEON_CYAN },
     );
 
-    fonts.draw_ui_regular(
-        &format!("{}m Length  •  {} Laps  •  {}", track_len_m, total_laps, track.surface_summary_string()),
+    curr_y += player_h + scaler.s(6.0);
+
+    // Card 2 (Index 4): Circuit Explorer / Selector Card
+    let circuit_h = scaler.s(50.0);
+    let is_circuit_active = is_left_focused && active_card_idx == 4;
+    let is_circuit_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + circuit_h;
+    let is_circuit_highlighted = is_circuit_active || is_circuit_hovered;
+
+    let circuit_border = if is_circuit_highlighted {
+        Palette::NEON_GOLD
+    } else {
+        Palette::NEON_CYAN
+    };
+    let circuit_bg = if is_circuit_highlighted {
+        Palette::UI_CARD_BG_HOVER
+    } else {
+        Palette::UI_CARD_BG
+    };
+    scaler.draw_glass_card(col1_x, curr_y, col_w, circuit_h, circuit_bg, circuit_border, if is_circuit_highlighted { 2.4 } else { 1.2 });
+
+    // Line 1: Track Information & Action Hint
+    fonts.draw_ui_bold(
+        &format!("CIRCUIT: {}", track.name.to_uppercase()),
         col1_x + scaler.s(12.0),
-        curr_y + scaler.s(74.0),
+        curr_y + scaler.s(20.0),
+        scaler.font_s(12.5),
+        Palette::NEON_GOLD,
+    );
+
+    let is_career = game_mode == GameMode::Career;
+    let circuit_hint = if is_career {
+        if is_circuit_highlighted {
+            "EXPLORE [ENTER] • 🔒 CAREER LOCKED"
+        } else {
+            "CIRCUIT [C] • 🔒 LOCKED"
+        }
+    } else if is_circuit_highlighted {
+        "SELECT CIRCUIT [ENTER]"
+    } else {
+        "CIRCUITS [ENTER / C]"
+    };
+    let circuit_hint_col = if is_circuit_highlighted {
+        Palette::NEON_GOLD
+    } else if is_career {
+        Palette::UI_TEXT_MUTED
+    } else {
+        Palette::NEON_CYAN
+    };
+    let c_hint_w = fonts.measure_ui_bold(circuit_hint, scaler.font_s(10.0)).width;
+    fonts.draw_ui_bold(
+        circuit_hint,
+        col1_x + col_w - scaler.s(12.0) - c_hint_w,
+        curr_y + scaler.s(20.0),
+        scaler.font_s(10.0),
+        circuit_hint_col,
+    );
+
+    // Line 2: Track Metrics & Active Career Circuit Tag
+    let track_metric_str = format!("{}m Length  •  {} Laps  •  {}", track_len_m, total_laps, track.surface_summary_string());
+    fonts.draw_ui_regular(
+        &track_metric_str,
+        col1_x + scaler.s(12.0),
+        curr_y + scaler.s(38.0),
         scaler.font_s(11.0),
         Palette::UI_TEXT_MUTED,
     );
 
-    curr_y += p1_h + scaler.s(8.0);
+    if is_career {
+        let career_badge = "★ ACTIVE CAREER CIRCUIT";
+        let badge_w = fonts.measure_ui_bold(career_badge, scaler.font_s(9.5)).width;
+        fonts.draw_ui_bold(
+            career_badge,
+            col1_x + col_w - scaler.s(12.0) - badge_w,
+            curr_y + scaler.s(38.0),
+            scaler.font_s(9.5),
+            Palette::NEON_GREEN,
+        );
+    }
 
-    // Card 2 (Index 0): Enlarged Motorsport Garage & Active Car Card
+    curr_y += circuit_h + scaler.s(8.0);
+
+    // Card 3 (Index 0): Enlarged Motorsport Garage & Active Car Card
     let is_garage_active = is_left_focused && active_card_idx == 0;
-    let garage_card_h = scaler.s(420.0);
+    let garage_card_h = scaler.s(408.0);
     let is_garage_hovered = mx >= col1_x && mx <= col1_x + col_w && my >= curr_y && my <= curr_y + garage_card_h;
     let is_garage_highlighted = is_garage_active || is_garage_hovered;
 
@@ -858,6 +932,7 @@ pub fn starting_grid_footer_prompt_with_mode(
                     "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [START] Launch  |  [B] Menu"
                 },
                 3 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A] Open Profile  |  [START] Launch  |  [B] Menu",
+                4 => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A] Circuit Explorer  |  [START] Launch  |  [B] Menu",
                 _ => "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Card  |  [A / START] LAUNCH RACE  |  [B] Menu",
             },
             StartingGridFocus::RightRoster => {
@@ -882,6 +957,7 @@ pub fn starting_grid_footer_prompt_with_mode(
                     "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
                 },
                 3 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER] Open Profile  |  [SPACE] Launch  |  [ESC] Menu",
+                4 => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / C] Circuit Explorer  |  [SPACE] Launch  |  [ESC] Menu",
                 _ => "[Left/Right] Switch Panel  |  [Up/Down] Select Card  |  [ENTER / SPACE / CLICK] LAUNCH RACE  |  [ESC] Menu",
             },
             StartingGridFocus::RightRoster => {

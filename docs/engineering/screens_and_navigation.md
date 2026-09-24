@@ -252,14 +252,14 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.3. Track & Setup Menu (`GameState::Menu`)
-* **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, vector map preview, telemetry analysis, and predefined car specifications.
+* **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, expanded vector map preview, telemetry analysis, and personal best lap timing records.
 * **State Struct**: `GameState::Menu`
 * **Components**:
   - **Left Column (Circuit Catalog)**:
     - **Filter Pill Bar**: Two neon filter tabs (`[ PRESETS [P] ]`, `[ CUSTOM [C] ]`) with live track counters.
     - **Circuit List**: Catalog list displaying either official motorsport presets or user-created custom circuits according to the active tab. In the `[ CUSTOM ]` view, a dedicated **Track Manager [T]** entry is included to open the track management and organization hub. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
-  - **Right Column Top (Circuit Dossier)**: Full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit specs (length, laps, checkpoints, grid slots). When the **Track Manager [T]** entry is highlighted, this panel renders the Circuit Studio & Workshop overview with quick actions.
-  - **Right Column Bottom (Vehicle Specifications)**: Predefined car class tag, vehicle title, handling description, 4 neon performance rating bars (`SPEED`, `ACCEL`, `GRIP`, `DRIFT` with exact percentages), and engineering specs. (Interactive vehicle selection is performed on the subsequent Starting Grid screen).
+  - **Right Column Top (Circuit Dossier & Geometry Preview)**: Expanded full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit overview & classification tags (scale, country, closed circuit / sprint stage). When the **Track Manager [T]** entry is highlighted, this panel renders the Circuit Studio & Workshop overview with quick actions.
+  - **Right Column Bottom (Circuit Timing & Telemetry Grid)**: Personal best lap record (`format_lap_time`), best race time / circuit completion, and 4-chip telemetry specifications grid (track length, track width, race laps & timing gates, grid capacity & off-track surface). (Interactive vehicle selection is performed on the subsequent Starting Grid screen).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
