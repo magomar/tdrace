@@ -20,6 +20,8 @@ pub struct PlayerVisibilityOptions {
     pub curve_helper: bool,
     /// Active color scheme for the curve approaching helper (cycled via key 6).
     pub curve_color_scheme: CurveColorScheme,
+    /// Option 6: In-race dynamic floating bot nameplates (toggled via Alt key).
+    pub bot_nameplates: bool,
 }
 
 impl Default for PlayerVisibilityOptions {
@@ -31,6 +33,7 @@ impl Default for PlayerVisibilityOptions {
             roof_beacon: true,
             curve_helper: true,
             curve_color_scheme: CurveColorScheme::Traffic,
+            bot_nameplates: true,
         }
     }
 }

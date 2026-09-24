@@ -235,6 +235,8 @@ pub struct DisplayConfig {
     pub vehicle_shadows: bool,
     /// Graphics quality tier for surface textures and terrain material shaders.
     pub surface_texture_quality: SurfaceTextureQuality,
+    /// In-race floating bot nameplates enabled toggle.
+    pub bot_nameplates: bool,
 }
 
 impl Default for DisplayConfig {
@@ -250,6 +252,7 @@ impl Default for DisplayConfig {
             custom_opacity: None,
             vehicle_shadows: true,
             surface_texture_quality: SurfaceTextureQuality::High,
+            bot_nameplates: true,
         }
     }
 }
