@@ -726,7 +726,7 @@ def generate_classic_kart():
         # Rotate 90 degrees clockwise (ROTATE_270) so vehicle nose points to the RIGHT (+X, forward heading)
         td_img = td_img.transpose(Image.Transpose.ROTATE_270)
         td_img.save(target_path)
-    print("✓ Generated classic_kart assets")
+    print("✓ Generated classic_kart assets (preserving high-res showroom & chassis textures)")
 
 
 # ==============================================================================

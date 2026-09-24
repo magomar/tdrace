@@ -1240,6 +1240,46 @@ fn test_classic_kart_topdown_sprite_orientation() {
 }
 
 #[test]
+fn test_classic_kart_dual_sprites_showroom_and_chassis() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let showroom_path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart.png");
+    let chassis_path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart_chassis.png");
+
+    // 1. Showroom sprite with wheels must exist and be high-resolution
+    let showroom_bytes = std::fs::read(&showroom_path).expect("Failed to read classic_kart showroom sprite");
+    assert!(showroom_bytes.len() > 100_000, "Showroom sprite must be high-res pre-fabricated bitmap (>100KB)");
+    let showroom_img = Image::from_file_with_format(&showroom_bytes, None).expect("Failed to parse showroom image");
+
+    // 2. In-game chassis sprite with wheels removed must exist and be high-resolution
+    let chassis_bytes = std::fs::read(&chassis_path).expect("Failed to read classic_kart_chassis in-game sprite");
+    assert!(chassis_bytes.len() > 100_000, "Chassis sprite must be high-res pre-fabricated bitmap (>100KB)");
+    let chassis_img = Image::from_file_with_format(&chassis_bytes, None).expect("Failed to parse chassis image");
+
+    // Both must be 512x512
+    assert_eq!(showroom_img.width, 512);
+    assert_eq!(showroom_img.height, 512);
+    assert_eq!(chassis_img.width, 512);
+    assert_eq!(chassis_img.height, 512);
+
+    // 3. Verify wheel zone isolation: in showroom_img, the front wheel center has dark tire pixels (alpha 255),
+    // while in chassis_img, the front wheel region is transparently cleared.
+    // Front-left wheel center is at roughly x=373, y=135
+    let fl_showroom_alpha = showroom_img.bytes[(135 * 512 + 373) * 4 + 3];
+    let fl_chassis_alpha = chassis_img.bytes[(135 * 512 + 373) * 4 + 3];
+    assert!(fl_showroom_alpha > 200, "Showroom sprite must contain front-left wheel pixels at hub center");
+    assert_eq!(fl_chassis_alpha, 0, "Chassis sprite must have front-left wheel pixels cleared for dynamic wheel animation");
+
+    // Front-right wheel center is at roughly x=373, y=377
+    let fr_showroom_alpha = showroom_img.bytes[(377 * 512 + 373) * 4 + 3];
+    let fr_chassis_alpha = chassis_img.bytes[(377 * 512 + 373) * 4 + 3];
+    assert!(fr_showroom_alpha > 200, "Showroom sprite must contain front-right wheel pixels at hub center");
+    assert_eq!(fr_chassis_alpha, 0, "Chassis sprite must have front-right wheel pixels cleared for dynamic wheel animation");
+}
+
+#[test]
 fn test_spec_026_kart_wheel_steering_ackermann_deflection_and_return_to_center() {
     let car = Car::new(CarConfig::classic_kart());
 

@@ -336,7 +336,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
     // 2. If model-specific high-detail top-down sprite is available, render sprite directly
     if let Some(m_id) = model_id {
-        if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture(m_id, color_scheme.primary, color_scheme.secondary) {
+        if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_chassis_texture(m_id, color_scheme.primary, color_scheme.secondary) {
             let steered_cfg = crate::render::vehicle_assets::get_steered_wheel_config(m_id);
             let wheel_tex = steered_cfg.and_then(|cfg| crate::render::vehicle_assets::get_wheel_texture(cfg.wheel_texture_id));
 

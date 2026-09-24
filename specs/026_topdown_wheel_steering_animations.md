@@ -325,6 +325,13 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
   - [x] **When** `kart_slick_front.png` is read by asset validation tests
   - [x] **Then** the file must exist, contain a valid PNG header, have dimensions $128 \times 256$, and feature transparent background margins ($A = 0$)
 
+- **Scenario: Dual sprite separation for showroom vs in-game chassis**
+  - [x] **Given** the vehicle model `"classic_kart"`
+  - [x] **When** asset loading is performed for the showroom or garage turntable via `get_vehicle_topdown_texture`
+  - [x] **Then** the canonical sprite `assets/textures/vehicles/topdown/classic/classic_kart.png` must be loaded, preserving authentic pre-baked front wheels
+  - [x] **When** in-game race rendering requests the chassis via `get_vehicle_topdown_chassis_texture`
+  - [x] **Then** the isolated chassis sprite `assets/textures/vehicles/topdown/classic/classic_kart_chassis.png` must be loaded with front wheel areas transparently cleared for dynamic steered wheel animation
+
 - **Scenario: Colorway tinting consistency on decomposed kart**
   - [x] **Given** a custom colorway applied to `"classic_kart"` in the garage
   - [x] **When** `apply_vehicle_tint` generates runtime textures
@@ -340,9 +347,11 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
 | Action | Path | Purpose |
 | :--- | :--- | :--- |
 | `[NEW]` | `specs/026_topdown_wheel_steering_animations.md` | Formal specification contract. |
-| `[NEW]` | `assets/textures/vehicles/topdown/wheels/kart_slick_front.png` | Decomposed high-res top-down kart slick tire asset. |
-| `[MODIFY]` | `scripts/generate_classic_fantasy_sprites.py` | Decomposes `classic_kart` generation into chassis-only and standalone wheel sprites. |
-| `[MODIFY]` | `crates/tdrace-app/src/render/vehicle_assets.rs` | Implements `SteeredWheelConfig`, wheel texture caching, and anchor lookups. |
-| `[MODIFY]` | `crates/tdrace-app/src/render/car.rs` | Integrates `render_steered_wheels` into `render_car_with_visual_type_model_and_shadows`. |
-| `[MODIFY]` | `crates/tdrace-app/tests/render_tests.rs` | Unit and integration tests for wheel asset presence, Ackermann deflection, and legacy fallback. |
+| `[NEW]` | `assets/textures/vehicles/topdown/wheels/kart_slick_front.png` | Decomposed high-res top-down kart slick tire asset ($128 \times 256$). |
+| `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_kart_chassis.png` | In-game chassis-only sprite with front wheels removed for modular wheel animation. |
+| `[MODIFY]` | `assets/textures/vehicles/topdown/classic/classic_kart.png` | Preserved canonical full-vehicle topdown sprite with wheels for showroom and garage. |
+| `[MODIFY]` | `scripts/generate_classic_fantasy_sprites.py` | Preserves canonical high-res showroom and chassis kart textures from accidental overwrite. |
+| `[MODIFY]` | `crates/tdrace-app/src/render/vehicle_assets.rs` | Implements `SteeredWheelConfig`, `get_vehicle_topdown_chassis_texture`, wheel texture caching, and anchor lookups. |
+| `[MODIFY]` | `crates/tdrace-app/src/render/car.rs` | Integrates `get_vehicle_topdown_chassis_texture` and `render_steered_wheels` into top-down race rendering. |
+| `[MODIFY]` | `crates/tdrace-app/tests/render_tests.rs` | Unit and integration tests for dual sprites, wheel asset presence, Ackermann deflection, and legacy fallback. |
 | `[MODIFY]` | `specs/index.md` | Progressive disclosure catalog registration. |

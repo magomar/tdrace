@@ -45,6 +45,8 @@ pub use track::{
     get_track_backdrop_color, render_elevated_track, render_elevated_track_culled,
     render_ground_track, render_ground_track_culled, render_track, render_track_culled,
 };
-pub use vehicle_assets::{get_vehicle_lateral_texture, get_vehicle_topdown_texture};
+pub use vehicle_assets::{
+    get_vehicle_lateral_texture, get_vehicle_topdown_chassis_texture, get_vehicle_topdown_texture,
+};
 
 

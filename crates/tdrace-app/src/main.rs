@@ -58,6 +58,7 @@ async fn main() {
             session.track_choice = tdrace_app::ui::menu::TrackChoice::KartArena;
             session.car_choice = tdrace_app::ui::menu::CarChoice::Kart;
             session.selected_car_model_id = Some("classic_kart");
+            session.garage_car_idx = 3;
         } else if clean_arg == "classic" {
             session.switch_to_classic();
         } else if clean_arg == "nascar-championship" {
@@ -75,11 +76,12 @@ async fn main() {
                 .unwrap_or(2);
             let car_idx = args.iter().position(|a| a == "--car" || a == "-c")
                 .and_then(|i| args.get(i + 1))
-                .and_then(|s| s.parse::<usize>().ok())
-                .unwrap_or(0);
+                .and_then(|s| s.parse::<usize>().ok());
             session.garage_origin = tdrace_app::game::GarageOrigin::ModalitySelect;
             session.garage_tier = tier;
-            session.garage_car_idx = car_idx;
+            if let Some(idx) = car_idx {
+                session.garage_car_idx = idx;
+            }
             if args.iter().any(|a| a == "--turntable") {
                 session.garage_view_mode = tdrace_app::ui::GarageViewMode::TopDownTurntable;
             }

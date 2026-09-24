@@ -179,15 +179,43 @@ pub fn get_vehicle_lateral_texture(
     Some(texture)
 }
 
-/// Retrieves or dynamically generates a colorway-tinted top-down in-race texture for the specified car model.
+/// Retrieves or dynamically generates a colorway-tinted top-down in-race or showroom texture for the specified car model.
+/// Loads the canonical full-vehicle sprite with wheels for showroom and garage display.
 pub fn get_vehicle_topdown_texture(
     model_id: &str,
     primary: Color,
     secondary: Color,
 ) -> Option<Texture2D> {
+    get_vehicle_topdown_texture_impl(model_id, primary, secondary, false)
+}
+
+/// Retrieves or dynamically generates a colorway-tinted top-down chassis texture for in-game race rendering.
+/// If an isolated chassis texture (`<model_id>_chassis.png`) exists (with wheels removed for modular wheel animation),
+/// it is loaded. Otherwise, it gracefully falls back to the canonical `<model_id>.png`.
+pub fn get_vehicle_topdown_chassis_texture(
+    model_id: &str,
+    primary: Color,
+    secondary: Color,
+) -> Option<Texture2D> {
+    get_vehicle_topdown_texture_impl(model_id, primary, secondary, true)
+}
+
+fn get_vehicle_topdown_texture_impl(
+    model_id: &str,
+    primary: Color,
+    secondary: Color,
+    chassis_only: bool,
+) -> Option<Texture2D> {
     let k1 = color_to_u32(primary);
     let k2 = color_to_u32(secondary);
-    let key = (model_id.to_string(), k1, k2);
+    let base_model_id = model_id.strip_suffix("_chassis").unwrap_or(model_id);
+    let is_chassis = chassis_only || model_id.ends_with("_chassis");
+    let key_name = if is_chassis {
+        format!("{}_chassis", base_model_id)
+    } else {
+        base_model_id.to_string()
+    };
+    let key = (key_name, k1, k2);
 
     let mut guard = TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let map = guard.get_or_insert_with(HashMap::new);
@@ -195,13 +223,23 @@ pub fn get_vehicle_topdown_texture(
         return Some(tex.clone());
     }
 
-    let model = crate::catalog::find_model_by_id(model_id);
+    let model = crate::catalog::find_model_by_id(base_model_id);
     let module_id = model.map(|m| m.module_id).unwrap_or("gt");
-    let rel_path = format!("textures/vehicles/topdown/{}/{}.png", module_id, model_id);
 
-    let bytes = if let Some(disk_bytes) = find_asset_file(&rel_path) {
+    let bytes = if is_chassis {
+        let chassis_rel_path = format!("textures/vehicles/topdown/{}/{}_chassis.png", module_id, base_model_id);
+        find_asset_file(&chassis_rel_path).or_else(|| {
+            let rel_path = format!("textures/vehicles/topdown/{}/{}.png", module_id, base_model_id);
+            find_asset_file(&rel_path)
+        })
+    } else {
+        let rel_path = format!("textures/vehicles/topdown/{}/{}.png", module_id, base_model_id);
+        find_asset_file(&rel_path)
+    };
+
+    let bytes = if let Some(disk_bytes) = bytes {
         disk_bytes
-    } else if model_id == "gt_porsche_911_gt3r" {
+    } else if base_model_id == "gt_porsche_911_gt3r" {
         PORSCHE_TOPDOWN_PNG.to_vec()
     } else {
         return None;
@@ -215,7 +253,7 @@ pub fn get_vehicle_topdown_texture(
     let final_img = if is_factory {
         base_img
     } else {
-        apply_vehicle_tint(&base_img, model_id, primary, secondary)
+        apply_vehicle_tint(&base_img, base_model_id, primary, secondary)
     };
 
     let texture = Texture2D::from_image(&final_img);
