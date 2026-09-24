@@ -16,11 +16,16 @@ pub mod starting_grid;
 pub mod track_manager_ui;
 pub mod track_preview;
 pub mod career_select;
+pub mod circuit_viewer;
 
 pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
 pub use career_select::{
     build_career_select_cards, career_select_card_rect, render_career_select_screen,
     CareerSelectCard,
+};
+pub use circuit_viewer::{
+    handle_circuit_viewer_input, render_circuit_viewer_screen, CircuitViewerOrigin,
+    CircuitViewerState,
 };
 
 pub use career_hub::{
@@ -47,7 +52,7 @@ pub use race_stats::render_race_stats_screen;
 pub use menu::{
     modality_card_rect, module_select_badge_rect, module_select_card_rect, pause_menu_layout,
     render_controls_screen, render_modality_select_screen, render_pause_menu,
-    render_results_screen, render_track_select_menu, CarChoice, GameMode, GameModeChoice,
+    render_results_screen, render_track_select_menu, track_select_preview_rect, CarChoice, GameMode, GameModeChoice,
     MenuPanelFocus, ModalityCategory, ModalityItem, ModalityModal, PauseMenuButtonLayout,
     RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };

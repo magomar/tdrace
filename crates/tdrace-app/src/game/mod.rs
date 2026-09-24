@@ -134,7 +134,7 @@ use crate::ui::track_manager_ui::{
 use crate::ui::{
     confirm_modal_layout,
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
-    CareerHubFocus, ScreenAction, UiScaler, UniversalConfirmModal,
+    CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, ScreenAction, UiScaler, UniversalConfirmModal,
 };
 pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
 pub use cabinet::fx::floating_text::{FloatingTextItem, FloatingTextManager};
@@ -206,6 +206,7 @@ pub enum GameState {
         selected_idx: usize,
     },
     Garage(GarageOrigin),
+    CircuitViewer(CircuitViewerOrigin),
     ChampionshipStandings,
     StartingGrid,
     Countdown(f32),
@@ -497,6 +498,7 @@ pub struct RaceSession {
     pub show_exit_confirm: bool,
     pub exit_confirm_modal: Option<UniversalConfirmModal>,
     pub settings_modal: Option<ArcadeSettingsModal>,
+    pub circuit_viewer_state: Option<CircuitViewerState>,
 
     // Track Editor & Test Drive state
     pub editor_state: Option<EditorState>,
@@ -784,6 +786,7 @@ impl RaceSession {
             show_exit_confirm: false,
             exit_confirm_modal: None,
             settings_modal: None,
+            circuit_viewer_state: None,
             editor_state: None,
             editor_camera,
             editor_tools: ToolSettings::default(),
@@ -4641,6 +4644,9 @@ impl RaceSession {
             GameState::Garage(origin) => {
                 self.update_garage(origin, frame_dt);
             }
+            GameState::CircuitViewer(origin) => {
+                self.update_circuit_viewer(origin, frame_dt);
+            }
             GameState::ModuleSelect { .. } => {
                 self.update_module_select();
             }
@@ -8177,6 +8183,84 @@ impl RaceSession {
         }
     }
 
+    /// Returns the active circuit identifier when in Menu or Starting Grid context.
+    pub fn active_menu_track_id(&self) -> Option<&str> {
+        if self.game_mode == GameMode::Career {
+            self.championship_session
+                .as_ref()
+                .and_then(|c| c.current_track_id())
+                .or(Some(self.track_choice.track_id()))
+        } else if self.menu_origin == MenuOrigin::StartingGrid {
+            Some(self.track_choice.track_id())
+        } else {
+            None
+        }
+    }
+
+    /// Transitions cleanly into full circuit top-down viewer with maximum zoom out.
+    pub fn open_circuit_viewer(&mut self, track: Track, title: String, origin: CircuitViewerOrigin) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        let state = CircuitViewerState::new(
+            track,
+            title,
+            self.active_module_id.to_string(),
+            origin,
+            sw,
+            sh,
+        );
+        self.circuit_viewer_state = Some(state);
+        self.state = GameState::CircuitViewer(origin);
+    }
+
+    /// Updates inputs (pan, zoom, reset fit, exit) for the full-circuit topdown viewer.
+    pub fn update_circuit_viewer(&mut self, origin: CircuitViewerOrigin, dt: f32) {
+        if let Some(ref mut state) = self.circuit_viewer_state {
+            let exit_requested = crate::ui::circuit_viewer::handle_circuit_viewer_input(
+                state,
+                dt,
+                &self.input.gamepad.snapshot,
+            );
+            if exit_requested {
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.circuit_viewer_state = None;
+                match origin {
+                    CircuitViewerOrigin::Menu => self.state = GameState::Menu,
+                    CircuitViewerOrigin::TrackManager => {
+                        let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
+                        let has_drafts = !self.track_manager.draft_track_choices().is_empty();
+                        let (target_tab, target_filter) = if !has_module_customs && has_drafts {
+                            (TrackManagerTab::Drafts, ModuleFilter::Drafts)
+                        } else {
+                            (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id))
+                        };
+                        self.state = GameState::TrackManager {
+                            active_tab: target_tab,
+                            module_filter: target_filter,
+                            selected_idx: 0,
+                            modal: TrackManagerModal::None,
+                        };
+                    }
+                    CircuitViewerOrigin::StartingGrid => self.state = GameState::StartingGrid,
+                }
+            }
+        } else {
+            self.state = match origin {
+                CircuitViewerOrigin::Menu => GameState::Menu,
+                CircuitViewerOrigin::StartingGrid => GameState::StartingGrid,
+                CircuitViewerOrigin::TrackManager => GameState::Menu,
+            };
+        }
+    }
+
+    /// Renders the full-circuit topdown viewer screen with complete in-game graphics and HUD overlay.
+    pub fn render_circuit_viewer(&self) {
+        if let Some(ref state) = self.circuit_viewer_state {
+            crate::ui::circuit_viewer::render_circuit_viewer_screen(&self.fonts, state);
+        }
+    }
+
     /// Menu input navigation (Keyboard + Gamepad D-pad/Analog Sticks/buttons).
     pub fn update_menu(&mut self) {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
@@ -8252,8 +8336,8 @@ impl RaceSession {
             return;
         }
 
-        // Open Arcade Settings Modal (X or O key)
-        if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
+        // Open Arcade Settings Modal (O key)
+        if is_key_pressed(KeyCode::O) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.open_settings_modal();
             return;
@@ -8521,6 +8605,46 @@ impl RaceSession {
                 modal: TrackManagerModal::None,
             };
             return;
+        }
+
+        // Full Circuit Top-Down Inspection View ([X], [Z], Gamepad X, or clicking the preview card)
+        let (sw, sh) = (screen_width_safe(), screen_height_safe());
+        let (mx, my) = mouse_position_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+        let clicked_preview = if self.menu_track_idx < available_tracks.len() {
+            let track_choice = &available_tracks[self.menu_track_idx];
+            let active_tid = self.active_menu_track_id();
+            let is_sel_active = active_tid.map_or(false, |aid| aid == track_choice.track_id());
+            let is_sel_locked = !self.is_track_unlocked(track_choice.track_id());
+            let has_status_banner = self.game_mode == GameMode::Career || is_sel_locked || is_sel_active;
+            let (px, py, pw, ph) = crate::ui::track_select_preview_rect(
+                sw,
+                sh,
+                self.active_module_id == "gt",
+                has_status_banner,
+                track_choice.is_user_custom(),
+            );
+            mouse_clicked && mx >= px && mx <= px + pw && my >= py && my <= py + ph
+        } else {
+            false
+        };
+
+        if is_key_pressed(KeyCode::X)
+            || is_key_pressed(KeyCode::Z)
+            || self.input.gamepad.snapshot.btn_x_pressed
+            || clicked_preview
+        {
+            if self.menu_track_idx < available_tracks.len() {
+                let track_choice = &available_tracks[self.menu_track_idx];
+                if let Some(loaded_track) = resolve_track_for_menu(track_choice) {
+                    self.open_circuit_viewer(
+                        loaded_track,
+                        track_choice.title().to_string(),
+                        CircuitViewerOrigin::Menu,
+                    );
+                    return;
+                }
+            }
         }
 
         // Start race or open Track Manager (Space, Enter, or Gamepad Confirm [A / South / Start])
@@ -10752,6 +10876,9 @@ impl RaceSession {
                     unlocked_tier as u32,
                     Some(&self.active_career_progress),
                 );
+            }
+            GameState::CircuitViewer(_) => {
+                self.render_circuit_viewer();
             }
             GameState::Menu => {
                 let available_tracks = self.filtered_menu_tracks();

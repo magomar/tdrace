@@ -1412,6 +1412,38 @@ pub fn render_track_select_menu(
                 Palette::UI_TEXT_MUTED,
             );
         }
+
+        // Full Circuit Top-Down View badge button on preview card
+        let inspect_btn_w = scaler.s(176.0);
+        let inspect_btn_h = scaler.s(26.0);
+        let inspect_btn_x = col2_x + col_w - inspect_btn_w - scaler.s(10.0);
+        let inspect_btn_y = c2_y + scaler.s(10.0);
+        let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+        let is_inspect_hover = mx >= inspect_btn_x
+            && mx <= inspect_btn_x + inspect_btn_w
+            && my >= inspect_btn_y
+            && my <= inspect_btn_y + inspect_btn_h;
+        scaler.draw_glass_card(
+            inspect_btn_x,
+            inspect_btn_y,
+            inspect_btn_w,
+            inspect_btn_h,
+            if is_inspect_hover {
+                Color::new(0.14, 0.36, 0.50, 0.95)
+            } else {
+                Color::new(0.06, 0.12, 0.20, 0.88)
+            },
+            if is_inspect_hover { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+            if is_inspect_hover { 1.8 } else { 1.0 },
+        );
+        fonts.draw_ui_bold_centered(
+            "⛶ FULL CIRCUIT VIEW [X]",
+            inspect_btn_x + inspect_btn_w * 0.5,
+            inspect_btn_y + scaler.s(17.0),
+            scaler.font_s(10.5),
+            if is_inspect_hover { Palette::WHITE } else { Palette::NEON_CYAN },
+        );
+
         c2_y += preview_h + scaler.s(8.0);
 
         // 1. Circuit Overview & Classification Glass Card
@@ -1755,11 +1787,11 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     let footer_text = if is_career_mode {
-        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [ESC] Return to Starting Grid"
+        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [X] Full Circuit View  •  [ESC] Return to Grid"
     } else if crate::storage::is_dev_mode() {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [X] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
     } else {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [T] Circuit Manager  •  [X] Settings  •  [K] Controls  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [X] Full Circuit View  •  [T] Circuit Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
     };
 
     fonts.draw_ui_regular_centered(
@@ -1780,6 +1812,45 @@ pub fn render_track_select_menu(
         scaler.font_s(16.0),
         Palette::WHITE,
     );
+}
+
+/// Computes the bounding rectangle (x, y, width, height) of the track preview card in the Track Selection Menu.
+pub fn track_select_preview_rect(
+    sw: f32,
+    sh: f32,
+    has_career_progress: bool,
+    has_status_banner: bool,
+    is_custom: bool,
+) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let col_w = (sw * 0.40).clamp(scaler.s(320.0), scaler.s(480.0));
+    let col2_x = (sw * 0.5 + scaler.s(16.0)).min(sw - col_w - scaler.safe_pad_x);
+
+    let badge_y = scaler.s(62.0);
+    let badge_h = scaler.s(48.0);
+    let cp_h = if has_career_progress { scaler.s(26.0) } else { 0.0 };
+    let menu_content_y = badge_y + badge_h + cp_h + scaler.s(14.0);
+
+    let mut c2_y = menu_content_y + scaler.s(22.0);
+    if has_status_banner {
+        c2_y += scaler.s(26.0);
+    }
+
+    let footer_btn_y = sh - scaler.s(40.0) - scaler.s(14.0);
+    let max_card_y = if is_custom {
+        footer_btn_y - scaler.s(32.0)
+    } else {
+        footer_btn_y - scaler.s(8.0)
+    };
+
+    let card1_h = scaler.s(60.0);
+    let card2_h = scaler.s(64.0);
+    let card3_h = scaler.s(50.0);
+    let gaps_h = scaler.s(24.0);
+    let fixed_cards_h = card1_h + card2_h + card3_h + gaps_h;
+    let preview_h = (max_card_y - c2_y - fixed_cards_h).clamp(scaler.s(180.0), scaler.s(285.0));
+
+    (col2_x, c2_y, col_w, preview_h)
 }
 
 
