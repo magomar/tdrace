@@ -14,10 +14,10 @@ A comprehensive visual, UI, and input specification introducing **dynamic in-rac
 
 Following the introduction of authentic 72-driver AI character rosters, distinct driving styles, and experience quality tiers (Specs [020](020_driver_favorite_cars_per_discipline_and_tier.md), [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), and [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md)), opponent vehicles currently appear anonymous during active racing. While the player can inspect opponent names in the pre-race Starting Grid and the post-race Results screen, active wheel-to-wheel battles lack immediate diegetic feedback about who the player is drafting, blocking, or overtaking.
 
-This specification introduces high-legibility, arcade-style floating nameplates anchored above AI bot cars with a **smart approach**:
-1. **Dynamic Proximity Culling**: Only opponent cars within active tactical engagement distance of the player car are shown.
-2. **Smooth Alpha Distance Fading**: Vehicles transition gradually from full opacity when close to completely transparent at the outer boundary, eliminating jarring visual pop-in.
-3. **Screen-Space Viewport Culling**: Off-screen vehicles are pruned prior to font measurement and projection.
+This specification introduces high-legibility, arcade-style floating nameplates anchored above AI bot cars with a **smart, simplified approach**:
+1. **Viewport-Only Culling**: Only opponent cars currently visible within the active camera screen viewport are rendered.
+2. **Strict Maximum 5 Racers Cap**: If more than 5 opponent cars are inside the viewport, only the 5 closest to the player car are shown (never displaying more than 5 names simultaneously).
+3. **Distance Priority Sorting**: Visible candidates are sorted by distance to the player car ascending, ensuring the closest active opponents always receive display priority.
 4. **Anti-Crowding & Collision Deconfliction**: Dense packs (e.g. grid starts and tight hairpins) dynamically stagger nameplate altitudes to prevent overlapping text illegibility.
 5. **Instant Alt Key Toggle**: Players can instantly enable or disable nameplates on demand using the `LeftAlt` or `RightAlt` key with audio feedback and toast notifications, backed by persistent configuration.
 
@@ -229,11 +229,17 @@ pub struct DisplayConfig {
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-- **Scenario: Nameplate proximity culling outside outer radius**
-  - [x] **Given** a race active with opponent bot cars on track
-  - [x] **When** an opponent bot is situated at a distance $d = 65\,\text{m} > R_{\text{outer}}$ from the player car
-  - [x] **Then** the bot's floating nameplate must not be rendered ($\alpha_{\text{prox}} = 0.0$)
-  - [x] **And** zero text draw calls must be issued for that vehicle
+- **Scenario: Maximum five visible nameplates limit in viewport**
+  - [x] **Given** a race active with 8 opponent bot cars situated within the camera viewport
+  - [x] **When** `deconflict_nameplates` processes candidate vehicles
+  - [x] **Then** exactly 5 bot nameplates must be rendered
+  - [x] **And** the 5 rendered must strictly correspond to the 5 closest vehicles to the player car
+  - [x] **And** no more than 5 nameplates are ever rendered simultaneously
+
+- **Scenario: Frustum culling for off-screen opponent cars**
+  - [x] **Given** an opponent bot outside the visible screen viewport
+  - [x] **When** nameplate screen culling runs
+  - [x] **Then** the off-screen bot must be culled before rasterization
 
 - **Scenario: Full opacity within inner proximity zone**
   - [x] **Given** a race active with opponent bot cars on track

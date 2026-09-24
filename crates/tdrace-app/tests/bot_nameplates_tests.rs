@@ -6,9 +6,9 @@ use tdrace_app::config::{DisplayConfig, GameConfig};
 use tdrace_app::game::RaceSession;
 use tdrace_app::render::{
     compute_proximity_alpha, deconflict_nameplates, render_floating_bot_nameplates,
-    PlayerVisibilityOptions, VehicleNameplateItem, NAMEPLATE_DECONFLICT_H_THRESH,
-    NAMEPLATE_DECONFLICT_W_THRESH, NAMEPLATE_HEIGHT_CLEARANCE, NAMEPLATE_INNER_RADIUS,
-    NAMEPLATE_OUTER_RADIUS, NAMEPLATE_STACK_NUDGE,
+    PlayerVisibilityOptions, VehicleNameplateItem, MAX_VISIBLE_NAMEPLATES,
+    NAMEPLATE_DECONFLICT_H_THRESH, NAMEPLATE_DECONFLICT_W_THRESH, NAMEPLATE_HEIGHT_CLEARANCE,
+    NAMEPLATE_INNER_RADIUS, NAMEPLATE_OUTER_RADIUS, NAMEPLATE_STACK_NUDGE,
 };
 use tdrace_app::ui::font::Fonts;
 
@@ -20,6 +20,7 @@ fn test_constants_calibration() {
     assert_eq!(NAMEPLATE_DECONFLICT_W_THRESH, 75.0);
     assert_eq!(NAMEPLATE_DECONFLICT_H_THRESH, 24.0);
     assert_eq!(NAMEPLATE_STACK_NUDGE, 20.0);
+    assert_eq!(MAX_VISIBLE_NAMEPLATES, 5);
 }
 
 #[test]
@@ -116,7 +117,7 @@ fn test_display_config_serde_roundtrip_and_defaults() {
 }
 
 #[test]
-fn test_deconflict_nameplates_proximity_culling() {
+fn test_deconflict_nameplates_viewport_culling() {
     let fonts = Fonts::load_embedded();
     let camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
 
@@ -126,25 +127,116 @@ fn test_deconflict_nameplates_proximity_culling() {
             name: "Vortex",
             tier_label: Some("T2"),
             accent_color: Color::new(1.0, 0.2, 0.2, 1.0),
-            position: Vec2::new(0.0, 0.0),
+            position: Vec2::new(0.0, 0.0), // Inside viewport (centered)
             elevation: 0.0,
-            distance_to_player: 15.0, // Close: inside R_inner (25m)
+            distance_to_player: 15.0,
         },
         VehicleNameplateItem {
             car_idx: 2,
             name: "Blaze",
             tier_label: Some("T3"),
             accent_color: Color::new(0.2, 1.0, 0.2, 1.0),
-            position: Vec2::new(0.0, 20.0),
+            position: Vec2::new(2000.0, 2000.0), // Far outside viewport -> culled
             elevation: 0.0,
-            distance_to_player: 60.0, // Far: outside R_outer (55m) -> culled
+            distance_to_player: 20.0,
         },
     ];
 
     let deconflicted = deconflict_nameplates(&items, &camera, None, &fonts, 1.0);
-    assert_eq!(deconflicted.len(), 1, "Far item outside 55m must be culled");
+    assert_eq!(deconflicted.len(), 1, "Racer outside viewport must be culled");
     assert_eq!(deconflicted[0].item.name, "Vortex");
     assert_eq!(deconflicted[0].alpha, 1.0);
+}
+
+#[test]
+fn test_deconflict_nameplates_max_five_closest_limit() {
+    let fonts = Fonts::load_embedded();
+    let camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+
+    // 8 racers all positioned inside the viewport, but at varying distances to the player
+    let items = vec![
+        VehicleNameplateItem {
+            car_idx: 1,
+            name: "Racer1_d5",
+            tier_label: Some("T1"),
+            accent_color: Color::new(1.0, 0.0, 0.0, 1.0),
+            position: Vec2::new(0.0, 1.0),
+            elevation: 0.0,
+            distance_to_player: 5.0,
+        },
+        VehicleNameplateItem {
+            car_idx: 2,
+            name: "Racer2_d10",
+            tier_label: Some("T2"),
+            accent_color: Color::new(0.0, 1.0, 0.0, 1.0),
+            position: Vec2::new(0.0, 2.0),
+            elevation: 0.0,
+            distance_to_player: 10.0,
+        },
+        VehicleNameplateItem {
+            car_idx: 3,
+            name: "Racer3_d15",
+            tier_label: Some("T3"),
+            accent_color: Color::new(0.0, 0.0, 1.0, 1.0),
+            position: Vec2::new(0.0, 3.0),
+            elevation: 0.0,
+            distance_to_player: 15.0,
+        },
+        VehicleNameplateItem {
+            car_idx: 4,
+            name: "Racer4_d20",
+            tier_label: Some("T4"),
+            accent_color: Color::new(1.0, 1.0, 0.0, 1.0),
+            position: Vec2::new(0.0, 4.0),
+            elevation: 0.0,
+            distance_to_player: 20.0,
+        },
+        VehicleNameplateItem {
+            car_idx: 5,
+            name: "Racer5_d25",
+            tier_label: Some("T5"),
+            accent_color: Color::new(1.0, 0.0, 1.0, 1.0),
+            position: Vec2::new(0.0, 5.0),
+            elevation: 0.0,
+            distance_to_player: 25.0,
+        },
+        VehicleNameplateItem {
+            car_idx: 6,
+            name: "Racer6_d30",
+            tier_label: Some("T1"),
+            accent_color: Color::new(0.0, 1.0, 1.0, 1.0),
+            position: Vec2::new(0.0, 6.0),
+            elevation: 0.0,
+            distance_to_player: 30.0, // 6th closest -> must be excluded
+        },
+        VehicleNameplateItem {
+            car_idx: 7,
+            name: "Racer7_d35",
+            tier_label: Some("T2"),
+            accent_color: Color::new(0.5, 0.5, 0.5, 1.0),
+            position: Vec2::new(0.0, 7.0),
+            elevation: 0.0,
+            distance_to_player: 35.0, // 7th closest -> must be excluded
+        },
+        VehicleNameplateItem {
+            car_idx: 8,
+            name: "Racer8_d40",
+            tier_label: Some("T3"),
+            accent_color: Color::new(0.8, 0.2, 0.2, 1.0),
+            position: Vec2::new(0.0, 8.0),
+            elevation: 0.0,
+            distance_to_player: 40.0, // 8th closest -> must be excluded
+        },
+    ];
+
+    let deconflicted = deconflict_nameplates(&items, &camera, None, &fonts, 1.0);
+
+    // Must never show more than 5 names simultaneously
+    assert_eq!(deconflicted.len(), 5, "Must strictly limit to 5 closest visible racers");
+
+    // The 5 shown must be the 5 closest (distances 5, 10, 15, 20, 25)
+    let shown_names: Vec<&str> = deconflicted.iter().map(|d| d.item.name).collect();
+    assert_eq!(shown_names, vec!["Racer1_d5", "Racer2_d10", "Racer3_d15", "Racer4_d20", "Racer5_d25"]);
 }
 
 #[test]

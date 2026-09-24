@@ -248,6 +248,9 @@ pub const NAMEPLATE_DECONFLICT_H_THRESH: f32 = 24.0;
 /// Vertical nudge offset (pixels) applied to stacked overlapping badges.
 pub const NAMEPLATE_STACK_NUDGE: f32 = 20.0;
 
+/// Maximum number of bot nameplates displayed simultaneously on screen.
+pub const MAX_VISIBLE_NAMEPLATES: usize = 5;
+
 /// Runtime metadata for an in-race vehicle floating nameplate.
 #[derive(Debug, Clone, PartialEq)]
 pub struct VehicleNameplateItem<'a> {
@@ -302,27 +305,27 @@ pub fn deconflict_nameplates<'a>(
 
     let (sw, sh) = RaceCamera::get_screen_dimensions_safe();
     let (vp_x, vp_y, vp_w, vp_h) = viewport_rect.unwrap_or((0.0, 0.0, sw, sh));
-    let margin = 40.0;
+    let margin = 20.0;
 
-    // 1. Filter candidates by proximity and viewport frustum culling
+    // 1. Filter candidates strictly by active viewport bounds
     let mut candidates = Vec::with_capacity(items.len());
     for item in items {
-        let prox_alpha = compute_proximity_alpha(item.distance_to_player);
-        let eff_alpha = prox_alpha * master_alpha;
-        if eff_alpha <= 0.005 {
-            continue;
-        }
-
-        // Anchor above the vehicle (clearance + jump elevation)
+        // Project car and anchor to screen space
         let world_anchor = item.position + Vec2::new(0.0, NAMEPLATE_HEIGHT_CLEARANCE + item.elevation);
         let screen_pos = camera.world_to_screen_with_viewport(world_anchor, sw, sh);
+        let car_screen = camera.world_to_screen_with_viewport(item.position + Vec2::new(0.0, item.elevation), sw, sh);
 
-        // Viewport frustum culling
-        if screen_pos.x < vp_x - margin
-            || screen_pos.x > vp_x + vp_w + margin
-            || screen_pos.y < vp_y - margin
-            || screen_pos.y > vp_y + vp_h + margin
-        {
+        // Viewport culling: only racers visible within active screen viewport are candidates
+        let in_viewport = (car_screen.x >= vp_x - margin
+            && car_screen.x <= vp_x + vp_w + margin
+            && car_screen.y >= vp_y - margin
+            && car_screen.y <= vp_y + vp_h + margin)
+            || (screen_pos.x >= vp_x - margin
+                && screen_pos.x <= vp_x + vp_w + margin
+                && screen_pos.y >= vp_y - margin
+                && screen_pos.y <= vp_y + vp_h + margin);
+
+        if !in_viewport {
             continue;
         }
 
@@ -332,17 +335,20 @@ pub fn deconflict_nameplates<'a>(
         let badge_w = (text_dim.width + tier_w + 16.0).max(48.0);
         let badge_h = 20.0;
 
-        candidates.push((item, screen_pos, eff_alpha, badge_w, badge_h));
+        candidates.push((item, screen_pos, master_alpha, badge_w, badge_h));
     }
 
-    // 2. Sort by distance ascending (closest car gets foreground priority)
+    // 2. Sort by distance ascending (closest racers get priority)
     candidates.sort_by(|a, b| {
         a.0.distance_to_player
             .partial_cmp(&b.0.distance_to_player)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    // 3. Stagger / deconflict overlapping positions
+    // 3. Never show more than MAX_VISIBLE_NAMEPLATES (5) closest racers simultaneously
+    candidates.truncate(MAX_VISIBLE_NAMEPLATES);
+
+    // 4. Stagger / deconflict overlapping positions
     let mut placed: Vec<DeconflictedNameplate<'a>> = Vec::with_capacity(candidates.len());
 
     for (item, screen_pos, alpha, w, h) in candidates {
@@ -363,6 +369,10 @@ pub fn deconflict_nameplates<'a>(
         } else {
             alpha
         };
+
+        // Clamp badge position inside viewport bounds with padding
+        final_pos.x = final_pos.x.clamp(vp_x + w * 0.5 + 4.0, vp_x + vp_w - w * 0.5 - 4.0);
+        final_pos.y = final_pos.y.clamp(vp_y + h * 0.5 + 4.0, vp_y + vp_h - h * 0.5 - 4.0);
 
         placed.push(DeconflictedNameplate {
             item,

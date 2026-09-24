@@ -101,7 +101,7 @@ use crate::render::{
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
     render_player_overhead_chevron, render_player_roof_beacon, render_tree_canopies_culled,
-    render_tree_shadows_culled, render_tree_trunks_culled, NAMEPLATE_OUTER_RADIUS,
+    render_tree_shadows_culled, render_tree_trunks_culled,
     PlayerVisibilityOptions, VehicleNameplateItem,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
@@ -12914,10 +12914,6 @@ impl RaceSession {
             }
 
             let dist = car.state.position.distance(focus_pos);
-            if dist > NAMEPLATE_OUTER_RADIUS {
-                continue;
-            }
-
             let scheme = self.color_schemes.get(i).unwrap_or(&self.active_profile.color_scheme);
             let accent_color = scheme.secondary;
 
