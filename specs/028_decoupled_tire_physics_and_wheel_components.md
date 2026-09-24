@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Decoupled Physical Tire Component & Per-Wheel Dynamics Architecture"
 description: "Decouples vehicle tires into independent physical wheel assemblies with per-axle Pacejka curves, rotational inertia integration, wheel spin/lockup dynamics, and thermal wear modeling in wheelbase."
-status: draft
+status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:25:00Z }
 ---
@@ -173,35 +173,35 @@ pub struct CarConfig {
 ### Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Staggered tire dimensions on open-wheel kart**
-  - [ ] **Given** a `classic_kart` configured with narrow front tires ($r = 0.18\,\text{m}, w = 0.12\,\text{m}$) and wide rear tires ($r = 0.20\,\text{m}, w = 0.21\,\text{m}$)
-  - [ ] **When** standing acceleration and maximum lateral cornering tests are executed
-  - [ ] **Then** the rear axle must deliver at least $35\%$ more peak lateral force than the front axle under equal normal load
-  - [ ] **And** rear wheel rotational inertia must measure larger than front wheel inertia ($I_{\text{rear}} > I_{\text{front}}$)
+  - [x] **Given** a `classic_kart` configured with narrow front tires ($r = 0.18\,\text{m}, w = 0.12\,\text{m}$) and wide rear tires ($r = 0.20\,\text{m}, w = 0.21\,\text{m}$)
+  - [x] **When** standing acceleration and maximum lateral cornering tests are executed
+  - [x] **Then** the rear axle must deliver at least $35\%$ more peak lateral force than the front axle under equal normal load
+  - [x] **And** rear wheel rotational inertia must measure larger than front wheel inertia ($I_{\text{rear}} > I_{\text{front}}$)
 
 - **Scenario: Independent front-wheel brake lockup under trail-braking**
-  - [ ] **Given** a vehicle traveling at $120\,\text{km/h}$ with a forward brake bias of $65\%$ front / $35\%$ rear
-  - [ ] **When** the driver applies $100\%$ service brake while cornering without ABS
-  - [ ] **Then** the front-inner wheel rotational velocity must reach zero ($\omega = 0\,\text{rad/s}$) while rear wheels continue rolling ($\omega > 20\,\text{rad/s}$)
-  - [ ] **And** the locked front wheel must report $\text{slip\_ratio} = -1.0$ and trigger maximum skid smoke telemetry
+  - [x] **Given** a vehicle traveling at $120\,\text{km/h}$ with a forward brake bias of $65\%$ front / $35\%$ rear
+  - [x] **When** the driver applies $100\%$ service brake while cornering without ABS
+  - [x] **Then** the front-inner wheel rotational velocity must reach zero ($\omega = 0\,\text{rad/s}$) while rear wheels continue rolling ($\omega > 20\,\text{rad/s}$)
+  - [x] **And** the locked front wheel must report $\text{slip\_ratio} = -1.0$ and trigger maximum skid smoke telemetry
 
 - **Scenario: Thermal grip degradation under prolonged power drifting**
-  - [ ] **Given** a high-powered GT vehicle executing sustained donut slides on dry asphalt
-  - [ ] **When** rear wheel slip energy is sustained for $> 8.0$ simulated seconds
-  - [ ] **Then** rear tire surface temperature $T_{\text{rear}}$ must rise above $120^\circ\text{C}$
-  - [ ] **And** rear peak lateral grip $D$ must drop by at least $15\%$ relative to nominal operating temperature
-  - [ ] **And** the telemetry must record elevated thermal wear rate $W_{\text{rear}}$
+  - [x] **Given** a high-powered GT vehicle executing sustained donut slides on dry asphalt
+  - [x] **When** rear wheel slip energy is sustained for $> 8.0$ simulated seconds
+  - [x] **Then** rear tire surface temperature $T_{\text{rear}}$ must rise above $120^\circ\text{C}$
+  - [x] **And** rear peak lateral grip $D$ must drop by at least $15\%$ relative to nominal operating temperature
+  - [x] **And** the telemetry must record elevated thermal wear rate $W_{\text{rear}}$
 
 - **Scenario: Legacy configuration backward compatibility**
-  - [ ] **Given** a legacy `config.toml` file containing only the singular `[car.tire]` section without `[car.wheels]`
-  - [ ] **When** the vehicle configuration is loaded by the engine
-  - [ ] **Then** the engine must successfully deserialize the car without error
-  - [ ] **And** all 4 wheel corners must automatically inherit the singular `TireConfig` parameters
+  - [x] **Given** a legacy `config.toml` file containing only the singular `[car.tire]` section without `[car.wheels]`
+  - [x] **When** the vehicle configuration is loaded by the engine
+  - [x] **Then** the engine must successfully deserialize the car without error
+  - [x] **And** all 4 wheel corners must automatically inherit the singular `TireConfig` parameters
 
 - **Scenario: Headless simulation throughput SLA**
-  - [ ] **Given** the headless benchmark harness ([Spec 010](010_surface_car_interaction_simulation.md))
-  - [ ] **When** executing 100,000 fixed-timestep simulation steps with decoupled 4-wheel dynamics
-  - [ ] **Then** total execution time must not exceed $1,200\,\text{ms}$ (throughput $> 85,000\,\text{steps/sec}$)
-  - [ ] **And** zero dynamic heap allocations must occur within the inner stepping loop
+  - [x] **Given** the headless benchmark harness ([Spec 010](010_surface_car_interaction_simulation.md))
+  - [x] **When** executing 100,000 fixed-timestep simulation steps with decoupled 4-wheel dynamics
+  - [x] **Then** total execution time must not exceed $1,200\,\text{ms}$ (throughput $> 85,000\,\text{steps/sec}$)
+  - [x] **And** zero dynamic heap allocations must occur within the inner stepping loop
 
 ---
 

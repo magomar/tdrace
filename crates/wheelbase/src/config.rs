@@ -1,5 +1,80 @@
 use serde::{Deserialize, Serialize};
 
+/// Configuration for an individual wheel corner or axle assembly.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct WheelAssemblyConfig {
+    /// Rolling radius of the tire under nominal load (meters).
+    pub tire_radius: f32,
+    /// Width of the tire contact patch (meters).
+    pub tire_width: f32,
+    /// Rotational polar moment of inertia (kg·m²).
+    pub rotational_inertia: f32,
+    /// Pacejka Magic Formula compound configuration for this wheel.
+    pub tire_model: TireConfig,
+    /// Brake torque distribution factor for this wheel [0.0 = none, 1.0 = full].
+    pub brake_bias_factor: f32,
+    /// Drive torque distribution factor from differential [0.0 = unpowered, 1.0 = spool/locked].
+    pub drive_torque_factor: f32,
+}
+
+impl Default for WheelAssemblyConfig {
+    fn default() -> Self {
+        Self {
+            tire_radius: 0.32,
+            tire_width: 0.24,
+            rotational_inertia: 1.25,
+            tire_model: TireConfig::default(),
+            brake_bias_factor: 0.25, // 25% per wheel = 50% front / 50% rear baseline
+            drive_torque_factor: 0.50, // RWD: 50% per rear wheel
+        }
+    }
+}
+
+impl WheelAssemblyConfig {
+    pub const fn new(
+        tire_radius: f32,
+        tire_width: f32,
+        rotational_inertia: f32,
+        tire_model: TireConfig,
+        brake_bias_factor: f32,
+        drive_torque_factor: f32,
+    ) -> Self {
+        Self {
+            tire_radius,
+            tire_width,
+            rotational_inertia,
+            tire_model,
+            brake_bias_factor,
+            drive_torque_factor,
+        }
+    }
+
+    /// Computes rotational polar moment of inertia I = 0.5 * m * r^2 from wheel mass.
+    pub fn from_mass(
+        tire_radius: f32,
+        tire_width: f32,
+        tire_mass: f32,
+        tire_model: TireConfig,
+        brake_bias_factor: f32,
+        drive_torque_factor: f32,
+    ) -> Self {
+        let rotational_inertia = 0.5 * tire_mass * tire_radius * tire_radius;
+        Self {
+            tire_radius,
+            tire_width,
+            rotational_inertia,
+            tire_model,
+            brake_bias_factor,
+            drive_torque_factor,
+        }
+    }
+}
+
+/// Helper returning standard default wheel assemblies for all 4 corners.
+pub fn default_wheel_assemblies() -> [WheelAssemblyConfig; 4] {
+    [WheelAssemblyConfig::default(); 4]
+}
+
 /// Tire parameters using an adapted Pacejka Magic Formula curve tuned for arcade drifting.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct TireConfig {
@@ -218,6 +293,7 @@ impl Default for TerrainInteractionConfig {
 
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(from = "CarConfigRaw")]
 pub struct CarConfig {
     /// Total vehicle mass in kilograms.
     pub mass: f32,
@@ -285,6 +361,87 @@ pub struct CarConfig {
     pub assists: DriverAssistsConfig,
     /// Terrain interaction modifiers (sand flotation, mud paddles, ice studs).
     pub terrain: TerrainInteractionConfig,
+    /// Decoupled wheel assembly configurations for all 4 corners [FL, FR, RL, RR].
+    #[serde(default = "default_wheel_assemblies")]
+    pub wheels: [WheelAssemblyConfig; 4],
+}
+
+#[derive(Deserialize)]
+struct CarConfigRaw {
+    pub mass: f32,
+    pub inertia: f32,
+    pub wheelbase: f32,
+    pub track_width: f32,
+    pub cg_to_front: f32,
+    pub cg_to_rear: f32,
+    pub cg_height: f32,
+    pub max_engine_force: f32,
+    pub max_reverse_force: f32,
+    pub max_brake_force: f32,
+    pub handbrake_force: f32,
+    pub brake_bias: f32,
+    pub drive_bias: f32,
+    pub top_speed_mps: f32,
+    pub max_steer_angle: f32,
+    pub steer_speed: f32,
+    pub steer_return_speed: f32,
+    pub counter_steer_assist: f32,
+    pub speed_sensitive_steer_factor: f32,
+    pub air_drag_coefficient: f32,
+    pub lateral_drag_coefficient: f32,
+    pub rolling_resistance_coefficient: f32,
+    pub angular_damping: f32,
+    pub weight_transfer_longitudinal: f32,
+    pub weight_transfer_lateral: f32,
+    pub engine_braking_coefficient: f32,
+    pub downforce_coefficient: f32,
+    pub tire: TireConfig,
+    pub assists: DriverAssistsConfig,
+    pub terrain: TerrainInteractionConfig,
+    #[serde(default)]
+    pub wheels: Option<[WheelAssemblyConfig; 4]>,
+}
+
+impl From<CarConfigRaw> for CarConfig {
+    fn from(raw: CarConfigRaw) -> Self {
+        let wheels = raw.wheels.unwrap_or_else(|| {
+            CarConfig::default_wheel_assemblies_for(raw.tire, raw.brake_bias, raw.drive_bias)
+        });
+
+        Self {
+            mass: raw.mass,
+            inertia: raw.inertia,
+            wheelbase: raw.wheelbase,
+            track_width: raw.track_width,
+            cg_to_front: raw.cg_to_front,
+            cg_to_rear: raw.cg_to_rear,
+            cg_height: raw.cg_height,
+            max_engine_force: raw.max_engine_force,
+            max_reverse_force: raw.max_reverse_force,
+            max_brake_force: raw.max_brake_force,
+            handbrake_force: raw.handbrake_force,
+            brake_bias: raw.brake_bias,
+            drive_bias: raw.drive_bias,
+            top_speed_mps: raw.top_speed_mps,
+            max_steer_angle: raw.max_steer_angle,
+            steer_speed: raw.steer_speed,
+            steer_return_speed: raw.steer_return_speed,
+            counter_steer_assist: raw.counter_steer_assist,
+            speed_sensitive_steer_factor: raw.speed_sensitive_steer_factor,
+            air_drag_coefficient: raw.air_drag_coefficient,
+            lateral_drag_coefficient: raw.lateral_drag_coefficient,
+            rolling_resistance_coefficient: raw.rolling_resistance_coefficient,
+            angular_damping: raw.angular_damping,
+            weight_transfer_longitudinal: raw.weight_transfer_longitudinal,
+            weight_transfer_lateral: raw.weight_transfer_lateral,
+            engine_braking_coefficient: raw.engine_braking_coefficient,
+            downforce_coefficient: raw.downforce_coefficient,
+            tire: raw.tire,
+            assists: raw.assists,
+            terrain: raw.terrain,
+            wheels,
+        }
+    }
 }
 
 impl Default for CarConfig {
@@ -294,8 +451,55 @@ impl Default for CarConfig {
 }
 
 impl CarConfig {
+    /// Generates standard 4-wheel assemblies matching current tire model, brake bias, and drive bias.
+    pub fn default_wheel_assemblies_for(
+        tire: TireConfig,
+        brake_bias: f32,
+        drive_bias: f32,
+    ) -> [WheelAssemblyConfig; 4] {
+        let front_brake = brake_bias * 0.5;
+        let rear_brake = (1.0 - brake_bias) * 0.5;
+        let front_drive = drive_bias * 0.5;
+        let rear_drive = (1.0 - drive_bias) * 0.5;
+        [
+            WheelAssemblyConfig {
+                tire_radius: 0.32,
+                tire_width: 0.24,
+                rotational_inertia: 1.25,
+                tire_model: tire,
+                brake_bias_factor: front_brake,
+                drive_torque_factor: front_drive,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.32,
+                tire_width: 0.24,
+                rotational_inertia: 1.25,
+                tire_model: tire,
+                brake_bias_factor: front_brake,
+                drive_torque_factor: front_drive,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.32,
+                tire_width: 0.24,
+                rotational_inertia: 1.25,
+                tire_model: tire,
+                brake_bias_factor: rear_brake,
+                drive_torque_factor: rear_drive,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.32,
+                tire_width: 0.24,
+                rotational_inertia: 1.25,
+                tire_model: tire,
+                brake_bias_factor: rear_brake,
+                drive_torque_factor: rear_drive,
+            },
+        ]
+    }
+
     /// Standard balanced sports car tuned for GeneRally-style arcade drift racing.
     pub fn sports_car() -> Self {
+        let tire = TireConfig::default();
         Self {
             mass: 1050.0,
             inertia: 1450.0,
@@ -330,9 +534,10 @@ impl CarConfig {
             engine_braking_coefficient: 0.12,
             downforce_coefficient: 0.65,
 
-            tire: TireConfig::default(),
+            tire,
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
+            wheels: Self::default_wheel_assemblies_for(tire, 0.60, 0.0),
         }
     }
 
@@ -352,11 +557,72 @@ impl CarConfig {
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
         cfg.assists = DriverAssistsConfig::sport();
+        for w in &mut cfg.wheels {
+            w.tire_model = cfg.tire;
+        }
         cfg
     }
 
     /// Go-kart preset: ultra-responsive, lightweight, high lateral grip, direct steering.
+    /// Features staggered open-wheel dimensions: narrow front tires (r=0.18m, w=0.12m)
+    /// and wide rear tires (r=0.20m, w=0.21m) delivering >= 35% higher peak lateral force.
     pub fn kart() -> Self {
+        let front_tire = TireConfig {
+            stiffness_b: 12.0,
+            shape_c: 1.50,
+            peak_d: 1.05,
+            curvature_e: -0.20,
+            drift_slide_friction: 0.82,
+            handbrake_lateral_friction_multiplier: 0.35,
+            skid_threshold: 0.08,
+            skid_full_threshold: 0.28,
+        };
+        let rear_tire = TireConfig {
+            stiffness_b: 12.0,
+            shape_c: 1.50,
+            peak_d: 1.45, // >= 35% higher peak lateral force than front axle under equal load
+            curvature_e: -0.20,
+            drift_slide_friction: 0.82,
+            handbrake_lateral_friction_multiplier: 0.35,
+            skid_threshold: 0.08,
+            skid_full_threshold: 0.28,
+        };
+        // I_front = 0.15 kg*m^2, I_rear = 0.24 kg*m^2 (I_rear > I_front)
+        let wheels = [
+            WheelAssemblyConfig {
+                tire_radius: 0.18,
+                tire_width: 0.12,
+                rotational_inertia: 0.15,
+                tire_model: front_tire,
+                brake_bias_factor: 0.25,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.18,
+                tire_width: 0.12,
+                rotational_inertia: 0.15,
+                tire_model: front_tire,
+                brake_bias_factor: 0.25,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.20,
+                tire_width: 0.21,
+                rotational_inertia: 0.24,
+                tire_model: rear_tire,
+                brake_bias_factor: 0.25,
+                drive_torque_factor: 0.50,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.20,
+                tire_width: 0.21,
+                rotational_inertia: 0.24,
+                tire_model: rear_tire,
+                brake_bias_factor: 0.25,
+                drive_torque_factor: 0.50,
+            },
+        ];
+
         Self {
             mass: 180.0,
             inertia: 120.0,
@@ -391,23 +657,20 @@ impl CarConfig {
             engine_braking_coefficient: 0.18,
             downforce_coefficient: 0.10,
 
-            tire: TireConfig {
-                stiffness_b: 12.0,
-                shape_c: 1.50,
-                peak_d: 1.05,
-                curvature_e: -0.20,
-                drift_slide_friction: 0.82,
-                handbrake_lateral_friction_multiplier: 0.35,
-                skid_threshold: 0.08,
-                skid_full_threshold: 0.28,
-            },
+            tire: front_tire,
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig {
                 sand_flotation: 1.0,
                 mud_flotation: 1.0,
                 ice_grip_multiplier: 0.80,
             },
+            wheels,
         }
+    }
+
+    /// Alias for `kart()` representing the classic 200cc sprint kart.
+    pub fn classic_kart() -> Self {
+        Self::kart()
     }
 
     /// Rally spec: AWD traction, softened tire curve for loose surfaces, high ride height.
@@ -426,6 +689,14 @@ impl CarConfig {
             mud_flotation: 0.70,
             ice_grip_multiplier: 3.50,
         };
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.33;
+            w.tire_width = 0.22;
+            w.rotational_inertia = 1.30;
+            w.tire_model = cfg.tire;
+            w.drive_torque_factor = 0.25; // AWD 4-wheel drive distribution
+            w.brake_bias_factor = 0.25;
+        }
         cfg
     }
 
@@ -436,6 +707,51 @@ impl CarConfig {
     /// that demands precise throttle modulation to avoid power-oversteer while remaining
     /// planted and controllable at high superspeedway speeds.
     pub fn stock_car_ta1() -> Self {
+        let tire = TireConfig {
+            stiffness_b: 11.5,
+            shape_c: 1.48,
+            peak_d: 1.15,
+            curvature_e: -0.12,
+            drift_slide_friction: 0.86,
+            handbrake_lateral_friction_multiplier: 0.42,
+            skid_threshold: 0.09,
+            skid_full_threshold: 0.28,
+        };
+        let wheels = [
+            WheelAssemblyConfig {
+                tire_radius: 0.36,
+                tire_width: 0.30,
+                rotational_inertia: 1.65,
+                tire_model: tire,
+                brake_bias_factor: 0.31,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.36,
+                tire_width: 0.30,
+                rotational_inertia: 1.65,
+                tire_model: tire,
+                brake_bias_factor: 0.31,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.36,
+                tire_width: 0.30,
+                rotational_inertia: 1.65,
+                tire_model: tire,
+                brake_bias_factor: 0.19,
+                drive_torque_factor: 0.50,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.36,
+                tire_width: 0.30,
+                rotational_inertia: 1.65,
+                tire_model: tire,
+                brake_bias_factor: 0.19,
+                drive_torque_factor: 0.50,
+            },
+        ];
+
         Self {
             mass: 1260.0,
             inertia: 1680.0,
@@ -470,18 +786,10 @@ impl CarConfig {
             engine_braking_coefficient: 0.18,
             downforce_coefficient: 1.25, // Moderate downforce package
 
-            tire: TireConfig {
-                stiffness_b: 11.5,
-                shape_c: 1.48,
-                peak_d: 1.15,
-                curvature_e: -0.12,
-                drift_slide_friction: 0.86,
-                handbrake_lateral_friction_multiplier: 0.42,
-                skid_threshold: 0.09,
-                skid_full_threshold: 0.28,
-            },
+            tire,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            wheels,
         }
     }
 
@@ -493,6 +801,51 @@ impl CarConfig {
     /// 300 BHP Sand Rail Buggy: ultralight chromoly spaceframe, pure RWD, wide stance,
     /// rear-biased weight, high-travel suspension compliance, and paddle tire grip.
     pub fn sand_rail() -> Self {
+        let tire = TireConfig {
+            stiffness_b: 8.2,
+            shape_c: 1.35,
+            peak_d: 1.12,
+            curvature_e: -0.15,
+            drift_slide_friction: 0.94,
+            handbrake_lateral_friction_multiplier: 0.35,
+            skid_threshold: 0.08,
+            skid_full_threshold: 0.28,
+        };
+        let wheels = [
+            WheelAssemblyConfig {
+                tire_radius: 0.38,
+                tire_width: 0.18,
+                rotational_inertia: 1.10,
+                tire_model: tire,
+                brake_bias_factor: 0.275,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.38,
+                tire_width: 0.18,
+                rotational_inertia: 1.10,
+                tire_model: tire,
+                brake_bias_factor: 0.275,
+                drive_torque_factor: 0.0,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.42,
+                tire_width: 0.38,
+                rotational_inertia: 1.85,
+                tire_model: tire,
+                brake_bias_factor: 0.225,
+                drive_torque_factor: 0.50,
+            },
+            WheelAssemblyConfig {
+                tire_radius: 0.42,
+                tire_width: 0.38,
+                rotational_inertia: 1.85,
+                tire_model: tire,
+                brake_bias_factor: 0.225,
+                drive_torque_factor: 0.50,
+            },
+        ];
+
         Self {
             mass: 590.0,
             inertia: 720.0,
@@ -527,22 +880,14 @@ impl CarConfig {
             engine_braking_coefficient: 0.14,
             downforce_coefficient: 0.35,
 
-            tire: TireConfig {
-                stiffness_b: 8.2,
-                shape_c: 1.35,
-                peak_d: 1.12,
-                curvature_e: -0.15,
-                drift_slide_friction: 0.94,
-                handbrake_lateral_friction_multiplier: 0.35,
-                skid_threshold: 0.08,
-                skid_full_threshold: 0.28,
-            },
+            tire,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig {
                 sand_flotation: 0.30,
                 mud_flotation: 0.65,
                 ice_grip_multiplier: 1.50,
             },
+            wheels,
         }
     }
 }
@@ -577,5 +922,124 @@ mod tests {
         assert_eq!(sand.max_engine_force, 8800.0);
         assert!(sand.top_speed_mps * 3.6 > 195.0);
         assert!(sand.track_width > sports.track_width);
+
+        // All presets must have 4 populated wheels
+        assert_eq!(sports.wheels.len(), 4);
+        assert_eq!(drift.wheels.len(), 4);
+        assert_eq!(kart.wheels.len(), 4);
+        assert_eq!(rally.wheels.len(), 4);
+        assert_eq!(stock.wheels.len(), 4);
+        assert_eq!(sand.wheels.len(), 4);
+    }
+
+    #[test]
+    fn test_staggered_kart_wheel_assemblies() {
+        let kart = CarConfig::classic_kart();
+        // Front narrow tires: r = 0.18, w = 0.12
+        assert_eq!(kart.wheels[0].tire_radius, 0.18);
+        assert_eq!(kart.wheels[0].tire_width, 0.12);
+        assert_eq!(kart.wheels[1].tire_radius, 0.18);
+        assert_eq!(kart.wheels[1].tire_width, 0.12);
+
+        // Rear wide tires: r = 0.20, w = 0.21
+        assert_eq!(kart.wheels[2].tire_radius, 0.20);
+        assert_eq!(kart.wheels[2].tire_width, 0.21);
+        assert_eq!(kart.wheels[3].tire_radius, 0.20);
+        assert_eq!(kart.wheels[3].tire_width, 0.21);
+
+        // Rear rotational inertia is greater than front: I_rear > I_front
+        assert!(kart.wheels[2].rotational_inertia > kart.wheels[0].rotational_inertia);
+
+        // Rear delivers >= 35% higher peak lateral force than front under equal load
+        let f_front = kart.wheels[0].tire_model.peak_d;
+        let f_rear = kart.wheels[2].tire_model.peak_d;
+        assert!(f_rear >= f_front * 1.35, "f_rear ({}) should be >= 1.35 * f_front ({})", f_rear, f_front);
+    }
+
+    #[test]
+    fn test_legacy_config_deserialization_backward_compatibility() {
+        // Legacy JSON without `wheels` array
+        let legacy_json = r#"{
+            "mass": 1050.0,
+            "inertia": 1450.0,
+            "wheelbase": 2.40,
+            "track_width": 1.40,
+            "cg_to_front": 1.10,
+            "cg_to_rear": 1.30,
+            "cg_height": 0.35,
+            "max_engine_force": 6800.0,
+            "max_reverse_force": 4420.0,
+            "max_brake_force": 11500.0,
+            "handbrake_force": 7500.0,
+            "brake_bias": 0.60,
+            "drive_bias": 0.0,
+            "top_speed_mps": 58.0,
+            "max_steer_angle": 0.68,
+            "steer_speed": 5.5,
+            "steer_return_speed": 7.0,
+            "counter_steer_assist": 1.3,
+            "speed_sensitive_steer_factor": 0.002,
+            "air_drag_coefficient": 0.42,
+            "lateral_drag_coefficient": 1.20,
+            "rolling_resistance_coefficient": 0.015,
+            "angular_damping": 160.0,
+            "weight_transfer_longitudinal": 1.0,
+            "weight_transfer_lateral": 1.0,
+            "engine_braking_coefficient": 0.12,
+            "downforce_coefficient": 0.65,
+            "tire": {
+                "stiffness_b": 15.0,
+                "shape_c": 1.45,
+                "peak_d": 1.10,
+                "curvature_e": -0.15,
+                "drift_slide_friction": 0.88,
+                "handbrake_lateral_friction_multiplier": 0.38,
+                "skid_threshold": 0.10,
+                "skid_full_threshold": 0.35
+            },
+            "assists": {
+                "tcs_enabled": true,
+                "tcs_slip_threshold": 0.18,
+                "tcs_strength": 0.75,
+                "esc_enabled": true,
+                "esc_yaw_threshold": 0.10,
+                "esc_strength": 0.85,
+                "counter_steer_assist_enabled": true,
+                "counter_steer_assist_strength": 0.70,
+                "abs_enabled": true,
+                "abs_slip_threshold": 0.15,
+                "abs_strength": 0.95,
+                "handbrake_bypass": true
+            },
+            "terrain": {
+                "sand_flotation": 1.0,
+                "mud_flotation": 1.0,
+                "ice_grip_multiplier": 1.0
+            }
+        }"#;
+
+        let deserialized: Result<CarConfig, _> = serde_json::from_str(legacy_json);
+        assert!(deserialized.is_ok(), "Failed to deserialize legacy config: {:?}", deserialized.err());
+        let config = deserialized.unwrap();
+
+        // Check that all 4 wheels inherited the custom tire model (stiffness_b = 15.0, peak_d = 1.10)
+        for i in 0..4 {
+            assert_eq!(config.wheels[i].tire_model.stiffness_b, 15.0);
+            assert_eq!(config.wheels[i].tire_model.peak_d, 1.10);
+            assert_eq!(config.wheels[i].tire_radius, 0.32);
+            assert_eq!(config.wheels[i].rotational_inertia, 1.25);
+        }
+
+        // Check brake bias distribution across axles (0.60 brake_bias -> 0.30 front, 0.20 rear)
+        assert!((config.wheels[0].brake_bias_factor - 0.30).abs() < 1e-4);
+        assert!((config.wheels[1].brake_bias_factor - 0.30).abs() < 1e-4);
+        assert!((config.wheels[2].brake_bias_factor - 0.20).abs() < 1e-4);
+        assert!((config.wheels[3].brake_bias_factor - 0.20).abs() < 1e-4);
+
+        // Check drive bias (0.0 RWD -> 0.0 front, 0.50 rear)
+        assert_eq!(config.wheels[0].drive_torque_factor, 0.0);
+        assert_eq!(config.wheels[1].drive_torque_factor, 0.0);
+        assert_eq!(config.wheels[2].drive_torque_factor, 0.50);
+        assert_eq!(config.wheels[3].drive_torque_factor, 0.50);
     }
 }

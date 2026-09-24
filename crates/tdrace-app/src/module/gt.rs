@@ -1467,6 +1467,20 @@ impl GtWorldChallengeModule {
             },
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            wheels: CarConfig::default_wheel_assemblies_for(
+                TireConfig {
+                    stiffness_b: 13.0,
+                    shape_c: 1.45,
+                    peak_d: 1.20,
+                    curvature_e: -0.08,
+                    drift_slide_friction: 0.82,
+                    handbrake_lateral_friction_multiplier: 0.50,
+                    skid_threshold: 0.08,
+                    skid_full_threshold: 0.24,
+                },
+                0.65,
+                0.0,
+            ),
         }
     }
 

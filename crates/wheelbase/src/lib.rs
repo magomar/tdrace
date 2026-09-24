@@ -13,11 +13,11 @@ pub mod tire;
 
 pub use bike::{Motorbike, MotorbikeConfig, MotorbikeControls, MotorbikeState};
 pub use car::{normalize_angle, Car, CarControls, CarState, JumpRampProperties};
-pub use config::{CarConfig, DriverAssistsConfig, TireConfig};
+pub use config::{default_wheel_assemblies, CarConfig, DriverAssistsConfig, TireConfig, WheelAssemblyConfig};
 pub use surface::{SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
 pub use tire::{
-    compute_skid_telemetry, pacejka_lateral_force, solve_combined_slip_forces, WheelId,
-    WheelTelemetry,
+    compute_skid_telemetry, pacejka_lateral_force, solve_combined_slip_forces, WheelAssembly,
+    WheelId, WheelTelemetry,
 };
 
 pub use glam::Vec2;

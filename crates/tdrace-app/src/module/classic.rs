@@ -30,6 +30,9 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 9.0;
         cfg.tire.drift_slide_friction = 0.94;
         cfg.tire.stiffness_b = 10.5;
+        for w in &mut cfg.wheels {
+            w.tire_model = cfg.tire;
+        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
@@ -47,6 +50,9 @@ impl ClassicGameModule {
         cfg.downforce_coefficient = 1.45;
         cfg.tire.drift_slide_friction = 0.93;
         cfg.tire.stiffness_b = 11.0;
+        for w in &mut cfg.wheels {
+            w.tire_model = cfg.tire;
+        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
@@ -65,6 +71,9 @@ impl ClassicGameModule {
         cfg.tire.stiffness_b = 9.0;
         cfg.weight_transfer_longitudinal = 0.65;
         cfg.weight_transfer_lateral = 0.65;
+        for w in &mut cfg.wheels {
+            w.tire_model = cfg.tire;
+        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
@@ -80,6 +89,10 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 14.0;
         cfg.tire.drift_slide_friction = 0.90;
         cfg.tire.stiffness_b = 13.0;
+        for w in &mut cfg.wheels {
+            w.tire_model.drift_slide_friction = cfg.tire.drift_slide_friction;
+            w.tire_model.stiffness_b = cfg.tire.stiffness_b;
+        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
@@ -100,6 +113,11 @@ impl ClassicGameModule {
         cfg.tire.stiffness_b = 10.0;
         cfg.weight_transfer_longitudinal = 0.50;
         cfg.weight_transfer_lateral = 0.50;
+        for w in &mut cfg.wheels {
+            w.tire_model = cfg.tire;
+            w.drive_torque_factor = 0.25;
+            w.brake_bias_factor = 0.25;
+        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }

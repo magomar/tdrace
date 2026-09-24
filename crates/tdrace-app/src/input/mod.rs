@@ -565,8 +565,8 @@ impl InputController {
     fn render_telemetry_panel(&self, car: &Car) {
         let x = 18.0;
         let y = 140.0;
-        let w = 290.0;
-        let h = 260.0;
+        let w = 310.0;
+        let h = 315.0;
 
         draw_rectangle(x, y, w, h, Color::new(0.05, 0.06, 0.08, 0.88));
         draw_rectangle_lines(x, y, w, h, 1.5, Color::new(0.3, 0.6, 0.9, 0.8));
@@ -588,6 +588,13 @@ impl InputController {
             format!("Local Accel: X={:.1} Y={:.1} m/s^2", car.state.acceleration_local.x, car.state.acceleration_local.y),
             format!("FL Skid: {:.0}% | FR Skid: {:.0}%", car.state.wheels[0].skid_intensity * 100.0, car.state.wheels[1].skid_intensity * 100.0),
             format!("RL Skid: {:.0}% | RR Skid: {:.0}%", car.state.wheels[2].skid_intensity * 100.0, car.state.wheels[3].skid_intensity * 100.0),
+            format!("FL: {:.0}°C (s={:.2}) | FR: {:.0}°C (s={:.2})", car.state.wheels[0].temperature, car.state.wheels[0].slip_ratio, car.state.wheels[1].temperature, car.state.wheels[1].slip_ratio),
+            format!("RL: {:.0}°C (s={:.2}) | RR: {:.0}°C (s={:.2})", car.state.wheels[2].temperature, car.state.wheels[2].slip_ratio, car.state.wheels[3].temperature, car.state.wheels[3].slip_ratio),
+            format!("Lockup: FL:{} FR:{} RL:{} RR:{}",
+                if car.state.wheels[0].is_locked { "LOCK" } else { "-" },
+                if car.state.wheels[1].is_locked { "LOCK" } else { "-" },
+                if car.state.wheels[2].is_locked { "LOCK" } else { "-" },
+                if car.state.wheels[3].is_locked { "LOCK" } else { "-" }),
         ];
 
         for t in &texts {

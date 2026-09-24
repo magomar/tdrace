@@ -38,8 +38,7 @@ impl SimulationRunner {
     pub fn with_state(mut self, position: Vec2, angle: f32, velocity: Vec2) -> Self {
         self.car.state_mut().position = position;
         self.car.state_mut().angle = angle;
-        self.car.state_mut().velocity = velocity;
-        self.car.state_mut().speed = velocity.length();
+        self.car.set_velocity(velocity);
         self
     }
 
