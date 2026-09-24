@@ -21,9 +21,11 @@ import math
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 LATERAL_DIR = ROOT / "assets" / "textures" / "vehicles" / "laterals" / "classic"
 TOPDOWN_DIR = ROOT / "assets" / "textures" / "vehicles" / "topdown" / "classic"
+WHEELS_DIR = ROOT / "assets" / "textures" / "vehicles" / "topdown" / "wheels"
 
 LATERAL_DIR.mkdir(parents=True, exist_ok=True)
 TOPDOWN_DIR.mkdir(parents=True, exist_ok=True)
+WHEELS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def draw_circle(draw, cx, cy, r, fill, outline=None, width=1):
@@ -674,12 +676,12 @@ def generate_classic_kart():
     h_half = int(185 * ss)
 
     # Exposed Kart Slick Wheels
-    # Rear extra-wide slicks
+    # Rear extra-wide slicks (fixed to chassis)
     draw_td.rounded_rectangle([cx - w_half - int(22 * ss), cy + int(70 * ss), cx - w_half + int(12 * ss), cy + int(145 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
     draw_td.rounded_rectangle([cx + w_half - int(12 * ss), cy + int(70 * ss), cx + w_half + int(22 * ss), cy + int(145 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
-    # Front steer slicks
-    draw_td.rounded_rectangle([cx - w_half - int(12 * ss), cy - int(135 * ss), cx - w_half + int(14 * ss), cy - int(75 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
-    draw_td.rounded_rectangle([cx + w_half - int(14 * ss), cy - int(135 * ss), cx + w_half + int(12 * ss), cy - int(75 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    # Front steer axle spindles / tie rods (front steer wheels decomposed into standalone kart_slick_front sprite)
+    draw_td.line([cx - int(45 * ss), cy - int(105 * ss), cx - w_half + int(2 * ss), cy - int(105 * ss)], fill=(160, 165, 175), width=int(5 * ss))
+    draw_td.line([cx + int(45 * ss), cy - int(105 * ss), cx + w_half - int(2 * ss), cy - int(105 * ss)], fill=(160, 165, 175), width=int(5 * ss))
 
     # Rear live axle bar
     draw_td.line([cx - w_half, cy + int(105 * ss), cx + w_half, cy + int(105 * ss)], fill=(190, 195, 205), width=int(8 * ss))
@@ -1021,10 +1023,72 @@ def generate_classic_rally():
     print("✓ Generated classic_rally assets")
 
 
+def generate_kart_slick_wheel():
+    ss = 2
+    W, H = 128 * ss, 256 * ss
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
+
+    cx = W // 2
+    cy = H // 2
+    tw_half = int(52 * ss)  # 104px wide at 128x256 (leaves 12px transparent margin left/right)
+    th_half = int(114 * ss) # 228px tall at 128x256 (leaves 14px transparent margin top/bottom)
+    corner_r = int(22 * ss)
+
+    # 1. Feathered outer bevel / edge
+    draw.rounded_rectangle(
+        [cx - tw_half, cy - th_half, cx + tw_half, cy + th_half],
+        radius=corner_r,
+        fill=(36, 40, 46, 255),
+    )
+
+    # 2. Main vulcanized black rubber tread
+    inner_margin = int(3 * ss)
+    draw.rounded_rectangle(
+        [cx - tw_half + inner_margin, cy - th_half + inner_margin, cx + tw_half - inner_margin, cy + th_half - inner_margin],
+        radius=corner_r - int(2 * ss),
+        fill=(22, 24, 28, 255),
+    )
+
+    # 3. Subtle central tire contact patch line
+    draw.line(
+        [cx, cy - th_half + int(15 * ss), cx, cy + th_half - int(15 * ss)],
+        fill=(16, 18, 20, 255),
+        width=int(6 * ss),
+    )
+
+    # 4. Dark graphite alloy hub / rim center
+    rw_half = int(18 * ss)
+    rh_half = int(55 * ss)
+    draw.rounded_rectangle(
+        [cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half],
+        radius=int(8 * ss),
+        fill=(48, 52, 60, 255),
+        outline=(75, 80, 92, 255),
+        width=int(2 * ss),
+    )
+
+    # Rim inner structure
+    draw.rounded_rectangle(
+        [cx - rw_half + int(3 * ss), cy - rh_half + int(4 * ss), cx + rw_half - int(3 * ss), cy + rh_half - int(4 * ss)],
+        radius=int(5 * ss),
+        fill=(38, 42, 48, 255),
+    )
+
+    # 5. Anodized gold center hub nut / cap
+    draw_circle(draw, cx, cy, int(10 * ss), fill=(215, 175, 45, 255), outline=(160, 125, 25, 255), width=int(1.5 * ss))
+    draw_circle(draw, cx, cy, int(4 * ss), fill=(245, 210, 80, 255))
+
+    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
+    out_img.save(WHEELS_DIR / "kart_slick_front.png")
+    print("✓ Generated kart_slick_front wheel asset (128x256)")
+
+
 if __name__ == "__main__":
     generate_classic_gt()
     generate_classic_nascar()
     generate_classic_offroad()
     generate_classic_kart()
     generate_classic_rally()
+    generate_kart_slick_wheel()
     print("✨ All 5 classic fantasy vehicle asset sets generated successfully!")

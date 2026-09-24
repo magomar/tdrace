@@ -6,9 +6,11 @@ use macroquad::texture::{Image, Texture2D};
 static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
 static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
 static PORSCHE_TOPDOWN_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+static KART_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/kart_slick_front.png");
 
 static LATERAL_CACHE: Mutex<Option<HashMap<(String, u32, u32, bool), Texture2D>>> = Mutex::new(None);
 static TOPDOWN_CACHE: Mutex<Option<HashMap<(String, u32, u32), Texture2D>>> = Mutex::new(None);
+static WHEEL_TEXTURE_CACHE: Mutex<Option<HashMap<String, Texture2D>>> = Mutex::new(None);
 
 #[inline]
 pub fn color_to_u32(c: Color) -> u32 {
@@ -218,6 +220,66 @@ pub fn get_vehicle_topdown_texture(
 
     let texture = Texture2D::from_image(&final_img);
     map.insert(key, texture.clone());
+    Some(texture)
+}
+
+/// Configuration for vehicles utilizing modular steered wheel rendering.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SteeredWheelConfig {
+    /// Relative path identifier or key for the wheel texture (e.g. "kart_slick_front").
+    pub wheel_texture_id: &'static str,
+    /// Distance from vehicle CG to front wheel axle (meters).
+    pub front_axle_offset: f32,
+    /// Half of the front track width (meters).
+    pub half_track_width: f32,
+    /// Rendered dimensions of the individual wheel [width (thickness), height (diameter)] (meters).
+    pub wheel_size: glam::Vec2,
+    /// Z-layering mode relative to the chassis body.
+    pub layering: WheelLayerMode,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WheelLayerMode {
+    /// Wheels render beneath the chassis body (ideal for closed GT/NASCAR/Rally).
+    UnderChassis,
+    /// Wheels render above or alongside the chassis body (ideal for open karts/buggies).
+    OverChassis,
+}
+
+/// Returns the steered wheel configuration for a model, if modular wheel animation is enabled.
+pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
+    match model_id {
+        "classic_kart" => Some(SteeredWheelConfig {
+            wheel_texture_id: "kart_slick_front",
+            front_axle_offset: 0.62,
+            half_track_width: 0.52,
+            wheel_size: glam::Vec2::new(0.24, 0.44),
+            layering: WheelLayerMode::OverChassis,
+        }),
+        _ => None, // 84 legacy vehicles continue using monolithic sprite rendering
+    }
+}
+
+/// Retrieves or loads a standalone high-resolution top-down wheel texture.
+pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
+    let mut guard = WHEEL_TEXTURE_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let map = guard.get_or_insert_with(HashMap::new);
+    if let Some(tex) = map.get(wheel_id) {
+        return Some(tex.clone());
+    }
+
+    let rel_path = format!("textures/vehicles/topdown/wheels/{}.png", wheel_id);
+    let bytes = if let Some(disk_bytes) = find_asset_file(&rel_path) {
+        disk_bytes
+    } else if wheel_id == "kart_slick_front" {
+        KART_SLICK_FRONT_PNG.to_vec()
+    } else {
+        return None;
+    };
+
+    let base_img = Image::from_file_with_format(&bytes, None).ok()?;
+    let texture = Texture2D::from_image(&base_img);
+    map.insert(wheel_id.to_string(), texture.clone());
     Some(texture)
 }
 

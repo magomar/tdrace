@@ -140,6 +140,76 @@ pub fn render_vehicle_topdown_sprite(
     render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
 }
 
+/// Context passed to top-down sprite rendering when steered wheel animation is enabled.
+pub struct SteeredWheelRenderContext<'a> {
+    pub config: crate::render::vehicle_assets::SteeredWheelConfig,
+    pub wheel_texture: &'a Texture2D,
+    pub steer_fl: f32,
+    pub steer_fr: f32,
+}
+
+/// Renders soft ground shadow for an individual steered wheel.
+pub fn render_wheel_shadow(pos: Vec2, angle: f32, size: Vec2, alpha: f32) {
+    let half_len = size.y * 0.5;
+    let half_w = size.x * 0.5;
+    let fwd = Vec2::new(angle.cos(), angle.sin());
+    let right = Vec2::new(angle.sin(), -angle.cos());
+
+    let p0 = pos + fwd * half_len - right * half_w;
+    let p1 = pos + fwd * half_len + right * half_w;
+    let p2 = pos - fwd * half_len + right * half_w;
+    let p3 = pos - fwd * half_len - right * half_w;
+
+    let shadow_color = Color::new(0.0, 0.0, 0.0, 0.38 * alpha);
+    draw_quad(p0, p1, p2, p3, shadow_color);
+}
+
+/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle.
+pub fn draw_steered_wheel(
+    texture: &Texture2D,
+    pos: Vec2,
+    angle: f32,
+    size: Vec2,
+) {
+    let dest_w = size.x;
+    let dest_h = size.y;
+    draw_texture_ex(
+        texture,
+        pos.x - dest_w * 0.5,
+        pos.y - dest_h * 0.5,
+        Color::new(1.0, 1.0, 1.0, 1.0),
+        DrawTextureParams {
+            dest_size: Some(macroquad::math::Vec2::new(dest_w, dest_h)),
+            rotation: angle + std::f32::consts::FRAC_PI_2,
+            pivot: Some(macroquad::math::Vec2::new(pos.x, pos.y)),
+            ..Default::default()
+        },
+    );
+}
+
+/// Renders steered front wheels with ground shadows and exact Ackermann geometry.
+pub fn render_steered_wheels(
+    chassis_center: Vec2,
+    angle: f32,
+    fwd: Vec2,
+    right: Vec2,
+    ctx: &SteeredWheelRenderContext,
+) {
+    let p_fl = chassis_center + fwd * ctx.config.front_axle_offset - right * ctx.config.half_track_width;
+    let p_fr = chassis_center + fwd * ctx.config.front_axle_offset + right * ctx.config.half_track_width;
+
+    let ang_fl = angle + ctx.steer_fl;
+    let ang_fr = angle + ctx.steer_fr;
+
+    // 1. Render soft ground shadow beneath each steered wheel
+    render_wheel_shadow(p_fl, ang_fl, ctx.config.wheel_size, 1.0);
+    render_wheel_shadow(p_fr, ang_fr, ctx.config.wheel_size, 1.0);
+
+    // 2. Render Left and Right Front Wheels
+    draw_steered_wheel(ctx.wheel_texture, p_fl, ang_fl, ctx.config.wheel_size);
+    draw_steered_wheel(ctx.wheel_texture, p_fr, ang_fr, ctx.config.wheel_size);
+}
+
 /// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
 pub fn render_porsche_gt3r_sprite(
     chassis_center: Vec2,
@@ -267,6 +337,55 @@ pub fn render_car_with_visual_type_model_and_shadows(
     // 2. If model-specific high-detail top-down sprite is available, render sprite directly
     if let Some(m_id) = model_id {
         if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture(m_id, color_scheme.primary, color_scheme.secondary) {
+            let steered_cfg = crate::render::vehicle_assets::get_steered_wheel_config(m_id);
+            let wheel_tex = steered_cfg.and_then(|cfg| crate::render::vehicle_assets::get_wheel_texture(cfg.wheel_texture_id));
+
+            if let (Some(cfg), Some(ref w_tex)) = (steered_cfg, wheel_tex) {
+                let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
+                let lf = cfg.front_axle_offset * air_scale;
+                let half_w = cfg.half_track_width * air_scale;
+                let p_fl = chassis_center + fwd * lf - right * half_w;
+                let p_fr = chassis_center + fwd * lf + right * half_w;
+                let ang_fl = angle + steer_fl;
+                let ang_fr = angle + steer_fr;
+                let wheel_size = cfg.wheel_size * air_scale;
+
+                // 1. Wheel ground shadows
+                if shadows_enabled {
+                    let shadow_offset = Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40);
+                    let shadow_scale = 1.0 + (z_lift * 0.08).min(0.40);
+                    let shadow_alpha = (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0);
+                    render_wheel_shadow(p_fl + shadow_offset, ang_fl, wheel_size * shadow_scale, shadow_alpha);
+                    render_wheel_shadow(p_fr + shadow_offset, ang_fr, wheel_size * shadow_scale, shadow_alpha);
+                }
+
+                // 2. UnderChassis wheels
+                if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                }
+
+                // 3. Chassis bodywork
+                render_vehicle_topdown_sprite(
+                    &texture,
+                    chassis_center,
+                    angle,
+                    fwd,
+                    right,
+                    body_half_len,
+                    body_half_w,
+                    is_braking,
+                );
+
+                // 4. OverChassis wheels
+                if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                }
+
+                return;
+            }
+
             render_vehicle_topdown_sprite(
                 &texture,
                 chassis_center,

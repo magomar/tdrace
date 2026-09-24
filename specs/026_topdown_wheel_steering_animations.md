@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Top-Down Pre-Baked Vehicle Wheel Steering Animations"
 description: "Multi-layer sprite decomposition and Ackermann wheel steering animation architecture for pre-baked high-resolution 2D top-down vehicles with proof-of-concept on classic_kart."
-status: draft
+status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:15:00Z }
 ---
@@ -296,40 +296,40 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
 ### Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Kart wheel steering visual deflection under steering input**
-  - [ ] **Given** a race session active with the vehicle model `"classic_kart"`
-  - [ ] **When** the player or AI applies a full left steering input ($\text{steer\_angle} < 0$)
-  - [ ] **Then** the front-left and front-right wheels must visibly rotate counter-clockwise relative to the vehicle heading
-  - [ ] **And** the inner wheel must exhibit a larger steering deflection angle than the outer wheel according to Ackermann geometry ($\lvert\delta_{\text{FL}}\rvert > \lvert\delta_{\text{FR}}\rvert$)
-  - [ ] **And** the kart chassis bodywork, driver helmet, and rear wheels must remain fixed relative to the vehicle centerline
+  - [x] **Given** a race session active with the vehicle model `"classic_kart"`
+  - [x] **When** the player or AI applies a full left steering input ($\text{steer\_angle} < 0$)
+  - [x] **Then** the front-left and front-right wheels must visibly rotate counter-clockwise relative to the vehicle heading
+  - [x] **And** the inner wheel must exhibit a larger steering deflection angle than the outer wheel according to Ackermann geometry ($\lvert\delta_{\text{FL}}\rvert > \lvert\delta_{\text{FR}}\rvert$)
+  - [x] **And** the kart chassis bodywork, driver helmet, and rear wheels must remain fixed relative to the vehicle centerline
 
 - **Scenario: Symmetrical steering return to center**
-  - [ ] **Given** the kart moving straight with zero steering input ($\text{steer\_angle} = 0.0$)
-  - [ ] **When** top-down car rendering is executed
-  - [ ] **Then** both front wheels must align exactly parallel to the vehicle forward vector ($\hat{\mathbf{f}}$)
-  - [ ] **And** no offset jitter or rotational drift must be observed
+  - [x] **Given** the kart moving straight with zero steering input ($\text{steer\_angle} = 0.0$)
+  - [x] **When** top-down car rendering is executed
+  - [x] **Then** both front wheels must align exactly parallel to the vehicle forward vector ($\hat{\mathbf{f}}$)
+  - [x] **And** no offset jitter or rotational drift must be observed
 
 - **Scenario: Steered wheel ground shadow alignment**
-  - [ ] **Given** dynamic shadows enabled in game settings
-  - [ ] **When** front wheels rotate to steer angle $\delta$
-  - [ ] **Then** the directional ambient ground shadow underneath each front wheel must rotate synchronously with the tire angle
-  - [ ] **And** the shadow must scale gracefully with jump elevation lift without detaching from ground plane projection
+  - [x] **Given** dynamic shadows enabled in game settings
+  - [x] **When** front wheels rotate to steer angle $\delta$
+  - [x] **Then** the directional ambient ground shadow underneath each front wheel must rotate synchronously with the tire angle
+  - [x] **And** the shadow must scale gracefully with jump elevation lift without detaching from ground plane projection
 
 - **Scenario: Legacy monolithic sprite fallback guarantee**
-  - [ ] **Given** a vehicle model without a modular wheel configuration (e.g. `"gt_porsche_911_gt3r"`)
-  - [ ] **When** the top-down vehicle sprite is rendered
-  - [ ] **Then** the engine must render the monolithic pre-baked sprite without attempting to load or draw detached wheel assets
-  - [ ] **And** zero missing texture warnings or rendering artifacts must occur
+  - [x] **Given** a vehicle model without a modular wheel configuration (e.g. `"gt_porsche_911_gt3r"`)
+  - [x] **When** the top-down vehicle sprite is rendered
+  - [x] **Then** the engine must render the monolithic pre-baked sprite without attempting to load or draw detached wheel assets
+  - [x] **And** zero missing texture warnings or rendering artifacts must occur
 
 - **Scenario: Standalone wheel texture asset integrity**
-  - [ ] **Given** the asset directory `assets/textures/vehicles/topdown/wheels/`
-  - [ ] **When** `kart_slick_front.png` is read by asset validation tests
-  - [ ] **Then** the file must exist, contain a valid PNG header, have dimensions $128 \times 256$, and feature transparent background margins ($A = 0$)
+  - [x] **Given** the asset directory `assets/textures/vehicles/topdown/wheels/`
+  - [x] **When** `kart_slick_front.png` is read by asset validation tests
+  - [x] **Then** the file must exist, contain a valid PNG header, have dimensions $128 \times 256$, and feature transparent background margins ($A = 0$)
 
 - **Scenario: Colorway tinting consistency on decomposed kart**
-  - [ ] **Given** a custom colorway applied to `"classic_kart"` in the garage
-  - [ ] **When** `apply_vehicle_tint` generates runtime textures
-  - [ ] **Then** the kart chassis body and side pods must reflect the custom primary color
-  - [ ] **And** the front wheel rim hubs must maintain realistic metallic/alloy hues without improper saturation bleeding
+  - [x] **Given** a custom colorway applied to `"classic_kart"` in the garage
+  - [x] **When** `apply_vehicle_tint` generates runtime textures
+  - [x] **Then** the kart chassis body and side pods must reflect the custom primary color
+  - [x] **And** the front wheel rim hubs must maintain realistic metallic/alloy hues without improper saturation bleeding
 
 ---
 

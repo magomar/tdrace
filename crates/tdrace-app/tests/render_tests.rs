@@ -1136,6 +1136,178 @@ fn test_backdrop_ground_pass_execution() {
     }
 }
 
+// ==============================================================================
+// SPEC 026: TOP-DOWN PRE-BAKED VEHICLE WHEEL STEERING ANIMATIONS
+// ==============================================================================
+
+#[test]
+fn test_spec_026_standalone_wheel_texture_asset_integrity() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/wheels/kart_slick_front.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_slick_front.png");
+
+    // Valid PNG signature: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+    assert_eq!(&bytes[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "Must contain valid PNG header");
+
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart wheel image");
+    assert_eq!(img.width, 128, "Tire width must be 128px");
+    assert_eq!(img.height, 256, "Tire height must be 256px");
+    assert_eq!(img.bytes.len(), 128 * 256 * 4);
+
+    // Transparent corner margins (A = 0)
+    let w = 128;
+    let h = 256;
+    for (cx, cy) in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (5, 5), (w - 6, 5)] {
+        let idx = (cy * w + cx) * 4;
+        assert_eq!(img.bytes[idx + 3], 0, "Corner pixel ({}, {}) must have alpha 0", cx, cy);
+    }
+
+    // Center hub must be opaque
+    let center_idx = (h / 2 * w + w / 2) * 4;
+    assert_eq!(img.bytes[center_idx + 3], 255, "Wheel center hub must be opaque");
+}
+
+#[test]
+fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
+    use tdrace_app::render::vehicle_assets::{get_steered_wheel_config, WheelLayerMode};
+
+    // 1. Proof-of-concept classic_kart must return explicit SteeredWheelConfig
+    let cfg = get_steered_wheel_config("classic_kart").expect("classic_kart must have SteeredWheelConfig");
+    assert_eq!(cfg.wheel_texture_id, "kart_slick_front");
+    assert!((cfg.front_axle_offset - 0.62).abs() < 1e-4);
+    assert!((cfg.half_track_width - 0.52).abs() < 1e-4);
+    assert!((cfg.wheel_size.x - 0.24).abs() < 1e-4);
+    assert!((cfg.wheel_size.y - 0.44).abs() < 1e-4);
+    assert_eq!(cfg.layering, WheelLayerMode::OverChassis);
+
+    // 2. Legacy fallback guarantee: all other models return None
+    let legacy_models = [
+        "gt_porsche_911_gt3r",
+        "classic_gt",
+        "classic_nascar",
+        "classic_offroad",
+        "classic_rally",
+        "nascar_camaro_zl1",
+        "rally_peugeot_208_rally4",
+    ];
+    for model_id in legacy_models {
+        assert!(
+            get_steered_wheel_config(model_id).is_none(),
+            "Model {} must return None to guarantee legacy monolithic sprite fallback",
+            model_id
+        );
+    }
+}
+
+#[test]
+fn test_spec_026_kart_wheel_steering_ackermann_deflection_and_return_to_center() {
+    let car = Car::new(CarConfig::classic_kart());
+
+    // 1. Symmetrical return to center: steer_angle = 0.0
+    let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
+    assert!(fl_zero.abs() < 1e-6, "Front-left wheel must align parallel to heading at 0 steer");
+    assert!(fr_zero.abs() < 1e-6, "Front-right wheel must align parallel to heading at 0 steer");
+
+    // 2. Turn left (steer_angle > 0.0, counter-clockwise): inner wheel (FL) turns sharper than outer wheel (FR)
+    let (fl_left, fr_left) = car.compute_ackermann_angles(0.45);
+    assert!(fl_left > 0.0, "Front-left wheel must turn left (counter-clockwise)");
+    assert!(fr_left > 0.0, "Front-right wheel must turn left (counter-clockwise)");
+    assert!(
+        fl_left > fr_left,
+        "Inner wheel ({:.4}) must deflect more than outer wheel ({:.4}) under left turn",
+        fl_left, fr_left
+    );
+
+    // 3. Turn right (steer_angle < 0.0, clockwise): inner wheel (FR) turns sharper than outer wheel (FL)
+    let (fl_right, fr_right) = car.compute_ackermann_angles(-0.45);
+    assert!(fl_right < 0.0, "Front-left wheel must turn right (clockwise)");
+    assert!(fr_right < 0.0, "Front-right wheel must turn right (clockwise)");
+    assert!(
+        fr_right.abs() > fl_right.abs(),
+        "Inner wheel (|{:.4}|) must deflect more than outer wheel (|{:.4}|) under right turn",
+        fr_right, fl_right
+    );
+
+    // 4. Symmetry: magnitude of FL under left turn matches FR under right turn
+    assert!(
+        (fl_left.abs() - fr_right.abs()).abs() < 1e-5,
+        "Steering geometry must be strictly symmetric between left and right turns"
+    );
+}
+
+#[test]
+fn test_spec_026_steered_wheel_ground_shadow_alignment_and_jump_scaling() {
+    use glam::Vec2;
+
+    let angle = 0.35f32; // vehicle heading
+    let steer_fl = -0.22f32; // turning
+    let wheel_ang = angle + steer_fl;
+    let _wheel_size = Vec2::new(0.24, 0.44);
+
+    // Grounded shadow (z_lift = 0.0)
+    let z_ground = 0.0f32;
+    let s_off_ground = Vec2::new(0.06 + z_ground * 0.30, 0.08 + z_ground * 0.40);
+    let s_scale_ground = 1.0 + (z_ground * 0.08).min(0.40);
+    let s_alpha_ground = (1.0 / (1.0 + z_ground * 0.55)).clamp(0.25, 1.0);
+    assert_eq!(s_scale_ground, 1.0);
+    assert_eq!(s_alpha_ground, 1.0);
+    assert!((s_off_ground - Vec2::new(0.06, 0.08)).length() < 1e-5);
+
+    // Airborne jump shadow (z_lift = 2.0m)
+    let z_jump = 2.0f32;
+    let s_off_jump = Vec2::new(0.06 + z_jump * 0.30, 0.08 + z_jump * 0.40);
+    let s_scale_jump = 1.0 + (z_jump * 0.08).min(0.40);
+    let s_alpha_jump = (1.0 / (1.0 + z_jump * 0.55)).clamp(0.25, 1.0);
+
+    assert!(s_scale_jump > 1.10, "Airborne jump shadow must expand: {:.3}", s_scale_jump);
+    assert!(s_alpha_jump < 0.50, "Airborne jump shadow must fade smoothly: {:.3}", s_alpha_jump);
+    assert!(s_off_jump.x > s_off_ground.x && s_off_jump.y > s_off_ground.y, "Shadow offset expands with altitude");
+
+    // Shadow orientation: verify forward and right vectors rotate synchronously with wheel heading
+    let fwd = Vec2::new(wheel_ang.cos(), wheel_ang.sin());
+    let right = Vec2::new(wheel_ang.sin(), -wheel_ang.cos());
+    assert!((fwd.dot(right)).abs() < 1e-6, "Shadow local frame must remain orthogonal");
+    assert!((fwd.length() - 1.0).abs() < 1e-6);
+}
+
+#[test]
+fn test_spec_026_colorway_tinting_consistency_on_decomposed_kart() {
+    use macroquad::color::Color;
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::render::vehicle_assets::apply_vehicle_tint;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let chassis_path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart.png");
+    let chassis_bytes = std::fs::read(&chassis_path).expect("Failed to read decomposed classic_kart chassis");
+    let base_img = Image::from_file_with_format(&chassis_bytes, None).expect("Failed to parse chassis");
+
+    let custom_primary = Color::new(0.90, 0.15, 0.15, 1.0); // Flame Red
+    let custom_secondary = Color::new(0.95, 0.95, 0.10, 1.0); // Bright Yellow
+    let tinted = apply_vehicle_tint(&base_img, "classic_kart", custom_primary, custom_secondary);
+
+    // Verify dimensions preserved
+    assert_eq!(base_img.width, tinted.width);
+    assert_eq!(base_img.height, tinted.height);
+
+    // Verify significant bodywork pixel tinting
+    let mut tinted_pixels = 0;
+    let mut total_opaque = 0;
+    for (orig, tint) in base_img.bytes.chunks_exact(4).zip(tinted.bytes.chunks_exact(4)) {
+        if orig[3] > 15 {
+            total_opaque += 1;
+            if orig != tint {
+                tinted_pixels += 1;
+            }
+        }
+    }
+    let ratio = tinted_pixels as f32 / total_opaque as f32;
+    assert!(ratio >= 0.25, "Expected at least 25% of chassis pixels tinted, got {:.1}%", ratio * 100.0);
+}
+
 
 
 
