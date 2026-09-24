@@ -11587,43 +11587,55 @@ impl RaceSession {
             selected_idx = cards.len() - 1;
         }
 
-        // Keyboard navigation
-        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
+        // Keyboard and Gamepad navigation
+        if is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.nav_up
+            || self.input.gamepad.snapshot.dpad_up_pressed
+        {
             if selected_idx > 0 {
                 selected_idx -= 1;
                 self.audio.play_sfx(SfxType::UiMove);
             }
         }
-        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
+        if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.nav_down
+            || self.input.gamepad.snapshot.dpad_down_pressed
+        {
             if selected_idx + 1 < cards.len() {
                 selected_idx += 1;
                 self.audio.play_sfx(SfxType::UiMove);
             }
         }
 
-        // Mouse hover and click
-        let sw = screen_width();
-        let sh = screen_height();
-        let mouse_pos = macroquad::input::mouse_position();
-        let mouse_vec = macroquad::math::Vec2::new(mouse_pos.0, mouse_pos.1);
+        // Mouse click navigation (click only to select/expand or launch; hover does not fight keys)
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        let (mx, my) = mouse_position_safe();
+        let mouse_vec = macroquad::math::Vec2::new(mx, my);
         let mut clicked_card = false;
 
-        for (i, _) in cards.iter().enumerate() {
-            let rect = crate::ui::career_select::career_select_card_rect(i, selected_idx, sw, sh);
-            if rect.contains(mouse_vec) {
-                if selected_idx != i {
-                    selected_idx = i;
-                    self.audio.play_sfx(SfxType::UiMove);
+        if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+            for (i, _) in cards.iter().enumerate() {
+                let rect = crate::ui::career_select::career_select_card_rect(i, selected_idx, sw, sh);
+                if rect.contains(mouse_vec) {
+                    if selected_idx != i {
+                        selected_idx = i;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    } else {
+                        clicked_card = true;
+                    }
+                    break;
                 }
-                if macroquad::input::is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
-                    clicked_card = true;
-                }
-                break;
             }
         }
 
         // Back / Cancel
-        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Backspace) {
+        if is_key_pressed(KeyCode::Escape)
+            || is_key_pressed(KeyCode::Backspace)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+        {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = GameState::ModalitySelect {
                 category: ModalityCategory::SinglePlayer,
@@ -11648,7 +11660,8 @@ impl RaceSession {
         let confirm_pressed = clicked_card
             || is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
-            || is_key_pressed(KeyCode::Space);
+            || is_key_pressed(KeyCode::Space)
+            || self.input.gamepad.snapshot.btn_confirm_pressed;
 
         if confirm_pressed {
             if let Some(card) = cards.get(selected_idx) {
