@@ -8,6 +8,7 @@ use tdrace_app::ui::career_select::build_career_select_cards;
 #[test]
 fn test_launch_or_resume_preserves_round() {
     let mut session = RaceSession::new();
+    session.hof_db = HallOfFameDb::open_in_memory().ok();
     let def = session.championship_manager.series.values().next().expect("At least one series def").clone();
 
     // Create an ongoing championship session with round 2 completed (current_round = 2)
@@ -39,7 +40,8 @@ fn test_launch_or_resume_preserves_round() {
 
 #[test]
 fn test_parallel_active_championships_across_modalities() {
-    let session = RaceSession::new();
+    let mut session = RaceSession::new();
+    session.hof_db = HallOfFameDb::open_in_memory().ok();
     let mut prog_map = std::collections::HashMap::new();
 
     // GT active championship at round 1

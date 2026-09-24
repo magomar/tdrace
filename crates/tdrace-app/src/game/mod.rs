@@ -11792,6 +11792,7 @@ impl RaceSession {
     pub fn start_editor_test_drive(&mut self) {
         if let Some(state) = &mut self.editor_state {
             state.rebuild_geometry();
+            self.track = state.track.clone();
             let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
             let default_car = resolve_predefined_car_for_track(Some(&self.track), effective_module);
             self.car_choice = default_car;

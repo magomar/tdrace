@@ -88,12 +88,16 @@ pub fn build_career_select_cards(
     let mut available_cards = Vec::new();
 
     for meta in MODALITY_CATALOG {
-        let prog = module_progress_map.get(meta.id).unwrap_or(if active_progress.module_id == meta.id {
+        let dummy_prog;
+        let prog = if let Some(p) = module_progress_map.get(meta.id) {
+            p
+        } else if active_progress.module_id == meta.id {
             active_progress
         } else {
-            &active_progress
-        });
-        let tier = if prog.module_id == meta.id { prog.level.clamp(1, 5) } else { 1 };
+            dummy_prog = ModuleCareerProgress::default_for_module(1, meta.id);
+            &dummy_prog
+        };
+        let tier = prog.level.clamp(1, 5);
         let tier_name = match tier {
             1 => "TIER 1 (ROOKIE)".to_string(),
             2 => "TIER 2 (AMATEUR)".to_string(),
@@ -102,26 +106,24 @@ pub fn build_career_select_cards(
             _ => "TIER 5 (LEGEND)".to_string(),
         };
 
-        // Find active session for this module
-        let session_match = |s: &ChampionshipSession| -> bool {
-            !s.is_completed && (
-                s.name.to_lowercase().contains(meta.id)
-                || meta.id.contains(&s.name.to_lowercase())
-                || s.name.eq_ignore_ascii_case(meta.default_series_name)
-            )
-        };
-
+        // Find active session for this module:
+        // 1. First check the module's own progress (which is strictly scoped to this modality)
+        // 2. Fall back to current_session if it matches this modality
         let session_opt = prog.active_championship.as_ref()
-            .filter(|s| session_match(s))
+            .filter(|s| !s.is_completed)
             .or_else(|| {
-                if active_progress.module_id == meta.id {
-                    active_progress.active_championship.as_ref().filter(|s| session_match(s))
-                } else {
-                    None
-                }
-            })
-            .or_else(|| {
-                current_session.filter(|s| session_match(s))
+                current_session.filter(|s| {
+                    !s.is_completed && (
+                        champ_manager.series.values().any(|def| {
+                            def.series.module_id == meta.id
+                                && (def.series.name.eq_ignore_ascii_case(&s.name)
+                                    || def.series.id.eq_ignore_ascii_case(&s.name))
+                        })
+                        || s.name.to_lowercase().contains(meta.id)
+                        || meta.id.contains(&s.name.to_lowercase())
+                        || s.name.eq_ignore_ascii_case(meta.default_series_name)
+                    )
+                })
             });
 
         // Resolve series definition if available
