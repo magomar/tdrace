@@ -251,6 +251,12 @@ pub enum GameState {
     },
     TrackEditor,
     ChampionshipEditor,
+    LanHub {
+        selected_idx: usize,
+    },
+    LanHostLobby,
+    LanJoinBrowser,
+    LanClientLobby,
 }
 
 /// Active view within the post-race Finished state.
@@ -549,6 +555,18 @@ pub struct RaceSession {
     pub stunt_scoring_override: Option<bool>,
     pub player_collision_stunt_lockout: f32,
     pub player2_collision_stunt_lockout: f32,
+
+    // LAN Multiplayer
+    pub lan_host_screen: Option<cabinet::net::CabinetLanHostScreen>,
+    pub lan_join_screen: Option<cabinet::net::CabinetLanJoinScreen>,
+    pub lan_client_lobby_screen: Option<cabinet::net::CabinetLanClientLobbyScreen>,
+    pub lan_host: Option<cabinet::net::LanHost>,
+    pub lan_client: Option<cabinet::net::LanClient>,
+    pub is_lan_multiplayer: bool,
+    pub is_lan_host: bool,
+    pub lan_player_slot: u8,
+    pub lan_remote_inputs: std::collections::HashMap<u8, cabinet::net::ClientInputPacket>,
+    pub lan_snapshot_tick: u32,
 }
 
 
@@ -833,6 +851,16 @@ impl RaceSession {
             stunt_scoring_override: None,
             player_collision_stunt_lockout: 0.0,
             player2_collision_stunt_lockout: 0.0,
+            lan_host_screen: None,
+            lan_join_screen: None,
+            lan_client_lobby_screen: None,
+            lan_host: None,
+            lan_client: None,
+            is_lan_multiplayer: false,
+            is_lan_host: false,
+            lan_player_slot: 0,
+            lan_remote_inputs: std::collections::HashMap::new(),
+            lan_snapshot_tick: 0,
         };
 
         session.refresh_profiles_and_stats();
@@ -4190,6 +4218,12 @@ impl RaceSession {
                 self.audio.stop_all_loops();
                 self.audio.play_sfx(SfxType::UiSelect);
             }
+            GameState::LanHub { .. }
+            | GameState::LanHostLobby
+            | GameState::LanJoinBrowser
+            | GameState::LanClientLobby => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+            }
             GameState::ModalitySelect { .. } => {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
@@ -4727,6 +4761,22 @@ impl RaceSession {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_modality_select();
             }
+            GameState::LanHub { selected_idx } => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_lan_hub(selected_idx);
+            }
+            GameState::LanHostLobby => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_lan_host_lobby(frame_dt);
+            }
+            GameState::LanJoinBrowser => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_lan_join_browser(frame_dt);
+            }
+            GameState::LanClientLobby => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_lan_client_lobby(frame_dt);
+            }
             GameState::CareerHub { .. } => {
                 self.audio.play_music(MusicTrack::NeonMenu);
                 self.update_career_hub();
@@ -4781,8 +4831,22 @@ impl RaceSession {
                     self.prev_countdown_sec = 1;
                 }
 
+                if self.is_lan_multiplayer {
+                    if let Some(ref mut host) = self.lan_host {
+                        let _ = host.update(frame_dt);
+                    }
+                    if let Some(ref mut client) = self.lan_client {
+                        let _ = client.update(frame_dt);
+                    }
+                }
+
                 // Camera follows player during countdown
-                if let Some(player_car) = self.cars.first() {
+                let countdown_cam_idx = if self.is_lan_multiplayer {
+                    (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1))
+                } else {
+                    0
+                };
+                if let Some(player_car) = self.cars.get(countdown_cam_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.game_mode.is_split_screen() {
@@ -4807,6 +4871,57 @@ impl RaceSession {
                     self.camera_p2.resume_from_pause(p2_car);
                 }
 
+                // LAN Packet Networking
+                if self.is_lan_multiplayer {
+                    if self.is_lan_host {
+                        if let Some(ref mut host) = self.lan_host {
+                            let events = host.update(frame_dt);
+                            for event in events {
+                                if let cabinet::net::HostEvent::PlayerInput { slot_id, input } = event {
+                                    self.lan_remote_inputs.insert(slot_id, input);
+                                }
+                            }
+                        }
+                    } else if let Some(ref mut client) = self.lan_client {
+                        let my_idx = (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1));
+                        let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                        let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
+                        let touch_ctrl = self.touch.poll_controls();
+                        let mut local_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                        if my_speed <= 0.25 && local_ctrl.brake > 0.0 && local_ctrl.throttle == 0.0 {
+                            local_ctrl.reverse = true;
+                            local_ctrl.throttle = local_ctrl.brake;
+                            local_ctrl.brake = 0.0;
+                        }
+
+                        self.lan_snapshot_tick += 1;
+                        let _ = client.send_input(
+                            local_ctrl.steer,
+                            local_ctrl.throttle,
+                            local_ctrl.brake,
+                            local_ctrl.handbrake,
+                            local_ctrl.reverse,
+                        );
+
+                        let events = client.update(frame_dt);
+                        for event in events {
+                            if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
+                                for car_snap in snapshot.cars {
+                                    let idx = car_snap.slot_id as usize;
+                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
+                                        let car = &mut self.cars[idx];
+                                        car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
+                                        car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
+                                        car.state.angle = car_snap.heading_rad;
+                                        car.state.angular_velocity = car_snap.angular_velocity;
+                                        car.state.steer_angle = car_snap.steer_angle_rad;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Pause trigger (Escape / Pause key or Gamepad Start)
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
                     self.pause_race();
@@ -4826,8 +4941,45 @@ impl RaceSession {
                     substeps += 1;
                 }
 
+                // Authoritative Snapshot Broadcast from Host at 60 Hz
+                if self.is_lan_multiplayer && self.is_lan_host {
+                    if let Some(ref mut host) = self.lan_host {
+                        self.lan_snapshot_tick += 1;
+                        let mut car_snapshots = Vec::with_capacity(self.cars.len());
+                        for (i, car) in self.cars.iter().enumerate() {
+                            let tracker = self.trackers.get(i);
+                            car_snapshots.push(cabinet::net::CarStateSnapshot {
+                                slot_id: i as u8,
+                                pos_x: car.state.position.x,
+                                pos_y: car.state.position.y,
+                                velocity_x: car.state.velocity.x,
+                                velocity_y: car.state.velocity.y,
+                                heading_rad: car.state.angle,
+                                angular_velocity: car.state.angular_velocity,
+                                steer_angle_rad: car.state.steer_angle,
+                                current_lap: tracker.map(|t| t.current_lap as u16).unwrap_or(1),
+                                checkpoint_idx: tracker.map(|t| t.next_checkpoint_idx as u16).unwrap_or(0),
+                                best_lap_time_ms: tracker.and_then(|t| t.best_lap_time).map(|s| (s * 1000.0) as u32),
+                                last_lap_time_ms: tracker.and_then(|t| t.last_lap_time).map(|s| (s * 1000.0) as u32),
+                                is_finished: tracker.map(|t| t.current_lap > self.total_laps).unwrap_or(false),
+                            });
+                        }
+                        let snapshot = cabinet::net::WorldSnapshotPacket {
+                            tick: self.lan_snapshot_tick,
+                            session_elapsed_sec: self.session_time,
+                            cars: car_snapshots,
+                        };
+                        let _ = host.broadcast_snapshot(&snapshot);
+                    }
+                }
+
                 // Update Camera
-                if let Some(player_car) = self.cars.first() {
+                let cam_focus_idx = if self.is_lan_multiplayer {
+                    (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1))
+                } else {
+                    0
+                };
+                if let Some(player_car) = self.cars.get(cam_focus_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.is_split_screen() {
@@ -7559,12 +7711,7 @@ impl RaceSession {
                     }
                     ModalityItem::LanPlay => {
                         self.audio.play_sfx(SfxType::UiSelect);
-                        modal = Some(ModalityModal::LanComingSoon);
-                        self.state = GameState::ModalitySelect {
-                            category,
-                            selected_idx,
-                            modal,
-                        };
+                        self.state = GameState::LanHub { selected_idx: 0 };
                         return;
                     }
                     ModalityItem::CloudPlay => {
@@ -7607,6 +7754,351 @@ impl RaceSession {
                 modal,
             };
         }
+    }
+
+    /// Handles navigation and selection in the LAN Hub screen.
+    pub fn update_lan_hub(&mut self, mut selected_idx: usize) {
+        // Navigation: Left/Right or Up/Down
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::Up)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.dpad_up_pressed
+        {
+            selected_idx = (selected_idx + 1) % 2;
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::Down)
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.dpad_down_pressed
+        {
+            selected_idx = (selected_idx + 1) % 2;
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+
+        // Selection: Enter, Space, Key1, Key2, Gamepad A
+        if is_key_pressed(KeyCode::Key1) {
+            self.select_lan_hub_option(0);
+            return;
+        }
+        if is_key_pressed(KeyCode::Key2) {
+            self.select_lan_hub_option(1);
+            return;
+        }
+
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || self.input.gamepad.snapshot.btn_a_pressed
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+        {
+            self.select_lan_hub_option(selected_idx);
+            return;
+        }
+
+        // Back: ESC, Gamepad B
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.state = GameState::ModalitySelect {
+                category: ModalityCategory::Multiplayer,
+                selected_idx: 1, // LAN Play card
+                modal: None,
+            };
+            return;
+        }
+
+        self.state = GameState::LanHub { selected_idx };
+    }
+
+    /// Launches either Host Room or Join Server Browser from LAN Hub.
+    pub fn select_lan_hub_option(&mut self, idx: usize) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        if idx == 0 {
+            // Option 0: Host Room
+            let mut bound_host = None;
+            for port in [cabinet::net::DEFAULT_GAME_PORT, 7778, 7779, 7780, 0] {
+                if let Ok(host) = cabinet::net::LanHost::bind(
+                    format!("{}'s Grand Prix", self.active_profile.name),
+                    &self.active_profile.name,
+                    self.active_profile.country.as_deref().unwrap_or("ESP"),
+                    self.selected_car_model_id.unwrap_or("scuderia_gt"),
+                    "red",
+                    port,
+                    8,
+                    self.track_choice.track_id(),
+                    self.active_module_id,
+                    5,
+                ) {
+                    bound_host = Some(host);
+                    break;
+                }
+            }
+
+            if let Some(host) = bound_host {
+                let track_names: Vec<String> = TrackChoice::ALL.iter().map(|tc| tc.track_id().to_string()).collect();
+                let mut screen = cabinet::net::CabinetLanHostScreen::new(host);
+                if !track_names.is_empty() {
+                    screen = screen.with_tracks(track_names);
+                }
+                self.lan_host_screen = Some(screen);
+                self.state = GameState::LanHostLobby;
+            }
+        } else {
+            // Option 1: Join Server Browser & Direct IP Keypad
+            let join_screen = cabinet::net::CabinetLanJoinScreen::new(
+                &self.active_profile.name,
+                self.active_profile.country.as_deref().unwrap_or("ESP"),
+                self.selected_car_model_id.unwrap_or("scuderia_gt"),
+                "corsa_red",
+            );
+            self.lan_join_screen = Some(join_screen);
+            self.state = GameState::LanJoinBrowser;
+        }
+    }
+
+    /// Updates authoritative host lobby screen, responds to ready changes, countdown, or disband.
+    pub fn update_lan_host_lobby(&mut self, frame_dt: f32) {
+        let mut launch = false;
+        let mut exit = false;
+
+        if let Some(ref mut screen) = self.lan_host_screen {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::cyberpunk_neon();
+            let mut ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, frame_dt)
+                .with_audio(Some(&self.audio));
+
+            let action = screen.update(&mut ctx);
+            if matches!(action, cabinet::state::stack::ScreenAction::Pop) || screen.exit_requested {
+                exit = true;
+            } else if screen.is_in_race() {
+                launch = true;
+            }
+        } else {
+            exit = true;
+        }
+
+        if exit {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.lan_host_screen = None;
+            self.state = GameState::LanHub { selected_idx: 0 };
+        } else if launch {
+            let host = self.lan_host_screen.take().unwrap().into_host();
+            self.launch_lan_race_session(Some(host), None, 0);
+        }
+    }
+
+    /// Updates client server browser screen, handles beacon discovery and direct IP connect.
+    pub fn update_lan_join_browser(&mut self, frame_dt: f32) {
+        let mut exit = false;
+
+        if let Some(ref mut screen) = self.lan_join_screen {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::cyberpunk_neon();
+            let mut ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, frame_dt)
+                .with_audio(Some(&self.audio));
+
+            let action = screen.update(&mut ctx);
+            if matches!(action, cabinet::state::stack::ScreenAction::Pop) {
+                exit = true;
+            } else if let Some(lobby) = screen.take_connected_lobby_screen() {
+                self.lan_client_lobby_screen = Some(lobby);
+                self.lan_join_screen = None;
+                self.state = GameState::LanClientLobby;
+                return;
+            }
+        } else {
+            exit = true;
+        }
+
+        if exit {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.lan_join_screen = None;
+            self.state = GameState::LanHub { selected_idx: 1 };
+        }
+    }
+
+    /// Updates client lobby waiting room, loadout cycling, ready check, and synchronized launch.
+    pub fn update_lan_client_lobby(&mut self, frame_dt: f32) {
+        let mut exit = false;
+        let mut launch = false;
+
+        if let Some(ref mut screen) = self.lan_client_lobby_screen {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::cyberpunk_neon();
+            let mut ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, frame_dt)
+                .with_audio(Some(&self.audio));
+
+            let action = screen.update(&mut ctx);
+            if matches!(action, cabinet::state::stack::ScreenAction::Pop) {
+                exit = true;
+            } else if screen.is_in_race() {
+                launch = true;
+            }
+        } else {
+            exit = true;
+        }
+
+        if exit {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.lan_client_lobby_screen = None;
+            self.state = GameState::LanHub { selected_idx: 1 };
+        } else if launch {
+            let client = self.lan_client_lobby_screen.take().unwrap().into_client();
+            let slot_id = client.assigned_slot_id().unwrap_or(1);
+            self.launch_lan_race_session(None, Some(client), slot_id);
+        }
+    }
+
+    /// Configures the circuit, spawns player and remote vehicles on starting grid, and enters countdown.
+    pub fn launch_lan_race_session(
+        &mut self,
+        host: Option<cabinet::net::LanHost>,
+        client: Option<cabinet::net::LanClient>,
+        my_slot_id: u8,
+    ) {
+        self.is_lan_multiplayer = true;
+        self.is_lan_host = host.is_some();
+        self.lan_host = host;
+        self.lan_client = client;
+        self.lan_player_slot = my_slot_id;
+        self.lan_remote_inputs.clear();
+        self.lan_snapshot_tick = 0;
+
+        let track_slug = if let Some(ref h) = self.lan_host {
+            h.track_id().to_string()
+        } else if let Some(ref c) = self.lan_client {
+            c.track_id().to_string()
+        } else {
+            "classic_grand_prix".to_string()
+        };
+
+        if let Ok(t) = self.track_manager.load_track_by_slug(&track_slug) {
+            self.track = t;
+        } else if let Some(tc) = TrackChoice::ALL.iter().find(|t| t.track_id() == track_slug) {
+            self.track = self.load_track_for_session(tc);
+        } else {
+            self.track = self.load_track_for_session(&TrackChoice::ClassicGrandPrix);
+        }
+
+        if let Some(ref h) = self.lan_host {
+            self.total_laps = h.laps() as u32;
+        } else if let Some(ref c) = self.lan_client {
+            self.total_laps = c.laps() as u32;
+        } else {
+            self.total_laps = 5;
+        }
+
+        let (_num_participants, slot_info): (usize, Vec<(u8, String, String, String, String)>) = if let Some(ref h) = self.lan_host {
+            let active = h.active_slots();
+            let count = active.len();
+            let info = active.iter().map(|s| (s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone())).collect();
+            (count, info)
+        } else if let Some(ref c) = self.lan_client {
+            let active = c.slots();
+            let mut info = Vec::new();
+            for s in active {
+                info.push((s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone()));
+            }
+            if info.is_empty() {
+                info.push((0, "Host".to_string(), "ESP".to_string(), "scuderia_gt".to_string(), "corsa_red".to_string()));
+                info.push((my_slot_id, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "scuderia_gt".to_string(), "corsa_red".to_string()));
+            }
+            let count = info.len().max(2);
+            (count, info)
+        } else {
+            (1, vec![(0, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "scuderia_gt".to_string(), "corsa_red".to_string())])
+        };
+
+        let num_cps = self.track.checkpoints.len();
+        let num_sectors = 3;
+        let base_config = self.config.get_car_config(CarChoice::SportsCar);
+
+        self.cars.clear();
+        self.car_visual_types.clear();
+        self.car_model_ids.clear();
+        self.trackers.clear();
+        self.ai_drivers.clear();
+        self.grid_participants.clear();
+        self.color_schemes.clear();
+
+        for (i, (slot_id, name, country, car_model, _livery)) in slot_info.into_iter().enumerate() {
+            let grid_pose = self
+                .track
+                .grid_positions
+                .get(i)
+                .copied()
+                .unwrap_or(SpawnPose {
+                    position: glam::Vec2::ZERO,
+                    angle: 0.0,
+                    grid_slot: i,
+                });
+            let mut car = Car::new(base_config).with_pose(grid_pose.position, grid_pose.angle);
+            car.state.velocity = glam::Vec2::ZERO;
+
+            let is_me = slot_id == my_slot_id;
+            let scheme = CarColorScheme::from_index(i % 9);
+            self.color_schemes.push(scheme);
+            self.car_visual_types.push(VehicleVisualType::TouringGT {
+                widebody: true,
+                gt_wing: true,
+                diffuser: true,
+            });
+            self.car_model_ids.push(Some("scuderia_gt"));
+
+            let tracker = TrackProgressTracker::new(num_cps, num_sectors);
+            self.trackers.push(tracker);
+
+            self.grid_participants.push(GridParticipant {
+                is_player: is_me,
+                bot_index: None,
+                name: name.clone(),
+                alias: name,
+                country: Some(country),
+                car_title: car_model.clone(),
+                car_choice: CarChoice::SportsCar,
+                color_scheme: scheme,
+                model_id: Some("scuderia_gt"),
+                best_lap: None,
+                best_circuit_time: None,
+                random_seed: i as u64,
+                driver_tier: Some(DriverTier::Pro),
+            });
+
+            self.cars.push(car);
+        }
+
+        self.camera.setup_for_track(&self.track);
+        let my_idx = (my_slot_id as usize).min(self.cars.len().saturating_sub(1));
+        if let Some(player_car) = self.cars.get(my_idx) {
+            self.camera.current_pos = player_car.state.position;
+            self.camera.target_pos = player_car.state.position;
+        }
+
+        self.audio.stop_all_loops();
+        self.audio.play_sfx(SfxType::CountdownLow);
+        self.state = GameState::Countdown(3.0);
+    }
+
+    /// Exits LAN session, cleanly disconnects sockets, and resets flags.
+    pub fn exit_lan_session(&mut self) {
+        self.is_lan_multiplayer = false;
+        self.is_lan_host = false;
+        self.lan_host = None;
+        if let Some(mut client) = self.lan_client.take() {
+            let _ = client.disconnect();
+        }
+        self.lan_host_screen = None;
+        self.lan_join_screen = None;
+        self.lan_client_lobby_screen = None;
+        self.lan_remote_inputs.clear();
     }
 
     /// Updates input and state for the GT Career Hub screen.
@@ -10035,36 +10527,87 @@ impl RaceSession {
                 controls_all.push(bot_ctrl);
             }
         } else {
-            let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-            let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
-            let touch_ctrl = self.touch.poll_controls();
-            let mut player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-            if player_speed <= 0.25 && player_ctrl.brake > 0.0 && player_ctrl.throttle == 0.0 {
-                player_ctrl.reverse = true;
-                player_ctrl.throttle = player_ctrl.brake;
-                player_ctrl.brake = 0.0;
-            }
+            let player_ctrl = if self.is_lan_multiplayer {
+                if self.lan_player_slot == 0 {
+                    let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                    let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
+                    let touch_ctrl = self.touch.poll_controls();
+                    let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                    if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
+                        ctrl.reverse = true;
+                        ctrl.throttle = ctrl.brake;
+                        ctrl.brake = 0.0;
+                    }
+                    ctrl
+                } else if let Some(input) = self.lan_remote_inputs.get(&0) {
+                    CarControls {
+                        throttle: input.throttle,
+                        steer: input.steering,
+                        brake: input.brake,
+                        handbrake: input.handbrake,
+                        reverse: input.reverse,
+                    }
+                } else {
+                    CarControls::default()
+                }
+            } else {
+                let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
+                let touch_ctrl = self.touch.poll_controls();
+                let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
+                    ctrl.reverse = true;
+                    ctrl.throttle = ctrl.brake;
+                    ctrl.brake = 0.0;
+                }
+                ctrl
+            };
             controls_all.push(player_ctrl);
 
             for i in 1..n_cars {
-                let ai_idx = i - 1;
-                let other_cars_refs: Vec<&Car> = self
-                    .cars
-                    .iter()
-                    .enumerate()
-                    .filter(|(idx, _)| *idx != i)
-                    .map(|(_, c)| c)
-                    .collect();
-
-                let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
-                    ai.compute_controls(
-                        &self.cars[i],
-                        &self.track,
-                        &other_cars_refs,
-                        dt,
-                    )
+                let bot_ctrl = if self.is_lan_multiplayer {
+                    if i == (self.lan_player_slot as usize) {
+                        let player_speed = self.cars.get(i).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                        let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
+                        let touch_ctrl = self.touch.poll_controls();
+                        let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                        if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
+                            ctrl.reverse = true;
+                            ctrl.throttle = ctrl.brake;
+                            ctrl.brake = 0.0;
+                        }
+                        ctrl
+                    } else if let Some(input) = self.lan_remote_inputs.get(&(i as u8)) {
+                        CarControls {
+                            throttle: input.throttle,
+                            steer: input.steering,
+                            brake: input.brake,
+                            handbrake: input.handbrake,
+                            reverse: input.reverse,
+                        }
+                    } else {
+                        CarControls::default()
+                    }
                 } else {
-                    CarControls::default()
+                    let ai_idx = i - 1;
+                    let other_cars_refs: Vec<&Car> = self
+                        .cars
+                        .iter()
+                        .enumerate()
+                        .filter(|(idx, _)| *idx != i)
+                        .map(|(_, c)| c)
+                        .collect();
+
+                    if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                        ai.compute_controls(
+                            &self.cars[i],
+                            &self.track,
+                            &other_cars_refs,
+                            dt,
+                        )
+                    } else {
+                        CarControls::default()
+                    }
                 };
                 controls_all.push(bot_ctrl);
             }
@@ -11020,6 +11563,44 @@ impl RaceSession {
     /// Renders current UI state, HUD, or pause screen.
     pub fn render(&mut self) {
         match self.state {
+            GameState::LanHub { selected_idx } => {
+                if let Some(clicked) = crate::ui::render_lan_hub_screen(&self.fonts, selected_idx) {
+                    self.select_lan_hub_option(clicked);
+                }
+            }
+            GameState::LanHostLobby => {
+                if let Some(ref screen) = self.lan_host_screen {
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::cyberpunk_neon();
+                    let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0)
+                        .with_audio(Some(&self.audio));
+                    screen.draw(&ctx);
+                }
+            }
+            GameState::LanJoinBrowser => {
+                if let Some(ref screen) = self.lan_join_screen {
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::cyberpunk_neon();
+                    let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0)
+                        .with_audio(Some(&self.audio));
+                    screen.draw(&ctx);
+                }
+            }
+            GameState::LanClientLobby => {
+                if let Some(ref screen) = self.lan_client_lobby_screen {
+                    let sw = screen_width_safe();
+                    let sh = screen_height_safe();
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::cyberpunk_neon();
+                    let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0)
+                        .with_audio(Some(&self.audio));
+                    screen.draw(&ctx);
+                }
+            }
             GameState::ModalitySelect {
                 category,
                 selected_idx,
@@ -12926,7 +13507,7 @@ impl RaceSession {
     }
 
     /// Collects candidate nameplate items for a given focus player car.
-    fn collect_bot_nameplates<'a>(&'a self, focus_car_idx: usize) -> Vec<VehicleNameplateItem<'a>> {
+    pub fn collect_bot_nameplates<'a>(&'a self, focus_car_idx: usize) -> Vec<VehicleNameplateItem<'a>> {
         let focus_pos = match self.cars.get(focus_car_idx) {
             Some(c) => c.state.position,
             None => return Vec::new(),
@@ -12944,7 +13525,18 @@ impl RaceSession {
             let scheme = self.color_schemes.get(i).unwrap_or(&self.active_profile.color_scheme);
             let accent_color = scheme.secondary;
 
-            if self.is_split_screen() && i == 0 {
+            if self.is_lan_multiplayer {
+                let name = self.grid_participants.get(i).map(|p| p.name.as_str()).unwrap_or("RACER");
+                items.push(VehicleNameplateItem {
+                    car_idx: i,
+                    name,
+                    tier_label: Some("LAN"),
+                    accent_color,
+                    position: car.state.position,
+                    elevation: car.total_elevation(),
+                    distance_to_player: dist,
+                });
+            } else if self.is_split_screen() && i == 0 {
                 items.push(VehicleNameplateItem {
                     car_idx: i,
                     name: self.active_profile.alias.as_str(),

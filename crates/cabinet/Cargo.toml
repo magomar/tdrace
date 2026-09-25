@@ -18,7 +18,8 @@ chrono = { version = "0.4", default-features = false, features = ["clock", "std"
 kira = { version = "0.12", optional = true }
 
 [features]
-default = ["gamepad", "kira"]
+default = ["gamepad", "kira", "net"]
 gamepad = ["dep:gilrs"]
 kira = ["dep:kira"]
+net = []
 

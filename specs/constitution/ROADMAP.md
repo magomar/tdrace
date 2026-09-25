@@ -74,6 +74,7 @@ Living list of security audits, performance profiling targets, or general worksp
 Unscheduled explorations, long-term visions, and community feature requests (refer to [BACKLOG.md](../../BACKLOG.md) for complete idea registry):
 
 ### 1. Multiplayer Networking & Online Lobbies
+- `[x]` **[Local Network LAN Multiplayer & Cabinet Arcade Lobby](../036_local_network_lan_multiplayer_and_cabinet_lobby.md)**: Zero-configuration local network multiplayer architecture, authoritative UDP host-client netcode, automatic LAN beacon discovery, direct IP connect, and reusable Cabinet lobby shell.
 - **Authoritative Relay & Netcode**: Client-server architecture with dead-reckoning prediction, delta compression, and rollback collision arbitration.
 - **Matchmaking & Lobbies**: Dedicated room lobbies with synchronized car selection and spectator director slots.
 

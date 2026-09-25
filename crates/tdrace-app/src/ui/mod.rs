@@ -17,7 +17,9 @@ pub mod track_manager_ui;
 pub mod track_preview;
 pub mod career_select;
 pub mod circuit_viewer;
+pub mod lan_ui;
 
+pub use lan_ui::render_lan_hub_screen;
 pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
 pub use career_select::{
     build_career_select_cards, career_select_card_rect, render_career_select_screen,

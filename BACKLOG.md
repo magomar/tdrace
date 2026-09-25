@@ -117,6 +117,7 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - Dedicated trigger action mapped through `cabinet::input::InputMap` (Keyboard Space, Gamepad B/Right Trigger, Mobile touch button).
 
 ### 2.8 Networked Multiplayer Racing
+- **Local Network (LAN) Multiplayer & Cabinet Lobby Spec**: See formal blueprint in [`specs/036_local_network_lan_multiplayer_and_cabinet_lobby.md`](specs/036_local_network_lan_multiplayer_and_cabinet_lobby.md) for retro-style host IP display, UDP beacon discovery (`255.255.255.255:7776`), direct IP arcade connect, reusable `cabinet::net` waiting rooms, and authoritative 60 Hz physics synchronization.
 - **Client-Server Architecture**: Dedicated lightweight authoritative game relay / room host using UDP or WebSockets (with WebRTC data channels for browser builds).
 - **Lobby & Matchmaking System**:
   - Module-specific open and private lobby rooms with customizable rulesets (laps, collision modes, vehicle restrictions).

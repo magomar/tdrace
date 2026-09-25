@@ -276,7 +276,7 @@ fn test_split_screen_modality_invariants() {
 fn test_in_development_lan_cloud_modals() {
     let mut session = RaceSession::new();
 
-    // 1. Select LAN Multiplayer
+    // 1. Select LAN Multiplayer -> Enters LanHub
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::Multiplayer,
         selected_idx: 1, // LAN
@@ -288,16 +288,12 @@ fn test_in_development_lan_cloud_modals() {
 
     assert_eq!(
         session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::Multiplayer,
-            selected_idx: 1,
-            modal: Some(ModalityModal::LanComingSoon),
-        }
+        GameState::LanHub { selected_idx: 0 }
     );
 
-    // Dismiss modal with B button
+    // Dismiss LanHub with B button back to ModalitySelect
     session.input.gamepad.snapshot.btn_b_pressed = true;
-    session.update_modality_select();
+    session.update_lan_hub(0);
     session.input.gamepad.snapshot.btn_b_pressed = false;
 
     assert_eq!(

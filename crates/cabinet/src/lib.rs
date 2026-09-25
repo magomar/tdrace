@@ -10,16 +10,25 @@
 //! - [`profile`]: `PlayerProfile`, multi-slot `ProfileManager`, country flag banners, and color presets.
 //! - [`records`]: `HallOfFame`, `RecordDatabase`, and persistent leaderboards.
 //! - [`audio`]: Multi-channel `AudioMixer` with 4 volume buses (`Master`, `Music`, `Sfx`, `Ui`).
+//! - [`net`]: Zero-configuration local LAN multiplayer, discovery beacons, datagram codecs, and arcade lobby.
 
 pub mod audio;
 pub mod fx;
 pub mod input;
+pub mod net;
 pub mod profile;
 pub mod records;
 pub mod state;
 pub mod ui;
 
 // Top-level convenient re-exports
+pub use net::{
+    sanitize_string, CarStateSnapshot, ClientEvent, ClientInputPacket, ClientState, DiscoveredHost,
+    HostEvent, JoinResult, LanBeacon, LanBeaconBroadcaster, LanBeaconScanner, LanClient,
+    LanCollisionMode, LanHost, LobbyPacket, LobbySlot, LocalIpResolver, Packet, ProtocolError,
+    WorldSnapshotPacket, DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES,
+    MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
+};
 pub use audio::{
     ActiveSoundHandle, AudioBackend, AudioMixer, AudioSettings, CabinetAudioPlayer,
     CabinetAudioSink, SoundBus, SoundCue, SoundData,

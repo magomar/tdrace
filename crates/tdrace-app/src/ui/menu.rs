@@ -2887,7 +2887,7 @@ impl ModalityItem {
             Self::TimeTrial => "SOLO BENCHMARK VS PB SHADOW",
             Self::FreeRide => "OPEN PRACTICE • NO PRESSURE",
             Self::SplitScreen => "HEAD-TO-HEAD LOCAL RACING",
-            Self::LanPlay => "LOCAL NETWORK [COMING SOON]",
+            Self::LanPlay => "ZERO-LAG PEER-TO-PEER RACING",
             Self::CloudPlay => "WORLDWIDE LOBBIES [COMING SOON]",
             Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
             Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
@@ -2916,7 +2916,7 @@ impl ModalityItem {
     }
 
     pub fn is_available(&self) -> bool {
-        !matches!(self, Self::LanPlay | Self::CloudPlay)
+        !matches!(self, Self::CloudPlay)
     }
 
     pub fn accent_color(&self) -> Color {
@@ -2927,7 +2927,7 @@ impl ModalityItem {
             Self::TimeTrial => Palette::NEON_MAGENTA,
             Self::FreeRide => Color::new(0.35, 0.75, 1.0, 1.0),
             Self::SplitScreen => Palette::NEON_ORANGE,
-            Self::LanPlay => Color::new(0.60, 0.65, 0.75, 1.0),
+            Self::LanPlay => Palette::NEON_CYAN,
             Self::CloudPlay => Color::new(0.60, 0.65, 0.75, 1.0),
             Self::PlayerProfile => Palette::NEON_CYAN,
             Self::Garage => Palette::NEON_GOLD,
