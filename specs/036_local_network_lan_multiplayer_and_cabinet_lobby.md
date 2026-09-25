@@ -456,50 +456,50 @@ Local network gameplay offers near-ideal networking conditions ($<2\text{ms}$ RT
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Host creates a LAN session and displays local IP
-- [ ] **Given** the player navigates to the Multiplayer section of Modality Select
-- [ ] **When** the player selects "Local LAN Play" and chooses "Host Game"
-- [ ] **Then** the engine binds a non-blocking UDP socket on port `7777`
-- [ ] **And** the host resolves its local IPv4 address (e.g. `192.168.1.X`)
-- [ ] **And** the Host Waiting Room screen displays `HOST IP: 192.168.1.X:7777` in prominent typography
-- [ ] **And** the UDP beacon broadcaster begins transmitting advertisements to `255.255.255.255:7776` once per second
+- [x] **Given** the player navigates to the Multiplayer section of Modality Select
+- [x] **When** the player selects "Local LAN Play" and chooses "Host Game"
+- [x] **Then** the engine binds a non-blocking UDP socket on port `7777`
+- [x] **And** the host resolves its local IPv4 address (e.g. `192.168.1.X`)
+- [x] **And** the Host Waiting Room screen displays `HOST IP: 192.168.1.X:7777` in prominent typography
+- [x] **And** the UDP beacon broadcaster begins transmitting advertisements to `255.255.255.255:7776` once per second
 
 #### Scenario: Client auto-discovers active LAN host via UDP beacon
-- [ ] **Given** a Host is active and broadcasting on the local subnet
-- [ ] **When** a second machine opens the "Join LAN Game" screen
-- [ ] **Then** the client listens on UDP port `7776`
-- [ ] **And** the host room appears in the server browser table within 1.5 seconds
-- [ ] **And** the entry displays the host's driver name, room title, track name, and current player count
+- [x] **Given** a Host is active and broadcasting on the local subnet
+- [x] **When** a second machine opens the "Join LAN Game" screen
+- [x] **Then** the client listens on UDP port `7776`
+- [x] **And** the host room appears in the server browser table within 1.5 seconds
+- [x] **And** the entry displays the host's driver name, room title, track name, and current player count
 
 #### Scenario: Client connects via Direct IP entry
-- [ ] **Given** a Host is running on `192.168.1.50:7777`
-- [ ] **And** automatic subnet broadcasting is blocked by network AP isolation
-- [ ] **When** the client selects the "Direct IP Connect" input field
-- [ ] **And** enters `192.168.1.50:7777` and presses [Connect]
-- [ ] **Then** the client sends a `LobbyPacket::JoinRequest` directly to `192.168.1.50:7777`
-- [ ] **And** the Host registers the client in an available slot and responds with `JoinResponse::Accepted`
-- [ ] **And** both screens update to show the joined player in Slot 2
+- [x] **Given** a Host is running on `192.168.1.50:7777`
+- [x] **And** automatic subnet broadcasting is blocked by network AP isolation
+- [x] **When** the client selects the "Direct IP Connect" input field
+- [x] **And** enters `192.168.1.50:7777` and presses [Connect]
+- [x] **Then** the client sends a `LobbyPacket::JoinRequest` directly to `192.168.1.50:7777`
+- [x] **And** the Host registers the client in an available slot and responds with `JoinResponse::Accepted`
+- [x] **And** both screens update to show the joined player in Slot 2
 
 #### Scenario: Real-time lobby customization and ready synchronization
-- [ ] **Given** two players are in the LAN waiting room lobby
-- [ ] **When** Client 2 selects a different car model or livery color
-- [ ] **Then** Client 2 transmits a `ClientSlotUpdate` packet
-- [ ] **And** the Host UI updates Slot 2 to render the newly chosen vehicle and livery in real-time
-- [ ] **When** Client 2 toggles the "READY" state
-- [ ] **Then** the Host's "START RACE" button activates
+- [x] **Given** two players are in the LAN waiting room lobby
+- [x] **When** Client 2 selects a different car model or livery color
+- [x] **Then** Client 2 transmits a `ClientSlotUpdate` packet
+- [x] **And** the Host UI updates Slot 2 to render the newly chosen vehicle and livery in real-time
+- [x] **When** Client 2 toggles the "READY" state
+- [x] **Then** the Host's "START RACE" button activates
 
 #### Scenario: Synchronized grid launch and countdown
-- [ ] **Given** all connected players in the lobby are marked "READY"
-- [ ] **When** the Host presses [ENTER] on "START RACE"
-- [ ] **Then** the Host broadcasts `LobbyPacket::LaunchCountdown { starts_in_millis: 3000 }`
-- [ ] **And** all connected game instances transition into the starting grid scene
-- [ ] **And** the 3-2-1 countdown begins synchronously across all screens
+- [x] **Given** all connected players in the lobby are marked "READY"
+- [x] **When** the Host presses [ENTER] on "START RACE"
+- [x] **Then** the Host broadcasts `LobbyPacket::LaunchCountdown { starts_in_millis: 3000 }`
+- [x] **And** all connected game instances transition into the starting grid scene
+- [x] **And** the 3-2-1 countdown begins synchronously across all screens
 
 #### Scenario: Smooth in-race vehicle synchronization
-- [ ] **Given** a 2-player LAN race is active
-- [ ] **When** Client 2 steers and accelerates down the track
-- [ ] **Then** Client 2 transmits `ClientInputPacket` at 60 Hz to the Host
-- [ ] **And** the Host simulates the car and broadcasts `WorldSnapshotPacket` to all peers
-- [ ] **And** Client 1 and Client 2 render opponent cars smoothly without visible stutter or rubber-banding
+- [x] **Given** a 2-player LAN race is active
+- [x] **When** Client 2 steers and accelerates down the track
+- [x] **Then** Client 2 transmits `ClientInputPacket` at 60 Hz to the Host
+- [x] **And** the Host simulates the car and broadcasts `WorldSnapshotPacket` to all peers
+- [x] **And** Client 1 and Client 2 render opponent cars smoothly without visible stutter or rubber-banding
 
 ---
 
