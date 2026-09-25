@@ -303,6 +303,64 @@ pub fn deep_merge_toml(base: &mut toml::Value, overrides: &toml::Value) {
     }
 }
 
+/// Configuration for player car locator helpers and visual aids.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PlayerHelpersConfig {
+    /// Inverted overhead triangle chevron marker above the player car.
+    pub overhead_chevron: bool,
+    /// Size scale multiplier for the overhead chevron (0.5 to 2.0).
+    pub overhead_chevron_scale: f32,
+    /// Brightness multiplier for the overhead chevron (0.2 to 2.5).
+    pub overhead_chevron_brightness: f32,
+    /// Soft ground aura / glow disc projected under the player car.
+    pub ground_aura: bool,
+    /// Radius ratio multiplier for the ground aura disc (0.4 to 1.8).
+    pub ground_aura_radius_ratio: f32,
+    /// Brightness multiplier for the ground aura disc (0.2 to 2.5).
+    pub ground_aura_brightness: f32,
+    /// High-visibility flashing emergency roof beacon strobe.
+    pub roof_beacon: bool,
+    /// Brightness multiplier for the roof beacon (0.2 to 2.5).
+    pub roof_beacon_brightness: f32,
+    /// Ground-projected braking ribbon / curve warning chevrons.
+    pub curve_helper: bool,
+    /// Size scale multiplier for the curve indicator / braking ribbon (0.5 to 2.0).
+    pub curve_helper_scale: f32,
+    /// Brightness multiplier for the curve indicator / braking ribbon (0.2 to 2.5).
+    pub curve_helper_brightness: f32,
+    /// Color scheme for the curve helper: "traffic" (green/yellow/red) or "themed" (accent color).
+    pub curve_color_scheme: String,
+    /// Distance and speed adaptive visibility scaling when zooming out or travelling fast.
+    pub adaptive_visibility: bool,
+    /// Expanding radar / sonar ping shockwaves on camera zoom changes and spin-outs.
+    pub radar_sonar_ping: bool,
+    /// Floating bot nameplates toggle.
+    pub bot_nameplates: bool,
+}
+
+impl Default for PlayerHelpersConfig {
+    fn default() -> Self {
+        Self {
+            overhead_chevron: true,
+            overhead_chevron_scale: 1.0,
+            overhead_chevron_brightness: 1.0,
+            ground_aura: true,
+            ground_aura_radius_ratio: 1.0,
+            ground_aura_brightness: 1.0,
+            roof_beacon: true,
+            roof_beacon_brightness: 1.0,
+            curve_helper: true,
+            curve_helper_scale: 1.0,
+            curve_helper_brightness: 1.0,
+            curve_color_scheme: "traffic".to_string(),
+            adaptive_visibility: true,
+            radar_sonar_ping: true,
+            bot_nameplates: true,
+        }
+    }
+}
+
 /// Root application and game configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GameConfig {
@@ -316,6 +374,8 @@ pub struct GameConfig {
     pub gameplay: GameplayConfig,
     #[serde(default)]
     pub display: DisplayConfig,
+    #[serde(default)]
+    pub player_helpers: PlayerHelpersConfig,
     #[serde(default)]
     pub cars: BTreeMap<String, CarConfig>,
     #[serde(default)]
@@ -336,6 +396,7 @@ impl Default for GameConfig {
             audio: AudioConfig::default(),
             gameplay: GameplayConfig::default(),
             display: DisplayConfig::default(),
+            player_helpers: PlayerHelpersConfig::default(),
             cars,
             modules: BTreeMap::new(),
         }

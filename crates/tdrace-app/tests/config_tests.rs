@@ -16,6 +16,7 @@ fn test_default_config_roundtrip_toml() {
     assert!(toml_str.contains("[input]"));
     assert!(toml_str.contains("[audio]"));
     assert!(toml_str.contains("[gameplay]"));
+    assert!(toml_str.contains("[player_helpers]"));
     assert!(toml_str.contains("[cars.sports_car]"));
     assert!(toml_str.contains("[cars.drift_car]"));
 
@@ -24,6 +25,7 @@ fn test_default_config_roundtrip_toml() {
     assert_eq!(original.input, restored.input);
     assert_eq!(original.audio, restored.audio);
     assert_eq!(original.gameplay, restored.gameplay);
+    assert_eq!(original.player_helpers, restored.player_helpers);
     assert_eq!(original.cars.len(), restored.cars.len());
 }
 
