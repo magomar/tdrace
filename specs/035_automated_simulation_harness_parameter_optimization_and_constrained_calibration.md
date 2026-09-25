@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T16:15:00Z }
 ---
-
 # Architecture Spec: Automated Simulation Harness Parameter Optimization & Constrained Vehicle Calibration 🔬🏎️📐
 
 An advanced computational vehicle physics architecture specification that establishes an **automated parameter optimization and constrained calibration engine** for **TdRace**. Operating directly atop the deterministic, high-throughput [`crates/wheelbase`](../crates/wheelbase) simulation harness, this framework enables algorithmic parameter fitting, sensitivity analysis, and automated homologation tuning across all 85+ vehicles and 6 motorsport modalities. Crucially, the optimization engine enforces **strict physical, drivetrain-specific, and regulatory constraints** (e.g., solid spool kinematic locks, Salisbury limited-slip ramp manifolds, minimum turning circles, and anti-roll bar distribution limits), ensuring that mathematical optimization converges exclusively to viable, authentic real-world setups.

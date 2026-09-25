@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T13:10:48Z }
 ---
-
 # Architecture Spec: Kart Handling, Caster Jacking & Agile Turning Dynamics 🏎️🏁🛞
 
 A comprehensive physics architecture specification that brings authentic real-world racing kart handling and close-turning agility to **TdRace**. Operating within the pure-Rust [`crates/wheelbase`](../crates/wheelbase) simulation engine and propagated to [`crates/tdrace-app`](../crates/tdrace-app), this architecture introduces **mechanical caster-jacking inside-rear wheel unloading**, high-grip racing slick compound balance ($> 2.0\text{g}$ lateral capability), extended $42^\circ$ ($0.73\text{ rad}$) direct steering lock, authentic rear-biased weight distribution ($43\%$ front / $57\%$ rear), and uninhibited yaw agility, while strictly preserving headless simulation throughput ($> 85,000\,\text{steps/sec}$) and deterministic invariance.

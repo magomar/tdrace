@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T23:25:00Z }
 ---
-
 # Feature Spec 024: Cross-Module AI Character Rosters and Dynamic Tier Assignment 🏁🤖
 
 A unified architectural specification that refactors the AI driver roster system in **TdRace**:

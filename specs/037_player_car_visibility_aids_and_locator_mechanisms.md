@@ -3,11 +3,10 @@ type: Feature Spec
 template: feature
 title: "Player Car Visibility Aids, Locator Mechanisms, and Helpers Settings Architecture"
 description: "Comprehensive specification of the five player car locator methods (Overhead Chevron, Ground Aura, Adaptive Scaling, Roof Beacon, and Radar Ping Ripple) and their integration into the Cabinet ArcadeSettingsModal HELPERS tab."
-status: in_progress
+status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T20:44:00Z }
 ---
-
 # Feature Spec: Player Car Visibility Aids, Locator Mechanisms, and Helpers Settings Architecture 🏎️✨📡
 
 A formal engineering, rendering, and UI specification codifying all **five player car locator mechanisms** in **TdRace**, their mathematical formulations, visual behaviors, auto-trigger telemetry rules, and their unified configuration within the **Cabinet Arcade Settings Modal (`HELPERS` tab)**.

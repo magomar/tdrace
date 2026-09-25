@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T15:13:21Z }
 ---
-
 # Architecture Spec: Explicit Drivetrain Differential Models & Axle Coupling ⚙️🏎️🛞
 
 A foundational vehicle physics architecture specification that introduces **explicit drivetrain differential models** and **cross-axle wheel coupling** to **TdRace**. Operating within the pure-Rust [`crates/wheelbase`](../crates/wheelbase) simulation engine and propagated through [`crates/tdrace-app`](../crates/tdrace-app), this architecture models real-world drivetrain mechanics—including locked solid axles (**Spool**), Salisbury multi-plate clutch limited-slip differentials (**LimitedSlip** with power/coast ramp angles and preload), and conventional **Open** differentials—with dynamic cross-axle torque reallocation and rotational velocity synchronization.

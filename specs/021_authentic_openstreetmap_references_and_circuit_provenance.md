@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T14:18:00Z }
 ---
-
 # Feature Spec 021: Authentic OpenStreetMap References and Circuit Provenance 🗺️🏁
 
 A comprehensive architectural and data specification establishing authentic **OpenStreetMap (OSM)** and **Wikipedia** provenance across all real-world motorsport circuits in **TdRace**. Fixes erroneous references currently displayed in the Showroom (e.g. Bahrain pointing to a basilica in Brazil, COTA yielding 404, and Montreal pointing to an industrial parcel), resolves missing URLs across 68 real-world venues, and builds an end-to-end pipeline ensuring metadata persists through Rust presets, canonical JSON track exports, and web catalog portals.
