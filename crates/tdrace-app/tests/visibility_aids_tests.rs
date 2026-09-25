@@ -313,21 +313,59 @@ fn test_render_sonar_ping_headless_and_session_triggers() {
     assert_eq!(session.sonar_ping_timer, 0.0);
 
     // Zoom cycle triggers sonar ping when enabled
-    if let Some(pos) = session.cars.first().map(|c| c.state.position) {
-        if session.visibility_options.sonar_ping {
-            session.sonar_ping_timer = 0.75;
-            session.sonar_ping_origin = pos;
-        }
-    }
+    session.cycle_camera_zoom();
     assert_eq!(session.sonar_ping_timer, 0.75);
+    if let Some(pos) = session.cars.first().map(|c| c.state.position) {
+        assert_eq!(session.sonar_ping_origin, pos);
+    }
 
     // When disabled, trigger is bypassed
     session.visibility_options.sonar_ping = false;
     session.sonar_ping_timer = 0.0;
-    if session.visibility_options.sonar_ping {
-        session.sonar_ping_timer = 0.75;
-    }
+    session.cycle_camera_zoom();
     assert_eq!(session.sonar_ping_timer, 0.0);
+
+    // 3. Auto-trigger on spin-out in Racing state with 3.0s cooldown
+    session.visibility_options.sonar_ping = true;
+    session.sonar_ping_timer = 0.0;
+    session.sonar_ping_cooldown = 0.0;
+    session.state = tdrace_app::game::GameState::Racing;
+    if let Some(pc) = session.cars.first_mut() {
+        pc.state.angular_velocity = 5.2; // > 4.5 rad/s
+    }
+    let expected_pos = session.cars.first().map(|c| c.state.position).unwrap();
+    session.update();
+    assert_eq!(session.sonar_ping_timer, 0.75);
+    assert_eq!(session.sonar_ping_origin, expected_pos);
+    assert!((session.sonar_ping_cooldown - 3.0).abs() < 0.1);
+}
+
+#[test]
+fn test_sonar_ping_no_hotkeys_and_modal_governance_only() {
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("sonar_no_hotkeys");
+    let mut session = RaceSession::new();
+    assert!(session.visibility_options.sonar_ping);
+
+    // Turn off via modal
+    session.open_settings_modal();
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.radar_ping_dropdown.set_selected(1); // Disabled
+    }
+    session.close_settings_modal(true);
+    assert!(!session.visibility_options.sonar_ping);
+
+    // Verify in Racing state, session.update() preserves disabled state
+    session.state = tdrace_app::game::GameState::Racing;
+    session.update();
+    assert!(!session.visibility_options.sonar_ping);
+
+    // Re-enable via modal
+    session.open_settings_modal();
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.radar_ping_dropdown.set_selected(0); // Enabled
+    }
+    session.close_settings_modal(true);
+    assert!(session.visibility_options.sonar_ping);
 }
 
 

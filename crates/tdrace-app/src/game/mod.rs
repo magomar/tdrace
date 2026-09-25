@@ -883,12 +883,23 @@ impl RaceSession {
         self.game_mode.is_split_screen()
     }
 
+    /// Triggers a Radar/Sonar Ping shockwave ripple centered on the player car if enabled.
+    pub fn trigger_sonar_ping(&mut self) {
+        if self.visibility_options.sonar_ping {
+            if let Some(player_car) = self.cars.first() {
+                self.sonar_ping_origin = player_car.state.position;
+            }
+            self.sonar_ping_timer = 0.75;
+        }
+    }
+
     /// Cycles to the next camera zoom level for player 1 (and synchronizes player 2 if in split-screen mode).
     pub fn cycle_camera_zoom(&mut self) -> ZoomLevelConfig {
         let lvl = self.camera.cycle_zoom_level();
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
         }
+        self.trigger_sonar_ping();
         lvl
     }
 
@@ -898,6 +909,9 @@ impl RaceSession {
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
         }
+        if lvl.is_some() {
+            self.trigger_sonar_ping();
+        }
         lvl
     }
 
@@ -906,6 +920,9 @@ impl RaceSession {
         let lvl = self.camera.zoom_out();
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
+        }
+        if lvl.is_some() {
+            self.trigger_sonar_ping();
         }
         lvl
     }
@@ -4435,10 +4452,6 @@ impl RaceSession {
                         .first()
                         .map(|c| c.state.position);
                     if let Some(pos) = car_pos {
-                        if self.visibility_options.sonar_ping {
-                            self.sonar_ping_timer = 0.75;
-                            self.sonar_ping_origin = pos;
-                        }
                         let lvl_idx = self.camera.current_level_idx + 1;
                         let total_lvls = self.camera.levels.iter().filter(|l| !l.is_overview()).count().max(1);
                         self.fx.drift_popups.spawn_text(
@@ -12989,9 +13002,9 @@ impl RaceSession {
             if self.visibility_options.sonar_ping && self.sonar_ping_timer > 0.0 {
                 render_player_sonar_ping(
                     self.sonar_ping_origin,
+                    camera.current_zoom,
                     self.sonar_ping_timer,
                     0.75,
-                    camera.current_zoom,
                 );
             }
         }
