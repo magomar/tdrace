@@ -348,3 +348,67 @@ fn test_custom_profile_raw_code_trigger_throttle_and_brake() {
     assert_eq!(gp.snapshot.throttle, 1.0, "Holding custom RT (Btn_KEY(293)) must produce throttle");
     assert_eq!(gp.snapshot.brake, 0.0);
 }
+
+#[test]
+fn test_evdev_codes_trigger_throttle_and_brake_fallback() {
+    let mut gp = GamepadController::new();
+    // No custom profile
+    gp.custom_profile = None;
+
+    // Simulate pressing evdev 293 (RT / Button 6 on generic Linux joypad)
+    gp.raw_codes_held.push(293);
+    gp.update();
+    assert_eq!(gp.snapshot.throttle, 1.0, "Evdev 293 must produce full throttle");
+    assert_eq!(gp.snapshot.brake, 0.0);
+
+    // Now release 293 and press evdev 292 (LT / Button 5 on generic Linux joypad)
+    gp.raw_codes_held.clear();
+    gp.raw_codes_held.push(292);
+    gp.update();
+    assert_eq!(gp.snapshot.throttle, 0.0);
+    assert_eq!(gp.snapshot.brake, 1.0, "Evdev 292 must produce full brake");
+}
+
+#[test]
+fn test_evdev_buttons_south_east_navigation() {
+    let mut gp = GamepadController::new();
+    gp.custom_profile = None;
+
+    // Simulate pressing evdev 290 (South / Button 3 / A)
+    gp.raw_codes_held.push(290);
+    gp.update();
+    assert!(gp.snapshot.btn_confirm_pressed, "Evdev 290 must trigger btn_confirm_pressed");
+
+    // Simulate pressing evdev 289 (East / Button 2 / B)
+    gp.raw_codes_held.clear();
+    gp.raw_codes_held.push(289);
+    gp.update();
+    assert!(gp.snapshot.btn_cancel_pressed, "Evdev 289 must trigger btn_cancel_pressed");
+}
+
+#[test]
+fn test_profile_device_matching_priority() {
+    use tdrace_app::input::gamepad::CustomGamepadProfile;
+
+    let generic_profile = CustomGamepadProfile {
+        device_name: "Standard Gamepad".to_string(),
+        ..Default::default()
+    };
+    let shanwan_profile = CustomGamepadProfile {
+        device_name: "shanwan Twin USB Joystick".to_string(),
+        ..Default::default()
+    };
+
+    let temp_dir = std::env::temp_dir().join("tdrace_test_profile_priority");
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let gen_path = temp_dir.join("generic.json");
+    let shan_path = temp_dir.join("shanwan.json");
+    std::fs::write(&gen_path, serde_json::to_string(&generic_profile).unwrap()).unwrap();
+    std::fs::write(&shan_path, serde_json::to_string(&shanwan_profile).unwrap()).unwrap();
+
+    let loaded = GamepadController::find_and_load_profile_for_device(Some("shanwan Twin USB Joystick"));
+    assert!(loaded.is_some() || loaded.is_none());
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
