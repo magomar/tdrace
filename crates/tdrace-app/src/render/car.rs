@@ -5,6 +5,7 @@ use macroquad::texture::{draw_texture_ex, DrawTextureParams, Texture2D};
 use tdrace_core::physics::car::Car;
 
 use super::color::{CarColorScheme, Palette};
+use super::lighting::{resolve_vehicle_lighting, VehicleLightingConfig};
 use super::track::draw_quad;
 use crate::module::VehicleVisualType;
 
@@ -67,7 +68,7 @@ pub fn porsche_gt3r_texture() -> Texture2D {
     get_tinted_porsche_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
 }
 
-/// Renders modern LED headlights and glowing taillights / brake lights.
+/// Renders vehicle lighting based on the resolved modality lighting profile.
 pub fn render_car_lights(
     pos: Vec2,
     fwd: Vec2,
@@ -75,35 +76,51 @@ pub fn render_car_lights(
     half_len: f32,
     half_w: f32,
     is_braking: bool,
+    cfg: &VehicleLightingConfig,
 ) {
-    // Projector LED Headlights with soft glow
-    let light_w = half_w * 0.55;
-    let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
-    let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
+    // 1. Projector LED Headlights with soft glow
+    if cfg.has_headlights {
+        let light_w = half_w * 0.55;
+        let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
+        let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
 
-    // Headlight outer glow
-    draw_circle(head_l.x, head_l.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
-    draw_circle(head_r.x, head_r.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
-    // Headlight core
-    draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
-    draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+        // Headlight outer glow
+        let glow_col = Color::new(cfg.headlight_color.r, cfg.headlight_color.g, cfg.headlight_color.b, 0.35);
+        draw_circle(head_l.x, head_l.y, 0.20, glow_col);
+        draw_circle(head_r.x, head_r.y, 0.20, glow_col);
+        // Headlight core
+        draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+        draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
+    }
 
-    // Tail / LED Brake Lights with glow halo
-    let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
-    let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
+    // 2. Auxiliary Rally Hood Spotlight Pods
+    if cfg.has_rally_pods {
+        crate::render::lighting::render_rally_hood_pods(pos, fwd, right, half_len, half_w);
+    }
 
-    if is_braking {
-        draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
-        draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
-        draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
-        draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
-    } else {
-        draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
-        draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+    // 3. Tail / LED Brake Lights with glow halo
+    if cfg.has_brake_lights {
+        let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
+        let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
+
+        if is_braking {
+            draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+            draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
+            draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+            draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
+        } else {
+            draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+            draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
+        }
+    }
+
+    // 4. High-Mount Amber Dust Chase Strobe (SCORE / Baja Off-Road)
+    if cfg.has_dust_chase_light {
+        crate::render::lighting::render_dust_chase_strobe(pos, fwd, half_len);
     }
 }
 
-/// Renders a vehicle topdown textured sprite.
+/// Renders a vehicle topdown textured sprite with modality-governed lighting.
 pub fn render_vehicle_topdown_sprite(
     texture: &Texture2D,
     chassis_center: Vec2,
@@ -113,6 +130,7 @@ pub fn render_vehicle_topdown_sprite(
     body_half_len: f32,
     body_half_w: f32,
     is_braking: bool,
+    lighting_cfg: &VehicleLightingConfig,
 ) {
     let (dest_w, dest_h, draw_angle) = if texture.height() > texture.width() {
         let w = body_half_len * 2.0 * 1.06;
@@ -137,7 +155,7 @@ pub fn render_vehicle_topdown_sprite(
         },
     );
 
-    render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
+    render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking, lighting_cfg);
 }
 
 /// Context passed to top-down sprite rendering when steered wheel animation is enabled.
@@ -223,6 +241,7 @@ pub fn render_porsche_gt3r_sprite(
     is_braking: bool,
 ) {
     if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_porsche_911_gt3r", primary, secondary) {
+        let lighting_cfg = VehicleLightingConfig::gt_touring();
         render_vehicle_topdown_sprite(
             &texture,
             chassis_center,
@@ -232,6 +251,7 @@ pub fn render_porsche_gt3r_sprite(
             body_half_len,
             body_half_w,
             is_braking,
+            &lighting_cfg,
         );
     }
 }
@@ -334,6 +354,21 @@ pub fn render_car_with_visual_type_model_and_shadows(
         );
     }
 
+    // Resolve modality-governed vehicle lighting profile
+    let lighting_cfg = resolve_vehicle_lighting(model_id, visual_type);
+
+    // Forward track illumination cone projected onto track surface ahead of vehicle
+    if lighting_cfg.project_track_beams {
+        crate::render::lighting::render_headlight_track_beams(
+            chassis_center,
+            fwd,
+            right,
+            body_half_len,
+            body_half_w,
+            &lighting_cfg,
+        );
+    }
+
     // 2. If model-specific high-detail top-down sprite is available, render sprite directly
     if let Some(m_id) = model_id {
         if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_chassis_texture(m_id, color_scheme.primary, color_scheme.secondary) {
@@ -375,6 +410,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
                     body_half_len,
                     body_half_w,
                     is_braking,
+                    &lighting_cfg,
                 );
 
                 // 4. OverChassis wheels
@@ -395,6 +431,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 body_half_len,
                 body_half_w,
                 is_braking,
+                &lighting_cfg,
             );
             return;
         }
@@ -436,7 +473,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
             if mudflaps {
                 render_mudflaps(chassis_center, &wheel_positions, fwd, right);
             }
-            render_rally_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme, roof_scoop, large_wing, is_braking);
+            render_rally_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme, roof_scoop, large_wing, is_braking, &lighting_cfg);
         }
         VehicleVisualType::TouringGT { .. } => {
             for i in 0..4 {
@@ -444,7 +481,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
             }
             render_chassis_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme);
             render_cockpit(chassis_center, fwd, right, color_scheme);
-            render_car_details(chassis_center, fwd, right, body_half_len, body_half_w, is_braking);
+            render_car_details(chassis_center, fwd, right, body_half_len, body_half_w, is_braking, &lighting_cfg);
         }
         VehicleVisualType::StockCar { tall_wing, roof_fins, window_net } => {
             for i in 0..4 {
@@ -498,6 +535,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 whip_antenna,
                 paddle_tires,
                 is_braking,
+                &lighting_cfg,
             );
         }
     }
@@ -847,6 +885,7 @@ fn render_rally_body(
     roof_scoop: bool,
     large_wing: bool,
     is_braking: bool,
+    cfg: &VehicleLightingConfig,
 ) {
     render_chassis_body(pos, fwd, right, half_len, half_w, color_scheme);
     render_cockpit(pos, fwd, right, color_scheme);
@@ -878,7 +917,7 @@ fn render_rally_body(
         );
     }
 
-    render_car_details(pos, fwd, right, half_len, half_w, is_braking);
+    render_car_details(pos, fwd, right, half_len, half_w, is_braking, cfg);
 }
 
 /// Draws the main aerodynamic car body.
@@ -992,34 +1031,12 @@ fn render_car_details(
     half_len: f32,
     half_w: f32,
     is_braking: bool,
+    cfg: &VehicleLightingConfig,
 ) {
-    // Projector LED Headlights with soft glow
-    let light_w = half_w * 0.55;
-    let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
-    let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
+    // 1. Render headlights and brake lights based on modality lighting profile
+    render_car_lights(pos, fwd, right, half_len, half_w, is_braking, cfg);
 
-    // Headlight outer glow
-    draw_circle(head_l.x, head_l.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
-    draw_circle(head_r.x, head_r.y, 0.20, Color::new(0.95, 0.98, 1.0, 0.35));
-    // Headlight core
-    draw_circle(head_l.x, head_l.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
-    draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
-
-    // Tail / LED Brake Lights with glow halo
-    let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
-    let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
-
-    if is_braking {
-        draw_circle(tail_l.x, tail_l.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
-        draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
-        draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
-        draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
-    } else {
-        draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
-        draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
-    }
-
-    // Modern Carbon Aero Wing
+    // 2. Modern Carbon Aero Wing
     let wing_pos = pos - fwd * (half_len + 0.05);
     let wing_half_w = half_w * 0.95;
     let wing_thick = 0.12;
@@ -1512,6 +1529,7 @@ fn render_sand_rail_body(
     whip_antenna: bool,
     _paddle_tires: bool,
     is_braking: bool,
+    cfg: &VehicleLightingConfig,
 ) {
     let tube_shadow = Color::new(0.08, 0.08, 0.10, 1.0);
     let tube_color = color_scheme.primary;
@@ -1693,7 +1711,7 @@ fn render_sand_rail_body(
     }
 
     // 6. --- High-Intensity 4-Pod Roof Lightbar ---
-    if lightbar {
+    if lightbar || cfg.has_roof_lightbar {
         let bar_center = (brow_l + brow_r) * 0.5 + fwd * 0.04;
         let bar_hw = half_w * 0.40;
         draw_line((bar_center - right * bar_hw).x, (bar_center - right * bar_hw).y,
@@ -1706,6 +1724,11 @@ fn render_sand_rail_body(
             let bloom_center = pod_pos + fwd * 0.08;
             draw_circle(bloom_center.x, bloom_center.y, 0.09, Color::new(1.0, 0.95, 0.70, 0.28));
         }
+    }
+
+    // Rear high-mount dust chase strobe (amber safety strobe for extreme off-road / Baja)
+    if cfg.has_dust_chase_light {
+        crate::render::lighting::render_dust_chase_strobe(pos, fwd, half_len);
     }
 
     // 7. --- Dynamic Whip Antenna with Neon Safety Pennant ---
