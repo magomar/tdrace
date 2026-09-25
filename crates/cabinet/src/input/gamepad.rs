@@ -100,6 +100,10 @@ pub struct CustomGamepadProfile {
     pub steering: Option<CustomAxisBinding>,
     #[serde(default, alias = "left_stick_y")]
     pub stick_y: Option<CustomAxisBinding>,
+    #[serde(default)]
+    pub right_stick_x: Option<CustomAxisBinding>,
+    #[serde(default)]
+    pub right_stick_y: Option<CustomAxisBinding>,
     #[serde(default, alias = "right_trigger")]
     pub throttle: Option<CustomTriggerBinding>,
     #[serde(default, alias = "left_trigger")]
@@ -237,9 +241,13 @@ impl GamepadManager {
 
         let mut snapshot = GamepadSnapshot::default();
         snapshot.is_connected = is_connected;
-        snapshot.gamepad_name = gamepad_name;
+        snapshot.gamepad_name = gamepad_name.clone();
 
-        let custom_profile = Self::find_and_load_profile();
+        let custom_profile = Self::find_and_load_profile_for_device(if is_connected {
+            Some(&gamepad_name)
+        } else {
+            None
+        });
 
         Self {
             #[cfg(feature = "gamepad")]
@@ -292,16 +300,53 @@ impl GamepadManager {
 
     /// Finds and parses the most recently modified profile among candidate locations.
     pub fn find_and_load_profile() -> Option<CustomGamepadProfile> {
+        Self::find_and_load_profile_for_device(None)
+    }
+
+    /// Finds and parses the best-matching profile for the specified device, prioritizing matched devices over generic profiles.
+    pub fn find_and_load_profile_for_device(target_device: Option<&str>) -> Option<CustomGamepadProfile> {
+        let mut candidates = Vec::new();
+
         for path in Self::candidate_profile_paths() {
             if path.exists() {
-                if let Ok(content) = std::fs::read_to_string(&path) {
-                    if let Ok(profile) = serde_json::from_str::<CustomGamepadProfile>(&content) {
-                        return Some(profile);
+                if let Ok(metadata) = std::fs::metadata(&path) {
+                    if let Ok(modified) = metadata.modified() {
+                        if let Ok(content) = std::fs::read_to_string(&path) {
+                            if let Ok(profile) = serde_json::from_str::<CustomGamepadProfile>(&content) {
+                                candidates.push((profile, path, modified));
+                            }
+                        }
                     }
                 }
             }
         }
-        None
+
+        candidates.into_iter().max_by(|a, b| {
+            let score_a = Self::profile_match_score(&a.0, target_device);
+            let score_b = Self::profile_match_score(&b.0, target_device);
+            score_a.cmp(&score_b).then_with(|| a.2.cmp(&b.2))
+        }).map(|(profile, _, _)| profile)
+    }
+
+    fn profile_match_score(profile: &CustomGamepadProfile, target_device: Option<&str>) -> u8 {
+        let dev = profile.device_name.trim();
+        if dev.is_empty() {
+            return 0;
+        }
+        if let Some(target) = target_device {
+            let target_lower = target.to_lowercase();
+            let dev_lower = dev.to_lowercase();
+            if !target_lower.is_empty() && target_lower != "no gamepad connected" && target_lower != "gamepad unavailable" {
+                if target_lower.contains(&dev_lower) || dev_lower.contains(&target_lower) {
+                    return 2;
+                }
+            }
+        }
+        if dev != "Standard Gamepad" {
+            1
+        } else {
+            0
+        }
     }
 
     /// Checks if a custom button binding is currently held down.
@@ -846,12 +891,17 @@ mod tests {
 
     #[test]
     fn test_custom_gamepad_profile_loading() {
-        let profile = GamepadManager::find_and_load_profile();
+        let profile = GamepadManager::find_and_load_profile_for_device(Some("shanwan Twin USB Joystick"));
         assert!(profile.is_some(), "Custom profile should be found in candidate paths");
         let prof = profile.unwrap();
         assert_eq!(prof.device_name, "shanwan Twin USB Joystick");
         assert!(prof.btn_south.is_some());
         assert_eq!(prof.btn_south.as_ref().unwrap().code, "Btn_KEY(290)");
+        assert!(prof.right_stick_x.is_some());
+        assert_eq!(prof.right_stick_x.as_ref().unwrap().axis_name, "LeftZ");
+        assert!(prof.right_stick_y.is_some());
+        assert_eq!(prof.right_stick_y.as_ref().unwrap().axis_name, "RightZ");
+        assert!(prof.right_stick_y.as_ref().unwrap().inverted);
     }
 
     #[test]
