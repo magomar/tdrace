@@ -90,7 +90,7 @@ impl InputController {
     /// Returns human-readable name of active control preset.
     pub fn active_preset_name(&self) -> &'static str {
         if self.input_map == InputMap::default_racing() {
-            "Hybrid (WASD + Arrows + Gamepad)"
+            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
         } else if self.input_map == InputMap::wasd_racing() {
             "WASD Layout"
         } else if self.input_map == InputMap::arrows_racing() {
@@ -616,7 +616,7 @@ mod tests {
         assert_eq!(controller.input_map, InputMap::default_racing());
         assert_eq!(
             controller.active_preset_name(),
-            "Hybrid (WASD + Arrows + Gamepad)"
+            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
         );
 
         // Headless polling safety check

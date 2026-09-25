@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "device_name": "Standard Gamepad",
-  "last_calibrated": "Default Predefined Profile",
+  "device_name": "shanwan Twin USB Joystick",
+  "last_calibrated": "Calibrated by Gamepad-Mapper",
   "left_stick_x": {
     "axis_name": "LeftStickX",
     "inverted": false,
@@ -19,7 +19,7 @@
     "fallback_btn_neg": "DPadDown"
   },
   "right_stick_x": {
-    "axis_name": "RightStickX",
+    "axis_name": "LeftZ",
     "inverted": false,
     "deadzone": 0.12,
     "scale": 1.0,
@@ -27,49 +27,49 @@
     "fallback_btn_neg": null
   },
   "right_stick_y": {
-    "axis_name": "RightStickY",
-    "inverted": false,
+    "axis_name": "RightZ",
+    "inverted": true,
     "deadzone": 0.12,
     "scale": 1.0,
     "fallback_btn_pos": null,
     "fallback_btn_neg": null
   },
   "left_trigger": {
-    "primary_code": "LeftTrigger2",
+    "primary_code": "Btn_KEY(292)",
     "is_axis": false,
     "inverted": false,
     "deadzone": 0.05,
     "alternate_code": null
   },
   "right_trigger": {
-    "primary_code": "RightTrigger2",
+    "primary_code": "Btn_KEY(293)",
     "is_axis": false,
     "inverted": false,
     "deadzone": 0.05,
     "alternate_code": null
   },
   "bumper_left": {
-    "code": "LeftTrigger",
+    "code": "Btn_KEY(294)",
     "alternate": null
   },
   "bumper_right": {
-    "code": "RightTrigger",
+    "code": "Btn_KEY(295)",
     "alternate": null
   },
   "btn_south": {
-    "code": "South",
+    "code": "Btn_KEY(290)",
     "alternate": null
   },
   "btn_east": {
-    "code": "East",
+    "code": "Btn_KEY(289)",
     "alternate": null
   },
   "btn_west": {
-    "code": "West",
+    "code": "Btn_KEY(291)",
     "alternate": null
   },
   "btn_north": {
-    "code": "North",
+    "code": "Btn_KEY(288)",
     "alternate": null
   },
   "dpad_up": {
@@ -89,19 +89,19 @@
     "alternate": null
   },
   "btn_start": {
-    "code": "Start",
+    "code": "Btn_KEY(297)",
     "alternate": null
   },
   "btn_select": {
-    "code": "Select",
+    "code": "Btn_KEY(296)",
     "alternate": null
   },
   "stick_l3": {
-    "code": "LeftThumb",
+    "code": "Btn_KEY(298)",
     "alternate": null
   },
   "stick_r3": {
-    "code": "RightThumb",
+    "code": "Btn_KEY(299)",
     "alternate": null
   }
 }
