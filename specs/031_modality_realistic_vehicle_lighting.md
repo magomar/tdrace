@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Modality-Realistic Vehicle Lighting Architecture"
 description: "Modality-governed vehicle lighting pipeline enforcing zero lights on Karts and NASCAR, full DRL/brake/projector illumination on GT and Rally, and multi-pod roof lightbars on Extreme Off-Road."
-status: draft
+status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T00:25:00Z }
 ---
@@ -335,50 +335,50 @@ pub fn render_car_lights(
 ### Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Kart vehicles render zero electrical lights**
-  - [ ] **Given** an active race session featuring vehicle model `"classic_kart"` or category `"kart"`
-  - [ ] **When** top-down car rendering is evaluated during full acceleration or heavy braking
-  - [ ] **Then** the engine must not draw front headlight circles or glow halos
-  - [ ] **And** the engine must not draw rear taillight or brake light circles
-  - [ ] **And** the vehicle must display only its chassis, exposed driver, and steered wheels
+  - [x] **Given** an active race session featuring vehicle model `"classic_kart"` or category `"kart"`
+  - [x] **When** top-down car rendering is evaluated during full acceleration or heavy braking
+  - [x] **Then** the engine must not draw front headlight circles or glow halos
+  - [x] **And** the engine must not draw rear taillight or brake light circles
+  - [x] **And** the vehicle must display only its chassis, exposed driver, and steered wheels
 
 - **Scenario: NASCAR stock cars render zero electrical headlights or brake lights**
-  - [ ] **Given** an active race session featuring vehicle model `"nascar_cup_chevrolet_camaro"` or category `"nascar"`
-  - [ ] **When** top-down vehicle rendering is evaluated during high speed and braking into an oval corner
-  - [ ] **Then** no front projector headlight discs or glow halos must be drawn on the front nose
-  - [ ] **And** no rear red brake light circles must be drawn on the rear bumper
-  - [ ] **And** front headlights must remain purely cosmetic decals baked into the livery texture
+  - [x] **Given** an active race session featuring vehicle model `"nascar_cup_chevrolet_camaro"` or category `"nascar"`
+  - [x] **When** top-down vehicle rendering is evaluated during high speed and braking into an oval corner
+  - [x] **Then** no front projector headlight discs or glow halos must be drawn on the front nose
+  - [x] **And** no rear red brake light circles must be drawn on the rear bumper
+  - [x] **And** front headlights must remain purely cosmetic decals baked into the livery texture
 
 - **Scenario: NASCAR side exhaust overrun combustion flames remain active**
-  - [ ] **Given** a NASCAR vehicle decelerating with $\text{acceleration\_local.x} < -0.6$ and $\text{speed} > 5.0\,\text{m/s}$
-  - [ ] **When** `render_stock_car_body` executes
-  - [ ] **Then** the boom-tube side exhaust flame plume and sparks must continue to render on the right sill
-  - [ ] **And** mechanical flames must not be suppressed by the electrical lighting config
+  - [x] **Given** a NASCAR vehicle decelerating with $\text{acceleration\_local.x} < -0.6$ and $\text{speed} > 5.0\,\text{m/s}$
+  - [x] **When** `render_stock_car_body` executes
+  - [x] **Then** the boom-tube side exhaust flame plume and sparks must continue to render on the right sill
+  - [x] **And** mechanical flames must not be suppressed by the electrical lighting config
 
 - **Scenario: GT vehicles render high-intensity headlights and dynamic brake lights**
-  - [ ] **Given** a GT vehicle model (e.g. `"gt_porsche_911_gt3r"`) in race mode
-  - [ ] **When** vehicle cruising with `is_braking = false`
-  - [ ] **Then** dual white projector headlights must be drawn with core and outer glow
-  - [ ] **And** dual rear red taillights must render at cruising intensity ($R=0.60, A=0.85$)
-  - [ ] **When** the driver applies brakes (`is_braking = true`)
-  - [ ] **Then** the rear brake lights must expand in radius and render with bright red bloom halo ($A=0.45$) and intense red core ($A=1.0$)
+  - [x] **Given** a GT vehicle model (e.g. `"gt_porsche_911_gt3r"`) in race mode
+  - [x] **When** vehicle cruising with `is_braking = false`
+  - [x] **Then** dual white projector headlights must be drawn with core and outer glow
+  - [x] **And** dual rear red taillights must render at cruising intensity ($R=0.60, A=0.85$)
+  - [x] **When** the driver applies brakes (`is_braking = true`)
+  - [x] **Then** the rear brake lights must expand in radius and render with bright red bloom halo ($A=0.45$) and intense red core ($A=1.0$)
 
 - **Scenario: Rally vehicles render auxiliary hood spotlight pods**
-  - [ ] **Given** a rallycross vehicle model (e.g. `"rally_peugeot_208_rally4"`) or `VehicleVisualType::RallyHatch`
-  - [ ] **When** `render_car_lights` executes with `VehicleLightingConfig::rally()`
-  - [ ] **Then** dual headlights and rear brake lights must be rendered
-  - [ ] **And** hood-mounted auxiliary quad spotlight pods must be drawn on the front fascia
+  - [x] **Given** a rallycross vehicle model (e.g. `"rally_peugeot_208_rally4"`) or `VehicleVisualType::RallyHatch`
+  - [x] **When** `render_car_lights` executes with `VehicleLightingConfig::rally()`
+  - [x] **Then** dual headlights and rear brake lights must be rendered
+  - [x] **And** hood-mounted auxiliary quad spotlight pods must be drawn on the front fascia
 
 - **Scenario: Extreme Off-Road vehicles render roof lightbar and rear dust chase light**
-  - [ ] **Given** an extreme off-road vehicle (e.g. `"classic_offroad"` or `VehicleVisualType::SandRail`)
-  - [ ] **When** top-down vehicle rendering executes
-  - [ ] **Then** the 4-pod rooftop LED lightbar must render with warm bloom
-  - [ ] **And** the high-mount rear amber dust chase strobe must be rendered along the rear roll cage
+  - [x] **Given** an extreme off-road vehicle (e.g. `"classic_offroad"` or `VehicleVisualType::SandRail`)
+  - [x] **When** top-down vehicle rendering executes
+  - [x] **Then** the 4-pod rooftop LED lightbar must render with warm bloom
+  - [x] **And** the high-mount rear amber dust chase strobe must be rendered along the rear roll cage
 
 - **Scenario: Forward track light beam projection for GT, Rally, and Off-Road**
-  - [ ] **Given** a vehicle with `project_track_beams: true`
-  - [ ] **When** the vehicle moves across the track
-  - [ ] **Then** semi-transparent forward light cones must be projected onto the ground plane along the forward vector
-  - [ ] **And** light cones must be disabled when `project_track_beams: false` (Karts and NASCAR)
+  - [x] **Given** a vehicle with `project_track_beams: true`
+  - [x] **When** the vehicle moves across the track
+  - [x] **Then** semi-transparent forward light cones must be projected onto the ground plane along the forward vector
+  - [x] **And** light cones must be disabled when `project_track_beams: false` (Karts and NASCAR)
 
 ---
 
