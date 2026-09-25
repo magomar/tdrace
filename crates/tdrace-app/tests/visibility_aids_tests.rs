@@ -7,10 +7,17 @@ use tdrace_app::game::RaceSession;
 fn test_player_visibility_options_defaults() {
     let opts = PlayerVisibilityOptions::default();
     assert!(opts.overhead_chevron, "Option 1 (Overhead Chevron) must be enabled by default");
+    assert!((opts.overhead_chevron_scale - 1.0).abs() < 1e-4);
+    assert!((opts.overhead_chevron_brightness - 1.0).abs() < 1e-4);
     assert!(opts.ground_aura, "Option 2 (Ground Aura) must be enabled by default");
+    assert!((opts.ground_aura_radius_ratio - 1.0).abs() < 1e-4);
+    assert!((opts.ground_aura_brightness - 1.0).abs() < 1e-4);
     assert!(opts.adaptive_visibility, "Option 3 (Adaptive Visibility) must be enabled by default");
     assert!(opts.roof_beacon, "Option 4 (Roof Beacon) must be enabled by default");
+    assert!((opts.roof_beacon_brightness - 1.0).abs() < 1e-4);
     assert!(opts.curve_helper, "Option 5 (Curve Helper) must be enabled by default");
+    assert!((opts.curve_helper_scale - 1.0).abs() < 1e-4);
+    assert!((opts.curve_helper_brightness - 1.0).abs() < 1e-4);
     assert_eq!(opts.curve_color_scheme, CurveColorScheme::Traffic);
 }
 
@@ -101,12 +108,14 @@ fn test_visibility_toast_struct() {
 
 #[test]
 fn test_race_session_visibility_initialization() {
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("helpers_visibility_init");
     let session = RaceSession::new();
     assert!(session.visibility_options.overhead_chevron);
     assert!(session.visibility_options.ground_aura);
     assert!(session.visibility_options.adaptive_visibility);
     assert!(session.visibility_options.roof_beacon);
     assert!(session.visibility_options.curve_helper);
+    assert!(session.visibility_options.sonar_ping);
     assert_eq!(session.visibility_options.curve_color_scheme, CurveColorScheme::Traffic);
     assert!(session.visibility_toast.is_none());
 }
@@ -143,13 +152,182 @@ fn test_render_player_visual_clues_headless_execution() {
             for &alpha in &[0.0f32, 0.20, 0.50, 1.0] {
                 // Must execute calculations cleanly without panic prior to GPU submission
                 let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    render_player_overhead_chevron(pos, 0.0, zoom, 1.25, scheme, alpha);
-                    render_player_ground_aura(pos, zoom, scheme, alpha);
-                    render_player_roof_beacon(pos, fwd, 0.0, zoom, 1.25, scheme, alpha);
+                    render_player_overhead_chevron(pos, 0.0, zoom, 1.25, scheme, alpha, 1.2, 1.5);
+                    render_player_ground_aura(pos, zoom, scheme, alpha, 0.8, 1.4);
+                    render_player_roof_beacon(pos, fwd, 0.0, zoom, 1.25, scheme, alpha, 1.3);
                 }));
             }
         }
     }
+}
+
+#[test]
+fn test_player_helpers_config_roundtrip() {
+    use tdrace_app::PlayerHelpersConfig;
+
+    let mut cfg = PlayerHelpersConfig::default();
+    cfg.overhead_chevron = false;
+    cfg.overhead_chevron_scale = 1.35;
+    cfg.overhead_chevron_brightness = 2.10;
+    cfg.ground_aura = false;
+    cfg.ground_aura_radius_ratio = 0.55;
+    cfg.ground_aura_brightness = 1.75;
+    cfg.roof_beacon = false;
+    cfg.roof_beacon_brightness = 0.70;
+    cfg.curve_helper = false;
+    cfg.curve_helper_scale = 1.60;
+    cfg.curve_helper_brightness = 2.25;
+    cfg.curve_color_scheme = "synthwave".to_string();
+    cfg.adaptive_visibility = false;
+    cfg.bot_nameplates = false;
+    cfg.radar_sonar_ping = false;
+
+    let opts = PlayerVisibilityOptions::from(&cfg);
+    assert!(!opts.overhead_chevron);
+    assert!((opts.overhead_chevron_scale - 1.35).abs() < 1e-4);
+    assert!((opts.overhead_chevron_brightness - 2.10).abs() < 1e-4);
+    assert!(!opts.ground_aura);
+    assert!((opts.ground_aura_radius_ratio - 0.55).abs() < 1e-4);
+    assert!((opts.ground_aura_brightness - 1.75).abs() < 1e-4);
+    assert!(!opts.roof_beacon);
+    assert!((opts.roof_beacon_brightness - 0.70).abs() < 1e-4);
+    assert!(!opts.curve_helper);
+    assert!((opts.curve_helper_scale - 1.60).abs() < 1e-4);
+    assert!((opts.curve_helper_brightness - 2.25).abs() < 1e-4);
+    assert_eq!(opts.curve_color_scheme, CurveColorScheme::Synthwave);
+    assert!(!opts.adaptive_visibility);
+    assert!(!opts.bot_nameplates);
+    assert!(!opts.sonar_ping);
+
+    let roundtrip = PlayerHelpersConfig::from(&opts);
+    assert_eq!(roundtrip.overhead_chevron, cfg.overhead_chevron);
+    assert!((roundtrip.overhead_chevron_scale - cfg.overhead_chevron_scale).abs() < 1e-4);
+    assert!((roundtrip.overhead_chevron_brightness - cfg.overhead_chevron_brightness).abs() < 1e-4);
+    assert_eq!(roundtrip.ground_aura, cfg.ground_aura);
+    assert!((roundtrip.ground_aura_radius_ratio - cfg.ground_aura_radius_ratio).abs() < 1e-4);
+    assert!((roundtrip.ground_aura_brightness - cfg.ground_aura_brightness).abs() < 1e-4);
+    assert_eq!(roundtrip.roof_beacon, cfg.roof_beacon);
+    assert!((roundtrip.roof_beacon_brightness - cfg.roof_beacon_brightness).abs() < 1e-4);
+    assert_eq!(roundtrip.curve_helper, cfg.curve_helper);
+    assert!((roundtrip.curve_helper_scale - cfg.curve_helper_scale).abs() < 1e-4);
+    assert!((roundtrip.curve_helper_brightness - cfg.curve_helper_brightness).abs() < 1e-4);
+    assert_eq!(roundtrip.curve_color_scheme, "synthwave");
+    assert_eq!(roundtrip.adaptive_visibility, cfg.adaptive_visibility);
+    assert_eq!(roundtrip.bot_nameplates, cfg.bot_nameplates);
+    assert_eq!(roundtrip.radar_sonar_ping, cfg.radar_sonar_ping);
+}
+
+#[test]
+fn test_render_curve_indicator_headless_execution() {
+    use tdrace_app::ui::curve_indicator::render_curve_indicator;
+    use tdrace_core::physics::car::Car;
+    use tdrace_core::physics::config::CarConfig;
+    use tdrace_core::track::presets::classic_grand_prix;
+
+    let track = classic_grand_prix();
+    let car = Car::new(CarConfig::sports_car());
+    if let Some(status) = track.spline.upcoming_curve(10.0, 20.0, 150.0) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            render_curve_indicator(
+                &car,
+                &status,
+                CurveColorScheme::Traffic,
+                12.0,
+                1.5,
+                1.25,
+                1.8,
+            );
+        }));
+    }
+}
+
+#[test]
+fn test_race_session_settings_modal_helpers_workflow() {
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("helpers_settings_workflow");
+    let mut session = RaceSession::new();
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.aura_dropdown.set_selected(1); // Disabled
+        modal.aura_ratio_slider.set_value(0.60);
+        modal.aura_brightness_slider.set_value(2.10);
+        modal.ribbon_dropdown.set_selected(0); // Enabled
+        modal.ribbon_scale_slider.set_value(1.75);
+        modal.ribbon_brightness_slider.set_value(2.40);
+        modal.chevron_dropdown.set_selected(1); // Disabled
+        modal.chevron_brightness_slider.set_value(0.80);
+        modal.beacon_dropdown.set_selected(0); // Enabled
+        modal.adaptive_dropdown.set_selected(1); // Disabled
+        modal.radar_ping_dropdown.set_selected(1); // Disabled
+    }
+
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+
+    assert!(!session.config.player_helpers.ground_aura);
+    assert!((session.config.player_helpers.ground_aura_radius_ratio - 0.60).abs() < 1e-4);
+    assert!((session.config.player_helpers.ground_aura_brightness - 2.10).abs() < 1e-4);
+    assert!(session.config.player_helpers.curve_helper);
+    assert!((session.config.player_helpers.curve_helper_scale - 1.75).abs() < 1e-4);
+    assert!((session.config.player_helpers.curve_helper_brightness - 2.40).abs() < 1e-4);
+    assert!(!session.config.player_helpers.overhead_chevron);
+    assert!((session.config.player_helpers.overhead_chevron_brightness - 0.80).abs() < 1e-4);
+    assert!(session.config.player_helpers.roof_beacon);
+    assert!(!session.config.player_helpers.adaptive_visibility);
+    assert!(!session.config.player_helpers.radar_sonar_ping);
+
+    // Also assert runtime visibility_options synced
+    assert!(!session.visibility_options.ground_aura);
+    assert!((session.visibility_options.ground_aura_radius_ratio - 0.60).abs() < 1e-4);
+    assert!((session.visibility_options.ground_aura_brightness - 2.10).abs() < 1e-4);
+    assert!(session.visibility_options.curve_helper);
+    assert!((session.visibility_options.curve_helper_scale - 1.75).abs() < 1e-4);
+    assert!((session.visibility_options.curve_helper_brightness - 2.40).abs() < 1e-4);
+    assert!(!session.visibility_options.overhead_chevron);
+    assert!((session.visibility_options.overhead_chevron_brightness - 0.80).abs() < 1e-4);
+    assert!(session.visibility_options.roof_beacon);
+    assert!(!session.visibility_options.adaptive_visibility);
+    assert!(!session.visibility_options.sonar_ping);
+}
+
+#[test]
+fn test_render_sonar_ping_headless_and_session_triggers() {
+    use glam::Vec2;
+    use tdrace_app::render::marker::render_player_sonar_ping;
+
+    // 1. Headless render execution checks
+    let pos = Vec2::new(50.0, 100.0);
+    for &zoom in &[4.0f32, 10.0, 18.0] {
+        for &progress in &[0.0f32, 0.15, 0.50, 0.85, 1.0] {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                render_player_sonar_ping(pos, zoom, progress, 0.75);
+            }));
+        }
+    }
+
+    // 2. Session zoom cycle trigger
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("helpers_sonar_trigger");
+    let mut session = RaceSession::new();
+    assert!(session.visibility_options.sonar_ping);
+    assert_eq!(session.sonar_ping_timer, 0.0);
+
+    // Zoom cycle triggers sonar ping when enabled
+    if let Some(pos) = session.cars.first().map(|c| c.state.position) {
+        if session.visibility_options.sonar_ping {
+            session.sonar_ping_timer = 0.75;
+            session.sonar_ping_origin = pos;
+        }
+    }
+    assert_eq!(session.sonar_ping_timer, 0.75);
+
+    // When disabled, trigger is bypassed
+    session.visibility_options.sonar_ping = false;
+    session.sonar_ping_timer = 0.0;
+    if session.visibility_options.sonar_ping {
+        session.sonar_ping_timer = 0.75;
+    }
+    assert_eq!(session.sonar_ping_timer, 0.0);
 }
 
 

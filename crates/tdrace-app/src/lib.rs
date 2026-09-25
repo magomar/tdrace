@@ -30,8 +30,8 @@ pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverFavoriteCar, Driver
 pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
 pub use camera::{CameraMode, RaceCamera, SplitLayout};
 pub use config::{
-    AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, ZoomLevelConfig,
-    REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
+    AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, PlayerHelpersConfig,
+    ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
 };
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
