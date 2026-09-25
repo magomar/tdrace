@@ -83,13 +83,18 @@ pub fn standard_tuning_bounds(constraint: &DrivetrainConstraint, base_config: &C
     ));
 
     match constraint {
-        DrivetrainConstraint::SpoolAxle { .. } => {
-            bounds.push(ParameterBound::new(
-                "caster_jacking_factor",
-                0.20,
-                1.80,
-                base_config.caster_jacking_factor,
-            ));
+        DrivetrainConstraint::SpoolAxle {
+            min_caster_jacking_unloading_ratio,
+            ..
+        } => {
+            if *min_caster_jacking_unloading_ratio > 0.10 {
+                bounds.push(ParameterBound::new(
+                    "caster_jacking_factor",
+                    0.20,
+                    1.80,
+                    base_config.caster_jacking_factor,
+                ));
+            }
             bounds.push(ParameterBound::new(
                 "max_steer_angle",
                 0.40,

@@ -102,6 +102,7 @@ fn main() {
         "drift_car" => ("Drift Machine", CarConfig::drift_car()),
         "rally_car" => ("Rally Supercar", CarConfig::rally_car()),
         "stock_car" => ("Cup Stock Car", CarConfig::stock_car_ta1()),
+        "sand_rail" => ("Sand Rail Buggy", CarConfig::sand_rail()),
         other => {
             eprintln!("Unsupported vehicle '{}'. Using 'kart'.", other);
             ("Sprint Kart", CarConfig::kart())
@@ -109,9 +110,19 @@ fn main() {
     };
 
     let constraint = match constraint_arg.as_str() {
-        "spool" => DrivetrainConstraint::SpoolAxle {
-            min_caster_jacking_unloading_ratio: 0.80,
-            max_turning_diameter_m: 2.6,
+        "spool" => match vehicle_arg.as_str() {
+            "stock_car" => DrivetrainConstraint::SpoolAxle {
+                min_caster_jacking_unloading_ratio: 0.0,
+                max_turning_diameter_m: 11.2,
+            },
+            "sand_rail" => DrivetrainConstraint::SpoolAxle {
+                min_caster_jacking_unloading_ratio: 0.0,
+                max_turning_diameter_m: 7.5,
+            },
+            _ => DrivetrainConstraint::SpoolAxle {
+                min_caster_jacking_unloading_ratio: 0.80,
+                max_turning_diameter_m: 2.6,
+            },
         },
         "salisbury" => DrivetrainConstraint::SalisburyRwd {
             min_power_coast_delta: 0.15,
@@ -137,6 +148,7 @@ fn main() {
         "gt3" | "gt3_homologation" => CalibrationTarget::gt3_homologation(),
         "nascar_ta1" | "stock_car_ta1" => CalibrationTarget::stock_car_ta1(),
         "rx_supercar" | "rallycross_supercar" => CalibrationTarget::rallycross_supercar(),
+        "sand_rail" | "sand_rail_buggy" => CalibrationTarget::sand_rail_buggy(),
         other => {
             eprintln!("Unsupported target '{}'. Using 'sprint_kart'.", other);
             CalibrationTarget::sprint_kart()

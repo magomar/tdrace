@@ -74,4 +74,18 @@ impl CalibrationTarget {
             max_sideslip_deg: 14.0,
         }
     }
+
+    /// Extreme Off-Road Sand Rail Buggy: 590kg chromoly tube chassis, 300 BHP, spool rear, paddle tires.
+    pub fn sand_rail_buggy() -> Self {
+        Self {
+            name: "Extreme Off-Road Sand Rail Regulation".to_string(),
+            modality: "extreme_offroad".to_string(),
+            tier: 1,
+            target_turning_diameter_m: Some(7.20),
+            target_peak_lat_g: 1.55,
+            target_0_100_time_s: Some(3.4),
+            target_understeer_gradient: 0.01,
+            max_sideslip_deg: 18.0,
+        }
+    }
 }

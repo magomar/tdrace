@@ -58,12 +58,15 @@ impl DrivetrainConstraint {
     /// Applies hard equality and manifold constraints directly to the configuration before simulation.
     pub fn project_hard_constraints(&self, config: &mut CarConfig) {
         match self {
-            Self::SpoolAxle { .. } => {
-                // Solid axle: rear diff is rigidly Spool, RWD drive bias (0.0), non-zero caster jacking
+            Self::SpoolAxle {
+                min_caster_jacking_unloading_ratio,
+                ..
+            } => {
+                // Solid axle: rear diff is rigidly Spool, RWD drive bias (0.0)
                 config.rear_differential = DifferentialType::Spool;
                 config.front_differential = DifferentialType::Open;
                 config.drive_bias = 0.0;
-                if config.caster_jacking_factor < 0.20 {
+                if *min_caster_jacking_unloading_ratio > 0.10 && config.caster_jacking_factor < 0.20 {
                     config.caster_jacking_factor = 0.80;
                 }
             }
