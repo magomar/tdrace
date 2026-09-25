@@ -462,6 +462,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Primary,
             vec![
+                InputSource::Key(ArcadeKey::Enter),
                 InputSource::Key(ArcadeKey::Space),
                 InputSource::Key(ArcadeKey::Z),
                 InputSource::GamepadBtn(GamepadButton::South),
@@ -494,6 +495,7 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Escape),
                 InputSource::GamepadBtn(GamepadButton::Start),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -521,17 +523,17 @@ impl InputMap {
         Self { bindings }
     }
 
-    /// Standard racing layout supporting Q/A/O/P, Arrow keys, and gamepad triggers/sticks.
+    /// Standard racing layout supporting WASD, Arrow keys, and gamepad triggers/sticks.
     ///
-    /// Note: WASD keys are excluded from this hybrid map because 'A' conflicts between
-    /// QAOP Down/Brake and WASD Steer Left. Players preferring WASD can select [InputMap::wasd_racing].
+    /// Primary confirm action is bound to Enter, Space, and Gamepad South (A).
+    /// Pause/cancel action is bound to Escape, Gamepad Start, and Gamepad East (B).
     pub fn default_racing() -> Self {
         let mut bindings = HashMap::new();
 
         bindings.insert(
             ArcadeAction::Up,
             vec![
-                InputSource::Key(ArcadeKey::Q),
+                InputSource::Key(ArcadeKey::W),
                 InputSource::Key(ArcadeKey::Up),
                 InputSource::GamepadAxisPos(GamepadAxis::Throttle),
                 InputSource::GamepadBtn(GamepadButton::DpadUp),
@@ -540,7 +542,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Down,
             vec![
-                InputSource::Key(ArcadeKey::A),
+                InputSource::Key(ArcadeKey::S),
                 InputSource::Key(ArcadeKey::Down),
                 InputSource::GamepadAxisPos(GamepadAxis::Brake),
                 InputSource::GamepadBtn(GamepadButton::DpadDown),
@@ -549,7 +551,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Left,
             vec![
-                InputSource::Key(ArcadeKey::O),
+                InputSource::Key(ArcadeKey::A),
                 InputSource::Key(ArcadeKey::Left),
                 InputSource::GamepadAxisNeg(GamepadAxis::LeftStickX),
                 InputSource::GamepadBtn(GamepadButton::DpadLeft),
@@ -558,7 +560,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Right,
             vec![
-                InputSource::Key(ArcadeKey::P),
+                InputSource::Key(ArcadeKey::D),
                 InputSource::Key(ArcadeKey::Right),
                 InputSource::GamepadAxisPos(GamepadAxis::LeftStickX),
                 InputSource::GamepadBtn(GamepadButton::DpadRight),
@@ -574,6 +576,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Primary,
             vec![
+                InputSource::Key(ArcadeKey::Enter),
                 InputSource::Key(ArcadeKey::Space),
                 InputSource::GamepadBtn(GamepadButton::South),
             ],
@@ -591,6 +594,7 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Escape),
                 InputSource::GamepadBtn(GamepadButton::Start),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -646,6 +650,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Primary,
             vec![
+                InputSource::Key(ArcadeKey::Enter),
                 InputSource::Key(ArcadeKey::Space),
                 InputSource::GamepadBtn(GamepadButton::South),
             ],
@@ -662,6 +667,7 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Escape),
                 InputSource::GamepadBtn(GamepadButton::Start),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -715,6 +721,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Primary,
             vec![
+                InputSource::Key(ArcadeKey::Enter),
                 InputSource::Key(ArcadeKey::Space),
                 InputSource::GamepadBtn(GamepadButton::South),
             ],
@@ -731,6 +738,7 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Escape),
                 InputSource::GamepadBtn(GamepadButton::Start),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -784,6 +792,7 @@ impl InputMap {
         bindings.insert(
             ArcadeAction::Primary,
             vec![
+                InputSource::Key(ArcadeKey::Enter),
                 InputSource::Key(ArcadeKey::Space),
                 InputSource::GamepadBtn(GamepadButton::South),
             ],
@@ -800,6 +809,7 @@ impl InputMap {
             vec![
                 InputSource::Key(ArcadeKey::Escape),
                 InputSource::GamepadBtn(GamepadButton::Start),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -1030,9 +1040,18 @@ mod tests {
         let classic = InputMap::classic_racing();
 
         assert!(!racing.get_bindings(ArcadeAction::Up).is_empty());
+        assert_eq!(racing.primary_binding_label(ArcadeAction::Up), "W / Up Arrow");
         assert_eq!(wasd.primary_binding_label(ArcadeAction::Up), "W");
         assert_eq!(arrows.primary_binding_label(ArcadeAction::Up), "Up Arrow");
         assert_eq!(classic.primary_binding_label(ArcadeAction::Up), "Q");
+
+        // Verify Enter is bound to Primary (Confirm) and Escape/East to Pause across all presets
+        for map in [&racing, &wasd, &arrows, &classic] {
+            assert!(map.get_bindings(ArcadeAction::Primary).contains(&InputSource::Key(ArcadeKey::Enter)));
+            assert!(map.get_bindings(ArcadeAction::Primary).contains(&InputSource::GamepadBtn(GamepadButton::South)));
+            assert!(map.get_bindings(ArcadeAction::Pause).contains(&InputSource::Key(ArcadeKey::Escape)));
+            assert!(map.get_bindings(ArcadeAction::Pause).contains(&InputSource::GamepadBtn(GamepadButton::East)));
+        }
 
         // Verify headless query safety
         assert!(!racing.is_key_down(ArcadeAction::Up));

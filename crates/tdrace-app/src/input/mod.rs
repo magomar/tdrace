@@ -90,7 +90,7 @@ impl InputController {
     /// Returns human-readable name of active control preset.
     pub fn active_preset_name(&self) -> &'static str {
         if self.input_map == InputMap::default_racing() {
-            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
+            "Hybrid (WASD + Arrows + Gamepad)"
         } else if self.input_map == InputMap::wasd_racing() {
             "WASD Layout"
         } else if self.input_map == InputMap::arrows_racing() {
@@ -160,7 +160,7 @@ impl InputController {
             self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
         let mut reverse = false;
 
-        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle <= 0.05 {
             reverse = true;
             throttle = raw_brake.max(brake);
             brake = 0.0;
@@ -352,7 +352,7 @@ impl InputController {
 
         // When stationary / stopped or moving backward (forward speed <= 0.25 m/s),
         // pushing the brakes becomes reverse gear unless forward throttle is applied.
-        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
+        if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle <= 0.05 {
             reverse = true;
             throttle = raw_brake.max(brake);
             brake = 0.0;
@@ -375,7 +375,7 @@ impl InputController {
         let handbrake = kb.handbrake || touch.handbrake;
         let mut reverse = kb.reverse || touch.reverse;
 
-        if kb.reverse && touch.brake > 0.0 && touch.throttle == 0.0 {
+        if kb.reverse && touch.brake > 0.0 && touch.throttle <= 0.05 {
             reverse = true;
             throttle = (kb.throttle + touch.brake).clamp(0.0, 1.0);
             brake = kb.brake;
@@ -616,7 +616,7 @@ mod tests {
         assert_eq!(controller.input_map, InputMap::default_racing());
         assert_eq!(
             controller.active_preset_name(),
-            "Hybrid (Q/A/O/P + Arrows + Gamepad)"
+            "Hybrid (WASD + Arrows + Gamepad)"
         );
 
         // Headless polling safety check
