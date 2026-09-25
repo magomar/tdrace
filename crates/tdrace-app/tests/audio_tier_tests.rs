@@ -10,7 +10,7 @@
 
 use std::collections::HashSet;
 use tdrace_app::audio::manager::EngineSoundType;
-use tdrace_app::audio::samples::{ArchetypeSampleBank, HIGH_RPM, IDLE_RPM, MID_RPM};
+use tdrace_app::audio::samples::ArchetypeSampleBank;
 use tdrace_app::catalog::{get_models_for_module_and_tier, CLASSIC_ARCADE_CARS};
 use tdrace_app::game::{GameState, GarageOrigin, RaceSession};
 use tdrace_app::module::classic::ClassicGameModule;
@@ -190,15 +190,20 @@ fn test_dsp_synthesis_all_25_archetypes_valid_buffers() {
         assert_eq!(bank.engine_type, archetype);
 
         let points = [
-            (&bank.idle, IDLE_RPM, false, "idle"),
-            (&bank.mid_on, MID_RPM, true, "mid_on"),
-            (&bank.mid_off, MID_RPM, false, "mid_off"),
-            (&bank.high_on, HIGH_RPM, true, "high_on"),
-            (&bank.high_off, HIGH_RPM, false, "high_off"),
+            (&bank.idle, false, "idle"),
+            (&bank.mid_on, true, "mid_on"),
+            (&bank.mid_off, false, "mid_off"),
+            (&bank.high_on, true, "high_on"),
+            (&bank.high_off, false, "high_off"),
         ];
 
-        for (point, expected_rpm, expected_load, label) in points {
-            assert_eq!(point.rpm, expected_rpm, "Archetype {:?} point {label} rpm mismatch", archetype);
+        assert!(bank.idle.rpm >= 600.0 && bank.idle.rpm <= 3500.0, "Archetype {:?} idle RPM out of range", archetype);
+        assert!(bank.high_on.rpm >= 4000.0 && bank.high_on.rpm <= 16000.0, "Archetype {:?} high RPM out of range", archetype);
+        assert_eq!(bank.mid_on.rpm, bank.mid_off.rpm, "Archetype {:?} mid on/off RPM mismatch", archetype);
+        assert_eq!(bank.high_on.rpm, bank.high_off.rpm, "Archetype {:?} high on/off RPM mismatch", archetype);
+
+        for (point, expected_load, label) in points {
+            assert!(point.rpm > 0.0, "Archetype {:?} point {label} rpm must be positive", archetype);
             assert_eq!(point.is_load, expected_load, "Archetype {:?} point {label} is_load mismatch", archetype);
             assert!(
                 !point.wav_bytes.is_empty(),
@@ -286,6 +291,56 @@ fn test_garage_showroom_dynamic_vehicle_switching_sound_resolution() {
                 session.audio.set_engine_type(active_sound);
                 assert_eq!(session.audio.active_engine_type, active_sound);
             }
+        }
+    }
+}
+
+#[test]
+fn test_vehicles_within_same_category_have_distinct_audio() {
+    let gt4_models = get_models_for_module_and_tier("gt", 1);
+    assert!(gt4_models.len() >= 4, "Must have at least 4 GT4 models");
+
+    let sample_rate = 44100;
+    let mut vehicle_samples: Vec<(&str, Vec<f32>)> = Vec::new();
+
+    for model in gt4_models {
+        let config = model.sound_config();
+        let bank = ArchetypeSampleBank::generate_from_config(model.sound_type(), &config, sample_rate);
+        let samples = decode_wav_16bit_mono(&bank.mid_on.wav_bytes);
+        assert!(!samples.is_empty(), "Vehicle {} produced empty mid_on samples", model.id);
+        vehicle_samples.push((model.id, samples));
+    }
+
+    // Compare all pairs and ensure normalized cross-correlation < 0.85
+    for i in 0..vehicle_samples.len() {
+        for j in (i + 1)..vehicle_samples.len() {
+            let (id_a, ref samples_a) = vehicle_samples[i];
+            let (id_b, ref samples_b) = vehicle_samples[j];
+
+            let min_len = samples_a.len().min(samples_b.len());
+            assert!(min_len > 1000, "Buffer too short for correlation analysis");
+
+            let a = &samples_a[..min_len];
+            let b = &samples_b[..min_len];
+
+            let mut dot = 0.0f32;
+            let mut norm_a = 0.0f32;
+            let mut norm_b = 0.0f32;
+
+            for k in 0..min_len {
+                dot += a[k] * b[k];
+                norm_a += a[k] * a[k];
+                norm_b += b[k] * b[k];
+            }
+
+            let corr = (dot / (norm_a.sqrt() * norm_b.sqrt())).abs();
+            assert!(
+                corr < 0.85,
+                "Vehicle audio too similar between {} and {}: cross-correlation = {:.3} >= 0.85",
+                id_a,
+                id_b,
+                corr
+            );
         }
     }
 }

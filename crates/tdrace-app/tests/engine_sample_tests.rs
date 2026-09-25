@@ -1,6 +1,6 @@
 use tdrace_app::audio::manager::EngineSoundType;
 use tdrace_app::audio::samples::{
-    generate_steady_engine_loop, ArchetypeSampleBank, HIGH_RPM, IDLE_RPM, MID_RPM,
+    generate_steady_engine_loop, ArchetypeSampleBank, IDLE_RPM, MID_RPM,
 };
 use tdrace_app::audio::sfx::EngineSoundConfig;
 
@@ -53,20 +53,20 @@ fn test_all_five_archetypes_sample_banks_generate_valid_audio() {
     for archetype in archetypes {
         let bank = ArchetypeSampleBank::generate(archetype, 44100);
 
-        assert_eq!(bank.idle.rpm, IDLE_RPM);
+        assert!(bank.idle.rpm >= 500.0);
         assert!(!bank.idle.is_load);
         assert!(!bank.idle.wav_bytes.is_empty());
 
-        assert_eq!(bank.mid_on.rpm, MID_RPM);
+        assert!(bank.mid_on.rpm > bank.idle.rpm);
         assert!(bank.mid_on.is_load);
 
-        assert_eq!(bank.mid_off.rpm, MID_RPM);
+        assert_eq!(bank.mid_off.rpm, bank.mid_on.rpm);
         assert!(!bank.mid_off.is_load);
 
-        assert_eq!(bank.high_on.rpm, HIGH_RPM);
+        assert!(bank.high_on.rpm > bank.mid_on.rpm);
         assert!(bank.high_on.is_load);
 
-        assert_eq!(bank.high_off.rpm, HIGH_RPM);
+        assert_eq!(bank.high_off.rpm, bank.high_on.rpm);
         assert!(!bank.high_off.is_load);
     }
 }

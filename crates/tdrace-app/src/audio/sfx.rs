@@ -20,13 +20,78 @@ pub use cabinet::audio::sfx::{
 };
 
 
+/// Physical layout and firing interval distribution across cylinders.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum CylinderLayout {
+    /// Uniformly distributed firing intervals (Inline-4, Inline-6, Flat-plane V8, V10, V12)
+    EvenlySpaced,
+    /// Crossplane 90° V8 with uneven 90-180-270-90 collector pulse spacing (NASCAR, AMG V8, LS V8)
+    CrossplaneV8,
+    /// Opposed-cylinder Boxer Flat-6 with split-bank acoustic rasp (Porsche 911 / Cayman)
+    BoxerFlat6,
+    /// Opposed-cylinder Boxer Flat-4 with syncopated rumble (Sand Rail, Subaru EJ)
+    BoxerFlat4,
+    /// 5-Cylinder 144° syncopated firing order (Audi Group B Quattro)
+    Inline5,
+    /// Uneven 270°-450° 4-stroke V-Twin thumper (Racing Mower)
+    VTwin4Stroke,
+}
+
+impl Default for CylinderLayout {
+    fn default() -> Self {
+        Self::EvenlySpaced
+    }
+}
+
+impl CylinderLayout {
+    /// Computes the normalized cycle phase offset in `[0.0, 1.0)` for a given cylinder.
+    #[inline(always)]
+    pub const fn phase_offset(self, cylinder_idx: usize, cylinder_count: usize) -> f32 {
+        match self {
+            Self::CrossplaneV8 if cylinder_count == 8 => {
+                const OFFSETS: [f32; 8] = [0.0, 0.125, 0.375, 0.50, 0.25, 0.625, 0.75, 0.875];
+                OFFSETS[cylinder_idx % 8]
+            }
+            Self::BoxerFlat6 if cylinder_count == 6 => {
+                const OFFSETS: [f32; 6] = [0.0, 0.1667, 0.50, 0.6667, 0.3333, 0.8333];
+                OFFSETS[cylinder_idx % 6]
+            }
+            Self::BoxerFlat4 if cylinder_count == 4 => {
+                const OFFSETS: [f32; 4] = [0.0, 0.25, 0.625, 0.875];
+                OFFSETS[cylinder_idx % 4]
+            }
+            Self::Inline5 if cylinder_count == 5 => {
+                const OFFSETS: [f32; 5] = [0.0, 0.40, 0.20, 0.80, 0.60];
+                OFFSETS[cylinder_idx % 5]
+            }
+            Self::VTwin4Stroke if cylinder_count == 2 => {
+                const OFFSETS: [f32; 2] = [0.0, 0.375];
+                OFFSETS[cylinder_idx % 2]
+            }
+            _ => {
+                if cylinder_count == 0 {
+                    0.0
+                } else {
+                    (cylinder_idx as f32) / (cylinder_count as f32)
+                }
+            }
+        }
+    }
+}
+
 /// Physical configuration parameters for procedural engine synthesis.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct EngineSoundConfig {
     /// Number of engine cylinders (e.g. 1 for Kart, 4 for Rally, 6 for F1, 8 for GT V8)
     pub cylinder_count: usize,
     /// Whether the engine operates on a 2-stroke cycle (true for Kart) vs 4-stroke cycle
     pub is_two_stroke: bool,
+    /// Physical cylinder spatial layout and firing sequence
+    pub cylinder_layout: CylinderLayout,
+    /// Typical engine idle speed in RPM
+    pub idle_rpm: f32,
+    /// Maximum operational redline speed in RPM
+    pub redline_rpm: f32,
     /// Crankshaft sub-harmonic / imbalance intensity (e.g. high for crossplane V8 rumble)
     pub crank_lumpiness: f32,
     /// Combustion pulse asymmetry / shape parameter [0.0..1.0]
@@ -62,11 +127,113 @@ impl Default for EngineSoundConfig {
 }
 
 impl EngineSoundConfig {
+    /// Builder: updates cylinder count and layout.
+    pub const fn with_cylinders(mut self, count: usize, layout: CylinderLayout) -> Self {
+        self.cylinder_count = count;
+        self.cylinder_layout = layout;
+        self
+    }
+
+    /// Builder: updates idle and redline RPM bounds.
+    pub const fn with_rpms(mut self, idle: f32, redline: f32) -> Self {
+        self.idle_rpm = idle;
+        self.redline_rpm = redline;
+        self
+    }
+
+    /// Builder: updates exhaust pipe formant resonant frequencies.
+    pub const fn with_formants(mut self, f1: f32, f2: f32) -> Self {
+        self.formant_f1_hz = f1;
+        self.formant_f2_hz = f2;
+        self
+    }
+
+    /// Builder: updates turbo spool level and blow-off flutter flag.
+    pub const fn with_turbo(mut self, whine: f32, flutter: bool) -> Self {
+        self.turbo_whine_level = whine;
+        self.has_turbo_flutter = flutter;
+        self
+    }
+
+    /// Builder: updates intake induction growl intensity.
+    pub const fn with_induction(mut self, growl: f32) -> Self {
+        self.intake_growl_intensity = growl;
+        self
+    }
+
+    /// Builder: updates crank sub-harmonic lumpiness.
+    pub const fn with_lumpiness(mut self, lumpiness: f32) -> Self {
+        self.crank_lumpiness = lumpiness;
+        self
+    }
+
+    /// Builder: updates valvetrain & mechanical buzz intensity.
+    pub const fn with_buzz(mut self, buzz: f32) -> Self {
+        self.mechanical_buzz = buzz;
+        self
+    }
+
+    /// Builder: updates supercharger blower whine flag.
+    pub const fn with_blower(mut self, blower: bool) -> Self {
+        self.has_blower_whine = blower;
+        self
+    }
+
+    /// Builder: updates electric hybrid inverter whine flag.
+    pub const fn with_hybrid(mut self, hybrid: bool) -> Self {
+        self.has_hybrid_whine = hybrid;
+        self
+    }
+
+    /// Builder: updates anti-lag overrun backfire flag.
+    pub const fn with_anti_lag(mut self, anti_lag: bool) -> Self {
+        self.has_anti_lag_pops = anti_lag;
+        self
+    }
+
+    /// Resolves the default synthesis configuration for a given engine sound archetype.
+    pub const fn from_sound_type(sound_type: crate::audio::manager::EngineSoundType) -> Self {
+        use crate::audio::manager::EngineSoundType;
+        match sound_type {
+            EngineSoundType::Generic => Self::generic(),
+            EngineSoundType::Gt4Clubsport => Self::gt4_clubsport(),
+            EngineSoundType::Gt3HighRev => Self::gt3_high_rev(),
+            EngineSoundType::Gt2Biturbo => Self::gt2_biturbo(),
+            EngineSoundType::Gt1V12Analogue => Self::gt1_v12_analogue(),
+            EngineSoundType::HypercarV6Hybrid => Self::hypercar_v6_hybrid(),
+            EngineSoundType::LateModelV8 => Self::late_model_v8(),
+            EngineSoundType::ArcaSpecV8 => Self::arca_spec_v8(),
+            EngineSoundType::SuperTruckV8 => Self::super_truck_v8(),
+            EngineSoundType::XfinityV8 => Self::xfinity_v8(),
+            EngineSoundType::NascarV8 => Self::nascar_v8(),
+            EngineSoundType::CrossCarMotorcycle => Self::cross_car_motorcycle(),
+            EngineSoundType::Super1600Atmo => Self::super1600_atmo(),
+            EngineSoundType::Rally2Turbo => Self::rally2_turbo(),
+            EngineSoundType::SupercarRx1 => Self::supercar_rx1(),
+            EngineSoundType::GroupBInline5 => Self::group_b_inline5(),
+            EngineSoundType::KartCadet60 => Self::kart_cadet_60(),
+            EngineSoundType::RacingMowerV2 => Self::racing_mower_v2(),
+            EngineSoundType::Kart125cc => Self::kart_125cc(),
+            EngineSoundType::KartShifterKZ => Self::kart_shifter_kz(),
+            EngineSoundType::Superkart250Twin => Self::superkart_250_twin(),
+            EngineSoundType::SandRailBoxer => Self::sand_rail_boxer(),
+            EngineSoundType::ProLiteV6 => Self::pro_lite_v6(),
+            EngineSoundType::Ultra4V8 => Self::ultra4_v8(),
+            EngineSoundType::Pro4UnlimitedV8 => Self::pro4_unlimited_v8(),
+            EngineSoundType::MonsterTruckBlower => Self::monster_truck_blower(),
+            EngineSoundType::SportGT => Self::sport_gt(),
+            EngineSoundType::RallyTurbo => Self::rally_turbo(),
+        }
+    }
+
     /// Generic / Balanced 6-Cylinder 4-Stroke Sports Engine (Fallback Default)
     pub const fn generic() -> Self {
         Self {
             cylinder_count: 6,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 850.0,
+            redline_rpm: 8000.0,
             crank_lumpiness: 0.28,
             combustion_asymmetry: 0.40,
             intake_growl_intensity: 0.22,
@@ -92,6 +259,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 6,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::BoxerFlat6,
+            idle_rpm: 900.0,
+            redline_rpm: 7800.0,
             crank_lumpiness: 0.25,
             combustion_asymmetry: 0.42,
             intake_growl_intensity: 0.28,
@@ -113,6 +283,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1000.0,
+            redline_rpm: 9000.0,
             crank_lumpiness: 0.18,
             combustion_asymmetry: 0.60,
             intake_growl_intensity: 0.38,
@@ -134,6 +307,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 6,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::BoxerFlat6,
+            idle_rpm: 900.0,
+            redline_rpm: 7500.0,
             crank_lumpiness: 0.30,
             combustion_asymmetry: 0.48,
             intake_growl_intensity: 0.42,
@@ -155,6 +331,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 12,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1000.0,
+            redline_rpm: 8500.0,
             crank_lumpiness: 0.12,
             combustion_asymmetry: 0.52,
             intake_growl_intensity: 0.45,
@@ -176,6 +355,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 6,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1200.0,
+            redline_rpm: 9000.0,
             crank_lumpiness: 0.22,
             combustion_asymmetry: 0.50,
             intake_growl_intensity: 0.36,
@@ -201,6 +383,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 850.0,
+            redline_rpm: 6800.0,
             crank_lumpiness: 0.48,
             combustion_asymmetry: 0.50,
             intake_growl_intensity: 0.34,
@@ -222,6 +407,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 900.0,
+            redline_rpm: 7200.0,
             crank_lumpiness: 0.46,
             combustion_asymmetry: 0.52,
             intake_growl_intensity: 0.38,
@@ -243,6 +431,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 950.0,
+            redline_rpm: 7500.0,
             crank_lumpiness: 0.49,
             combustion_asymmetry: 0.54,
             intake_growl_intensity: 0.40,
@@ -264,6 +455,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 1000.0,
+            redline_rpm: 8500.0,
             crank_lumpiness: 0.45,
             combustion_asymmetry: 0.58,
             intake_growl_intensity: 0.42,
@@ -285,6 +479,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 1100.0,
+            redline_rpm: 9200.0,
             crank_lumpiness: 0.50,
             combustion_asymmetry: 0.56,
             intake_growl_intensity: 0.42,
@@ -310,6 +507,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 4,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1500.0,
+            redline_rpm: 13500.0,
             crank_lumpiness: 0.15,
             combustion_asymmetry: 0.62,
             intake_growl_intensity: 0.32,
@@ -331,6 +531,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 4,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1100.0,
+            redline_rpm: 9000.0,
             crank_lumpiness: 0.26,
             combustion_asymmetry: 0.56,
             intake_growl_intensity: 0.44,
@@ -352,6 +555,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 4,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1000.0,
+            redline_rpm: 7500.0,
             crank_lumpiness: 0.32,
             combustion_asymmetry: 0.50,
             intake_growl_intensity: 0.38,
@@ -373,6 +579,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 4,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 1200.0,
+            redline_rpm: 8500.0,
             crank_lumpiness: 0.38,
             combustion_asymmetry: 0.58,
             intake_growl_intensity: 0.46,
@@ -394,6 +603,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 5,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::Inline5,
+            idle_rpm: 1100.0,
+            redline_rpm: 8200.0,
             crank_lumpiness: 0.42,
             combustion_asymmetry: 0.55,
             intake_growl_intensity: 0.48,
@@ -419,6 +631,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 1,
             is_two_stroke: true,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 2500.0,
+            redline_rpm: 11000.0,
             crank_lumpiness: 0.06,
             combustion_asymmetry: 0.60,
             intake_growl_intensity: 0.14,
@@ -440,6 +655,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 2,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::VTwin4Stroke,
+            idle_rpm: 800.0,
+            redline_rpm: 4200.0,
             crank_lumpiness: 0.52,
             combustion_asymmetry: 0.64,
             intake_growl_intensity: 0.35,
@@ -461,6 +679,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 1,
             is_two_stroke: true,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 2800.0,
+            redline_rpm: 14000.0,
             crank_lumpiness: 0.08,
             combustion_asymmetry: 0.65,
             intake_growl_intensity: 0.18,
@@ -482,6 +703,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 1,
             is_two_stroke: true,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 2900.0,
+            redline_rpm: 15500.0,
             crank_lumpiness: 0.09,
             combustion_asymmetry: 0.68,
             intake_growl_intensity: 0.22,
@@ -503,6 +727,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 2,
             is_two_stroke: true,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 3000.0,
+            redline_rpm: 14500.0,
             crank_lumpiness: 0.10,
             combustion_asymmetry: 0.70,
             intake_growl_intensity: 0.26,
@@ -528,6 +755,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 4,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::BoxerFlat4,
+            idle_rpm: 950.0,
+            redline_rpm: 7000.0,
             crank_lumpiness: 0.44,
             combustion_asymmetry: 0.54,
             intake_growl_intensity: 0.36,
@@ -549,6 +779,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 6,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::EvenlySpaced,
+            idle_rpm: 950.0,
+            redline_rpm: 7600.0,
             crank_lumpiness: 0.32,
             combustion_asymmetry: 0.46,
             intake_growl_intensity: 0.36,
@@ -570,6 +803,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 850.0,
+            redline_rpm: 6500.0,
             crank_lumpiness: 0.54,
             combustion_asymmetry: 0.58,
             intake_growl_intensity: 0.44,
@@ -591,6 +827,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 1050.0,
+            redline_rpm: 8400.0,
             crank_lumpiness: 0.46,
             combustion_asymmetry: 0.58,
             intake_growl_intensity: 0.44,
@@ -612,6 +851,9 @@ impl EngineSoundConfig {
         Self {
             cylinder_count: 8,
             is_two_stroke: false,
+            cylinder_layout: CylinderLayout::CrossplaneV8,
+            idle_rpm: 1000.0,
+            redline_rpm: 7200.0,
             crank_lumpiness: 0.56,
             combustion_asymmetry: 0.62,
             intake_growl_intensity: 0.50,
@@ -686,10 +928,10 @@ pub fn generate_custom_engine_rpm_band(sample_rate: u32, base_hz: f32, config: &
     for (i, sample) in samples.iter_mut().enumerate() {
         let t = i as f32 / sample_rate as f32;
 
-        // 1. Physical Cylinder Combustion Pressure Pulses across engine cycle (staggered at 1/N cycle offsets)
+        // 1. Physical Cylinder Combustion Pressure Pulses across engine cycle (staggered at cylinder layout offsets)
         let mut combustion = 0.0f32;
         for c in 0..config.cylinder_count {
-            let phase_offset = c as f32 / config.cylinder_count as f32;
+            let phase_offset = config.cylinder_layout.phase_offset(c, config.cylinder_count);
             let cyl_phase = t * cycle_hz + phase_offset;
             if config.is_two_stroke {
                 combustion += Oscillator::cylinder_pulse(cyl_phase, 2.0);

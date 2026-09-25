@@ -2,6 +2,7 @@ use macroquad::color::Color;
 use tdrace_core::physics::config::TerrainInteractionConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use crate::audio::EngineSoundType;
+use crate::audio::sfx::{CylinderLayout, EngineSoundConfig};
 use crate::module::VehicleVisualType;
 use crate::ui::menu::CarChoice;
 
@@ -314,6 +315,203 @@ impl RealCarModel {
                     "gt" | "gt_challenge" => EngineSoundType::Gt4Clubsport,
                     _ => self.base_car_choice.sound_type(),
                 },
+            }
+        }
+    }
+
+    /// Returns the bespoke physical acoustic configuration for this real car model,
+    /// derived from its exact engine architecture, cylinder layout, aspiration, and redline.
+    pub fn sound_config(&self) -> EngineSoundConfig {
+        let base = EngineSoundConfig::from_sound_type(self.sound_type());
+
+        // 1. Direct model ID overrides for vehicles with hallmark powertrains
+        match self.id {
+            // GT Tier 1: GT4 Clubsport
+            "gt_porsche_718_gt4" => base
+                .with_cylinders(6, CylinderLayout::BoxerFlat6)
+                .with_rpms(900.0, 8200.0)
+                .with_formants(220.0, 2100.0)
+                .with_turbo(0.0, false)
+                .with_induction(0.35),
+            "gt_bmw_m4_gt4" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(850.0, 7600.0)
+                .with_formants(180.0, 1850.0)
+                .with_turbo(0.32, true)
+                .with_induction(0.28),
+            "gt_aston_vantage_gt4" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(800.0, 7200.0)
+                .with_formants(130.0, 1400.0)
+                .with_turbo(0.26, true)
+                .with_lumpiness(0.42),
+            "gt_toyota_supra_gt4" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(850.0, 7000.0)
+                .with_formants(195.0, 1900.0)
+                .with_turbo(0.35, true)
+                .with_induction(0.30),
+
+            // GT Tier 2: GT3 Evo
+            "gt_porsche_911_gt3r" => base
+                .with_cylinders(6, CylinderLayout::BoxerFlat6)
+                .with_rpms(1000.0, 9200.0)
+                .with_formants(260.0, 2700.0)
+                .with_buzz(0.26)
+                .with_turbo(0.0, false),
+            "gt_ferrari_296_gt3" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(1100.0, 8500.0)
+                .with_formants(230.0, 2500.0)
+                .with_turbo(0.28, true),
+            "gt_amg_gt3_evo" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(900.0, 7500.0)
+                .with_formants(120.0, 1350.0)
+                .with_lumpiness(0.48)
+                .with_induction(0.42)
+                .with_turbo(0.0, false),
+            "gt_audi_r8_gt3_evo2" => base
+                .with_cylinders(10, CylinderLayout::EvenlySpaced)
+                .with_rpms(1050.0, 8800.0)
+                .with_formants(270.0, 2650.0)
+                .with_buzz(0.22)
+                .with_turbo(0.0, false),
+
+            // GT Tier 3: GT2 Biturbo
+            "gt_porsche_911_gt2_rs" => base
+                .with_cylinders(6, CylinderLayout::BoxerFlat6)
+                .with_rpms(950.0, 7200.0)
+                .with_formants(160.0, 1700.0)
+                .with_turbo(0.40, true),
+            "gt_brabham_bt62_gt2" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(1000.0, 8200.0)
+                .with_formants(140.0, 1500.0)
+                .with_lumpiness(0.44)
+                .with_turbo(0.0, false),
+            "gt_maserati_mc20_gt2" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(950.0, 8000.0)
+                .with_formants(210.0, 2200.0)
+                .with_turbo(0.36, true),
+            "gt_audi_r8_gt2" => base
+                .with_cylinders(10, CylinderLayout::EvenlySpaced)
+                .with_rpms(1000.0, 8500.0)
+                .with_formants(260.0, 2600.0)
+                .with_turbo(0.0, false),
+
+            // GT Tier 4: GT1 Legend
+            "gt_porsche_911_gt1_98" => base
+                .with_cylinders(6, CylinderLayout::BoxerFlat6)
+                .with_rpms(1000.0, 8000.0)
+                .with_formants(210.0, 2300.0)
+                .with_turbo(0.35, true),
+            "gt_mclaren_f1_gtr_lt" => base
+                .with_cylinders(12, CylinderLayout::EvenlySpaced)
+                .with_rpms(1050.0, 8600.0)
+                .with_formants(330.0, 2900.0)
+                .with_turbo(0.0, false),
+            "gt_mercedes_clk_gtr" => base
+                .with_cylinders(12, CylinderLayout::EvenlySpaced)
+                .with_rpms(950.0, 8200.0)
+                .with_formants(300.0, 2700.0)
+                .with_turbo(0.0, false),
+            "gt_nissan_r390_gt1" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(950.0, 7800.0)
+                .with_formants(150.0, 1600.0)
+                .with_turbo(0.32, true),
+
+            // GT Tier 5: LMH Hypercar
+            "gt_ferrari_499p" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(1200.0, 9000.0)
+                .with_hybrid(true)
+                .with_turbo(0.28, true),
+            "gt_porsche_963" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(1100.0, 8800.0)
+                .with_formants(150.0, 1750.0)
+                .with_hybrid(true)
+                .with_turbo(0.24, true),
+            "gt_toyota_gr010" => base
+                .with_cylinders(6, CylinderLayout::EvenlySpaced)
+                .with_rpms(1150.0, 8500.0)
+                .with_hybrid(true)
+                .with_turbo(0.30, true),
+            "gt_cadillac_v_series_r" => base
+                .with_cylinders(8, CylinderLayout::CrossplaneV8)
+                .with_rpms(1050.0, 8800.0)
+                .with_formants(130.0, 1500.0)
+                .with_hybrid(true)
+                .with_turbo(0.0, false)
+                .with_lumpiness(0.46),
+
+            // Rally Group B
+            "rally_audi_sport_quattro_e2" | "rally_quattro_s1" => base
+                .with_cylinders(5, CylinderLayout::Inline5)
+                .with_rpms(1100.0, 8400.0)
+                .with_formants(165.0, 1950.0)
+                .with_turbo(0.40, true)
+                .with_anti_lag(true),
+            "rally_lancia_delta_s4" => base
+                .with_cylinders(4, CylinderLayout::EvenlySpaced)
+                .with_rpms(1150.0, 8500.0)
+                .with_blower(true)
+                .with_turbo(0.35, true)
+                .with_anti_lag(true),
+            "rally_peugeot_205_t16" => base
+                .with_cylinders(4, CylinderLayout::EvenlySpaced)
+                .with_rpms(1200.0, 8500.0)
+                .with_turbo(0.38, true)
+                .with_anti_lag(true),
+            "rally_ford_rs200" => base
+                .with_cylinders(4, CylinderLayout::EvenlySpaced)
+                .with_rpms(1100.0, 8200.0)
+                .with_turbo(0.36, true)
+                .with_anti_lag(true),
+
+            // Fallback: heuristic inspection of engine_desc
+            _ => {
+                let mut cfg = base;
+                let desc = self.engine_desc;
+                if desc.contains("V12") {
+                    cfg = cfg.with_cylinders(12, CylinderLayout::EvenlySpaced)
+                        .with_formants(310.0, 2800.0);
+                } else if desc.contains("V10") {
+                    cfg = cfg.with_cylinders(10, CylinderLayout::EvenlySpaced)
+                        .with_formants(265.0, 2600.0);
+                } else if desc.contains("V8") || desc.contains("cu in") || desc.contains("LS") {
+                    cfg = cfg.with_cylinders(8, CylinderLayout::CrossplaneV8)
+                        .with_lumpiness(0.48);
+                } else if desc.contains("Flat-6") || desc.contains("Boxer-6") {
+                    cfg = cfg.with_cylinders(6, CylinderLayout::BoxerFlat6);
+                } else if desc.contains("Flat-4") || desc.contains("Boxer-4") {
+                    cfg = cfg.with_cylinders(4, CylinderLayout::BoxerFlat4);
+                } else if desc.contains("I5") || desc.contains("Inline-5") {
+                    cfg = cfg.with_cylinders(5, CylinderLayout::Inline5);
+                } else if desc.contains("I6") || desc.contains("Inline-6") {
+                    cfg = cfg.with_cylinders(6, CylinderLayout::EvenlySpaced);
+                } else if desc.contains("I4") || desc.contains("Inline-4") || desc.contains("4-Cyl") {
+                    cfg = cfg.with_cylinders(4, CylinderLayout::EvenlySpaced);
+                } else if desc.contains("V-Twin") {
+                    cfg = cfg.with_cylinders(2, CylinderLayout::VTwin4Stroke);
+                } else if desc.contains("Twin") && desc.contains("2-Stroke") {
+                    cfg = cfg.with_cylinders(2, CylinderLayout::EvenlySpaced);
+                }
+
+                if desc.contains("Turbo") || desc.contains("Biturbo") {
+                    cfg = cfg.with_turbo(0.32, true);
+                }
+                if desc.contains("Supercharger") || desc.contains("Blower") {
+                    cfg = cfg.with_blower(true);
+                }
+                if desc.contains("Hybrid") || desc.contains("MGU-K") {
+                    cfg = cfg.with_hybrid(true);
+                }
+
+                cfg
             }
         }
     }

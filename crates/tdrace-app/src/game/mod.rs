@@ -1457,6 +1457,29 @@ impl RaceSession {
         }
     }
 
+    /// Returns the currently active authentic car model if available.
+    pub fn resolve_active_car_model(&self) -> Option<&'static crate::catalog::RealCarModel> {
+        if matches!(self.state, GameState::Garage(_)) {
+            let models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
+            return models.get(self.garage_car_idx).copied();
+        }
+        if let Some(model_id) = self.selected_car_model_id {
+            if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+                return Some(model);
+            }
+        }
+        None
+    }
+
+    /// Resolves the engine sound configuration for the active session, providing bespoke acoustic modeling per vehicle.
+    pub fn resolve_active_sound_config(&self) -> crate::audio::sfx::EngineSoundConfig {
+        if let Some(model) = self.resolve_active_car_model() {
+            return model.sound_config();
+        }
+        let sound_type = self.resolve_active_sound_type();
+        crate::audio::sfx::EngineSoundConfig::from_sound_type(sound_type)
+    }
+
     /// Returns the pool of eligible car models for opponents based on the active motorsport category or track.
     pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
         let cat = self.track.car_category;
@@ -4066,7 +4089,8 @@ impl RaceSession {
         self.audio.stop_music(); // In-game music muted
 
         let sound_type = self.resolve_active_sound_type();
-        self.audio.set_engine_type(sound_type);
+        let sound_config = self.resolve_active_sound_config();
+        self.audio.set_engine_type_with_config(sound_type, &sound_config);
 
         // Show Starting Grid with selected race participants
         self.starting_grid_focus = StartingGridFocus::LeftSetup;
@@ -7996,9 +8020,12 @@ impl RaceSession {
 
         // Active vehicle engine acoustic archetype & live telemetry
         let sound_type = self.resolve_active_sound_type();
-        self.audio.set_engine_type(sound_type);
+        let sound_config = self.resolve_active_sound_config();
+        self.audio.set_engine_type_with_config(sound_type, &sound_config);
 
-        let current_rpm = 1100.0 + self.garage_rev_rpm * 7400.0;
+        let idle_rpm = sound_config.idle_rpm;
+        let redline_rpm = sound_config.redline_rpm;
+        let current_rpm = idle_rpm + self.garage_rev_rpm * (redline_rpm - idle_rpm);
         let throttle = if self.garage_revving { 1.0 } else { 0.0 };
         self.audio.update_engine_telemetry(current_rpm, throttle, false, 0.0, 1, frame_dt);
 

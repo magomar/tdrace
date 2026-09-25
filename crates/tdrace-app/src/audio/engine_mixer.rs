@@ -82,14 +82,19 @@ impl EngineAudioMixer {
         self.start_voices(backend);
     }
 
-    /// Computes dynamic playback rates and equal-power volume weights for all 5 voices.
+    /// Computes dynamic playback rates and equal-power volume weights for all 5 voices using specified bounding RPMs.
     /// Returns: `[(rate_idle, vol_idle), (rate_mid_on, vol_mid_on), (rate_mid_off, vol_mid_off), (rate_high_on, vol_high_on), (rate_high_off, vol_high_off)]`
-    pub fn compute_voice_parameters(
+    pub fn compute_voice_parameters_bounded(
         rpm: f32,
         throttle: f32,
         master_vol: f32,
+        idle_rpm: f32,
+        mid_rpm: f32,
+        high_rpm: f32,
     ) -> [(f32, f32); 5] {
-        let clamped_rpm = rpm.clamp(600.0, 9500.0);
+        let min_rpm = (idle_rpm * 0.5).max(300.0);
+        let max_rpm = high_rpm * 1.35;
+        let clamped_rpm = rpm.clamp(min_rpm, max_rpm);
         let clamped_throttle = throttle.clamp(0.0, 1.0);
 
         // Equal-power throttle load blend: on-throttle vs off-throttle
@@ -101,16 +106,17 @@ impl EngineAudioMixer {
         let load_gain = 0.55 + 0.45 * clamped_throttle;
         let effective_vol = master_vol * load_gain;
 
-        if clamped_rpm <= MID_RPM {
+        if clamped_rpm <= mid_rpm {
             // Low to Mid RPM region: interpolate between IDLE and MID
-            let u = ((clamped_rpm - IDLE_RPM) / (MID_RPM - IDLE_RPM)).clamp(0.0, 1.0);
+            let denom = (mid_rpm - idle_rpm).max(10.0);
+            let u = ((clamped_rpm - idle_rpm) / denom).clamp(0.0, 1.0);
             let rpm_angle = u * FRAC_PI_2;
             let idle_w = rpm_angle.cos();
             let mid_w = rpm_angle.sin();
 
             // Dynamic Pitch Matching: both samples scale to the exact target RPM
-            let rate_idle = (clamped_rpm / IDLE_RPM).clamp(0.5, 2.5);
-            let rate_mid = (clamped_rpm / MID_RPM).clamp(0.5, 2.5);
+            let rate_idle = (clamped_rpm / idle_rpm).clamp(0.4, 2.8);
+            let rate_mid = (clamped_rpm / mid_rpm).clamp(0.4, 2.8);
 
             let vol_idle = effective_vol * idle_w;
             let vol_mid_on = effective_vol * mid_w * on_weight;
@@ -125,14 +131,15 @@ impl EngineAudioMixer {
             ]
         } else {
             // Mid to High/Redline RPM region: interpolate between MID and HIGH
-            let u = ((clamped_rpm - MID_RPM) / (HIGH_RPM - MID_RPM)).clamp(0.0, 1.0);
+            let denom = (high_rpm - mid_rpm).max(10.0);
+            let u = ((clamped_rpm - mid_rpm) / denom).clamp(0.0, 1.0);
             let rpm_angle = u * FRAC_PI_2;
             let mid_w = rpm_angle.cos();
             let high_w = rpm_angle.sin();
 
             // Dynamic Pitch Matching: both samples scale to the exact target RPM
-            let rate_mid = (clamped_rpm / MID_RPM).clamp(0.5, 2.5);
-            let rate_high = (clamped_rpm / HIGH_RPM).clamp(0.5, 2.5);
+            let rate_mid = (clamped_rpm / mid_rpm).clamp(0.4, 2.8);
+            let rate_high = (clamped_rpm / high_rpm).clamp(0.4, 2.8);
 
             let vol_mid_on = effective_vol * mid_w * on_weight;
             let vol_mid_off = effective_vol * mid_w * off_weight;
@@ -147,6 +154,16 @@ impl EngineAudioMixer {
                 (rate_high, vol_high_off),
             ]
         }
+    }
+
+    /// Computes dynamic playback rates and equal-power volume weights for all 5 voices using standard 1200/4500/8000 RPM defaults.
+    /// Returns: `[(rate_idle, vol_idle), (rate_mid_on, vol_mid_on), (rate_mid_off, vol_mid_off), (rate_high_on, vol_high_on), (rate_high_off, vol_high_off)]`
+    pub fn compute_voice_parameters(
+        rpm: f32,
+        throttle: f32,
+        master_vol: f32,
+    ) -> [(f32, f32); 5] {
+        Self::compute_voice_parameters_bounded(rpm, throttle, master_vol, IDLE_RPM, MID_RPM, HIGH_RPM)
     }
 
     /// Updates dynamic playback rate and volume across all active engine voices with sub-frame tweening.
@@ -164,7 +181,14 @@ impl EngineAudioMixer {
         self.current_rpm = rpm;
         self.current_throttle = throttle;
 
-        let params = Self::compute_voice_parameters(rpm, throttle, master_vol);
+        let params = Self::compute_voice_parameters_bounded(
+            rpm,
+            throttle,
+            master_vol,
+            self.bank.idle.rpm,
+            self.bank.mid_on.rpm,
+            self.bank.high_on.rpm,
+        );
         let tween_dur = Duration::from_millis(8);
 
         self.voices.idle.set_playback_rate(params[0].0, tween_dur);

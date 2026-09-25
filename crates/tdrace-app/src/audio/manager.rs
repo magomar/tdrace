@@ -28,7 +28,7 @@ use crate::audio::sfx::{
     generate_lap_chime, generate_nascar_v8_rpm_band, generate_offroad_sound, generate_race_finish,
     generate_rally_turbo_rpm_band, generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
     generate_sport_gt_rpm_band, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
-    generate_water_splash_sound,
+    generate_water_splash_sound, EngineSoundConfig,
 };
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
 use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
@@ -573,14 +573,20 @@ impl AudioManager {
     /// Sets the active vehicle engine sound archetype, stopping prior engine loops if switching.
     pub fn set_engine_type(&mut self, engine_type: EngineSoundType) {
         if self.active_engine_type != engine_type {
-            self.stop_all_loops();
-            self.active_engine_type = engine_type;
-            if let Some(sampled) = self.sampled_engine.as_mut() {
-                let new_bank = ArchetypeSampleBank::generate(engine_type, DEFAULT_SAMPLE_RATE);
-                sampled.set_bank(new_bank.clone(), &mut self.backend);
-                if let Some(sampled_p2) = self.sampled_engine_p2.as_mut() {
-                    sampled_p2.set_bank(new_bank, &mut self.backend);
-                }
+            let config = EngineSoundConfig::from_sound_type(engine_type);
+            self.set_engine_type_with_config(engine_type, &config);
+        }
+    }
+
+    /// Sets the active vehicle engine sound archetype with custom physical parameters, synthesizing bespoke sample loops.
+    pub fn set_engine_type_with_config(&mut self, engine_type: EngineSoundType, config: &EngineSoundConfig) {
+        self.stop_all_loops();
+        self.active_engine_type = engine_type;
+        if let Some(sampled) = self.sampled_engine.as_mut() {
+            let new_bank = ArchetypeSampleBank::generate_from_config(engine_type, config, DEFAULT_SAMPLE_RATE);
+            sampled.set_bank(new_bank.clone(), &mut self.backend);
+            if let Some(sampled_p2) = self.sampled_engine_p2.as_mut() {
+                sampled_p2.set_bank(new_bank, &mut self.backend);
             }
         }
     }

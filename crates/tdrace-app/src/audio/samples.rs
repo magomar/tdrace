@@ -43,6 +43,59 @@ pub struct ArchetypeSampleBank {
 }
 
 impl ArchetypeSampleBank {
+    /// Generates pristine, click-free seamless loop sample points in memory for a customized engine configuration.
+    pub fn generate_from_config(engine_type: EngineSoundType, config: &EngineSoundConfig, sample_rate: u32) -> Self {
+        let idle_rpm = config.idle_rpm.max(500.0);
+        let high_rpm = config.redline_rpm.max(idle_rpm + 1000.0);
+        let mid_rpm = (idle_rpm + high_rpm) * 0.5;
+
+        let idle_wav = generate_steady_engine_loop(sample_rate, idle_rpm, false, config);
+        let mid_on_wav = generate_steady_engine_loop(sample_rate, mid_rpm, true, config);
+        let mid_off_wav = generate_steady_engine_loop(sample_rate, mid_rpm, false, config);
+        let high_on_wav = generate_steady_engine_loop(sample_rate, high_rpm, true, config);
+        let high_off_wav = generate_steady_engine_loop(sample_rate, high_rpm, false, config);
+
+        let idle_snd = SoundData::from_bytes(&idle_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
+        let mid_on_snd = SoundData::from_bytes(&mid_on_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
+        let mid_off_snd = SoundData::from_bytes(&mid_off_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
+        let high_on_snd = SoundData::from_bytes(&high_on_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
+        let high_off_snd = SoundData::from_bytes(&high_off_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
+
+        Self {
+            engine_type,
+            idle: EngineSamplePoint {
+                rpm: idle_rpm,
+                is_load: false,
+                sound: idle_snd,
+                wav_bytes: idle_wav,
+            },
+            mid_on: EngineSamplePoint {
+                rpm: mid_rpm,
+                is_load: true,
+                sound: mid_on_snd,
+                wav_bytes: mid_on_wav,
+            },
+            mid_off: EngineSamplePoint {
+                rpm: mid_rpm,
+                is_load: false,
+                sound: mid_off_snd,
+                wav_bytes: mid_off_wav,
+            },
+            high_on: EngineSamplePoint {
+                rpm: high_rpm,
+                is_load: true,
+                sound: high_on_snd,
+                wav_bytes: high_on_wav,
+            },
+            high_off: EngineSamplePoint {
+                rpm: high_rpm,
+                is_load: false,
+                sound: high_off_snd,
+                wav_bytes: high_off_wav,
+            },
+        }
+    }
+
     /// Generates pristine, click-free seamless loop sample points in memory for the given archetype.
     pub fn generate(engine_type: EngineSoundType, sample_rate: u32) -> Self {
         let config = match engine_type {
@@ -82,51 +135,7 @@ impl ArchetypeSampleBank {
             EngineSoundType::RallyTurbo => EngineSoundConfig::rally_turbo(),
         };
 
-        let idle_wav = generate_steady_engine_loop(sample_rate, IDLE_RPM, false, &config);
-        let mid_on_wav = generate_steady_engine_loop(sample_rate, MID_RPM, true, &config);
-        let mid_off_wav = generate_steady_engine_loop(sample_rate, MID_RPM, false, &config);
-        let high_on_wav = generate_steady_engine_loop(sample_rate, HIGH_RPM, true, &config);
-        let high_off_wav = generate_steady_engine_loop(sample_rate, HIGH_RPM, false, &config);
-
-        let idle_snd = SoundData::from_bytes(&idle_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
-        let mid_on_snd = SoundData::from_bytes(&mid_on_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
-        let mid_off_snd = SoundData::from_bytes(&mid_off_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
-        let high_on_snd = SoundData::from_bytes(&high_on_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
-        let high_off_snd = SoundData::from_bytes(&high_off_wav, true).unwrap_or_else(|_| SoundData::from_bytes(&[], true).unwrap());
-
-        Self {
-            engine_type,
-            idle: EngineSamplePoint {
-                rpm: IDLE_RPM,
-                is_load: false,
-                sound: idle_snd,
-                wav_bytes: idle_wav,
-            },
-            mid_on: EngineSamplePoint {
-                rpm: MID_RPM,
-                is_load: true,
-                sound: mid_on_snd,
-                wav_bytes: mid_on_wav,
-            },
-            mid_off: EngineSamplePoint {
-                rpm: MID_RPM,
-                is_load: false,
-                sound: mid_off_snd,
-                wav_bytes: mid_off_wav,
-            },
-            high_on: EngineSamplePoint {
-                rpm: HIGH_RPM,
-                is_load: true,
-                sound: high_on_snd,
-                wav_bytes: high_on_wav,
-            },
-            high_off: EngineSamplePoint {
-                rpm: HIGH_RPM,
-                is_load: false,
-                sound: high_off_snd,
-                wav_bytes: high_off_wav,
-            },
-        }
+        Self::generate_from_config(engine_type, &config, sample_rate)
     }
 
     /// Subdirectory name under assets/audio/engines/
@@ -286,13 +295,16 @@ pub fn generate_steady_engine_loop(
         // 1. Physical Cylinder Combustion Pressure Pulses
         let mut combustion = 0.0f32;
         for c in 0..config.cylinder_count {
-            let phase_offset = c as f32 / config.cylinder_count as f32;
+            let phase_offset = config.cylinder_layout.phase_offset(c, config.cylinder_count);
             let cyl_phase = t * cycle_hz + phase_offset;
-            if config.is_two_stroke {
-                combustion += Oscillator::cylinder_pulse(cyl_phase, 2.0);
+            // Runner variation per cylinder for organic acoustic asymmetry
+            let runner_variation = 1.0 + 0.04 * ((c as f32 * 1.618).fract() - 0.5);
+            let pulse = if config.is_two_stroke {
+                Oscillator::cylinder_pulse(cyl_phase, 2.0)
             } else {
-                combustion += Oscillator::combustion_pulse(cyl_phase, config.combustion_asymmetry);
-            }
+                Oscillator::combustion_pulse(cyl_phase, config.combustion_asymmetry)
+            };
+            combustion += pulse * runner_variation;
         }
         combustion *= if on_throttle { 1.0 } else { 0.65 };
 
