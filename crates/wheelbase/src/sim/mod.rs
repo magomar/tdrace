@@ -7,6 +7,7 @@
 pub mod circuit;
 pub mod harness;
 pub mod matrix;
+pub mod optimizer;
 pub mod playground;
 pub mod protocols;
 pub mod report;
@@ -17,6 +18,11 @@ pub use circuit::{
 };
 pub use harness::{SimulationRunner, DEFAULT_SIMULATION_DT};
 pub use matrix::{ExperimentDataset, VehicleBenchmarkResult};
+pub use optimizer::{
+    AutoCalibrator, AutoTunerConfig, CalibrationResult, CalibrationTarget, CmaEsOptimizer,
+    DrivetrainConstraint, DynamicMetrics, OptimizationEvaluator, ParameterBound,
+    standard_tuning_bounds,
+};
 pub use playground::{
     run_playground_simulation, run_wall_contact_protocol_g, PlaygroundSimulationResult,
     SimBarrierType, SimObstacleType, SimPlayground, SimSceneryObstacle, SimSector, SimWallBarrier,

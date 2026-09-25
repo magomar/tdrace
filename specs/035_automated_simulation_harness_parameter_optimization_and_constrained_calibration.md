@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Automated Simulation Harness Parameter Optimization and Constrained Vehicle Calibration"
 description: "Algorithmic parameter optimization and constrained calibration architecture utilizing the deterministic headless simulation harness to systematically fit vehicle dynamics under physical drivetrain, chassis, and homologation constraints."
-status: draft
+status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T16:15:00Z }
 ---
@@ -310,46 +310,46 @@ pub struct CalibrationResult {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Constrained Optimization of Solid-Axle Kart Under Turning Diameter Limit
-- [ ] **Given** a `CarConfig::classic_kart()` with uncalibrated suspension and spool rear differential
-- [ ] **And** a physical constraint `DrivetrainConstraint::SpoolAxle { max_turning_diameter_m: 2.60, min_caster_jacking_unloading_ratio: 0.80 }`
-- [ ] **When** the `auto_tune` engine executes for 50 generations
-- [ ] **Then** the final calibrated configuration must strictly maintain `omega_L == omega_R` across all timesteps
-- [ ] **And** the low-speed turning circle diameter must measure $\le 2.60\text{ m}$
-- [ ] **And** inside rear wheel normal load must drop by $\ge 80\%$ under maximum steering lock
-- [ ] **And** the optimization exit acceleration cost must improve by at least $15\%$ over baseline
+- [x] **Given** a `CarConfig::classic_kart()` with uncalibrated suspension and spool rear differential
+- [x] **And** a physical constraint `DrivetrainConstraint::SpoolAxle { max_turning_diameter_m: 2.60, min_caster_jacking_unloading_ratio: 0.80 }`
+- [x] **When** the `auto_tune` engine executes for 50 generations
+- [x] **Then** the final calibrated configuration must strictly maintain `omega_L == omega_R` across all timesteps
+- [x] **And** the low-speed turning circle diameter must measure $\le 2.60\text{ m}$
+- [x] **And** inside rear wheel normal load must drop by $\ge 80\%$ under maximum steering lock
+- [x] **And** the optimization exit acceleration cost must improve by at least $15\%$ over baseline
 
 #### Scenario: RWD GT3 Salisbury LSD Optimization Under Trail-Braking Stability Constraint
-- [ ] **Given** a GT3 vehicle with `DrivetrainConstraint::SalisburyRwd`
-- [ ] **And** an inequality constraint preventing yaw acceleration divergence ($\ddot{\psi}_{\max} \le 3.5\text{ rad/s}^2$ during trail-braking)
-- [ ] **When** optimizing `power_lock`, `coast_lock`, `preload_nm`, and front/rear anti-roll bars
-- [ ] **Then** the optimized `coast_lock` must remain $\le \text{power\_lock} - 0.10$
-- [ ] **And** the vehicle must complete the 160 km/h trail-braking maneuver without spinning ($\beta < 12^\circ$)
-- [ ] **And** mid-corner exit traction on asphalt must improve with $< 5\%$ differential slip loss
+- [x] **Given** a GT3 vehicle with `DrivetrainConstraint::SalisburyRwd`
+- [x] **And** an inequality constraint preventing yaw acceleration divergence ($\ddot{\psi}_{\max} \le 3.5\text{ rad/s}^2$ during trail-braking)
+- [x] **When** optimizing `power_lock`, `coast_lock`, `preload_nm`, and front/rear anti-roll bars
+- [x] **Then** the optimized `coast_lock` must remain $\le \text{power\_lock} - 0.10$
+- [x] **And** the vehicle must complete the 160 km/h trail-braking maneuver without spinning ($\beta < 12^\circ$)
+- [x] **And** mid-corner exit traction on asphalt must improve with $< 5\%$ differential slip loss
 
 #### Scenario: Infeasible Constraint Reporting and Graceful Boundary Fallback
-- [ ] **Given** an impossible calibration target (e.g. asking for a $2.0\text{ m}$ turning circle on a NASCAR TA1 stock car with solid spool)
-- [ ] **When** the auto-tuner runs
-- [ ] **Then** the solver must not panic or diverge to NaN
-- [ ] **And** it must report an explicit `ConstraintViolationError` identifying the conflicting physical boundary
-- [ ] **And** output the closest achievable configuration on the constraint boundary ($D \approx 11.0\text{ m}$)
+- [x] **Given** an impossible calibration target (e.g. asking for a $2.0\text{ m}$ turning circle on a NASCAR TA1 stock car with solid spool)
+- [x] **When** the auto-tuner runs
+- [x] **Then** the solver must not panic or diverge to NaN
+- [x] **And** it must report an explicit `ConstraintViolationError` identifying the conflicting physical boundary
+- [x] **And** output the closest achievable configuration on the constraint boundary ($D \approx 11.0\text{ m}$)
 
 #### Scenario: Multi-Threaded Throughput SLA
-- [ ] **Given** a population size of 32 candidates running on an 8-core CPU
-- [ ] **When** executing 30 generations of the multi-protocol test battery (Protocols A, B, C, D)
-- [ ] **Then** total execution time must not exceed $5.0\text{ seconds}$ ($> 200,000\text{ simulation steps/sec}$ aggregate throughput)
+- [x] **Given** a population size of 32 candidates running on an 8-core CPU
+- [x] **When** executing 30 generations of the multi-protocol test battery (Protocols A, B, C, D)
+- [x] **Then** total execution time must not exceed $5.0\text{ seconds}$ ($> 200,000\text{ simulation steps/sec}$ aggregate throughput)
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Files to Create / Modify
-- `[ ]` `crates/wheelbase/src/sim/optimizer/mod.rs` -> Public module entry point, optimizer orchestrator.
-- `[ ]` `crates/wheelbase/src/sim/optimizer/constraints.rs` -> Definition of `DrivetrainConstraint`, box bounds, and projection operators.
-- `[ ]` `crates/wheelbase/src/sim/optimizer/targets.rs` -> Target specification structs and real-world reference telemetry databases.
-- `[ ]` `crates/wheelbase/src/sim/optimizer/cma_es.rs` -> Bounded Covariance Matrix Adaptation Evolution Strategy algorithm.
-- `[ ]` `crates/wheelbase/src/sim/optimizer/evaluator.rs` -> Multi-protocol objective loss calculator wrapping simulation harness.
-- `[ ]` `crates/wheelbase/src/sim/optimizer/report.rs` -> Convergence analysis, diff formatting, and automated preset serializer.
-- `[ ]` `crates/wheelbase/src/bin/auto_tune.rs` -> CLI binary for interactive and batch vehicle calibration.
-- `[ ]` `crates/wheelbase/tests/auto_calibration_tests.rs` -> Integration tests verifying constrained optimization across Spool, LSD, and Open differentials.
-- `[ ]` `specs/index.md` -> Registers Spec 035 in the progressive disclosure directory index.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 035 under Phase 6 next-gen vehicle dynamics milestones.
+- `[x]` `crates/wheelbase/src/sim/optimizer/mod.rs` -> Public module entry point, optimizer orchestrator.
+- `[x]` `crates/wheelbase/src/sim/optimizer/constraints.rs` -> Definition of `DrivetrainConstraint`, box bounds, and projection operators.
+- `[x]` `crates/wheelbase/src/sim/optimizer/targets.rs` -> Target specification structs and real-world reference telemetry databases.
+- `[x]` `crates/wheelbase/src/sim/optimizer/cma_es.rs` -> Bounded Covariance Matrix Adaptation Evolution Strategy algorithm.
+- `[x]` `crates/wheelbase/src/sim/optimizer/evaluator.rs` -> Multi-protocol objective loss calculator wrapping simulation harness.
+- `[x]` `crates/wheelbase/src/sim/optimizer/report.rs` -> Convergence analysis, diff formatting, and automated preset serializer.
+- `[x]` `crates/wheelbase/src/bin/auto_tune.rs` -> CLI binary for interactive and batch vehicle calibration.
+- `[x]` `crates/wheelbase/tests/auto_calibration_tests.rs` -> Integration tests verifying constrained optimization across Spool, LSD, and Open differentials.
+- `[x]` `specs/index.md` -> Registers Spec 035 in the progressive disclosure directory index.
+- `[x]` `specs/constitution/ROADMAP.md` -> Links Spec 035 under Phase 6 next-gen vehicle dynamics milestones.
