@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T19:15:00Z }
 ---
-
 # Feature Spec 023: Orthogonal AI Driving Styles and Quality Tiers 🏁🤖
 
 A comprehensive specification that decouples the AI driving model in **TdRace** into two strictly orthogonal dimensions:

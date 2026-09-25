@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T17:42:00Z }
 ---
-
 # Feature Spec: Floating Bot Names and Dynamic Proximity Nameplates 🏷️🏎️💨
 
 A comprehensive visual, UI, and input specification introducing **dynamic in-race floating bot nameplates** hovering over opponent vehicles in **TdRace**.

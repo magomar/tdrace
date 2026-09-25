@@ -220,12 +220,15 @@ pub fn render_curve_indicator(
     scheme: CurveColorScheme,
     current_zoom: f32,
     anim_time: f32,
+    scale: f32,
+    brightness: f32,
 ) {
-    let alpha = compute_indicator_alpha(
+    let base_alpha = compute_indicator_alpha(
         status.distance_to_entry,
         status.distance_to_apex,
         status.is_inside_curve,
     );
+    let alpha = (base_alpha * brightness).clamp(0.0, 1.0);
 
     if alpha <= 0.02 {
         return;
@@ -252,20 +255,21 @@ pub fn render_curve_indicator(
         zoom,
     );
 
-    // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size)
-    let chevron_w = (14.0 * pulse_scale) / zoom;
-    let chevron_h = (22.0 * pulse_scale) / zoom;
-    let chevron_thickness = (3.5 * pulse_scale) / zoom;
-    let spacing = (16.0 * pulse_scale) / zoom;
-    let shadow_offset = 1.6 / zoom;
+    // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size, modulated by scale)
+    let chevron_w = (14.0 * pulse_scale * scale) / zoom;
+    let chevron_h = (22.0 * pulse_scale * scale) / zoom;
+    let chevron_thickness = (3.5 * pulse_scale * scale) / zoom;
+    let spacing = (16.0 * pulse_scale * scale) / zoom;
+    let shadow_offset = (1.6 * scale) / zoom;
 
     let num_chevrons = degree as usize;
     let total_w = (num_chevrons as f32 - 1.0) * spacing + chevron_w;
     let start_x = arrow_center.x - total_w * 0.5;
     let cy = arrow_center.y;
 
-    let shadow_col = Color::new(0.0, 0.0, 0.0, 0.70 * alpha);
-    let glow_col = Color::new(color.r, color.g, color.b, 0.35 * alpha);
+    let shadow_col = Color::new(0.0, 0.0, 0.0, (0.70 * alpha).min(1.0));
+    let glow_alpha = (0.35 * alpha * brightness.min(2.0)).min(1.0);
+    let glow_col = Color::new(color.r, color.g, color.b, glow_alpha);
 
     for i in 0..num_chevrons {
         let cx = start_x + (i as f32) * spacing;

@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T13:30:00Z }
 ---
-
 # Architecture Spec 033: Cross-Modality Vehicle Turning Capabilities and Real-World Benchmark Analysis 🏎️📐🛞
 
 A comprehensive vehicle dynamics engineering specification and benchmarking architecture for **TdRace**. Operating within the pure-Rust simulation core ([`crates/wheelbase`](../crates/wheelbase)) and applied across gameplay modules ([`crates/tdrace-app`](../crates/tdrace-app)), this specification establishes an analytical and empirical framework to evaluate, benchmark, and calibrate the turning capabilities, cornering limits, steering kinematics, and yaw agility of all vehicles against their homologated real-world motorsport counterparts.

@@ -4,7 +4,7 @@ use cabinet::input::{DigitalInputFilter, GamepadConfig, GamepadSnapshot, NavGrid
 use cabinet::profile::{ColorScheme, PlayerProfile, ProfileManager};
 use cabinet::records::{HallOfFame, RecordEntry, RecordMetric};
 use cabinet::state::{
-    format_metric_score, ArcadeSettingsModal, CabinetContext, CabinetScreen, LeaderboardModal,
+    format_metric_score, ArcadeSettingsModal, CabinetContext, CabinetScreen, HelpersSettingsState, LeaderboardModal,
     ProfileSelectModal, ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
 use cabinet::ui::{CabinetTheme, DropdownWidget, Fonts, Palette, SliderWidget, TabBar, UiScaler};
@@ -948,6 +948,96 @@ fn test_arcade_settings_dirty_tracking_and_exit_modal() {
     assert!(!modal3.is_saved);
     assert!(modal3.unsaved_confirm_modal.is_none());
 }
+
+#[test]
+fn test_arcade_settings_modal_helpers_tab_integration() {
+    let audio = AudioSettings::default();
+    let gp_config = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp_config);
+
+    // 1. Verify 5 tabs and tab 4 is "HELPERS"
+    assert_eq!(modal.tab_bar.tabs.len(), 5);
+    assert_eq!(modal.tab_bar.tabs[4], "HELPERS");
+    assert_eq!(modal.nav.column_lengths.len(), 5);
+    assert_eq!(modal.nav.column_lengths[4], 12);
+
+    // 2. Verify default state matches HelpersSettingsState::default()
+    let def_helpers = HelpersSettingsState::default();
+    assert_eq!(modal.helpers_state(), def_helpers);
+    assert!(def_helpers.radar_sonar_ping);
+    assert!(!modal.has_changes());
+
+    // 3. Mutate aura glow radius and brightness
+    modal.aura_ratio_slider.set_value(0.65);
+    assert!(modal.has_changes());
+    modal.aura_brightness_slider.set_value(1.80);
+    assert!((modal.helpers_state().aura_ratio - 0.65).abs() < 1e-4);
+    assert!((modal.helpers_state().aura_brightness - 1.80).abs() < 1e-4);
+
+    // 4. Mutate ribbon and dropdowns
+    modal.ribbon_dropdown.set_selected(1); // Disabled
+    modal.ribbon_scale_slider.set_value(1.40);
+    modal.ribbon_brightness_slider.set_value(2.20);
+    modal.chevron_dropdown.set_selected(1);
+    modal.chevron_brightness_slider.set_value(1.50);
+    modal.beacon_dropdown.set_selected(1);
+    modal.adaptive_dropdown.set_selected(1);
+    modal.radar_ping_dropdown.set_selected(1);
+
+    let state = modal.helpers_state();
+    assert!(!state.ribbon_enabled);
+    assert!((state.ribbon_scale - 1.40).abs() < 1e-4);
+    assert!((state.ribbon_brightness - 2.20).abs() < 1e-4);
+    assert!(!state.chevron_enabled);
+    assert!((state.chevron_brightness - 1.50).abs() < 1e-4);
+    assert!(!state.beacon_enabled);
+    assert!(!state.adaptive_enabled);
+    assert!(!state.radar_sonar_ping);
+
+    // 5. Test set_helpers_state
+    let custom = HelpersSettingsState {
+        aura_enabled: false,
+        aura_ratio: 0.50,
+        aura_brightness: 0.80,
+        ribbon_enabled: true,
+        ribbon_brightness: 1.25,
+        ribbon_scale: 0.90,
+        chevron_enabled: true,
+        chevron_brightness: 0.75,
+        beacon_enabled: true,
+        adaptive_enabled: false,
+        radar_sonar_ping: false,
+    };
+    modal.set_helpers_state(&custom);
+    let cur = modal.helpers_state();
+    assert_eq!(cur.aura_enabled, custom.aura_enabled);
+    assert!((cur.aura_ratio - custom.aura_ratio).abs() < 1e-4);
+    assert!((cur.aura_brightness - custom.aura_brightness).abs() < 1e-4);
+    assert_eq!(cur.ribbon_enabled, custom.ribbon_enabled);
+    assert!((cur.ribbon_brightness - custom.ribbon_brightness).abs() < 1e-4);
+    assert!((cur.ribbon_scale - custom.ribbon_scale).abs() < 1e-4);
+    assert_eq!(cur.chevron_enabled, custom.chevron_enabled);
+    assert!((cur.chevron_brightness - custom.chevron_brightness).abs() < 1e-4);
+    assert_eq!(cur.beacon_enabled, custom.beacon_enabled);
+    assert_eq!(cur.adaptive_enabled, custom.adaptive_enabled);
+    assert_eq!(cur.radar_sonar_ping, custom.radar_sonar_ping);
+
+    // 6. Test restore_defaults restores helpers
+    modal.restore_defaults();
+    let restored = modal.helpers_state();
+    assert_eq!(restored.aura_enabled, def_helpers.aura_enabled);
+    assert!((restored.aura_ratio - def_helpers.aura_ratio).abs() < 1e-4);
+    assert!((restored.aura_brightness - def_helpers.aura_brightness).abs() < 1e-4);
+    assert_eq!(restored.ribbon_enabled, def_helpers.ribbon_enabled);
+    assert!((restored.ribbon_brightness - def_helpers.ribbon_brightness).abs() < 1e-4);
+    assert!((restored.ribbon_scale - def_helpers.ribbon_scale).abs() < 1e-4);
+    assert_eq!(restored.chevron_enabled, def_helpers.chevron_enabled);
+    assert!((restored.chevron_brightness - def_helpers.chevron_brightness).abs() < 1e-4);
+    assert_eq!(restored.beacon_enabled, def_helpers.beacon_enabled);
+    assert_eq!(restored.adaptive_enabled, def_helpers.adaptive_enabled);
+    assert_eq!(restored.radar_sonar_ping, def_helpers.radar_sonar_ping);
+}
+
 
 
 

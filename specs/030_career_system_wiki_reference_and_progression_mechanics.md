@@ -8,7 +8,6 @@ created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T20:24:01Z }
 verified: { by: human:mario, at: 2026-09-24T20:23:03Z }
 ---
-
 # Feature Spec 030: Career System Wiki Reference and Progression Mechanics 🏆📚
 
 A unified technical specification and public knowledge base documentation suite establishing the formal reference for **TdRace**'s 5-tier career progression architecture. Published to the **Astro Starlight Engineering Reference Portal** (`portals/option-a-starlight`) under the OKF v0.2 Knowledge Graph (`docs/career/index.md`), this document codifies tournament scoring models, mathematical XP award formulas, tier promotion criteria, vehicle acquisition economics, discipline starter cars, circuit calendars, and dynamic AI roster evolution.

@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:25:00Z }
 ---
-
 # Architecture Spec: Decoupled Physical Tire Component & Per-Wheel Dynamics 🏎️⚙️🛞
 
 A comprehensive physics architecture specification that decouples tires from monolithic vehicle definitions in **TdRace**. Operating within the pure-Rust [`crates/wheelbase`](../crates/wheelbase) simulation engine, this architecture introduces independent **`WheelAssembly`** components featuring per-wheel rotational inertia ($\omega_i$), dynamic wheel spin and lockup mechanics, per-axle asymmetric/staggered Pacejka curves, thermal grip degradation, and localized contact patch dynamics, while preserving strict headless simulation throughput ($> 85,000\,\text{steps/sec}$) and deterministic invariance.

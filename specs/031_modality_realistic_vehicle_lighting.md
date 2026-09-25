@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T00:25:00Z }
 ---
-
 # Feature Spec: Modality-Realistic Vehicle Lighting Architecture 🏎️💡🏁
 
 A comprehensive rendering, asset configuration, and visual realism specification that introduces **Modality-Governed Vehicle Lighting** in **TdRace**.

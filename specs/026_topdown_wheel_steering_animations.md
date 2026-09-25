@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:15:00Z }
 ---
-
 # Feature Spec: Top-Down Pre-Baked Vehicle Wheel Steering Animations 🏎️💨🛞
 
 A comprehensive architectural, rendering, and asset pipeline specification introducing dynamic wheel steering animations to pre-baked, high-resolution 2D top-down vehicle textures in **TdRace**. 

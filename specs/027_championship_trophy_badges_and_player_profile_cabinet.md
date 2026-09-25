@@ -7,7 +7,6 @@ status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:17:00Z }
 ---
-
 # Feature Spec: Championship Trophy Badges & Player Profile Trophy Cabinet 🏆⭐
 
 A unified vector iconography architecture and player progression display system introducing bespoke championship podium badges (**1st Place Gold**, **2nd Place Silver**, and **3rd Place Bronze**) across all 5 career performance tiers (**Tiers 1–5**, symbolized by $1 \dots 5$ summit stars) and all 5 motorsport disciplines (**GT World Challenge**, **Karting World Cup**, **Rallycross & All-Terrain**, **NASCAR Cup Series**, and **Extreme Off-Road & Stunt**). Furthermore, introduces a dedicated **Trophy Cabinet (`[3] TROPHY CABINET`)** in the **Player Profile (`GameState::ProfileManager`)**, providing an interactive motorsport trophy room with locked silhouettes, telemetry provenance, and podium showcase shelves.

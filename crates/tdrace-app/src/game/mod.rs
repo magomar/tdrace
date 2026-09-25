@@ -100,7 +100,8 @@ use crate::render::{
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
-    render_player_overhead_chevron, render_player_roof_beacon, render_tree_canopies_culled,
+    render_player_overhead_chevron, render_player_roof_beacon, render_player_sonar_ping,
+    render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
     PlayerVisibilityOptions, VehicleNameplateItem,
 };
@@ -138,7 +139,8 @@ use crate::ui::track_manager_ui::{
 use crate::ui::{
     confirm_modal_layout,
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
-    CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, ScreenAction, UiScaler, UniversalConfirmModal,
+    CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
+    UiScaler, UniversalConfirmModal,
 };
 pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
 pub use cabinet::fx::floating_text::{FloatingTextItem, FloatingTextManager};
@@ -471,6 +473,9 @@ pub struct RaceSession {
     pub fonts: Fonts,
     pub visibility_options: PlayerVisibilityOptions,
     pub visibility_toast: Option<VisibilityToast>,
+    pub sonar_ping_timer: f32,
+    pub sonar_ping_origin: Vec2,
+    pub sonar_ping_cooldown: f32,
 
     // Ghost vehicle recording and playback (Time Attack)
     pub ghost_recorder: GhostRecorder,
@@ -696,6 +701,9 @@ impl RaceSession {
         let bot_nameplates_pref = config.display.bot_nameplates;
         crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
+        let mut visibility_options = PlayerVisibilityOptions::from(&config.player_helpers);
+        visibility_options.bot_nameplates = bot_nameplates_pref;
+
         let mut session = Self {
             state: GameState::ModuleSelect { selected_idx: 0 },
             track,
@@ -780,12 +788,11 @@ impl RaceSession {
             input,
             touch: TouchController::new(),
             fonts: Fonts::load_embedded(),
-            visibility_options: {
-                let mut opts = PlayerVisibilityOptions::default();
-                opts.bot_nameplates = bot_nameplates_pref;
-                opts
-            },
+            visibility_options,
             visibility_toast: None,
+            sonar_ping_timer: 0.0,
+            sonar_ping_origin: Vec2::ZERO,
+            sonar_ping_cooldown: 0.0,
 
             ghost_recorder: GhostRecorder::new(),
             replay_recorder: None,
@@ -904,12 +911,23 @@ impl RaceSession {
         self.game_mode.is_split_screen()
     }
 
+    /// Triggers a Radar/Sonar Ping shockwave ripple centered on the player car if enabled.
+    pub fn trigger_sonar_ping(&mut self) {
+        if self.visibility_options.sonar_ping {
+            if let Some(player_car) = self.cars.first() {
+                self.sonar_ping_origin = player_car.state.position;
+            }
+            self.sonar_ping_timer = 0.75;
+        }
+    }
+
     /// Cycles to the next camera zoom level for player 1 (and synchronizes player 2 if in split-screen mode).
     pub fn cycle_camera_zoom(&mut self) -> ZoomLevelConfig {
         let lvl = self.camera.cycle_zoom_level();
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
         }
+        self.trigger_sonar_ping();
         lvl
     }
 
@@ -919,6 +937,9 @@ impl RaceSession {
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
         }
+        if lvl.is_some() {
+            self.trigger_sonar_ping();
+        }
         lvl
     }
 
@@ -927,6 +948,9 @@ impl RaceSession {
         let lvl = self.camera.zoom_out();
         if self.is_split_screen() {
             self.camera_p2.set_zoom_level(self.camera.current_level_idx);
+        }
+        if lvl.is_some() {
+            self.trigger_sonar_ping();
         }
         lvl
     }
@@ -1130,7 +1154,7 @@ impl RaceSession {
         self.audio.play_music(MusicTrack::NeonMenu);
     }
 
-    /// Opens the Arcade Settings Modal, pre-populating it with current audio, gamepad, assists, and display resolution.
+    /// Opens the Arcade Settings Modal, pre-populating it with current audio, gamepad, assists, display resolution, and player car helpers.
     pub fn open_settings_modal(&mut self) {
         let mut modal = ArcadeSettingsModal::new(&self.audio.settings, &self.input.gamepad.config);
         let assist_idx = match self.assist_profile {
@@ -1150,6 +1174,21 @@ impl RaceSession {
         let is_fs = self.config.display.fullscreen;
         modal.set_display_state(w, h, is_fs);
 
+        let helpers_state = HelpersSettingsState {
+            aura_enabled: self.config.player_helpers.ground_aura,
+            aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
+            aura_brightness: self.config.player_helpers.ground_aura_brightness,
+            ribbon_enabled: self.config.player_helpers.curve_helper,
+            ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
+            ribbon_scale: self.config.player_helpers.curve_helper_scale,
+            chevron_enabled: self.config.player_helpers.overhead_chevron,
+            chevron_brightness: self.config.player_helpers.overhead_chevron_brightness,
+            beacon_enabled: self.config.player_helpers.roof_beacon,
+            adaptive_enabled: self.config.player_helpers.adaptive_visibility,
+            radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
+        };
+        modal.set_helpers_state(&helpers_state);
+
         modal.snapshot_initial();
 
         self.settings_modal = Some(modal);
@@ -1160,7 +1199,7 @@ impl RaceSession {
         self.settings_modal.is_some()
     }
 
-    /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, assists, and display resolution.
+    /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, assists, display resolution, and player car helpers.
     pub fn close_settings_modal(&mut self, save: bool) {
         if let Some(modal) = self.settings_modal.take() {
             if save {
@@ -1192,6 +1231,26 @@ impl RaceSession {
                     ScanlineMode::RetroGlow => "retro_glow".to_string(),
                     ScanlineMode::Disabled => "disabled".to_string(),
                 };
+
+                // Apply helpers settings
+                let h_state = modal.helpers_state();
+                self.config.player_helpers.ground_aura = h_state.aura_enabled;
+                self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
+                self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
+                self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
+                self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
+                self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
+                self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
+                self.config.player_helpers.overhead_chevron_brightness = h_state.chevron_brightness;
+                self.config.player_helpers.roof_beacon = h_state.beacon_enabled;
+                self.config.player_helpers.adaptive_visibility = h_state.adaptive_enabled;
+                self.config.player_helpers.radar_sonar_ping = h_state.radar_sonar_ping;
+
+                let bot_nameplates = self.visibility_options.bot_nameplates;
+                self.visibility_options = PlayerVisibilityOptions::from(&self.config.player_helpers);
+                self.visibility_options.bot_nameplates = bot_nameplates;
+
+                self.base_config.player_helpers = self.config.player_helpers.clone();
                 self.base_config.display = self.config.display.clone();
                 self.base_config.audio = self.config.audio.clone();
 
@@ -4590,6 +4649,23 @@ impl RaceSession {
                 toast.timer -= frame_dt;
                 if toast.timer <= 0.0 {
                     self.visibility_toast = None;
+                }
+            }
+
+            // Update sonar ping timers
+            self.sonar_ping_timer = (self.sonar_ping_timer - frame_dt).max(0.0);
+            self.sonar_ping_cooldown = (self.sonar_ping_cooldown - frame_dt).max(0.0);
+
+            // Auto-trigger sonar ping on spin-out or slow speed in overview mode
+            if self.visibility_options.sonar_ping {
+                if let Some(pc) = self.cars.first() {
+                    let is_spin = pc.state.angular_velocity.abs() > 4.5 || pc.state.local_velocity.y.abs() > 8.0;
+                    let is_slow_overview = self.camera.mode == crate::camera::CameraMode::StaticOverview && pc.state.speed < 2.0;
+                    if (is_spin || is_slow_overview) && self.sonar_ping_cooldown <= 0.0 {
+                        self.sonar_ping_timer = 0.75;
+                        self.sonar_ping_origin = pc.state.position;
+                        self.sonar_ping_cooldown = 3.0;
+                    }
                 }
             }
 
@@ -13353,7 +13429,14 @@ impl RaceSession {
         if self.visibility_options.ground_aura && ground_cars.contains(&focus_car_idx) {
             if let Some(focus_car) = self.cars.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
-                render_player_ground_aura(focus_car.state.position, camera.current_zoom, scheme, player_alpha);
+                render_player_ground_aura(
+                    focus_car.state.position,
+                    camera.current_zoom,
+                    scheme,
+                    player_alpha,
+                    self.visibility_options.ground_aura_radius_ratio,
+                    self.visibility_options.ground_aura_brightness,
+                );
             }
         }
         for &i in &ground_cars {
@@ -13408,7 +13491,14 @@ impl RaceSession {
         if self.visibility_options.ground_aura && elevated_cars.contains(&focus_car_idx) {
             if let Some(focus_car) = self.cars.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
-                render_player_ground_aura(focus_car.state.position, camera.current_zoom, scheme, player_alpha);
+                render_player_ground_aura(
+                    focus_car.state.position,
+                    camera.current_zoom,
+                    scheme,
+                    player_alpha,
+                    self.visibility_options.ground_aura_radius_ratio,
+                    self.visibility_options.ground_aura_brightness,
+                );
             }
         }
         for &i in &elevated_cars {
@@ -13455,6 +13545,7 @@ impl RaceSession {
                     self.session_time,
                     scheme,
                     player_alpha,
+                    self.visibility_options.roof_beacon_brightness,
                 );
             }
             if self.visibility_options.overhead_chevron {
@@ -13465,6 +13556,8 @@ impl RaceSession {
                     self.session_time,
                     scheme,
                     player_alpha,
+                    self.visibility_options.overhead_chevron_scale,
+                    self.visibility_options.overhead_chevron_brightness,
                 );
             }
             if self.visibility_options.curve_helper {
@@ -13481,9 +13574,19 @@ impl RaceSession {
                             self.visibility_options.curve_color_scheme,
                             camera.current_zoom,
                             self.session_time,
+                            self.visibility_options.curve_helper_scale,
+                            self.visibility_options.curve_helper_brightness,
                         );
                     }
                 }
+            }
+            if self.visibility_options.sonar_ping && self.sonar_ping_timer > 0.0 {
+                render_player_sonar_ping(
+                    self.sonar_ping_origin,
+                    camera.current_zoom,
+                    self.sonar_ping_timer,
+                    0.75,
+                );
             }
         }
 

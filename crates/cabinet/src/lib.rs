@@ -45,7 +45,7 @@ pub use input::{
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
 pub use records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};
 pub use state::{
-    ArcadeSettingsModal, CabinetContext, CabinetScreen, LeaderboardModal, ProfileSelectModal,
+    ArcadeSettingsModal, CabinetContext, CabinetScreen, HelpersSettingsState, LeaderboardModal, ProfileSelectModal,
     ScreenAction, ScreenStack, UniversalConfirmModal, UniversalPauseModal,
 };
 pub use ui::{
