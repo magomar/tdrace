@@ -157,39 +157,48 @@ impl Oscillator {
     }
 
     /// Asymmetric internal combustion pressure pulse with physical compression lobe & expansion tail.
-    /// Produces a zero-mean periodic waveform rich in engine-like odd and even harmonics.
+    /// Produces a zero-mean periodic waveform with high-order Fourier harmonics that constructively
+    /// sum across multi-cylinder engines (I-4, I-5, Flat-6, V6, V8, V10, V12) without cancelling out.
     #[inline(always)]
     pub fn combustion_pulse(phase: f32, asymmetry: f32) -> f32 {
         let mut p = phase.fract();
         if p < 0.0 {
             p += 1.0;
         }
-        let rad = p * 2.0 * PI;
-        let fund = rad.sin();
-        let harm2 = (rad * 2.0 - 0.35).sin() * (0.42 + asymmetry * 0.20);
-        let harm3 = (rad * 3.0 - 0.70).sin() * (0.22 + asymmetry * 0.10);
-        let harm4 = (rad * 4.0 - 1.05).sin() * 0.12;
-
-        let raw = fund + harm2 + harm3 + harm4;
-        raw * 0.65
+        let w = 0.22;
+        if p < w {
+            let u = p / w;
+            let shock = (u * PI).sin();
+            let expansion = (1.0 - u * 0.60) * (1.0 + asymmetry.clamp(0.0, 1.0) * 0.40 * (1.0 - u));
+            let crackle = (u * 3.0 * PI).sin() * 0.22 * (1.0 - u);
+            shock * expansion + crackle
+        } else {
+            let scavenge_dur = 1.0 - w;
+            let u_scav = (p - w) / scavenge_dur;
+            -(u_scav * PI).sin() * 0.28
+        }
     }
 
     /// Sharp expansion pressure wave pulse for 2-stroke or high-compression racing engines.
-    /// Uses Fourier harmonic series with staggered phase alignment for zero DC offset.
+    /// Uses localized power-stroke impulse with expansion chamber resonance.
     #[inline(always)]
     pub fn cylinder_pulse(phase: f32, sharpness: f32) -> f32 {
         let mut p = phase.fract();
         if p < 0.0 {
             p += 1.0;
         }
-        let rad = p * 2.0 * PI;
         let s = sharpness.clamp(1.0, 4.0);
-        let h1 = rad.sin();
-        let h2 = (rad * 2.0 - 0.40).sin() * (0.50 * s * 0.45);
-        let h3 = (rad * 3.0 - 0.80).sin() * (0.30 * s * 0.45);
-        let h4 = (rad * 4.0 - 1.20).sin() * 0.18;
-        let h5 = (rad * 5.0 - 1.60).sin() * 0.10;
-        (h1 + h2 + h3 + h4 + h5) * 0.65
+        let w = 0.28 / s.sqrt();
+        if p < w {
+            let u = p / w;
+            let spike = (u * PI).sin().powf(s * 0.6);
+            let ring = (u * 5.0 * PI).sin() * 0.30 * (1.0 - u);
+            spike + ring
+        } else {
+            let scavenge_dur = 1.0 - w;
+            let u_scav = (p - w) / scavenge_dur;
+            -(u_scav * PI).sin() * 0.32
+        }
     }
 }
 
@@ -539,5 +548,29 @@ mod tests {
         assert_eq!(waveshape_engine(0.0, 1.0, 0.5), 0.0);
         let saturated = waveshape_engine(2.0, 1.5, 0.3);
         assert!(saturated > 0.0 && saturated <= 1.0);
+    }
+
+    #[test]
+    fn test_multicylinder_combustion_summation_constructive() {
+        // Assert that summing combustion pulses across N cylinders (4, 5, 6, 8, 10, 12)
+        // produces strong constructive acoustic energy rather than cancelling out to zero.
+        for cyl_count in [4, 5, 6, 8, 10, 12] {
+            let mut sum_sq = 0.0f32;
+            let steps = 400;
+            for i in 0..steps {
+                let t = i as f32 / steps as f32;
+                let mut comb = 0.0f32;
+                for c in 0..cyl_count {
+                    let phase = t + c as f32 / cyl_count as f32;
+                    comb += Oscillator::combustion_pulse(phase, 0.5);
+                }
+                sum_sq += comb * comb;
+            }
+            let rms = (sum_sq / steps as f32).sqrt();
+            assert!(
+                rms > 0.15,
+                "Combustion pulse for {cyl_count} cylinders cancelled out! RMS was {rms}"
+            );
+        }
     }
 }
