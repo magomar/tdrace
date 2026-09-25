@@ -52,6 +52,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 6: Next-Gen Vehicle Dynamics & Pre-Baked Visual Kinematics (Priority: Medium)
 - `[x]` **[Top-Down Pre-Baked Vehicle Wheel Steering Animations](../026_topdown_wheel_steering_animations.md)**: Multi-layer sprite decomposition and Ackermann wheel steering animation architecture for pre-baked high-resolution 2D top-down vehicles with proof-of-concept on classic_kart.
 - `[x]` **[Decoupled Physical Tire Component & Per-Wheel Dynamics Architecture](../028_decoupled_tire_physics_and_wheel_components.md)**: Decouples vehicle tires into independent physical wheel assemblies with per-axle Pacejka curves, rotational inertia integration, wheel spin/lockup dynamics, and thermal wear modeling in wheelbase.
+- `[ ]` **[Modality-Realistic Vehicle Lighting Architecture](../031_modality_realistic_vehicle_lighting.md)**: Modality-governed vehicle lighting pipeline enforcing zero lights on Karts and NASCAR, full DRL/brake/projector illumination on GT and Rally, and multi-pod roof lightbars on Extreme Off-Road.
 
 ---
 
