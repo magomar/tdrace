@@ -1451,6 +1451,7 @@ impl GtWorldChallengeModule {
 
             weight_transfer_longitudinal: 0.55,
             weight_transfer_lateral: 0.45,
+            caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.22,
             downforce_coefficient: 2.10, // Strong GT3 aerodynamic package

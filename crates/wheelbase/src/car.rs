@@ -674,12 +674,41 @@ impl Car {
             1.0
         };
 
+        // Mechanical Caster Jacking (Spec 032):
+        // In solid-axle vehicles (e.g. racing karts with 10°-15° kingpin caster and rigid chassis),
+        // steering lock dynamically jacks the chassis diagonally, unloading the inside rear wheel
+        // (down to near-zero load) to eliminate rear spool binding and allow razor-sharp apex pivoting.
+        let nom_fz_fl = (static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front;
+        let nom_fz_fr = (static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front;
+        let nom_fz_rl = (static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear;
+        let nom_fz_rr = (static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear;
+
+        let (delta_fz_caster_fl, delta_fz_caster_fr, delta_fz_caster_rl, delta_fz_caster_rr) =
+            if self.config.caster_jacking_factor > 1e-4 && self.state.steer_angle.abs() > 1e-4 {
+                let steer_frac = (self.state.steer_angle.abs() / self.config.max_steer_angle.max(1e-3)).min(1.0);
+                let raw_delta = static_rear_load * 0.5 * self.config.caster_jacking_factor * steer_frac.powf(1.15);
+
+                if self.state.steer_angle < 0.0 {
+                    // Turning right (steer_angle < 0): RR (inside rear) unloads, RL (outside rear) and FR (inside front) load
+                    let max_unload = (nom_fz_rr - min_load_r).max(0.0);
+                    let eff = raw_delta.min(max_unload);
+                    (0.0, eff * 0.5, eff * 0.5, -eff)
+                } else {
+                    // Turning left (steer_angle > 0): RL (inside rear) unloads, RR (outside rear) and FL (inside front) load
+                    let max_unload = (nom_fz_rl - min_load_r).max(0.0);
+                    let eff = raw_delta.min(max_unload);
+                    (eff * 0.5, 0.0, -eff, eff * 0.5)
+                }
+            } else {
+                (0.0, 0.0, 0.0, 0.0)
+            };
+
         // Wheel 0 = FL (left), Wheel 1 = FR (right), Wheel 2 = RL (left), Wheel 3 = RR (right)
         let normal_loads = [
-            (((static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f)) * ground_contact, // FL (left)
-            (((static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front).max(min_load_f)) * ground_contact, // FR (right)
-            (((static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r)) * ground_contact,  // RL (left)
-            (((static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear).max(min_load_r)) * ground_contact,  // RR (right)
+            ((nom_fz_fl + delta_fz_caster_fl).max(min_load_f)) * ground_contact, // FL (left)
+            ((nom_fz_fr + delta_fz_caster_fr).max(min_load_f)) * ground_contact, // FR (right)
+            ((nom_fz_rl + delta_fz_caster_rl).max(min_load_r)) * ground_contact, // RL (left)
+            ((nom_fz_rr + delta_fz_caster_rr).max(min_load_r)) * ground_contact, // RR (right)
         ];
 
         // 4. Force calculation per wheel

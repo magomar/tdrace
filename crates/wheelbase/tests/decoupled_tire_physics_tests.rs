@@ -273,3 +273,139 @@ fn test_headless_simulation_throughput_sla() {
         throughput
     );
 }
+
+/// Scenario: Caster-jacking diagonal inside-rear wheel unloading under steering lock (Spec 032)
+///
+/// Given a classic_kart with caster_jacking_factor > 0.0 executing a maximum lock turn
+/// When steering lock reaches full application (|delta| >= 0.70 rad)
+/// Then the vertical normal load on the inside rear tire must decrease by at least 60% relative to resting load
+/// And outside rear and inside front normal loads must increase proportionally to maintain total vertical load equilibrium
+#[test]
+fn test_kart_caster_jacking_inside_rear_wheel_unloading() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::kart();
+    assert!(cfg.caster_jacking_factor > 1.0);
+
+    let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    // Measure static resting loads
+    car.step(&CarControls::default(), SurfaceType::Asphalt, dt);
+    let static_total_fz: f32 = car.state().wheels.iter().map(|w| w.normal_load).sum();
+    let static_rr_fz = car.state().wheels[3].normal_load; // RR resting load
+
+    // Apply hard right turn at low speed so dynamic body roll is minimal and caster dominates
+    let steer_ctrl = CarControls::new(0.05, 1.0, 0.0, false);
+    for _ in 0..40 {
+        car.step(&steer_ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    assert!(car.state().steer_angle.abs() >= 0.70, "Kart must reach >= 0.70 rad steer lock");
+
+    let dynamic_rr_fz = car.state().wheels[3].normal_load; // Inside rear
+    let dynamic_rl_fz = car.state().wheels[2].normal_load; // Outside rear
+    let dynamic_fr_fz = car.state().wheels[1].normal_load; // Inside front
+    let dynamic_total_fz: f32 = car.state().wheels.iter().map(|w| w.normal_load).sum();
+
+    println!(
+        "Caster Jacking: Static RR={:.1} N -> Dynamic RR={:.1} N (Drop={:.1}%) | RL={:.1} N, FR={:.1} N",
+        static_rr_fz, dynamic_rr_fz, (1.0 - dynamic_rr_fz / static_rr_fz) * 100.0,
+        dynamic_rl_fz, dynamic_fr_fz
+    );
+
+    // Inside rear load must decrease by >= 60%
+    assert!(
+        dynamic_rr_fz < static_rr_fz * 0.40,
+        "Inside rear tire load ({:.1} N) must drop by >= 60% relative to static ({:.1} N)",
+        dynamic_rr_fz, static_rr_fz
+    );
+
+    // Total normal load equilibrium preserved
+    assert!(
+        (dynamic_total_fz - static_total_fz).abs() < 25.0,
+        "Total normal force must be conserved (static={:.1}, dynamic={:.1})",
+        static_total_fz, dynamic_total_fz
+    );
+}
+
+/// Scenario: High-speed kart hairpin turning radius and lateral grip (Spec 032)
+///
+/// Given a CarConfig::kart() cornering at high speed on dry asphalt
+/// When negotiating a sweeper or hairpin curve
+/// Then the steady-state turning circle diameter must not exceed 16.0 meters
+/// And lateral acceleration must reach at least 1.70g without front tire slip runaway
+#[test]
+fn test_kart_high_speed_tight_turning_radius_and_lateral_grip() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::kart();
+    let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    // Initial speed ~50 km/h (13.9 m/s)
+    car.set_velocity(Vec2::new(50.0 / 3.6, 0.0));
+
+    // Corner at ~45-55 km/h with active throttle through curve
+    let ctrl = CarControls::new(0.85, 0.70, 0.0, false);
+    for _ in 0..60 {
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    let speed = car.state().speed;
+    let yaw = car.state().angular_velocity.abs();
+    let radius = if yaw > 1e-3 { speed / yaw } else { 999.0 };
+    let diameter = radius * 2.0;
+    let lat_g = (speed * yaw) / 9.81;
+    let front_slip_deg = car.state().wheels[0].slip_angle.abs().to_degrees();
+
+    println!(
+        "Kart Curve Performance: Speed={:.1} km/h | Radius={:.2} m (Diameter={:.2} m) | Ay={:.2}g | FrontSlip={:.1}°",
+        speed * 3.6, radius, diameter, lat_g, front_slip_deg
+    );
+
+    assert!(
+        diameter <= 16.0,
+        "Kart turning circle diameter ({:.2} m) must be <= 16.0 m",
+        diameter
+    );
+    assert!(
+        lat_g >= 1.85,
+        "Kart lateral acceleration ({:.2}g) must exceed 1.85g",
+        lat_g
+    );
+    assert!(
+        front_slip_deg < 65.0,
+        "Front slip angle ({:.1}°) must remain stable without uncontrollable spinout",
+        front_slip_deg
+    );
+}
+
+/// Scenario: Low-speed geometric turning circle (Spec 032)
+///
+/// Given a CarConfig::kart() traveling at walking pace (12 km/h)
+/// When maximum steering lock (0.73 rad / 41.8°) is held
+/// Then the turning circle diameter must be less than 2.6 meters (radius < 1.3m)
+#[test]
+fn test_kart_low_speed_geometric_turning_circle() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::kart();
+    let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    car.set_velocity(Vec2::new(12.0 / 3.6, 0.0));
+
+    let ctrl = CarControls::new(0.04, 1.0, 0.0, false);
+    for _ in 0..150 {
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    let speed = car.state().speed;
+    let yaw = car.state().angular_velocity.abs();
+    let radius = if yaw > 1e-3 { speed / yaw } else { 999.0 };
+    let diameter = radius * 2.0;
+
+    println!(
+        "Low-Speed Geometric Circle: Speed={:.1} km/h | Lock={:.1}° | Radius={:.2} m (Diameter={:.2} m)",
+        speed * 3.6, car.state().steer_angle.to_degrees().abs(), radius, diameter
+    );
+
+    assert!(
+        diameter < 2.6,
+        "Low speed turning diameter ({:.2} m) must be < 2.6 m",
+        diameter
+    );
+}
+

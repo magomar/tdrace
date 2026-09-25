@@ -84,16 +84,15 @@ impl ClassicGameModule {
         cfg.mass = 180.0;
         cfg.max_engine_force = 2600.0;
         cfg.top_speed_mps = 32.0; // ~115 km/h
-        cfg.max_steer_angle = 0.65;
-        cfg.steer_speed = 10.0;
+        cfg.max_steer_angle = 0.73;
+        cfg.steer_speed = 10.5;
         cfg.steer_return_speed = 14.0;
         cfg.tire.drift_slide_friction = 0.90;
-        cfg.tire.stiffness_b = 13.0;
+        cfg.tire.stiffness_b = 13.5;
         for w in &mut cfg.wheels {
             w.tire_model.drift_slide_friction = cfg.tire.drift_slide_friction;
             w.tire_model.stiffness_b = cfg.tire.stiffness_b;
         }
-        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg
     }
 

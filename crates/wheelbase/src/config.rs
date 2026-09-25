@@ -349,6 +349,9 @@ pub struct CarConfig {
     pub weight_transfer_longitudinal: f32,
     /// Lateral weight transfer scaling factor (cornering body roll).
     pub weight_transfer_lateral: f32,
+    /// Caster jacking diagonal load transfer factor [0.0 = cars with differential, ~1.0-1.5 = karts with solid axle].
+    #[serde(default)]
+    pub caster_jacking_factor: f32,
 
     /// Engine braking retarding coefficient on throttle release [0.0 = none, 0.15 = strong].
     pub engine_braking_coefficient: f32,
@@ -393,6 +396,8 @@ struct CarConfigRaw {
     pub angular_damping: f32,
     pub weight_transfer_longitudinal: f32,
     pub weight_transfer_lateral: f32,
+    #[serde(default)]
+    pub caster_jacking_factor: f32,
     pub engine_braking_coefficient: f32,
     pub downforce_coefficient: f32,
     pub tire: TireConfig,
@@ -434,6 +439,7 @@ impl From<CarConfigRaw> for CarConfig {
             angular_damping: raw.angular_damping,
             weight_transfer_longitudinal: raw.weight_transfer_longitudinal,
             weight_transfer_lateral: raw.weight_transfer_lateral,
+            caster_jacking_factor: raw.caster_jacking_factor,
             engine_braking_coefficient: raw.engine_braking_coefficient,
             downforce_coefficient: raw.downforce_coefficient,
             tire: raw.tire,
@@ -530,6 +536,7 @@ impl CarConfig {
 
             weight_transfer_longitudinal: 1.0,
             weight_transfer_lateral: 1.0,
+            caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.12,
             downforce_coefficient: 0.65,
@@ -568,21 +575,21 @@ impl CarConfig {
     /// and wide rear tires (r=0.20m, w=0.21m) delivering >= 35% higher peak lateral force.
     pub fn kart() -> Self {
         let front_tire = TireConfig {
-            stiffness_b: 12.0,
+            stiffness_b: 13.5,
             shape_c: 1.50,
-            peak_d: 1.05,
+            peak_d: 1.35,
             curvature_e: -0.20,
-            drift_slide_friction: 0.82,
+            drift_slide_friction: 0.88,
             handbrake_lateral_friction_multiplier: 0.35,
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
         };
         let rear_tire = TireConfig {
-            stiffness_b: 12.0,
+            stiffness_b: 13.5,
             shape_c: 1.50,
-            peak_d: 1.45, // >= 35% higher peak lateral force than front axle under equal load
+            peak_d: 1.85, // >= 35% higher peak lateral force than front axle under equal load (1.85 >= 1.35 * 1.35)
             curvature_e: -0.20,
-            drift_slide_friction: 0.82,
+            drift_slide_friction: 0.88,
             handbrake_lateral_friction_multiplier: 0.35,
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
@@ -628,8 +635,8 @@ impl CarConfig {
             inertia: 120.0,
             wheelbase: 1.05,
             track_width: 0.85,
-            cg_to_front: 0.50,
-            cg_to_rear: 0.55,
+            cg_to_front: 0.60,
+            cg_to_rear: 0.45,
             cg_height: 0.18,
 
             max_engine_force: 2200.0,
@@ -640,25 +647,39 @@ impl CarConfig {
             drive_bias: 0.0,
             top_speed_mps: 32.0, // ~115 km/h
 
-            max_steer_angle: 0.58, // ~33 deg agile direct lock
-            steer_speed: 9.0,
-            steer_return_speed: 12.0,
-            counter_steer_assist: 1.2,
-            speed_sensitive_steer_factor: 0.001,
+            max_steer_angle: 0.73, // ~41.8 deg direct 1:1 racing kart lock
+            steer_speed: 10.5,
+            steer_return_speed: 14.0,
+            counter_steer_assist: 1.25,
+            speed_sensitive_steer_factor: 0.0008,
 
             air_drag_coefficient: 0.35,
             lateral_drag_coefficient: 1.00,
             rolling_resistance_coefficient: 0.018,
-            angular_damping: 60.0,
+            angular_damping: 35.0,
 
             weight_transfer_longitudinal: 0.8,
             weight_transfer_lateral: 0.8,
+            caster_jacking_factor: 1.25,
 
             engine_braking_coefficient: 0.18,
             downforce_coefficient: 0.10,
 
             tire: front_tire,
-            assists: DriverAssistsConfig::arcade(),
+            assists: DriverAssistsConfig {
+                tcs_enabled: true,
+                tcs_slip_threshold: 0.30,
+                tcs_strength: 0.35,
+                esc_enabled: false, // Pure analog chassis yaw rotation for karts
+                esc_yaw_threshold: 0.40,
+                esc_strength: 0.0,
+                counter_steer_assist_enabled: true,
+                counter_steer_assist_strength: 0.60,
+                abs_enabled: true,
+                abs_slip_threshold: 0.20,
+                abs_strength: 0.75,
+                handbrake_bypass: true,
+            },
             terrain: TerrainInteractionConfig {
                 sand_flotation: 1.0,
                 mud_flotation: 1.0,
@@ -782,6 +803,7 @@ impl CarConfig {
 
             weight_transfer_longitudinal: 0.85,
             weight_transfer_lateral: 0.75,
+            caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.18,
             downforce_coefficient: 1.25, // Moderate downforce package
@@ -876,6 +898,7 @@ impl CarConfig {
 
             weight_transfer_longitudinal: 1.5,
             weight_transfer_lateral: 1.3,
+            caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.14,
             downforce_coefficient: 0.35,
