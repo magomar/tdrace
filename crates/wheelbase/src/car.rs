@@ -531,7 +531,15 @@ impl Car {
         // 1. Steering dynamics with speed-sensitive limit and counter-steer assist
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
-        let speed_factor = 1.0 + self.state.speed * self.config.speed_sensitive_steer_factor;
+        let speed_factor = if self.config.caster_jacking_factor > 0.0 {
+            // For racing karts with 42° direct steering lock:
+            // Retain 100% full lock at low speed (<= 3.5 m/s ~ 12.6 km/h) for tight hairpins and pit maneuvers.
+            // Progressively attenuate at racing speeds so high-speed steering inputs do not cause front tire scrub stall.
+            let speed_above_hairpin = (self.state.speed - 3.5).max(0.0);
+            1.0 + speed_above_hairpin * self.config.speed_sensitive_steer_factor.max(0.025)
+        } else {
+            1.0 + self.state.speed * self.config.speed_sensitive_steer_factor
+        };
         let mut target_steer = (-clamped_ctrl.steer * self.config.max_steer_angle) / speed_factor;
 
         // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
@@ -876,7 +884,21 @@ impl Car {
                 static_share
             };
 
-            let drive_share = self.state.wheel_assemblies[i].config.drive_torque_factor;
+            let nominal_drive_share = self.state.wheel_assemblies[i].config.drive_torque_factor;
+            let drive_share = if self.config.caster_jacking_factor > 0.0 && wheel_id.is_rear() {
+                // Solid rear axle: torque transfers dynamically to the loaded wheel with grip
+                let rear_normal_total = normal_loads[2] + normal_loads[3];
+                let rear_drive_total = self.state.wheel_assemblies[2].config.drive_torque_factor
+                    + self.state.wheel_assemblies[3].config.drive_torque_factor;
+                if rear_normal_total > 1e-3 {
+                    rear_drive_total * (fz / rear_normal_total)
+                } else {
+                    nominal_drive_share
+                }
+            } else {
+                nominal_drive_share
+            };
+
             let (wheel_drive_force, mut engine_retard_force) = if clamped_ctrl.throttle > 0.0 || clamped_ctrl.reverse {
                 (total_drive_force * drive_share, 0.0)
             } else {
@@ -1007,6 +1029,24 @@ impl Car {
             let drive_torque = wheel_drive_force * r;
             let fx_grip_capacity = (max_friction * max_friction - fy * fy).max(0.0).sqrt();
             self.state.wheel_assemblies[i].step_rotation(drive_torque, total_brake_torque, fx_grip_capacity, w_v_long, dt);
+
+            // Solid rear axle synchronization (Spec 032 / Spec 033):
+            // Rigid steel drive shaft mechanically locks RL and RR rotational velocities
+            if self.config.caster_jacking_factor > 0.0 && i == 3 {
+                let avg_rear_omega = (self.state.wheel_assemblies[2].angular_velocity
+                    + self.state.wheel_assemblies[3].angular_velocity)
+                    * 0.5;
+                self.state.wheel_assemblies[2].angular_velocity = avg_rear_omega;
+                self.state.wheel_assemblies[3].angular_velocity = avg_rear_omega;
+                self.state.wheels[2].angular_velocity = avg_rear_omega;
+                let offset_rl = wheel_local_offsets[2];
+                let offset_world_rl = fwd * offset_rl.x + right * offset_rl.y;
+                let v_rot_rl = Vec2::new(-omega * offset_world_rl.y, omega * offset_world_rl.x);
+                let w2_v_world = self.state.velocity + v_rot_rl;
+                let w2_fwd = Vec2::new(self.state.angle.cos(), self.state.angle.sin());
+                let w2_v_long = w2_v_world.dot(w2_fwd);
+                self.state.wheels[2].slip_ratio = self.state.wheel_assemblies[2].compute_slip_ratio(w2_v_long);
+            }
 
             // Exact kinematic slip ratio from integrated wheel rotational velocity
             let slip_ratio = self.state.wheel_assemblies[i].compute_slip_ratio(w_v_long);

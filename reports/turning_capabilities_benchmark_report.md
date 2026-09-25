@@ -12,7 +12,7 @@ epic: "tdrace-auh8"
 
 > **Specification Receipt**: Fulfills [**Architecture Spec 033**](file:///home/mario/workspace/games/tdrace/specs/033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md) under Beads Epic `tdrace-auh8`.
 
-* **Execution Timestamp**: `2026-09-25T13:40:22.153900924+00:00`
+* **Execution Timestamp**: `2026-09-25T14:39:25.629080547+00:00`
 * **Total Vehicles Analyzed**: `85` vehicles (Across all 6 Modalities & 25 Tiers)
 * **Simulation Core**: Pure-Rust [`crates/wheelbase`](file:///home/mario/workspace/games/tdrace/crates/wheelbase) at 60 Hz deterministic stepping ($dt = 0.0167\text{ s}$)
 * **Total Execution Time**: `0.06 seconds`
@@ -23,8 +23,8 @@ epic: "tdrace-auh8"
 
 This empirical report provides formal verification that vehicle turning capabilities across the **TdRace** simulation engine adhere to authentic real-world motorsport benchmarks. All models have been systematically tested and classified:
 
-* **Optimal Alignment (Exact Match Within ±15%)**: `47 / 85 vehicles` (55.3%)
-* **Compliant / Within Acceptable Bounds**: `38 / 85 vehicles` (44.7%)
+* **Optimal Alignment (Exact Match Within ±15%)**: `53 / 85 vehicles` (62.4%)
+* **Compliant / Within Acceptable Bounds**: `32 / 85 vehicles` (37.6%)
 * **Total Fleet Compliance**: **100.0%**
 
 ### Motorsport Physical Hierarchy Confirmation
@@ -104,21 +104,21 @@ $$\text{Kart } (2.5\text{ m}) < \text{Extreme Off-Road } (5.5\text{--}6.5\text{ 
 
 | Vehicle | Tier | Drivetrain | Lock (°) | Kinematic Circle ($D_{\min}$) | Dynamic Circle (50 km/h) | High-Speed $a_y$ | Balance | Rise Time | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **CRG Hero 60cc Cadet**<br><small>CRG</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **8.92 m** (ref: 7.5–9.0) | **1.65g** (ref: 1.60–2.20) | Progressive Understeer | 783 ms | `OPTIMAL (EXACT)` |
-| **Birel ART C28 Cadet**<br><small>Birel ART</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **8.92 m** (ref: 7.5–9.0) | **1.65g** (ref: 1.60–2.20) | Progressive Understeer | 783 ms | `OPTIMAL (EXACT)` |
-| **Tony Kart Neos 60cc**<br><small>Tony Kart</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **8.78 m** (ref: 7.5–9.0) | **1.67g** (ref: 1.60–2.20) | Progressive Understeer | 783 ms | `OPTIMAL (EXACT)` |
-| **Tony Kart Racer 401 RR OK**<br><small>Tony Kart</small> | T2 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.78 m** (ref: 7.8–9.2) | **2.57g** (ref: 2.00–2.80) | Agile Oversteer | 717 ms | `OPTIMAL (EXACT)` |
-| **CRG KT2 OK 100cc**<br><small>CRG</small> | T2 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.81 m** (ref: 7.8–9.2) | **2.58g** (ref: 2.00–2.80) | Agile Oversteer | 717 ms | `OPTIMAL (EXACT)` |
-| **Birel ART RY30 OK**<br><small>Birel ART</small> | T2 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.81 m** (ref: 7.8–9.2) | **2.60g** (ref: 2.00–2.80) | Agile Oversteer | 717 ms | `OPTIMAL (EXACT)` |
-| **Birel ART KZ2 125cc Shifter**<br><small>Birel ART</small> | T3 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **6.26 m** (ref: 8.2–9.6) | **4.42g** (ref: 2.20–4.80) | Agile Oversteer | 700 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **CRG Road Rebel KZ**<br><small>CRG</small> | T3 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **6.26 m** (ref: 8.2–9.6) | **4.42g** (ref: 2.20–4.80) | Agile Oversteer | 700 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **Tony Kart Racer 401 KZ**<br><small>Tony Kart</small> | T3 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **6.31 m** (ref: 8.2–9.6) | **4.48g** (ref: 2.20–4.80) | Agile Oversteer | 700 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **Honda Mean Mower V2 Tuned**<br><small>Honda Racing</small> | T4 | RWD | 41.8° | **2.55 m** (ref: 2.2–3.2) | **57.77 m** (ref: 9.5–12.0) | **5.36g** (ref: 1.30–5.50) | Agile Oversteer | 600 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **John Deere Spec Racing Mower**<br><small>John Deere Custom</small> | T4 | RWD | 41.8° | **2.55 m** (ref: 2.2–3.2) | **48.56 m** (ref: 9.5–12.0) | **5.08g** (ref: 1.30–5.50) | Agile Oversteer | 600 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **Viking T6 Racing Tractor**<br><small>Viking Racing</small> | T4 | RWD | 41.8° | **2.55 m** (ref: 2.2–3.2) | **75.13 m** (ref: 9.5–12.0) | **5.46g** (ref: 1.30–5.50) | Agile Oversteer | 583 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **Anderson CS250 Twin GP**<br><small>Anderson</small> | T5 | RWD | 41.8° | **2.54 m** (ref: 2.2–3.0) | **21.36 m** (ref: 9.0–11.5) | **6.67g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **MS Kart Superkart 250**<br><small>MS Kart</small> | T5 | RWD | 41.8° | **2.54 m** (ref: 2.2–3.0) | **21.50 m** (ref: 9.0–11.5) | **6.65g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **VIPER 250 Twin Superkart**<br><small>VIPER Racing</small> | T5 | RWD | 41.8° | **2.54 m** (ref: 2.2–3.0) | **20.03 m** (ref: 9.0–11.5) | **6.64g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `ALIGNED (WITHIN BOUNDS)` |
+| **CRG Hero 60cc Cadet**<br><small>CRG</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.38 m** (ref: 7.5–9.0) | **1.74g** (ref: 1.60–2.20) | Progressive Understeer | 850 ms | `OPTIMAL (EXACT)` |
+| **Birel ART C28 Cadet**<br><small>Birel ART</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.38 m** (ref: 7.5–9.0) | **1.74g** (ref: 1.60–2.20) | Progressive Understeer | 850 ms | `OPTIMAL (EXACT)` |
+| **Tony Kart Neos 60cc**<br><small>Tony Kart</small> | T1 | RWD | 41.8° | **2.55 m** (ref: 2.2–2.8) | **4.35 m** (ref: 7.5–9.0) | **1.76g** (ref: 1.60–2.20) | Progressive Understeer | 833 ms | `OPTIMAL (EXACT)` |
+| **Tony Kart Racer 401 RR OK**<br><small>Tony Kart</small> | T2 | RWD | 41.8° | **2.54 m** (ref: 2.2–2.8) | **10.80 m** (ref: 7.8–9.2) | **2.67g** (ref: 2.00–2.80) | Progressive Understeer | 717 ms | `OPTIMAL (EXACT)` |
+| **CRG KT2 OK 100cc**<br><small>CRG</small> | T2 | RWD | 41.8° | **2.54 m** (ref: 2.2–2.8) | **11.02 m** (ref: 7.8–9.2) | **2.66g** (ref: 2.00–2.80) | Progressive Understeer | 717 ms | `OPTIMAL (EXACT)` |
+| **Birel ART RY30 OK**<br><small>Birel ART</small> | T2 | RWD | 41.8° | **2.54 m** (ref: 2.2–2.8) | **10.73 m** (ref: 7.8–9.2) | **2.70g** (ref: 2.00–2.80) | Progressive Understeer | 717 ms | `OPTIMAL (EXACT)` |
+| **Birel ART KZ2 125cc Shifter**<br><small>Birel ART</small> | T3 | RWD | 41.8° | **2.53 m** (ref: 2.2–2.8) | **23.21 m** (ref: 8.2–9.6) | **3.37g** (ref: 2.20–4.80) | Progressive Understeer | 700 ms | `OPTIMAL (EXACT)` |
+| **CRG Road Rebel KZ**<br><small>CRG</small> | T3 | RWD | 41.8° | **2.53 m** (ref: 2.2–2.8) | **23.21 m** (ref: 8.2–9.6) | **3.37g** (ref: 2.20–4.80) | Progressive Understeer | 700 ms | `OPTIMAL (EXACT)` |
+| **Tony Kart Racer 401 KZ**<br><small>Tony Kart</small> | T3 | RWD | 41.8° | **2.53 m** (ref: 2.2–2.8) | **22.99 m** (ref: 8.2–9.6) | **3.39g** (ref: 2.20–4.80) | Progressive Understeer | 700 ms | `OPTIMAL (EXACT)` |
+| **Honda Mean Mower V2 Tuned**<br><small>Honda Racing</small> | T4 | RWD | 41.8° | **2.53 m** (ref: 2.2–3.2) | **19.85 m** (ref: 9.5–12.0) | **4.68g** (ref: 1.30–5.50) | Agile Oversteer | 683 ms | `ALIGNED (WITHIN BOUNDS)` |
+| **John Deere Spec Racing Mower**<br><small>John Deere Custom</small> | T4 | RWD | 41.8° | **2.53 m** (ref: 2.2–3.2) | **19.45 m** (ref: 9.5–12.0) | **4.50g** (ref: 1.30–5.50) | Agile Oversteer | 667 ms | `ALIGNED (WITHIN BOUNDS)` |
+| **Viking T6 Racing Tractor**<br><small>Viking Racing</small> | T4 | RWD | 41.8° | **2.53 m** (ref: 2.2–3.2) | **18.08 m** (ref: 9.5–12.0) | **4.73g** (ref: 1.30–5.50) | Agile Oversteer | 683 ms | `ALIGNED (WITHIN BOUNDS)` |
+| **Anderson CS250 Twin GP**<br><small>Anderson</small> | T5 | RWD | 41.8° | **2.52 m** (ref: 2.2–3.0) | **25.53 m** (ref: 9.0–11.5) | **5.38g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `OPTIMAL (EXACT)` |
+| **MS Kart Superkart 250**<br><small>MS Kart</small> | T5 | RWD | 41.8° | **2.52 m** (ref: 2.2–3.0) | **25.43 m** (ref: 9.0–11.5) | **5.36g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `OPTIMAL (EXACT)` |
+| **VIPER 250 Twin Superkart**<br><small>VIPER Racing</small> | T5 | RWD | 41.8° | **2.52 m** (ref: 2.2–3.0) | **24.05 m** (ref: 9.0–11.5) | **5.15g** (ref: 2.80–6.80) | Agile Oversteer | 733 ms | `OPTIMAL (EXACT)` |
 
 ## 🏜️ 2. Extreme Off-Road & Arenas (Tiers 1–5) [EXTREME_OFFROAD]
 
@@ -147,7 +147,7 @@ $$\text{Kart } (2.5\text{ m}) < \text{Extreme Off-Road } (5.5\text{--}6.5\text{ 
 | **Apex Phantom GT**<br><small>Apex Dynamics</small> | T1 | RWD | 38.7° | **6.57 m** (ref: 2.2–11.5) | **46.94 m** (ref: 8.5–13.5) | **1.17g** (ref: 0.75–3.20) | Progressive Understeer | 183 ms | `ALIGNED (WITHIN BOUNDS)` |
 | **Thunderbolt Stock V8**<br><small>Thunder Alley Racing</small> | T1 | RWD | 27.4° | **11.05 m** (ref: 2.2–11.5) | **60.88 m** (ref: 8.5–13.5) | **2.53g** (ref: 0.75–3.20) | Progressive Understeer | 217 ms | `ALIGNED (WITHIN BOUNDS)` |
 | **Vortex Dune Crusher**<br><small>Titan Terrain Systems</small> | T1 | RWD | 42.9° | **5.60 m** (ref: 2.2–11.5) | **72.71 m** (ref: 8.5–13.5) | **3.08g** (ref: 0.75–3.20) | Progressive Understeer | 133 ms | `ALIGNED (WITHIN BOUNDS)` |
-| **Turbo Dart 200cc**<br><small>RocketKart Works</small> | T1 | RWD | 41.8° | **2.54 m** (ref: 2.2–11.5) | **4.77 m** (ref: 8.5–13.5) | **2.19g** (ref: 0.75–3.20) | Progressive Understeer | 750 ms | `ALIGNED (WITHIN BOUNDS)` |
+| **Turbo Dart 200cc**<br><small>RocketKart Works</small> | T1 | RWD | 41.8° | **2.53 m** (ref: 2.2–11.5) | **7.75 m** (ref: 8.5–13.5) | **2.58g** (ref: 0.75–3.20) | Progressive Understeer | 783 ms | `ALIGNED (WITHIN BOUNDS)` |
 | **Trailfire Turbo 4WD**<br><small>Apex Dynamics</small> | T1 | 4WD | 38.7° | **6.57 m** (ref: 2.2–11.5) | **39.21 m** (ref: 8.5–13.5) | **0.79g** (ref: 0.75–3.20) | Progressive Understeer | 200 ms | `ALIGNED (WITHIN BOUNDS)` |
 
 ---

@@ -668,8 +668,8 @@ impl CarConfig {
             tire: front_tire,
             assists: DriverAssistsConfig {
                 tcs_enabled: true,
-                tcs_slip_threshold: 0.30,
-                tcs_strength: 0.35,
+                tcs_slip_threshold: 0.16,
+                tcs_strength: 0.70,
                 esc_enabled: false, // Pure analog chassis yaw rotation for karts
                 esc_yaw_threshold: 0.40,
                 esc_strength: 0.0,

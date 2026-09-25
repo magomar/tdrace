@@ -409,3 +409,51 @@ fn test_kart_low_speed_geometric_turning_circle() {
     );
 }
 
+/// Scenario: Kart cornering under throttle with solid rear axle coupling
+///
+/// Given a CarConfig::kart() cruising at 60 km/h with solid rear axle coupling
+/// When full throttle and steering input are commanded
+/// Then the inside and outside rear wheels must remain synchronized in rotational velocity (solid axle)
+/// And the inside rear wheel must not experience runaway wheelspin or disconnect from ground traction
+#[test]
+fn test_kart_cornering_under_throttle_preserves_drive_and_prevents_runaway_wheelspin() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::kart();
+    let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    car.set_velocity(Vec2::new(60.0 / 3.6, 0.0));
+
+    // Full throttle (1.0) and full right turn (1.0)
+    let ctrl = CarControls::new(1.0, 1.0, 0.0, false);
+    for _ in 0..60 {
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    let rl_omega = car.state().wheels[2].angular_velocity;
+    let rr_omega = car.state().wheels[3].angular_velocity;
+    let diff = (rl_omega - rr_omega).abs();
+
+    println!(
+        "Solid Rear Axle Sync: RL={:.2} rad/s, RR={:.2} rad/s (Diff={:.4}) | Speed={:.1} km/h",
+        rl_omega, rr_omega, diff, car.speed_kmh()
+    );
+
+    // Rear wheels must be synchronized on the solid axle
+    assert!(
+        diff < 1e-3,
+        "Rear wheels must rotate synchronously on solid axle (RL={rl_omega:.2}, RR={rr_omega:.2})"
+    );
+
+    // Inside rear tire must not run away to extreme wheelspin (> 300 rad/s)
+    assert!(
+        rr_omega < 250.0,
+        "Inside rear tire angular velocity ({rr_omega:.1} rad/s) must not run away"
+    );
+
+    // Kart must maintain forward speed under 100% throttle
+    assert!(
+        car.speed_kmh() > 30.0,
+        "Kart must not stall under cornering throttle ({:.1} km/h)",
+        car.speed_kmh()
+    );
+}
+
