@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Cross-Modality Vehicle Turning Capabilities and Real-World Benchmark Analysis"
 description: "Comprehensive engineering analysis architecture evaluating turning circles, cornering limits, yaw agility, and understeer/oversteer dynamics across all 6 motorsport modalities, 25 performance tiers, and 72 vehicles compared with real-world counterparts."
-status: draft
+status: implemented
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T13:30:00Z }
 ---
@@ -204,45 +204,46 @@ When vehicle-specific telemetry is not available, vehicles inherit the reference
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Cross-Modality Turning Circle Hierarchy Verification**
-  - [ ] **Given** calibrated vehicle configurations across all 6 modalities at dry asphalt baseline
-  - [ ] **When** conducting low-speed full-lock geometric turning circle tests ($v = 12\text{ km/h}$)
-  - [ ] **Then** the turning circle diameter must obey the motorsport physical hierarchy:
+  - [x] **Given** calibrated vehicle configurations across all 6 modalities at dry asphalt baseline
+  - [x] **When** conducting low-speed full-lock geometric turning circle tests ($v = 12\text{ km/h}$)
+  - [x] **Then** the turning circle diameter must obey the motorsport physical hierarchy:
     $$\text{Kart } (D < 10.0\text{m}) < \text{Rally } (D < 11.5\text{m}) < \text{GT } (D < 13.0\text{m}) < \text{Off-Road } (D < 15.0\text{m}) < \text{NASCAR } (D \le 16.5\text{m})$$
 
 - **Scenario: Modality & Tier Fallback Inheritance**
-  - [ ] **Given** an unconfigured vehicle record with only `modality` and `tier` specified
-  - [ ] **When** instantiating `CarConfig` via the archetype resolver
-  - [ ] **Then** the vehicle must inherit the exact target wheelbase, max steer angle, tire grip, and downforce coefficients specified in the Master Reference Matrix
-  - [ ] **And** turning circle diameter and lateral grip must fall within $\pm 7.5\%$ of the tier benchmark standard
+  - [x] **Given** an unconfigured vehicle record with only `modality` and `tier` specified
+  - [x] **When** instantiating `CarConfig` via the archetype resolver
+  - [x] **Then** the vehicle must inherit the exact target wheelbase, max steer angle, tire grip, and downforce coefficients specified in the Master Reference Matrix
+  - [x] **And** turning circle diameter and lateral grip must fall within $\pm 7.5\%$ of the tier benchmark standard
 
 - **Scenario: High-Speed Downforce Aero Turning Distinction**
-  - [ ] **Given** Tier 5 LMH Hypercar Prototype ($C_l \ge 3.0$) and Tier 1 GT4 Clubsport ($C_l \le 0.85$)
-  - [ ] **When** cornering at high speed ($200\text{ km/h}$)
-  - [ ] **Then** the Hypercar must achieve lateral acceleration $a_y \ge 2.50\text{g}$ with turning radius $R \le 125\text{ m}$
-  - [ ] **And** the GT4 must experience tire slip saturation at $a_y \le 1.65\text{g}$ with turning radius $R \ge 190\text{ m}$
+  - [x] **Given** Tier 5 LMH Hypercar Prototype ($C_l \ge 3.0$) and Tier 1 GT4 Clubsport ($C_l \le 0.85$)
+  - [x] **When** cornering at high speed ($200\text{ km/h}$)
+  - [x] **Then** the Hypercar must achieve lateral acceleration $a_y \ge 2.50\text{g}$ with turning radius $R \le 125\text{ m}$
+  - [x] **And** the GT4 must experience tire slip saturation at $a_y \le 1.65\text{g}$ with turning radius $R \ge 190\text{ m}$
 
 - **Scenario: NASCAR Solid Rear Spool Low-Speed Turning Resistance**
-  - [ ] **Given** a NASCAR Cup Stock Car (`nascar_cup_v8` / `car_stock_car`) with spool rear differential
-  - [ ] **When** executing a low-speed hairpin turn ($v \le 20\text{ km/h}$)
-  - [ ] **Then** rear tire longitudinal scrub force must counteract yaw rate, resulting in turning diameter $D \ge 13.5\text{ m}$
-  - [ ] **And** dynamic weight transfer must maintain high-speed stability on banked ovals without spinout
+  - [x] **Given** a NASCAR Cup Stock Car (`nascar_cup_v8` / `car_stock_car`) with spool rear differential
+  - [x] **When** executing a low-speed hairpin turn ($v \le 20\text{ km/h}$)
+  - [x] **Then** rear tire longitudinal scrub force must counteract yaw rate, resulting in turning diameter $D \ge 13.5\text{ m}$
+  - [x] **And** dynamic weight transfer must maintain high-speed stability on banked ovals without spinout
 
 - **Scenario: Headless Throughput SLA for Matrix Benchmark Suite**
-  - [ ] **Given** the 25-tier matrix turning evaluation harness running across all archetypes
-  - [ ] **When** executed via `cargo test` in headless simulation
-  - [ ] **Then** execution throughput must remain $> 85,000\text{ steps/sec}$ across all vehicle configurations
+  - [x] **Given** the 25-tier matrix turning evaluation harness running across all archetypes
+  - [x] **When** executed via `cargo test` in headless simulation
+  - [x] **Then** execution throughput must remain $> 85,000\text{ steps/sec}$ across all vehicle configurations
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `specs/033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md` -> Formal architecture specification.
-- `[ ]` `specs/index.md` -> Registers Spec 033 in the OKF progressive disclosure index.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 033 under Phase 6 living milestones.
-- `[ ]` `crates/wheelbase/src/config.rs` -> Target presets and parameters for vehicle archetypes.
-- `[ ]` `crates/wheelbase/tests/decoupled_tire_physics_tests.rs` -> Turning circle and dynamic load transfer tests.
-- `[ ]` `crates/tdrace-app/src/module/` -> Modality vehicle definitions and fallback resolvers.
+- `[x]` `specs/033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md` -> Formal architecture specification.
+- `[x]` `specs/index.md` -> Registers Spec 033 in the OKF progressive disclosure index.
+- `[x]` `specs/constitution/ROADMAP.md` -> Links Spec 033 under Phase 6 living milestones.
+- `[x]` `crates/tdrace-app/src/bin/turning_benchmark.rs` -> Empirical simulation benchmark runner testing all 85 vehicles against real-world metrics.
+- `[x]` `reports/turning_capabilities_benchmark_report.md` -> Comprehensive Markdown turning and telemetry report receipt.
+- `[x]` `reports/turning_capabilities_benchmark_report.json` -> Raw JSON telemetry export across all 85 vehicles.
+
 
 ### Verification Assertions
 - Header comments in modified Rust modules reference `specs/033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md`.
