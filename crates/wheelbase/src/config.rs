@@ -291,6 +291,47 @@ impl Default for TerrainInteractionConfig {
     }
 }
 
+/// Type and mechanical characteristics of an axle differential.
+///
+/// Governs dynamic cross-axle torque distribution and rotational speed coupling
+/// across driven wheels (Spec 034).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum DifferentialType {
+    /// 100% mechanical lock between left and right wheels (omega_L == omega_R).
+    /// Used on Karts, NASCAR Cup/Trucks/TA1, and Extreme Off-Road Spool buggies.
+    Spool,
+    /// Salisbury multi-plate clutch limited-slip differential.
+    /// Used on GT3, LMH Hypercars, Sports Cars, and Rallycross machines.
+    LimitedSlip {
+        /// Locking factor under power / acceleration in [0.0, 1.0].
+        power_lock: f32,
+        /// Locking factor under coast / trailing throttle in [0.0, 1.0].
+        coast_lock: f32,
+        /// Static clutch pack spring preload in N*m.
+        preload_nm: f32,
+    },
+    /// Conventional open differential with 50/50 torque split.
+    Open,
+}
+
+impl Default for DifferentialType {
+    fn default() -> Self {
+        Self::Open
+    }
+}
+
+pub fn default_front_differential() -> DifferentialType {
+    DifferentialType::Open
+}
+
+pub fn default_rear_differential() -> DifferentialType {
+    DifferentialType::LimitedSlip {
+        power_lock: 0.50,
+        coast_lock: 0.30,
+        preload_nm: 60.0,
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(from = "CarConfigRaw")]
@@ -322,6 +363,12 @@ pub struct CarConfig {
     pub brake_bias: f32,
     /// Drive power distribution bias [0.0 = RWD, 0.5 = AWD, 1.0 = FWD].
     pub drive_bias: f32,
+    /// Front axle differential model (governs cross-axle torque distribution on wheels 0 and 1).
+    #[serde(default = "default_front_differential")]
+    pub front_differential: DifferentialType,
+    /// Rear axle differential model (governs cross-axle torque distribution on wheels 2 and 3).
+    #[serde(default = "default_rear_differential")]
+    pub rear_differential: DifferentialType,
     /// Maximum top speed reachable in m/s (engine power tapers near top speed).
     pub top_speed_mps: f32,
 
@@ -384,6 +431,10 @@ struct CarConfigRaw {
     pub handbrake_force: f32,
     pub brake_bias: f32,
     pub drive_bias: f32,
+    #[serde(default)]
+    pub front_differential: Option<DifferentialType>,
+    #[serde(default)]
+    pub rear_differential: Option<DifferentialType>,
     pub top_speed_mps: f32,
     pub max_steer_angle: f32,
     pub steer_speed: f32,
@@ -413,6 +464,15 @@ impl From<CarConfigRaw> for CarConfig {
             CarConfig::default_wheel_assemblies_for(raw.tire, raw.brake_bias, raw.drive_bias)
         });
 
+        let front_differential = raw.front_differential.unwrap_or_else(default_front_differential);
+        let rear_differential = raw.rear_differential.unwrap_or_else(|| {
+            if raw.caster_jacking_factor > 0.0 {
+                DifferentialType::Spool
+            } else {
+                default_rear_differential()
+            }
+        });
+
         Self {
             mass: raw.mass,
             inertia: raw.inertia,
@@ -427,6 +487,8 @@ impl From<CarConfigRaw> for CarConfig {
             handbrake_force: raw.handbrake_force,
             brake_bias: raw.brake_bias,
             drive_bias: raw.drive_bias,
+            front_differential,
+            rear_differential,
             top_speed_mps: raw.top_speed_mps,
             max_steer_angle: raw.max_steer_angle,
             steer_speed: raw.steer_speed,
@@ -521,6 +583,12 @@ impl CarConfig {
             handbrake_force: 7500.0,
             brake_bias: 0.60,
             drive_bias: 0.0, // RWD arcade feel
+            front_differential: DifferentialType::Open,
+            rear_differential: DifferentialType::LimitedSlip {
+                power_lock: 0.50,
+                coast_lock: 0.30,
+                preload_nm: 60.0,
+            },
             top_speed_mps: 58.0, // ~208 km/h
 
             max_steer_angle: 0.68, // ~39 deg responsive turning lock
@@ -563,6 +631,11 @@ impl CarConfig {
         cfg.tire.drift_slide_friction = 0.92;
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.90,
+            coast_lock: 0.80,
+            preload_nm: 140.0,
+        };
         cfg.assists = DriverAssistsConfig::sport();
         for w in &mut cfg.wheels {
             w.tire_model = cfg.tire;
@@ -645,6 +718,8 @@ impl CarConfig {
             handbrake_force: 1800.0,
             brake_bias: 0.50,
             drive_bias: 0.0,
+            front_differential: DifferentialType::Open,
+            rear_differential: DifferentialType::Spool,
             top_speed_mps: 32.0, // ~115 km/h
 
             max_steer_angle: 0.73, // ~41.8 deg direct 1:1 racing kart lock
@@ -698,6 +773,16 @@ impl CarConfig {
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
         cfg.drive_bias = 0.5; // AWD
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.60,
+            coast_lock: 0.40,
+            preload_nm: 70.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.50,
+            preload_nm: 85.0,
+        };
         cfg.cg_height = 0.42;
         cfg.max_engine_force = 7500.0;
         cfg.max_reverse_force = 4875.0;
@@ -788,6 +873,8 @@ impl CarConfig {
             handbrake_force: 7000.0,
             brake_bias: 0.62,
             drive_bias: 0.0, // RWD
+            front_differential: DifferentialType::Open,
+            rear_differential: DifferentialType::Spool,
             top_speed_mps: 89.0, // ~320 km/h (~200 mph)
 
             max_steer_angle: 0.48, // ~27.5 deg quick-ratio stock car steering box
@@ -883,6 +970,8 @@ impl CarConfig {
             handbrake_force: 8200.0,
             brake_bias: 0.55,
             drive_bias: 0.0, // Pure RWD
+            front_differential: DifferentialType::Open,
+            rear_differential: DifferentialType::Spool,
             top_speed_mps: 55.5, // ~200 km/h
 
             max_steer_angle: 0.75, // ~43 deg responsive off-road lock

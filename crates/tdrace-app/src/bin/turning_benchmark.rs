@@ -12,7 +12,7 @@ use std::time::Instant;
 
 use chrono::Utc;
 use glam::Vec2;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use tdrace_app::catalog::{get_models_for_module, RealCarModel};
 use tdrace_core::physics::car::{Car, CarControls};

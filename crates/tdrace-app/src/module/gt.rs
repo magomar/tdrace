@@ -1,6 +1,8 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TerrainInteractionConfig, TireConfig};
+use tdrace_core::physics::config::{
+    CarConfig, DifferentialType, DriverAssistsConfig, TerrainInteractionConfig, TireConfig,
+};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, TrackGeometry};
 use tdrace_core::track::presets::{generate_checkpoints, generate_grid_positions, generate_walls_from_spline};
@@ -1436,6 +1438,12 @@ impl GtWorldChallengeModule {
             handbrake_force: 7000.0,
             brake_bias: 0.65,
             drive_bias: 0.0, // RWD
+            front_differential: DifferentialType::Open,
+            rear_differential: DifferentialType::LimitedSlip {
+                power_lock: 0.70,
+                coast_lock: 0.50,
+                preload_nm: 100.0,
+            },
             top_speed_mps: 82.5, // ~297 km/h
 
             max_steer_angle: 0.50, // ~28.6 deg responsive GT rack

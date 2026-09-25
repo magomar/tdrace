@@ -55,6 +55,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Modality-Realistic Vehicle Lighting Architecture](../031_modality_realistic_vehicle_lighting.md)**: Modality-governed vehicle lighting pipeline enforcing zero lights on Karts and NASCAR, full DRL/brake/projector illumination on GT and Rally, and multi-pod roof lightbars on Extreme Off-Road.
 - `[x]` **[Kart Handling, Caster Jacking & Agile Turning Dynamics](../032_kart_handling_caster_jacking_and_agile_turning_dynamics.md)**: Authentic karting physics architecture introducing mechanical caster-jacking inside-rear wheel unloading, high-G sticky slick compound balance, extended 42° steering lock, and agile rear-biased weight distribution in wheelbase.
 - `[x]` **[Cross-Modality Vehicle Turning Capabilities and Real-World Benchmark Analysis](../033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md)**: Comprehensive engineering analysis architecture evaluating turning circles, cornering limits, yaw agility, and understeer/oversteer dynamics across all 6 motorsport modalities, 25 performance tiers, and 85 vehicles compared with real-world counterparts.
+- `[ ]` **[Explicit Drivetrain Differential Models and Axle Coupling](../034_explicit_drivetrain_differential_models_and_axle_coupling.md)**: Explicit drivetrain differential models (Spool, LimitedSlip, Open), dynamic cross-axle torque distribution, and rotational velocity coupling across front, rear, and AWD powertrains.
 
 
 ---

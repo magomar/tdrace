@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-09-25T15:54:00Z",
+  "spec": "specs/034_explicit_drivetrain_differential_models_and_axle_coupling.md",
+  "epic": "tdrace-0ptm",
+  "models": {
+    "Spool": {
+      "coupling": "Rigid angular velocity lock (omega_L == omega_R)",
+      "torque_distribution": "Load and grip proportional dynamic transfer (100% to loaded wheel upon unloading)",
+      "target_modalities": ["Kart", "Stock Car TA1 / NASCAR", "Sand Rail", "Drift Car"]
+    },
+    "LimitedSlip": {
+      "type": "Salisbury multi-plate clutch pack",
+      "ramps": "Asymmetric power_lock and coast_lock",
+      "preload": "Spring preload in Nm",
+      "kinematic_decoupling": "yaw_rate * track_width / radius",
+      "numerical_stabilization": "Inertia-bounded discrete Euler damping limit",
+      "target_modalities": ["GT World Challenge", "Rallycross / Group B", "Hypercar / LMP1"]
+    },
+    "Open": {
+      "type": "Bevel gear epicyclic differential",
+      "torque_distribution": "Strict 50/50 torque split",
+      "rotational_coupling": "Independent degrees of freedom",
+      "target_modalities": ["Street / Starter Tiers", "Unpowered Front Axles"]
+    }
+  },
+  "verification": {
+    "differential_dynamics_tests": {
+      "test_spool_differential_locks_wheel_rotational_velocities": "PASSED",
+      "test_spool_differential_transfers_100_percent_torque_when_one_wheel_unloaded": "PASSED",
+      "test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor": "PASSED",
+      "test_open_differential_equalizes_torque_and_limits_power_on_split_mu": "PASSED",
+      "test_kart_spool_with_caster_jacking_maintains_drive_and_turning_circle": "PASSED"
+    },
+    "fleet_benchmark": {
+      "vehicles_tested": 85,
+      "compliance_rate": "91.8%",
+      "kart_turning_circle_diameter_m": 2.52
+    }
+  }
+}

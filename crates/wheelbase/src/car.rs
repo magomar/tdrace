@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use super::config::CarConfig;
+use super::config::{CarConfig, DifferentialType};
 use super::surface::{SurfaceSampler, SurfaceType};
 use super::tire::{
     compute_skid_telemetry, solve_combined_slip_forces, WheelAssembly, WheelId, WheelTelemetry,
@@ -456,6 +456,114 @@ impl Car {
         max_draft
     }
 
+/// Solves cross-axle drive force distribution for a given differential type (Spec 034).
+///
+/// Returns `(f_drive_left, f_drive_right)` in Newtons.
+fn solve_differential_torque_split(
+    diff_type: DifferentialType,
+    total_axle_drive_force: f32,
+    fz_l: f32,
+    fz_r: f32,
+    mu_l: f32,
+    mu_r: f32,
+    omega_l: f32,
+    omega_r: f32,
+    yaw_rate: f32,
+    track_width: f32,
+    radius: f32,
+    inertia: f32,
+    dt: f32,
+) -> (f32, f32) {
+    if total_axle_drive_force.abs() < 1e-4 {
+        return (0.0, 0.0);
+    }
+
+    match diff_type {
+        DifferentialType::Spool => {
+            // 100% mechanical lock: drive torque transfers dynamically to whichever wheel has load and grip.
+            // When inside wheel unloads under caster jacking or cornering (fz_l -> 0), 100% of axle force
+            // transfers to the loaded outside wheel.
+            let grip_l = (mu_l * fz_l).max(0.0);
+            let grip_r = (mu_r * fz_r).max(0.0);
+            let total_grip = grip_l + grip_r;
+            if total_grip > 1e-3 {
+                let share_l = grip_l / total_grip;
+                let share_r = grip_r / total_grip;
+                (total_axle_drive_force * share_l, total_axle_drive_force * share_r)
+            } else {
+                (total_axle_drive_force * 0.5, total_axle_drive_force * 0.5)
+            }
+        }
+        DifferentialType::LimitedSlip {
+            power_lock,
+            coast_lock,
+            preload_nm,
+        } => {
+            // Salisbury multi-plate clutch LSD with power/coast ramp angles and preload.
+            let force_sign = if total_axle_drive_force >= 0.0 { 1.0f32 } else { -1.0f32 };
+            let total_mag = total_axle_drive_force.abs();
+            let base_mag = total_mag * 0.5;
+            let axle_torque = total_mag * radius;
+            let ramp_lock = if total_axle_drive_force >= 0.0 {
+                power_lock
+            } else {
+                coast_lock
+            };
+            let t_lock = preload_nm + ramp_lock * axle_torque;
+            let max_clutch_force = (t_lock / radius.max(1e-2)).min(base_mag);
+
+            // Kinematic speed differentiation: subtract the geometric speed difference due to cornering yaw
+            // so an LSD doesn't artificially transfer torque when rolling smoothly without tire slip.
+            let delta_omega_kin = -yaw_rate * (track_width / radius.max(1e-2));
+            let delta_omega_slip = (omega_l - omega_r) - delta_omega_kin;
+
+            // Direction of slip relative to drive:
+            // If wheel L is slipping faster in the direction of drive, slip_dir > 0
+            let slip_dir = delta_omega_slip * force_sign;
+
+            // Numerically stable torque transfer:
+            // The maximum force transfer that avoids discrete Euler overshoot in timestep dt
+            // is governed by the rotational inertia of the wheel pair:
+            let max_stable_force = (inertia * delta_omega_slip.abs() / (2.0 * radius.max(1e-2) * dt.max(1e-4))).min(base_mag);
+
+            // Active transfer force is bounded by both clutch locking capacity and numerical stability:
+            let delta_f = max_clutch_force.min(max_stable_force) * slip_dir.signum();
+
+            let f_mag_l = (base_mag - delta_f).clamp(0.0, total_mag);
+            let f_mag_r = (base_mag + delta_f).clamp(0.0, total_mag);
+
+            (f_mag_l * force_sign, f_mag_r * force_sign)
+        }
+        DifferentialType::Open => {
+            // Conventional open differential: 50/50 torque split.
+            (total_axle_drive_force * 0.5, total_axle_drive_force * 0.5)
+        }
+    }
+}
+
+/// Applies rotational velocity coupling across an axle's wheels based on its differential type (Spec 034).
+///
+/// Returns `(omega_left, omega_right)` in rad/s.
+fn apply_differential_rotational_coupling(
+    diff_type: DifferentialType,
+    omega_l: f32,
+    omega_r: f32,
+    i_l: f32,
+    i_r: f32,
+) -> (f32, f32) {
+    match diff_type {
+        DifferentialType::Spool => {
+            // 100% mechanical lock: rigid shaft locks angular velocities
+            let total_inertia = (i_l + i_r).max(1e-3);
+            let locked_omega = (omega_l * i_l + omega_r * i_r) / total_inertia;
+            (locked_omega, locked_omega)
+        }
+        DifferentialType::LimitedSlip { .. } | DifferentialType::Open => {
+            (omega_l, omega_r)
+        }
+    }
+}
+
     /// Steps the physics simulation forward by a fixed timestep `dt` over a uniform surface.
     #[inline]
     pub fn step(&mut self, controls: &CarControls, surface: SurfaceType, dt: f32) {
@@ -813,6 +921,59 @@ impl Car {
 
         let total_normal_load: f32 = normal_loads.iter().sum();
 
+        let mut surface_mus = [0.0f32; 4];
+        for i in 0..4 {
+            let surf = surfaces[i];
+            let mut mu = surf.friction_coefficient();
+            if surf == SurfaceType::SheetIce {
+                let alpha = self.config.terrain.ice_grip_multiplier.clamp(0.50, 10.0);
+                mu = (mu * alpha).min(1.20);
+            }
+            let prev_dirt = self.state.wheels[i].dirt_contamination;
+            if surf.is_rigid_pavement() && prev_dirt > 0.02 {
+                mu *= (1.0 - 0.20 * prev_dirt).max(0.65);
+            }
+            surface_mus[i] = mu;
+        }
+
+        // Cross-axle differential drive force resolution (Spec 034):
+        let front_axle_force = total_drive_force * self.config.drive_bias;
+        let rear_axle_force = total_drive_force * (1.0 - self.config.drive_bias);
+
+        let (f_drive_fl, f_drive_fr) = Self::solve_differential_torque_split(
+            self.config.front_differential,
+            front_axle_force,
+            normal_loads[0],
+            normal_loads[1],
+            surface_mus[0],
+            surface_mus[1],
+            self.state.wheel_assemblies[0].angular_velocity,
+            self.state.wheel_assemblies[1].angular_velocity,
+            omega,
+            self.config.track_width,
+            self.state.wheel_assemblies[0].config.tire_radius,
+            self.state.wheel_assemblies[0].config.rotational_inertia,
+            dt,
+        );
+
+        let (f_drive_rl, f_drive_rr) = Self::solve_differential_torque_split(
+            self.config.rear_differential,
+            rear_axle_force,
+            normal_loads[2],
+            normal_loads[3],
+            surface_mus[2],
+            surface_mus[3],
+            self.state.wheel_assemblies[2].angular_velocity,
+            self.state.wheel_assemblies[3].angular_velocity,
+            omega,
+            self.config.track_width,
+            self.state.wheel_assemblies[2].config.tire_radius,
+            self.state.wheel_assemblies[2].config.rotational_inertia,
+            dt,
+        );
+
+        let resolved_drive_forces = [f_drive_fl, f_drive_fr, f_drive_rl, f_drive_rr];
+
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
             let offset_local = wheel_local_offsets[i];
@@ -836,18 +997,9 @@ impl Car {
 
             // Surface properties
             let surf = surfaces[i];
-            let mut mu = surf.friction_coefficient();
-            if surf == SurfaceType::SheetIce {
-                let alpha = self.config.terrain.ice_grip_multiplier.clamp(0.50, 10.0);
-                mu = (mu * alpha).min(1.20);
-            }
+            let mu = surface_mus[i];
             let prev_dirt = self.state.wheels[i].dirt_contamination;
             let prev_dirt_surface = self.state.wheels[i].dirt_surface;
-
-            // Apply minor temporary grip penalty if tire is contaminated with loose dirt/gravel on pavement
-            if surf.is_rigid_pavement() && prev_dirt > 0.02 {
-                mu *= (1.0 - 0.20 * prev_dirt).max(0.65);
-            }
 
             let fz = normal_loads[i];
             let max_friction = mu * fz;
@@ -884,25 +1036,10 @@ impl Car {
                 static_share
             };
 
-            let nominal_drive_share = self.state.wheel_assemblies[i].config.drive_torque_factor;
-            let drive_share = if self.config.caster_jacking_factor > 0.0 && wheel_id.is_rear() {
-                // Solid rear axle: torque transfers dynamically to the loaded wheel with grip
-                let rear_normal_total = normal_loads[2] + normal_loads[3];
-                let rear_drive_total = self.state.wheel_assemblies[2].config.drive_torque_factor
-                    + self.state.wheel_assemblies[3].config.drive_torque_factor;
-                if rear_normal_total > 1e-3 {
-                    rear_drive_total * (fz / rear_normal_total)
-                } else {
-                    nominal_drive_share
-                }
-            } else {
-                nominal_drive_share
-            };
-
             let (wheel_drive_force, mut engine_retard_force) = if clamped_ctrl.throttle > 0.0 || clamped_ctrl.reverse {
-                (total_drive_force * drive_share, 0.0)
+                (resolved_drive_forces[i], 0.0)
             } else {
-                (0.0, (-total_drive_force * drive_share).max(0.0))
+                (0.0, (-resolved_drive_forces[i]).max(0.0))
             };
 
             // Electronic Drag Reduction (EDR / MSR): prevent engine braking overrun from breaking tire grip when ABS is enabled
@@ -1030,20 +1167,46 @@ impl Car {
             let fx_grip_capacity = (max_friction * max_friction - fy * fy).max(0.0).sqrt();
             self.state.wheel_assemblies[i].step_rotation(drive_torque, total_brake_torque, fx_grip_capacity, w_v_long, dt);
 
-            // Solid rear axle synchronization (Spec 032 / Spec 033):
-            // Rigid steel drive shaft mechanically locks RL and RR rotational velocities
-            if self.config.caster_jacking_factor > 0.0 && i == 3 {
-                let avg_rear_omega = (self.state.wheel_assemblies[2].angular_velocity
-                    + self.state.wheel_assemblies[3].angular_velocity)
-                    * 0.5;
-                self.state.wheel_assemblies[2].angular_velocity = avg_rear_omega;
-                self.state.wheel_assemblies[3].angular_velocity = avg_rear_omega;
-                self.state.wheels[2].angular_velocity = avg_rear_omega;
+            // Cross-axle differential rotational coupling (Spec 034):
+            // Spool mechanically locks angular velocities; LimitedSlip applies clutch damping torque
+            if i == 1 && (self.config.drive_bias > 0.0 || self.config.front_differential == DifferentialType::Spool) {
+                let (w0, w1) = Self::apply_differential_rotational_coupling(
+                    self.config.front_differential,
+                    self.state.wheel_assemblies[0].angular_velocity,
+                    self.state.wheel_assemblies[1].angular_velocity,
+                    self.state.wheel_assemblies[0].config.rotational_inertia,
+                    self.state.wheel_assemblies[1].config.rotational_inertia,
+                );
+                self.state.wheel_assemblies[0].angular_velocity = w0;
+                self.state.wheel_assemblies[1].angular_velocity = w1;
+                self.state.wheels[0].angular_velocity = w0;
+                self.state.wheels[1].angular_velocity = w1;
+                let offset_fl = wheel_local_offsets[0];
+                let offset_world_fl = fwd * offset_fl.x + right * offset_fl.y;
+                let v_rot_fl = Vec2::new(-omega * offset_world_fl.y, omega * offset_world_fl.x);
+                let w0_v_world = self.state.velocity + v_rot_fl;
+                let w0_angle = self.state.angle + wheel_steer_angles[0];
+                let w0_fwd = Vec2::new(w0_angle.cos(), w0_angle.sin());
+                let w0_v_long = w0_v_world.dot(w0_fwd);
+                self.state.wheels[0].slip_ratio = self.state.wheel_assemblies[0].compute_slip_ratio(w0_v_long);
+            } else if i == 3 && ((1.0 - self.config.drive_bias) > 0.0 || self.config.rear_differential == DifferentialType::Spool) {
+                let (w2, w3) = Self::apply_differential_rotational_coupling(
+                    self.config.rear_differential,
+                    self.state.wheel_assemblies[2].angular_velocity,
+                    self.state.wheel_assemblies[3].angular_velocity,
+                    self.state.wheel_assemblies[2].config.rotational_inertia,
+                    self.state.wheel_assemblies[3].config.rotational_inertia,
+                );
+                self.state.wheel_assemblies[2].angular_velocity = w2;
+                self.state.wheel_assemblies[3].angular_velocity = w3;
+                self.state.wheels[2].angular_velocity = w2;
+                self.state.wheels[3].angular_velocity = w3;
                 let offset_rl = wheel_local_offsets[2];
                 let offset_world_rl = fwd * offset_rl.x + right * offset_rl.y;
                 let v_rot_rl = Vec2::new(-omega * offset_world_rl.y, omega * offset_world_rl.x);
                 let w2_v_world = self.state.velocity + v_rot_rl;
-                let w2_fwd = Vec2::new(self.state.angle.cos(), self.state.angle.sin());
+                let w2_angle = self.state.angle + wheel_steer_angles[2];
+                let w2_fwd = Vec2::new(w2_angle.cos(), w2_angle.sin());
                 let w2_v_long = w2_v_world.dot(w2_fwd);
                 self.state.wheels[2].slip_ratio = self.state.wheel_assemblies[2].compute_slip_ratio(w2_v_long);
             }
