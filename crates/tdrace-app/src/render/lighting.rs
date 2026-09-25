@@ -101,18 +101,7 @@ pub fn resolve_vehicle_lighting(
     visual_type: VehicleVisualType,
 ) -> VehicleLightingConfig {
     if let Some(m_id) = model_id {
-        if let Some(model) = crate::catalog::find_model_by_id(m_id) {
-            return match model.module_id {
-                "kart" => VehicleLightingConfig::none(),
-                "nascar" => VehicleLightingConfig::none(),
-                "rally" => VehicleLightingConfig::rally(),
-                "extreme_offroad" => VehicleLightingConfig::extreme_offroad(),
-                "gt" => VehicleLightingConfig::gt_touring(),
-                _ => VehicleLightingConfig::gt_touring(),
-            };
-        }
-
-        // Prefix matching fallback for custom or uncatalogued models
+        // 1. Explicit model ID and prefix resolution (including classic fantasy cars)
         if m_id.starts_with("kart") || m_id.starts_with("classic_kart") {
             return VehicleLightingConfig::none();
         }
@@ -132,9 +121,21 @@ pub fn resolve_vehicle_lighting(
         if m_id.starts_with("gt") || m_id.starts_with("classic_gt") {
             return VehicleLightingConfig::gt_touring();
         }
+
+        // 2. Catalog module_id lookup for real cars
+        if let Some(model) = crate::catalog::find_model_by_id(m_id) {
+            match model.module_id {
+                "kart" => return VehicleLightingConfig::none(),
+                "nascar" => return VehicleLightingConfig::none(),
+                "rally" => return VehicleLightingConfig::rally(),
+                "extreme_offroad" => return VehicleLightingConfig::extreme_offroad(),
+                "gt" => return VehicleLightingConfig::gt_touring(),
+                _ => {}
+            }
+        }
     }
 
-    // Procedural archetype fallback
+    // 3. Procedural archetype fallback
     match visual_type {
         VehicleVisualType::GoKart { .. } => VehicleLightingConfig::none(),
         VehicleVisualType::StockCar { .. } => VehicleLightingConfig::none(),

@@ -1385,6 +1385,155 @@ fn test_spec_026_colorway_tinting_consistency_on_decomposed_kart() {
     assert!(ratio >= 0.25, "Expected at least 25% of chassis pixels tinted, got {:.1}%", ratio * 100.0);
 }
 
+// ============================================================================
+// Spec 031: Modality-Realistic Vehicle Lighting Tests
+// ============================================================================
+
+#[test]
+fn test_spec_031_modality_realistic_lighting_profiles() {
+    use tdrace_app::module::VehicleVisualType;
+    use tdrace_app::render::{resolve_vehicle_lighting, VehicleLightingConfig};
+
+    // 1. Karting: Zero electrical lights
+    let kart_cfg = resolve_vehicle_lighting(
+        Some("classic_kart"),
+        VehicleVisualType::GoKart {
+            exposed_driver: true,
+            side_bumpers: true,
+        },
+    );
+    assert_eq!(kart_cfg, VehicleLightingConfig::none());
+    assert!(!kart_cfg.has_headlights, "Karts must not have headlights");
+    assert!(!kart_cfg.has_brake_lights, "Karts must not have brake lights");
+    assert!(!kart_cfg.has_roof_lightbar, "Karts must not have roof lightbar");
+    assert!(!kart_cfg.has_rally_pods, "Karts must not have rally pods");
+    assert!(!kart_cfg.has_dust_chase_light, "Karts must not have dust chase lights");
+    assert!(!kart_cfg.project_track_beams, "Karts must not project track beams");
+
+    // 2. NASCAR: Zero electrical lights (decals only, no brake lights)
+    let nascar_cfg = resolve_vehicle_lighting(
+        Some("nascar_cup_chevrolet_camaro"),
+        VehicleVisualType::StockCar {
+            tall_wing: false,
+            roof_fins: true,
+            window_net: true,
+        },
+    );
+    assert_eq!(nascar_cfg, VehicleLightingConfig::none());
+    assert!(!nascar_cfg.has_headlights, "NASCAR stock cars must not have electrical headlights");
+    assert!(!nascar_cfg.has_brake_lights, "NASCAR stock cars must not have brake lights");
+    assert!(!nascar_cfg.project_track_beams, "NASCAR stock cars must not project track beams");
+
+    // 3. GT / Touring: Full DRL headlights, dynamic brake lights, track illumination
+    let gt_cfg = resolve_vehicle_lighting(
+        Some("gt_porsche_911_gt3r"),
+        VehicleVisualType::TouringGT {
+            widebody: true,
+            gt_wing: true,
+            diffuser: true,
+        },
+    );
+    assert_eq!(gt_cfg, VehicleLightingConfig::gt_touring());
+    assert!(gt_cfg.has_headlights, "GT vehicles must have headlights");
+    assert!(gt_cfg.has_brake_lights, "GT vehicles must have brake lights");
+    assert!(gt_cfg.project_track_beams, "GT vehicles must project track beams");
+    assert!(gt_cfg.beam_range_m >= 10.0, "GT beam range must be at least 10m");
+    assert!(gt_cfg.beam_spread_rad > 0.10, "GT beam spread must be positive");
+
+    // 4. Rallycross / All-Terrain: Full headlights, brake lights, hood spotlight pods, track illumination
+    let rally_cfg = resolve_vehicle_lighting(
+        Some("rally_peugeot_208_rally4"),
+        VehicleVisualType::RallyHatch {
+            roof_scoop: true,
+            mudflaps: true,
+            large_wing: true,
+        },
+    );
+    assert_eq!(rally_cfg, VehicleLightingConfig::rally());
+    assert!(rally_cfg.has_headlights, "Rally vehicles must have headlights");
+    assert!(rally_cfg.has_brake_lights, "Rally vehicles must have brake lights");
+    assert!(rally_cfg.has_rally_pods, "Rally vehicles must have hood spotlight pods");
+    assert!(rally_cfg.project_track_beams, "Rally vehicles must project track beams");
+
+    // 5. Extreme Off-Road: 4-pod roof lightbar, rear dust chase light, brake lights, track illumination
+    let offroad_cfg = resolve_vehicle_lighting(
+        Some("classic_offroad"),
+        VehicleVisualType::SandRail {
+            lightbar: true,
+            whip_antenna: true,
+            paddle_tires: false,
+        },
+    );
+    assert_eq!(offroad_cfg, VehicleLightingConfig::extreme_offroad());
+    assert!(offroad_cfg.has_headlights, "Extreme off-road vehicles must have front spots");
+    assert!(offroad_cfg.has_brake_lights, "Extreme off-road vehicles must have brake lights");
+    assert!(offroad_cfg.has_roof_lightbar, "Extreme off-road vehicles must have roof lightbars");
+    assert!(offroad_cfg.has_dust_chase_light, "Extreme off-road vehicles must have rear dust chase lights");
+    assert!(offroad_cfg.project_track_beams, "Extreme off-road vehicles must project track beams");
+}
+
+#[test]
+fn test_spec_031_all_catalog_cars_lighting_by_modality() {
+    use tdrace_app::catalog::get_all_models;
+    use tdrace_app::render::{resolve_vehicle_lighting, VehicleLightingConfig};
+
+    let all_cars = get_all_models();
+    assert!(all_cars.len() >= 80, "Expected at least 80 real car models in catalog");
+
+    for car in all_cars {
+        let cfg = resolve_vehicle_lighting(Some(car.id), car.visual_type);
+        match car.module_id {
+            "kart" => {
+                assert_eq!(cfg, VehicleLightingConfig::none(), "Car {} in 'kart' must have zero lights", car.id);
+            }
+            "nascar" => {
+                assert_eq!(cfg, VehicleLightingConfig::none(), "Car {} in 'nascar' must have zero lights", car.id);
+            }
+            "gt" => {
+                assert_eq!(cfg, VehicleLightingConfig::gt_touring(), "Car {} in 'gt' must have GT touring lighting", car.id);
+            }
+            "rally" => {
+                assert_eq!(cfg, VehicleLightingConfig::rally(), "Car {} in 'rally' must have rally lighting", car.id);
+            }
+            "extreme_offroad" => {
+                assert_eq!(cfg, VehicleLightingConfig::extreme_offroad(), "Car {} in 'extreme_offroad' must have offroad lighting", car.id);
+            }
+            other => panic!("Unexpected module_id '{}' for car {}", other, car.id),
+        }
+    }
+}
+
+#[test]
+fn test_spec_031_procedural_archetype_lighting_fallbacks() {
+    use tdrace_app::module::VehicleVisualType;
+    use tdrace_app::render::{resolve_vehicle_lighting, VehicleLightingConfig};
+
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::GoKart { exposed_driver: true, side_bumpers: true }),
+        VehicleLightingConfig::none()
+    );
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::StockCar { tall_wing: false, roof_fins: true, window_net: true }),
+        VehicleLightingConfig::none()
+    );
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::OpenWheel { front_wing_span: 1.8, rear_wing_height: 0.9, halo: true }),
+        VehicleLightingConfig::none()
+    );
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::TouringGT { widebody: true, gt_wing: true, diffuser: true }),
+        VehicleLightingConfig::gt_touring()
+    );
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::RallyHatch { roof_scoop: true, mudflaps: true, large_wing: true }),
+        VehicleLightingConfig::rally()
+    );
+    assert_eq!(
+        resolve_vehicle_lighting(None, VehicleVisualType::SandRail { lightbar: true, whip_antenna: true, paddle_tires: false }),
+        VehicleLightingConfig::extreme_offroad()
+    );
+}
+
 
 
 
