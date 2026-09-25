@@ -54,6 +54,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Decoupled Physical Tire Component & Per-Wheel Dynamics Architecture](../028_decoupled_tire_physics_and_wheel_components.md)**: Decouples vehicle tires into independent physical wheel assemblies with per-axle Pacejka curves, rotational inertia integration, wheel spin/lockup dynamics, and thermal wear modeling in wheelbase.
 - `[x]` **[Modality-Realistic Vehicle Lighting Architecture](../031_modality_realistic_vehicle_lighting.md)**: Modality-governed vehicle lighting pipeline enforcing zero lights on Karts and NASCAR, full DRL/brake/projector illumination on GT and Rally, and multi-pod roof lightbars on Extreme Off-Road.
 - `[x]` **[Kart Handling, Caster Jacking & Agile Turning Dynamics](../032_kart_handling_caster_jacking_and_agile_turning_dynamics.md)**: Authentic karting physics architecture introducing mechanical caster-jacking inside-rear wheel unloading, high-G sticky slick compound balance, extended 42° steering lock, and agile rear-biased weight distribution in wheelbase.
+- `[ ]` **[Cross-Modality Vehicle Turning Capabilities and Real-World Benchmark Analysis](../033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md)**: Comprehensive engineering analysis architecture evaluating turning circles, cornering limits, yaw agility, and understeer/oversteer dynamics across all 6 motorsport modalities, 25 performance tiers, and 72 vehicles compared with real-world counterparts.
 
 
 ---
