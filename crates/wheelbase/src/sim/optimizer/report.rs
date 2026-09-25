@@ -48,14 +48,45 @@ impl CalibrationResult {
             self.initial_metrics.axle_slip_differential_integral, self.optimized_metrics.axle_slip_differential_integral));
 
         if self.constraint_violations.is_empty() {
-            out.push_str("✅ **Constraint Verification**: All physical, kinematic, and homologation constraints strictly satisfied!\n");
+            out.push_str("✅ **Constraint Verification**: All physical, kinematic, and homologation constraints strictly satisfied!\n\n");
         } else {
             out.push_str("⚠️ **Active Constraint Boundaries**:\n");
             for (name, val) in &self.constraint_violations {
                 out.push_str(&format!("- *{}*: deviation = {:.3}\n", name, val));
             }
+            out.push_str("\n");
         }
 
+        out.push_str("### ⚙️ Calibrated Vehicle Parameters (Rust Source Representation)\n\n");
+        out.push_str("```rust\n");
+        out.push_str(&self.to_rust_snippet());
+        out.push_str("```\n");
+
         out
+    }
+
+    /// Formats the tuned parameters as Rust struct initialization lines.
+    pub fn to_rust_snippet(&self) -> String {
+        let mut s = String::new();
+        s.push_str(&format!("speed_sensitive_steer_factor: {:.5},\n", self.optimized_config.speed_sensitive_steer_factor));
+        s.push_str(&format!("angular_damping: {:.1},\n", self.optimized_config.angular_damping));
+        s.push_str(&format!("weight_transfer_lateral: {:.2},\n", self.optimized_config.weight_transfer_lateral));
+        s.push_str(&format!("weight_transfer_longitudinal: {:.2},\n", self.optimized_config.weight_transfer_longitudinal));
+        s.push_str(&format!("brake_bias: {:.2},\n", self.optimized_config.brake_bias));
+        s.push_str(&format!("max_steer_angle: {:.2},\n", self.optimized_config.max_steer_angle));
+        s.push_str(&format!("caster_jacking_factor: {:.2},\n", self.optimized_config.caster_jacking_factor));
+        s.push_str(&format!("drive_bias: {:.2},\n", self.optimized_config.drive_bias));
+        s.push_str(&format!("rear_differential: {:?},\n", self.optimized_config.rear_differential));
+        s
+    }
+
+    /// Exports the full calibrated CarConfig as JSON.
+    pub fn export_json(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let json_str = serde_json::to_string_pretty(&self.optimized_config)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, json_str)
     }
 }

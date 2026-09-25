@@ -49,36 +49,36 @@ pub fn standard_tuning_bounds(constraint: &DrivetrainConstraint, base_config: &C
 
     bounds.push(ParameterBound::new(
         "speed_sensitive_steer_factor",
-        0.005,
-        0.035,
+        (base_config.speed_sensitive_steer_factor * 0.4).max(0.0002),
+        (base_config.speed_sensitive_steer_factor * 2.5).min(0.030),
         base_config.speed_sensitive_steer_factor,
     ));
 
     bounds.push(ParameterBound::new(
         "angular_damping",
-        0.8,
-        3.5,
+        (base_config.angular_damping * 0.7).max(10.0),
+        (base_config.angular_damping * 1.4).max(30.0),
         base_config.angular_damping,
     ));
 
     bounds.push(ParameterBound::new(
         "weight_transfer_lateral",
-        0.5,
-        1.5,
+        (base_config.weight_transfer_lateral * 0.7).max(0.2),
+        (base_config.weight_transfer_lateral * 1.3).min(2.5),
         base_config.weight_transfer_lateral,
     ));
 
     bounds.push(ParameterBound::new(
         "weight_transfer_longitudinal",
-        0.5,
-        1.5,
+        (base_config.weight_transfer_longitudinal * 0.7).max(0.2),
+        (base_config.weight_transfer_longitudinal * 1.3).min(2.5),
         base_config.weight_transfer_longitudinal,
     ));
 
     bounds.push(ParameterBound::new(
         "brake_bias",
-        0.48,
-        0.72,
+        0.50,
+        0.70,
         base_config.brake_bias,
     ));
 

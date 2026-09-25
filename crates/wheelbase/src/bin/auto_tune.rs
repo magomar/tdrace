@@ -22,6 +22,7 @@ OPTIONS:
     --population <N>        Population size per generation (default: 16)
     --seed <N>              Deterministic RNG seed (default: 42)
     --report <PATH>         Write markdown receipt to specified file path
+    --export-json <PATH>    Export calibrated CarConfig as JSON
     --help                  Print this help message
 "#
     );
@@ -37,6 +38,7 @@ fn main() {
     let mut population: usize = 16;
     let mut seed: u64 = 42;
     let mut report_path: Option<String> = None;
+    let mut json_path: Option<String> = None;
 
     let mut i = 1;
     while i < args.len() {
@@ -81,6 +83,12 @@ fn main() {
                 i += 1;
                 if i < args.len() {
                     report_path = Some(args[i].clone());
+                }
+            }
+            "--export-json" => {
+                i += 1;
+                if i < args.len() {
+                    json_path = Some(args[i].clone());
                 }
             }
             "--help" | "-h" => {
@@ -187,6 +195,16 @@ fn main() {
             process::exit(1);
         } else {
             println!("Calibration report written to {}", path);
+        }
+    }
+
+    if let Some(path_str) = json_path {
+        let p = std::path::Path::new(&path_str);
+        if let Err(e) = result.export_json(p) {
+            eprintln!("Failed to export JSON to {}: {}", path_str, e);
+            process::exit(1);
+        } else {
+            println!("Calibrated CarConfig JSON exported to {}", path_str);
         }
     }
 }

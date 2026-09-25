@@ -52,12 +52,25 @@ Following the implementation of **Spec 034 (Explicit Drivetrain Differential Mod
 
 | Vehicle | Drivetrain Constraint | Target Benchmark | Initial Cost | Final Cost | Cost Δ | Calibrated Turning Circle | Unloading / Preload |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Sprint Kart** | `SpoolAxle` ($D \le 2.6\text{m}, U \ge 80\%$) | FIA Karting Sprint | 22.27 | **20.87** | **-6.3%** | **2.52 m** | **95.0%** unloading |
-| **Sports Car** | `SalisburyRwd` ($\Delta \ge 0.15, \ddot{\psi} \le 3.5$) | SRO GT3 Homologation | 34.80 | **34.49** | **-0.9%** | **6.66 m** | **60 Nm** preload |
-| **Drift Machine** | `SalisburyRwd` (High Lock 2-way) | Drift / SRO GT3 | 34.97 | **34.64** | **-0.9%** | **5.64 m** | **120 Nm** preload |
-| **Sand Rail Buggy** | `SpoolAxle` ($D \le 7.5\text{m}, U = 0\%$) | Extreme Off-Road Spec | 20.43 | **16.85** | **-17.5%** | **7.19 m** | **0.0%** caster jack |
-| **Rally Supercar** | `MultiLsdAwd` (Drive bias $35\text{--}65\%$) | World RX Supercar | 32.48 | **31.72** | **-2.3%** | **6.53 m** | **-56%** slip loss |
-| **Cup Stock Car** | `SpoolAxle` ($D \le 11.2\text{m}, U = 0\%$) | Trans-Am TA1 Spec | 28.08 | **27.64** | **-1.6%** | **11.06 m** | **0.0%** caster jack |
+| **Sprint Kart** | `SpoolAxle` ($D \le 2.6\text{m}, U \ge 80\%$) | FIA Karting Sprint | 22.45 | **21.43** | **-4.5%** | **2.54 m** | **95.0%** unloading |
+| **Sports Car** | `SalisburyRwd` ($\Delta \ge 0.15, \ddot{\psi} \le 3.5$) | SRO GT3 Homologation | 34.83 | **34.70** | **-0.4%** | **6.21 m** | **65 Nm** preload |
+| **Drift Machine** | `SalisburyRwd` (High Lock 2-way) | Drift / SRO GT3 | 35.30 | **35.09** | **-0.6%** | **5.12 m** | **62 Nm** preload |
+| **Sand Rail Buggy** | `SpoolAxle` ($D \le 7.5\text{m}, U = 0\%$) | Extreme Off-Road Spec | 20.83 | **17.04** | **-18.2%** | **7.20 m** | **0.0%** caster jack |
+| **Rally Supercar** | `MultiLsdAwd` (Drive bias $35\text{--}65\%$) | World RX Supercar | 32.54 | **32.07** | **-1.4%** | **6.08 m** | **-46%** slip loss |
+| **Cup Stock Car** | `SpoolAxle` ($D \le 11.2\text{m}, U = 0\%$) | Trans-Am TA1 Spec | 28.23 | **27.66** | **-2.0%** | **11.04 m** | **0.0%** caster jack |
+
+---
+
+## ⚙️ Calibrated Parameters Applied to `crates/wheelbase/src/config.rs`
+
+| Vehicle | Damping ($N\cdot m\cdot s/rad$) | Weight Transfer (Lat / Long) | Brake Bias | Steer Sens. Factor | Differential Setup | JSON Profile |
+| :--- | :---: | :---: | :---: | :---: | :--- | :--- |
+| **Sprint Kart** | 35.0 | 0.83 / 1.00 | 0.54 | 0.00080 | `Spool` (Caster: 1.25) | [`assets/calibration/kart.json`](../assets/calibration/kart.json) |
+| **Sports Car** | 120.0 | 1.12 / 1.00 | 0.56 | 0.00450 | `LSD` (Power 56%, Coast 33%, 65 Nm) | [`assets/calibration/sports_car.json`](../assets/calibration/sports_car.json) |
+| **Drift Machine** | 114.0 | 1.05 / 0.71 | 0.56 | 0.00370 | `LSD` (Power 48%, Coast 16%, 62 Nm) | [`assets/calibration/drift_car.json`](../assets/calibration/drift_car.json) |
+| **Sand Rail Buggy**| 135.7 | 1.65 / 1.06 | 0.58 | 0.00167 | `Spool` (Caster: 0.0) | [`assets/calibration/sand_rail.json`](../assets/calibration/sand_rail.json) |
+| **Rally Supercar** | 126.0 | 1.24 / 0.70 | 0.62 | 0.00100 | AWD `Multi-LSD` (Bias 50%, Preload 85 Nm) | [`assets/calibration/rally_car.json`](../assets/calibration/rally_car.json) |
+| **Cup Stock Car** | 148.0 | 0.81 / 0.99 | 0.57 | 0.00145 | `Spool` (Caster: 0.0) | [`assets/calibration/stock_car.json`](../assets/calibration/stock_car.json) |
 
 ---
 

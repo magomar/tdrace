@@ -581,13 +581,13 @@ impl CarConfig {
             max_reverse_force: 4420.0,
             max_brake_force: 11500.0,
             handbrake_force: 7500.0,
-            brake_bias: 0.60,
+            brake_bias: 0.56,
             drive_bias: 0.0, // RWD arcade feel
             front_differential: DifferentialType::Open,
             rear_differential: DifferentialType::LimitedSlip {
-                power_lock: 0.50,
-                coast_lock: 0.30,
-                preload_nm: 60.0,
+                power_lock: 0.56,
+                coast_lock: 0.33,
+                preload_nm: 65.0,
             },
             top_speed_mps: 58.0, // ~208 km/h
 
@@ -595,15 +595,15 @@ impl CarConfig {
             steer_speed: 5.5,
             steer_return_speed: 7.0,
             counter_steer_assist: 1.3,
-            speed_sensitive_steer_factor: 0.002,
+            speed_sensitive_steer_factor: 0.0045,
 
             air_drag_coefficient: 0.42,
             lateral_drag_coefficient: 1.20,
             rolling_resistance_coefficient: 0.015,
-            angular_damping: 160.0,
+            angular_damping: 120.0,
 
             weight_transfer_longitudinal: 1.0,
-            weight_transfer_lateral: 1.0,
+            weight_transfer_lateral: 1.12,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.12,
@@ -612,7 +612,7 @@ impl CarConfig {
             tire,
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
-            wheels: Self::default_wheel_assemblies_for(tire, 0.60, 0.0),
+            wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
         }
     }
 
@@ -625,16 +625,20 @@ impl CarConfig {
         cfg.max_reverse_force = 5330.0;
         cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
-        cfg.speed_sensitive_steer_factor = 0.0015;
+        cfg.speed_sensitive_steer_factor = 0.0037;
+        cfg.angular_damping = 114.0;
+        cfg.weight_transfer_lateral = 1.05;
+        cfg.weight_transfer_longitudinal = 0.71;
+        cfg.brake_bias = 0.56;
         cfg.engine_braking_coefficient = 0.10;
         cfg.downforce_coefficient = 0.45;
         cfg.tire.drift_slide_friction = 0.92;
         cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
         cfg.drive_bias = 0.0;
         cfg.rear_differential = DifferentialType::LimitedSlip {
-            power_lock: 0.90,
-            coast_lock: 0.80,
-            preload_nm: 140.0,
+            power_lock: 0.48,
+            coast_lock: 0.16,
+            preload_nm: 62.0,
         };
         cfg.assists = DriverAssistsConfig::sport();
         for w in &mut cfg.wheels {
@@ -716,7 +720,7 @@ impl CarConfig {
             max_reverse_force: 1430.0,
             max_brake_force: 2400.0,
             handbrake_force: 1800.0,
-            brake_bias: 0.50,
+            brake_bias: 0.54,
             drive_bias: 0.0,
             front_differential: DifferentialType::Open,
             rear_differential: DifferentialType::Spool,
@@ -733,8 +737,8 @@ impl CarConfig {
             rolling_resistance_coefficient: 0.018,
             angular_damping: 35.0,
 
-            weight_transfer_longitudinal: 0.8,
-            weight_transfer_lateral: 0.8,
+            weight_transfer_longitudinal: 1.0,
+            weight_transfer_lateral: 0.83,
             caster_jacking_factor: 1.25,
 
             engine_braking_coefficient: 0.18,
@@ -773,6 +777,11 @@ impl CarConfig {
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
         cfg.drive_bias = 0.5; // AWD
+        cfg.speed_sensitive_steer_factor = 0.0010;
+        cfg.angular_damping = 126.0;
+        cfg.weight_transfer_lateral = 1.24;
+        cfg.weight_transfer_longitudinal = 0.70;
+        cfg.brake_bias = 0.62;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.60,
             coast_lock: 0.40,
@@ -871,25 +880,25 @@ impl CarConfig {
             max_reverse_force: 7670.0,
             max_brake_force: 21000.0,
             handbrake_force: 7000.0,
-            brake_bias: 0.62,
+            brake_bias: 0.57,
             drive_bias: 0.0, // RWD
             front_differential: DifferentialType::Open,
             rear_differential: DifferentialType::Spool,
             top_speed_mps: 89.0, // ~320 km/h (~200 mph)
 
-            max_steer_angle: 0.48, // ~27.5 deg quick-ratio stock car steering box
+            max_steer_angle: 0.47, // ~27 deg quick-ratio stock car steering box
             steer_speed: 7.5,
             steer_return_speed: 10.0,
             counter_steer_assist: 1.35,
-            speed_sensitive_steer_factor: 0.0012,
+            speed_sensitive_steer_factor: 0.00145,
 
             air_drag_coefficient: 0.52,
             lateral_drag_coefficient: 1.35,
             rolling_resistance_coefficient: 0.013,
-            angular_damping: 175.0,
+            angular_damping: 148.0,
 
-            weight_transfer_longitudinal: 0.85,
-            weight_transfer_lateral: 0.75,
+            weight_transfer_longitudinal: 0.99,
+            weight_transfer_lateral: 0.81,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.18,
@@ -968,25 +977,25 @@ impl CarConfig {
             max_reverse_force: 5000.0,
             max_brake_force: 11500.0,
             handbrake_force: 8200.0,
-            brake_bias: 0.55,
+            brake_bias: 0.58,
             drive_bias: 0.0, // Pure RWD
             front_differential: DifferentialType::Open,
             rear_differential: DifferentialType::Spool,
             top_speed_mps: 55.5, // ~200 km/h
 
-            max_steer_angle: 0.75, // ~43 deg responsive off-road lock
+            max_steer_angle: 0.65, // ~37.2 deg responsive off-road lock
             steer_speed: 8.5,
             steer_return_speed: 9.5,
             counter_steer_assist: 1.55,
-            speed_sensitive_steer_factor: 0.001,
+            speed_sensitive_steer_factor: 0.00167,
 
             air_drag_coefficient: 0.48,
             lateral_drag_coefficient: 1.40,
             rolling_resistance_coefficient: 0.018,
-            angular_damping: 140.0,
+            angular_damping: 135.7,
 
-            weight_transfer_longitudinal: 1.5,
-            weight_transfer_lateral: 1.3,
+            weight_transfer_longitudinal: 1.06,
+            weight_transfer_lateral: 1.65,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.14,

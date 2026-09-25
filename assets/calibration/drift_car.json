@@ -1,0 +1,137 @@
+{
+  "mass": 980.0,
+  "inertia": 1250.0,
+  "wheelbase": 2.4,
+  "track_width": 1.4,
+  "cg_to_front": 1.1,
+  "cg_to_rear": 1.3,
+  "cg_height": 0.35,
+  "max_engine_force": 8200.0,
+  "max_reverse_force": 5330.0,
+  "max_brake_force": 11500.0,
+  "handbrake_force": 7500.0,
+  "brake_bias": 0.5569714,
+  "drive_bias": 0.0,
+  "front_differential": "Open",
+  "rear_differential": {
+    "LimitedSlip": {
+      "power_lock": 0.47669387,
+      "coast_lock": 0.16373028,
+      "preload_nm": 61.98726
+    }
+  },
+  "top_speed_mps": 58.0,
+  "max_steer_angle": 0.78,
+  "steer_speed": 5.5,
+  "steer_return_speed": 7.0,
+  "counter_steer_assist": 1.6,
+  "speed_sensitive_steer_factor": 0.003711536,
+  "air_drag_coefficient": 0.42,
+  "lateral_drag_coefficient": 1.2,
+  "rolling_resistance_coefficient": 0.015,
+  "angular_damping": 113.61066,
+  "weight_transfer_longitudinal": 0.70860714,
+  "weight_transfer_lateral": 1.0504832,
+  "caster_jacking_factor": 0.0,
+  "engine_braking_coefficient": 0.1,
+  "downforce_coefficient": 0.45,
+  "tire": {
+    "stiffness_b": 9.5,
+    "shape_c": 1.45,
+    "peak_d": 1.0,
+    "curvature_e": -0.15,
+    "drift_slide_friction": 0.92,
+    "handbrake_lateral_friction_multiplier": 0.3,
+    "skid_threshold": 0.1,
+    "skid_full_threshold": 0.35
+  },
+  "assists": {
+    "tcs_enabled": true,
+    "tcs_slip_threshold": 0.3,
+    "tcs_strength": 0.4,
+    "esc_enabled": true,
+    "esc_yaw_threshold": 0.22,
+    "esc_strength": 0.5,
+    "counter_steer_assist_enabled": true,
+    "counter_steer_assist_strength": 0.6,
+    "abs_enabled": true,
+    "abs_slip_threshold": 0.2,
+    "abs_strength": 0.75,
+    "handbrake_bypass": true
+  },
+  "terrain": {
+    "sand_flotation": 1.0,
+    "mud_flotation": 1.0,
+    "ice_grip_multiplier": 1.0
+  },
+  "wheels": [
+    {
+      "tire_radius": 0.32,
+      "tire_width": 0.24,
+      "rotational_inertia": 1.25,
+      "tire_model": {
+        "stiffness_b": 9.5,
+        "shape_c": 1.45,
+        "peak_d": 1.0,
+        "curvature_e": -0.15,
+        "drift_slide_friction": 0.92,
+        "handbrake_lateral_friction_multiplier": 0.3,
+        "skid_threshold": 0.1,
+        "skid_full_threshold": 0.35
+      },
+      "brake_bias_factor": 0.3,
+      "drive_torque_factor": 0.0
+    },
+    {
+      "tire_radius": 0.32,
+      "tire_width": 0.24,
+      "rotational_inertia": 1.25,
+      "tire_model": {
+        "stiffness_b": 9.5,
+        "shape_c": 1.45,
+        "peak_d": 1.0,
+        "curvature_e": -0.15,
+        "drift_slide_friction": 0.92,
+        "handbrake_lateral_friction_multiplier": 0.3,
+        "skid_threshold": 0.1,
+        "skid_full_threshold": 0.35
+      },
+      "brake_bias_factor": 0.3,
+      "drive_torque_factor": 0.0
+    },
+    {
+      "tire_radius": 0.32,
+      "tire_width": 0.24,
+      "rotational_inertia": 1.25,
+      "tire_model": {
+        "stiffness_b": 9.5,
+        "shape_c": 1.45,
+        "peak_d": 1.0,
+        "curvature_e": -0.15,
+        "drift_slide_friction": 0.92,
+        "handbrake_lateral_friction_multiplier": 0.3,
+        "skid_threshold": 0.1,
+        "skid_full_threshold": 0.35
+      },
+      "brake_bias_factor": 0.19999999,
+      "drive_torque_factor": 0.5
+    },
+    {
+      "tire_radius": 0.32,
+      "tire_width": 0.24,
+      "rotational_inertia": 1.25,
+      "tire_model": {
+        "stiffness_b": 9.5,
+        "shape_c": 1.45,
+        "peak_d": 1.0,
+        "curvature_e": -0.15,
+        "drift_slide_friction": 0.92,
+        "handbrake_lateral_friction_multiplier": 0.3,
+        "skid_threshold": 0.1,
+        "skid_full_threshold": 0.35
+      },
+      "brake_bias_factor": 0.19999999,
+      "drive_torque_factor": 0.5
+    }
+  ]
+}
