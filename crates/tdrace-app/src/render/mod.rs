@@ -3,6 +3,7 @@ pub mod car;
 pub mod color;
 pub mod ghost;
 pub mod lateral;
+pub mod lighting;
 pub mod marker;
 pub mod scenery;
 pub mod surface_material;
@@ -10,6 +11,10 @@ pub mod track;
 pub mod trophy_textures;
 pub mod vehicle_assets;
 
+pub use lighting::{
+    render_dust_chase_strobe, render_headlight_track_beams, render_rally_hood_pods,
+    resolve_vehicle_lighting, VehicleLightingConfig,
+};
 pub use trophy_textures::{draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename};
 
 pub use barrier::{
