@@ -4,6 +4,7 @@ template: architecture
 title: "Keyboard Steering Signal Smoothing, Drivetrain Power Governor Decoupling, and Audio RPM Telemetry Isolation"
 description: "Comprehensive physics and input architecture specification resolving digital keyboard steering snap, induced tire scrub drag, top-speed governor choking on unloaded inside-wheel slip, and false engine audio rev-flare."
 status: in_progress
+receipt: "docs/receipts/spec-038-receipt.md"
 created: 2026-09-26
 verified: { by: "human:mario", at: "2026-09-26T17:35:00Z" }
 generated: { by: agent/antigravity, at: 2026-09-26T17:18:00Z }
