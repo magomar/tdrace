@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Keyboard Steering Signal Smoothing, Drivetrain Power Governor Decoupling, and Audio RPM Telemetry Isolation"
 description: "Comprehensive physics and input architecture specification resolving digital keyboard steering snap, induced tire scrub drag, top-speed governor choking on unloaded inside-wheel slip, and false engine audio rev-flare."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-038-receipt.md"
 created: 2026-09-26
 verified: { by: "human:mario", at: "2026-09-26T17:35:00Z" }
@@ -135,29 +135,29 @@ This architectural remediation affects runtime in-memory input filtering, physic
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Digital keyboard steering progressive tap response**
-  - [ ] **Given** a vehicle driven via keyboard with `DigitalInputFilter`
-  - [ ] **When** a steering key is tapped for 66 ms (4 frames at 60 Hz)
-  - [ ] **Then** the filtered steering value must be between 0.15 and 0.45
-  - [ ] **And** must not snap instantaneously to 1.0 full lock
+  - [x] **Given** a vehicle driven via keyboard with `DigitalInputFilter`
+  - [x] **When** a steering key is tapped for 66 ms (4 frames at 60 Hz)
+  - [x] **Then** the filtered steering value must be between 0.15 and 0.45
+  - [x] **And** must not snap instantaneously to 1.0 full lock
 
 - **Scenario: Top-speed governor does not choke engine during inside wheel unloading**
-  - [ ] **Given** a competition kart with `DifferentialType::Spool` and `caster_jacking_factor > 1.0`
-  - [ ] **When** turning sharply at 20 m/s (~72 km/h) under full throttle
-  - [ ] **And** the inside rear wheel unloads and exhibits rotational speed $\omega \cdot r > v_{\text{long}}$
-  - [ ] **Then** the engine tractive drive force must not be choked to zero by `engine_taper`
-  - [ ] **And** forward acceleration must remain positive on asphalt
+  - [x] **Given** a competition kart with `DifferentialType::Spool` and `caster_jacking_factor > 1.0`
+  - [x] **When** turning sharply at 20 m/s (~72 km/h) under full throttle
+  - [x] **And** the inside rear wheel unloads and exhibits rotational speed $\omega \cdot r > v_{\text{long}}$
+  - [x] **Then** the engine tractive drive force must not be choked to zero by `engine_taper`
+  - [x] **And** forward acceleration must remain positive on asphalt
 
 - **Scenario: Front steering slip angle does not induce engine audio rev flare**
-  - [ ] **Given** a rear-wheel-drive vehicle executing a turn on high-grip asphalt
-  - [ ] **When** the front steer wheels exhibit lateral slip angle $\alpha > 0.20\,\text{rad}$ while driven rear wheels maintain grip ($s_{\text{ratio}} < 0.10$)
-  - [ ] **Then** `slip_intensity` fed to `EngineRpmModel` must remain below 0.15
-  - [ ] **And** no audible engine rev flare ($> 500\,\text{RPM}$) shall occur
+  - [x] **Given** a rear-wheel-drive vehicle executing a turn on high-grip asphalt
+  - [x] **When** the front steer wheels exhibit lateral slip angle $\alpha > 0.20\,\text{rad}$ while driven rear wheels maintain grip ($s_{\text{ratio}} < 0.10$)
+  - [x] **Then** `slip_intensity` fed to `EngineRpmModel` must remain below 0.15
+  - [x] **And** no audible engine rev flare ($> 500\,\text{RPM}$) shall occur
 
 - **Scenario: Classic Sprint Kart steering lock alignment**
-  - [ ] **Given** the active game module is `"classic"`
-  - [ ] **When** `ClassicGameModule::car_classic_kart()` is instantiated
-  - [ ] **Then** `max_steer_angle` must be $\le 0.65\,\text{rad}$
-  - [ ] **And** `rear_differential` must be `DifferentialType::Spool`
+  - [x] **Given** the active game module is `"classic"`
+  - [x] **When** `ClassicGameModule::car_classic_kart()` is instantiated
+  - [x] **Then** `max_steer_angle` must be $\le 0.65\,\text{rad}$
+  - [x] **And** `rear_differential` must be `DifferentialType::Spool`
 
 ---
 
