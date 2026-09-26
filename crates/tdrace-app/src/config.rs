@@ -348,7 +348,7 @@ impl Default for PlayerHelpersConfig {
             ground_aura: true,
             ground_aura_radius_ratio: 1.0,
             ground_aura_brightness: 1.0,
-            roof_beacon: true,
+            roof_beacon: false,
             roof_beacon_brightness: 1.0,
             curve_helper: true,
             curve_helper_scale: 1.0,

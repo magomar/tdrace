@@ -13,8 +13,8 @@ fn test_player_visibility_options_defaults() {
     assert!((opts.ground_aura_radius_ratio - 1.0).abs() < 1e-4);
     assert!((opts.ground_aura_brightness - 1.0).abs() < 1e-4);
     assert!(opts.adaptive_visibility, "Option 3 (Adaptive Visibility) must be enabled by default");
-    assert!(opts.roof_beacon, "Option 4 (Roof Beacon) must be enabled by default");
-    assert!((opts.roof_beacon_brightness - 1.0).abs() < 1e-4);
+    assert!(!opts.roof_beacon, "Roof Beacon must be disabled entirely");
+    assert!(opts.sonar_ping, "Option 4 (Sonar Ping) must be enabled by default");
     assert!(opts.curve_helper, "Option 5 (Curve Helper) must be enabled by default");
     assert!((opts.curve_helper_scale - 1.0).abs() < 1e-4);
     assert!((opts.curve_helper_brightness - 1.0).abs() < 1e-4);
@@ -38,11 +38,11 @@ fn test_player_visibility_options_individual_toggles() {
     // Toggle 3
     opts.adaptive_visibility = !opts.adaptive_visibility;
     assert!(!opts.adaptive_visibility);
-    assert!(opts.roof_beacon);
-
-    // Toggle 4
-    opts.roof_beacon = !opts.roof_beacon;
     assert!(!opts.roof_beacon);
+
+    // Toggle 4 (Sonar Ping Shockwave Ripple)
+    opts.sonar_ping = !opts.sonar_ping;
+    assert!(!opts.sonar_ping);
     assert!(opts.curve_helper);
 
     // Toggle 5 (Curve Helper)
@@ -113,7 +113,7 @@ fn test_race_session_visibility_initialization() {
     assert!(session.visibility_options.overhead_chevron);
     assert!(session.visibility_options.ground_aura);
     assert!(session.visibility_options.adaptive_visibility);
-    assert!(session.visibility_options.roof_beacon);
+    assert!(!session.visibility_options.roof_beacon);
     assert!(session.visibility_options.curve_helper);
     assert!(session.visibility_options.sonar_ping);
     assert_eq!(session.visibility_options.curve_color_scheme, CurveColorScheme::Traffic);
@@ -257,7 +257,6 @@ fn test_race_session_settings_modal_helpers_workflow() {
         modal.ribbon_brightness_slider.set_value(2.40);
         modal.chevron_dropdown.set_selected(1); // Disabled
         modal.chevron_brightness_slider.set_value(0.80);
-        modal.beacon_dropdown.set_selected(0); // Enabled
         modal.adaptive_dropdown.set_selected(1); // Disabled
         modal.radar_ping_dropdown.set_selected(1); // Disabled
     }
@@ -273,7 +272,7 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!((session.config.player_helpers.curve_helper_brightness - 2.40).abs() < 1e-4);
     assert!(!session.config.player_helpers.overhead_chevron);
     assert!((session.config.player_helpers.overhead_chevron_brightness - 0.80).abs() < 1e-4);
-    assert!(session.config.player_helpers.roof_beacon);
+    assert!(!session.config.player_helpers.roof_beacon);
     assert!(!session.config.player_helpers.adaptive_visibility);
     assert!(!session.config.player_helpers.radar_sonar_ping);
 
@@ -286,7 +285,7 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!((session.visibility_options.curve_helper_brightness - 2.40).abs() < 1e-4);
     assert!(!session.visibility_options.overhead_chevron);
     assert!((session.visibility_options.overhead_chevron_brightness - 0.80).abs() < 1e-4);
-    assert!(session.visibility_options.roof_beacon);
+    assert!(!session.visibility_options.roof_beacon);
     assert!(!session.visibility_options.adaptive_visibility);
     assert!(!session.visibility_options.sonar_ping);
 }
@@ -341,10 +340,14 @@ fn test_render_sonar_ping_headless_and_session_triggers() {
 }
 
 #[test]
-fn test_sonar_ping_no_hotkeys_and_modal_governance_only() {
-    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("sonar_no_hotkeys");
+fn test_sonar_ping_key4_toggle_and_modal_governance() {
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("sonar_key4_governance");
     let mut session = RaceSession::new();
     assert!(session.visibility_options.sonar_ping);
+
+    // Toggle off via Key 4 action
+    session.visibility_options.sonar_ping = !session.visibility_options.sonar_ping;
+    assert!(!session.visibility_options.sonar_ping);
 
     // Turn off via modal
     session.open_settings_modal();
@@ -358,6 +361,12 @@ fn test_sonar_ping_no_hotkeys_and_modal_governance_only() {
     session.state = tdrace_app::game::GameState::Racing;
     session.update();
     assert!(!session.visibility_options.sonar_ping);
+
+    // Re-enable via Key 4 toggle
+    session.visibility_options.sonar_ping = !session.visibility_options.sonar_ping;
+    assert!(session.visibility_options.sonar_ping);
+    session.trigger_sonar_ping();
+    assert_eq!(session.sonar_ping_timer, 0.75);
 
     // Re-enable via modal
     session.open_settings_modal();

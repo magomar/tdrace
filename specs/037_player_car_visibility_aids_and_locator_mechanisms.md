@@ -153,7 +153,7 @@ pub struct PlayerVisibilityOptions {
 In `ArcadeSettingsModal`:
 - Tab Bar: `["AUDIO", "CONTROLS", "DISPLAY", "GAMEPLAY", "HELPERS"]`
 - NavGrid2D structure: Column 4 houses 11 item rows (10 widgets + bottom button row).
-- Dirty detection: Evaluated against `SettingsSnapshot` fields (`aura_idx`, `aura_ratio`, `chevron_idx`, `beacon_idx`, `adaptive_idx`, `radar_ping_idx`, `ribbon_idx`).
+- Dirty detection: Evaluated against `SettingsSnapshot` fields (`aura_idx`, `aura_ratio`, `chevron_idx`, `adaptive_idx`, `radar_ping_idx`, `ribbon_idx`).
 
 ---
 
@@ -186,11 +186,11 @@ In `ArcadeSettingsModal`:
   - [x] **And** when progress $p > 0.18$, a secondary delayed echo circle must be rendered
   - [x] **And** when $t_{\text{rem}} \le 0.0\,\text{s}$, zero draw calls must be issued
 
-- **Scenario: Absence of dedicated hotkey for Radar/Sonar Ping**
+- **Scenario: Dedicated hotkey [Key 4] for Radar/Sonar Ping**
   - [x] **Given** an active race session in `GameState::Racing`
-  - [x] **When** any numeric key or alphanumeric key is pressed
-  - [x] **Then** no hotkey shall toggle or manually fire the sonar ping
-  - [x] **And** sonar ping toggle remains exclusively governed by the Settings Modal
+  - [x] **When** `Key 4` is pressed
+  - [x] **Then** `visibility_options.sonar_ping` shall toggle between enabled and disabled
+  - [x] **And** when switched on, `trigger_sonar_ping()` shall immediately fire an expanding shockwave ripple
 
 - **Scenario: Automatic trigger on camera zoom cycle**
   - [x] **Given** `visibility_options.sonar_ping` is enabled

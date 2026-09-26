@@ -100,7 +100,7 @@ use crate::render::{
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
-    render_player_overhead_chevron, render_player_roof_beacon, render_player_sonar_ping,
+    render_player_overhead_chevron, render_player_sonar_ping,
     render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
     PlayerVisibilityOptions, VehicleNameplateItem,
@@ -1185,7 +1185,6 @@ impl RaceSession {
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
             chevron_brightness: self.config.player_helpers.overhead_chevron_brightness,
-            beacon_enabled: self.config.player_helpers.roof_beacon,
             adaptive_enabled: self.config.player_helpers.adaptive_visibility,
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
         };
@@ -1244,7 +1243,6 @@ impl RaceSession {
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
                 self.config.player_helpers.overhead_chevron_brightness = h_state.chevron_brightness;
-                self.config.player_helpers.roof_beacon = h_state.beacon_enabled;
                 self.config.player_helpers.adaptive_visibility = h_state.adaptive_enabled;
                 self.config.player_helpers.radar_sonar_ping = h_state.radar_sonar_ping;
 
@@ -4596,18 +4594,21 @@ impl RaceSession {
                 });
             }
 
-            // [4] Toggle High-Visibility Roof Beacon
+            // [4] Toggle Sonar Ping Shockwave Ripple
             if is_key_pressed(KeyCode::Key4) {
-                self.visibility_options.roof_beacon = !self.visibility_options.roof_beacon;
+                self.visibility_options.sonar_ping = !self.visibility_options.sonar_ping;
+                if self.visibility_options.sonar_ping {
+                    self.trigger_sonar_ping();
+                }
                 self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.roof_beacon { "ON" } else { "OFF" };
-                let col = if self.visibility_options.roof_beacon { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                let state_str = if self.visibility_options.sonar_ping { "ON" } else { "OFF" };
+                let col = if self.visibility_options.sonar_ping { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                 if let Some(pos) = self.cars.first().map(|c| c.state.position) {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[4] ROOF BEACON: {}", state_str), col);
+                    self.fx.drift_popups.spawn_text(pos, &format!("[4] SONAR PING: {}", state_str), col);
                 }
                 self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[4] ROOF BEACON: {}", state_str),
-                    is_on: self.visibility_options.roof_beacon,
+                    text: format!("[4] SONAR PING: {}", state_str),
+                    is_on: self.visibility_options.sonar_ping,
                     timer: 1.8,
                     duration: 1.8,
                 });
@@ -13585,21 +13586,9 @@ impl RaceSession {
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)
         self.fx.render_airborne_fx();
 
-        // 10. Player Car Visibility Aids (Overhead Chevron, Roof Beacon)
+        // 10. Player Car Visibility Aids (Overhead Chevron)
         if let Some(focus_car) = self.cars.get(focus_car_idx) {
             let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
-            if self.visibility_options.roof_beacon {
-                render_player_roof_beacon(
-                    focus_car.state.position,
-                    focus_car.forward_vector(),
-                    focus_car.total_elevation(),
-                    camera.current_zoom,
-                    self.session_time,
-                    scheme,
-                    player_alpha,
-                    self.visibility_options.roof_beacon_brightness,
-                );
-            }
             if self.visibility_options.overhead_chevron {
                 render_player_overhead_chevron(
                     focus_car.state.position,

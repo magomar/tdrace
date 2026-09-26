@@ -54,7 +54,7 @@ impl Default for PlayerVisibilityOptions {
             ground_aura_radius_ratio: 1.0,
             ground_aura_brightness: 1.0,
             adaptive_visibility: true,
-            roof_beacon: true,
+            roof_beacon: false,
             roof_beacon_brightness: 1.0,
             curve_helper: true,
             curve_helper_scale: 1.0,
@@ -618,7 +618,7 @@ mod tests {
         assert!(opts.overhead_chevron);
         assert!(opts.ground_aura);
         assert!(opts.adaptive_visibility);
-        assert!(opts.roof_beacon);
+        assert!(!opts.roof_beacon);
         assert!(opts.curve_helper);
         assert!(opts.bot_nameplates);
         assert!(opts.sonar_ping);

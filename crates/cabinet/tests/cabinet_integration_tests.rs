@@ -959,7 +959,7 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(modal.tab_bar.tabs.len(), 5);
     assert_eq!(modal.tab_bar.tabs[4], "HELPERS");
     assert_eq!(modal.nav.column_lengths.len(), 5);
-    assert_eq!(modal.nav.column_lengths[4], 12);
+    assert_eq!(modal.nav.column_lengths[4], 11);
 
     // 2. Verify default state matches HelpersSettingsState::default()
     let def_helpers = HelpersSettingsState::default();
@@ -980,7 +980,6 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     modal.ribbon_brightness_slider.set_value(2.20);
     modal.chevron_dropdown.set_selected(1);
     modal.chevron_brightness_slider.set_value(1.50);
-    modal.beacon_dropdown.set_selected(1);
     modal.adaptive_dropdown.set_selected(1);
     modal.radar_ping_dropdown.set_selected(1);
 
@@ -990,7 +989,6 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((state.ribbon_brightness - 2.20).abs() < 1e-4);
     assert!(!state.chevron_enabled);
     assert!((state.chevron_brightness - 1.50).abs() < 1e-4);
-    assert!(!state.beacon_enabled);
     assert!(!state.adaptive_enabled);
     assert!(!state.radar_sonar_ping);
 
@@ -1004,7 +1002,6 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
         ribbon_scale: 0.90,
         chevron_enabled: true,
         chevron_brightness: 0.75,
-        beacon_enabled: true,
         adaptive_enabled: false,
         radar_sonar_ping: false,
     };
@@ -1018,7 +1015,6 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((cur.ribbon_scale - custom.ribbon_scale).abs() < 1e-4);
     assert_eq!(cur.chevron_enabled, custom.chevron_enabled);
     assert!((cur.chevron_brightness - custom.chevron_brightness).abs() < 1e-4);
-    assert_eq!(cur.beacon_enabled, custom.beacon_enabled);
     assert_eq!(cur.adaptive_enabled, custom.adaptive_enabled);
     assert_eq!(cur.radar_sonar_ping, custom.radar_sonar_ping);
 
@@ -1033,7 +1029,6 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((restored.ribbon_scale - def_helpers.ribbon_scale).abs() < 1e-4);
     assert_eq!(restored.chevron_enabled, def_helpers.chevron_enabled);
     assert!((restored.chevron_brightness - def_helpers.chevron_brightness).abs() < 1e-4);
-    assert_eq!(restored.beacon_enabled, def_helpers.beacon_enabled);
     assert_eq!(restored.adaptive_enabled, def_helpers.adaptive_enabled);
     assert_eq!(restored.radar_sonar_ping, def_helpers.radar_sonar_ping);
 }

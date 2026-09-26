@@ -77,7 +77,7 @@ fn test_player_visibility_options_bot_nameplates_default_and_toggle() {
     assert!(opts.overhead_chevron);
     assert!(opts.ground_aura);
     assert!(opts.adaptive_visibility);
-    assert!(opts.roof_beacon);
+    assert!(!opts.roof_beacon);
     assert!(opts.curve_helper);
 
     // Toggle on

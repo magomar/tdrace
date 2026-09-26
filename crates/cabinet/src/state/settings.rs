@@ -46,7 +46,6 @@ pub struct SettingsSnapshot {
     pub ribbon_scale: f32,
     pub chevron_idx: usize,
     pub chevron_brightness: f32,
-    pub beacon_idx: usize,
     pub adaptive_idx: usize,
     pub radar_sonar_ping_idx: usize,
 }
@@ -80,14 +79,13 @@ impl Default for SettingsSnapshot {
             ribbon_scale: 1.0,
             chevron_idx: 0,
             chevron_brightness: 1.0,
-            beacon_idx: 0,
             adaptive_idx: 0,
             radar_sonar_ping_idx: 0,
         }
     }
 }
 
-/// Serializable / translatable state for the 11 player helpers settings widgets.
+/// Serializable / translatable state for the 10 player helpers settings widgets.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HelpersSettingsState {
     pub aura_enabled: bool,
@@ -98,7 +96,6 @@ pub struct HelpersSettingsState {
     pub ribbon_scale: f32,
     pub chevron_enabled: bool,
     pub chevron_brightness: f32,
-    pub beacon_enabled: bool,
     pub adaptive_enabled: bool,
     pub radar_sonar_ping: bool,
 }
@@ -114,7 +111,6 @@ impl Default for HelpersSettingsState {
             ribbon_scale: 1.0,
             chevron_enabled: true,
             chevron_brightness: 1.0,
-            beacon_enabled: true,
             adaptive_enabled: true,
             radar_sonar_ping: true,
         }
@@ -395,7 +391,6 @@ pub struct ArcadeSettingsModal {
     pub ribbon_scale_slider: SliderWidget,
     pub chevron_dropdown: DropdownWidget,
     pub chevron_brightness_slider: SliderWidget,
-    pub beacon_dropdown: DropdownWidget,
     pub adaptive_dropdown: DropdownWidget,
     pub radar_ping_dropdown: DropdownWidget,
 
@@ -428,8 +423,8 @@ impl ArcadeSettingsModal {
         // Tab 1 (Controls): 4 widgets + 1 bottom row = 5 rows
         // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
         // Tab 3 (Gameplay): 3 widgets + 1 bottom row = 4 rows
-        // Tab 4 (Helpers): 11 widgets + 1 bottom row = 12 rows
-        let nav = NavGrid2D::new(vec![6, 5, 7, 4, 12]);
+        // Tab 4 (Helpers): 10 widgets + 1 bottom row = 11 rows
+        let nav = NavGrid2D::new(vec![6, 5, 7, 4, 11]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -510,7 +505,6 @@ impl ArcadeSettingsModal {
             ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00).with_suffix("x"),
             chevron_dropdown: DropdownWidget::new("OVERHEAD CHEVRON", enabled_options.clone(), 0),
             chevron_brightness_slider: SliderWidget::new("CHEVRON BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            beacon_dropdown: DropdownWidget::new("ROOF BEACON STROBE", enabled_options.clone(), 0),
             adaptive_dropdown: DropdownWidget::new("ADAPTIVE VISIBILITY", enabled_options.clone(), 0),
             radar_ping_dropdown: DropdownWidget::new("RADAR / SONAR PING", enabled_options, 0),
 
@@ -564,7 +558,6 @@ impl ArcadeSettingsModal {
             ribbon_scale: self.ribbon_scale_slider.value,
             chevron_enabled: self.chevron_dropdown.selected_index == 0,
             chevron_brightness: self.chevron_brightness_slider.value,
-            beacon_enabled: self.beacon_dropdown.selected_index == 0,
             adaptive_enabled: self.adaptive_dropdown.selected_index == 0,
             radar_sonar_ping: self.radar_ping_dropdown.selected_index == 0,
         }
@@ -580,7 +573,6 @@ impl ArcadeSettingsModal {
         self.ribbon_scale_slider.set_value(state.ribbon_scale);
         self.chevron_dropdown.set_selected(if state.chevron_enabled { 0 } else { 1 });
         self.chevron_brightness_slider.set_value(state.chevron_brightness);
-        self.beacon_dropdown.set_selected(if state.beacon_enabled { 0 } else { 1 });
         self.adaptive_dropdown.set_selected(if state.adaptive_enabled { 0 } else { 1 });
         self.radar_ping_dropdown.set_selected(if state.radar_sonar_ping { 0 } else { 1 });
     }
@@ -690,7 +682,6 @@ impl ArcadeSettingsModal {
             ribbon_scale: self.ribbon_scale_slider.value,
             chevron_idx: self.chevron_dropdown.selected_index,
             chevron_brightness: self.chevron_brightness_slider.value,
-            beacon_idx: self.beacon_dropdown.selected_index,
             adaptive_idx: self.adaptive_dropdown.selected_index,
             radar_sonar_ping_idx: self.radar_ping_dropdown.selected_index,
         }
@@ -732,7 +723,6 @@ impl ArcadeSettingsModal {
             || (cur.ribbon_scale - init.ribbon_scale).abs() > 0.001
             || cur.chevron_idx != init.chevron_idx
             || (cur.chevron_brightness - init.chevron_brightness).abs() > 0.001
-            || cur.beacon_idx != init.beacon_idx
             || cur.adaptive_idx != init.adaptive_idx
             || cur.radar_sonar_ping_idx != init.radar_sonar_ping_idx
     }
@@ -787,8 +777,8 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
-            || self.beacon_dropdown.is_open
-            || self.adaptive_dropdown.is_open;
+            || self.adaptive_dropdown.is_open
+            || self.radar_ping_dropdown.is_open;
 
         // Cancel / Back closes modal or prompts confirmation if settings have changed
         if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed || ctx.gamepad.btn_back_pressed) {
@@ -807,8 +797,8 @@ impl CabinetScreen for ArcadeSettingsModal {
                 self.aura_dropdown.is_open = false;
                 self.ribbon_dropdown.is_open = false;
                 self.chevron_dropdown.is_open = false;
-                self.beacon_dropdown.is_open = false;
                 self.adaptive_dropdown.is_open = false;
+                self.radar_ping_dropdown.is_open = false;
                 ctx.play_ui_cancel();
                 return ScreenAction::None;
             }
@@ -860,7 +850,6 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
-            || self.beacon_dropdown.is_open
             || self.adaptive_dropdown.is_open
             || self.radar_ping_dropdown.is_open;
 
@@ -1177,8 +1166,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let r6 = (content_x, y, content_w, row_h); y += row_h + row_gap;
                 let r7 = (content_x, y, content_w, row_h); y += row_h + row_gap;
                 let r8 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r9 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r10 = (content_x, y, content_w, row_h);
+                let r9 = (content_x, y, content_w, row_h);
 
                 if self.aura_dropdown.handle_input(
                     active_row == 0,
@@ -1234,7 +1222,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 if self.chevron_brightness_slider.handle_input(active_row == 7, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r7) {
                     ctx.play_ui_move();
                 }
-                if self.beacon_dropdown.handle_input(
+                if self.adaptive_dropdown.handle_input(
                     active_row == 8,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -1247,7 +1235,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 ) {
                     ctx.play_ui_select();
                 }
-                if self.adaptive_dropdown.handle_input(
+                if self.radar_ping_dropdown.handle_input(
                     active_row == 9,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
@@ -1256,19 +1244,6 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.gamepad.btn_confirm_pressed,
                     ctx.gamepad.btn_cancel_pressed,
                     r9,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.radar_ping_dropdown.handle_input(
-                    active_row == 10,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r10,
                     scaler,
                 ) {
                     ctx.play_ui_select();
@@ -1477,13 +1452,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                 draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.chevron_brightness_slider.label, &self.chevron_brightness_slider.formatted_value(), self.chevron_brightness_slider.normalized(), active_row == 7, false, accent);
                 y += row_h + row_gap;
                 let r8 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.beacon_dropdown.label, &self.beacon_dropdown.options, self.beacon_dropdown.selected_index, false, self.beacon_dropdown.popup_hovered_index, active_row == 8, false, accent);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.adaptive_dropdown.label, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, false, self.adaptive_dropdown.popup_hovered_index, active_row == 8, false, accent);
                 y += row_h + row_gap;
                 let r9 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.adaptive_dropdown.label, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, false, self.adaptive_dropdown.popup_hovered_index, active_row == 9, false, accent);
-                y += row_h + row_gap;
-                let r10 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.radar_ping_dropdown.label, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, false, self.radar_ping_dropdown.popup_hovered_index, active_row == 10, false, accent);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.radar_ping_dropdown.label, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, false, self.radar_ping_dropdown.popup_hovered_index, active_row == 9, false, accent);
 
                 // Foreground layer: Draw open popup over other rows
                 if self.aura_dropdown.is_open {
@@ -1492,12 +1464,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, self.ribbon_dropdown.popup_hovered_index, accent);
                 } else if self.chevron_dropdown.is_open {
                     draw_dropdown_popup(scaler, fonts, r6.0, r6.1, r6.2, r6.3, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, self.chevron_dropdown.popup_hovered_index, accent);
-                } else if self.beacon_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r8.0, r8.1, r8.2, r8.3, &self.beacon_dropdown.options, self.beacon_dropdown.selected_index, self.beacon_dropdown.popup_hovered_index, accent);
                 } else if self.adaptive_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r9.0, r9.1, r9.2, r9.3, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, self.adaptive_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(scaler, fonts, r8.0, r8.1, r8.2, r8.3, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, self.adaptive_dropdown.popup_hovered_index, accent);
                 } else if self.radar_ping_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r10.0, r10.1, r10.2, r10.3, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, self.radar_ping_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(scaler, fonts, r9.0, r9.1, r9.2, r9.3, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, self.radar_ping_dropdown.popup_hovered_index, accent);
                 }
             }
         }
