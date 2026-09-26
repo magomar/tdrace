@@ -284,46 +284,54 @@ impl IpKeypad {
             return IpKeypadAction::None;
         }
 
-        // Direct hardware keyboard typing support
+        // Direct hardware keyboard typing support (character stream + keycode fallback)
         let mut text_changed = false;
-        for num in 0..=9 {
-            let key = match num {
-                0 => KeyCode::Key0,
-                1 => KeyCode::Key1,
-                2 => KeyCode::Key2,
-                3 => KeyCode::Key3,
-                4 => KeyCode::Key4,
-                5 => KeyCode::Key5,
-                6 => KeyCode::Key6,
-                7 => KeyCode::Key7,
-                8 => KeyCode::Key8,
-                9 => KeyCode::Key9,
-                _ => unreachable!(),
-            };
-            let kp_key = match num {
-                0 => KeyCode::Kp0,
-                1 => KeyCode::Kp1,
-                2 => KeyCode::Kp2,
-                3 => KeyCode::Kp3,
-                4 => KeyCode::Kp4,
-                5 => KeyCode::Kp5,
-                6 => KeyCode::Kp6,
-                7 => KeyCode::Kp7,
-                8 => KeyCode::Kp8,
-                9 => KeyCode::Kp9,
-                _ => unreachable!(),
-            };
-            if safe_key_pressed(key) || safe_key_pressed(kp_key) {
-                let c = char::from_digit(num, 10).unwrap_or('0');
+        while let Some(c) = std::panic::catch_unwind(macroquad::input::get_char_pressed).ok().flatten() {
+            if c.is_ascii_digit() || c == '.' || c == ':' {
                 text_changed |= self.append_char(c);
             }
         }
 
-        if safe_key_pressed(KeyCode::Period) || safe_key_pressed(KeyCode::KpDecimal) {
-            text_changed |= self.append_char('.');
-        }
-        if safe_key_pressed(KeyCode::Semicolon) {
-            text_changed |= self.append_char(':');
+        if !text_changed {
+            for num in 0..=9 {
+                let key = match num {
+                    0 => KeyCode::Key0,
+                    1 => KeyCode::Key1,
+                    2 => KeyCode::Key2,
+                    3 => KeyCode::Key3,
+                    4 => KeyCode::Key4,
+                    5 => KeyCode::Key5,
+                    6 => KeyCode::Key6,
+                    7 => KeyCode::Key7,
+                    8 => KeyCode::Key8,
+                    9 => KeyCode::Key9,
+                    _ => unreachable!(),
+                };
+                let kp_key = match num {
+                    0 => KeyCode::Kp0,
+                    1 => KeyCode::Kp1,
+                    2 => KeyCode::Kp2,
+                    3 => KeyCode::Kp3,
+                    4 => KeyCode::Kp4,
+                    5 => KeyCode::Kp5,
+                    6 => KeyCode::Kp6,
+                    7 => KeyCode::Kp7,
+                    8 => KeyCode::Kp8,
+                    9 => KeyCode::Kp9,
+                    _ => unreachable!(),
+                };
+                if safe_key_pressed(key) || safe_key_pressed(kp_key) {
+                    let c = char::from_digit(num, 10).unwrap_or('0');
+                    text_changed |= self.append_char(c);
+                }
+            }
+
+            if safe_key_pressed(KeyCode::Period) || safe_key_pressed(KeyCode::KpDecimal) {
+                text_changed |= self.append_char('.');
+            }
+            if safe_key_pressed(KeyCode::Semicolon) {
+                text_changed |= self.append_char(':');
+            }
         }
         if safe_key_pressed(KeyCode::Backspace) {
             text_changed |= self.backspace();

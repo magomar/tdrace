@@ -491,20 +491,15 @@ impl LanHost {
                     return;
                 }
 
-                // Name uniqueness check
-                let sanitized_name = sanitize_string(&player_name, MAX_NAME_LENGTH);
+                // Name uniqueness check: auto-disambiguate duplicates instead of rejecting
+                let mut sanitized_name = sanitize_string(&player_name, MAX_NAME_LENGTH);
                 if self.active_slots().iter().any(|s| s.player_name == sanitized_name) {
-                    let _ = self.send_to_addr(
-                        &LobbyPacket::JoinResponse {
-                            result: JoinResult::RejectedNameTaken,
-                            room_name: self.room_name.clone(),
-                            track_id: self.track_id.clone(),
-                            laps: self.laps,
-                            slots: self.active_slots(),
-                        },
-                        src_addr,
-                    );
-                    return;
+                    let base = sanitized_name.clone();
+                    let mut suffix = 2;
+                    while self.active_slots().iter().any(|s| s.player_name == sanitized_name) {
+                        sanitized_name = format!("{} ({})", base, suffix);
+                        suffix += 1;
+                    }
                 }
 
                 // Find free slot

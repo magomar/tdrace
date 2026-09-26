@@ -273,7 +273,7 @@ impl LanClient {
             if *elapsed_sec >= 0.75 {
                 *elapsed_sec = 0.0;
                 *retries += 1;
-                if *retries > 4 {
+                if *retries > 6 {
                     self.state = ClientState::Disconnected(Some("Host connection timed out".to_string()));
                     events.push(ClientEvent::Disconnected("Host did not respond".to_string()));
                     return events;

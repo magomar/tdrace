@@ -105,12 +105,19 @@ impl LanBeaconBroadcaster {
         if let Some(target) = self.custom_target {
             let _ = self.socket.send_to(&encoded, target);
         } else {
+            // 1. Global subnet broadcast
             let broadcast_addr = format!("255.255.255.255:{}", self.broadcast_port);
-            if self.socket.send_to(&encoded, &broadcast_addr).is_err() {
-                // If global subnet broadcast fails (e.g. no default route), fallback to local loopback
-                let loopback_addr = format!("127.0.0.1:{}", self.broadcast_port);
-                let _ = self.socket.send_to(&encoded, &loopback_addr);
-            }
+            let _ = self.socket.send_to(&encoded, &broadcast_addr);
+
+            // 2. Directed subnet broadcast based on resolved local IPv4 (/24)
+            let local_ip = crate::net::ip::LocalIpResolver::resolve_local_ipv4();
+            let octets = local_ip.octets();
+            let directed_bcast = format!("{}.{}.{}.255:{}", octets[0], octets[1], octets[2], self.broadcast_port);
+            let _ = self.socket.send_to(&encoded, &directed_bcast);
+
+            // 3. Local loopback for multi-instance testing on the same machine
+            let loopback_addr = format!("127.0.0.1:{}", self.broadcast_port);
+            let _ = self.socket.send_to(&encoded, &loopback_addr);
         }
         Ok(())
     }
