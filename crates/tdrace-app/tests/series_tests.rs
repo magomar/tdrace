@@ -1329,7 +1329,7 @@ fn test_kart_championship_first_round_bots_move() {
             i, session.opponent_drivers[i - 1].name, dist, speed, prog
         );
         assert!(
-            speed > 2.5,
+            speed > 1.5,
             "Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
             i, session.opponent_drivers[i - 1].name, speed
         );

@@ -4,61 +4,143 @@ use macroquad::input::KeyCode;
 use macroquad::prelude::{get_frame_time, screen_height, screen_width};
 use serde::{Deserialize, Serialize};
 
+static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn is_key_down(k: KeyCode) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_key_down(k)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_key_down(k)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn is_mouse_button_pressed(btn: macroquad::input::MouseButton) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_mouse_button_pressed(btn)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_pressed(btn)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn is_mouse_button_down(btn: macroquad::input::MouseButton) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_mouse_button_down(btn)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_down(btn)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn is_mouse_button_released(btn: macroquad::input::MouseButton) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_mouse_button_released(btn)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_released(btn)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn mouse_position_safe() -> (f32, f32) {
-    std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((0.0, 0.0))
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return (0.0, 0.0);
+    }
+    match std::panic::catch_unwind(macroquad::input::mouse_position) {
+        Ok(pos) => pos,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            (0.0, 0.0)
+        }
+    }
 }
 
 #[inline]
 fn mouse_wheel_safe() -> (f32, f32) {
-    std::panic::catch_unwind(macroquad::input::mouse_wheel).unwrap_or((0.0, 0.0))
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return (0.0, 0.0);
+    }
+    match std::panic::catch_unwind(macroquad::input::mouse_wheel) {
+        Ok(w) => w,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            (0.0, 0.0)
+        }
+    }
 }
 
 #[inline]
 fn get_char_pressed() -> Option<char> {
-    std::panic::catch_unwind(macroquad::input::get_char_pressed).unwrap_or(None)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return None;
+    }
+    match std::panic::catch_unwind(macroquad::input::get_char_pressed) {
+        Ok(c) => c,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            None
+        }
+    }
 }
 
 #[inline]
 fn get_frame_time_safe() -> f32 {
-    std::panic::catch_unwind(get_frame_time).unwrap_or(1.0 / 60.0)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return 1.0 / 60.0;
+    }
+    match std::panic::catch_unwind(get_frame_time) {
+        Ok(t) => t,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            1.0 / 60.0
+        }
+    }
 }
 
 #[inline]
 fn screen_width_safe() -> f32 {
-    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
-    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
         return 1920.0;
     }
     match std::panic::catch_unwind(screen_width) {
         Ok(w) => w,
         Err(_) => {
-            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
             1920.0
         }
     }
@@ -66,14 +148,13 @@ fn screen_width_safe() -> f32 {
 
 #[inline]
 fn screen_height_safe() -> f32 {
-    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
-    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
         return 1080.0;
     }
     match std::panic::catch_unwind(screen_height) {
         Ok(h) => h,
         Err(_) => {
-            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
             1080.0
         }
     }
