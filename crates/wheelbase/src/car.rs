@@ -833,13 +833,25 @@ fn apply_differential_rotational_coupling(
 
         let omega = self.state.angular_velocity;
 
-        // Drive / Brake torque requests with top-speed governor and TCS
+        // Drive / Brake torque requests with top-speed governor and TCS (Spec 038)
+        // Average driven-wheel speed (representing driveshaft / differential carrier speed)
+        // governs top-speed power taper alongside chassis speed, preventing a single unloaded
+        // spinning inside wheel from choking engine power during cornering.
         let top_speed = self.config.top_speed_mps;
-        let max_driven_wheel_linear_speed = self.state.wheel_assemblies.iter()
-            .filter(|w| w.config.drive_torque_factor > 0.0)
-            .map(|w| (w.angular_velocity * w.config.tire_radius).abs())
-            .fold(0.0f32, f32::max);
-        let effective_engine_speed = v_long.abs().max(max_driven_wheel_linear_speed);
+        let mut driven_count = 0.0f32;
+        let mut driven_speed_sum = 0.0f32;
+        for w in self.state.wheel_assemblies.iter() {
+            if w.config.drive_torque_factor > 0.0 {
+                driven_count += 1.0;
+                driven_speed_sum += (w.angular_velocity * w.config.tire_radius).abs();
+            }
+        }
+        let avg_driven_speed = if driven_count > 0.0 {
+            driven_speed_sum / driven_count
+        } else {
+            v_long.abs()
+        };
+        let effective_engine_speed = v_long.abs().max(avg_driven_speed);
         let speed_ratio = effective_engine_speed / top_speed;
         let engine_taper = if speed_ratio < 0.90 {
             1.0

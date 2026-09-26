@@ -84,7 +84,7 @@ impl ClassicGameModule {
         cfg.mass = 180.0;
         cfg.max_engine_force = 2600.0;
         cfg.top_speed_mps = 32.0; // ~115 km/h
-        cfg.max_steer_angle = 0.73;
+        cfg.max_steer_angle = 0.65; // ~37.2 deg calibrated FIA benchmark (Spec 038)
         cfg.steer_speed = 10.5;
         cfg.steer_return_speed = 14.0;
         cfg.tire.drift_slide_friction = 0.90;

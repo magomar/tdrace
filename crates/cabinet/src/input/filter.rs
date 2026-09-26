@@ -22,10 +22,10 @@ pub struct DigitalInputConfig {
 impl Default for DigitalInputConfig {
     fn default() -> Self {
         Self {
-            steer_rise_rate: 7.2,
-            steer_return_rate: 13.5,
-            steer_exponent: 1.05,
-            speed_sensitive_factor: 0.0025,
+            steer_rise_rate: 6.5,
+            steer_return_rate: 13.0,
+            steer_exponent: 1.35,
+            speed_sensitive_factor: 0.004,
             min_speed_steer_limit: 0.70,
             throttle_rise_rate: 9.5,
             brake_rise_rate: 6.5,

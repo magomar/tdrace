@@ -11017,10 +11017,16 @@ impl RaceSession {
         }
 
         // Dynamic Accelerating Engine Audio (motor sound only)
+        // Dynamic Accelerating Engine Audio (motor sound only) (Spec 038)
+        // Engine RPM rev flare must strictly reflect driven wheels' longitudinal slip ratio,
+        // isolating engine acoustics from unpowered front steer wheels' lateral slip angles.
         if let Some(player_car) = self.cars.first() {
-            let max_slip_angle = player_car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
-            let max_slip_ratio = player_car.state.wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
-            let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
+            let driven_slip_ratio = player_car.state.wheel_assemblies.iter()
+                .zip(player_car.state.wheels.iter())
+                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                .fold(0.0f32, f32::max);
+            let slip_intensity = driven_slip_ratio;
 
             let p1_ctrl = controls_all[0];
             let forward_speed = player_car.state.local_velocity.x;
@@ -11035,9 +11041,12 @@ impl RaceSession {
 
         if is_split && self.cars.len() >= 2 {
             let p2_car = &self.cars[1];
-            let max_slip_angle = p2_car.state.wheels.iter().map(|w| w.slip_angle.abs()).fold(0.0f32, f32::max);
-            let max_slip_ratio = p2_car.state.wheels.iter().map(|w| w.slip_ratio.abs()).fold(0.0f32, f32::max);
-            let slip_intensity = (max_slip_angle * 1.5).max(max_slip_ratio);
+            let driven_slip_ratio = p2_car.state.wheel_assemblies.iter()
+                .zip(p2_car.state.wheels.iter())
+                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                .fold(0.0f32, f32::max);
+            let slip_intensity = driven_slip_ratio;
 
             let p2_ctrl = controls_all[1];
             let forward_speed = p2_car.state.local_velocity.x;
