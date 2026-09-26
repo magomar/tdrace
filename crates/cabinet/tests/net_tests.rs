@@ -308,7 +308,7 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     assert!(host_screen.copied_timer > 0.0);
 
     // 2. Join Screen & Keypad setup
-    let mut join_screen = CabinetLanJoinScreen::new("GuestDriver", "ESP", "scuderia_gt", "red");
+    let mut join_screen = CabinetLanJoinScreen::new("GuestDriver", "ESP", "gt_ferrari_296_gt3", "red");
     join_screen.keypad.set_text("127.0.0.1:7777");
     join_screen.connect_via_keypad();
     assert!(join_screen.pending_client.is_some());

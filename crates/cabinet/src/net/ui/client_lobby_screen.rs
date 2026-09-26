@@ -50,11 +50,12 @@ impl CabinetLanClientLobbyScreen {
     /// Creates a client lobby screen wrapping a connected `LanClient`.
     pub fn new(client: LanClient) -> Self {
         let car_models = vec![
-            ("scuderia_gt".to_string(), "Scuderia 296 GT3".to_string()),
-            ("stuttgart_gt".to_string(), "Stuttgart 911 GT3 R".to_string()),
-            ("bavarian_m4".to_string(), "Bavarian M4 GT3".to_string()),
-            ("silverstone_vantage".to_string(), "Silverstone Vantage GT3".to_string()),
-            ("shifter_kart_125".to_string(), "125cc Shifter Kart".to_string()),
+            ("gt_ferrari_296_gt3".to_string(), "Ferrari 296 GT3".to_string()),
+            ("gt_porsche_911_gt3r".to_string(), "Porsche 911 GT3 R".to_string()),
+            ("gt_amg_gt3_evo".to_string(), "Mercedes-AMG GT3 Evo".to_string()),
+            ("gt_audi_r8_gt3_evo2".to_string(), "Audi R8 LMS GT3 Evo II".to_string()),
+            ("gt_bmw_m4_gt4".to_string(), "BMW M4 GT4".to_string()),
+            ("kart_birel_art_kz2".to_string(), "Birel ART KZ2 Shifter Kart".to_string()),
         ];
 
         let liveries = vec![

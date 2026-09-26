@@ -192,7 +192,7 @@ impl LanHost {
             slot_id: 0,
             player_name: sanitize_string(&host_player_name.into(), MAX_NAME_LENGTH),
             country_code: "ESP".to_string(),
-            car_model_id: "scuderia_gt".to_string(),
+            car_model_id: "gt_ferrari_296_gt3".to_string(),
             color_scheme_id: "red".to_string(),
             is_ready: true,
             is_host: true,

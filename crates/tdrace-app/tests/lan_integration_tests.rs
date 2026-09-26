@@ -83,7 +83,7 @@ fn test_lan_launch_session_and_nameplates() {
         "Grand Prix Test Room",
         "HostDriver",
         "ESP",
-        "scuderia_gt",
+        "gt_ferrari_296_gt3",
         "corsa_red",
         0, // ephemeral port
         4,
@@ -98,9 +98,11 @@ fn test_lan_launch_session_and_nameplates() {
     assert!(session.is_lan_multiplayer);
     assert!(session.is_lan_host);
     assert_eq!(session.lan_player_slot, 0);
+    assert_eq!(session.player_car_index(), 0);
     assert_eq!(session.cars.len(), 1);
     assert_eq!(session.trackers.len(), 1);
     assert_eq!(session.grid_participants.len(), 1);
+    assert_eq!(session.car_model_ids[0], Some("gt_ferrari_296_gt3"));
     assert!(matches!(session.state, GameState::Countdown(_)));
 
     // Verify nameplates contain LAN indicator for remote peers
@@ -113,7 +115,7 @@ fn test_lan_launch_session_and_nameplates() {
         car_title: "GT3 Car".to_string(),
         car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
         color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
-        model_id: Some("scuderia_gt"),
+        model_id: Some("gt_ferrari_296_gt3"),
         best_lap: None,
         best_circuit_time: None,
         random_seed: 99,
@@ -133,4 +135,82 @@ fn test_lan_launch_session_and_nameplates() {
     assert!(!session.is_lan_host);
     assert!(session.lan_host.is_none());
     assert!(session.lan_client.is_none());
+}
+
+#[test]
+fn test_lan_client_perspective_targeting_and_helpers() {
+    let mut session = RaceSession::new();
+
+    use tdrace_core::physics::config::AssistProfile;
+
+    // Verify canonical model ID resolver
+    assert_eq!(RaceSession::canonicalize_car_model_id("scuderia_gt"), "gt_ferrari_296_gt3");
+    assert_eq!(RaceSession::canonicalize_car_model_id("stuttgart_gt"), "gt_porsche_911_gt3r");
+    assert_eq!(RaceSession::canonicalize_car_model_id("gt_amg_gt3_evo"), "gt_amg_gt3_evo");
+
+    // Configure session as LAN client in slot 1
+    session.is_lan_multiplayer = true;
+    session.is_lan_host = false;
+    session.lan_player_slot = 1;
+
+    let base_cfg = session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar);
+    let mut host_car = tdrace_core::car::Car::new(base_cfg.clone());
+    host_car.config.assists = AssistProfile::Arcade.to_config();
+
+    let mut client_car = tdrace_core::car::Car::new(base_cfg.clone());
+    client_car.config.assists = AssistProfile::Sport.to_config();
+
+    session.cars = vec![host_car, client_car];
+    session.trackers = vec![
+        tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
+        tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
+    ];
+    session.grid_participants = vec![
+        tdrace_app::game::GridParticipant {
+            is_player: false,
+            bot_index: None,
+            name: "HostPlayer".to_string(),
+            alias: "HostPlayer".to_string(),
+            country: Some("ESP".to_string()),
+            car_title: "Ferrari 296 GT3".to_string(),
+            car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
+            color_scheme: tdrace_app::render::color::CarColorScheme::from_index(0),
+            model_id: Some("gt_ferrari_296_gt3"),
+            best_lap: None,
+            best_circuit_time: None,
+            random_seed: 1,
+            driver_tier: None,
+        },
+        tdrace_app::game::GridParticipant {
+            is_player: true,
+            bot_index: None,
+            name: "ClientPlayer".to_string(),
+            alias: "ClientPlayer".to_string(),
+            country: Some("FRA".to_string()),
+            car_title: "Porsche 911 GT3 R".to_string(),
+            car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
+            color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
+            model_id: Some("gt_porsche_911_gt3r"),
+            best_lap: None,
+            best_circuit_time: None,
+            random_seed: 2,
+            driver_tier: None,
+        },
+    ];
+
+    // Player car index for client must be slot 1
+    assert_eq!(session.player_car_index(), 1);
+
+    // Changing assist profile must modify client's car (index 1), NOT host's car (index 0)
+    session.set_assist_profile(AssistProfile::Pro);
+    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+
+    // Collecting nameplates for client must focus on host (car_idx 0)
+    let client_focus = session.player_car_index();
+    let nameplates = session.collect_bot_nameplates(client_focus);
+    assert_eq!(nameplates.len(), 1);
+    assert_eq!(nameplates[0].name, "HostPlayer");
+    assert_eq!(nameplates[0].car_idx, 0);
+    assert_eq!(nameplates[0].tier_label, Some("LAN"));
 }
