@@ -4,6 +4,7 @@ template: feature
 title: "Top-Down Pre-Baked Vehicle Wheel Steering Animations"
 description: "Multi-layer sprite decomposition and Ackermann wheel steering animation architecture for pre-baked high-resolution 2D top-down vehicles with proof-of-concept on classic_kart."
 status: implemented
+receipt: "docs/receipts/spec-026-receipt.md"
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T11:15:00Z }
 ---
