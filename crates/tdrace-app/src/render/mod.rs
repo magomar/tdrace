@@ -23,7 +23,7 @@ pub use barrier::{
     render_ground_barriers_and_obstacles_culled,
 };
 pub use car::{
-    render_car, render_car_with_visual_type, render_car_with_visual_type_and_model,
+    render_car, render_car_lights, render_car_with_visual_type, render_car_with_visual_type_and_model,
     render_car_with_visual_type_model_and_shadows,
 };
 pub use lateral::{render_car_lateral, render_lateral_car, render_real_car_lateral_by_id};

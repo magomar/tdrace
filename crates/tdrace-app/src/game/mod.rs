@@ -416,6 +416,7 @@ pub struct RaceSession {
     pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
     pub car_model_ids: Vec<Option<&'static str>>,
+    pub car_lights_on: Vec<bool>,
 
     pub cars: Vec<Car>,
     pub color_schemes: Vec<CarColorScheme>,
@@ -735,6 +736,7 @@ impl RaceSession {
             car_visual_types: Vec::new(),
             selected_car_model_id: None,
             car_model_ids: Vec::new(),
+            car_lights_on: Vec::new(),
 
             cars: Vec::new(),
             color_schemes: Vec::new(),
@@ -1924,6 +1926,32 @@ impl RaceSession {
         } else {
             self.active_profile.color_scheme
         }
+    }
+
+    /// Returns whether the vehicle at `car_idx` has electrical road/track lights equipped.
+    pub fn car_has_lights(&self, car_idx: usize) -> bool {
+        let visual_type = self.car_visual_types.get(car_idx).copied().unwrap_or(self.current_visual_type);
+        let model_id = self.car_model_ids.get(car_idx).copied().flatten().or(self.selected_car_model_id);
+        crate::render::resolve_vehicle_lighting(model_id, visual_type).has_lights()
+    }
+
+    /// Returns whether the lights are currently switched on for vehicle `car_idx`.
+    pub fn is_car_lights_on(&self, car_idx: usize) -> bool {
+        self.car_lights_on.get(car_idx).copied().unwrap_or(true)
+    }
+
+    /// Toggles the lights on/off for vehicle `car_idx` if the vehicle is equipped with lights.
+    /// Returns `true` if lights were toggled, `false` if the car has no lights.
+    pub fn toggle_car_lights(&mut self, car_idx: usize) -> bool {
+        if !self.car_has_lights(car_idx) {
+            return false;
+        }
+        if car_idx >= self.car_lights_on.len() {
+            self.car_lights_on.resize(car_idx + 1, true);
+        }
+        self.car_lights_on[car_idx] = !self.car_lights_on[car_idx];
+        self.audio.play_sfx(SfxType::UiSelect);
+        true
     }
 
     /// Resolves the color scheme for an AI bot driver across Career, Quick, and Custom races.
@@ -3323,6 +3351,7 @@ impl RaceSession {
         self.cars.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
+        self.car_lights_on.clear();
         self.color_schemes.clear();
         self.trackers.clear();
         self.ai_drivers.clear();
@@ -3875,6 +3904,7 @@ impl RaceSession {
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
         self.car_model_ids.push(player_model_id);
+        self.car_lights_on.push(true);
         self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
@@ -3901,6 +3931,7 @@ impl RaceSession {
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
             self.car_model_ids.push(player_model_id);
+            self.car_lights_on.push(true);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
 
@@ -3977,6 +4008,7 @@ impl RaceSession {
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
             self.car_model_ids.push(bot_model_id);
+            self.car_lights_on.push(true);
             self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             let bot_tier = if let Some(champ) = &self.championship_session {
                 champ
@@ -4418,9 +4450,14 @@ impl RaceSession {
             self.touch.enabled = !self.touch.enabled;
         }
 
-        // Toggle touch layout (L key)
-        if is_key_pressed(KeyCode::L) {
-            self.touch.toggle_layout();
+        // Switch vehicle lights on/off (L key) for cars equipped with lights
+        if !is_typing_or_tm && is_key_pressed(KeyCode::L) {
+            let focus_idx = 0;
+            if self.car_has_lights(focus_idx) {
+                self.toggle_car_lights(focus_idx);
+            } else if self.touch.enabled {
+                self.touch.toggle_layout();
+            }
         }
 
         // Toggle Split-Screen Layout (F8 key)
@@ -8100,6 +8137,7 @@ impl RaceSession {
         self.cars.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
+        self.car_lights_on.clear();
         self.trackers.clear();
         self.ai_drivers.clear();
         self.grid_participants.clear();
@@ -8128,6 +8166,7 @@ impl RaceSession {
                 diffuser: true,
             });
             self.car_model_ids.push(Some("scuderia_gt"));
+            self.car_lights_on.push(true);
 
             let tracker = TrackProgressTracker::new(num_cps, num_sectors);
             self.trackers.push(tracker);
@@ -13458,6 +13497,7 @@ impl RaceSession {
             };
             let is_braking = car.state.is_braking;
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
+            let lights_on = self.is_car_lights_on(i);
             render_car_with_visual_type_model_and_shadows(
                 car,
                 &effective_scheme,
@@ -13465,6 +13505,7 @@ impl RaceSession {
                 visual_type,
                 model_id,
                 self.config.display.vehicle_shadows,
+                lights_on,
             );
         }
 
@@ -13520,6 +13561,7 @@ impl RaceSession {
             };
             let is_braking = car.state.is_braking;
             let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
+            let lights_on = self.is_car_lights_on(i);
             render_car_with_visual_type_model_and_shadows(
                 car,
                 &effective_scheme,
@@ -13527,6 +13569,7 @@ impl RaceSession {
                 visual_type,
                 model_id,
                 self.config.display.vehicle_shadows,
+                lights_on,
             );
         }
 

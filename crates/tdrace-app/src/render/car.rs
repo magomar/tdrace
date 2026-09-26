@@ -79,7 +79,7 @@ pub fn render_car_lights(
     cfg: &VehicleLightingConfig,
 ) {
     // 1. Projector LED Headlights with soft glow
-    if cfg.has_headlights {
+    if cfg.has_headlights && cfg.lights_on {
         let light_w = half_w * 0.55;
         let head_l = pos + fwd * (half_len - 0.05) - right * light_w;
         let head_r = pos + fwd * (half_len - 0.05) + right * light_w;
@@ -94,7 +94,7 @@ pub fn render_car_lights(
     }
 
     // 2. Auxiliary Rally Hood Spotlight Pods
-    if cfg.has_rally_pods {
+    if cfg.has_rally_pods && cfg.lights_on {
         crate::render::lighting::render_rally_hood_pods(pos, fwd, right, half_len, half_w);
     }
 
@@ -108,14 +108,14 @@ pub fn render_car_lights(
             draw_circle(tail_r.x, tail_r.y, 0.28, Color::new(1.0, 0.15, 0.15, 0.45));
             draw_circle(tail_l.x, tail_l.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
             draw_circle(tail_r.x, tail_r.y, 0.18, Color::new(1.0, 0.20, 0.20, 1.0));
-        } else {
+        } else if cfg.lights_on {
             draw_circle(tail_l.x, tail_l.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
             draw_circle(tail_r.x, tail_r.y, 0.11, Color::new(0.60, 0.08, 0.08, 0.85));
         }
     }
 
     // 4. High-Mount Amber Dust Chase Strobe (SCORE / Baja Off-Road)
-    if cfg.has_dust_chase_light {
+    if cfg.has_dust_chase_light && cfg.lights_on {
         crate::render::lighting::render_dust_chase_strobe(pos, fwd, half_len);
     }
 }
@@ -296,6 +296,7 @@ pub fn render_car_with_visual_type_and_model(
         visual_type,
         model_id,
         true,
+        true,
     );
 }
 
@@ -307,6 +308,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
     visual_type: VehicleVisualType,
     model_id: Option<&str>,
     shadows_enabled: bool,
+    lights_on: bool,
 ) {
     let pos = car.state.position;
     let angle = car.state.angle;
@@ -355,7 +357,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
     }
 
     // Resolve modality-governed vehicle lighting profile
-    let lighting_cfg = resolve_vehicle_lighting(model_id, visual_type);
+    let lighting_cfg = resolve_vehicle_lighting(model_id, visual_type).with_lights_on(lights_on);
 
     // Forward track illumination cone projected onto track surface ahead of vehicle
     if lighting_cfg.project_track_beams {
@@ -1720,14 +1722,16 @@ fn render_sand_rail_body(
         for step in [-0.75, -0.25, 0.25, 0.75] {
             let pod_pos = bar_center + right * (bar_hw * step);
             draw_circle(pod_pos.x, pod_pos.y, 0.055, Color::new(0.18, 0.18, 0.22, 1.0));
-            draw_circle(pod_pos.x, pod_pos.y, 0.038, Color::new(1.0, 0.98, 0.80, 0.98));
-            let bloom_center = pod_pos + fwd * 0.08;
-            draw_circle(bloom_center.x, bloom_center.y, 0.09, Color::new(1.0, 0.95, 0.70, 0.28));
+            if cfg.lights_on {
+                draw_circle(pod_pos.x, pod_pos.y, 0.038, Color::new(1.0, 0.98, 0.80, 0.98));
+                let bloom_center = pod_pos + fwd * 0.08;
+                draw_circle(bloom_center.x, bloom_center.y, 0.09, Color::new(1.0, 0.95, 0.70, 0.28));
+            }
         }
     }
 
     // Rear high-mount dust chase strobe (amber safety strobe for extreme off-road / Baja)
-    if cfg.has_dust_chase_light {
+    if cfg.has_dust_chase_light && cfg.lights_on {
         crate::render::lighting::render_dust_chase_strobe(pos, fwd, half_len);
     }
 

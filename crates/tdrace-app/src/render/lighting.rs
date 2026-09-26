@@ -25,6 +25,8 @@ pub struct VehicleLightingConfig {
     pub beam_spread_rad: f32,
     /// Forward reach of the illuminated track cone in world meters (e.g. 14.0m - 18.0m).
     pub beam_range_m: f32,
+    /// Whether electrical headlights/auxiliary lights are currently switched on (for vehicles equipped with lights).
+    pub lights_on: bool,
 }
 
 impl Default for VehicleLightingConfig {
@@ -46,6 +48,7 @@ impl VehicleLightingConfig {
             project_track_beams: false,
             beam_spread_rad: 0.0,
             beam_range_m: 0.0,
+            lights_on: false,
         }
     }
 
@@ -61,6 +64,7 @@ impl VehicleLightingConfig {
             project_track_beams: true,
             beam_spread_rad: 0.18,
             beam_range_m: 14.0,
+            lights_on: true,
         }
     }
 
@@ -76,6 +80,7 @@ impl VehicleLightingConfig {
             project_track_beams: true,
             beam_spread_rad: 0.24,
             beam_range_m: 16.0,
+            lights_on: true,
         }
     }
 
@@ -91,6 +96,31 @@ impl VehicleLightingConfig {
             project_track_beams: true,
             beam_spread_rad: 0.32,
             beam_range_m: 18.0,
+            lights_on: true,
+        }
+    }
+
+    /// Returns whether this vehicle archetype is equipped with electrical road/track lights.
+    #[inline]
+    pub fn has_lights(&self) -> bool {
+        self.has_headlights || self.has_roof_lightbar || self.has_rally_pods
+    }
+
+    /// Returns a copy of the lighting config with `lights_on` set.
+    /// Vehicles without lights (e.g. Karts, NASCAR) will always remain `false`.
+    pub fn with_lights_on(mut self, on: bool) -> Self {
+        self.lights_on = if self.has_lights() { on } else { false };
+        self
+    }
+
+    /// Toggles the lights on/off if the vehicle is equipped with lights.
+    /// Returns `true` if toggled, or `false` if the vehicle has no lights.
+    pub fn toggle_lights(&mut self) -> bool {
+        if self.has_lights() {
+            self.lights_on = !self.lights_on;
+            true
+        } else {
+            false
         }
     }
 }
@@ -155,7 +185,7 @@ pub fn render_headlight_track_beams(
     half_w: f32,
     cfg: &VehicleLightingConfig,
 ) {
-    if !cfg.project_track_beams || cfg.beam_range_m <= 0.0 {
+    if !cfg.lights_on || !cfg.project_track_beams || cfg.beam_range_m <= 0.0 {
         return;
     }
 

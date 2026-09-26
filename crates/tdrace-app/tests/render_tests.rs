@@ -1534,6 +1534,91 @@ fn test_spec_031_procedural_archetype_lighting_fallbacks() {
     );
 }
 
+#[test]
+fn test_vehicle_lighting_toggle_switch_on_off() {
+    use tdrace_app::module::VehicleVisualType;
+    use tdrace_app::render::resolve_vehicle_lighting;
+
+    // 1. Cars with lights: GT, Rally, Offroad start with lights_on = true
+    let mut gt = resolve_vehicle_lighting(
+        Some("gt_porsche_911_gt3r"),
+        VehicleVisualType::TouringGT {
+            widebody: true,
+            gt_wing: true,
+            diffuser: true,
+        },
+    );
+    assert!(gt.has_lights(), "GT vehicles must have lights equipped");
+    assert!(gt.lights_on, "GT headlights must be on by default");
+
+    // Switch off
+    assert!(gt.toggle_lights(), "Toggle must succeed for GT car");
+    assert!(!gt.lights_on, "GT lights must be switched off");
+
+    // Switch back on
+    assert!(gt.toggle_lights(), "Toggle must succeed to turn back on");
+    assert!(gt.lights_on, "GT lights must be switched on");
+
+    let mut rally = resolve_vehicle_lighting(
+        Some("rally_peugeot_208_rally4"),
+        VehicleVisualType::RallyHatch {
+            roof_scoop: true,
+            mudflaps: true,
+            large_wing: true,
+        },
+    );
+    assert!(rally.has_lights(), "Rally vehicles must have lights equipped");
+    assert!(rally.lights_on, "Rally lights must be on by default");
+    assert!(rally.toggle_lights());
+    assert!(!rally.lights_on);
+
+    let mut offroad = resolve_vehicle_lighting(
+        Some("classic_offroad"),
+        VehicleVisualType::SandRail {
+            lightbar: true,
+            whip_antenna: true,
+            paddle_tires: false,
+        },
+    );
+    assert!(offroad.has_lights(), "Extreme offroad vehicles must have lights equipped");
+    assert!(offroad.lights_on, "Offroad lightbar/spots must be on by default");
+    assert!(offroad.toggle_lights());
+    assert!(!offroad.lights_on);
+
+    // 2. Cars without lights: Kart, NASCAR cannot have lights switched on
+    let mut kart = resolve_vehicle_lighting(
+        Some("classic_kart"),
+        VehicleVisualType::GoKart {
+            exposed_driver: true,
+            side_bumpers: true,
+        },
+    );
+    assert!(!kart.has_lights(), "Karts must not have lights equipped");
+    assert!(!kart.lights_on, "Karts must not have lights on");
+    // Attempting to toggle returns false and stays off
+    assert!(!kart.toggle_lights(), "Toggle must return false on kart");
+    assert!(!kart.lights_on, "Kart lights must remain off");
+    // Explicit with_lights_on(true) must be ignored for unequipped vehicles
+    let forced_kart = kart.with_lights_on(true);
+    assert!(!forced_kart.lights_on, "Unequipped kart must ignore with_lights_on(true)");
+
+    let mut nascar = resolve_vehicle_lighting(
+        Some("nascar_cup_chevrolet_camaro"),
+        VehicleVisualType::StockCar {
+            tall_wing: false,
+            roof_fins: true,
+            window_net: true,
+        },
+    );
+    assert!(!nascar.has_lights(), "NASCAR stock cars must not have lights equipped");
+    assert!(!nascar.lights_on, "NASCAR lights must not be on");
+    assert!(!nascar.toggle_lights(), "Toggle must return false on NASCAR");
+    assert!(!nascar.lights_on, "NASCAR lights must remain off");
+    let forced_nascar = nascar.with_lights_on(true);
+    assert!(!forced_nascar.lights_on, "Unequipped NASCAR must ignore with_lights_on(true)");
+}
+
+
 
 
 
