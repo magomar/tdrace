@@ -111,74 +111,65 @@ pub fn render_lan_hub_screen(
         draw_rectangle(x, y, card_w, scaler.s(4.0), accent);
 
         // Card Header: Badge & Title
-        let header_y = y + scaler.s(22.0);
-        let badge_w = scaler.s(120.0);
-        let badge_h = scaler.s(20.0);
-        let badge_x = x + card_w - badge_w - scaler.s(16.0);
-        draw_rectangle(badge_x, header_y, badge_w, badge_h, Color::new(accent.r * 0.2, accent.g * 0.2, accent.b * 0.2, 0.8));
-        draw_rectangle_lines(badge_x, header_y, badge_w, badge_h, scaler.s(1.0), accent);
+        let title_size = scaler.font_s(18.0);
+        let title_y = y + scaler.s(32.0);
+
+        let badge_font_size = scaler.font_s(10.5);
+        let badge_text_w = fonts.measure_ui_bold(badge, badge_font_size).width;
+        let badge_w = (badge_text_w + scaler.s(20.0)).max(scaler.s(90.0));
+        let badge_h = scaler.s(22.0);
+        let badge_x = x + card_w - badge_w - scaler.s(18.0);
+        let badge_y = y + scaler.s(16.0);
+
+        draw_rectangle(badge_x, badge_y, badge_w, badge_h, Color::new(accent.r * 0.2, accent.g * 0.2, accent.b * 0.2, 0.8));
+        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, scaler.s(1.0), accent);
         fonts.draw_ui_bold_centered(
             badge,
             badge_x + badge_w * 0.5,
-            header_y + scaler.s(4.0),
-            scaler.font_s(10.0),
+            badge_y + badge_h * 0.65,
+            badge_font_size,
             accent,
         );
 
         fonts.draw_ui_bold(
             title,
             x + scaler.s(18.0),
-            header_y + scaler.s(4.0),
-            scaler.font_s(18.0),
+            title_y,
+            title_size,
             if is_focused { Palette::WHITE } else { Color::new(0.85, 0.88, 0.95, 1.0) },
         );
 
+        let subtitle_y = title_y + scaler.s(22.0);
         fonts.draw_ui_bold(
             subtitle,
             x + scaler.s(18.0),
-            header_y + scaler.s(28.0),
+            subtitle_y,
             scaler.font_s(12.0),
             accent,
         );
 
         // Description
-        let desc_y = header_y + scaler.s(56.0);
-        let words = desc.split_whitespace().collect::<Vec<_>>();
-        let mut line = String::new();
-        let mut line_y = desc_y;
-        for word in words {
-            let test_line = if line.is_empty() { word.to_string() } else { format!("{} {}", line, word) };
-            if test_line.len() > 42 {
-                fonts.draw_ui_regular(
-                    &line,
-                    x + scaler.s(18.0),
-                    line_y,
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                line = word.to_string();
-                line_y += scaler.s(18.0);
-            } else {
-                line = test_line;
-            }
-        }
-        if !line.is_empty() {
-            fonts.draw_ui_regular(
-                &line,
-                x + scaler.s(18.0),
-                line_y,
-                scaler.font_s(12.0),
-                Palette::UI_TEXT_MUTED,
-            );
-            line_y += scaler.s(22.0);
-        }
+        let desc_y = subtitle_y + scaler.s(22.0);
+        let desc_font_size = scaler.font_s(12.0);
+        let desc_line_h = scaler.s(17.0);
+        let desc_max_w = card_w - scaler.s(36.0);
+        let num_lines = fonts.draw_ui_regular_multiline(
+            desc,
+            x + scaler.s(18.0),
+            desc_y,
+            desc_font_size,
+            desc_line_h,
+            desc_max_w,
+            Palette::UI_TEXT_MUTED,
+        );
 
         // Features list
-        let mut feat_y = line_y.max(y + scaler.s(160.0));
+        let feat_start_y = (desc_y + (num_lines as f32 * desc_line_h) + scaler.s(14.0)).max(y + scaler.s(152.0));
+        let mut feat_y = feat_start_y;
         for &feature in features {
             fonts.draw_ui_regular(
                 feature,
-                x + scaler.s(22.0),
+                x + scaler.s(20.0),
                 feat_y,
                 scaler.font_s(11.5),
                 Color::new(0.70, 0.76, 0.85, 1.0),
@@ -187,8 +178,8 @@ pub fn render_lan_hub_screen(
         }
 
         // Action Button at card bottom
-        let btn_h = scaler.s(36.0);
-        let btn_y = y + card_h - btn_h - scaler.s(16.0);
+        let btn_h = scaler.s(38.0);
+        let btn_y = y + card_h - btn_h - scaler.s(18.0);
         let btn_w = card_w - scaler.s(36.0);
         let btn_x = x + scaler.s(18.0);
 
@@ -212,7 +203,7 @@ pub fn render_lan_hub_screen(
         fonts.draw_ui_bold_centered(
             btn_label,
             btn_x + btn_w * 0.5,
-            btn_y + scaler.s(9.0),
+            btn_y + btn_h * 0.63,
             scaler.font_s(14.0),
             btn_fg,
         );
@@ -221,7 +212,7 @@ pub fn render_lan_hub_screen(
     // Bottom Navigation Help Footer
     let footer_y = sh - scaler.s(36.0);
     fonts.draw_ui_regular_centered(
-        "[▲/▼ or ◀/▶] Navigate  •  [ENTER / SPACE / A] Select  •  [ESC / B] Back to Menu",
+        "[LEFT / RIGHT or 1 / 2] Navigate  •  [ENTER / SPACE / A] Select  •  [ESC / B] Back to Menu",
         sw * 0.5,
         footer_y,
         scaler.font_s(12.5),

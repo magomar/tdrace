@@ -638,7 +638,7 @@ impl CabinetScreen for CabinetLanHostScreen {
             Palette::NEON_GOLD,
         );
 
-        let nav_hint = "[▲/▼/◄/►] Navigate  •  [ENTER] Activate  •  [ESC] Disband";
+        let nav_hint = "[ARROWS / WASD] Navigate  •  [ENTER] Activate  •  [ESC] Disband";
         let nav_dim = fonts.measure_ui_regular(nav_hint, scaler.font_s(11.0));
         fonts.draw_ui_regular(
             nav_hint,

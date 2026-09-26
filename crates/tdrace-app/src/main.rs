@@ -95,6 +95,8 @@ async fn main() {
         } else if clean_arg == "racing" {
             session.init_race();
             session.state = tdrace_app::game::GameState::Racing;
+        } else if clean_arg == "lan" || clean_arg == "lan-hub" {
+            session.state = tdrace_app::game::GameState::LanHub { selected_idx: 0 };
         }
     }
 

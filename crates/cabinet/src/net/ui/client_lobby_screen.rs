@@ -553,7 +553,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
             Palette::NEON_GOLD,
         );
 
-        let nav_hint = "[▲/▼/◄/►] Navigate  •  [ENTER] Toggle / Cycle  •  [ESC] Leave";
+        let nav_hint = "[ARROWS / WASD] Navigate  •  [ENTER] Toggle / Cycle  •  [ESC] Leave";
         let nav_dim = fonts.measure_ui_regular(nav_hint, scaler.font_s(11.0));
         fonts.draw_ui_regular(
             nav_hint,
