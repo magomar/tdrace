@@ -4,6 +4,7 @@ template: feature
 title: "Player Car Visibility Aids, Locator Mechanisms, and Helpers Settings Architecture"
 description: "Comprehensive specification of the five player car locator methods (Overhead Chevron, Ground Aura, Adaptive Scaling, Roof Beacon, and Radar Ping Ripple) and their integration into the Cabinet ArcadeSettingsModal HELPERS tab."
 status: implemented
+receipt: "docs/receipts/spec-037-receipt.md"
 created: 2026-09-25
 generated: { by: agent/antigravity, at: 2026-09-25T20:44:00Z }
 ---
