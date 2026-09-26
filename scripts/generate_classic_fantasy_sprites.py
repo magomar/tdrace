@@ -195,10 +195,12 @@ def generate_classic_gt():
         (int(142 * ss), ground_y - int(105 * ss)),
     ], fill=(255, 30, 30))
 
-    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
-    lat_img.save(LATERAL_DIR / "classic_gt.png")
-    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
-    lat_thumb.save(LATERAL_DIR / "classic_gt_thumb.png")
+    lat_target = LATERAL_DIR / "classic_gt.png"
+    if not lat_target.exists() or lat_target.stat().st_size < 50_000:
+        lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+        lat_img.save(lat_target)
+        lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+        lat_thumb.save(LATERAL_DIR / "classic_gt_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
     W_TD, H_TD = 512 * ss, 512 * ss
@@ -268,9 +270,12 @@ def generate_classic_gt():
     draw_td.polygon([(cx - int(72 * ss), cy - h_half + int(35 * ss)), (cx - int(55 * ss), cy - h_half + int(18 * ss)), (cx - int(45 * ss), cy - h_half + int(28 * ss))], fill=(220, 245, 255))
     draw_td.polygon([(cx + int(72 * ss), cy - h_half + int(35 * ss)), (cx + int(55 * ss), cy - h_half + int(18 * ss)), (cx + int(45 * ss), cy - h_half + int(28 * ss))], fill=(220, 245, 255))
 
-    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
-    td_img.save(TOPDOWN_DIR / "classic_gt.png")
-    print("✓ Generated classic_gt assets")
+    target_path = TOPDOWN_DIR / "classic_gt.png"
+    if not target_path.exists() or target_path.stat().st_size < 50_000:
+        td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+        td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+        td_img.save(target_path)
+    print("✓ Generated classic_gt assets (preserving high-res showroom & chassis textures)")
 
 
 # ==============================================================================
@@ -365,10 +370,12 @@ def generate_classic_nascar():
     draw_wheel_lateral(draw, wr_x, cy_wheel, r_wheel, style="steel", ss=ss)
     draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="steel", ss=ss)
 
-    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
-    lat_img.save(LATERAL_DIR / "classic_nascar.png")
-    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
-    lat_thumb.save(LATERAL_DIR / "classic_nascar_thumb.png")
+    lat_target = LATERAL_DIR / "classic_nascar.png"
+    if not lat_target.exists() or lat_target.stat().st_size < 50_000:
+        lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+        lat_img.save(lat_target)
+        lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+        lat_thumb.save(LATERAL_DIR / "classic_nascar_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
     W_TD, H_TD = 512 * ss, 512 * ss
@@ -432,9 +439,12 @@ def generate_classic_nascar():
     # Rear Blade Spoiler
     draw_td.rectangle([cx - int(86 * ss), cy + h_half - int(22 * ss), cx + int(86 * ss), cy + h_half - int(10 * ss)], fill=(16, 18, 22), outline=(250, 195, 20), width=int(2 * ss))
 
-    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
-    td_img.save(TOPDOWN_DIR / "classic_nascar.png")
-    print("✓ Generated classic_nascar assets")
+    target_path = TOPDOWN_DIR / "classic_nascar.png"
+    if not target_path.exists() or target_path.stat().st_size < 50_000:
+        td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+        td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+        td_img.save(target_path)
+    print("✓ Generated classic_nascar assets (preserving high-res showroom & chassis textures)")
 
 
 # ==============================================================================
@@ -510,10 +520,12 @@ def generate_classic_offroad():
     draw_wheel_lateral(draw, wr_x, cy_wheel, int(r_wheel * 1.12), style="paddle", ss=ss)
     draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="paddle", ss=ss)
 
-    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
-    lat_img.save(LATERAL_DIR / "classic_offroad.png")
-    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
-    lat_thumb.save(LATERAL_DIR / "classic_offroad_thumb.png")
+    lat_target = LATERAL_DIR / "classic_offroad.png"
+    if not lat_target.exists() or lat_target.stat().st_size < 50_000:
+        lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+        lat_img.save(lat_target)
+        lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+        lat_thumb.save(LATERAL_DIR / "classic_offroad_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
     W_TD, H_TD = 512 * ss, 512 * ss
@@ -566,9 +578,12 @@ def generate_classic_offroad():
     draw_td.rectangle([cx - int(45 * ss), cy + int(85 * ss), cx + int(45 * ss), cy + int(155 * ss)], fill=(90, 95, 105), outline=(50, 52, 58), width=int(2 * ss))
     draw_td.ellipse([cx - int(20 * ss), cy + int(155 * ss), cx + int(20 * ss), cy + int(185 * ss)], fill=(200, 120, 20), outline=(50, 25, 10), width=int(2 * ss))
 
-    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
-    td_img.save(TOPDOWN_DIR / "classic_offroad.png")
-    print("✓ Generated classic_offroad assets")
+    target_path = TOPDOWN_DIR / "classic_offroad.png"
+    if not target_path.exists() or target_path.stat().st_size < 50_000:
+        td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+        td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+        td_img.save(target_path)
+    print("✓ Generated classic_offroad assets (preserving high-res showroom & chassis textures)")
 
 
 # ==============================================================================
@@ -660,10 +675,12 @@ def generate_classic_kart():
     draw_wheel_lateral(draw, wr_x, cy_wheel, int(r_wheel * 1.15), style="kart", ss=ss)
     draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="kart", ss=ss)
 
-    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
-    lat_img.save(LATERAL_DIR / "classic_kart.png")
-    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
-    lat_thumb.save(LATERAL_DIR / "classic_kart_thumb.png")
+    lat_target = LATERAL_DIR / "classic_kart.png"
+    if not lat_target.exists() or lat_target.stat().st_size < 50_000:
+        lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+        lat_img.save(lat_target)
+        lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+        lat_thumb.save(LATERAL_DIR / "classic_kart_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
     W_TD, H_TD = 512 * ss, 512 * ss
@@ -927,10 +944,12 @@ def generate_classic_rally():
     draw_wheel_lateral(draw, wr_x, cy_wheel, r_wheel, rim_color=(245, 245, 250), style="alloy", ss=ss)
     draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, rim_color=(245, 245, 250), style="alloy", ss=ss)
 
-    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
-    lat_img.save(LATERAL_DIR / "classic_rally.png")
-    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
-    lat_thumb.save(LATERAL_DIR / "classic_rally_thumb.png")
+    lat_target = LATERAL_DIR / "classic_rally.png"
+    if not lat_target.exists() or lat_target.stat().st_size < 50_000:
+        lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+        lat_img.save(lat_target)
+        lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+        lat_thumb.save(LATERAL_DIR / "classic_rally_thumb.png")
 
     # --- TOP-DOWN SPRITE (512x512) ---
     W_TD, H_TD = 512 * ss, 512 * ss
@@ -1022,9 +1041,12 @@ def generate_classic_rally():
     draw_td.rectangle([cx - int(85 * ss), cy + h_half - int(10 * ss), cx - int(78 * ss), cy + h_half + int(20 * ss)], fill=(220, 35, 30))
     draw_td.rectangle([cx + int(78 * ss), cy + h_half - int(10 * ss), cx + int(85 * ss), cy + h_half + int(20 * ss)], fill=(220, 35, 30))
 
-    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
-    td_img.save(TOPDOWN_DIR / "classic_rally.png")
-    print("✓ Generated classic_rally assets")
+    target_path = TOPDOWN_DIR / "classic_rally.png"
+    if not target_path.exists() or target_path.stat().st_size < 50_000:
+        td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+        td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+        td_img.save(target_path)
+    print("✓ Generated classic_rally assets (preserving high-res showroom & chassis textures)")
 
 
 def generate_kart_slick_wheel():
@@ -1088,6 +1110,188 @@ def generate_kart_slick_wheel():
     print("✓ Generated kart_slick_front wheel asset (128x256)")
 
 
+def generate_gt_slick_wheel():
+    ss = 2
+    W, H = 128 * ss, 256 * ss
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    cx, cy = W // 2, H // 2
+    tw_half, th_half = int(54 * ss), int(116 * ss)
+    corner_r = int(22 * ss)
+
+    # Outer tire bevel
+    draw.rounded_rectangle([cx - tw_half, cy - th_half, cx + tw_half, cy + th_half], radius=corner_r, fill=(34, 38, 44, 255))
+    # Main tread
+    im_m = int(3 * ss)
+    draw.rounded_rectangle([cx - tw_half + im_m, cy - th_half + im_m, cx + tw_half - im_m, cy + th_half - im_m], radius=corner_r - int(2 * ss), fill=(20, 22, 26, 255))
+    # Center slick groove
+    draw.line([cx, cy - th_half + int(16 * ss), cx, cy + th_half - int(16 * ss)], fill=(14, 16, 18, 255), width=int(5 * ss))
+
+    # Brake disc & red caliper
+    rw_half, rh_half = int(22 * ss), int(64 * ss)
+    draw.rounded_rectangle([cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half], radius=int(10 * ss), fill=(60, 64, 72, 255), outline=(90, 95, 105, 255), width=int(2 * ss))
+    # Caliper (red, on right edge of rotor)
+    draw.rounded_rectangle([cx + int(10 * ss), cy - int(24 * ss), cx + rw_half - int(2 * ss), cy + int(24 * ss)], radius=int(4 * ss), fill=(225, 30, 25, 255))
+
+    # BBS Alloy Rim center
+    rim_w, rim_h = int(17 * ss), int(52 * ss)
+    draw.rounded_rectangle([cx - rim_w, cy - rim_h, cx + rim_w, cy + rim_h], radius=int(7 * ss), fill=(180, 185, 195, 255), outline=(130, 135, 145, 255), width=int(2 * ss))
+    # Spokes / slots
+    for dy in [-int(32 * ss), -int(16 * ss), int(16 * ss), int(32 * ss)]:
+        draw.line([cx - rim_w + int(3 * ss), cy + dy, cx + rim_w - int(3 * ss), cy + dy], fill=(45, 48, 55, 255), width=int(3 * ss))
+    # Center lock nut (blue anodized)
+    draw_circle(draw, cx, cy, int(9 * ss), fill=(30, 100, 220, 255), outline=(15, 60, 140, 255), width=int(2 * ss))
+    draw_circle(draw, cx, cy, int(4 * ss), fill=(220, 230, 245, 255))
+
+    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
+    out_img.save(WHEELS_DIR / "gt_slick_front.png")
+    print("✓ Generated gt_slick_front wheel asset (128x256)")
+
+
+def generate_nascar_wheel():
+    ss = 2
+    W, H = 128 * ss, 256 * ss
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    cx, cy = W // 2, H // 2
+    tw_half, th_half = int(55 * ss), int(118 * ss)
+    corner_r = int(24 * ss)
+
+    # Outer tire bevel
+    draw.rounded_rectangle([cx - tw_half, cy - th_half, cx + tw_half, cy + th_half], radius=corner_r, fill=(32, 35, 40, 255))
+    # Main tread
+    im_m = int(4 * ss)
+    draw.rounded_rectangle([cx - tw_half + im_m, cy - th_half + im_m, cx + tw_half - im_m, cy + th_half - im_m], radius=corner_r - int(2 * ss), fill=(18, 20, 24, 255))
+
+    # Yellow beadlock rim lip / Goodyear branding edge
+    rw_half, rh_half = int(22 * ss), int(64 * ss)
+    draw.rounded_rectangle([cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half], radius=int(10 * ss), fill=(245, 195, 25, 255), outline=(180, 140, 15, 255), width=int(2 * ss))
+
+    # Black steel rim center
+    draw.rounded_rectangle([cx - rw_half + int(3 * ss), cy - rh_half + int(4 * ss), cx + rw_half - int(3 * ss), cy + rh_half - int(4 * ss)], radius=int(7 * ss), fill=(26, 28, 32, 255))
+
+    # Cooling holes
+    for dy in [-int(36 * ss), -int(18 * ss), int(18 * ss), int(36 * ss)]:
+        draw_circle(draw, cx, cy + dy, int(6 * ss), fill=(12, 14, 16, 255), outline=(50, 54, 60, 255), width=int(1 * ss))
+
+    # 5 Gold lug nuts around center hub
+    draw_circle(draw, cx, cy, int(11 * ss), fill=(40, 44, 52, 255), outline=(70, 75, 85, 255), width=int(1.5 * ss))
+    for i in range(5):
+        ang = i * (2 * math.pi / 5)
+        lx = cx + math.cos(ang) * (6.5 * ss)
+        ly = cy + math.sin(ang) * (6.5 * ss)
+        draw_circle(draw, lx, ly, int(2.5 * ss), fill=(250, 210, 50, 255))
+
+    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
+    out_img.save(WHEELS_DIR / "nascar_wheel_front.png")
+    print("✓ Generated nascar_wheel_front wheel asset (128x256)")
+
+
+def generate_offroad_wheel():
+    ss = 2
+    W, H = 128 * ss, 256 * ss
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    cx, cy = W // 2, H // 2
+    tw_half, th_half = int(54 * ss), int(118 * ss)
+    corner_r = int(20 * ss)
+
+    # Outer tire
+    draw.rounded_rectangle([cx - tw_half, cy - th_half, cx + tw_half, cy + th_half], radius=corner_r, fill=(35, 38, 42, 255))
+    im_m = int(3 * ss)
+    draw.rounded_rectangle([cx - tw_half + im_m, cy - th_half + im_m, cx + tw_half - im_m, cy + th_half - im_m], radius=corner_r - int(2 * ss), fill=(22, 24, 28, 255))
+
+    # Aggressive off-road tread sipes / blocks along sides
+    for y_pos in range(cy - th_half + int(14 * ss), cy + th_half - int(14 * ss), int(16 * ss)):
+        draw.line([cx - tw_half + int(4 * ss), y_pos, cx - tw_half + int(16 * ss), y_pos], fill=(12, 14, 16, 255), width=int(4 * ss))
+        draw.line([cx + tw_half - int(16 * ss), y_pos, cx + tw_half - int(4 * ss), y_pos], fill=(12, 14, 16, 255), width=int(4 * ss))
+
+    # Neon Orange beadlock ring (matching Vortex Dune Crusher)
+    rw_half, rh_half = int(21 * ss), int(62 * ss)
+    draw.rounded_rectangle([cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half], radius=int(9 * ss), fill=(255, 110, 15, 255), outline=(180, 70, 10, 255), width=int(2 * ss))
+
+    # Dark titanium rim center
+    draw.rounded_rectangle([cx - rw_half + int(3 * ss), cy - rh_half + int(4 * ss), cx + rw_half - int(3 * ss), cy + rh_half - int(4 * ss)], radius=int(6 * ss), fill=(42, 45, 52, 255))
+
+    # 6-Spoke star pattern / beadlock bolts
+    for dy in [-int(34 * ss), -int(17 * ss), int(17 * ss), int(34 * ss)]:
+        draw.line([cx - rw_half + int(4 * ss), cy + dy, cx + rw_half - int(4 * ss), cy + dy], fill=(65, 70, 80, 255), width=int(3 * ss))
+
+    # Center heavy-duty chrome hub
+    draw_circle(draw, cx, cy, int(10 * ss), fill=(195, 200, 210, 255), outline=(90, 95, 105, 255), width=int(2 * ss))
+    draw_circle(draw, cx, cy, int(4 * ss), fill=(50, 54, 62, 255))
+
+    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
+    out_img.save(WHEELS_DIR / "offroad_wheel_front.png")
+    print("✓ Generated offroad_wheel_front wheel asset (128x256)")
+
+
+def generate_rally_wheel():
+    ss = 2
+    W, H = 128 * ss, 256 * ss
+    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    cx, cy = W // 2, H // 2
+    tw_half, th_half = int(52 * ss), int(114 * ss)
+    corner_r = int(22 * ss)
+
+    # Outer tire
+    draw.rounded_rectangle([cx - tw_half, cy - th_half, cx + tw_half, cy + th_half], radius=corner_r, fill=(36, 40, 46, 255))
+    im_m = int(3 * ss)
+    draw.rounded_rectangle([cx - tw_half + im_m, cy - th_half + im_m, cx + tw_half - im_m, cy + th_half - im_m], radius=corner_r - int(2 * ss), fill=(20, 22, 26, 255))
+
+    # Diagonal rally tread sipes
+    for y_pos in range(cy - th_half + int(18 * ss), cy + th_half - int(18 * ss), int(22 * ss)):
+        draw.line([cx - int(12 * ss), y_pos - int(5 * ss), cx + int(12 * ss), y_pos + int(5 * ss)], fill=(14, 16, 18, 255), width=int(3 * ss))
+
+    # OZ Racing White Competition Rim
+    rw_half, rh_half = int(20 * ss), int(58 * ss)
+    draw.rounded_rectangle([cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half], radius=int(8 * ss), fill=(245, 245, 250, 255), outline=(190, 195, 205, 255), width=int(2 * ss))
+
+    # Inner rim recessed recess
+    draw.rounded_rectangle([cx - rw_half + int(3 * ss), cy - rh_half + int(4 * ss), cx + rw_half - int(3 * ss), cy + rh_half - int(4 * ss)], radius=int(6 * ss), fill=(225, 228, 235, 255))
+
+    # Multi-spoke rally slots
+    for dy in [-int(30 * ss), -int(15 * ss), int(15 * ss), int(30 * ss)]:
+        draw.line([cx - rw_half + int(4 * ss), cy + dy, cx + rw_half - int(4 * ss), cy + dy], fill=(45, 50, 60, 255), width=int(3 * ss))
+
+    # Center rally hub cap (carbon with yellow accent)
+    draw_circle(draw, cx, cy, int(9 * ss), fill=(28, 30, 36, 255), outline=(235, 200, 30, 255), width=int(1.5 * ss))
+    draw_circle(draw, cx, cy, int(3 * ss), fill=(240, 205, 25, 255))
+
+    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
+    out_img.save(WHEELS_DIR / "rally_wheel_front.png")
+    print("✓ Generated rally_wheel_front wheel asset (128x256)")
+
+
+def generate_classic_chassis_sprites():
+    import numpy as np
+    chassis_configs = [
+        ("classic_gt", 340, 420, 145, 205, 307, 367, False),
+        ("classic_nascar", 315, 390, 155, 215, 297, 357, False),
+        ("classic_offroad", 330, 420, 135, 195, 317, 377, True),
+        ("classic_rally", 340, 415, 145, 215, 295, 365, False),
+    ]
+
+    for name, x_min, x_max, y_fl_min, y_fl_max, y_fr_min, y_fr_max, is_open in chassis_configs:
+        im = Image.open(TOPDOWN_DIR / f"{name}.png")
+        arr = np.array(im)
+
+        if is_open:
+            fl_mask = (np.arange(512)[None, :] >= x_min) & (np.arange(512)[None, :] <= x_max) & (np.arange(512)[:, None] >= y_fl_min) & (np.arange(512)[:, None] <= y_fl_max)
+            fr_mask = (np.arange(512)[None, :] >= x_min) & (np.arange(512)[None, :] <= x_max) & (np.arange(512)[:, None] >= y_fr_min) & (np.arange(512)[:, None] <= y_fr_max)
+        else:
+            is_dark = (arr[:, :, 0] < 60) & (arr[:, :, 1] < 60) & (arr[:, :, 2] < 60) & (arr[:, :, 3] > 0)
+            fl_mask = is_dark & (np.arange(512)[None, :] >= x_min) & (np.arange(512)[None, :] <= x_max) & (np.arange(512)[:, None] >= y_fl_min) & (np.arange(512)[:, None] <= y_fl_max)
+            fr_mask = is_dark & (np.arange(512)[None, :] >= x_min) & (np.arange(512)[None, :] <= x_max) & (np.arange(512)[:, None] >= y_fr_min) & (np.arange(512)[:, None] <= y_fr_max)
+
+        clear_mask = fl_mask | fr_mask
+        arr[clear_mask] = [0, 0, 0, 0]
+        out_im = Image.fromarray(arr)
+        out_im.save(TOPDOWN_DIR / f"{name}_chassis.png")
+        print(f"✓ Generated {name}_chassis.png (cleared {np.sum(clear_mask)} wheel pixels)")
+
+
 if __name__ == "__main__":
     generate_classic_gt()
     generate_classic_nascar()
@@ -1095,4 +1299,9 @@ if __name__ == "__main__":
     generate_classic_kart()
     generate_classic_rally()
     generate_kart_slick_wheel()
+    generate_gt_slick_wheel()
+    generate_nascar_wheel()
+    generate_offroad_wheel()
+    generate_rally_wheel()
+    generate_classic_chassis_sprites()
     print("✨ All 5 classic fantasy vehicle asset sets generated successfully!")

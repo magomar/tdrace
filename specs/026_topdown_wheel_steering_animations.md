@@ -166,7 +166,35 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.20, 0.28),
             layering: WheelLayerMode::OverChassis,
         }),
-        _ => None, // 84 legacy vehicles continue using monolithic sprite rendering
+        "classic_gt" => Some(SteeredWheelConfig {
+            wheel_texture_id: "gt_slick_front",
+            front_axle_offset: 0.75,
+            half_track_width: 0.48,
+            wheel_size: glam::Vec2::new(0.24, 0.48),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        "classic_nascar" => Some(SteeredWheelConfig {
+            wheel_texture_id: "nascar_wheel_front",
+            front_axle_offset: 0.66,
+            half_track_width: 0.51,
+            wheel_size: glam::Vec2::new(0.26, 0.50),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        "classic_offroad" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 0.68,
+            half_track_width: 0.54,
+            wheel_size: glam::Vec2::new(0.24, 0.48),
+            layering: WheelLayerMode::OverChassis,
+        }),
+        "classic_rally" => Some(SteeredWheelConfig {
+            wheel_texture_id: "rally_wheel_front",
+            front_axle_offset: 0.73,
+            half_track_width: 0.41,
+            wheel_size: glam::Vec2::new(0.24, 0.46),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        _ => None, // Non-classic vehicles continue using monolithic sprite rendering
     }
 }
 ```
@@ -294,15 +322,15 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
 
 ### Acceptance Criteria (Pseudo-Gherkin)
 
-- **Scenario: Kart wheel steering visual deflection under steering input**
-  - [x] **Given** a race session active with the vehicle model `"classic_kart"`
-  - [x] **When** the player or AI applies a full left steering input ($\text{steer\_angle} < 0$)
+- **Scenario: Dynamic wheel steering visual deflection across classic cars under steering input**
+  - [x] **Given** a race session active with any classic vehicle model (`classic_kart`, `classic_gt`, `classic_nascar`, `classic_offroad`, `classic_rally`)
+  - [x] **When** the player or AI applies a full left steering input ($\text{steer\_angle} > 0$)
   - [x] **Then** the front-left and front-right wheels must visibly rotate counter-clockwise relative to the vehicle heading
   - [x] **And** the inner wheel must exhibit a larger steering deflection angle than the outer wheel according to Ackermann geometry ($\lvert\delta_{\text{FL}}\rvert > \lvert\delta_{\text{FR}}\rvert$)
-  - [x] **And** the kart chassis bodywork, driver helmet, and rear wheels must remain fixed relative to the vehicle centerline
+  - [x] **And** the vehicle chassis bodywork and rear wheels must remain fixed relative to the vehicle centerline
 
 - **Scenario: Symmetrical steering return to center**
-  - [x] **Given** the kart moving straight with zero steering input ($\text{steer\_angle} = 0.0$)
+  - [x] **Given** any classic car moving straight with zero steering input ($\text{steer\_angle} = 0.0$)
   - [x] **When** top-down car rendering is executed
   - [x] **Then** both front wheels must align exactly parallel to the vehicle forward vector ($\hat{\mathbf{f}}$)
   - [x] **And** no offset jitter or rotational drift must be observed
@@ -314,28 +342,28 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
   - [x] **And** the shadow must scale gracefully with jump elevation lift without detaching from ground plane projection
 
 - **Scenario: Legacy monolithic sprite fallback guarantee**
-  - [x] **Given** a vehicle model without a modular wheel configuration (e.g. `"gt_porsche_911_gt3r"`)
+  - [x] **Given** a vehicle model without a modular wheel configuration (e.g. `"gt_porsche_911_gt3r"`, `"nascar_camaro_zl1"`)
   - [x] **When** the top-down vehicle sprite is rendered
   - [x] **Then** the engine must render the monolithic pre-baked sprite without attempting to load or draw detached wheel assets
   - [x] **And** zero missing texture warnings or rendering artifacts must occur
 
 - **Scenario: Standalone wheel texture asset integrity**
   - [x] **Given** the asset directory `assets/textures/vehicles/topdown/wheels/`
-  - [x] **When** `kart_slick_front.png` is read by asset validation tests
-  - [x] **Then** the file must exist, contain a valid PNG header, have dimensions $128 \times 256$, and feature transparent background margins ($A = 0$)
+  - [x] **When** standalone wheel assets (`kart_slick_front.png`, `gt_slick_front.png`, `nascar_wheel_front.png`, `offroad_wheel_front.png`, `rally_wheel_front.png`) are read by asset validation tests
+  - [x] **Then** all files must exist, contain a valid PNG header, have dimensions $128 \times 256$, and feature transparent background margins ($A = 0$) with opaque hub centers ($A = 255$)
 
-- **Scenario: Dual sprite separation for showroom vs in-game chassis**
-  - [x] **Given** the vehicle model `"classic_kart"`
+- **Scenario: Dual sprite separation for showroom vs in-game chassis across classic cars**
+  - [x] **Given** any classic vehicle model (`classic_kart`, `classic_gt`, `classic_nascar`, `classic_offroad`, `classic_rally`)
   - [x] **When** asset loading is performed for the showroom or garage turntable via `get_vehicle_topdown_texture`
-  - [x] **Then** the canonical sprite `assets/textures/vehicles/topdown/classic/classic_kart.png` must be loaded, preserving authentic pre-baked front wheels
+  - [x] **Then** the canonical sprite `assets/textures/vehicles/topdown/classic/<id>.png` must be loaded, preserving authentic pre-baked front wheels
   - [x] **When** in-game race rendering requests the chassis via `get_vehicle_topdown_chassis_texture`
-  - [x] **Then** the isolated chassis sprite `assets/textures/vehicles/topdown/classic/classic_kart_chassis.png` must be loaded with front wheel areas transparently cleared for dynamic steered wheel animation
+  - [x] **Then** the isolated chassis sprite `assets/textures/vehicles/topdown/classic/<id>_chassis.png` must be loaded with front wheel areas transparently cleared for dynamic steered wheel animation
 
-- **Scenario: Colorway tinting consistency on decomposed kart**
-  - [x] **Given** a custom colorway applied to `"classic_kart"` in the garage
+- **Scenario: Colorway tinting consistency on decomposed vehicles**
+  - [x] **Given** a custom colorway applied to any classic vehicle in the garage
   - [x] **When** `apply_vehicle_tint` generates runtime textures
-  - [x] **Then** the kart chassis body and side pods must reflect the custom primary color
-  - [x] **And** the front wheel rim hubs must maintain realistic metallic/alloy hues without improper saturation bleeding
+  - [x] **Then** the chassis bodywork must reflect the custom primary color
+  - [x] **And** transparent wheel well cutouts must remain untouched
 
 ---
 
@@ -345,12 +373,19 @@ For all 84 other vehicle models (`gt_porsche_911_gt3r`, `nascar_monte_carlo_ss`,
 
 | Action | Path | Purpose |
 | :--- | :--- | :--- |
-| `[NEW]` | `specs/026_topdown_wheel_steering_animations.md` | Formal specification contract. |
+| `[MODIFY]` | `specs/026_topdown_wheel_steering_animations.md` | Formal specification contract expanded to classic module cars. |
 | `[NEW]` | `assets/textures/vehicles/topdown/wheels/kart_slick_front.png` | Decomposed high-res top-down kart slick tire asset ($128 \times 256$). |
+| `[NEW]` | `assets/textures/vehicles/topdown/wheels/gt_slick_front.png` | Decomposed high-res top-down GT racing slick asset ($128 \times 256$). |
+| `[NEW]` | `assets/textures/vehicles/topdown/wheels/nascar_wheel_front.png` | Decomposed high-res top-down NASCAR steel wheel asset ($128 \times 256$). |
+| `[NEW]` | `assets/textures/vehicles/topdown/wheels/offroad_wheel_front.png` | Decomposed high-res top-down sand rail steering tire asset ($128 \times 256$). |
+| `[NEW]` | `assets/textures/vehicles/topdown/wheels/rally_wheel_front.png` | Decomposed high-res top-down rally competition wheel asset ($128 \times 256$). |
 | `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_kart_chassis.png` | In-game chassis-only sprite with front wheels removed for modular wheel animation. |
-| `[MODIFY]` | `assets/textures/vehicles/topdown/classic/classic_kart.png` | Preserved canonical full-vehicle topdown sprite with wheels for showroom and garage. |
-| `[MODIFY]` | `scripts/generate_classic_fantasy_sprites.py` | Preserves canonical high-res showroom and chassis kart textures from accidental overwrite. |
-| `[MODIFY]` | `crates/tdrace-app/src/render/vehicle_assets.rs` | Implements `SteeredWheelConfig`, `get_vehicle_topdown_chassis_texture`, wheel texture caching, and anchor lookups. |
+| `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_gt_chassis.png` | In-game chassis-only sprite with front wheels cleared for UnderChassis steering animation. |
+| `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_nascar_chassis.png` | In-game chassis-only sprite with front wheels cleared for UnderChassis steering animation. |
+| `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_offroad_chassis.png` | In-game chassis-only sprite with front wheels removed for OverChassis steering animation. |
+| `[NEW]` | `assets/textures/vehicles/topdown/classic/classic_rally_chassis.png` | In-game chassis-only sprite with front wheels cleared for UnderChassis steering animation. |
+| `[MODIFY]` | `scripts/generate_classic_fantasy_sprites.py` | Standalone wheel generators and chassis decomposition routines. |
+| `[MODIFY]` | `crates/tdrace-app/src/render/vehicle_assets.rs` | Implements `SteeredWheelConfig` and wheel texture caching for all classic module cars. |
 | `[MODIFY]` | `crates/tdrace-app/src/render/car.rs` | Integrates `get_vehicle_topdown_chassis_texture` and `render_steered_wheels` into top-down race rendering. |
 | `[MODIFY]` | `crates/tdrace-app/tests/render_tests.rs` | Unit and integration tests for dual sprites, wheel asset presence, Ackermann deflection, and legacy fallback. |
 | `[MODIFY]` | `specs/index.md` | Progressive disclosure catalog registration. |

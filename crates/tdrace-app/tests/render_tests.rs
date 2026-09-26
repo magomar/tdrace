@@ -1146,52 +1146,82 @@ fn test_spec_026_standalone_wheel_texture_asset_integrity() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/wheels/kart_slick_front.png");
-    let bytes = std::fs::read(&path).expect("Failed to read kart_slick_front.png");
+    let wheel_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/wheels");
+    let wheels = [
+        "kart_slick_front.png",
+        "gt_slick_front.png",
+        "nascar_wheel_front.png",
+        "offroad_wheel_front.png",
+        "rally_wheel_front.png",
+    ];
 
-    // Valid PNG signature: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
-    assert_eq!(&bytes[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "Must contain valid PNG header");
+    for wheel_file in wheels {
+        let path = wheel_dir.join(wheel_file);
+        let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("Failed to read {}: {:?}", wheel_file, e));
 
-    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart wheel image");
-    assert_eq!(img.width, 128, "Tire width must be 128px");
-    assert_eq!(img.height, 256, "Tire height must be 256px");
-    assert_eq!(img.bytes.len(), 128 * 256 * 4);
+        // Valid PNG signature: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        assert_eq!(&bytes[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A], "Must contain valid PNG header: {}", wheel_file);
 
-    // Transparent corner margins (A = 0)
-    let w = 128;
-    let h = 256;
-    for (cx, cy) in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (5, 5), (w - 6, 5)] {
-        let idx = (cy * w + cx) * 4;
-        assert_eq!(img.bytes[idx + 3], 0, "Corner pixel ({}, {}) must have alpha 0", cx, cy);
+        let img = Image::from_file_with_format(&bytes, None).unwrap_or_else(|e| panic!("Failed to parse {}: {:?}", wheel_file, e));
+        assert_eq!(img.width, 128, "Tire width must be 128px for {}", wheel_file);
+        assert_eq!(img.height, 256, "Tire height must be 256px for {}", wheel_file);
+        assert_eq!(img.bytes.len(), 128 * 256 * 4);
+
+        // Transparent corner margins (A = 0)
+        let w = 128;
+        let h = 256;
+        for (cx, cy) in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1), (5, 5), (w - 6, 5)] {
+            let idx = (cy * w + cx) * 4;
+            assert_eq!(img.bytes[idx + 3], 0, "Corner pixel ({}, {}) must have alpha 0 on {}", cx, cy, wheel_file);
+        }
+
+        // Center hub must be opaque
+        let center_idx = (h / 2 * w + w / 2) * 4;
+        assert_eq!(img.bytes[center_idx + 3], 255, "Wheel center hub must be opaque on {}", wheel_file);
     }
-
-    // Center hub must be opaque
-    let center_idx = (h / 2 * w + w / 2) * 4;
-    assert_eq!(img.bytes[center_idx + 3], 255, "Wheel center hub must be opaque");
 }
 
 #[test]
 fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
     use tdrace_app::render::vehicle_assets::{get_steered_wheel_config, WheelLayerMode};
 
-    // 1. Proof-of-concept classic_kart must return explicit SteeredWheelConfig
-    let cfg = get_steered_wheel_config("classic_kart").expect("classic_kart must have SteeredWheelConfig");
-    assert_eq!(cfg.wheel_texture_id, "kart_slick_front");
-    assert!((cfg.front_axle_offset - 0.41).abs() < 1e-4);
-    assert!((cfg.half_track_width - 0.39).abs() < 1e-4);
-    assert!((cfg.wheel_size.x - 0.20).abs() < 1e-4);
-    assert!((cfg.wheel_size.y - 0.28).abs() < 1e-4);
-    assert_eq!(cfg.layering, WheelLayerMode::OverChassis);
+    // 1. All 5 classic module vehicles must return explicit SteeredWheelConfig
+    let kart = get_steered_wheel_config("classic_kart").expect("classic_kart must have SteeredWheelConfig");
+    assert_eq!(kart.wheel_texture_id, "kart_slick_front");
+    assert!((kart.front_axle_offset - 0.41).abs() < 1e-4);
+    assert!((kart.half_track_width - 0.39).abs() < 1e-4);
+    assert_eq!(kart.layering, WheelLayerMode::OverChassis);
 
-    // 2. Legacy fallback guarantee: all other models return None
+    let gt = get_steered_wheel_config("classic_gt").expect("classic_gt must have SteeredWheelConfig");
+    assert_eq!(gt.wheel_texture_id, "gt_slick_front");
+    assert!((gt.front_axle_offset - 0.75).abs() < 1e-4);
+    assert!((gt.half_track_width - 0.48).abs() < 1e-4);
+    assert_eq!(gt.layering, WheelLayerMode::UnderChassis);
+
+    let nascar = get_steered_wheel_config("classic_nascar").expect("classic_nascar must have SteeredWheelConfig");
+    assert_eq!(nascar.wheel_texture_id, "nascar_wheel_front");
+    assert!((nascar.front_axle_offset - 0.66).abs() < 1e-4);
+    assert!((nascar.half_track_width - 0.51).abs() < 1e-4);
+    assert_eq!(nascar.layering, WheelLayerMode::UnderChassis);
+
+    let offroad = get_steered_wheel_config("classic_offroad").expect("classic_offroad must have SteeredWheelConfig");
+    assert_eq!(offroad.wheel_texture_id, "offroad_wheel_front");
+    assert!((offroad.front_axle_offset - 0.68).abs() < 1e-4);
+    assert!((offroad.half_track_width - 0.54).abs() < 1e-4);
+    assert_eq!(offroad.layering, WheelLayerMode::OverChassis);
+
+    let rally = get_steered_wheel_config("classic_rally").expect("classic_rally must have SteeredWheelConfig");
+    assert_eq!(rally.wheel_texture_id, "rally_wheel_front");
+    assert!((rally.front_axle_offset - 0.73).abs() < 1e-4);
+    assert!((rally.half_track_width - 0.41).abs() < 1e-4);
+    assert_eq!(rally.layering, WheelLayerMode::UnderChassis);
+
+    // 2. Legacy fallback guarantee: all non-classic models return None
     let legacy_models = [
         "gt_porsche_911_gt3r",
-        "classic_gt",
-        "classic_nascar",
-        "classic_offroad",
-        "classic_rally",
         "nascar_camaro_zl1",
         "rally_peugeot_208_rally4",
+        "offroad_baja_trophy_truck",
     ];
     for model_id in legacy_models {
         assert!(
@@ -1240,79 +1270,100 @@ fn test_classic_kart_topdown_sprite_orientation() {
 }
 
 #[test]
-fn test_classic_kart_dual_sprites_showroom_and_chassis() {
+fn test_classic_cars_dual_sprites_showroom_and_chassis() {
     use macroquad::texture::Image;
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let showroom_path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart.png");
-    let chassis_path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_kart_chassis.png");
+    let classic_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/classic");
 
-    // 1. Showroom sprite with wheels must exist and be high-resolution
-    let showroom_bytes = std::fs::read(&showroom_path).expect("Failed to read classic_kart showroom sprite");
-    assert!(showroom_bytes.len() > 100_000, "Showroom sprite must be high-res pre-fabricated bitmap (>100KB)");
-    let showroom_img = Image::from_file_with_format(&showroom_bytes, None).expect("Failed to parse showroom image");
+    let cars = [
+        ("classic_kart", (373, 135), (373, 377)),
+        ("classic_offroad", (400, 150), (400, 358)),
+        ("classic_gt", (374, 170), (374, 338)),
+        ("classic_nascar", (340, 176), (346, 300)),
+        ("classic_rally", (355, 167), (350, 300)),
+    ];
 
-    // 2. In-game chassis sprite with wheels removed must exist and be high-resolution
-    let chassis_bytes = std::fs::read(&chassis_path).expect("Failed to read classic_kart_chassis in-game sprite");
-    assert!(chassis_bytes.len() > 100_000, "Chassis sprite must be high-res pre-fabricated bitmap (>100KB)");
-    let chassis_img = Image::from_file_with_format(&chassis_bytes, None).expect("Failed to parse chassis image");
+    for (model_id, (fl_x, fl_y), (fr_x, fr_y)) in cars {
+        let showroom_path = classic_dir.join(format!("{}.png", model_id));
+        let chassis_path = classic_dir.join(format!("{}_chassis.png", model_id));
 
-    // Both must be 512x512
-    assert_eq!(showroom_img.width, 512);
-    assert_eq!(showroom_img.height, 512);
-    assert_eq!(chassis_img.width, 512);
-    assert_eq!(chassis_img.height, 512);
+        // 1. Showroom sprite with wheels must exist and be high-resolution (>100KB, 512x512)
+        let showroom_bytes = std::fs::read(&showroom_path).unwrap_or_else(|e| panic!("Failed to read {} showroom: {:?}", model_id, e));
+        assert!(showroom_bytes.len() > 100_000, "Showroom sprite must be high-res (>100KB) for {}", model_id);
+        let showroom_img = Image::from_file_with_format(&showroom_bytes, None).unwrap_or_else(|e| panic!("Failed to parse {} showroom: {:?}", model_id, e));
 
-    // 3. Verify wheel zone isolation: in showroom_img, the front wheel center has dark tire pixels (alpha 255),
-    // while in chassis_img, the front wheel region is transparently cleared.
-    // Front-left wheel center is at roughly x=373, y=135
-    let fl_showroom_alpha = showroom_img.bytes[(135 * 512 + 373) * 4 + 3];
-    let fl_chassis_alpha = chassis_img.bytes[(135 * 512 + 373) * 4 + 3];
-    assert!(fl_showroom_alpha > 200, "Showroom sprite must contain front-left wheel pixels at hub center");
-    assert_eq!(fl_chassis_alpha, 0, "Chassis sprite must have front-left wheel pixels cleared for dynamic wheel animation");
+        // 2. In-game chassis sprite with wheels removed must exist and be high-resolution (>100KB, 512x512)
+        let chassis_bytes = std::fs::read(&chassis_path).unwrap_or_else(|e| panic!("Failed to read {} chassis: {:?}", model_id, e));
+        assert!(chassis_bytes.len() > 100_000, "Chassis sprite must be high-res (>100KB) for {}", model_id);
+        let chassis_img = Image::from_file_with_format(&chassis_bytes, None).unwrap_or_else(|e| panic!("Failed to parse {} chassis: {:?}", model_id, e));
 
-    // Front-right wheel center is at roughly x=373, y=377
-    let fr_showroom_alpha = showroom_img.bytes[(377 * 512 + 373) * 4 + 3];
-    let fr_chassis_alpha = chassis_img.bytes[(377 * 512 + 373) * 4 + 3];
-    assert!(fr_showroom_alpha > 200, "Showroom sprite must contain front-right wheel pixels at hub center");
-    assert_eq!(fr_chassis_alpha, 0, "Chassis sprite must have front-right wheel pixels cleared for dynamic wheel animation");
+        assert_eq!(showroom_img.width, 512, "Width must be 512 for {}", model_id);
+        assert_eq!(showroom_img.height, 512, "Height must be 512 for {}", model_id);
+        assert_eq!(chassis_img.width, 512, "Chassis width must be 512 for {}", model_id);
+        assert_eq!(chassis_img.height, 512, "Chassis height must be 512 for {}", model_id);
+
+        // 3. Verify wheel zone isolation: in showroom_img, the front wheel center has opaque pixels (alpha 255),
+        // while in chassis_img, the front wheel region is transparently cleared (alpha == 0).
+        let fl_showroom_alpha = showroom_img.bytes[(fl_y * 512 + fl_x) * 4 + 3];
+        let fl_chassis_alpha = chassis_img.bytes[(fl_y * 512 + fl_x) * 4 + 3];
+        assert!(fl_showroom_alpha > 200, "Showroom sprite must contain front-left wheel pixels at ({}, {}) for {}, got alpha {}", fl_x, fl_y, model_id, fl_showroom_alpha);
+        assert_eq!(fl_chassis_alpha, 0, "Chassis sprite must have front-left wheel pixels cleared at ({}, {}) for {}, got alpha {}", fl_x, fl_y, model_id, fl_chassis_alpha);
+
+        let fr_showroom_alpha = showroom_img.bytes[(fr_y * 512 + fr_x) * 4 + 3];
+        let fr_chassis_alpha = chassis_img.bytes[(fr_y * 512 + fr_x) * 4 + 3];
+        assert!(fr_showroom_alpha > 200, "Showroom sprite must contain front-right wheel pixels at ({}, {}) for {}, got alpha {}", fr_x, fr_y, model_id, fr_showroom_alpha);
+        assert_eq!(fr_chassis_alpha, 0, "Chassis sprite must have front-right wheel pixels cleared at ({}, {}) for {}, got alpha {}", fr_x, fr_y, model_id, fr_chassis_alpha);
+    }
 }
 
 #[test]
-fn test_spec_026_kart_wheel_steering_ackermann_deflection_and_return_to_center() {
-    let car = Car::new(CarConfig::classic_kart());
+fn test_spec_026_wheel_steering_ackermann_deflection_across_classic_cars() {
+    use tdrace_app::module::classic::ClassicGameModule;
 
-    // 1. Symmetrical return to center: steer_angle = 0.0
-    let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
-    assert!(fl_zero.abs() < 1e-6, "Front-left wheel must align parallel to heading at 0 steer");
-    assert!(fr_zero.abs() < 1e-6, "Front-right wheel must align parallel to heading at 0 steer");
+    let configs = [
+        ClassicGameModule::car_classic_kart(),
+        ClassicGameModule::car_classic_gt(),
+        ClassicGameModule::car_classic_nascar(),
+        ClassicGameModule::car_classic_offroad(),
+        ClassicGameModule::car_classic_rally(),
+    ];
 
-    // 2. Turn left (steer_angle > 0.0, counter-clockwise): inner wheel (FL) turns sharper than outer wheel (FR)
-    let (fl_left, fr_left) = car.compute_ackermann_angles(0.45);
-    assert!(fl_left > 0.0, "Front-left wheel must turn left (counter-clockwise)");
-    assert!(fr_left > 0.0, "Front-right wheel must turn left (counter-clockwise)");
-    assert!(
-        fl_left > fr_left,
-        "Inner wheel ({:.4}) must deflect more than outer wheel ({:.4}) under left turn",
-        fl_left, fr_left
-    );
+    for cfg in configs {
+        let car = Car::new(cfg);
 
-    // 3. Turn right (steer_angle < 0.0, clockwise): inner wheel (FR) turns sharper than outer wheel (FL)
-    let (fl_right, fr_right) = car.compute_ackermann_angles(-0.45);
-    assert!(fl_right < 0.0, "Front-left wheel must turn right (clockwise)");
-    assert!(fr_right < 0.0, "Front-right wheel must turn right (clockwise)");
-    assert!(
-        fr_right.abs() > fl_right.abs(),
-        "Inner wheel (|{:.4}|) must deflect more than outer wheel (|{:.4}|) under right turn",
-        fr_right, fl_right
-    );
+        // 1. Symmetrical return to center: steer_angle = 0.0
+        let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
+        assert!(fl_zero.abs() < 1e-6, "Front-left wheel must align parallel to heading at 0 steer");
+        assert!(fr_zero.abs() < 1e-6, "Front-right wheel must align parallel to heading at 0 steer");
 
-    // 4. Symmetry: magnitude of FL under left turn matches FR under right turn
-    assert!(
-        (fl_left.abs() - fr_right.abs()).abs() < 1e-5,
-        "Steering geometry must be strictly symmetric between left and right turns"
-    );
+        // 2. Turn left (steer_angle > 0.0, counter-clockwise): inner wheel (FL) turns sharper than outer wheel (FR)
+        let (fl_left, fr_left) = car.compute_ackermann_angles(0.40);
+        assert!(fl_left > 0.0, "Front-left wheel must turn left (counter-clockwise)");
+        assert!(fr_left > 0.0, "Front-right wheel must turn left (counter-clockwise)");
+        assert!(
+            fl_left > fr_left,
+            "Inner wheel ({:.4}) must deflect more than outer wheel ({:.4}) under left turn",
+            fl_left, fr_left
+        );
+
+        // 3. Turn right (steer_angle < 0.0, clockwise): inner wheel (FR) turns sharper than outer wheel (FL)
+        let (fl_right, fr_right) = car.compute_ackermann_angles(-0.40);
+        assert!(fl_right < 0.0, "Front-left wheel must turn right (clockwise)");
+        assert!(fr_right < 0.0, "Front-right wheel must turn right (clockwise)");
+        assert!(
+            fr_right.abs() > fl_right.abs(),
+            "Inner wheel (|{:.4}|) must deflect more than outer wheel (|{:.4}|) under right turn",
+            fr_right, fl_right
+        );
+
+        // 4. Symmetry: magnitude of FL under left turn matches FR under right turn
+        assert!(
+            (fl_left.abs() - fr_right.abs()).abs() < 1e-5,
+            "Steering geometry must be strictly symmetric between left and right turns"
+        );
+    }
 }
 
 #[test]

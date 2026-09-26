@@ -7,6 +7,10 @@ static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/
 static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
 static PORSCHE_TOPDOWN_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
 static KART_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/kart_slick_front.png");
+static GT_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/gt_slick_front.png");
+static NASCAR_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/nascar_wheel_front.png");
+static OFFROAD_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/offroad_wheel_front.png");
+static RALLY_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/rally_wheel_front.png");
 
 static LATERAL_CACHE: Mutex<Option<HashMap<(String, u32, u32, bool), Texture2D>>> = Mutex::new(None);
 static TOPDOWN_CACHE: Mutex<Option<HashMap<(String, u32, u32), Texture2D>>> = Mutex::new(None);
@@ -294,7 +298,35 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.20, 0.28),
             layering: WheelLayerMode::OverChassis,
         }),
-        _ => None, // 84 legacy vehicles continue using monolithic sprite rendering
+        "classic_gt" => Some(SteeredWheelConfig {
+            wheel_texture_id: "gt_slick_front",
+            front_axle_offset: 0.75,
+            half_track_width: 0.48,
+            wheel_size: glam::Vec2::new(0.24, 0.48),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        "classic_nascar" => Some(SteeredWheelConfig {
+            wheel_texture_id: "nascar_wheel_front",
+            front_axle_offset: 0.66,
+            half_track_width: 0.51,
+            wheel_size: glam::Vec2::new(0.26, 0.50),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        "classic_offroad" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 0.68,
+            half_track_width: 0.54,
+            wheel_size: glam::Vec2::new(0.24, 0.48),
+            layering: WheelLayerMode::OverChassis,
+        }),
+        "classic_rally" => Some(SteeredWheelConfig {
+            wheel_texture_id: "rally_wheel_front",
+            front_axle_offset: 0.73,
+            half_track_width: 0.41,
+            wheel_size: glam::Vec2::new(0.24, 0.46),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        _ => None, // Non-classic vehicles continue using monolithic sprite rendering
     }
 }
 
@@ -309,10 +341,15 @@ pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
     let rel_path = format!("textures/vehicles/topdown/wheels/{}.png", wheel_id);
     let bytes = if let Some(disk_bytes) = find_asset_file(&rel_path) {
         disk_bytes
-    } else if wheel_id == "kart_slick_front" {
-        KART_SLICK_FRONT_PNG.to_vec()
     } else {
-        return None;
+        match wheel_id {
+            "kart_slick_front" => KART_SLICK_FRONT_PNG.to_vec(),
+            "gt_slick_front" => GT_SLICK_FRONT_PNG.to_vec(),
+            "nascar_wheel_front" => NASCAR_WHEEL_FRONT_PNG.to_vec(),
+            "offroad_wheel_front" => OFFROAD_WHEEL_FRONT_PNG.to_vec(),
+            "rally_wheel_front" => RALLY_WHEEL_FRONT_PNG.to_vec(),
+            _ => return None,
+        }
     };
 
     let base_img = Image::from_file_with_format(&bytes, None).ok()?;
