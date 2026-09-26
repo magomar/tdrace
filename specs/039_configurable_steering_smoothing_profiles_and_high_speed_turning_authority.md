@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Configurable Steering Smoothing Profiles and High Speed Turning Authority"
 description: "Input and physics architecture eliminating high-speed steering choking via progressive hold-lock bleed, calibrated physics attenuation alignment, and selectable steering smoothing profiles."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-039-receipt.md"
 created: 2026-09-26
 verified: { by: "human:mario", at: "2026-09-26T23:55:00Z" }
 generated: { by: agent/antigravity, at: 2026-09-26T23:56:00Z }
@@ -100,22 +101,22 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Sustained keyboard hold achieves full steering authority at high speed**
-  - [ ] **Given** a vehicle traveling at high forward speed ($v \ge 25\,\text{m/s}$ ~ $90\,\text{km/h}$)
-  - [ ] **When** the driver holds full steering lock for $> 0.35\,\text{seconds}$
-  - [ ] **Then** the filtered steering output must reach $\ge 0.95$ (full lock)
-  - [ ] **And** turning authority must not be clamped to a restrictive floor $< 0.75$
+  - [x] **Given** a vehicle traveling at high forward speed ($v \ge 25\,\text{m/s}$ ~ $90\,\text{km/h}$)
+  - [x] **When** the driver holds full steering lock for $> 0.35\,\text{seconds}$
+  - [x] **Then** the filtered steering output must reach $\ge 0.95$ (full lock)
+  - [x] **And** turning authority must not be clamped to a restrictive floor $< 0.75$
 
 - **Scenario: Steering profile cycling in Controls screen**
-  - [ ] **Given** the player is viewing the Controls & Driving Assists screen
-  - [ ] **When** the player activates the steering profile toggle command
-  - [ ] **Then** the active profile must cycle through `Balanced -> Smooth -> Direct -> Balanced`
-  - [ ] **And** the updated configuration must take effect immediately on vehicle handling
+  - [x] **Given** the player is viewing the Controls & Driving Assists screen
+  - [x] **When** the player activates the steering profile toggle command
+  - [x] **Then** the active profile must cycle through `Balanced -> Smooth -> Direct -> Balanced`
+  - [x] **And** the updated configuration must take effect immediately on vehicle handling
 
 - **Scenario: Caster jacking vehicle turning alignment**
-  - [ ] **Given** a competition kart with `caster_jacking_factor > 0.0`
-  - [ ] **When** turning at $25\,\text{m/s}$ under full throttle
-  - [ ] **Then** wheelbase `speed_factor` must not enforce a hardcoded 0.025 multiplier
-  - [ ] **And** turning lateral acceleration must exceed $12.0\,\text{m/s}^2$ on asphalt
+  - [x] **Given** a competition kart with `caster_jacking_factor > 0.0`
+  - [x] **When** turning at $25\,\text{m/s}$ under full throttle
+  - [x] **Then** wheelbase `speed_factor` must not enforce a hardcoded 0.025 multiplier
+  - [x] **And** turning lateral acceleration must exceed $12.0\,\text{m/s}^2$ on asphalt
 
 ---
 
