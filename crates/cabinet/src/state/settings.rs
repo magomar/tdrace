@@ -38,6 +38,7 @@ pub struct SettingsSnapshot {
     pub assist_idx: usize,
     pub speed_unit_idx: usize,
     pub ghost_car_idx: usize,
+    pub visual_aids_preset_idx: usize,
     pub aura_idx: usize,
     pub aura_ratio: f32,
     pub aura_brightness: f32,
@@ -71,6 +72,7 @@ impl Default for SettingsSnapshot {
             assist_idx: 0,
             speed_unit_idx: 0,
             ghost_car_idx: 0,
+            visual_aids_preset_idx: 0,
             aura_idx: 0,
             aura_ratio: 1.0,
             aura_brightness: 1.0,
@@ -381,8 +383,10 @@ pub struct ArcadeSettingsModal {
     pub assist_dropdown: DropdownWidget,
     pub speed_unit_dropdown: DropdownWidget,
     pub ghost_car_dropdown: DropdownWidget,
+    pub visual_aids_preset_dropdown: DropdownWidget,
+    pub gameplay_sub_tab: usize, // 0: General, 1: Visual Aids
 
-    // Player Helpers Tab Widgets (Tab 4)
+    // Player Helpers / Visual Aids Widgets (Configured under Gameplay -> Visual Aids)
     pub aura_dropdown: DropdownWidget,
     pub aura_ratio_slider: SliderWidget,
     pub aura_brightness_slider: SliderWidget,
@@ -414,17 +418,17 @@ impl ArcadeSettingsModal {
             "CONTROLS".to_string(),
             "DISPLAY".to_string(),
             "GAMEPLAY".to_string(),
-            "HELPERS".to_string(),
         ];
         let tab_bar = TabBar::new(tabs);
 
-        // Grid navigation: 5 columns for the 5 tabs, each with widget count + 1 (for bottom buttons)
+        // Grid navigation: 4 columns for the 4 tabs, each with widget count + 1 (for bottom buttons)
         // Tab 0 (Audio): 5 widgets + 1 bottom row = 6 rows
         // Tab 1 (Controls): 4 widgets + 1 bottom row = 5 rows
         // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
-        // Tab 3 (Gameplay): 3 widgets + 1 bottom row = 4 rows
-        // Tab 4 (Helpers): 10 widgets + 1 bottom row = 11 rows
-        let nav = NavGrid2D::new(vec![6, 5, 7, 4, 11]);
+        // Tab 3 (Gameplay):
+        //   Sub-tab 0 (General): 4 widgets (assist, speed, ghost, preset) + 1 customize button + 1 bottom row = 6 rows
+        //   Sub-tab 1 (Visual Aids): 1 preset + 10 helper widgets + 1 bottom row = 12 rows
+        let nav = NavGrid2D::new(vec![6, 5, 7, 6]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -462,6 +466,12 @@ impl ArcadeSettingsModal {
 
         let speed_options = vec!["KM/H (Metric)".to_string(), "MPH (Imperial)".to_string()];
         let ghost_options = vec!["Enabled (Best Lap)".to_string(), "Disabled".to_string()];
+        let preset_options = vec![
+            "Full (All Aids)".to_string(),
+            "Minimal (Clean HUD)".to_string(),
+            "Off (Disabled)".to_string(),
+            "Custom...".to_string(),
+        ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
 
         let mut modal = Self {
@@ -496,6 +506,8 @@ impl ArcadeSettingsModal {
             assist_dropdown: DropdownWidget::new("ASSIST PROFILE", assist_options, 0),
             speed_unit_dropdown: DropdownWidget::new("SPEEDOMETER UNIT", speed_options, 0),
             ghost_car_dropdown: DropdownWidget::new("GHOST REPLAY", ghost_options, 0),
+            visual_aids_preset_dropdown: DropdownWidget::new("VISUAL DRIVING AIDS", preset_options, 0),
+            gameplay_sub_tab: 0,
 
             aura_dropdown: DropdownWidget::new("GROUND AURA DISC", enabled_options.clone(), 0),
             aura_ratio_slider: SliderWidget::new("AURA GLOW RADIUS", 0.40, 1.80, 0.05, 1.00).with_suffix("x"),
@@ -543,8 +555,124 @@ impl ArcadeSettingsModal {
         self.assist_dropdown.set_selected(0);
         self.speed_unit_dropdown.set_selected(0);
         self.ghost_car_dropdown.set_selected(0);
+        self.visual_aids_preset_dropdown.set_selected(0);
 
         self.set_helpers_state(&HelpersSettingsState::default());
+        self.switch_gameplay_subtab(0);
+    }
+
+    /// Switches the Gameplay subtab (0: General, 1: Visual Aids) and updates navigation grid bounds.
+    pub fn switch_gameplay_subtab(&mut self, subtab: usize) {
+        self.gameplay_sub_tab = subtab;
+        if subtab == 1 {
+            self.nav.set_column_len(3, 12);
+            self.nav.set_focus(3, 0);
+        } else {
+            self.nav.set_column_len(3, 6);
+            self.nav.set_focus(3, 4); // Focus on "CUSTOMIZE VISUAL AIDS ➔" button
+        }
+    }
+
+    /// Applies one of the master visual aids presets (0: Full, 1: Minimal, 2: Off).
+    pub fn apply_visual_aids_preset(&mut self, preset_idx: usize) {
+        match preset_idx {
+            0 => {
+                // Full (All Aids Enabled)
+                self.aura_dropdown.set_selected(0);
+                self.aura_ratio_slider.set_value(1.00);
+                self.aura_brightness_slider.set_value(1.00);
+                self.ribbon_dropdown.set_selected(0);
+                self.ribbon_brightness_slider.set_value(1.00);
+                self.ribbon_scale_slider.set_value(1.00);
+                self.chevron_dropdown.set_selected(0);
+                self.chevron_brightness_slider.set_value(1.00);
+                self.adaptive_dropdown.set_selected(0);
+                self.radar_ping_dropdown.set_selected(0);
+                self.visual_aids_preset_dropdown.set_selected(0);
+            }
+            1 => {
+                // Minimal (Clean HUD)
+                self.aura_dropdown.set_selected(1); // Disabled
+                self.aura_ratio_slider.set_value(0.80);
+                self.aura_brightness_slider.set_value(0.80);
+                self.ribbon_dropdown.set_selected(0); // Enabled
+                self.ribbon_brightness_slider.set_value(0.80);
+                self.ribbon_scale_slider.set_value(0.80);
+                self.chevron_dropdown.set_selected(0); // Enabled
+                self.chevron_brightness_slider.set_value(0.80);
+                self.adaptive_dropdown.set_selected(0); // Enabled
+                self.radar_ping_dropdown.set_selected(1); // Disabled
+                self.visual_aids_preset_dropdown.set_selected(1);
+            }
+            2 => {
+                // Off (Raw Racing)
+                self.aura_dropdown.set_selected(1);
+                self.aura_ratio_slider.set_value(1.00);
+                self.aura_brightness_slider.set_value(1.00);
+                self.ribbon_dropdown.set_selected(1);
+                self.ribbon_brightness_slider.set_value(1.00);
+                self.ribbon_scale_slider.set_value(1.00);
+                self.chevron_dropdown.set_selected(1);
+                self.chevron_brightness_slider.set_value(1.00);
+                self.adaptive_dropdown.set_selected(1);
+                self.radar_ping_dropdown.set_selected(1);
+                self.visual_aids_preset_dropdown.set_selected(2);
+            }
+            _ => {
+                self.visual_aids_preset_dropdown.set_selected(3);
+            }
+        }
+    }
+
+    /// Evaluates current helper widget values to determine matching preset index (0: Full, 1: Minimal, 2: Off, 3: Custom).
+    pub fn compute_matching_preset(&self) -> usize {
+        // Full (0)
+        if self.aura_dropdown.selected_index == 0
+            && (self.aura_ratio_slider.value - 1.00).abs() < 1e-3
+            && (self.aura_brightness_slider.value - 1.00).abs() < 1e-3
+            && self.ribbon_dropdown.selected_index == 0
+            && (self.ribbon_brightness_slider.value - 1.00).abs() < 1e-3
+            && (self.ribbon_scale_slider.value - 1.00).abs() < 1e-3
+            && self.chevron_dropdown.selected_index == 0
+            && (self.chevron_brightness_slider.value - 1.00).abs() < 1e-3
+            && self.adaptive_dropdown.selected_index == 0
+            && self.radar_ping_dropdown.selected_index == 0
+        {
+            return 0;
+        }
+
+        // Minimal (1)
+        if self.aura_dropdown.selected_index == 1
+            && (self.aura_ratio_slider.value - 0.80).abs() < 1e-3
+            && (self.aura_brightness_slider.value - 0.80).abs() < 1e-3
+            && self.ribbon_dropdown.selected_index == 0
+            && (self.ribbon_brightness_slider.value - 0.80).abs() < 1e-3
+            && (self.ribbon_scale_slider.value - 0.80).abs() < 1e-3
+            && self.chevron_dropdown.selected_index == 0
+            && (self.chevron_brightness_slider.value - 0.80).abs() < 1e-3
+            && self.adaptive_dropdown.selected_index == 0
+            && self.radar_ping_dropdown.selected_index == 1
+        {
+            return 1;
+        }
+
+        // Off (2)
+        if self.aura_dropdown.selected_index == 1
+            && self.ribbon_dropdown.selected_index == 1
+            && self.chevron_dropdown.selected_index == 1
+            && self.adaptive_dropdown.selected_index == 1
+            && self.radar_ping_dropdown.selected_index == 1
+        {
+            return 2;
+        }
+
+        3 // Custom...
+    }
+
+    /// Synchronizes the visual aids preset dropdown to match the fine-tuned helper states.
+    pub fn sync_preset_from_helpers(&mut self) {
+        let matching = self.compute_matching_preset();
+        self.visual_aids_preset_dropdown.set_selected(matching);
     }
 
     /// Returns the current state of the player helpers settings widgets.
@@ -575,6 +703,7 @@ impl ArcadeSettingsModal {
         self.chevron_brightness_slider.set_value(state.chevron_brightness);
         self.adaptive_dropdown.set_selected(if state.adaptive_enabled { 0 } else { 1 });
         self.radar_ping_dropdown.set_selected(if state.radar_sonar_ping { 0 } else { 1 });
+        self.sync_preset_from_helpers();
     }
 
     /// Pre-populates the resolution and window mode dropdowns based on active dimensions.
@@ -674,6 +803,7 @@ impl ArcadeSettingsModal {
             assist_idx: self.assist_dropdown.selected_index,
             speed_unit_idx: self.speed_unit_dropdown.selected_index,
             ghost_car_idx: self.ghost_car_dropdown.selected_index,
+            visual_aids_preset_idx: self.visual_aids_preset_dropdown.selected_index,
             aura_idx: self.aura_dropdown.selected_index,
             aura_ratio: self.aura_ratio_slider.value,
             aura_brightness: self.aura_brightness_slider.value,
@@ -715,6 +845,7 @@ impl ArcadeSettingsModal {
             || cur.assist_idx != init.assist_idx
             || cur.speed_unit_idx != init.speed_unit_idx
             || cur.ghost_car_idx != init.ghost_car_idx
+            || cur.visual_aids_preset_idx != init.visual_aids_preset_idx
             || cur.aura_idx != init.aura_idx
             || (cur.aura_ratio - init.aura_ratio).abs() > 0.001
             || (cur.aura_brightness - init.aura_brightness).abs() > 0.001
@@ -774,6 +905,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.assist_dropdown.is_open
             || self.speed_unit_dropdown.is_open
             || self.ghost_car_dropdown.is_open
+            || self.visual_aids_preset_dropdown.is_open
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
@@ -794,11 +926,19 @@ impl CabinetScreen for ArcadeSettingsModal {
                 self.assist_dropdown.is_open = false;
                 self.speed_unit_dropdown.is_open = false;
                 self.ghost_car_dropdown.is_open = false;
+                self.visual_aids_preset_dropdown.is_open = false;
                 self.aura_dropdown.is_open = false;
                 self.ribbon_dropdown.is_open = false;
                 self.chevron_dropdown.is_open = false;
                 self.adaptive_dropdown.is_open = false;
                 self.radar_ping_dropdown.is_open = false;
+                ctx.play_ui_cancel();
+                return ScreenAction::None;
+            }
+
+            // If currently viewing detailed Visual Aids inside Gameplay, Back returns to Gameplay General
+            if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
+                self.switch_gameplay_subtab(0);
                 ctx.play_ui_cancel();
                 return ScreenAction::None;
             }
@@ -847,6 +987,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.assist_dropdown.is_open
             || self.speed_unit_dropdown.is_open
             || self.ghost_car_dropdown.is_open
+            || self.visual_aids_preset_dropdown.is_open
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
@@ -955,11 +1096,7 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Content items area
         let content_x = box_x + scaler.s(24.0);
         let content_w = box_w - scaler.s(48.0);
-        let (row_h, row_gap, content_y) = if active_tab == 4 {
-            (scaler.s(26.0), scaler.s(3.5), box_y + scaler.s(88.0))
-        } else {
-            (scaler.s(44.0), scaler.s(8.0), box_y + scaler.s(100.0))
-        };
+        let (row_h, row_gap, content_y) = (scaler.s(44.0), scaler.s(8.0), box_y + scaler.s(100.0));
 
         match active_tab {
             0 => {
@@ -1104,149 +1241,236 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.play_ui_select();
                 }
             }
-            3 => {
-                // GAMEPLAY: 0: Assist, 1: Speed Units, 2: Ghost Car, 3: Bottom Buttons
-                let r0 = (content_x, content_y, content_w, row_h);
-                let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
-                let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
-
-                if self.assist_dropdown.handle_input(
-                    active_row == 0,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r0,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.speed_unit_dropdown.handle_input(
-                    active_row == 1,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r1,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.ghost_car_dropdown.handle_input(
-                    active_row == 2,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r2,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-            }
             _ => {
-                // HELPERS (Tab 4):
-                // 0: aura_dropdown, 1: aura_ratio_slider, 2: aura_brightness_slider
-                // 3: ribbon_dropdown, 4: ribbon_brightness_slider, 5: ribbon_scale_slider
-                // 6: chevron_dropdown, 7: chevron_brightness_slider
-                // 8: beacon_dropdown, 9: adaptive_dropdown, 10: radar_ping_dropdown, 11: Bottom Buttons
-                let mut y = content_y;
-                let r0 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r1 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r2 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r3 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r4 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r5 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r6 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r7 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r8 = (content_x, y, content_w, row_h); y += row_h + row_gap;
-                let r9 = (content_x, y, content_w, row_h);
+                // GAMEPLAY (Tab 3):
+                // Sub-tab pills rects
+                let subtab_pills_y = box_y + scaler.s(90.0);
+                let subtab_pills_h = scaler.s(26.0);
+                let pill_gap = scaler.s(8.0);
+                let pill_w = (content_w - pill_gap) * 0.5;
+                let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
 
-                if self.aura_dropdown.handle_input(
-                    active_row == 0,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r0,
-                    scaler,
-                ) {
+                if NavGrid2D::check_mouse_click(pill0_rect) && self.gameplay_sub_tab != 0 {
+                    self.switch_gameplay_subtab(0);
+                    ctx.play_ui_select();
+                } else if NavGrid2D::check_mouse_click(pill1_rect) && self.gameplay_sub_tab != 1 {
+                    self.switch_gameplay_subtab(1);
                     ctx.play_ui_select();
                 }
-                if self.aura_ratio_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
-                    ctx.play_ui_move();
-                }
-                if self.aura_brightness_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
-                    ctx.play_ui_move();
-                }
-                if self.ribbon_dropdown.handle_input(
-                    active_row == 3,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r3,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.ribbon_brightness_slider.handle_input(active_row == 4, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r4) {
-                    ctx.play_ui_move();
-                }
-                if self.ribbon_scale_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
-                    ctx.play_ui_move();
-                }
-                if self.chevron_dropdown.handle_input(
-                    active_row == 6,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r6,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.chevron_brightness_slider.handle_input(active_row == 7, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r7) {
-                    ctx.play_ui_move();
-                }
-                if self.adaptive_dropdown.handle_input(
-                    active_row == 8,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r8,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
-                }
-                if self.radar_ping_dropdown.handle_input(
-                    active_row == 9,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r9,
-                    scaler,
-                ) {
-                    ctx.play_ui_select();
+
+                if self.gameplay_sub_tab == 0 {
+                    // GENERAL SUB-TAB:
+                    // 0: Assist, 1: Speed, 2: Ghost, 3: Visual Aids Preset, 4: Customize Button, 5: Bottom Buttons
+                    let (gen_row_h, gen_row_gap, gen_content_y) = (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                    let r0 = (content_x, gen_content_y, content_w, gen_row_h);
+                    let r1 = (content_x, gen_content_y + (gen_row_h + gen_row_gap), content_w, gen_row_h);
+                    let r2 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 2.0, content_w, gen_row_h);
+                    let r3 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 3.0, content_w, gen_row_h);
+                    let r4 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 4.0, content_w, gen_row_h);
+
+                    if self.assist_dropdown.handle_input(
+                        active_row == 0,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r0,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                    }
+                    if self.speed_unit_dropdown.handle_input(
+                        active_row == 1,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r1,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                    }
+                    if self.ghost_car_dropdown.handle_input(
+                        active_row == 2,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r2,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                    }
+
+                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
+                    if self.visual_aids_preset_dropdown.handle_input(
+                        active_row == 3,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r3,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                        let new_preset = self.visual_aids_preset_dropdown.selected_index;
+                        if new_preset != prev_preset {
+                            if new_preset < 3 {
+                                self.apply_visual_aids_preset(new_preset);
+                            } else {
+                                self.switch_gameplay_subtab(1);
+                            }
+                        }
+                    }
+
+                    // Row 4: Customize Button
+                    let is_cust_focused = active_row == 4;
+                    let is_confirm = safe_key_pressed(KeyCode::Enter)
+                        || safe_key_pressed(KeyCode::KpEnter)
+                        || safe_key_pressed(KeyCode::Space)
+                        || ctx.gamepad.btn_confirm_pressed
+                        || ctx.gamepad.btn_a_pressed;
+
+                    if (is_cust_focused && is_confirm) || NavGrid2D::check_mouse_click(r4) {
+                        self.switch_gameplay_subtab(1);
+                        ctx.play_ui_select();
+                    }
+                } else {
+                    // VISUAL AIDS SUB-TAB:
+                    // 0: Preset, 1: Aura, 2: Aura Ratio, 3: Aura Brightness, 4: Ribbon, 5: Ribbon Brightness, 6: Ribbon Scale
+                    // 7: Chevron, 8: Chevron Brightness, 9: Adaptive, 10: Radar Ping, 11: Bottom Buttons
+                    let (aid_row_h, aid_row_gap, aid_content_y) = (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                    let mut y = aid_content_y;
+                    let r0 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r1 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r2 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r3 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r4 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r5 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r6 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r7 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r8 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r9 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r10 = (content_x, y, content_w, aid_row_h);
+
+                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
+                    if self.visual_aids_preset_dropdown.handle_input(
+                        active_row == 0,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r0,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                        let new_preset = self.visual_aids_preset_dropdown.selected_index;
+                        if new_preset != prev_preset && new_preset < 3 {
+                            self.apply_visual_aids_preset(new_preset);
+                        }
+                    }
+
+                    if self.aura_dropdown.handle_input(
+                        active_row == 1,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r1,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
+                    if self.aura_ratio_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
+                    }
+                    if self.aura_brightness_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
+                    }
+                    if self.ribbon_dropdown.handle_input(
+                        active_row == 4,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r4,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
+                    if self.ribbon_brightness_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
+                    }
+                    if self.ribbon_scale_slider.handle_input(active_row == 6, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r6) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
+                    }
+                    if self.chevron_dropdown.handle_input(
+                        active_row == 7,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r7,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
+                    if self.chevron_brightness_slider.handle_input(active_row == 8, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r8) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
+                    }
+                    if self.adaptive_dropdown.handle_input(
+                        active_row == 9,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r9,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
+                    if self.radar_ping_dropdown.handle_input(
+                        active_row == 10,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r10,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
                 }
             }
         }
@@ -1332,11 +1556,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         let content_x = box_x + scaler.s(24.0);
         let content_w = box_w - scaler.s(48.0);
-        let (row_h, row_gap, content_y) = if active_tab == 4 {
-            (scaler.s(26.0), scaler.s(3.5), box_y + scaler.s(88.0))
-        } else {
-            (scaler.s(42.0), scaler.s(8.0), box_y + scaler.s(96.0))
-        };
+        let (row_h, row_gap, content_y) = (scaler.s(42.0), scaler.s(8.0), box_y + scaler.s(96.0));
 
         match active_tab {
             0 => {
@@ -1404,70 +1624,145 @@ impl CabinetScreen for ArcadeSettingsModal {
                     draw_dropdown_popup(scaler, fonts, r5.0, r5.1, r5.2, r5.3, &self.theme_dropdown.options, self.theme_dropdown.selected_index, self.theme_dropdown.popup_hovered_index, accent);
                 }
             }
-            3 => {
-                // GAMEPLAY TAB
-                let mut y = content_y;
-                let r0 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.assist_dropdown.label, &self.assist_dropdown.options, self.assist_dropdown.selected_index, false, self.assist_dropdown.popup_hovered_index, active_row == 0, false, accent);
-                y += row_h + row_gap;
-                let r1 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.speed_unit_dropdown.label, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, false, self.speed_unit_dropdown.popup_hovered_index, active_row == 1, false, accent);
-                y += row_h + row_gap;
-                let r2 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ghost_car_dropdown.label, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, false, self.ghost_car_dropdown.popup_hovered_index, active_row == 2, false, accent);
-
-                // Foreground layer: Draw open popup over other rows
-                if self.assist_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.assist_dropdown.options, self.assist_dropdown.selected_index, self.assist_dropdown.popup_hovered_index, accent);
-                } else if self.speed_unit_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, self.speed_unit_dropdown.popup_hovered_index, accent);
-                } else if self.ghost_car_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, self.ghost_car_dropdown.popup_hovered_index, accent);
-                }
-            }
             _ => {
-                // HELPERS TAB (Tab 4):
-                // 0: aura_dropdown, 1: aura_ratio_slider, 2: aura_brightness_slider
-                // 3: ribbon_dropdown, 4: ribbon_brightness_slider, 5: ribbon_scale_slider
-                // 6: chevron_dropdown, 7: chevron_brightness_slider
-                // 8: beacon_dropdown, 9: adaptive_dropdown, 10: Bottom Buttons
-                let mut y = content_y;
-                let r0 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.aura_dropdown.label, &self.aura_dropdown.options, self.aura_dropdown.selected_index, false, self.aura_dropdown.popup_hovered_index, active_row == 0, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.aura_ratio_slider.label, &self.aura_ratio_slider.formatted_value(), self.aura_ratio_slider.normalized(), active_row == 1, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.aura_brightness_slider.label, &self.aura_brightness_slider.formatted_value(), self.aura_brightness_slider.normalized(), active_row == 2, false, accent);
-                y += row_h + row_gap;
-                let r3 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ribbon_dropdown.label, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, false, self.ribbon_dropdown.popup_hovered_index, active_row == 3, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.ribbon_brightness_slider.label, &self.ribbon_brightness_slider.formatted_value(), self.ribbon_brightness_slider.normalized(), active_row == 4, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.ribbon_scale_slider.label, &self.ribbon_scale_slider.formatted_value(), self.ribbon_scale_slider.normalized(), active_row == 5, false, accent);
-                y += row_h + row_gap;
-                let r6 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.chevron_dropdown.label, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, false, self.chevron_dropdown.popup_hovered_index, active_row == 6, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.chevron_brightness_slider.label, &self.chevron_brightness_slider.formatted_value(), self.chevron_brightness_slider.normalized(), active_row == 7, false, accent);
-                y += row_h + row_gap;
-                let r8 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.adaptive_dropdown.label, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, false, self.adaptive_dropdown.popup_hovered_index, active_row == 8, false, accent);
-                y += row_h + row_gap;
-                let r9 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.radar_ping_dropdown.label, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, false, self.radar_ping_dropdown.popup_hovered_index, active_row == 9, false, accent);
+                // GAMEPLAY TAB (Tab 3):
+                // 1. Draw sub-tab pills
+                let subtab_pills_y = box_y + scaler.s(90.0);
+                let subtab_pills_h = scaler.s(26.0);
+                let pill_gap = scaler.s(8.0);
+                let pill_w = (content_w - pill_gap) * 0.5;
+                let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
 
-                // Foreground layer: Draw open popup over other rows
-                if self.aura_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.aura_dropdown.options, self.aura_dropdown.selected_index, self.aura_dropdown.popup_hovered_index, accent);
-                } else if self.ribbon_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, self.ribbon_dropdown.popup_hovered_index, accent);
-                } else if self.chevron_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r6.0, r6.1, r6.2, r6.3, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, self.chevron_dropdown.popup_hovered_index, accent);
-                } else if self.adaptive_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r8.0, r8.1, r8.2, r8.3, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, self.adaptive_dropdown.popup_hovered_index, accent);
-                } else if self.radar_ping_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r9.0, r9.1, r9.2, r9.3, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, self.radar_ping_dropdown.popup_hovered_index, accent);
+                // Pill 0: GENERAL
+                let is_p0_active = self.gameplay_sub_tab == 0;
+                let is_p0_hovered = NavGrid2D::check_mouse_hover(pill0_rect);
+                let p0_bg = if is_p0_active {
+                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
+                } else if is_p0_hovered {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Palette::UI_CARD_BG
+                };
+                let p0_border = if is_p0_active { accent } else { Palette::UI_CARD_BORDER };
+                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_active { 2.0 } else { 1.0 });
+                fonts.draw_ui_bold_centered(
+                    "GAMEPLAY GENERAL",
+                    pill0_rect.0 + pill0_rect.2 * 0.5,
+                    pill0_rect.1 + pill0_rect.3 * 0.65,
+                    scaler.font_s(11.5),
+                    if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                );
+
+                // Pill 1: VISUAL AIDS
+                let is_p1_active = self.gameplay_sub_tab == 1;
+                let is_p1_hovered = NavGrid2D::check_mouse_hover(pill1_rect);
+                let p1_bg = if is_p1_active {
+                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
+                } else if is_p1_hovered {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Palette::UI_CARD_BG
+                };
+                let p1_border = if is_p1_active { accent } else { Palette::UI_CARD_BORDER };
+                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_active { 2.0 } else { 1.0 });
+                fonts.draw_ui_bold_centered(
+                    "VISUAL DRIVING AIDS",
+                    pill1_rect.0 + pill1_rect.2 * 0.5,
+                    pill1_rect.1 + pill1_rect.3 * 0.65,
+                    scaler.font_s(11.5),
+                    if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                );
+
+                if self.gameplay_sub_tab == 0 {
+                    // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Preset, 4: Customize Button
+                    let (gen_row_h, gen_row_gap, gen_content_y) = (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                    let mut y = gen_content_y;
+                    let r0 = (content_x, y, content_w, gen_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.assist_dropdown.label, &self.assist_dropdown.options, self.assist_dropdown.selected_index, false, self.assist_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    y += gen_row_h + gen_row_gap;
+                    let r1 = (content_x, y, content_w, gen_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.speed_unit_dropdown.label, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, false, self.speed_unit_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                    y += gen_row_h + gen_row_gap;
+                    let r2 = (content_x, y, content_w, gen_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.ghost_car_dropdown.label, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, false, self.ghost_car_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                    y += gen_row_h + gen_row_gap;
+                    let r3 = (content_x, y, content_w, gen_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.visual_aids_preset_dropdown.label, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, false, self.visual_aids_preset_dropdown.popup_hovered_index, active_row == 3, false, accent);
+                    y += gen_row_h + gen_row_gap;
+                    let r4 = (content_x, y, content_w, gen_row_h);
+
+                    // Row 4: Customize Button
+                    let is_cust_focused = active_row == 4;
+                    let is_cust_hovered = NavGrid2D::check_mouse_hover(r4);
+                    let cust_active = is_cust_focused || is_cust_hovered;
+                    let cust_bg = if cust_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+                    let cust_border = if cust_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+                    scaler.draw_glass_card(r4.0, r4.1, r4.2, r4.3, cust_bg, cust_border, if cust_active { 2.0 } else { 1.0 });
+                    fonts.draw_ui_bold_centered(
+                        if is_cust_focused { "[ENTER] CUSTOMIZE 10 INDIVIDUAL AIDS ➔" } else { "CUSTOMIZE 10 INDIVIDUAL AIDS ➔" },
+                        r4.0 + r4.2 * 0.5,
+                        r4.1 + r4.3 * 0.62,
+                        scaler.font_s(12.5),
+                        if cust_active { Palette::NEON_CYAN } else { Palette::WHITE },
+                    );
+
+                    // Popups
+                    if self.assist_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.assist_dropdown.options, self.assist_dropdown.selected_index, self.assist_dropdown.popup_hovered_index, accent);
+                    } else if self.speed_unit_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, self.speed_unit_dropdown.popup_hovered_index, accent);
+                    } else if self.ghost_car_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, self.ghost_car_dropdown.popup_hovered_index, accent);
+                    } else if self.visual_aids_preset_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, self.visual_aids_preset_dropdown.popup_hovered_index, accent);
+                    }
+                } else {
+                    // VISUAL AIDS SUB-TAB (Tab 3, Sub-tab 1):
+                    let (aid_row_h, aid_row_gap, aid_content_y) = (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                    let mut y = aid_content_y;
+                    let r0 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.visual_aids_preset_dropdown.label, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, false, self.visual_aids_preset_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    let r1 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_dropdown.label, &self.aura_dropdown.options, self.aura_dropdown.selected_index, false, self.aura_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_ratio_slider.label, &self.aura_ratio_slider.formatted_value(), self.aura_ratio_slider.normalized(), active_row == 2, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_brightness_slider.label, &self.aura_brightness_slider.formatted_value(), self.aura_brightness_slider.normalized(), active_row == 3, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    let r4 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_dropdown.label, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, false, self.ribbon_dropdown.popup_hovered_index, active_row == 4, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_brightness_slider.label, &self.ribbon_brightness_slider.formatted_value(), self.ribbon_brightness_slider.normalized(), active_row == 5, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_scale_slider.label, &self.ribbon_scale_slider.formatted_value(), self.ribbon_scale_slider.normalized(), active_row == 6, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    let r7 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.chevron_dropdown.label, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, false, self.chevron_dropdown.popup_hovered_index, active_row == 7, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.chevron_brightness_slider.label, &self.chevron_brightness_slider.formatted_value(), self.chevron_brightness_slider.normalized(), active_row == 8, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    let r9 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.adaptive_dropdown.label, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, false, self.adaptive_dropdown.popup_hovered_index, active_row == 9, false, accent);
+                    y += aid_row_h + aid_row_gap;
+                    let r10 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.radar_ping_dropdown.label, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, false, self.radar_ping_dropdown.popup_hovered_index, active_row == 10, false, accent);
+
+                    // Popups
+                    if self.visual_aids_preset_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, self.visual_aids_preset_dropdown.popup_hovered_index, accent);
+                    } else if self.aura_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.aura_dropdown.options, self.aura_dropdown.selected_index, self.aura_dropdown.popup_hovered_index, accent);
+                    } else if self.ribbon_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, self.ribbon_dropdown.popup_hovered_index, accent);
+                    } else if self.chevron_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r7.0, r7.1, r7.2, r7.3, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, self.chevron_dropdown.popup_hovered_index, accent);
+                    } else if self.adaptive_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r9.0, r9.1, r9.2, r9.3, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, self.adaptive_dropdown.popup_hovered_index, accent);
+                    } else if self.radar_ping_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r10.0, r10.1, r10.2, r10.3, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, self.radar_ping_dropdown.popup_hovered_index, accent);
+                    }
                 }
             }
         }
@@ -1542,6 +1837,8 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Navigation hints under dialog box
         let hint_text = if self.is_tab_focused {
             "◄ / ► ARROWS: Switch Category   •   ▼ DOWN / ENTER: Adjust Settings   •   TAB / Q / E: Cycle"
+        } else if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
+            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ESC / B: Back to General Gameplay"
         } else {
             "▲ UP (at top): Back to Categories   •   ◄ / ►: Adjust Setting   •   TAB / Q / E: Switch Category   •   ESC: Close"
         };

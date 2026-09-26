@@ -40,7 +40,7 @@ pub use fx::{
 };
 pub use input::{
     ArcadeAction, ArcadeKey, DigitalInputConfig, DigitalInputFilter, GamepadAxis, GamepadButton,
-    GamepadConfig, GamepadManager, GamepadSnapshot, InputMap, InputSource, NavGrid2D,
+    GamepadConfig, GamepadManager, GamepadSnapshot, InputMap, InputSource, NavGrid2D, SteeringProfile,
 };
 pub use profile::{ColorScheme, CountryInfo, CountryRegistry, PlayerProfile, ProfileManager};
 pub use records::{HallOfFame, RecordDatabase, RecordEntry, RecordMetric};

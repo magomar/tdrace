@@ -22,7 +22,7 @@ use crate::render::color::Palette;
 pub use cabinet::input::{
     ArcadeAction, ArcadeKey, GamepadAxis, GamepadButton, InputMap, InputSource, NavGrid2D,
 };
-pub use filter::{DigitalInputConfig, DigitalInputFilter};
+pub use filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
 pub use gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 
@@ -100,6 +100,23 @@ impl InputController {
         } else {
             "Custom User Bindings"
         }
+    }
+
+    /// Cycles to the next steering smoothing profile (Balanced -> Smooth -> Direct -> Balanced).
+    pub fn cycle_steering_profile(&mut self) -> SteeringProfile {
+        let next = self.filter.config.profile.cycle();
+        self.filter.config.set_profile(next);
+        next
+    }
+
+    /// Sets the active steering smoothing profile.
+    pub fn set_steering_profile(&mut self, profile: SteeringProfile) {
+        self.filter.config.set_profile(profile);
+    }
+
+    /// Returns the active steering smoothing profile.
+    pub fn steering_profile(&self) -> SteeringProfile {
+        self.filter.config.profile
     }
 
     /// Polls player driving controls (Keyboard + Gamepad with progressive smoothing & analog precision).

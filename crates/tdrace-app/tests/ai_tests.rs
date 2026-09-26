@@ -104,3 +104,55 @@ fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
     );
 }
 
+#[test]
+fn test_bot_ai_on_kart_grid_positions() {
+    let track_mgr = tdrace_app::track_manager::TrackManager::default();
+    for track_slug in &["lonato", "sarno", "genk", "pfi"] {
+        let track = track_mgr.load_track_by_slug(track_slug).expect("Load track");
+        let model = tdrace_app::catalog::find_model_by_id("kart_crg_hero_60").expect("model");
+        let car_config = model.to_car_config();
+        let mut cars = Vec::new();
+        for grid_pose in &track.grid_positions {
+            cars.push(Car::new(car_config).with_pose(grid_pose.position, grid_pose.angle));
+        }
+        for (i, car) in cars.iter().enumerate().skip(1) {
+            let other_refs: Vec<&Car> = cars.iter().enumerate().filter(|(idx, _)| *idx != i).map(|(_, c)| c).collect();
+            let mut bot = BotAiDriver::new(BotProfile::rookie());
+            let ctrl = bot.compute_controls(car, &track, &other_refs, 0.016);
+            assert!(ctrl.throttle > 0.05, "Track {} slot {}: bot throttle too low: {}", track_slug, i, ctrl.throttle);
+            assert!(ctrl.brake < 0.2, "Track {} slot {}: bot is braking on grid: {}", track_slug, i, ctrl.brake);
+        }
+
+        // Now test stepping 180 frames with step_per_wheel and TrackProgressTracker with hint
+        let mut moving_cars = cars.clone();
+        let mut trackers: Vec<tdrace_core::track::checkpoint::TrackProgressTracker> = track.grid_positions.iter().map(|g| {
+            let mut tr = tdrace_core::track::checkpoint::TrackProgressTracker::new(track.checkpoints.len(), 3);
+            tr.sync_to_position(&track.spline, g.position);
+            tr
+        }).collect();
+        let mut bots: Vec<BotAiDriver> = (1..moving_cars.len()).map(|_| BotAiDriver::new(BotProfile::rookie())).collect();
+        for _step in 0..180 {
+            let n = moving_cars.len();
+            let mut controls = Vec::new();
+            // Player
+            controls.push(tdrace_core::CarControls { throttle: 1.0, steer: 0.0, brake: 0.0, handbrake: false, reverse: false });
+            for i in 1..n {
+                let other_refs: Vec<&Car> = moving_cars.iter().enumerate().filter(|(idx, _)| *idx != i).map(|(_, c)| c).collect();
+                let ctrl = bots[i - 1].compute_controls(&moving_cars[i], &track, &other_refs, 1.0 / 60.0);
+                assert!(!ctrl.reverse, "Track {} bot {} engaged REVERSE on starting grid!", track_slug, i);
+                controls.push(ctrl);
+            }
+            for i in 0..n {
+                let prog = trackers[i].progress_distance;
+                let surfaces = track.sample_car_surfaces_with_hint(&moving_cars[i], prog);
+                moving_cars[i].step_per_wheel(&controls[i], surfaces, 1.0 / 60.0);
+                trackers[i].update(&moving_cars[i], &track.spline, &track.checkpoints, 1.0 / 60.0);
+            }
+        }
+        for (i, car) in moving_cars.iter().enumerate().skip(1) {
+            let dist = car.state.position.distance(cars[i].state.position);
+            assert!(dist > 2.0, "Track {} bot {} did not move! Moved dist: {}, speed: {}", track_slug, i, dist, car.state.speed);
+        }
+    }
+}
+

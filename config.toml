@@ -31,13 +31,15 @@ min_zoom = 5.0
 max_zoom = 7.5
 
 [input]
-steer_rise_rate = 6.0
-steer_return_rate = 10.0
-steer_exponent = 1.350000023841858
-speed_sensitive_factor = 0.017999999225139618
-min_speed_steer_limit = 0.3799999952316284
-throttle_rise_rate = 10.0
-brake_rise_rate = 14.0
+steering_profile = "balanced"
+steer_rise_rate = 6.5
+steer_return_rate = 13.0
+steer_exponent = 1.25
+speed_sensitive_factor = 0.004
+min_speed_steer_limit = 0.75
+hold_bleed_rate = 2.5
+throttle_rise_rate = 9.5
+brake_rise_rate = 6.5
 
 [audio]
 master_volume = 0.8500000238418579

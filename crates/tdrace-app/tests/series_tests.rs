@@ -1303,6 +1303,40 @@ fn test_championship_lap_calibration_across_all_modules() {
     }
 }
 
+#[test]
+fn test_kart_championship_first_round_bots_move() {
+    let mut session = RaceSession::new();
+    session.switch_to_kart();
+    session.start_kart_career_tier(1);
+    session.state = GameState::Racing;
 
+    let initial_positions: Vec<_> = session.cars.iter().map(|c| c.state.position).collect();
+    let num_cars = session.cars.len();
 
+    // Step 300 frames (5.0 seconds of racing)
+    for _ in 0..300 {
+        session.physics_step(RaceSession::FIXED_DT);
+    }
 
+    // Every bot must have launched cleanly from the grid
+    for i in 1..num_cars {
+        let dist = session.cars[i].state.position.distance(initial_positions[i]);
+        let speed = session.cars[i].state.speed;
+        let prog = session.trackers[i].progress_distance;
+        assert!(
+            dist > 5.0,
+            "Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
+            i, session.opponent_drivers[i - 1].name, dist, speed, prog
+        );
+        assert!(
+            speed > 2.5,
+            "Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
+            i, session.opponent_drivers[i - 1].name, speed
+        );
+        assert_eq!(
+            session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
+            "Bot {} ({}) entered reverse recovery on the starting grid!",
+            i, session.opponent_drivers[i - 1].name
+        );
+    }
+}

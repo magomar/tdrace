@@ -202,6 +202,14 @@ impl TrackProgressTracker {
         self.last_position = None;
     }
 
+    /// Syncs the tracker's progress distance and last position to a spawn point on the track spline.
+    pub fn sync_to_position(&mut self, spline: &TrackSpline, pos: Vec2) {
+        let proj = spline.project_point(pos);
+        self.progress_distance = proj.progress_distance;
+        self.normalized_progress = proj.normalized_progress;
+        self.last_position = Some(pos);
+    }
+
     /// Updates race progression given the car's state, track spline, checkpoints, and timestep.
     pub fn update(
         &mut self,

@@ -60,10 +60,15 @@ fn test_session_standings_computation() {
     session.trackers[1].current_lap = 1;
     session.trackers[1].normalized_progress = 0.40;
 
+    // Car 3 on lap 1 with 0.10 progress
+    session.trackers[3].current_lap = 1;
+    session.trackers[3].normalized_progress = 0.10;
+
     let standings = session.compute_standings();
     assert_eq!(standings[0], 2); // Car 2 is P1
     assert_eq!(standings[1], 0); // Car 0 is P2
     assert_eq!(standings[2], 1); // Car 1 is P3
+    assert_eq!(standings[3], 3); // Car 3 is P4
 }
 
 #[test]

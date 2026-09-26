@@ -51,12 +51,32 @@ fn get_frame_time_safe() -> f32 {
 
 #[inline]
 fn screen_width_safe() -> f32 {
-    std::panic::catch_unwind(screen_width).unwrap_or(1920.0)
+    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return 1920.0;
+    }
+    match std::panic::catch_unwind(screen_width) {
+        Ok(w) => w,
+        Err(_) => {
+            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            1920.0
+        }
+    }
 }
 
 #[inline]
 fn screen_height_safe() -> f32 {
-    std::panic::catch_unwind(screen_height).unwrap_or(1080.0)
+    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return 1080.0;
+    }
+    match std::panic::catch_unwind(screen_height) {
+        Ok(h) => h,
+        Err(_) => {
+            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            1080.0
+        }
+    }
 }
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
@@ -685,11 +705,13 @@ impl RaceSession {
         audio.settings.music_volume = config.audio.music_volume;
 
         let mut input = InputController::new();
+        input.filter.config.profile = config.input.steering_profile;
         input.filter.config.steer_rise_rate = config.input.steer_rise_rate;
         input.filter.config.steer_return_rate = config.input.steer_return_rate;
         input.filter.config.steer_exponent = config.input.steer_exponent;
         input.filter.config.speed_sensitive_factor = config.input.speed_sensitive_factor;
         input.filter.config.min_speed_steer_limit = config.input.min_speed_steer_limit;
+        input.filter.config.hold_bleed_rate = config.input.hold_bleed_rate;
         input.filter.config.throttle_rise_rate = config.input.throttle_rise_rate;
         input.filter.config.brake_rise_rate = config.input.brake_rise_rate;
 
@@ -1789,11 +1811,13 @@ impl RaceSession {
         self.audio.settings.music_volume = self.config.audio.music_volume;
 
         // Apply input filter settings
+        self.input.filter.config.profile = self.config.input.steering_profile;
         self.input.filter.config.steer_rise_rate = self.config.input.steer_rise_rate;
         self.input.filter.config.steer_return_rate = self.config.input.steer_return_rate;
         self.input.filter.config.steer_exponent = self.config.input.steer_exponent;
         self.input.filter.config.speed_sensitive_factor = self.config.input.speed_sensitive_factor;
         self.input.filter.config.min_speed_steer_limit = self.config.input.min_speed_steer_limit;
+        self.input.filter.config.hold_bleed_rate = self.config.input.hold_bleed_rate;
         self.input.filter.config.throttle_rise_rate = self.config.input.throttle_rise_rate;
         self.input.filter.config.brake_rise_rate = self.config.input.brake_rise_rate;
 
@@ -5311,6 +5335,21 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.input.cycle_control_preset();
                     let _ = self.input.save_bindings();
+                }
+
+                if is_key_pressed(KeyCode::S)
+                    || is_key_pressed(KeyCode::P)
+                    || self.input.gamepad.snapshot.btn_y_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let new_profile = self.input.cycle_steering_profile();
+                    self.config.input.steering_profile = new_profile;
+                    self.config.input.steer_rise_rate = self.input.filter.config.steer_rise_rate;
+                    self.config.input.steer_return_rate = self.input.filter.config.steer_return_rate;
+                    self.config.input.steer_exponent = self.input.filter.config.steer_exponent;
+                    self.config.input.speed_sensitive_factor = self.input.filter.config.speed_sensitive_factor;
+                    self.config.input.min_speed_steer_limit = self.input.filter.config.min_speed_steer_limit;
+                    self.config.input.hold_bleed_rate = self.input.filter.config.hold_bleed_rate;
                 }
 
                 if is_key_pressed(KeyCode::Escape)
@@ -12147,6 +12186,7 @@ impl RaceSession {
                     &self.input.gamepad.snapshot.gamepad_name,
                     &self.input.input_map,
                     self.input.active_preset_name(),
+                    self.input.steering_profile(),
                 );
             }
             GameState::DriverCards(_) => {

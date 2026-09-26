@@ -453,6 +453,7 @@ struct CarConfigRaw {
     pub downforce_coefficient: f32,
     pub tire: TireConfig,
     pub assists: DriverAssistsConfig,
+    #[serde(default)]
     pub terrain: TerrainInteractionConfig,
     #[serde(default)]
     pub wheels: Option<[WheelAssemblyConfig; 4]>,

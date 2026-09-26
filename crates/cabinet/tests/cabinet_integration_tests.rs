@@ -955,20 +955,46 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     let gp_config = GamepadConfig::default();
     let mut modal = ArcadeSettingsModal::new(&audio, &gp_config);
 
-    // 1. Verify 5 tabs and tab 4 is "HELPERS"
-    assert_eq!(modal.tab_bar.tabs.len(), 5);
-    assert_eq!(modal.tab_bar.tabs[4], "HELPERS");
-    assert_eq!(modal.nav.column_lengths.len(), 5);
-    assert_eq!(modal.nav.column_lengths[4], 11);
+    // 1. Verify 4 tabs and tab 3 is "GAMEPLAY"
+    assert_eq!(modal.tab_bar.tabs.len(), 4);
+    assert_eq!(modal.tab_bar.tabs[3], "GAMEPLAY");
+    assert_eq!(modal.nav.column_lengths.len(), 4);
+    assert_eq!(modal.gameplay_sub_tab, 0); // General
+    assert_eq!(modal.nav.column_lengths[3], 6);
 
-    // 2. Verify default state matches HelpersSettingsState::default()
+    // 2. Switch to VISUAL AIDS subtab and verify 12 rows
+    modal.switch_gameplay_subtab(1);
+    assert_eq!(modal.gameplay_sub_tab, 1);
+    assert_eq!(modal.nav.column_lengths[3], 12);
+
+    // 3. Verify default state matches HelpersSettingsState::default() and Full preset
     let def_helpers = HelpersSettingsState::default();
     assert_eq!(modal.helpers_state(), def_helpers);
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 0); // Full
     assert!(def_helpers.radar_sonar_ping);
     assert!(!modal.has_changes());
 
-    // 3. Mutate aura glow radius and brightness
+    // 4. Test presets: Minimal (1) and Off (2)
+    modal.apply_visual_aids_preset(1); // Minimal
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 1);
+    assert!(!modal.helpers_state().aura_enabled);
+    assert!(modal.helpers_state().ribbon_enabled);
+    assert!((modal.helpers_state().ribbon_scale - 0.80).abs() < 1e-4);
+
+    modal.apply_visual_aids_preset(2); // Off
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 2);
+    assert!(!modal.helpers_state().aura_enabled);
+    assert!(!modal.helpers_state().ribbon_enabled);
+    assert!(!modal.helpers_state().chevron_enabled);
+
+    modal.apply_visual_aids_preset(0); // Restore Full
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 0);
+    assert_eq!(modal.helpers_state(), def_helpers);
+
+    // 5. Mutate aura glow radius and brightness -> switches preset to Custom (3)
     modal.aura_ratio_slider.set_value(0.65);
+    modal.sync_preset_from_helpers();
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 3); // Custom
     assert!(modal.has_changes());
     modal.aura_brightness_slider.set_value(1.80);
     assert!((modal.helpers_state().aura_ratio - 0.65).abs() < 1e-4);

@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::CarConfig;
+use cabinet::input::SteeringProfile;
 use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
 
@@ -128,16 +129,20 @@ impl Default for CameraConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct InputConfig {
+    /// Active steering profile preset (Direct, Balanced, Smooth).
+    pub steering_profile: SteeringProfile,
     /// Steering rise rate in units/second.
     pub steer_rise_rate: f32,
     /// Steering return to center rate in units/second.
     pub steer_return_rate: f32,
-    /// Non-linear steering exponent (e.g. 1.35 for fine micro-corrections near center).
+    /// Non-linear steering exponent (e.g. 1.25 for fine micro-corrections near center).
     pub steer_exponent: f32,
     /// Speed-sensitive steering attenuation factor.
     pub speed_sensitive_factor: f32,
     /// Minimum steering lock allowed at maximum vehicle speed.
     pub min_speed_steer_limit: f32,
+    /// Rate at which sustained turn-key hold bleeds off speed attenuation towards 1.0 full lock (units/sec).
+    pub hold_bleed_rate: f32,
     /// Throttle rise rate in units/second.
     pub throttle_rise_rate: f32,
     /// Brake rise rate in units/second.
@@ -146,14 +151,17 @@ pub struct InputConfig {
 
 impl Default for InputConfig {
     fn default() -> Self {
+        let preset = cabinet::input::DigitalInputConfig::from_profile(SteeringProfile::Balanced);
         Self {
-            steer_rise_rate: 6.0,
-            steer_return_rate: 10.0,
-            steer_exponent: 1.35,
-            speed_sensitive_factor: 0.018,
-            min_speed_steer_limit: 0.38,
-            throttle_rise_rate: 10.0,
-            brake_rise_rate: 6.5,
+            steering_profile: SteeringProfile::Balanced,
+            steer_rise_rate: preset.steer_rise_rate,
+            steer_return_rate: preset.steer_return_rate,
+            steer_exponent: preset.steer_exponent,
+            speed_sensitive_factor: preset.speed_sensitive_factor,
+            min_speed_steer_limit: preset.min_speed_steer_limit,
+            hold_bleed_rate: preset.hold_bleed_rate,
+            throttle_rise_rate: preset.throttle_rise_rate,
+            brake_rise_rate: preset.brake_rise_rate,
         }
     }
 }

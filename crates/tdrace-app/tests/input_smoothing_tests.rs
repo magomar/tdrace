@@ -33,31 +33,66 @@ fn test_digital_input_filter_progressive_rise_and_centering() {
 
 #[test]
 fn test_speed_sensitive_steering_scaling() {
-    let mut filter = DigitalInputFilter::default();
     let dt = 1.0 / 60.0;
 
     // Saturated steering at standstill (0 km/h) -> scale = 1.0
-    for _ in 0..40 {
-        filter.update(1.0, 0.0, 0.0, 0.0, dt);
+    let mut filter_0 = DigitalInputFilter::default();
+    for _ in 0..25 {
+        filter_0.update(1.0, 0.0, 0.0, 0.0, dt);
     }
-    let (steer_0, _, _) = filter.update(1.0, 0.0, 0.0, 0.0, dt);
+    let (steer_0, _, _) = filter_0.update(1.0, 0.0, 0.0, 0.0, dt);
     assert_eq!(steer_0, 1.0, "Standstill steering must have full 1.0 lock");
 
-    // Saturated steering at 30 m/s (~108 km/h) -> scale is responsive (~0.87)
-    let mut filter_med = DigitalInputFilter::default();
-    for _ in 0..40 {
-        filter_med.update(1.0, 0.0, 0.0, 30.0, dt);
+    // Quick initial steer (6 frames at 60Hz = 100ms) at 30 m/s (~108 km/h)
+    // is attenuated by base speed factor for stability
+    let mut filter_quick = DigitalInputFilter::default();
+    let mut quick_steer = 0.0;
+    for _ in 0..6 {
+        let (s, _, _) = filter_quick.update(1.0, 0.0, 0.0, 30.0, dt);
+        quick_steer = s;
     }
-    let (steer_med, _, _) = filter_med.update(1.0, 0.0, 0.0, 30.0, dt);
-    assert!(steer_med < 0.95 && steer_med > 0.80, "Medium speed steer was {steer_med}");
+    assert!(
+        quick_steer < 0.75 && quick_steer > 0.40,
+        "Initial high-speed turn response should be smoothed for stability, was {quick_steer}"
+    );
 
-    // Saturated steering at 60 m/s (~216 km/h) -> scale maintains high turning authority (~0.77)
-    let mut filter_high = DigitalInputFilter::default();
-    for _ in 0..40 {
-        filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
+    // Sustained key hold (30+ frames = >0.5s) bleeds off attenuation to 1.0 full lock
+    let mut filter_hold = DigitalInputFilter::default();
+    for _ in 0..30 {
+        filter_hold.update(1.0, 0.0, 0.0, 30.0, dt);
     }
-    let (steer_high, _, _) = filter_high.update(1.0, 0.0, 0.0, 60.0, dt);
-    assert!(steer_high < 0.90 && steer_high >= 0.70, "High speed steer was {steer_high}");
+    let (steer_held, _, _) = filter_hold.update(1.0, 0.0, 0.0, 30.0, dt);
+    assert!(
+        (steer_held - 1.0).abs() < 1e-3,
+        "Sustained key hold at speed must bleed to 1.0 full lock, was {steer_held}"
+    );
+}
+
+#[test]
+fn test_steering_profiles_configuration_and_cycling() {
+    use tdrace_app::input::SteeringProfile;
+
+    // Direct profile: instant 1.0 rise and no speed attenuation
+    let direct_cfg = DigitalInputConfig::from_profile(SteeringProfile::Direct);
+    assert_eq!(direct_cfg.steer_exponent, 1.0);
+    assert_eq!(direct_cfg.speed_sensitive_factor, 0.0);
+    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
+
+    // Balanced profile: recommended default
+    let balanced_cfg = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
+    assert_eq!(balanced_cfg.profile, SteeringProfile::Balanced);
+    assert_eq!(balanced_cfg.min_speed_steer_limit, 0.75);
+    assert_eq!(balanced_cfg.hold_bleed_rate, 2.5);
+
+    // Smooth profile: softer arcade
+    let smooth_cfg = DigitalInputConfig::from_profile(SteeringProfile::Smooth);
+    assert_eq!(smooth_cfg.profile, SteeringProfile::Smooth);
+    assert!(smooth_cfg.steer_exponent > balanced_cfg.steer_exponent);
+
+    // Cycling: Balanced -> Smooth -> Direct -> Balanced
+    assert_eq!(SteeringProfile::Balanced.cycle(), SteeringProfile::Smooth);
+    assert_eq!(SteeringProfile::Smooth.cycle(), SteeringProfile::Direct);
+    assert_eq!(SteeringProfile::Direct.cycle(), SteeringProfile::Balanced);
 }
 
 

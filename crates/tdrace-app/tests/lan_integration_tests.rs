@@ -140,6 +140,7 @@ fn test_lan_launch_session_and_nameplates() {
 #[test]
 fn test_lan_client_perspective_targeting_and_helpers() {
     let mut session = RaceSession::new();
+    session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
 
     use tdrace_core::physics::config::AssistProfile;
 

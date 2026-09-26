@@ -644,7 +644,7 @@ fn apply_differential_rotational_coupling(
             // Retain 100% full lock at low speed (<= 3.5 m/s ~ 12.6 km/h) for tight hairpins and pit maneuvers.
             // Progressively attenuate at racing speeds so high-speed steering inputs do not cause front tire scrub stall.
             let speed_above_hairpin = (self.state.speed - 3.5).max(0.0);
-            1.0 + speed_above_hairpin * self.config.speed_sensitive_steer_factor.max(0.025)
+            1.0 + speed_above_hairpin * self.config.speed_sensitive_steer_factor.max(0.020)
         } else {
             1.0 + self.state.speed * self.config.speed_sensitive_steer_factor
         };

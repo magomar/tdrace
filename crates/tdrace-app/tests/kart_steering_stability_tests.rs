@@ -184,3 +184,46 @@ fn test_digital_keyboard_progressive_steering_modulation() {
         center_steer
     );
 }
+
+/// Scenario: High-speed sustained keyboard hold achieves full turning authority (Spec 039)
+///
+/// Given a competition kart traveling at high speed (25 m/s ~ 90 km/h)
+/// When the driver holds full steering lock for > 0.35 seconds
+/// Then the filtered steering output reaches >= 0.95 (full authority)
+/// And the vehicle generates > 12.0 m/s^2 lateral acceleration without suffocated turning
+#[test]
+fn test_high_speed_sustained_key_hold_achieves_full_turning_authority() {
+    let mut car = Car::new(ClassicGameModule::car_classic_kart());
+    car.set_velocity(Vec2::new(25.0, 0.0));
+    let mut filter = DigitalInputFilter::default();
+    let dt = 1.0 / 60.0;
+
+    // Hold full steer right with throttle for 25 frames (~0.42 seconds)
+    let mut final_steer = 0.0;
+    for _ in 0..25 {
+        let (steer, throttle, _) = filter.update(1.0, 1.0, 0.0, car.state().speed, dt);
+        final_steer = steer;
+        let ctrl = CarControls::new(throttle, steer, 0.0, false);
+        car.step(&ctrl, SurfaceType::Asphalt, dt);
+    }
+
+    assert!(
+        final_steer >= 0.95,
+        "Sustained key hold at speed must bleed to >= 0.95 full lock, got {:.3}",
+        final_steer
+    );
+
+    let speed = car.state().speed;
+    let yaw_rate = car.state().angular_velocity.abs();
+    let lat_accel = speed * yaw_rate;
+    println!(
+        "High-speed held turn: speed={:.1} km/h, yaw={:.2} rad/s, lat_accel={:.2} m/s^2, steer={:.3}",
+        speed * 3.6, yaw_rate, lat_accel, final_steer
+    );
+
+    assert!(
+        lat_accel > 12.0,
+        "Vehicle must achieve substantial cornering acceleration (> 12 m/s^2), was {:.2}",
+        lat_accel
+    );
+}

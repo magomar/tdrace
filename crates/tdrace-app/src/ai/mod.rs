@@ -435,6 +435,7 @@ pub struct BotAiDriver {
     pub stuck_timer: f32,
     pub reverse_recovery_timer: f32,
     pub last_pos: Option<Vec2>,
+    pub total_distance_travelled: f32,
 }
 
 impl BotAiDriver {
@@ -448,6 +449,7 @@ impl BotAiDriver {
             stuck_timer: 0.0,
             reverse_recovery_timer: 0.0,
             last_pos: None,
+            total_distance_travelled: 0.0,
         }
     }
 
@@ -525,15 +527,19 @@ impl BotAiDriver {
             1.0
         };
         self.last_pos = Some(car_pos);
+        self.total_distance_travelled += car_speed * dt;
 
         let car_alignment = car_fwd.dot(proj.tangent);
         let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2) || (car_alignment < -0.35 && car_speed < 1.5);
-        if moved_dist < (1.2 * dt) && is_stuck_situation {
+        if self.total_distance_travelled > 15.0 && moved_dist < (1.2 * dt) && is_stuck_situation {
             self.stuck_timer += dt;
             if self.stuck_timer > 0.8 {
                 self.stuck_timer = 0.0;
                 self.reverse_recovery_timer = 1.0;
             }
+        } else if self.total_distance_travelled <= 15.0 {
+            self.stuck_timer = 0.0;
+            self.reverse_recovery_timer = 0.0;
         } else {
             self.stuck_timer = (self.stuck_timer - dt * 2.0).max(0.0);
         }

@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom build-portals build-wiki build-showroom ingest-assets verify-okf
+.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-windows package-windows build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom build-portals build-wiki build-showroom ingest-assets verify-okf
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -130,6 +130,12 @@ build-web: ## Build WebAssembly distribution for web browsers
 serve-web: build-web ## Start a local web server to play the WASM build in browser (port 8080)
 	@echo -e "$(GREEN)🌐 Serving WebAssembly game at http://localhost:8080 (Ctrl+C to stop)...$(RESET)"
 	@(cd web/dist && python3 -m http.server 8080)
+
+build-windows: ## Build Windows x86_64 executable and package into standalone zip with assets
+	@echo -e "$(CYAN)🪟 Building and packaging Windows distribution...$(RESET)"
+	./scripts/package_windows.sh $(if $(EXTRA_ARGS),$(EXTRA_ARGS),release)
+
+package-windows: build-windows ## Alias for build-windows
 
 build-android: ## Build Android APK / native library bundle
 	@echo -e "$(CYAN)📱 Building Android package...$(RESET)"

@@ -58,3 +58,16 @@ serve-web: build-web
     @echo "🌐 Serving WebAssembly game at http://localhost:8080 (Ctrl+C to stop)..."
     cd web/dist && python3 -m http.server 8080
 
+# ------------------------------------------------------------------------------
+# 📦 Windows Desktop Distribution
+# ------------------------------------------------------------------------------
+
+# Build Windows x86_64 executable and package into standalone zip with assets
+build-windows MODE="release":
+    @echo "🪟 Building and packaging Windows distribution ({{MODE}})..."
+    ./scripts/package_windows.sh {{MODE}}
+
+# Alias for build-windows
+package-windows: (build-windows "release")
+
+

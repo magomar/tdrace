@@ -217,6 +217,7 @@ make bench
 
 ## 📱 Cross-Platform Builds
 
+- **Windows Standalone**: `make build-windows` or `./scripts/package_windows.sh` (builds `tdrace-app.exe` and packages `dist/tdrace-windows-x86_64.zip` with all assets, tracks, and launcher scripts)
 - **WebAssembly**: `./web/build_web.sh` (produces a standalone 660KB WASM bundle in `web/dist/`)
 - **Android**: `./mobile/android/build_android.sh` (builds `arm64-v8a` / `x86_64` `.so` and Gradle project)
 - **iOS**: `./mobile/ios/build_ios.sh` (builds universal static framework for iOS Device and Simulator)

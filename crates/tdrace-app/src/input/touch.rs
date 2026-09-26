@@ -4,17 +4,47 @@ use macroquad::input::{is_mouse_button_down, mouse_position, touches, MouseButto
 
 #[inline]
 fn touches_safe() -> Vec<macroquad::input::Touch> {
-    std::panic::catch_unwind(touches).unwrap_or_default()
+    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return Vec::new();
+    }
+    match std::panic::catch_unwind(touches) {
+        Ok(t) => t,
+        Err(_) => {
+            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            Vec::new()
+        }
+    }
 }
 
 #[inline]
 fn mouse_position_safe() -> (f32, f32) {
-    std::panic::catch_unwind(mouse_position).unwrap_or((0.0, 0.0))
+    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return (0.0, 0.0);
+    }
+    match std::panic::catch_unwind(mouse_position) {
+        Ok(pos) => pos,
+        Err(_) => {
+            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            (0.0, 0.0)
+        }
+    }
 }
 
 #[inline]
 fn is_mouse_button_down_safe(btn: MouseButton) -> bool {
-    std::panic::catch_unwind(|| is_mouse_button_down(btn)).unwrap_or(false)
+    static AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+    if !AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| is_mouse_button_down(btn)) {
+        Ok(down) => down,
+        Err(_) => {
+            AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
 use serde::{Deserialize, Serialize};

@@ -10,7 +10,7 @@ use super::scaler::UiScaler;
 use crate::audio::{AudioSettings, EngineSoundType};
 use crate::game::XpAwardReceipt;
 use crate::render::color::{CarColorScheme, Palette};
-use cabinet::input::GamepadSnapshot;
+use cabinet::input::{GamepadSnapshot, SteeringProfile};
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
@@ -2276,6 +2276,7 @@ pub fn render_controls_screen(
     gamepad_name: &str,
     input_map: &cabinet::input::InputMap,
     preset_name: &str,
+    steering_profile: SteeringProfile,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2342,6 +2343,8 @@ pub fn render_controls_screen(
     let handbrake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Action3);
 
     let kb_rows = [
+        ("Steering Smoothing", steering_profile.name()),
+        ("Cycle Steering Profile", "S / P"),
         ("Accelerate / Gas", throttle_label.as_str()),
         ("Brake / Reverse (at stop)", brake_label.as_str()),
         ("Steer Left / Right", steer_label.as_str()),
@@ -2356,12 +2359,12 @@ pub fn render_controls_screen(
         ("Audio Mute / Volume", "M / [ and ]"),
     ];
 
-    let mut row_y = col_y + scaler.s(52.0);
+    let mut row_y = col_y + scaler.s(48.0);
     for (action, key) in &kb_rows {
-        fonts.draw_ui_regular(action, col1_x + scaler.s(16.0), row_y, scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
-        let km = fonts.measure_ui_bold(key, scaler.font_s(13.0));
-        fonts.draw_ui_bold(key, col1_x + col_w - km.width - scaler.s(16.0), row_y, scaler.font_s(13.0), Palette::NEON_GOLD);
-        row_y += scaler.s(20.0);
+        fonts.draw_ui_regular(action, col1_x + scaler.s(16.0), row_y, scaler.font_s(12.5), Color::new(0.80, 0.85, 0.92, 1.0));
+        let km = fonts.measure_ui_bold(key, scaler.font_s(12.5));
+        fonts.draw_ui_bold(key, col1_x + col_w - km.width - scaler.s(16.0), row_y, scaler.font_s(12.5), Palette::NEON_GOLD);
+        row_y += scaler.s(18.5);
     }
 
     // Right Column: Gamepad Controls
@@ -2406,7 +2409,7 @@ pub fn render_controls_screen(
     fonts.draw_ui_regular("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
-    let back_prompt = "PRESS [TAB / C] CYCLE PRESET  •  [H / R3] ASSISTS  •  [ESC / K / SPACE] RETURN";
+    let back_prompt = "PRESS [TAB / C] KEY PRESET  •  [S / P] STEERING PROFILE  •  [H / R3] ASSISTS  •  [ESC / SPACE] RETURN";
     fonts.draw_ui_bold_centered(
         back_prompt,
         sw * 0.5,

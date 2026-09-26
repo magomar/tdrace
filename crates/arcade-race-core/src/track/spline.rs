@@ -943,6 +943,22 @@ impl TrackSpline {
         let s0 = &self.samples[best_sample_idx];
         let s1 = &self.samples[(best_sample_idx + 1).min(self.samples.len() - 1)];
 
+        let track_width = s0.width + (s1.width - s0.width) * best_t;
+        let half_w = track_width * 0.5;
+
+        // Continuity Plausibility Guard:
+        // If the best candidate found in the continuity window is outside the track corridor
+        // (beyond track boundary + curb width), verify whether a global projection finds a
+        // closer point on the circuit. This catches uninitialized trackers, grid placements,
+        // teleports, or window search discontinuities without sacrificing continuity on valid off-track slides.
+        let corridor_limit = half_w + Self::DEFAULT_CURB_WIDTH;
+        if best_dist_sq > corridor_limit * corridor_limit {
+            let full = self.project_point(pos);
+            if full.distance_to_spline * full.distance_to_spline < best_dist_sq {
+                return full;
+            }
+        }
+
         let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
         let normal = Vec2::new(-tangent.y, tangent.x);
         let right_vector = Vec2::new(tangent.y, -tangent.x);
@@ -950,8 +966,6 @@ impl TrackSpline {
         let to_pos = pos - best_point;
         let lateral_offset = to_pos.dot(right_vector);
         let distance_to_spline = best_dist_sq.sqrt();
-
-        let track_width = s0.width + (s1.width - s0.width) * best_t;
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
         let right_curb = if best_t < 0.5 { s0.right_curb } else { s1.right_curb };
         let elevation = (s0.elevation + (s1.elevation - s0.elevation) * best_t).max(0.0);
@@ -960,7 +974,6 @@ impl TrackSpline {
         let vertical_curvature = s0.vertical_curvature + (s1.vertical_curvature - s0.vertical_curvature) * best_t;
         let is_bridge = if best_t < 0.5 { s0.is_bridge } else { s1.is_bridge };
 
-        let half_w = track_width * 0.5;
         let is_on_track = lateral_offset.abs() <= half_w;
 
         let is_on_left_curb = left_curb

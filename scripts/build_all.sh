@@ -19,6 +19,7 @@ RESET="\033[0m"
 
 BUILD_MODE="release"
 BUILD_DESKTOP=0
+BUILD_WINDOWS=0
 BUILD_ANDROID=0
 BUILD_IOS=0
 BUILD_WEB=0
@@ -32,8 +33,9 @@ Usage:
   ./scripts/build_all.sh [options]
 
 Options:
-  --all            Build all platforms (Desktop, Web, Android, iOS)
+  --all            Build all platforms (Desktop, Windows, Web, Android, iOS)
   --desktop        Build Native Desktop executable (Linux/macOS/Windows)
+  --windows        Build & Package Windows x86_64 Standalone ZIP
   --web            Build WebAssembly HTML5 client
   --android        Build Android native libraries & APK structure
   --ios            Build iOS native libraries / framework
@@ -44,6 +46,7 @@ Options:
 
 Examples:
   ./scripts/build_all.sh --desktop --web
+  ./scripts/build_all.sh --windows
   ./scripts/build_all.sh --all --release
 EOF
 }
@@ -63,6 +66,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --desktop)
             BUILD_DESKTOP=1
+            shift
+            ;;
+        --windows)
+            BUILD_WINDOWS=1
             shift
             ;;
         --web)
@@ -132,7 +139,25 @@ if [ "${BUILD_DESKTOP}" -eq 1 ]; then
     fi
 fi
 
-# 2. Web (WASM) Build
+# 2. Windows x86_64 Build & Package
+if [ "${BUILD_WINDOWS}" -eq 1 ]; then
+    echo -e "\n${BOLD}🪟  Building Windows Package...${RESET}"
+    if [ "${CHECK_ONLY}" -eq 1 ]; then
+        if "${ROOT_DIR}/scripts/package_windows.sh" --check; then
+            RESULTS+=("${GREEN}✓ Windows (Check): PASSED${RESET}")
+        else
+            RESULTS+=("${RED}✗ Windows (Check): FAILED${RESET}")
+        fi
+    else
+        if "${ROOT_DIR}/scripts/package_windows.sh" "--${BUILD_MODE}"; then
+            RESULTS+=("${GREEN}✓ Windows Bundle: dist/tdrace-windows-x86_64.zip${RESET}")
+        else
+            RESULTS+=("${RED}✗ Windows Build: FAILED${RESET}")
+        fi
+    fi
+fi
+
+# 3. Web (WASM) Build
 if [ "${BUILD_WEB}" -eq 1 ]; then
     echo -e "\n${BOLD}🌐 Building WebAssembly Target...${RESET}"
     if [ "${CHECK_ONLY}" -eq 1 ]; then
