@@ -260,3 +260,50 @@ fn test_assists_execution_performance_benchmark() {
         "Physics with assists must execute at least 100,000 steps/sec (got {steps_per_sec:.0})"
     );
 }
+
+#[test]
+fn test_reverse_handbrake_decelerates_and_locks_wheels_and_allows_slides() {
+    let dt = 1.0 / 60.0;
+    let mut car = Car::new(CarConfig::sports_car());
+
+    // 1. Build reverse speed
+    let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
+    ctrl_rev.reverse = true;
+    for _ in 0..120 {
+        car.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+    }
+    assert!(car.speed_kmh() > 20.0, "Car must achieve reverse speed, was {:.1} km/h", car.speed_kmh());
+
+    // 2. Engage handbrake while reversing
+    let mut ctrl_hb = CarControls::new(0.0, 0.0, 0.0, true);
+    ctrl_hb.reverse = true;
+    let mut locked = false;
+    for _ in 0..180 {
+        car.step(&ctrl_hb, SurfaceType::Asphalt, dt);
+        if car.state.wheels[2].is_locked && car.state.wheels[3].is_locked {
+            locked = true;
+        }
+    }
+    assert!(locked, "Handbrake in reverse must lock the rear wheels");
+    assert_eq!(car.state.speed, 0.0, "Handbrake in reverse must bring the car to a full stop");
+
+    // 3. Reverse handbrake J-turn / slide initiation
+    let mut car_slide = Car::new(CarConfig::sports_car());
+    for _ in 0..120 {
+        car_slide.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+    }
+
+    let mut ctrl_hb_slide = CarControls::new(0.8, 1.0, 0.0, true);
+    ctrl_hb_slide.reverse = true;
+    let mut entered_drift = false;
+    for _ in 0..60 {
+        car_slide.step(&ctrl_hb_slide, SurfaceType::Asphalt, dt);
+        if car_slide.state.is_drifting {
+            entered_drift = true;
+        }
+    }
+    assert!(
+        entered_drift,
+        "Handbrake with steering in reverse must initiate intentional drift despite active driver assists"
+    );
+}

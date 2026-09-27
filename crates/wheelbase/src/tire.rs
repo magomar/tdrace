@@ -349,25 +349,38 @@ impl WheelAssembly {
         // Road grip torque capability
         let road_grip_torque = fx.abs() * r;
 
-        if drive_torque > road_grip_torque {
-            // Forward wheelspin: drive torque exceeds road traction
-            let excess_torque = drive_torque - road_grip_torque;
+        // Net torque evaluation when both drive and braking are applied:
+        // Drive torque accelerates the wheel (positive forward, negative reverse).
+        // Brake torque magnitude opposes rotation / drive torque.
+        let (net_fwd_drive, net_rev_drive, net_brake) = if drive_torque >= 0.0 {
+            let fwd = (drive_torque - brake_torque).max(0.0);
+            let brk = (brake_torque - drive_torque).max(0.0);
+            (fwd, 0.0, brk)
+        } else {
+            let rev = (-drive_torque - brake_torque).max(0.0);
+            let brk = (brake_torque - (-drive_torque)).max(0.0);
+            (0.0, rev, brk)
+        };
+
+        if net_fwd_drive > road_grip_torque {
+            // Forward wheelspin: drive torque exceeds brake hold and road traction
+            let excess_torque = net_fwd_drive - road_grip_torque;
             let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
             self.angular_velocity += angular_accel * dt;
-        } else if drive_torque < -road_grip_torque {
-            // Reverse wheelspin: reverse drive torque exceeds road traction
-            let excess_torque = (-drive_torque) - road_grip_torque;
+        } else if net_rev_drive > road_grip_torque {
+            // Reverse wheelspin: reverse drive torque exceeds brake hold and road traction
+            let excess_torque = net_rev_drive - road_grip_torque;
             let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
             self.angular_velocity -= angular_accel * dt;
-        } else if brake_torque > road_grip_torque {
-            // Over-braking: brake torque exceeds available road traction -> decelerate towards lockup
+        } else if net_brake > road_grip_torque {
+            // Over-braking: net brake torque exceeds available road traction -> decelerate towards lockup
             // As tire slips heavily (|omega| < 0.6 * |target_omega|), dynamic slide friction drops road spinup resistance
             let effective_road_grip = if self.angular_velocity.abs() < target_omega.abs() * 0.6 {
                 road_grip_torque * 0.60
             } else {
                 road_grip_torque
             };
-            let excess_torque = brake_torque - effective_road_grip;
+            let excess_torque = net_brake - effective_road_grip;
             let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
             if v_long >= 0.0 {
                 self.angular_velocity = (self.angular_velocity - angular_accel * dt).clamp(0.0, target_omega);
@@ -376,8 +389,8 @@ impl WheelAssembly {
             }
         } else if (self.angular_velocity - target_omega).abs() > (target_omega.abs() * 0.05).max(0.5) {
             // Spin recovery (from wheelspin or lockup): road grip restores synchronous rolling
-            let recovery_torque = if brake_torque > 0.0 {
-                (road_grip_torque - brake_torque).max(3500.0)
+            let recovery_torque = if net_brake > 0.0 {
+                (road_grip_torque - net_brake).max(3500.0)
             } else if drive_torque.abs() > 0.0 {
                 (road_grip_torque - drive_torque.abs()).max(2000.0)
             } else {

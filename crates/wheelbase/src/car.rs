@@ -1075,7 +1075,7 @@ fn apply_differential_rotational_coupling(
             }
 
             // Anti-lock Braking System (ABS) & Cornering Brake Control (CBC)
-            if self.config.assists.abs_enabled && w_v_long.abs() > 0.5 {
+            if self.config.assists.abs_enabled && !is_handbraking_wheel && w_v_long.abs() > 0.5 {
                 let is_cornering = wheel_steer_angles[i].abs() > 0.01
                     || clamped_ctrl.steer.abs() > 0.02
                     || self.state.sideslip_angle.abs() > 0.02
@@ -1139,13 +1139,23 @@ fn apply_differential_rotational_coupling(
 
             let total_retard_force = wheel_brake_force + engine_retard_force;
             let total_brake_torque = total_retard_force * r;
-            let brake_dir = if w_v_long.abs() > 0.1 {
+            let brake_dir = if w_v_long.abs() > 0.05 {
                 -w_v_long.signum()
-            } else {
+            } else if v_long.abs() > 0.05 {
                 -v_long.signum()
+            } else {
+                0.0
             };
 
-            let mut fx_demand = wheel_drive_force + total_retard_force * brake_dir;
+            let mut fx_demand = if brake_dir.abs() > 0.0 {
+                wheel_drive_force + total_retard_force * brake_dir
+            } else if wheel_drive_force.abs() <= total_retard_force {
+                // Static brake hold balances drive force completely
+                0.0
+            } else {
+                // Drive force overcomes static brake hold
+                wheel_drive_force - total_retard_force * wheel_drive_force.signum()
+            };
 
             // Rolling resistance opposes wheel forward motion
             let base_rr_mult = surf.rolling_resistance_multiplier();
@@ -1429,8 +1439,17 @@ fn apply_differential_rotational_coupling(
             grade_rad.abs() > 0.02
         };
         let on_steep_slope = on_steep_bank || on_steep_grade;
-        if self.state.speed < 0.05
-            && clamped_ctrl.throttle < 1e-3
+        let drive_force_mag = if clamped_ctrl.reverse {
+            clamped_ctrl.throttle * self.config.max_reverse_force
+        } else {
+            clamped_ctrl.throttle * self.config.max_engine_force
+        };
+        let brake_holding_mag = clamped_ctrl.brake * self.config.max_brake_force
+            + if clamped_ctrl.handbrake { self.config.handbrake_force } else { 0.0 };
+        let brakes_overpower_engine = is_holding_brakes && brake_holding_mag >= drive_force_mag;
+
+        if self.state.speed < 0.08
+            && (clamped_ctrl.throttle < 1e-3 || brakes_overpower_engine)
             && (is_holding_brakes || !on_steep_slope)
         {
             self.state.velocity = Vec2::ZERO;
@@ -2092,6 +2111,59 @@ mod tests {
             ice_racer.state.angular_velocity.abs(),
             unstudded.state.angular_velocity.abs()
         );
+    }
+
+    #[test]
+    fn test_reverse_handbrake() {
+        let mut car = Car::new(CarConfig::sports_car());
+        let dt = 1.0 / 60.0;
+        let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_rev.reverse = true;
+        for _ in 0..120 {
+            car.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+        }
+        let speed_before = car.state.local_velocity.x;
+        assert!(speed_before < -5.0, "Car should reach reverse speed before handbrake, was {:.2}", speed_before);
+
+        let mut ctrl_hb = CarControls::new(0.0, 0.0, 0.0, true);
+        ctrl_hb.reverse = true;
+        let mut locked_during_brake = false;
+        for _ in 0..180 {
+            car.step(&ctrl_hb, SurfaceType::Asphalt, dt);
+            if car.state.wheels[2].is_locked && car.state.wheels[3].is_locked {
+                locked_during_brake = true;
+            }
+        }
+        assert!(locked_during_brake, "Rear wheels must lock up when handbrake is engaged in reverse");
+        assert_eq!(car.state.speed, 0.0, "Handbrake must bring reversing car to a complete stop and hold it");
+        assert_eq!(car.state.wheels[2].longitudinal_force, 0.0, "Resting lock must eliminate longitudinal force when held");
+
+        // Test reverse handbrake turn with steering (J-turn / slide)
+        let mut car_rev_turn = Car::new(CarConfig::sports_car());
+        let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
+        ctrl_rev.reverse = true;
+        for _ in 0..120 {
+            car_rev_turn.step(&ctrl_rev, SurfaceType::Asphalt, dt);
+        }
+
+        let mut ctrl_hb_turn = CarControls::new(0.8, 1.0, 0.0, true);
+        ctrl_hb_turn.reverse = true;
+        let mut entered_drift = false;
+        let mut max_yaw: f32 = 0.0;
+        let mut max_sideslip: f32 = 0.0;
+        for _ in 0..60 {
+            car_rev_turn.step(&ctrl_hb_turn, SurfaceType::Asphalt, dt);
+            let yaw = car_rev_turn.state.angular_velocity.abs();
+            let ss = car_rev_turn.state.sideslip_angle.abs();
+            max_yaw = max_yaw.max(yaw);
+            max_sideslip = max_sideslip.max(ss);
+            if car_rev_turn.state.is_drifting {
+                entered_drift = true;
+            }
+        }
+        assert!(entered_drift, "Steering with handbrake in reverse must initiate drift state");
+        assert!(max_yaw > 1.0, "Reverse handbrake turn must generate high yaw rate, got {:.2} rad/s", max_yaw);
+        assert!(max_sideslip > 0.4, "Reverse handbrake turn must generate high sideslip, got {:.2} rad", max_sideslip);
     }
 }
 
