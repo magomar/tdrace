@@ -786,64 +786,85 @@ fn test_arcade_settings_modal_arrow_category_navigation() {
     assert!(modal.is_tab_focused);
     assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
 
-    // 4. Press Down Arrow -> Steps down from Tab Bar into category settings (row 0)
+    // 4. Press Down Arrow -> Steps down from Tab Bar into Controls Subtab Bar
     let mut gp_down = GamepadSnapshot::default();
     gp_down.nav_down = true;
     ctx.gamepad = &gp_down;
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
-    assert_eq!(modal.nav.active_row(), 0);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
 
-    // 5. Press Down Arrow again -> Moves to row 1 (trigger deadzone)
+    // 5. Press Down Arrow again -> Steps down from Subtab Bar into category settings (row 0)
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
+    assert_eq!(modal.nav.active_row(), 0);
+
+    // 6. Press Down Arrow again -> Moves to row 1 (speed sensitive switch)
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
     assert_eq!(modal.nav.active_row(), 1);
 
-    // 6. Press Up Arrow -> Moves back to row 0
+    // 7. Press Up Arrow -> Moves back to row 0
     let mut gp_up = GamepadSnapshot::default();
     gp_up.nav_up = true;
     ctx.gamepad = &gp_up;
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
     assert_eq!(modal.nav.active_row(), 0);
 
-    // 7. Press Up Arrow from row 0 -> Moves focus back up to the Tab Bar!
-    modal.update(&mut ctx);
-    assert!(modal.is_tab_focused);
-    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
-
-    // 8. Press Up Arrow from Tab Bar -> Wraps to bottom action buttons
+    // 8. Press Up Arrow from row 0 -> Moves focus back up to the Subtab Bar!
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
-    assert_eq!(modal.nav.active_row(), 7); // Last row in Controls column (len 8)
+    assert!(modal.is_subtab_focused);
+
+    // 9. Press Up Arrow from Subtab Bar -> Moves focus back up to Main Tab Bar!
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
+
+    // 10. Press Up Arrow from Tab Bar -> Wraps to bottom action buttons
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert_eq!(modal.nav.active_row(), 6); // Last row in Controls Subtab 0 column (len 7)
     assert_eq!(modal.selected_bottom_btn, 1); // Defaults to Save & Close
 
-    // 9. Press Left Arrow on bottom row -> Selects Restore Defaults (btn 0)
+    // 11. Press Left Arrow on bottom row -> Selects Restore Defaults (btn 0)
     ctx.gamepad = &gp_left;
     modal.update(&mut ctx);
     assert_eq!(modal.selected_bottom_btn, 0);
 
-    // 10. Press Right Arrow on bottom row -> Selects Save & Close (btn 1)
+    // 12. Press Right Arrow on bottom row -> Selects Save & Close (btn 1)
     ctx.gamepad = &gp_right;
     modal.update(&mut ctx);
     assert_eq!(modal.selected_bottom_btn, 1);
 
-    // 11. Press Down Arrow from bottom row -> Wraps back up to Tab Bar!
+    // 13. Press Down Arrow from bottom row -> Wraps back up to Tab Bar!
     ctx.gamepad = &gp_down;
     modal.update(&mut ctx);
     assert!(modal.is_tab_focused);
     assert_eq!(modal.tab_bar.active_tab_name(), "CONTROLS");
 
-    // 12. Press Confirm (Enter/Space/A) on Tab Bar -> Steps into settings (row 0)
+    // 14. Press Confirm (Enter/Space/A) on Tab Bar -> Steps into Subtab Bar
     let mut gp_confirm = GamepadSnapshot::default();
     gp_confirm.btn_confirm_pressed = true;
     ctx.gamepad = &gp_confirm;
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
+    assert!(modal.is_subtab_focused);
+
+    // 15. Press Confirm on Subtab Bar -> Steps into settings (row 0)
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
     assert_eq!(modal.nav.active_row(), 0);
 
-    // 13. Move directly to bottom buttons and confirm save
-    modal.nav.set_focus(1, 7);
+    // 16. Move directly to bottom buttons and confirm save
+    modal.nav.set_focus(1, 6);
     modal.selected_bottom_btn = 1;
     ctx.gamepad = &gp_confirm;
     let pop_action = modal.update(&mut ctx);
@@ -1091,29 +1112,15 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     assert_eq!(modal.gameplay_sub_tab, 0); // Starts in General
     assert!(!modal.is_subtab_focused);
 
-    // 2. Press Right Arrow on GAMEPLAY category tab -> switches to VISUAL DRIVING AIDS subtab
+    // 2. Press Down Arrow from Main Tab Bar -> lands on Subtab Bar!
     let mut ctx = CabinetContext {
         scaler: &scaler,
         fonts: &fonts,
         theme: &theme,
-        gamepad: &gp_right,
+        gamepad: &gp_down,
         dt: 1.0 / 60.0,
         audio: None,
     };
-    modal.update(&mut ctx);
-    assert!(modal.is_tab_focused);
-    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
-    assert_eq!(modal.gameplay_sub_tab, 1); // Visual Aids view active
-
-    // 3. Press Left Arrow on GAMEPLAY category tab -> switches back to General
-    ctx.gamepad = &gp_left;
-    modal.update(&mut ctx);
-    assert!(modal.is_tab_focused);
-    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
-    assert_eq!(modal.gameplay_sub_tab, 0); // General view active
-
-    // 4. Press Down Arrow from Main Tab Bar -> lands on Subtab Bar!
-    ctx.gamepad = &gp_down;
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
     assert!(modal.is_subtab_focused);
@@ -1173,30 +1180,101 @@ fn test_arcade_settings_modal_controls_tab_widgets_and_rollback() {
     let mut modal = ArcadeSettingsModal::new(&audio, &gp);
 
     // Initial state
-    modal.set_input_filter_state(SteeringProfile::Balanced, 4.0, 0.75);
+    modal.set_input_filter_state(SteeringProfile::Balanced, true, 4.0, 0.75, 8.0, 0.004);
     modal.snapshot_initial();
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
+    assert!(modal.speed_sensitive_enabled());
     assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
     assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
+    assert!((modal.selected_steer_rise_rate() - 8.0).abs() < 1e-3);
+    assert!((modal.selected_speed_sensitive_factor() - 0.004).abs() < 1e-4);
     assert!(!modal.has_changes());
 
-    // Modify controls settings
+    // Modify controls settings (including new switch and rise/factor sliders)
     modal.steering_profile_dropdown.set_selected(1); // Smooth
+    modal.speed_sensitive_switch.set_selected(1); // Disabled
     modal.hold_bleed_rate_slider.set_value(6.5);
     modal.min_speed_steer_limit_slider.set_value(0.90);
+    modal.steer_rise_rate_slider.set_value(12.5);
+    modal.speed_sensitive_factor_slider.set_value(0.008);
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Smooth);
+    assert!(!modal.speed_sensitive_enabled());
     assert!((modal.selected_hold_bleed_rate() - 6.5).abs() < 1e-3);
     assert!((modal.selected_min_speed_steer_limit() - 0.90).abs() < 1e-3);
+    assert!((modal.selected_steer_rise_rate() - 12.5).abs() < 1e-3);
+    assert!((modal.selected_speed_sensitive_factor() - 0.008).abs() < 1e-4);
     assert!(modal.has_changes());
 
     // Cancel / Rollback to snapshot
     modal.revert_to_snapshot();
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
+    assert!(modal.speed_sensitive_enabled());
     assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
     assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
+    assert!((modal.selected_steer_rise_rate() - 8.0).abs() < 1e-3);
+    assert!((modal.selected_speed_sensitive_factor() - 0.004).abs() < 1e-4);
     assert!(!modal.has_changes());
+}
+
+#[test]
+fn test_arcade_settings_modal_controls_subtabs_navigation_and_profile_presets() {
+    use cabinet::input::SteeringProfile;
+
+    let audio = AudioSettings::default();
+    let gp = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp);
+
+    // Initial controls subtab is Keyboard & Filter (0) with 7 nav rows
+    assert_eq!(modal.controls_sub_tab, 0);
+    assert_eq!(modal.nav.column_lengths[1], 7);
+
+    // Switch to Gamepad subtab (1) with 5 nav rows
+    modal.switch_controls_subtab(1);
+    assert_eq!(modal.controls_sub_tab, 1);
+    assert_eq!(modal.nav.column_lengths[1], 5);
+
+    // Switch back to Keyboard & Filter
+    modal.switch_controls_subtab(0);
+    assert_eq!(modal.controls_sub_tab, 0);
+    assert_eq!(modal.nav.column_lengths[1], 7);
+
+    // Test profile preset population:
+    // 1. Direct (idx 3): Switch OFF, Limit 1.00, Bleed 8.0, Rise 12.0
+    let cfg_direct = SteeringProfile::Direct.to_config();
+    assert!(!cfg_direct.speed_sensitive_enabled);
+    assert_eq!(cfg_direct.min_speed_steer_limit, 1.0);
+    assert_eq!(cfg_direct.hold_bleed_rate, 8.0);
+    assert_eq!(cfg_direct.steer_rise_rate, 12.0);
+
+    // 2. Raw (idx 4): Switch OFF, Limit 1.00, Bleed 10.0, Rise 20.0
+    let cfg_raw = SteeringProfile::Raw.to_config();
+    assert!(!cfg_raw.speed_sensitive_enabled);
+    assert_eq!(cfg_raw.min_speed_steer_limit, 1.0);
+    assert_eq!(cfg_raw.hold_bleed_rate, 10.0);
+    assert_eq!(cfg_raw.steer_rise_rate, 20.0);
+
+    // 3. Agile (idx 2): Switch ON, Limit 0.80, Bleed 6.0, Rise 10.0
+    let cfg_agile = SteeringProfile::Agile.to_config();
+    assert!(cfg_agile.speed_sensitive_enabled);
+    assert_eq!(cfg_agile.min_speed_steer_limit, 0.80);
+    assert_eq!(cfg_agile.hold_bleed_rate, 6.0);
+    assert_eq!(cfg_agile.steer_rise_rate, 10.0);
+
+    // 4. Smooth (idx 1): Switch ON, Limit 0.60, Bleed 2.0, Rise 6.0
+    let cfg_smooth = SteeringProfile::Smooth.to_config();
+    assert!(cfg_smooth.speed_sensitive_enabled);
+    assert_eq!(cfg_smooth.min_speed_steer_limit, 0.60);
+    assert_eq!(cfg_smooth.hold_bleed_rate, 2.0);
+    assert_eq!(cfg_smooth.steer_rise_rate, 6.0);
+
+    // 5. Balanced (idx 0): Switch ON, Limit 0.75, Bleed 4.0, Rise 8.0
+    let cfg_balanced = SteeringProfile::Balanced.to_config();
+    assert!(cfg_balanced.speed_sensitive_enabled);
+    assert_eq!(cfg_balanced.min_speed_steer_limit, 0.75);
+    assert_eq!(cfg_balanced.hold_bleed_rate, 4.0);
+    assert_eq!(cfg_balanced.steer_rise_rate, 8.0);
 }
 

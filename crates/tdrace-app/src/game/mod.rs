@@ -1309,8 +1309,11 @@ impl RaceSession {
         modal.set_helpers_state(&helpers_state);
         modal.set_input_filter_state(
             self.input.filter.config.profile,
+            self.input.filter.config.speed_sensitive_enabled,
             self.input.filter.config.hold_bleed_rate,
             self.input.filter.config.min_speed_steer_limit,
+            self.input.filter.config.steer_rise_rate,
+            self.input.filter.config.speed_sensitive_factor,
         );
 
         modal.snapshot_initial();
@@ -1349,26 +1352,31 @@ impl RaceSession {
 
                 // Apply and persist input smoothing and progressive hold bleed settings
                 let chosen_profile = modal.selected_steering_profile();
+                let chosen_speed_sensitive_enabled = modal.speed_sensitive_enabled();
                 let chosen_bleed = modal.selected_hold_bleed_rate();
                 let chosen_limit = modal.selected_min_speed_steer_limit();
+                let chosen_rise = modal.selected_steer_rise_rate();
+                let chosen_factor = modal.selected_speed_sensitive_factor();
 
                 self.input.filter.config.profile = chosen_profile;
+                self.input.filter.config.speed_sensitive_enabled = chosen_speed_sensitive_enabled;
                 self.input.filter.config.hold_bleed_rate = chosen_bleed;
                 self.input.filter.config.min_speed_steer_limit = chosen_limit;
+                self.input.filter.config.steer_rise_rate = chosen_rise;
+                self.input.filter.config.speed_sensitive_factor = chosen_factor;
                 let base_cfg = chosen_profile.to_config();
-                self.input.filter.config.steer_rise_rate = base_cfg.steer_rise_rate;
                 self.input.filter.config.steer_return_rate = base_cfg.steer_return_rate;
                 self.input.filter.config.steer_exponent = base_cfg.steer_exponent;
-                self.input.filter.config.speed_sensitive_factor = base_cfg.speed_sensitive_factor;
                 self.filter_p2.config = self.input.filter.config.clone();
 
                 self.config.input.steering_profile = chosen_profile;
+                self.config.input.speed_sensitive_enabled = chosen_speed_sensitive_enabled;
                 self.config.input.hold_bleed_rate = chosen_bleed;
                 self.config.input.min_speed_steer_limit = chosen_limit;
-                self.config.input.steer_rise_rate = base_cfg.steer_rise_rate;
+                self.config.input.steer_rise_rate = chosen_rise;
+                self.config.input.speed_sensitive_factor = chosen_factor;
                 self.config.input.steer_return_rate = base_cfg.steer_return_rate;
                 self.config.input.steer_exponent = base_cfg.steer_exponent;
-                self.config.input.speed_sensitive_factor = base_cfg.speed_sensitive_factor;
 
                 // Apply and persist display settings (resolution & fullscreen)
                 modal.apply_display_settings();
@@ -5516,6 +5524,7 @@ impl RaceSession {
                     self.audio.play_sfx(SfxType::UiSelect);
                     let new_profile = self.input.cycle_steering_profile();
                     self.config.input.steering_profile = new_profile;
+                    self.config.input.speed_sensitive_enabled = self.input.filter.config.speed_sensitive_enabled;
                     self.config.input.steer_rise_rate = self.input.filter.config.steer_rise_rate;
                     self.config.input.steer_return_rate = self.input.filter.config.steer_return_rate;
                     self.config.input.steer_exponent = self.input.filter.config.steer_exponent;
