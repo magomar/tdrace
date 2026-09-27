@@ -2,7 +2,7 @@ use macroquad::color::Color;
 use macroquad::input::KeyCode;
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use crate::audio::AudioSettings;
-use crate::input::{GamepadConfig, NavGrid2D};
+use crate::input::{GamepadConfig, NavGrid2D, SteeringProfile};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::display::{safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode};
 use crate::ui::scaler::UiScaler;
@@ -29,6 +29,9 @@ pub struct SettingsSnapshot {
     pub trigger_deadzone: f32,
     pub steer_sensitivity: f32,
     pub steer_exponent: f32,
+    pub steering_profile_idx: usize,
+    pub hold_bleed_rate: f32,
+    pub min_speed_steer_limit: f32,
     pub resolution_idx: usize,
     pub display_mode_idx: usize,
     pub ui_scale_idx: usize,
@@ -63,6 +66,9 @@ impl Default for SettingsSnapshot {
             trigger_deadzone: 0.0,
             steer_sensitivity: 0.0,
             steer_exponent: 0.0,
+            steering_profile_idx: 0,
+            hold_bleed_rate: 2.2,
+            min_speed_steer_limit: 0.55,
             resolution_idx: 0,
             display_mode_idx: 0,
             ui_scale_idx: 0,
@@ -366,6 +372,9 @@ pub struct ArcadeSettingsModal {
     pub mute_dropdown: DropdownWidget,
 
     // Controls Tab Widgets
+    pub steering_profile_dropdown: DropdownWidget,
+    pub hold_bleed_rate_slider: SliderWidget,
+    pub min_speed_steer_limit_slider: SliderWidget,
     pub stick_deadzone_slider: SliderWidget,
     pub trigger_deadzone_slider: SliderWidget,
     pub steer_sensitivity_slider: SliderWidget,
@@ -424,12 +433,12 @@ impl ArcadeSettingsModal {
 
         // Grid navigation: 4 columns for the 4 tabs, each with widget count + 1 (for bottom buttons)
         // Tab 0 (Audio): 5 widgets + 1 bottom row = 6 rows
-        // Tab 1 (Controls): 4 widgets + 1 bottom row = 5 rows
+        // Tab 1 (Controls): 7 widgets + 1 bottom row = 8 rows
         // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
         // Tab 3 (Gameplay):
         //   Sub-tab 0 (General): 4 widgets (assist, speed, ghost, preset) + 1 customize button + 1 bottom row = 6 rows
         //   Sub-tab 1 (Visual Aids): 1 preset + 10 helper widgets + 1 bottom row = 12 rows
-        let nav = NavGrid2D::new(vec![6, 5, 7, 6]);
+        let nav = NavGrid2D::new(vec![6, 8, 7, 6]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -474,6 +483,11 @@ impl ArcadeSettingsModal {
             "Custom...".to_string(),
         ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
+        let steering_profile_options = vec![
+            "Balanced (Default)".to_string(),
+            "Smooth (Touring)".to_string(),
+            "Direct (Sim)".to_string(),
+        ];
 
         let mut modal = Self {
             tab_bar,
@@ -484,6 +498,13 @@ impl ArcadeSettingsModal {
             ui_slider: SliderWidget::percentage("UI SOUNDS VOLUME", audio.ui_volume),
             mute_dropdown: DropdownWidget::new("AUDIO OUTPUT", mute_options, mute_idx),
 
+            steering_profile_dropdown: DropdownWidget::new(
+                "STEERING PROFILE",
+                steering_profile_options,
+                0,
+            ),
+            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 0.50, 5.00, 0.10, 2.20).with_suffix("x"),
+            min_speed_steer_limit_slider: SliderWidget::new("MIN SPEED STEER LIMIT", 0.30, 0.90, 0.05, 0.55).with_suffix("x"),
             stick_deadzone_slider: SliderWidget::new("STICK DEADZONE", 0.0, 0.40, 0.02, gamepad.stick_deadzone),
             trigger_deadzone_slider: SliderWidget::new("TRIGGER DEADZONE", 0.0, 0.30, 0.01, gamepad.trigger_deadzone),
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
@@ -547,6 +568,9 @@ impl ArcadeSettingsModal {
         self.trigger_deadzone_slider.set_value(def_gp.trigger_deadzone);
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
+        self.steering_profile_dropdown.set_selected(0);
+        self.hold_bleed_rate_slider.set_value(2.20);
+        self.min_speed_steer_limit_slider.set_value(0.55);
 
         self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
@@ -760,6 +784,28 @@ impl ArcadeSettingsModal {
         gp.steer_exponent = self.steer_exponent_slider.value;
     }
 
+    /// Sets the steering smoothing and hold-lock bleed widgets from external state.
+    pub fn set_input_filter_state(&mut self, profile: SteeringProfile, hold_bleed_rate: f32, min_speed_steer_limit: f32) {
+        self.steering_profile_dropdown.set_selected(profile.to_index());
+        self.hold_bleed_rate_slider.set_value(hold_bleed_rate);
+        self.min_speed_steer_limit_slider.set_value(min_speed_steer_limit);
+    }
+
+    /// Returns the currently selected steering profile.
+    pub fn selected_steering_profile(&self) -> SteeringProfile {
+        SteeringProfile::from_index(self.steering_profile_dropdown.selected_index)
+    }
+
+    /// Returns the currently configured progressive hold-lock bleed rate.
+    pub fn selected_hold_bleed_rate(&self) -> f32 {
+        self.hold_bleed_rate_slider.value
+    }
+
+    /// Returns the currently configured minimum speed steering limit.
+    pub fn selected_min_speed_steer_limit(&self) -> f32 {
+        self.min_speed_steer_limit_slider.value
+    }
+
     /// Returns the currently selected CRT scanline mode.
     pub fn scanline_mode(&self) -> crate::fx::ScanlineMode {
         crate::fx::ScanlineMode::from_index(self.scanlines_dropdown.selected_index)
@@ -798,6 +844,9 @@ impl ArcadeSettingsModal {
             trigger_deadzone: self.trigger_deadzone_slider.value,
             steer_sensitivity: self.steer_sensitivity_slider.value,
             steer_exponent: self.steer_exponent_slider.value,
+            steering_profile_idx: self.steering_profile_dropdown.selected_index,
+            hold_bleed_rate: self.hold_bleed_rate_slider.value,
+            min_speed_steer_limit: self.min_speed_steer_limit_slider.value,
             resolution_idx: self.resolution_dropdown.selected_index,
             display_mode_idx: self.display_mode_dropdown.selected_index,
             ui_scale_idx: self.ui_scale_dropdown.selected_index,
@@ -826,6 +875,48 @@ impl ArcadeSettingsModal {
         self.initial_snapshot = self.current_snapshot();
     }
 
+    /// Restores all modal widgets from the initial baseline snapshot.
+    pub fn revert_to_snapshot(&mut self) {
+        let snap = self.initial_snapshot.clone();
+        self.apply_snapshot(&snap);
+    }
+
+    /// Applies a specific snapshot to all modal widgets.
+    pub fn apply_snapshot(&mut self, snap: &SettingsSnapshot) {
+        self.master_slider.set_normalized(snap.master_volume);
+        self.music_slider.set_normalized(snap.music_volume);
+        self.sfx_slider.set_normalized(snap.sfx_volume);
+        self.ui_slider.set_normalized(snap.ui_volume);
+        self.mute_dropdown.set_selected(snap.mute_idx);
+        self.stick_deadzone_slider.set_value(snap.stick_deadzone);
+        self.trigger_deadzone_slider.set_value(snap.trigger_deadzone);
+        self.steer_sensitivity_slider.set_value(snap.steer_sensitivity);
+        self.steer_exponent_slider.set_value(snap.steer_exponent);
+        self.steering_profile_dropdown.set_selected(snap.steering_profile_idx);
+        self.hold_bleed_rate_slider.set_value(snap.hold_bleed_rate);
+        self.min_speed_steer_limit_slider.set_value(snap.min_speed_steer_limit);
+        self.resolution_dropdown.set_selected(snap.resolution_idx);
+        self.display_mode_dropdown.set_selected(snap.display_mode_idx);
+        self.ui_scale_dropdown.set_selected(snap.ui_scale_idx);
+        self.scanlines_dropdown.set_selected(snap.scanlines_idx);
+        self.vehicle_shadows_dropdown.set_selected(snap.vehicle_shadows_idx);
+        self.theme_dropdown.set_selected(snap.theme_idx);
+        self.assist_dropdown.set_selected(snap.assist_idx);
+        self.speed_unit_dropdown.set_selected(snap.speed_unit_idx);
+        self.ghost_car_dropdown.set_selected(snap.ghost_car_idx);
+        self.visual_aids_preset_dropdown.set_selected(snap.visual_aids_preset_idx);
+        self.aura_dropdown.set_selected(snap.aura_idx);
+        self.aura_ratio_slider.set_value(snap.aura_ratio);
+        self.aura_brightness_slider.set_value(snap.aura_brightness);
+        self.ribbon_dropdown.set_selected(snap.ribbon_idx);
+        self.ribbon_brightness_slider.set_value(snap.ribbon_brightness);
+        self.ribbon_scale_slider.set_value(snap.ribbon_scale);
+        self.chevron_dropdown.set_selected(snap.chevron_idx);
+        self.chevron_brightness_slider.set_value(snap.chevron_brightness);
+        self.adaptive_dropdown.set_selected(snap.adaptive_idx);
+        self.radar_ping_dropdown.set_selected(snap.radar_sonar_ping_idx);
+    }
+
     /// Returns true if any setting differs from the initial baseline snapshot.
     pub fn has_changes(&self) -> bool {
         let cur = self.current_snapshot();
@@ -840,6 +931,9 @@ impl ArcadeSettingsModal {
             || (cur.trigger_deadzone - init.trigger_deadzone).abs() > 0.001
             || (cur.steer_sensitivity - init.steer_sensitivity).abs() > 0.001
             || (cur.steer_exponent - init.steer_exponent).abs() > 0.001
+            || cur.steering_profile_idx != init.steering_profile_idx
+            || (cur.hold_bleed_rate - init.hold_bleed_rate).abs() > 0.001
+            || (cur.min_speed_steer_limit - init.min_speed_steer_limit).abs() > 0.001
             || cur.resolution_idx != init.resolution_idx
             || cur.display_mode_idx != init.display_mode_idx
             || cur.ui_scale_idx != init.ui_scale_idx
@@ -992,6 +1086,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
+            || self.steering_profile_dropdown.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
@@ -1008,6 +1103,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.adaptive_dropdown.is_open
             || self.radar_ping_dropdown.is_open;
 
+        let mut was_header_focused = false;
         if !is_any_dropdown_open {
             let nav_left = safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
             let nav_right = safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || ctx.gamepad.nav_right;
@@ -1021,6 +1117,8 @@ impl CabinetScreen for ArcadeSettingsModal {
 
             let active_tab = self.tab_bar.active_tab;
             let last_row = self.nav.column_lengths.get(active_tab).copied().unwrap_or(1).saturating_sub(1);
+
+            was_header_focused = self.is_tab_focused || self.is_subtab_focused;
 
             if self.is_tab_focused {
                 if nav_left {
@@ -1165,7 +1263,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         let active_tab = self.tab_bar.active_tab;
         self.nav.focused_col = active_tab;
-        let active_row = if self.is_tab_focused || self.is_subtab_focused {
+        let active_row = if was_header_focused || self.is_tab_focused || self.is_subtab_focused {
             usize::MAX
         } else {
             self.nav.active_row()
@@ -1217,22 +1315,63 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             1 => {
-                // CONTROLS: 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent, 4: Bottom Buttons
-                let r0 = (content_x, content_y, content_w, row_h);
-                let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
-                let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
-                let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
+                // CONTROLS: 0: Steering Profile, 1: Hold Bleed Rate, 2: Min Speed Limit, 3: Stick Deadzone, 4: Trigger Deadzone, 5: Steer Sensitivity, 6: Steer Exponent, 7: Bottom Buttons
+                let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(38.0), scaler.s(6.0), box_y + scaler.s(96.0));
+                let r0 = (content_x, ctrl_content_y, content_w, ctrl_row_h);
+                let r1 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap), content_w, ctrl_row_h);
+                let r2 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 2.0, content_w, ctrl_row_h);
+                let r3 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 3.0, content_w, ctrl_row_h);
+                let r4 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 4.0, content_w, ctrl_row_h);
+                let r5 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 5.0, content_w, ctrl_row_h);
+                let r6 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 6.0, content_w, ctrl_row_h);
 
-                if self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                let prev_profile_idx = self.steering_profile_dropdown.selected_index;
+                if self.steering_profile_dropdown.handle_input(
+                    active_row == 0,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    ctx.gamepad.nav_up,
+                    ctx.gamepad.nav_down,
+                    ctx.gamepad.btn_confirm_pressed,
+                    ctx.gamepad.btn_cancel_pressed,
+                    r0,
+                    scaler,
+                ) {
+                    ctx.play_ui_select();
+                    if self.steering_profile_dropdown.selected_index != prev_profile_idx {
+                        match self.steering_profile_dropdown.selected_index {
+                            0 => {
+                                self.hold_bleed_rate_slider.set_value(2.20);
+                                self.min_speed_steer_limit_slider.set_value(0.55);
+                            }
+                            1 => {
+                                self.hold_bleed_rate_slider.set_value(1.80);
+                                self.min_speed_steer_limit_slider.set_value(0.45);
+                            }
+                            2 => {
+                                self.hold_bleed_rate_slider.set_value(4.00);
+                                self.min_speed_steer_limit_slider.set_value(0.85);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                if self.hold_bleed_rate_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
                     ctx.play_ui_move();
                 }
-                if self.trigger_deadzone_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                if self.min_speed_steer_limit_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
                     ctx.play_ui_move();
                 }
-                if self.steer_sensitivity_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                if self.stick_deadzone_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
                     ctx.play_ui_move();
                 }
-                if self.steer_exponent_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                if self.trigger_deadzone_slider.handle_input(active_row == 4, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r4) {
+                    ctx.play_ui_move();
+                }
+                if self.steer_sensitivity_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
+                    ctx.play_ui_move();
+                }
+                if self.steer_exponent_slider.handle_input(active_row == 6, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r6) {
                     ctx.play_ui_move();
                 }
             }
@@ -1665,15 +1804,27 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             1 => {
-                // CONTROLS TAB
-                let mut y = content_y;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.stick_deadzone_slider.label, &self.stick_deadzone_slider.formatted_value(), self.stick_deadzone_slider.normalized(), active_row == 0, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.trigger_deadzone_slider.label, &self.trigger_deadzone_slider.formatted_value(), self.trigger_deadzone_slider.normalized(), active_row == 1, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 2, false, accent);
-                y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 3, false, accent);
+                // CONTROLS TAB: 0: Steering Profile, 1: Hold Bleed Rate, 2: Min Speed Limit, 3: Stick Deadzone, 4: Trigger Deadzone, 5: Steer Sensitivity, 6: Steer Exponent
+                let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(38.0), scaler.s(6.0), box_y + scaler.s(96.0));
+                let mut y = ctrl_content_y;
+                let r0 = (content_x, y, content_w, ctrl_row_h);
+                draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steering_profile_dropdown.label, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, false, self.steering_profile_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.hold_bleed_rate_slider.label, &self.hold_bleed_rate_slider.formatted_value(), self.hold_bleed_rate_slider.normalized(), active_row == 1, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.min_speed_steer_limit_slider.label, &self.min_speed_steer_limit_slider.formatted_value(), self.min_speed_steer_limit_slider.normalized(), active_row == 2, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.stick_deadzone_slider.label, &self.stick_deadzone_slider.formatted_value(), self.stick_deadzone_slider.normalized(), active_row == 3, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.trigger_deadzone_slider.label, &self.trigger_deadzone_slider.formatted_value(), self.trigger_deadzone_slider.normalized(), active_row == 4, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 5, false, accent);
+                y += ctrl_row_h + ctrl_row_gap;
+                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 6, false, accent);
+
+                if self.steering_profile_dropdown.is_open {
+                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, self.steering_profile_dropdown.popup_hovered_index, accent);
+                }
             }
             2 => {
                 // DISPLAY TAB: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Theme

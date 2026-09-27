@@ -185,3 +185,61 @@ fn test_keyboard_progressive_brake_tap_vs_hold() {
     println!("Sustained 250ms hold brake value: {:.3}", hold_brake);
     assert_eq!(hold_brake, 1.0, "Sustained brake key press must saturate at 1.0 full braking");
 }
+
+#[test]
+fn test_interactive_controls_filter_sync_and_persistence() {
+    use tdrace_app::input::SteeringProfile;
+
+    // 1. Verify profile-to-config presets
+    let bal = SteeringProfile::Balanced.to_config();
+    assert_eq!(bal.profile, SteeringProfile::Balanced);
+    assert!((bal.hold_bleed_rate - 2.5).abs() < 1e-3);
+    assert!((bal.min_speed_steer_limit - 0.75).abs() < 1e-3);
+
+    let smo = SteeringProfile::Smooth.to_config();
+    assert_eq!(smo.profile, SteeringProfile::Smooth);
+    assert!((smo.hold_bleed_rate - 1.5).abs() < 1e-3);
+    assert!((smo.min_speed_steer_limit - 0.60).abs() < 1e-3);
+
+    let dir = SteeringProfile::Direct.to_config();
+    assert_eq!(dir.profile, SteeringProfile::Direct);
+    assert!((dir.hold_bleed_rate - 0.0).abs() < 1e-3);
+    assert!((dir.min_speed_steer_limit - 1.00).abs() < 1e-3);
+
+    // 2. Index round-trips
+    assert_eq!(SteeringProfile::from_index(0), SteeringProfile::Balanced);
+    assert_eq!(SteeringProfile::from_index(1), SteeringProfile::Smooth);
+    assert_eq!(SteeringProfile::from_index(2), SteeringProfile::Direct);
+    assert_eq!(SteeringProfile::from_index(99), SteeringProfile::Balanced);
+    assert_eq!(SteeringProfile::Balanced.to_index(), 0);
+    assert_eq!(SteeringProfile::Smooth.to_index(), 1);
+    assert_eq!(SteeringProfile::Direct.to_index(), 2);
+
+    // 3. Bleed rate dynamic behavior: higher bleed rate recovers full lock faster
+    let dt = 1.0 / 60.0;
+    let mut slow_filter = DigitalInputFilter::new(DigitalInputConfig {
+        hold_bleed_rate: 1.0,
+        min_speed_steer_limit: 0.50,
+        ..bal
+    });
+    let mut fast_filter = DigitalInputFilter::new(DigitalInputConfig {
+        hold_bleed_rate: 4.0,
+        min_speed_steer_limit: 0.50,
+        ..bal
+    });
+
+    let mut slow_steer = 0.0;
+    let mut fast_steer = 0.0;
+    for _ in 0..10 {
+        let (s, _, _) = slow_filter.update(1.0, 0.0, 0.0, 25.0, dt);
+        slow_steer = s;
+        let (f, _, _) = fast_filter.update(1.0, 0.0, 0.0, 25.0, dt);
+        fast_steer = f;
+    }
+
+    assert!(
+        fast_steer > slow_steer,
+        "Faster bleed rate ({fast_steer}) should restore more steering angle than slow bleed rate ({slow_steer})"
+    );
+}
+

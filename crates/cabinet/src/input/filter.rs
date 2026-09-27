@@ -44,6 +44,26 @@ impl SteeringProfile {
             Self::Direct => Self::Balanced,
         }
     }
+
+    pub fn to_config(&self) -> DigitalInputConfig {
+        DigitalInputConfig::from_profile(*self)
+    }
+
+    pub fn to_index(&self) -> usize {
+        match self {
+            Self::Balanced => 0,
+            Self::Smooth => 1,
+            Self::Direct => 2,
+        }
+    }
+
+    pub fn from_index(idx: usize) -> Self {
+        match idx {
+            1 => Self::Smooth,
+            2 => Self::Direct,
+            _ => Self::Balanced,
+        }
+    }
 }
 
 fn default_steering_profile() -> SteeringProfile {

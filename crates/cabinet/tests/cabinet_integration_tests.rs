@@ -815,7 +815,7 @@ fn test_arcade_settings_modal_arrow_category_navigation() {
     // 8. Press Up Arrow from Tab Bar -> Wraps to bottom action buttons
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
-    assert_eq!(modal.nav.active_row(), 4); // Last row in Controls column (len 5)
+    assert_eq!(modal.nav.active_row(), 7); // Last row in Controls column (len 8)
     assert_eq!(modal.selected_bottom_btn, 1); // Defaults to Save & Close
 
     // 9. Press Left Arrow on bottom row -> Selects Restore Defaults (btn 0)
@@ -843,7 +843,7 @@ fn test_arcade_settings_modal_arrow_category_navigation() {
     assert_eq!(modal.nav.active_row(), 0);
 
     // 13. Move directly to bottom buttons and confirm save
-    modal.nav.set_focus(1, 4);
+    modal.nav.set_focus(1, 7);
     modal.selected_bottom_btn = 1;
     ctx.gamepad = &gp_confirm;
     let pop_action = modal.update(&mut ctx);
@@ -1163,3 +1163,40 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     assert_eq!(modal.gameplay_sub_tab, 0); // Returned to General
     assert!(modal.is_subtab_focused);
 }
+
+#[test]
+fn test_arcade_settings_modal_controls_tab_widgets_and_rollback() {
+    use cabinet::input::SteeringProfile;
+
+    let audio = AudioSettings::default();
+    let gp = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp);
+
+    // Initial state
+    modal.set_input_filter_state(SteeringProfile::Balanced, 2.2, 0.55);
+    modal.snapshot_initial();
+
+    assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
+    assert!((modal.selected_hold_bleed_rate() - 2.2).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.55).abs() < 1e-3);
+    assert!(!modal.has_changes());
+
+    // Modify controls settings
+    modal.steering_profile_dropdown.set_selected(1); // Smooth
+    modal.hold_bleed_rate_slider.set_value(3.5);
+    modal.min_speed_steer_limit_slider.set_value(0.70);
+
+    assert_eq!(modal.selected_steering_profile(), SteeringProfile::Smooth);
+    assert!((modal.selected_hold_bleed_rate() - 3.5).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.70).abs() < 1e-3);
+    assert!(modal.has_changes());
+
+    // Cancel / Rollback to snapshot
+    modal.revert_to_snapshot();
+
+    assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
+    assert!((modal.selected_hold_bleed_rate() - 2.2).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.55).abs() < 1e-3);
+    assert!(!modal.has_changes());
+}
+

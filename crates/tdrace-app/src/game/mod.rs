@@ -1307,10 +1307,24 @@ impl RaceSession {
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
         };
         modal.set_helpers_state(&helpers_state);
+        modal.set_input_filter_state(
+            self.input.filter.config.profile,
+            self.input.filter.config.hold_bleed_rate,
+            self.input.filter.config.min_speed_steer_limit,
+        );
 
         modal.snapshot_initial();
 
         self.settings_modal = Some(modal);
+    }
+
+    /// Opens the settings modal focused on a specific tab index.
+    pub fn open_settings_modal_tab(&mut self, tab_idx: usize) {
+        self.open_settings_modal();
+        if let Some(ref mut modal) = self.settings_modal {
+            modal.tab_bar.set_tab(tab_idx);
+            modal.nav.set_focus(tab_idx, 0);
+        }
     }
 
     /// Returns true if the settings modal overlay is currently open.
@@ -1332,6 +1346,29 @@ impl RaceSession {
                     _ => AssistProfile::Pro,
                 };
                 self.set_assist_profile(chosen_assist);
+
+                // Apply and persist input smoothing and progressive hold bleed settings
+                let chosen_profile = modal.selected_steering_profile();
+                let chosen_bleed = modal.selected_hold_bleed_rate();
+                let chosen_limit = modal.selected_min_speed_steer_limit();
+
+                self.input.filter.config.profile = chosen_profile;
+                self.input.filter.config.hold_bleed_rate = chosen_bleed;
+                self.input.filter.config.min_speed_steer_limit = chosen_limit;
+                let base_cfg = chosen_profile.to_config();
+                self.input.filter.config.steer_rise_rate = base_cfg.steer_rise_rate;
+                self.input.filter.config.steer_return_rate = base_cfg.steer_return_rate;
+                self.input.filter.config.steer_exponent = base_cfg.steer_exponent;
+                self.input.filter.config.speed_sensitive_factor = base_cfg.speed_sensitive_factor;
+                self.filter_p2.config = self.input.filter.config.clone();
+
+                self.config.input.steering_profile = chosen_profile;
+                self.config.input.hold_bleed_rate = chosen_bleed;
+                self.config.input.min_speed_steer_limit = chosen_limit;
+                self.config.input.steer_rise_rate = base_cfg.steer_rise_rate;
+                self.config.input.steer_return_rate = base_cfg.steer_return_rate;
+                self.config.input.steer_exponent = base_cfg.steer_exponent;
+                self.config.input.speed_sensitive_factor = base_cfg.speed_sensitive_factor;
 
                 // Apply and persist display settings (resolution & fullscreen)
                 modal.apply_display_settings();
@@ -1371,6 +1408,7 @@ impl RaceSession {
                 self.base_config.player_helpers = self.config.player_helpers.clone();
                 self.base_config.display = self.config.display.clone();
                 self.base_config.audio = self.config.audio.clone();
+                self.base_config.input = self.config.input.clone();
 
                 let _ = self.config.save_to_first_existing_or_default();
             }
@@ -5431,6 +5469,37 @@ impl RaceSession {
             }
 
             GameState::ControlsHelp(from_paused) => {
+                // If Arcade Settings Modal is open, handle its updates and return
+                if let Some(ref mut modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let mut ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: self.accumulator.min(0.1),
+                        audio: Some(&self.audio),
+                    };
+
+                    let action = modal.update(&mut ctx);
+                    if matches!(action, ScreenAction::Pop) {
+                        let saved = modal.is_saved;
+                        self.close_settings_modal(saved);
+                        if saved {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                        }
+                    }
+                    return;
+                }
+
+                if is_key_pressed(KeyCode::O) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.open_settings_modal_tab(1);
+                    return;
+                }
+
                 if is_key_pressed(KeyCode::Tab)
                     || is_key_pressed(KeyCode::C)
                     || self.input.gamepad.snapshot.btn_x_pressed
@@ -5454,6 +5523,40 @@ impl RaceSession {
                     self.config.input.min_speed_steer_limit = self.input.filter.config.min_speed_steer_limit;
                     self.config.input.hold_bleed_rate = self.input.filter.config.hold_bleed_rate;
                     self.filter_p2.config = self.input.filter.config.clone();
+                    self.base_config.input = self.config.input.clone();
+                    let _ = self.config.save_to_first_existing_or_default();
+                }
+
+                if is_key_pressed(KeyCode::B) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let current = self.input.filter.config.hold_bleed_rate;
+                    let next = if (current - 1.5).abs() < 0.15 {
+                        2.2
+                    } else if (current - 2.2).abs() < 0.15 {
+                        3.0
+                    } else if (current - 3.0).abs() < 0.15 {
+                        4.0
+                    } else if (current - 4.0).abs() < 0.15 {
+                        1.5
+                    } else if current < 2.0 {
+                        2.2
+                    } else if current < 2.6 {
+                        3.0
+                    } else if current < 3.5 {
+                        4.0
+                    } else {
+                        1.5
+                    };
+                    self.input.filter.config.hold_bleed_rate = next;
+                    self.config.input.hold_bleed_rate = next;
+                    self.filter_p2.config = self.input.filter.config.clone();
+                    self.base_config.input = self.config.input.clone();
+                    let _ = self.config.save_to_first_existing_or_default();
+                }
+
+                if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.assist_profile = self.assist_profile.next();
                 }
 
                 if is_key_pressed(KeyCode::Escape)
@@ -12348,7 +12451,23 @@ impl RaceSession {
                     &self.input.input_map,
                     self.input.active_preset_name(),
                     self.input.steering_profile(),
+                    self.input.filter.config.hold_bleed_rate,
                 );
+                if let Some(ref modal) = self.settings_modal {
+                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
+                    let scaler = UiScaler::new(sw, sh);
+                    let theme = CabinetTheme::default();
+                    let ctx = CabinetContext {
+                        scaler: &scaler,
+                        fonts: &self.fonts,
+                        theme: &theme,
+                        gamepad: &self.input.gamepad.snapshot,
+                        dt: 0.0,
+                        audio: Some(&self.audio),
+                    };
+
+                    modal.draw(&ctx);
+                }
             }
             GameState::DriverCards(_) => {
                 let drivers = self.active_module_drivers();
