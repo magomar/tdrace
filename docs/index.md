@@ -82,6 +82,7 @@ Technical design documents, audio engine architectures, and performance profiles
 | [UI & Screen Terminology](engineering/terminology.md) | Architecture Spec | `active` | Formal UI component hierarchy, Cabinet platform primitives, and canonical screen catalog. |
 | [Motor Sound Synthesis](engineering/motor_sound_improvement.md) | Architecture Spec | `active` | Procedural motor sound synthesis, pitch modulation, exhaust pop harmonics, and Kira integration. |
 | [Circuit Rendering Performance](engineering/circuit_rendering_performance.md) | Architecture Spec | `active` | OpenGL batching, Catmull-Rom spline tessellation, and memory footprint analysis. |
+| [Steering Responsiveness & Controls](engineering/high_speed_steering_responsiveness_and_double_attenuation.md) | Architecture Spec | `active` | Root cause analysis and resolution of high-speed steering double-attenuation across input filter and wheelbase physics. |
 | [Surface & Wall Legacy Spec](engineering/surface_and_wall_legacy_spec.md) | Architecture Spec | `active` | Historical specifications for 12 surface types and 4 barrier collision models. |
 | [Vehicle Roster Ideas](engineering/vehicle_roster_expansion_ideas.md) | Feature Spec | `active` | Exploratory design notes on prospective vehicle variants and class archetypes. |
 | [Contributing Guide](engineering/contributing.md) | Architecture Spec | `active` | Repository setup, cross-platform symlink instructions, and development workflow. |
