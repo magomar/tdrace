@@ -576,15 +576,19 @@ def process_circuit(cid):
         v1 = (x - p_prev[0], y - p_prev[1])
         v2 = (p_next[0] - x, p_next[1] - y)
         cross = v1[0] * v2[1] - v1[1] * v2[0]
+        len_v1 = math.hypot(v1[0], v1[1])
+        len_v2 = math.hypot(v2[0], v2[1])
+        # Sine of the deflection angle: independent of waypoint spacing and circuit scale
+        norm_cross = cross / (len_v1 * len_v2) if len_v1 > 1e-6 and len_v2 > 1e-6 else 0.0
 
-        is_straight = abs(cross) < 18.0 and (i < 3 or i > n - 3)
+        is_straight = abs(norm_cross) < 0.18 and (i < 3 or i > n - 3)
         width = cfg["straight_width"] if is_straight else cfg["default_width"]
 
         left_curb = False
         right_curb = False
-        if cross > 45.0:
+        if norm_cross > 0.35:
             left_curb = True
-        elif cross < -45.0:
+        elif norm_cross < -0.35:
             right_curb = True
 
         elev = custom_elevations.get(i, 0.0)
