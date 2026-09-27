@@ -1206,8 +1206,8 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
 
     let offroad = get_steered_wheel_config("classic_offroad").expect("classic_offroad must have SteeredWheelConfig");
     assert_eq!(offroad.wheel_texture_id, "offroad_wheel_front");
-    assert!((offroad.front_axle_offset - 0.68).abs() < 1e-4);
-    assert!((offroad.half_track_width - 0.54).abs() < 1e-4);
+    assert!((offroad.front_axle_offset - 1.03).abs() < 1e-4);
+    assert!((offroad.half_track_width - 0.66).abs() < 1e-4);
     assert_eq!(offroad.layering, WheelLayerMode::OverChassis);
 
     let rally = get_steered_wheel_config("classic_rally").expect("classic_rally must have SteeredWheelConfig");
@@ -1279,7 +1279,7 @@ fn test_classic_cars_dual_sprites_showroom_and_chassis() {
 
     let cars = [
         ("classic_kart", (373, 135), (373, 377)),
-        ("classic_offroad", (400, 150), (400, 358)),
+        ("classic_offroad", (430, 143), (424, 362)),
         ("classic_gt", (374, 170), (374, 338)),
         ("classic_nascar", (340, 176), (346, 300)),
         ("classic_rally", (355, 167), (350, 300)),

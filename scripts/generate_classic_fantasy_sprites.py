@@ -1188,42 +1188,33 @@ def generate_nascar_wheel():
 
 
 def generate_offroad_wheel():
-    ss = 2
-    W, H = 128 * ss, 256 * ss
-    im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(im)
-    cx, cy = W // 2, H // 2
-    tw_half, th_half = int(54 * ss), int(118 * ss)
-    corner_r = int(20 * ss)
+    import numpy as np
 
-    # Outer tire
-    draw.rounded_rectangle([cx - tw_half, cy - th_half, cx + tw_half, cy + th_half], radius=corner_r, fill=(35, 38, 42, 255))
-    im_m = int(3 * ss)
-    draw.rounded_rectangle([cx - tw_half + im_m, cy - th_half + im_m, cx + tw_half - im_m, cy + th_half - im_m], radius=corner_r - int(2 * ss), fill=(22, 24, 28, 255))
+    im = Image.open(TOPDOWN_DIR / "classic_offroad.png")
+    arr = np.array(im)
 
-    # Aggressive off-road tread sipes / blocks along sides
-    for y_pos in range(cy - th_half + int(14 * ss), cy + th_half - int(14 * ss), int(16 * ss)):
-        draw.line([cx - tw_half + int(4 * ss), y_pos, cx - tw_half + int(16 * ss), y_pos], fill=(12, 14, 16, 255), width=int(4 * ss))
-        draw.line([cx + tw_half - int(16 * ss), y_pos, cx + tw_half - int(4 * ss), y_pos], fill=(12, 14, 16, 255), width=int(4 * ss))
+    # Extract authentic front-left tire: Y in [126, 156], X in [384, 476]
+    tire = arr[126:156, 384:476].copy()
+    tire_img = Image.fromarray(tire)
+    rot_tire = np.array(tire_img.transpose(Image.Transpose.ROTATE_90))  # shape: (92, 30, 4)
 
-    # Neon Orange beadlock ring (matching Vortex Dune Crusher)
-    rw_half, rh_half = int(21 * ss), int(62 * ss)
-    draw.rounded_rectangle([cx - rw_half, cy - rh_half, cx + rw_half, cy + rh_half], radius=int(9 * ss), fill=(255, 110, 15, 255), outline=(180, 70, 10, 255), width=int(2 * ss))
+    # Make horizontally symmetrical across tire center (authentic knobby tread on both shoulders)
+    h = rot_tire.shape[0]
+    half_w = 18
+    sym_tire = np.zeros((h, half_w * 2, 4), dtype=np.uint8)
+    sym_tire[:, :half_w, :] = rot_tire[:, :half_w, :]
+    sym_tire[:, half_w:, :] = np.fliplr(rot_tire[:, :half_w, :])
 
-    # Dark titanium rim center
-    draw.rounded_rectangle([cx - rw_half + int(3 * ss), cy - rh_half + int(4 * ss), cx + rw_half - int(3 * ss), cy + rh_half - int(4 * ss)], radius=int(6 * ss), fill=(42, 45, 52, 255))
+    sym_img = Image.fromarray(sym_tire)
+    # Scale into 128x256 canvas with proportional aspect ratio
+    target_h = 236
+    target_w = int(target_h * (sym_tire.shape[1] / sym_tire.shape[0]))  # 236 * 36 / 92 = 92
+    scaled = sym_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-    # 6-Spoke star pattern / beadlock bolts
-    for dy in [-int(34 * ss), -int(17 * ss), int(17 * ss), int(34 * ss)]:
-        draw.line([cx - rw_half + int(4 * ss), cy + dy, cx + rw_half - int(4 * ss), cy + dy], fill=(65, 70, 80, 255), width=int(3 * ss))
-
-    # Center heavy-duty chrome hub
-    draw_circle(draw, cx, cy, int(10 * ss), fill=(195, 200, 210, 255), outline=(90, 95, 105, 255), width=int(2 * ss))
-    draw_circle(draw, cx, cy, int(4 * ss), fill=(50, 54, 62, 255))
-
-    out_img = im.resize((128, 256), Image.Resampling.LANCZOS)
-    out_img.save(WHEELS_DIR / "offroad_wheel_front.png")
-    print("✓ Generated offroad_wheel_front wheel asset (128x256)")
+    canvas = Image.new("RGBA", (128, 256), (0, 0, 0, 0))
+    canvas.paste(scaled, ((128 - target_w) // 2, (256 - target_h) // 2), scaled)
+    canvas.save(WHEELS_DIR / "offroad_wheel_front.png")
+    print("✓ Generated authentic offroad_wheel_front wheel asset (128x256)")
 
 
 def generate_rally_wheel():
@@ -1269,7 +1260,7 @@ def generate_classic_chassis_sprites():
     chassis_configs = [
         ("classic_gt", 340, 420, 145, 205, 307, 367, False),
         ("classic_nascar", 315, 390, 155, 215, 297, 357, False),
-        ("classic_offroad", 330, 420, 135, 195, 317, 377, True),
+        ("classic_offroad", 370, 485, 100, 161, 344, 405, True),
         ("classic_rally", 340, 415, 145, 215, 295, 365, False),
     ]
 

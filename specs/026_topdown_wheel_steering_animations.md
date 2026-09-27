@@ -183,9 +183,9 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
         }),
         "classic_offroad" => Some(SteeredWheelConfig {
             wheel_texture_id: "offroad_wheel_front",
-            front_axle_offset: 0.68,
-            half_track_width: 0.54,
-            wheel_size: glam::Vec2::new(0.24, 0.48),
+            front_axle_offset: 1.03,
+            half_track_width: 0.66,
+            wheel_size: glam::Vec2::new(0.30, 0.62),
             layering: WheelLayerMode::OverChassis,
         }),
         "classic_rally" => Some(SteeredWheelConfig {
