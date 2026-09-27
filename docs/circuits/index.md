@@ -26,6 +26,26 @@ tags: [circuits, tracks, directory, catalog, venues]
 
 ---
 
+## 📏 Circuit Scale Rule
+
+Every real circuit is built from OpenStreetMap (`scripts/osm_importer.py`, map data in
+`assets/osm/`) unless it is not mapped there. Its lap length follows this rule
+(decided 2026-09-28):
+
+| Modality | Lap length | `scale` label |
+| :--- | :--- | :---: |
+| **GT World Challenge** | 0.5× the official length. Track width stays real. | `0.5x` |
+| **Rallycross** | 1:1, the official length. | `1:1` |
+| **Karting** | 1:1, the official length. | `1:1` |
+| **NASCAR** | Not decided yet. Keep each circuit's current length until then. | as now |
+| **Extreme Off-Road** | Out of scope for now. Do not re-import. | as now |
+| **Classic Heritage** | Fantasy circuits; the rule does not apply. | — |
+
+The `scale` field of a track must say the ratio actually used (see
+`crates/tdrace-app/tests/gt_circuit_geometry_tests.rs` for the GT check).
+
+---
+
 ## 📐 Circuit Geometry Architecture
 
 Each circuit JSON defines:

@@ -24,7 +24,8 @@ curl -s "https://nominatim.openstreetmap.org/search?q=Estering+Buxtehude&format=
 ### 1.2 OpenStreetMap API vs Overpass
 - **Overpass API** (`https://overpass-api.de/api/interpreter`): Great for querying specific tags (`way["highway"="raceway"](...)`), but frequently rate-limits (HTTP 429) or times out under load.
 - **Direct OSM Map API** (`https://api.openstreetmap.org/api/0.6/map?bbox=minLon,minLat,maxLon,maxLat`): Extremely fast (<1s), reliable, and returns full node coordinates with tags in a single call.
-- Always cache downloaded JSON files in `target/osm_cache/<track_id>.json`.
+- Always cache downloaded survey files in `assets/osm/<track_id>.osm`.
+- Download them with `python3 scripts/osm_importer.py download --track <track_id>`: it reads the circuit's `osm_url` from `provenance.rs` and saves the map area around it (plus 300 m).
 
 ---
 
@@ -65,6 +66,10 @@ $$y' = x \sin(-\theta) + y \cos(-\theta)$$
 Scale coordinates by the ratio of official FIA length to current perimeter:
 $$s = \frac{L_{\text{FIA}}}{L_{\text{measured}}}$$
 $$P_{\text{scaled}} = s \cdot P$$
+
+Target length per modality (the circuit scale rule, `docs/circuits/index.md`):
+GT uses $0.5 \cdot L_{\text{FIA}}$ (label `0.5x`); rallycross and karting use $L_{\text{FIA}}$ (1:1);
+NASCAR keeps each circuit's current length until a rule is decided; extreme off-road is not re-imported.
 
 ### 3.4 Uniform Resampling
 Resample the polygon to 26–32 uniform points using cumulative arc-length interpolation. This guarantees smooth Catmull-Rom spline curves without clustering.

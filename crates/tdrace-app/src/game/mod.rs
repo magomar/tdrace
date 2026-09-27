@@ -4585,6 +4585,30 @@ impl RaceSession {
             return;
         }
 
+        // If Arcade Settings Modal is open, handle its updates and return
+        if let Some(ref mut modal) = self.settings_modal {
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::default();
+            let mut ctx = CabinetContext {
+                scaler: &scaler,
+                fonts: &self.fonts,
+                theme: &theme,
+                gamepad: &self.input.gamepad.snapshot,
+                dt: frame_dt,
+                audio: Some(&self.audio),
+            };
+
+            let action = modal.update(&mut ctx);
+            if matches!(action, ScreenAction::Pop) {
+                let saved = modal.is_saved;
+                self.close_settings_modal(saved);
+                if saved {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                }
+            }
+            return;
+        }
+
         // Handle debug toggles
         self.input.update_debug_toggles();
 
@@ -5036,6 +5060,21 @@ impl RaceSession {
             return;
         }
 
+        // Open Arcade Settings Modal globally (X key)
+        if is_key_pressed(KeyCode::X) && !matches!(self.state, GameState::CircuitViewer(_)) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            if matches!(self.state, GameState::Racing | GameState::Countdown(_)) {
+                self.state = GameState::Paused;
+                self.audio.stop_all_loops();
+            }
+            if matches!(self.state, GameState::ControlsHelp(_)) {
+                self.open_settings_modal_tab(1);
+            } else {
+                self.open_settings_modal();
+            }
+            return;
+        }
+
         // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen)
         if is_key_pressed(KeyCode::H) || (!self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed) {
             let next_mode = self.assist_profile.next();
@@ -5334,33 +5373,8 @@ impl RaceSession {
                     self.camera_p2.set_paused_overview();
                 }
 
-                // If Arcade Settings Modal is open, handle its updates and return
-                if let Some(ref mut modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let mut ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: self.accumulator.min(0.1),
-                        audio: Some(&self.audio),
-                    };
-
-                    let action = modal.update(&mut ctx);
-                    if matches!(action, ScreenAction::Pop) {
-                        let saved = modal.is_saved;
-                        self.close_settings_modal(saved);
-                        if saved {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                        }
-                    }
-                    return;
-                }
-
-                // Open Arcade Settings Modal via O key or Gamepad Y button
-                if is_key_pressed(KeyCode::O) || self.input.gamepad.snapshot.btn_y_pressed {
+                // Open Arcade Settings Modal via X / O key or Gamepad Y button
+                if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) || self.input.gamepad.snapshot.btn_y_pressed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.open_settings_modal();
                     return;
@@ -5494,32 +5508,7 @@ impl RaceSession {
             }
 
             GameState::ControlsHelp(from_paused) => {
-                // If Arcade Settings Modal is open, handle its updates and return
-                if let Some(ref mut modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let mut ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: self.accumulator.min(0.1),
-                        audio: Some(&self.audio),
-                    };
-
-                    let action = modal.update(&mut ctx);
-                    if matches!(action, ScreenAction::Pop) {
-                        let saved = modal.is_saved;
-                        self.close_settings_modal(saved);
-                        if saved {
-                            self.audio.play_sfx(SfxType::UiSelect);
-                        }
-                    }
-                    return;
-                }
-
-                if is_key_pressed(KeyCode::O) {
+                if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.open_settings_modal_tab(1);
                     return;
@@ -6167,6 +6156,13 @@ impl RaceSession {
         // View Circuit Explorer direct key shortcut (C key)
         if is_key_pressed(KeyCode::C) {
             self.open_circuit_selector_from_starting_grid();
+            return;
+        }
+
+        // Open Arcade Settings Modal (X key)
+        if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.open_settings_modal();
             return;
         }
 
@@ -7610,31 +7606,6 @@ impl RaceSession {
             _ => return,
         };
 
-        // If Arcade Settings Modal is open on the Grand Hub, update it and return:
-        if let Some(ref mut modal) = self.settings_modal {
-            let (sw, sh) = (screen_width_safe(), screen_height_safe());
-            let scaler = UiScaler::new(sw, sh);
-            let theme = CabinetTheme::default();
-            let mut ctx = CabinetContext {
-                scaler: &scaler,
-                fonts: &self.fonts,
-                theme: &theme,
-                gamepad: &self.input.gamepad.snapshot,
-                dt: 1.0 / 60.0,
-                audio: Some(&self.audio),
-            };
-
-            let action = modal.update(&mut ctx);
-            if matches!(action, ScreenAction::Pop) {
-                let saved = modal.is_saved;
-                self.close_settings_modal(saved);
-                if saved {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                }
-            }
-            return;
-        }
-
         // If exit confirmation modal is currently open:
         if self.show_exit_confirm {
             if self.exit_confirm_modal.is_none() {
@@ -7834,31 +7805,6 @@ impl RaceSession {
             } => (category, selected_idx, modal.clone()),
             _ => return,
         };
-
-        // If Arcade Settings Modal is open on the Modality Select screen, update it and return:
-        if let Some(ref mut modal) = self.settings_modal {
-            let (sw, sh) = (screen_width_safe(), screen_height_safe());
-            let scaler = UiScaler::new(sw, sh);
-            let theme = CabinetTheme::default();
-            let mut ctx = CabinetContext {
-                scaler: &scaler,
-                fonts: &self.fonts,
-                theme: &theme,
-                gamepad: &self.input.gamepad.snapshot,
-                dt: 1.0 / 60.0,
-                audio: Some(&self.audio),
-            };
-
-            let action = modal.update(&mut ctx);
-            if matches!(action, ScreenAction::Pop) {
-                let saved = modal.is_saved;
-                self.close_settings_modal(saved);
-                if saved {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                }
-            }
-            return;
-        }
 
         // If informational coming-soon modal is open, any confirm/back dismisses it
         if modal.is_some() {
@@ -9534,33 +9480,8 @@ impl RaceSession {
             return;
         }
 
-        // If Arcade Settings Modal is open in the main menu, update it and return:
-        if let Some(ref mut modal) = self.settings_modal {
-            let (sw, sh) = (screen_width_safe(), screen_height_safe());
-            let scaler = UiScaler::new(sw, sh);
-            let theme = CabinetTheme::default();
-            let mut ctx = CabinetContext {
-                scaler: &scaler,
-                fonts: &self.fonts,
-                theme: &theme,
-                gamepad: &self.input.gamepad.snapshot,
-                dt: 1.0 / 60.0,
-                audio: Some(&self.audio),
-            };
-
-            let action = modal.update(&mut ctx);
-            if matches!(action, ScreenAction::Pop) {
-                let saved = modal.is_saved;
-                self.close_settings_modal(saved);
-                if saved {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                }
-            }
-            return;
-        }
-
-        // Open Arcade Settings Modal (O key)
-        if is_key_pressed(KeyCode::O) {
+        // Open Arcade Settings Modal (X key or O key)
+        if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.open_settings_modal();
             return;
@@ -9760,18 +9681,6 @@ impl RaceSession {
             }
         }
 
-        // Cycle Audio Volume (V key)
-        if is_key_pressed(KeyCode::V) {
-            let mut vol = self.audio.settings.master_volume + 0.25;
-            if vol > 1.05 {
-                vol = 0.0;
-            }
-            self.audio.settings.master_volume = vol;
-            self.audio.settings.sfx_volume = vol;
-            self.audio.settings.music_volume = vol;
-            self.audio.play_sfx(SfxType::UiSelect);
-        }
-
         // Direct Circuit Manager shortcut (T key)
         if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -9830,7 +9739,7 @@ impl RaceSession {
             return;
         }
 
-        // Full Circuit Top-Down Inspection View ([X], [Z], Gamepad X, or clicking the preview card)
+        // Full Circuit Top-Down Inspection View ([V], [Z], Gamepad X, or clicking the preview card)
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let (mx, my) = mouse_position_safe();
         let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
@@ -9852,7 +9761,7 @@ impl RaceSession {
             false
         };
 
-        if is_key_pressed(KeyCode::X)
+        if is_key_pressed(KeyCode::V)
             || is_key_pressed(KeyCode::Z)
             || self.input.gamepad.snapshot.btn_x_pressed
             || clicked_preview
@@ -12168,20 +12077,6 @@ impl RaceSession {
                     self.is_dev_mode(),
                     &active_tracks,
                 );
-                if let Some(ref modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 0.0,
-                        audio: Some(&self.audio),
-                    };
-                    modal.draw(&ctx);
-                }
             }
             GameState::Garage(_) => {
                 let unlocked_tier = if self.is_dev_mode() {
@@ -12274,20 +12169,6 @@ impl RaceSession {
                         render_exit_confirm_modal(&self.fonts);
                     }
                 }
-                if let Some(ref modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 0.0,
-                        audio: Some(&self.audio),
-                    };
-                    modal.draw(&ctx);
-                }
             }
             GameState::ModuleSelect { selected_idx } => {
                 let modules_data = [
@@ -12316,20 +12197,6 @@ impl RaceSession {
                     } else {
                         render_exit_confirm_modal(&self.fonts);
                     }
-                }
-                if let Some(ref modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 0.0,
-                        audio: Some(&self.audio),
-                    };
-                    modal.draw(&ctx);
                 }
             }
             GameState::CareerHub {
@@ -12414,21 +12281,6 @@ impl RaceSession {
                 self.render_world();
                 self.render_screen(None);
                 render_pause_menu(&self.fonts, self.assist_profile, &self.audio.settings, self.pause_selected_btn);
-                if let Some(ref modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 0.0,
-                        audio: Some(&self.audio),
-                    };
-
-                    modal.draw(&ctx);
-                }
             }
             GameState::Finished => {
                 self.render_world();
@@ -12480,21 +12332,6 @@ impl RaceSession {
                     self.input.steering_profile(),
                     self.input.filter.config.hold_bleed_rate,
                 );
-                if let Some(ref modal) = self.settings_modal {
-                    let (sw, sh) = (screen_width_safe(), screen_height_safe());
-                    let scaler = UiScaler::new(sw, sh);
-                    let theme = CabinetTheme::default();
-                    let ctx = CabinetContext {
-                        scaler: &scaler,
-                        fonts: &self.fonts,
-                        theme: &theme,
-                        gamepad: &self.input.gamepad.snapshot,
-                        dt: 0.0,
-                        audio: Some(&self.audio),
-                    };
-
-                    modal.draw(&ctx);
-                }
             }
             GameState::DriverCards(_) => {
                 let drivers = self.active_module_drivers();
@@ -12591,6 +12428,22 @@ impl RaceSession {
             GameState::ChampionshipEditor => {
                 self.render_championship_editor();
             }
+        }
+
+        // Render Arcade Settings Modal globally on top of whatever screen is active
+        if let Some(ref modal) = self.settings_modal {
+            let (sw, sh) = (screen_width_safe(), screen_height_safe());
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::default();
+            let ctx = CabinetContext {
+                scaler: &scaler,
+                fonts: &self.fonts,
+                theme: &theme,
+                gamepad: &self.input.gamepad.snapshot,
+                dt: 0.0,
+                audio: Some(&self.audio),
+            };
+            modal.draw(&ctx);
         }
 
         // Render CRT & Retro Scanline post-processing overlay

@@ -13,7 +13,7 @@ import os
 import urllib.request
 import xml.etree.ElementTree as ET
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "target", "osm_cache")
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "osm")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 

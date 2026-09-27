@@ -46,7 +46,7 @@ When a player or developer navigates the showroom web catalog (`portals/option-b
 
 ```mermaid
 flowchart TD
-    A["Verified OSM Catalog<br/>(scripts/osm_importer.py, scripts/osm_nascar_importer.py & target/osm_cache)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
+    A["Verified OSM Catalog<br/>(scripts/osm_importer.py, scripts/osm_nascar_importer.py & assets/osm)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
     B -->|cargo test test_export_canonical_presets_to_git_repo| C["Canonical Track Files<br/>(tracks/**/*.json)"]
     C -->|python3 scripts/generate_asset_data.py| D["Portal Catalog<br/>(portals/shared/data/circuits.json)"]
     D -->|Astro SSG Build| E["Interactive Showroom<br/>(CircuitCard.astro)"]
@@ -82,7 +82,7 @@ All 18 circuits surveyed from OpenStreetMap via `scripts/osm_importer.py gt`:
 | `le_mans_sarthe`| Circuit de la Sarthe (Le Mans) | FR | [`relation/2126739`](https://www.openstreetmap.org/relation/2126739) | [`Circuit_de_la_Sarthe`](https://en.wikipedia.org/wiki/Circuit_de_la_Sarthe) |
 
 ### 2. Karting World Cup (17 Circuits)
-Surveyed via `scripts/osm_importer.py kart` and `target/osm_cache/`:
+Surveyed via `scripts/osm_importer.py kart` and `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |
@@ -105,7 +105,7 @@ Surveyed via `scripts/osm_importer.py kart` and `target/osm_cache/`:
 | `valencia_kart`| Kartódromo Lucas Guerrero | ES | [`way/751513226`](https://www.openstreetmap.org/way/751513226) | [`Chiva,_Spain`](https://en.wikipedia.org/wiki/Chiva,_Spain) |
 
 ### 3. Rallycross & All-Terrain (17 Circuits)
-Surveyed via `scripts/osm_importer.py rally` and `target/osm_cache/`:
+Surveyed via `scripts/osm_importer.py rally` and `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |
@@ -128,7 +128,7 @@ Surveyed via `scripts/osm_importer.py rally` and `target/osm_cache/`:
 | `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`way/788873788`](https://www.openstreetmap.org/way/788873788) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
 
 ### 4. NASCAR Cup Series & Trans-Am (17 Circuits)
-Surveyed via `scripts/osm_nascar_importer.py` and `target/osm_cache/`:
+Surveyed via `scripts/osm_nascar_importer.py` and `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |
@@ -151,7 +151,7 @@ Surveyed via `scripts/osm_nascar_importer.py` and `target/osm_cache/`:
 | `watkins_glen` | Watkins Glen International | US | [`way/702671615`](https://www.openstreetmap.org/way/702671615) | [`Watkins_Glen_International`](https://en.wikipedia.org/wiki/Watkins_Glen_International) |
 
 ### 5. Real-World Extreme Off-Road (2 Circuits)
-Surveyed via `target/osm_cache/`:
+Surveyed via `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |

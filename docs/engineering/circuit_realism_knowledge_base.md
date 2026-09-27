@@ -255,7 +255,7 @@ out geom qt;
 
 ### 4.2 Rules for fetching
 
-- Fetch **offline, once**, into `target/osm_cache/<id>_env.json`. Never at game runtime.
+- Fetch **offline, once**, into `assets/osm/<id>.osm` with `python3 scripts/osm_importer.py download --track <id>`. Never at game runtime.
 - Public overpass-api.de: < 10,000 requests/day, < 1 GB/day, default timeout 180 s.
   Send a descriptive User-Agent (the skill uses `tdrace-osm-tool/1.0`).
 - The OSM Map API (`/api/0.6/map`) is for editors. It has a 0.25 deg² / 50k-node limit.
@@ -634,7 +634,7 @@ Example: Monza (GT, 0.5×). Monza is well mapped: 38 walls, 10 `natural=sand`,
 
 | Step | Action | Check |
 |---|---|---|
-| 1 | Fetch the §4.1 query for the Monza bbox into `target/osm_cache/monza_env.json`. | File has barriers, sand, grandstands. |
+| 1 | Use `assets/osm/monza.osm` (full map area), or fetch the §4.1 query for more detail. | File has barriers, sand, grandstands. |
 | 2 | Re-run the centreline importer for Monza. Compute the transform. | New waypoints vs `module/gt.rs` preset: max deviation < 0.5 m. |
 | 3 | Project all features with the transform. Plot them over the waypoints (SVG in scratch). | Walls sit on both sides; pit lane parallel to the main straight. |
 | 4 | Measure per-side barrier distance (§5.4), scale ×0.5, clean (§5.6), clamp (§5.7). | No wall inside the track; no zig-zag. |
