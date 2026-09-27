@@ -434,7 +434,7 @@ fn render_viewer_hud(
     );
 
     // Interactive Controls Hints on right side of footer
-    let controls_hint = "[ESC / B] Return • [Drag / WASD] Pan • [Scroll Wheel / Triggers] Zoom • [R / Space] Reset Fit";
+    let controls_hint = "[ESC / V / B] Return • [Drag / WASD] Pan • [Scroll Wheel / Triggers] Zoom • [R / Space] Reset Fit";
     fonts.draw_ui_bold(
         controls_hint,
         footer_x + footer_w - scaler.s(550.0),
@@ -471,6 +471,7 @@ pub fn handle_circuit_viewer_input(
     let exit_requested = is_key_pressed(KeyCode::Escape)
         || is_key_pressed(KeyCode::Backspace)
         || is_key_pressed(KeyCode::B)
+        || is_key_pressed(KeyCode::V)
         || gamepad_snapshot.btn_b_pressed
         || clicked_back;
 

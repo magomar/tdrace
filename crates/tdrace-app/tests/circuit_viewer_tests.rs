@@ -171,3 +171,95 @@ fn test_compute_full_track_bounds_incorporates_scenery() {
     assert!(neg_min.x <= neg_point.x);
     assert!(neg_min.y <= neg_point.y);
 }
+
+#[test]
+fn test_global_settings_modal_opening_across_screens() {
+    let mut session = RaceSession::new();
+
+    // 1. Menu (Circuit Catalogue / Selector)
+    session.state = GameState::Menu;
+    assert!(!session.is_settings_modal_open());
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+    assert!(!session.is_settings_modal_open());
+
+    // 2. Starting Grid
+    session.state = GameState::StartingGrid;
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 3. Paused
+    session.state = GameState::Paused;
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 4. Controls Help
+    session.state = GameState::ControlsHelp(false);
+    session.open_settings_modal_tab(1);
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 5. Garage
+    session.state = GameState::Garage(tdrace_app::game::GarageOrigin::Menu);
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 6. Career Hub
+    session.state = GameState::CareerHub {
+        selected_tier: 1,
+        selected_slot: 0,
+        calendar_tracks: vec!["monza".to_string()],
+        showing_standings: false,
+    };
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 7. Modality Select
+    session.state = GameState::ModalitySelect {
+        category: tdrace_app::ui::ModalityCategory::SinglePlayer,
+        selected_idx: 0,
+        modal: None,
+    };
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+
+    // 8. Module Select
+    session.state = GameState::ModuleSelect { selected_idx: 0 };
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+}
+
+#[test]
+fn test_circuit_viewer_state_and_modal_global_integration() {
+    let mut session = RaceSession::new();
+    let track = classic_grand_prix();
+    session.state = GameState::Menu;
+
+    // Open circuit viewer from Menu
+    session.open_circuit_viewer(track, "Classic GP".to_string(), CircuitViewerOrigin::Menu);
+    assert_eq!(
+        session.state,
+        GameState::CircuitViewer(CircuitViewerOrigin::Menu)
+    );
+
+    // Verify circuit viewer state
+    assert!(session.circuit_viewer_state.is_some());
+
+    // Exiting returns to Menu
+    session.circuit_viewer_state = None;
+    session.update_circuit_viewer(CircuitViewerOrigin::Menu, 0.016);
+    assert_eq!(session.state, GameState::Menu);
+
+    // Opening settings modal from Menu works cleanly
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    session.close_settings_modal(false);
+    assert!(!session.is_settings_modal_open());
+}
