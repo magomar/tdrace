@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Interactive Controls Settings for Steering Smoothing and Progressive Hold Bleed"
 description: "Extends ArcadeSettingsModal Controls tab and the in-game Controls Guide screen with interactive widgets and real-time adjustment for steering smoothing profiles, hold-lock bleed rate, and speed-sensitive steering limits."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-040-receipt.md"
 created: 2026-09-27
 verified: { by: "human:mario", at: "2026-09-27T19:00:00Z" }
 generated: { by: agent/antigravity, at: 2026-09-27T19:01:00Z }
@@ -119,20 +120,20 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Player modifies steering profile and hold-lock bleed in Settings Modal**
-  - [ ] **Given** the player opens `ArcadeSettingsModal` on the `CONTROLS` tab
-  - [ ] **When** the player modifies the steering profile dropdown and hold-lock bleed slider and clicks "SAVE & APPLY"
-  - [ ] **Then** the updated values must immediately take effect on `InputController` and `filter_p2`
-  - [ ] **And** `config.toml` input settings must be updated
+  - [x] **Given** the player opens `ArcadeSettingsModal` on the `CONTROLS` tab
+  - [x] **When** the player modifies the steering profile dropdown and hold-lock bleed slider and clicks "SAVE & APPLY"
+  - [x] **Then** the updated values must immediately take effect on `InputController` and `filter_p2`
+  - [x] **And** `config.toml` input settings must be updated
 
 - **Scenario: Player cancels edits with rollback**
-  - [ ] **Given** the player changes the hold-lock bleed slider in the Settings modal
-  - [ ] **When** the player presses Escape or Cancel without saving
-  - [ ] **Then** the settings must revert to the initial snapshot
+  - [x] **Given** the player changes the hold-lock bleed slider in the Settings modal
+  - [x] **When** the player presses Escape or Cancel without saving
+  - [x] **Then** the settings must revert to the initial snapshot
 
 - **Scenario: Player cycles hold-lock bleed rate on Controls Help screen**
-  - [ ] **Given** the player is on `GameState::ControlsHelp`
-  - [ ] **When** the player presses key `[B]`
-  - [ ] **Then** the active hold bleed rate must cycle through preset values and update the filter immediately
+  - [x] **Given** the player is on `GameState::ControlsHelp`
+  - [x] **When** the player presses key `[B]`
+  - [x] **Then** the active hold bleed rate must cycle through preset values and update the filter immediately
 
 ---
 
