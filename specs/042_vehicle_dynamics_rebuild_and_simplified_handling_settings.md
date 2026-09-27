@@ -101,10 +101,19 @@ understeer moment.
 
 #### 2.5 Steering authority (`car.rs`)
 
-`authority(v) = lerp(lock, min(lock, atan(L/R_min) + overslip·α_peak), smoothstep(6, 14, v))`,
-where `R_min = v²/(μ·g_eff)` and `g_eff` includes downforce. `target = −steer · authority`. This
+`authority(v) = min(lock, atan(L/R_min) + (0.25 + overslip − 1)·α_peak)`, where
+`R_min = v²/(μ·grip·g_eff)` and `g_eff` includes downforce. `target = −steer · authority`. This
 replaces `speed_sensitive_steer_factor` and both input-layer speed-sensitivity terms. The rack rate
 (`steer_speed`) stays a per-car constant and is no longer patched at runtime.
+
+*Implementation notes (measured during task 5):*
+- *The front reaches its peak near `kinematic + 0.25·α_peak`, because the rear tires also slip.
+  The planned `kinematic + overslip·α_peak` put full input about 0.75 peak-widths past the limit.*
+- *The planned 6–14 m/s blend to full lock was dropped. It overshot the useful angle at 8–12 m/s.
+  At parking speed the kinematic term already exceeds lock.*
+- *The grip-aware mapping applies to **human drivers** (`PlayerHandling.grip_aware_steering`).
+  Bots and scripted controllers keep the linear full-lock mapping, because their closed-loop gains
+  were tuned for it. Their angle is capped at the grip limit with overslip 1.5.*
 
 #### 2.6 Drive, brake, assists (`car.rs`)
 
@@ -133,7 +142,7 @@ catalog/module builders after their mutations. `Car::new` debug-asserts that the
 | `CarConfig.rear_tire: Option<TireConfig>` | New. Per-axle tire override (karts). |
 | `CarConfig.roll_balance` (0.35–0.65), `weight_transfer_hz` (2–10) | New. Replace `weight_transfer_lateral` / `weight_transfer_longitudinal` (accepted, ignored). |
 | `CarConfig.engine_brake_front_share` | New. Default `0.35 + 0.30·drive_bias` when missing. |
-| `CarConfig.player: PlayerHandling { steer_overslip, traction_help }` | New. Default `{1.0, 0.0}` (bots). |
+| `CarConfig.player: PlayerHandling { grip_aware_steering, steer_overslip, traction_help }` | New. Default `{false, 1.0, 0.0}` (bots). Human drivers get `PlayerHandling::human(..)`. |
 | `CarConfig.speed_sensitive_steer_factor` | Removed (accepted, ignored). |
 | `DriverAssistsConfig.tcs_slip_angle_deg` | New, default 12. |
 | `MotorbikeConfig.tire` | Moves to a `PacejkaTireConfig` (the old struct, renamed). The bike physics is not changed. |

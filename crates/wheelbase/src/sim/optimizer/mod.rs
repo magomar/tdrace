@@ -48,6 +48,13 @@ pub fn standard_tuning_bounds(constraint: &DrivetrainConstraint, base_config: &C
     let mut bounds = Vec::new();
 
     bounds.push(ParameterBound::new(
+        "tire_grip",
+        (base_config.tire.grip * 0.85).max(0.5),
+        (base_config.tire.grip * 1.15).min(1.8),
+        base_config.tire.grip,
+    ));
+
+    bounds.push(ParameterBound::new(
         "tire_peak_slip_angle_deg",
         6.0,
         15.0,
