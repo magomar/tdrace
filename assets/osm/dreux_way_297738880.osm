@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="openstreetmap-cgimap 2.1.0 (3498755 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="3016400351" visible="true" version="3" changeset="157008915" timestamp="2024-09-23T18:30:05Z" user="Smockwette" uid="10505227" lat="48.7569632" lon="1.3714346">
+  <tag k="noexit" v="yes"/>
+ </node>
+ <node id="3016400386" visible="true" version="3" changeset="82982472" timestamp="2020-04-02T13:06:04Z" user="Smockwette" uid="10505227" lat="48.7562990" lon="1.3708579"/>
+ <node id="7283053218" visible="true" version="1" changeset="82019315" timestamp="2020-03-10T18:16:24Z" user="Smockwette" uid="10505227" lat="48.7567094" lon="1.3712140"/>
+ <node id="7358865636" visible="true" version="2" changeset="89061599" timestamp="2020-08-06T23:58:14Z" user="Smockwette" uid="10505227" lat="48.7566090" lon="1.3711270">
+  <tag k="name" v="Ligne de Départ"/>
+  <tag k="raceway" v="start"/>
+ </node>
+ <node id="7358865637" visible="true" version="1" changeset="82982472" timestamp="2020-04-02T13:06:04Z" user="Smockwette" uid="10505227" lat="48.7561560" lon="1.3707368">
+  <tag k="name" v="Ligne d'Arrivée"/>
+  <tag k="raceway" v="finish"/>
+ </node>
+ <node id="7358865642" visible="true" version="1" changeset="82982472" timestamp="2020-04-02T13:06:04Z" user="Smockwette" uid="10505227" lat="48.7559016" lon="1.3705292"/>
+ <node id="7792736016" visible="true" version="1" changeset="89061599" timestamp="2020-08-06T23:58:14Z" user="Smockwette" uid="10505227" lat="48.7566441" lon="1.3711574"/>
+ <way id="297738880" visible="true" version="14" changeset="118462596" timestamp="2022-03-14T15:14:12Z" user="Eric Bie" uid="2141750">
+  <nd ref="3016400351"/>
+  <nd ref="7283053218"/>
+  <nd ref="7792736016"/>
+  <nd ref="7358865636"/>
+  <nd ref="3016400386"/>
+  <nd ref="7358865637"/>
+  <nd ref="7358865642"/>
+  <tag k="highway" v="raceway"/>
+  <tag k="lanes" v="1"/>
+  <tag k="lit" v="yes"/>
+  <tag k="name" v="Ligne Droite de Départ"/>
+  <tag k="oneway" v="yes"/>
+  <tag k="sport" v="motor;rallycross"/>
+  <tag k="surface" v="asphalt"/>
+  <tag k="width" v="16"/>
+ </way>
+</osm>

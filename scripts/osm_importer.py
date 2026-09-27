@@ -15,7 +15,7 @@ metres, rotate the start straight onto +X, scale to the official length, resampl
 evenly spaced waypoints, then assign widths and inside-apex kerbs from the deflection
 angle at each waypoint.
 
-Map data is read from the cache directory (default: <repo>/target/osm_cache):
+Map data is read from the cache directory (default: <repo>/assets/osm):
   gt     pre-downloaded OSM XML files named in each circuit's "file" entry
   kart   <track_id>.json, fetched from the OSM map API (Overpass fallback) when missing
   rally  <track_id>.json, fetched the same way from the bbox in the circuit's "query"
@@ -42,7 +42,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "target", "osm_cache")
+DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "assets", "osm")
 USER_AGENT = "tdrace-osm-tool/1.0"
 
 # Joins between consecutive chain nodes that are not OSM edges must be closer than this.
@@ -1697,7 +1697,7 @@ DISCIPLINES = {
 
 def main():
     parser = argparse.ArgumentParser(description="Extract and generate tdrace circuits from OpenStreetMap")
-    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: target/osm_cache)")
+    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: assets/osm)")
     sub = parser.add_subparsers(dest="discipline", required=True)
     for name, (specs, _, _, _) in DISCIPLINES.items():
         p = sub.add_parser(name, help=f"{name} circuits")
