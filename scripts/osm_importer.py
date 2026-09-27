@@ -15,16 +15,17 @@ metres, rotate the start straight onto +X, scale to the official length, resampl
 evenly spaced waypoints, then assign widths and inside-apex kerbs from the deflection
 angle at each waypoint.
 
-Map data is read from the cache directory (default: <repo>/target/osm_cache):
-  gt     pre-downloaded OSM XML files named in each circuit's "file" entry
-  kart   <track_id>.json, fetched from the OSM map API (Overpass fallback) when missing
-  rally  <track_id>.json, fetched the same way from the bbox in the circuit's "query"
+Map data is read from <cache_dir>/<track_id>.osm (default cache dir: <repo>/assets/osm).
+`download` fetches it for the real circuits listed in crates/arcade-race-core/src/track/provenance.rs:
+the OSM map API area around the circuit's osm_url element (plus the kart/rally config bbox) with a
+300 m margin, or, when that area is too large, an Overpass extract of everything near the raceways.
 
 Warnings on stderr flag suspect geometry: a join between two nodes that are not an OSM
 edge and are more than 45 m apart, a way that could not be stitched, and a raw OSM loop
 length more than 10% away from the official length.
 
 Usage:
+  python3 scripts/osm_importer.py download --track monza
   python3 scripts/osm_importer.py gt --track monza --rust
   python3 scripts/osm_importer.py rally
   python3 scripts/osm_importer.py kart --cache-dir /path/to/osm_cache
@@ -33,16 +34,17 @@ Map data (c) OpenStreetMap contributors, available under the Open Database Licen
 """
 
 import argparse
-import json
 import math
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "target", "osm_cache")
+DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "assets", "osm")
 USER_AGENT = "tdrace-osm-tool/1.0"
 
 # Joins between consecutive chain nodes that are not OSM edges must be closer than this.
@@ -202,40 +204,17 @@ def map_api_to_elements(xml_text):
     return {"elements": elements}
 
 
-def fetch_osm_bbox(cache_dir, name, min_lat, min_lon, max_lat, max_lon, overpass_query):
-    """Return cached OSM JSON for `name`, or fetch the bbox (OSM map API, then Overpass) and cache it."""
-    cache_file = os.path.join(cache_dir, f"{name}.json")
-    if os.path.exists(cache_file):
-        with open(cache_file, "r") as f:
-            return json.load(f)
-    os.makedirs(cache_dir, exist_ok=True)
+def osm_file_path(cache_dir, track_id):
+    return os.path.join(cache_dir, f"{track_id}.osm")
 
-    map_url = f"https://api.openstreetmap.org/api/0.6/map?bbox={min_lon},{min_lat},{max_lon},{max_lat}"
-    try:
-        req = urllib.request.Request(map_url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = map_api_to_elements(resp.read().decode("utf-8"))
-        with open(cache_file, "w") as f:
-            json.dump(data, f)
-        return data
-    except (OSError, ValueError, ET.ParseError) as e:
-        warn(name, f"OSM map API failed ({e}), trying Overpass")
 
-    endpoints = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
-    ]
-    for ep in endpoints:
-        try:
-            req = urllib.request.Request(ep, data=overpass_query.encode("utf-8"), headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            with open(cache_file, "w") as f:
-                json.dump(data, f)
-            return data
-        except (OSError, ValueError) as e:
-            warn(name, f"Overpass endpoint {ep} failed ({e})")
-    raise RuntimeError(f"Failed to query OSM for {name}")
+def load_osm_elements(cache_dir, track_id):
+    """Nodes and ways of <cache_dir>/<track_id>.osm as Overpass-style JSON elements."""
+    path = osm_file_path(cache_dir, track_id)
+    if not os.path.exists(path):
+        raise SystemExit(f"Missing {path}: run `python3 scripts/osm_importer.py download --track {track_id}` first")
+    with open(path, "r", encoding="utf-8") as f:
+        return map_api_to_elements(f.read())
 
 
 def stitch_ways(label, way_nodes_list, nodes_coords, max_gap=MAX_JOIN_GAP_M):
@@ -294,7 +273,6 @@ GT_CIRCUITS = {
     "monza": {
         "name": "Monza Autodromo Nazionale",
         "description": "High-speed Italian Grand Prix temple of speed.",
-        "file": "monza.osm",
         "rel_id": 284565,
         "fia_length": 5793.0,
         "num_waypoints": 28,
@@ -308,7 +286,6 @@ GT_CIRCUITS = {
     "spa": {
         "name": "Circuit de Spa-Francorchamps",
         "description": "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.",
-        "file": "spa.osm",
         "rel_id": 284560,
         "fia_length": 7004.0,
         "num_waypoints": 32,
@@ -326,7 +303,6 @@ GT_CIRCUITS = {
     "silverstone": {
         "name": "Silverstone Grand Prix Circuit",
         "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
-        "file": "silverstone.osm",
         "rel_id": 51160,
         "fia_length": 5891.0,
         "num_waypoints": 30,
@@ -340,7 +316,6 @@ GT_CIRCUITS = {
     "monaco": {
         "name": "Circuit de Monaco",
         "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
-        "file": "monaco.osm",
         "rel_id": 148194,
         "fia_length": 3337.0,
         "num_waypoints": 26,
@@ -364,7 +339,6 @@ GT_CIRCUITS = {
     "suzuka": {
         "name": "Suzuka International Racing Course",
         "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
-        "file": "suzuka.osm",
         "rel_id": 284570,
         "fia_length": 5807.0,
         "num_waypoints": 34,
@@ -379,7 +353,6 @@ GT_CIRCUITS = {
     "interlagos": {
         "name": "Autodromo Jose Carlos Pace (Interlagos)",
         "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
-        "file": "interlagos.osm",
         "rel_id": 6781071,
         "fia_length": 4309.0,
         "num_waypoints": 28,
@@ -393,7 +366,6 @@ GT_CIRCUITS = {
     "montreal": {
         "name": "Circuit Gilles Villeneuve (Montreal)",
         "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
-        "file": "montreal.osm",
         "rel_id": 284595,
         "fia_length": 4361.0,
         "num_waypoints": 28,
@@ -407,7 +379,6 @@ GT_CIRCUITS = {
     "red_bull_ring": {
         "name": "Red Bull Ring (Spielberg)",
         "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
-        "file": "red_bull_ring.osm",
         "rel_id": 5309181,
         "fia_length": 4318.0,
         "num_waypoints": 26,
@@ -428,7 +399,6 @@ GT_CIRCUITS = {
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
         "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
-        "file": "catalunya.osm",
         "way_id": "831804327",
         "fia_length": 4657.0,
         "num_waypoints": 28,
@@ -446,7 +416,6 @@ GT_CIRCUITS = {
     "zandvoort": {
         "name": "Circuit Zandvoort",
         "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
-        "file": "zandvoort.osm",
         "rel_id": 13545573,
         "fia_length": 4259.0,
         "num_waypoints": 28,
@@ -468,7 +437,6 @@ GT_CIRCUITS = {
     "bahrain": {
         "name": "Bahrain International Circuit (Sakhir)",
         "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
-        "file": "bahrain.osm",
         "rel_id": 284538,
         "fia_length": 5412.0,
         "num_waypoints": 30,
@@ -482,7 +450,6 @@ GT_CIRCUITS = {
     "marina_bay": {
         "name": "Marina Bay Street Circuit (Singapore)",
         "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
-        "file": "marina_bay_rel.osm",
         "rel_id": 421263,
         "fia_length": 4940.0,
         "num_waypoints": 30,
@@ -501,7 +468,6 @@ GT_CIRCUITS = {
     "cota": {
         "name": "Circuit of the Americas (COTA)",
         "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
-        "file": "cota_rel.osm",
         "rel_id": 6537729,
         "fia_length": 5513.0,
         "num_waypoints": 30,
@@ -519,7 +485,6 @@ GT_CIRCUITS = {
     "madring": {
         "name": "MadRing Circuito de Madrid",
         "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
-        "file": "madring.osm",
         "rel_id": 18813472,
         "fia_length": 5474.0,
         "num_waypoints": 30,
@@ -534,7 +499,6 @@ GT_CIRCUITS = {
     "nurburgring_gp": {
         "name": "Nurburgring Grand Prix-Strecke",
         "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
-        "file": "nurburgring.osm",
         "rel_id": 38567,
         "fia_length": 5148.0,
         "num_waypoints": 30,
@@ -558,7 +522,6 @@ GT_CIRCUITS = {
     "bathurst": {
         "name": "Mount Panorama (Bathurst)",
         "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
-        "file": "bathurst.osm",
         "rel_id": 6942508,
         "fia_length": 6213.0,
         "num_waypoints": 32,
@@ -582,7 +545,6 @@ GT_CIRCUITS = {
     "portimao_gp": {
         "name": "Autodromo Internacional do Algarve",
         "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
-        "file": "portimao.osm",
         "rel_id": 7509968,
         "fia_length": 4653.0,
         "num_waypoints": 28,
@@ -608,7 +570,6 @@ GT_CIRCUITS = {
     "le_mans_sarthe": {
         "name": "Circuit de la Sarthe (Le Mans)",
         "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
-        "file": "le_mans.osm",
         "rel_id": 2126739,
         "fia_length": 13626.0,
         "num_waypoints": 36,
@@ -632,7 +593,9 @@ GT_CIRCUITS = {
 
 def process_gt_circuit(cid, cache_dir):
     cfg = GT_CIRCUITS[cid]
-    path = os.path.join(cache_dir, cfg["file"])
+    path = osm_file_path(cache_dir, cid)
+    if not os.path.exists(path):
+        raise SystemExit(f"Missing {path}: run `python3 scripts/osm_importer.py download --track {cid}` first")
     root = ET.parse(path).getroot()
 
     nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
@@ -1067,17 +1030,7 @@ def find_longest_straight(points):
 
 def process_kart_track(track_id, cache_dir):
     spec = KART_TRACKS[track_id]
-    min_lon, min_lat, max_lon, max_lat = spec["bbox"]
-    query = f"""
-[out:json][timeout:25];
-(
-  way["highway"="raceway"]({min_lat},{min_lon},{max_lat},{max_lon});
-);
-out body;
->;
-out skel qt;
-"""
-    data = fetch_osm_bbox(cache_dir, track_id, min_lat, min_lon, max_lat, max_lon, query)
+    data = load_osm_elements(cache_dir, track_id)
 
     nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
     ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
@@ -1480,12 +1433,7 @@ def rally_way_surface(tags):
 
 def process_rally_track(track_id, cache_dir):
     spec = RALLY_TRACKS[track_id]
-    query = spec["query"]
-    m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", query)
-    lat1, lon1, lat2, lon2 = map(float, m.groups())
-    data = fetch_osm_bbox(
-        cache_dir, track_id, min(lat1, lat2), min(lon1, lon2), max(lat1, lat2), max(lon1, lon2), query
-    )
+    data = load_osm_elements(cache_dir, track_id)
 
     nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
     ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
@@ -1685,6 +1633,111 @@ def print_rally_summary(res):
 
 
 # ---------------------------------------------------------------------------
+# Download (all real circuits in the Rust provenance registry)
+# ---------------------------------------------------------------------------
+
+PROVENANCE_RS = os.path.join(REPO_ROOT, "crates", "arcade-race-core", "src", "track", "provenance.rs")
+# Extra ground around the circuit, so barriers, gravel traps and grandstands are included.
+DOWNLOAD_MARGIN_M = 300.0
+MAP_API = "https://api.openstreetmap.org/api/0.6"
+OVERPASS_API = "https://overpass-api.de/api/interpreter"
+
+
+def provenance_osm_urls():
+    """{circuit id: osm_url} for every real circuit in the Rust provenance registry."""
+    with open(PROVENANCE_RS, "r", encoding="utf-8") as f:
+        src = f.read()
+    return dict(re.findall(r'id: "([^"]+)",\s*name: "[^"]*",.*?osm_url: "([^"]+)"', src, re.DOTALL))
+
+
+def http_get(url, data=None, timeout=120):
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8")
+
+
+def element_bounds(osm_url):
+    """(south, west, north, east) of the OSM element an osm_url points to."""
+    m = re.search(r"openstreetmap\.org/(node|way|relation)/(\d+)", osm_url)
+    if not m:
+        raise ValueError(f"not an OSM element URL: {osm_url}")
+    kind, eid = m.groups()
+    url = f"{MAP_API}/{kind}/{eid}" + ("" if kind == "node" else "/full")
+    root = ET.fromstring(http_get(url))
+    lats = [float(n.get("lat")) for n in root.findall("node")]
+    lons = [float(n.get("lon")) for n in root.findall("node")]
+    return min(lats), min(lons), max(lats), max(lons)
+
+
+def config_bbox(track_id):
+    """(south, west, north, east) from a kart or rallycross config, when it has one."""
+    if track_id in KART_TRACKS:
+        min_lon, min_lat, max_lon, max_lat = KART_TRACKS[track_id]["bbox"]
+        return min_lat, min_lon, max_lat, max_lon
+    if track_id in RALLY_TRACKS:
+        m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", RALLY_TRACKS[track_id]["query"])
+        lat1, lon1, lat2, lon2 = map(float, m.groups())
+        return min(lat1, lat2), min(lon1, lon2), max(lat1, lat2), max(lon1, lon2)
+    return None
+
+
+def expand_bbox(bbox, margin_m):
+    s, w, n, e = bbox
+    dlat = margin_m / 111320.0
+    dlon = margin_m / (111320.0 * math.cos(math.radians((s + n) / 2)))
+    return s - dlat, w - dlon, n + dlat, e + dlon
+
+
+def download_circuit(track_id, osm_url, cache_dir, margin_m=DOWNLOAD_MARGIN_M):
+    """Save the OSM map area around one circuit to <cache_dir>/<track_id>.osm. Returns a status word."""
+    bbox = element_bounds(osm_url)
+    cfg = config_bbox(track_id)
+    if cfg:
+        bbox = (min(bbox[0], cfg[0]), min(bbox[1], cfg[1]), max(bbox[2], cfg[2]), max(bbox[3], cfg[3]))
+    s, w, n, e = expand_bbox(bbox, margin_m)
+
+    source = "map"
+    try:
+        xml_text = http_get(f"{MAP_API}/map?bbox={w:.6f},{s:.6f},{e:.6f},{n:.6f}")
+    except urllib.error.HTTPError as err:
+        if err.code not in (400, 509):
+            raise
+        # Area too large for the map API (50k nodes / 0.25 deg2): keep only what lies near the raceways.
+        source = "overpass"
+        query = (
+            f"[out:xml][timeout:300][bbox:{s:.6f},{w:.6f},{n:.6f},{e:.6f}];"
+            f"way[highway=raceway]->.t;(node(around.t:{margin_m:.0f});way(around.t:{margin_m:.0f}););"
+            "(._;>;)->.env;rel(bw.t)->.r;(.env;.r;.r>;);out body;"
+        )
+        xml_text = http_get(OVERPASS_API, data=query.encode("utf-8"), timeout=360)
+
+    root = ET.fromstring(xml_text)
+    raceways = [w_el for w_el in root.findall("way") if any(
+        t.get("k") == "highway" and t.get("v") == "raceway" for t in w_el.findall("tag"))]
+    os.makedirs(cache_dir, exist_ok=True)
+    with open(osm_file_path(cache_dir, track_id), "w", encoding="utf-8") as f:
+        f.write(xml_text)
+    if not raceways:
+        warn(track_id, "no highway=raceway way in the downloaded area: the circuit may not be mapped")
+    return f"{source}, {len(raceways)} raceway ways"
+
+
+def download(track_ids, cache_dir, force=False):
+    urls = provenance_osm_urls()
+    for tid in track_ids:
+        path = osm_file_path(cache_dir, tid)
+        if os.path.exists(path) and not force:
+            print(f"[{tid}] exists, skipped")
+            continue
+        try:
+            status = download_circuit(tid, urls[tid], cache_dir)
+            print(f"[{tid}] saved {path} ({os.path.getsize(path) // 1024} KiB, {status})")
+        except (OSError, ValueError, ET.ParseError) as err:
+            warn(tid, f"download failed: {err}")
+        time.sleep(1.0)  # be polite to the public OSM servers
+
+
+# ---------------------------------------------------------------------------
 # Command line
 # ---------------------------------------------------------------------------
 
@@ -1697,13 +1750,21 @@ DISCIPLINES = {
 
 def main():
     parser = argparse.ArgumentParser(description="Extract and generate tdrace circuits from OpenStreetMap")
-    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: target/osm_cache)")
+    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: assets/osm)")
     sub = parser.add_subparsers(dest="discipline", required=True)
     for name, (specs, _, _, _) in DISCIPLINES.items():
         p = sub.add_parser(name, help=f"{name} circuits")
         p.add_argument("--track", choices=list(specs.keys()), help="Process one circuit (default: all)")
         p.add_argument("--rust", action="store_true", help="Print Rust code")
+    real_ids = list(provenance_osm_urls().keys())
+    p = sub.add_parser("download", help="Download OSM map data for the real circuits in provenance.rs")
+    p.add_argument("--track", choices=real_ids, action="append", help="Circuit id (repeatable; default: all)")
+    p.add_argument("--force", action="store_true", help="Download again even if the file exists")
     args = parser.parse_args()
+
+    if args.discipline == "download":
+        download(args.track or real_ids, args.cache_dir, args.force)
+        return
 
     specs, process, generate_rust, print_summary = DISCIPLINES[args.discipline]
     track_ids = [args.track] if args.track else list(specs.keys())

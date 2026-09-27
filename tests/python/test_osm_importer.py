@@ -65,3 +65,22 @@ def test_resample_polyline_keeps_segment_props():
     assert pts[1] == (50.0, 0.0) and pts[2] == (100.0, 0.0)
     # A point exactly on a corner still belongs to the segment that ends there.
     assert props == ["A", "A", "A", "B", "B", "C", "C", "D"]
+
+
+def test_provenance_registry_lists_all_real_circuits():
+    urls = imp.provenance_osm_urls()
+    assert len(urls) == 71
+    assert all(u.startswith("https://www.openstreetmap.org/") for u in urls.values())
+
+
+def test_every_importer_config_can_be_downloaded():
+    urls = imp.provenance_osm_urls()
+    for specs in (imp.GT_CIRCUITS, imp.KART_TRACKS, imp.RALLY_TRACKS):
+        missing = [tid for tid in specs if tid not in urls]
+        assert not missing, f"configs without a provenance osm_url: {missing}"
+
+
+def test_expand_bbox_adds_margin_in_meters():
+    s, w, n, e = imp.expand_bbox((45.0, 9.0, 45.0, 9.0), 111.32)
+    assert abs((n - s) - 0.002) < 1e-9
+    assert abs((e - w) - 0.002 / 0.70710678) < 1e-6
