@@ -129,8 +129,10 @@ impl Default for CameraConfig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct InputConfig {
-    /// Active steering profile preset (Direct, Balanced, Smooth).
+    /// Active steering profile preset (Balanced, Smooth, Agile, Direct, Raw).
     pub steering_profile: SteeringProfile,
+    /// Master toggle for speed-sensitive steering attenuation.
+    pub speed_sensitive_enabled: bool,
     /// Steering rise rate in units/second.
     pub steer_rise_rate: f32,
     /// Steering return to center rate in units/second.
@@ -154,6 +156,7 @@ impl Default for InputConfig {
         let preset = cabinet::input::DigitalInputConfig::from_profile(SteeringProfile::Balanced);
         Self {
             steering_profile: SteeringProfile::Balanced,
+            speed_sensitive_enabled: preset.speed_sensitive_enabled,
             steer_rise_rate: preset.steer_rise_rate,
             steer_return_rate: preset.steer_return_rate,
             steer_exponent: preset.steer_exponent,

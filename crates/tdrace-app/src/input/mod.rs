@@ -1,5 +1,6 @@
 pub mod filter;
 pub mod gamepad;
+pub mod simulation;
 pub mod touch;
 
 use macroquad::color::Color;
@@ -35,6 +36,7 @@ pub use cabinet::input::{
 };
 pub use filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
 pub use gamepad::{GamepadConfig, GamepadController, GamepadSnapshot};
+pub use simulation::*;
 pub use touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 
 /// Active debug overlay visibility flags.

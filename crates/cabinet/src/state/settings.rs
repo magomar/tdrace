@@ -30,8 +30,11 @@ pub struct SettingsSnapshot {
     pub steer_sensitivity: f32,
     pub steer_exponent: f32,
     pub steering_profile_idx: usize,
+    pub speed_sensitive_switch_idx: usize,
     pub hold_bleed_rate: f32,
     pub min_speed_steer_limit: f32,
+    pub steer_rise_rate: f32,
+    pub speed_sensitive_factor: f32,
     pub resolution_idx: usize,
     pub display_mode_idx: usize,
     pub ui_scale_idx: usize,
@@ -67,8 +70,11 @@ impl Default for SettingsSnapshot {
             steer_sensitivity: 0.0,
             steer_exponent: 0.0,
             steering_profile_idx: 0,
+            speed_sensitive_switch_idx: 0,
             hold_bleed_rate: 4.0,
             min_speed_steer_limit: 0.75,
+            steer_rise_rate: 8.0,
+            speed_sensitive_factor: 0.004,
             resolution_idx: 0,
             display_mode_idx: 0,
             ui_scale_idx: 0,
@@ -372,9 +378,13 @@ pub struct ArcadeSettingsModal {
     pub mute_dropdown: DropdownWidget,
 
     // Controls Tab Widgets
+    pub controls_sub_tab: usize, // 0: Keyboard & Filter, 1: Gamepad Controller
     pub steering_profile_dropdown: DropdownWidget,
-    pub hold_bleed_rate_slider: SliderWidget,
+    pub speed_sensitive_switch: DropdownWidget,
     pub min_speed_steer_limit_slider: SliderWidget,
+    pub hold_bleed_rate_slider: SliderWidget,
+    pub steer_rise_rate_slider: SliderWidget,
+    pub speed_sensitive_factor_slider: SliderWidget,
     pub stick_deadzone_slider: SliderWidget,
     pub trigger_deadzone_slider: SliderWidget,
     pub steer_sensitivity_slider: SliderWidget,
@@ -438,7 +448,7 @@ impl ArcadeSettingsModal {
         // Tab 3 (Gameplay):
         //   Sub-tab 0 (General): 4 widgets (assist, speed, ghost, preset) + 1 customize button + 1 bottom row = 6 rows
         //   Sub-tab 1 (Visual Aids): 1 preset + 10 helper widgets + 1 bottom row = 12 rows
-        let nav = NavGrid2D::new(vec![6, 8, 7, 6]);
+        let nav = NavGrid2D::new(vec![6, 7, 7, 6]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -485,9 +495,12 @@ impl ArcadeSettingsModal {
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
         let steering_profile_options = vec![
             "Balanced (Default)".to_string(),
-            "Smooth (Touring)".to_string(),
+            "Smooth (Arcade)".to_string(),
+            "Agile (Responsive)".to_string(),
             "Direct (Sim)".to_string(),
+            "Raw (Unfiltered)".to_string(),
         ];
+        let speed_sensitive_options = vec!["ENABLED".to_string(), "DISABLED".to_string()];
 
         let mut modal = Self {
             tab_bar,
@@ -498,13 +511,21 @@ impl ArcadeSettingsModal {
             ui_slider: SliderWidget::percentage("UI SOUNDS VOLUME", audio.ui_volume),
             mute_dropdown: DropdownWidget::new("AUDIO OUTPUT", mute_options, mute_idx),
 
+            controls_sub_tab: 0,
             steering_profile_dropdown: DropdownWidget::new(
                 "STEERING PROFILE",
                 steering_profile_options,
                 0,
             ),
-            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 1.00, 10.00, 0.10, 4.00).with_suffix("x"),
+            speed_sensitive_switch: DropdownWidget::new(
+                "SPEED SENSITIVITY",
+                speed_sensitive_options,
+                0,
+            ),
             min_speed_steer_limit_slider: SliderWidget::new("MIN SPEED STEER LIMIT", 0.50, 1.00, 0.05, 0.75).with_suffix("x"),
+            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 1.00, 10.00, 0.10, 4.00).with_suffix("x"),
+            steer_rise_rate_slider: SliderWidget::new("STEER RISE RATE", 3.0, 25.0, 0.5, 8.0).with_suffix("/s"),
+            speed_sensitive_factor_slider: SliderWidget::new("SPEED SENSITIVE FACTOR", 0.000, 0.015, 0.001, 0.004),
             stick_deadzone_slider: SliderWidget::new("STICK DEADZONE", 0.0, 0.40, 0.02, gamepad.stick_deadzone),
             trigger_deadzone_slider: SliderWidget::new("TRIGGER DEADZONE", 0.0, 0.30, 0.01, gamepad.trigger_deadzone),
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
@@ -569,8 +590,11 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
         self.steering_profile_dropdown.set_selected(0);
+        self.speed_sensitive_switch.set_selected(0);
         self.hold_bleed_rate_slider.set_value(4.00);
         self.min_speed_steer_limit_slider.set_value(0.75);
+        self.steer_rise_rate_slider.set_value(8.00);
+        self.speed_sensitive_factor_slider.set_value(0.004);
 
         self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
@@ -584,9 +608,22 @@ impl ArcadeSettingsModal {
         self.visual_aids_preset_dropdown.set_selected(0);
 
         self.set_helpers_state(&HelpersSettingsState::default());
+        self.switch_controls_subtab(0);
         self.switch_gameplay_subtab(0);
         self.is_tab_focused = true;
         self.is_subtab_focused = false;
+    }
+
+    /// Switches the Controls subtab (0: Keyboard & Filter, 1: Gamepad Controller) and updates navigation grid bounds.
+    pub fn switch_controls_subtab(&mut self, subtab: usize) {
+        self.controls_sub_tab = subtab;
+        if subtab == 1 {
+            self.nav.set_column_len(1, 5);
+            self.nav.set_focus(1, 0);
+        } else {
+            self.nav.set_column_len(1, 7);
+            self.nav.set_focus(1, 0);
+        }
     }
 
     /// Switches the Gameplay subtab (0: General, 1: Visual Aids) and updates navigation grid bounds.
@@ -785,10 +822,36 @@ impl ArcadeSettingsModal {
     }
 
     /// Sets the steering smoothing and hold-lock bleed widgets from external state.
-    pub fn set_input_filter_state(&mut self, profile: SteeringProfile, hold_bleed_rate: f32, min_speed_steer_limit: f32) {
+    pub fn set_input_filter_state(
+        &mut self,
+        profile: SteeringProfile,
+        speed_sensitive_enabled: bool,
+        hold_bleed_rate: f32,
+        min_speed_steer_limit: f32,
+        steer_rise_rate: f32,
+        speed_sensitive_factor: f32,
+    ) {
         self.steering_profile_dropdown.set_selected(profile.to_index());
+        self.speed_sensitive_switch.set_selected(if speed_sensitive_enabled { 0 } else { 1 });
         self.hold_bleed_rate_slider.set_value(hold_bleed_rate);
         self.min_speed_steer_limit_slider.set_value(min_speed_steer_limit);
+        self.steer_rise_rate_slider.set_value(steer_rise_rate);
+        self.speed_sensitive_factor_slider.set_value(speed_sensitive_factor);
+    }
+
+    /// Returns true if speed sensitive steering attenuation is enabled.
+    pub fn speed_sensitive_enabled(&self) -> bool {
+        self.speed_sensitive_switch.selected_index == 0
+    }
+
+    /// Returns the currently selected steer rise rate.
+    pub fn selected_steer_rise_rate(&self) -> f32 {
+        self.steer_rise_rate_slider.value
+    }
+
+    /// Returns the currently selected speed sensitive factor.
+    pub fn selected_speed_sensitive_factor(&self) -> f32 {
+        self.speed_sensitive_factor_slider.value
     }
 
     /// Returns the currently selected steering profile.
@@ -845,8 +908,11 @@ impl ArcadeSettingsModal {
             steer_sensitivity: self.steer_sensitivity_slider.value,
             steer_exponent: self.steer_exponent_slider.value,
             steering_profile_idx: self.steering_profile_dropdown.selected_index,
+            speed_sensitive_switch_idx: self.speed_sensitive_switch.selected_index,
             hold_bleed_rate: self.hold_bleed_rate_slider.value,
             min_speed_steer_limit: self.min_speed_steer_limit_slider.value,
+            steer_rise_rate: self.steer_rise_rate_slider.value,
+            speed_sensitive_factor: self.speed_sensitive_factor_slider.value,
             resolution_idx: self.resolution_dropdown.selected_index,
             display_mode_idx: self.display_mode_dropdown.selected_index,
             ui_scale_idx: self.ui_scale_dropdown.selected_index,
@@ -893,8 +959,11 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(snap.steer_sensitivity);
         self.steer_exponent_slider.set_value(snap.steer_exponent);
         self.steering_profile_dropdown.set_selected(snap.steering_profile_idx);
+        self.speed_sensitive_switch.set_selected(snap.speed_sensitive_switch_idx);
         self.hold_bleed_rate_slider.set_value(snap.hold_bleed_rate);
         self.min_speed_steer_limit_slider.set_value(snap.min_speed_steer_limit);
+        self.steer_rise_rate_slider.set_value(snap.steer_rise_rate);
+        self.speed_sensitive_factor_slider.set_value(snap.speed_sensitive_factor);
         self.resolution_dropdown.set_selected(snap.resolution_idx);
         self.display_mode_dropdown.set_selected(snap.display_mode_idx);
         self.ui_scale_dropdown.set_selected(snap.ui_scale_idx);
@@ -932,8 +1001,11 @@ impl ArcadeSettingsModal {
             || (cur.steer_sensitivity - init.steer_sensitivity).abs() > 0.001
             || (cur.steer_exponent - init.steer_exponent).abs() > 0.001
             || cur.steering_profile_idx != init.steering_profile_idx
+            || cur.speed_sensitive_switch_idx != init.speed_sensitive_switch_idx
             || (cur.hold_bleed_rate - init.hold_bleed_rate).abs() > 0.001
             || (cur.min_speed_steer_limit - init.min_speed_steer_limit).abs() > 0.001
+            || (cur.steer_rise_rate - init.steer_rise_rate).abs() > 0.001
+            || (cur.speed_sensitive_factor - init.speed_sensitive_factor).abs() > 0.0001
             || cur.resolution_idx != init.resolution_idx
             || cur.display_mode_idx != init.display_mode_idx
             || cur.ui_scale_idx != init.ui_scale_idx
@@ -994,6 +1066,8 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
+            || self.steering_profile_dropdown.is_open
+            || self.speed_sensitive_switch.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
@@ -1015,6 +1089,8 @@ impl CabinetScreen for ArcadeSettingsModal {
             if is_any_dropdown_open {
                 // If a dropdown was open, close it first
                 self.mute_dropdown.is_open = false;
+                self.steering_profile_dropdown.is_open = false;
+                self.speed_sensitive_switch.is_open = false;
                 self.resolution_dropdown.is_open = false;
                 self.display_mode_dropdown.is_open = false;
                 self.ui_scale_dropdown.is_open = false;
@@ -1042,8 +1118,8 @@ impl CabinetScreen for ArcadeSettingsModal {
                 return ScreenAction::None;
             }
 
-            // If focused on the subtab bar in Gameplay General, Back returns to Main Tab Bar
-            if self.tab_bar.active_tab == 3 && self.is_subtab_focused {
+            // If focused on the subtab bar in Controls or Gameplay, Back returns to Main Tab Bar
+            if (self.tab_bar.active_tab == 1 || self.tab_bar.active_tab == 3) && self.is_subtab_focused {
                 self.is_subtab_focused = false;
                 self.is_tab_focused = true;
                 ctx.play_ui_cancel();
@@ -1079,6 +1155,11 @@ impl CabinetScreen for ArcadeSettingsModal {
         if tab_changed {
             ctx.play_ui_move();
             self.is_subtab_focused = false;
+            if self.tab_bar.active_tab == 1 {
+                self.switch_controls_subtab(self.controls_sub_tab);
+            } else if self.tab_bar.active_tab == 3 {
+                self.switch_gameplay_subtab(self.gameplay_sub_tab);
+            }
             if !self.is_tab_focused {
                 self.nav.set_focus(self.tab_bar.active_tab, 0);
             }
@@ -1087,6 +1168,7 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
             || self.steering_profile_dropdown.is_open
+            || self.speed_sensitive_switch.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
@@ -1122,34 +1204,26 @@ impl CabinetScreen for ArcadeSettingsModal {
 
             if self.is_tab_focused {
                 if nav_left {
-                    if active_tab == 3 && self.gameplay_sub_tab == 1 {
-                        // On GAMEPLAY in Visual Aids: Left switches back to General
-                        self.switch_gameplay_subtab(0);
-                        ctx.play_ui_move();
-                    } else {
-                        self.tab_bar.prev_tab();
-                        if self.tab_bar.active_tab == 3 {
-                            self.switch_gameplay_subtab(1);
-                        }
-                        self.nav.set_focus(self.tab_bar.active_tab, 0);
-                        ctx.play_ui_move();
+                    self.tab_bar.prev_tab();
+                    if self.tab_bar.active_tab == 1 {
+                        self.switch_controls_subtab(self.controls_sub_tab);
+                    } else if self.tab_bar.active_tab == 3 {
+                        self.switch_gameplay_subtab(self.gameplay_sub_tab);
                     }
+                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    ctx.play_ui_move();
                 } else if nav_right {
-                    if active_tab == 3 && self.gameplay_sub_tab == 0 {
-                        // On GAMEPLAY in General: Right switches to Visual Aids
-                        self.switch_gameplay_subtab(1);
-                        ctx.play_ui_move();
-                    } else {
-                        self.tab_bar.next_tab();
-                        if self.tab_bar.active_tab == 3 {
-                            self.switch_gameplay_subtab(0);
-                        }
-                        self.nav.set_focus(self.tab_bar.active_tab, 0);
-                        ctx.play_ui_move();
+                    self.tab_bar.next_tab();
+                    if self.tab_bar.active_tab == 1 {
+                        self.switch_controls_subtab(self.controls_sub_tab);
+                    } else if self.tab_bar.active_tab == 3 {
+                        self.switch_gameplay_subtab(self.gameplay_sub_tab);
                     }
+                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    ctx.play_ui_move();
                 } else if nav_down || is_confirm {
                     self.is_tab_focused = false;
-                    if active_tab == 3 {
+                    if active_tab == 1 || active_tab == 3 {
                         self.is_subtab_focused = true;
                     } else {
                         self.is_subtab_focused = false;
@@ -1165,41 +1239,80 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ctx.play_ui_move();
                 }
             } else if self.is_subtab_focused {
-                // Focus is on the Sub-tab Bar (General vs Visual Aids)
-                if nav_left {
-                    if self.gameplay_sub_tab != 0 {
-                        self.switch_gameplay_subtab(0);
-                        ctx.play_ui_move();
-                    } else {
-                        // Move back to DISPLAY tab
+                if active_tab == 1 {
+                    // Focus is on Controls Sub-tab Bar (KEYBOARD & FILTER vs GAMEPAD CONTROLLER)
+                    if nav_left {
+                        if self.controls_sub_tab != 0 {
+                            self.switch_controls_subtab(0);
+                            ctx.play_ui_move();
+                        } else {
+                            // Move back to AUDIO tab
+                            self.is_subtab_focused = false;
+                            self.is_tab_focused = true;
+                            self.tab_bar.set_tab(0);
+                            self.nav.set_focus(0, 0);
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_right {
+                        if self.controls_sub_tab != 1 {
+                            self.switch_controls_subtab(1);
+                            ctx.play_ui_move();
+                        } else {
+                            // Move to DISPLAY tab
+                            self.is_subtab_focused = false;
+                            self.is_tab_focused = true;
+                            self.tab_bar.set_tab(2);
+                            self.nav.set_focus(2, 0);
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_down || is_confirm {
+                        // Enter setting rows of current subtab
+                        self.is_subtab_focused = false;
+                        self.nav.set_focus(1, 0);
+                        ctx.play_ui_select();
+                    } else if nav_up {
+                        // Move up to main Tab Bar
                         self.is_subtab_focused = false;
                         self.is_tab_focused = true;
-                        self.tab_bar.set_tab(2);
-                        self.nav.set_focus(2, 0);
                         ctx.play_ui_move();
                     }
-                } else if nav_right {
-                    if self.gameplay_sub_tab != 1 {
-                        self.switch_gameplay_subtab(1);
-                        ctx.play_ui_move();
-                    } else {
-                        // Wrap to AUDIO tab
+                } else if active_tab == 3 {
+                    // Focus is on Gameplay Sub-tab Bar (General vs Visual Aids)
+                    if nav_left {
+                        if self.gameplay_sub_tab != 0 {
+                            self.switch_gameplay_subtab(0);
+                            ctx.play_ui_move();
+                        } else {
+                            // Move back to DISPLAY tab
+                            self.is_subtab_focused = false;
+                            self.is_tab_focused = true;
+                            self.tab_bar.set_tab(2);
+                            self.nav.set_focus(2, 0);
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_right {
+                        if self.gameplay_sub_tab != 1 {
+                            self.switch_gameplay_subtab(1);
+                            ctx.play_ui_move();
+                        } else {
+                            // Wrap to AUDIO tab
+                            self.is_subtab_focused = false;
+                            self.is_tab_focused = true;
+                            self.tab_bar.set_tab(0);
+                            self.nav.set_focus(0, 0);
+                            ctx.play_ui_move();
+                        }
+                    } else if nav_down || is_confirm {
+                        // Enter setting rows of current subtab
+                        self.is_subtab_focused = false;
+                        self.nav.set_focus(3, 0);
+                        ctx.play_ui_select();
+                    } else if nav_up {
+                        // Move up to main Tab Bar
                         self.is_subtab_focused = false;
                         self.is_tab_focused = true;
-                        self.tab_bar.set_tab(0);
-                        self.nav.set_focus(0, 0);
                         ctx.play_ui_move();
                     }
-                } else if nav_down || is_confirm {
-                    // Enter setting rows of current subtab
-                    self.is_subtab_focused = false;
-                    self.nav.set_focus(3, 0);
-                    ctx.play_ui_select();
-                } else if nav_up {
-                    // Move up to main Tab Bar
-                    self.is_subtab_focused = false;
-                    self.is_tab_focused = true;
-                    ctx.play_ui_move();
                 }
             } else {
                 let active_row = self.nav.active_row();
@@ -1237,7 +1350,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                     // Focus is on a setting widget row (0..last_row - 1)
                     if nav_up {
                         if active_row == 0 {
-                            if active_tab == 3 {
+                            if active_tab == 1 || active_tab == 3 {
                                 // Move up to Sub-tab Bar
                                 self.is_subtab_focused = true;
                                 ctx.play_ui_move();
@@ -1315,53 +1428,106 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             1 => {
-                // CONTROLS: 0: Steering Profile, 1: Hold Bleed Rate, 2: Min Speed Limit, 3: Stick Deadzone, 4: Trigger Deadzone, 5: Steer Sensitivity, 6: Steer Exponent, 7: Bottom Buttons
-                let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(38.0), scaler.s(6.0), box_y + scaler.s(96.0));
-                let r0 = (content_x, ctrl_content_y, content_w, ctrl_row_h);
-                let r1 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap), content_w, ctrl_row_h);
-                let r2 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 2.0, content_w, ctrl_row_h);
-                let r3 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 3.0, content_w, ctrl_row_h);
-                let r4 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 4.0, content_w, ctrl_row_h);
-                let r5 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 5.0, content_w, ctrl_row_h);
-                let r6 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 6.0, content_w, ctrl_row_h);
+                // CONTROLS (Tab 1):
+                let subtab_pills_y = box_y + scaler.s(90.0);
+                let subtab_pills_h = scaler.s(26.0);
+                let pill_gap = scaler.s(8.0);
+                let pill_w = (content_w - pill_gap) * 0.5;
+                let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
 
-                let prev_profile_idx = self.steering_profile_dropdown.selected_index;
-                if self.steering_profile_dropdown.handle_input(
-                    active_row == 0,
-                    ctx.gamepad.nav_left,
-                    ctx.gamepad.nav_right,
-                    ctx.gamepad.nav_up,
-                    ctx.gamepad.nav_down,
-                    ctx.gamepad.btn_confirm_pressed,
-                    ctx.gamepad.btn_cancel_pressed,
-                    r0,
-                    scaler,
-                ) {
+                if NavGrid2D::check_mouse_click(pill0_rect) && self.controls_sub_tab != 0 {
+                    self.switch_controls_subtab(0);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
                     ctx.play_ui_select();
-                    if self.steering_profile_dropdown.selected_index != prev_profile_idx {
-                        let profile = SteeringProfile::from_index(self.steering_profile_dropdown.selected_index);
-                        let cfg = profile.to_config();
-                        self.hold_bleed_rate_slider.set_value(cfg.hold_bleed_rate.clamp(1.0, 10.0));
-                        self.min_speed_steer_limit_slider.set_value(cfg.min_speed_steer_limit.clamp(0.5, 1.0));
+                } else if NavGrid2D::check_mouse_click(pill1_rect) && self.controls_sub_tab != 1 {
+                    self.switch_controls_subtab(1);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
+                    ctx.play_ui_select();
+                }
+
+                if self.controls_sub_tab == 0 {
+                    // KEYBOARD & FILTER:
+                    // 0: Profile, 1: Switch, 2: Min Limit, 3: Hold Bleed, 4: Steer Rise Rate, 5: Speed Sensitive Factor, 6: Bottom Buttons
+                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
+                    let r0 = (content_x, ctrl_content_y, content_w, ctrl_row_h);
+                    let r1 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap), content_w, ctrl_row_h);
+                    let r2 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 2.0, content_w, ctrl_row_h);
+                    let r3 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 3.0, content_w, ctrl_row_h);
+                    let r4 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 4.0, content_w, ctrl_row_h);
+                    let r5 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 5.0, content_w, ctrl_row_h);
+
+                    let prev_profile_idx = self.steering_profile_dropdown.selected_index;
+                    if self.steering_profile_dropdown.handle_input(
+                        active_row == 0,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r0,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                        if self.steering_profile_dropdown.selected_index != prev_profile_idx {
+                            let profile = SteeringProfile::from_index(self.steering_profile_dropdown.selected_index);
+                            let cfg = profile.to_config();
+                            self.speed_sensitive_switch.set_selected(if cfg.speed_sensitive_enabled { 0 } else { 1 });
+                            self.min_speed_steer_limit_slider.set_value(cfg.min_speed_steer_limit.clamp(0.5, 1.0));
+                            self.hold_bleed_rate_slider.set_value(cfg.hold_bleed_rate.clamp(1.0, 10.0));
+                            self.steer_rise_rate_slider.set_value(cfg.steer_rise_rate.clamp(3.0, 25.0));
+                            self.speed_sensitive_factor_slider.set_value(cfg.speed_sensitive_factor.clamp(0.0, 0.015));
+                        }
                     }
-                }
-                if self.hold_bleed_rate_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
-                    ctx.play_ui_move();
-                }
-                if self.min_speed_steer_limit_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
-                    ctx.play_ui_move();
-                }
-                if self.stick_deadzone_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
-                    ctx.play_ui_move();
-                }
-                if self.trigger_deadzone_slider.handle_input(active_row == 4, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r4) {
-                    ctx.play_ui_move();
-                }
-                if self.steer_sensitivity_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
-                    ctx.play_ui_move();
-                }
-                if self.steer_exponent_slider.handle_input(active_row == 6, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r6) {
-                    ctx.play_ui_move();
+                    if self.speed_sensitive_switch.handle_input(
+                        active_row == 1,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r1,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                    }
+                    if self.min_speed_steer_limit_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                        ctx.play_ui_move();
+                    }
+                    if self.hold_bleed_rate_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                        ctx.play_ui_move();
+                    }
+                    if self.steer_rise_rate_slider.handle_input(active_row == 4, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r4) {
+                        ctx.play_ui_move();
+                    }
+                    if self.speed_sensitive_factor_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
+                        ctx.play_ui_move();
+                    }
+                } else {
+                    // GAMEPAD CONTROLLER:
+                    // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent, 4: Bottom Buttons
+                    let (gp_row_h, gp_row_gap, gp_content_y) = (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
+                    let r0 = (content_x, gp_content_y, content_w, gp_row_h);
+                    let r1 = (content_x, gp_content_y + (gp_row_h + gp_row_gap), content_w, gp_row_h);
+                    let r2 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 2.0, content_w, gp_row_h);
+                    let r3 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 3.0, content_w, gp_row_h);
+
+                    if self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                        ctx.play_ui_move();
+                    }
+                    if self.trigger_deadzone_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                        ctx.play_ui_move();
+                    }
+                    if self.steer_sensitivity_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                        ctx.play_ui_move();
+                    }
+                    if self.steer_exponent_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                        ctx.play_ui_move();
+                    }
                 }
             }
             2 => {
@@ -1793,26 +1959,119 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             1 => {
-                // CONTROLS TAB: 0: Steering Profile, 1: Hold Bleed Rate, 2: Min Speed Limit, 3: Stick Deadzone, 4: Trigger Deadzone, 5: Steer Sensitivity, 6: Steer Exponent
-                let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(38.0), scaler.s(6.0), box_y + scaler.s(96.0));
-                let mut y = ctrl_content_y;
-                let r0 = (content_x, y, content_w, ctrl_row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steering_profile_dropdown.label, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, false, self.steering_profile_dropdown.popup_hovered_index, active_row == 0, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.hold_bleed_rate_slider.label, &self.hold_bleed_rate_slider.formatted_value(), self.hold_bleed_rate_slider.normalized(), active_row == 1, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.min_speed_steer_limit_slider.label, &self.min_speed_steer_limit_slider.formatted_value(), self.min_speed_steer_limit_slider.normalized(), active_row == 2, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.stick_deadzone_slider.label, &self.stick_deadzone_slider.formatted_value(), self.stick_deadzone_slider.normalized(), active_row == 3, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.trigger_deadzone_slider.label, &self.trigger_deadzone_slider.formatted_value(), self.trigger_deadzone_slider.normalized(), active_row == 4, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 5, false, accent);
-                y += ctrl_row_h + ctrl_row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 6, false, accent);
+                // CONTROLS TAB (Tab 1):
+                // 1. Draw sub-tab pills
+                let subtab_pills_y = box_y + scaler.s(90.0);
+                let subtab_pills_h = scaler.s(26.0);
+                let pill_gap = scaler.s(8.0);
+                let pill_w = (content_w - pill_gap) * 0.5;
+                let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
 
-                if self.steering_profile_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, self.steering_profile_dropdown.popup_hovered_index, accent);
+                // Pill 0: KEYBOARD & FILTER
+                let is_p0_active = self.controls_sub_tab == 0;
+                let is_p0_focused = self.is_subtab_focused && is_p0_active;
+                let is_p0_hovered = NavGrid2D::check_mouse_hover(pill0_rect);
+                let p0_bg = if is_p0_focused {
+                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
+                } else if is_p0_active {
+                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
+                } else if is_p0_hovered {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Palette::UI_CARD_BG
+                };
+                let p0_border = if is_p0_focused {
+                    Palette::NEON_GOLD
+                } else if is_p0_active {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
+                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_focused { 2.5 } else if is_p0_active { 2.0 } else { 1.0 });
+                let p0_label = if is_p0_focused {
+                    "< KEYBOARD & FILTER >"
+                } else {
+                    "KEYBOARD & FILTER"
+                };
+                fonts.draw_ui_bold_centered(
+                    p0_label,
+                    pill0_rect.0 + pill0_rect.2 * 0.5,
+                    pill0_rect.1 + pill0_rect.3 * 0.65,
+                    scaler.font_s(11.5),
+                    if is_p0_focused { Palette::NEON_GOLD } else if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                );
+
+                // Pill 1: GAMEPAD CONTROLLER
+                let is_p1_active = self.controls_sub_tab == 1;
+                let is_p1_focused = self.is_subtab_focused && is_p1_active;
+                let is_p1_hovered = NavGrid2D::check_mouse_hover(pill1_rect);
+                let p1_bg = if is_p1_focused {
+                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
+                } else if is_p1_active {
+                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
+                } else if is_p1_hovered {
+                    Palette::UI_CARD_BG_HOVER
+                } else {
+                    Palette::UI_CARD_BG
+                };
+                let p1_border = if is_p1_focused {
+                    Palette::NEON_GOLD
+                } else if is_p1_active {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
+                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_focused { 2.5 } else if is_p1_active { 2.0 } else { 1.0 });
+                let p1_label = if is_p1_focused {
+                    "< GAMEPAD CONTROLLER >"
+                } else {
+                    "GAMEPAD CONTROLLER"
+                };
+                fonts.draw_ui_bold_centered(
+                    p1_label,
+                    pill1_rect.0 + pill1_rect.2 * 0.5,
+                    pill1_rect.1 + pill1_rect.3 * 0.65,
+                    scaler.font_s(11.5),
+                    if is_p1_focused { Palette::NEON_GOLD } else if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                );
+
+                if self.controls_sub_tab == 0 {
+                    // KEYBOARD & FILTER:
+                    // 0: Steering Profile, 1: Speed Sensitivity Switch, 2: Min Speed Limit, 3: Hold Bleed Rate, 4: Steer Rise Rate, 5: Speed Sensitive Factor
+                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
+                    let mut y = ctrl_content_y;
+                    let r0 = (content_x, y, content_w, ctrl_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steering_profile_dropdown.label, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, false, self.steering_profile_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    y += ctrl_row_h + ctrl_row_gap;
+                    let r1 = (content_x, y, content_w, ctrl_row_h);
+                    draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.speed_sensitive_switch.label, &self.speed_sensitive_switch.options, self.speed_sensitive_switch.selected_index, false, self.speed_sensitive_switch.popup_hovered_index, active_row == 1, false, accent);
+                    y += ctrl_row_h + ctrl_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.min_speed_steer_limit_slider.label, &self.min_speed_steer_limit_slider.formatted_value(), self.min_speed_steer_limit_slider.normalized(), active_row == 2, false, accent);
+                    y += ctrl_row_h + ctrl_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.hold_bleed_rate_slider.label, &self.hold_bleed_rate_slider.formatted_value(), self.hold_bleed_rate_slider.normalized(), active_row == 3, false, accent);
+                    y += ctrl_row_h + ctrl_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_rise_rate_slider.label, &self.steer_rise_rate_slider.formatted_value(), self.steer_rise_rate_slider.normalized(), active_row == 4, false, accent);
+                    y += ctrl_row_h + ctrl_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.speed_sensitive_factor_slider.label, &format!("{:.3}", self.speed_sensitive_factor_slider.value), self.speed_sensitive_factor_slider.normalized(), active_row == 5, false, accent);
+
+                    if self.steering_profile_dropdown.is_open {
+                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, self.steering_profile_dropdown.popup_hovered_index, accent);
+                    } else if self.speed_sensitive_switch.is_open {
+                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_sensitive_switch.options, self.speed_sensitive_switch.selected_index, self.speed_sensitive_switch.popup_hovered_index, accent);
+                    }
+                } else {
+                    // GAMEPAD CONTROLLER:
+                    // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent
+                    let (gp_row_h, gp_row_gap, gp_content_y) = (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
+                    let mut y = gp_content_y;
+                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.stick_deadzone_slider.label, &self.stick_deadzone_slider.formatted_value(), self.stick_deadzone_slider.normalized(), active_row == 0, false, accent);
+                    y += gp_row_h + gp_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.trigger_deadzone_slider.label, &self.trigger_deadzone_slider.formatted_value(), self.trigger_deadzone_slider.normalized(), active_row == 1, false, accent);
+                    y += gp_row_h + gp_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 2, false, accent);
+                    y += gp_row_h + gp_row_gap;
+                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 3, false, accent);
                 }
             }
             2 => {
@@ -2093,9 +2352,15 @@ impl CabinetScreen for ArcadeSettingsModal {
         let hint_text = if self.is_tab_focused {
             "◄ / ► ARROWS: Switch Category   •   ▼ DOWN / ENTER: Select Sub-Category / Settings   •   TAB / Q / E: Cycle"
         } else if self.is_subtab_focused {
-            "◄ / ► ARROWS: Switch View (General / Visual Aids)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
+            if self.tab_bar.active_tab == 1 {
+                "◄ / ► ARROWS: Switch Subtab (Keyboard & Filter / Gamepad)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
+            } else {
+                "◄ / ► ARROWS: Switch View (General / Visual Aids)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
+            }
         } else if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
             "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Switch View   •   ESC / B: Back to General"
+        } else if self.tab_bar.active_tab == 1 {
+            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Subtabs   •   TAB / Q / E: Switch Category   •   ESC: Close"
         } else {
             "▲ UP (at top): Back to Categories   •   ◄ / ►: Adjust Setting   •   TAB / Q / E: Switch Category   •   ESC: Close"
         };

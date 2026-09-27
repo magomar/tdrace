@@ -72,27 +72,88 @@ fn test_speed_sensitive_steering_scaling() {
 fn test_steering_profiles_configuration_and_cycling() {
     use tdrace_app::input::SteeringProfile;
 
-    // Direct profile: instant 1.0 rise and no speed attenuation
-    let direct_cfg = DigitalInputConfig::from_profile(SteeringProfile::Direct);
-    assert_eq!(direct_cfg.steer_exponent, 1.0);
-    assert_eq!(direct_cfg.speed_sensitive_factor, 0.0);
-    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
-
-    // Balanced profile: recommended default
+    // 1. Balanced profile: recommended default
     let balanced_cfg = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
     assert_eq!(balanced_cfg.profile, SteeringProfile::Balanced);
+    assert!(balanced_cfg.speed_sensitive_enabled);
     assert_eq!(balanced_cfg.min_speed_steer_limit, 0.75);
     assert_eq!(balanced_cfg.hold_bleed_rate, 4.0);
+    assert_eq!(balanced_cfg.steer_rise_rate, 8.0);
 
-    // Smooth profile: softer arcade
+    // 2. Smooth profile: softer arcade
     let smooth_cfg = DigitalInputConfig::from_profile(SteeringProfile::Smooth);
     assert_eq!(smooth_cfg.profile, SteeringProfile::Smooth);
-    assert!(smooth_cfg.steer_exponent > balanced_cfg.steer_exponent);
+    assert!(smooth_cfg.speed_sensitive_enabled);
+    assert_eq!(smooth_cfg.min_speed_steer_limit, 0.60);
+    assert_eq!(smooth_cfg.hold_bleed_rate, 2.0);
+    assert_eq!(smooth_cfg.steer_rise_rate, 6.0);
 
-    // Cycling: Balanced -> Smooth -> Direct -> Balanced
+    // 3. Agile profile: sharp response for chicanes
+    let agile_cfg = DigitalInputConfig::from_profile(SteeringProfile::Agile);
+    assert_eq!(agile_cfg.profile, SteeringProfile::Agile);
+    assert!(agile_cfg.speed_sensitive_enabled);
+    assert_eq!(agile_cfg.min_speed_steer_limit, 0.80);
+    assert_eq!(agile_cfg.hold_bleed_rate, 6.0);
+    assert_eq!(agile_cfg.steer_rise_rate, 10.0);
+
+    // 4. Direct profile: sim feel with speed attenuation switched off
+    let direct_cfg = DigitalInputConfig::from_profile(SteeringProfile::Direct);
+    assert_eq!(direct_cfg.profile, SteeringProfile::Direct);
+    assert!(!direct_cfg.speed_sensitive_enabled);
+    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
+    assert_eq!(direct_cfg.hold_bleed_rate, 8.0);
+    assert_eq!(direct_cfg.steer_rise_rate, 12.0);
+
+    // 5. Raw profile: esports zero-delay instant keys
+    let raw_cfg = DigitalInputConfig::from_profile(SteeringProfile::Raw);
+    assert_eq!(raw_cfg.profile, SteeringProfile::Raw);
+    assert!(!raw_cfg.speed_sensitive_enabled);
+    assert_eq!(raw_cfg.min_speed_steer_limit, 1.0);
+    assert_eq!(raw_cfg.hold_bleed_rate, 10.0);
+    assert_eq!(raw_cfg.steer_rise_rate, 20.0);
+
+    // 5-profile Cycling: Balanced -> Smooth -> Agile -> Direct -> Raw -> Balanced
     assert_eq!(SteeringProfile::Balanced.cycle(), SteeringProfile::Smooth);
-    assert_eq!(SteeringProfile::Smooth.cycle(), SteeringProfile::Direct);
-    assert_eq!(SteeringProfile::Direct.cycle(), SteeringProfile::Balanced);
+    assert_eq!(SteeringProfile::Smooth.cycle(), SteeringProfile::Agile);
+    assert_eq!(SteeringProfile::Agile.cycle(), SteeringProfile::Direct);
+    assert_eq!(SteeringProfile::Direct.cycle(), SteeringProfile::Raw);
+    assert_eq!(SteeringProfile::Raw.cycle(), SteeringProfile::Balanced);
+
+    // Index conversion
+    for idx in 0..5 {
+        let prof = SteeringProfile::from_index(idx);
+        assert_eq!(prof.to_index(), idx);
+    }
+}
+
+#[test]
+fn test_speed_sensitive_switch_bypass() {
+    let dt = 1.0 / 60.0;
+
+    // Config with speed_sensitive_enabled = false
+    let config = DigitalInputConfig::from_profile(tdrace_app::input::SteeringProfile::Direct);
+    assert!(!config.speed_sensitive_enabled);
+    let mut filter = DigitalInputFilter::new(config);
+
+    // After saturation, turning at 30 m/s (~108 km/h) should yield 1.0 full steer immediately
+    for _ in 0..20 {
+        filter.update(1.0, 0.0, 0.0, 30.0, dt);
+    }
+    let (steer, _, _) = filter.update(1.0, 0.0, 0.0, 30.0, dt);
+    assert_eq!(steer, 1.0, "Disabled speed sensitivity must allow 1.0 lock regardless of speed");
+
+    // Re-enable speed sensitivity: attenuation applies at high speed
+    filter.config.speed_sensitive_enabled = true;
+    filter.config.speed_sensitive_factor = 0.005;
+    filter.config.min_speed_steer_limit = 0.60;
+    filter.config.hold_bleed_rate = 0.0; // Freeze bleed to verify base speed scaling
+    filter.steer_hold_factor = 0.0;
+
+    let (attenuated_steer, _, _) = filter.update(1.0, 0.0, 0.0, 30.0, dt);
+    assert!(
+        attenuated_steer < 0.95,
+        "Enabled speed sensitivity must attenuate high speed steer, was {attenuated_steer}"
+    );
 }
 
 
@@ -201,19 +262,33 @@ fn test_interactive_controls_filter_sync_and_persistence() {
     assert!((smo.hold_bleed_rate - 2.0).abs() < 1e-3);
     assert!((smo.min_speed_steer_limit - 0.60).abs() < 1e-3);
 
+    let agi = SteeringProfile::Agile.to_config();
+    assert_eq!(agi.profile, SteeringProfile::Agile);
+    assert!((agi.hold_bleed_rate - 6.0).abs() < 1e-3);
+    assert!((agi.min_speed_steer_limit - 0.80).abs() < 1e-3);
+
     let dir = SteeringProfile::Direct.to_config();
     assert_eq!(dir.profile, SteeringProfile::Direct);
     assert!((dir.hold_bleed_rate - 8.0).abs() < 1e-3);
     assert!((dir.min_speed_steer_limit - 1.00).abs() < 1e-3);
 
+    let raw = SteeringProfile::Raw.to_config();
+    assert_eq!(raw.profile, SteeringProfile::Raw);
+    assert!((raw.hold_bleed_rate - 10.0).abs() < 1e-3);
+    assert!((raw.min_speed_steer_limit - 1.00).abs() < 1e-3);
+
     // 2. Index round-trips
     assert_eq!(SteeringProfile::from_index(0), SteeringProfile::Balanced);
     assert_eq!(SteeringProfile::from_index(1), SteeringProfile::Smooth);
-    assert_eq!(SteeringProfile::from_index(2), SteeringProfile::Direct);
+    assert_eq!(SteeringProfile::from_index(2), SteeringProfile::Agile);
+    assert_eq!(SteeringProfile::from_index(3), SteeringProfile::Direct);
+    assert_eq!(SteeringProfile::from_index(4), SteeringProfile::Raw);
     assert_eq!(SteeringProfile::from_index(99), SteeringProfile::Balanced);
     assert_eq!(SteeringProfile::Balanced.to_index(), 0);
     assert_eq!(SteeringProfile::Smooth.to_index(), 1);
-    assert_eq!(SteeringProfile::Direct.to_index(), 2);
+    assert_eq!(SteeringProfile::Agile.to_index(), 2);
+    assert_eq!(SteeringProfile::Direct.to_index(), 3);
+    assert_eq!(SteeringProfile::Raw.to_index(), 4);
 
     // 3. Bleed rate dynamic behavior: higher bleed rate recovers full lock faster
     let dt = 1.0 / 60.0;
@@ -240,6 +315,68 @@ fn test_interactive_controls_filter_sync_and_persistence() {
     assert!(
         fast_steer > slow_steer,
         "Faster bleed rate ({fast_steer}) should restore more steering angle than slow bleed rate ({slow_steer})"
+    );
+}
+
+#[test]
+fn test_player_car_physics_receives_unattenuated_steering_when_direct_or_raw() {
+    use tdrace_app::input::SteeringProfile;
+    use tdrace_core::Vec2;
+
+    let dt = 1.0 / 60.0;
+    let high_speed = 45.0; // 45 m/s ~ 162 km/h
+
+    // 1. Direct/Raw profile filter
+    let direct_cfg = SteeringProfile::Direct.to_config();
+    assert!(!direct_cfg.speed_sensitive_enabled);
+    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
+    let mut filter = DigitalInputFilter::new(direct_cfg);
+
+    // After ramp, filter outputs 1.0 full lock at 162 km/h
+    for _ in 0..15 {
+        filter.update(1.0, 0.0, 0.0, high_speed, dt);
+    }
+    let (filter_steer, _, _) = filter.update(1.0, 0.0, 0.0, high_speed, dt);
+    assert_eq!(filter_steer, 1.0);
+
+    // 2. Player car with speed_sensitive_steer_factor = 0.0 (applied by RaceSession)
+    let mut player_car = Car::new(CarConfig::sports_car());
+    player_car.config.speed_sensitive_steer_factor = 0.0;
+    player_car.state.velocity = Vec2::new(high_speed, 0.0);
+    player_car.state.speed = high_speed;
+
+    let ctrl = CarControls::new(0.0, filter_steer, 0.0, false);
+    for _ in 0..30 {
+        player_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
+    }
+
+    // Player car must reach 100% of max_steer_angle at high speed without physics attenuation
+    let max_steer = player_car.config.max_steer_angle;
+    assert!(
+        (player_car.state.steer_angle.abs() - max_steer).abs() < 1e-2,
+        "Player car steering angle ({}) must reach full mechanical lock ({}) at high speed when Direct/Raw",
+        player_car.state.steer_angle.abs(),
+        max_steer
+    );
+
+    // 3. Contrast with unconfigured car (legacy double-attenuation with speed_sensitive_steer_factor > 0)
+    let mut legacy_car = Car::new(CarConfig::sports_car());
+    legacy_car.config.speed_sensitive_steer_factor = 0.016; // Legacy GT factor
+    legacy_car.state.velocity = Vec2::new(high_speed, 0.0);
+    legacy_car.state.speed = high_speed;
+
+    for _ in 0..30 {
+        legacy_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
+    }
+    let legacy_steer = legacy_car.state.steer_angle.abs();
+    assert!(
+        legacy_steer < max_steer * 0.65,
+        "Legacy car was heavily attenuated to only {} of max lock",
+        legacy_steer / max_steer
+    );
+    assert!(
+        player_car.state.steer_angle.abs() > legacy_steer * 1.5,
+        "Player car with settings applied must have significantly greater steering angle than legacy attenuated car"
     );
 }
 
