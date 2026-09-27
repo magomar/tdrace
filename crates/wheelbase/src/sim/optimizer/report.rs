@@ -70,8 +70,8 @@ impl CalibrationResult {
         let mut s = String::new();
         s.push_str(&format!("speed_sensitive_steer_factor: {:.5},\n", self.optimized_config.speed_sensitive_steer_factor));
         s.push_str(&format!("angular_damping: {:.1},\n", self.optimized_config.angular_damping));
-        s.push_str(&format!("weight_transfer_lateral: {:.2},\n", self.optimized_config.weight_transfer_lateral));
-        s.push_str(&format!("weight_transfer_longitudinal: {:.2},\n", self.optimized_config.weight_transfer_longitudinal));
+        s.push_str(&format!("roll_balance: {:.2},\n", self.optimized_config.roll_balance));
+        s.push_str(&format!("weight_transfer_hz: {:.1},\n", self.optimized_config.weight_transfer_hz));
         s.push_str(&format!("brake_bias: {:.2},\n", self.optimized_config.brake_bias));
         s.push_str(&format!("max_steer_angle: {:.2},\n", self.optimized_config.max_steer_angle));
         s.push_str(&format!("caster_jacking_factor: {:.2},\n", self.optimized_config.caster_jacking_factor));

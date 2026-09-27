@@ -460,6 +460,9 @@ impl Default for DifferentialType {
     }
 }
 
+/// Default load transfer response (Hz). The pre-042 filter `alpha = dt * 15` was ~2.4 Hz.
+pub const DEFAULT_WEIGHT_TRANSFER_HZ: f32 = 3.0;
+
 pub fn default_front_differential() -> DifferentialType {
     DifferentialType::Open
 }
@@ -532,16 +535,20 @@ pub struct CarConfig {
     /// Yaw angular velocity damping coefficient in N*m*s/rad.
     pub angular_damping: f32,
 
-    /// Longitudinal weight transfer scaling factor (squat & dive).
-    pub weight_transfer_longitudinal: f32,
-    /// Lateral weight transfer scaling factor (cornering body roll).
-    pub weight_transfer_lateral: f32,
+    /// Handling balance: front axle share of lateral load transfer [0.35-0.65] (Spec 042).
+    /// Higher = more understeer (the front tires lose grip first), lower = more oversteer.
+    pub roll_balance: f32,
+    /// How fast load transfer follows the chassis acceleration, in Hz [2-10] (Spec 042).
+    /// Low = lazy, floaty weight shifts; high = sharp, twitchy.
+    pub weight_transfer_hz: f32,
     /// Caster jacking diagonal load transfer factor [0.0 = cars with differential, ~1.0-1.5 = karts with solid axle].
     #[serde(default)]
     pub caster_jacking_factor: f32,
 
     /// Engine braking retarding coefficient on throttle release [0.0 = none, 0.15 = strong].
     pub engine_braking_coefficient: f32,
+    /// Front axle share of engine-braking retard [0.2-0.6] (Spec 042). Lower = more lift-off oversteer.
+    pub engine_brake_front_share: f32,
     /// Aerodynamic downforce coefficient (0.5 * Cl * A * air_density) scaling vertical load with V^2.
     pub downforce_coefficient: f32,
 
@@ -588,11 +595,20 @@ struct CarConfigRaw {
     pub lateral_drag_coefficient: f32,
     pub rolling_resistance_coefficient: f32,
     pub angular_damping: f32,
-    pub weight_transfer_longitudinal: f32,
-    pub weight_transfer_lateral: f32,
+    // Legacy (pre Spec 042) load transfer scales: accepted and ignored.
+    #[serde(default, rename = "weight_transfer_longitudinal")]
+    pub _weight_transfer_longitudinal: Option<f32>,
+    #[serde(default, rename = "weight_transfer_lateral")]
+    pub _weight_transfer_lateral: Option<f32>,
+    #[serde(default)]
+    pub roll_balance: Option<f32>,
+    #[serde(default)]
+    pub weight_transfer_hz: Option<f32>,
     #[serde(default)]
     pub caster_jacking_factor: f32,
     pub engine_braking_coefficient: f32,
+    #[serde(default)]
+    pub engine_brake_front_share: Option<f32>,
     pub downforce_coefficient: f32,
     pub tire: TireConfig,
     #[serde(default)]
@@ -645,10 +661,15 @@ impl From<CarConfigRaw> for CarConfig {
             lateral_drag_coefficient: raw.lateral_drag_coefficient,
             rolling_resistance_coefficient: raw.rolling_resistance_coefficient,
             angular_damping: raw.angular_damping,
-            weight_transfer_longitudinal: raw.weight_transfer_longitudinal,
-            weight_transfer_lateral: raw.weight_transfer_lateral,
+            roll_balance: raw
+                .roll_balance
+                .unwrap_or(raw.cg_to_rear / (raw.cg_to_front + raw.cg_to_rear).max(1e-3)),
+            weight_transfer_hz: raw.weight_transfer_hz.unwrap_or(DEFAULT_WEIGHT_TRANSFER_HZ),
             caster_jacking_factor: raw.caster_jacking_factor,
             engine_braking_coefficient: raw.engine_braking_coefficient,
+            engine_brake_front_share: raw
+                .engine_brake_front_share
+                .unwrap_or(0.35 + 0.30 * raw.drive_bias.clamp(0.0, 1.0)),
             downforce_coefficient: raw.downforce_coefficient,
             tire: raw.tire,
             rear_tire: raw.rear_tire,
@@ -775,11 +796,12 @@ impl CarConfig {
             rolling_resistance_coefficient: 0.015,
             angular_damping: 120.0,
 
-            weight_transfer_longitudinal: 1.0,
-            weight_transfer_lateral: 1.12,
+            roll_balance: 0.54,
+            weight_transfer_hz: DEFAULT_WEIGHT_TRANSFER_HZ,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.12,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.65,
 
             tire,
@@ -802,8 +824,7 @@ impl CarConfig {
         cfg.counter_steer_assist = 1.6;
         cfg.speed_sensitive_steer_factor = 0.0037;
         cfg.angular_damping = 114.0;
-        cfg.weight_transfer_lateral = 1.05;
-        cfg.weight_transfer_longitudinal = 0.71;
+        cfg.roll_balance = 0.50;
         cfg.brake_bias = 0.56;
         cfg.engine_braking_coefficient = 0.10;
         cfg.downforce_coefficient = 0.45;
@@ -900,11 +921,12 @@ impl CarConfig {
             rolling_resistance_coefficient: 0.018,
             angular_damping: 35.0,
 
-            weight_transfer_longitudinal: 1.0,
-            weight_transfer_lateral: 0.83,
+            roll_balance: 0.43,
+            weight_transfer_hz: 5.0,
             caster_jacking_factor: 1.25,
 
             engine_braking_coefficient: 0.18,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.10,
 
             tire: front_tire,
@@ -945,8 +967,8 @@ impl CarConfig {
         cfg.drive_bias = 0.5; // AWD
         cfg.speed_sensitive_steer_factor = 0.0010;
         cfg.angular_damping = 126.0;
-        cfg.weight_transfer_lateral = 1.24;
-        cfg.weight_transfer_longitudinal = 0.70;
+        cfg.engine_brake_front_share = 0.50;
+        cfg.weight_transfer_hz = 2.5;
         cfg.brake_bias = 0.62;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.60,
@@ -1058,11 +1080,12 @@ impl CarConfig {
             rolling_resistance_coefficient: 0.013,
             angular_damping: 148.0,
 
-            weight_transfer_longitudinal: 0.99,
-            weight_transfer_lateral: 0.81,
+            roll_balance: 0.51,
+            weight_transfer_hz: DEFAULT_WEIGHT_TRANSFER_HZ,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.18,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 1.25, // Moderate downforce package
 
             tire,
@@ -1155,11 +1178,12 @@ impl CarConfig {
             rolling_resistance_coefficient: 0.018,
             angular_damping: 135.7,
 
-            weight_transfer_longitudinal: 1.06,
-            weight_transfer_lateral: 1.65,
+            roll_balance: 0.40,
+            weight_transfer_hz: 2.5,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.14,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.35,
 
             tire,

@@ -62,17 +62,17 @@ pub fn standard_tuning_bounds(constraint: &DrivetrainConstraint, base_config: &C
     ));
 
     bounds.push(ParameterBound::new(
-        "weight_transfer_lateral",
-        (base_config.weight_transfer_lateral * 0.7).max(0.2),
-        (base_config.weight_transfer_lateral * 1.3).min(2.5),
-        base_config.weight_transfer_lateral,
+        "roll_balance",
+        0.35,
+        0.65,
+        base_config.roll_balance.clamp(0.35, 0.65),
     ));
 
     bounds.push(ParameterBound::new(
-        "weight_transfer_longitudinal",
-        (base_config.weight_transfer_longitudinal * 0.7).max(0.2),
-        (base_config.weight_transfer_longitudinal * 1.3).min(2.5),
-        base_config.weight_transfer_longitudinal,
+        "weight_transfer_hz",
+        2.0,
+        10.0,
+        base_config.weight_transfer_hz.clamp(2.0, 10.0),
     ));
 
     bounds.push(ParameterBound::new(

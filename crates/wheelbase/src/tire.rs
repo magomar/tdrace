@@ -177,13 +177,22 @@ pub fn pacejka_lateral_force(
     }
 }
 
+/// Shape of the rising branch: a Pacejka curve (C = 1.45, E = -0.15) rescaled so it peaks at s = 1.
+/// Its initial slope (B * C = 2.56) matches a real tire's cornering stiffness at a given peak slip;
+/// a softer rise (e.g. s * (2 - s), slope 2) under-damps the chassis yaw.
+const CURVE_C: f32 = 1.45;
+const CURVE_E: f32 = -0.15;
+/// `B` such that `C * atan(B - E * (B - atan(B))) = PI / 2` (peak at s = 1).
+const CURVE_B: f32 = 1.7646;
+
 /// Normalized tire curve (Spec 042): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
 /// to `slide_grip` over `falloff` peak-widths.
 #[inline]
 pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
     let s = s.abs();
     if s <= 1.0 {
-        s * (2.0 - s)
+        let bs = CURVE_B * s;
+        (CURVE_C * (bs - CURVE_E * (bs - bs.atan())).atan()).sin().min(1.0)
     } else {
         let t = ((s - 1.0) / tire.falloff.max(0.1)).min(1.0);
         1.0 - (1.0 - tire.slide_grip) * t * t * (3.0 - 2.0 * t)
@@ -567,10 +576,21 @@ mod tests {
     }
 
     #[test]
+    fn test_curve_constant_places_peak_at_one() {
+        let tire = TireConfig::default();
+        let at_peak = normalized_grip_curve(1.0, &tire);
+        assert!((at_peak - 1.0).abs() < 1e-4, "curve(1) = {at_peak}");
+        assert!(normalized_grip_curve(0.98, &tire) < 1.0);
+        // Initial slope ~ B * C = 2.56
+        let slope = normalized_grip_curve(0.01, &tire) / 0.01;
+        assert!((slope - 2.56).abs() < 0.05, "slope = {slope}");
+    }
+
+    #[test]
     fn test_normalized_curve_peaks_at_one_and_falls_to_slide_grip() {
         let tire = TireConfig::default();
         assert_eq!(normalized_grip_curve(0.0, &tire), 0.0);
-        assert!((normalized_grip_curve(1.0, &tire) - 1.0).abs() < 1e-6);
+        assert!((normalized_grip_curve(1.0, &tire) - 1.0).abs() < 1e-4);
         assert!(normalized_grip_curve(0.5, &tire) < 1.0);
         assert!(normalized_grip_curve(1.2, &tire) < 1.0);
         let deep = normalized_grip_curve(1.0 + tire.falloff + 1.0, &tire);

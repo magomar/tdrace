@@ -696,8 +696,7 @@ fn couple_axle(
         // Acceleration squat (a_long > 0): front unloads, rear loads
         // Grade incline pitch (grade_sin > 0 = uphill): front unloads, rear loads
         let grade_pitch = self.config.mass * g * grade_sin * (self.config.cg_height / wheelbase);
-        let delta_fz_long = (self.config.mass * a_long * (self.config.cg_height / wheelbase) + grade_pitch)
-            * self.config.weight_transfer_longitudinal;
+        let delta_fz_long = self.config.mass * a_long * (self.config.cg_height / wheelbase) + grade_pitch;
 
         // Cornering roll & gravity cross-slope roll moment
         let cross_slope_roll = if bank_deg.abs() > 1e-4 {
@@ -706,11 +705,13 @@ fn couple_axle(
             0.0
         };
 
-        let delta_fz_lat_f = ((self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll) * (lr / wheelbase))
-            * self.config.weight_transfer_lateral;
-
-        let delta_fz_lat_r = ((self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll) * (lf / wheelbase))
-            * self.config.weight_transfer_lateral;
+        // Lateral load transfer is physical (m * a * h / track); `roll_balance` decides which axle
+        // carries it. With load-sensitive tires, the axle that carries more transfer loses more
+        // grip, so roll_balance moves the handling balance (Spec 042).
+        let roll_balance = self.config.roll_balance.clamp(0.0, 1.0);
+        let delta_fz_lat_total = self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll;
+        let delta_fz_lat_f = delta_fz_lat_total * roll_balance;
+        let delta_fz_lat_r = delta_fz_lat_total * (1.0 - roll_balance);
 
         let min_load_f = static_front_load * 0.05 * 0.5;
         let min_load_r = static_rear_load * 0.05 * 0.5;
@@ -818,15 +819,11 @@ fn couple_axle(
             }
         }
 
-        let mut engine_brake_multiplier = 1.0f32;
-        // Engine Drag Reduction (EDR / MSR): prevent lift-off snap oversteer when the chassis is in
-        // transient sideslip or high yaw rate, letting the rear tires regain lateral restoring traction.
-        if self.state.sideslip_angle.abs() > 0.08 || omega.abs() > 0.15 {
-            let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12)
-                .max((omega.abs() - 0.15) / 0.25)
-                .clamp(0.0, 1.0);
-            engine_brake_multiplier *= 1.0 - 0.85 * slide_severity;
-        }
+        // Engine Drag Reduction (EDR / MSR): fade engine braking out as body sideslip grows, so a lift
+        // in a slide lets the rear tires regain lateral traction. Continuous in sideslip only: normal
+        // cornering yaw rates no longer switch engine braking off mid-corner (Spec 042).
+        let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12).clamp(0.0, 1.0);
+        let engine_brake_multiplier = 1.0 - 0.85 * slide_severity;
 
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
@@ -937,15 +934,18 @@ fn couple_axle(
             self.config.brake_bias.clamp(0.0, 1.0)
         };
         let abs_target_scale = self.config.assists.abs_slip_threshold / 0.15;
+        let is_coasting = !clamped_ctrl.reverse && clamped_ctrl.throttle <= 0.0;
         let tcs_target_scale = self.config.assists.tcs_slip_threshold / 0.18;
         let tcs_strength = self.config.assists.tcs_strength.clamp(0.0, 1.0);
 
         for (axle_start, is_front_axle) in [(0usize, true), (2usize, false)] {
             let pair = [axle_start, axle_start + 1];
+            // Drive torque follows drive_bias; engine-braking retard follows engine_brake_front_share.
+            let front_share = if is_coasting { self.config.engine_brake_front_share.clamp(0.0, 1.0) } else { self.config.drive_bias };
             let (diff_type, axle_force) = if is_front_axle {
-                (self.config.front_differential, total_drive_force * self.config.drive_bias)
+                (self.config.front_differential, total_drive_force * front_share)
             } else {
-                (self.config.rear_differential, total_drive_force * (1.0 - self.config.drive_bias))
+                (self.config.rear_differential, total_drive_force * (1.0 - front_share))
             };
             // Handbrake declutches the rear axle (arcade convention: the handbrake always wins over
             // throttle on the rear wheels, so a held throttle cannot stop the rear from locking).
@@ -1328,8 +1328,8 @@ fn couple_axle(
         // Local acceleration for next frame weight transfer
         let accel_long = linear_accel_world.dot(fwd);
         let accel_lat = linear_accel_world.dot(right);
-        // Exponential smoothing filter to eliminate numerical oscillations
-        let alpha_filter = (dt * 15.0).min(1.0);
+        // First-order load transfer response at `weight_transfer_hz` (also removes numerical chatter)
+        let alpha_filter = 1.0 - (-2.0 * PI * self.config.weight_transfer_hz.max(0.1) * dt).exp();
         self.state.acceleration_local = self.state.acceleration_local * (1.0 - alpha_filter)
             + Vec2::new(accel_long, accel_lat) * alpha_filter;
 

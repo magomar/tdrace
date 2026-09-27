@@ -63,8 +63,6 @@ impl ClassicGameModule {
         cfg.downforce_coefficient = 0.85;
         cfg.tire.slide_grip = 0.95;
         cfg.tire.peak_slip_angle_deg = 11.3;
-        cfg.weight_transfer_longitudinal = 0.65;
-        cfg.weight_transfer_lateral = 0.65;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg.finalized()
     }
@@ -101,8 +99,6 @@ impl ClassicGameModule {
         cfg.drive_bias = 0.5; // 4WD 50:50 torque split
         cfg.tire.slide_grip = 0.94;
         cfg.tire.peak_slip_angle_deg = 10.2;
-        cfg.weight_transfer_longitudinal = 0.50;
-        cfg.weight_transfer_lateral = 0.50;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg.finalized()
     }

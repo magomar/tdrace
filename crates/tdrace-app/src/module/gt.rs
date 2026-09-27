@@ -1457,11 +1457,12 @@ impl GtWorldChallengeModule {
             rolling_resistance_coefficient: 0.014,
             angular_damping: 180.0,
 
-            weight_transfer_longitudinal: 0.55,
-            weight_transfer_lateral: 0.45,
+            roll_balance: 0.50,
+            weight_transfer_hz: 4.0,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.22,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 2.10, // Strong GT3 aerodynamic package
 
             tire: TireConfig {

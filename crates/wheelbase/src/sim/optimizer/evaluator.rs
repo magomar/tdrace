@@ -50,8 +50,8 @@ impl OptimizationEvaluator {
                 "max_steer_angle" => cfg.max_steer_angle = val,
                 "steer_speed" => cfg.steer_speed = val,
                 "steer_return_speed" => cfg.steer_return_speed = val,
-                "weight_transfer_lateral" => cfg.weight_transfer_lateral = val,
-                "weight_transfer_longitudinal" => cfg.weight_transfer_longitudinal = val,
+                "roll_balance" => cfg.roll_balance = val,
+                "weight_transfer_hz" => cfg.weight_transfer_hz = val,
                 "downforce_coefficient" => cfg.downforce_coefficient = val,
                 "air_drag_coefficient" => cfg.air_drag_coefficient = val,
                 "power_lock" => {
