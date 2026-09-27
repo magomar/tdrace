@@ -4,6 +4,7 @@ template: architecture
 title: "5-Tier Steering Smoothing Profiles, Speed Sensitivity Switch, and Subtab Controls Separation"
 description: "Expands keyboard steering smoothing to 5 distinct profiles (Balanced, Smooth, Agile, Direct, Raw), introduces a master Speed Sensitivity Switch, exposes granular steering filter parameters, and separates keyboard from gamepad controls via sub-tabs within the ArcadeSettingsModal Controls tab."
 status: implemented
+receipt: "docs/receipts/spec-041-receipt.md"
 created: 2026-09-27
 verified: { by: "human:mario", at: "2026-09-27T20:45:00Z" }
 generated: { by: agent/antigravity, at: 2026-09-27T20:45:00Z }
