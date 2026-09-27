@@ -1059,6 +1059,112 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(restored.radar_sonar_ping, def_helpers.radar_sonar_ping);
 }
 
+#[test]
+fn test_arcade_settings_modal_gameplay_subtab_navigation() {
+    let audio = AudioSettings::default();
+    let gp_config = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp_config);
+
+    let scaler = UiScaler::new(1280.0, 720.0);
+    let fonts = Fonts { display: None, ui_bold: None, ui_regular: None };
+    let theme = CabinetTheme::cyberpunk_neon();
+
+    let mut gp_right = GamepadSnapshot::default();
+    gp_right.nav_right = true;
+
+    let mut gp_left = GamepadSnapshot::default();
+    gp_left.nav_left = true;
+
+    let mut gp_down = GamepadSnapshot::default();
+    gp_down.nav_down = true;
+
+    let mut gp_up = GamepadSnapshot::default();
+    gp_up.nav_up = true;
+
+    let mut gp_cancel = GamepadSnapshot::default();
+    gp_cancel.btn_b_pressed = true;
+
+    // 1. Navigate from AUDIO -> CONTROLS -> DISPLAY -> GAMEPLAY
+    modal.tab_bar.set_tab(3); // Direct jump to GAMEPLAY
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
+    assert_eq!(modal.gameplay_sub_tab, 0); // Starts in General
+    assert!(!modal.is_subtab_focused);
+
+    // 2. Press Right Arrow on GAMEPLAY category tab -> switches to VISUAL DRIVING AIDS subtab
+    let mut ctx = CabinetContext {
+        scaler: &scaler,
+        fonts: &fonts,
+        theme: &theme,
+        gamepad: &gp_right,
+        dt: 1.0 / 60.0,
+        audio: None,
+    };
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
+    assert_eq!(modal.gameplay_sub_tab, 1); // Visual Aids view active
+
+    // 3. Press Left Arrow on GAMEPLAY category tab -> switches back to General
+    ctx.gamepad = &gp_left;
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
+    assert_eq!(modal.gameplay_sub_tab, 0); // General view active
+
+    // 4. Press Down Arrow from Main Tab Bar -> lands on Subtab Bar!
+    ctx.gamepad = &gp_down;
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 0);
+
+    // 5. Press Right Arrow on Subtab Bar -> switches to Visual Driving Aids subtab
+    ctx.gamepad = &gp_right;
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 1);
+    assert_eq!(modal.nav.column_lengths[3], 12);
+
+    // 6. Press Down Arrow from Subtab Bar -> enters row 0 of Visual Driving Aids!
+    ctx.gamepad = &gp_down;
+    modal.update(&mut ctx);
+    assert!(!modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
+    assert_eq!(modal.nav.active_row(), 0);
+
+    // 7. Press Up Arrow from row 0 -> returns to Subtab Bar!
+    ctx.gamepad = &gp_up;
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 1);
+
+    // 8. Press Left Arrow on Subtab Bar -> switches back to General
+    ctx.gamepad = &gp_left;
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 0);
+    assert_eq!(modal.nav.column_lengths[3], 6);
+
+    // 9. Press Up Arrow from Subtab Bar -> returns to Main Tab Bar
+    ctx.gamepad = &gp_up;
+    modal.update(&mut ctx);
+    assert!(modal.is_tab_focused);
+    assert!(!modal.is_subtab_focused);
+    assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
+
+    // 10. Switch to Visual Aids, enter settings, and verify Cancel/B returns to General
+    modal.switch_gameplay_subtab(1);
+    modal.is_tab_focused = false;
+    modal.is_subtab_focused = false;
+    modal.nav.set_focus(3, 2); // Row 2 in Visual Aids
+    ctx.gamepad = &gp_cancel;
+    modal.update(&mut ctx);
+    assert_eq!(modal.gameplay_sub_tab, 0); // Returned to General
+    assert!(modal.is_subtab_focused);
+}
+
+
 
 
 

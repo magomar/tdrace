@@ -399,6 +399,7 @@ pub struct ArcadeSettingsModal {
     pub radar_ping_dropdown: DropdownWidget,
 
     pub is_tab_focused: bool,
+    pub is_subtab_focused: bool,
     pub selected_bottom_btn: usize,
     pub is_saved: bool,
     pub initial_snapshot: SettingsSnapshot,
@@ -521,6 +522,7 @@ impl ArcadeSettingsModal {
             radar_ping_dropdown: DropdownWidget::new("RADAR / SONAR PING", enabled_options, 0),
 
             is_tab_focused: true,
+            is_subtab_focused: false,
             selected_bottom_btn: 1,
             is_saved: false,
             initial_snapshot: SettingsSnapshot::default(),
@@ -559,6 +561,8 @@ impl ArcadeSettingsModal {
 
         self.set_helpers_state(&HelpersSettingsState::default());
         self.switch_gameplay_subtab(0);
+        self.is_tab_focused = true;
+        self.is_subtab_focused = false;
     }
 
     /// Switches the Gameplay subtab (0: General, 1: Visual Aids) and updates navigation grid bounds.
@@ -569,7 +573,7 @@ impl ArcadeSettingsModal {
             self.nav.set_focus(3, 0);
         } else {
             self.nav.set_column_len(3, 6);
-            self.nav.set_focus(3, 4); // Focus on "CUSTOMIZE VISUAL AIDS ➔" button
+            self.nav.set_focus(3, 0);
         }
     }
 
@@ -939,6 +943,15 @@ impl CabinetScreen for ArcadeSettingsModal {
             // If currently viewing detailed Visual Aids inside Gameplay, Back returns to Gameplay General
             if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
                 self.switch_gameplay_subtab(0);
+                self.is_subtab_focused = true;
+                ctx.play_ui_cancel();
+                return ScreenAction::None;
+            }
+
+            // If focused on the subtab bar in Gameplay General, Back returns to Main Tab Bar
+            if self.tab_bar.active_tab == 3 && self.is_subtab_focused {
+                self.is_subtab_focused = false;
+                self.is_tab_focused = true;
                 ctx.play_ui_cancel();
                 return ScreenAction::None;
             }
@@ -971,6 +984,7 @@ impl CabinetScreen for ArcadeSettingsModal {
         let tab_changed = self.tab_bar.handle_input(false, false, tab_bar_rect);
         if tab_changed {
             ctx.play_ui_move();
+            self.is_subtab_focused = false;
             if !self.is_tab_focused {
                 self.nav.set_focus(self.tab_bar.active_tab, 0);
             }
@@ -1010,22 +1024,83 @@ impl CabinetScreen for ArcadeSettingsModal {
 
             if self.is_tab_focused {
                 if nav_left {
-                    self.tab_bar.prev_tab();
-                    self.nav.set_focus(self.tab_bar.active_tab, 0);
-                    ctx.play_ui_move();
+                    if active_tab == 3 && self.gameplay_sub_tab == 1 {
+                        // On GAMEPLAY in Visual Aids: Left switches back to General
+                        self.switch_gameplay_subtab(0);
+                        ctx.play_ui_move();
+                    } else {
+                        self.tab_bar.prev_tab();
+                        if self.tab_bar.active_tab == 3 {
+                            self.switch_gameplay_subtab(1);
+                        }
+                        self.nav.set_focus(self.tab_bar.active_tab, 0);
+                        ctx.play_ui_move();
+                    }
                 } else if nav_right {
-                    self.tab_bar.next_tab();
-                    self.nav.set_focus(self.tab_bar.active_tab, 0);
-                    ctx.play_ui_move();
+                    if active_tab == 3 && self.gameplay_sub_tab == 0 {
+                        // On GAMEPLAY in General: Right switches to Visual Aids
+                        self.switch_gameplay_subtab(1);
+                        ctx.play_ui_move();
+                    } else {
+                        self.tab_bar.next_tab();
+                        if self.tab_bar.active_tab == 3 {
+                            self.switch_gameplay_subtab(0);
+                        }
+                        self.nav.set_focus(self.tab_bar.active_tab, 0);
+                        ctx.play_ui_move();
+                    }
                 } else if nav_down || is_confirm {
                     self.is_tab_focused = false;
-                    self.nav.set_focus(self.tab_bar.active_tab, 0);
+                    if active_tab == 3 {
+                        self.is_subtab_focused = true;
+                    } else {
+                        self.is_subtab_focused = false;
+                        self.nav.set_focus(active_tab, 0);
+                    }
                     ctx.play_ui_move();
                 } else if nav_up {
                     // Wrap up from tab bar to bottom action buttons
                     self.is_tab_focused = false;
+                    self.is_subtab_focused = false;
                     self.nav.set_focus(active_tab, last_row);
                     self.selected_bottom_btn = 1;
+                    ctx.play_ui_move();
+                }
+            } else if self.is_subtab_focused {
+                // Focus is on the Sub-tab Bar (General vs Visual Aids)
+                if nav_left {
+                    if self.gameplay_sub_tab != 0 {
+                        self.switch_gameplay_subtab(0);
+                        ctx.play_ui_move();
+                    } else {
+                        // Move back to DISPLAY tab
+                        self.is_subtab_focused = false;
+                        self.is_tab_focused = true;
+                        self.tab_bar.set_tab(2);
+                        self.nav.set_focus(2, 0);
+                        ctx.play_ui_move();
+                    }
+                } else if nav_right {
+                    if self.gameplay_sub_tab != 1 {
+                        self.switch_gameplay_subtab(1);
+                        ctx.play_ui_move();
+                    } else {
+                        // Wrap to AUDIO tab
+                        self.is_subtab_focused = false;
+                        self.is_tab_focused = true;
+                        self.tab_bar.set_tab(0);
+                        self.nav.set_focus(0, 0);
+                        ctx.play_ui_move();
+                    }
+                } else if nav_down || is_confirm {
+                    // Enter setting rows of current subtab
+                    self.is_subtab_focused = false;
+                    self.nav.set_focus(3, 0);
+                    ctx.play_ui_select();
+                } else if nav_up {
+                    // Move up to main Tab Bar
+                    self.is_subtab_focused = false;
+                    self.is_tab_focused = true;
                     ctx.play_ui_move();
                 }
             } else {
@@ -1049,6 +1124,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                     } else if nav_down {
                         // Wrap down from bottom buttons back up to Tab Bar
                         self.is_tab_focused = true;
+                        self.is_subtab_focused = false;
                         ctx.play_ui_move();
                     } else if is_confirm {
                         ctx.play_ui_select();
@@ -1063,9 +1139,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                     // Focus is on a setting widget row (0..last_row - 1)
                     if nav_up {
                         if active_row == 0 {
-                            // Move up to Tab Bar
-                            self.is_tab_focused = true;
-                            ctx.play_ui_move();
+                            if active_tab == 3 {
+                                // Move up to Sub-tab Bar
+                                self.is_subtab_focused = true;
+                                ctx.play_ui_move();
+                            } else {
+                                // Move up to Tab Bar
+                                self.is_tab_focused = true;
+                                ctx.play_ui_move();
+                            }
                         } else {
                             self.nav.set_focus(active_tab, active_row - 1);
                             ctx.play_ui_move();
@@ -1083,7 +1165,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         let active_tab = self.tab_bar.active_tab;
         self.nav.focused_col = active_tab;
-        let active_row = if self.is_tab_focused {
+        let active_row = if self.is_tab_focused || self.is_subtab_focused {
             usize::MAX
         } else {
             self.nav.active_row()
@@ -1091,6 +1173,7 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         if is_any_dropdown_open {
             self.is_tab_focused = false;
+            self.is_subtab_focused = false;
         }
 
         // Content items area
@@ -1253,9 +1336,13 @@ impl CabinetScreen for ArcadeSettingsModal {
 
                 if NavGrid2D::check_mouse_click(pill0_rect) && self.gameplay_sub_tab != 0 {
                     self.switch_gameplay_subtab(0);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
                     ctx.play_ui_select();
                 } else if NavGrid2D::check_mouse_click(pill1_rect) && self.gameplay_sub_tab != 1 {
                     self.switch_gameplay_subtab(1);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
                     ctx.play_ui_select();
                 }
 
@@ -1636,42 +1723,70 @@ impl CabinetScreen for ArcadeSettingsModal {
 
                 // Pill 0: GENERAL
                 let is_p0_active = self.gameplay_sub_tab == 0;
+                let is_p0_focused = self.is_subtab_focused && is_p0_active;
                 let is_p0_hovered = NavGrid2D::check_mouse_hover(pill0_rect);
-                let p0_bg = if is_p0_active {
+                let p0_bg = if is_p0_focused {
+                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
+                } else if is_p0_active {
                     Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
                 } else if is_p0_hovered {
                     Palette::UI_CARD_BG_HOVER
                 } else {
                     Palette::UI_CARD_BG
                 };
-                let p0_border = if is_p0_active { accent } else { Palette::UI_CARD_BORDER };
-                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_active { 2.0 } else { 1.0 });
+                let p0_border = if is_p0_focused {
+                    Palette::NEON_GOLD
+                } else if is_p0_active {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
+                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_focused { 2.5 } else if is_p0_active { 2.0 } else { 1.0 });
+                let p0_label = if is_p0_focused {
+                    "< GAMEPLAY GENERAL >"
+                } else {
+                    "GAMEPLAY GENERAL"
+                };
                 fonts.draw_ui_bold_centered(
-                    "GAMEPLAY GENERAL",
+                    p0_label,
                     pill0_rect.0 + pill0_rect.2 * 0.5,
                     pill0_rect.1 + pill0_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p0_focused { Palette::NEON_GOLD } else if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
                 );
 
                 // Pill 1: VISUAL AIDS
                 let is_p1_active = self.gameplay_sub_tab == 1;
+                let is_p1_focused = self.is_subtab_focused && is_p1_active;
                 let is_p1_hovered = NavGrid2D::check_mouse_hover(pill1_rect);
-                let p1_bg = if is_p1_active {
+                let p1_bg = if is_p1_focused {
+                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
+                } else if is_p1_active {
                     Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
                 } else if is_p1_hovered {
                     Palette::UI_CARD_BG_HOVER
                 } else {
                     Palette::UI_CARD_BG
                 };
-                let p1_border = if is_p1_active { accent } else { Palette::UI_CARD_BORDER };
-                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_active { 2.0 } else { 1.0 });
+                let p1_border = if is_p1_focused {
+                    Palette::NEON_GOLD
+                } else if is_p1_active {
+                    accent
+                } else {
+                    Palette::UI_CARD_BORDER
+                };
+                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_focused { 2.5 } else if is_p1_active { 2.0 } else { 1.0 });
+                let p1_label = if is_p1_focused {
+                    "< VISUAL DRIVING AIDS >"
+                } else {
+                    "VISUAL DRIVING AIDS"
+                };
                 fonts.draw_ui_bold_centered(
-                    "VISUAL DRIVING AIDS",
+                    p1_label,
                     pill1_rect.0 + pill1_rect.2 * 0.5,
                     pill1_rect.1 + pill1_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p1_focused { Palette::NEON_GOLD } else if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
                 );
 
                 if self.gameplay_sub_tab == 0 {
@@ -1836,9 +1951,11 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         // Navigation hints under dialog box
         let hint_text = if self.is_tab_focused {
-            "◄ / ► ARROWS: Switch Category   •   ▼ DOWN / ENTER: Adjust Settings   •   TAB / Q / E: Cycle"
+            "◄ / ► ARROWS: Switch Category   •   ▼ DOWN / ENTER: Select Sub-Category / Settings   •   TAB / Q / E: Cycle"
+        } else if self.is_subtab_focused {
+            "◄ / ► ARROWS: Switch View (General / Visual Aids)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
         } else if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
-            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ESC / B: Back to General Gameplay"
+            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Switch View   •   ESC / B: Back to General"
         } else {
             "▲ UP (at top): Back to Categories   •   ◄ / ►: Adjust Setting   •   TAB / Q / E: Switch Category   •   ESC: Close"
         };
