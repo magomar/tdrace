@@ -48,10 +48,10 @@ pub fn standard_tuning_bounds(constraint: &DrivetrainConstraint, base_config: &C
     let mut bounds = Vec::new();
 
     bounds.push(ParameterBound::new(
-        "speed_sensitive_steer_factor",
-        (base_config.speed_sensitive_steer_factor * 0.4).max(0.0002),
-        (base_config.speed_sensitive_steer_factor * 2.5).min(0.030),
-        base_config.speed_sensitive_steer_factor,
+        "tire_peak_slip_angle_deg",
+        6.0,
+        15.0,
+        base_config.tire.peak_slip_angle_deg.clamp(6.0, 15.0),
     ));
 
     bounds.push(ParameterBound::new(

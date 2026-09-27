@@ -306,10 +306,9 @@ mod tests {
             let temp_f = car_calibrated.state().wheel_assemblies[0].temperature;
             let _grip_f = car_calibrated.state().wheel_assemblies[0].thermal_grip_multiplier();
 
-            // 3. GT Car (0.016 factor + calibrated thermal dynamics)
+            // 3. GT Car (reduced lock + calibrated thermal dynamics)
             let mut gt_cfg = CarConfig::sports_car();
             gt_cfg.max_steer_angle = 0.50;
-            gt_cfg.speed_sensitive_steer_factor = 0.016;
             let mut car_gt = Car::new(gt_cfg).with_pose(glam::Vec2::ZERO, 0.0);
             car_gt.set_velocity(glam::Vec2::new(v0, 0.0));
             for _ in 0..180 {

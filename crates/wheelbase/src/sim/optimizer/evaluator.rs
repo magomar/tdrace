@@ -43,7 +43,7 @@ impl OptimizationEvaluator {
             let val = bound.from_normalized(normalized_params[i]);
             match bound.name.as_str() {
                 "caster_jacking_factor" => cfg.caster_jacking_factor = val,
-                "speed_sensitive_steer_factor" => cfg.speed_sensitive_steer_factor = val,
+                "tire_peak_slip_angle_deg" => cfg.tire.peak_slip_angle_deg = val,
                 "angular_damping" => cfg.angular_damping = val,
                 "brake_bias" => cfg.brake_bias = val,
                 "drive_bias" => cfg.drive_bias = val,

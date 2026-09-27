@@ -318,65 +318,44 @@ fn test_interactive_controls_filter_sync_and_persistence() {
     );
 }
 
+/// Spec 042 successor of the double-attenuation regression test.
+///
+/// Steering is shaped exactly once: the input filter only handles timing, and the car maps full
+/// input to its grip-aware authority. At 162 km/h full input must reach that authority (not 100%
+/// mechanical lock, which is 3x past the front tire's useful angle), and the player's
+/// Steering Authority (steer_overslip) must scale the wheel angle.
 #[test]
 fn test_player_car_physics_receives_unattenuated_steering_when_direct_or_raw() {
-    use tdrace_app::input::SteeringProfile;
     use tdrace_core::Vec2;
 
     let dt = 1.0 / 60.0;
     let high_speed = 45.0; // 45 m/s ~ 162 km/h
 
-    // 1. Direct/Raw profile filter
-    let direct_cfg = SteeringProfile::Direct.to_config();
-    assert!(!direct_cfg.speed_sensitive_enabled);
-    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
-    let mut filter = DigitalInputFilter::new(direct_cfg);
+    let steer_at = |overslip: f32| {
+        let mut car = Car::new(CarConfig::sports_car());
+        car.config.player = tdrace_core::physics::config::PlayerHandling::human(overslip, 0.0);
+        car.state.velocity = Vec2::new(high_speed, 0.0);
+        car.state.speed = high_speed;
+        let authority = car.steer_authority(high_speed, 1.0);
+        let ctrl = CarControls::new(0.0, 1.0, 0.0, false);
+        // Rack reaches the target in a few frames; read it before the car slows or rotates much.
+        for _ in 0..6 {
+            car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
+        }
+        (car.state.steer_angle.abs(), authority, car.config.max_steer_angle)
+    };
 
-    // After ramp, filter outputs 1.0 full lock at 162 km/h
-    for _ in 0..15 {
-        filter.update(1.0, 0.0, 0.0, high_speed, dt);
-    }
-    let (filter_steer, _, _) = filter.update(1.0, 0.0, 0.0, high_speed, dt);
-    assert_eq!(filter_steer, 1.0);
-
-    // 2. Player car with speed_sensitive_steer_factor = 0.0 (applied by RaceSession)
-    let mut player_car = Car::new(CarConfig::sports_car());
-    player_car.config.speed_sensitive_steer_factor = 0.0;
-    player_car.state.velocity = Vec2::new(high_speed, 0.0);
-    player_car.state.speed = high_speed;
-
-    let ctrl = CarControls::new(0.0, filter_steer, 0.0, false);
-    for _ in 0..30 {
-        player_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
-    }
-
-    // Player car must reach 100% of max_steer_angle at high speed without physics attenuation
-    let max_steer = player_car.config.max_steer_angle;
+    let (angle_1, authority_1, lock) = steer_at(1.0);
     assert!(
-        (player_car.state.steer_angle.abs() - max_steer).abs() < 1e-2,
-        "Player car steering angle ({}) must reach full mechanical lock ({}) at high speed when Direct/Raw",
-        player_car.state.steer_angle.abs(),
-        max_steer
+        (angle_1 - authority_1).abs() < 0.02,
+        "Full input must reach the grip-aware authority ({authority_1:.3}), got {angle_1:.3}"
     );
+    assert!(authority_1 < lock * 0.5, "At 162 km/h the useful angle is far below mechanical lock");
 
-    // 3. Contrast with unconfigured car (legacy double-attenuation with speed_sensitive_steer_factor > 0)
-    let mut legacy_car = Car::new(CarConfig::sports_car());
-    legacy_car.config.speed_sensitive_steer_factor = 0.016; // Legacy GT factor
-    legacy_car.state.velocity = Vec2::new(high_speed, 0.0);
-    legacy_car.state.speed = high_speed;
-
-    for _ in 0..30 {
-        legacy_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
-    }
-    let legacy_steer = legacy_car.state.steer_angle.abs();
+    let (angle_13, _, _) = steer_at(1.3);
     assert!(
-        legacy_steer < max_steer * 0.65,
-        "Legacy car was heavily attenuated to only {} of max lock",
-        legacy_steer / max_steer
-    );
-    assert!(
-        player_car.state.steer_angle.abs() > legacy_steer * 1.5,
-        "Player car with settings applied must have significantly greater steering angle than legacy attenuated car"
+        angle_13 > angle_1 * 1.2,
+        "Steering Authority 130% must steer clearly more than 100% ({angle_13:.3} vs {angle_1:.3})"
     );
 }
 

@@ -68,7 +68,7 @@ impl CalibrationResult {
     /// Formats the tuned parameters as Rust struct initialization lines.
     pub fn to_rust_snippet(&self) -> String {
         let mut s = String::new();
-        s.push_str(&format!("speed_sensitive_steer_factor: {:.5},\n", self.optimized_config.speed_sensitive_steer_factor));
+        s.push_str(&format!("tire.peak_slip_angle_deg: {:.2},\n", self.optimized_config.tire.peak_slip_angle_deg));
         s.push_str(&format!("angular_damping: {:.1},\n", self.optimized_config.angular_damping));
         s.push_str(&format!("roll_balance: {:.2},\n", self.optimized_config.roll_balance));
         s.push_str(&format!("weight_transfer_hz: {:.1},\n", self.optimized_config.weight_transfer_hz));

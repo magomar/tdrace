@@ -16,6 +16,9 @@ pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
     ]
 }
 
+/// Steering overslip cap for bots and scripted controllers (linear mapping, see `step_per_wheel`).
+pub const BOT_STEER_OVERSLIP: f32 = 1.5;
+
 /// Normalizes an angle in radians to (-PI, PI].
 #[inline]
 pub fn normalize_angle(mut angle: f32) -> f32 {
@@ -411,6 +414,34 @@ impl Car {
         }
     }
 
+    /// Largest useful road-wheel steering angle at `speed` on a surface with friction `surface_mu`
+    /// (Spec 042 grip-aware authority), in radians.
+    ///
+    /// `atan(L / R_min) + (0.25 + steer_overslip - 1) * front peak slip angle`, where `R_min = v^2 / (mu * g_eff)`
+    /// is the tightest radius the tires can hold (downforce included). At low speed `R_min` shrinks
+    /// until the kinematic term alone exceeds mechanical lock, so parking-speed steering keeps full
+    /// lock without a separate blend (a speed blend overshot the useful angle at 8-12 m/s).
+    pub fn steer_authority(&self, speed: f32, surface_mu: f32) -> f32 {
+        self.steer_authority_with(speed, surface_mu, self.config.player.steer_overslip)
+    }
+
+    /// [`Car::steer_authority`] with an explicit overslip instead of the driver's setting.
+    pub fn steer_authority_with(&self, speed: f32, surface_mu: f32, steer_overslip: f32) -> f32 {
+        let lock = self.config.max_steer_angle;
+        let tire = &self.config.tire;
+        let g_eff = 9.81 + self.config.downforce_coefficient * speed * speed / self.config.mass.max(1.0);
+        let mu = (surface_mu * tire.grip).max(0.01);
+        let r_min = (speed * speed / (mu * g_eff)).max(1e-3);
+        let kinematic = (self.config.wheelbase / r_min).atan();
+        // In a steady corner the rear tires slip too, so the front reaches its peak at about
+        // kinematic + LIMIT_SLIP_FRACTION * alpha_peak, not kinematic + alpha_peak. steer_overslip
+        // moves full input around that limit in units of the peak slip angle.
+        const LIMIT_SLIP_FRACTION: f32 = 0.25;
+        let slip_share = LIMIT_SLIP_FRACTION + (steer_overslip - 1.0);
+        let grip_limit = kinematic + slip_share.max(0.0) * tire.peak_slip_angle();
+        grip_limit.clamp(0.0, lock)
+    }
+
     /// Computes the aerodynamic slipstream drafting intensity [0.0..0.40] based on opponent vehicles
     /// within the forward wake cone (up to 32m ahead, +/- 2.8m lateral), with subtle push-draft support.
     pub fn compute_draft_intensity(&self, other_cars: &[&Car]) -> f32 {
@@ -572,24 +603,30 @@ fn couple_axle(
         self.state.local_velocity = Vec2::new(v_long, v_lat);
         self.state.speed = self.state.velocity.length();
 
-        // 1. Steering dynamics with speed-sensitive limit and counter-steer assist
+        // 1. Steering dynamics: grip-aware authority and counter-steer assist (Spec 042)
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
-        let speed_factor = if self.config.speed_sensitive_steer_factor <= 0.0 {
-            1.0
-        } else if self.config.caster_jacking_factor > 0.0 {
-            // For racing karts with 42° direct steering lock:
-            // Retain 100% full lock at low speed (<= 3.5 m/s ~ 12.6 km/h) for tight hairpins and pit maneuvers.
-            // Progressively attenuate at racing speeds so high-speed steering inputs do not cause front tire scrub stall.
-            let speed_above_hairpin = (self.state.speed - 3.5).max(0.0);
-            1.0 + speed_above_hairpin * self.config.speed_sensitive_steer_factor.max(0.020)
-        } else {
-            1.0 + self.state.speed * self.config.speed_sensitive_steer_factor
-        };
-        let mut target_steer = (-clamped_ctrl.steer * self.config.max_steer_angle) / speed_factor;
 
         // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
         let is_counter_steering = (clamped_ctrl.steer * v_lat) < -0.05;
+
+        // Human drivers (grip-aware steering): full input maps to the largest road-wheel angle the
+        // front tires can use at this speed, so more input never gives less turn. Counter-steering
+        // adds the body slip angle as headroom, so the wheels can still point down the road in a
+        // slide. Bots and scripted controllers keep the linear full-lock mapping.
+        let front_mu = 0.5 * (surfaces[0].friction_coefficient() + surfaces[1].friction_coefficient());
+        let counter_headroom = if is_counter_steering { self.state.sideslip_angle.abs() } else { 0.0 };
+        let mut target_steer = if self.config.player.grip_aware_steering {
+            let authority = (self.steer_authority(self.state.speed, front_mu) + counter_headroom)
+                .min(self.config.max_steer_angle);
+            -clamped_ctrl.steer * authority
+        } else {
+            // Linear full-lock mapping keeps closed-loop controller gains; the angle is capped at a
+            // generous grip limit (overslip 1.5) so saturated commands cannot scrub past the tire.
+            let cap = (self.steer_authority_with(self.state.speed, front_mu, BOT_STEER_OVERSLIP) + counter_headroom)
+                .min(self.config.max_steer_angle);
+            (-clamped_ctrl.steer * self.config.max_steer_angle).clamp(-cap, cap)
+        };
 
         // Counter-steer / self-aligning drift recovery assist (forward motion only)
         if self.config.assists.counter_steer_assist_enabled
@@ -825,10 +862,27 @@ fn couple_axle(
         let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12).clamp(0.0, 1.0);
         let engine_brake_multiplier = 1.0 - 0.85 * slide_severity;
 
+        // Traction help (player aid, Spec 042): ease the throttle as the rear axle nears its lateral
+        // limit, the way a good driver (and the AI) feeds throttle out of a corner.
+        let traction_help = self.config.player.traction_help.clamp(0.0, 1.0);
+        let throttle_scale = if traction_help > 0.0 && !clamped_ctrl.reverse {
+            let rear_use = [2usize, 3]
+                .iter()
+                .map(|&j| {
+                    let w = &self.state.wheels[j];
+                    let grip = self.state.wheel_assemblies[j].config.tire_model.grip;
+                    w.lateral_force.abs() / (w.normal_load * w.surface.friction_coefficient() * grip).max(1.0)
+                })
+                .fold(0.0f32, f32::max);
+            1.0 - traction_help * ((rear_use - 0.8) / 0.2).clamp(0.0, 1.0)
+        } else {
+            1.0
+        };
+
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
-            clamped_ctrl.throttle * self.config.max_engine_force * engine_taper * drive_torque_multiplier
+            clamped_ctrl.throttle * throttle_scale * self.config.max_engine_force * engine_taper * drive_torque_multiplier
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
             // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
@@ -1072,15 +1126,22 @@ fn couple_axle(
             }
 
             // TCS (longitudinal): once the axle is coupled, catch any runaway above the slip target.
-            // A spool shares one speed, so it is held at the mean of both wheels' limits (one wheel
-            // must out-slip the other in a corner).
+            // A spool shares one speed, so it is held at the grip-weighted mean of both wheels'
+            // limits: in a corner the loaded outer wheel must be free to drive while the unloaded
+            // inner wheel over-slips (a plain mean pinned a kart spool at zero drive).
             if tcs_axle {
                 let limits = pair.map(|j| {
                     let k = j - axle_start;
                     self.state.wheel_assemblies[j].omega_for_slip(tcs_targets[k], wheel_v_longs[j])
                 });
                 let limits = if diff_type == DifferentialType::Spool {
-                    [0.5 * (limits[0] + limits[1]); 2]
+                    let (ea, eb) = (envelopes[pair[0]], envelopes[pair[1]]);
+                    let shared = if ea + eb > 1e-3 {
+                        (limits[0] * ea + limits[1] * eb) / (ea + eb)
+                    } else {
+                        0.5 * (limits[0] + limits[1])
+                    };
+                    [shared; 2]
                 } else {
                     limits
                 };

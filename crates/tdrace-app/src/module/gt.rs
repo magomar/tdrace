@@ -1450,7 +1450,6 @@ impl GtWorldChallengeModule {
             steer_speed: 9.0,
             steer_return_speed: 12.0,
             counter_steer_assist: 1.15,
-            speed_sensitive_steer_factor: 0.016,
 
             air_drag_coefficient: 0.65,
             lateral_drag_coefficient: 1.40,
@@ -1476,6 +1475,7 @@ impl GtWorldChallengeModule {
             rear_tire: None,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            player: Default::default(),
             wheels: CarConfig::default_wheel_assemblies_for(
                 TireConfig {
                     grip: 1.20,

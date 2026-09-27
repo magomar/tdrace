@@ -3,7 +3,7 @@
 //! Each test measures vehicle *behavior* (yaw, sideslip, axle saturation, distances), not
 //! internal parameters, so tuning can change freely as long as the feel targets hold.
 
-use wheelbase::{Car, CarConfig, CarControls, DriverAssistsConfig, SurfaceType, Vec2};
+use wheelbase::{Car, CarConfig, CarControls, DriverAssistsConfig, PlayerHandling, SurfaceType, Vec2};
 
 const DT: f32 = 1.0 / 120.0;
 
@@ -47,4 +47,50 @@ fn test_roll_balance_flips_which_axle_saturates_first() {
     println!("roll_balance 0.40 -> {loose} first, 0.60 -> {tight} first");
     assert_eq!(loose, "rear");
     assert_eq!(tight, "front");
+}
+
+/// Steady path curvature yaw/speed (1/m, mean of the last 0.5 s of a 2 s hold) with throttle
+/// holding `speed`, plus the peak sideslip. Curvature, not yaw rate: when the front plows the car
+/// also slows, and yaw rate would fall with speed even though the turn did not open up.
+fn steady_yaw(cfg: &CarConfig, speed: f32, steer: f32) -> (f32, f32) {
+    let mut car = Car::new(cfg.clone());
+    car.set_velocity(Vec2::new(speed, 0.0));
+    let (mut curvature, mut beta) = (0.0f32, 0.0f32);
+    for step in 0..240 {
+        let throttle = ((speed - car.state.speed) * 0.5).clamp(0.0, 1.0);
+        car.step(&CarControls::new(throttle, steer, 0.0, false), SurfaceType::Asphalt, DT);
+        beta = beta.max(car.state.sideslip_angle.abs());
+        if step >= 180 {
+            curvature += car.state.angular_velocity.abs() / car.state.speed.max(1.0) / 60.0;
+        }
+    }
+    (curvature, beta)
+}
+
+/// Scenario: Steering response is monotonic at every speed
+///
+/// Given overslip settings 0.85 to 1.30 and speeds of 10, 25 and 45 m/s, throttle holding speed
+/// When a held steer input sweeps 0.1 -> 1.0
+/// Then the steady turn (path curvature) never opens up by more than 3% as input grows
+#[test]
+fn test_steering_response_is_monotonic_at_every_speed() {
+    for overslip in [0.85f32, 1.0, 1.15, 1.30] {
+        let mut cfg = CarConfig::sports_car();
+        cfg.player = PlayerHandling::human(overslip, 0.0);
+        for speed in [10.0f32, 25.0, 45.0] {
+            let mut prev = 0.0f32;
+            let mut row = String::new();
+            for i in 1..=10 {
+                let steer = i as f32 / 10.0;
+                let (yaw, beta) = steady_yaw(&cfg, speed, steer);
+                row.push_str(&format!(" {steer:.1}:{yaw:.4}/{beta:.2}"));
+                assert!(
+                    yaw >= prev * 0.97,
+                    "overslip {overslip} at {speed} m/s: curvature dropped from {prev:.4} to {yaw:.4} at steer {steer:.1}\n{row}"
+                );
+                prev = prev.max(yaw);
+            }
+            println!("overslip {overslip:.2} v={speed:>4.1}:{row}");
+        }
+    }
 }

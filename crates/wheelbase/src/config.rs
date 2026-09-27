@@ -431,6 +431,34 @@ impl Default for TerrainInteractionConfig {
     }
 }
 
+/// Per-driver handling aids (Spec 042). Set from the player's handling preset; bots use the default.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PlayerHandling {
+    /// Grip-aware steering: full input maps to the largest angle the front tires can use at this
+    /// speed. On for human drivers. Off (linear full-lock mapping) for bots and scripted
+    /// controllers, whose closed-loop steering gains were tuned for the linear mapping.
+    #[serde(default)]
+    pub grip_aware_steering: bool,
+    /// Steering authority: where full input sits relative to the front grip limit, in units of the
+    /// front peak slip angle (0.85 = just short of the limit, 1.0 = on the limit, 1.3 = past it).
+    pub steer_overslip: f32,
+    /// Traction help [0, 1]: eases throttle as the rear axle nears its lateral limit.
+    pub traction_help: f32,
+}
+
+impl Default for PlayerHandling {
+    fn default() -> Self {
+        Self { grip_aware_steering: false, steer_overslip: 1.0, traction_help: 0.0 }
+    }
+}
+
+impl PlayerHandling {
+    /// Human-driver handling with grip-aware steering on.
+    pub fn human(steer_overslip: f32, traction_help: f32) -> Self {
+        Self { grip_aware_steering: true, steer_overslip, traction_help }
+    }
+}
+
 /// Type and mechanical characteristics of an axle differential.
 ///
 /// Governs dynamic cross-axle torque distribution and rotational speed coupling
@@ -523,8 +551,6 @@ pub struct CarConfig {
     pub steer_return_speed: f32,
     /// Steering speed multiplier when player is counter-steering during a drift.
     pub counter_steer_assist: f32,
-    /// Factor reducing maximum steer lock at high vehicle speeds to stabilize fast corners.
-    pub speed_sensitive_steer_factor: f32,
 
     /// Aerodynamic drag coefficient (0.5 * Cd * A * air_density).
     pub air_drag_coefficient: f32,
@@ -561,6 +587,9 @@ pub struct CarConfig {
     pub assists: DriverAssistsConfig,
     /// Terrain interaction modifiers (sand flotation, mud paddles, ice studs).
     pub terrain: TerrainInteractionConfig,
+    /// Per-driver handling aids set from the player's settings (bots keep the defaults).
+    #[serde(default)]
+    pub player: PlayerHandling,
     /// Decoupled wheel assembly configurations for all 4 corners [FL, FR, RL, RR].
     #[serde(default = "default_wheel_assemblies")]
     pub wheels: [WheelAssemblyConfig; 4],
@@ -590,7 +619,9 @@ struct CarConfigRaw {
     pub steer_speed: f32,
     pub steer_return_speed: f32,
     pub counter_steer_assist: f32,
-    pub speed_sensitive_steer_factor: f32,
+    // Legacy (pre Spec 042) physics steering attenuation: replaced by grip-aware authority.
+    #[serde(default, rename = "speed_sensitive_steer_factor")]
+    pub _speed_sensitive_steer_factor: Option<f32>,
     pub air_drag_coefficient: f32,
     pub lateral_drag_coefficient: f32,
     pub rolling_resistance_coefficient: f32,
@@ -616,6 +647,8 @@ struct CarConfigRaw {
     pub assists: DriverAssistsConfig,
     #[serde(default)]
     pub terrain: TerrainInteractionConfig,
+    #[serde(default)]
+    pub player: PlayerHandling,
     #[serde(default)]
     pub wheels: Option<[WheelAssemblyConfig; 4]>,
 }
@@ -656,7 +689,6 @@ impl From<CarConfigRaw> for CarConfig {
             steer_speed: raw.steer_speed,
             steer_return_speed: raw.steer_return_speed,
             counter_steer_assist: raw.counter_steer_assist,
-            speed_sensitive_steer_factor: raw.speed_sensitive_steer_factor,
             air_drag_coefficient: raw.air_drag_coefficient,
             lateral_drag_coefficient: raw.lateral_drag_coefficient,
             rolling_resistance_coefficient: raw.rolling_resistance_coefficient,
@@ -675,6 +707,7 @@ impl From<CarConfigRaw> for CarConfig {
             rear_tire: raw.rear_tire,
             assists: raw.assists,
             terrain: raw.terrain,
+            player: raw.player,
             wheels,
         };
         cfg.finalize();
@@ -789,7 +822,6 @@ impl CarConfig {
             steer_speed: 5.5,
             steer_return_speed: 7.0,
             counter_steer_assist: 1.3,
-            speed_sensitive_steer_factor: 0.0045,
 
             air_drag_coefficient: 0.42,
             lateral_drag_coefficient: 1.20,
@@ -808,6 +840,7 @@ impl CarConfig {
             rear_tire: None,
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
+            player: PlayerHandling::default(),
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
         }
         .finalized()
@@ -822,7 +855,6 @@ impl CarConfig {
         cfg.max_reverse_force = 5330.0;
         cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
-        cfg.speed_sensitive_steer_factor = 0.0037;
         cfg.angular_damping = 114.0;
         cfg.roll_balance = 0.50;
         cfg.brake_bias = 0.56;
@@ -914,7 +946,6 @@ impl CarConfig {
             steer_speed: 10.5,
             steer_return_speed: 14.0,
             counter_steer_assist: 1.25,
-            speed_sensitive_steer_factor: 0.0008,
 
             air_drag_coefficient: 0.35,
             lateral_drag_coefficient: 1.00,
@@ -951,6 +982,7 @@ impl CarConfig {
                 mud_flotation: 1.0,
                 ice_grip_multiplier: 0.80,
             },
+            player: PlayerHandling::default(),
             wheels,
         }
         .finalized()
@@ -965,7 +997,6 @@ impl CarConfig {
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
         cfg.drive_bias = 0.5; // AWD
-        cfg.speed_sensitive_steer_factor = 0.0010;
         cfg.angular_damping = 126.0;
         cfg.engine_brake_front_share = 0.50;
         cfg.weight_transfer_hz = 2.5;
@@ -1073,7 +1104,6 @@ impl CarConfig {
             steer_speed: 7.5,
             steer_return_speed: 10.0,
             counter_steer_assist: 1.35,
-            speed_sensitive_steer_factor: 0.00145,
 
             air_drag_coefficient: 0.52,
             lateral_drag_coefficient: 1.35,
@@ -1092,6 +1122,7 @@ impl CarConfig {
             rear_tire: None,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            player: PlayerHandling::default(),
             wheels,
         }
         .finalized()
@@ -1171,7 +1202,6 @@ impl CarConfig {
             steer_speed: 8.5,
             steer_return_speed: 9.5,
             counter_steer_assist: 1.55,
-            speed_sensitive_steer_factor: 0.00167,
 
             air_drag_coefficient: 0.48,
             lateral_drag_coefficient: 1.40,
@@ -1194,6 +1224,7 @@ impl CarConfig {
                 mud_flotation: 0.65,
                 ice_grip_multiplier: 1.50,
             },
+            player: PlayerHandling::default(),
             wheels,
         }
         .finalized()

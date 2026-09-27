@@ -245,8 +245,7 @@ pub fn run_protocol_c(
             let heading_error = normalize_angle(target_heading - car.state().angle);
 
             // Kinematic Ackermann feedforward (negative steer commands counter-clockwise left turn)
-            let speed_factor = 1.0 + car.state().speed * config.speed_sensitive_steer_factor;
-            let steer_ff = -(config.wheelbase / (radius_m * config.max_steer_angle)) * speed_factor;
+            let steer_ff = -(config.wheelbase / radius_m).atan() / config.max_steer_angle.max(1e-3);
 
             // Geometric closed-loop steering feedback (cross-track and heading regulation)
             let steer_fb = -(1.8 * heading_error + 0.15 * radial_error);
@@ -790,8 +789,7 @@ pub fn run_braking_in_turn(
     let initial_pos = Vec2::new(radius_m, 0.0);
 
     // Kinematic steer for circle
-    let speed_factor = 1.0 + v0_mps * config.speed_sensitive_steer_factor;
-    let turn_steer = -(config.wheelbase / (radius_m * config.max_steer_angle)) * speed_factor;
+    let turn_steer = -(config.wheelbase / radius_m).atan() / config.max_steer_angle.max(1e-3);
 
     runner.run_until(
         15.0,
