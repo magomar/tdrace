@@ -67,6 +67,10 @@ Scale coordinates by the ratio of official FIA length to current perimeter:
 $$s = \frac{L_{\text{FIA}}}{L_{\text{measured}}}$$
 $$P_{\text{scaled}} = s \cdot P$$
 
+Target length per modality (the circuit scale rule, `docs/circuits/index.md`):
+GT uses $0.5 \cdot L_{\text{FIA}}$ (label `0.5x`); rallycross and karting use $L_{\text{FIA}}$ (1:1);
+NASCAR keeps each circuit's current length until a rule is decided; extreme off-road is not re-imported.
+
 ### 3.4 Uniform Resampling
 Resample the polygon to 26–32 uniform points using cumulative arc-length interpolation. This guarantees smooth Catmull-Rom spline curves without clustering.
 
