@@ -282,7 +282,7 @@ impl CabinetScreen for SpaceArenaGame {
         }
 
         let (filtered_steer, filtered_thrust, _) =
-            self.filter.update(steer_input, thrust_input, 0.0, 0.0, ctx.dt);
+            self.filter.update(steer_input, thrust_input, 0.0, ctx.dt);
 
         self.ship_heading += filtered_steer * 4.2 * ctx.dt;
         let thrust_dir = Vec2::new(self.ship_heading.cos(), self.ship_heading.sin());

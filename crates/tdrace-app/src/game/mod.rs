@@ -162,7 +162,7 @@ fn screen_height_safe() -> f32 {
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
 use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::physics::car::{Car, CarControls};
-use tdrace_core::physics::config::AssistProfile;
+use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
@@ -172,11 +172,11 @@ use tdrace_core::track::{Track, TrackCategory};
 use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
 use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::{RaceCamera, SplitLayout, ZoomLevelConfig};
-use crate::config::GameConfig;
+use crate::config::{GameConfig, InputConfig};
 use crate::db::{HallOfFameDb, HallOfFameEntry};
 use crate::fx::EffectsManager;
 use crate::input::touch::TouchController;
-use crate::input::{DigitalInputFilter, InputController, NavGrid2D};
+use crate::input::{DigitalInputConfig, DigitalInputFilter, InputController, NavGrid2D};
 pub use crate::module::VehicleVisualType;
 use crate::module::{
     ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
@@ -786,16 +786,7 @@ impl RaceSession {
         audio.settings.music_volume = config.audio.music_volume;
 
         let mut input = InputController::new();
-        input.filter.config.profile = config.input.steering_profile;
-        input.filter.config.speed_sensitive_enabled = config.input.speed_sensitive_enabled;
-        input.filter.config.steer_rise_rate = config.input.steer_rise_rate;
-        input.filter.config.steer_return_rate = config.input.steer_return_rate;
-        input.filter.config.steer_exponent = config.input.steer_exponent;
-        input.filter.config.speed_sensitive_factor = config.input.speed_sensitive_factor;
-        input.filter.config.min_speed_steer_limit = config.input.min_speed_steer_limit;
-        input.filter.config.hold_bleed_rate = config.input.hold_bleed_rate;
-        input.filter.config.throttle_rise_rate = config.input.throttle_rise_rate;
-        input.filter.config.brake_rise_rate = config.input.brake_rise_rate;
+        input.filter.config = config.input.to_filter_config();
 
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let camera = RaceCamera::from_config_with_viewport(&config.camera, sw, sh);
@@ -1308,14 +1299,7 @@ impl RaceSession {
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
         };
         modal.set_helpers_state(&helpers_state);
-        modal.set_input_filter_state(
-            self.input.filter.config.profile,
-            self.input.filter.config.speed_sensitive_enabled,
-            self.input.filter.config.hold_bleed_rate,
-            self.input.filter.config.min_speed_steer_limit,
-            self.input.filter.config.steer_rise_rate,
-            self.input.filter.config.speed_sensitive_factor,
-        );
+        modal.set_input_filter_state(&self.input.filter.config);
 
         modal.snapshot_initial();
 
@@ -1336,6 +1320,27 @@ impl RaceSession {
         self.settings_modal.is_some()
     }
 
+    /// Car-side handling aids for a human driver's keyboard settings (Spec 042).
+    fn player_handling(cfg: &DigitalInputConfig) -> PlayerHandling {
+        PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
+    }
+
+    /// Applies the primary keyboard settings to the split-screen filter and to every human car.
+    /// The single place that syncs handling settings into live cars (Spec 042).
+    pub fn apply_player_handling(&mut self) {
+        self.filter_p2.config = self.input.filter.config;
+        let handling = Self::player_handling(&self.input.filter.config);
+        let my_idx = self.player_car_index();
+        if let Some(car) = self.cars.get_mut(my_idx) {
+            car.config.player = handling;
+        }
+        if self.is_split_screen() {
+            if let Some(car) = self.cars.get_mut(1) {
+                car.config.player = handling;
+            }
+        }
+    }
+
     /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, assists, display resolution, and player car helpers.
     pub fn close_settings_modal(&mut self, save: bool) {
         if let Some(modal) = self.settings_modal.take() {
@@ -1351,44 +1356,10 @@ impl RaceSession {
                 };
                 self.set_assist_profile(chosen_assist);
 
-                // Apply and persist input smoothing and progressive hold bleed settings
-                let chosen_profile = modal.selected_steering_profile();
-                let chosen_speed_sensitive_enabled = modal.speed_sensitive_enabled();
-                let chosen_bleed = modal.selected_hold_bleed_rate();
-                let chosen_limit = modal.selected_min_speed_steer_limit();
-                let chosen_rise = modal.selected_steer_rise_rate();
-                let chosen_factor = modal.selected_speed_sensitive_factor();
-
-                self.input.filter.config.profile = chosen_profile;
-                self.input.filter.config.speed_sensitive_enabled = chosen_speed_sensitive_enabled;
-                self.input.filter.config.hold_bleed_rate = chosen_bleed;
-                self.input.filter.config.min_speed_steer_limit = chosen_limit;
-                self.input.filter.config.steer_rise_rate = chosen_rise;
-                self.input.filter.config.speed_sensitive_factor = chosen_factor;
-                let base_cfg = chosen_profile.to_config();
-                self.input.filter.config.steer_return_rate = base_cfg.steer_return_rate;
-                self.input.filter.config.steer_exponent = base_cfg.steer_exponent;
-                self.filter_p2.config = self.input.filter.config.clone();
-
-                self.config.input.steering_profile = chosen_profile;
-                self.config.input.speed_sensitive_enabled = chosen_speed_sensitive_enabled;
-                self.config.input.hold_bleed_rate = chosen_bleed;
-                self.config.input.min_speed_steer_limit = chosen_limit;
-                self.config.input.steer_rise_rate = chosen_rise;
-                self.config.input.speed_sensitive_factor = chosen_factor;
-                self.config.input.steer_return_rate = base_cfg.steer_return_rate;
-                self.config.input.steer_exponent = base_cfg.steer_exponent;
-
-                // Sync active player car physics to bypass double-attenuation and match rise rate
-                let my_idx = self.player_car_index();
-                if let Some(car) = self.cars.get_mut(my_idx) {
-                    car.config.steer_speed = car.config.steer_speed.max(chosen_rise * car.config.max_steer_angle);
-                }
-                if self.is_split_screen() {
-                    if let Some(car) = self.cars.get_mut(1) {
-                        car.config.steer_speed = car.config.steer_speed.max(chosen_rise * car.config.max_steer_angle);
-                    }
-                }
+                // Apply and persist keyboard handling settings (Spec 042)
+                self.input.filter.config = modal.selected_input_config();
+                self.config.input = InputConfig::from_filter_config(&self.input.filter.config);
+                self.apply_player_handling();
 
                 // Apply and persist display settings (resolution & fullscreen)
                 modal.apply_display_settings();
@@ -1950,15 +1921,7 @@ impl RaceSession {
         self.audio.settings.music_volume = self.config.audio.music_volume;
 
         // Apply input filter settings
-        self.input.filter.config.profile = self.config.input.steering_profile;
-        self.input.filter.config.steer_rise_rate = self.config.input.steer_rise_rate;
-        self.input.filter.config.steer_return_rate = self.config.input.steer_return_rate;
-        self.input.filter.config.steer_exponent = self.config.input.steer_exponent;
-        self.input.filter.config.speed_sensitive_factor = self.config.input.speed_sensitive_factor;
-        self.input.filter.config.min_speed_steer_limit = self.config.input.min_speed_steer_limit;
-        self.input.filter.config.hold_bleed_rate = self.config.input.hold_bleed_rate;
-        self.input.filter.config.throttle_rise_rate = self.config.input.throttle_rise_rate;
-        self.input.filter.config.brake_rise_rate = self.config.input.brake_rise_rate;
+        self.input.filter.config = self.config.input.to_filter_config();
 
         // Apply camera settings
         self.camera.position_smoothing = self.config.camera.position_smoothing;
@@ -4094,7 +4057,7 @@ impl RaceSession {
                 grid_slot: player_slot,
             });
         let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
-        player_car.config.steer_speed = player_car.config.steer_speed.max(self.input.filter.config.steer_rise_rate * player_car.config.max_steer_angle);
+        player_car.config.player = Self::player_handling(&self.input.filter.config);
         self.cars.push(player_car);
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
@@ -4122,7 +4085,7 @@ impl RaceSession {
             let mut p2_config = base_config;
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
-            p2_car.config.steer_speed = p2_car.config.steer_speed.max(self.filter_p2.config.steer_rise_rate * p2_car.config.max_steer_angle);
+            p2_car.config.player = Self::player_handling(&self.filter_p2.config);
             self.cars.push(p2_car);
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
@@ -5536,42 +5499,10 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_y_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    let new_profile = self.input.cycle_steering_profile();
-                    self.config.input.steering_profile = new_profile;
-                    self.config.input.speed_sensitive_enabled = self.input.filter.config.speed_sensitive_enabled;
-                    self.config.input.steer_rise_rate = self.input.filter.config.steer_rise_rate;
-                    self.config.input.steer_return_rate = self.input.filter.config.steer_return_rate;
-                    self.config.input.steer_exponent = self.input.filter.config.steer_exponent;
-                    self.config.input.speed_sensitive_factor = self.input.filter.config.speed_sensitive_factor;
-                    self.config.input.min_speed_steer_limit = self.input.filter.config.min_speed_steer_limit;
-                    self.config.input.hold_bleed_rate = self.input.filter.config.hold_bleed_rate;
-                    self.filter_p2.config = self.input.filter.config.clone();
+                    self.input.cycle_steering_profile();
+                    self.config.input = InputConfig::from_filter_config(&self.input.filter.config);
                     self.base_config.input = self.config.input.clone();
-                    let my_idx = self.player_car_index();
-                    if let Some(car) = self.cars.get_mut(my_idx) {
-                        car.config.steer_speed = car.config.steer_speed.max(self.input.filter.config.steer_rise_rate * car.config.max_steer_angle);
-                    }
-                    let _ = self.config.save_to_first_existing_or_default();
-                }
-
-                if is_key_pressed(KeyCode::B) {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let current = self.input.filter.config.hold_bleed_rate;
-                    let presets = [2.0, 4.0, 6.0, 8.0, 10.0];
-                    let next = match presets.iter().position(|&p| (current - p).abs() < 0.35) {
-                        Some(idx) => presets[(idx + 1) % presets.len()],
-                        None => {
-                            if current < 3.0 { 4.0 }
-                            else if current < 5.0 { 6.0 }
-                            else if current < 7.0 { 8.0 }
-                            else if current < 9.0 { 10.0 }
-                            else { 2.0 }
-                        }
-                    };
-                    self.input.filter.config.hold_bleed_rate = next;
-                    self.config.input.hold_bleed_rate = next;
-                    self.filter_p2.config = self.input.filter.config.clone();
-                    self.base_config.input = self.config.input.clone();
+                    self.apply_player_handling();
                     let _ = self.config.save_to_first_existing_or_default();
                 }
 
@@ -8566,7 +8497,7 @@ impl RaceSession {
                     self.car_choice = m.base_car_choice;
                     self.current_visual_type = m.visual_type;
                 }
-                car.config.steer_speed = car.config.steer_speed.max(self.input.filter.config.steer_rise_rate * car.config.max_steer_angle);
+                car.config.player = Self::player_handling(&self.input.filter.config);
             }
 
             self.cars.push(car);
@@ -12472,8 +12403,7 @@ impl RaceSession {
                     &self.input.gamepad.snapshot.gamepad_name,
                     &self.input.input_map,
                     self.input.active_preset_name(),
-                    self.input.steering_profile(),
-                    self.input.filter.config.hold_bleed_rate,
+                    &self.input.filter.config,
                 );
                 if let Some(ref modal) = self.settings_modal {
                     let (sw, sh) = (screen_width_safe(), screen_height_safe());

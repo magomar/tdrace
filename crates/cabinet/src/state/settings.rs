@@ -2,7 +2,7 @@ use macroquad::color::Color;
 use macroquad::input::KeyCode;
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use crate::audio::AudioSettings;
-use crate::input::{GamepadConfig, NavGrid2D, SteeringProfile};
+use crate::input::{DigitalInputConfig, GamepadConfig, NavGrid2D, SteeringProfile};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::display::{safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode};
 use crate::ui::scaler::UiScaler;
@@ -30,11 +30,11 @@ pub struct SettingsSnapshot {
     pub steer_sensitivity: f32,
     pub steer_exponent: f32,
     pub steering_profile_idx: usize,
-    pub speed_sensitive_switch_idx: usize,
-    pub hold_bleed_rate: f32,
-    pub min_speed_steer_limit: f32,
-    pub steer_rise_rate: f32,
-    pub speed_sensitive_factor: f32,
+    pub steer_time_ms: f32,
+    pub steer_authority_pct: f32,
+    pub center_precision: f32,
+    pub pedal_time_ms: f32,
+    pub traction_help_pct: f32,
     pub resolution_idx: usize,
     pub display_mode_idx: usize,
     pub ui_scale_idx: usize,
@@ -69,12 +69,12 @@ impl Default for SettingsSnapshot {
             trigger_deadzone: 0.0,
             steer_sensitivity: 0.0,
             steer_exponent: 0.0,
-            steering_profile_idx: 0,
-            speed_sensitive_switch_idx: 0,
-            hold_bleed_rate: 4.0,
-            min_speed_steer_limit: 0.75,
-            steer_rise_rate: 8.0,
-            speed_sensitive_factor: 0.004,
+            steering_profile_idx: SteeringProfile::Balanced.to_index(),
+            steer_time_ms: 140.0,
+            steer_authority_pct: 100.0,
+            center_precision: 1.3,
+            pedal_time_ms: 140.0,
+            traction_help_pct: 50.0,
             resolution_idx: 0,
             display_mode_idx: 0,
             ui_scale_idx: 0,
@@ -380,11 +380,11 @@ pub struct ArcadeSettingsModal {
     // Controls Tab Widgets
     pub controls_sub_tab: usize, // 0: Keyboard & Filter, 1: Gamepad Controller
     pub steering_profile_dropdown: DropdownWidget,
-    pub speed_sensitive_switch: DropdownWidget,
-    pub min_speed_steer_limit_slider: SliderWidget,
-    pub hold_bleed_rate_slider: SliderWidget,
-    pub steer_rise_rate_slider: SliderWidget,
-    pub speed_sensitive_factor_slider: SliderWidget,
+    pub steer_time_slider: SliderWidget,
+    pub steer_authority_slider: SliderWidget,
+    pub center_precision_slider: SliderWidget,
+    pub pedal_time_slider: SliderWidget,
+    pub traction_help_slider: SliderWidget,
     pub stick_deadzone_slider: SliderWidget,
     pub trigger_deadzone_slider: SliderWidget,
     pub steer_sensitivity_slider: SliderWidget,
@@ -493,14 +493,12 @@ impl ArcadeSettingsModal {
             "Custom...".to_string(),
         ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
-        let steering_profile_options = vec![
-            "Balanced (Default)".to_string(),
-            "Smooth (Arcade)".to_string(),
-            "Agile (Responsive)".to_string(),
-            "Direct (Sim)".to_string(),
-            "Raw (Unfiltered)".to_string(),
-        ];
-        let speed_sensitive_options = vec!["ENABLED".to_string(), "DISABLED".to_string()];
+        let steering_profile_options: Vec<String> = SteeringProfile::PRESETS
+            .iter()
+            .chain(std::iter::once(&SteeringProfile::Custom))
+            .map(|p| p.name().to_string())
+            .collect();
+        let default_keys = DigitalInputConfig::default();
 
         let mut modal = Self {
             tab_bar,
@@ -513,19 +511,15 @@ impl ArcadeSettingsModal {
 
             controls_sub_tab: 0,
             steering_profile_dropdown: DropdownWidget::new(
-                "STEERING PROFILE",
+                "HANDLING PRESET",
                 steering_profile_options,
-                0,
+                SteeringProfile::Balanced.to_index(),
             ),
-            speed_sensitive_switch: DropdownWidget::new(
-                "SPEED SENSITIVITY",
-                speed_sensitive_options,
-                0,
-            ),
-            min_speed_steer_limit_slider: SliderWidget::new("MIN SPEED STEER LIMIT", 0.50, 1.00, 0.05, 0.75).with_suffix("x"),
-            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 1.00, 10.00, 0.10, 4.00).with_suffix("x"),
-            steer_rise_rate_slider: SliderWidget::new("STEER RISE RATE", 3.0, 25.0, 0.5, 8.0).with_suffix("/s"),
-            speed_sensitive_factor_slider: SliderWidget::new("SPEED SENSITIVE FACTOR", 0.000, 0.015, 0.001, 0.004),
+            steer_time_slider: SliderWidget::new("STEERING SPEED", 30.0, 300.0, 10.0, default_keys.steer_time_ms).with_suffix(" ms"),
+            steer_authority_slider: SliderWidget::new("STEERING AUTHORITY", 80.0, 140.0, 5.0, default_keys.steer_authority * 100.0).with_suffix(" %"),
+            center_precision_slider: SliderWidget::new("CENTER PRECISION", 1.0, 1.8, 0.05, default_keys.center_precision),
+            pedal_time_slider: SliderWidget::new("PEDAL SPEED", 0.0, 300.0, 10.0, default_keys.pedal_time_ms).with_suffix(" ms"),
+            traction_help_slider: SliderWidget::new("TRACTION HELP", 0.0, 100.0, 10.0, default_keys.traction_help * 100.0).with_suffix(" %"),
             stick_deadzone_slider: SliderWidget::new("STICK DEADZONE", 0.0, 0.40, 0.02, gamepad.stick_deadzone),
             trigger_deadzone_slider: SliderWidget::new("TRIGGER DEADZONE", 0.0, 0.30, 0.01, gamepad.trigger_deadzone),
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
@@ -589,12 +583,7 @@ impl ArcadeSettingsModal {
         self.trigger_deadzone_slider.set_value(def_gp.trigger_deadzone);
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
-        self.steering_profile_dropdown.set_selected(0);
-        self.speed_sensitive_switch.set_selected(0);
-        self.hold_bleed_rate_slider.set_value(4.00);
-        self.min_speed_steer_limit_slider.set_value(0.75);
-        self.steer_rise_rate_slider.set_value(8.00);
-        self.speed_sensitive_factor_slider.set_value(0.004);
+        self.set_input_filter_state(&DigitalInputConfig::default());
 
         self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
@@ -822,54 +811,39 @@ impl ArcadeSettingsModal {
     }
 
     /// Sets the steering smoothing and hold-lock bleed widgets from external state.
-    pub fn set_input_filter_state(
-        &mut self,
-        profile: SteeringProfile,
-        speed_sensitive_enabled: bool,
-        hold_bleed_rate: f32,
-        min_speed_steer_limit: f32,
-        steer_rise_rate: f32,
-        speed_sensitive_factor: f32,
-    ) {
-        self.steering_profile_dropdown.set_selected(profile.to_index());
-        self.speed_sensitive_switch.set_selected(if speed_sensitive_enabled { 0 } else { 1 });
-        self.hold_bleed_rate_slider.set_value(hold_bleed_rate);
-        self.min_speed_steer_limit_slider.set_value(min_speed_steer_limit);
-        self.steer_rise_rate_slider.set_value(steer_rise_rate);
-        self.speed_sensitive_factor_slider.set_value(speed_sensitive_factor);
+    pub fn set_input_filter_state(&mut self, cfg: &DigitalInputConfig) {
+        self.steering_profile_dropdown.set_selected(cfg.profile.to_index());
+        self.set_keyboard_sliders(cfg);
     }
 
-    /// Returns true if speed sensitive steering attenuation is enabled.
-    pub fn speed_sensitive_enabled(&self) -> bool {
-        self.speed_sensitive_switch.selected_index == 0
+    fn set_keyboard_sliders(&mut self, cfg: &DigitalInputConfig) {
+        self.steer_time_slider.set_value(cfg.steer_time_ms);
+        self.steer_authority_slider.set_value(cfg.steer_authority * 100.0);
+        self.center_precision_slider.set_value(cfg.center_precision);
+        self.pedal_time_slider.set_value(cfg.pedal_time_ms);
+        self.traction_help_slider.set_value(cfg.traction_help * 100.0);
     }
 
-    /// Returns the currently selected steer rise rate.
-    pub fn selected_steer_rise_rate(&self) -> f32 {
-        self.steer_rise_rate_slider.value
+    /// Keyboard handling settings as currently shown (Spec 042).
+    pub fn selected_input_config(&self) -> DigitalInputConfig {
+        let mut cfg = DigitalInputConfig {
+            profile: SteeringProfile::from_index(self.steering_profile_dropdown.selected_index),
+            steer_time_ms: self.steer_time_slider.value,
+            steer_authority: self.steer_authority_slider.value / 100.0,
+            center_precision: self.center_precision_slider.value,
+            pedal_time_ms: self.pedal_time_slider.value,
+            traction_help: self.traction_help_slider.value / 100.0,
+        }
+        .clamped();
+        cfg.profile = cfg.matching_profile();
+        cfg
     }
 
-    /// Returns the currently selected speed sensitive factor.
-    pub fn selected_speed_sensitive_factor(&self) -> f32 {
-        self.speed_sensitive_factor_slider.value
-    }
-
-    /// Returns the currently selected steering profile.
+    /// Returns the currently selected handling preset.
     pub fn selected_steering_profile(&self) -> SteeringProfile {
         SteeringProfile::from_index(self.steering_profile_dropdown.selected_index)
     }
 
-    /// Returns the currently configured progressive hold-lock bleed rate.
-    pub fn selected_hold_bleed_rate(&self) -> f32 {
-        self.hold_bleed_rate_slider.value
-    }
-
-    /// Returns the currently configured minimum speed steering limit.
-    pub fn selected_min_speed_steer_limit(&self) -> f32 {
-        self.min_speed_steer_limit_slider.value
-    }
-
-    /// Returns the currently selected CRT scanline mode.
     pub fn scanline_mode(&self) -> crate::fx::ScanlineMode {
         crate::fx::ScanlineMode::from_index(self.scanlines_dropdown.selected_index)
     }
@@ -908,11 +882,11 @@ impl ArcadeSettingsModal {
             steer_sensitivity: self.steer_sensitivity_slider.value,
             steer_exponent: self.steer_exponent_slider.value,
             steering_profile_idx: self.steering_profile_dropdown.selected_index,
-            speed_sensitive_switch_idx: self.speed_sensitive_switch.selected_index,
-            hold_bleed_rate: self.hold_bleed_rate_slider.value,
-            min_speed_steer_limit: self.min_speed_steer_limit_slider.value,
-            steer_rise_rate: self.steer_rise_rate_slider.value,
-            speed_sensitive_factor: self.speed_sensitive_factor_slider.value,
+            steer_time_ms: self.steer_time_slider.value,
+            steer_authority_pct: self.steer_authority_slider.value,
+            center_precision: self.center_precision_slider.value,
+            pedal_time_ms: self.pedal_time_slider.value,
+            traction_help_pct: self.traction_help_slider.value,
             resolution_idx: self.resolution_dropdown.selected_index,
             display_mode_idx: self.display_mode_dropdown.selected_index,
             ui_scale_idx: self.ui_scale_dropdown.selected_index,
@@ -959,11 +933,11 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(snap.steer_sensitivity);
         self.steer_exponent_slider.set_value(snap.steer_exponent);
         self.steering_profile_dropdown.set_selected(snap.steering_profile_idx);
-        self.speed_sensitive_switch.set_selected(snap.speed_sensitive_switch_idx);
-        self.hold_bleed_rate_slider.set_value(snap.hold_bleed_rate);
-        self.min_speed_steer_limit_slider.set_value(snap.min_speed_steer_limit);
-        self.steer_rise_rate_slider.set_value(snap.steer_rise_rate);
-        self.speed_sensitive_factor_slider.set_value(snap.speed_sensitive_factor);
+        self.steer_time_slider.set_value(snap.steer_time_ms);
+        self.steer_authority_slider.set_value(snap.steer_authority_pct);
+        self.center_precision_slider.set_value(snap.center_precision);
+        self.pedal_time_slider.set_value(snap.pedal_time_ms);
+        self.traction_help_slider.set_value(snap.traction_help_pct);
         self.resolution_dropdown.set_selected(snap.resolution_idx);
         self.display_mode_dropdown.set_selected(snap.display_mode_idx);
         self.ui_scale_dropdown.set_selected(snap.ui_scale_idx);
@@ -1001,11 +975,11 @@ impl ArcadeSettingsModal {
             || (cur.steer_sensitivity - init.steer_sensitivity).abs() > 0.001
             || (cur.steer_exponent - init.steer_exponent).abs() > 0.001
             || cur.steering_profile_idx != init.steering_profile_idx
-            || cur.speed_sensitive_switch_idx != init.speed_sensitive_switch_idx
-            || (cur.hold_bleed_rate - init.hold_bleed_rate).abs() > 0.001
-            || (cur.min_speed_steer_limit - init.min_speed_steer_limit).abs() > 0.001
-            || (cur.steer_rise_rate - init.steer_rise_rate).abs() > 0.001
-            || (cur.speed_sensitive_factor - init.speed_sensitive_factor).abs() > 0.0001
+            || (cur.steer_time_ms - init.steer_time_ms).abs() > 0.001
+            || (cur.steer_authority_pct - init.steer_authority_pct).abs() > 0.001
+            || (cur.center_precision - init.center_precision).abs() > 0.001
+            || (cur.pedal_time_ms - init.pedal_time_ms).abs() > 0.001
+            || (cur.traction_help_pct - init.traction_help_pct).abs() > 0.001
             || cur.resolution_idx != init.resolution_idx
             || cur.display_mode_idx != init.display_mode_idx
             || cur.ui_scale_idx != init.ui_scale_idx
@@ -1067,7 +1041,6 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
             || self.steering_profile_dropdown.is_open
-            || self.speed_sensitive_switch.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
@@ -1090,7 +1063,6 @@ impl CabinetScreen for ArcadeSettingsModal {
                 // If a dropdown was open, close it first
                 self.mute_dropdown.is_open = false;
                 self.steering_profile_dropdown.is_open = false;
-                self.speed_sensitive_switch.is_open = false;
                 self.resolution_dropdown.is_open = false;
                 self.display_mode_dropdown.is_open = false;
                 self.ui_scale_dropdown.is_open = false;
@@ -1168,7 +1140,6 @@ impl CabinetScreen for ArcadeSettingsModal {
         // Check if any dropdown is currently open. If so, let it capture input
         let is_any_dropdown_open = self.mute_dropdown.is_open
             || self.steering_profile_dropdown.is_open
-            || self.speed_sensitive_switch.is_open
             || self.resolution_dropdown.is_open
             || self.display_mode_dropdown.is_open
             || self.ui_scale_dropdown.is_open
@@ -1449,15 +1420,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
 
                 if self.controls_sub_tab == 0 {
-                    // KEYBOARD & FILTER:
-                    // 0: Profile, 1: Switch, 2: Min Limit, 3: Hold Bleed, 4: Steer Rise Rate, 5: Speed Sensitive Factor, 6: Bottom Buttons
+                    // KEYBOARD HANDLING (Spec 042):
+                    // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help, 6: Bottom Buttons
                     let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
-                    let r0 = (content_x, ctrl_content_y, content_w, ctrl_row_h);
-                    let r1 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap), content_w, ctrl_row_h);
-                    let r2 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 2.0, content_w, ctrl_row_h);
-                    let r3 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 3.0, content_w, ctrl_row_h);
-                    let r4 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 4.0, content_w, ctrl_row_h);
-                    let r5 = (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * 5.0, content_w, ctrl_row_h);
+                    let row = |k: f32| (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * k, content_w, ctrl_row_h);
 
                     let prev_profile_idx = self.steering_profile_dropdown.selected_index;
                     if self.steering_profile_dropdown.handle_input(
@@ -1468,44 +1434,38 @@ impl CabinetScreen for ArcadeSettingsModal {
                         ctx.gamepad.nav_down,
                         ctx.gamepad.btn_confirm_pressed,
                         ctx.gamepad.btn_cancel_pressed,
-                        r0,
+                        row(0.0),
                         scaler,
                     ) {
                         ctx.play_ui_select();
                         if self.steering_profile_dropdown.selected_index != prev_profile_idx {
                             let profile = SteeringProfile::from_index(self.steering_profile_dropdown.selected_index);
-                            let cfg = profile.to_config();
-                            self.speed_sensitive_switch.set_selected(if cfg.speed_sensitive_enabled { 0 } else { 1 });
-                            self.min_speed_steer_limit_slider.set_value(cfg.min_speed_steer_limit.clamp(0.5, 1.0));
-                            self.hold_bleed_rate_slider.set_value(cfg.hold_bleed_rate.clamp(1.0, 10.0));
-                            self.steer_rise_rate_slider.set_value(cfg.steer_rise_rate.clamp(3.0, 25.0));
-                            self.speed_sensitive_factor_slider.set_value(cfg.speed_sensitive_factor.clamp(0.0, 0.015));
+                            if profile != SteeringProfile::Custom {
+                                self.set_keyboard_sliders(&profile.to_config());
+                            }
                         }
                     }
-                    if self.speed_sensitive_switch.handle_input(
-                        active_row == 1,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r1,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
+                    let mut slider_changed = false;
+                    for (k, slider) in [
+                        &mut self.steer_time_slider,
+                        &mut self.steer_authority_slider,
+                        &mut self.center_precision_slider,
+                        &mut self.pedal_time_slider,
+                        &mut self.traction_help_slider,
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        let k = k + 1;
+                        if slider.handle_input(active_row == k, ctx.gamepad.nav_left, ctx.gamepad.nav_right, row(k as f32)) {
+                            slider_changed = true;
+                        }
                     }
-                    if self.min_speed_steer_limit_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                    if slider_changed {
                         ctx.play_ui_move();
-                    }
-                    if self.hold_bleed_rate_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
-                        ctx.play_ui_move();
-                    }
-                    if self.steer_rise_rate_slider.handle_input(active_row == 4, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r4) {
-                        ctx.play_ui_move();
-                    }
-                    if self.speed_sensitive_factor_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
-                        ctx.play_ui_move();
+                        // Editing a slider shows the matching preset, or Custom.
+                        let profile = self.selected_input_config().profile;
+                        self.steering_profile_dropdown.set_selected(profile.to_index());
                     }
                 } else {
                     // GAMEPAD CONTROLLER:
@@ -2037,28 +1997,28 @@ impl CabinetScreen for ArcadeSettingsModal {
                 );
 
                 if self.controls_sub_tab == 0 {
-                    // KEYBOARD & FILTER:
-                    // 0: Steering Profile, 1: Speed Sensitivity Switch, 2: Min Speed Limit, 3: Hold Bleed Rate, 4: Steer Rise Rate, 5: Speed Sensitive Factor
+                    // KEYBOARD HANDLING (Spec 042):
+                    // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help
                     let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
                     let mut y = ctrl_content_y;
                     let r0 = (content_x, y, content_w, ctrl_row_h);
                     draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steering_profile_dropdown.label, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, false, self.steering_profile_dropdown.popup_hovered_index, active_row == 0, false, accent);
-                    y += ctrl_row_h + ctrl_row_gap;
-                    let r1 = (content_x, y, content_w, ctrl_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.speed_sensitive_switch.label, &self.speed_sensitive_switch.options, self.speed_sensitive_switch.selected_index, false, self.speed_sensitive_switch.popup_hovered_index, active_row == 1, false, accent);
-                    y += ctrl_row_h + ctrl_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.min_speed_steer_limit_slider.label, &self.min_speed_steer_limit_slider.formatted_value(), self.min_speed_steer_limit_slider.normalized(), active_row == 2, false, accent);
-                    y += ctrl_row_h + ctrl_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.hold_bleed_rate_slider.label, &self.hold_bleed_rate_slider.formatted_value(), self.hold_bleed_rate_slider.normalized(), active_row == 3, false, accent);
-                    y += ctrl_row_h + ctrl_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steer_rise_rate_slider.label, &self.steer_rise_rate_slider.formatted_value(), self.steer_rise_rate_slider.normalized(), active_row == 4, false, accent);
-                    y += ctrl_row_h + ctrl_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.speed_sensitive_factor_slider.label, &format!("{:.3}", self.speed_sensitive_factor_slider.value), self.speed_sensitive_factor_slider.normalized(), active_row == 5, false, accent);
+                    for (k, slider) in [
+                        &self.steer_time_slider,
+                        &self.steer_authority_slider,
+                        &self.center_precision_slider,
+                        &self.pedal_time_slider,
+                        &self.traction_help_slider,
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        y += ctrl_row_h + ctrl_row_gap;
+                        draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &slider.label, &slider.formatted_value(), slider.normalized(), active_row == k + 1, false, accent);
+                    }
 
                     if self.steering_profile_dropdown.is_open {
                         draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, self.steering_profile_dropdown.popup_hovered_index, accent);
-                    } else if self.speed_sensitive_switch.is_open {
-                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_sensitive_switch.options, self.speed_sensitive_switch.selected_index, self.speed_sensitive_switch.popup_hovered_index, accent);
                     }
                 } else {
                     // GAMEPAD CONTROLLER:

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::CarConfig;
-use cabinet::input::SteeringProfile;
+use cabinet::input::{DigitalInputConfig, SteeringProfile};
 use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
 
@@ -125,46 +125,85 @@ impl Default for CameraConfig {
     }
 }
 
-/// Digital keyboard steering and throttle input filter settings.
+/// Keyboard handling settings (Spec 042): a preset plus five values.
+///
+/// Settings files from before Spec 042 still load: the old ten fields are ignored and the
+/// five values come from the (renamed) preset, e.g. `"agile"` loads as Sharp.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(from = "InputConfigRaw")]
 pub struct InputConfig {
-    /// Active steering profile preset (Balanced, Smooth, Agile, Direct, Raw).
+    /// Active handling preset (Smooth, Balanced, Sharp, Raw, Custom).
     pub steering_profile: SteeringProfile,
-    /// Master toggle for speed-sensitive steering attenuation.
-    pub speed_sensitive_enabled: bool,
-    /// Steering rise rate in units/second.
-    pub steer_rise_rate: f32,
-    /// Steering return to center rate in units/second.
-    pub steer_return_rate: f32,
-    /// Non-linear steering exponent (e.g. 1.25 for fine micro-corrections near center).
-    pub steer_exponent: f32,
-    /// Speed-sensitive steering attenuation factor.
-    pub speed_sensitive_factor: f32,
-    /// Minimum steering lock allowed at maximum vehicle speed.
-    pub min_speed_steer_limit: f32,
-    /// Rate at which sustained turn-key hold bleeds off speed attenuation towards 1.0 full lock (units/sec).
-    pub hold_bleed_rate: f32,
-    /// Throttle rise rate in units/second.
-    pub throttle_rise_rate: f32,
-    /// Brake rise rate in units/second.
-    pub brake_rise_rate: f32,
+    /// Steering Speed: center to full input, in ms.
+    pub steer_time_ms: f32,
+    /// Steering Authority: full input relative to the front grip limit (0.80-1.40).
+    pub steer_authority: f32,
+    /// Center Precision: response curve exponent (1.0-1.8).
+    pub center_precision: f32,
+    /// Pedal Speed: throttle and brake time to full, in ms (0 = instant).
+    pub pedal_time_ms: f32,
+    /// Traction Help [0, 1].
+    pub traction_help: f32,
+}
+
+impl InputConfig {
+    /// The keyboard filter configuration for these settings.
+    /// The profile is re-derived from the values, so a module override of one value shows Custom.
+    pub fn to_filter_config(&self) -> DigitalInputConfig {
+        let mut cfg = DigitalInputConfig {
+            profile: self.steering_profile,
+            steer_time_ms: self.steer_time_ms,
+            steer_authority: self.steer_authority,
+            center_precision: self.center_precision,
+            pedal_time_ms: self.pedal_time_ms,
+            traction_help: self.traction_help,
+        }
+        .clamped();
+        cfg.profile = cfg.matching_profile();
+        cfg
+    }
+
+    /// Settings that persist the given keyboard filter configuration.
+    pub fn from_filter_config(cfg: &DigitalInputConfig) -> Self {
+        Self {
+            steering_profile: cfg.profile,
+            steer_time_ms: cfg.steer_time_ms,
+            steer_authority: cfg.steer_authority,
+            center_precision: cfg.center_precision,
+            pedal_time_ms: cfg.pedal_time_ms,
+            traction_help: cfg.traction_help,
+        }
+    }
 }
 
 impl Default for InputConfig {
     fn default() -> Self {
-        let preset = cabinet::input::DigitalInputConfig::from_profile(SteeringProfile::Balanced);
+        Self::from_filter_config(&DigitalInputConfig::default())
+    }
+}
+
+#[derive(Deserialize, Default)]
+#[serde(default)]
+struct InputConfigRaw {
+    steering_profile: Option<SteeringProfile>,
+    steer_time_ms: Option<f32>,
+    steer_authority: Option<f32>,
+    center_precision: Option<f32>,
+    pedal_time_ms: Option<f32>,
+    traction_help: Option<f32>,
+}
+
+impl From<InputConfigRaw> for InputConfig {
+    fn from(raw: InputConfigRaw) -> Self {
+        let profile = raw.steering_profile.unwrap_or_default();
+        let base = DigitalInputConfig::from_profile(profile);
         Self {
-            steering_profile: SteeringProfile::Balanced,
-            speed_sensitive_enabled: preset.speed_sensitive_enabled,
-            steer_rise_rate: preset.steer_rise_rate,
-            steer_return_rate: preset.steer_return_rate,
-            steer_exponent: preset.steer_exponent,
-            speed_sensitive_factor: preset.speed_sensitive_factor,
-            min_speed_steer_limit: preset.min_speed_steer_limit,
-            hold_bleed_rate: preset.hold_bleed_rate,
-            throttle_rise_rate: preset.throttle_rise_rate,
-            brake_rise_rate: preset.brake_rise_rate,
+            steering_profile: profile,
+            steer_time_ms: raw.steer_time_ms.unwrap_or(base.steer_time_ms),
+            steer_authority: raw.steer_authority.unwrap_or(base.steer_authority),
+            center_precision: raw.center_precision.unwrap_or(base.center_precision),
+            pedal_time_ms: raw.pedal_time_ms.unwrap_or(base.pedal_time_ms),
+            traction_help: raw.traction_help.unwrap_or(base.traction_help),
         }
     }
 }

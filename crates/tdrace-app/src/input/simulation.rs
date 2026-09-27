@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
 use tdrace_core::physics::car::{normalize_angle, CarControls};
-use tdrace_core::physics::config::CarConfig;
+use tdrace_core::physics::config::{CarConfig, PlayerHandling};
 use tdrace_core::physics::sim::SimulationRunner;
 use tdrace_core::physics::surface::SurfaceType;
 
@@ -79,7 +79,7 @@ impl KeyboardDriverProfile {
         Self::new(
             "hold_balanced",
             "Sustained Hold (Balanced)",
-            "Continuous key press with progressive hold-lock bleed on Balanced filter",
+            "Continuous key press on the default Balanced preset",
             KeyboardSteerPattern::SustainedHold,
             SteeringProfile::Balanced,
         )
@@ -89,10 +89,10 @@ impl KeyboardDriverProfile {
     pub fn sustained_hold_direct() -> Self {
         Self::new(
             "hold_direct",
-            "Sustained Hold (Direct/Raw)",
-            "Instantaneous raw digital key lock with zero speed attenuation",
+            "Sustained Hold (Sharp)",
+            "Continuous key press on the quick Sharp preset",
             KeyboardSteerPattern::SustainedHold,
-            SteeringProfile::Direct,
+            SteeringProfile::Sharp,
         )
     }
 
@@ -101,7 +101,7 @@ impl KeyboardDriverProfile {
         Self::new(
             "hold_smooth",
             "Sustained Hold (Smooth Arcade)",
-            "Continuous key press with softened center gamma and high damping",
+            "Continuous key press on the relaxed Smooth preset",
             KeyboardSteerPattern::SustainedHold,
             SteeringProfile::Smooth,
         )
@@ -163,6 +163,12 @@ impl KeyboardDriverProfile {
     }
 
     /// Resolves the concrete filter configuration.
+    /// Car-side handling aids this driver's keyboard settings apply (Spec 042).
+    pub fn player_handling(&self) -> PlayerHandling {
+        let cfg = self.filter_config();
+        PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
+    }
+
     pub fn filter_config(&self) -> DigitalInputConfig {
         self.custom_filter_config
             .unwrap_or_else(|| DigitalInputConfig::from_profile(self.filter_profile))
@@ -382,6 +388,7 @@ pub fn run_keyboard_sweeper_simulation(
         .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
+    runner.car.config.player = driver.player_handling();
 
     let mut min_speed_mps = v0_mps;
     let mut sum_speed = 0.0f32;
@@ -400,7 +407,7 @@ pub fn run_keyboard_sweeper_simulation(
     runner.run_for(duration_s, surface, |t, car| {
         let (raw_steer, raw_throttle, raw_brake) = driver.sample_raw_inputs(t, duration_s);
         let speed_mps = car.state().speed;
-        let (steer, throttle, brake) = filter.update(raw_steer, raw_throttle, raw_brake, speed_mps, dt);
+        let (steer, throttle, brake) = filter.update(raw_steer, raw_throttle, raw_brake, dt);
 
         // Update telemetry tracking
         if speed_mps < min_speed_mps {
@@ -526,6 +533,7 @@ pub fn run_keyboard_chicane_simulation(
         .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
+    runner.car.config.player = driver.player_handling();
 
     let mut initial_yaw_sign = 0.0f32;
     let mut reversal_latency_ms = 0.0f32;
@@ -565,8 +573,7 @@ pub fn run_keyboard_chicane_simulation(
             }
         };
 
-        let speed_mps = car.state().speed;
-        let (steer, throttle, brake) = filter.update(raw_steer, 1.0, 0.0, speed_mps, dt);
+        let (steer, throttle, brake) = filter.update(raw_steer, 1.0, 0.0, dt);
 
         let yaw_rate = car.state().angular_velocity;
         let yaw_deg_s = yaw_rate.to_degrees();
@@ -678,6 +685,7 @@ pub fn run_keyboard_slide_catch_simulation(
     runner.car.state_mut().angular_velocity = initial_slide_yaw_deg_s.to_radians();
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
+    runner.car.config.player = driver.player_handling();
 
     let mut recovery_time_s = None;
     let mut max_sideslip_deg = 0.0f32;
@@ -696,8 +704,7 @@ pub fn run_keyboard_slide_catch_simulation(
                 _ => -1.0, // Sustained countersteer hold
             };
 
-            let speed_mps = car.state().speed;
-            let (steer, throttle, brake) = filter.update(raw_steer, 0.8, 0.0, speed_mps, dt);
+            let (steer, throttle, brake) = filter.update(raw_steer, 0.8, 0.0, dt);
 
             let sideslip = car.state().sideslip_angle.to_degrees().abs();
             if sideslip > max_sideslip_deg {

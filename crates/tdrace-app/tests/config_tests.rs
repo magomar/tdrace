@@ -104,14 +104,14 @@ fn test_session_initialization_with_custom_config() {
     config.gameplay.default_laps = 5;
     config.gameplay.default_num_bots = 7;
     config.audio.master_volume = 0.42;
-    config.input.steer_rise_rate = 8.5;
+    config.input.steer_time_ms = 180.0;
 
     let session = RaceSession::new_with_config(config);
     assert_eq!(session.total_laps, 5);
     assert_eq!(session.config.gameplay.default_num_bots, 7);
     assert_eq!(session.num_bots, session.max_bots());
     assert!((session.audio.settings.master_volume - 0.42).abs() < 1e-4);
-    assert_eq!(session.input.filter.config.steer_rise_rate, 8.5);
+    assert_eq!(session.input.filter.config.steer_time_ms, 180.0);
 }
 
 #[test]
@@ -359,7 +359,7 @@ fn test_external_module_files_and_hierarchy_precedence() {
     let kart_cfg = base_cfg.for_module("kart");
     assert_eq!(kart_cfg.gameplay.default_track, "kart_arena");
     assert_eq!(kart_cfg.gameplay.default_laps, 5);
-    assert!((kart_cfg.input.steer_rise_rate - 8.5).abs() < 1e-4);
+    assert!((kart_cfg.input.steer_time_ms - 120.0).abs() < 1e-4);
 
     // 4. Precedence: Custom in-file override vs external merge override
     let mut custom_base = GameConfig::default();

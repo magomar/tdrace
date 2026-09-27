@@ -1,19 +1,27 @@
+//! Digital keyboard handling settings (Spec 042).
+//!
+//! Five player parameters shape how keyboard input reaches the car. The filter owns the
+//! *timing* (steering speed, center precision, pedal speed); steering authority and traction
+//! help are car-side aids that the game applies to the player's car. Speed sensitivity is gone:
+//! the car's grip-aware steering already maps full input to the useful angle at any speed.
+
 use serde::{Deserialize, Serialize};
 
-/// Selectable steering smoothing profiles for digital keyboard controls.
+/// Calibrated keyboard handling presets. `Custom` is selected when a slider is edited.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SteeringProfile {
-    /// Balanced response: progressive rise, center gamma curve, and hold-lock bleed.
-    Balanced,
-    /// Smooth arcade response: higher damping and softer center for relaxed driving.
+    /// Relaxed: slow steering, short of the grip limit, strong traction help.
     Smooth,
-    /// Agile response: high turn rise rate, quick hold-lock bleed, responsive chicanes.
-    Agile,
-    /// Direct sim response: speed sensitivity disabled, full lock floor.
-    Direct,
-    /// Raw esports binary response: zero-delay instant keys, no speed attenuation.
+    /// Default: on the grip limit, moderate steering speed and traction help.
+    Balanced,
+    /// Quick steering, a little past the limit, light traction help. (Pre-042 "agile"/"direct".)
+    #[serde(alias = "agile", alias = "direct")]
+    Sharp,
+    /// Instant keys, well past the limit, no traction help.
     Raw,
+    /// Player-edited values.
+    Custom,
 }
 
 impl Default for SteeringProfile {
@@ -25,33 +33,36 @@ impl Default for SteeringProfile {
 impl std::fmt::Display for SteeringProfile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Balanced => write!(f, "Balanced"),
             Self::Smooth => write!(f, "Smooth"),
-            Self::Agile => write!(f, "Agile"),
-            Self::Direct => write!(f, "Direct"),
+            Self::Balanced => write!(f, "Balanced"),
+            Self::Sharp => write!(f, "Sharp"),
             Self::Raw => write!(f, "Raw"),
+            Self::Custom => write!(f, "Custom"),
         }
     }
 }
 
 impl SteeringProfile {
+    /// The calibrated presets in display order (`Custom` excluded).
+    pub const PRESETS: [Self; 4] = [Self::Smooth, Self::Balanced, Self::Sharp, Self::Raw];
+
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Balanced => "Balanced (Progressive)",
-            Self::Smooth => "Smooth (Arcade)",
-            Self::Agile => "Agile (Responsive)",
-            Self::Direct => "Direct (Sim)",
-            Self::Raw => "Raw (Unfiltered)",
+            Self::Smooth => "Smooth (Relaxed)",
+            Self::Balanced => "Balanced (Default)",
+            Self::Sharp => "Sharp (Quick)",
+            Self::Raw => "Raw (Instant)",
+            Self::Custom => "Custom",
         }
     }
 
+    /// Next preset in the in-race cycle. `Custom` cycles to `Smooth`.
     pub fn cycle(&self) -> Self {
         match self {
-            Self::Balanced => Self::Smooth,
-            Self::Smooth => Self::Agile,
-            Self::Agile => Self::Direct,
-            Self::Direct => Self::Raw,
-            Self::Raw => Self::Balanced,
+            Self::Smooth => Self::Balanced,
+            Self::Balanced => Self::Sharp,
+            Self::Sharp => Self::Raw,
+            Self::Raw | Self::Custom => Self::Smooth,
         }
     }
 
@@ -59,144 +70,126 @@ impl SteeringProfile {
         DigitalInputConfig::from_profile(*self)
     }
 
+    /// Dropdown index: presets in display order, then `Custom`.
     pub fn to_index(&self) -> usize {
         match self {
-            Self::Balanced => 0,
-            Self::Smooth => 1,
-            Self::Agile => 2,
-            Self::Direct => 3,
-            Self::Raw => 4,
+            Self::Smooth => 0,
+            Self::Balanced => 1,
+            Self::Sharp => 2,
+            Self::Raw => 3,
+            Self::Custom => 4,
         }
     }
 
     pub fn from_index(idx: usize) -> Self {
         match idx {
-            1 => Self::Smooth,
-            2 => Self::Agile,
-            3 => Self::Direct,
-            4 => Self::Raw,
+            0 => Self::Smooth,
+            2 => Self::Sharp,
+            3 => Self::Raw,
+            4 => Self::Custom,
             _ => Self::Balanced,
         }
     }
 }
 
-fn default_steering_profile() -> SteeringProfile {
-    SteeringProfile::Balanced
-}
-
-fn default_speed_sensitive_enabled() -> bool {
-    true
-}
-
-fn default_hold_bleed_rate() -> f32 {
-    4.0
-}
-
-/// Configuration for digital keyboard input smoothing and progressive steering/turning.
+/// The five keyboard handling parameters (Spec 042).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct DigitalInputConfig {
-    /// Active steering profile preset.
-    #[serde(default = "default_steering_profile")]
+    /// Preset these values came from (`Custom` after a slider edit).
     pub profile: SteeringProfile,
-    /// Master toggle for speed-sensitive steering attenuation.
-    #[serde(default = "default_speed_sensitive_enabled")]
-    pub speed_sensitive_enabled: bool,
-    /// Turn rise rate in units/second (how quickly turning reaches full lock).
-    pub steer_rise_rate: f32,
-    /// Turn return-to-center rate in units/second when turn keys are released.
-    pub steer_return_rate: f32,
-    /// Non-linear response exponent (> 1.0 creates a soft zone near center for precision).
-    pub steer_exponent: f32,
-    /// Dynamic speed-sensitive steering attenuation factor.
-    pub speed_sensitive_factor: f32,
-    /// Minimum steering limit fraction at top speed.
-    pub min_speed_steer_limit: f32,
-    /// Rate at which sustained turn-key hold bleeds off speed attenuation towards 1.0 full lock (units/sec).
-    #[serde(default = "default_hold_bleed_rate")]
-    pub hold_bleed_rate: f32,
-    /// Throttle/acceleration rise rate in units/second.
-    pub throttle_rise_rate: f32,
-    /// Service brake/deceleration rise rate in units/second.
-    pub brake_rise_rate: f32,
+    /// Steering Speed: time for a held key to go from center to full input, in ms (30-300).
+    /// Centering takes 0.7x this time.
+    pub steer_time_ms: f32,
+    /// Steering Authority: where full input sits relative to the front grip limit (0.80-1.40).
+    /// Applied car-side as `PlayerHandling::steer_overslip`.
+    pub steer_authority: f32,
+    /// Center Precision: response curve exponent (1.0 = linear, 1.8 = very soft near center).
+    pub center_precision: f32,
+    /// Pedal Speed: time for throttle and brake to reach full, in ms (0 = instant, max 300).
+    pub pedal_time_ms: f32,
+    /// Traction Help [0, 1]: eases throttle near the rear grip limit. Applied car-side.
+    pub traction_help: f32,
 }
 
 impl DigitalInputConfig {
+    pub const STEER_TIME_RANGE_MS: (f32, f32) = (30.0, 300.0);
+    pub const AUTHORITY_RANGE: (f32, f32) = (0.80, 1.40);
+    pub const CENTER_PRECISION_RANGE: (f32, f32) = (1.0, 1.8);
+    pub const PEDAL_TIME_RANGE_MS: (f32, f32) = (0.0, 300.0);
+    /// Centering time as a fraction of the steering time.
+    pub const RETURN_TIME_FRACTION: f32 = 0.7;
+
     pub fn from_profile(profile: SteeringProfile) -> Self {
-        match profile {
-            SteeringProfile::Balanced => Self {
-                profile,
-                speed_sensitive_enabled: true,
-                steer_rise_rate: 8.0,
-                steer_return_rate: 13.0,
-                steer_exponent: 1.25,
-                speed_sensitive_factor: 0.004,
-                min_speed_steer_limit: 0.75,
-                hold_bleed_rate: 4.0,
-                throttle_rise_rate: 9.5,
-                brake_rise_rate: 6.5,
-            },
-            SteeringProfile::Smooth => Self {
-                profile,
-                speed_sensitive_enabled: true,
-                steer_rise_rate: 6.0,
-                steer_return_rate: 11.0,
-                steer_exponent: 1.40,
-                speed_sensitive_factor: 0.008,
-                min_speed_steer_limit: 0.60,
-                hold_bleed_rate: 2.0,
-                throttle_rise_rate: 8.0,
-                brake_rise_rate: 5.5,
-            },
-            SteeringProfile::Agile => Self {
-                profile,
-                speed_sensitive_enabled: true,
-                steer_rise_rate: 10.0,
-                steer_return_rate: 16.0,
-                steer_exponent: 1.15,
-                speed_sensitive_factor: 0.003,
-                min_speed_steer_limit: 0.80,
-                hold_bleed_rate: 6.0,
-                throttle_rise_rate: 11.0,
-                brake_rise_rate: 8.0,
-            },
-            SteeringProfile::Direct => Self {
-                profile,
-                speed_sensitive_enabled: false,
-                steer_rise_rate: 12.0,
-                steer_return_rate: 20.0,
-                steer_exponent: 1.0,
-                speed_sensitive_factor: 0.0,
-                min_speed_steer_limit: 1.0,
-                hold_bleed_rate: 8.0,
-                throttle_rise_rate: 12.0,
-                brake_rise_rate: 10.0,
-            },
-            SteeringProfile::Raw => Self {
-                profile,
-                speed_sensitive_enabled: false,
-                steer_rise_rate: 20.0,
-                steer_return_rate: 25.0,
-                steer_exponent: 1.0,
-                speed_sensitive_factor: 0.0,
-                min_speed_steer_limit: 1.0,
-                hold_bleed_rate: 10.0,
-                throttle_rise_rate: 20.0,
-                brake_rise_rate: 20.0,
-            },
+        let (steer_time_ms, steer_authority, center_precision, pedal_time_ms, traction_help) = match profile {
+            SteeringProfile::Smooth => (220.0, 0.85, 1.5, 220.0, 0.8),
+            SteeringProfile::Balanced | SteeringProfile::Custom => (140.0, 1.00, 1.3, 140.0, 0.5),
+            SteeringProfile::Sharp => (90.0, 1.15, 1.1, 80.0, 0.2),
+            SteeringProfile::Raw => (40.0, 1.30, 1.0, 0.0, 0.0),
+        };
+        Self {
+            profile,
+            steer_time_ms,
+            steer_authority,
+            center_precision,
+            pedal_time_ms,
+            traction_help,
         }
     }
 
-    /// Applies a steering profile to this config, preserving throttle/brake rates.
+    /// Applies a preset's five values. `Custom` keeps the current values.
     pub fn set_profile(&mut self, profile: SteeringProfile) {
-        let preset = Self::from_profile(profile);
+        if profile != SteeringProfile::Custom {
+            *self = Self::from_profile(profile);
+        }
         self.profile = profile;
-        self.speed_sensitive_enabled = preset.speed_sensitive_enabled;
-        self.steer_rise_rate = preset.steer_rise_rate;
-        self.steer_return_rate = preset.steer_return_rate;
-        self.steer_exponent = preset.steer_exponent;
-        self.speed_sensitive_factor = preset.speed_sensitive_factor;
-        self.min_speed_steer_limit = preset.min_speed_steer_limit;
-        self.hold_bleed_rate = preset.hold_bleed_rate;
+    }
+
+    /// Returns the preset whose five values match these, or `Custom`.
+    pub fn matching_profile(&self) -> SteeringProfile {
+        SteeringProfile::PRESETS
+            .into_iter()
+            .find(|p| Self::from_profile(*p).same_values(self))
+            .unwrap_or(SteeringProfile::Custom)
+    }
+
+    fn same_values(&self, other: &Self) -> bool {
+        let eq = |a: f32, b: f32| (a - b).abs() < 1e-3;
+        eq(self.steer_time_ms, other.steer_time_ms)
+            && eq(self.steer_authority, other.steer_authority)
+            && eq(self.center_precision, other.center_precision)
+            && eq(self.pedal_time_ms, other.pedal_time_ms)
+            && eq(self.traction_help, other.traction_help)
+    }
+
+    /// Clamps every value into its UI range.
+    pub fn clamped(mut self) -> Self {
+        self.steer_time_ms = self.steer_time_ms.clamp(Self::STEER_TIME_RANGE_MS.0, Self::STEER_TIME_RANGE_MS.1);
+        self.steer_authority = self.steer_authority.clamp(Self::AUTHORITY_RANGE.0, Self::AUTHORITY_RANGE.1);
+        self.center_precision = self
+            .center_precision
+            .clamp(Self::CENTER_PRECISION_RANGE.0, Self::CENTER_PRECISION_RANGE.1);
+        self.pedal_time_ms = self.pedal_time_ms.clamp(Self::PEDAL_TIME_RANGE_MS.0, Self::PEDAL_TIME_RANGE_MS.1);
+        self.traction_help = self.traction_help.clamp(0.0, 1.0);
+        self
+    }
+
+    /// Steering rise rate in input units per second.
+    pub fn steer_rise_rate(&self) -> f32 {
+        1000.0 / self.steer_time_ms.max(1.0)
+    }
+
+    /// Steering centering rate in input units per second.
+    pub fn steer_return_rate(&self) -> f32 {
+        self.steer_rise_rate() / Self::RETURN_TIME_FRACTION
+    }
+
+    /// Throttle / brake rise rate in input units per second (`None` = instant).
+    pub fn pedal_rise_rate(&self) -> Option<f32> {
+        if self.pedal_time_ms <= 0.5 {
+            None
+        } else {
+            Some(1000.0 / self.pedal_time_ms)
+        }
     }
 }
 
@@ -216,8 +209,6 @@ pub struct DigitalInputFilter {
     pub current_throttle: f32,
     /// Smoothed brake [0.0, 1.0].
     pub current_brake: f32,
-    /// Continuous turn hold factor [0.0, 1.0] for progressive lock bleed.
-    pub steer_hold_factor: f32,
 }
 
 impl DigitalInputFilter {
@@ -227,7 +218,6 @@ impl DigitalInputFilter {
             current_steer: 0.0,
             current_throttle: 0.0,
             current_brake: 0.0,
-            steer_hold_factor: 0.0,
         }
     }
 
@@ -236,31 +226,21 @@ impl DigitalInputFilter {
         self.current_steer = 0.0;
         self.current_throttle = 0.0;
         self.current_brake = 0.0;
-        self.steer_hold_factor = 0.0;
     }
 
-    /// Filters and smooths raw digital inputs over timestep `dt` with forward speed scaling.
+    /// Filters raw digital inputs over timestep `dt`.
     /// Returns `(smoothed_steer, smoothed_throttle, smoothed_brake)`.
-    pub fn update(
-        &mut self,
-        target_steer: f32,
-        target_throttle: f32,
-        target_brake: f32,
-        speed_mps: f32,
-        dt: f32,
-    ) -> (f32, f32, f32) {
+    pub fn update(&mut self, target_steer: f32, target_throttle: f32, target_brake: f32, dt: f32) -> (f32, f32, f32) {
         let dt = dt.max(1e-5);
 
-        // 1. Steering smoothing
+        // 1. Steering: rise at the steering speed, center (or reverse) faster
         let is_centering = target_steer == 0.0
             || (target_steer.signum() != self.current_steer.signum() && self.current_steer.abs() > 0.02);
-
         let steer_rate = if is_centering {
-            self.config.steer_return_rate
+            self.config.steer_return_rate()
         } else {
-            self.config.steer_rise_rate
+            self.config.steer_rise_rate()
         };
-
         let steer_step = steer_rate * dt;
         if self.current_steer < target_steer {
             self.current_steer = (self.current_steer + steer_step).min(target_steer);
@@ -268,46 +248,78 @@ impl DigitalInputFilter {
             self.current_steer = (self.current_steer - steer_step).max(target_steer);
         }
 
-        // 2. Non-linear center curve (gamma)
+        // 2. Center precision curve
         let steer_abs = self.current_steer.abs();
-        let curved_steer = self.current_steer.signum() * steer_abs.powf(self.config.steer_exponent);
+        let final_steer =
+            (self.current_steer.signum() * steer_abs.powf(self.config.center_precision.max(1.0))).clamp(-1.0, 1.0);
 
-        // 3. Dynamic speed-sensitive scaling with progressive hold-lock bleed
-        let speed_scale = if self.config.speed_sensitive_enabled {
-            if target_steer.abs() > 0.1 && target_steer.signum() == self.current_steer.signum() {
-                if self.config.hold_bleed_rate > 0.0 {
-                    self.steer_hold_factor = (self.steer_hold_factor + self.config.hold_bleed_rate * dt).min(1.0);
-                }
-            } else {
-                self.steer_hold_factor = 0.0;
-            }
-
-            let base_speed_scale = (1.0 / (1.0 + speed_mps * self.config.speed_sensitive_factor))
-                .max(self.config.min_speed_steer_limit);
-            base_speed_scale + (1.0 - base_speed_scale) * self.steer_hold_factor
-        } else {
-            self.steer_hold_factor = 0.0;
-            1.0
+        // 3. Pedals: ramp up at the pedal speed, release instantly
+        let pedal_rate = self.config.pedal_rise_rate();
+        let ramp = |current: f32, target: f32| match pedal_rate {
+            Some(rate) if current < target => (current + rate * dt).min(target),
+            _ => target,
         };
-
-        let final_steer = (curved_steer * speed_scale).clamp(-1.0, 1.0);
-
-        // 4. Throttle smoothing
-        let throttle_step = self.config.throttle_rise_rate * dt;
-        if self.current_throttle < target_throttle {
-            self.current_throttle = (self.current_throttle + throttle_step).min(target_throttle);
-        } else {
-            self.current_throttle = target_throttle;
-        }
-
-        // 5. Brake smoothing
-        let brake_step = self.config.brake_rise_rate * dt;
-        if self.current_brake < target_brake {
-            self.current_brake = (self.current_brake + brake_step).min(target_brake);
-        } else {
-            self.current_brake = target_brake;
-        }
+        self.current_throttle = ramp(self.current_throttle, target_throttle);
+        self.current_brake = ramp(self.current_brake, target_brake);
 
         (final_steer, self.current_throttle, self.current_brake)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_presets_are_ordered_and_distinct() {
+        let cfgs = SteeringProfile::PRESETS.map(DigitalInputConfig::from_profile);
+        for pair in cfgs.windows(2) {
+            assert!(pair[1].steer_time_ms < pair[0].steer_time_ms);
+            assert!(pair[1].steer_authority > pair[0].steer_authority);
+            assert!(pair[1].center_precision < pair[0].center_precision);
+            assert!(pair[1].pedal_time_ms < pair[0].pedal_time_ms);
+            assert!(pair[1].traction_help < pair[0].traction_help);
+        }
+        for p in SteeringProfile::PRESETS {
+            assert_eq!(DigitalInputConfig::from_profile(p).matching_profile(), p);
+        }
+    }
+
+    #[test]
+    fn test_slider_edit_becomes_custom() {
+        let mut cfg = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
+        cfg.steer_authority = 1.05;
+        assert_eq!(cfg.matching_profile(), SteeringProfile::Custom);
+    }
+
+    #[test]
+    fn test_legacy_profile_names_deserialize() {
+        let agile: SteeringProfile = serde_json::from_str("\"agile\"").unwrap();
+        let direct: SteeringProfile = serde_json::from_str("\"direct\"").unwrap();
+        let raw: SteeringProfile = serde_json::from_str("\"raw\"").unwrap();
+        assert_eq!(agile, SteeringProfile::Sharp);
+        assert_eq!(direct, SteeringProfile::Sharp);
+        assert_eq!(raw, SteeringProfile::Raw);
+    }
+
+    #[test]
+    fn test_steering_reaches_full_in_steer_time() {
+        let cfg = DigitalInputConfig { center_precision: 1.0, ..DigitalInputConfig::from_profile(SteeringProfile::Balanced) };
+        let mut filter = DigitalInputFilter::new(cfg);
+        let dt = 1.0 / 1000.0;
+        let mut ms = 0;
+        while filter.current_steer < 1.0 && ms < 1000 {
+            filter.update(1.0, 0.0, 0.0, dt);
+            ms += 1;
+        }
+        assert!((ms as f32 - cfg.steer_time_ms).abs() <= 2.0, "reached full in {ms} ms");
+    }
+
+    #[test]
+    fn test_raw_pedals_are_instant() {
+        let mut filter = DigitalInputFilter::new(DigitalInputConfig::from_profile(SteeringProfile::Raw));
+        let (_, throttle, brake) = filter.update(0.0, 1.0, 1.0, 1.0 / 120.0);
+        assert_eq!(throttle, 1.0);
+        assert_eq!(brake, 1.0);
     }
 }
