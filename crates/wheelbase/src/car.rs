@@ -262,7 +262,8 @@ pub struct Car {
 
 impl Car {
     /// Creates a new car instance with the given configuration at the origin.
-    pub fn new(config: CarConfig) -> Self {
+    pub fn new(mut config: CarConfig) -> Self {
+        config.finalize();
         let mut state = CarState::default();
         for i in 0..4 {
             state.wheel_assemblies[i] = WheelAssembly::new(config.wheels[i]);
@@ -334,7 +335,8 @@ impl Car {
 
     /// Updates the car configuration.
     #[inline]
-    pub fn set_config(&mut self, config: CarConfig) {
+    pub fn set_config(&mut self, mut config: CarConfig) {
+        config.finalize();
         for i in 0..4 {
             self.state.wheel_assemblies[i].config = config.wheels[i];
         }

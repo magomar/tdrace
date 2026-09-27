@@ -1472,6 +1472,7 @@ impl GtWorldChallengeModule {
                 skid_full_threshold: 0.24,
                 ..TireConfig::default()
             },
+            rear_tire: None,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
             wheels: CarConfig::default_wheel_assemblies_for(

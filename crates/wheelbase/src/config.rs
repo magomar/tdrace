@@ -9,11 +9,11 @@ pub struct WheelAssemblyConfig {
     pub tire_width: f32,
     /// Rotational polar moment of inertia (kg·m²).
     pub rotational_inertia: f32,
-    /// Pacejka Magic Formula compound configuration for this wheel.
+    /// Tire model of this wheel. Derived from `CarConfig::tire` / `rear_tire` by `CarConfig::finalize()`.
     pub tire_model: TireConfig,
-    /// Brake torque distribution factor for this wheel [0.0 = none, 1.0 = full].
+    /// Brake torque share of this wheel. Derived from `CarConfig::brake_bias` by `CarConfig::finalize()`.
     pub brake_bias_factor: f32,
-    /// Drive torque distribution factor from differential [0.0 = unpowered, 1.0 = spool/locked].
+    /// Drive torque share of this wheel. Derived from `CarConfig::drive_bias` by `CarConfig::finalize()`.
     pub drive_torque_factor: f32,
 }
 
@@ -532,8 +532,11 @@ pub struct CarConfig {
     /// Aerodynamic downforce coefficient (0.5 * Cl * A * air_density) scaling vertical load with V^2.
     pub downforce_coefficient: f32,
 
-    /// Tire friction and slip parameters.
+    /// Tire model (front axle, and rear axle unless `rear_tire` is set).
     pub tire: TireConfig,
+    /// Optional rear axle tire override (staggered karts and open-wheelers).
+    #[serde(default)]
+    pub rear_tire: Option<TireConfig>,
     /// Driver electronic stability and traction assistance settings.
     pub assists: DriverAssistsConfig,
     /// Terrain interaction modifiers (sand flotation, mud paddles, ice studs).
@@ -579,6 +582,8 @@ struct CarConfigRaw {
     pub engine_braking_coefficient: f32,
     pub downforce_coefficient: f32,
     pub tire: TireConfig,
+    #[serde(default)]
+    pub rear_tire: Option<TireConfig>,
     pub assists: DriverAssistsConfig,
     #[serde(default)]
     pub terrain: TerrainInteractionConfig,
@@ -601,7 +606,7 @@ impl From<CarConfigRaw> for CarConfig {
             }
         });
 
-        Self {
+        let mut cfg = Self {
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -633,10 +638,13 @@ impl From<CarConfigRaw> for CarConfig {
             engine_braking_coefficient: raw.engine_braking_coefficient,
             downforce_coefficient: raw.downforce_coefficient,
             tire: raw.tire,
+            rear_tire: raw.rear_tire,
             assists: raw.assists,
             terrain: raw.terrain,
             wheels,
-        }
+        };
+        cfg.finalize();
+        cfg
     }
 }
 
@@ -693,6 +701,30 @@ impl CarConfig {
         ]
     }
 
+    /// Derives every per-wheel field from the axle-level settings (Spec 042 single source of truth).
+    ///
+    /// Tire model from `tire` / `rear_tire`, brake share from `brake_bias`, drive share from
+    /// `drive_bias`. Wheel geometry (radius, width, inertia) stays per wheel. Idempotent.
+    /// Called by every preset, by deserialization, and by `Car::new` / `Car::set_config`.
+    pub fn finalize(&mut self) {
+        let rear_tire = self.rear_tire.unwrap_or(self.tire);
+        let bb = self.brake_bias.clamp(0.0, 1.0);
+        let db = self.drive_bias.clamp(0.0, 1.0);
+        for (i, w) in self.wheels.iter_mut().enumerate() {
+            let front = i < 2;
+            w.tire_model = if front { self.tire } else { rear_tire };
+            w.brake_bias_factor = if front { bb * 0.5 } else { (1.0 - bb) * 0.5 };
+            w.drive_torque_factor = if front { db * 0.5 } else { (1.0 - db) * 0.5 };
+        }
+    }
+
+    /// Builder form of [`CarConfig::finalize`].
+    #[must_use]
+    pub fn finalized(mut self) -> Self {
+        self.finalize();
+        self
+    }
+
     /// Standard balanced sports car tuned for GeneRally-style arcade drift racing.
     pub fn sports_car() -> Self {
         let tire = TireConfig::default();
@@ -738,10 +770,12 @@ impl CarConfig {
             downforce_coefficient: 0.65,
 
             tire,
+            rear_tire: None,
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
         }
+        .finalized()
     }
 
     /// Dedicated drift machine: aggressive rear power, loose tail, quick counter-steer.
@@ -768,10 +802,7 @@ impl CarConfig {
             preload_nm: 62.0,
         };
         cfg.assists = DriverAssistsConfig::sport();
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
-        cfg
+        cfg.finalized()
     }
 
     /// Go-kart preset: ultra-responsive, lightweight, high lateral grip, direct steering.
@@ -864,6 +895,7 @@ impl CarConfig {
             downforce_coefficient: 0.10,
 
             tire: front_tire,
+            rear_tire: Some(rear_tire),
             assists: DriverAssistsConfig {
                 tcs_enabled: true,
                 tcs_slip_threshold: 0.16,
@@ -885,6 +917,7 @@ impl CarConfig {
             },
             wheels,
         }
+        .finalized()
     }
 
     /// Alias for `kart()` representing the classic 200cc sprint kart.
@@ -927,11 +960,8 @@ impl CarConfig {
             w.tire_radius = 0.33;
             w.tire_width = 0.22;
             w.rotational_inertia = 1.30;
-            w.tire_model = cfg.tire;
-            w.drive_torque_factor = 0.25; // AWD 4-wheel drive distribution
-            w.brake_bias_factor = 0.25;
         }
-        cfg
+        cfg.finalized()
     }
 
     /// 850 BHP Trans-Am TA1 / NASCAR Cup tubular spaceframe V8 stock car spec.
@@ -1022,10 +1052,12 @@ impl CarConfig {
             downforce_coefficient: 1.25, // Moderate downforce package
 
             tire,
+            rear_tire: None,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
             wheels,
         }
+        .finalized()
     }
 
     /// Alias for `stock_car_ta1()` representing the 850 BHP Trans-Am TA1 spaceframe racer.
@@ -1117,6 +1149,7 @@ impl CarConfig {
             downforce_coefficient: 0.35,
 
             tire,
+            rear_tire: None,
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig {
                 sand_flotation: 0.30,
@@ -1125,6 +1158,7 @@ impl CarConfig {
             },
             wheels,
         }
+        .finalized()
     }
 }
 
@@ -1190,6 +1224,31 @@ mod tests {
         let f_front = kart.wheels[0].tire_model.grip;
         let f_rear = kart.wheels[2].tire_model.grip;
         assert!(f_rear > f_front, "rear grip ({}) should exceed front grip ({})", f_rear, f_front);
+    }
+
+    #[test]
+    fn test_finalize_derives_wheels_from_axle_settings() {
+        let mut cfg = CarConfig::sports_car();
+        cfg.tire.grip = 1.3;
+        cfg.drive_bias = 1.0;
+        cfg.brake_bias = 0.70;
+        cfg.finalize();
+        for i in 0..4 {
+            assert_eq!(cfg.wheels[i].tire_model.grip, 1.3);
+        }
+        assert!((cfg.wheels[0].drive_torque_factor - 0.5).abs() < 1e-6);
+        assert_eq!(cfg.wheels[2].drive_torque_factor, 0.0);
+        assert!((cfg.wheels[0].brake_bias_factor - 0.35).abs() < 1e-6);
+        assert!((cfg.wheels[3].brake_bias_factor - 0.15).abs() < 1e-6);
+
+        // Rear override (staggered kart)
+        let kart = CarConfig::kart();
+        assert_eq!(kart.wheels[0].tire_model, kart.tire);
+        assert_eq!(Some(kart.wheels[2].tire_model), kart.rear_tire);
+
+        // Idempotent
+        let again = cfg.finalized();
+        assert_eq!(again, cfg);
     }
 
     #[test]

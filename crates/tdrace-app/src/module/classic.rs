@@ -30,11 +30,8 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 9.0;
         cfg.tire.slide_grip = 0.94;
         cfg.tire.peak_slip_angle_deg = 9.7;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 750 BHP Arcade Stock Car: roaring speedway V8, planted rear, spin-proof stability.
@@ -50,11 +47,8 @@ impl ClassicGameModule {
         cfg.downforce_coefficient = 1.45;
         cfg.tire.slide_grip = 0.93;
         cfg.tire.peak_slip_angle_deg = 9.3;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 350 BHP Extreme Off-Road Buggy: high suspension travel, all-terrain forgiving grip.
@@ -71,11 +65,8 @@ impl ClassicGameModule {
         cfg.tire.peak_slip_angle_deg = 11.3;
         cfg.weight_transfer_longitudinal = 0.65;
         cfg.weight_transfer_lateral = 0.65;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 45 BHP 200cc Arcade Sprint Kart: 1:1 direct steering, ultra-light, razor apex grip.
@@ -89,11 +80,11 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 14.0;
         cfg.tire.slide_grip = 0.90;
         cfg.tire.peak_slip_angle_deg = 7.0;
-        for w in &mut cfg.wheels {
-            w.tire_model.slide_grip = cfg.tire.slide_grip;
-            w.tire_model.peak_slip_angle_deg = cfg.tire.peak_slip_angle_deg;
+        if let Some(rear) = cfg.rear_tire.as_mut() {
+            rear.slide_grip = cfg.tire.slide_grip;
+            rear.peak_slip_angle_deg = cfg.tire.peak_slip_angle_deg;
         }
-        cfg
+        cfg.finalized()
     }
 
     /// 450 BHP Fantasy Group B Rally Beast: explosive 4WD acceleration, multi-surface suspension compliance, agile slide damping.
@@ -112,13 +103,8 @@ impl ClassicGameModule {
         cfg.tire.peak_slip_angle_deg = 10.2;
         cfg.weight_transfer_longitudinal = 0.50;
         cfg.weight_transfer_lateral = 0.50;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-            w.drive_torque_factor = 0.25;
-            w.brake_bias_factor = 0.25;
-        }
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 }
 

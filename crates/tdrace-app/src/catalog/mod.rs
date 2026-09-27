@@ -256,7 +256,8 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        cfg
+        // Spec 042: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        cfg.finalized()
     }
 
     /// Returns the engine sound archetype for this real car model.
@@ -2852,6 +2853,12 @@ mod tests {
 
         // 4. Lateral tire grip differentiation (Toyota higher grip)
         assert!(toyota_cfg.tire.grip > bmw_cfg.tire.grip, "Toyota should have higher peak lateral tire grip");
+        // Spec 042: the grip stat must reach every wheel assembly the physics reads
+        for cfg in [&toyota_cfg, &bmw_cfg] {
+            for w in &cfg.wheels {
+                assert_eq!(w.tire_model.grip, cfg.tire.grip);
+            }
+        }
 
         // 5. Engine force differentiation (BMW has 450 BHP vs Toyota 430 BHP)
         assert!(bmw_cfg.max_engine_force > toyota_cfg.max_engine_force, "BMW should have higher engine tractive force");
