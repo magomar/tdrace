@@ -11,6 +11,7 @@ definitions for crates/tdrace-app/src/module/gt.rs.
 
 import math
 import os
+import sys
 import xml.etree.ElementTree as ET
 
 CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "target", "osm_cache")
@@ -366,7 +367,14 @@ def dist(p1, p2):
     return math.hypot(p2[0] - p1[0], p2[1] - p1[1])
 
 
-def stitch_ways(way_nodes_list, nodes_coords, max_gap=45.0):
+def geo_dist_m(p1, p2):
+    """Distance in meters between two (lat, lon) points (local tangent plane, fine at circuit scale)."""
+    x, y = latlon_to_meters(p2[0], p2[1], p1[0], p1[1])
+    return math.hypot(x, y)
+
+
+def stitch_ways(way_nodes_list, nodes_coords, max_gap=45.0, max_closure_gap=15.0):
+    """Greedily chain ways by nearest endpoint. `nodes_coords` maps node id -> (lat, lon); gaps are in meters."""
     if not way_nodes_list:
         return []
     remaining = [list(w) for w in way_nodes_list]
@@ -381,8 +389,8 @@ def stitch_ways(way_nodes_list, nodes_coords, max_gap=45.0):
         min_d = float("inf")
 
         for idx, w in enumerate(remaining):
-            d_start = dist(curr_end_pt, nodes_coords[w[0]])
-            d_end = dist(curr_end_pt, nodes_coords[w[-1]])
+            d_start = geo_dist_m(curr_end_pt, nodes_coords[w[0]])
+            d_end = geo_dist_m(curr_end_pt, nodes_coords[w[-1]])
             if d_start < min_d:
                 min_d = d_start
                 best_idx = idx
@@ -393,6 +401,11 @@ def stitch_ways(way_nodes_list, nodes_coords, max_gap=45.0):
                 best_rev = True
 
         if min_d > max_gap:
+            print(
+                f"WARNING: stitch_ways stopped: nearest way is {min_d:.1f} m away (max_gap {max_gap:.1f} m); "
+                f"{len(remaining)} way(s) left unjoined",
+                file=sys.stderr,
+            )
             break
 
         next_w = remaining.pop(best_idx)
@@ -403,6 +416,14 @@ def stitch_ways(way_nodes_list, nodes_coords, max_gap=45.0):
             chain.extend(next_w[1:])
         else:
             chain.extend(next_w)
+
+    closure_gap = geo_dist_m(nodes_coords[chain[-1]], nodes_coords[chain[0]])
+    if closure_gap > max_closure_gap:
+        print(
+            f"WARNING: stitched chain is not closed: end-to-start gap {closure_gap:.1f} m "
+            f"(max_closure_gap {max_closure_gap:.1f} m)",
+            file=sys.stderr,
+        )
 
     return chain
 
