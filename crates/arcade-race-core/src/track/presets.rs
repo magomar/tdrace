@@ -4118,7 +4118,7 @@ pub fn road_america() -> Track {
 }
 
 /// Preset: Chicago Street Course (Grant Park 220)
-/// NASCAR's premier 2.2-mile 12-turn downtown street circuit surveyed from OpenStreetMap (OSM) scaled to 0.5x (1770m):
+/// NASCAR's premier 2.2-mile 12-turn downtown street circuit surveyed from OpenStreetMap (OSM) at ~1:1 (3,380m of the real 3,541m):
 /// tight 90° corners between concrete barrier walls along Columbus Drive, Balbo Drive, DuSable Lake Shore Drive, and Michigan Avenue.
 pub fn chicago_street_course() -> Track {
     let waypoints = vec![
@@ -4190,7 +4190,7 @@ pub fn chicago_street_course() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "0.5x".to_string(),
+        scale: "1:1".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
