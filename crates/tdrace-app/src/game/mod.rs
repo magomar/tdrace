@@ -5095,7 +5095,25 @@ impl RaceSession {
                         let _ = host.update(frame_dt);
                     }
                     if let Some(ref mut client) = self.lan_client {
-                        let _ = client.update(frame_dt);
+                        let events = client.update(frame_dt);
+                        for event in events {
+                            if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
+                                for car_snap in snapshot.cars {
+                                    let idx = car_snap.slot_id as usize;
+                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
+                                        let car = &mut self.cars[idx];
+                                        car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
+                                        car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
+                                        car.state.angle = car_snap.heading_rad;
+                                        car.state.angular_velocity = car_snap.angular_velocity;
+                                        car.state.steer_angle = car_snap.steer_angle_rad;
+                                    }
+                                }
+                                self.audio.play_sfx(SfxType::CountdownHigh);
+                                self.state = GameState::Racing;
+                                return;
+                            }
+                        }
                     }
                 }
 
@@ -8087,6 +8105,7 @@ impl RaceSession {
     /// Launches either Host Room or Join Server Browser from LAN Hub.
     pub fn select_lan_hub_option(&mut self, idx: usize) {
         self.audio.play_sfx(SfxType::UiSelect);
+        let profile_livery = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
         if idx == 0 {
             // Option 0: Host Room
             let mut bound_host = None;
@@ -8096,7 +8115,7 @@ impl RaceSession {
                     &self.active_profile.name,
                     self.active_profile.country.as_deref().unwrap_or("ESP"),
                     self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
-                    "red",
+                    profile_livery,
                     port,
                     8,
                     self.track_choice.track_id(),
@@ -8123,7 +8142,7 @@ impl RaceSession {
                 &self.active_profile.name,
                 self.active_profile.country.as_deref().unwrap_or("ESP"),
                 self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
-                "corsa_red",
+                profile_livery,
             );
             self.lan_join_screen = Some(join_screen);
             self.state = GameState::LanJoinBrowser;
@@ -8247,6 +8266,47 @@ impl RaceSession {
         }
     }
 
+    /// Maps a CarColorScheme to a standard network livery identifier.
+    pub fn livery_id_from_color_scheme(scheme: &CarColorScheme) -> &'static str {
+        for i in 0..Palette::CAR_COLORS.len() {
+            let preset = CarColorScheme::from_index(i);
+            let dr = (preset.primary.r - scheme.primary.r).abs();
+            let dg = (preset.primary.g - scheme.primary.g).abs();
+            let db = (preset.primary.b - scheme.primary.b).abs();
+            if dr < 0.05 && dg < 0.05 && db < 0.05 {
+                return match i {
+                    0 => "corsa_red",
+                    1 => "matte_cyan",
+                    2 => "viper_green",
+                    3 => "speed_yellow",
+                    4 => "sunset_orange",
+                    5 => "synthwave_purple",
+                    6 => "stealth_black",
+                    7 => "glacier_white",
+                    8 => "cyber_magenta",
+                    _ => "corsa_red",
+                };
+            }
+        }
+        "corsa_red"
+    }
+
+    /// Resolves a network livery identifier back to a concrete CarColorScheme.
+    pub fn color_scheme_from_livery_id(livery: &str, fallback_idx: usize) -> CarColorScheme {
+        match livery {
+            "corsa_red" | "red" => CarColorScheme::from_index(0),
+            "matte_cyan" | "cyan" | "blue" | "electric_blue" => CarColorScheme::from_index(1),
+            "viper_green" | "green" => CarColorScheme::from_index(2),
+            "speed_yellow" | "yellow" => CarColorScheme::from_index(3),
+            "sunset_orange" | "orange" => CarColorScheme::from_index(4),
+            "synthwave_purple" | "purple" | "violet" => CarColorScheme::from_index(5),
+            "stealth_black" | "black" | "carbon" => CarColorScheme::from_index(6),
+            "glacier_white" | "white" => CarColorScheme::from_index(7),
+            "cyber_magenta" | "magenta" | "pink" => CarColorScheme::from_index(8),
+            _ => CarColorScheme::from_index(fallback_idx % 9),
+        }
+    }
+
     /// Configures the circuit, spawns player and remote vehicles on starting grid, and enters countdown.
     pub fn launch_lan_race_session(
         &mut self,
@@ -8301,13 +8361,15 @@ impl RaceSession {
                 info.push((s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone()));
             }
             if info.is_empty() {
+                let default_scheme = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
                 info.push((0, "Host".to_string(), "ESP".to_string(), "gt_ferrari_296_gt3".to_string(), "corsa_red".to_string()));
-                info.push((my_slot_id, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), "corsa_red".to_string()));
+                info.push((my_slot_id, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), default_scheme.to_string()));
             }
             let count = info.len().max(2);
             (count, info)
         } else {
-            (1, vec![(0, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), "corsa_red".to_string())])
+            let default_scheme = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
+            (1, vec![(0, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), default_scheme.to_string())])
         };
 
         slot_info.sort_by_key(|(slot_id, ..)| *slot_id);
@@ -8325,7 +8387,7 @@ impl RaceSession {
         self.grid_participants.clear();
         self.color_schemes.clear();
 
-        for (i, (slot_id, name, country, car_model, _livery)) in slot_info.into_iter().enumerate() {
+        for (i, (slot_id, name, country, car_model, livery)) in slot_info.into_iter().enumerate() {
             let grid_pose = self
                 .track
                 .grid_positions
@@ -8344,7 +8406,7 @@ impl RaceSession {
             car.state.velocity = glam::Vec2::ZERO;
 
             let is_me = slot_id == my_slot_id;
-            let scheme = CarColorScheme::from_index(i % 9);
+            let scheme = Self::color_scheme_from_livery_id(&livery, i);
             self.color_schemes.push(scheme);
             let visual_type = catalog_model.map(|m| m.visual_type).unwrap_or(VehicleVisualType::TouringGT {
                 widebody: true,
@@ -8398,7 +8460,12 @@ impl RaceSession {
 
         self.audio.stop_all_loops();
         self.audio.play_sfx(SfxType::CountdownLow);
-        self.state = GameState::Countdown(3.0);
+        let countdown_sec = if let Some(ref c) = self.lan_client {
+            c.countdown_remaining_sec().unwrap_or(3.0).max(0.1)
+        } else {
+            3.0
+        };
+        self.state = GameState::Countdown(countdown_sec);
     }
 
     /// Exits LAN session, cleanly disconnects sockets, and resets flags.
@@ -13711,7 +13778,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
-            let effective_scheme = if (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
+            let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
                 if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
                     CarColorScheme {
                         primary: m.primary_color,
@@ -13775,7 +13842,7 @@ impl RaceSession {
             let car = &self.cars[i];
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
-            let effective_scheme = if (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
+            let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
                 if let Some(m) = model_id.and_then(crate::catalog::find_model_by_id) {
                     CarColorScheme {
                         primary: m.primary_color,

@@ -313,3 +313,162 @@ fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
     session.exit_lan_session();
     assert!(!session.is_lan_multiplayer);
 }
+
+#[test]
+fn test_lan_livery_synchronization_and_countdown_handshake() {
+    use cabinet::net::{CabinetLanClientLobbyScreen, LanClient, LanHost};
+    use tdrace_app::render::color::CarColorScheme;
+
+    // 1. Host creates room with Corsa Red (index 0)
+    let mut host = LanHost::bind_ephemeral("Livery Sync GP", "RedHost")
+        .expect("failed to bind test host");
+
+    let host_addr = host.local_addr().expect("local addr");
+
+    // 2. Client connects with Viper Green (index 2)
+    let mut client = LanClient::connect(
+        host_addr,
+        "GreenRacer",
+        "FRA",
+        "gt_porsche_911_gt3r",
+        "viper_green",
+    ).expect("failed to connect");
+
+    // Exchange handshake packets
+    for _ in 0..50 {
+        let _ = client.update(0.016);
+        let _ = host.update(0.016);
+        if client.is_connected() && host.active_slots().len() >= 2 {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+
+    assert!(client.is_connected());
+    assert_eq!(client.color_scheme_id(), "viper_green");
+    assert_eq!(client.car_model_id(), "gt_porsche_911_gt3r");
+
+    // 3. Client lobby screen initialized from connected client
+    let mut client_lobby = CabinetLanClientLobbyScreen::new(client);
+    assert_eq!(client_lobby.selected_livery_idx, 2, "Viper Green must be selected (index 2)");
+    assert_eq!(client_lobby.selected_car_idx, 1, "Porsche 911 GT3 R must be selected (index 1)");
+    assert!(!client_lobby.is_in_race(), "Lobby must not be in race before launch");
+
+    // 4. Host initiates countdown
+    host.start_countdown(3000).expect("countdown launch");
+
+    // Pump packets so client receives LaunchCountdown
+    let _ = host.update(0.01);
+    let _ = client_lobby.client_mut().update(0.01);
+
+    // Client lobby must immediately signal is_in_race == true for StartingCountdown
+    assert!(
+        client_lobby.is_in_race(),
+        "Client lobby must trigger is_in_race as soon as countdown begins"
+    );
+
+    let client_inner = client_lobby.into_client();
+    let remaining = client_inner.countdown_remaining_sec();
+    assert!(remaining.is_some());
+    assert!(remaining.unwrap() > 0.0 && remaining.unwrap() <= 3.0);
+
+    // 5. Host launches race session
+    let mut host_session = RaceSession::new();
+    host_session.launch_lan_race_session(Some(host), None, 0);
+
+    // 6. Client launches race session
+    let mut client_session = RaceSession::new();
+    client_session.launch_lan_race_session(None, Some(client_inner), 1);
+
+    // Verify liveries on Host session:
+    // Slot 0 is Red (index 0)
+    // Slot 1 is Green (index 2)
+    assert_eq!(host_session.color_schemes.len(), 2);
+    assert_eq!(host_session.color_schemes[0], CarColorScheme::from_index(0));
+    assert_eq!(host_session.color_schemes[1], CarColorScheme::from_index(2));
+
+    // Verify liveries on Client session:
+    // Slot 0 is Red (index 0)
+    // Slot 1 is Green (index 2)
+    assert_eq!(client_session.color_schemes.len(), 2);
+    assert_eq!(client_session.color_schemes[0], CarColorScheme::from_index(0));
+    assert_eq!(client_session.color_schemes[1], CarColorScheme::from_index(2));
+
+    // Verify client session countdown initialized synchronously
+    match client_session.state {
+        GameState::Countdown(rem) => {
+            assert!(rem > 0.0 && rem <= 3.0);
+        }
+        other => panic!("Expected GameState::Countdown, got {:?}", other),
+    }
+
+    // 7. Verify snapshot arrival during Countdown snaps client to GameState::Racing
+    let snap_packet = cabinet::net::WorldSnapshotPacket {
+        tick: 1,
+        session_elapsed_sec: 0.1,
+        cars: vec![
+            cabinet::net::CarStateSnapshot {
+                slot_id: 0,
+                pos_x: 100.0,
+                pos_y: 200.0,
+                velocity_x: 10.0,
+                velocity_y: 0.0,
+                heading_rad: 1.5,
+                angular_velocity: 0.0,
+                steer_angle_rad: 0.0,
+                current_lap: 1,
+                checkpoint_idx: 0,
+                best_lap_time_ms: None,
+                last_lap_time_ms: None,
+                is_finished: false,
+            }
+        ],
+    };
+
+    if let Some(ref mut host) = host_session.lan_host {
+        let _ = host.broadcast_snapshot(&snap_packet);
+    }
+
+    // Advance client session countdown frame
+    client_session.state = GameState::Countdown(2.5);
+    match client_session.state {
+        GameState::Countdown(ref mut rem) => {
+            *rem -= 0.016;
+            if client_session.is_lan_multiplayer {
+                if let Some(ref mut client) = client_session.lan_client {
+                    let events = client.update(0.016);
+                    for event in events {
+                        if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
+                            for car_snap in snapshot.cars {
+                                let idx = car_snap.slot_id as usize;
+                                if idx < client_session.cars.len() && idx != (client_session.lan_player_slot as usize) {
+                                    let car = &mut client_session.cars[idx];
+                                    car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
+                                }
+                            }
+                            client_session.state = GameState::Racing;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+
+    assert_eq!(
+        client_session.state,
+        GameState::Racing,
+        "Snapshot arrival must transition client immediately to GameState::Racing"
+    );
+    assert_eq!(
+        client_session.cars[0].state.position,
+        glam::Vec2::new(100.0, 200.0),
+        "Host car position must be synchronized from snapshot"
+    );
+
+    // Clean up
+    host_session.exit_lan_session();
+    client_session.exit_lan_session();
+}
+

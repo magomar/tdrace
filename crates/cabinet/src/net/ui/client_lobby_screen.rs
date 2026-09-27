@@ -60,18 +60,32 @@ impl CabinetLanClientLobbyScreen {
 
         let liveries = vec![
             ("corsa_red".to_string(), "Rosso Corsa".to_string(), Palette::NEON_RED),
+            ("matte_cyan".to_string(), "Matte Cyan".to_string(), Palette::NEON_CYAN),
             ("viper_green".to_string(), "Viper Green".to_string(), Palette::NEON_GREEN),
             ("speed_yellow".to_string(), "Speed Yellow".to_string(), Palette::NEON_GOLD),
-            ("matte_cyan".to_string(), "Matte Cyan".to_string(), Palette::NEON_CYAN),
+            ("sunset_orange".to_string(), "Sunset Orange".to_string(), Palette::NEON_ORANGE),
+            ("synthwave_purple".to_string(), "Synthwave Purple".to_string(), Palette::NEON_MAGENTA),
             ("stealth_black".to_string(), "Stealth Black".to_string(), Color::new(0.20, 0.22, 0.28, 1.0)),
+            ("glacier_white".to_string(), "Glacier White".to_string(), Palette::WHITE),
+            ("cyber_magenta".to_string(), "Cyber Magenta".to_string(), Color::new(0.90, 0.15, 0.60, 1.0)),
         ];
+
+        let selected_car_idx = car_models
+            .iter()
+            .position(|(id, _)| id == client.car_model_id())
+            .unwrap_or(0);
+
+        let selected_livery_idx = liveries
+            .iter()
+            .position(|(id, _, _)| id == client.color_scheme_id())
+            .unwrap_or(0);
 
         Self {
             client,
             car_models,
-            selected_car_idx: 0,
+            selected_car_idx,
             liveries,
-            selected_livery_idx: 0,
+            selected_livery_idx,
             is_ready: false,
             nav: NavGrid2D::new(vec![8, 4]),
             status_message: "Connected to host lobby. Choose car and mark READY!".to_string(),
@@ -95,9 +109,9 @@ impl CabinetLanClientLobbyScreen {
         self.client
     }
 
-    /// Returns true if countdown has completed and race is active.
+    /// Returns true if countdown has begun or race is active.
     pub fn is_in_race(&self) -> bool {
-        matches!(self.client.state(), ClientState::InRace { .. })
+        matches!(self.client.state(), ClientState::StartingCountdown { .. } | ClientState::InRace { .. })
     }
 
     /// Cycles local car model.

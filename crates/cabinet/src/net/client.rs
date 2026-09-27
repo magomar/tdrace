@@ -189,6 +189,24 @@ impl LanClient {
         &self.last_known_slots
     }
 
+    /// Selected car model identifier.
+    pub fn car_model_id(&self) -> &str {
+        &self.car_model_id
+    }
+
+    /// Selected livery color scheme identifier.
+    pub fn color_scheme_id(&self) -> &str {
+        &self.color_scheme_id
+    }
+
+    /// Remaining countdown duration in seconds if in countdown state.
+    pub fn countdown_remaining_sec(&self) -> Option<f32> {
+        match self.state {
+            ClientState::StartingCountdown { remaining_sec, .. } => Some(remaining_sec),
+            _ => None,
+        }
+    }
+
     /// Sends a vehicle selection or ready toggle update to the host.
     pub fn send_slot_update(
         &mut self,
