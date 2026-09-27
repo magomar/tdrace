@@ -156,6 +156,12 @@ pub struct Track {
     pub max_width: Option<f32>,
     #[serde(default)]
     pub is_inspired: bool,
+    /// Short uppercase catalog badge, e.g. "WORLD RX SWEDEN".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub tag: String,
+    /// Catalog class shown in circuit lists, e.g. "World RX" or "Superspeedway".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub category_label: String,
 }
 
 impl Default for Track {
@@ -183,6 +189,8 @@ impl Default for Track {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }
     }
 }

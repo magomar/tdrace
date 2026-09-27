@@ -101,6 +101,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Circuito Internazionale Napoli (Sarno, Italy): High-Speed Temple of Speed
@@ -179,6 +181,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Karting Genk (Genk, Belgium): Home of Champions
@@ -255,6 +259,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// PF International Kart Circuit (PFI, UK): Elevated Flyover Crossover Bridge
@@ -333,6 +339,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Circuito Internacional de Zuera (Zaragoza, Spain): Ultra-Fast Supertrack
@@ -411,6 +419,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Le Mans Karting International (Le Mans, France): Alain Prost CIK Circuit
@@ -487,6 +497,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Kartodromo Internacional do Algarve (Portimao, Portugal): Rollercoaster Track
@@ -565,6 +577,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
     /// Franciacorta Karting Track (Castrezzato, Italy): World Championship Benchmark
@@ -641,6 +655,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -718,6 +734,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -795,6 +813,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -872,6 +892,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -947,6 +969,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1018,6 +1042,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1097,6 +1123,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1176,6 +1204,8 @@ impl KartGameModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 }

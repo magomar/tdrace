@@ -83,12 +83,12 @@ graph TD
 - **Embedded copy.** A `build.rs` in `tdrace-app` reads `tracks/**/*.json` and `tracks/.track_order.json`. It rewrites each file as compact JSON, compresses the bundle with DEFLATE, and emits it for `include_bytes!`. Measured: 79 MB pretty → ~45 MB compact → **~5.6 MB gzip -9**. The catalog decompresses one circuit on demand, not all 96 at start.
 - **Disk copy.** When the tracks dir resolves (see 2.4) and dev mode is on, a file on disk replaces its embedded copy. New files on disk are added. Outside dev mode the embedded copy is used, so a stray local edit cannot change a release game.
 - **Empty `tracks/`.** If the submodule is not checked out at build time, `build.rs` fails the build with a clear message (`git submodule update --init tracks`). A build never silently ships zero circuits.
-- **Metadata moves into JSON.** `TrackDefinition.title`, `tag`, `description`, `category` and `default_laps` move into the circuit file. `Track` gains an optional `tag: String` field with `#[serde(default)]`. Existing files stay readable.
-- **Shared circuits.** `dirt_figure_eight` is used by classic and extreme_offroad (with a 12-slot grid). It becomes two files, `classic/dirt_figure_eight.json` and `extreme_offroad/dirt_figure_eight.json`. Each module owns its copy.
+- **Metadata moves into JSON.** `TrackDefinition.title` → `name`, `description` → `description`, `tag` → new `tag`, `category` → new `category_label` (`Track.category` is already the Main/Draft tier). `default_laps` is already in the JSON. Both new fields are `#[serde(default, skip_serializing_if = "String::is_empty")]`, so existing files stay readable. Where the menu text and the JSON text differed (29 names, 64 descriptions), the menu text was kept (decision, 2026-09-27). Lap counts keep the JSON value, because races already use it.
+- **Shared circuits.** `dirt_figure_eight` is used by classic and extreme_offroad (with a 12-slot grid). It is already two files, `classic/dirt_figure_eight.json` and `extreme_offroad/dirt_figure_eight.json`. Each module owns its copy.
 
 #### 2.2 Slug rules
 
-- File stem = canonical id. The 17 NASCAR files are renamed to their long ids (`daytona.json` → `daytona_superspeedway.json`, and so on). This matches `series/*.toml`.
+- File stem = canonical id. The 16 short-named NASCAR files are renamed to their long ids (`daytona.json` → `daytona_superspeedway.json`, and so on). This matches `series/*.toml`.
 - One small alias map stays in the catalog, only to read old saves, old `series` files and old `.track_order.json` keys. It is data (`tracks/.aliases.json`), not Rust code.
 
 #### 2.3 One precedence order
@@ -141,7 +141,7 @@ The menu cache (`MENU_TRACK_CACHE`) keeps its role, but reads through this resol
 - A test helper `official_track(module, slug) -> Track` loads from the embedded catalog. The 31 test files and 2 benches that call generators switch to it (mechanical change: `presets::monza()` → `official_track("gt", "monza")`).
 - Tests that only need *a* track, not a real circuit, use `create_prototypical_track` so they do not depend on circuit data.
 - `crates/tdrace-py/src/engine.rs:100-109` resolves `track_name` through `OfficialCatalog`. All 96 circuits become available to Python. The six current names and their aliases keep working. `python/tdrace/env.py` defaults stay unchanged.
-- `scripts/generate_asset_data.py` already reads JSON. Its `CLASSIC_TRACK_CATEGORIES` table moves into the JSON `tag` field.
+- `scripts/generate_asset_data.py` already reads JSON. Its `CLASSIC_TRACK_CATEGORIES` table is a portal modality mapping, not a tag, so it stays. Its output (`portals/shared/data/circuits.json`, circuit SVGs) is regenerated after the NASCAR renames.
 
 ---
 
@@ -150,7 +150,7 @@ The menu cache (`MENU_TRACK_CACHE`) keeps its role, but reads through this resol
 Work is done in phases. Each phase leaves `make test` green.
 
 1. **Parity baseline.** Before any change, export every Rust generator and diff it against its JSON (spline waypoints, wall counts, grid, checkpoints, metadata). Record which side is newer per circuit. Where Rust is newer (for example the GT kerb fix), re-export that circuit so the JSON wins. Commit the JSON in `tdrace-tracks`.
-2. **Metadata into JSON.** Add `tag` to `Track`. Write title, tag, description, category and `default_laps` from each `tracks()` table into its JSON. Rename the 17 NASCAR files; write `tracks/.aliases.json`; split `dirt_figure_eight`; delete `tracks/.deleted_tracks.json`.
+2. **Metadata into JSON.** Add `tag` to `Track`. Write title, tag, description, category and `default_laps` from each `tracks()` table into its JSON. Rename the 16 short NASCAR files; write `tracks/.aliases.json` and `tracks/.track_order.json`; delete `tracks/.deleted_tracks.json`.
 3. **Embedded catalog.** Add `build.rs` and `OfficialCatalog`. Route `load_track`, menu preview, series and tdrace-py through the one resolver. Rust generators still exist but are no longer called by game code.
 4. **Dev-mode save and promote.** Single-copy dev save, six-module promote, `target_module` fix, normal-mode "Save as copy".
 5. **Test migration.** Move tests and benches to `official_track` or templates.

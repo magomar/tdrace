@@ -1375,32 +1375,12 @@ fn test_export_canonical_presets_to_git_repo() {
             if !track.modules.contains(&mod_id.to_string()) {
                 track.modules.push(mod_id.to_string());
             }
-            let filename = if mod_id == "nascar" {
-                match track_def.id {
-                    "daytona_superspeedway" => "daytona",
-                    "talladega_superspeedway" => "talladega",
-                    "watkins_glen_nascar" => "watkins_glen",
-                    "bristol_motor_speedway" => "bristol",
-                    "martinsville_speedway" => "martinsville",
-                    "darlington_raceway" => "darlington",
-                    "charlotte_motor_speedway" => "charlotte",
-                    "indianapolis_motor_speedway" => "indianapolis",
-                    "eldora_speedway" => "eldora",
-                    "iowa_speedway" => "iowa",
-                    "chicago_street_course" => "chicago",
-                    "bowman_gray_stadium" => "bowman_gray",
-                    "lucas_oil_irp" => "irp_oval",
-                    "north_wilkesboro_speedway" => "north_wilkesboro",
-                    "pocono_raceway" => "pocono",
-                    "phoenix_raceway" => "phoenix",
-                    other => other,
-                }
-            } else {
-                track_def.id
-            };
-            track = track
-                .with_provenance_if_known(filename)
-                .with_provenance_if_known(track_def.id);
+            let filename = track_def.id;
+            track.name = track_def.title.to_string();
+            track.description = track_def.description.to_string();
+            track.tag = track_def.tag.to_string();
+            track.category_label = track_def.category.to_string();
+            track = track.with_provenance_if_known(filename);
             let file_path = target_dir.join(format!("{}.json", filename));
             track.save_to_file(&file_path).expect("Failed to export canonical preset");
 
@@ -1918,7 +1898,7 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "marina_bay".to_string(),
     };
     let loaded_mb = manager.load_track(&choice_mb).expect("Load marina_bay");
-    assert_eq!(loaded_mb.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_mb.name, "Marina Bay Street Circuit");
 
     let choice_sg = TrackChoice::Custom {
         id: "singapore".to_string(),
@@ -1927,7 +1907,7 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "singapore".to_string(),
     };
     let loaded_sg = manager.load_track(&choice_sg).expect("Load singapore");
-    assert_eq!(loaded_sg.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_sg.name, "Marina Bay Street Circuit");
 
     let choice_sp = TrackChoice::Custom {
         id: "singapur".to_string(),
@@ -1936,15 +1916,15 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "singapur".to_string(),
     };
     let loaded_sp = manager.load_track(&choice_sp).expect("Load singapur");
-    assert_eq!(loaded_sp.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_sp.name, "Marina Bay Street Circuit");
 
     // Verify menu resolver
     let menu_mb = tdrace_app::ui::menu::resolve_track_for_menu(&choice_mb).expect("Resolve menu marina_bay");
-    assert_eq!(menu_mb.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_mb.name, "Marina Bay Street Circuit");
     let menu_sg = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sg).expect("Resolve menu singapore");
-    assert_eq!(menu_sg.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_sg.name, "Marina Bay Street Circuit");
     let menu_sp = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sp).expect("Resolve menu singapur");
-    assert_eq!(menu_sp.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_sp.name, "Marina Bay Street Circuit");
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

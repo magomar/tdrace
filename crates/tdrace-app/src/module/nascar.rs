@@ -248,7 +248,7 @@ impl GameModule for NascarGameModule {
                 tag: "SHORT TRACK 14° BANK",
                 description: "Historic 0.625-mile short track with an uphill frontstretch and downhill backstretch.",
                 category: "Short Track",
-                default_laps: 4,
+                default_laps: 5,
                 generator: north_wilkesboro_speedway,
             },
             TrackDefinition {
@@ -257,7 +257,7 @@ impl GameModule for NascarGameModule {
                 tag: "TRICKY TRIANGLE 14° BANK",
                 description: "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
                 category: "Superspeedway",
-                default_laps: 3,
+                default_laps: 4,
                 generator: pocono_raceway,
             },
             TrackDefinition {

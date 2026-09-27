@@ -721,6 +721,8 @@ pub fn classic_grand_prix() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -784,6 +786,8 @@ pub fn oval_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -847,6 +851,8 @@ pub fn dirty_oval_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -938,6 +944,8 @@ pub fn drift_park() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1003,6 +1011,8 @@ pub fn kart_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1102,6 +1112,8 @@ pub fn ramp_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1209,6 +1221,8 @@ pub fn oasis_rally() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1349,6 +1363,8 @@ pub fn dirt_figure_eight() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1471,6 +1487,8 @@ pub fn classic_rallycross() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1588,6 +1606,8 @@ pub fn holjes_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1686,6 +1706,8 @@ pub fn lydden_hill() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1800,6 +1822,8 @@ pub fn hell_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -1914,6 +1938,8 @@ pub fn loheac_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2002,6 +2028,8 @@ pub fn estering_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2096,6 +2124,8 @@ pub fn montalegre_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2176,6 +2206,8 @@ pub fn nyirad_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2270,6 +2302,8 @@ pub fn kouvola_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2377,6 +2411,8 @@ pub fn catalunya_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2471,6 +2507,8 @@ pub fn mettet_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2565,6 +2603,8 @@ pub fn silverstone_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2661,6 +2701,8 @@ pub fn riga_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2755,6 +2797,8 @@ pub fn killarney_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2856,6 +2900,8 @@ pub fn yas_marina_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -2967,6 +3013,8 @@ pub fn essay_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3276,6 +3324,8 @@ pub fn create_prototypical_track(
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3373,6 +3423,8 @@ pub fn daytona_superspeedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3445,6 +3497,8 @@ pub fn talladega_superspeedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3524,6 +3578,8 @@ pub fn watkins_glen_nascar() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3591,6 +3647,8 @@ pub fn bristol_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3660,6 +3718,8 @@ pub fn martinsville_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3730,6 +3790,8 @@ pub fn darlington_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3801,6 +3863,8 @@ pub fn charlotte_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3885,6 +3949,8 @@ pub fn indianapolis_motor_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -3949,6 +4015,8 @@ pub fn eldora_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4015,6 +4083,8 @@ pub fn iowa_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4097,6 +4167,8 @@ pub fn road_america() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4181,6 +4253,8 @@ pub fn chicago_street_course() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4261,6 +4335,8 @@ pub fn cota() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4386,6 +4462,8 @@ pub fn sahara_dune_crossing() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4497,6 +4575,8 @@ pub fn atacama_sand_basin() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4594,6 +4674,8 @@ pub fn red_rock_canyon() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4721,6 +4803,8 @@ pub fn baja_500_desert_scrub() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4820,6 +4904,8 @@ pub fn mud_slough_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -4908,6 +4994,8 @@ pub fn gravel_quarry_chasm() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5004,6 +5092,8 @@ pub fn louisiana_mud_swampland() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5089,6 +5179,8 @@ pub fn arctic_frozen_lake() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5185,6 +5277,8 @@ pub fn alpine_snow_ridge() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5264,6 +5358,8 @@ pub fn rovaniemi_ice_ring() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5373,6 +5469,8 @@ pub fn glacier_crest_pass() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5482,6 +5580,8 @@ pub fn supercross_stadium_arena() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5589,6 +5689,8 @@ pub fn monster_colosseum() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5693,6 +5795,8 @@ pub fn stunt_city_megastructure() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5768,6 +5872,8 @@ pub fn bowman_gray_stadium() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5843,6 +5949,8 @@ pub fn lucas_oil_irp() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -5921,6 +6029,8 @@ pub fn north_wilkesboro_speedway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6003,6 +6113,8 @@ pub fn pocono_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6082,6 +6194,8 @@ pub fn phoenix_raceway() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6184,6 +6298,8 @@ pub fn dreux_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6286,6 +6402,8 @@ pub fn blyton_park_rx() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6374,6 +6492,8 @@ pub fn laval_kart() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6462,6 +6582,8 @@ pub fn whilton_mill_kart() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6587,6 +6709,8 @@ pub fn glamis_sand_dunes() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }
 
@@ -6706,5 +6830,7 @@ pub fn crandon_short_course() -> Track {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     }.with_default_runoff_surfaces()
 }

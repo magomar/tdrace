@@ -800,6 +800,8 @@ mod tests {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         };
 
         let diags = validate_track(&track);

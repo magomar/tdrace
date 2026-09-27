@@ -95,6 +95,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -175,6 +177,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -253,6 +257,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -327,6 +333,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -409,6 +417,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -485,6 +495,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -561,6 +573,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -635,6 +649,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -711,6 +727,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -787,6 +805,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -865,6 +885,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -943,6 +965,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1021,6 +1045,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1099,6 +1125,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1177,6 +1205,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1257,6 +1287,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1333,6 +1365,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
@@ -1417,6 +1451,8 @@ impl GtWorldChallengeModule {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }.with_default_runoff_surfaces()
     }
 
