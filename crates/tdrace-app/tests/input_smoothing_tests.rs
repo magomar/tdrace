@@ -82,7 +82,7 @@ fn test_steering_profiles_configuration_and_cycling() {
     let balanced_cfg = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
     assert_eq!(balanced_cfg.profile, SteeringProfile::Balanced);
     assert_eq!(balanced_cfg.min_speed_steer_limit, 0.75);
-    assert_eq!(balanced_cfg.hold_bleed_rate, 2.5);
+    assert_eq!(balanced_cfg.hold_bleed_rate, 4.0);
 
     // Smooth profile: softer arcade
     let smooth_cfg = DigitalInputConfig::from_profile(SteeringProfile::Smooth);
@@ -193,17 +193,17 @@ fn test_interactive_controls_filter_sync_and_persistence() {
     // 1. Verify profile-to-config presets
     let bal = SteeringProfile::Balanced.to_config();
     assert_eq!(bal.profile, SteeringProfile::Balanced);
-    assert!((bal.hold_bleed_rate - 2.5).abs() < 1e-3);
+    assert!((bal.hold_bleed_rate - 4.0).abs() < 1e-3);
     assert!((bal.min_speed_steer_limit - 0.75).abs() < 1e-3);
 
     let smo = SteeringProfile::Smooth.to_config();
     assert_eq!(smo.profile, SteeringProfile::Smooth);
-    assert!((smo.hold_bleed_rate - 1.5).abs() < 1e-3);
+    assert!((smo.hold_bleed_rate - 2.0).abs() < 1e-3);
     assert!((smo.min_speed_steer_limit - 0.60).abs() < 1e-3);
 
     let dir = SteeringProfile::Direct.to_config();
     assert_eq!(dir.profile, SteeringProfile::Direct);
-    assert!((dir.hold_bleed_rate - 0.0).abs() < 1e-3);
+    assert!((dir.hold_bleed_rate - 8.0).abs() < 1e-3);
     assert!((dir.min_speed_steer_limit - 1.00).abs() < 1e-3);
 
     // 2. Index round-trips

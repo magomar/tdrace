@@ -53,15 +53,15 @@ flowchart TD
 
 1. **New Interactive Widgets in Tab 1 (CONTROLS)**:
    - `steering_profile_dropdown: DropdownWidget`: Options `["Balanced (Default)", "Smooth (Touring)", "Direct (Sim)"]`.
-   - `hold_bleed_rate_slider: SliderWidget`: Min `0.5`, Max `5.0`, Step `0.1`, Default `2.2`, Suffix `"x"`.
-   - `min_speed_steer_limit_slider: SliderWidget`: Min `0.30`, Max `0.90`, Step `0.05`, Default `0.55`, Suffix `"x"`.
+   - `hold_bleed_rate_slider: SliderWidget`: Min `1.0`, Max `10.0`, Step `0.1`, Default `4.0`, Suffix `"x"`.
+   - `min_speed_steer_limit_slider: SliderWidget`: Min `0.50`, Max `1.00`, Step `0.05`, Default `0.75`, Suffix `"x"`.
 2. **Navigation Grid Synchronization**:
-   - Tab 1 navigation row count expanded from 5 to 7 (6 widgets + 1 bottom button row).
-   - Up/Down navigation correctly navigates through all 6 controls widgets and handles popup dropdown focus.
+   - Tab 1 navigation row count expanded from 5 to 8 (7 widgets + 1 bottom button row).
+   - Up/Down navigation correctly navigates through all 7 controls widgets and handles popup dropdown focus.
 3. **State Snapshot & Rollback**:
    - `SettingsSnapshot` extended to record `steering_profile_idx: usize`, `hold_bleed_rate: f32`, and `min_speed_steer_limit: f32`.
-   - `has_unsaved_changes()` accurately reflects edits to input smoothing parameters.
-   - `restore_defaults()` resets input widgets to `Balanced`, `2.2x`, and `0.55x`.
+   - `has_changes()` accurately reflects edits to input smoothing parameters.
+   - `restore_defaults()` resets input widgets to `Balanced`, `4.0x`, and `0.75x`.
 
 ### 2. Game Mod Binding & Application (`crates/tdrace-app/src/game/mod.rs`)
 
@@ -78,7 +78,7 @@ flowchart TD
    - Displays active Steering Profile and Hold-Lock Bleed Rate.
 2. **Hotkeys**:
    - `[S / P]`: Cycle steering profile.
-   - `[B]`: Cycle hold-lock bleed presets (`1.5x` -> `2.2x` -> `3.0x` -> `4.0x`).
+   - `[B]`: Cycle hold-lock bleed presets (`2.0x` -> `4.0x` -> `6.0x` -> `8.0x` -> `10.0x`).
    - `[O]`: Open Settings Modal directly from Controls screen.
 
 ---

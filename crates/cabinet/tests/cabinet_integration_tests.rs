@@ -1173,30 +1173,30 @@ fn test_arcade_settings_modal_controls_tab_widgets_and_rollback() {
     let mut modal = ArcadeSettingsModal::new(&audio, &gp);
 
     // Initial state
-    modal.set_input_filter_state(SteeringProfile::Balanced, 2.2, 0.55);
+    modal.set_input_filter_state(SteeringProfile::Balanced, 4.0, 0.75);
     modal.snapshot_initial();
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
-    assert!((modal.selected_hold_bleed_rate() - 2.2).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.55).abs() < 1e-3);
+    assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
     assert!(!modal.has_changes());
 
     // Modify controls settings
     modal.steering_profile_dropdown.set_selected(1); // Smooth
-    modal.hold_bleed_rate_slider.set_value(3.5);
-    modal.min_speed_steer_limit_slider.set_value(0.70);
+    modal.hold_bleed_rate_slider.set_value(6.5);
+    modal.min_speed_steer_limit_slider.set_value(0.90);
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Smooth);
-    assert!((modal.selected_hold_bleed_rate() - 3.5).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.70).abs() < 1e-3);
+    assert!((modal.selected_hold_bleed_rate() - 6.5).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.90).abs() < 1e-3);
     assert!(modal.has_changes());
 
     // Cancel / Rollback to snapshot
     modal.revert_to_snapshot();
 
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
-    assert!((modal.selected_hold_bleed_rate() - 2.2).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.55).abs() < 1e-3);
+    assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
+    assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
     assert!(!modal.has_changes());
 }
 

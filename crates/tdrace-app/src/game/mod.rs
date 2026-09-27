@@ -5530,22 +5530,16 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::B) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     let current = self.input.filter.config.hold_bleed_rate;
-                    let next = if (current - 1.5).abs() < 0.15 {
-                        2.2
-                    } else if (current - 2.2).abs() < 0.15 {
-                        3.0
-                    } else if (current - 3.0).abs() < 0.15 {
-                        4.0
-                    } else if (current - 4.0).abs() < 0.15 {
-                        1.5
-                    } else if current < 2.0 {
-                        2.2
-                    } else if current < 2.6 {
-                        3.0
-                    } else if current < 3.5 {
-                        4.0
-                    } else {
-                        1.5
+                    let presets = [2.0, 4.0, 6.0, 8.0, 10.0];
+                    let next = match presets.iter().position(|&p| (current - p).abs() < 0.35) {
+                        Some(idx) => presets[(idx + 1) % presets.len()],
+                        None => {
+                            if current < 3.0 { 4.0 }
+                            else if current < 5.0 { 6.0 }
+                            else if current < 7.0 { 8.0 }
+                            else if current < 9.0 { 10.0 }
+                            else { 2.0 }
+                        }
                     };
                     self.input.filter.config.hold_bleed_rate = next;
                     self.config.input.hold_bleed_rate = next;

@@ -71,7 +71,7 @@ fn default_steering_profile() -> SteeringProfile {
 }
 
 fn default_hold_bleed_rate() -> f32 {
-    2.5
+    4.0
 }
 
 /// Configuration for digital keyboard input smoothing and progressive steering/turning.
@@ -109,7 +109,7 @@ impl DigitalInputConfig {
                 steer_exponent: 1.0,
                 speed_sensitive_factor: 0.0,
                 min_speed_steer_limit: 1.0,
-                hold_bleed_rate: 0.0,
+                hold_bleed_rate: 8.0,
                 throttle_rise_rate: 12.0,
                 brake_rise_rate: 10.0,
             },
@@ -120,7 +120,7 @@ impl DigitalInputConfig {
                 steer_exponent: 1.25,
                 speed_sensitive_factor: 0.004,
                 min_speed_steer_limit: 0.75,
-                hold_bleed_rate: 2.5,
+                hold_bleed_rate: 4.0,
                 throttle_rise_rate: 9.5,
                 brake_rise_rate: 6.5,
             },
@@ -131,7 +131,7 @@ impl DigitalInputConfig {
                 steer_exponent: 1.40,
                 speed_sensitive_factor: 0.008,
                 min_speed_steer_limit: 0.60,
-                hold_bleed_rate: 1.5,
+                hold_bleed_rate: 2.0,
                 throttle_rise_rate: 8.0,
                 brake_rise_rate: 5.5,
             },

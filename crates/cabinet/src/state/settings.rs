@@ -67,8 +67,8 @@ impl Default for SettingsSnapshot {
             steer_sensitivity: 0.0,
             steer_exponent: 0.0,
             steering_profile_idx: 0,
-            hold_bleed_rate: 2.2,
-            min_speed_steer_limit: 0.55,
+            hold_bleed_rate: 4.0,
+            min_speed_steer_limit: 0.75,
             resolution_idx: 0,
             display_mode_idx: 0,
             ui_scale_idx: 0,
@@ -503,8 +503,8 @@ impl ArcadeSettingsModal {
                 steering_profile_options,
                 0,
             ),
-            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 0.50, 5.00, 0.10, 2.20).with_suffix("x"),
-            min_speed_steer_limit_slider: SliderWidget::new("MIN SPEED STEER LIMIT", 0.30, 0.90, 0.05, 0.55).with_suffix("x"),
+            hold_bleed_rate_slider: SliderWidget::new("HOLD-LOCK BLEED SPEED", 1.00, 10.00, 0.10, 4.00).with_suffix("x"),
+            min_speed_steer_limit_slider: SliderWidget::new("MIN SPEED STEER LIMIT", 0.50, 1.00, 0.05, 0.75).with_suffix("x"),
             stick_deadzone_slider: SliderWidget::new("STICK DEADZONE", 0.0, 0.40, 0.02, gamepad.stick_deadzone),
             trigger_deadzone_slider: SliderWidget::new("TRIGGER DEADZONE", 0.0, 0.30, 0.01, gamepad.trigger_deadzone),
             steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
@@ -569,8 +569,8 @@ impl ArcadeSettingsModal {
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
         self.steering_profile_dropdown.set_selected(0);
-        self.hold_bleed_rate_slider.set_value(2.20);
-        self.min_speed_steer_limit_slider.set_value(0.55);
+        self.hold_bleed_rate_slider.set_value(4.00);
+        self.min_speed_steer_limit_slider.set_value(0.75);
 
         self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
@@ -1339,21 +1339,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                 ) {
                     ctx.play_ui_select();
                     if self.steering_profile_dropdown.selected_index != prev_profile_idx {
-                        match self.steering_profile_dropdown.selected_index {
-                            0 => {
-                                self.hold_bleed_rate_slider.set_value(2.20);
-                                self.min_speed_steer_limit_slider.set_value(0.55);
-                            }
-                            1 => {
-                                self.hold_bleed_rate_slider.set_value(1.80);
-                                self.min_speed_steer_limit_slider.set_value(0.45);
-                            }
-                            2 => {
-                                self.hold_bleed_rate_slider.set_value(4.00);
-                                self.min_speed_steer_limit_slider.set_value(0.85);
-                            }
-                            _ => {}
-                        }
+                        let profile = SteeringProfile::from_index(self.steering_profile_dropdown.selected_index);
+                        let cfg = profile.to_config();
+                        self.hold_bleed_rate_slider.set_value(cfg.hold_bleed_rate.clamp(1.0, 10.0));
+                        self.min_speed_steer_limit_slider.set_value(cfg.min_speed_steer_limit.clamp(0.5, 1.0));
                     }
                 }
                 if self.hold_bleed_rate_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
