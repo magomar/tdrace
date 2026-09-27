@@ -13326,6 +13326,22 @@ impl RaceSession {
             }
         }
 
+        if (is_key_down(KeyCode::LeftControl)
+            || is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::LeftSuper)
+            || is_key_down(KeyCode::RightSuper))
+            && is_key_pressed(KeyCode::O)
+        {
+            if self.editor_modal == EditorModal::None {
+                let _ = self.track_manager.scan_custom_tracks();
+                self.editor_modal = EditorModal::OpenTrack {
+                    selected_tab: 0,
+                    page: 0,
+                    selected_idx: 0,
+                };
+            }
+        }
+
         if is_key_pressed(KeyCode::Delete) || is_key_pressed(KeyCode::Backspace) {
             if let Some(state) = &mut self.editor_state {
                 if self.editor_tools.delete_selected(state) {
@@ -13773,6 +13789,7 @@ impl RaceSession {
                 &mut self.editor_camera,
                 &mut self.track_manager,
                 &mut self.editor_modal,
+                &self.input.gamepad.snapshot,
             );
 
             // 3. Render floating Save Confirmation Toast if active

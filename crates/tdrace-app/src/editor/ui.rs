@@ -17,6 +17,7 @@ use crate::editor::state::{EditorState, GridSnapSetting, Selection};
 use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
 use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
+use cabinet::input::GamepadSnapshot;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
 
@@ -52,6 +53,7 @@ pub enum EditorModal {
     OpenTrack {
         selected_tab: usize,
         page: usize,
+        selected_idx: usize,
     },
     Diagnostics,
     Help,
@@ -188,6 +190,7 @@ pub fn render_editor_ui(
     camera: &mut EditorCamera,
     track_manager: &mut TrackManager,
     active_modal: &mut EditorModal,
+    gamepad: &GamepadSnapshot,
 ) -> EditorAction {
     let sw = screen_width();
     let sh = screen_height();
@@ -251,6 +254,7 @@ pub fn render_editor_ui(
         *active_modal = EditorModal::OpenTrack {
             selected_tab: 0,
             page: 0,
+            selected_idx: 0,
         };
     }
     tb_x += scaler.s(72.0);
@@ -646,7 +650,11 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
-            EditorModal::OpenTrack { selected_tab, page } => {
+            EditorModal::OpenTrack {
+                selected_tab,
+                page,
+                selected_idx,
+            } => {
                 if let Some(action) = render_open_modal(
                     fonts,
                     &scaler,
@@ -654,9 +662,11 @@ pub fn render_editor_ui(
                     sh,
                     selected_tab,
                     page,
+                    selected_idx,
                     track_manager,
                     mouse_pos,
                     mouse_clicked,
+                    gamepad,
                 ) {
                     dispatched_action = action;
                     *active_modal = EditorModal::None;
@@ -726,11 +736,15 @@ pub fn render_editor_ui(
             EditorModal::None => {}
         }
 
-        if (is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Enter))
+        let is_cancel = is_key_pressed(KeyCode::Escape)
+            || gamepad.btn_cancel_pressed
+            || gamepad.btn_b_pressed
+            || gamepad.btn_back_pressed;
+        if (is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Enter) || gamepad.btn_confirm_pressed || gamepad.btn_cancel_pressed)
             && matches!(*active_modal, EditorModal::Warning { .. })
         {
             *active_modal = EditorModal::None;
-        } else if is_key_pressed(KeyCode::Escape) && *active_modal != EditorModal::None && *active_modal != EditorModal::UnsavedChanges {
+        } else if is_cancel && *active_modal != EditorModal::None && *active_modal != EditorModal::UnsavedChanges {
             *active_modal = EditorModal::None;
         }
     } else {
@@ -3841,6 +3855,83 @@ fn render_save_modal(
     action_to_dispatch
 }
 
+/// User navigation inputs for the Open Circuit modal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OpenCircuitNavInput {
+    Up,
+    Down,
+    PagePrev,
+    PageNext,
+    TabPrev,
+    TabNext,
+    SetTab(usize),
+}
+
+/// Updates open circuit modal navigation state based on user inputs.
+pub fn update_open_circuit_nav(
+    selected_tab: &mut usize,
+    page: &mut usize,
+    selected_idx: &mut usize,
+    total_tabs: usize,
+    total_items: usize,
+    items_per_page: usize,
+    input: OpenCircuitNavInput,
+) {
+    if total_tabs == 0 {
+        return;
+    }
+    let items_per_page = items_per_page.max(1);
+    let total_pages = ((total_items + items_per_page - 1) / items_per_page).max(1);
+
+    match input {
+        OpenCircuitNavInput::Up => {
+            if total_items > 0 {
+                if *selected_idx == 0 {
+                    *selected_idx = total_items - 1;
+                } else {
+                    *selected_idx -= 1;
+                }
+                *page = *selected_idx / items_per_page;
+            }
+        }
+        OpenCircuitNavInput::Down => {
+            if total_items > 0 {
+                *selected_idx = (*selected_idx + 1) % total_items;
+                *page = *selected_idx / items_per_page;
+            }
+        }
+        OpenCircuitNavInput::PagePrev => {
+            if *page > 0 {
+                *page -= 1;
+                *selected_idx = *page * items_per_page;
+            }
+        }
+        OpenCircuitNavInput::PageNext => {
+            if *page + 1 < total_pages {
+                *page += 1;
+                *selected_idx = (*page * items_per_page).min(total_items.saturating_sub(1));
+            }
+        }
+        OpenCircuitNavInput::TabPrev => {
+            *selected_tab = selected_tab.checked_sub(1).unwrap_or(total_tabs - 1);
+            *page = 0;
+            *selected_idx = 0;
+        }
+        OpenCircuitNavInput::TabNext => {
+            *selected_tab = (*selected_tab + 1) % total_tabs;
+            *page = 0;
+            *selected_idx = 0;
+        }
+        OpenCircuitNavInput::SetTab(tab_idx) => {
+            if tab_idx < total_tabs && *selected_tab != tab_idx {
+                *selected_tab = tab_idx;
+                *page = 0;
+                *selected_idx = 0;
+            }
+        }
+    }
+}
+
 /// Renders open track modal with tabs for all registered modules and drafts.
 fn render_open_modal(
     fonts: &Fonts,
@@ -3849,9 +3940,11 @@ fn render_open_modal(
     sh: f32,
     selected_tab: &mut usize,
     page: &mut usize,
+    selected_idx: &mut usize,
     track_manager: &TrackManager,
     mouse_pos: Vec2,
     clicked: bool,
+    gamepad: &GamepadSnapshot,
 ) -> Option<EditorAction> {
     let mw = scaler.s(680.0);
     let mh = scaler.s(490.0);
@@ -3878,17 +3971,55 @@ fn render_open_modal(
         ("CUSTOM", "custom"),
     ];
 
-    if is_key_pressed(KeyCode::Left) {
-        *selected_tab = selected_tab.checked_sub(1).unwrap_or(tabs.len() - 1);
-        *page = 0;
+    let items_per_page = 5;
+
+    // Direct tab numeric hotkeys (1-6)
+    let num_keys = [KeyCode::Key1, KeyCode::Key2, KeyCode::Key3, KeyCode::Key4, KeyCode::Key5, KeyCode::Key6];
+    let kp_keys = [KeyCode::Kp1, KeyCode::Kp2, KeyCode::Kp3, KeyCode::Kp4, KeyCode::Kp5, KeyCode::Kp6];
+    for (i, (&k, &kp)) in num_keys.iter().zip(kp_keys.iter()).enumerate() {
+        if is_key_pressed(k) || is_key_pressed(kp) {
+            update_open_circuit_nav(
+                selected_tab,
+                page,
+                selected_idx,
+                tabs.len(),
+                0,
+                items_per_page,
+                OpenCircuitNavInput::SetTab(i),
+            );
+        }
     }
-    if is_key_pressed(KeyCode::Right) {
-        *selected_tab = (*selected_tab + 1) % tabs.len();
-        *page = 0;
-    }
-    if is_key_pressed(KeyCode::Tab) {
-        *selected_tab = (*selected_tab + 1) % tabs.len();
-        *page = 0;
+
+    // Tab cycling (Q / E / LB / RB / Tab / Shift+Tab)
+    let tab_next = is_key_pressed(KeyCode::E)
+        || is_key_pressed(KeyCode::RightBracket)
+        || gamepad.btn_rb_pressed
+        || (is_key_pressed(KeyCode::Tab) && !is_key_down(KeyCode::LeftShift) && !is_key_down(KeyCode::RightShift));
+    let tab_prev = is_key_pressed(KeyCode::Q)
+        || is_key_pressed(KeyCode::LeftBracket)
+        || gamepad.btn_lb_pressed
+        || (is_key_pressed(KeyCode::Tab) && (is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift)));
+
+    if tab_next {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            0,
+            items_per_page,
+            OpenCircuitNavInput::TabNext,
+        );
+    } else if tab_prev {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            0,
+            items_per_page,
+            OpenCircuitNavInput::TabPrev,
+        );
     }
 
     // Render Tab Buttons
@@ -3914,8 +4045,15 @@ fn render_open_modal(
         };
 
         if draw_ui_btn(fonts, scaler, tx, tab_y, tab_w, tab_h, tab_label, bg_col, border_col, mouse_pos, clicked) {
-            *selected_tab = idx;
-            *page = 0;
+            update_open_circuit_nav(
+                selected_tab,
+                page,
+                selected_idx,
+                tabs.len(),
+                0,
+                items_per_page,
+                OpenCircuitNavInput::SetTab(idx),
+            );
         }
     }
 
@@ -3927,11 +4065,123 @@ fn render_open_modal(
         track_manager.module_catalog_tracks(mod_id)
     };
 
-    let items_per_page = 5;
     let total_pages = ((tracks.len() + items_per_page - 1) / items_per_page).max(1);
     if *page >= total_pages {
         *page = total_pages - 1;
     }
+    if tracks.is_empty() {
+        *selected_idx = 0;
+    } else if *selected_idx >= tracks.len() {
+        *selected_idx = tracks.len() - 1;
+    }
+
+    // Circuit Navigation (Up / Down / W / S / Gamepad Stick & D-Pad)
+    let nav_up = is_key_pressed(KeyCode::Up)
+        || is_key_pressed(KeyCode::W)
+        || gamepad.dpad_up_pressed
+        || gamepad.nav_up;
+    let nav_down = is_key_pressed(KeyCode::Down)
+        || is_key_pressed(KeyCode::S)
+        || gamepad.dpad_down_pressed
+        || gamepad.nav_down;
+
+    if nav_up {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            tracks.len(),
+            items_per_page,
+            OpenCircuitNavInput::Up,
+        );
+    } else if nav_down {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            tracks.len(),
+            items_per_page,
+            OpenCircuitNavInput::Down,
+        );
+    }
+
+    // Page Navigation (Left / Right / PageUp / PageDown / Gamepad Left/Right)
+    let page_prev = is_key_pressed(KeyCode::PageUp)
+        || (total_pages > 1 && (is_key_pressed(KeyCode::Left) || gamepad.dpad_left_pressed || gamepad.nav_left));
+    let page_next = is_key_pressed(KeyCode::PageDown)
+        || (total_pages > 1 && (is_key_pressed(KeyCode::Right) || gamepad.dpad_right_pressed || gamepad.nav_right));
+
+    if page_prev {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            tracks.len(),
+            items_per_page,
+            OpenCircuitNavInput::PagePrev,
+        );
+    } else if page_next {
+        update_open_circuit_nav(
+            selected_tab,
+            page,
+            selected_idx,
+            tabs.len(),
+            tracks.len(),
+            items_per_page,
+            OpenCircuitNavInput::PageNext,
+        );
+    } else if total_pages <= 1 {
+        // Fallback when single page: Left and Right arrows switch tabs
+        if is_key_pressed(KeyCode::Left) || gamepad.dpad_left_pressed || gamepad.nav_left {
+            update_open_circuit_nav(
+                selected_tab,
+                page,
+                selected_idx,
+                tabs.len(),
+                tracks.len(),
+                items_per_page,
+                OpenCircuitNavInput::TabPrev,
+            );
+        } else if is_key_pressed(KeyCode::Right) || gamepad.dpad_right_pressed || gamepad.nav_right {
+            update_open_circuit_nav(
+                selected_tab,
+                page,
+                selected_idx,
+                tabs.len(),
+                tracks.len(),
+                items_per_page,
+                OpenCircuitNavInput::TabNext,
+            );
+        }
+    }
+
+    let mut chosen_action = None;
+
+    // Confirm action (Enter / Space / Gamepad A)
+    let is_confirm = is_key_pressed(KeyCode::Enter)
+        || is_key_pressed(KeyCode::KpEnter)
+        || is_key_pressed(KeyCode::Space)
+        || gamepad.btn_confirm_pressed
+        || gamepad.btn_a_pressed;
+    if is_confirm {
+        if let Some(choice) = tracks.get(*selected_idx) {
+            chosen_action = Some(EditorAction::OpenTrack(choice.clone()));
+        }
+    }
+
+    // Delete action (Delete / Backspace / Gamepad X)
+    let is_delete_key = is_key_pressed(KeyCode::Backspace)
+        || is_key_pressed(KeyCode::Delete)
+        || gamepad.btn_x_pressed;
+    if is_delete_key && chosen_action.is_none() {
+        if let Some(choice) = tracks.get(*selected_idx) {
+            chosen_action = Some(EditorAction::DeleteTrack(choice.track_id().to_string()));
+        }
+    }
+
     let start_idx = *page * items_per_page;
     let end_idx = (start_idx + items_per_page).min(tracks.len());
 
@@ -3939,8 +4189,6 @@ fn render_open_modal(
     let item_w = mw - scaler.s(40.0);
     let item_h = scaler.s(50.0);
     let item_x = mx + scaler.s(20.0);
-
-    let mut chosen_action = None;
 
     if tracks.is_empty() {
         fonts.draw_ui_regular_centered(
@@ -3951,20 +4199,29 @@ fn render_open_modal(
             Palette::UI_TEXT_MUTED,
         );
     } else {
-        for choice in &tracks[start_idx..end_idx] {
+        for (rel_idx, choice) in tracks[start_idx..end_idx].iter().enumerate() {
+            let abs_idx = start_idx + rel_idx;
+            let is_sel = *selected_idx == abs_idx;
             let is_hover = mouse_pos.x >= item_x && mouse_pos.x <= item_x + item_w && mouse_pos.y >= ty && mouse_pos.y <= ty + item_h;
-            let bg_col = if is_hover {
+            let is_active = is_sel || is_hover;
+
+            let bg_col = if is_active {
                 Palette::UI_CARD_BG_HOVER
             } else {
                 Color::new(0.04, 0.06, 0.09, 0.95)
             };
-            let border_col = if is_hover {
+            let border_col = if is_active {
                 Palette::NEON_CYAN
             } else {
                 Palette::UI_CARD_BORDER
             };
 
-            scaler.draw_glass_card(item_x, ty, item_w, item_h, bg_col, border_col, if is_hover { 1.8 } else { 1.0 });
+            scaler.draw_glass_card(item_x, ty, item_w, item_h, bg_col, border_col, if is_active { 1.8 } else { 1.0 });
+
+            // Active card indicator bar on left edge
+            if is_sel {
+                macroquad::shapes::draw_rectangle(item_x, ty, scaler.s(3.5), item_h, Palette::NEON_CYAN);
+            }
 
             // Title & Description
             fonts.draw_ui_bold(
@@ -3972,7 +4229,7 @@ fn render_open_modal(
                 item_x + scaler.s(14.0),
                 ty + scaler.s(20.0),
                 scaler.font_s(13.5),
-                Palette::WHITE,
+                if is_active { Palette::NEON_CYAN } else { Palette::WHITE },
             );
 
             let desc = choice.description();
@@ -4028,9 +4285,10 @@ fn render_open_modal(
                 clicked,
             );
 
-            if del_clicked || (is_hover && (is_key_pressed(KeyCode::Backspace) || is_key_pressed(KeyCode::Delete))) {
+            if del_clicked {
                 chosen_action = Some(EditorAction::DeleteTrack(choice.track_id().to_string()));
             } else if is_hover && clicked {
+                *selected_idx = abs_idx;
                 chosen_action = Some(EditorAction::OpenTrack(choice.clone()));
             }
 
@@ -4059,15 +4317,47 @@ fn render_open_modal(
 
         if *page > 0 {
             if draw_ui_btn(fonts, scaler, prev_x, foot_y + scaler.s(4.0), nav_w, nav_h, "< PREV", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                *page -= 1;
+                update_open_circuit_nav(
+                    selected_tab,
+                    page,
+                    selected_idx,
+                    tabs.len(),
+                    tracks.len(),
+                    items_per_page,
+                    OpenCircuitNavInput::PagePrev,
+                );
             }
         }
         if *page + 1 < total_pages {
             if draw_ui_btn(fonts, scaler, next_x, foot_y + scaler.s(4.0), nav_w, nav_h, "NEXT >", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                *page += 1;
+                update_open_circuit_nav(
+                    selected_tab,
+                    page,
+                    selected_idx,
+                    tabs.len(),
+                    tracks.len(),
+                    items_per_page,
+                    OpenCircuitNavInput::PageNext,
+                );
             }
         }
     }
+
+    // Controls helper hint (right)
+    let hint_text = if gamepad.is_connected {
+        "[D-Pad/Sticks] Select  •  [A] Open  •  [X] Del  •  [LB/RB] Tab"
+    } else {
+        "[↑/↓] Select  •  [Enter] Open  •  [Del] Del  •  [Q/E/Tab] Tab"
+    };
+    let hint_w = fonts.measure_ui_regular(hint_text, scaler.font_s(10.0)).width;
+    let hint_x = item_x + item_w - hint_w;
+    fonts.draw_ui_regular(
+        hint_text,
+        hint_x,
+        foot_y + scaler.s(20.0),
+        scaler.font_s(10.0),
+        Palette::UI_TEXT_MUTED,
+    );
 
     chosen_action
 }
@@ -4457,10 +4747,12 @@ mod tests {
         modal = EditorModal::OpenTrack {
             selected_tab: 2,
             page: 1,
+            selected_idx: 3,
         };
-        if let EditorModal::OpenTrack { selected_tab, page } = &modal {
+        if let EditorModal::OpenTrack { selected_tab, page, selected_idx } = &modal {
             assert_eq!(*selected_tab, 2);
             assert_eq!(*page, 1);
+            assert_eq!(*selected_idx, 3);
         } else {
             panic!("Expected OpenTrack modal");
         }
@@ -4538,5 +4830,74 @@ mod tests {
     fn test_checkpoint_finish_line_label_consistency() {
         assert_eq!(checkpoint_finish_line_label(true), "[X] Finish Line");
         assert_eq!(checkpoint_finish_line_label(false), "[ ] Finish Line");
+    }
+
+    #[test]
+    fn test_open_circuit_navigation() {
+        let mut tab = 0;
+        let mut page = 0;
+        let mut sel = 0;
+        let total_tabs = 6;
+        let total_items = 93; // Matches screenshot: 93 circuits across 19 pages
+        let items_per_page = 5;
+
+        // Nav Down moves down item by item
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down);
+        assert_eq!(sel, 1);
+        assert_eq!(page, 0);
+
+        // Advance to 5th item (last on page 0)
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down); // 2
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down); // 3
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down); // 4
+        assert_eq!(sel, 4);
+        assert_eq!(page, 0);
+
+        // Moving down past the bottom of page 0 automatically flips to page 1 and selects item 5
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down);
+        assert_eq!(sel, 5);
+        assert_eq!(page, 1);
+
+        // Moving up returns to page 0, item 4
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Up);
+        assert_eq!(sel, 4);
+        assert_eq!(page, 0);
+
+        // Page navigation
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::PageNext);
+        assert_eq!(page, 1);
+        assert_eq!(sel, 5);
+
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::PagePrev);
+        assert_eq!(page, 0);
+        assert_eq!(sel, 0);
+
+        // Wrap around on Up at top of list
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Up);
+        assert_eq!(sel, 92);
+        assert_eq!(page, 18); // 19th page (0-indexed 18)
+
+        // Wrap around on Down at end of list
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down);
+        assert_eq!(sel, 0);
+        assert_eq!(page, 0);
+
+        // Tab switching resets page and selection
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::Down);
+        assert_eq!(sel, 1);
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::TabNext);
+        assert_eq!(tab, 1);
+        assert_eq!(page, 0);
+        assert_eq!(sel, 0);
+
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::TabPrev);
+        assert_eq!(tab, 0);
+        assert_eq!(page, 0);
+        assert_eq!(sel, 0);
+
+        update_open_circuit_nav(&mut tab, &mut page, &mut sel, total_tabs, total_items, items_per_page, OpenCircuitNavInput::SetTab(4));
+        assert_eq!(tab, 4);
+        assert_eq!(page, 0);
+        assert_eq!(sel, 0);
     }
 }
