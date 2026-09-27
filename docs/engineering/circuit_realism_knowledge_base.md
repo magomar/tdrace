@@ -615,10 +615,13 @@ These are proposals. None is implemented. Each P1+ item needs a Keel spec first.
 
 1. One shared Python module for projection, stitching, resampling and transform
    (replace the four copy-pasted scripts). Store `OsmImportRecord` (§5.1).
+   *Done for GT, kart and rallycross in `scripts/osm_importer.py` (2026-09-27), including
+   the join check and the raw-length check. Still to do: NASCAR, and storing the transform.*
 2. `osm_environment_importer.py`: runs §5.4–5.9 and prints per-waypoint wall distances,
    runoff surfaces, grandstands and trees as Rust (same paste workflow as today).
 3. Raw-length ratio check in tests (flag ratio outside 0.9–1.1), instead of the
    circular length tests.
+   *The importer now warns on this ratio; the Rust tests are unchanged.*
 4. DEM elevation (and allow negative elevation, D4). Needs a data source decision.
 5. ODbL attribution in credits and in the portal (D12).
 
