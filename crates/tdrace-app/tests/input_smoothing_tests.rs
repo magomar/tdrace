@@ -318,3 +318,65 @@ fn test_interactive_controls_filter_sync_and_persistence() {
     );
 }
 
+#[test]
+fn test_player_car_physics_receives_unattenuated_steering_when_direct_or_raw() {
+    use tdrace_app::input::SteeringProfile;
+    use tdrace_core::Vec2;
+
+    let dt = 1.0 / 60.0;
+    let high_speed = 45.0; // 45 m/s ~ 162 km/h
+
+    // 1. Direct/Raw profile filter
+    let direct_cfg = SteeringProfile::Direct.to_config();
+    assert!(!direct_cfg.speed_sensitive_enabled);
+    assert_eq!(direct_cfg.min_speed_steer_limit, 1.0);
+    let mut filter = DigitalInputFilter::new(direct_cfg);
+
+    // After ramp, filter outputs 1.0 full lock at 162 km/h
+    for _ in 0..15 {
+        filter.update(1.0, 0.0, 0.0, high_speed, dt);
+    }
+    let (filter_steer, _, _) = filter.update(1.0, 0.0, 0.0, high_speed, dt);
+    assert_eq!(filter_steer, 1.0);
+
+    // 2. Player car with speed_sensitive_steer_factor = 0.0 (applied by RaceSession)
+    let mut player_car = Car::new(CarConfig::sports_car());
+    player_car.config.speed_sensitive_steer_factor = 0.0;
+    player_car.state.velocity = Vec2::new(high_speed, 0.0);
+    player_car.state.speed = high_speed;
+
+    let ctrl = CarControls::new(0.0, filter_steer, 0.0, false);
+    for _ in 0..30 {
+        player_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
+    }
+
+    // Player car must reach 100% of max_steer_angle at high speed without physics attenuation
+    let max_steer = player_car.config.max_steer_angle;
+    assert!(
+        (player_car.state.steer_angle.abs() - max_steer).abs() < 1e-2,
+        "Player car steering angle ({}) must reach full mechanical lock ({}) at high speed when Direct/Raw",
+        player_car.state.steer_angle.abs(),
+        max_steer
+    );
+
+    // 3. Contrast with unconfigured car (legacy double-attenuation with speed_sensitive_steer_factor > 0)
+    let mut legacy_car = Car::new(CarConfig::sports_car());
+    legacy_car.config.speed_sensitive_steer_factor = 0.016; // Legacy GT factor
+    legacy_car.state.velocity = Vec2::new(high_speed, 0.0);
+    legacy_car.state.speed = high_speed;
+
+    for _ in 0..30 {
+        legacy_car.step_per_wheel(&ctrl, [SurfaceType::Asphalt; 4], dt);
+    }
+    let legacy_steer = legacy_car.state.steer_angle.abs();
+    assert!(
+        legacy_steer < max_steer * 0.65,
+        "Legacy car was heavily attenuated to only {} of max lock",
+        legacy_steer / max_steer
+    );
+    assert!(
+        player_car.state.steer_angle.abs() > legacy_steer * 1.5,
+        "Player car with settings applied must have significantly greater steering angle than legacy attenuated car"
+    );
+}
+

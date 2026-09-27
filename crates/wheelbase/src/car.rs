@@ -639,7 +639,9 @@ fn apply_differential_rotational_coupling(
         // 1. Steering dynamics with speed-sensitive limit and counter-steer assist
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
-        let speed_factor = if self.config.caster_jacking_factor > 0.0 {
+        let speed_factor = if self.config.speed_sensitive_steer_factor <= 0.0 {
+            1.0
+        } else if self.config.caster_jacking_factor > 0.0 {
             // For racing karts with 42° direct steering lock:
             // Retain 100% full lock at low speed (<= 3.5 m/s ~ 12.6 km/h) for tight hairpins and pit maneuvers.
             // Progressively attenuate at racing speeds so high-speed steering inputs do not cause front tire scrub stall.
