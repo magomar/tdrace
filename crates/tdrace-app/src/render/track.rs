@@ -1503,11 +1503,6 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 if is_banked {
                     lines_to_draw.push((mid_l0, mid_l1, 0.12, Color::new(0.40, 0.42, 0.46, 0.4)));
                     lines_to_draw.push((mid_r0, mid_r1, 0.12, Color::new(0.40, 0.42, 0.46, 0.4)));
-                } else {
-                    let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
-                    if center_stripe {
-                        lines_to_draw.push((s0.point, s1.point, 0.16, Color::new(0.95, 0.95, 0.95, 0.35)));
-                    }
                 }
             }
             SurfaceType::Concrete => {
@@ -1595,14 +1590,24 @@ fn render_finish_line(track: &Track) {
 
     // Use the first checkpoint or sample at dist 0
     let finish_cp = track.checkpoints.iter().find(|cp| cp.is_finish_line).unwrap_or(&track.checkpoints[0]);
-    let start_pt = finish_cp.gate.start;
-    let end_pt = finish_cp.gate.end;
-    let dir = end_pt - start_pt;
-    let total_w = dir.length();
-    if total_w < 1.0 {
+    let gate_dir = finish_cp.gate.end - finish_cp.gate.start;
+    let gate_w = gate_dir.length();
+    if gate_w < 1.0 {
         return;
     }
-    let norm = dir / total_w;
+    let norm = gate_dir / gate_w;
+
+    // The timing gate extends past the track edges; paint the checkers across the track width only,
+    // centered where the gate crosses the centerline.
+    let gate_mid = (finish_cp.gate.start + finish_cp.gate.end) * 0.5;
+    let (center, total_w) = if track.spline.samples.len() >= 2 {
+        let proj = track.spline.project_point(gate_mid);
+        let along = (proj.closest_point - finish_cp.gate.start).dot(norm).clamp(0.0, gate_w);
+        (finish_cp.gate.start + norm * along, proj.track_width.min(gate_w))
+    } else {
+        (gate_mid, gate_w)
+    };
+    let start_pt = center - norm * (total_w * 0.5);
     let fwd = finish_cp.direction * 0.85; // depth of finish line checkering
 
     let num_checks = 10;
