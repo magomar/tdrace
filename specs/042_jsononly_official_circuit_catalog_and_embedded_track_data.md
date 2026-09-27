@@ -3,8 +3,9 @@ type: Architecture Spec
 template: architecture
 title: "JSON-Only Official Circuit Catalog and Embedded Track Data"
 description: "Makes tracks/<module>/<slug>.json the single source of truth for the 96 official circuits, removes the Rust-coded circuit presets, embeds a compressed copy of the JSON in the binary as the fallback, lets dev mode save official circuits back to their JSON for all six modules, keeps custom circuits in the user folder only, and makes the OSM importer emit JSON."
-status: draft
+status: in_progress
 created: 2026-09-28
+verified: { by: "human:mario", at: "2026-09-27T22:33:11Z" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T00:00:00Z }
 ---
 
@@ -266,6 +267,6 @@ Work is done in phases. Each phase leaves `make test` green.
 - `crates/tdrace-app/src/tracks/catalog.rs` references `specs/042_jsononly_official_circuit_catalog_and_embedded_track_data.md` in its header comment.
 - No file under `crates/` defines a function that returns a specific named circuit.
 
-### Open Questions (resolve at approval)
-1. Approve the `miniz_oxide` direct dependency for the compressed embed.
-2. Confirm that normal mode ignores disk `tracks/` (only the embedded copy), so only dev mode reads the submodule at run time.
+### Resolved Decisions (at approval, 2026-09-27)
+1. `miniz_oxide` is approved as a direct dependency for the compressed embed.
+2. Normal mode ignores disk `tracks/` and uses only the embedded copy. Only dev mode reads the submodule at run time.

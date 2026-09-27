@@ -1345,7 +1345,10 @@ fn test_export_canonical_presets_to_git_repo() {
     };
     use tdrace_core::track::TrackCategory;
 
-    let repo_tracks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
+    // TDRACE_EXPORT_DIR redirects the export, e.g. for the spec 042 parity baseline.
+    let repo_tracks_dir = std::env::var_os("TDRACE_EXPORT_DIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks"));
     if !repo_tracks_dir.exists() {
         return;
     }
