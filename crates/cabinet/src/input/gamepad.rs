@@ -792,7 +792,7 @@ impl GamepadManager {
                     let raw_lt = raw_lt_btn.max(is_lt_pressed).max(is_lt_evdev).max(is_lt_profile);
                     brake = Self::process_trigger_deadzone(raw_lt, config.trigger_deadzone).clamp(0.0, 1.0);
 
-                    handbrake = curr_south;
+                    handbrake = curr_east;
                     reverse = curr_west;
 
                     btn_a_down = curr_south;
@@ -882,6 +882,35 @@ impl GamepadManager {
         } else {
             (raw - deadzone) / (1.0 - deadzone)
         }
+    }
+
+    /// Resets all held button and raw event tracking states.
+    pub fn reset(&mut self) {
+        self.raw_codes_held.clear();
+        self.raw_buttons_held.clear();
+        self.prev_buttons_held.clear();
+        self.prev_south = false;
+        self.prev_east = false;
+        self.prev_west = false;
+        self.prev_north = false;
+        self.prev_start = false;
+        self.prev_select = false;
+        self.prev_dpad_up = false;
+        self.prev_dpad_down = false;
+        self.prev_dpad_left = false;
+        self.prev_dpad_right = false;
+        self.prev_thumb_r = false;
+        self.prev_thumb_l = false;
+        self.prev_rb = false;
+        self.prev_lb = false;
+        self.prev_stick_x = 0.0;
+        self.prev_stick_y = 0.0;
+        self.snapshot.steer = 0.0;
+        self.snapshot.throttle = 0.0;
+        self.snapshot.brake = 0.0;
+        self.snapshot.handbrake = false;
+        self.snapshot.reverse = false;
+        self.clear_frame_events();
     }
 }
 

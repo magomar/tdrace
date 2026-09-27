@@ -5060,18 +5060,21 @@ impl RaceSession {
                 // Player launch throttle / revs on grid
                 if self.is_split_screen() {
                     let (p1_ctrl, p2_ctrl) = self.input.poll_split_player_controls(&mut self.filter_p2, frame_dt, 0.0, 0.0);
-                    let (rpm1, is_shift1) = self.engine_rpm.update(0.0, p1_ctrl.throttle, 0.0, frame_dt);
-                    self.audio.update_engine_telemetry(rpm1, p1_ctrl.throttle, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
-                    let (rpm2, is_shift2) = self.engine_rpm_p2.update(0.0, p2_ctrl.throttle, 0.0, frame_dt);
-                    self.audio.update_engine_telemetry_p2(rpm2, p2_ctrl.throttle, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
+                    let eff_throttle1 = if p1_ctrl.reverse { -p1_ctrl.throttle } else { (p1_ctrl.throttle - p1_ctrl.brake).max(0.0) };
+                    let (rpm1, is_shift1) = self.engine_rpm.update(0.0, eff_throttle1, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry(rpm1, eff_throttle1, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
+                    let eff_throttle2 = if p2_ctrl.reverse { -p2_ctrl.throttle } else { (p2_ctrl.throttle - p2_ctrl.brake).max(0.0) };
+                    let (rpm2, is_shift2) = self.engine_rpm_p2.update(0.0, eff_throttle2, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry_p2(rpm2, eff_throttle2, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
                 } else {
                     let my_idx = self.player_car_index();
                     let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                     let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                    let (rpm, is_shift) = self.engine_rpm.update(0.0, player_ctrl.throttle, 0.0, frame_dt);
-                    self.audio.update_engine_telemetry(rpm, player_ctrl.throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
+                    let eff_throttle = if player_ctrl.reverse { -player_ctrl.throttle } else { (player_ctrl.throttle - player_ctrl.brake).max(0.0) };
+                    let (rpm, is_shift) = self.engine_rpm.update(0.0, eff_throttle, 0.0, frame_dt);
+                    self.audio.update_engine_telemetry(rpm, eff_throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
                 }
 
                 // Countdown audio beeps (3, 2, 1)

@@ -1340,3 +1340,55 @@ fn test_kart_championship_first_round_bots_move() {
         );
     }
 }
+
+#[test]
+fn test_player_throttle_in_kart_championship() {
+    let mut session = RaceSession::new();
+    session.switch_to_kart();
+    session.start_kart_career_tier(1);
+    session.state = GameState::Racing;
+
+    let start_pos = session.cars[0].state.position;
+    let dt = 1.0 / 60.0;
+
+    // Simulate 60 frames of player applying throttle on the starting grid
+    for frame in 0..60 {
+        let prog = session.trackers[0].progress_distance;
+        let surfaces = session.track.sample_car_surfaces_with_hint(&session.cars[0], prog);
+        let ctrl = session.input.process_inputs((0.0, 1.0, 0.0, false), dt, session.cars[0].state.speed);
+        if frame > 10 {
+            assert!(ctrl.throttle > 0.5, "Expected throttle > 0.5, got {}", ctrl.throttle);
+        }
+        assert!(!ctrl.handbrake, "Handbrake should not be engaged during throttle launch");
+        assert_eq!(ctrl.brake, 0.0, "Brake should be 0.0 during throttle launch");
+        session.cars[0].step_per_wheel(&ctrl, surfaces, dt);
+    }
+
+    let end_pos = session.cars[0].state.position;
+    let distance = (end_pos - start_pos).length();
+    assert!(
+        distance > 1.0,
+        "Player kart failed to move from grid under throttle! Distance = {} m",
+        distance
+    );
+    assert!(
+        session.cars[0].state.speed > 2.0,
+        "Player kart failed to accelerate! Speed = {} m/s",
+        session.cars[0].state.speed
+    );
+}
+
+#[test]
+fn test_primary_confirm_action_does_not_engage_handbrake() {
+    let mut session = RaceSession::new();
+    session.input.gamepad.snapshot.btn_a_down = true;
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+
+    let dt = 1.0 / 60.0;
+    let ctrl = session.input.process_inputs((0.0, 0.0, 0.0, false), dt, 10.0);
+    assert!(
+        !ctrl.handbrake,
+        "Primary confirm button (A/South) must not engage driving handbrake"
+    );
+}
+

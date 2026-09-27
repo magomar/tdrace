@@ -1163,9 +1163,3 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     assert_eq!(modal.gameplay_sub_tab, 0); // Returned to General
     assert!(modal.is_subtab_focused);
 }
-
-
-
-
-
-

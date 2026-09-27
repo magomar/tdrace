@@ -300,14 +300,34 @@ pub enum InputSource {
     GamepadAxisNeg(GamepadAxis),
 }
 
+static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
 #[inline]
 fn safe_key_down(key: KeyCode) -> bool {
-    std::panic::catch_unwind(|| is_key_down(key)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| is_key_down(key)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
-    std::panic::catch_unwind(|| is_key_pressed(key)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| is_key_pressed(key)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 
 impl InputSource {
@@ -326,18 +346,18 @@ impl InputSource {
                 }
             }
             InputSource::GamepadBtn(btn) => match btn {
-                GamepadButton::South => gp.handbrake || gp.btn_a_pressed,
-                GamepadButton::East => gp.btn_b_pressed,
-                GamepadButton::West => gp.btn_x_pressed,
-                GamepadButton::North => gp.reverse || gp.btn_y_pressed,
+                GamepadButton::South => gp.btn_a_down || gp.btn_a_pressed,
+                GamepadButton::East => gp.handbrake || gp.btn_b_down || gp.btn_b_pressed,
+                GamepadButton::West => gp.btn_x_down || gp.btn_x_pressed,
+                GamepadButton::North => gp.reverse || gp.btn_y_down || gp.btn_y_pressed,
                 GamepadButton::Start => gp.btn_start_pressed,
                 GamepadButton::Back => gp.btn_back_pressed,
-                GamepadButton::DpadUp => gp.dpad_up_pressed || gp.nav_up,
-                GamepadButton::DpadDown => gp.dpad_down_pressed || gp.nav_down,
-                GamepadButton::DpadLeft => gp.dpad_left_pressed || gp.nav_left,
-                GamepadButton::DpadRight => gp.dpad_right_pressed || gp.nav_right,
-                GamepadButton::LeftBumper => false,
-                GamepadButton::RightBumper => false,
+                GamepadButton::DpadUp => gp.dpad_up_down || gp.dpad_up_pressed || gp.nav_up,
+                GamepadButton::DpadDown => gp.dpad_down_down || gp.dpad_down_pressed || gp.nav_down,
+                GamepadButton::DpadLeft => gp.dpad_left_down || gp.dpad_left_pressed || gp.nav_left,
+                GamepadButton::DpadRight => gp.dpad_right_down || gp.dpad_right_pressed || gp.nav_right,
+                GamepadButton::LeftBumper => gp.btn_lb_down,
+                GamepadButton::RightBumper => gp.btn_rb_down,
             },
             InputSource::GamepadAxisPos(axis) => match axis {
                 GamepadAxis::LeftStickX => gp.steer > 0.3,
@@ -572,7 +592,7 @@ impl InputMap {
             ArcadeAction::Action3,
             vec![
                 InputSource::Key(ArcadeKey::Space),
-                InputSource::GamepadBtn(GamepadButton::South),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -646,7 +666,7 @@ impl InputMap {
             ArcadeAction::Action3,
             vec![
                 InputSource::Key(ArcadeKey::Space),
-                InputSource::GamepadBtn(GamepadButton::South),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -717,7 +737,7 @@ impl InputMap {
             ArcadeAction::Action3,
             vec![
                 InputSource::Key(ArcadeKey::Space),
-                InputSource::GamepadBtn(GamepadButton::South),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -788,7 +808,7 @@ impl InputMap {
             ArcadeAction::Action3,
             vec![
                 InputSource::Key(ArcadeKey::Space),
-                InputSource::GamepadBtn(GamepadButton::South),
+                InputSource::GamepadBtn(GamepadButton::East),
             ],
         );
         bindings.insert(
@@ -965,9 +985,22 @@ impl InputMap {
         serde_json::to_string_pretty(self)
     }
 
-    /// Deserializes configuration from JSON.
+    /// Sanitizes bindings by migrating conflicting legacy bindings (e.g. South on Action3).
+    pub fn sanitize_bindings(&mut self) {
+        if let Some(sources) = self.bindings.get_mut(&ArcadeAction::Action3) {
+            for s in sources.iter_mut() {
+                if *s == InputSource::GamepadBtn(GamepadButton::South) {
+                    *s = InputSource::GamepadBtn(GamepadButton::East);
+                }
+            }
+        }
+    }
+
+    /// Deserializes configuration from JSON and sanitizes legacy bindings.
     pub fn from_json(json: &str) -> Result<Self, serde_json::Error> {
-        serde_json::from_str(json)
+        let mut map: Self = serde_json::from_str(json)?;
+        map.sanitize_bindings();
+        Ok(map)
     }
 }
 

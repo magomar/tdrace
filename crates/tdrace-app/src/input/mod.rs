@@ -5,9 +5,20 @@ pub mod touch;
 use macroquad::color::Color;
 use macroquad::input::KeyCode;
 
+static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
-    std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)).unwrap_or(false)
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
 }
 use macroquad::shapes::{draw_circle, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::text::draw_text;
@@ -64,9 +75,10 @@ impl InputController {
         }
     }
 
-    /// Resets smoothed input filter state (e.g. on race start / restart).
+    /// Resets smoothed input filter state and gamepad button states (e.g. on race start / restart).
     pub fn reset(&mut self) {
         self.filter.reset();
+        self.gamepad.reset();
     }
 
     /// Saves current input bindings to user storage directory.
@@ -144,8 +156,7 @@ impl InputController {
             raw_brake = 1.0;
         }
 
-        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3)
-            || self.input_map.is_key_down(ArcadeAction::Primary);
+        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3);
 
         self.process_inputs((raw_steer, raw_throttle, raw_brake, kb_handbrake), dt, current_speed_fwd)
     }
@@ -169,8 +180,7 @@ impl InputController {
             raw_brake = 1.0;
         }
 
-        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3)
-            || self.input_map.is_key_down(ArcadeAction::Primary);
+        let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3);
 
         let speed_abs = current_speed_fwd.abs();
         let (steer, mut throttle, mut brake) =
@@ -225,8 +235,7 @@ impl InputController {
         let mut throttle = gp.throttle.max(gp_btn_throttle).clamp(0.0, 1.0);
         let mut brake = gp.brake.max(gp_btn_brake).clamp(0.0, 1.0);
         let handbrake = gp.handbrake
-            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp)
-            || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp);
         let mut reverse = gp.reverse;
 
         if current_speed_fwd <= 0.25 && brake > 0.0 && throttle == 0.0 {
@@ -363,8 +372,7 @@ impl InputController {
         let mut brake = kb_brake.max(gp.brake).max(gp_btn_brake).clamp(0.0, 1.0);
         let handbrake = kb_handbrake
             || gp.handbrake
-            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp)
-            || self.input_map.is_gamepad_btn_down(ArcadeAction::Primary, gp);
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Action3, gp);
         let mut reverse = gp.reverse;
 
         // When stationary / stopped or moving backward (forward speed <= 0.25 m/s),

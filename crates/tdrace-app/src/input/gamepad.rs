@@ -863,13 +863,13 @@ impl GamepadController {
             .unwrap_or(config.trigger_deadzone);
         let brake = Self::process_trigger_deadzone(raw_lt, brake_deadzone).clamp(0.0, 1.0);
 
-        // 4. Handbrake (Button A / South or Custom Profile Binding)
+        // 4. Handbrake (Button B / East or Custom Profile Binding)
         let handbrake = Self::is_binding_held(
-            &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone().or_else(|| p.handbrake.clone())),
+            &self.custom_profile.as_ref().and_then(|p| p.handbrake.clone().or_else(|| p.btn_east.clone())),
             &self.raw_buttons_held,
             &self.raw_codes_held,
             maybe_gp.as_ref(),
-            curr_south,
+            curr_east,
         );
 
         // 5. Reverse (Button X / West or Custom Profile Binding)
@@ -882,7 +882,7 @@ impl GamepadController {
         );
 
         let is_a_pressed = Self::is_binding_pressed_this_frame(
-            &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone().or_else(|| p.handbrake.clone())),
+            &self.custom_profile.as_ref().and_then(|p| p.btn_south.clone()),
             &pressed_codes,
             btn_south,
         );
@@ -993,6 +993,33 @@ impl GamepadController {
     /// Injects simulated gamepad state (for unit testing and headless emulation).
     pub fn inject_snapshot(&mut self, snapshot: GamepadSnapshot) {
         self.snapshot = snapshot;
+    }
+
+    /// Resets all held button and raw event tracking states.
+    pub fn reset(&mut self) {
+        self.raw_codes_held.clear();
+        self.raw_buttons_held.clear();
+        self.prev_buttons_held.clear();
+        self.prev_south = false;
+        self.prev_east = false;
+        self.prev_west = false;
+        self.prev_north = false;
+        self.prev_start = false;
+        self.prev_select = false;
+        self.prev_dpad_up = false;
+        self.prev_dpad_down = false;
+        self.prev_dpad_left = false;
+        self.prev_dpad_right = false;
+        self.prev_thumb_r = false;
+        self.prev_thumb_l = false;
+        self.prev_stick_x = 0.0;
+        self.prev_stick_y = 0.0;
+        self.snapshot.steer = 0.0;
+        self.snapshot.throttle = 0.0;
+        self.snapshot.brake = 0.0;
+        self.snapshot.handbrake = false;
+        self.snapshot.reverse = false;
+        self.clear_frame_events();
     }
 }
 
