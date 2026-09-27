@@ -14,13 +14,14 @@ pub mod tire;
 pub use bike::{Motorbike, MotorbikeConfig, MotorbikeControls, MotorbikeState};
 pub use car::{normalize_angle, Car, CarControls, CarState, JumpRampProperties};
 pub use config::{
-    default_wheel_assemblies, CarConfig, DifferentialType, DriverAssistsConfig, TireConfig,
-    WheelAssemblyConfig,
+    default_wheel_assemblies, pacejka_peak_slip_angle_deg, CarConfig, DifferentialType,
+    DriverAssistsConfig, PacejkaTireConfig, TireConfig, WheelAssemblyConfig,
 };
 pub use surface::{SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
 pub use tire::{
-    compute_skid_telemetry, pacejka_lateral_force, solve_combined_slip_forces, WheelAssembly,
-    WheelId, WheelTelemetry,
+    combined_slip_forces, compute_skid_telemetry, longitudinal_slip_stiffness,
+    normalized_grip_curve, pacejka_lateral_force, solve_combined_slip_forces,
+    tire_friction_envelope, WheelAssembly, WheelId, WheelTelemetry,
 };
 
 pub use glam::Vec2;

@@ -1465,27 +1465,23 @@ impl GtWorldChallengeModule {
             downforce_coefficient: 2.10, // Strong GT3 aerodynamic package
 
             tire: TireConfig {
-                stiffness_b: 13.0,
-                shape_c: 1.45,
-                peak_d: 1.20,
-                curvature_e: -0.08,
-                drift_slide_friction: 0.82,
-                handbrake_lateral_friction_multiplier: 0.50,
+                grip: 1.20,
+                peak_slip_angle_deg: 8.0,
+                slide_grip: 0.82,
                 skid_threshold: 0.08,
                 skid_full_threshold: 0.24,
+                ..TireConfig::default()
             },
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
             wheels: CarConfig::default_wheel_assemblies_for(
                 TireConfig {
-                    stiffness_b: 13.0,
-                    shape_c: 1.45,
-                    peak_d: 1.20,
-                    curvature_e: -0.08,
-                    drift_slide_friction: 0.82,
-                    handbrake_lateral_friction_multiplier: 0.50,
+                    grip: 1.20,
+                    peak_slip_angle_deg: 8.0,
+                    slide_grip: 0.82,
                     skid_threshold: 0.08,
                     skid_full_threshold: 0.24,
+                    ..TireConfig::default()
                 },
                 0.65,
                 0.0,

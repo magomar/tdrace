@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use super::config::{CarConfig, DifferentialType};
 use super::surface::{SurfaceSampler, SurfaceType};
 use super::tire::{
-    compute_skid_telemetry, solve_combined_slip_forces, WheelAssembly, WheelId, WheelTelemetry,
+    combined_slip_forces, compute_skid_telemetry, solve_combined_slip_forces, WheelAssembly,
+    WheelId, WheelTelemetry,
 };
 
 /// Helper returning default wheel assemblies state for CarState deserialization.
@@ -1016,7 +1017,12 @@ fn apply_differential_rotational_coupling(
             let prev_dirt_surface = self.state.wheels[i].dirt_surface;
 
             let fz = normal_loads[i];
-            let max_friction = mu * fz;
+            let nominal_fz = if wheel_id.is_front() {
+                total_weight * (lr / wheelbase) * 0.5
+            } else {
+                total_weight * (lf / wheelbase) * 0.5
+            };
+            let max_friction = self.state.wheel_assemblies[i].friction_envelope(fz, nominal_fz, mu);
 
             let r = self.state.wheel_assemblies[i].config.tire_radius.max(1e-2);
 
@@ -1176,12 +1182,13 @@ fn apply_differential_rotational_coupling(
 
             // Lateral demand: Pacejka Magic Formula with thermal degradation and low-speed stabilization
             let low_speed_blend = (w_v_long.abs() / 3.0).clamp(0.05, 1.0);
-            let fy_demand = self.state.wheel_assemblies[i].lateral_force(
+            let (_, fy_pure) = combined_slip_forces(
+                0.0,
                 slip_angle,
-                fz,
-                mu,
-                is_handbraking_wheel,
-            ) * low_speed_blend;
+                max_friction,
+                &self.state.wheel_assemblies[i].config.tire_model,
+            );
+            let fy_demand = fy_pure * low_speed_blend;
 
             // Friction ellipse combination
             let (fx, fy) = solve_combined_slip_forces(fx_demand, fy_demand, max_friction);
@@ -1713,8 +1720,8 @@ mod tests {
         let mut config = CarConfig::sports_car();
         config.max_reverse_force = 6175.0; // GT3 evo reverse power
         config.mass = 1260.0;
-        config.tire.stiffness_b = 13.0;
-        config.tire.peak_d = 1.20;
+        config.tire.peak_slip_angle_deg = 7.8;
+        config.tire.grip = 1.20;
         let dt = 1.0 / 60.0;
         let mut car = Car::new(config);
         let mut ctrl = CarControls::new(1.0, 0.0, 0.0, false);

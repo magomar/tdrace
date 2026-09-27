@@ -75,9 +75,11 @@ pub fn default_wheel_assemblies() -> [WheelAssemblyConfig; 4] {
     [WheelAssemblyConfig::default(); 4]
 }
 
-/// Tire parameters using an adapted Pacejka Magic Formula curve tuned for arcade drifting.
+/// Classic Pacejka Magic Formula lateral tire parameters.
+///
+/// Used by the motorbike model. Car tires use [`TireConfig`] (Spec 042).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct TireConfig {
+pub struct PacejkaTireConfig {
     /// Pacejka B (Stiffness factor). Determines slope at low slip angles.
     pub stiffness_b: f32,
     /// Pacejka C (Shape factor). Controls shape and peak prominence (typically ~1.4 - 1.6).
@@ -87,7 +89,6 @@ pub struct TireConfig {
     /// Pacejka E (Curvature factor). Controls drop-off after peak.
     pub curvature_e: f32,
     /// Friction retention ratio during high slip drift (slide friction / peak friction).
-    /// Ensures controllable drifts without instant spinouts.
     pub drift_slide_friction: f32,
     /// Rear tire lateral friction multiplier when handbrake is engaged (allows rear breakout).
     pub handbrake_lateral_friction_multiplier: f32,
@@ -97,7 +98,7 @@ pub struct TireConfig {
     pub skid_full_threshold: f32,
 }
 
-impl Default for TireConfig {
+impl Default for PacejkaTireConfig {
     fn default() -> Self {
         Self {
             stiffness_b: 9.5,
@@ -108,6 +109,132 @@ impl Default for TireConfig {
             handbrake_lateral_friction_multiplier: 0.38,
             skid_threshold: 0.10,
             skid_full_threshold: 0.35,
+        }
+    }
+}
+
+/// Slip angle (degrees) at which a Pacejka curve with the given B, C, E peaks.
+///
+/// Solves `C * atan(B*a - E*(B*a - atan(B*a))) = PI/2` for `a`. Used to migrate legacy
+/// Pacejka tire configs to [`TireConfig::peak_slip_angle_deg`].
+pub fn pacejka_peak_slip_angle_deg(b: f32, c: f32, e: f32) -> f32 {
+    if b <= 1e-3 || c <= 1.0 {
+        return TireConfig::DEFAULT_PEAK_SLIP_ANGLE_DEG;
+    }
+    let target = (std::f32::consts::FRAC_PI_2 / c).tan();
+    let f = |y: f32| y - e * (y - y.atan()) - target;
+    let (mut lo, mut hi) = (0.0f32, 50.0f32);
+    if f(hi) < 0.0 {
+        return TireConfig::DEFAULT_PEAK_SLIP_ANGLE_DEG;
+    }
+    for _ in 0..60 {
+        let mid = 0.5 * (lo + hi);
+        if f(mid) < 0.0 { lo = mid; } else { hi = mid; }
+    }
+    (0.5 * (lo + hi) / b).to_degrees().clamp(3.0, 25.0)
+}
+
+/// Car tire model (Spec 042): normalized combined slip with load sensitivity.
+///
+/// Every field is a designer knob expressed in a unit a driver can feel.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(from = "TireConfigRaw")]
+pub struct TireConfig {
+    /// Grip multiplier on the surface friction coefficient (1.0 = road tire on asphalt).
+    pub grip: f32,
+    /// Slip angle in degrees where lateral grip peaks (sharp turn-in: 6-8, lazy: 12-14).
+    pub peak_slip_angle_deg: f32,
+    /// Longitudinal slip ratio where traction/braking grip peaks (0.08-0.15).
+    pub peak_slip_ratio: f32,
+    /// Grip retained deep in a slide relative to peak (0.6 = snappy, 1.0 = flat plateau).
+    pub slide_grip: f32,
+    /// Width of the post-peak grip fall, in multiples of the peak slip (1.0-3.0).
+    pub falloff: f32,
+    /// Load sensitivity: grip per newton drops as load rises above nominal (0 = linear, 0.1-0.25 = real).
+    pub load_sensitivity: f32,
+    /// How much longitudinal slip steals lateral grip (1.0 = physical friction circle, 0.3 = arcade).
+    pub power_slide: f32,
+    /// Minimum slip angle (radians) to trigger tire squeal and skid marks.
+    pub skid_threshold: f32,
+    /// Slip angle (radians) corresponding to 100% skid intensity and dense tire smoke.
+    pub skid_full_threshold: f32,
+}
+
+impl TireConfig {
+    pub const DEFAULT_PEAK_SLIP_ANGLE_DEG: f32 = 10.5;
+
+    /// Peak lateral slip angle in radians.
+    #[inline]
+    pub fn peak_slip_angle(&self) -> f32 {
+        self.peak_slip_angle_deg.to_radians()
+    }
+}
+
+impl Default for TireConfig {
+    fn default() -> Self {
+        Self {
+            grip: 1.0,
+            peak_slip_angle_deg: Self::DEFAULT_PEAK_SLIP_ANGLE_DEG,
+            peak_slip_ratio: 0.10,
+            slide_grip: 0.88,
+            falloff: 1.5,
+            load_sensitivity: 0.15,
+            power_slide: 0.85,
+            skid_threshold: 0.10,
+            skid_full_threshold: 0.35,
+        }
+    }
+}
+
+/// Serde input for [`TireConfig`] that also accepts the legacy Pacejka field names.
+#[derive(Deserialize)]
+struct TireConfigRaw {
+    #[serde(default, alias = "peak_d")]
+    grip: Option<f32>,
+    #[serde(default)]
+    peak_slip_angle_deg: Option<f32>,
+    #[serde(default)]
+    peak_slip_ratio: Option<f32>,
+    #[serde(default, alias = "drift_slide_friction")]
+    slide_grip: Option<f32>,
+    #[serde(default)]
+    falloff: Option<f32>,
+    #[serde(default)]
+    load_sensitivity: Option<f32>,
+    #[serde(default)]
+    power_slide: Option<f32>,
+    #[serde(default)]
+    skid_threshold: Option<f32>,
+    #[serde(default)]
+    skid_full_threshold: Option<f32>,
+    // Legacy Pacejka shape (pre Spec 042): only used to derive the peak slip angle.
+    #[serde(default)]
+    stiffness_b: Option<f32>,
+    #[serde(default)]
+    shape_c: Option<f32>,
+    #[serde(default)]
+    curvature_e: Option<f32>,
+    // Legacy handbrake grip multiplier: handbrake slides now come from rear wheel lock-up.
+    #[serde(default, rename = "handbrake_lateral_friction_multiplier")]
+    _handbrake_lateral_friction_multiplier: Option<f32>,
+}
+
+impl From<TireConfigRaw> for TireConfig {
+    fn from(raw: TireConfigRaw) -> Self {
+        let d = TireConfig::default();
+        let legacy_peak = raw.stiffness_b.map(|b| {
+            pacejka_peak_slip_angle_deg(b, raw.shape_c.unwrap_or(1.45), raw.curvature_e.unwrap_or(-0.15))
+        });
+        Self {
+            grip: raw.grip.unwrap_or(d.grip),
+            peak_slip_angle_deg: raw.peak_slip_angle_deg.or(legacy_peak).unwrap_or(d.peak_slip_angle_deg),
+            peak_slip_ratio: raw.peak_slip_ratio.unwrap_or(d.peak_slip_ratio),
+            slide_grip: raw.slide_grip.unwrap_or(d.slide_grip),
+            falloff: raw.falloff.unwrap_or(d.falloff),
+            load_sensitivity: raw.load_sensitivity.unwrap_or(d.load_sensitivity),
+            power_slide: raw.power_slide.unwrap_or(d.power_slide),
+            skid_threshold: raw.skid_threshold.unwrap_or(d.skid_threshold),
+            skid_full_threshold: raw.skid_full_threshold.unwrap_or(d.skid_full_threshold),
         }
     }
 }
@@ -633,8 +760,7 @@ impl CarConfig {
         cfg.brake_bias = 0.56;
         cfg.engine_braking_coefficient = 0.10;
         cfg.downforce_coefficient = 0.45;
-        cfg.tire.drift_slide_friction = 0.92;
-        cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
+        cfg.tire.slide_grip = 0.92;
         cfg.drive_bias = 0.0;
         cfg.rear_differential = DifferentialType::LimitedSlip {
             power_lock: 0.48,
@@ -653,24 +779,16 @@ impl CarConfig {
     /// and wide rear tires (r=0.20m, w=0.21m) delivering >= 35% higher peak lateral force.
     pub fn kart() -> Self {
         let front_tire = TireConfig {
-            stiffness_b: 13.5,
-            shape_c: 1.50,
-            peak_d: 1.35,
-            curvature_e: -0.20,
-            drift_slide_friction: 0.88,
-            handbrake_lateral_friction_multiplier: 0.35,
+            grip: 1.05,
+            peak_slip_angle_deg: 7.0,
+            slide_grip: 0.88,
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         let rear_tire = TireConfig {
-            stiffness_b: 13.5,
-            shape_c: 1.50,
-            peak_d: 1.85, // >= 35% higher peak lateral force than front axle under equal load (1.85 >= 1.35 * 1.35)
-            curvature_e: -0.20,
-            drift_slide_friction: 0.88,
-            handbrake_lateral_friction_multiplier: 0.35,
-            skid_threshold: 0.08,
-            skid_full_threshold: 0.28,
+            grip: 1.15, // wide rear slicks: more grip than the narrow fronts
+            ..front_tire
         };
         // I_front = 0.15 kg*m^2, I_rear = 0.24 kg*m^2 (I_rear > I_front)
         let wheels = [
@@ -798,8 +916,8 @@ impl CarConfig {
         cfg.max_reverse_force = 4875.0;
         cfg.engine_braking_coefficient = 0.14;
         cfg.downforce_coefficient = 0.70;
-        cfg.tire.stiffness_b = 8.0;
-        cfg.tire.drift_slide_friction = 0.90;
+        cfg.tire.peak_slip_angle_deg = 12.7;
+        cfg.tire.slide_grip = 0.90;
         cfg.terrain = TerrainInteractionConfig {
             sand_flotation: 0.70,
             mud_flotation: 0.70,
@@ -824,14 +942,12 @@ impl CarConfig {
     /// planted and controllable at high superspeedway speeds.
     pub fn stock_car_ta1() -> Self {
         let tire = TireConfig {
-            stiffness_b: 11.5,
-            shape_c: 1.48,
-            peak_d: 1.15,
-            curvature_e: -0.12,
-            drift_slide_friction: 0.86,
-            handbrake_lateral_friction_multiplier: 0.42,
+            grip: 1.10,
+            peak_slip_angle_deg: 8.5,
+            slide_grip: 0.86,
             skid_threshold: 0.09,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         let wheels = [
             WheelAssemblyConfig {
@@ -921,14 +1037,12 @@ impl CarConfig {
     /// rear-biased weight, high-travel suspension compliance, and paddle tire grip.
     pub fn sand_rail() -> Self {
         let tire = TireConfig {
-            stiffness_b: 8.2,
-            shape_c: 1.35,
-            peak_d: 1.12,
-            curvature_e: -0.15,
-            drift_slide_friction: 0.94,
-            handbrake_lateral_friction_multiplier: 0.35,
+            grip: 1.05,
+            peak_slip_angle_deg: 15.0,
+            slide_grip: 0.94,
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         let wheels = [
             WheelAssemblyConfig {
@@ -1072,10 +1186,19 @@ mod tests {
         // Rear rotational inertia is greater than front: I_rear > I_front
         assert!(kart.wheels[2].rotational_inertia > kart.wheels[0].rotational_inertia);
 
-        // Rear delivers >= 35% higher peak lateral force than front under equal load
-        let f_front = kart.wheels[0].tire_model.peak_d;
-        let f_rear = kart.wheels[2].tire_model.peak_d;
-        assert!(f_rear >= f_front * 1.35, "f_rear ({}) should be >= 1.35 * f_front ({})", f_rear, f_front);
+        // Wide rear slicks carry more grip than the narrow fronts (Spec 042: grip is a true mu scale)
+        let f_front = kart.wheels[0].tire_model.grip;
+        let f_rear = kart.wheels[2].tire_model.grip;
+        assert!(f_rear > f_front, "rear grip ({}) should exceed front grip ({})", f_rear, f_front);
+    }
+
+    #[test]
+    fn test_pacejka_peak_slip_angle_migration() {
+        // Default legacy sports tire (B=9.5, C=1.45, E=-0.15) peaks at ~10.7 deg
+        let peak = pacejka_peak_slip_angle_deg(9.5, 1.45, -0.15);
+        assert!((peak - 10.72).abs() < 0.05, "peak = {peak}");
+        // Stiffer tire peaks earlier
+        assert!(pacejka_peak_slip_angle_deg(13.5, 1.45, -0.15) < peak);
     }
 
     #[test]
@@ -1144,10 +1267,12 @@ mod tests {
         assert!(deserialized.is_ok(), "Failed to deserialize legacy config: {:?}", deserialized.err());
         let config = deserialized.unwrap();
 
-        // Check that all 4 wheels inherited the custom tire model (stiffness_b = 15.0, peak_d = 1.10)
+        // All 4 wheels inherit the migrated tire: peak_d -> grip, Pacejka B/C/E -> peak slip angle
+        let expected_peak = pacejka_peak_slip_angle_deg(15.0, 1.45, -0.15);
         for i in 0..4 {
-            assert_eq!(config.wheels[i].tire_model.stiffness_b, 15.0);
-            assert_eq!(config.wheels[i].tire_model.peak_d, 1.10);
+            assert_eq!(config.wheels[i].tire_model.grip, 1.10);
+            assert!((config.wheels[i].tire_model.peak_slip_angle_deg - expected_peak).abs() < 1e-4);
+            assert_eq!(config.wheels[i].tire_model.slide_grip, 0.88);
             assert_eq!(config.wheels[i].tire_radius, 0.32);
             assert_eq!(config.wheels[i].rotational_inertia, 1.25);
         }

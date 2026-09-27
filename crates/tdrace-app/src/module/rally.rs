@@ -44,14 +44,12 @@ impl RallyGameModule {
         cfg.downforce_coefficient = 0.85;
 
         cfg.tire = TireConfig {
-            stiffness_b: 7.8, // Compliant tire sidewall for gravel/dirt
-            shape_c: 1.40,
-            peak_d: 1.05,
-            curvature_e: -0.18,
-            drift_slide_friction: 0.92, // High controllable slide grip
-            handbrake_lateral_friction_multiplier: 0.32,
+            grip: 1.05,
+            peak_slip_angle_deg: 14.2, // Compliant tire sidewall for gravel/dirt
+            slide_grip: 0.92,          // High controllable slide grip
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         cfg.assists = DriverAssistsConfig::sport();
         cfg

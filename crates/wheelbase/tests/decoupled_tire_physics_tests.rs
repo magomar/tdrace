@@ -1,7 +1,7 @@
 use wheelbase::car::{Car, CarControls};
 use wheelbase::config::{CarConfig, DriverAssistsConfig, WheelAssemblyConfig};
 use wheelbase::surface::SurfaceType;
-use wheelbase::tire::WheelAssembly;
+use wheelbase::tire::{combined_slip_forces, WheelAssembly};
 use wheelbase::Vec2;
 
 /// Scenario: Staggered tire dimensions on open-wheel kart
@@ -9,7 +9,8 @@ use wheelbase::Vec2;
 /// Given a classic_kart configured with narrow front tires (r=0.18m, w=0.12m)
 /// and wide rear tires (r=0.20m, w=0.21m)
 /// When standing acceleration and maximum lateral cornering tests are executed
-/// Then the rear axle must deliver at least 35% more peak lateral force than the front axle under equal normal load
+/// Then the rear axle must deliver more peak lateral force than the front axle under equal normal load
+/// (Spec 042: tire grip is a true friction scale, so the old 35% Pacejka D gap no longer applies)
 /// And rear wheel rotational inertia must measure larger than front wheel inertia (I_rear > I_front)
 #[test]
 fn test_staggered_tire_dimensions_on_open_wheel_kart() {
@@ -36,8 +37,12 @@ fn test_staggered_tire_dimensions_on_open_wheel_kart() {
     let slip_angle = 0.15;
     let mu = 1.0;
 
-    let fy_front = front_assembly.lateral_force(slip_angle, load, mu, false);
-    let fy_rear = rear_assembly.lateral_force(slip_angle, load, mu, false);
+    let lateral = |a: &WheelAssembly| {
+        let envelope = a.friction_envelope(load, load, mu);
+        combined_slip_forces(0.0, slip_angle, envelope, &a.config.tire_model).1
+    };
+    let fy_front = lateral(&front_assembly);
+    let fy_rear = lateral(&rear_assembly);
 
     let force_ratio = fy_rear / fy_front;
     println!(
@@ -46,8 +51,8 @@ fn test_staggered_tire_dimensions_on_open_wheel_kart() {
     );
 
     assert!(
-        force_ratio >= 1.35,
-        "Rear axle must deliver at least 35% more peak lateral force (got ratio {:.2})",
+        force_ratio > 1.05,
+        "Rear axle must deliver more peak lateral force (got ratio {:.2})",
         force_ratio
     );
 }
@@ -227,8 +232,9 @@ fn test_legacy_configuration_backward_compatibility() {
     let cfg: CarConfig = serde_json::from_str(legacy_json).expect("Legacy JSON must deserialize cleanly");
     assert_eq!(cfg.wheels.len(), 4);
     for i in 0..4 {
-        assert_eq!(cfg.wheels[i].tire_model.stiffness_b, 11.0);
-        assert_eq!(cfg.wheels[i].tire_model.peak_d, 1.18);
+        assert_eq!(cfg.wheels[i].tire_model.grip, 1.18);
+        let expected_peak = wheelbase::pacejka_peak_slip_angle_deg(11.0, 1.35, -0.15);
+        assert!((cfg.wheels[i].tire_model.peak_slip_angle_deg - expected_peak).abs() < 1e-4);
         assert_eq!(cfg.wheels[i].tire_radius, 0.32);
         assert_eq!(cfg.wheels[i].rotational_inertia, 1.25);
     }

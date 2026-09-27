@@ -1,7 +1,7 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use super::config::{TireConfig, WheelAssemblyConfig};
+use super::config::{PacejkaTireConfig, TireConfig, WheelAssemblyConfig};
 use super::surface::SurfaceType;
 
 /// Default baseline tire temperature (nominal warm tire in °C).
@@ -126,13 +126,14 @@ impl Default for WheelTelemetry {
 
 /// Computes pure lateral force using the Pacejka Magic Formula curve adapted for arcade drifting.
 ///
+/// Used by the motorbike model. Car tires use [`combined_slip_forces`].
 /// Returns lateral force Fy in Newtons.
 #[inline]
 pub fn pacejka_lateral_force(
     slip_angle: f32,
     normal_load: f32,
     friction_coeff: f32,
-    config: &TireConfig,
+    config: &PacejkaTireConfig,
     is_handbraking: bool,
 ) -> f32 {
     if normal_load <= 1e-4 {
@@ -167,6 +168,78 @@ pub fn pacejka_lateral_force(
     } else {
         base_force
     }
+}
+
+/// Normalized tire curve (Spec 042): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
+/// to `slide_grip` over `falloff` peak-widths.
+#[inline]
+pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
+    let s = s.abs();
+    if s <= 1.0 {
+        s * (2.0 - s)
+    } else {
+        let t = ((s - 1.0) / tire.falloff.max(0.1)).min(1.0);
+        1.0 - (1.0 - tire.slide_grip) * t * t * (3.0 - 2.0 * t)
+    }
+}
+
+/// Load-sensitive friction envelope `mu_eff * Fz` in Newtons.
+///
+/// Heavily loaded tires deliver less grip per newton of load, so lateral load transfer
+/// reduces an axle's total grip and the roll balance moves the handling balance.
+#[inline]
+pub fn tire_friction_envelope(normal_load: f32, nominal_load: f32, friction_coeff: f32, tire: &TireConfig) -> f32 {
+    if normal_load <= 1e-4 {
+        return 0.0;
+    }
+    let load_ratio = normal_load / nominal_load.max(1.0);
+    let sensitivity = (1.0 - tire.load_sensitivity * (load_ratio - 1.0)).clamp(0.5, 1.3);
+    friction_coeff * tire.grip * sensitivity * normal_load
+}
+
+/// Combined-slip tire forces on the normalized slip vector (Spec 042).
+///
+/// `sx = slip_ratio / peak_slip_ratio`, `sy = tan(slip_angle) / tan(peak_slip_angle)`.
+/// The resultant `F = envelope * curve(|s|)` points along the slip vector, so wheelspin and
+/// lock-up erode lateral grip naturally. `power_slide < 1` keeps extra lateral grip under
+/// longitudinal slip (arcade). Returns `(Fx, Fy)` in the wheel frame: `Fx > 0` pushes the car
+/// forward (wheel spinning faster than the road), `Fy` has the sign of `slip_angle`.
+#[inline]
+pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> (f32, f32) {
+    if envelope <= 1e-4 {
+        return (0.0, 0.0);
+    }
+    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
+    let sy = slip_angle.tan() / tire.peak_slip_angle().tan().max(1e-3);
+    let s = (sx * sx + sy * sy).sqrt();
+    if s < 1e-6 {
+        return (0.0, 0.0);
+    }
+    let f = envelope * normalized_grip_curve(s, tire);
+    let fx = f * sx / s;
+    let mut fy = f * sy / s;
+    if tire.power_slide < 1.0 {
+        let fy_pure = envelope * normalized_grip_curve(sy, tire) * sy.signum();
+        let budget = (1.0 - (tire.power_slide.max(0.0) * fx / envelope).powi(2)).max(0.0).sqrt();
+        let fy_arcade = fy_pure * budget;
+        if fy_arcade.abs() > fy.abs() {
+            fy = fy_arcade;
+        }
+    }
+    (fx, fy)
+}
+
+/// Longitudinal stiffness `dFx/d(slip_ratio)` at the given combined slip state (N per unit slip).
+///
+/// Used by the implicit wheel spin integrator. Evaluated by central difference and floored at a
+/// small positive value so the implicit step stays well conditioned past the peak.
+#[inline]
+pub fn longitudinal_slip_stiffness(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
+    let h = tire.peak_slip_ratio.max(1e-3) * 0.05;
+    let (fx_hi, _) = combined_slip_forces(slip_ratio + h, slip_angle, envelope, tire);
+    let (fx_lo, _) = combined_slip_forces(slip_ratio - h, slip_angle, envelope, tire);
+    let slope = (fx_hi - fx_lo) / (2.0 * h);
+    slope.max(envelope * 0.05)
 }
 
 /// Applies the friction circle / ellipse limit to combine longitudinal and lateral forces.
@@ -464,24 +537,17 @@ impl WheelAssembly {
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
     }
 
-    /// Computes pure lateral force Fy taking thermal degradation and mechanical wear into account.
-    pub fn lateral_force(
-        &self,
-        slip_angle: f32,
-        normal_load: f32,
-        friction_coeff: f32,
-        is_handbraking: bool,
-    ) -> f32 {
-        let thermal_mult = self.thermal_grip_multiplier();
+    /// Surface friction coefficient scaled by tread temperature and wear.
+    #[inline]
+    pub fn effective_friction(&self, friction_coeff: f32) -> f32 {
         let wear_mult = (1.0 - 0.20 * self.wear).max(0.50);
-        let effective_mu = friction_coeff * thermal_mult * wear_mult;
-        pacejka_lateral_force(
-            slip_angle,
-            normal_load,
-            effective_mu,
-            &self.config.tire_model,
-            is_handbraking,
-        )
+        friction_coeff * self.thermal_grip_multiplier() * wear_mult
+    }
+
+    /// Load-sensitive friction envelope of this tire including thermal and wear effects (N).
+    #[inline]
+    pub fn friction_envelope(&self, normal_load: f32, nominal_load: f32, friction_coeff: f32) -> f32 {
+        tire_friction_envelope(normal_load, nominal_load, self.effective_friction(friction_coeff), &self.config.tire_model)
     }
 }
 
@@ -491,7 +557,7 @@ mod tests {
 
     #[test]
     fn test_pacejka_lateral_force() {
-        let cfg = TireConfig::default();
+        let cfg = PacejkaTireConfig::default();
         let normal_load = 2500.0;
         let friction_coeff = 1.0;
 
@@ -511,6 +577,60 @@ mod tests {
         // Handbrake reduces lateral grip
         let f_hb = pacejka_lateral_force(0.1, normal_load, friction_coeff, &cfg, true);
         assert!(f_hb < f_small);
+    }
+
+    #[test]
+    fn test_normalized_curve_peaks_at_one_and_falls_to_slide_grip() {
+        let tire = TireConfig::default();
+        assert_eq!(normalized_grip_curve(0.0, &tire), 0.0);
+        assert!((normalized_grip_curve(1.0, &tire) - 1.0).abs() < 1e-6);
+        assert!(normalized_grip_curve(0.5, &tire) < 1.0);
+        assert!(normalized_grip_curve(1.2, &tire) < 1.0);
+        let deep = normalized_grip_curve(1.0 + tire.falloff + 1.0, &tire);
+        assert!((deep - tire.slide_grip).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_combined_slip_peak_and_symmetry() {
+        let tire = TireConfig { power_slide: 1.0, ..TireConfig::default() };
+        let env = 3000.0;
+        let (_, fy_peak) = combined_slip_forces(0.0, tire.peak_slip_angle(), env, &tire);
+        assert!((fy_peak - env).abs() < 1.0, "pure lateral peak equals envelope, got {fy_peak}");
+        let (_, fy_neg) = combined_slip_forces(0.0, -tire.peak_slip_angle(), env, &tire);
+        assert!((fy_peak + fy_neg).abs() < 1e-3);
+        let (fx_peak, _) = combined_slip_forces(tire.peak_slip_ratio, 0.0, env, &tire);
+        assert!((fx_peak - env).abs() < 1.0);
+        let (fx_neg, _) = combined_slip_forces(-tire.peak_slip_ratio, 0.0, env, &tire);
+        assert!(fx_neg < 0.0);
+    }
+
+    #[test]
+    fn test_wheelspin_erodes_lateral_grip_and_resultant_stays_in_envelope() {
+        let tire = TireConfig { power_slide: 1.0, ..TireConfig::default() };
+        let env = 3000.0;
+        let alpha = tire.peak_slip_angle() * 0.8;
+        let (_, fy_free) = combined_slip_forces(0.0, alpha, env, &tire);
+        let (fx_spin, fy_spin) = combined_slip_forces(0.4, alpha, env, &tire);
+        assert!(fy_spin < fy_free * 0.5, "spinning wheel keeps {fy_spin} of {fy_free}");
+        assert!((fx_spin * fx_spin + fy_spin * fy_spin).sqrt() <= env + 1e-2);
+
+        // Arcade power_slide keeps more lateral grip under the same wheelspin
+        let arcade = TireConfig { power_slide: 0.4, ..tire };
+        let (_, fy_arcade) = combined_slip_forces(0.4, alpha, env, &arcade);
+        assert!(fy_arcade > fy_spin);
+    }
+
+    #[test]
+    fn test_load_sensitivity_reduces_grip_per_newton() {
+        let tire = TireConfig::default();
+        let nominal = 2500.0;
+        let light = tire_friction_envelope(1500.0, nominal, 1.0, &tire) / 1500.0;
+        let heavy = tire_friction_envelope(3500.0, nominal, 1.0, &tire) / 3500.0;
+        assert!(light > heavy);
+        // Transferring load across an axle loses total grip
+        let even = 2.0 * tire_friction_envelope(2500.0, nominal, 1.0, &tire);
+        let split = tire_friction_envelope(1500.0, nominal, 1.0, &tire) + tire_friction_envelope(3500.0, nominal, 1.0, &tire);
+        assert!(split < even);
     }
 
     #[test]

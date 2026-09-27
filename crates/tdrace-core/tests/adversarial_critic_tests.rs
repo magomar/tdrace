@@ -201,7 +201,9 @@ fn test_friction_circle_conservation_under_random_fuzz() {
             let total_force = (fx * fx + fy * fy).sqrt();
 
             let mu = wheel.surface.friction_coefficient();
-            let max_allowed_force = mu * wheel.normal_load;
+            // Spec 042: the tire envelope is mu * grip * thermal (<= 1.08) * load sensitivity (<= 1.3) * Fz
+            let tire = &car.config.wheels[i].tire_model;
+            let max_allowed_force = mu * tire.grip * 1.08 * 1.3 * wheel.normal_load;
 
             let tolerance = 1e-2;
             assert!(

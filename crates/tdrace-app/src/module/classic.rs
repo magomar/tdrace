@@ -28,8 +28,8 @@ impl ClassicGameModule {
         cfg.downforce_coefficient = 0.95;
         cfg.steer_speed = 7.0;
         cfg.steer_return_speed = 9.0;
-        cfg.tire.drift_slide_friction = 0.94;
-        cfg.tire.stiffness_b = 10.5;
+        cfg.tire.slide_grip = 0.94;
+        cfg.tire.peak_slip_angle_deg = 9.7;
         for w in &mut cfg.wheels {
             w.tire_model = cfg.tire;
         }
@@ -48,8 +48,8 @@ impl ClassicGameModule {
         cfg.steer_speed = 8.0;
         cfg.steer_return_speed = 10.5;
         cfg.downforce_coefficient = 1.45;
-        cfg.tire.drift_slide_friction = 0.93;
-        cfg.tire.stiffness_b = 11.0;
+        cfg.tire.slide_grip = 0.93;
+        cfg.tire.peak_slip_angle_deg = 9.3;
         for w in &mut cfg.wheels {
             w.tire_model = cfg.tire;
         }
@@ -67,8 +67,8 @@ impl ClassicGameModule {
         cfg.steer_speed = 9.0;
         cfg.steer_return_speed = 11.0;
         cfg.downforce_coefficient = 0.85;
-        cfg.tire.drift_slide_friction = 0.95;
-        cfg.tire.stiffness_b = 9.0;
+        cfg.tire.slide_grip = 0.95;
+        cfg.tire.peak_slip_angle_deg = 11.3;
         cfg.weight_transfer_longitudinal = 0.65;
         cfg.weight_transfer_lateral = 0.65;
         for w in &mut cfg.wheels {
@@ -87,11 +87,11 @@ impl ClassicGameModule {
         cfg.max_steer_angle = 0.65; // ~37.2 deg calibrated FIA benchmark (Spec 038)
         cfg.steer_speed = 10.5;
         cfg.steer_return_speed = 14.0;
-        cfg.tire.drift_slide_friction = 0.90;
-        cfg.tire.stiffness_b = 13.5;
+        cfg.tire.slide_grip = 0.90;
+        cfg.tire.peak_slip_angle_deg = 7.0;
         for w in &mut cfg.wheels {
-            w.tire_model.drift_slide_friction = cfg.tire.drift_slide_friction;
-            w.tire_model.stiffness_b = cfg.tire.stiffness_b;
+            w.tire_model.slide_grip = cfg.tire.slide_grip;
+            w.tire_model.peak_slip_angle_deg = cfg.tire.peak_slip_angle_deg;
         }
         cfg
     }
@@ -108,8 +108,8 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 12.0;
         cfg.downforce_coefficient = 1.10;
         cfg.drive_bias = 0.5; // 4WD 50:50 torque split
-        cfg.tire.drift_slide_friction = 0.94;
-        cfg.tire.stiffness_b = 10.0;
+        cfg.tire.slide_grip = 0.94;
+        cfg.tire.peak_slip_angle_deg = 10.2;
         cfg.weight_transfer_longitudinal = 0.50;
         cfg.weight_transfer_lateral = 0.50;
         for w in &mut cfg.wheels {
