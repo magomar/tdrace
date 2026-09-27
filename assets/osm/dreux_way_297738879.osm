@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="openstreetmap-cgimap 2.1.0 (3498758 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="3016400215" visible="true" version="3" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7592119" lon="1.3718036">
+  <tag k="name" v="Ligne de Départ-Arrivée"/>
+  <tag k="raceway" v="start-finish"/>
+ </node>
+ <node id="3016400350" visible="true" version="3" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7579010" lon="1.3725058"/>
+ <node id="11632764590" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7584922" lon="1.3722392"/>
+ <node id="11632764614" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7580659" lon="1.3724962"/>
+ <node id="11632764615" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7580253" lon="1.3725176"/>
+ <node id="11632764616" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7579995" lon="1.3725267"/>
+ <node id="11632764617" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7579753" lon="1.3725281"/>
+ <node id="11632764618" visible="true" version="1" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227" lat="48.7579532" lon="1.3725245"/>
+ <way id="297738879" visible="true" version="6" changeset="147553887" timestamp="2024-02-17T01:06:51Z" user="Smockwette" uid="10505227">
+  <nd ref="3016400350"/>
+  <nd ref="11632764618"/>
+  <nd ref="11632764617"/>
+  <nd ref="11632764616"/>
+  <nd ref="11632764615"/>
+  <nd ref="11632764614"/>
+  <nd ref="11632764590"/>
+  <nd ref="3016400215"/>
+  <tag k="highway" v="raceway"/>
+  <tag k="oneway" v="yes"/>
+  <tag k="sport" v="motor"/>
+  <tag k="surface" v="asphalt"/>
+ </way>
+</osm>

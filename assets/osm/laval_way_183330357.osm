@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="openstreetmap-cgimap 2.1.0 (3498753 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="1937024362" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:53Z" user="l@ur3nt" uid="822467" lat="48.0363388" lon="-0.7436045"/>
+ <node id="1937024364" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:53Z" user="l@ur3nt" uid="822467" lat="48.0360782" lon="-0.7440073"/>
+ <node id="1937024365" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:53Z" user="l@ur3nt" uid="822467" lat="48.0353273" lon="-0.7422204"/>
+ <node id="1937024366" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:53Z" user="l@ur3nt" uid="822467" lat="48.0363436" lon="-0.7424409"/>
+ <node id="1937024367" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:53Z" user="l@ur3nt" uid="822467" lat="48.0362970" lon="-0.7425697"/>
+ <node id="1937024370" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0367477" lon="-0.7427408"/>
+ <node id="1937024371" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0361559" lon="-0.7420166"/>
+ <node id="1937024372" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0362276" lon="-0.7440443"/>
+ <node id="1937024373" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0368087" lon="-0.7421239"/>
+ <node id="1937024374" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0364620" lon="-0.7429881"/>
+ <node id="1937024375" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0367382" lon="-0.7426019"/>
+ <node id="1937024376" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0369450" lon="-0.7420005"/>
+ <node id="1937024378" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0369355" lon="-0.7417918"/>
+ <node id="1937024379" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0352555" lon="-0.7424243"/>
+ <node id="1937024380" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0361643" lon="-0.7440502"/>
+ <node id="1937024381" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0352747" lon="-0.7423068"/>
+ <node id="1937024383" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0369032" lon="-0.7417489"/>
+ <node id="1937024384" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0366401" lon="-0.7432558"/>
+ <node id="1937024385" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0352532" lon="-0.7417167"/>
+ <node id="1937024386" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0351886" lon="-0.7417060"/>
+ <node id="1937024387" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0356406" lon="-0.7418938"/>
+ <node id="1937024389" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0360567" lon="-0.7422746"/>
+ <node id="1937024390" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0351766" lon="-0.7428534"/>
+ <node id="1937024391" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0362133" lon="-0.7416196"/>
+ <node id="1937024395" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0354098" lon="-0.7421614"/>
+ <node id="1937024396" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0357374" lon="-0.7419045"/>
+ <node id="1937024397" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0366593" lon="-0.7424892"/>
+ <node id="1937024398" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360280" lon="-0.7417543"/>
+ <node id="1937024399" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360926" lon="-0.7421137"/>
+ <node id="1937024400" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0365397" lon="-0.7415767"/>
+ <node id="1937024401" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0368948" lon="-0.7420863"/>
+ <node id="1937024402" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0364249" lon="-0.7438888"/>
+ <node id="1937024403" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0361092" lon="-0.7428374"/>
+ <node id="1937024404" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0364584" lon="-0.7430686"/>
+ <node id="1937024405" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360662" lon="-0.7436206"/>
+ <node id="1937024406" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0350165" lon="-0.7419045"/>
+ <node id="1937024407" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0362325" lon="-0.7436962"/>
+ <node id="1937024408" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0350703" lon="-0.7425697"/>
+ <node id="1937024409" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0350308" lon="-0.7423229"/>
+ <node id="1937024410" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0362863" lon="-0.7436640"/>
+ <node id="1937024411" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0357016" lon="-0.7422693"/>
+ <node id="1937024412" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0366509" lon="-0.7415767"/>
+ <node id="1937024413" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0364118" lon="-0.7423980"/>
+ <node id="1937024414" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0350057" lon="-0.7420547"/>
+ <node id="1937024415" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0363352" lon="-0.7427193"/>
+ <node id="1937024416" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0352962" lon="-0.7426019"/>
+ <node id="1937024417" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0369522" lon="-0.7418932"/>
+ <node id="1937024418" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0359778" lon="-0.7430096"/>
+ <node id="1937024419" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0363209" lon="-0.7419200"/>
+ <node id="1937024420" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360997" lon="-0.7426823"/>
+ <node id="1937024421" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360890" lon="-0.7429452"/>
+ <node id="1937024422" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0360459" lon="-0.7429988"/>
+ <node id="1937024423" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0358630" lon="-0.7429023"/>
+ <node id="1937024424" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0357661" lon="-0.7423390"/>
+ <node id="1937024425" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0357984" lon="-0.7424141"/>
+ <node id="1937024426" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0355940" lon="-0.7422049"/>
+ <node id="1937024428" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0355138" lon="-0.7421668"/>
+ <node id="1937024429" visible="true" version="2" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0350381" lon="-0.7418148"/>
+ <node id="1937024430" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0359096" lon="-0.7429827"/>
+ <node id="1937024431" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0361464" lon="-0.7436855"/>
+ <node id="1937024433" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0352640" lon="-0.7425321"/>
+ <node id="1937024434" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0351061" lon="-0.7417328"/>
+ <node id="1937024435" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0362455" lon="-0.7419415"/>
+ <node id="1937024439" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0359096" lon="-0.7418401"/>
+ <node id="6860938029" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0356593" lon="-0.7430823"/>
+ <node id="6860938033" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0355176" lon="-0.7432898"/>
+ <node id="6860938037" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0360246" lon="-0.7439386"/>
+ <node id="8209554018" visible="true" version="1" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0357805" lon="-0.7436434"/>
+ <node id="8209554020" visible="true" version="1" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0350653" lon="-0.7417647"/>
+ <node id="8209554021" visible="true" version="1" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0350050" lon="-0.7419806"/>
+ <way id="183330357" visible="true" version="5" changeset="184447580" timestamp="2026-06-22T19:54:57Z" user="YBau" uid="19282503">
+  <nd ref="1937024380"/>
+  <nd ref="1937024372"/>
+  <nd ref="1937024402"/>
+  <nd ref="1937024384"/>
+  <nd ref="1937024370"/>
+  <nd ref="1937024375"/>
+  <nd ref="1937024397"/>
+  <nd ref="1937024413"/>
+  <nd ref="1937024366"/>
+  <nd ref="1937024367"/>
+  <nd ref="1937024415"/>
+  <nd ref="1937024374"/>
+  <nd ref="1937024404"/>
+  <nd ref="1937024362"/>
+  <nd ref="1937024410"/>
+  <nd ref="1937024407"/>
+  <nd ref="1937024431"/>
+  <nd ref="1937024405"/>
+  <nd ref="6860938029"/>
+  <nd ref="1937024416"/>
+  <nd ref="1937024433"/>
+  <nd ref="1937024379"/>
+  <nd ref="1937024381"/>
+  <nd ref="1937024365"/>
+  <nd ref="1937024395"/>
+  <nd ref="1937024428"/>
+  <nd ref="1937024426"/>
+  <nd ref="1937024411"/>
+  <nd ref="1937024424"/>
+  <nd ref="1937024425"/>
+  <nd ref="1937024423"/>
+  <nd ref="1937024430"/>
+  <nd ref="1937024418"/>
+  <nd ref="1937024422"/>
+  <nd ref="1937024421"/>
+  <nd ref="1937024403"/>
+  <nd ref="1937024420"/>
+  <nd ref="1937024389"/>
+  <nd ref="1937024399"/>
+  <nd ref="1937024371"/>
+  <nd ref="1937024435"/>
+  <nd ref="1937024419"/>
+  <nd ref="1937024373"/>
+  <nd ref="1937024401"/>
+  <nd ref="1937024376"/>
+  <nd ref="1937024417"/>
+  <nd ref="1937024378"/>
+  <nd ref="1937024383"/>
+  <nd ref="1937024412"/>
+  <nd ref="1937024400"/>
+  <nd ref="1937024391"/>
+  <nd ref="1937024398"/>
+  <nd ref="1937024439"/>
+  <nd ref="1937024396"/>
+  <nd ref="1937024387"/>
+  <nd ref="1937024385"/>
+  <nd ref="1937024386"/>
+  <nd ref="1937024434"/>
+  <nd ref="8209554020"/>
+  <nd ref="1937024429"/>
+  <nd ref="1937024406"/>
+  <nd ref="8209554021"/>
+  <nd ref="1937024414"/>
+  <nd ref="1937024409"/>
+  <nd ref="1937024408"/>
+  <nd ref="1937024390"/>
+  <nd ref="6860938033"/>
+  <nd ref="8209554018"/>
+  <nd ref="6860938037"/>
+  <nd ref="1937024364"/>
+  <nd ref="1937024380"/>
+  <tag k="highway" v="raceway"/>
+  <tag k="lit" v="yes"/>
+  <tag k="oneway" v="yes"/>
+  <tag k="sport" v="karting"/>
+  <tag k="surface" v="asphalt"/>
+ </way>
+</osm>
