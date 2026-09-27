@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Vehicle Dynamics Rebuild and Simplified Handling Settings"
 description: "Rebuild wheelbase tire, wheel spin, differential and weight transfer physics around slip-based forces, add grip-aware steering authority, and replace the 10-parameter keyboard filter with a 5-parameter handling model and 4 calibrated presets."
-status: draft
+status: in_progress
+verified: { by: human:Mario Gomez, at: 2026-09-27T21:52:41Z }
 created: 2026-09-27
 generated: { by: agent/claude-opus-5-5, at: 2026-09-27T21:37:09Z }
 ---
@@ -165,6 +166,29 @@ settings to the filters and to player cars at car spawn, settings close and the 
 replaces the 5 current patch sites. Gamepad settings are not changed. Steering Authority applies to
 the gamepad as well, because it is a car-side value.
 
+#### 2.9 Key-pressing style analysis (`tdrace-app/src/input/simulation.rs`)
+
+The existing keyboard simulation harness (`KeyboardSteerPattern`, sweeper / chicane / slide-catch
+scenarios, `keyboard_simulation_benchmark`) is ported to the new settings and extended into a
+**key style × preset × car** matrix:
+
+- Key styles: Sustained Hold, Rapid Feathering (75/75 ms), Cadence Pulse (180/120 ms),
+  Tap-and-Coast, Lift-Off Turn, Snap Countersteer.
+- Presets: Smooth, Balanced, Sharp, Raw.
+- Cars: the 5 classic arcade cars (GT, NASCAR, off-road, kart, rally) on asphalt, dirt, packed sand
+  and ice.
+- Metrics per cell: exit speed, speed retention, peak lateral g, front/rear peak slip, effective
+  radius, chicane reversal latency and lateral excursion, slide-catch heading error, outcome badge.
+- New summary: **Key Style Sensitivity** = spread of exit speed across key styles per car and
+  preset. It shows how much *how you press* matters versus *what you press*.
+
+Design goal: a held key must be a valid way to drive. On the old model, Sustained Hold lost up to
+84 % of the entry speed (kart) while Rapid Feathering lost 0 %. Feathering may stay faster, because
+it is a skill, but holding must not collapse the car.
+
+The benchmark writes `reports/keyboard_input_car_control_report.{md,json}` and adds an old-vs-new
+comparison section with the numbers from the previous report.
+
 ---
 
 ## 🗄️ Database & Storage Migration Plan
@@ -272,6 +296,26 @@ Not applicable. There are no network, credential or dependency changes. No new c
   - [ ] **When** the player switches to Smooth and back to Raw
   - [ ] **Then** the player car's steering authority and traction help match the active preset each time
 
+- **Scenario: Holding a key is a valid driving style**
+  - [ ] **Given** the sweeper scenario for each classic car on asphalt with the Balanced preset
+  - [ ] **When** Sustained Hold and Rapid Feathering are compared
+  - [ ] **Then** Sustained Hold keeps ≥ 70 % of the Rapid Feathering exit speed on every car, including the kart (old model: 11 %)
+
+- **Scenario: Key styles do not cause spins on safe presets**
+  - [ ] **Given** the chicane scenario for each classic car with Smooth and Balanced
+  - [ ] **When** every key style is run
+  - [ ] **Then** no cell has the `SPINOUT` outcome
+
+- **Scenario: Presets change the key style picture**
+  - [ ] **Given** the Key Style Sensitivity summary
+  - [ ] **When** Smooth and Raw are compared for the same car
+  - [ ] **Then** Smooth has the lower exit-speed spread across key styles on asphalt for at least 4 of the 5 cars
+
+- **Scenario: Key style report is generated**
+  - [ ] **Given** the new physics and settings
+  - [ ] **When** `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` runs
+  - [ ] **Then** `reports/keyboard_input_car_control_report.md` and `.json` contain the key style × preset × car matrix, the sensitivity summary and the old-vs-new comparison
+
 - **Scenario: Player playtest (human)**
   - [ ] **Given** the Balanced preset on keyboard, sports/GT class, Tier 1 bots
   - [ ] **When** Mario races 3 races
@@ -296,6 +340,8 @@ Not applicable. There are no network, credential or dependency changes. No new c
 - `[ ]` `crates/tdrace-app/src/catalog/mod.rs`, `src/module/*.rs` -> Use new fields, call `finalize()`.
 - `[ ]` `crates/tdrace-app/tests/handling_presets_tests.rs` -> Preset ordering, migration, live apply.
 - `[ ]` `crates/tdrace-app/tests/{input_smoothing,config,controls_ui,kart_steering_stability,braking_stability}_tests.rs`, `crates/cabinet/tests/cabinet_integration_tests.rs` -> Intent-preserving rewrites.
+- `[ ]` `crates/tdrace-app/src/input/simulation.rs`, `src/bin/keyboard_simulation_benchmark.rs`, `tests/keyboard_simulation_tests.rs` -> Key style × preset × car matrix and gates.
+- `[ ]` `reports/keyboard_input_car_control_report.{md,json}` -> Regenerated key style analysis.
 - `[ ]` `docs/engineering/*.md` -> Mark the old steering report superseded. Document the new tuning knobs.
 
 ### Verification Assertions
