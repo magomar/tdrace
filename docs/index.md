@@ -82,6 +82,8 @@ Technical design documents, audio engine architectures, and performance profiles
 | [UI & Screen Terminology](engineering/terminology.md) | Architecture Spec | `active` | Formal UI component hierarchy, Cabinet platform primitives, and canonical screen catalog. |
 | [Motor Sound Synthesis](engineering/motor_sound_improvement.md) | Architecture Spec | `active` | Procedural motor sound synthesis, pitch modulation, exhaust pop harmonics, and Kira integration. |
 | [Circuit Rendering Performance](engineering/circuit_rendering_performance.md) | Architecture Spec | `active` | OpenGL batching, Catmull-Rom spline tessellation, and memory footprint analysis. |
+| [Circuit Building & Environment Analysis](engineering/circuit_building_analysis.md) | Architecture Spec | `active` | As-built analysis of track splines, runoff, walls, scenery, rendering and the OSM import pipeline, with defects and realism gaps. |
+| [Circuit Realism Knowledge Base](engineering/circuit_realism_knowledge_base.md) | Architecture Spec | `active` | OSM tagging and Overpass queries, runoff derivation, FIA design rules at game scale, grandstand/pit/scenery placement, visual design, and improvement plan. |
 | [Surface & Wall Legacy Spec](engineering/surface_and_wall_legacy_spec.md) | Architecture Spec | `active` | Historical specifications for 12 surface types and 4 barrier collision models. |
 | [Vehicle Roster Ideas](engineering/vehicle_roster_expansion_ideas.md) | Feature Spec | `active` | Exploratory design notes on prospective vehicle variants and class archetypes. |
 | [Contributing Guide](engineering/contributing.md) | Architecture Spec | `active` | Repository setup, cross-platform symlink instructions, and development workflow. |
