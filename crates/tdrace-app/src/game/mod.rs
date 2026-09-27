@@ -1013,7 +1013,7 @@ impl RaceSession {
     /// Whether the active game session is in 2-Player Split Screen mode.
     #[inline]
     pub fn is_split_screen(&self) -> bool {
-        self.game_mode.is_split_screen()
+        !self.is_lan_multiplayer && self.game_mode.is_split_screen()
     }
 
     /// Returns the local human player's vehicle index in the active session.
@@ -5058,7 +5058,7 @@ impl RaceSession {
                 let remaining = remaining_val - frame_dt;
 
                 // Player launch throttle / revs on grid
-                if self.game_mode.is_split_screen() {
+                if self.is_split_screen() {
                     let (p1_ctrl, p2_ctrl) = self.input.poll_split_player_controls(&mut self.filter_p2, frame_dt, 0.0, 0.0);
                     let (rpm1, is_shift1) = self.engine_rpm.update(0.0, p1_ctrl.throttle, 0.0, frame_dt);
                     self.audio.update_engine_telemetry(rpm1, p1_ctrl.throttle, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
@@ -5100,7 +5100,7 @@ impl RaceSession {
                 if let Some(player_car) = self.cars.get(countdown_cam_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
-                if self.game_mode.is_split_screen() {
+                if self.is_split_screen() {
                     if let Some(p2_car) = self.cars.get(1) {
                         self.camera_p2.update(p2_car, frame_dt);
                     }
@@ -7975,6 +7975,9 @@ impl RaceSession {
                     }
                     ModalityItem::LanPlay => {
                         self.audio.play_sfx(SfxType::UiSelect);
+                        self.game_mode = GameMode::StandardRace;
+                        self.free_car_selection = false;
+                        self.is_time_attack = false;
                         self.state = GameState::LanHub { selected_idx: 0 };
                         return;
                     }
@@ -8251,6 +8254,9 @@ impl RaceSession {
         self.lan_host = host;
         self.lan_client = client;
         self.lan_player_slot = my_slot_id;
+        self.game_mode = GameMode::StandardRace;
+        self.free_car_selection = false;
+        self.is_time_attack = false;
         self.lan_remote_inputs.clear();
         self.lan_snapshot_tick = 0;
 
@@ -8278,7 +8284,7 @@ impl RaceSession {
             self.total_laps = 5;
         }
 
-        let (_num_participants, slot_info): (usize, Vec<(u8, String, String, String, String)>) = if let Some(ref h) = self.lan_host {
+        let (_num_participants, mut slot_info): (usize, Vec<(u8, String, String, String, String)>) = if let Some(ref h) = self.lan_host {
             let active = h.active_slots();
             let count = active.len();
             let info = active.iter().map(|s| (s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone())).collect();
@@ -8298,6 +8304,8 @@ impl RaceSession {
         } else {
             (1, vec![(0, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), "corsa_red".to_string())])
         };
+
+        slot_info.sort_by_key(|(slot_id, ..)| *slot_id);
 
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;

@@ -215,3 +215,101 @@ fn test_lan_client_perspective_targeting_and_helpers() {
     assert_eq!(nameplates[0].car_idx, 0);
     assert_eq!(nameplates[0].tier_label, Some("LAN"));
 }
+
+#[test]
+fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
+    let mut session = RaceSession::new();
+
+    // 1. Suppose user previously selected SplitScreen mode in menus
+    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
+    assert!(session.is_split_screen());
+
+    // 2. Launch LAN race session as host (slot 0)
+    let host = cabinet::net::LanHost::bind(
+        "Host Split Prevention Room",
+        "HostPlayer",
+        "ESP",
+        "gt_ferrari_296_gt3",
+        "corsa_red",
+        0,
+        4,
+        "classic_grand_prix",
+        "classic",
+        3,
+    ).expect("failed to bind host");
+
+    session.launch_lan_race_session(Some(host), None, 0);
+
+    // 3. Verify is_split_screen is strictly false and game_mode reset to StandardRace
+    assert!(session.is_lan_multiplayer);
+    assert!(session.is_lan_host);
+    assert_eq!(session.lan_player_slot, 0);
+    assert_eq!(session.player_car_index(), 0);
+    assert_eq!(session.game_mode, tdrace_app::ui::menu::GameMode::StandardRace);
+    assert!(!session.is_split_screen(), "LAN session must never run in split screen mode");
+
+    // 4. Add remote client car (slot 1)
+    let base_cfg = session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar);
+    let client_car = tdrace_core::car::Car::new(base_cfg);
+    session.cars.push(client_car);
+    session.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(
+        session.track.checkpoints.len(),
+        3,
+    ));
+    session.grid_participants.push(tdrace_app::game::GridParticipant {
+        is_player: false,
+        bot_index: None,
+        name: "RemoteClient".to_string(),
+        alias: "RemoteClient".to_string(),
+        country: Some("FRA".to_string()),
+        car_title: "Porsche 911 GT3 R".to_string(),
+        car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
+        color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
+        model_id: Some("gt_porsche_911_gt3r"),
+        best_lap: None,
+        best_circuit_time: None,
+        random_seed: 10,
+        driver_tier: None,
+    });
+
+    assert_eq!(session.cars.len(), 2);
+
+    // Initial position & velocity of client car
+    let initial_pos = session.cars[1].state.position;
+    let initial_speed = session.cars[1].state.speed;
+    assert_eq!(initial_speed, 0.0);
+
+    // 5. Host receives remote input packet from slot 1 (full throttle)
+    session.lan_remote_inputs.insert(
+        1,
+        cabinet::net::ClientInputPacket {
+            sequence_num: 1,
+            slot_id: 1,
+            steering: 0.0,
+            throttle: 1.0,
+            brake: 0.0,
+            handbrake: false,
+            reverse: false,
+        },
+    );
+
+    // Step physics multiple times
+    for _ in 0..10 {
+        session.physics_step(1.0 / 60.0);
+    }
+
+    // 6. Verify client car moved due to remote input applied by host physics_step
+    assert!(
+        session.cars[1].state.speed > 0.0,
+        "Remote client car must accelerate from remote throttle input"
+    );
+    assert_ne!(
+        session.cars[1].state.position,
+        initial_pos,
+        "Remote client car position must change under host simulation"
+    );
+
+    // Exit cleanly
+    session.exit_lan_session();
+    assert!(!session.is_lan_multiplayer);
+}
