@@ -217,6 +217,35 @@ def load_osm_elements(cache_dir, track_id):
         return map_api_to_elements(f.read())
 
 
+def heading_ahead(points, min_dist=60.0):
+    """Heading from points[0] to the first point at least `min_dist` meters away (or the last point)."""
+    p0 = points[0]
+    p_ahead = points[1]
+    for p in points[1:]:
+        p_ahead = p
+        if math.hypot(p[0] - p0[0], p[1] - p0[1]) >= min_dist:
+            break
+    return math.atan2(p_ahead[1] - p0[1], p_ahead[0] - p0[0])
+
+
+def chain_segments(ways, segments):
+    """Node ids along (way id, first node or None) segments; each segment runs to its way's last node.
+
+    Consecutive segments share their join node, which is kept once; a closing repeat of the first
+    node is dropped. Returns [(node id, way id)].
+    """
+    chain = []
+    for wid, first in segments:
+        nds = ways[wid]["nodes"]
+        nds = nds[nds.index(first):] if first is not None else nds
+        if chain and chain[-1][0] == nds[0]:
+            nds = nds[1:]
+        chain.extend((nid, wid) for nid in nds)
+    if len(chain) > 1 and chain[-1][0] == chain[0][0]:
+        chain.pop()
+    return chain
+
+
 def stitch_ways(label, way_nodes_list, nodes_coords, max_gap=MAX_JOIN_GAP_M):
     """Greedily chain ways by nearest endpoint, reversing ways as needed.
 
@@ -997,6 +1026,49 @@ KART_TRACKS = {
         "num_waypoints": 24,
         "elevation_fn": None,
     },
+    "laval_kart": {
+        "name": "Laval Karting (Circuit Louis Beuvron)",
+        "description": "Legendary French CIK-FIA Grade 1 karting arena in Mayenne featuring banked parabolique, rapid esses, and technical chicanes.",
+        "ways": [183330357],
+        "fia_length": 1232.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 50,  # ~25 m spacing keeps the hairpins within ~3 m of the OSM line
+        "elevation_fn": None,
+    },
+    "whilton_mill": {
+        "name": "Whilton Mill Kart Circuit",
+        "description": "Premier British National karting venue in Northamptonshire featuring challenging downhill esses, Ashby hairpin, and rapid chicanes.",
+        # Full lap without the pit lane, through Christmas Corner, Ashby, Zulu, Back Straight and Pit Bend.
+        "ways": [1208351124, 1208351123, 244268438, 1208351121, 1208351112, 1208351122, 1208351119, 1208351120,
+                 1208351115, 1208351114, 1208351118, 1208351116, 1208351125, 1208351117, 1208351126],
+        # The spec lists 1200 m, but the complete OSM lap is ~1044 m; keep the mapped (1:1) length.
+        "fia_length": 1044.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 50,  # ~21 m spacing keeps the esses within ~3 m of the OSM line
+        "elevation_fn": None,
+    },
+    "campillos": {
+        "name": "Kartcenter Campillos",
+        "description": "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.",
+        "ways": [639076279],
+        "fia_length": 1580.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
+    "valencia_kart": {
+        "name": "Kartodromo Internacional Lucas Guerrero (Valencia)",
+        "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
+        "ways": [751513226],
+        "fia_length": 1428.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
 }
 
 
@@ -1064,15 +1136,7 @@ def process_kart_track(track_id, cache_dir):
     if "start_node_id" in spec:
         start_idx = raw_node_ids.index(spec["start_node_id"])
         reordered_pts = metric_pts[start_idx:] + metric_pts[:start_idx]
-        p0 = reordered_pts[0]
-        p_ahead = reordered_pts[1]
-        for k in range(1, len(reordered_pts)):
-            d = math.hypot(reordered_pts[k][0] - p0[0], reordered_pts[k][1] - p0[1])
-            if d >= 60.0:
-                p_ahead = reordered_pts[k]
-                break
-            p_ahead = reordered_pts[k]
-        heading = math.atan2(p_ahead[1] - p0[1], p_ahead[0] - p0[0])
+        heading = heading_ahead(reordered_pts)
     else:
         start_idx, heading = find_longest_straight(metric_pts)
         reordered_pts = metric_pts[start_idx:] + metric_pts[:start_idx]
@@ -1423,6 +1487,30 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
+    "essay_rx": {
+        "name": "Circuit des Ducs (Essay RX)",
+        "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+        # Main lap (the Tour Joker way 787532794 is left out). (way, first node) pairs; None = whole way.
+        "segments": [(787532793, 7363261553), (787532796, None), (787532795, None)],
+        # The spec lists 1115 m, but the mapped lap is ~925 m (the old preset was 914 m); keep 1:1.
+        "fia_length": 925.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 44,  # ~21 m spacing keeps the lap within ~3 m of the OSM line
+        "jump": None,
+    },
+    "dreux_rx": {
+        "name": "Circuit de l'Ouest Parisien (Dreux RX)",
+        "description": "French Rallycross Championship venue in Dreux featuring high-speed sweeping tarmac, technical loose dirt hairpins, and tabletop jump.",
+        # "Circuit Mixte de l'Ouest Parisien" from the start straight; the Tour Joker is left out.
+        "segments": [(297738880, 3016400386), (1328613408, None), (787140597, None), (1311041712, None),
+                     (787140601, None), (1311041713, None), (787140602, None), (787140604, None)],
+        "fia_length": 1050.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
+        "jump": None,
+    },
 }
 
 
@@ -1440,7 +1528,10 @@ def process_rally_track(track_id, cache_dir):
 
     # (node id, surface) along the lap
     raw_nodes_surf = []
-    if track_id == "hell_rx":
+    if "segments" in spec:
+        for nid, wid in chain_segments(ways, spec["segments"]):
+            raw_nodes_surf.append((nid, rally_way_surface(ways[wid].get("tags", {}))))
+    elif track_id == "hell_rx":
         nodes_67 = ways[1069390967]["nodes"][1:]  # Skip start grid lane (node 0)
         nodes_68 = ways[1069390968]["nodes"]
         nodes_78 = ways[1069390978]["nodes"]
@@ -1543,10 +1634,13 @@ def process_rally_track(track_id, cache_dir):
     lon0 = sum(p[1] for p in raw_pts) / len(raw_pts)
     metric_pts = [latlon_to_meters(p[0], p[1], lat0, lon0) for p in raw_pts]
 
-    # Start straight heading from the first nodes of the lap
-    p_start = metric_pts[0]
-    p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
-    heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
+    # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
+    if "segments" in spec:
+        heading = heading_ahead(metric_pts)
+    else:
+        p_start = metric_pts[0]
+        p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
+        heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
 
     # Rotate so start straight heads along +X
     rotated_pts = rotate_points(metric_pts, heading)
@@ -1604,7 +1698,7 @@ def process_rally_track(track_id, cache_dir):
         "waypoints": waypoints,
         "total_length": round(final_len, 1),
         "fia_length": spec["fia_length"],
-        "jump": spec["jump"],
+        "jump": spec.get("jump"),
     }
 
 
@@ -1671,10 +1765,10 @@ def element_bounds(osm_url):
 
 def config_bbox(track_id):
     """(south, west, north, east) from a kart or rallycross config, when it has one."""
-    if track_id in KART_TRACKS:
+    if "bbox" in KART_TRACKS.get(track_id, {}):
         min_lon, min_lat, max_lon, max_lat = KART_TRACKS[track_id]["bbox"]
         return min_lat, min_lon, max_lat, max_lon
-    if track_id in RALLY_TRACKS:
+    if "query" in RALLY_TRACKS.get(track_id, {}):
         m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", RALLY_TRACKS[track_id]["query"])
         lat1, lon1, lat2, lon2 = map(float, m.groups())
         return min(lat1, lat2), min(lon1, lon2), max(lat1, lat2), max(lon1, lon2)
