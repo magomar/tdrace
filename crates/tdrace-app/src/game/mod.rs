@@ -889,7 +889,7 @@ impl RaceSession {
             camera,
             camera_p2,
             split_layout: SplitLayout::Vertical,
-            filter_p2: DigitalInputFilter::default(),
+            filter_p2: DigitalInputFilter::new(input.filter.config.clone()),
             input,
             touch: TouchController::new(),
             fonts: Fonts::load_embedded(),
@@ -4325,6 +4325,7 @@ impl RaceSession {
 
         // Reset input filter smoothing state
         self.input.reset();
+        self.filter_p2.reset();
 
         // Start new replay recording
         let active_car = self.active_player_car_choice();
@@ -5434,6 +5435,7 @@ impl RaceSession {
                     self.config.input.speed_sensitive_factor = self.input.filter.config.speed_sensitive_factor;
                     self.config.input.min_speed_steer_limit = self.input.filter.config.min_speed_steer_limit;
                     self.config.input.hold_bleed_rate = self.input.filter.config.hold_bleed_rate;
+                    self.filter_p2.config = self.input.filter.config.clone();
                 }
 
                 if is_key_pressed(KeyCode::Escape)
