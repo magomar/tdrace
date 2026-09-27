@@ -678,24 +678,34 @@ impl Track {
             }
         }
 
-        for s in &mut self.spline.samples {
+        let sample_offset = |s: &SplineSample| {
+            let elev_factor = if s.is_bridge { (s.elevation / 3.0).clamp(0.0, 1.0) } else { 0.0 };
+            let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
+            let bridge_offset = curb_extra + 0.50;
+            bo * (1.0 - elev_factor) + bridge_offset * elev_factor
+        };
+        let blended: Vec<(Option<f32>, Option<f32>)> = (0..self.spline.samples.len())
+            .map(|i| {
+                let sample_bo = sample_offset(&self.spline.samples[i]);
+                (
+                    self.spline.blended_wall_distance(i, true, sample_bo),
+                    self.spline.blended_wall_distance(i, false, sample_bo),
+                )
+            })
+            .collect();
+
+        for (s, (left_d, right_d)) in self.spline.samples.iter_mut().zip(blended) {
             if s.left_runoff_surface.is_none() {
                 s.left_runoff_surface = default_runoff;
             }
             if s.right_runoff_surface.is_none() {
                 s.right_runoff_surface = default_runoff;
             }
-            let elev_factor = if s.is_bridge { (s.elevation / 3.0).clamp(0.0, 1.0) } else { 0.0 };
-            let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
-            let bridge_offset = curb_extra + 0.50;
-            let sample_bo = bo * (1.0 - elev_factor) + bridge_offset * elev_factor;
+            let sample_bo = sample_offset(s);
 
-            if s.left_wall_distance.is_none() && s.left_wall {
-                s.left_wall_distance = Some(sample_bo);
-            }
-            if s.right_wall_distance.is_none() && s.right_wall {
-                s.right_wall_distance = Some(sample_bo);
-            }
+            // Runoff corridor width applies with or without a wall, matching `sample_surface`.
+            s.left_wall_distance = left_d.or(Some(sample_bo));
+            s.right_wall_distance = right_d.or(Some(sample_bo));
         }
     }
 
@@ -943,6 +953,77 @@ mod tests {
         assert_eq!(rx.name, "Classic Rallycross");
         assert!(rx.spline.total_length() >= 950.0 && rx.spline.total_length() <= 1100.0, "Classic Rallycross must be ~1km (got {})", rx.spline.total_length());
         assert_eq!(rx.car_category, CarCategory::Rally);
+    }
+
+    /// Closed 8-waypoint loop, 100 m apart, used by the runoff corridor tests.
+    fn octagon_waypoints() -> Vec<TrackWaypoint> {
+        (0..8)
+            .map(|i| {
+                let a = i as f32 * std::f32::consts::TAU / 8.0;
+                TrackWaypoint::new(Vec2::new(a.cos(), a.sin()) * 130.0, 12.0)
+            })
+            .collect()
+    }
+
+    fn octagon_track(waypoints: Vec<TrackWaypoint>) -> Track {
+        let spline = TrackSpline::new(waypoints, true);
+        let (inner_walls, outer_walls, left_poly, right_poly) =
+            generate_walls_from_spline(&spline, 4.0, BarrierType::Steel);
+        Track {
+            name: "Runoff Test Octagon".to_string(),
+            spline,
+            geometry: TrackGeometry {
+                inner_walls,
+                outer_walls,
+                left_boundary_polyline: left_poly,
+                right_boundary_polyline: right_poly,
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+        .with_default_runoff_surfaces()
+    }
+
+    #[test]
+    fn test_single_waypoint_wall_distance_override_blends_without_step() {
+        let mut waypoints = octagon_waypoints();
+        waypoints[2] = waypoints[2].clone().with_wall_distances(Some(10.0), None);
+        let track = octagon_track(waypoints);
+
+        // Corridor width ramps 4 m -> 10 m -> 4 m across the two segments next to waypoint 2.
+        let max_step = (10.0 - 4.0) / TrackSpline::STEPS_PER_SEGMENT as f32 + 1e-3;
+        let samples = &track.spline.samples;
+        for pair in samples.windows(2) {
+            let (a, b) = (pair[0].left_wall_distance.unwrap(), pair[1].left_wall_distance.unwrap());
+            assert!((a - b).abs() <= max_step, "left corridor jumps from {a} to {b}");
+        }
+        let peak = samples[2 * TrackSpline::STEPS_PER_SEGMENT].left_wall_distance.unwrap();
+        assert!((peak - 10.0).abs() < 1e-3, "override must hold at its waypoint (got {peak})");
+        let mid = samples[2 * TrackSpline::STEPS_PER_SEGMENT + TrackSpline::STEPS_PER_SEGMENT / 2]
+            .left_wall_distance
+            .unwrap();
+        assert!((mid - 7.0).abs() < 0.05, "corridor must be halfway at the segment midpoint (got {mid})");
+
+        // Walls follow the same blend: no wall segment endpoint may jump sideways.
+        for pair in track.geometry.inner_walls.windows(2) {
+            let gap = (pair[0].segment.end - pair[1].segment.start).length();
+            assert!(gap < 0.5, "left wall has a {gap:.2} m break");
+        }
+    }
+
+    #[test]
+    fn test_runoff_corridor_width_set_where_wall_is_absent() {
+        let mut waypoints = octagon_waypoints();
+        waypoints[4] = waypoints[4].clone().with_walls(false, true);
+        let track = octagon_track(waypoints);
+
+        // Physics treats the corridor as present without a wall; the sample data must say so too.
+        for s in &track.spline.samples {
+            assert!(s.left_wall_distance.is_some() && s.right_wall_distance.is_some());
+        }
+        let open = track.spline.samples.iter().find(|s| !s.left_wall).expect("walls-off samples");
+        let probe = open.point + open.normal * (open.width * 0.5 + 2.0);
+        assert_eq!(track.sample_surface(probe), track.default_runoff_surface().unwrap());
     }
 
     #[test]

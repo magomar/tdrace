@@ -377,13 +377,13 @@ pub fn generate_walls_from_spline(
     let mut left_pts = Vec::with_capacity(n);
     let mut right_pts = Vec::with_capacity(n);
 
-    for s in &spline.samples {
+    for (i, s) in spline.samples.iter().enumerate() {
         let elev_factor = if s.is_bridge { (s.elevation / 3.0).clamp(0.0, 1.0) } else { 0.0 };
         let curb_extra = if s.left_curb || s.right_curb { 1.35 } else { 0.75 };
         let bridge_offset = curb_extra + 0.50;
 
-        let left_base = s.left_wall_distance.unwrap_or(barrier_offset);
-        let right_base = s.right_wall_distance.unwrap_or(barrier_offset);
+        let left_base = spline.blended_wall_distance(i, true, barrier_offset).unwrap_or(barrier_offset);
+        let right_base = spline.blended_wall_distance(i, false, barrier_offset).unwrap_or(barrier_offset);
 
         let left_offset = left_base * (1.0 - elev_factor) + bridge_offset * elev_factor;
         let right_offset = right_base * (1.0 - elev_factor) + bridge_offset * elev_factor;

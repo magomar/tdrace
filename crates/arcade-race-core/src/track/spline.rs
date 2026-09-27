@@ -248,6 +248,9 @@ impl TrackSpline {
     /// Default wall distance from track edge in meters when unspecified.
     pub const DEFAULT_WALL_DISTANCE: f32 = 8.0;
 
+    /// Number of samples generated per Catmull-Rom segment.
+    pub const STEPS_PER_SEGMENT: usize = 24;
+
     /// An empty track spline with no waypoints or samples.
     pub fn empty() -> Self {
         Self {
@@ -276,7 +279,7 @@ impl TrackSpline {
         let segments = if closed { num_wp } else { num_wp - 1 };
 
         // 1. Resample each Catmull-Rom segment into fine sub-steps (~16-32 steps per segment)
-        let steps_per_segment = 24;
+        let steps_per_segment = Self::STEPS_PER_SEGMENT;
         let mut raw_points = Vec::new();
         let mut raw_widths = Vec::new();
         let mut raw_left_curbs = Vec::new();
@@ -629,6 +632,49 @@ impl TrackSpline {
 
     /// Total track centerline length in meters.
     #[inline]
+    /// Wall distance for sample `index` on one side (`left` or right).
+    ///
+    /// Where only one of the two waypoints bounding the sample's segment overrides the
+    /// distance, this blends linearly toward `default` across the segment instead of the
+    /// stored mid-segment step. Otherwise it returns the stored sample value.
+    pub fn blended_wall_distance(&self, index: usize, left: bool, default: f32) -> Option<f32> {
+        let sample = self.samples.get(index)?;
+        let stored = if left { sample.left_wall_distance } else { sample.right_wall_distance };
+
+        let num_wp = self.waypoints.len();
+        if num_wp < 3 {
+            return stored;
+        }
+        let segments = if self.closed { num_wp } else { num_wp - 1 };
+        let steps = Self::STEPS_PER_SEGMENT;
+        if self.samples.len() != segments * steps + 1 {
+            // Baked samples from a different sampling layout: keep them as they are.
+            return stored;
+        }
+
+        let (seg, t) = if index == segments * steps {
+            if self.closed { (0, 0.0) } else { (segments - 1, 1.0) }
+        } else {
+            (index / steps, (index % steps) as f32 / steps as f32)
+        };
+        let wp1 = &self.waypoints[seg % num_wp];
+        let wp2 = &self.waypoints[(seg + 1) % num_wp];
+        let (d1, d2) = if left {
+            (wp1.left_wall_distance, wp2.left_wall_distance)
+        } else {
+            (wp1.right_wall_distance, wp2.right_wall_distance)
+        };
+
+        match (d1, d2) {
+            (Some(_), None) | (None, Some(_)) => {
+                let a = d1.unwrap_or(default);
+                let b = d2.unwrap_or(default);
+                Some(a + (b - a) * t)
+            }
+            _ => stored,
+        }
+    }
+
     pub fn total_length(&self) -> f32 {
         self.total_length
     }

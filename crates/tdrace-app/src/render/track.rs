@@ -843,135 +843,131 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
         let u1 = d1 / 2.0;
 
         // Left runoff corridor (constrained strictly to between track/curb edge and wall boundary)
-        if s0.left_wall && s1.left_wall {
-            if let Some(runoff_surf) = s0.left_runoff_surface {
-                let hw0 = s0.width * 0.5;
-                let hw1 = s1.width * 0.5;
-                let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
-                let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
+        if let Some(runoff_surf) = s0.left_runoff_surface {
+            let hw0 = s0.width * 0.5;
+            let hw1 = s1.width * 0.5;
+            let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
+            let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
 
-                let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-                let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
-                if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                    let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
-                    let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
-                    let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
-                    let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
+            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
+                let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
+                let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
+                let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
 
-                    let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
-                        let (tex, _, _) = get_surface_material_info(runoff_surf);
-                        BatchMeshBuilder::new(tex)
-                    });
+                let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
+                    let (tex, _, _) = get_surface_material_info(runoff_surf);
+                    BatchMeshBuilder::new(tex)
+                });
 
-                    let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
-                    let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+                let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
+                let (fill_col, _) = get_surface_zone_colors(runoff_surf);
 
-                    if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
-                        let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
-                        let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
-                        let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
-                        let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
+                if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
+                    let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
+                    let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
+                    let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
+                    let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
 
-                        let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
-                            let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
-                            let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
-                            let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
-                            let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
-                            (
-                                Color::new(m0, m0, m0, 1.0),
-                                Color::new(m1, m1, m1, 1.0),
-                                Color::new(m2, m2, m2, 1.0),
-                                Color::new(m3, m3, m3, 1.0),
-                            )
-                        } else {
-                            (WHITE, WHITE, WHITE, WHITE)
-                        };
-
-                        builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
-
-                        // Outer organic fringe feathering
-                        if fringe_builder.texture.is_some() {
-                            let p0_fringe = p0_outer + s0.normal * 0.6;
-                            let p1_fringe = p1_outer + s1.normal * 0.6;
-                            let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
-                            fringe_builder.push_quad(
-                                p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
-                                p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
-                                p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
-                                p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
-                            );
-                        }
+                    let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
+                        (
+                            Color::new(m0, m0, m0, 1.0),
+                            Color::new(m1, m1, m1, 1.0),
+                            Color::new(m2, m2, m2, 1.0),
+                            Color::new(m3, m3, m3, 1.0),
+                        )
                     } else {
-                        builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
+                        (WHITE, WHITE, WHITE, WHITE)
+                    };
+
+                    builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
+
+                    // Outer organic fringe feathering
+                    if fringe_builder.texture.is_some() {
+                        let p0_fringe = p0_outer + s0.normal * 0.6;
+                        let p1_fringe = p1_outer + s1.normal * 0.6;
+                        let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
+                        fringe_builder.push_quad(
+                            p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
+                            p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
+                            p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
+                            p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
+                        );
                     }
+                } else {
+                    builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                 }
             }
         }
 
         // Right runoff corridor (constrained strictly to between track/curb edge and wall boundary)
-        if s0.right_wall && s1.right_wall {
-            if let Some(runoff_surf) = s0.right_runoff_surface {
-                let hw0 = s0.width * 0.5;
-                let hw1 = s1.width * 0.5;
-                let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
-                let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
+        if let Some(runoff_surf) = s0.right_runoff_surface {
+            let hw0 = s0.width * 0.5;
+            let hw1 = s1.width * 0.5;
+            let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
+            let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
 
-                let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-                let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+            let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
-                if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                    let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
-                    let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
-                    let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
-                    let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
+            if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
+                let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
+                let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
+                let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
+                let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
 
-                    let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
-                        let (tex, _, _) = get_surface_material_info(runoff_surf);
-                        BatchMeshBuilder::new(tex)
-                    });
+                let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
+                    let (tex, _, _) = get_surface_material_info(runoff_surf);
+                    BatchMeshBuilder::new(tex)
+                });
 
-                    let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
-                    let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+                let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
+                let (fill_col, _) = get_surface_zone_colors(runoff_surf);
 
-                    if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
-                        let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
-                        let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
-                        let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
-                        let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
+                if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
+                    let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
+                    let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
+                    let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
+                    let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
 
-                        let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
-                            let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
-                            let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
-                            let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
-                            let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
-                            (
-                                Color::new(m0, m0, m0, 1.0),
-                                Color::new(m1, m1, m1, 1.0),
-                                Color::new(m2, m2, m2, 1.0),
-                                Color::new(m3, m3, m3, 1.0),
-                            )
-                        } else {
-                            (WHITE, WHITE, WHITE, WHITE)
-                        };
-
-                        builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
-
-                        // Outer organic fringe feathering
-                        if fringe_builder.texture.is_some() {
-                            let p0_fringe = p0_outer - s0.normal * 0.6;
-                            let p1_fringe = p1_outer - s1.normal * 0.6;
-                            let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
-                            fringe_builder.push_quad(
-                                p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
-                                p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
-                                p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
-                                p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
-                            );
-                        }
+                    let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
+                        let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
+                        let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
+                        let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
+                        let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
+                        (
+                            Color::new(m0, m0, m0, 1.0),
+                            Color::new(m1, m1, m1, 1.0),
+                            Color::new(m2, m2, m2, 1.0),
+                            Color::new(m3, m3, m3, 1.0),
+                        )
                     } else {
-                        builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
+                        (WHITE, WHITE, WHITE, WHITE)
+                    };
+
+                    builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
+
+                    // Outer organic fringe feathering
+                    if fringe_builder.texture.is_some() {
+                        let p0_fringe = p0_outer - s0.normal * 0.6;
+                        let p1_fringe = p1_outer - s1.normal * 0.6;
+                        let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
+                        fringe_builder.push_quad(
+                            p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
+                            p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
+                            p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
+                            p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
+                        );
                     }
+                } else {
+                    builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                 }
             }
         }
