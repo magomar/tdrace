@@ -25,6 +25,7 @@ curl -s "https://nominatim.openstreetmap.org/search?q=Estering+Buxtehude&format=
 - **Overpass API** (`https://overpass-api.de/api/interpreter`): Great for querying specific tags (`way["highway"="raceway"](...)`), but frequently rate-limits (HTTP 429) or times out under load.
 - **Direct OSM Map API** (`https://api.openstreetmap.org/api/0.6/map?bbox=minLon,minLat,maxLon,maxLat`): Extremely fast (<1s), reliable, and returns full node coordinates with tags in a single call.
 - Always cache downloaded survey files in `assets/osm/<track_id>.osm`.
+- Download them with `python3 scripts/osm_importer.py download --track <track_id>`: it reads the circuit's `osm_url` from `provenance.rs` and saves the map area around it (plus 300 m).
 
 ---
 
