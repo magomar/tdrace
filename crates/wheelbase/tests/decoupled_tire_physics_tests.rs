@@ -87,15 +87,17 @@ fn test_independent_front_wheel_brake_lockup_under_trail_braking() {
     }
 
     // Now apply 100% service brake while cornering without ABS
+    // steer > 0 turns right, so the front-inner wheel is front-right (index 1).
+    // (Spec 042: the pre-042 test read index 0, the outer wheel; the old model locked it first.)
     let trail_ctrl = CarControls::new(0.0, 0.45, 1.0, false);
     for _ in 0..30 {
         car.step(&trail_ctrl, SurfaceType::Asphalt, dt);
-        if car.state.wheels[0].is_locked {
+        if car.state.wheels[1].is_locked {
             break;
         }
     }
 
-    let fl_wheel = &car.state.wheels[0];
+    let fl_wheel = &car.state.wheels[1];
     let rr_wheel = &car.state.wheels[3];
 
     println!(

@@ -4,10 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::config::{CarConfig, DifferentialType};
 use super::surface::{SurfaceSampler, SurfaceType};
-use super::tire::{
-    combined_slip_forces, compute_skid_telemetry, solve_combined_slip_forces, WheelAssembly,
-    WheelId, WheelTelemetry,
-};
+use super::tire::{combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry};
 
 /// Helper returning default wheel assemblies state for CarState deserialization.
 pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
@@ -832,13 +829,17 @@ fn apply_differential_rotational_coupling(
             ((nom_fz_rr + delta_fz_caster_rr).max(min_load_r)) * ground_contact, // RR (right)
         ];
 
-        // 4. Force calculation per wheel
+        // 4. Tires, wheel spin and drivetrain (Spec 042)
+        //
+        // Pass A: contact-patch kinematics and friction envelopes.
+        // Pass B: drive / brake torques and implicit wheel spin (+ axle coupling).
+        // Pass C: tire forces from the integrated slip, chassis force/torque sums and telemetry.
         let mut total_wheel_force_world = Vec2::ZERO;
         let mut total_wheel_torque = 0.0;
 
         let omega = self.state.angular_velocity;
 
-        // Drive / Brake torque requests with top-speed governor and TCS (Spec 038)
+        // Drive / Brake torque requests with top-speed governor (Spec 038)
         // Average driven-wheel speed (representing driveshaft / differential carrier speed)
         // governs top-speed power taper alongside chassis speed, preventing a single unloaded
         // spinning inside wheel from choking engine power during cornering.
@@ -864,43 +865,23 @@ fn apply_differential_rotational_coupling(
             (1.0 - (speed_ratio - 0.90) / 0.10).clamp(0.0, 1.0)
         };
 
-        let mut tcs_active = false;
-        let mut drive_torque_multiplier = 1.0f32;
-
-        if self.config.assists.tcs_enabled
+        // TCS: the lateral term cuts engine torque when the rear axle slides past the trigger
+        // angle; the longitudinal term (per wheel, Pass B) holds driven-wheel slip at its target.
+        let tcs_engaged = self.config.assists.tcs_enabled
             && clamped_ctrl.throttle > 0.0
             && !clamped_ctrl.reverse
-            && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
-        {
-            let thresh = self.config.assists.tcs_slip_threshold;
+            && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake);
+        let mut tcs_active = false;
+        let mut drive_torque_multiplier = 1.0f32;
+        if tcs_engaged {
             let rear_slip_lat = self.state.wheels[2].slip_angle.abs().max(self.state.wheels[3].slip_angle.abs());
-            let is_cornering = self.state.steer_angle.abs() > 0.02 || self.state.sideslip_angle.abs() > 0.03 || rear_slip_lat > 0.08;
-
-            let max_driven_slip_long = self.state.wheel_assemblies.iter()
-                .filter(|w| w.config.drive_torque_factor > 0.0)
-                .map(|w| w.compute_slip_ratio(v_long))
-                .fold(0.0f32, f32::max);
-
-            let mut cut = 0.0f32;
-            if is_cornering && rear_slip_lat > thresh {
-                let excess_lat = (rear_slip_lat - thresh).max(0.0) / thresh;
-                cut = cut.max((excess_lat * self.config.assists.tcs_strength).clamp(0.0, 0.75));
+            let trigger = self.config.assists.tcs_slip_angle_deg.to_radians().max(1e-3);
+            if rear_slip_lat > trigger {
+                let excess_lat = (rear_slip_lat - trigger) / trigger;
+                drive_torque_multiplier = 1.0 - (excess_lat * self.config.assists.tcs_strength).clamp(0.0, 0.75);
                 tcs_active = true;
-            }
-
-            if max_driven_slip_long > thresh {
-                let excess_long = (max_driven_slip_long - thresh) / (1.0 - thresh).max(0.05);
-                // At standstill / low-speed launch, blend TCS intervention to allow standing takeoff without bogging down
-                let launch_blend = (v_long.abs() / 3.0).clamp(0.25, 1.0);
-                cut = cut.max((excess_long * self.config.assists.tcs_strength * launch_blend).clamp(0.0, 0.65));
-                tcs_active = true;
-            }
-
-            if tcs_active {
-                drive_torque_multiplier = 1.0 - cut;
             }
         }
-        self.state.tcs_active = tcs_active;
 
         let mut engine_brake_multiplier = 1.0f32;
         // Engine Drag Reduction (EDR / MSR): prevent lift-off snap oversteer when the chassis is in
@@ -953,6 +934,58 @@ fn apply_differential_rotational_coupling(
             surface_mus[i] = mu;
         }
 
+        // Pass A: contact-patch kinematics
+        let mut offsets_world = [Vec2::ZERO; 4];
+        let mut wheel_v_worlds = [Vec2::ZERO; 4];
+        let mut wheel_fwds = [Vec2::ZERO; 4];
+        let mut wheel_rights = [Vec2::ZERO; 4];
+        let mut wheel_v_longs = [0.0f32; 4];
+        let mut slip_angles = [0.0f32; 4];
+        let mut envelopes = [0.0f32; 4];
+        for i in 0..4 {
+            let offset_local = wheel_local_offsets[i];
+            let offset_world = fwd * offset_local.x + right * offset_local.y;
+
+            // Contact patch world velocity = V_cg + omega x r
+            let v_rot = Vec2::new(-omega * offset_world.y, omega * offset_world.x);
+            let wheel_v_world = self.state.velocity + v_rot;
+
+            // Wheel orientation
+            let wheel_angle_world = self.state.angle + wheel_steer_angles[i];
+            let wheel_fwd = Vec2::new(wheel_angle_world.cos(), wheel_angle_world.sin());
+            let wheel_right = Vec2::new(wheel_angle_world.sin(), -wheel_angle_world.cos());
+
+            let w_v_long = wheel_v_world.dot(wheel_fwd);
+            let w_v_lat = wheel_v_world.dot(wheel_right);
+
+            let nominal_fz = if WheelId::ALL[i].is_front() {
+                total_weight * (lr / wheelbase) * 0.5
+            } else {
+                total_weight * (lf / wheelbase) * 0.5
+            };
+
+            offsets_world[i] = offset_world;
+            wheel_v_worlds[i] = wheel_v_world;
+            wheel_fwds[i] = wheel_fwd;
+            wheel_rights[i] = wheel_right;
+            wheel_v_longs[i] = w_v_long;
+            // Slip angle: angle between wheel direction and velocity vector
+            slip_angles[i] = -w_v_lat.atan2(w_v_long.abs().max(2.5));
+            envelopes[i] = self.state.wheel_assemblies[i].friction_envelope(normal_loads[i], nominal_fz, surface_mus[i]);
+
+            // Kinematic rolling synchronization: if vehicle was spawned/set at speed without previous lockup
+            let r = self.state.wheel_assemblies[i].config.tire_radius.max(1e-2);
+            if !self.state.wheel_assemblies[i].is_locked
+                && self.state.wheel_assemblies[i].angular_velocity.abs() < 1e-3
+                && w_v_long.abs() > 1.0
+                && clamped_ctrl.brake < 0.05
+                && !clamped_ctrl.handbrake
+            {
+                self.state.wheel_assemblies[i].angular_velocity = w_v_long / r;
+            }
+        }
+
+        // Pass B: drive / brake torques and implicit wheel spin
         // Cross-axle differential drive force resolution (Spec 034):
         let front_axle_force = total_drive_force * self.config.drive_bias;
         let rear_axle_force = total_drive_force * (1.0 - self.config.drive_bias);
@@ -989,183 +1022,217 @@ fn apply_differential_rotational_coupling(
             dt,
         );
 
+        // Handbrake declutches the rear axle (arcade convention: the handbrake always wins over
+        // throttle on the rear wheels, so a held throttle cannot stop the rear from locking).
+        let (f_drive_rl, f_drive_rr) = if clamped_ctrl.handbrake {
+            (0.0, 0.0)
+        } else {
+            (f_drive_rl, f_drive_rr)
+        };
         let resolved_drive_forces = [f_drive_fl, f_drive_fr, f_drive_rl, f_drive_rr];
 
+        // Cornering Brake Control (CBC): trim inside rear brake pressure under oversteering yaw divergence
+        let kinematic_yaw_rate = (v_long / self.config.wheelbase) * self.state.steer_angle.tan();
+        let yaw_divergence = omega - kinematic_yaw_rate;
+        let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum() && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
+            || (kinematic_yaw_rate.abs() < 0.05 && omega.abs() > 0.08)
+            || (omega.signum() != kinematic_yaw_rate.signum() && omega.abs() > 0.12);
+
+        // Electronic Brakeforce Distribution (with ABS): `brake_bias` is the minimum front share;
+        // EBD only moves bias forward, towards the dynamic front load share, never rearward.
+        let front_brake_share = if self.config.assists.abs_enabled && total_normal_load > 1e-3 {
+            let dynamic_front = (normal_loads[0] + normal_loads[1]) / total_normal_load;
+            self.config.brake_bias.max(dynamic_front).clamp(0.0, 1.0)
+        } else {
+            self.config.brake_bias.clamp(0.0, 1.0)
+        };
+
+        let mut brake_torques = [0.0f32; 4];
+        let mut tcs_limit_omega: [Option<f32>; 4] = [None; 4];
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
-            let offset_local = wheel_local_offsets[i];
-            let offset_world = fwd * offset_local.x + right * offset_local.y;
-            let wheel_pos_world = self.state.position + offset_world;
+            let assembly = &self.state.wheel_assemblies[i];
+            let r = assembly.config.tire_radius.max(1e-2);
+            let w_v_long = wheel_v_longs[i];
 
-            // Contact patch world velocity = V_cg + omega x r
-            let v_rot = Vec2::new(-omega * offset_world.y, omega * offset_world.x);
-            let wheel_v_world = self.state.velocity + v_rot;
-
-            // Wheel orientation
-            let wheel_angle_world = self.state.angle + wheel_steer_angles[i];
-            let wheel_fwd = Vec2::new(wheel_angle_world.cos(), wheel_angle_world.sin());
-            let wheel_right = Vec2::new(wheel_angle_world.sin(), -wheel_angle_world.cos());
-
-            let w_v_long = wheel_v_world.dot(wheel_fwd);
-            let w_v_lat = wheel_v_world.dot(wheel_right);
-
-            // Slip angle: angle between wheel direction and velocity vector
-            let slip_angle = -w_v_lat.atan2(w_v_long.abs().max(2.5));
-
-            // Surface properties
-            let surf = surfaces[i];
-            let mu = surface_mus[i];
-            let prev_dirt = self.state.wheels[i].dirt_contamination;
-            let prev_dirt_surface = self.state.wheels[i].dirt_surface;
-
-            let fz = normal_loads[i];
-            let nominal_fz = if wheel_id.is_front() {
-                total_weight * (lr / wheelbase) * 0.5
-            } else {
-                total_weight * (lf / wheelbase) * 0.5
-            };
-            let max_friction = self.state.wheel_assemblies[i].friction_envelope(fz, nominal_fz, mu);
-
-            let r = self.state.wheel_assemblies[i].config.tire_radius.max(1e-2);
-
-            // Kinematic rolling synchronization: if vehicle was spawned/set at speed without previous lockup
-            if !self.state.wheel_assemblies[i].is_locked
-                && self.state.wheel_assemblies[i].angular_velocity.abs() < 1e-3
-                && w_v_long.abs() > 1.0
-            {
-                self.state.wheel_assemblies[i].angular_velocity = w_v_long / r;
+            let axle_brake_share = if wheel_id.is_front() { front_brake_share } else { 1.0 - front_brake_share };
+            let mut wheel_brake_force = total_brake_force * axle_brake_share * 0.5;
+            if self.config.assists.abs_enabled && is_oversteering_under_brake && w_v_long.abs() > 0.5 {
+                let yaw_sign = omega.signum();
+                let is_inside_rear = (yaw_sign > 0.0 && wheel_id == WheelId::RearLeft)
+                    || (yaw_sign < 0.0 && wheel_id == WheelId::RearRight);
+                if is_inside_rear {
+                    let cbc_cut = (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength).clamp(0.0, 0.45);
+                    wheel_brake_force *= 1.0 - cbc_cut;
+                }
             }
-
-            // Dynamic Electronic Brakeforce Distribution (EBD):
-            // Blends nominal brake bias with dynamic normal load fraction.
-            // As weight transfers forward under deceleration, front brake share increases and rear decreases.
-            // Safety limiter: ensure rear brake share never exceeds dynamic rear load capability,
-            // guaranteeing the front axle saturates before the rear axle (stable understeer).
-            let static_share = self.state.wheel_assemblies[i].config.brake_bias_factor;
-            let brake_share = if self.config.assists.abs_enabled {
-                let dynamic_load_share = if total_normal_load > 1e-3 {
-                    fz / total_normal_load
-                } else {
-                    0.25
+            // ABS rear select-low: both rear brakes are capped to what the lower-grip rear tire can
+            // take at its slip target, so split-mu braking cannot build a rear yaw moment.
+            if self.config.assists.abs_enabled && wheel_id.is_rear() && w_v_long.abs() > 0.5 {
+                let rear_cap = |j: usize| {
+                    let a = &self.state.wheel_assemblies[j];
+                    let target = a.config.tire_model.peak_slip_ratio * (self.config.assists.abs_slip_threshold / 0.15) * 0.6;
+                    combined_slip_forces(-target, slip_angles[j], envelopes[j], &a.config.tire_model).0.abs()
                 };
-                let nominal_share = 0.20 * static_share + 0.80 * dynamic_load_share;
-                if wheel_id.is_rear() {
-                    nominal_share.min(dynamic_load_share * 0.75)
-                } else {
-                    nominal_share
-                }
-            } else {
-                static_share
-            };
-
-            let (wheel_drive_force, mut engine_retard_force) = if clamped_ctrl.throttle > 0.0 || clamped_ctrl.reverse {
-                (resolved_drive_forces[i], 0.0)
-            } else {
-                (0.0, (-resolved_drive_forces[i]).max(0.0))
-            };
-
-            // Electronic Drag Reduction (EDR / MSR): prevent engine braking overrun from breaking tire grip when ABS is enabled
-            if self.config.assists.abs_enabled && engine_retard_force > max_friction * 0.70 {
-                engine_retard_force = max_friction * 0.70;
+                wheel_brake_force = wheel_brake_force.min(rear_cap(2).min(rear_cap(3)));
             }
-
-            let mut wheel_brake_force = total_brake_force * brake_share;
-
-            // Dynamic EBD limiter: rear axle retarding force must not exceed rear dynamic load envelope
-            if wheel_id.is_rear() && self.config.assists.abs_enabled {
-                let max_rear_retard = max_friction * 0.82;
-                if wheel_brake_force + engine_retard_force > max_rear_retard {
-                    wheel_brake_force = (max_rear_retard - engine_retard_force).max(0.0);
-                }
-            }
-
             let is_handbraking_wheel = clamped_ctrl.handbrake && wheel_id.is_rear();
             if is_handbraking_wheel {
                 wheel_brake_force += self.config.handbrake_force * 0.5;
             }
+            brake_torques[i] = wheel_brake_force * r;
 
-            // Anti-lock Braking System (ABS) & Cornering Brake Control (CBC)
-            if self.config.assists.abs_enabled && !is_handbraking_wheel && w_v_long.abs() > 0.5 {
-                let is_cornering = wheel_steer_angles[i].abs() > 0.01
-                    || clamped_ctrl.steer.abs() > 0.02
-                    || self.state.sideslip_angle.abs() > 0.02
-                    || omega.abs() > 0.06;
-
-                // CBC: trim inside rear brake pressure under oversteering yaw divergence
-                let kinematic_yaw_rate = (v_long / self.config.wheelbase) * self.state.steer_angle.tan();
-                let yaw_divergence = omega - kinematic_yaw_rate;
-                let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum() && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
-                    || (kinematic_yaw_rate.abs() < 0.05 && omega.abs() > 0.08)
-                    || (omega.signum() != kinematic_yaw_rate.signum() && omega.abs() > 0.12);
-
-                if is_oversteering_under_brake {
-                    let yaw_sign = omega.signum();
-                    let is_inside_rear = (yaw_sign > 0.0 && wheel_id == WheelId::RearLeft)
-                        || (yaw_sign < 0.0 && wheel_id == WheelId::RearRight);
-                    if is_inside_rear {
-                        let cbc_cut = (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength).clamp(0.0, 0.45);
-                        wheel_brake_force *= 1.0 - cbc_cut;
-                    }
-                }
-
-                // ABS: preserve lateral grip envelope and prevent lockup
-                let target_lat_reserve: f32 = if is_cornering {
-                    if wheel_id.is_front() {
-                        0.72 // High front lateral authority for crisp turn-in under threshold braking
-                    } else {
-                        0.65 // High rear lateral reserve guarantees rear axle stays planted
-                    }
-                } else {
-                    if wheel_id.is_rear() {
-                        0.35 // Reserve 35% lateral grip on rear axle in straight lines
-                    } else {
-                        0.20 // Front maximizes longitudinal stopping power (98% peak Fx)
-                    }
+            let mut drive_torque = resolved_drive_forces[i] * r;
+            let tcs_wheel = tcs_engaged && assembly.config.drive_torque_factor > 0.0 && drive_torque > 0.0;
+            let tcs_target = assembly.config.tire_model.peak_slip_ratio * (self.config.assists.tcs_slip_threshold / 0.18);
+            if tcs_wheel {
+                // TCS torque reduction: trim drive torque towards what the tire transmits at the slip
+                // target. A spool axle shares torque across both wheels, so it uses the axle average.
+                let fx_at_target = |j: usize| {
+                    let a = &self.state.wheel_assemblies[j];
+                    combined_slip_forces(tcs_target, slip_angles[j], envelopes[j], &a.config.tire_model).0.max(0.0)
                 };
-
-                let max_fx_abs = max_friction * (1.0f32 - target_lat_reserve * target_lat_reserve).sqrt();
-                let total_retard = wheel_brake_force + engine_retard_force;
-                if total_retard > max_fx_abs {
-                    let excess = total_retard - max_fx_abs;
-                    wheel_brake_force = (wheel_brake_force - excess * self.config.assists.abs_strength).max(0.0);
-                    abs_active = true;
+                let axle_diff = if wheel_id.is_front() { self.config.front_differential } else { self.config.rear_differential };
+                let fx_target = if axle_diff == DifferentialType::Spool {
+                    let base = if wheel_id.is_front() { 0 } else { 2 };
+                    0.5 * (fx_at_target(base) + fx_at_target(base + 1))
+                } else {
+                    fx_at_target(i)
+                };
+                let torque_cap = fx_target * r;
+                if drive_torque > torque_cap {
+                    drive_torque -= (drive_torque - torque_cap) * self.config.assists.tcs_strength.clamp(0.0, 1.0);
+                    tcs_active = true;
                 }
+            }
+            self.state.wheel_assemblies[i].step_implicit(
+                drive_torque,
+                brake_torques[i],
+                w_v_long,
+                slip_angles[i],
+                envelopes[i],
+                dt,
+            );
 
-                // If wheel has nevertheless started to slip heavily, modulate further
-                let current_slip = self.state.wheel_assemblies[i].compute_slip_ratio(w_v_long);
-                if current_slip < -self.config.assists.abs_slip_threshold || self.state.wheel_assemblies[i].is_locked {
-                    let excess_slip = (-current_slip - self.config.assists.abs_slip_threshold).max(0.0);
-                    let pulse_cut = (excess_slip * 2.0 * self.config.assists.abs_strength).clamp(0.0, 0.90);
-                    wheel_brake_force *= 1.0 - pulse_cut;
+            let assembly = &mut self.state.wheel_assemblies[i];
+            let peak_slip = assembly.config.tire_model.peak_slip_ratio;
+
+            // ABS: hold braking slip at the target; the target shrinks with lateral utilization so
+            // the tire keeps steering authority while cornering (continuous, no steering gate).
+            if self.config.assists.abs_enabled
+                && !is_handbraking_wheel
+                && brake_torques[i] > 0.0
+                && w_v_long.abs() > 0.5
+            {
+                let lateral_use = if envelopes[i] > 1e-3 {
+                    (self.state.wheels[i].lateral_force.abs() / envelopes[i]).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                // EBD: the rear axle is held further below its peak than the front so it keeps the
+                // lateral stiffness that holds the car straight under braking.
+                let axle_share = if wheel_id.is_rear() { 0.6 } else { 1.0 };
+                let target = peak_slip * (self.config.assists.abs_slip_threshold / 0.15) * axle_share * (1.0 - 0.4 * lateral_use);
+                let omega_limit = assembly.omega_for_slip(-target * w_v_long.signum(), w_v_long);
+                let over_slipping = if w_v_long > 0.0 {
+                    assembly.angular_velocity < omega_limit
+                } else {
+                    assembly.angular_velocity > omega_limit
+                };
+                if over_slipping {
+                    let strength = self.config.assists.abs_strength.clamp(0.0, 1.0);
+                    assembly.angular_velocity += (omega_limit - assembly.angular_velocity) * strength;
+                    assembly.is_locked = false;
                     abs_active = true;
-                }
-
-                // Generically cap wheel braking force near the tire traction envelope when ABS is active
-                let max_traction_cap = max_friction * 0.98;
-                if wheel_brake_force > max_traction_cap {
-                    wheel_brake_force = max_traction_cap;
                 }
             }
 
-            let total_retard_force = wheel_brake_force + engine_retard_force;
-            let total_brake_torque = total_retard_force * r;
-            let brake_dir = if w_v_long.abs() > 0.05 {
-                -w_v_long.signum()
-            } else if v_long.abs() > 0.05 {
-                -v_long.signum()
+            tcs_limit_omega[i] = if tcs_wheel {
+                Some(assembly.omega_for_slip(tcs_target, w_v_long))
             } else {
-                0.0
+                None
             };
 
-            let mut fx_demand = if brake_dir.abs() > 0.0 {
-                wheel_drive_force + total_retard_force * brake_dir
-            } else if wheel_drive_force.abs() <= total_retard_force {
-                // Static brake hold balances drive force completely
-                0.0
-            } else {
-                // Drive force overcomes static brake hold
-                wheel_drive_force - total_retard_force * wheel_drive_force.signum()
-            };
+            // Cross-axle differential rotational coupling (Spec 034): Spool locks angular velocities
+            if i == 1 && (self.config.drive_bias > 0.0 || self.config.front_differential == DifferentialType::Spool) {
+                let (w0, w1) = Self::apply_differential_rotational_coupling(
+                    self.config.front_differential,
+                    self.state.wheel_assemblies[0].angular_velocity,
+                    self.state.wheel_assemblies[1].angular_velocity,
+                    self.state.wheel_assemblies[0].config.rotational_inertia,
+                    self.state.wheel_assemblies[1].config.rotational_inertia,
+                );
+                self.state.wheel_assemblies[0].angular_velocity = w0;
+                self.state.wheel_assemblies[1].angular_velocity = w1;
+            } else if i == 3 && ((1.0 - self.config.drive_bias) > 0.0 || self.config.rear_differential == DifferentialType::Spool) {
+                let (w2, w3) = Self::apply_differential_rotational_coupling(
+                    self.config.rear_differential,
+                    self.state.wheel_assemblies[2].angular_velocity,
+                    self.state.wheel_assemblies[3].angular_velocity,
+                    self.state.wheel_assemblies[2].config.rotational_inertia,
+                    self.state.wheel_assemblies[3].config.rotational_inertia,
+                );
+                self.state.wheel_assemblies[2].angular_velocity = w2;
+                self.state.wheel_assemblies[3].angular_velocity = w3;
+            }
+
+            // TCS (longitudinal): once an axle is coupled, catch any runaway above the slip target.
+            // A spool shares one speed, so it is held at the mean of both wheels' limits (one wheel
+            // must out-slip the other in a corner).
+            if i == 1 || i == 3 {
+                let (a, b) = (i - 1, i);
+                let axle_is_spool = if i == 1 {
+                    self.config.front_differential == DifferentialType::Spool
+                } else {
+                    self.config.rear_differential == DifferentialType::Spool
+                };
+                let strength = self.config.assists.tcs_strength.clamp(0.0, 1.0);
+                let limits = if axle_is_spool {
+                    match (tcs_limit_omega[a], tcs_limit_omega[b]) {
+                        (Some(la), Some(lb)) => [Some(0.5 * (la + lb)); 2],
+                        _ => [None; 2],
+                    }
+                } else {
+                    [tcs_limit_omega[a], tcs_limit_omega[b]]
+                };
+                for (j, limit) in [a, b].into_iter().zip(limits) {
+                    if let Some(omega_limit) = limit {
+                        let w = &mut self.state.wheel_assemblies[j];
+                        if w.angular_velocity > omega_limit {
+                            w.angular_velocity += (omega_limit - w.angular_velocity) * strength;
+                            tcs_active = true;
+                        }
+                    }
+                }
+            }
+        }
+        self.state.tcs_active = tcs_active;
+
+        // Pass C: tire forces from the integrated wheel state
+        for i in 0..4 {
+            let wheel_id = WheelId::ALL[i];
+            let offset_world = offsets_world[i];
+            let wheel_pos_world = self.state.position + offset_world;
+            let wheel_v_world = wheel_v_worlds[i];
+            let wheel_fwd = wheel_fwds[i];
+            let wheel_right = wheel_rights[i];
+            let w_v_long = wheel_v_longs[i];
+            let slip_angle = slip_angles[i];
+            let surf = surfaces[i];
+            let fz = normal_loads[i];
+            let envelope = envelopes[i];
+            let prev_dirt = self.state.wheels[i].dirt_contamination;
+            let prev_dirt_surface = self.state.wheels[i].dirt_surface;
+            let is_handbraking_wheel = clamped_ctrl.handbrake && wheel_id.is_rear();
+
+            let raw_slip_ratio = self.state.wheel_assemblies[i].slip_ratio_raw(w_v_long);
+            let slip_ratio = raw_slip_ratio.clamp(-1.0, 1.0);
+            let (fx_tire, fy_tire) = combined_slip_forces(
+                raw_slip_ratio,
+                slip_angle,
+                envelope,
+                &self.state.wheel_assemblies[i].config.tire_model,
+            );
 
             // Rolling resistance opposes wheel forward motion
             let base_rr_mult = surf.rolling_resistance_multiplier();
@@ -1180,72 +1247,15 @@ fn apply_differential_rotational_coupling(
             };
             let rr_coeff = self.config.rolling_resistance_coefficient * effective_rr_mult;
             let rr_force = -rr_coeff * fz * (w_v_long / 0.5).tanh();
-            fx_demand += rr_force;
 
-            // Lateral demand: Pacejka Magic Formula with thermal degradation and low-speed stabilization
+            // Low-speed lateral stabilization: below ~3.0 m/s the explicit chassis integration of
+            // tire yaw damping violates its stability limit, so lateral force fades out.
             let low_speed_blend = (w_v_long.abs() / 3.0).clamp(0.05, 1.0);
-            let (_, fy_pure) = combined_slip_forces(
-                0.0,
-                slip_angle,
-                max_friction,
-                &self.state.wheel_assemblies[i].config.tire_model,
-            );
-            let fy_demand = fy_pure * low_speed_blend;
-
-            // Friction ellipse combination
-            let (fx, fy) = solve_combined_slip_forces(fx_demand, fy_demand, max_friction);
-
-            // Step wheel rotational dynamics
-            let drive_torque = wheel_drive_force * r;
-            let fx_grip_capacity = (max_friction * max_friction - fy * fy).max(0.0).sqrt();
-            self.state.wheel_assemblies[i].step_rotation(drive_torque, total_brake_torque, fx_grip_capacity, w_v_long, dt);
-
-            // Cross-axle differential rotational coupling (Spec 034):
-            // Spool mechanically locks angular velocities; LimitedSlip applies clutch damping torque
-            if i == 1 && (self.config.drive_bias > 0.0 || self.config.front_differential == DifferentialType::Spool) {
-                let (w0, w1) = Self::apply_differential_rotational_coupling(
-                    self.config.front_differential,
-                    self.state.wheel_assemblies[0].angular_velocity,
-                    self.state.wheel_assemblies[1].angular_velocity,
-                    self.state.wheel_assemblies[0].config.rotational_inertia,
-                    self.state.wheel_assemblies[1].config.rotational_inertia,
-                );
-                self.state.wheel_assemblies[0].angular_velocity = w0;
-                self.state.wheel_assemblies[1].angular_velocity = w1;
-                self.state.wheels[0].angular_velocity = w0;
-                self.state.wheels[1].angular_velocity = w1;
-                let offset_fl = wheel_local_offsets[0];
-                let offset_world_fl = fwd * offset_fl.x + right * offset_fl.y;
-                let v_rot_fl = Vec2::new(-omega * offset_world_fl.y, omega * offset_world_fl.x);
-                let w0_v_world = self.state.velocity + v_rot_fl;
-                let w0_angle = self.state.angle + wheel_steer_angles[0];
-                let w0_fwd = Vec2::new(w0_angle.cos(), w0_angle.sin());
-                let w0_v_long = w0_v_world.dot(w0_fwd);
-                self.state.wheels[0].slip_ratio = self.state.wheel_assemblies[0].compute_slip_ratio(w0_v_long);
-            } else if i == 3 && ((1.0 - self.config.drive_bias) > 0.0 || self.config.rear_differential == DifferentialType::Spool) {
-                let (w2, w3) = Self::apply_differential_rotational_coupling(
-                    self.config.rear_differential,
-                    self.state.wheel_assemblies[2].angular_velocity,
-                    self.state.wheel_assemblies[3].angular_velocity,
-                    self.state.wheel_assemblies[2].config.rotational_inertia,
-                    self.state.wheel_assemblies[3].config.rotational_inertia,
-                );
-                self.state.wheel_assemblies[2].angular_velocity = w2;
-                self.state.wheel_assemblies[3].angular_velocity = w3;
-                self.state.wheels[2].angular_velocity = w2;
-                self.state.wheels[3].angular_velocity = w3;
-                let offset_rl = wheel_local_offsets[2];
-                let offset_world_rl = fwd * offset_rl.x + right * offset_rl.y;
-                let v_rot_rl = Vec2::new(-omega * offset_world_rl.y, omega * offset_world_rl.x);
-                let w2_v_world = self.state.velocity + v_rot_rl;
-                let w2_angle = self.state.angle + wheel_steer_angles[2];
-                let w2_fwd = Vec2::new(w2_angle.cos(), w2_angle.sin());
-                let w2_v_long = w2_v_world.dot(w2_fwd);
-                self.state.wheels[2].slip_ratio = self.state.wheel_assemblies[2].compute_slip_ratio(w2_v_long);
-            }
-
-            // Exact kinematic slip ratio from integrated wheel rotational velocity
-            let slip_ratio = self.state.wheel_assemblies[i].compute_slip_ratio(w_v_long);
+            let fy = fy_tire * low_speed_blend;
+            // Rolling resistance shares the tire's longitudinal budget (braking on grass is still
+            // grip-limited), but its own drag is always available so off-track coasting slows the car.
+            let fx_room = (envelope * envelope - fy * fy).max(0.0).sqrt().max(rr_force.abs());
+            let fx = (fx_tire + rr_force).clamp(-fx_room, fx_room);
 
             // Step thermal dissipation and mechanical tread wear
             self.state.wheel_assemblies[i].step_thermal_and_wear(

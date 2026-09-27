@@ -152,7 +152,8 @@ pub struct TireConfig {
     pub falloff: f32,
     /// Load sensitivity: grip per newton drops as load rises above nominal (0 = linear, 0.1-0.25 = real).
     pub load_sensitivity: f32,
-    /// How much longitudinal slip steals lateral grip (1.0 = physical friction circle, 0.3 = arcade).
+    /// How much longitudinal slip steals lateral grip (1.0 = physical slip-vector direction,
+    /// 0.0 = lateral keeps the whole friction-circle budget left after Fx; arcade ~0.6-0.85).
     pub power_slide: f32,
     /// Minimum slip angle (radians) to trigger tire squeal and skid marks.
     pub skid_threshold: f32,
@@ -245,10 +246,14 @@ pub struct DriverAssistsConfig {
     /// Traction Control System (TCS) enabled.
     /// Prevents excessive drive wheel slip under acceleration to eliminate snap power-oversteer.
     pub tcs_enabled: bool,
-    /// TCS sensitivity / slip threshold: wheel slip ratio above which drive torque is modulated.
+    /// TCS longitudinal slip target. 0.18 holds driven wheels at the tire's peak slip ratio;
+    /// higher values allow proportionally more wheelspin (0.30 = 1.67x peak).
     pub tcs_slip_threshold: f32,
     /// TCS torque reduction strength [0.0 = none, 1.0 = full cut down to grip limit].
     pub tcs_strength: f32,
+    /// TCS lateral trigger: rear slip angle (degrees) above which engine torque is cut (Spec 042).
+    #[serde(default = "default_tcs_slip_angle_deg")]
+    pub tcs_slip_angle_deg: f32,
 
     /// Electronic Stability Control (ESC) enabled.
     /// Applies corrective stabilizing yaw moment when unintended sideslip/yaw rate occurs.
@@ -267,7 +272,8 @@ pub struct DriverAssistsConfig {
     /// Anti-lock Braking System (ABS) enabled.
     /// Prevents excessive brake lockup to preserve lateral steering grip during braking.
     pub abs_enabled: bool,
-    /// ABS target lateral grip retention factor [0.0 = none, 1.0 = full lateral priority].
+    /// ABS braking slip target. 0.15 holds braked wheels at the tire's peak slip ratio;
+    /// higher values allow proportionally deeper slip. The target shrinks while cornering.
     pub abs_slip_threshold: f32,
     /// ABS modulation strength [0.0 = disabled, 1.0 = full pressure modulation].
     pub abs_strength: f32,
@@ -275,6 +281,10 @@ pub struct DriverAssistsConfig {
     /// Handbrake bypass: whether holding the handbrake temporarily disengages TCS and relaxes ESC
     /// so intentional handbrake power-drifts are 100% responsive and uninhibited.
     pub handbrake_bypass: bool,
+}
+
+fn default_tcs_slip_angle_deg() -> f32 {
+    12.0
 }
 
 impl Default for DriverAssistsConfig {
@@ -290,6 +300,7 @@ impl DriverAssistsConfig {
             tcs_enabled: true,
             tcs_slip_threshold: 0.18,
             tcs_strength: 0.75,
+            tcs_slip_angle_deg: 12.0,
             esc_enabled: true,
             esc_yaw_threshold: 0.10,
             esc_strength: 0.85,
@@ -308,6 +319,7 @@ impl DriverAssistsConfig {
             tcs_enabled: true,
             tcs_slip_threshold: 0.30,
             tcs_strength: 0.40,
+            tcs_slip_angle_deg: 16.0,
             esc_enabled: true,
             esc_yaw_threshold: 0.22,
             esc_strength: 0.50,
@@ -326,6 +338,7 @@ impl DriverAssistsConfig {
             tcs_enabled: false,
             tcs_slip_threshold: 0.50,
             tcs_strength: 0.0,
+            tcs_slip_angle_deg: 30.0,
             esc_enabled: false,
             esc_yaw_threshold: 1.0,
             esc_strength: 0.0,
@@ -900,6 +913,7 @@ impl CarConfig {
                 tcs_enabled: true,
                 tcs_slip_threshold: 0.16,
                 tcs_strength: 0.70,
+                tcs_slip_angle_deg: 12.0,
                 esc_enabled: false, // Pure analog chassis yaw rotation for karts
                 esc_yaw_threshold: 0.40,
                 esc_strength: 0.0,
