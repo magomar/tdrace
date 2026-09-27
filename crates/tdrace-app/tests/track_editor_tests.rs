@@ -2108,7 +2108,7 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
 
     let mut daytona_initial = tdrace_core::track::presets::oval_speedway();
     daytona_initial.name = "Daytona Original".to_string();
-    daytona_initial.save_to_file(mock_git_tracks.join("nascar").join("daytona.json")).unwrap();
+    daytona_initial.save_to_file(mock_git_tracks.join("nascar").join("daytona_superspeedway.json")).unwrap();
 
     struct TestEnvGuard {
         git_dir_set: bool,
@@ -2194,12 +2194,12 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
             id: "daytona_superspeedway".to_string(),
             title: "Daytona International Speedway".to_string(),
             description: "Famous tri-oval".to_string(),
-            path: "nascar/daytona".to_string(),
+            path: "nascar/daytona_superspeedway".to_string(),
         };
 
         let loaded = session.track_manager.load_track(&choice).expect("Load NASCAR preset");
         let canonical_file = session.track_manager.resolve_preset_git_file("daytona_superspeedway", Some("nascar"));
-        assert!(canonical_file.is_some(), "Must resolve daytona_superspeedway to nascar/daytona.json");
+        assert!(canonical_file.is_some(), "Must resolve daytona_superspeedway to nascar/daytona_superspeedway.json");
         let canonical_file_str = canonical_file.unwrap().to_string_lossy().to_string();
 
         session.enter_track_editor_with_path(loaded, Some(canonical_file_str.clone()));

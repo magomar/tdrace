@@ -233,7 +233,7 @@ impl TrackManager {
                 }
             }
         }
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
             let git_path = git_tracks_dir.join(".track_order.json");
             if git_path.exists() {
                 if let Ok(data) = fs::read_to_string(&git_path) {
@@ -637,8 +637,8 @@ impl TrackManager {
 
         let mut list = raw;
 
-        // In dev mode or when git_tracks_dir exists, discover promoted presets
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        // In dev mode, discover presets promoted to tracks/ that are not embedded yet
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
             let scan_modules: Vec<&str> = match module_id {
                 "gt" | "gt_challenge" => vec!["gt"],
                 _ => vec![module_id],
@@ -800,10 +800,17 @@ impl TrackManager {
             "classic_rallycross" => TrackChoice::ClassicRallycross,
             "oasis_rally" => TrackChoice::OasisRally,
             custom_id => {
-                // If it exists in git_tracks_dir, load directly from the git preset file
-                if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
-                    return Track::load_from_file(&git_file)
-                        .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
+                if !self.is_preset_demoted(custom_id) {
+                    if let Some(result) = crate::tracks::official::load(custom_id, None) {
+                        return result;
+                    }
+                    // Dev mode: a circuit promoted to tracks/ in this session is not embedded yet.
+                    if crate::storage::is_dev_mode() {
+                        if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
+                            return Track::load_from_file(&git_file)
+                                .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
+                        }
+                    }
                 }
                 let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
                 TrackChoice::Custom {
@@ -815,12 +822,6 @@ impl TrackManager {
             }
         };
         self.load_track(&choice)
-    }
-
-    /// Loads the canonical procedural version of an official preset track.
-    pub fn load_procedural_preset(&self, choice: &TrackChoice) -> Result<Track, String> {
-        TrackChoice::resolve_procedural_preset(choice)
-            .ok_or_else(|| format!("Not an official procedural preset: {}", choice.track_id()))
     }
 
     /// Loads a `Track` from a `TrackChoice`.
@@ -852,20 +853,19 @@ impl TrackManager {
             }
         };
 
-        // Official presets load from git preset files first, then user storage overrides, then procedural generator.
+        // Official presets load only from the official catalog (spec 042); the user folder never shadows them.
         if choice.is_official_preset() {
-            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
-                if let Ok(t) = Track::load_from_file(&git_file) {
-                    return Ok(t);
+            if let Some(result) = crate::tracks::official::load(choice.track_id(), choice_module) {
+                return result;
+            }
+            // Dev mode: a circuit promoted to tracks/ in this session is not embedded yet.
+            if crate::storage::is_dev_mode() {
+                if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
+                    return Track::load_from_file(&git_file)
+                        .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
                 }
             }
-            let user_path = self.track_path_for_slug(choice.track_id());
-            if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
-                if let Ok(t) = Track::load_from_file(&user_path) {
-                    return Ok(t);
-                }
-            }
-            return self.load_procedural_preset(choice);
+            return Err(format!("Official circuit not found: {}", choice.track_id()));
         }
 
         match choice {
@@ -932,7 +932,7 @@ impl TrackManager {
                         return Ok(t);
                     }
                 }
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
                     let git_rel = git_tracks_dir.join(path);
                     if git_rel.exists() {
                         if let Ok(t) = Track::load_from_file(&git_rel) {
@@ -946,9 +946,11 @@ impl TrackManager {
                         }
                     }
                 }
-                if let Some(git_file) = self.resolve_preset_git_file(id, choice_module) {
-                    if let Ok(t) = Track::load_from_file(&git_file) {
-                        return Ok(t);
+                if crate::storage::is_dev_mode() {
+                    if let Some(git_file) = self.resolve_preset_git_file(id, choice_module) {
+                        if let Ok(t) = Track::load_from_file(&git_file) {
+                            return Ok(t);
+                        }
                     }
                 }
                 let alt_path = self.track_path_for_slug(id);
@@ -963,85 +965,8 @@ impl TrackManager {
                         return Ok(t);
                     }
                 }
-                match id.as_str() {
-                    "classic_rallycross" => Ok(tdrace_core::track::presets::classic_rallycross()),
-                    "dirty_oval_speedway" => Ok(tdrace_core::track::presets::dirty_oval_speedway()),
-                    "figure_eight" => Ok(tdrace_core::track::presets::figure_eight()),
-                    "monza" => Ok(crate::module::gt::GtWorldChallengeModule::track_monza()),
-                    "spa" => Ok(crate::module::gt::GtWorldChallengeModule::track_spa()),
-                    "silverstone" => Ok(crate::module::gt::GtWorldChallengeModule::track_silverstone()),
-                    "monaco" => Ok(crate::module::gt::GtWorldChallengeModule::track_monaco()),
-                    "suzuka" => Ok(crate::module::gt::GtWorldChallengeModule::track_suzuka()),
-                    "interlagos" => Ok(crate::module::gt::GtWorldChallengeModule::track_interlagos()),
-                    "montreal" => Ok(crate::module::gt::GtWorldChallengeModule::track_montreal()),
-                    "red_bull_ring" => Ok(crate::module::gt::GtWorldChallengeModule::track_red_bull_ring()),
-                    "catalunya" => Ok(crate::module::gt::GtWorldChallengeModule::track_catalunya()),
-                    "zandvoort" => Ok(crate::module::gt::GtWorldChallengeModule::track_zandvoort()),
-                    "bahrain" => Ok(crate::module::gt::GtWorldChallengeModule::track_bahrain()),
-                    "marina_bay" | "singapore" | "singapur" => Ok(crate::module::gt::GtWorldChallengeModule::track_marina_bay()),
-                    "cota" => Ok(crate::module::gt::GtWorldChallengeModule::track_cota()),
-                    "madring" => Ok(crate::module::gt::GtWorldChallengeModule::track_madring()),
-                    "nurburgring_gp" | "nurburgring" => Ok(crate::module::gt::GtWorldChallengeModule::track_nurburgring_gp()),
-                    "bathurst" | "mount_panorama" => Ok(crate::module::gt::GtWorldChallengeModule::track_bathurst()),
-                    "portimao_gp" | "portimao" => Ok(crate::module::gt::GtWorldChallengeModule::track_portimao_gp()),
-                    "le_mans_sarthe" | "le_mans" => Ok(crate::module::gt::GtWorldChallengeModule::track_le_mans_sarthe()),
-                    "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
-                    "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
-                    "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
-                    "lydden_hill" | "lydden" => Ok(tdrace_core::track::presets::lydden_hill()),
-                    "hell_rx" | "hell" => Ok(tdrace_core::track::presets::hell_rx()),
-                    "loheac_rx" | "loheac" => Ok(tdrace_core::track::presets::loheac_rx()),
-                    "estering_rx" | "estering" => Ok(tdrace_core::track::presets::estering_rx()),
-                    "montalegre_rx" | "montalegre" => Ok(tdrace_core::track::presets::montalegre_rx()),
-                    "nyirad_rx" | "nyirad" => Ok(tdrace_core::track::presets::nyirad_rx()),
-                    "kouvola_rx" | "kouvola" => Ok(tdrace_core::track::presets::kouvola_rx()),
-                    "catalunya_rx" => Ok(tdrace_core::track::presets::catalunya_rx()),
-                    "mettet_rx" | "mettet" => Ok(tdrace_core::track::presets::mettet_rx()),
-                    "silverstone_rx" => Ok(tdrace_core::track::presets::silverstone_rx()),
-                    "riga_rx" | "riga" | "bikernieki" => Ok(tdrace_core::track::presets::riga_rx()),
-                    "killarney_rx" | "killarney" => Ok(tdrace_core::track::presets::killarney_rx()),
-                    "yas_marina_rx" | "yas_marina" => Ok(tdrace_core::track::presets::yas_marina_rx()),
-                    "essay_rx" | "essay" => Ok(tdrace_core::track::presets::essay_rx()),
-                    "lonato" => Ok(crate::module::kart::KartGameModule::track_lonato()),
-                    "sarno" => Ok(crate::module::kart::KartGameModule::track_sarno()),
-                    "genk" => Ok(crate::module::kart::KartGameModule::track_genk()),
-                    "pfi" => Ok(crate::module::kart::KartGameModule::track_pfi()),
-                    "zuera" => Ok(crate::module::kart::KartGameModule::track_zuera()),
-                    "le_mans_kart" => Ok(crate::module::kart::KartGameModule::track_le_mans()),
-                    "portimao_kart" => Ok(crate::module::kart::KartGameModule::track_portimao()),
-                    "franciacorta" => Ok(crate::module::kart::KartGameModule::track_franciacorta()),
-                    "wackersdorf" | "prokart_wackersdorf" => Ok(crate::module::kart::KartGameModule::track_wackersdorf()),
-                    "kristianstad" | "asum_ring" => Ok(crate::module::kart::KartGameModule::track_kristianstad()),
-                    "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => Ok(crate::module::kart::KartGameModule::track_seven_laghi()),
-                    "ampfing" | "schweppermannring" => Ok(crate::module::kart::KartGameModule::track_ampfing()),
-                    "silverstone_national_kart" | "silverstone_kart" => Ok(crate::module::kart::KartGameModule::track_silverstone_national_kart()),
-                    "valencia_kart" | "valencia" => Ok(crate::module::kart::KartGameModule::track_valencia_kart()),
-                    "campillos" => Ok(crate::module::kart::KartGameModule::track_campillos()),
-                    "daytona" | "daytona_superspeedway" => Ok(tdrace_core::track::presets::daytona_superspeedway()),
-                    "talladega" | "talladega_superspeedway" => Ok(tdrace_core::track::presets::talladega_superspeedway()),
-                    "watkins_glen" | "watkins_glen_nascar" => Ok(tdrace_core::track::presets::watkins_glen_nascar()),
-                    "bristol" | "bristol_motor_speedway" => Ok(tdrace_core::track::presets::bristol_motor_speedway()),
-                    "martinsville" | "martinsville_speedway" => Ok(tdrace_core::track::presets::martinsville_speedway()),
-                    "darlington" | "darlington_raceway" => Ok(tdrace_core::track::presets::darlington_raceway()),
-                    "charlotte" | "charlotte_motor_speedway" => Ok(tdrace_core::track::presets::charlotte_motor_speedway()),
-                    "indianapolis" | "indianapolis_motor_speedway" => Ok(tdrace_core::track::presets::indianapolis_motor_speedway()),
-                    "eldora" | "eldora_speedway" => Ok(tdrace_core::track::presets::eldora_speedway()),
-                    "iowa" | "iowa_speedway" => Ok(tdrace_core::track::presets::iowa_speedway()),
-                    "road_america" => Ok(tdrace_core::track::presets::road_america()),
-                    "chicago" | "chicago_street_course" => Ok(tdrace_core::track::presets::chicago_street_course()),
-                    "bowman_gray" | "bowman_gray_stadium" => Ok(tdrace_core::track::presets::bowman_gray_stadium()),
-                    "irp_oval" | "lucas_oil_irp" => Ok(tdrace_core::track::presets::lucas_oil_irp()),
-                    "north_wilkesboro" | "north_wilkesboro_speedway" => Ok(tdrace_core::track::presets::north_wilkesboro_speedway()),
-                    "pocono" | "pocono_raceway" => Ok(tdrace_core::track::presets::pocono_raceway()),
-                    "phoenix" | "phoenix_raceway" => Ok(tdrace_core::track::presets::phoenix_raceway()),
-                    "dreux_rx" | "dreux" => Ok(tdrace_core::track::presets::dreux_rx()),
-                    "blyton_rx" | "blyton_park" | "blyton_park_rx" => Ok(tdrace_core::track::presets::blyton_park_rx()),
-                    "laval_kart" | "laval" => Ok(tdrace_core::track::presets::laval_kart()),
-                    "whilton_mill" | "whilton_mill_kart" => Ok(tdrace_core::track::presets::whilton_mill_kart()),
-                    "glamis_dunes" | "glamis" | "glamis_sand_dunes" => Ok(tdrace_core::track::presets::glamis_sand_dunes()),
-                    "crandon_short_course" | "crandon" => Ok(tdrace_core::track::presets::crandon_short_course()),
-                    _ => Err(format!("Track file not found: {}", path)),
-                }
+                crate::tracks::official::load(id, choice_module)
+                    .unwrap_or_else(|| Err(format!("Track file not found: {}", path)))
             }
         }
     }
@@ -1056,7 +981,7 @@ impl TrackManager {
             "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" | "bowman_gray" | "bowman_gray_stadium" | "irp_oval" | "lucas_oil_irp" | "north_wilkesboro" | "north_wilkesboro_speedway" | "pocono" | "pocono_raceway" | "phoenix" | "phoenix_raceway" => Some("nascar"),
             "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" | "glamis_dunes" | "glamis" | "glamis_sand_dunes" | "crandon_short_course" | "crandon" => Some("extreme_offroad"),
             _ => {
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
                     for m in ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"] {
                         if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
                             return match m {

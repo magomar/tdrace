@@ -239,6 +239,8 @@ fn resolve_track_for_menu_with_dir_uncached(
                 Some("kart")
             } else if path.starts_with("classic/") {
                 Some("classic")
+            } else if path.starts_with("extreme_offroad/") {
+                Some("extreme_offroad")
             } else {
                 None
             }
@@ -246,8 +248,14 @@ fn resolve_track_for_menu_with_dir_uncached(
         _ => None,
     };
 
-    // 0. Check user storage first: if the user customized this track (preset or custom),
-    // their local saved version in `dir` takes highest priority.
+    // Official presets come only from the official catalog (spec 042); the user folder never shadows them.
+    if choice.is_official_preset() {
+        if let Some(result) = crate::tracks::official::load(choice.track_id(), choice_module) {
+            return result.ok();
+        }
+    }
+
+    // 0. Check user storage first: a custom track saved in `dir` takes highest priority.
     let id = choice.track_id();
     let file_name = format!("{}.json", id);
     let user_candidates = [
@@ -267,9 +275,9 @@ fn resolve_track_for_menu_with_dir_uncached(
         }
     }
 
-    // 1. If git_tracks_dir exists, official git presets or custom tracks saved into the repository's
+    // 1. In dev mode, official git presets or custom tracks saved into the repository's
     // tracks/ directory take second precedence.
-    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
         if let Some(p) = crate::track_manager::TrackManager::resolve_preset_git_file_with_dir(
             &git_tracks_dir,
             choice.track_id(),
@@ -306,7 +314,7 @@ fn resolve_track_for_menu_with_dir_uncached(
                 return Some(t);
             }
         }
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
             let rel_in_git = git_tracks_dir.join(path);
             if rel_in_git.exists() {
                 if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git) {
@@ -324,7 +332,7 @@ fn resolve_track_for_menu_with_dir_uncached(
 
     // 2. Check git fallback candidates across module subdirectories
 
-    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
         let git_candidates = [
             git_tracks_dir.join("classic").join(&file_name),
             git_tracks_dir.join("gt").join(&file_name),
@@ -342,8 +350,8 @@ fn resolve_track_for_menu_with_dir_uncached(
         }
     }
 
-    // 3. Fallback to procedural preset definitions
-    TrackChoice::resolve_procedural_preset(choice)
+    // 3. Fallback to the official catalog (e.g. an alias id saved as a custom choice)
+    crate::tracks::official::load(choice.track_id(), choice_module).and_then(|r| r.ok())
 }
 
 impl TrackChoice {

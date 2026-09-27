@@ -80,7 +80,7 @@ graph TD
 #### 2.1 Official catalog (`OfficialCatalog`)
 
 - One new type owns the official list. It replaces `module::*::tracks()` as the source of ids, and it replaces the Rust fallback `match` blocks.
-- **Embedded copy.** A `build.rs` in `tdrace-app` reads `tracks/**/*.json` and `tracks/.track_order.json`. It rewrites each file as compact JSON, compresses the bundle with DEFLATE, and emits it for `include_bytes!`. Measured: 79 MB pretty → ~45 MB compact → **~5.6 MB gzip -9**. The catalog decompresses one circuit on demand, not all 96 at start.
+- **Embedded copy.** A `build.rs` in `tdrace-core` reads `tracks/**/*.json` and `tracks/.track_order.json`. It rewrites each file as compact JSON, compresses each circuit with DEFLATE, and emits it for `include_bytes!`. The catalog (`tdrace_core::catalog`) lives in `tdrace-core`, because `tdrace-py` and the `tdrace-core` tests depend only on that crate. The app-level resolver is `crates/tdrace-app/src/tracks/official.rs`. Measured: 79 MB pretty → ~45 MB compact → **~5.6 MB gzip -9**. The catalog decompresses one circuit on demand, not all 96 at start.
 - **Disk copy.** When the tracks dir resolves (see 2.4) and dev mode is on, a file on disk replaces its embedded copy. New files on disk are added. Outside dev mode the embedded copy is used, so a stray local edit cannot change a release game.
 - **Empty `tracks/`.** If the submodule is not checked out at build time, `build.rs` fails the build with a clear message (`git submodule update --init tracks`). A build never silently ships zero circuits.
 - **Metadata moves into JSON.** `TrackDefinition.title` → `name`, `description` → `description`, `tag` → new `tag`, `category` → new `category_label` (`Track.category` is already the Main/Draft tier). `default_laps` is already in the JSON. Both new fields are `#[serde(default, skip_serializing_if = "String::is_empty")]`, so existing files stay readable. Where the menu text and the JSON text differed (29 names, 64 descriptions), the menu text was kept (decision, 2026-09-27). Lap counts keep the JSON value, because races already use it.
@@ -173,7 +173,7 @@ Work is done in phases. Each phase leaves `make test` green.
 ## 🛡️ Disaster Recovery, Monitoring, & Fallbacks
 
 - **Rollback.** Phases 1–5 keep the Rust generators, so any phase can be reverted with `git revert`. Phase 6 is the point of no return in `tdrace`; the generators stay in git history.
-- **Build guard.** `build.rs` fails when `tracks/` has fewer than 96 JSON files or when a file fails to parse. The error names the file.
+- **Build guard.** `build.rs` fails when `tracks/.track_order.json` is missing, when a module folder and `.track_order.json` disagree, when an alias points to an unknown id, or when a file fails to parse. The error names the file and, when data is missing, `git submodule update --init tracks`.
 - **Start-up log.** One line: `official circuits: <n> embedded, <m> from disk (dev)`.
 - **Binary size.** Embedded bundle target ≤ 8 MB. `build.rs` prints the size as a `cargo:warning` when it exceeds this.
 
@@ -202,9 +202,9 @@ Work is done in phases. Each phase leaves `make test` green.
   - [ ] **When** the binary runs from a folder with no `tracks/` next to it and dev mode off
   - [ ] **Then** all 96 official circuits are listed and each one loads a race
 - **Scenario: Build fails without circuit data**
-  - [ ] **Given** a fresh clone where `tracks/` is empty
-  - [ ] **When** the developer runs `cargo build`
-  - [ ] **Then** the build stops with an error that names `git submodule update --init tracks`
+  - [x] **Given** a fresh clone where `tracks/` is empty
+  - [x] **When** the developer runs `cargo build`
+  - [x] **Then** the build stops with an error that names `git submodule update --init tracks`
 - **Scenario: Dev mode saves an official circuit in every module**
   - [ ] **Given** dev mode is on
   - [ ] **When** the developer opens and saves one official circuit in each of classic, gt, rally, kart, nascar and extreme_offroad
@@ -243,8 +243,10 @@ Work is done in phases. Each phase leaves `make test` green.
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/build.rs` (new) -> Bundles and compresses `tracks/` into the binary.
-- `[ ]` `crates/tdrace-app/src/tracks/catalog.rs` -> Becomes `OfficialCatalog` (embedded + dev disk override, order, aliases).
+- `[x]` `crates/tdrace-core/build.rs` (new) -> Bundles and compresses `tracks/` into the binary.
+- `[x]` `crates/tdrace-core/src/catalog.rs` (new) -> Embedded catalog: list, aliases, module hint, load.
+- `[x]` `crates/tdrace-app/src/tracks/official.rs` (new) -> The one resolver: dev-mode disk override, else embedded.
+- `[ ]` `crates/tdrace-app/src/tracks/catalog.rs` -> Test-only `PresetCatalog`; switch to the resolver or remove in step 6.
 - `[ ]` `crates/tdrace-app/src/track_manager.rs` -> One resolver; remove slug tables and Rust fallback; single-copy dev save; promote `target_module` fix.
 - `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Preview through the resolver; remove `resolve_procedural_preset` and hard-coded classic variants.
 - `[ ]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Six-module promote picker.
@@ -264,7 +266,7 @@ Work is done in phases. Each phase leaves `make test` green.
 - `[ ]` `docs/engineering/circuit_building_analysis.md` -> Update §2.6 and §4 to the new flow.
 
 ### Verification Assertions
-- `crates/tdrace-app/src/tracks/catalog.rs` references `specs/042_jsononly_official_circuit_catalog_and_embedded_track_data.md` in its header comment.
+- `crates/tdrace-core/src/catalog.rs` and `crates/tdrace-app/src/tracks/official.rs` reference `specs/042_jsononly_official_circuit_catalog_and_embedded_track_data.md` in their header comments.
 - No file under `crates/` defines a function that returns a specific named circuit.
 
 ### Resolved Decisions (at approval, 2026-09-27)
