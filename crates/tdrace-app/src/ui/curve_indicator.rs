@@ -130,19 +130,41 @@ pub fn compute_curve_colors(
     )
 }
 
-/// Calculates the display opacity for the curve indicator based on approach distance and apex traversal.
+/// Time to curve entry (seconds) at which the indicator starts to fade in.
+pub const CURVE_INDICATOR_FADE_START_S: f32 = 4.5;
+/// Time to curve entry (seconds) at which the indicator is fully visible.
+pub const CURVE_INDICATOR_FADE_END_S: f32 = 4.0;
+/// Speed floor (m/s) for the time-to-entry estimate, so a slow or stopped car
+/// still sees the turn at `CURVE_INDICATOR_FADE_START_S * 15 m/s` = 67.5 m.
+pub const CURVE_INDICATOR_MIN_ETA_SPEED: f32 = 15.0;
+
+/// Estimated time (seconds) until the car reaches `distance_to_entry` at `speed_mps`.
+#[inline]
+pub fn compute_curve_eta(distance_to_entry: f32, speed_mps: f32) -> f32 {
+    distance_to_entry / speed_mps.max(CURVE_INDICATOR_MIN_ETA_SPEED)
+}
+
+/// Curve search distance (meters) that covers the whole fade-in window at `speed_mps`.
+#[inline]
+pub fn curve_indicator_lookahead(speed_mps: f32) -> f32 {
+    CURVE_INDICATOR_FADE_START_S * speed_mps.max(CURVE_INDICATOR_MIN_ETA_SPEED)
+}
+
+/// Calculates the display opacity for the curve indicator based on time to curve entry and apex traversal.
 pub fn compute_indicator_alpha(
     distance_to_entry: f32,
     distance_to_apex: f32,
     is_inside_curve: bool,
+    speed_mps: f32,
 ) -> f32 {
-    // Smooth fade in on approach (150m -> 130m)
+    // Smooth fade in on approach (4.5 s -> 4.0 s before entry), so faster cars get earlier warning
     let approach_alpha = if is_inside_curve {
         1.0
-    } else if distance_to_entry > 130.0 {
-        ((150.0 - distance_to_entry) / 20.0).clamp(0.0, 1.0)
     } else {
-        1.0
+        let eta = compute_curve_eta(distance_to_entry, speed_mps);
+        ((CURVE_INDICATOR_FADE_START_S - eta)
+            / (CURVE_INDICATOR_FADE_START_S - CURVE_INDICATOR_FADE_END_S))
+            .clamp(0.0, 1.0)
     };
 
     // Quick fade away after the apex / inflexion point of the curve has been traversed (< 0.0)
@@ -157,10 +179,20 @@ pub fn compute_indicator_alpha(
     approach_alpha * apex_fade_alpha
 }
 
-/// Computes the fixed horizontal world-space position for curve alert arrows adjacent to the player car.
+/// Unit vector from the player car toward the side of the curve, in the car's own frame
+/// (the car's left or right, not the screen's).
+#[inline]
+fn curve_side_vector(player_car: &Car, direction: CurveDirection) -> Vec2 {
+    match direction {
+        CurveDirection::Left => -player_car.right_vector(),
+        CurveDirection::Right => player_car.right_vector(),
+    }
+}
+
+/// Computes the world-space center of the curve alert chevron block next to the player car.
 ///
-/// Places arrows strictly horizontal with respect to the player car (at the car's vertical level),
-/// to the left or right based on curve direction.
+/// Places the block on the car's own left or right side (perpendicular to its heading),
+/// so the arrows stay beside the car whichever way it faces on screen.
 /// Factors in the total width of the chevron block so multi-arrow clusters expand outward
 /// while maintaining generous clearance from the vehicle chassis.
 pub fn compute_curve_arrow_position(
@@ -172,12 +204,6 @@ pub fn compute_curve_arrow_position(
     let zoom = current_zoom.max(0.5);
     let car_pos = player_car.state.position;
     let elevation = player_car.total_elevation();
-
-    // Horizontal offset: left or right of car
-    let side_sign = match direction {
-        CurveDirection::Left => -1.0,
-        CurveDirection::Right => 1.0,
-    };
 
     // Total width of the chevron cluster
     let deg = degree.clamp(1, 5) as usize;
@@ -191,10 +217,7 @@ pub fn compute_curve_arrow_position(
 
     // Center of the chevron block is offset so the innermost chevron maintains `inner_clearance`
     let lateral_dist = inner_clearance + total_w * 0.5;
-    let base_x = car_pos.x + side_sign * lateral_dist;
-    let base_y = car_pos.y + elevation;
-
-    Vec2::new(base_x, base_y)
+    car_pos + curve_side_vector(player_car, direction) * lateral_dist + Vec2::new(0.0, elevation)
 }
 
 /// Backwards-compatible alias for `compute_curve_arrow_position` without dynamic repositioning overhead.
@@ -210,10 +233,10 @@ pub fn compute_smart_curve_arrow_position(
     compute_curve_arrow_position(player_car, direction, degree, current_zoom)
 }
 
-/// Renders the simplified curve alert chevrons in world space horizontally adjacent to the player car.
+/// Renders the simplified curve alert chevrons in world space beside the player car.
 ///
 /// Features no background box and no text labels — only anti-aliased, glowing vector chevrons
-/// positioned strictly horizontal to the left or right of the car.
+/// on the car's own left or right side, pointing away from the car toward the curve.
 pub fn render_curve_indicator(
     player_car: &Car,
     status: &CurveApproachStatus,
@@ -227,6 +250,7 @@ pub fn render_curve_indicator(
         status.distance_to_entry,
         status.distance_to_apex,
         status.is_inside_curve,
+        player_car.state.speed,
     );
     let alpha = (base_alpha * brightness).clamp(0.0, 1.0);
 
@@ -247,98 +271,41 @@ pub fn render_curve_indicator(
 
     let zoom = current_zoom.max(0.5);
 
-    // Compute static horizontal position to the left or right of the car
-    let arrow_center = compute_curve_arrow_position(
-        player_car,
-        status.curve.direction,
-        degree,
-        zoom,
-    );
+    // Car frame: `side` points from the car toward the curve, `fwd` along the car heading
+    let side = curve_side_vector(player_car, status.curve.direction);
+    let fwd = player_car.forward_vector();
+    let inner_clearance = (56.0 / zoom).clamp(4.2, 8.5);
+    let origin = player_car.state.position + Vec2::new(0.0, player_car.total_elevation());
 
     // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size, modulated by scale)
     let chevron_w = (14.0 * pulse_scale * scale) / zoom;
     let chevron_h = (22.0 * pulse_scale * scale) / zoom;
     let chevron_thickness = (3.5 * pulse_scale * scale) / zoom;
     let spacing = (16.0 * pulse_scale * scale) / zoom;
-    let shadow_offset = (1.6 * scale) / zoom;
-
-    let num_chevrons = degree as usize;
-    let total_w = (num_chevrons as f32 - 1.0) * spacing + chevron_w;
-    let start_x = arrow_center.x - total_w * 0.5;
-    let cy = arrow_center.y;
+    let shadow_offset = Vec2::new(1.6 * scale, -1.6 * scale) / zoom;
 
     let shadow_col = Color::new(0.0, 0.0, 0.0, (0.70 * alpha).min(1.0));
     let glow_alpha = (0.35 * alpha * brightness.min(2.0)).min(1.0);
     let glow_col = Color::new(color.r, color.g, color.b, glow_alpha);
 
-    for i in 0..num_chevrons {
-        let cx = start_x + (i as f32) * spacing;
+    for i in 0..degree as usize {
+        // Each chevron points away from the car: arms at `u`, tip at `u + chevron_w`
+        let u = inner_clearance + (i as f32) * spacing;
+        let apex = origin + side * (u + chevron_w);
+        let top = origin + side * u + fwd * (chevron_h * 0.5);
+        let btm = origin + side * u - fwd * (chevron_h * 0.5);
 
-        match status.curve.direction {
-            CurveDirection::Left => {
-                // Points Left: <
-                let apex = Vec2::new(cx, cy);
-                let top = Vec2::new(cx + chevron_w, cy + chevron_h * 0.5);
-                let btm = Vec2::new(cx + chevron_w, cy - chevron_h * 0.5);
+        // 1. Dark outer drop shadow
+        let (st, sa, sb) = (top + shadow_offset, apex + shadow_offset, btm + shadow_offset);
+        draw_line(st.x, st.y, sa.x, sa.y, chevron_thickness + 1.2 / zoom, shadow_col);
+        draw_line(sa.x, sa.y, sb.x, sb.y, chevron_thickness + 1.2 / zoom, shadow_col);
 
-                // 1. Dark outer drop shadow
-                draw_line(
-                    top.x + shadow_offset,
-                    top.y - shadow_offset,
-                    apex.x + shadow_offset,
-                    apex.y - shadow_offset,
-                    chevron_thickness + 1.2 / zoom,
-                    shadow_col,
-                );
-                draw_line(
-                    apex.x + shadow_offset,
-                    apex.y - shadow_offset,
-                    btm.x + shadow_offset,
-                    btm.y - shadow_offset,
-                    chevron_thickness + 1.2 / zoom,
-                    shadow_col,
-                );
+        // 2. Glowing ambient stroke
+        draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
+        draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
 
-                // 2. Glowing ambient stroke
-                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
-                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
-
-                // 3. Crisp sharp primary stroke
-                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
-                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
-            }
-            CurveDirection::Right => {
-                // Points Right: >
-                let apex = Vec2::new(cx + chevron_w, cy);
-                let top = Vec2::new(cx, cy + chevron_h * 0.5);
-                let btm = Vec2::new(cx, cy - chevron_h * 0.5);
-
-                // 1. Dark outer drop shadow
-                draw_line(
-                    top.x + shadow_offset,
-                    top.y - shadow_offset,
-                    apex.x + shadow_offset,
-                    apex.y - shadow_offset,
-                    chevron_thickness + 1.2 / zoom,
-                    shadow_col,
-                );
-                draw_line(
-                    apex.x + shadow_offset,
-                    apex.y - shadow_offset,
-                    btm.x + shadow_offset,
-                    btm.y - shadow_offset,
-                    chevron_thickness + 1.2 / zoom,
-                    shadow_col,
-                );
-
-                // 2. Glowing ambient stroke
-                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
-                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
-
-                // 3. Crisp sharp primary stroke
-                draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
-                draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
-            }
-        }
+        // 3. Crisp sharp primary stroke
+        draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
+        draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
     }
 }

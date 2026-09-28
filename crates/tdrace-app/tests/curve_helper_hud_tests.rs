@@ -1,6 +1,6 @@
 use tdrace_app::ui::curve_indicator::{
     compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
-    compute_smart_curve_arrow_position, CurveColorScheme,
+    compute_smart_curve_arrow_position, curve_indicator_lookahead, CurveColorScheme,
 };
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::CarConfig;
@@ -95,99 +95,114 @@ fn test_classic_grand_prix_curve_evaluation_at_speed() {
 
 #[test]
 fn test_indicator_alpha_quick_fade_past_apex() {
-    // 1. Far approach: 150m is 0.0, 140m is 0.5, 130m is 1.0
-    let a_150 = compute_indicator_alpha(150.0, 180.0, false);
-    assert!((a_150 - 0.0).abs() < 1e-3);
+    // 1. Far approach at 40 m/s: 4.5 s (180m) is 0.0, 4.25 s (170m) is 0.5, 4.0 s (160m) is 1.0
+    let a_180 = compute_indicator_alpha(180.0, 210.0, false, 40.0);
+    assert!((a_180 - 0.0).abs() < 1e-3);
 
-    let a_140 = compute_indicator_alpha(140.0, 170.0, false);
-    assert!((a_140 - 0.5).abs() < 1e-3);
+    let a_170 = compute_indicator_alpha(170.0, 200.0, false, 40.0);
+    assert!((a_170 - 0.5).abs() < 1e-3);
 
-    let a_100 = compute_indicator_alpha(100.0, 130.0, false);
+    let a_160 = compute_indicator_alpha(160.0, 190.0, false, 40.0);
+    assert!((a_160 - 1.0).abs() < 1e-3);
+
+    let a_100 = compute_indicator_alpha(100.0, 130.0, false, 40.0);
     assert!((a_100 - 1.0).abs() < 1e-3);
 
     // 2. Inside curve approaching apex: alpha is full 1.0
-    let a_in_turn = compute_indicator_alpha(-10.0, 15.0, true);
+    let a_in_turn = compute_indicator_alpha(-10.0, 15.0, true, 40.0);
     assert!((a_in_turn - 1.0).abs() < 1e-3);
 
     // 3. At apex: alpha is full 1.0
-    let a_at_apex = compute_indicator_alpha(-25.0, 0.0, true);
+    let a_at_apex = compute_indicator_alpha(-25.0, 0.0, true, 40.0);
     assert!((a_at_apex - 1.0).abs() < 1e-3);
 
     // 4. Past apex by 3m: fades quickly (1.0 - 0.3 = 0.7)
-    let a_past_3m = compute_indicator_alpha(-28.0, -3.0, true);
+    let a_past_3m = compute_indicator_alpha(-28.0, -3.0, true, 40.0);
     assert!((a_past_3m - 0.7).abs() < 1e-3);
 
     // 5. Past apex by 5m: half faded (0.5)
-    let a_past_5m = compute_indicator_alpha(-30.0, -5.0, true);
+    let a_past_5m = compute_indicator_alpha(-30.0, -5.0, true, 40.0);
     assert!((a_past_5m - 0.5).abs() < 1e-3);
 
     // 6. Past apex by 10m: fully faded (0.0)
-    let a_past_10m = compute_indicator_alpha(-35.0, -10.0, true);
+    let a_past_10m = compute_indicator_alpha(-35.0, -10.0, true, 40.0);
     assert!((a_past_10m - 0.0).abs() < 1e-3);
 
     // 7. Beyond 10m: clamped to 0.0
-    let a_past_15m = compute_indicator_alpha(-40.0, -15.0, true);
+    let a_past_15m = compute_indicator_alpha(-40.0, -15.0, true, 40.0);
     assert_eq!(a_past_15m, 0.0);
 }
 
 #[test]
-fn test_curve_arrow_positioning_horizontal_and_clearance() {
+fn test_indicator_alpha_uses_time_to_entry_not_distance() {
+    // Same 300m gap: a fast car (80 m/s, 3.75 s away) already sees the turn, a slow one (20 m/s, 15 s) does not
+    let fast = compute_indicator_alpha(300.0, 330.0, false, 80.0);
+    let slow = compute_indicator_alpha(300.0, 330.0, false, 20.0);
+    assert!((fast - 1.0).abs() < 1e-3, "Fast car must see the turn 300m out (got {})", fast);
+    assert_eq!(slow, 0.0, "Slow car must not see the turn 300m out (got {})", slow);
+
+    // Speed floor: a stopped car still sees a turn 60m ahead (60m / 15 m/s = 4.0 s)
+    let stopped = compute_indicator_alpha(60.0, 90.0, false, 0.0);
+    assert!((stopped - 1.0).abs() < 1e-3, "Stopped car must see a turn 60m ahead (got {})", stopped);
+
+    // The curve search reaches the start of the fade window at every speed
+    for speed in [0.0f32, 10.0, 40.0, 80.0, 110.0] {
+        let lookahead = curve_indicator_lookahead(speed);
+        let at_edge = compute_indicator_alpha(lookahead, lookahead + 30.0, false, speed);
+        assert!(at_edge < 1e-3, "Fade must start at the lookahead edge (speed {}, alpha {})", speed, at_edge);
+        let just_inside = compute_indicator_alpha(lookahead * 0.85, lookahead + 30.0, false, speed);
+        assert!(just_inside > 0.99, "Turn inside the lookahead must be fully visible (speed {})", speed);
+    }
+}
+
+#[test]
+fn test_curve_arrow_positioning_follows_car_heading_with_clearance() {
     let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sample = &track.spline.samples[0];
-    let player_car = Car::new(CarConfig::sports_car())
-        .with_pose(sample.point, 0.0);
     let zoom = 12.0;
 
-    // 1. Left curve: arrow must be placed to the LEFT of the player car (x < car.x)
-    let pos_left = compute_curve_arrow_position(&player_car, CurveDirection::Left, 3, zoom);
-    assert!(
-        pos_left.x < player_car.state.position.x,
-        "Left curve arrow ({}) must be to the left of the player car ({})",
-        pos_left.x,
-        player_car.state.position.x
-    );
+    for angle in [0.0f32, std::f32::consts::FRAC_PI_2, std::f32::consts::PI, -2.3] {
+        let player_car = Car::new(CarConfig::sports_car()).with_pose(sample.point, angle);
+        let origin = player_car.state.position + glam::Vec2::new(0.0, player_car.total_elevation());
+        let right = player_car.right_vector();
+        let fwd = player_car.forward_vector();
 
-    // 2. Right curve: arrow must be placed to the RIGHT of the player car (x > car.x)
-    let pos_right = compute_curve_arrow_position(&player_car, CurveDirection::Right, 3, zoom);
-    assert!(
-        pos_right.x > player_car.state.position.x,
-        "Right curve arrow ({}) must be to the right of the player car ({})",
-        pos_right.x,
-        player_car.state.position.x
-    );
+        let pos_left = compute_curve_arrow_position(&player_car, CurveDirection::Left, 3, zoom);
+        let pos_right = compute_curve_arrow_position(&player_car, CurveDirection::Right, 3, zoom);
 
-    // 3. Strictly horizontal: Y coordinate must always match the car's vertical elevation level
-    let expected_y = player_car.state.position.y + player_car.total_elevation();
-    assert_eq!(
-        pos_left.y, expected_y,
-        "Left arrow Y ({}) must be strictly horizontal with car ({})",
-        pos_left.y, expected_y
-    );
-    assert_eq!(
-        pos_right.y, expected_y,
-        "Right arrow Y ({}) must be strictly horizontal with car ({})",
-        pos_right.y, expected_y
-    );
+        // 1. Left curve arrow is on the car's own left, right curve arrow on the car's own right
+        assert!((pos_left - origin).dot(right) < 0.0, "Left arrow must be on the car's left (angle {})", angle);
+        assert!((pos_right - origin).dot(right) > 0.0, "Right arrow must be on the car's right (angle {})", angle);
 
-    // 4. Spacing: generous clearance from car center
-    let dist_left = pos_left.distance(player_car.state.position);
-    let dist_right = pos_right.distance(player_car.state.position);
-    assert!(dist_left >= 4.0 && dist_left <= 12.0, "Left arrow clearance must be comfortable (got {})", dist_left);
-    assert!(dist_right >= 4.0 && dist_right <= 12.0, "Right arrow clearance must be comfortable (got {})", dist_right);
+        // 2. Beside the car: level with it along its heading
+        assert!((pos_left - origin).dot(fwd).abs() < 1e-3, "Left arrow must be level with the car (angle {})", angle);
+        assert!((pos_right - origin).dot(fwd).abs() < 1e-3, "Right arrow must be level with the car (angle {})", angle);
 
-    // 5. Multi-arrow expansion: even with 5 chevrons, the nearest chevron remains comfortably clear of the car
-    let pos_5 = compute_curve_arrow_position(&player_car, CurveDirection::Right, 5, zoom);
-    let total_w_5 = (4.0 * 16.0 + 14.0) / zoom;
-    let closest_chevron_dist = (pos_5.x - total_w_5 * 0.5) - player_car.state.position.x;
-    assert!(
-        closest_chevron_dist >= 4.0,
-        "Innermost chevron of 5-arrow alert must remain clear of car (got {:.2}m)",
-        closest_chevron_dist
-    );
+        // 3. Spacing: generous clearance from car center
+        let dist_left = pos_left.distance(origin);
+        let dist_right = pos_right.distance(origin);
+        assert!(dist_left >= 4.0 && dist_left <= 12.0, "Left arrow clearance must be comfortable (got {})", dist_left);
+        assert!(dist_right >= 4.0 && dist_right <= 12.0, "Right arrow clearance must be comfortable (got {})", dist_right);
 
-    // 6. Backwards compatibility alias returns identical position without dynamic computation
-    let pos_compat = compute_smart_curve_arrow_position(&track, &[], &player_car, CurveDirection::Right, 5, zoom);
-    assert_eq!(pos_compat, pos_5);
+        // 4. Multi-arrow expansion: even with 5 chevrons, the nearest chevron remains comfortably clear of the car
+        let pos_5 = compute_curve_arrow_position(&player_car, CurveDirection::Right, 5, zoom);
+        let total_w_5 = (4.0 * 16.0 + 14.0) / zoom;
+        let closest_chevron_dist = pos_5.distance(origin) - total_w_5 * 0.5;
+        assert!(
+            closest_chevron_dist >= 4.0,
+            "Innermost chevron of 5-arrow alert must remain clear of car (got {:.2}m)",
+            closest_chevron_dist
+        );
+
+        // 5. Backwards compatibility alias returns identical position without dynamic computation
+        let pos_compat = compute_smart_curve_arrow_position(&track, &[], &player_car, CurveDirection::Right, 5, zoom);
+        assert_eq!(pos_compat, pos_5);
+    }
+
+    // 6. A car driving down the screen (facing -Y) shows its right-turn arrow on the screen's left
+    let car_down = Car::new(CarConfig::sports_car()).with_pose(sample.point, -std::f32::consts::FRAC_PI_2);
+    let pos = compute_curve_arrow_position(&car_down, CurveDirection::Right, 3, zoom);
+    assert!(pos.x < car_down.state.position.x, "Right arrow of a car facing down must be screen-left");
 }
 
 #[test]
@@ -231,7 +246,7 @@ fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
     assert_eq!(s_far.curve.id, 0);
     assert_eq!(s_far.curve.direction, CurveDirection::Right);
     let pos_far = compute_curve_arrow_position(&car, s_far.curve.direction, s_far.curve.degree, zoom);
-    assert!(pos_far.x > car.state.position.x, "Far approach shows Right arrow to right of car");
+    assert!((pos_far - car.state.position).dot(car.right_vector()) > 0.0, "Far approach shows Right arrow to right of car");
     let (col_far, _) = compute_curve_colors(CurveColorScheme::Traffic, s_far.urgency, s_far.curve.degree, 1.0);
     assert!(col_far.g > col_far.r, "Far approach on mild turn has green cruise color");
 
@@ -243,8 +258,8 @@ fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
     assert_eq!(s_preempt.curve.direction, CurveDirection::Left);
     assert_eq!(s_preempt.curve.degree, 5);
     let pos_preempt = compute_curve_arrow_position(&car, s_preempt.curve.direction, s_preempt.curve.degree, zoom);
-    assert!(pos_preempt.x < car.state.position.x, "Preempted arrow updates to Left side of car");
-    let alpha_preempt = compute_indicator_alpha(s_preempt.distance_to_entry, s_preempt.distance_to_apex, s_preempt.is_inside_curve);
+    assert!((pos_preempt - car.state.position).dot(car.right_vector()) < 0.0, "Preempted arrow updates to Left side of car");
+    let alpha_preempt = compute_indicator_alpha(s_preempt.distance_to_entry, s_preempt.distance_to_apex, s_preempt.is_inside_curve, 40.0);
     assert!((alpha_preempt - 1.0).abs() < 1e-3, "Turn 2 alert is fully visible");
     let (col_preempt, _) = compute_curve_colors(CurveColorScheme::Traffic, s_preempt.urgency, s_preempt.curve.degree, alpha_preempt);
     assert!(col_preempt.r > 0.8, "Turn 2 alert is urgent warning/red color");

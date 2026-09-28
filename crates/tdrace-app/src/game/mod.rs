@@ -237,7 +237,7 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    confirm_modal_layout,
+    confirm_modal_layout, curve_indicator_lookahead,
     render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
@@ -14088,7 +14088,7 @@ impl RaceSession {
             }
             if self.visibility_options.curve_helper {
                 if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
-                    let max_lookahead = (focus_car.state.speed * 3.5).clamp(130.0, 220.0);
+                    let max_lookahead = curve_indicator_lookahead(focus_car.state.speed);
                     if let Some(status) = self.track.spline.upcoming_curve(
                         focus_tracker.progress_distance,
                         focus_car.state.speed,
