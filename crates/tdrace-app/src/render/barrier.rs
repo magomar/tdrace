@@ -308,11 +308,10 @@ fn render_obstacle_body(obs: &Obstacle) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tdrace_core::track::presets::classic_grand_prix;
-
+    
     #[test]
     fn test_virtual_barrier_rendering_bypass_logic() {
-        let mut track = classic_grand_prix();
+        let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let physical_count = track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge).count();
         track.geometry.outer_walls.push(WallBarrier::new(
             Vec2::new(10.0, -10.0),

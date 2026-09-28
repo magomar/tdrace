@@ -1,7 +1,7 @@
 use glam::Vec2;
 use tdrace_app::camera::{CameraMode, RaceCamera, SplitLayout};
 use tdrace_core::{Car, CarConfig};
-use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+
 
 #[test]
 fn test_camera_modes_and_toggle() {
@@ -18,13 +18,13 @@ fn test_camera_modes_and_toggle() {
 #[test]
 fn test_camera_setup_for_all_presets() {
     let mut camera = RaceCamera::new();
-    let gp = classic_grand_prix();
+    let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     camera.setup_for_track(&gp);
 
     assert!(camera.overview_zoom > 0.0);
     assert_ne!(camera.overview_center, Vec2::ZERO);
 
-    let oval = oval_speedway();
+    let oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
     camera.setup_for_track(&oval);
     assert!(camera.overview_zoom > 0.0);
 }
@@ -225,7 +225,7 @@ fn test_camera_skip_overview_on_tab_cycle() {
 #[test]
 fn test_camera_paused_overview_and_resume() {
     let mut camera = RaceCamera::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     camera.setup_for_track(&track);
     camera.set_zoom_level(1); // Medium
 

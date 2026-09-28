@@ -1,7 +1,7 @@
 use glam::Vec2;
 use tdrace_app::ai::{BotAiDriver, BotProfile};
 use tdrace_core::{Car, CarConfig};
-use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+
 
 #[test]
 fn test_bot_profiles_creation() {
@@ -17,7 +17,7 @@ fn test_bot_profiles_creation() {
 
 #[test]
 fn test_bot_ai_steering_and_throttle_on_straight() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Car is initialized facing spline direction
@@ -36,7 +36,7 @@ fn test_bot_ai_steering_and_throttle_on_straight() {
 
 #[test]
 fn test_bot_ai_collision_avoidance() {
-    let track = oval_speedway();
+    let track = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Car A (our bot) is traveling at 35 m/s at x=50, y=-60
@@ -57,7 +57,7 @@ fn test_bot_ai_collision_avoidance() {
 
 #[test]
 fn test_bot_ai_cornering_slowdown() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Approaching hairpin at high speed (x=240, y=300, heading right towards hairpin)
@@ -72,17 +72,17 @@ fn test_bot_ai_cornering_slowdown() {
 
 #[test]
 fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
-    let track = tdrace_core::track::presets::daytona_superspeedway();
+    let track = tdrace_core::catalog::official_track("nascar", "daytona_superspeedway");
     let mut bot = BotAiDriver::new(BotProfile::aggressive());
 
     // Bot car trailing 15m behind lead car on the back straight (heading left, angle PI)
-    // Superstretch is at y = 180.0, heading towards negative X
-    let mut trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(100.0, 180.0), std::f32::consts::PI);
+    // Superstretch runs at y ~= 596 near x = 100, heading towards negative X
+    let mut trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(100.0, 595.8), std::f32::consts::PI);
     trailing_car.state.speed = 65.0; // ~234 km/h
     trailing_car.state.velocity = Vec2::new(-65.0, 0.0);
 
-    // Lead car slightly offset laterally (e.g. y = 180.6)
-    let mut lead_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(85.0, 180.6), std::f32::consts::PI);
+    // Lead car slightly offset laterally (0.6 m)
+    let mut lead_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(85.0, 597.2), std::f32::consts::PI);
     lead_car.state.speed = 64.0;
     lead_car.state.velocity = Vec2::new(-64.0, 0.0);
 
@@ -93,7 +93,7 @@ fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
     assert!(ctrl.throttle > 0.8, "Drafting bot should maintain full throttle");
 
     // When closing in closely (< 8m), bot executes slingshot lateral pass
-    let mut close_trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(92.0, 180.0), std::f32::consts::PI);
+    let mut close_trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(92.0, 596.2), std::f32::consts::PI);
     close_trailing_car.state.speed = 70.0;
     close_trailing_car.state.velocity = Vec2::new(-70.0, 0.0);
 

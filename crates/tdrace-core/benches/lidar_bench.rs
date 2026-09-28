@@ -2,14 +2,13 @@ use std::time::Instant;
 use glam::Vec2;
 use tdrace_core::lidar::{LidarConfig, LidarScanner};
 use tdrace_core::physics::{Car, CarConfig};
-use tdrace_core::track::presets::classic_grand_prix;
 
 fn main() {
     println!("============================================================");
     println!("📡 TDRace High-Speed LIDAR Raycasting Benchmark");
     println!("============================================================");
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let scanner = LidarScanner::new(LidarConfig::surround_32());
     let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), 0.0);
 

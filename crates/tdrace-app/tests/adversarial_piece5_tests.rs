@@ -8,7 +8,7 @@ use tdrace_app::replay::{Replay, ReplayPlayer, ReplayRecorder};
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+
 use tdrace_core::CarConfig;
 
 // ==============================================================================
@@ -238,22 +238,22 @@ fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
         (
             TrackChoice::ClassicGrandPrix,
             tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::ClassicGrandPrix)
-                .unwrap_or_else(classic_grand_prix),
+                .unwrap_or_else(|| tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
         ),
         (
             TrackChoice::OvalSpeedway,
             tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::OvalSpeedway)
-                .unwrap_or_else(oval_speedway),
+                .unwrap_or_else(|| tdrace_core::catalog::official_track("classic", "oval_speedway")),
         ),
         (
             TrackChoice::DriftPark,
             tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::DriftPark)
-                .unwrap_or_else(drift_park),
+                .unwrap_or_else(|| tdrace_core::catalog::official_track("classic", "drift_park")),
         ),
         (
             TrackChoice::KartArena,
             tdrace_app::ui::menu::resolve_track_for_menu(&TrackChoice::KartArena)
-                .unwrap_or_else(kart_arena),
+                .unwrap_or_else(|| tdrace_core::catalog::official_track("classic", "kart_arena")),
         ),
     ];
 

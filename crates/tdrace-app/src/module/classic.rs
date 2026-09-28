@@ -1,10 +1,5 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
-use tdrace_core::track::presets::{
-    classic_grand_prix, classic_rallycross, dirt_figure_eight, dirty_oval_speedway, drift_park, figure_eight,
-    kart_arena, oasis_rally, oval_speedway, ramp_raceway,
-};
-
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::DriverCharacter;
 use crate::render::color::CarColorScheme;
@@ -254,98 +249,7 @@ impl GameModule for ClassicGameModule {
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {
-        vec![
-            TrackDefinition {
-                id: "classic_grand_prix",
-                title: "Classic Grand Prix",
-                tag: "FIA GP CIRCUIT",
-                description: "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
-                category: "Asphalt Circuit",
-                default_laps: 5,
-                generator: classic_grand_prix,
-            },
-            TrackDefinition {
-                id: "oval_speedway",
-                title: "Oval Speedway",
-                tag: "SUPERSPEEDWAY",
-                description: "Full-throttle banked superspeedway surrounded by concrete barriers.",
-                category: "Oval Superspeedway",
-                default_laps: 5,
-                generator: oval_speedway,
-            },
-            TrackDefinition {
-                id: "dirty_oval_speedway",
-                title: "Dirty Oval Speedway",
-                tag: "DIRT SPEEDWAY",
-                description: "Banked dirt oval speedway with loose gravel cushion and high-sliding turns.",
-                category: "Dirt Oval",
-                default_laps: 5,
-                generator: dirty_oval_speedway,
-            },
-            TrackDefinition {
-                id: "figure_eight",
-                title: "Figure 8",
-                tag: "ASPHALT CROSSOVER",
-                description: "High-speed asphalt figure-8 arena with at-grade flat crossover and concrete safety walls.",
-                category: "Figure-8 Arena",
-                default_laps: 5,
-                generator: figure_eight,
-            },
-            TrackDefinition {
-                id: "dirt_figure_eight",
-                title: "Dirt Figure-8 Arena",
-                tag: "DIRT CROSSOVER",
-                description: "Stadium figure-8 dirt arena featuring an at-grade flat crossover, sweeping dirt carousels & tabletop jumps.",
-                category: "Figure-8 Arena",
-                default_laps: 5,
-                generator: dirt_figure_eight,
-            },
-            TrackDefinition {
-                id: "drift_park",
-                title: "Drift Park",
-                tag: "TECHNICAL DRIFT",
-                description: "Technical hairpin slides, wide transitions & dynamic apex clipping zones.",
-                category: "Drift Arena",
-                default_laps: 5,
-                generator: drift_park,
-            },
-            TrackDefinition {
-                id: "kart_arena",
-                title: "Kart Arena",
-                tag: "AGILE SPRINT",
-                description: "Tight 90-degree corners, rapid switchbacks & aggressive rumble curbs.",
-                category: "Sprint Arena",
-                default_laps: 5,
-                generator: kart_arena,
-            },
-            TrackDefinition {
-                id: "ramp_raceway",
-                title: "Ramp Raceway",
-                tag: "DIRT STUNT RAMPS",
-                description: "High-speed dirt stadium circuit with launch ramps, water hazards & gap jumps.",
-                category: "Dirt Stunt Track",
-                default_laps: 5,
-                generator: ramp_raceway,
-            },
-            TrackDefinition {
-                id: "oasis_rally",
-                title: "Oasis Rally",
-                tag: "DESERT DIRT RALLY",
-                description: "Pure dirt desert rally circuit with oasis water hazards & sand traps.",
-                category: "Desert Rally",
-                default_laps: 5,
-                generator: oasis_rally,
-            },
-            TrackDefinition {
-                id: "classic_rallycross",
-                title: "Classic Rallycross",
-                tag: "HYBRID RALLYCROSS",
-                description: "Dynamic 1.0 km mixed-surface rallycross circuit with asphalt straights, dirt hairpins & tabletop jumps.",
-                category: "Mixed Surface RX",
-                default_laps: 5,
-                generator: classic_rallycross,
-            },
-        ]
+        crate::module::catalog_tracks("classic")
     }
 
     fn default_track_id(&self) -> &'static str {

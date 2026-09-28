@@ -1,7 +1,6 @@
 use std::fs;
 use std::sync::Mutex;
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
 
 static PERM_TEST_MUTEX: Mutex<()> = Mutex::new(());
@@ -97,7 +96,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create a custom track
-    let mut custom = classic_grand_prix();
+    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     custom.name = "My Custom Speedway".to_string();
     custom.category = TrackCategory::Draft;
     manager.save_custom_track(&custom, Some("my_custom_speedway")).unwrap();
@@ -188,7 +187,7 @@ fn test_dev_mode_promote_custom_track_and_demote_preset() {
 
     // 1. Create a custom track
     let slug = "nordic_sprint";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Nordic Sprint".to_string();
     track.description = "Fast technical tarmac sprint.".to_string();
     track.category = TrackCategory::Draft;
@@ -198,7 +197,7 @@ fn test_dev_mode_promote_custom_track_and_demote_preset() {
 
     // 2. Promote custom track to git preset via dev shortcut method
     let promo_path = manager
-        .promote_custom_track_to_git_preset(slug)
+        .promote_custom_track_to_git_preset(slug, None)
         .expect("Dev mode must promote custom track to git preset");
     assert!(promo_path.exists());
     assert!(promo_path.to_string_lossy().contains("tracks/classic/nordic_sprint.json"));

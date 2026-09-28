@@ -2,30 +2,33 @@
 """
 OSM Circuit Importer for tdrace
 
-One importer for the OpenStreetMap (OSM) circuits of three disciplines:
+One importer for the OpenStreetMap (OSM) circuits of four disciplines:
 
   gt     18 GT / F1 circuits, scaled to 0.5x the official FIA length
-         (Rust output: a full `track_<id>()` for crates/tdrace-app/src/module/gt.rs)
-  kart   CIK-FIA kart circuits at 1:1 (waypoint vec for crates/tdrace-app/src/module/kart.rs)
+  kart   CIK-FIA kart circuits at 1:1
   rally  World RX rallycross circuits at 1:1 with asphalt/dirt surfaces
-         (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
+  nascar NASCAR ovals and road courses: 1:1 under 3 km, 0.75x above, with banking per corner
+
+With --json the waypoints go to tracks/<module>/<id>.json (spec 042: official circuits are JSON
+only); then run the printed `cargo run --bin track_bake -- ... --rebuild` command.
 
 Every circuit goes through the same steps: select the raceway nodes, project them to
 metres, rotate the start straight onto +X, scale to the official length, resample to
 evenly spaced waypoints, then assign widths and inside-apex kerbs from the deflection
 angle at each waypoint.
 
-Map data is read from the cache directory (default: <repo>/target/osm_cache):
-  gt     pre-downloaded OSM XML files named in each circuit's "file" entry
-  kart   <track_id>.json, fetched from the OSM map API (Overpass fallback) when missing
-  rally  <track_id>.json, fetched the same way from the bbox in the circuit's "query"
+Map data is read from <cache_dir>/<track_id>.osm (default cache dir: <repo>/assets/osm).
+`download` fetches it for the real circuits listed in crates/arcade-race-core/src/track/provenance.rs:
+the OSM map API area around the circuit's osm_url element (plus the kart/rally config bbox) with a
+300 m margin, or, when that area is too large, an Overpass extract of everything near the raceways.
 
 Warnings on stderr flag suspect geometry: a join between two nodes that are not an OSM
 edge and are more than 45 m apart, a way that could not be stitched, and a raw OSM loop
 length more than 10% away from the official length.
 
 Usage:
-  python3 scripts/osm_importer.py gt --track monza --rust
+  python3 scripts/osm_importer.py download --track monza
+  python3 scripts/osm_importer.py gt --track monza --json   # then run the printed track_bake command
   python3 scripts/osm_importer.py rally
   python3 scripts/osm_importer.py kart --cache-dir /path/to/osm_cache
 
@@ -38,11 +41,13 @@ import math
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "target", "osm_cache")
+DEFAULT_CACHE_DIR = os.path.join(REPO_ROOT, "assets", "osm")
 USER_AGENT = "tdrace-osm-tool/1.0"
 
 # Joins between consecutive chain nodes that are not OSM edges must be closer than this.
@@ -202,40 +207,46 @@ def map_api_to_elements(xml_text):
     return {"elements": elements}
 
 
-def fetch_osm_bbox(cache_dir, name, min_lat, min_lon, max_lat, max_lon, overpass_query):
-    """Return cached OSM JSON for `name`, or fetch the bbox (OSM map API, then Overpass) and cache it."""
-    cache_file = os.path.join(cache_dir, f"{name}.json")
-    if os.path.exists(cache_file):
-        with open(cache_file, "r") as f:
-            return json.load(f)
-    os.makedirs(cache_dir, exist_ok=True)
+def osm_file_path(cache_dir, track_id):
+    return os.path.join(cache_dir, f"{track_id}.osm")
 
-    map_url = f"https://api.openstreetmap.org/api/0.6/map?bbox={min_lon},{min_lat},{max_lon},{max_lat}"
-    try:
-        req = urllib.request.Request(map_url, headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = map_api_to_elements(resp.read().decode("utf-8"))
-        with open(cache_file, "w") as f:
-            json.dump(data, f)
-        return data
-    except (OSError, ValueError, ET.ParseError) as e:
-        warn(name, f"OSM map API failed ({e}), trying Overpass")
 
-    endpoints = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
-    ]
-    for ep in endpoints:
-        try:
-            req = urllib.request.Request(ep, data=overpass_query.encode("utf-8"), headers={"User-Agent": USER_AGENT})
-            with urllib.request.urlopen(req, timeout=20) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            with open(cache_file, "w") as f:
-                json.dump(data, f)
-            return data
-        except (OSError, ValueError) as e:
-            warn(name, f"Overpass endpoint {ep} failed ({e})")
-    raise RuntimeError(f"Failed to query OSM for {name}")
+def load_osm_elements(cache_dir, track_id):
+    """Nodes and ways of <cache_dir>/<track_id>.osm as Overpass-style JSON elements."""
+    path = osm_file_path(cache_dir, track_id)
+    if not os.path.exists(path):
+        raise SystemExit(f"Missing {path}: run `python3 scripts/osm_importer.py download --track {track_id}` first")
+    with open(path, "r", encoding="utf-8") as f:
+        return map_api_to_elements(f.read())
+
+
+def heading_ahead(points, min_dist=60.0):
+    """Heading from points[0] to the first point at least `min_dist` meters away (or the last point)."""
+    p0 = points[0]
+    p_ahead = points[1]
+    for p in points[1:]:
+        p_ahead = p
+        if math.hypot(p[0] - p0[0], p[1] - p0[1]) >= min_dist:
+            break
+    return math.atan2(p_ahead[1] - p0[1], p_ahead[0] - p0[0])
+
+
+def chain_segments(ways, segments):
+    """Node ids along (way id, first node or None) segments; each segment runs to its way's last node.
+
+    Consecutive segments share their join node, which is kept once; a closing repeat of the first
+    node is dropped. Returns [(node id, way id)].
+    """
+    chain = []
+    for wid, first in segments:
+        nds = ways[wid]["nodes"]
+        nds = nds[nds.index(first):] if first is not None else nds
+        if chain and chain[-1][0] == nds[0]:
+            nds = nds[1:]
+        chain.extend((nid, wid) for nid in nds)
+    if len(chain) > 1 and chain[-1][0] == chain[0][0]:
+        chain.pop()
+    return chain
 
 
 def stitch_ways(label, way_nodes_list, nodes_coords, max_gap=MAX_JOIN_GAP_M):
@@ -294,7 +305,6 @@ GT_CIRCUITS = {
     "monza": {
         "name": "Monza Autodromo Nazionale",
         "description": "High-speed Italian Grand Prix temple of speed.",
-        "file": "monza.osm",
         "rel_id": 284565,
         "fia_length": 5793.0,
         "num_waypoints": 28,
@@ -308,7 +318,6 @@ GT_CIRCUITS = {
     "spa": {
         "name": "Circuit de Spa-Francorchamps",
         "description": "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.",
-        "file": "spa.osm",
         "rel_id": 284560,
         "fia_length": 7004.0,
         "num_waypoints": 32,
@@ -326,7 +335,6 @@ GT_CIRCUITS = {
     "silverstone": {
         "name": "Silverstone Grand Prix Circuit",
         "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
-        "file": "silverstone.osm",
         "rel_id": 51160,
         "fia_length": 5891.0,
         "num_waypoints": 30,
@@ -340,7 +348,6 @@ GT_CIRCUITS = {
     "monaco": {
         "name": "Circuit de Monaco",
         "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
-        "file": "monaco.osm",
         "rel_id": 148194,
         "fia_length": 3337.0,
         "num_waypoints": 26,
@@ -364,7 +371,6 @@ GT_CIRCUITS = {
     "suzuka": {
         "name": "Suzuka International Racing Course",
         "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
-        "file": "suzuka.osm",
         "rel_id": 284570,
         "fia_length": 5807.0,
         "num_waypoints": 34,
@@ -379,7 +385,6 @@ GT_CIRCUITS = {
     "interlagos": {
         "name": "Autodromo Jose Carlos Pace (Interlagos)",
         "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
-        "file": "interlagos.osm",
         "rel_id": 6781071,
         "fia_length": 4309.0,
         "num_waypoints": 28,
@@ -393,7 +398,6 @@ GT_CIRCUITS = {
     "montreal": {
         "name": "Circuit Gilles Villeneuve (Montreal)",
         "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
-        "file": "montreal.osm",
         "rel_id": 284595,
         "fia_length": 4361.0,
         "num_waypoints": 28,
@@ -407,7 +411,6 @@ GT_CIRCUITS = {
     "red_bull_ring": {
         "name": "Red Bull Ring (Spielberg)",
         "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
-        "file": "red_bull_ring.osm",
         "rel_id": 5309181,
         "fia_length": 4318.0,
         "num_waypoints": 26,
@@ -428,7 +431,6 @@ GT_CIRCUITS = {
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
         "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
-        "file": "catalunya.osm",
         "way_id": "831804327",
         "fia_length": 4657.0,
         "num_waypoints": 28,
@@ -446,7 +448,6 @@ GT_CIRCUITS = {
     "zandvoort": {
         "name": "Circuit Zandvoort",
         "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
-        "file": "zandvoort.osm",
         "rel_id": 13545573,
         "fia_length": 4259.0,
         "num_waypoints": 28,
@@ -468,7 +469,6 @@ GT_CIRCUITS = {
     "bahrain": {
         "name": "Bahrain International Circuit (Sakhir)",
         "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
-        "file": "bahrain.osm",
         "rel_id": 284538,
         "fia_length": 5412.0,
         "num_waypoints": 30,
@@ -482,7 +482,6 @@ GT_CIRCUITS = {
     "marina_bay": {
         "name": "Marina Bay Street Circuit (Singapore)",
         "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
-        "file": "marina_bay_rel.osm",
         "rel_id": 421263,
         "fia_length": 4940.0,
         "num_waypoints": 30,
@@ -501,7 +500,6 @@ GT_CIRCUITS = {
     "cota": {
         "name": "Circuit of the Americas (COTA)",
         "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
-        "file": "cota_rel.osm",
         "rel_id": 6537729,
         "fia_length": 5513.0,
         "num_waypoints": 30,
@@ -519,7 +517,6 @@ GT_CIRCUITS = {
     "madring": {
         "name": "MadRing Circuito de Madrid",
         "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
-        "file": "madring.osm",
         "rel_id": 18813472,
         "fia_length": 5474.0,
         "num_waypoints": 30,
@@ -534,7 +531,6 @@ GT_CIRCUITS = {
     "nurburgring_gp": {
         "name": "Nurburgring Grand Prix-Strecke",
         "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
-        "file": "nurburgring.osm",
         "rel_id": 38567,
         "fia_length": 5148.0,
         "num_waypoints": 30,
@@ -558,7 +554,6 @@ GT_CIRCUITS = {
     "bathurst": {
         "name": "Mount Panorama (Bathurst)",
         "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
-        "file": "bathurst.osm",
         "rel_id": 6942508,
         "fia_length": 6213.0,
         "num_waypoints": 32,
@@ -582,7 +577,6 @@ GT_CIRCUITS = {
     "portimao_gp": {
         "name": "Autodromo Internacional do Algarve",
         "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
-        "file": "portimao.osm",
         "rel_id": 7509968,
         "fia_length": 4653.0,
         "num_waypoints": 28,
@@ -608,7 +602,6 @@ GT_CIRCUITS = {
     "le_mans_sarthe": {
         "name": "Circuit de la Sarthe (Le Mans)",
         "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
-        "file": "le_mans.osm",
         "rel_id": 2126739,
         "fia_length": 13626.0,
         "num_waypoints": 36,
@@ -632,7 +625,9 @@ GT_CIRCUITS = {
 
 def process_gt_circuit(cid, cache_dir):
     cfg = GT_CIRCUITS[cid]
-    path = os.path.join(cache_dir, cfg["file"])
+    path = osm_file_path(cache_dir, cid)
+    if not os.path.exists(path):
+        raise SystemExit(f"Missing {path}: run `python3 scripts/osm_importer.py download --track {cid}` first")
     root = ET.parse(path).getroot()
 
     nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
@@ -801,75 +796,6 @@ def process_gt_circuit(cid, cache_dir):
     }
 
 
-def generate_gt_rust_code(cdata):
-    """Full `track_<id>()` in the template used by crates/tdrace-app/src/module/gt.rs."""
-    lines = []
-    lines.append(f"    /// {cdata['name']}: {cdata['description']}")
-    lines.append(f"    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: {cdata['final_len']:.1f}m (Real FIA: {cdata['fia_length']:.0f}m).")
-    lines.append(f"    pub fn track_{cdata['id']}() -> Track {{")
-    lines.append("        let waypoints = vec![")
-
-    for w in cdata["waypoints"]:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        elev_str = ""
-        if w["elevation"] > 0.0 or w["elevation"] < 0.0:
-            elev_str = f".with_elevation({w['elevation']:.1f})"
-        wall_dist_str = ""
-        if "wall_dist" in w:
-            wall_dist_str = f".with_wall_distances(Some({w['wall_dist']:.1f}), Some({w['wall_dist']:.1f}))"
-        surf_str = ".with_surface(SurfaceType::Asphalt)"
-        lines.append(
-            f"            TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){surf_str}{curb_str}{elev_str}{wall_dist_str},"
-        )
-
-    lines.append("        ];")
-    lines.append("")
-    lines.append("        let spline = TrackSpline::new(waypoints, true);")
-    lines.append("        let (left_walls, right_walls, left_poly, right_poly) =")
-    lines.append(f"            generate_walls_from_spline(&spline, {cdata['barrier_offset']:.1f}, {cdata['barrier']});")
-    lines.append("")
-    lines.append("        let checkpoints = generate_checkpoints(&spline, 20, 3);")
-    lines.append("        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);")
-    lines.append("")
-    lines.append("        Track {")
-    lines.append(f'            name: "{cdata["name"]}".to_string(),')
-    lines.append(f'            description: "{cdata["description"]}".to_string(),')
-    lines.append("            category: TrackCategory::Main,")
-    lines.append("            kind: TrackKind::Circuit,")
-    lines.append("            spline,")
-    lines.append("            geometry: TrackGeometry {")
-    lines.append("                inner_walls: left_walls,")
-    lines.append("                outer_walls: right_walls,")
-    lines.append("                obstacles: Vec::new(),")
-    lines.append("                surface_zones: Vec::new(),")
-    lines.append("                jump_ramps: Vec::new(),")
-    lines.append("                left_boundary_polyline: left_poly,")
-    lines.append("                right_boundary_polyline: right_poly,")
-    lines.append("                ..Default::default()")
-    lines.append("            },")
-    lines.append("            checkpoints,")
-    lines.append("            grid_positions: starting_grid,")
-    lines.append("            default_surface: SurfaceType::Grass,")
-    lines.append("            pit_box_area: None,")
-    lines.append(f"            default_laps: {cdata['default_laps']},")
-    lines.append("            car_category: CarCategory::Gt,")
-    lines.append('            module_id: Some("gt".to_string()),')
-    lines.append('            modules: vec!["gt".to_string()],')
-    lines.append('            scale: "0.5x".to_string(),')
-    lines.append("            wikipedia_url: None,")
-    lines.append("            osm_url: None,")
-    lines.append("            country_code: None,")
-    lines.append("            country_name: None,")
-    lines.append("            min_width: None,")
-    lines.append("            max_width: None,")
-    lines.append("            is_inspired: false,")
-    lines.append("        }.with_default_runoff_surfaces()")
-    lines.append("    }")
-    return "\n".join(lines)
-
-
 def print_gt_summary(data):
     print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, 0.5x FIA)")
 
@@ -1034,6 +960,49 @@ KART_TRACKS = {
         "num_waypoints": 24,
         "elevation_fn": None,
     },
+    "laval_kart": {
+        "name": "Laval Karting (Circuit Louis Beuvron)",
+        "description": "Legendary French CIK-FIA Grade 1 karting arena in Mayenne featuring banked parabolique, rapid esses, and technical chicanes.",
+        "ways": [183330357],
+        "fia_length": 1232.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 50,  # ~25 m spacing keeps the hairpins within ~3 m of the OSM line
+        "elevation_fn": None,
+    },
+    "whilton_mill": {
+        "name": "Whilton Mill Kart Circuit",
+        "description": "Premier British National karting venue in Northamptonshire featuring challenging downhill esses, Ashby hairpin, and rapid chicanes.",
+        # Full lap without the pit lane, through Christmas Corner, Ashby, Zulu, Back Straight and Pit Bend.
+        "ways": [1208351124, 1208351123, 244268438, 1208351121, 1208351112, 1208351122, 1208351119, 1208351120,
+                 1208351115, 1208351114, 1208351118, 1208351116, 1208351125, 1208351117, 1208351126],
+        # The spec lists 1200 m, but the complete OSM lap is ~1044 m; keep the mapped (1:1) length.
+        "fia_length": 1044.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 50,  # ~21 m spacing keeps the esses within ~3 m of the OSM line
+        "elevation_fn": None,
+    },
+    "campillos": {
+        "name": "Kartcenter Campillos",
+        "description": "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.",
+        "ways": [639076279],
+        "fia_length": 1580.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
+    "valencia_kart": {
+        "name": "Kartodromo Internacional Lucas Guerrero (Valencia)",
+        "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
+        "ways": [751513226],
+        "fia_length": 1428.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
 }
 
 
@@ -1067,17 +1036,7 @@ def find_longest_straight(points):
 
 def process_kart_track(track_id, cache_dir):
     spec = KART_TRACKS[track_id]
-    min_lon, min_lat, max_lon, max_lat = spec["bbox"]
-    query = f"""
-[out:json][timeout:25];
-(
-  way["highway"="raceway"]({min_lat},{min_lon},{max_lat},{max_lon});
-);
-out body;
->;
-out skel qt;
-"""
-    data = fetch_osm_bbox(cache_dir, track_id, min_lat, min_lon, max_lat, max_lon, query)
+    data = load_osm_elements(cache_dir, track_id)
 
     nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
     ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
@@ -1111,15 +1070,7 @@ out skel qt;
     if "start_node_id" in spec:
         start_idx = raw_node_ids.index(spec["start_node_id"])
         reordered_pts = metric_pts[start_idx:] + metric_pts[:start_idx]
-        p0 = reordered_pts[0]
-        p_ahead = reordered_pts[1]
-        for k in range(1, len(reordered_pts)):
-            d = math.hypot(reordered_pts[k][0] - p0[0], reordered_pts[k][1] - p0[1])
-            if d >= 60.0:
-                p_ahead = reordered_pts[k]
-                break
-            p_ahead = reordered_pts[k]
-        heading = math.atan2(p_ahead[1] - p0[1], p_ahead[0] - p0[0])
+        heading = heading_ahead(reordered_pts)
     else:
         start_idx, heading = find_longest_straight(metric_pts)
         reordered_pts = metric_pts[start_idx:] + metric_pts[:start_idx]
@@ -1203,24 +1154,6 @@ out skel qt;
         "total_length": round(final_len, 1),
         "fia_length": spec["fia_length"],
     }
-
-
-def generate_kart_rust_code(track_data):
-    wps = track_data["waypoints"]
-    lines = []
-    lines.append("        let waypoints = vec![")
-    for w in wps:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        elev_str = ""
-        if w.get("elevation", 0.0) > 0.0:
-            elev_str = f".with_elevation({w['elevation']:.1f})"
-        lines.append(
-            f"            TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){elev_str}{curb_str},"
-        )
-    lines.append("        ];")
-    return "\n".join(lines)
 
 
 def print_kart_summary(res):
@@ -1470,6 +1403,30 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
+    "essay_rx": {
+        "name": "Circuit des Ducs (Essay RX)",
+        "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+        # Main lap (the Tour Joker way 787532794 is left out). (way, first node) pairs; None = whole way.
+        "segments": [(787532793, 7363261553), (787532796, None), (787532795, None)],
+        # The spec lists 1115 m, but the mapped lap is ~925 m (the old preset was 914 m); keep 1:1.
+        "fia_length": 925.0,
+        "default_width": 13.0,
+        "straight_width": 14.0,
+        "num_waypoints": 44,  # ~21 m spacing keeps the lap within ~3 m of the OSM line
+        "jump": None,
+    },
+    "dreux_rx": {
+        "name": "Circuit de l'Ouest Parisien (Dreux RX)",
+        "description": "French Rallycross Championship venue in Dreux featuring high-speed sweeping tarmac, technical loose dirt hairpins, and tabletop jump.",
+        # "Circuit Mixte de l'Ouest Parisien" from the start straight; the Tour Joker is left out.
+        "segments": [(297738880, 3016400386), (1328613408, None), (787140597, None), (1311041712, None),
+                     (787140601, None), (1311041713, None), (787140602, None), (787140604, None)],
+        "fia_length": 1050.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
+        "jump": None,
+    },
 }
 
 
@@ -1480,19 +1437,17 @@ def rally_way_surface(tags):
 
 def process_rally_track(track_id, cache_dir):
     spec = RALLY_TRACKS[track_id]
-    query = spec["query"]
-    m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", query)
-    lat1, lon1, lat2, lon2 = map(float, m.groups())
-    data = fetch_osm_bbox(
-        cache_dir, track_id, min(lat1, lat2), min(lon1, lon2), max(lat1, lat2), max(lon1, lon2), query
-    )
+    data = load_osm_elements(cache_dir, track_id)
 
     nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
     ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
 
     # (node id, surface) along the lap
     raw_nodes_surf = []
-    if track_id == "hell_rx":
+    if "segments" in spec:
+        for nid, wid in chain_segments(ways, spec["segments"]):
+            raw_nodes_surf.append((nid, rally_way_surface(ways[wid].get("tags", {}))))
+    elif track_id == "hell_rx":
         nodes_67 = ways[1069390967]["nodes"][1:]  # Skip start grid lane (node 0)
         nodes_68 = ways[1069390968]["nodes"]
         nodes_78 = ways[1069390978]["nodes"]
@@ -1595,10 +1550,13 @@ def process_rally_track(track_id, cache_dir):
     lon0 = sum(p[1] for p in raw_pts) / len(raw_pts)
     metric_pts = [latlon_to_meters(p[0], p[1], lat0, lon0) for p in raw_pts]
 
-    # Start straight heading from the first nodes of the lap
-    p_start = metric_pts[0]
-    p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
-    heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
+    # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
+    if "segments" in spec:
+        heading = heading_ahead(metric_pts)
+    else:
+        p_start = metric_pts[0]
+        p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
+        heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
 
     # Rotate so start straight heads along +X
     rotated_pts = rotate_points(metric_pts, heading)
@@ -1656,24 +1614,8 @@ def process_rally_track(track_id, cache_dir):
         "waypoints": waypoints,
         "total_length": round(final_len, 1),
         "fia_length": spec["fia_length"],
-        "jump": spec["jump"],
+        "jump": spec.get("jump"),
     }
-
-
-def generate_rally_rust_code(track_data):
-    wps = track_data["waypoints"]
-    lines = []
-    lines.append("    let waypoints = vec![")
-    for w in wps:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        surf_str = f".with_surface(SurfaceType::{w['surface']})"
-        lines.append(
-            f"        TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){surf_str}{curb_str},"
-        )
-    lines.append("    ];")
-    return "\n".join(lines)
 
 
 def print_rally_summary(res):
@@ -1685,34 +1627,620 @@ def print_rally_summary(res):
 
 
 # ---------------------------------------------------------------------------
+# NASCAR ovals and road courses (1:1 under 3 km, 0.75x above; Road America 0.5x)
+# ---------------------------------------------------------------------------
+
+# Each lap is a list of (way id, first node or None) segments in race direction (see chain_segments).
+# start_node (+ start_offset_m along the lap) is the start/finish line: a mapped start-finish node, or
+# the middle of the pit road straight.
+# corner_banks lists the banking of each corner in lap order from the start line (one value is
+# used for all corners); bend_bank is for gentle bends such as a tri-oval or a dogleg.
+NASCAR_TRACKS = {
+    "bowman_gray": {
+        "name": "Bowman Gray Stadium",
+        "segments": [(914237156, None)],
+        "start_node": 8492580790,  # start of the south straight; no pit road is mapped
+        "start_offset_m": 40.0,  # middle of that straight
+        "official_length": 402.0,
+        "scale": 1.0,
+        "num_waypoints": 16,
+        "width": 14.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "bristol": {
+        "name": "Bristol Motor Speedway",
+        "segments": [(116606212, None)],
+        "start_node": 1314158509,  # both straights have pit road; the start straight is a guess
+        "start_offset_m": 84.0,  # middle of that straight
+        "official_length": 858.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 10.0,
+        "corner_banks": [28.0],
+        "surface": "Concrete",
+    },
+    "martinsville": {
+        "name": "Martinsville Speedway",
+        "segments": [(448515178, None), (448515177, None), (402168721, None)],
+        "start_node": 4045926977,  # middle of the straight before the First Turn Tower grandstand
+        "official_length": 847.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 0.0,
+        "corner_banks": [12.0],
+        "corner_surface": "Concrete",
+        "kerbs": True,
+    },
+    "north_wilkesboro": {
+        "name": "North Wilkesboro Speedway",
+        "segments": [(18928710, None)],
+        "start_node": 2313815791,
+        "start_offset_m": 58.0,  # middle of the pit road straight
+        "official_length": 1006.0,  # the OSM way is 846 m, the inside line
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 3.0,
+        "corner_banks": [14.0],
+        "straight_elevations": [-1.5, 2.0],  # downhill frontstretch, uphill backstretch
+        "kerbs": True,
+    },
+    "irp_oval": {
+        "name": "Lucas Oil Indianapolis Raceway Park",
+        "segments": [(123830268, None)],
+        "start_node": 1379538172,  # mapped motorsport=start-finish node
+        "official_length": 1104.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 2.0,
+        "corner_banks": [12.0],
+        "kerbs": True,
+    },
+    "phoenix": {
+        "name": "Phoenix Raceway",
+        "segments": [(29333335, None)],
+        "start_node": 322700088,
+        "start_offset_m": 182.0,  # middle of the pit road straight
+        "official_length": 1645.0,
+        "scale": 1.0,
+        "num_waypoints": 32,
+        "width": 18.0,
+        "straight_bank": 3.0,
+        "corner_banks": [10.0],  # turns 1-2, the dogleg and turns 3-4 (as in the hand-made preset)
+        "kerbs": True,
+    },
+    "darlington": {
+        "name": "Darlington Raceway",
+        "segments": [(104277971, None)],
+        "start_node": 13658651458,
+        "start_offset_m": 147.0,  # middle of the pit road straight
+        "official_length": 2198.0,
+        "scale": 1.0,
+        "num_waypoints": 40,
+        "width": 18.0,
+        "straight_bank": 3.0,
+        "corner_banks": [25.0, 23.0],  # turns 1-2, turns 3-4
+    },
+    "charlotte": {
+        "name": "Charlotte Motor Speedway",
+        "segments": [(396483278, None), (116034341, None), (402168709, None), (1052107104, None), (402168711, None)],
+        "start_node": 9668619996,  # mapped raceway=start-finish node
+        "official_length": 2414.0,
+        "scale": 1.0,
+        "num_waypoints": 40,
+        "width": 20.0,
+        "straight_bank": 5.0,
+        "corner_banks": [24.0],
+        "bend_bank": 5.0,  # quad-oval frontstretch
+    },
+    "chicago": {
+        "name": "Chicago Street Course",
+        # Relation 16546690 lists its ways against the race direction; this is the list reversed.
+        "segments": [(w, None) for w in (
+            435561738, 435559503, 316907584, 435558482, 435558479, 25026604, 314943087, 255623675, 435559507,
+            621319020, 1377694368, 313874094, 313874095, 1377697560, 5010709, 372671686, 772541923, 33116710,
+            23888140, 435657099, 25026653, 435559504, 435559500, 435559499, 231237737, 435559505, 518573327,
+            435559501, 231237526, 435558483, 435558481, 25026606, 1227037106, 235741029, 435561742, 90707299,
+            1287253578, 435561319, 235714536)],
+        "start_node": 6061506190,  # Columbus Drive, halfway between Roosevelt Road and Balbo Drive
+        "official_length": 3541.0,
+        "scale": 0.75,
+        "num_waypoints": 64,  # ~45 m spacing keeps the lap within ~7 m of the OSM line
+        "width": 13.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "watkins_glen": {
+        "name": "Watkins Glen International",
+        # NASCAR short course: the Inner Loop, then the Short Course cut past the Boot.
+        "segments": [(293208067, None), (20163576, None), (293208063, None), (293208062, None), (293208064, None),
+                     (293208074, None), (428026652, None), (293208056, None), (293208060, None), (293208070, None),
+                     (293208065, None), (293208075, None)],
+        "start_node": 2967820339,  # pit entry on the front straight
+        "start_offset_m": 400.0,  # middle of pit road, ~170 m before the Ninety
+        "official_length": 3943.0,
+        "scale": 0.75,
+        "num_waypoints": 64,  # ~45 m spacing keeps the lap within ~7 m of the OSM line
+        "width": 16.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "daytona": {
+        "name": "Daytona International Speedway",
+        "segments": [(11371365, None), (352067004, None), (352070311, None), (352070309, None), (352070316, None)],
+        "start_node": 101134873,
+        "start_offset_m": 12.0,  # tri-oval, level with the middle of pit road
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 22.0,
+        "straight_bank": 3.0,
+        "corner_banks": [31.0],
+        "bend_bank": 18.0,  # tri-oval
+    },
+    "indianapolis": {
+        "name": "Indianapolis Motor Speedway",
+        "segments": [(588780351, None), (588780349, None), (51308226, None), (588780333, None), (588780334, None),
+                     (588780335, None), (588780332, None), (588780343, None), (588780345, None), (588780347, None)],
+        "start_node": 654509391,  # nearest lap node to the painted IMS start-finish line
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 48,
+        "width": 20.0,
+        "straight_bank": 0.0,
+        "corner_banks": [9.2],
+    },
+    "pocono": {
+        "name": "Pocono Raceway",
+        "segments": [(109767460, None)],
+        "start_node": 1255320153,
+        "start_offset_m": 436.0,  # middle of the pit road straight
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 18.0,
+        "straight_bank": 0.0,
+        "corner_banks": [14.0, 8.0, 6.0],  # turn 1, Tunnel Turn, turn 3
+        "kerbs": True,
+    },
+    "talladega": {
+        "name": "Talladega Superspeedway",
+        "segments": [(426163860, None), (426163859, None), (532106116, None), (8835825, None)],
+        "start_node": 13757090309,  # nearest lap node to the mapped raceway=start-finish node
+        "official_length": 4281.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 24.0,
+        "straight_bank": 3.0,
+        "corner_banks": [33.0],
+        "bend_bank": 16.5,  # tri-oval
+    },
+}
+
+# Curvature classes, relative to the tightest waypoint of the lap.
+NASCAR_CORNER_CURVATURE = 0.6
+NASCAR_BEND_CURVATURE = 0.12
+
+
+def shift_start(points, offset_m):
+    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted)."""
+    n = len(points)
+    left = offset_m
+    for i in range(n):
+        a, b = points[i], points[(i + 1) % n]
+        seg = math.hypot(b[0] - a[0], b[1] - a[1])
+        if left <= seg:
+            t = left / seg if seg > 0 else 0.0
+            p = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
+            return [p] + points[i + 1:] + points[:i + 1]
+        left -= seg
+    return points
+
+
+def curvature_classes(points):
+    """(class, signed smoothed curvature) per closed-loop point; class is corner, bend or straight."""
+    n = len(points)
+    turn = []
+    for i in range(n):
+        a, b, c = points[i - 1], points[i], points[(i + 1) % n]
+        h1 = math.atan2(b[1] - a[1], b[0] - a[0])
+        h2 = math.atan2(c[1] - b[1], c[0] - b[0])
+        dh = (h2 - h1 + math.pi) % (2 * math.pi) - math.pi
+        turn.append(dh / (0.5 * (math.dist(a, b) + math.dist(b, c))))
+    smooth = [(turn[i - 1] + 2 * turn[i] + turn[(i + 1) % n]) / 4 for i in range(n)]
+    k_max = max(abs(k) for k in smooth) or 1.0
+    classes = []
+    for k in smooth:
+        r = abs(k) / k_max
+        classes.append("corner" if r >= NASCAR_CORNER_CURVATURE else "bend" if r >= NASCAR_BEND_CURVATURE else "straight")
+    return classes, smooth
+
+
+def runs_of(classes, wanted):
+    """Index of each run of `wanted` classes in lap order (-1 elsewhere); a run through waypoint 0 is one run."""
+    n = len(classes)
+    run = [-1] * n
+    if all(c in wanted for c in classes):
+        return [0] * n, 1
+    start = next(i for i in range(n) if classes[i] not in wanted)  # begin outside a run
+    count = -1
+    for k in range(1, n + 1):
+        i = (start + k) % n
+        if classes[i] in wanted:
+            if classes[(i - 1) % n] not in wanted:
+                count += 1
+            run[i] = count
+    # renumber so that the first run met from waypoint 0 is run 0
+    order = []
+    for i in range(n):
+        if run[i] >= 0 and run[i] not in order:
+            order.append(run[i])
+    return [order.index(r) if r >= 0 else -1 for r in run], len(order)
+
+
+def process_nascar_track(track_id, cache_dir):
+    spec = NASCAR_TRACKS[track_id]
+    data = load_osm_elements(cache_dir, track_id)
+    nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
+    ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
+
+    node_ids = [nid for nid, _ in chain_segments(ways, spec["segments"])]
+    k = node_ids.index(spec["start_node"])
+    node_ids = node_ids[k:] + node_ids[:k]
+    check_loop_joins(track_id, node_ids, nodes, way_edges(w["nodes"] for w in ways.values()))
+
+    lat0 = sum(nodes[n][0] for n in node_ids) / len(node_ids)
+    lon0 = sum(nodes[n][1] for n in node_ids) / len(node_ids)
+    metric_pts = [latlon_to_meters(*nodes[n], lat0, lon0) for n in node_ids]
+    if spec.get("start_offset_m"):
+        metric_pts = shift_start(metric_pts, spec["start_offset_m"])
+
+    raw_len = polyline_length(metric_pts, closed=True)
+    check_length_ratio(track_id, raw_len, spec["official_length"])
+    target_len = spec["official_length"] * spec["scale"]
+    factor = target_len / raw_len
+    scaled = [(x * factor, y * factor) for x, y in metric_pts]
+    x0, y0 = scaled[0]
+    scaled = [(x - x0, y - y0) for x, y in scaled]
+
+    resampled, _, _ = resample_polyline(scaled, spec["num_waypoints"])
+    # Start line along +X, from the first waypoint to the next one.
+    pts = rotate_points(resampled, math.atan2(resampled[1][1], resampled[1][0]))
+
+    classes, curv = curvature_classes(pts)
+    corner_run, n_corners = runs_of(classes, ("corner",))
+    banks = spec["corner_banks"]
+    if len(banks) > 1 and len(banks) != n_corners:
+        raise SystemExit(f"[{track_id}] {n_corners} corners found, but corner_banks has {len(banks)} values")
+    straight_run, n_straights = runs_of(classes, ("straight", "bend"))
+    elevs = spec.get("straight_elevations")
+    if elevs and len(elevs) != n_straights:
+        raise SystemExit(f"[{track_id}] {n_straights} straights found, but straight_elevations has {len(elevs)} values")
+
+    waypoints = []
+    for i, (x, y) in enumerate(pts):
+        cls = classes[i]
+        if cls == "corner":
+            bank = banks[corner_run[i]] if len(banks) > 1 else banks[0]
+        elif cls == "bend":
+            bank = spec.get("bend_bank", spec["straight_bank"])
+        else:
+            bank = spec["straight_bank"]
+        surface = spec.get("corner_surface") if cls == "corner" else None
+        surface = surface or spec.get("surface")
+        kerb = spec.get("kerbs", False) and cls == "corner"
+        waypoints.append({
+            "x": round(x, 1),
+            "y": round(y, 1),
+            "width": spec["width"],
+            "bank": bank,
+            "elevation": elevs[straight_run[i]] if elevs and straight_run[i] >= 0 else 0.0,
+            "surface": surface,
+            "left_curb": kerb and curv[i] > 0,
+            "right_curb": kerb and curv[i] < 0,
+        })
+
+    return {
+        "id": track_id,
+        "name": spec["name"],
+        "waypoints": waypoints,
+        "raw_length": round(raw_len, 1),
+        "target_length": round(target_len, 1),
+        "official_length": spec["official_length"],
+        "scale": spec["scale"],
+        "corners": n_corners,
+    }
+
+
+def print_nascar_summary(res):
+    print(f"=== {res['name']} ({res['id']}) ===")
+    print(f"  Waypoints: {len(res['waypoints'])}, target {res['target_length']} m "
+          f"({res['scale']}x of {res['official_length']} m; raw OSM loop {res['raw_length']} m), "
+          f"{res['corners']} corners")
+
+
+# ---------------------------------------------------------------------------
+# Download (all real circuits with an osm_url in tracks/)
+# ---------------------------------------------------------------------------
+
+# Extra ground around the circuit, so barriers, gravel traps and grandstands are included.
+DOWNLOAD_MARGIN_M = 300.0
+MAP_API = "https://api.openstreetmap.org/api/0.6"
+OVERPASS_API = "https://overpass-api.de/api/interpreter"
+
+
+def provenance_osm_urls(tracks_dir=None, cache_dir=DEFAULT_CACHE_DIR):
+    """{circuit id: osm_url} for every official circuit JSON in tracks/ that has an osm_url.
+
+    The id is the catalog id, or an older alias when the OSM file is already saved under that alias
+    (e.g. the NASCAR files `daytona.osm`), so existing map files keep working.
+    """
+    tracks_dir = tracks_dir or TRACKS_DIR
+    aliases = load_aliases(tracks_dir)
+    urls = {}
+    for module in sorted(os.listdir(tracks_dir)):
+        module_dir = os.path.join(tracks_dir, module)
+        if module.startswith(".") or not os.path.isdir(module_dir):
+            continue
+        for name in sorted(os.listdir(module_dir)):
+            if not name.endswith(".json"):
+                continue
+            with open(os.path.join(module_dir, name), "r", encoding="utf-8") as f:
+                osm_url = json.load(f).get("osm_url")
+            if not osm_url:
+                continue
+            cid = name[: -len(".json")]
+            saved_as = [a for a, target in aliases.items() if target == cid and os.path.exists(osm_file_path(cache_dir, a))]
+            urls[saved_as[0] if saved_as and not os.path.exists(osm_file_path(cache_dir, cid)) else cid] = osm_url
+    return urls
+
+
+def http_get(url, data=None, timeout=120):
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8")
+
+
+def element_bounds(osm_url):
+    """(south, west, north, east) of the OSM element an osm_url points to."""
+    m = re.search(r"openstreetmap\.org/(node|way|relation)/(\d+)", osm_url)
+    if not m:
+        raise ValueError(f"not an OSM element URL: {osm_url}")
+    kind, eid = m.groups()
+    url = f"{MAP_API}/{kind}/{eid}" + ("" if kind == "node" else "/full")
+    root = ET.fromstring(http_get(url))
+    lats = [float(n.get("lat")) for n in root.findall("node")]
+    lons = [float(n.get("lon")) for n in root.findall("node")]
+    return min(lats), min(lons), max(lats), max(lons)
+
+
+def config_bbox(track_id):
+    """(south, west, north, east) from a kart or rallycross config, when it has one."""
+    if "bbox" in KART_TRACKS.get(track_id, {}):
+        min_lon, min_lat, max_lon, max_lat = KART_TRACKS[track_id]["bbox"]
+        return min_lat, min_lon, max_lat, max_lon
+    if "query" in RALLY_TRACKS.get(track_id, {}):
+        m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", RALLY_TRACKS[track_id]["query"])
+        lat1, lon1, lat2, lon2 = map(float, m.groups())
+        return min(lat1, lat2), min(lon1, lon2), max(lat1, lat2), max(lon1, lon2)
+    return None
+
+
+def expand_bbox(bbox, margin_m):
+    s, w, n, e = bbox
+    dlat = margin_m / 111320.0
+    dlon = margin_m / (111320.0 * math.cos(math.radians((s + n) / 2)))
+    return s - dlat, w - dlon, n + dlat, e + dlon
+
+
+def download_circuit(track_id, osm_url, cache_dir, margin_m=DOWNLOAD_MARGIN_M):
+    """Save the OSM map area around one circuit to <cache_dir>/<track_id>.osm. Returns a status word."""
+    bbox = element_bounds(osm_url)
+    cfg = config_bbox(track_id)
+    if cfg:
+        bbox = (min(bbox[0], cfg[0]), min(bbox[1], cfg[1]), max(bbox[2], cfg[2]), max(bbox[3], cfg[3]))
+    s, w, n, e = expand_bbox(bbox, margin_m)
+
+    source = "map"
+    try:
+        xml_text = http_get(f"{MAP_API}/map?bbox={w:.6f},{s:.6f},{e:.6f},{n:.6f}")
+    except urllib.error.HTTPError as err:
+        if err.code not in (400, 509):
+            raise
+        # Area too large for the map API (50k nodes / 0.25 deg2): keep only what lies near the raceways.
+        source = "overpass"
+        query = (
+            f"[out:xml][timeout:300][bbox:{s:.6f},{w:.6f},{n:.6f},{e:.6f}];"
+            f"way[highway=raceway]->.t;(node(around.t:{margin_m:.0f});way(around.t:{margin_m:.0f}););"
+            "(._;>;)->.env;rel(bw.t)->.r;(.env;.r;.r>;);out body;"
+        )
+        xml_text = http_get(OVERPASS_API, data=query.encode("utf-8"), timeout=360)
+
+    root = ET.fromstring(xml_text)
+    raceways = [w_el for w_el in root.findall("way") if any(
+        t.get("k") == "highway" and t.get("v") == "raceway" for t in w_el.findall("tag"))]
+    os.makedirs(cache_dir, exist_ok=True)
+    with open(osm_file_path(cache_dir, track_id), "w", encoding="utf-8") as f:
+        f.write(xml_text)
+    if not raceways:
+        warn(track_id, "no highway=raceway way in the downloaded area: the circuit may not be mapped")
+    return f"{source}, {len(raceways)} raceway ways"
+
+
+def download(track_ids, cache_dir, force=False):
+    urls = provenance_osm_urls()
+    for tid in track_ids:
+        path = osm_file_path(cache_dir, tid)
+        if os.path.exists(path) and not force:
+            print(f"[{tid}] exists, skipped")
+            continue
+        try:
+            status = download_circuit(tid, urls[tid], cache_dir)
+            print(f"[{tid}] saved {path} ({os.path.getsize(path) // 1024} KiB, {status})")
+        except (OSError, ValueError, ET.ParseError) as err:
+            warn(tid, f"download failed: {err}")
+        time.sleep(1.0)  # be polite to the public OSM servers
+
+
+# ---------------------------------------------------------------------------
 # Command line
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# JSON output (spec 042): official circuits live only in tracks/<module>/<id>.json
+# ---------------------------------------------------------------------------
+
+TRACKS_DIR = os.path.join(REPO_ROOT, "tracks")
+BAKE_COMMAND = "cargo run --bin track_bake --"
+
+
+def load_aliases(tracks_dir):
+    path = os.path.join(tracks_dir, ".aliases.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def catalog_id(module, track_id, tracks_dir):
+    """The catalog id (file name) for an importer track id, following tracks/.aliases.json."""
+    if os.path.exists(os.path.join(tracks_dir, module, f"{track_id}.json")):
+        return track_id
+    return load_aliases(tracks_dir).get(track_id, track_id)
+
+
+def source_waypoint(w, discipline):
+    """One importer waypoint as a Track JSON waypoint (the fields the Rust code used to set)."""
+    surface = w.get("surface") or ("Asphalt" if discipline == "gt" else None)
+    wp = {
+        "point": [round(w["x"], 1), round(w["y"], 1)],
+        "width": round(w["width"], 1),
+        "left_curb": bool(w["left_curb"]),
+        "right_curb": bool(w["right_curb"]),
+        "surface": surface,
+        "elevation": round(w.get("elevation", 0.0), 1),
+    }
+    if w.get("bank"):
+        wp["bank_angle"] = round(w["bank"], 1)
+    if "wall_dist" in w:
+        wp["left_wall_distance"] = wp["right_wall_distance"] = round(w["wall_dist"], 1)
+    return wp
+
+
+def write_source_json(discipline, data, tracks_dir=None):
+    """Writes the imported waypoints to tracks/<module>/<id>.json; returns (path, track_bake command).
+
+    An existing circuit keeps every other field (names, tag, provenance, scenery, walls); only the waypoints
+    change, and `track_bake --rebuild` then regenerates spline, walls, checkpoints and grid from them, keeping
+    the current wall setup. A new circuit gets a minimal file and is appended to tracks/.track_order.json.
+    """
+    tracks_dir = tracks_dir or TRACKS_DIR
+    module = discipline
+    cid = catalog_id(module, data["id"], tracks_dir)
+    path = os.path.join(tracks_dir, module, f"{cid}.json")
+    waypoints = [source_waypoint(w, discipline) for w in data["waypoints"]]
+
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            track = json.load(f)
+        track["spline"]["waypoints"] = waypoints
+        track["spline"]["closed"] = True
+        bake_args = ["--rebuild"]
+    else:
+        track = {
+            "name": data["name"],
+            "description": data.get("description", ""),
+            "category": "main",
+            "kind": {"type": "circuit"},
+            "spline": {"waypoints": waypoints, "closed": True, "samples": [], "total_length": 0.0, "curves": []},
+            "geometry": {
+                "inner_walls": [],
+                "outer_walls": [],
+                "obstacles": [],
+                "surface_zones": [],
+                "jump_ramps": [],
+                "left_boundary_polyline": [],
+                "right_boundary_polyline": [],
+            },
+            "checkpoints": [],
+            "grid_positions": [],
+            "default_surface": "Grass",
+            "pit_box_area": None,
+            "default_laps": data.get("default_laps", 3),
+            "car_category": module,
+            "module_id": module,
+            "modules": [module],
+            "scale": "0.5x" if module == "gt" else "1:1",
+            "is_inspired": False,
+        }
+        if data.get("tag"):
+            track["tag"] = data["tag"]
+        if data.get("scale") and data["scale"] != 1.0:
+            track["scale"] = f"{data['scale']:g}x"
+        order_path = os.path.join(tracks_dir, ".track_order.json")
+        with open(order_path, "r", encoding="utf-8") as f:
+            order = json.load(f)
+        if cid not in order.setdefault(module, []):
+            order[module].append(cid)
+            with open(order_path, "w", encoding="utf-8") as f:
+                json.dump(order, f, indent=2, ensure_ascii=False)
+        bake_args = []
+        if "barrier_offset" in data:
+            bake_args += ["--barrier-offset", f"{data['barrier_offset']:.1f}"]
+        if "barrier" in data:
+            bake_args += ["--barrier-type", data["barrier"].split("::")[-1]]
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(track, f, indent=2, ensure_ascii=False)
+    rel = os.path.relpath(path, REPO_ROOT)
+    return path, " ".join([BAKE_COMMAND, rel] + bake_args)
+
+
 DISCIPLINES = {
-    "gt": (GT_CIRCUITS, process_gt_circuit, generate_gt_rust_code, print_gt_summary),
-    "kart": (KART_TRACKS, process_kart_track, generate_kart_rust_code, print_kart_summary),
-    "rally": (RALLY_TRACKS, process_rally_track, generate_rally_rust_code, print_rally_summary),
+    "gt": (GT_CIRCUITS, process_gt_circuit, print_gt_summary),
+    "kart": (KART_TRACKS, process_kart_track, print_kart_summary),
+    "rally": (RALLY_TRACKS, process_rally_track, print_rally_summary),
+    "nascar": (NASCAR_TRACKS, process_nascar_track, print_nascar_summary),
 }
 
 
 def main():
     parser = argparse.ArgumentParser(description="Extract and generate tdrace circuits from OpenStreetMap")
-    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: target/osm_cache)")
+    parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: assets/osm)")
     sub = parser.add_subparsers(dest="discipline", required=True)
-    for name, (specs, _, _, _) in DISCIPLINES.items():
+    for name, (specs, _, _) in DISCIPLINES.items():
         p = sub.add_parser(name, help=f"{name} circuits")
         p.add_argument("--track", choices=list(specs.keys()), help="Process one circuit (default: all)")
-        p.add_argument("--rust", action="store_true", help="Print Rust code")
+        p.add_argument(
+            "--json", action="store_true", help="Write tracks/<module>/<id>.json and print the track_bake command"
+        )
+    real_ids = list(provenance_osm_urls().keys())
+    p = sub.add_parser("download", help="Download OSM map data for the real circuits in tracks/")
+    p.add_argument("--track", choices=real_ids, action="append", help="Circuit id (repeatable; default: all)")
+    p.add_argument("--force", action="store_true", help="Download again even if the file exists")
     args = parser.parse_args()
 
-    specs, process, generate_rust, print_summary = DISCIPLINES[args.discipline]
+    if args.discipline == "download":
+        download(args.track or real_ids, args.cache_dir, args.force)
+        return
+
+    specs, process, print_summary = DISCIPLINES[args.discipline]
     track_ids = [args.track] if args.track else list(specs.keys())
     for tid in track_ids:
         data = process(tid, args.cache_dir)
         print_summary(data)
-        if args.rust:
-            print(generate_rust(data))
-            print()
+        if args.json:
+            path, bake_cmd = write_source_json(args.discipline, data)
+            print(f"  Wrote {path}")
+            print(f"  Next: {bake_cmd}")
 
 
 if __name__ == "__main__":

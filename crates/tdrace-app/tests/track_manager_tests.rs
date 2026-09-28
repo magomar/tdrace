@@ -4,7 +4,6 @@ use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::ui::menu::TrackChoice;
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
 
 static DEV_MODE_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -115,7 +114,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     assert_eq!(loaded.category, TrackCategory::Draft);
 
     // 4. Save a track that has TrackCategory::Draft
-    let mut draft_copy = classic_grand_prix();
+    let mut draft_copy = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     draft_copy.name = "My Modified GP".to_string();
     draft_copy.category = TrackCategory::Draft;
     manager.save_custom_track(&draft_copy, Some("my_modified_gp")).expect("Save draft copy");
@@ -138,7 +137,7 @@ fn test_promotion_and_demotion_lifecycle() {
 
     // Create a draft
     let track_id = "test_circuit_proto";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Proto Circuit".to_string();
     track.description = "Prototype for testing.".to_string();
     track.category = TrackCategory::Draft;
@@ -193,7 +192,7 @@ fn test_metadata_editing() {
     let mut manager = TrackManager::new(&temp_dir);
 
     let track_id = "apex_circuit";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Original Name".to_string();
     track.description = "Original Desc".to_string();
     track.category = TrackCategory::Draft;
@@ -230,7 +229,7 @@ fn test_track_deletion() {
     let mut manager = TrackManager::new(&temp_dir);
 
     let track_id = "doomed_track";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Doomed Track".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save");
@@ -440,13 +439,13 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 17);
 
     // Promote a new track to GT
-    let mut track_gt = classic_grand_prix();
+    let mut track_gt = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track_gt.name = "Monza Custom GP".to_string();
     manager.save_custom_track(&track_gt, Some("monza_custom")).unwrap();
     manager.promote_track_to_module("monza_custom", "gt").unwrap();
 
     // Promote a new track to Rally
-    let mut track_rally = classic_grand_prix();
+    let mut track_rally = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track_rally.name = "Dune Safari".to_string();
     manager.save_custom_track(&track_rally, Some("dune_safari")).unwrap();
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
@@ -489,7 +488,7 @@ fn test_module_subdirectories_and_file_movement() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create a draft track -> saved flat in temp_dir/my_circuit.json with Draft category
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "My Circuit".to_string();
     track.category = TrackCategory::Draft;
     let saved_path = manager.save_custom_track(&track, Some("my_circuit")).expect("Save draft");
@@ -724,7 +723,7 @@ fn test_multi_module_promotion_and_distribution() {
 
     // 1. Create a draft circuit
     let track_id = "multi_spec_gp";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Multi Spec GP".to_string();
     track.description = "Circuit designed for multiple disciplines.".to_string();
     track.category = TrackCategory::Draft;
@@ -800,7 +799,7 @@ fn test_consistent_module_categorization_in_module_view() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // Promote a draft to Classic and Rally
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Desert Speed".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some("desert_speed")).expect("Save");
@@ -900,8 +899,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
     let _lock = DEV_MODE_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
     std::env::remove_var("TDRACE_DEV");
 
-    use tdrace_core::track::presets::oval_speedway;
-
+    
     let temp_dir = std::env::temp_dir().join(format!(
         "tdrace_test_preset_persistence_{}",
         std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
@@ -910,15 +908,15 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // 1. In normal user mode, official presets cannot be overwritten directly
-    let mut oval = oval_speedway();
+    // 1. In normal user mode, official presets are never overwritten: the edit is saved as a copy (spec 042)
+    let mut oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
     oval.name = "Oval Speedway (Modified)".to_string();
     oval.description = "Customized banked oval.".to_string();
 
-    let err_oval = manager
+    let copy_path = manager
         .save_custom_track_with_options(&oval, Some("oval_speedway"), true)
-        .expect_err("Normal user mode must reject overwriting official preset");
-    assert!(err_oval.contains("is an official preset and cannot be modified directly"));
+        .expect("Normal user mode must save an edited official preset as a copy");
+    assert!(copy_path.contains("oval_speedway_copy"), "{}", copy_path);
 
     // Official presets remain untouched in the catalog
     let loaded_oval = manager.load_track(&TrackChoice::OvalSpeedway).unwrap();
@@ -930,7 +928,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
         .expect("Clone preset to drafts");
     assert!(copy_path.contains("oval_speedway_clone"));
     assert_eq!(cloned_oval.category, TrackCategory::Draft);
-    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.draft_track_choices().len(), 2, "the saved copy and the clone");
 
     // 3. In Developer Mode (TDRACE_DEV=1), official presets can be modified directly
     {
@@ -944,7 +942,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
         assert!(dev_save.is_ok(), "Dev mode must allow saving preset");
 
         // Revert preset back to canonical
-        let canonical_oval = oval_speedway();
+        let canonical_oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
         let _ = manager.save_custom_track_with_options(&canonical_oval, Some("oval_speedway"), true);
         std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
     }
@@ -964,7 +962,7 @@ fn test_re_promoting_already_promoted_track_to_different_modules() {
 
     // 1. Create a draft track
     let track_id = "dynamic_apex_gp";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Dynamic Apex GP".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save draft");
@@ -1038,7 +1036,7 @@ fn test_track_manager_promotion_mask_resolution_for_promoted_track() {
 
     // Create and promote to Kart and GT
     let track_id = "kart_gt_hybrid";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Hybrid Circuit".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).unwrap();
@@ -1270,7 +1268,7 @@ fn test_module_scoped_track_deletion_preserves_other_modules() {
 
     // 1. Promote a track to both classic and rally
     let track_id = "dual_discipline_gp";
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Dual Discipline GP".to_string();
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save draft");
@@ -1294,7 +1292,7 @@ fn test_module_scoped_track_deletion_preserves_other_modules() {
     assert_eq!(loaded_track.modules, vec!["classic".to_string()]);
 
     // 5. Test with a custom circuit promoted to multiple modules
-    let mut custom_fig8 = tdrace_core::track::presets::dirt_figure_eight();
+    let mut custom_fig8 = tdrace_core::catalog::official_track("classic", "dirt_figure_eight");
     custom_fig8.name = "Dirt Figure-8 Custom".to_string();
     custom_fig8.category = TrackCategory::Draft;
     let _ = manager.save_custom_track(&custom_fig8, Some("my_custom_fig8")).expect("Save");
@@ -1333,98 +1331,6 @@ fn test_workspace_rally_deletion_preserves_classic() {
 
     assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirt_figure_eight"), "dirt_figure_eight must NOT be in rally");
     assert!(!rally_tracks.iter().any(|c| c.track_id() == "dirty_oval_speedway"), "dirty_oval_speedway must NOT be in rally");
-}
-
-#[test]
-#[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
-fn test_export_canonical_presets_to_git_repo() {
-    use tdrace_app::module::{
-        classic::ClassicGameModule, extreme_offroad::ExtremeOffRoadModule,
-        gt::GtWorldChallengeModule, kart::KartGameModule, nascar::NascarGameModule,
-        rally::RallyGameModule, GameModule,
-    };
-    use tdrace_core::track::TrackCategory;
-
-    let repo_tracks_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks");
-    if !repo_tracks_dir.exists() {
-        return;
-    }
-
-    let modules: Vec<Box<dyn GameModule>> = vec![
-        Box::new(ClassicGameModule::new()),
-        Box::new(GtWorldChallengeModule::new()),
-        Box::new(RallyGameModule::new()),
-        Box::new(KartGameModule::new()),
-        Box::new(NascarGameModule::new()),
-        Box::new(ExtremeOffRoadModule::new()),
-    ];
-
-    let mut total_exported = 0;
-    for module in modules {
-        let mod_id = module.id();
-        let target_dir = repo_tracks_dir.join(mod_id);
-        let _ = fs::create_dir_all(&target_dir);
-
-        for track_def in module.tracks() {
-            let mut track = (track_def.generator)();
-            track.category = TrackCategory::Main;
-            track.module_id = Some(mod_id.to_string());
-            if !track.modules.contains(&mod_id.to_string()) {
-                track.modules.push(mod_id.to_string());
-            }
-            let filename = if mod_id == "nascar" {
-                match track_def.id {
-                    "daytona_superspeedway" => "daytona",
-                    "talladega_superspeedway" => "talladega",
-                    "watkins_glen_nascar" => "watkins_glen",
-                    "bristol_motor_speedway" => "bristol",
-                    "martinsville_speedway" => "martinsville",
-                    "darlington_raceway" => "darlington",
-                    "charlotte_motor_speedway" => "charlotte",
-                    "indianapolis_motor_speedway" => "indianapolis",
-                    "eldora_speedway" => "eldora",
-                    "iowa_speedway" => "iowa",
-                    "chicago_street_course" => "chicago",
-                    "bowman_gray_stadium" => "bowman_gray",
-                    "lucas_oil_irp" => "irp_oval",
-                    "north_wilkesboro_speedway" => "north_wilkesboro",
-                    "pocono_raceway" => "pocono",
-                    "phoenix_raceway" => "phoenix",
-                    other => other,
-                }
-            } else {
-                track_def.id
-            };
-            track = track
-                .with_provenance_if_known(filename)
-                .with_provenance_if_known(track_def.id);
-            let file_path = target_dir.join(format!("{}.json", filename));
-            track.save_to_file(&file_path).expect("Failed to export canonical preset");
-
-            // Verify load
-            let loaded = tdrace_core::track::Track::load_from_file(&file_path)
-                .expect("Failed to load exported canonical preset");
-            assert_eq!(loaded.name, track.name);
-            assert_eq!(loaded.category, TrackCategory::Main);
-
-            if let Some(prov) = tdrace_core::track::get_circuit_provenance(filename) {
-                assert!(
-                    loaded.osm_url.is_some(),
-                    "Real circuit {} must have osm_url preserved in exported json",
-                    filename
-                );
-                assert_eq!(
-                    loaded.osm_url.as_deref(),
-                    Some(prov.osm_url),
-                    "OSM URL mismatch on {}",
-                    filename
-                );
-            }
-
-            total_exported += 1;
-        }
-    }
-    assert!(total_exported >= 80, "Must export all preset track definitions across modules");
 }
 
 #[test]
@@ -1508,7 +1414,7 @@ fn test_custom_circuit_multi_category_assignment() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // Create a track assigned to both Classic and Rally
-    let mut hybrid_track = classic_grand_prix();
+    let mut hybrid_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     hybrid_track.name = "Hybrid Classic Rally".to_string();
     hybrid_track.category = TrackCategory::Main;
     hybrid_track.modules = vec!["classic".to_string(), "rally".to_string()];
@@ -1595,7 +1501,7 @@ fn test_custom_circuit_promoted_to_preset_classified_as_official_preset() {
     // 4. Stale user track copy resilience: even if a file with preset slug exists in user tracks dir,
     // TrackManager keeps it classified as an official preset.
     let stale_path = temp_dir.join("classic_grand_prix.json");
-    let mut gp_track = classic_grand_prix();
+    let mut gp_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     gp_track.category = TrackCategory::Main;
     let _ = gp_track.save_to_file(&stale_path);
     // Clear demoted marker
@@ -1867,8 +1773,8 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
 #[test]
 fn test_marina_bay_singapore_aliases_and_osm_calibration() {
-    let t_mb = tdrace_app::module::gt::GtWorldChallengeModule::track_marina_bay();
-    assert_eq!(t_mb.name, "Marina Bay Street Circuit (Singapore)");
+    let t_mb = tdrace_core::catalog::official_track("gt", "marina_bay");
+    assert_eq!(t_mb.name, "Marina Bay Street Circuit");
     assert_eq!(t_mb.car_category, tdrace_core::CarCategory::Gt);
     assert_eq!(t_mb.module_id.as_deref(), Some("gt"));
     assert!(t_mb.modules.contains(&"gt".to_string()));
@@ -1915,7 +1821,7 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "marina_bay".to_string(),
     };
     let loaded_mb = manager.load_track(&choice_mb).expect("Load marina_bay");
-    assert_eq!(loaded_mb.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_mb.name, "Marina Bay Street Circuit");
 
     let choice_sg = TrackChoice::Custom {
         id: "singapore".to_string(),
@@ -1924,7 +1830,7 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "singapore".to_string(),
     };
     let loaded_sg = manager.load_track(&choice_sg).expect("Load singapore");
-    assert_eq!(loaded_sg.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_sg.name, "Marina Bay Street Circuit");
 
     let choice_sp = TrackChoice::Custom {
         id: "singapur".to_string(),
@@ -1933,15 +1839,15 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
         path: "singapur".to_string(),
     };
     let loaded_sp = manager.load_track(&choice_sp).expect("Load singapur");
-    assert_eq!(loaded_sp.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(loaded_sp.name, "Marina Bay Street Circuit");
 
     // Verify menu resolver
     let menu_mb = tdrace_app::ui::menu::resolve_track_for_menu(&choice_mb).expect("Resolve menu marina_bay");
-    assert_eq!(menu_mb.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_mb.name, "Marina Bay Street Circuit");
     let menu_sg = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sg).expect("Resolve menu singapore");
-    assert_eq!(menu_sg.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_sg.name, "Marina Bay Street Circuit");
     let menu_sp = tdrace_app::ui::menu::resolve_track_for_menu(&choice_sp).expect("Resolve menu singapur");
-    assert_eq!(menu_sp.name, "Marina Bay Street Circuit (Singapore)");
+    assert_eq!(menu_sp.name, "Marina Bay Street Circuit");
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -1971,7 +1877,8 @@ fn test_all_canonical_track_files_provenance_integrity() {
                 .unwrap_or_else(|e| panic!("Failed loading {}: {}", path.display(), e));
 
             let stem = path.file_stem().and_then(|s| s.to_str()).unwrap();
-            let is_real = tdrace_core::track::get_circuit_provenance(stem).is_some();
+            // Provenance lives only in the JSON (spec 042); the counts below lock it.
+            let is_real = track.osm_url.is_some();
 
             if is_real {
                 assert!(

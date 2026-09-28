@@ -5,7 +5,6 @@ use tdrace_core::collision::{
     collide_obb_obb, resolve_all_wall_collisions, resolve_multi_car_collisions, OrientedBox,
 };
 use tdrace_core::physics::{Car, CarConfig, CarControls, SurfaceType};
-use tdrace_core::track::presets::classic_grand_prix;
 
 fn main() {
     println!("============================================================");
@@ -56,7 +55,7 @@ fn main() {
     println!("8-Car Multi-Body Steps: {:.2} steps/second ({:.2} us/step)", pileup_steps_per_sec, (elapsed_pileup.as_micros() as f64) / (pileup_steps as f64));
 
     // 3. Wall Collision Resolution Benchmark
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut wall_car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(10.0, 7.0), 0.2);
     wall_car.state.velocity = Vec2::new(20.0, 5.0);
 

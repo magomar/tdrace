@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="openstreetmap-cgimap 2.1.0 (3498741 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="1937024431" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:56Z" user="l@ur3nt" uid="822467" lat="48.0361464" lon="-0.7436855"/>
+ <node id="6860938034" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0361364" lon="-0.7438034"/>
+ <node id="6860938035" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0361176" lon="-0.7438637"/>
+ <node id="6860938036" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0360781" lon="-0.7439066"/>
+ <node id="6860938037" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:34Z" user="Olyon" uid="1443767" lat="48.0360246" lon="-0.7439386"/>
+ <way id="732690093" visible="true" version="3" changeset="184447580" timestamp="2026-06-22T19:54:57Z" user="YBau" uid="19282503">
+  <nd ref="6860938037"/>
+  <nd ref="6860938036"/>
+  <nd ref="6860938035"/>
+  <nd ref="6860938034"/>
+  <nd ref="1937024431"/>
+  <tag k="highway" v="raceway"/>
+  <tag k="oneway" v="yes"/>
+  <tag k="sport" v="karting"/>
+  <tag k="surface" v="asphalt"/>
+ </way>
+</osm>
