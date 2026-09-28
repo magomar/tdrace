@@ -148,6 +148,12 @@ Built in pure **Rust** with native **Python / Gymnasium bindings**, TDRace combi
 git clone git@github.com:magomar/tdrace.git
 cd tdrace
 
+# Fetch the official circuits (tracks/ submodule, needed to build)
+git submodule update --init tracks
+
+# Refuse pushes of tdrace commits whose tracks/ commit is not pushed yet
+ln -sf ../../scripts/hooks/pre-push "$(git rev-parse --git-common-dir)/hooks/pre-push"
+
 # Initialize virtualenv, install dependencies, and build PyO3 extension
 make setup
 ```

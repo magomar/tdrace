@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# pre-push: refuse to push a tdrace commit whose tracks/ submodule commit is not on the
+# tdrace-tracks remote yet. A clone of such a commit cannot fetch tracks/, and
+# crates/tdrace-core/build.rs needs tracks/ to build.
+#
+# Install (once per clone; worktrees share it):
+#   ln -sf ../../scripts/hooks/pre-push "$(git rev-parse --git-common-dir)/hooks/pre-push"
+# Bypass, when you know the tracks commit is on its way: git push --no-verify
+set -uo pipefail
+
+zero=0000000000000000000000000000000000000000
+top=$(git rev-parse --show-toplevel)
+fetched=0
+fail=0
+
+while read -r local_ref local_sha remote_ref _remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue  # deleting a remote ref
+    tracks=$(git ls-tree "$local_sha" tracks | awk '$2 == "commit" {print $3}')
+    [ -z "$tracks" ] && continue
+
+    # An uninitialised tracks/ is an empty folder: git would find the tdrace repo around it.
+    if [ "$(git -C "$top/tracks" rev-parse --show-toplevel 2>/dev/null)" != "$top/tracks" ]; then
+        echo "pre-push: tracks/ is not initialised here, so $remote_ref -> tracks $tracks cannot be checked." >&2
+        echo "  Run: git submodule update --init tracks" >&2
+        fail=1
+        continue
+    fi
+    if [ "$fetched" = 0 ]; then
+        if ! git -C "$top/tracks" fetch -q origin; then
+            echo "pre-push: could not fetch tdrace-tracks to check tracks $tracks." >&2
+            exit 1
+        fi
+        fetched=1
+    fi
+    if [ -z "$(git -C "$top/tracks" branch -r --contains "$tracks" 2>/dev/null)" ]; then
+        echo "pre-push: $local_ref points at tracks $tracks, which is not on the tdrace-tracks remote yet." >&2
+        echo "  Push it first: git -C tracks push origin $tracks:main" >&2
+        fail=1
+    fi
+done
+
+exit $fail
