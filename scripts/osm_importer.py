@@ -1403,25 +1403,6 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
-    "silverstone_rx": {
-        "name": "Silverstone Circuit RX (World RX Great Britain)",
-        "description": "Speedmachine Festival circuit carved into the legendary Silverstone Stowe complex, featuring high-speed tarmac drifts and loose gravel switchbacks.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](52.060,-1.035,52.075,-1.005););out body;>;out skel qt;',
-        "way_ids": [169851260, 227310197, 259160216, 227339144],
-        "fia_length": 972.0,
-        "default_width": 13.0,
-        "straight_width": 14.0,
-        "num_waypoints": 28,
-        "jump": {
-            "name": "Silverstone Arena Dirt Jump",
-            "at_fraction": 0.55,
-            "height": 1.3,
-            "angle_deg": 5.5,
-            "launch_speed": 2.2,
-            "dist": 16.0,
-            "surface": "Dirt",
-        },
-    },
     "riga_rx": {
         "name": "Biķernieku Trase (World RX Latvia)",
         "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
@@ -1469,25 +1450,6 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
-    "yas_marina_rx": {
-        "name": "Yas Marina RX Arena (World RX Abu Dhabi)",
-        "description": "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](24.460,54.595,24.475,54.615););out body;>;out skel qt;',
-        "way_ids": [1083519983, 1083519984, 1083519985, 1083519986, 1083519987],
-        "fia_length": 1050.0,
-        "default_width": 13.0,
-        "straight_width": 14.0,
-        "num_waypoints": 28,
-        "jump": {
-            "name": "Yas Marina Arena Dirt Jump",
-            "at_fraction": 0.58,
-            "height": 1.3,
-            "angle_deg": 5.5,
-            "launch_speed": 2.2,
-            "dist": 16.0,
-            "surface": "Dirt",
-        },
-    },
     "essay_rx": {
         "name": "Circuit des Ducs (Essay RX)",
         "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
@@ -1510,6 +1472,42 @@ RALLY_TRACKS = {
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
+        "jump": None,
+    },
+    "lavare_rx": {
+        "name": "Circuit de Lavaré",
+        "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
+        # Relation 11752542 "Épreuve de rallycross de Lavaré" without its Tour Joker ways (1112 m in OSM,
+        # the official lap is 1070 m). The three "dirt" ways are 65% of the lap, as officially.
+        "segments": [
+            (858729749, 8004957286, 8004957299), (858729741, 8004957299, 8004957381),
+            (858729743, 8004957381, 8004957382), (858729744, 8004957382, 8004950346),
+            (858729745, 8004950346, 8004950363), (858729746, 8004950363, 8004957339),
+            (858729747, 8004957339, 8004957286),
+        ],
+        "start_offset_m": 150.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 64 m to the first corner
+        "fia_length": 1070.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 46,  # ~23 m spacing
+        "jump": None,
+    },
+    "lessay_rx": {
+        "name": "Circuit de Lessay",
+        "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
+        # The Circuit de Lessay raceways without the Tour Joker (887 m in OSM, the official lap is 886 m).
+        "segments": [
+            (788196384, 7369271960, 7369272031), (788196388, 7369272031, 7369272029),
+            (788196386, 7369272029, 7369272030), (788196387, 7369272030, 7369272032),
+            (788196389, 7369272032, 7369272033), (788196390, 7369272033, 7369271934),
+            (788196392, 7369271934, 7369271949), (788196393, 7369271949, 7369271950),
+            (788196394, 7369271950, 7369271960),
+        ],
+        "start_offset_m": 110.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 66 m to the first corner
+        "fia_length": 886.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 38,  # ~23 m spacing
         "jump": None,
     },
     "croft_rx": {

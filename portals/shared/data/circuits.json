@@ -2125,6 +2125,56 @@
     "rel_path": "tracks/rally/kouvola_rx.json"
   },
   {
+    "id": "lavare_rx",
+    "name": "Circuit de Lavar\u00e9",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Lavar%C3%A9",
+    "osm_url": "https://www.openstreetmap.org/relation/11752542",
+    "country_code": "FR",
+    "country_name": "France",
+    "min_width_meters": 11.5,
+    "max_width_meters": 14.5,
+    "is_inspired": false,
+    "length_meters": 1057.1,
+    "turns_count": 15,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/rally/lavare_rx.svg",
+    "rel_path": "tracks/rally/lavare_rx.json"
+  },
+  {
+    "id": "lessay_rx",
+    "name": "Circuit de Lessay",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Lessay",
+    "osm_url": "https://www.openstreetmap.org/way/788196389",
+    "country_code": "FR",
+    "country_name": "France",
+    "min_width_meters": 11.5,
+    "max_width_meters": 14.5,
+    "is_inspired": false,
+    "length_meters": 877.4,
+    "turns_count": 11,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/rally/lessay_rx.svg",
+    "rel_path": "tracks/rally/lessay_rx.json"
+  },
+  {
     "id": "loheac_rx",
     "name": "Circuit de Loh\u00e9ac",
     "module": "rally",
@@ -2273,55 +2323,5 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/rally/riga_rx.svg",
     "rel_path": "tracks/rally/riga_rx.json"
-  },
-  {
-    "id": "silverstone_rx",
-    "name": "Silverstone Circuit RX",
-    "module": "rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
-    "scale": "1:1",
-    "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
-    "osm_url": "https://www.openstreetmap.org/way/169851260",
-    "country_code": "GB",
-    "country_name": "United Kingdom",
-    "min_width_meters": 11.5,
-    "max_width_meters": 14.0,
-    "is_inspired": false,
-    "length_meters": 949.8,
-    "turns_count": 9,
-    "surfaces": [
-      "Asphalt",
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "image_url": "/textures/circuits/rally/silverstone_rx.svg",
-    "rel_path": "tracks/rally/silverstone_rx.json"
-  },
-  {
-    "id": "yas_marina_rx",
-    "name": "Yas Marina RX Arena",
-    "module": "rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
-    "scale": "1:1",
-    "wikipedia_url": "https://en.wikipedia.org/wiki/Yas_Marina_Circuit",
-    "osm_url": "https://www.openstreetmap.org/way/1083519983",
-    "country_code": "AE",
-    "country_name": "United Arab Emirates",
-    "min_width_meters": 11.5,
-    "max_width_meters": 13.0,
-    "is_inspired": false,
-    "length_meters": 1003.5,
-    "turns_count": 14,
-    "surfaces": [
-      "Asphalt",
-      "Dirt"
-    ],
-    "has_jumps": false,
-    "image_url": "/textures/circuits/rally/yas_marina_rx.svg",
-    "rel_path": "tracks/rally/yas_marina_rx.json"
   }
 ]

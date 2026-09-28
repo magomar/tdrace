@@ -852,7 +852,7 @@ fn test_empty_module_tracks_resilience() {
         "dirty_oval_speedway".into(), "figure_eight".into(),
         "sahara".into(), "sahara_dunes".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
         "hell_rx".into(), "loheac_rx".into(), "estering_rx".into(), "montalegre_rx".into(), "nyirad_rx".into(), "kouvola_rx".into(), "catalunya_rx".into(),
-        "mettet_rx".into(), "silverstone_rx".into(), "riga_rx".into(), "killarney_rx".into(), "yas_marina_rx".into(), "essay_rx".into(),
+        "mettet_rx".into(), "lavare_rx".into(), "riga_rx".into(), "killarney_rx".into(), "lessay_rx".into(), "essay_rx".into(),
         "dreux_rx".into(), "croft_rx".into(),
         "lonato".into(), "sarno".into(), "genk".into(), "pfi".into(),
         "zuera".into(), "le_mans_kart".into(), "portimao_kart".into(), "franciacorta".into(),

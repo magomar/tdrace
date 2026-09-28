@@ -38,7 +38,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Lånkebanen (Hell RX)** | `hell_rx.json` | $1,019\text{ m}$ | $63\%$ Asphalt / $37\%$ Gravel | Turn 1 Outside Banking | Steep elevation changes; blind crests and sweeping gravel switchbacks. |
 | **Lohéac RX** | `loheac_rx.json` | $1,088\text{ m}$ | $66\%$ Asphalt / $34\%$ Gravel | Turn 3 Inside Shortcut | Ultra-wide asphalt launch grid; high-speed braking into tight gravel hairpin. |
-| **Silverstone RX** | `silverstone_rx.json`| $972\text{ m}$ | $50\%$ Asphalt / $50\%$ Gravel | Stowe Corner Detour | Technical gravel infield with high-banked dirt berms. |
+| **Circuit de Lavaré** | `lavare_rx.json` | $1,070\text{ m}$ | $35\%$ Asphalt / $65\%$ Dirt | 260 m Start Straight | French and European Rallycross venue in Sarthe; four dirt and four asphalt sections. Replaced Silverstone RX (loose section not in OSM) on 2026-09-28. |
 
 ### Tier 3: High-Octane European Supercar Tour (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
@@ -58,7 +58,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Circuit de Barcelona-Catalunya RX**| `catalunya_rx.json`| $1,125\text{ m}$| $67\%$ Asphalt / $33\%$ Gravel | Stadium Sector Outer Loop | Built within the F1 stadium section; tight kerbs and loose gravel chicane. |
-| **Yas Marina RX** | `yas_marina_rx.json` | $1,010\text{ m}$ | $63\%$ Asphalt / $37\%$ Gravel | North Hairpin Sweep | Floodlit night racing venue; high-grip asphalt abruptly meeting fine desert gravel. |
+| **Circuit de Lessay** | `lessay_rx.json` | $886\text{ m}$ | $55\%$ Asphalt / $45\%$ Dirt | 200 m Start Straight | Normandy round of the French Rallycross Championship; compact alternating asphalt and dirt. Replaced Yas Marina RX (loose section not in OSM) on 2026-09-28. |
 | **Circuit des Ducs (Essay RX)** | `essay_rx.json` | $936\text{ m}$ | $65\%$ Asphalt / $35\%$ Dirt | La Butte Dirt Jump | Historic French rallycross proving ground in Normandy with high-speed launch, technical hairpins, and wooded perimeter. |
 
 ---
