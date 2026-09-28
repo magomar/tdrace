@@ -1,3 +1,12 @@
+---
+type: Architecture Spec
+title: "Circuit Parity Baseline (Spec 042, step 1)"
+description: "Baseline verification confirming that official circuit JSON definitions match legacy Rust circuit generators for Spec 042."
+status: active
+category: engineering
+tags: [circuits, tracks, parity, baseline, spec-042]
+---
+
 # Circuit Parity Baseline (Spec 042, step 1)
 
 Date: 2026-09-27. Task: `tdrace-ylew.1`.
