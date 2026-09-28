@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "JSON-Only Official Circuit Catalog and Embedded Track Data"
 description: "Makes tracks/<module>/<slug>.json the single source of truth for the 96 official circuits, removes the Rust-coded circuit presets, embeds a compressed copy of the JSON in the binary as the fallback, lets dev mode save official circuits back to their JSON for all six modules, keeps custom circuits in the user folder only, and makes the OSM importer emit JSON."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-042-receipt.md"
 created: 2026-09-28
 verified: { by: "human:mario", at: "2026-09-27T22:33:11Z" }
