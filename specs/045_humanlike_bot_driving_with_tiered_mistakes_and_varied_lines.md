@@ -331,11 +331,12 @@ The benchmark writes `reports/bot_behaviour_report.md`.
   - [x] **Then** all of them pass
 
 - **Scenario: Playtest — bots feel human**
-  - [ ] **Given** a casual race with a Tier 1 and Tier 2 grid, then one with a Tier 4 grid, Balanced preset
-  - [ ] **When** Mario races them
-  - [ ] **Then** Mario beats the Tier 1 grid
-  - [ ] **And** Mario sees at least one bot spin or run wide in the Tier 1/2 race
-  - [ ] **And** the bots do not follow one another like a train on the same line
+  - [x] **Given** a casual race with a Tier 1 and Tier 2 grid, then one with a Tier 4 grid, Balanced preset
+  - [x] **When** Mario races them
+  - [x] **Then** Mario beats the Tier 1 grid
+  - [x] **And** Mario sees at least one bot spin or run wide in the Tier 1/2 race
+  - [x] **And** the bots do not follow one another like a train on the same line
+  - Playtest sign-off (2026-09-28, Mario Gomez): "Feels good, close spec 045 and merge to main."
 
 ---
 
