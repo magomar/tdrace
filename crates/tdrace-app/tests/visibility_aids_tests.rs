@@ -439,3 +439,32 @@ fn test_render_curve_pacenote_headless_execution() {
         }));
     }
 }
+
+#[test]
+fn test_key5_cycles_curve_indicator_modes() {
+    use tdrace_app::ui::CurveIndicatorStyle;
+    let mut opts = PlayerVisibilityOptions::default();
+    assert!(opts.curve_helper);
+    assert_eq!(opts.curve_indicator_style, CurveIndicatorStyle::Chevrons);
+    assert_eq!(opts.curve_indicator_label(), "CHEVRONS");
+
+    opts.cycle_curve_indicator();
+    assert!(opts.curve_helper);
+    assert_eq!(opts.curve_indicator_style, CurveIndicatorStyle::Pacenote);
+    assert_eq!(opts.curve_indicator_label(), "RALLY PACENOTE");
+
+    opts.cycle_curve_indicator();
+    assert!(!opts.curve_helper);
+    assert_eq!(opts.curve_indicator_label(), "OFF");
+
+    opts.cycle_curve_indicator();
+    assert!(opts.curve_helper);
+    assert_eq!(opts.curve_indicator_style, CurveIndicatorStyle::Chevrons);
+
+    // Off with a pacenote look saved (from settings) still restarts at chevrons
+    opts.curve_helper = false;
+    opts.curve_indicator_style = CurveIndicatorStyle::Pacenote;
+    opts.cycle_curve_indicator();
+    assert!(opts.curve_helper);
+    assert_eq!(opts.curve_indicator_style, CurveIndicatorStyle::Chevrons);
+}

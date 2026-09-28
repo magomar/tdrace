@@ -4818,11 +4818,11 @@ impl RaceSession {
                 });
             }
 
-            // [5] Toggle Approaching Curve & Dynamic Braking Helper
+            // [5] Cycle Approaching Curve Helper: Chevrons -> Rally Pacenote -> Off
             if is_key_pressed(KeyCode::Key5) {
-                self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                self.visibility_options.cycle_curve_indicator();
                 self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
+                let state_str = self.visibility_options.curve_indicator_label();
                 let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                 if let Some(pos) = my_pos {
                     self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);

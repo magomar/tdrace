@@ -46,6 +46,33 @@ pub struct PlayerVisibilityOptions {
     pub sonar_ping: bool,
 }
 
+impl PlayerVisibilityOptions {
+    /// Key [5]: cycles the curve helper Chevrons -> Rally Pacenote -> Off -> Chevrons.
+    pub fn cycle_curve_indicator(&mut self) {
+        match (self.curve_helper, self.curve_indicator_style) {
+            (false, _) => {
+                self.curve_helper = true;
+                self.curve_indicator_style = CurveIndicatorStyle::Chevrons;
+            }
+            (true, CurveIndicatorStyle::Chevrons) => {
+                self.curve_indicator_style = CurveIndicatorStyle::Pacenote;
+            }
+            (true, CurveIndicatorStyle::Pacenote) => {
+                self.curve_helper = false;
+            }
+        }
+    }
+
+    /// Toast label for the current curve helper mode.
+    pub fn curve_indicator_label(&self) -> &'static str {
+        match (self.curve_helper, self.curve_indicator_style) {
+            (false, _) => "OFF",
+            (true, CurveIndicatorStyle::Chevrons) => "CHEVRONS",
+            (true, CurveIndicatorStyle::Pacenote) => "RALLY PACENOTE",
+        }
+    }
+}
+
 impl Default for PlayerVisibilityOptions {
     fn default() -> Self {
         Self {
