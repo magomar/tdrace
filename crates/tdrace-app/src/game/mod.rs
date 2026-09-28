@@ -4191,7 +4191,9 @@ impl RaceSession {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
             let bot_profile = character.resolve_profile(bot_tier);
-            self.ai_drivers.push(BotAiDriver::new(bot_profile));
+            // Spec 046: the grid entry seed (session seed + bot index) drives the human layer.
+            let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
+            self.ai_drivers.push(BotAiDriver::with_seed(bot_profile, bot_seed));
         }
     }
 
