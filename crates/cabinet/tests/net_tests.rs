@@ -3,10 +3,7 @@
 //! Verifies end-to-end socket handshakes, slot assignments, state sync,
 //! input streaming, snapshot broadcasting, and disconnect handling.
 
-use cabinet::net::{
-    CarStateSnapshot, ClientEvent, HostEvent,
-    LanClient, LanHost, WorldSnapshotPacket,
-};
+use cabinet::net::{ClientEvent, HostEvent, LanClient, LanHost};
 
 #[test]
 fn test_host_and_client_loopback_handshake() {
@@ -113,7 +110,7 @@ fn test_client_slot_customization_and_ready_check() {
 }
 
 #[test]
-fn test_launch_countdown_and_race_streaming() {
+fn test_launch_start_and_car_state_relay() {
     let mut host = LanHost::bind_ephemeral("Race Room", "Pilot1")
         .expect("Bind host");
     let host_addr = host.local_addr().expect("Host addr");
@@ -127,116 +124,98 @@ fn test_launch_countdown_and_race_streaming() {
     )
     .expect("Connect");
 
-    for _ in 0..50 {
+    // Connect and let a few clock pings complete.
+    for _ in 0..60 {
         host.update(0.016);
         client.update(0.016);
-        if client.is_connected() {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(5));
+        std::thread::sleep(std::time::Duration::from_millis(2));
     }
+    assert!(client.is_connected());
+    assert!(client.clock_offset().is_some(), "client must have a clock sample");
 
-    // Host triggers launch countdown
-    host.start_countdown(3000).expect("Start countdown");
+    // Host launches the race with a frozen roster.
+    let config = host.launch_race().expect("Launch race");
+    assert_eq!(config.roster.len(), 2);
+    assert_eq!(config.car_index_of(1), Some(1));
 
-    let mut countdown_started = false;
+    let mut launched = None;
     for _ in 0..50 {
         host.update(0.016);
-        let events = client.update(0.016);
-        for event in events {
-            if let ClientEvent::CountdownStarted { starts_in_millis, .. } = event {
-                assert_eq!(starts_in_millis, 3000);
-                countdown_started = true;
+        for event in client.update(0.016) {
+            if let ClientEvent::RaceLaunched(cfg) = event {
+                launched = Some(cfg);
             }
         }
-        if countdown_started {
+        if launched.is_some() {
             break;
         }
-        std::thread::sleep(std::time::Duration::from_millis(5));
+        std::thread::sleep(std::time::Duration::from_millis(2));
     }
-    assert!(countdown_started, "Client should receive countdown start");
+    assert_eq!(launched.as_ref(), Some(&config), "client must receive the same roster");
 
-    // Client streams input frame
+    // Both sides load; the host schedules the green light.
+    client.send_loaded().expect("Send loaded");
+    host.set_local_loaded();
+    let mut scheduled = false;
+    for _ in 0..50 {
+        for event in host.update(0.016) {
+            if let HostEvent::RaceStartScheduled { .. } = event {
+                scheduled = true;
+            }
+        }
+        client.update(0.016);
+        if scheduled && client.race_clock().is_some() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
+    assert!(scheduled, "host must schedule the start once everyone is loaded");
+    let host_clock = host.race_clock().expect("host race clock");
+    let client_clock = client.race_clock().expect("client race clock");
+    assert!(host_clock < 0.0 && host_clock > -3.1, "countdown on host: {host_clock}");
+    assert!((host_clock - client_clock).abs() < 0.05, "shared clock: host {host_clock}, client {client_clock}");
+
+    // Client streams its own car state; the host receives it.
     client
-        .send_input(0.75, 1.0, 0.0, false, false)
-        .expect("Send input");
-
-    let mut input_received = false;
+        .send_car_state(NetCarState { time_ms: 16, pos_x: 10.0, pos_y: 25.0, vel_x: 6.0, ..Default::default() })
+        .expect("Send car state");
+    let mut host_got = None;
     for _ in 0..50 {
-        let events = host.update(0.016);
-        for event in events {
-            if let HostEvent::PlayerInput { slot_id, input } = event {
-                assert_eq!(slot_id, 1);
-                assert_eq!(input.steering, 0.75);
-                assert_eq!(input.throttle, 1.0);
-                input_received = true;
+        for event in host.update(0.016) {
+            if let HostEvent::CarState(state) = event {
+                host_got = Some(state);
             }
         }
         client.update(0.016);
-        if input_received {
+        if host_got.is_some() {
             break;
         }
-        std::thread::sleep(std::time::Duration::from_millis(5));
+        std::thread::sleep(std::time::Duration::from_millis(2));
     }
-    assert!(input_received, "Host should receive streamed input");
+    let host_got = host_got.expect("host must receive the client car state");
+    assert_eq!(host_got.slot, 1);
+    assert_eq!(host_got.pos_y, 25.0);
 
-    // Host broadcasts world snapshot
-    let snapshot = WorldSnapshotPacket {
-        tick: 1,
-        session_elapsed_sec: 0.016,
-        cars: vec![
-            CarStateSnapshot {
-                slot_id: 0,
-                pos_x: 10.0,
-                pos_y: 20.0,
-                velocity_x: 5.0,
-                velocity_y: 0.0,
-                heading_rad: 0.0,
-                angular_velocity: 0.0,
-                steer_angle_rad: 0.0,
-                current_lap: 0,
-                checkpoint_idx: 0,
-                best_lap_time_ms: None,
-                last_lap_time_ms: None,
-                is_finished: false,
-            },
-            CarStateSnapshot {
-                slot_id: 1,
-                pos_x: 10.0,
-                pos_y: 25.0,
-                velocity_x: 6.0,
-                velocity_y: 0.0,
-                heading_rad: 0.0,
-                angular_velocity: 0.0,
-                steer_angle_rad: 0.1,
-                current_lap: 0,
-                checkpoint_idx: 0,
-                best_lap_time_ms: None,
-                last_lap_time_ms: None,
-                is_finished: false,
-            },
-        ],
-    };
-
-    host.broadcast_snapshot(&snapshot).expect("Broadcast snapshot");
-
-    let mut snapshot_received = false;
+    // Host relays the world; the client gets only the other car.
+    host.send_car_state(NetCarState { time_ms: 20, pos_x: 10.0, pos_y: 20.0, ..Default::default() })
+        .expect("Relay world");
+    let mut client_got = None;
     for _ in 0..50 {
         host.update(0.016);
-        let events = client.update(0.016);
-        for event in events {
-            if let ClientEvent::WorldSnapshot(s) = event {
-                assert_eq!(s.tick, 1);
-                assert_eq!(s.cars.len(), 2);
-                snapshot_received = true;
+        for event in client.update(0.016) {
+            if let ClientEvent::CarStates(states) = event {
+                client_got = Some(states);
             }
         }
-        if snapshot_received {
+        if client_got.is_some() {
             break;
         }
-        std::thread::sleep(std::time::Duration::from_millis(5));
+        std::thread::sleep(std::time::Duration::from_millis(2));
     }
-    assert!(snapshot_received, "Client should receive authoritative world snapshot");
+    let client_got = client_got.expect("client must receive the world state");
+    assert_eq!(client_got.len(), 1);
+    assert_eq!(client_got[0].slot, 0);
+    assert_eq!(client_got[0].pos_y, 20.0);
 }
 
 #[test]
@@ -393,18 +372,17 @@ fn test_d1_eight_car_world_state_fits_one_datagram() {
 }
 
 #[test]
-#[ignore = "spec 044 D4: fixed by the stored slot id (tdrace-6d87.3)"]
 fn test_d4_client_in_slot_three_keeps_its_slot_after_launch() {
     let net = SimNetwork::new(SimLinkConfig::default(), 1);
     let (mut host, mut clients) = sim_host_with_clients(&net, &["A", "B", "C"]);
     assert_eq!(clients[2].assigned_slot_id(), Some(3));
 
-    host.start_countdown(3000).unwrap();
+    host.launch_race().unwrap();
     {
         let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
         sim_pump(&net, &mut host, &mut refs, 5);
     }
-    assert_eq!(clients[2].assigned_slot_id(), Some(3), "slot during countdown");
+    assert_eq!(clients[2].assigned_slot_id(), Some(3), "slot after launch");
     {
         let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
         sim_pump(&net, &mut host, &mut refs, 250);
@@ -413,7 +391,6 @@ fn test_d4_client_in_slot_three_keeps_its_slot_after_launch() {
 }
 
 #[test]
-#[ignore = "spec 044 D5: fixed by reliable StateSync and the RaceLaunch roster (tdrace-6d87.3)"]
 fn test_d5_lost_state_sync_does_not_change_the_client_roster() {
     let net = SimNetwork::new(SimLinkConfig::default(), 2);
     let (mut host, mut clients) = sim_host_with_clients(&net, &["A"]);

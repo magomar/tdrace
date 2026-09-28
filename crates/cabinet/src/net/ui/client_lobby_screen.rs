@@ -2,7 +2,7 @@
 //!
 //! Participant waiting room lobby screen displaying the room settings,
 //! connected racers table, local vehicle/livery selectors, ready status toggle,
-//! and synchronized starting grid countdown.
+//! and the synchronized race launch.
 
 use macroquad::color::Color;
 use macroquad::input::{is_key_pressed, mouse_position, KeyCode};
@@ -40,8 +40,6 @@ pub struct CabinetLanClientLobbyScreen {
     pub nav: NavGrid2D,
     /// Status message banner.
     pub status_message: String,
-    /// Countdown remaining timer in seconds, if active.
-    pub countdown_remaining_sec: Option<f32>,
     /// Pulse timer for animations.
     pulse_timer: f32,
 }
@@ -89,7 +87,6 @@ impl CabinetLanClientLobbyScreen {
             is_ready: false,
             nav: NavGrid2D::new(vec![8, 4]),
             status_message: "Connected to host lobby. Choose car and mark READY!".to_string(),
-            countdown_remaining_sec: None,
             pulse_timer: 0.0,
         }
     }
@@ -109,9 +106,9 @@ impl CabinetLanClientLobbyScreen {
         self.client
     }
 
-    /// Returns true if countdown has begun or race is active.
+    /// Returns true once the host launched the race.
     pub fn is_in_race(&self) -> bool {
-        matches!(self.client.state(), ClientState::StartingCountdown { .. } | ClientState::InRace { .. })
+        self.client.race_config().is_some()
     }
 
     /// Cycles local car model.
@@ -156,13 +153,6 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
     fn update(&mut self, ctx: &mut CabinetContext) -> ScreenAction {
         self.pulse_timer += ctx.dt;
 
-        // Advance countdown timer if active
-        if let Some(ref mut time) = self.countdown_remaining_sec {
-            *time -= ctx.dt;
-            if *time <= 0.0 {
-                self.countdown_remaining_sec = None;
-            }
-        }
 
         // Pump client network events
         let events = self.client.update(ctx.dt);
@@ -174,16 +164,15 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
                 ClientEvent::LobbyUpdated { track_id, laps, .. } => {
                     self.status_message = format!("Host updated track: {} ({} Laps)", track_id, laps);
                 }
-                ClientEvent::CountdownStarted { starts_in_millis, .. } => {
+                ClientEvent::RaceLaunched(_) => {
                     ctx.play_ui_select();
-                    self.countdown_remaining_sec = Some(starts_in_millis as f32 / 1000.0);
-                    self.status_message = "Host launched starting countdown! Prepare for race...".to_string();
+                    self.status_message = "Host launched the race! Loading the grid...".to_string();
                 }
                 ClientEvent::Disconnected(_reason) => {
                     ctx.play_ui_cancel();
                     return ScreenAction::Pop;
                 }
-                ClientEvent::WorldSnapshot(_) => {}
+                _ => {}
             }
         }
 
@@ -577,42 +566,5 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
             scaler.font_s(11.0),
             Palette::UI_TEXT_MUTED,
         );
-
-        // Synchronized Launch Countdown Overlay
-        if let Some(time) = self.countdown_remaining_sec {
-            let overlay_w = scaler.s(480.0);
-            let overlay_h = scaler.s(180.0);
-            let (ox, oy, _, _) = scaler.centered_rect(overlay_w, overlay_h);
-
-            scaler.draw_glass_card(
-                ox,
-                oy,
-                overlay_w,
-                overlay_h,
-                Color::new(0.05, 0.08, 0.15, 0.98),
-                Palette::NEON_GREEN,
-                2.5,
-            );
-
-            fonts.draw_display_centered(
-                "GRID LAUNCH COUNTDOWN",
-                ox + overlay_w * 0.5,
-                oy + scaler.s(45.0),
-                scaler.font_s(18.0),
-                Palette::WHITE,
-            );
-
-            let count_int = (time.ceil() as u32).max(1);
-            let count_str = format!("{}", count_int);
-            fonts.draw_display_centered_with_shadow(
-                &count_str,
-                ox + overlay_w * 0.5,
-                oy + scaler.s(120.0),
-                scaler.font_s(64.0),
-                Palette::NEON_GREEN,
-                Palette::BLACK,
-                scaler.s(3.0),
-            );
-        }
     }
 }

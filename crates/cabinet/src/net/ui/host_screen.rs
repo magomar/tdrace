@@ -2,7 +2,7 @@
 //!
 //! Authoritative multiplayer host waiting room lobby screen displaying the
 //! local IP banner, connected driver slots (1..8), race configuration controls,
-//! and synchronized launch countdown.
+//! and the synchronized race launch.
 
 use macroquad::color::Color;
 use macroquad::input::{is_key_pressed, mouse_position, KeyCode};
@@ -43,8 +43,6 @@ pub struct CabinetLanHostScreen {
     pub status_message: String,
     /// Timer for clipboard copied notification popup.
     pub copied_timer: f32,
-    /// Host countdown active timer.
-    pub countdown_remaining_sec: Option<f32>,
     /// Whether user requested to disband and exit the lobby.
     pub exit_requested: bool,
     /// Pulse timer for animations.
@@ -79,7 +77,6 @@ impl CabinetLanHostScreen {
             nav: NavGrid2D::new(vec![8, 6]),
             status_message: "Room open. Broadcasting to local subnet on port 7776...".to_string(),
             copied_timer: 0.0,
-            countdown_remaining_sec: None,
             exit_requested: false,
             pulse_timer: 0.0,
         };
@@ -155,12 +152,10 @@ impl CabinetLanHostScreen {
         self.status_message = format!("Copied {} to clipboard!", self.host.formatted_address());
     }
 
-    /// Initiates race launch countdown.
+    /// Launches the race when every racer is ready.
     pub fn launch_race(&mut self) {
-        if self.host.is_all_ready() {
-            let _ = self.host.start_countdown(3000);
-            self.countdown_remaining_sec = Some(3.0);
-            self.status_message = "All racers ready! Starting launch countdown...".to_string();
+        if self.host.is_all_ready() && self.host.launch_race().is_ok() {
+            self.status_message = "All racers ready! Launching the race...".to_string();
         }
     }
 }
@@ -196,21 +191,10 @@ impl CabinetScreen for CabinetLanHostScreen {
                     let ready_str = if is_ready { "READY ⭐" } else { "selecting" };
                     self.status_message = format!("Slot {} updated ({})", slot_id + 1, ready_str);
                 }
-                HostEvent::CountdownStarted { starts_in_millis } => {
-                    ctx.play_ui_select();
-                    self.countdown_remaining_sec = Some(starts_in_millis as f32 / 1000.0);
-                }
-                HostEvent::PlayerInput { .. } => {}
+                _ => {}
             }
         }
 
-        // Advance countdown timer if active
-        if let Some(ref mut time) = self.countdown_remaining_sec {
-            *time -= ctx.dt;
-            if *time <= 0.0 {
-                self.countdown_remaining_sec = None;
-            }
-        }
 
         // Copy IP shortcut (C key)
         if safe_key_pressed(KeyCode::C) {
@@ -317,18 +301,12 @@ impl CabinetScreen for CabinetLanHostScreen {
             Palette::WHITE,
         );
 
-        let room_status = if self.countdown_remaining_sec.is_some() {
-            "STARTING COUNTDOWN"
-        } else if self.host.is_in_race() {
+        let room_status = if self.host.is_in_race() {
             "IN RACE"
         } else {
             "WAITING ROOM LOBBY"
         };
-        let status_color = if self.countdown_remaining_sec.is_some() {
-            Palette::NEON_GREEN
-        } else {
-            Palette::NEON_CYAN
-        };
+        let status_color = Palette::NEON_CYAN;
         let status_dim = fonts.measure_ui_bold(room_status, scaler.font_s(13.0));
         fonts.draw_ui_bold(
             room_status,
@@ -543,7 +521,7 @@ impl CabinetScreen for CabinetLanHostScreen {
             ("LAPS", &format!("{} Laps", laps_num), "[CYCLE]"),
             ("COLLISIONS", collision_str, "[TOGGLE]"),
             ("MY STATUS", ready_button_text, ""),
-            ("START RACE", "Launch countdown", "[ENTER]"),
+            ("START RACE", "Launch the race", "[ENTER]"),
             ("DISBAND ROOM", "Exit to Modality Hub", "[ESC]"),
         ];
 
@@ -647,42 +625,5 @@ impl CabinetScreen for CabinetLanHostScreen {
             scaler.font_s(11.0),
             Palette::UI_TEXT_MUTED,
         );
-
-        // Synchronized Launch Countdown Overlay
-        if let Some(time) = self.countdown_remaining_sec {
-            let overlay_w = scaler.s(480.0);
-            let overlay_h = scaler.s(180.0);
-            let (ox, oy, _, _) = scaler.centered_rect(overlay_w, overlay_h);
-
-            scaler.draw_glass_card(
-                ox,
-                oy,
-                overlay_w,
-                overlay_h,
-                Color::new(0.05, 0.08, 0.15, 0.98),
-                Palette::NEON_GREEN,
-                2.5,
-            );
-
-            fonts.draw_display_centered(
-                "GRID LAUNCH COUNTDOWN",
-                ox + overlay_w * 0.5,
-                oy + scaler.s(45.0),
-                scaler.font_s(18.0),
-                Palette::WHITE,
-            );
-
-            let count_int = (time.ceil() as u32).max(1);
-            let count_str = format!("{}", count_int);
-            fonts.draw_display_centered_with_shadow(
-                &count_str,
-                ox + overlay_w * 0.5,
-                oy + scaler.s(120.0),
-                scaler.font_s(64.0),
-                Palette::NEON_GREEN,
-                Palette::BLACK,
-                scaler.s(3.0),
-            );
-        }
     }
 }

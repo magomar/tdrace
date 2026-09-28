@@ -221,8 +221,9 @@ impl LobbySlot {
     }
 }
 
-/// Packets exchanged during the lobby staging and synchronization phase.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Unreliable handshake and heartbeat packets. Lobby and race state changes
+/// travel as reliable [`ControlMessage`]s instead.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LobbyPacket {
     /// Sent by connecting client to request admission into the lobby.
     JoinRequest {
@@ -232,39 +233,124 @@ pub enum LobbyPacket {
         car_model_id: String,
         color_scheme_id: String,
     },
-    /// Host response to client join request.
+    /// Host response to client join request. The roster follows as a reliable `StateSync`.
     JoinResponse {
         result: JoinResult,
         room_name: String,
         track_id: String,
         laps: u8,
-        slots: Vec<LobbySlot>,
     },
-    /// Periodic or event-triggered full lobby state broadcast from host.
+    /// Latency and clock probe; `sent_at` is the sender's monotonic clock in seconds.
+    Ping { sent_at: f64 },
+    /// Probe answer; `responder_time` is the responder's monotonic clock in seconds.
+    Pong { sent_at: f64, responder_time: f64 },
+    /// Notification that client has disconnected or been kicked.
+    DisconnectNotice { reason: String },
+}
+
+/// One car of the frozen race roster sent in [`ControlMessage::RaceLaunch`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RosterEntry {
+    pub slot_id: u8,
+    /// Starting grid position, `0` = pole. Also the car index in the race.
+    pub grid_index: u8,
+    pub player_name: String,
+    pub country_code: String,
+    pub car_model_id: String,
+    pub color_scheme_id: String,
+}
+
+/// Complete race setup. Every machine builds its car list only from this.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RaceConfig {
+    pub track_id: String,
+    pub laps: u8,
+    pub collision_mode: LanCollisionMode,
+    /// Sorted by `grid_index`.
+    pub roster: Vec<RosterEntry>,
+}
+
+impl RaceConfig {
+    /// Car index of `slot_id`, if it is in the roster.
+    pub fn car_index_of(&self, slot_id: u8) -> Option<usize> {
+        self.roster.iter().position(|e| e.slot_id == slot_id)
+    }
+}
+
+/// One finisher as recorded by the host referee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FinishRecord {
+    pub slot_id: u8,
+    /// Shared race clock at the finish line, in milliseconds.
+    pub finish_ms: u32,
+    pub best_lap_ms: Option<u32>,
+}
+
+/// Final status of one car.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RaceStatus {
+    Finished,
+    /// Still racing when the race closed.
+    Dnf,
+    /// Left or lost connection during the race.
+    Left,
+}
+
+/// One row of the host's final results.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RaceResult {
+    pub slot_id: u8,
+    /// `1` = winner.
+    pub position: u8,
+    pub status: RaceStatus,
+    pub finish_ms: Option<u32>,
+    pub best_lap_ms: Option<u32>,
+}
+
+/// Lobby and race-control messages, always sent on the reliable channel.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ControlMessage {
+    /// Host → clients: full lobby state. `roster_rev` grows with every change.
     StateSync {
+        roster_rev: u32,
         track_id: String,
         laps: u8,
         collision_mode: LanCollisionMode,
         slots: Vec<LobbySlot>,
     },
-    /// Client-to-host update when changing vehicle, livery, or ready flag.
+    /// Client → host: vehicle, livery or ready change.
     ClientSlotUpdate {
         slot_id: u8,
         car_model_id: String,
         color_scheme_id: String,
         is_ready: bool,
     },
-    /// Host notification that synchronized grid launch is starting.
-    LaunchCountdown {
-        starts_in_millis: u32,
-        grid_positions: Vec<u8>,
-    },
-    /// Latency measurement probe.
-    Ping { timestamp_ms: u64 },
-    /// Latency measurement response.
-    Pong { timestamp_ms: u64 },
-    /// Notification that client has disconnected or been kicked.
-    DisconnectNotice { reason: String },
+    /// Host → clients: the race is launched with this frozen setup.
+    RaceLaunch(RaceConfig),
+    /// Client → host: track loaded, ready for the start.
+    Loaded,
+    /// Host → clients: the green light is at `start_at` on the host clock (seconds).
+    RaceStart { start_at: f64 },
+    /// Owner → host: the owner's car crossed the finish line.
+    Finished { finish_ms: u32, best_lap_ms: Option<u32> },
+    /// Host → clients: finish order so far.
+    Standings { finishers: Vec<FinishRecord> },
+    /// Host → clients: a player left the race.
+    PlayerLeft { slot_id: u8, reason: String },
+    /// Host → clients: the race is closed; final results.
+    RaceOver { results: Vec<RaceResult> },
+}
+
+impl ControlMessage {
+    /// Serializes the message for the reliable channel.
+    pub fn to_bytes(&self) -> Result<Vec<u8>, ProtocolError> {
+        serde_json::to_vec(self).map_err(|e| ProtocolError::SerializationFailed(e.to_string()))
+    }
+
+    /// Parses a message delivered by the reliable channel.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, ProtocolError> {
+        serde_json::from_slice(bytes).map_err(|e| ProtocolError::DeserializationFailed(e.to_string()))
+    }
 }
 
 impl LobbyPacket {
@@ -549,7 +635,7 @@ mod tests {
     fn test_lobby_packet_roundtrips() {
         let packets = vec![
             LobbyPacket::JoinRequest {
-                protocol_version: 1,
+                protocol_version: PROTOCOL_VERSION,
                 player_name: "Alex".to_string(),
                 country_code: "FRA".to_string(),
                 car_model_id: "gt3_viper".to_string(),
@@ -560,38 +646,9 @@ mod tests {
                 room_name: "Mario GP".to_string(),
                 track_id: "monza".to_string(),
                 laps: 5,
-                slots: vec![
-                    LobbySlot::new(0, "Mario".to_string(), "ESP".to_string(), true),
-                    LobbySlot::new(1, "Alex".to_string(), "FRA".to_string(), false),
-                ],
             },
-            LobbyPacket::StateSync {
-                track_id: "spa".to_string(),
-                laps: 3,
-                collision_mode: LanCollisionMode::FullSatSolid,
-                slots: vec![LobbySlot::new(
-                    0,
-                    "Mario".to_string(),
-                    "ESP".to_string(),
-                    true,
-                )],
-            },
-            LobbyPacket::ClientSlotUpdate {
-                slot_id: 1,
-                car_model_id: "m4_gt3".to_string(),
-                color_scheme_id: "black".to_string(),
-                is_ready: true,
-            },
-            LobbyPacket::LaunchCountdown {
-                starts_in_millis: 3000,
-                grid_positions: vec![0, 1],
-            },
-            LobbyPacket::Ping {
-                timestamp_ms: 123456789,
-            },
-            LobbyPacket::Pong {
-                timestamp_ms: 123456789,
-            },
+            LobbyPacket::Ping { sent_at: 12.5 },
+            LobbyPacket::Pong { sent_at: 12.5, responder_time: 1003.25 },
             LobbyPacket::DisconnectNotice {
                 reason: "Host disbanded lobby".to_string(),
             },
@@ -602,6 +659,65 @@ mod tests {
             let decoded = LobbyPacket::decode(&encoded).expect("Decode should succeed");
             assert_eq!(pkt, decoded);
         }
+    }
+
+    #[test]
+    fn test_control_message_roundtrips() {
+        let roster = vec![RosterEntry {
+            slot_id: 2,
+            grid_index: 0,
+            player_name: "Alex".to_string(),
+            country_code: "FRA".to_string(),
+            car_model_id: "gt3_viper".to_string(),
+            color_scheme_id: "green".to_string(),
+        }];
+        let messages = vec![
+            ControlMessage::StateSync {
+                roster_rev: 4,
+                track_id: "spa".to_string(),
+                laps: 3,
+                collision_mode: LanCollisionMode::GhostPassing,
+                slots: vec![LobbySlot::new(0, "Mario".to_string(), "ESP".to_string(), true)],
+            },
+            ControlMessage::ClientSlotUpdate {
+                slot_id: 1,
+                car_model_id: "m4_gt3".to_string(),
+                color_scheme_id: "black".to_string(),
+                is_ready: true,
+            },
+            ControlMessage::RaceLaunch(RaceConfig {
+                track_id: "monza".to_string(),
+                laps: 5,
+                collision_mode: LanCollisionMode::FullSatSolid,
+                roster,
+            }),
+            ControlMessage::Loaded,
+            ControlMessage::RaceStart { start_at: 42.125 },
+            ControlMessage::Finished { finish_ms: 90_000, best_lap_ms: Some(29_500) },
+            ControlMessage::Standings {
+                finishers: vec![FinishRecord { slot_id: 2, finish_ms: 90_000, best_lap_ms: None }],
+            },
+            ControlMessage::PlayerLeft { slot_id: 3, reason: "Heartbeat timeout".to_string() },
+            ControlMessage::RaceOver {
+                results: vec![RaceResult {
+                    slot_id: 2,
+                    position: 1,
+                    status: RaceStatus::Finished,
+                    finish_ms: Some(90_000),
+                    best_lap_ms: Some(29_500),
+                }],
+            },
+        ];
+        for m in messages {
+            assert_eq!(ControlMessage::from_bytes(&m.to_bytes().unwrap()).unwrap(), m);
+        }
+        let cfg = RaceConfig {
+            track_id: String::new(),
+            laps: 1,
+            collision_mode: LanCollisionMode::default(),
+            roster: vec![],
+        };
+        assert_eq!(cfg.car_index_of(0), None);
     }
 
     #[test]

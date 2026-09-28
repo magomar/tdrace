@@ -355,7 +355,7 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
     assert!(!client_lobby.is_in_race(), "Lobby must not be in race before launch");
 
     // 4. Host initiates countdown
-    host.start_countdown(3000).expect("countdown launch");
+    host.launch_race().expect("race launch");
 
     // Pump packets so client receives LaunchCountdown
     let _ = host.update(0.01);
