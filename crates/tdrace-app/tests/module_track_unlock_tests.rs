@@ -26,10 +26,6 @@ fn test_every_module_circuit_unlocks_by_max_level() {
         progress.level = 5;
         progress.sync_unlocks_for_level();
         for track in module.tracks() {
-            // Known gap, tracked in tdrace-xxlw: MadRing has no career tier yet.
-            if module_id == "gt" && track.id == "madring" {
-                continue;
-            }
             if !progress.is_track_unlocked(track.id, false) {
                 never_unlock.push(format!("{module_id}/{}", track.id));
             }
@@ -76,4 +72,15 @@ fn test_session_locks_circuits_in_every_module_but_classic() {
     session.switch_to_classic();
     assert!(session.is_track_unlocked("oval_speedway"));
     assert!(session.is_track_unlocked("ramp_raceway"));
+}
+
+#[test]
+fn test_gt_madring_unlocks_at_tier_five() {
+    let mut progress = ModuleCareerProgress::default_for_module(1, "gt");
+    progress.level = 4;
+    progress.sync_unlocks_for_level();
+    assert!(!progress.is_track_unlocked("madring", false));
+    progress.level = 5;
+    progress.sync_unlocks_for_level();
+    assert!(progress.is_track_unlocked("madring", false));
 }
