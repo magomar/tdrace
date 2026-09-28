@@ -80,33 +80,35 @@ graph LR
 
 | Packet | Direction | Content | Size |
 |---|---|---|---|
-| `CarState` | owner → host | `race_tick u32`, `slot u8`, `pos 2×f32`, `vel 2×f32`, `angle f32`, `ang_vel f32`, `steer f32`, `elevation f32`, `vert_vel f32`, `throttle u8`, `brake u8`, `flags u8` (braking, handbrake, drifting, airborne, lights, reverse), `lap u8`, `checkpoint u16`, `progress f32` | 51 B per car |
+| `CarState` | owner → host | `slot u8`, `time_ms u32` (shared race clock), `pos 2×f32`, `vel 2×f32`, `angle f32`, `ang_vel f32`, `steer f32`, `elevation f32`, `vert_vel f32`, `throttle u8`, `brake u8`, `flags u8` (braking, handbrake, drifting, airborne, lights, reverse), `lap u8`, `checkpoint u16`, `progress f32` | 51 B per car |
 | `WorldState` | host → all | `host_tick u32`, `count u8`, then `count × CarState` | 8 cars = 419 B (with envelope) |
 
 - A unit test asserts that an 8-car `WorldState` encodes to less than `MAX_DATAGRAM_SIZE`. `encode` never fails silently: an error is counted in `NetStats` and logged once.
 
 #### 2.2 Race clock
 
-- Physics stays at `FIXED_DT = 1/120 s`. A `race_tick` counts physics steps from the green light (tick 0).
-- The host picks `start_at` = host monotonic time + countdown. Clients convert it to local time with a clock offset from ping (`offset = host_time − (local_send + rtt/2)`, median of the last 5 pings).
-- Car states are sent every 2 physics ticks (60 Hz). Each state carries its `race_tick`, so the receiver places it on the shared timeline.
+- Physics stays at `FIXED_DT = 1/120 s`. The shared race clock counts seconds from the green light (0.0).
+- The host picks `start_at` = host monotonic time + countdown. Clients convert it to local time with a clock offset from ping (`offset = host_time − (local_send + rtt/2)`, from the lowest-RTT sample of the last 8 pings; clients ping every 0.5 s).
+- Car states are sent at most at 60 Hz. Each state carries the owner's race clock in ms (`time_ms`), not a physics tick count, so a machine whose simulation lags after a frame hitch still places its states on the shared timeline.
 
 #### 2.3 Remote car interpolation
 
 - One `RemoteCarBuffer` per remote car holds the last ~16 states, ordered by `race_tick`. An older or duplicate tick is dropped.
-- A remote car is shown at `render_tick = local_race_tick − interp_delay`, with `interp_delay` = 100 ms (12 ticks). Position uses Hermite interpolation with the sent velocities. Angle uses shortest-arc interpolation.
+- A remote car is shown at `render_time = race_clock − interp_delay`, with `interp_delay` = 100 ms. Position uses Hermite interpolation with the sent velocities. Angle uses shortest-arc interpolation.
 - If the buffer runs dry, the car is extrapolated for up to 250 ms, then held still. Extrapolation stops when a new state arrives, with a 100 ms blend (no snap).
 - Remote cars are **excluded from physics integration**. Their derived fields (`speed`, `local_velocity`, `is_braking`, lights) are set from the state so that sound, skidmarks and the HUD keep working.
 
 #### 2.4 Collisions
 
 - `resolve_multi_car_collisions` runs as today. Before it runs, the state of every remote car is saved. After it runs, the remote cars are restored. So only the owned car gets the impulse. The other player gets their own impulse on their own machine.
+- A car whose player left, or that already finished, collides with nothing. A finished own car also collides with nothing. (Found in testing: a braking finisher or a paused car is an immovable wall on the other machines.)
 - No change to `arcade-race-core`.
 - `LanCollisionMode::GhostPassing` skips car-to-car collisions. `FullSatSolid` and `VergeOnly` keep solid collisions (`VergeOnly` has no definition in spec 036; defining it is out of scope).
 
 #### 2.5 Roster and launch
 
 - The client stores its `assigned_slot_id` in the `LanClient` struct, set once from `JoinResponse::Accepted`. Every client state reads it from there (fixes D4).
+- `JoinResponse` no longer carries the slot list (8 slots did not fit one datagram); a reliable `StateSync` follows it.
 - `LaunchCountdown` is replaced by a reliable `RaceLaunch` message with the full race config: track id, laps, collision mode, and the roster (per car: `slot`, `grid_index`, name, country, car model, livery). The roster is frozen at launch.
 - Host and clients build the car list only from `RaceLaunch`. A `SlotMap` maps `slot ↔ car index` and is used for every lookup (fixes D5). `lan_player_slot` is kept as a slot id; `player_car_index()` resolves through the `SlotMap`.
 - Each client sends a reliable `Loaded` when its track is ready. The host sends a reliable `RaceStart { start_at }` when all clients are loaded, or after 10 s (a client that is not loaded by then is marked DNF). Every machine shows the countdown until `start_at`, so the green light is shared.
@@ -114,7 +116,9 @@ graph LR
 #### 2.6 Reliable control channel
 
 - New `net/reliable.rs`: each reliable message has a `seq u16`. The receiver sends `Ack { seq }` and drops duplicates. The sender resends every 150 ms, for up to 20 tries, then treats the peer as lost.
-- Reliable: `StateSync`, `ClientSlotUpdate`, `RaceLaunch`, `Loaded`, `RaceStart`, `Finished`, `Standings`, `PlayerLeft`, `RaceOver`, `DisconnectNotice`.
+- Reliable: `StateSync`, `ClientSlotUpdate`, `RaceLaunch`, `Loaded`, `RaceStart`, `Finished`, `Standings`, `PlayerLeft`, `RaceOver`.
+- `DisconnectNotice` is sent 3 times instead, because the sender stops listening right after it.
+- A message larger than one datagram is split into fragments (up to 255).
 - `StateSync` carries a `roster_rev u32`. A client ignores a `StateSync` older than the one it has.
 
 #### 2.7 Race state and finish (host is referee)
@@ -127,7 +131,7 @@ graph LR
 
 #### 2.8 Lifecycle
 
-- New `GameSession::pump_lan(frame_dt)` runs every frame in `Countdown`, `Racing`, `Paused` and the finish/results states. It is the only place that calls `host.update()` / `client.update()` during a race.
+- New `RaceSession::pump_lan(frame_dt)` runs every frame of a LAN race. It is the only place that calls `host.update()` / `client.update()` during a race. `update()` ends with `lan_after_frame()`: when the pause menu, a modal or another screen kept the race branch from running, the race still advances (own car braked) and the network is still pumped.
 - **LAN pause does not stop the race.** In LAN mode `Esc` opens the pause menu as an overlay; physics and network continue. The own car gets zero input (brake) while the menu is open.
 - **Player leaves or times out:** the host broadcasts reliable `PlayerLeft { slot }`. Every machine parks that car (last state, zero speed, ghost, no collisions) and marks it DNF.
 - **Host leaves or times out:** a client shows "Host left the race" and goes to the results screen with the last `Standings`, then to the LAN hub.
@@ -239,9 +243,9 @@ No database or save-file change. Work is done in phases. Each phase leaves `make
   - [ ] **When** two cars drive through each other
   - [ ] **Then** neither car is pushed on either machine
 - **Scenario: Old build is rejected**
-  - [ ] **Given** a host on a protocol v1 build
-  - [ ] **When** a v2 client joins
-  - [ ] **Then** the client shows "Version mismatch with host" and stays on the join screen
+  - [ ] **Given** a host on this build (protocol v2)
+  - [ ] **When** a client on an older build (protocol v1) joins
+  - [ ] **Then** the old client shows its version-mismatch message and gets no slot (a v1 host cannot answer a v2 client; that client times out with "Host did not respond")
 
 ---
 

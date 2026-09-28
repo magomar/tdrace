@@ -8,6 +8,7 @@
 
 use std::io;
 use std::net::SocketAddr;
+use std::sync::Arc;
 
 use super::clock::ClockSync;
 use super::protocol::{
@@ -16,6 +17,7 @@ use super::protocol::{
     MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 use super::reliable::ReliableChannel;
+use super::stats::{CountingTransport, NetCounters, NetStats, RateMeter};
 use super::transport::{Transport, UdpTransport};
 use super::wire::{self, NetCarState, WorldState};
 
@@ -105,6 +107,10 @@ pub struct LanClient {
     latest_time_ms: Vec<Option<u32>>,
     standings: Vec<FinishRecord>,
     results: Option<Vec<RaceResult>>,
+    counters: Arc<NetCounters>,
+    rate: RateMeter,
+    decode_errors: u64,
+    stale_dropped: u64,
 }
 
 impl LanClient {
@@ -133,9 +139,10 @@ impl LanClient {
         let country_code = country_code.into();
         let car_model_id = car_model_id.into();
         let color_scheme_id = color_scheme_id.into();
+        let (transport, counters) = CountingTransport::new(transport);
 
         let mut client = Self {
-            transport,
+            transport: Box::new(transport),
             host_addr,
             state: ClientState::Connecting {
                 host_addr,
@@ -166,6 +173,10 @@ impl LanClient {
             latest_time_ms: vec![None; 256],
             standings: Vec::new(),
             results: None,
+            counters,
+            rate: RateMeter::default(),
+            decode_errors: 0,
+            stale_dropped: 0,
         };
 
         client.send_join_request()?;
@@ -260,6 +271,20 @@ impl LanClient {
     /// Final results, once the host closed the race.
     pub fn results(&self) -> Option<&[RaceResult]> {
         self.results.as_deref()
+    }
+
+    /// Network counters, rates, RTT and clock offset for the dev net HUD.
+    pub fn stats(&self) -> NetStats {
+        let mut stats = NetStats {
+            decode_errors: self.decode_errors,
+            stale_dropped: self.stale_dropped,
+            reliable_pending: self.channel.pending_count(),
+            rtt_ms: self.clock.last_rtt().map(|r| (r * 1000.0).min(999.0) as u16),
+            clock_offset_ms: self.clock.offset().map(|o| o * 1000.0),
+            ..NetStats::default()
+        };
+        self.rate.fill(&self.counters, &mut stats);
+        stats
     }
 
     /// Sends a vehicle selection or ready toggle update to the host.
@@ -385,6 +410,8 @@ impl LanClient {
             let _ = self.transport.send_to(&d, self.host_addr);
         }
 
+        self.rate.tick(now, &self.counters);
+
         // 5. Host silence timeout
         if self.is_connected() && (self.last_seen_sec > self.timeout_sec || self.channel.has_failed()) {
             self.state = ClientState::Disconnected(Some("Lost connection to host".to_string()));
@@ -402,7 +429,10 @@ impl LanClient {
                 events.push(ClientEvent::Disconnected("Version mismatch with host".to_string()));
                 return;
             }
-            Err(_) => return,
+            Err(_) => {
+                self.decode_errors += 1;
+                return;
+            }
         };
         match kind {
             wire::KIND_JSON => {
@@ -412,6 +442,7 @@ impl LanClient {
             }
             wire::KIND_WORLD_STATE => {
                 let Ok(world) = WorldState::decode_payload(payload) else {
+                    self.decode_errors += 1;
                     return;
                 };
                 let own = self.slot_id;
@@ -422,6 +453,9 @@ impl LanClient {
                     }
                     let seen = &mut self.latest_time_ms[car.slot as usize];
                     if seen.is_some_and(|t| car.time_ms <= t) {
+                        if seen.is_some_and(|t| car.time_ms < t) {
+                            self.stale_dropped += 1;
+                        }
                         continue;
                     }
                     *seen = Some(car.time_ms);

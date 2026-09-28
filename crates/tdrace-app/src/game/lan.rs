@@ -18,7 +18,10 @@ use cabinet::net::{
 use glam::Vec2;
 use tdrace_core::physics::car::CarControls;
 
-use super::{get_frame_time_safe, screen_height_safe, screen_width_safe, GameState, RaceSession};
+use macroquad::input::KeyCode;
+use macroquad::shapes::draw_rectangle;
+
+use super::{get_frame_time_safe, is_key_pressed, screen_height_safe, screen_width_safe, GameState, RaceSession};
 use crate::audio::SfxType;
 use crate::input::InputController;
 use crate::render::color::Palette;
@@ -57,6 +60,8 @@ pub struct LanRaceState {
     pub hold_input: bool,
     /// Scripted own-car controls (headless tests and demos) instead of the keyboard.
     pub input_override: Option<CarControls>,
+    /// Dev net HUD visible (F9, dev mode only).
+    pub show_net_hud: bool,
 }
 
 impl LanRaceState {
@@ -74,6 +79,7 @@ impl LanRaceState {
             last_controls: CarControls::default(),
             hold_input: false,
             input_override: None,
+            show_net_hud: false,
         }
     }
 
@@ -110,9 +116,19 @@ impl RaceSession {
             .is_some_and(|l| l.slot_of(car_idx).is_some_and(|s| l.left.contains(&s)))
     }
 
-    /// Car-to-car collisions are off in Ghost mode.
+    /// Car-to-car collisions are off in Ghost mode, and for the own car once it finished.
     pub fn lan_ghost_collisions(&self) -> bool {
-        self.lan_race.as_ref().is_some_and(|l| l.config.collision_mode == LanCollisionMode::GhostPassing)
+        self.lan_race
+            .as_ref()
+            .is_some_and(|l| l.config.collision_mode == LanCollisionMode::GhostPassing || l.local_finished)
+    }
+
+    /// A remote car that no longer collides: its player left, or it already finished.
+    pub fn lan_car_passive(&self, car_idx: usize) -> bool {
+        self.lan_race.as_ref().is_some_and(|l| {
+            l.slot_of(car_idx)
+                .is_some_and(|s| l.left.contains(&s) || l.standings.iter().any(|f| f.slot_id == s))
+        })
     }
 
     /// Controls for the own car in a LAN race.
@@ -415,6 +431,9 @@ impl RaceSession {
         }
         if let Some(ref mut lan) = self.lan_race {
             lan.hold_input = hold;
+            if !hold && crate::storage::is_dev_mode() && is_key_pressed(KeyCode::F9) {
+                lan.show_net_hud = !lan.show_net_hud;
+            }
         }
         self.lan_apply_remote_poses(clock - INTERP_DELAY_SEC);
 
@@ -488,5 +507,54 @@ impl RaceSession {
         let lan = self.lan_race.as_ref()?;
         let slot = lan.slot_of(car_idx)?;
         lan.results.as_ref()?.iter().find(|r| r.slot_id == slot).copied()
+    }
+
+    /// Draws the dev net HUD (F9): RTT, clock offset, rates, errors, and each remote buffer.
+    pub(super) fn render_lan_net_hud(&self) {
+        let Some(ref lan) = self.lan_race else {
+            return;
+        };
+        if !lan.show_net_hud {
+            return;
+        }
+        let (role, stats) = if let Some(ref h) = self.lan_host {
+            ("HOST".to_string(), h.stats())
+        } else if let Some(ref c) = self.lan_client {
+            (format!("CLIENT slot {}", self.lan_player_slot), c.stats())
+        } else {
+            return;
+        };
+        let mut lines = vec![
+            format!("LAN {role}  clock {:.2}s", self.lan_race_clock().unwrap_or(f64::NAN)),
+            format!(
+                "rtt {} ms  offset {}",
+                stats.rtt_ms.map(|r| r.to_string()).unwrap_or_else(|| "-".into()),
+                stats.clock_offset_ms.map(|o| format!("{o:.1} ms")).unwrap_or_else(|| "-".into())
+            ),
+            format!("in {:.0}/s  out {:.0}/s  reliable pending {}", stats.in_per_sec, stats.out_per_sec, stats.reliable_pending),
+            format!("decode err {}  encode err {}  stale {}", stats.decode_errors, stats.encode_errors, stats.stale_dropped),
+        ];
+        for entry in &lan.config.roster {
+            if entry.slot_id == self.lan_player_slot {
+                continue;
+            }
+            let line = match lan.remote.get(&entry.slot_id) {
+                _ if lan.left.contains(&entry.slot_id) => format!("slot {}: left", entry.slot_id),
+                Some(b) => format!(
+                    "slot {}: buf {}  extrap {:.0} ms  dropped {}",
+                    entry.slot_id,
+                    b.len(),
+                    b.extrapolation_sec() * 1000.0,
+                    b.dropped()
+                ),
+                None => format!("slot {}: no data", entry.slot_id),
+            };
+            lines.push(line);
+        }
+        let (x, y, line_h) = (12.0, 120.0, 16.0);
+        draw_rectangle(x - 6.0, y - 14.0, 360.0, line_h * lines.len() as f32 + 10.0, macroquad::color::Color::new(0.0, 0.0, 0.0, 0.65));
+        for (i, line) in lines.iter().enumerate() {
+            self.fonts.draw_ui_bold(line, x, y + i as f32 * line_h, 13.0, Palette::NEON_CYAN);
+        }
     }
 }

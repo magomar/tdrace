@@ -11120,13 +11120,13 @@ impl RaceSession {
 
         // 4. Resolve Car-to-Car collisions with momentum exchange and penetration pushback
         // LAN: only the own car takes the impulse; each owner resolves its own side of a contact.
-        // A car whose player left is moved out of reach for the solve, so it collides with nothing.
+        // A car that left or finished is moved out of reach for the solve, so it collides with nothing.
         let lan_saved: Vec<(usize, tdrace_core::physics::car::CarState)> = (0..n_cars)
             .filter(|&i| lan_remote[i])
             .map(|i| (i, self.cars[i].state.clone()))
             .collect();
         for &(i, _) in &lan_saved {
-            if self.lan_car_left(i) {
+            if self.lan_car_passive(i) {
                 self.cars[i].state.position = Vec2::splat(1.0e7 + i as f32 * 1.0e3);
             }
         }
@@ -14099,6 +14099,9 @@ impl RaceSession {
                 self.touch.render(&self.fonts, sw, sh);
             }
         }
+
+        // F9 (dev mode): LAN net HUD
+        self.render_lan_net_hud();
 
         // Render floating text popups (combos, sector splits, alerts) on HUD overlay
         let scaler = UiScaler::new(sw, sh);

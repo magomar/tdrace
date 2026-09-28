@@ -416,3 +416,27 @@ fn test_d5_lost_state_sync_does_not_change_the_client_roster() {
     let a_names: Vec<String> = clients[0].slots().iter().map(|s| s.player_name.clone()).collect();
     assert_eq!(a_names, host_names, "client A must see the same roster as the host");
 }
+
+#[test]
+fn test_v1_client_gets_a_v1_version_mismatch_reply() {
+    use cabinet::net::Transport;
+    let net = SimNetwork::new(SimLinkConfig::default(), 9);
+    let mut host = LanHost::with_transport(Box::new(net.endpoint()), "New Room", "Host").unwrap();
+    let old_client = net.endpoint();
+    // A protocol v1 JoinRequest: magic, version 1, then JSON (no kind byte).
+    let mut v1 = b"TDLN".to_vec();
+    v1.push(1);
+    v1.extend_from_slice(br#"{"Lobby":{"JoinRequest":{"protocol_version":1,"player_name":"Old","country_code":"ESP","car_model_id":"x","color_scheme_id":"red"}}}"#);
+    old_client.send_to(&v1, host.local_addr().unwrap()).unwrap();
+    net.advance(0.01);
+    host.update(0.01);
+    net.advance(0.01);
+
+    let mut buf = [0u8; 1400];
+    let (n, _) = old_client.recv_from(&mut buf).expect("host must answer the old client");
+    assert_eq!(&buf[..4], b"TDLN");
+    assert_eq!(buf[4], 1, "reply uses the old client's version byte");
+    let body: serde_json::Value = serde_json::from_slice(&buf[5..n]).expect("v1 JSON body");
+    assert_eq!(body["Lobby"]["JoinResponse"]["result"], "RejectedVersionMismatch");
+    assert!(host.active_slots().len() == 1, "old client gets no slot");
+}

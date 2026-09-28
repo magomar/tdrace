@@ -11,6 +11,7 @@ pub mod interp;
 pub mod ip;
 pub mod protocol;
 pub mod reliable;
+pub mod stats;
 pub mod transport;
 pub mod wire;
 pub mod ui;
@@ -30,6 +31,7 @@ pub use protocol::{
 };
 pub use transport::{SimDropFilter, SimLinkConfig, SimNetwork, SimTransport, Transport, UdpTransport};
 pub use reliable::ReliableChannel;
+pub use stats::NetStats;
 pub use wire::{NetCarState, WorldState};
 pub use ui::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction};
 

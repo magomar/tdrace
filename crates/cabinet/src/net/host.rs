@@ -10,6 +10,7 @@
 use std::collections::HashMap;
 use std::io;
 use std::net::{Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 
 use super::beacon::LanBeaconBroadcaster;
 use super::ip::LocalIpResolver;
@@ -20,6 +21,7 @@ use super::protocol::{
     MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 use super::reliable::ReliableChannel;
+use super::stats::{CountingTransport, NetCounters, NetStats, RateMeter};
 use super::transport::{Transport, UdpTransport};
 use super::wire::{self, NetCarState, WorldState};
 
@@ -104,6 +106,11 @@ pub struct LanHost {
     ping_timer_sec: f32,
     ping_interval_sec: f32,
     recv_buf: [u8; MAX_DATAGRAM_SIZE],
+    counters: Arc<NetCounters>,
+    rate: RateMeter,
+    decode_errors: u64,
+    encode_errors: u64,
+    stale_dropped: u64,
 }
 
 impl LanHost {
@@ -188,9 +195,10 @@ impl LanHost {
         );
 
         let broadcaster = LanBeaconBroadcaster::new(beacon, DEFAULT_BEACON_PORT).ok();
+        let (transport, counters) = CountingTransport::new(Box::new(socket));
 
         Ok(Self {
-            transport: Box::new(socket),
+            transport: Box::new(transport),
             port: bound_port,
             room_name: room_name_sanitized,
             track_id,
@@ -208,6 +216,11 @@ impl LanHost {
             ping_timer_sec: 0.0,
             ping_interval_sec: 1.0,
             recv_buf: [0u8; MAX_DATAGRAM_SIZE],
+            counters,
+            rate: RateMeter::default(),
+            decode_errors: 0,
+            encode_errors: 0,
+            stale_dropped: 0,
         })
     }
 
@@ -244,9 +257,10 @@ impl LanHost {
         for _ in 1..max_players {
             slots.push(None);
         }
+        let (transport, counters) = CountingTransport::new(transport);
 
         Ok(Self {
-            transport,
+            transport: Box::new(transport),
             port,
             room_name: sanitize_string(&room_name.into(), MAX_NAME_LENGTH),
             track_id: "monza".to_string(),
@@ -264,6 +278,11 @@ impl LanHost {
             ping_timer_sec: 0.0,
             ping_interval_sec: 1.0,
             recv_buf: [0u8; MAX_DATAGRAM_SIZE],
+            counters,
+            rate: RateMeter::default(),
+            decode_errors: 0,
+            encode_errors: 0,
+            stale_dropped: 0,
         })
     }
 
@@ -458,7 +477,16 @@ impl LanHost {
         let mut cars: Vec<NetCarState> = race.latest.values().copied().collect();
         cars.sort_by_key(|c| c.slot);
         let host_time_ms = self.race_clock().map(|t| (t.max(0.0) * 1000.0) as u32).unwrap_or(0);
-        let encoded = WorldState { host_time_ms, cars }.encode()?;
+        let encoded = match (WorldState { host_time_ms, cars }).encode() {
+            Ok(encoded) => encoded,
+            Err(e) => {
+                if self.encode_errors == 0 {
+                    eprintln!("[LAN] world state encode failed: {e}");
+                }
+                self.encode_errors += 1;
+                return Err(e);
+            }
+        };
         for client in &self.clients {
             let _ = self.transport.send_to(&encoded, client.addr);
         }
@@ -480,6 +508,20 @@ impl LanHost {
     /// Final results, once the race is closed.
     pub fn results(&self) -> Option<&[RaceResult]> {
         self.race.as_ref()?.results.as_deref()
+    }
+
+    /// Network counters and rates for the dev net HUD.
+    pub fn stats(&self) -> NetStats {
+        let mut stats = NetStats {
+            decode_errors: self.decode_errors,
+            encode_errors: self.encode_errors,
+            stale_dropped: self.stale_dropped,
+            reliable_pending: self.clients.iter().map(|c| c.channel.pending_count()).sum(),
+            rtt_ms: self.clients.iter().map(|c| c.ping_ms).max(),
+            ..NetStats::default()
+        };
+        self.rate.fill(&self.counters, &mut stats);
+        stats
     }
 
     /// Kicks a player from the room by slot index.
@@ -565,6 +607,9 @@ impl LanHost {
         // 7. Race referee timers
         self.referee_tick(&mut events);
 
+        let now = self.now();
+        self.rate.tick(now, &self.counters);
+
         events
     }
 
@@ -575,7 +620,10 @@ impl LanHost {
                 self.reply_legacy_version_mismatch(datagram, src_addr);
                 return;
             }
-            Err(_) => return,
+            Err(_) => {
+                self.decode_errors += 1;
+                return;
+            }
         };
 
         let client_idx = self.clients.iter().position(|c| c.addr == src_addr);
@@ -584,21 +632,29 @@ impl LanHost {
         }
 
         match kind {
-            wire::KIND_JSON => {
-                if let Ok(packet) = Packet::decode_json(payload) {
-                    self.handle_packet(packet, src_addr, events);
-                }
-            }
+            wire::KIND_JSON => match Packet::decode_json(payload) {
+                Ok(packet) => self.handle_packet(packet, src_addr, events),
+                Err(_) => self.decode_errors += 1,
+            },
             wire::KIND_CAR_STATE => {
-                let (Some(idx), Ok(state)) = (client_idx, NetCarState::decode_payload(payload)) else {
+                let Some(idx) = client_idx else {
+                    return;
+                };
+                let Ok(state) = NetCarState::decode_payload(payload) else {
+                    self.decode_errors += 1;
                     return;
                 };
                 if state.slot != self.clients[idx].slot_id {
                     return;
                 }
                 if let Some(ref mut race) = self.race {
-                    if race.config.car_index_of(state.slot).is_some() && Self::store_state(race, state) {
+                    if race.config.car_index_of(state.slot).is_none() {
+                        return;
+                    }
+                    if Self::store_state(race, state) {
                         events.push(HostEvent::CarState(state));
+                    } else {
+                        self.stale_dropped += 1;
                     }
                 }
             }
@@ -607,6 +663,7 @@ impl LanHost {
                     return;
                 };
                 let Ok((ack, messages)) = self.clients[idx].channel.on_reliable(payload) else {
+                    self.decode_errors += 1;
                     return;
                 };
                 if !ack.is_empty() {

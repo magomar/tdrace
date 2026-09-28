@@ -202,3 +202,105 @@ fn test_solid_mode_pushes_only_the_own_car() {
     assert!(own_moved > 0.05, "own car must be pushed out, moved {own_moved} m");
     assert_eq!(remote_moved, 0.0, "the remote car belongs to its owner");
 }
+
+/// Owner position at race time `t`, linear between recorded frames.
+fn owner_pos_at(history: &[(f64, glam::Vec2)], t: f64) -> Option<glam::Vec2> {
+    let i = history.iter().position(|(ht, _)| *ht >= t)?;
+    if i == 0 {
+        return None;
+    }
+    let (t0, p0) = history[i - 1];
+    let (t1, p1) = history[i];
+    let u = ((t - t0) / (t1 - t0)).clamp(0.0, 1.0) as f32;
+    Some(p0.lerp(p1, u))
+}
+
+#[test]
+fn test_four_players_with_slot_gap_stay_in_sync_over_a_lossy_link() {
+    use cabinet::net::{SimLinkConfig, SimNetwork, INTERP_DELAY_SEC};
+
+    // Slots 0 (host), 1 (leaves in the lobby), 2, 3, 4.
+    let net = SimNetwork::new(SimLinkConfig { loss: 0.0, delay_sec: 0.002, jitter_sec: 0.0 }, 44);
+    // Two laps (~95 s for the bots), so the 60 s measurement is all live racing.
+    let (mut host, mut clients) = build_lobby(&net, &["Leaver", "B", "C", "D"], "classic_grand_prix", 2);
+    let mut leaver = clients.remove(0);
+    leaver.disconnect().unwrap();
+    lan_support::pump_lobby(&net, &mut host, &mut clients, 60);
+
+    // From here on the link drops 5% of all datagrams and jitters them by up to 20 ms.
+    net.set_config(SimLinkConfig { loss: 0.05, delay_sec: 0.002, jitter_sec: 0.020 });
+    let mut sessions = launch(&net, host, clients);
+
+    // Same roster and slot -> car map on every machine.
+    let rosters: Vec<Vec<u8>> = sessions
+        .iter()
+        .map(|s| s.lan_race.as_ref().unwrap().config.roster.iter().map(|e| e.slot_id).collect())
+        .collect();
+    for r in &rosters {
+        assert_eq!(r, &vec![0, 2, 3, 4]);
+    }
+    for (s, slot) in sessions.iter().zip([0u8, 2, 3, 4]) {
+        assert_eq!(s.lan_player_slot, slot);
+        assert_eq!(s.player_car_index(), rosters[0].iter().position(|&x| x == slot).unwrap());
+    }
+
+    run_until_racing(&net, &mut sessions);
+    let mut drivers = Drivers::new(sessions.len());
+    let n = sessions.len();
+    let mut history: Vec<Vec<(f64, glam::Vec2)>> = vec![Vec::new(); n];
+    let mut errors: Vec<f32> = Vec::new();
+    let mut max_error = 0.0f32;
+
+    for _ in 0..(60 * 60) {
+        drivers.drive(&mut sessions);
+        lan_support::step(&net, &mut sessions);
+        assert!(
+            sessions.iter().all(|s| s.lan_race.as_ref().unwrap().standings.is_empty()),
+            "measurement window must be live racing"
+        );
+        for (k, s) in sessions.iter().enumerate() {
+            let clock = s.lan_race_clock().unwrap();
+            history[k].push((clock, s.cars[s.player_car_index()].state.position));
+        }
+        // Every machine's view of every other car vs where its owner had it at the render time.
+        for observer in &sessions {
+            let render_time = observer.lan_race_clock().unwrap() - INTERP_DELAY_SEC;
+            for (owner_k, owner) in sessions.iter().enumerate() {
+                if std::ptr::eq(owner, observer) {
+                    continue;
+                }
+                let car_idx = owner.player_car_index();
+                if let Some(truth) = owner_pos_at(&history[owner_k], render_time) {
+                    let e = observer.cars[car_idx].state.position.distance(truth);
+                    errors.push(e);
+                    max_error = max_error.max(e);
+                }
+            }
+        }
+    }
+    errors.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let p95 = errors[errors.len() * 95 / 100];
+    let p50 = errors[errors.len() / 2];
+    eprintln!("sync error over {} samples: p50 {p50:.3} m, p95 {p95:.3} m, max {max_error:.3} m", errors.len());
+    assert!(p95 <= 1.5, "p95 remote position error {p95} m (max {max_error} m)");
+
+    for s in &sessions {
+        let stats = if let Some(ref h) = s.lan_host { h.stats() } else { s.lan_client.as_ref().unwrap().stats() };
+        assert_eq!(stats.encode_errors, 0);
+        assert!(s.lan_client.as_ref().map_or(true, |c| c.is_connected()));
+    }
+
+    // Race to the end: identical results everywhere.
+    let mut guard = 0;
+    while sessions.iter().any(|s| s.state != GameState::Finished) && guard < 60 * 300 {
+        drivers.drive(&mut sessions);
+        lan_support::step(&net, &mut sessions);
+        guard += 1;
+    }
+    assert!(sessions.iter().all(|s| s.state == GameState::Finished), "race must close");
+    let host_results = results_of(&sessions[0]);
+    assert_eq!(host_results.len(), 4);
+    for s in &sessions[1..] {
+        assert_eq!(results_of(s), host_results);
+    }
+}
