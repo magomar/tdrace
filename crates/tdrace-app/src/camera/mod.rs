@@ -9,6 +9,11 @@ pub use crate::config::{
 
 pub use cabinet::fx::ScreenShake;
 
+/// Largest distance from screen center to the followed car, as a fraction of screen height.
+/// Fast straights push the look-ahead far past the car; this cap keeps the car clear of the
+/// top-center lap timer and the other edge HUD panels.
+pub const MAX_CAR_SCREEN_OFFSET_FRAC: f32 = 0.25;
+
 /// Camera mode setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CameraMode {
@@ -310,6 +315,17 @@ impl RaceCamera {
             self.target_zoom = self.max_zoom_scale
                 - speed_ratio * (self.max_zoom_scale - self.min_zoom_scale);
             self.current_zoom = self.target_zoom;
+            self.clamp_to_car(car.state.position);
+        }
+    }
+
+    /// Pulls the camera center back toward the car so the car stays within
+    /// `MAX_CAR_SCREEN_OFFSET_FRAC` of the screen height from the screen center.
+    fn clamp_to_car(&mut self, car_pos: Vec2) {
+        let max_offset = MAX_CAR_SCREEN_OFFSET_FRAC * self.screen_height / self.current_zoom.max(0.1);
+        let offset = self.current_pos - car_pos;
+        if offset.length() > max_offset {
+            self.current_pos = car_pos + offset.normalize() * max_offset;
         }
     }
 
@@ -454,6 +470,8 @@ impl RaceCamera {
 
                 let zoom_blend = 1.0 - (-self.zoom_smoothing * dt).exp();
                 self.current_zoom += (self.target_zoom - self.current_zoom) * zoom_blend;
+
+                self.clamp_to_car(target_car.state.position);
             }
             CameraMode::StaticOverview => {
                 let pos_blend = 1.0 - (-self.position_smoothing * dt).exp();
