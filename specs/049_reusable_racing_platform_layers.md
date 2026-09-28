@@ -186,8 +186,8 @@ Later phases keep every existing file readable:
   - Hashes are recorded per platform and build mode. On macOS the release optimizer merges `sin` and `cos` into `__sincosf_stret`, so debug and release results differ (gap E11, Beads `tdrace-d3m7`). A platform with no recorded hash checks run-to-run equality only.
 - **Performance gates.**
   - The benches move out of `tdrace-core` into `wheelbase` and `arcade-race-core`, so they run without `tracks/`.
-  - Targets: physics ≥4.0M steps/s, SAT ≥22M checks/s, LIDAR ≥1M rays/s, all in release.
-  - A missed gate is reported with its number, never lowered silently.
+  - Each bench asserts a regression floor about 15% under its throughput measured on macOS aarch64 (2026-09-28, release): physics 1.5M steps/s (measured 1.8M), SAT 20M checks/s (measured 23-25M), LIDAR 14M rays/s (measured 16-17M on the generated oval).
+  - Each bench also prints its roadmap target and whether it is met. SAT meets its 22M target. Physics does not meet its 4.0M target (Beads `tdrace-il8m`); the old bench only asserted 500k, so this gap was never enforced.
 - **Rollback.** Each phase is a separate branch, merged with `--no-ff`. Reverting its merge commit restores the previous layer. `tdrace-core` keeps re-exporting the engine crates, so downstream imports stay stable.
 
 ---
