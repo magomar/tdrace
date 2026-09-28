@@ -20,5 +20,8 @@ pub use protocol::{
     DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES, MAX_DATAGRAM_SIZE,
     MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
-pub use ui::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction};
+pub use ui::{
+    CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction, LanLobbyRequest,
+    LAN_LIVERIES,
+};
 
