@@ -3,8 +3,9 @@ type: Architecture Spec
 template: architecture
 title: "Robust LAN Race Synchronization with Owner-Authoritative Cars"
 description: "Replaces the LAN in-race netcode: each machine simulates only its own car and streams compact binary state; the host relays a world packet and referees laps, finish order and results; remote cars are interpolated; lobby and race-control messages become reliable; the race roster is fixed by one launch message; pause, finish and disconnects no longer break the session."
-status: draft
+status: in_progress
 created: 2026-09-28
+verified: { by: "human:mario", at: "2026-09-28T07:52:09Z" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T07:40:00Z }
 ---
 
@@ -270,7 +271,7 @@ No database or save-file change. Work is done in phases. Each phase leaves `make
 - `rg -n "ClientInputPacket|lan_remote_inputs|WorldSnapshotPacket" crates/` returns no hits.
 - `rg -n "let _ = host.broadcast|Some\(1\)" crates/cabinet/src/net crates/tdrace-app/src/game` returns no hits.
 
-### Open Questions (decide at approval)
-1. **Finish timeout:** 30 s after the winner, then DNF for the rest. OK?
-2. **Pause in LAN:** the own car brakes while the menu is open, and the race goes on. OK, or should the host pause for everyone?
-3. **Spec number:** 043 is used by `feat/042-vehicle-dynamics-rebuild`, so this spec takes 044. The unmerged `claude/steam-legal-circuits-cars-818a72` draft (now 042) will need 045 or later.
+### Resolved Decisions (at approval, 2026-09-28)
+1. **Finish timeout:** 30 s after the winner, then DNF for the rest.
+2. **Pause in LAN:** pause brakes only the local player's own car; the race goes on for everyone.
+3. **Spec number:** 044 (043 is used by `feat/042-vehicle-dynamics-rebuild`). The unmerged `claude/steam-legal-circuits-cars-818a72` draft will need 045 or later.
