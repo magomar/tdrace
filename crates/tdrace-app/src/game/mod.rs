@@ -604,6 +604,9 @@ pub struct RaceSession {
     pub garage_gallery_filter: usize,
     pub garage_gallery_sel: usize,
     pub in_garage_state: bool,
+    /// Discipline, tier and car the Garage was opened with. Browsing other disciplines only
+    /// changes the view; leaving the Garage restores this unless the player picked a car there.
+    pub garage_entry: Option<(&'static str, u8, usize)>,
 
     // Active Player Profile & Career History
     pub profile_origin: ProfileOrigin,
@@ -928,6 +931,7 @@ impl RaceSession {
             garage_gallery_filter: 0,
             garage_gallery_sel: 0,
             in_garage_state: false,
+            garage_entry: None,
 
             profile_origin: ProfileOrigin::Menu,
             active_profile: PlayerProfile::default(),
@@ -4694,6 +4698,7 @@ impl RaceSession {
             self.audio.stop_music();
         } else if !is_in_garage {
             self.in_garage_state = false;
+            self.garage_restore_entry();
         }
 
         // Toggle audio: M switches music, S switches other sounds (SFX / engine)
@@ -9226,8 +9231,41 @@ impl RaceSession {
         };
     }
 
+    /// Keeps the in-memory career progress of the active discipline in `profile_module_progress`,
+    /// so switching disciplines and back does not reload an older copy (Garage purchases).
+    fn stash_active_career_progress(&mut self) {
+        self.profile_module_progress
+            .insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
+    }
+
+    /// Shows another discipline's cars in the Garage with that discipline's own XP, unlocks and
+    /// purchases, without switching the session (see [`Self::garage_restore_entry`]).
+    fn garage_view_module(&mut self, module: &'static str) {
+        if module == self.active_module_id {
+            return;
+        }
+        self.stash_active_career_progress();
+        self.active_module_id = module;
+        self.sync_career_progress_for_active_module();
+    }
+
+    /// Puts back the discipline, tier and car the Garage was opened with, and forgets them.
+    pub fn garage_restore_entry(&mut self) {
+        if let Some((module, tier, car_idx)) = self.garage_entry.take() {
+            if module != self.active_module_id {
+                self.garage_view_module(module);
+                self.garage_tier = tier;
+                self.garage_car_idx = car_idx;
+            }
+        }
+    }
+
     /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
     pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
+        if self.garage_entry.is_none() {
+            self.garage_entry = Some((self.active_module_id, self.garage_tier, self.garage_car_idx));
+        }
+
         // 1. Turntable rotation & Revving state
         self.garage_turntable_angle += frame_dt * 0.45;
 
@@ -9266,6 +9304,7 @@ impl RaceSession {
                 return;
             }
             self.audio.stop_all_loops();
+            self.garage_restore_entry();
             match origin {
                 GarageOrigin::ModalitySelect => {
                     self.state = self.modality_return_state();
@@ -9443,7 +9482,7 @@ impl RaceSession {
                 }
                 if confirm_selection {
                     if let Some(car) = filtered_models.get(self.garage_gallery_sel) {
-                        self.active_module_id = car.module_id;
+                        self.garage_view_module(car.module_id);
                         self.garage_tier = car.tier;
                         let tier_models = crate::catalog::get_models_for_module_and_tier(car.module_id, car.tier);
                         if let Some(pos) = tier_models.iter().position(|m| m.id == car.id) {
@@ -9460,16 +9499,21 @@ impl RaceSession {
         // 5. Switching active module (1..=5); locked to the host discipline in LAN
         let prev_mod = self.active_module_id;
         if origin != GarageOrigin::LanLobby {
-            if is_key_pressed(KeyCode::Key1) {
-                self.active_module_id = "gt";
+            let key_module = if is_key_pressed(KeyCode::Key1) {
+                Some("gt")
             } else if is_key_pressed(KeyCode::Key2) {
-                self.active_module_id = "rally";
+                Some("rally")
             } else if is_key_pressed(KeyCode::Key3) {
-                self.active_module_id = "kart";
+                Some("kart")
             } else if is_key_pressed(KeyCode::Key4) {
-                self.active_module_id = "nascar";
+                Some("nascar")
             } else if is_key_pressed(KeyCode::Key5) {
-                self.active_module_id = "extreme_offroad";
+                Some("extreme_offroad")
+            } else {
+                None
+            };
+            if let Some(module) = key_module {
+                self.garage_view_module(module);
             }
         }
         if self.active_module_id != prev_mod {
@@ -9555,6 +9599,31 @@ impl RaceSession {
 
                 if is_unlocked {
                     if confirm_pressed {
+                        // A car from another discipline than the Garage opened in switches the whole
+                        // session to that discipline, but only while no race is set up yet.
+                        let entry_module = self.garage_entry.map(|(m, _, _)| m).unwrap_or(self.active_module_id);
+                        if active_car.module_id != entry_module {
+                            let can_switch = matches!(origin, GarageOrigin::Menu | GarageOrigin::ModalitySelect)
+                                && self.game_mode != GameMode::Career
+                                && self.championship_session.is_none()
+                                && !self.is_lan_multiplayer;
+                            if !can_switch {
+                                let class = crate::ui::garage::GALLERY_MODULES
+                                    .iter()
+                                    .find(|(id, _)| *id == entry_module)
+                                    .map(|(_, label)| *label)
+                                    .unwrap_or("CLASSIC");
+                                self.spawn_hud_alert(format!("THIS RACE NEEDS A {} CAR", class), Palette::RED);
+                                self.audio.play_sfx(SfxType::UiMove);
+                                return;
+                            }
+                            let (tier, car_idx) = (self.garage_tier, self.garage_car_idx);
+                            self.stash_active_career_progress();
+                            self.switch_to_module(active_car.module_id);
+                            self.garage_tier = tier;
+                            self.garage_car_idx = car_idx;
+                            self.garage_entry = Some((self.active_module_id, tier, car_idx));
+                        }
                         self.car_choice = active_car.base_car_choice;
                         self.current_visual_type = active_car.visual_type;
                         self.selected_car_model_id = Some(active_car.id);
@@ -12757,6 +12826,13 @@ impl RaceSession {
             GameState::ChampionshipEditor => {
                 self.render_championship_editor();
             }
+        }
+
+        // Alerts (purchases, locks, resets) are drawn by the race HUD in race states; menus such
+        // as the Garage and Career Select spawn them too, so draw them there as well.
+        if !matches!(self.state, GameState::Countdown(_) | GameState::Racing | GameState::Paused) {
+            let scaler = UiScaler::new(screen_width_safe(), screen_height_safe());
+            self.floating_text.draw(&self.fonts, &scaler);
         }
 
         // Render Arcade Settings Modal globally on top of whatever screen is active
