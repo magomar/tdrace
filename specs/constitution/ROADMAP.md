@@ -66,6 +66,9 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Vehicle Dynamics Rebuild and Simplified Handling Settings](../043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)**: Slip-based tire, implicit wheel spin and differential coupling, roll-balance load transfer, grip-aware steering authority, and a 5-parameter keyboard handling model with 4 calibrated presets.
 - `[x]` **[Human-Like Bot Driving with Tiered Mistakes and Varied Lines](../046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md)**: Seeded per-bot driver model with line wander, per-corner line choice, braking-point and corner-speed variation, reaction lag, and tier- and style-driven mistakes, so Tier 1 and 2 bots are beatable and no two laps are the same.
 
+### Phase 7: Steam Release Readiness (Priority: High)
+- `[ ]` **[Fictional Branding and Real-World IP Removal for Steam Release](../047_fictional_branding_and_realworld_ip_removal_for_steam_release.md)**: Replaces real car, series, team, driver, sponsor, and circuit names with fictional ones, removes unlicensed photos and logo-bearing sprites, keeps real track layouts, adds OpenStreetMap attribution, and gates the build with a real-world IP denylist test.
+
 
 ---
 
