@@ -1,11 +1,14 @@
+pub mod bot_harness;
 pub mod career;
 pub mod driver;
+pub mod humanize;
 
 pub use career::{
     CareerRivalEntry, RetainedRivalReport, RosterEvolutionEngine, RosterEvolutionReport,
     SkillProgressionOutcome,
 };
 pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats, LcgRng};
+pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
 
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
@@ -193,7 +196,8 @@ impl DriverQuality {
         match tier {
             DriverTier::Rookie => Self {
                 tier,
-                pace_limit: 0.88,
+                // Spec 045: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid.
+                pace_limit: 0.82,
                 brake_padding: 0.22,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
@@ -201,11 +205,11 @@ impl DriverQuality {
             },
             DriverTier::Amateur => Self {
                 tier,
-                pace_limit: 0.92,
+                pace_limit: 0.90,
                 brake_padding: 0.14,
                 avoidance_padding: 1.5,
                 consistency: 0.72,
-                composure: 0.65,
+                composure: 0.60,
             },
             DriverTier::Contender => Self {
                 tier,
@@ -254,6 +258,8 @@ pub struct BotProfile {
     pub aggression: f32,
     /// Proximity avoidance safety radius in meters.
     pub avoidance_distance: f32,
+    /// Human variation and mistakes (spec 045). `HumanTraits::none()` for the fixed presets.
+    pub traits: HumanTraits,
 }
 
 impl Default for BotProfile {
@@ -273,6 +279,7 @@ impl BotProfile {
             brake_margin: 1.05,
             aggression: 0.80,
             avoidance_distance: 7.0,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -286,6 +293,7 @@ impl BotProfile {
             brake_margin: 1.30,
             aggression: 0.35,
             avoidance_distance: 9.5,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -299,6 +307,7 @@ impl BotProfile {
             brake_margin: 1.02,
             aggression: 0.70,
             avoidance_distance: 6.5,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -312,6 +321,7 @@ impl BotProfile {
             brake_margin: 0.90,
             aggression: 0.95,
             avoidance_distance: 5.0,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -325,6 +335,7 @@ impl BotProfile {
             brake_margin: 1.05,
             aggression: 0.82,
             avoidance_distance: 6.0,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -338,6 +349,7 @@ impl BotProfile {
             brake_margin: 1.00,
             aggression: 0.75,
             avoidance_distance: 6.5,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -351,6 +363,7 @@ impl BotProfile {
             brake_margin: 0.88,
             aggression: 0.92,
             avoidance_distance: 5.2,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -364,6 +377,7 @@ impl BotProfile {
             brake_margin: 1.05,
             aggression: 0.65,
             avoidance_distance: 7.0,
+            traits: HumanTraits::none(),
         }
     }
 
@@ -397,6 +411,7 @@ impl BotProfile {
             brake_margin: (style_brake + quality.brake_padding).clamp(0.80, 1.45),
             aggression: style_aggression,
             avoidance_distance: (style_avoidance + quality.avoidance_padding).clamp(3.5, 12.0),
+            traits: HumanTraits::for_style_and_quality(style, quality, style_aggression),
         }
     }
 
@@ -424,6 +439,9 @@ impl BotProfile {
     }
 }
 
+/// Longest reverse of a no-progress watchdog recovery (s).
+const WATCHDOG_REVERSE_S: f32 = 3.0;
+
 /// Multi-car Bot Racing AI Controller.
 #[derive(Debug, Clone)]
 pub struct BotAiDriver {
@@ -434,13 +452,25 @@ pub struct BotAiDriver {
     pub avoidance_lateral_bias: f32,
     pub stuck_timer: f32,
     pub reverse_recovery_timer: f32,
+    /// Track distance at the last 5 m of progress, and the time since (spec 045 watchdog).
+    pub progress_mark: f32,
+    pub no_progress_timer: f32,
+    /// Watchdog recoveries since the last progress. Each one reverses with the other lock.
+    pub recovery_attempts: u32,
     pub last_pos: Option<Vec2>,
     pub total_distance_travelled: f32,
+    pub human: HumanDriver,
 }
 
 impl BotAiDriver {
     pub fn new(profile: BotProfile) -> Self {
+        Self::with_seed(profile, 0)
+    }
+
+    /// A bot whose human layer (spec 045) draws from `seed`. The same seed gives the same race.
+    pub fn with_seed(profile: BotProfile, seed: u64) -> Self {
         Self {
+            human: HumanDriver::new(profile.traits, seed),
             profile,
             prev_heading_error: 0.0,
             has_prev_heading: false,
@@ -448,6 +478,9 @@ impl BotAiDriver {
             avoidance_lateral_bias: 0.0,
             stuck_timer: 0.0,
             reverse_recovery_timer: 0.0,
+            progress_mark: 0.0,
+            no_progress_timer: 0.0,
+            recovery_attempts: 0,
             last_pos: None,
             total_distance_travelled: 0.0,
         }
@@ -479,6 +512,7 @@ impl BotAiDriver {
             spline.project_point(car_pos)
         };
         let curr_dist = proj.progress_distance;
+        self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
         // 2. Dynamic lookahead based on speed and profile
         let lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
@@ -487,6 +521,9 @@ impl BotAiDriver {
 
         let target_sample = spline.sample_at_distance(target_dist);
         let mut target_point = target_sample.point;
+        if self.human.is_active() {
+            target_point += target_sample.normal * self.human.line_offset(spline, target_dist, target_sample.width, dt);
+        }
 
         // Obstacle clearance: shift target point away from track obstacles (apex tire stacks)
         for obs in &track.geometry.obstacles {
@@ -509,9 +546,16 @@ impl BotAiDriver {
         let heading_error = normalize_angle(desired_heading - car.state.angle);
 
         // Stuck / Wall-pin detection & Reverse recovery state machine
+        // A watchdog recovery reverses until the nose points near the target (after 0.5 s at least).
+        if self.recovery_attempts > 0 && self.reverse_recovery_timer < WATCHDOG_REVERSE_S - 0.5 && heading_error.abs() < 0.6 {
+            self.reverse_recovery_timer = 0.0;
+        }
         if self.reverse_recovery_timer > 0.0 {
             self.reverse_recovery_timer -= dt;
-            let steer_rev = -heading_error.signum();
+            // Opposite lock to the forward turn: reversing then keeps turning the nose towards the
+            // target, as in a three-point turn (spec 045; the old sign undid each forward turn).
+            let flip = if self.recovery_attempts.is_multiple_of(2) { 1.0 } else { -1.0 };
+            let steer_rev = heading_error.signum() * flip;
             return CarControls {
                 throttle: 0.85,
                 steer: steer_rev,
@@ -530,7 +574,10 @@ impl BotAiDriver {
         self.total_distance_travelled += car_speed * dt;
 
         let car_alignment = car_fwd.dot(proj.tangent);
-        let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2) || (car_alignment < -0.35 && car_speed < 1.5);
+        // Spec 045: a spun bot can stop nose-first against a wall while still on the track.
+        let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2)
+            || (car_alignment < -0.35 && car_speed < 1.5)
+            || (car_alignment < 0.5 && car_speed < 1.2);
         if self.total_distance_travelled > 15.0 && moved_dist < (1.2 * dt) && is_stuck_situation {
             self.stuck_timer += dt;
             if self.stuck_timer > 0.8 {
@@ -542,6 +589,23 @@ impl BotAiDriver {
             self.reverse_recovery_timer = 0.0;
         } else {
             self.stuck_timer = (self.stuck_timer - dt * 2.0).max(0.0);
+        }
+
+        // Spec 045: a spun bot can also circle slowly against a wall without ever stopping.
+        let lap_len = spline.total_length();
+        let gained = (curr_dist - self.progress_mark).rem_euclid(lap_len);
+        if self.total_distance_travelled <= 15.0 || (gained > 5.0 && gained < 0.5 * lap_len) {
+            self.progress_mark = curr_dist;
+            self.no_progress_timer = 0.0;
+            self.recovery_attempts = 0;
+        } else {
+            self.no_progress_timer += dt;
+            if self.no_progress_timer > 3.0 {
+                self.no_progress_timer = 0.0;
+                self.progress_mark = curr_dist;
+                self.reverse_recovery_timer = WATCHDOG_REVERSE_S;
+                self.recovery_attempts += 1;
+            }
         }
 
         // 3. Physically Exact Autonomous Racing Braking Envelope: v_allowable = sqrt(v_apex^2 + 2*a_brake*d)
@@ -571,9 +635,20 @@ impl BotAiDriver {
                 let local_radius = 1.0 / local_curvature;
                 let bank_rad = s0.bank_angle.to_radians().abs();
                 let effective_grip = mu + bank_rad.tan().clamp(0.0, 0.75);
-                let v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor;
+                let m = self.human.corner_modifiers(scan_dist, spline.total_length());
+                let mut v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor * m.speed_mult;
+                let mut a_scan = a_brake;
+                // Spec 045 mistakes are set against the car's real grip, not the controller's
+                // conservative `mu`.
+                if m.over_limit > 0.0 {
+                    let limit_grip = car.config.tire.grip + bank_rad.tan().clamp(0.0, 0.75);
+                    v_apex = v_apex.max((limit_grip * g * local_radius).sqrt() * m.over_limit);
+                }
+                if m.brake_decel_mult > 0.0 {
+                    a_scan = a_scan.max(car.config.tire.grip * g * m.brake_decel_mult);
+                }
                 // Maximum entry speed from distance d: v = sqrt(v_apex^2 + 2 * a * d)
-                let v_allowable = (v_apex * v_apex + 2.0 * a_brake * dist_ahead).sqrt();
+                let v_allowable = (v_apex * v_apex + 2.0 * a_scan * HumanDriver::shifted_distance(dist_ahead, m.brake_shift_m)).sqrt();
                 if v_allowable < target_speed {
                     target_speed = v_allowable;
                 }
@@ -589,6 +664,7 @@ impl BotAiDriver {
 
         // Gradually decay previous lateral bias
         self.avoidance_lateral_bias *= 0.95;
+        let mut had_pass_target = false;
 
         // 4b. Opponent cars avoidance
         for &opp in other_cars {
@@ -630,8 +706,9 @@ impl BotAiDriver {
                     // Attempt lateral slingshot overtaking maneuver around car in front
                     if opp_fwd_proj < 15.0 && opp_lat_proj.abs() < 2.8 {
                         // Pick the side with more track clearance
-                        let evade_dir = if opp_lat_proj >= 0.0 { 1.0 } else { -1.0 };
-                        let evade_strength = (1.0 - (opp_fwd_proj / 15.0)) * self.profile.aggression;
+                        let evade_dir = self.human.pass_side(if opp_lat_proj >= 0.0 { 1.0 } else { -1.0 }, opp_lat_proj);
+                        let evade_strength = (1.0 - (opp_fwd_proj / 15.0)) * self.profile.aggression * self.human.pass_commit();
+                        had_pass_target = true;
                         avoidance_steer += evade_dir * evade_strength * 0.50;
                     }
                 }
@@ -643,6 +720,8 @@ impl BotAiDriver {
                 }
             }
         }
+
+        self.human.update_pass_timer(had_pass_target, dt);
 
         // Apply avoidance lateral offset to target point
         if avoidance_steer.abs() > 0.05 {
@@ -663,7 +742,7 @@ impl BotAiDriver {
         self.prev_heading_error = heading_error;
 
         let steer = -(heading_error * self.profile.steering_kp + d_error * self.profile.steering_kd);
-        let steer_cmd = steer.clamp(-1.0, 1.0);
+        let steer_cmd = self.human.shape_steer(steer.clamp(-1.0, 1.0), dt);
 
         // Heading alignment and corner steering throttle limit (prevents spinning when loaded laterally)
         if car_speed > 4.0 {
@@ -674,6 +753,9 @@ impl BotAiDriver {
             let steer_traction_limit = (1.0f32 - steer_cmd.abs() * 0.55).clamp(0.3, 1.0);
             throttle_limit *= steer_traction_limit;
         }
+        // Spec 045: turning round after a spin. Full throttle at full lock only spins a
+        // rear-drive car on the spot.
+        let turning_round = car_speed <= 6.0 && heading_error.abs() > 0.8 && self.total_distance_travelled > 15.0;
         if heading_error.abs() > 1.15 && car_speed > 6.0 {
             extra_brake = extra_brake.max(0.6);
         }
@@ -695,7 +777,8 @@ impl BotAiDriver {
             (0.0, 0.0)
         };
 
-        let handbrake_cmd = false;
+        let throttle_cmd = if turning_round { throttle_cmd.min(0.5) } else { throttle_cmd };
+        let (throttle_cmd, brake_cmd, handbrake_cmd) = self.human.shape_pedals(throttle_cmd, brake_cmd);
 
         CarControls {
             throttle: throttle_cmd,
