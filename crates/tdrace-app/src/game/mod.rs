@@ -237,8 +237,8 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    confirm_modal_layout,
-    render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    confirm_modal_layout, curve_indicator_lookahead,
+    render_curve_indicator, render_curve_pacenote, ArcadeSettingsModal, CurveIndicatorStyle, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -1294,6 +1294,8 @@ impl RaceSession {
             aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
             aura_brightness: self.config.player_helpers.ground_aura_brightness,
             ribbon_enabled: self.config.player_helpers.curve_helper,
+            ribbon_pacenote: CurveIndicatorStyle::from_config_str(&self.config.player_helpers.curve_indicator_style)
+                == CurveIndicatorStyle::Pacenote,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
@@ -1388,6 +1390,10 @@ impl RaceSession {
                 self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
                 self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
+                if h_state.ribbon_enabled {
+                    let style = if h_state.ribbon_pacenote { CurveIndicatorStyle::Pacenote } else { CurveIndicatorStyle::Chevrons };
+                    self.config.player_helpers.curve_indicator_style = style.as_config_str().to_string();
+                }
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
@@ -4812,11 +4818,11 @@ impl RaceSession {
                 });
             }
 
-            // [5] Toggle Approaching Curve & Dynamic Braking Helper
+            // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
             if is_key_pressed(KeyCode::Key5) {
-                self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                self.visibility_options.cycle_curve_indicator();
                 self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
+                let state_str = self.visibility_options.curve_indicator_label();
                 let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                 if let Some(pos) = my_pos {
                     self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
@@ -14091,21 +14097,33 @@ impl RaceSession {
             }
             if self.visibility_options.curve_helper {
                 if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
-                    let max_lookahead = (focus_car.state.speed * 3.5).clamp(130.0, 220.0);
+                    let max_lookahead = curve_indicator_lookahead(focus_car.state.speed);
                     if let Some(status) = self.track.spline.upcoming_curve(
                         focus_tracker.progress_distance,
                         focus_car.state.speed,
                         max_lookahead,
                     ) {
-                        render_curve_indicator(
-                            focus_car,
-                            &status,
-                            self.visibility_options.curve_color_scheme,
-                            camera.current_zoom,
-                            self.session_time,
-                            self.visibility_options.curve_helper_scale,
-                            self.visibility_options.curve_helper_brightness,
-                        );
+                        match self.visibility_options.curve_indicator_style {
+                            CurveIndicatorStyle::Chevrons => render_curve_indicator(
+                                focus_car,
+                                &status,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                            CurveIndicatorStyle::Pacenote => render_curve_pacenote(
+                                focus_car,
+                                &status,
+                                &self.track.spline,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                        }
                     }
                 }
             }
