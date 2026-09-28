@@ -22,9 +22,9 @@ pub use host::{HostEvent, LanHost, COUNTDOWN_SEC, FINISH_TIMEOUT_SEC, LOAD_TIMEO
 pub use interp::{RemoteCarBuffer, INTERP_DELAY_SEC, MAX_EXTRAPOLATION_SEC};
 pub use ip::LocalIpResolver;
 pub use protocol::{
-    sanitize_string, CarStateSnapshot, ClientInputPacket, ControlMessage, FinishRecord,
-    JoinResult, LanBeacon, LanCollisionMode, LobbyPacket, LobbySlot, Packet, ProtocolError,
-    RaceConfig, RaceResult, RaceStatus, RosterEntry, WorldSnapshotPacket,
+    sanitize_string, ControlMessage, FinishRecord, JoinResult, LanBeacon, LanCollisionMode,
+    LobbyPacket, LobbySlot, Packet, ProtocolError, RaceConfig, RaceResult, RaceStatus,
+    RosterEntry,
     DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES, MAX_DATAGRAM_SIZE,
     MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };

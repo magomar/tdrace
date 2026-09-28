@@ -246,6 +246,9 @@ pub use cabinet::fx::crt::{CrtConfig, CrtOverlay, ScanlineMode};
 pub use cabinet::fx::floating_text::{FloatingTextItem, FloatingTextManager};
 pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, TransitionPhase, TransitionType};
 
+mod lan;
+pub use lan::{LanRaceState, LAN_WAITING_COUNTDOWN};
+
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DriverCardsOrigin {
@@ -671,8 +674,10 @@ pub struct RaceSession {
     pub is_lan_multiplayer: bool,
     pub is_lan_host: bool,
     pub lan_player_slot: u8,
-    pub lan_remote_inputs: std::collections::HashMap<u8, cabinet::net::ClientInputPacket>,
-    pub lan_snapshot_tick: u32,
+    /// Active LAN race (roster, remote car buffers, referee results). See `game/lan.rs`.
+    pub lan_race: Option<LanRaceState>,
+    /// The LAN race was advanced in this frame (see `lan_after_frame`).
+    pub lan_frame_ran: bool,
 }
 
 
@@ -971,8 +976,8 @@ impl RaceSession {
             is_lan_multiplayer: false,
             is_lan_host: false,
             lan_player_slot: 0,
-            lan_remote_inputs: std::collections::HashMap::new(),
-            lan_snapshot_tick: 0,
+            lan_race: None,
+            lan_frame_ran: false,
         };
 
         session.refresh_profiles_and_stats();
@@ -1017,11 +1022,13 @@ impl RaceSession {
     }
 
     /// Returns the local human player's vehicle index in the active session.
-    /// In LAN multiplayer, resolves to `lan_player_slot` (clamped to available cars).
+    /// In a LAN race, resolves `lan_player_slot` through the frozen roster.
     /// In single-player or local split-screen P1, resolves to index 0.
     #[inline]
     pub fn player_car_index(&self) -> usize {
-        if self.is_lan_multiplayer {
+        if let Some(idx) = self.lan_race.as_ref().and_then(|l| l.config.car_index_of(self.lan_player_slot)) {
+            idx
+        } else if self.is_lan_multiplayer {
             (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1))
         } else {
             0
@@ -4553,6 +4560,12 @@ impl RaceSession {
 
     /// Master update tick called once per frame.
     pub fn update(&mut self) {
+        self.lan_frame_ran = false;
+        self.update_frame();
+        self.lan_after_frame();
+    }
+
+    fn update_frame(&mut self) {
         let frame_dt = get_frame_time_safe().min(0.1);
         let sw = screen_width_safe();
         let sh = screen_height_safe();
@@ -5102,7 +5115,9 @@ impl RaceSession {
         }
 
         // Global restart shortcut (R key) during active racing / paused sessions
+        // (Not in a LAN race: one machine cannot restart a shared race.)
         if matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_))
+            && self.lan_race.is_none()
             && is_key_pressed(KeyCode::R)
         {
             self.init_race();
@@ -5158,7 +5173,13 @@ impl RaceSession {
                 self.update_starting_grid();
             }
             GameState::Countdown(remaining_val) => {
-                let remaining = remaining_val - frame_dt;
+                // LAN: the green light is at race clock 0 on every machine.
+                let remaining = if self.lan_race.is_some() {
+                    self.pump_lan(frame_dt);
+                    self.lan_countdown_remaining()
+                } else {
+                    remaining_val - frame_dt
+                };
 
                 // Player launch throttle / revs on grid
                 if self.is_split_screen() {
@@ -5192,33 +5213,6 @@ impl RaceSession {
                     self.prev_countdown_sec = 1;
                 }
 
-                if self.is_lan_multiplayer {
-                    if let Some(ref mut host) = self.lan_host {
-                        let _ = host.update(frame_dt);
-                    }
-                    if let Some(ref mut client) = self.lan_client {
-                        let events = client.update(frame_dt);
-                        for event in events {
-                            if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
-                                for car_snap in snapshot.cars {
-                                    let idx = car_snap.slot_id as usize;
-                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
-                                        let car = &mut self.cars[idx];
-                                        car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
-                                        car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
-                                        car.state.angle = car_snap.heading_rad;
-                                        car.state.angular_velocity = car_snap.angular_velocity;
-                                        car.state.steer_angle = car_snap.steer_angle_rad;
-                                    }
-                                }
-                                self.audio.play_sfx(SfxType::CountdownHigh);
-                                self.state = GameState::Racing;
-                                return;
-                            }
-                        }
-                    }
-                }
-
                 // Camera follows player during countdown
                 let countdown_cam_idx = self.player_car_index();
                 if let Some(player_car) = self.cars.get(countdown_cam_idx) {
@@ -5248,105 +5242,27 @@ impl RaceSession {
                     self.camera_p2.resume_from_pause(p2_car);
                 }
 
-                // LAN Packet Networking
-                if self.is_lan_multiplayer {
-                    if self.is_lan_host {
-                        if let Some(ref mut host) = self.lan_host {
-                            let events = host.update(frame_dt);
-                            for event in events {
-                                if let cabinet::net::HostEvent::PlayerInput { slot_id, input } = event {
-                                    self.lan_remote_inputs.insert(slot_id, input);
-                                }
-                            }
-                        }
-                    } else if let Some(ref mut client) = self.lan_client {
-                        let my_idx = (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1));
-                        let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-                        let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
-                        let touch_ctrl = self.touch.poll_controls();
-                        let mut local_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                        if my_speed <= 0.25 && local_ctrl.brake > 0.0 && local_ctrl.throttle == 0.0 {
-                            local_ctrl.reverse = true;
-                            local_ctrl.throttle = local_ctrl.brake;
-                            local_ctrl.brake = 0.0;
-                        }
-
-                        self.lan_snapshot_tick += 1;
-                        let _ = client.send_input(
-                            local_ctrl.steer,
-                            local_ctrl.throttle,
-                            local_ctrl.brake,
-                            local_ctrl.handbrake,
-                            local_ctrl.reverse,
-                        );
-
-                        let events = client.update(frame_dt);
-                        for event in events {
-                            if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
-                                for car_snap in snapshot.cars {
-                                    let idx = car_snap.slot_id as usize;
-                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
-                                        let car = &mut self.cars[idx];
-                                        car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
-                                        car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
-                                        car.state.angle = car_snap.heading_rad;
-                                        car.state.angular_velocity = car_snap.angular_velocity;
-                                        car.state.steer_angle = car_snap.steer_angle_rad;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // Pause trigger (Escape / Pause key or Gamepad Start)
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
                     self.pause_race();
                     return;
                 }
 
-                self.session_time += frame_dt;
-                self.accumulator += frame_dt;
+                if self.lan_race.is_some() {
+                    // LAN: network, remote cars, own-car physics and own state (game/lan.rs).
+                    self.lan_race_frame(frame_dt, false);
+                } else {
+                    self.session_time += frame_dt;
+                    self.accumulator += frame_dt;
 
-                // Fixed physics substepping
-                let max_substeps = 8;
-                let mut substeps = 0;
+                    // Fixed physics substepping
+                    let max_substeps = 8;
+                    let mut substeps = 0;
 
-                while self.accumulator >= Self::FIXED_DT && substeps < max_substeps {
-                    self.physics_step(Self::FIXED_DT);
-                    self.accumulator -= Self::FIXED_DT;
-                    substeps += 1;
-                }
-
-                // Authoritative Snapshot Broadcast from Host at 60 Hz
-                if self.is_lan_multiplayer && self.is_lan_host {
-                    if let Some(ref mut host) = self.lan_host {
-                        self.lan_snapshot_tick += 1;
-                        let mut car_snapshots = Vec::with_capacity(self.cars.len());
-                        for (i, car) in self.cars.iter().enumerate() {
-                            let tracker = self.trackers.get(i);
-                            car_snapshots.push(cabinet::net::CarStateSnapshot {
-                                slot_id: i as u8,
-                                pos_x: car.state.position.x,
-                                pos_y: car.state.position.y,
-                                velocity_x: car.state.velocity.x,
-                                velocity_y: car.state.velocity.y,
-                                heading_rad: car.state.angle,
-                                angular_velocity: car.state.angular_velocity,
-                                steer_angle_rad: car.state.steer_angle,
-                                current_lap: tracker.map(|t| t.current_lap as u16).unwrap_or(1),
-                                checkpoint_idx: tracker.map(|t| t.next_checkpoint_idx as u16).unwrap_or(0),
-                                best_lap_time_ms: tracker.and_then(|t| t.best_lap_time).map(|s| (s * 1000.0) as u32),
-                                last_lap_time_ms: tracker.and_then(|t| t.last_lap_time).map(|s| (s * 1000.0) as u32),
-                                is_finished: tracker.map(|t| t.current_lap > self.total_laps).unwrap_or(false),
-                            });
-                        }
-                        let snapshot = cabinet::net::WorldSnapshotPacket {
-                            tick: self.lan_snapshot_tick,
-                            session_elapsed_sec: self.session_time,
-                            cars: car_snapshots,
-                        };
-                        let _ = host.broadcast_snapshot(&snapshot);
+                    while self.accumulator >= Self::FIXED_DT && substeps < max_substeps {
+                        self.physics_step(Self::FIXED_DT);
+                        self.accumulator -= Self::FIXED_DT;
+                        substeps += 1;
                     }
                 }
 
@@ -5464,7 +5380,8 @@ impl RaceSession {
                             self.return_to_editor_on_exit = false;
                             self.transition_fade_to(GameState::TrackEditor, 0.35);
                         } else {
-                            self.transition_fade_to(GameState::Menu, 0.35);
+                            let target = self.race_exit_target();
+                            self.transition_fade_to(target, 0.35);
                         }
                         return;
                     }
@@ -5494,7 +5411,8 @@ impl RaceSession {
                         self.return_to_editor_on_exit = false;
                         self.transition_fade_to(GameState::TrackEditor, 0.35);
                     } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
+                        let target = self.race_exit_target();
+                        self.transition_fade_to(target, 0.35);
                     }
                     return;
                 }
@@ -6329,7 +6247,8 @@ impl RaceSession {
                         self.return_to_editor_on_exit = false;
                         self.transition_fade_to(GameState::TrackEditor, 0.35);
                     } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
+                        let target = self.race_exit_target();
+                        self.transition_fade_to(target, 0.35);
                     }
                     return;
                 }
@@ -6380,7 +6299,8 @@ impl RaceSession {
                             showing_standings: false,
                         };
                     } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
+                        let target = self.race_exit_target();
+                        self.transition_fade_to(target, 0.35);
                     }
                     return;
                 }
@@ -8248,7 +8168,9 @@ impl RaceSession {
 
         if exit {
             self.audio.play_sfx(SfxType::UiMove);
-            self.lan_host_screen = None;
+            if let Some(screen) = self.lan_host_screen.take() {
+                screen.into_host().shutdown("Host closed the room");
+            }
             self.state = GameState::LanHub { selected_idx: 0 };
         } else if launch {
             let host = self.lan_host_screen.take().unwrap().into_host();
@@ -8317,8 +8239,10 @@ impl RaceSession {
             self.state = GameState::LanHub { selected_idx: 1 };
         } else if launch {
             let client = self.lan_client_lobby_screen.take().unwrap().into_client();
-            let slot_id = client.assigned_slot_id().unwrap_or(1);
-            self.launch_lan_race_session(None, Some(client), slot_id);
+            match client.assigned_slot_id() {
+                Some(slot_id) => self.launch_lan_race_session(None, Some(client), slot_id),
+                None => self.state = GameState::LanHub { selected_idx: 1 },
+            }
         }
     }
 
@@ -8382,12 +8306,29 @@ impl RaceSession {
     }
 
     /// Configures the circuit, spawns player and remote vehicles on starting grid, and enters countdown.
+    ///
+    /// The car list comes only from the host's frozen `RaceConfig` (spec 044 §2.5): car index `i`
+    /// is `config.roster[i]` on every machine. A host that has not launched yet launches now.
     pub fn launch_lan_race_session(
         &mut self,
-        host: Option<cabinet::net::LanHost>,
+        mut host: Option<cabinet::net::LanHost>,
         client: Option<cabinet::net::LanClient>,
         my_slot_id: u8,
     ) {
+        let config = match (host.as_mut(), client.as_ref()) {
+            (Some(h), _) => h.launch_race().ok(),
+            (None, Some(c)) => c.race_config().cloned(),
+            (None, None) => None,
+        };
+        let Some(config) = config else {
+            // A client without the launch message cannot build the grid.
+            self.lan_host = host;
+            self.lan_client = client;
+            self.exit_lan_session();
+            self.state = GameState::LanHub { selected_idx: 1 };
+            return;
+        };
+
         self.is_lan_multiplayer = true;
         self.is_lan_host = host.is_some();
         self.lan_host = host;
@@ -8396,17 +8337,12 @@ impl RaceSession {
         self.game_mode = GameMode::StandardRace;
         self.free_car_selection = false;
         self.is_time_attack = false;
-        self.lan_remote_inputs.clear();
-        self.lan_snapshot_tick = 0;
+        self.lan_race = Some(LanRaceState::new(config.clone()));
+        self.accumulator = 0.0;
+        self.session_time = 0.0;
+        self.prev_countdown_sec = 4;
 
-        let track_slug = if let Some(ref h) = self.lan_host {
-            h.track_id().to_string()
-        } else if let Some(ref c) = self.lan_client {
-            c.track_id().to_string()
-        } else {
-            "classic_grand_prix".to_string()
-        };
-
+        let track_slug = config.track_id.clone();
         if let Ok(t) = self.track_manager.load_track_by_slug(&track_slug) {
             self.track = t;
         } else if let Some(tc) = TrackChoice::ALL.iter().find(|t| t.track_id() == track_slug) {
@@ -8415,38 +8351,13 @@ impl RaceSession {
             self.track = self.load_track_for_session(&TrackChoice::ClassicGrandPrix);
         }
 
-        if let Some(ref h) = self.lan_host {
-            self.total_laps = h.laps() as u32;
-        } else if let Some(ref c) = self.lan_client {
-            self.total_laps = c.laps() as u32;
-        } else {
-            self.total_laps = 5;
-        }
+        self.total_laps = config.laps as u32;
 
-        let (_num_participants, mut slot_info): (usize, Vec<(u8, String, String, String, String)>) = if let Some(ref h) = self.lan_host {
-            let active = h.active_slots();
-            let count = active.len();
-            let info = active.iter().map(|s| (s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone())).collect();
-            (count, info)
-        } else if let Some(ref c) = self.lan_client {
-            let active = c.slots();
-            let mut info = Vec::new();
-            for s in active {
-                info.push((s.slot_id, s.player_name.clone(), s.country_code.clone(), s.car_model_id.clone(), s.color_scheme_id.clone()));
-            }
-            if info.is_empty() {
-                let default_scheme = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
-                info.push((0, "Host".to_string(), "ESP".to_string(), "gt_ferrari_296_gt3".to_string(), "corsa_red".to_string()));
-                info.push((my_slot_id, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), default_scheme.to_string()));
-            }
-            let count = info.len().max(2);
-            (count, info)
-        } else {
-            let default_scheme = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
-            (1, vec![(0, self.active_profile.name.clone(), self.active_profile.country.clone().unwrap_or_else(|| "ESP".to_string()), "gt_ferrari_296_gt3".to_string(), default_scheme.to_string())])
-        };
-
-        slot_info.sort_by_key(|(slot_id, ..)| *slot_id);
+        let slot_info: Vec<(u8, String, String, String, String)> = config
+            .roster
+            .iter()
+            .map(|e| (e.slot_id, e.player_name.clone(), e.country_code.clone(), e.car_model_id.clone(), e.color_scheme_id.clone()))
+            .collect();
 
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
@@ -8524,7 +8435,7 @@ impl RaceSession {
         }
 
         self.camera.setup_for_track(&self.track);
-        let my_idx = (my_slot_id as usize).min(self.cars.len().saturating_sub(1));
+        let my_idx = self.player_car_index();
         if let Some(player_car) = self.cars.get(my_idx) {
             self.camera.current_pos = player_car.state.position;
             self.camera.target_pos = player_car.state.position;
@@ -8536,26 +8447,41 @@ impl RaceSession {
 
         self.audio.stop_all_loops();
         self.audio.play_sfx(SfxType::CountdownLow);
-        let countdown_sec = if let Some(ref c) = self.lan_client {
-            c.countdown_remaining_sec().unwrap_or(3.0).max(0.1)
-        } else {
-            3.0
-        };
-        self.state = GameState::Countdown(countdown_sec);
+
+        // Tell the host this machine is ready; the host then schedules the shared green light.
+        if let Some(ref mut h) = self.lan_host {
+            // Only RaceStartScheduled can come back; the countdown reads the host clock directly.
+            let _ = h.set_local_loaded();
+        } else if let Some(ref mut c) = self.lan_client {
+            let _ = c.send_loaded();
+        }
+        self.state = GameState::Countdown(LAN_WAITING_COUNTDOWN);
     }
 
     /// Exits LAN session, cleanly disconnects sockets, and resets flags.
     pub fn exit_lan_session(&mut self) {
         self.is_lan_multiplayer = false;
         self.is_lan_host = false;
-        self.lan_host = None;
+        if let Some(mut host) = self.lan_host.take() {
+            host.shutdown("Host left the session");
+        }
         if let Some(mut client) = self.lan_client.take() {
             let _ = client.disconnect();
         }
         self.lan_host_screen = None;
         self.lan_join_screen = None;
         self.lan_client_lobby_screen = None;
-        self.lan_remote_inputs.clear();
+        self.lan_race = None;
+    }
+
+    /// Where leaving a race goes: the LAN hub (closing the LAN session) or the main menu.
+    fn race_exit_target(&mut self) -> GameState {
+        if self.is_lan_multiplayer {
+            self.exit_lan_session();
+            GameState::LanHub { selected_idx: 0 }
+        } else {
+            GameState::Menu
+        }
     }
 
     /// Updates input and state for the GT Career Hub screen.
@@ -10899,6 +10825,8 @@ impl RaceSession {
             return;
         }
         let is_split = self.is_split_screen();
+        // LAN: cars of other players are kinematic here (owner-authoritative, see game/lan.rs).
+        let lan_remote: Vec<bool> = (0..n_cars).map(|i| self.lan_is_remote_car(i)).collect();
 
         if self.player_collision_stunt_lockout > 0.0 {
             self.player_collision_stunt_lockout = (self.player_collision_stunt_lockout - dt).max(0.0);
@@ -10954,26 +10882,11 @@ impl RaceSession {
                 controls_all.push(bot_ctrl);
             }
         } else {
-            let player_ctrl = if self.is_lan_multiplayer {
-                if self.lan_player_slot == 0 {
-                    let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-                    let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
-                    let touch_ctrl = self.touch.poll_controls();
-                    let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                    if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
-                        ctrl.reverse = true;
-                        ctrl.throttle = ctrl.brake;
-                        ctrl.brake = 0.0;
-                    }
-                    ctrl
-                } else if let Some(input) = self.lan_remote_inputs.get(&0) {
-                    CarControls {
-                        throttle: input.throttle,
-                        steer: input.steering,
-                        brake: input.brake,
-                        handbrake: input.handbrake,
-                        reverse: input.reverse,
-                    }
+            let player_ctrl = if self.lan_race.is_some() {
+                // LAN: only the own car is driven here; remote cars are placed from the network.
+                let my_idx = self.player_car_index();
+                if my_idx == 0 {
+                    self.lan_own_controls(dt, 0)
                 } else {
                     CarControls::default()
                 }
@@ -10992,26 +10905,9 @@ impl RaceSession {
             controls_all.push(player_ctrl);
 
             for i in 1..n_cars {
-                let bot_ctrl = if self.is_lan_multiplayer {
-                    if i == (self.lan_player_slot as usize) {
-                        let player_speed = self.cars.get(i).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-                        let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
-                        let touch_ctrl = self.touch.poll_controls();
-                        let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                        if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
-                            ctrl.reverse = true;
-                            ctrl.throttle = ctrl.brake;
-                            ctrl.brake = 0.0;
-                        }
-                        ctrl
-                    } else if let Some(input) = self.lan_remote_inputs.get(&(i as u8)) {
-                        CarControls {
-                            throttle: input.throttle,
-                            steer: input.steering,
-                            brake: input.brake,
-                            handbrake: input.handbrake,
-                            reverse: input.reverse,
-                        }
+                let bot_ctrl = if self.lan_race.is_some() {
+                    if i == self.player_car_index() {
+                        self.lan_own_controls(dt, i)
                     } else {
                         CarControls::default()
                     }
@@ -11065,6 +10961,9 @@ impl RaceSession {
 
         // 3. Step individual vehicle dynamics and update road elevation & cross-slope banking
         for i in 0..n_cars {
+            if lan_remote[i] {
+                continue;
+            }
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
             let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
             self.cars[i].state.road_elevation = proj.elevation;
@@ -11106,6 +11005,9 @@ impl RaceSession {
         // Continuous Jump Ramp Traversal, Lip Takeoff & Landing SFX/FX
         let mut player_jump_air_time = None;
         for (i, car) in self.cars.iter_mut().enumerate() {
+            if lan_remote[i] {
+                continue;
+            }
             let was_airborne = car.state.is_airborne;
             let mut on_any_ramp = false;
 
@@ -11217,17 +11119,34 @@ impl RaceSession {
         }
 
         // 4. Resolve Car-to-Car collisions with momentum exchange and penetration pushback
-        let car_collision_events = if n_cars > 1 {
+        // LAN: only the own car takes the impulse; each owner resolves its own side of a contact.
+        // A car whose player left is moved out of reach for the solve, so it collides with nothing.
+        let lan_saved: Vec<(usize, tdrace_core::physics::car::CarState)> = (0..n_cars)
+            .filter(|&i| lan_remote[i])
+            .map(|i| (i, self.cars[i].state.clone()))
+            .collect();
+        for &(i, _) in &lan_saved {
+            if self.lan_car_left(i) {
+                self.cars[i].state.position = Vec2::splat(1.0e7 + i as f32 * 1.0e3);
+            }
+        }
+        let car_collision_events = if n_cars > 1 && !self.lan_ghost_collisions() {
             resolve_multi_car_collisions(&mut self.cars, 0.45, 0.35, 3)
         } else {
             Vec::new()
         };
+        for (i, state) in lan_saved {
+            self.cars[i].state = state;
+        }
 
         // 5. Resolve Wall and Obstacle boundary collisions for each car (including grandstands & tree trunks)
         let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
         let demolition_mode = self.is_demolition_scoring_enabled();
         let mut wall_collision_events = Vec::new();
         for (car_idx, car) in self.cars.iter_mut().enumerate() {
+            if lan_remote[car_idx] {
+                continue;
+            }
             let mut wall_events = resolve_all_wall_collisions(
                 car,
                 &self.track.geometry.inner_walls,
@@ -11382,7 +11301,11 @@ impl RaceSession {
         }
 
         // 6. Update race progression, lap tracking, sector splits, anti-cheat
+        // (LAN remote trackers are set from the owner's state in `lan_apply_remote_poses`.)
         for i in 0..n_cars {
+            if lan_remote[i] {
+                continue;
+            }
             self.trackers[i].update(
                 &self.cars[i],
                 &self.track.spline,
@@ -11631,7 +11554,13 @@ impl RaceSession {
     /// Evaluates current positions and checks for checkered flag completion.
     pub fn check_race_finish(&mut self) {
         let my_car_idx = self.player_car_index();
-        let player_done = if self.is_split_screen() {
+        if self.lan_race.is_some() {
+            self.lan_check_own_finish();
+        }
+        // LAN: the race ends for everyone when the host's results arrive.
+        let player_done = if let Some(ref lan) = self.lan_race {
+            lan.results.is_some()
+        } else if self.is_split_screen() {
             let p1_done = self.trackers.first().is_some_and(|t| t.current_lap > self.total_laps);
             let p2_done = self.trackers.get(1).is_some_and(|t| t.current_lap > self.total_laps);
             p1_done || p2_done
@@ -11930,6 +11859,9 @@ impl RaceSession {
 
     /// Computes real-time race standings.
     pub fn compute_standings(&self) -> Vec<usize> {
+        if let Some(order) = self.lan_result_order() {
+            return order;
+        }
         let mut indices: Vec<usize> = (0..self.cars.len()).collect();
         indices.sort_by(|&a, &b| {
             let tr_a = &self.trackers[a];
@@ -11983,8 +11915,20 @@ impl RaceSession {
             };
 
             let tracker = &self.trackers[car_idx];
-            let total_time = self.session_time + (rank as f32 * 0.65);
+            let mut total_time = self.session_time + (rank as f32 * 0.65);
             let leader_time = self.session_time;
+            let mut best_lap = tracker.best_lap_time;
+            // LAN: finish times and best laps are the host's (shared race clock).
+            if let Some(result) = self.lan_result_of(car_idx) {
+                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(self.session_time);
+                best_lap = result.best_lap_ms.map(|ms| ms as f32 / 1000.0).or(best_lap);
+            }
+            let leader_time = self
+                .lan_result_order()
+                .and_then(|order| order.first().and_then(|&i| self.lan_result_of(i)))
+                .and_then(|r| r.finish_ms)
+                .map(|ms| ms as f32 / 1000.0)
+                .unwrap_or(leader_time);
             let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
 
             self.results.push(RaceResultEntry {
@@ -11992,7 +11936,7 @@ impl RaceSession {
                 car_name,
                 is_player,
                 total_time,
-                best_lap: tracker.best_lap_time,
+                best_lap,
                 delta_to_leader: delta,
                 car_idx,
                 points_awarded: 0,
@@ -13803,6 +13747,18 @@ impl RaceSession {
         }
         for &i in &ground_cars {
             let car = &self.cars[i];
+            if self.lan_car_left(i) {
+                // The player left the LAN race: the parked car is drawn as a ghost.
+                let frame = crate::render::ghost::GhostFrame {
+                    time: 0.0,
+                    position: car.state.position,
+                    angle: car.state.angle,
+                    steer_angle: 0.0,
+                    speed: 0.0,
+                };
+                render_ghost_car(&frame, &car.config, 0.45);
+                continue;
+            }
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
             let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
@@ -13867,6 +13823,18 @@ impl RaceSession {
         }
         for &i in &elevated_cars {
             let car = &self.cars[i];
+            if self.lan_car_left(i) {
+                // The player left the LAN race: the parked car is drawn as a ghost.
+                let frame = crate::render::ghost::GhostFrame {
+                    time: 0.0,
+                    position: car.state.position,
+                    angle: car.state.angle,
+                    steer_angle: 0.0,
+                    speed: 0.0,
+                };
+                render_ghost_car(&frame, &car.config, 0.45);
+                continue;
+            }
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
             let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {

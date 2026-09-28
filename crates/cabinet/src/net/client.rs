@@ -11,9 +11,9 @@ use std::net::SocketAddr;
 
 use super::clock::ClockSync;
 use super::protocol::{
-    sanitize_string, ClientInputPacket, ControlMessage, FinishRecord, JoinResult,
+    sanitize_string, ControlMessage, FinishRecord, JoinResult,
     LanCollisionMode, LobbyPacket, LobbySlot, Packet, ProtocolError, RaceConfig, RaceResult,
-    WorldSnapshotPacket, MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
+    MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 use super::reliable::ReliableChannel;
 use super::transport::{Transport, UdpTransport};
@@ -66,8 +66,6 @@ pub enum ClientEvent {
     RaceStartScheduled { start_at: f64 },
     /// Newer states of other players' cars (never this client's own car).
     CarStates(Vec<NetCarState>),
-    /// In-race authoritative world snapshot received from host.
-    WorldSnapshot(WorldSnapshotPacket),
     /// Finish order so far.
     Standings(Vec<FinishRecord>),
     /// A player left the race.
@@ -93,7 +91,6 @@ pub struct LanClient {
     ping_timer_sec: f32,
     ping_interval_sec: f32,
     ping_ms: u16,
-    input_seq: u32,
     timeout_sec: f32,
     recv_buf: [u8; MAX_DATAGRAM_SIZE],
     last_known_track_id: String,
@@ -155,7 +152,6 @@ impl LanClient {
             ping_timer_sec: 0.0,
             ping_interval_sec: 0.5,
             ping_ms: 0,
-            input_seq: 0,
             timeout_sec: 4.5,
             recv_buf: [0u8; MAX_DATAGRAM_SIZE],
             last_known_track_id: "monza".to_string(),
@@ -310,36 +306,6 @@ impl LanClient {
     /// Tells the host that this client's car crossed the finish line.
     pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>) -> Result<(), ProtocolError> {
         self.send_control(&ControlMessage::Finished { finish_ms, best_lap_ms })
-    }
-
-    /// Streams an in-race 60 Hz input frame to the authoritative host.
-    pub fn send_input(
-        &mut self,
-        steering: f32,
-        throttle: f32,
-        brake: f32,
-        handbrake: bool,
-        reverse: bool,
-    ) -> Result<(), ProtocolError> {
-        let slot_id = match self.assigned_slot_id() {
-            Some(id) => id,
-            None => return Ok(()),
-        };
-
-        self.input_seq = self.input_seq.wrapping_add(1);
-        let packet = ClientInputPacket {
-            sequence_num: self.input_seq,
-            slot_id,
-            steering,
-            throttle,
-            brake,
-            handbrake,
-            reverse,
-        };
-
-        let encoded = packet.encode()?;
-        let _ = self.transport.send_to(&encoded, self.host_addr);
-        Ok(())
     }
 
     /// Sends a graceful disconnect notice to the host and resets state.
@@ -549,10 +515,6 @@ impl LanClient {
             Packet::Lobby(LobbyPacket::DisconnectNotice { reason }) => {
                 self.state = ClientState::Disconnected(Some(reason.clone()));
                 events.push(ClientEvent::Disconnected(reason));
-            }
-
-            Packet::Snapshot(snapshot) => {
-                events.push(ClientEvent::WorldSnapshot(snapshot));
             }
 
             _ => {}

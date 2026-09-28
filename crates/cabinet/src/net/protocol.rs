@@ -370,102 +370,6 @@ impl LobbyPacket {
     }
 }
 
-/// 60 Hz input frame streamed from client to authoritative host during race.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ClientInputPacket {
-    /// Monotonically increasing client input sequence number.
-    pub sequence_num: u32,
-    /// Assigned player slot index.
-    pub slot_id: u8,
-    /// Steering command: -1.0 (full left) to +1.0 (full right).
-    pub steering: f32,
-    /// Throttle pedal: 0.0 (idle) to 1.0 (full throttle).
-    pub throttle: f32,
-    /// Brake pedal: 0.0 (idle) to 1.0 (full brake).
-    pub brake: f32,
-    /// Handbrake flag.
-    pub handbrake: bool,
-    /// Reverse gear flag.
-    #[serde(default)]
-    pub reverse: bool,
-}
-
-impl ClientInputPacket {
-    /// Encodes this input packet into a wire-formatted datagram byte buffer.
-    pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
-        Packet::Input(self.clone()).encode()
-    }
-
-    /// Decodes an input packet from a wire-formatted datagram byte buffer.
-    pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        match Packet::decode(bytes)? {
-            Packet::Input(packet) => Ok(packet),
-            _ => Err(ProtocolError::DeserializationFailed(
-                "Packet is not an input packet".to_string(),
-            )),
-        }
-    }
-}
-
-/// Kinematic snapshot of a single car transmitted by the authoritative host.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CarStateSnapshot {
-    /// Participant slot index.
-    pub slot_id: u8,
-    /// World position X coordinate in meters.
-    pub pos_x: f32,
-    /// World position Y coordinate in meters.
-    pub pos_y: f32,
-    /// Linear velocity X in m/s.
-    pub velocity_x: f32,
-    /// Linear velocity Y in m/s.
-    pub velocity_y: f32,
-    /// Heading orientation angle in radians.
-    pub heading_rad: f32,
-    /// Angular yaw velocity in rad/s.
-    pub angular_velocity: f32,
-    /// Current front steer angle in radians.
-    pub steer_angle_rad: f32,
-    /// Current completed lap count.
-    pub current_lap: u16,
-    /// Most recent track checkpoint index passed.
-    pub checkpoint_idx: u16,
-    /// Best lap time in milliseconds, if recorded.
-    pub best_lap_time_ms: Option<u32>,
-    /// Last completed lap time in milliseconds, if recorded.
-    pub last_lap_time_ms: Option<u32>,
-    /// Whether the car has completed the race distance.
-    pub is_finished: bool,
-}
-
-/// 60 Hz authoritative world snapshot broadcasted from host to all peers.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct WorldSnapshotPacket {
-    /// Monotonically increasing server simulation tick.
-    pub tick: u32,
-    /// Elapsed race session time in seconds.
-    pub session_elapsed_sec: f32,
-    /// Kinematic states for all active cars.
-    pub cars: Vec<CarStateSnapshot>,
-}
-
-impl WorldSnapshotPacket {
-    /// Encodes this world snapshot packet into a wire-formatted datagram byte buffer.
-    pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
-        Packet::Snapshot(self.clone()).encode()
-    }
-
-    /// Decodes a world snapshot packet from a wire-formatted datagram byte buffer.
-    pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        match Packet::decode(bytes)? {
-            Packet::Snapshot(packet) => Ok(packet),
-            _ => Err(ProtocolError::DeserializationFailed(
-                "Packet is not a world snapshot packet".to_string(),
-            )),
-        }
-    }
-}
-
 /// Top-level wire packet envelope for Cabinet LAN datagrams.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Packet {
@@ -473,10 +377,6 @@ pub enum Packet {
     Beacon(LanBeacon),
     /// Staging lobby coordination packet.
     Lobby(LobbyPacket),
-    /// Client-to-host driver input packet.
-    Input(ClientInputPacket),
-    /// Authoritative host-to-client world snapshot packet.
-    Snapshot(WorldSnapshotPacket),
     /// Direct peer disconnection packet.
     Disconnect {
         /// Disconnecting slot index.
@@ -532,22 +432,6 @@ impl Packet {
         }
     }
 
-    /// Returns a reference to the inner [`ClientInputPacket`] if this is an input packet.
-    pub fn as_input(&self) -> Option<&ClientInputPacket> {
-        match self {
-            Self::Input(p) => Some(p),
-            _ => None,
-        }
-    }
-
-    /// Returns a reference to the inner [`WorldSnapshotPacket`] if this is a snapshot packet.
-    pub fn as_snapshot(&self) -> Option<&WorldSnapshotPacket> {
-        match self {
-            Self::Snapshot(p) => Some(p),
-            _ => None,
-        }
-    }
-
     /// Returns a reference to the inner [`LanBeacon`] if this is a beacon packet.
     pub fn as_beacon(&self) -> Option<&LanBeacon> {
         match self {
@@ -566,18 +450,6 @@ impl From<LanBeacon> for Packet {
 impl From<LobbyPacket> for Packet {
     fn from(p: LobbyPacket) -> Self {
         Self::Lobby(p)
-    }
-}
-
-impl From<ClientInputPacket> for Packet {
-    fn from(p: ClientInputPacket) -> Self {
-        Self::Input(p)
-    }
-}
-
-impl From<WorldSnapshotPacket> for Packet {
-    fn from(p: WorldSnapshotPacket) -> Self {
-        Self::Snapshot(p)
     }
 }
 
@@ -721,67 +593,6 @@ mod tests {
     }
 
     #[test]
-    fn test_client_input_packet_roundtrip() {
-        let input = ClientInputPacket {
-            sequence_num: 42,
-            slot_id: 2,
-            steering: -0.75,
-            throttle: 1.0,
-            brake: 0.0,
-            handbrake: false,
-            reverse: false,
-        };
-
-        let encoded = input.encode().expect("Encode input");
-        let decoded = ClientInputPacket::decode(&encoded).expect("Decode input");
-        assert_eq!(input, decoded);
-    }
-
-    #[test]
-    fn test_world_snapshot_packet_roundtrip() {
-        let snapshot = WorldSnapshotPacket {
-            tick: 1800,
-            session_elapsed_sec: 30.0,
-            cars: vec![
-                CarStateSnapshot {
-                    slot_id: 0,
-                    pos_x: 100.5,
-                    pos_y: 250.2,
-                    velocity_x: 45.0,
-                    velocity_y: 12.0,
-                    heading_rad: 1.57,
-                    angular_velocity: 0.02,
-                    steer_angle_rad: -0.1,
-                    current_lap: 2,
-                    checkpoint_idx: 15,
-                    best_lap_time_ms: Some(82500),
-                    last_lap_time_ms: Some(83100),
-                    is_finished: false,
-                },
-                CarStateSnapshot {
-                    slot_id: 1,
-                    pos_x: 95.0,
-                    pos_y: 248.0,
-                    velocity_x: 44.5,
-                    velocity_y: 11.8,
-                    heading_rad: 1.55,
-                    angular_velocity: -0.01,
-                    steer_angle_rad: 0.05,
-                    current_lap: 2,
-                    checkpoint_idx: 14,
-                    best_lap_time_ms: Some(83200),
-                    last_lap_time_ms: None,
-                    is_finished: false,
-                },
-            ],
-        };
-
-        let encoded = snapshot.encode().expect("Encode snapshot");
-        let decoded = WorldSnapshotPacket::decode(&encoded).expect("Decode snapshot");
-        assert_eq!(snapshot, decoded);
-    }
-
-    #[test]
     fn test_reject_invalid_magic() {
         let mut encoded = Packet::Disconnect {
             slot_id: 1,
@@ -842,7 +653,5 @@ mod tests {
         let pkt: Packet = beacon.clone().into();
         assert_eq!(pkt.as_beacon(), Some(&beacon));
         assert!(pkt.as_lobby().is_none());
-        assert!(pkt.as_input().is_none());
-        assert!(pkt.as_snapshot().is_none());
     }
 }

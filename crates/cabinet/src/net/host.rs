@@ -14,9 +14,9 @@ use std::net::{Ipv4Addr, SocketAddr};
 use super::beacon::LanBeaconBroadcaster;
 use super::ip::LocalIpResolver;
 use super::protocol::{
-    sanitize_string, ClientInputPacket, ControlMessage, FinishRecord, JoinResult, LanBeacon,
+    sanitize_string, ControlMessage, FinishRecord, JoinResult, LanBeacon,
     LanCollisionMode, LobbyPacket, LobbySlot, Packet, ProtocolError, RaceConfig, RaceResult,
-    RaceStatus, RosterEntry, WorldSnapshotPacket, DEFAULT_BEACON_PORT, MAGIC_BYTES,
+    RaceStatus, RosterEntry, DEFAULT_BEACON_PORT, MAGIC_BYTES,
     MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 use super::reliable::ReliableChannel;
@@ -50,11 +50,6 @@ pub enum HostEvent {
     PlayerLeft {
         slot_id: u8,
         reason: String,
-    },
-    /// In-race input packet received from a client.
-    PlayerInput {
-        slot_id: u8,
-        input: ClientInputPacket,
     },
     /// A client finished loading the race.
     PlayerLoaded { slot_id: u8 },
@@ -487,15 +482,6 @@ impl LanHost {
         self.race.as_ref()?.results.as_deref()
     }
 
-    /// Broadcasts an authoritative kinematic world snapshot to all clients at 60 Hz.
-    pub fn broadcast_snapshot(&mut self, snapshot: &WorldSnapshotPacket) -> Result<(), ProtocolError> {
-        let encoded = snapshot.encode()?;
-        for client in &self.clients {
-            let _ = self.transport.send_to(&encoded, client.addr);
-        }
-        Ok(())
-    }
-
     /// Kicks a player from the room by slot index.
     pub fn kick_player(&mut self, slot_id: u8, reason: &str) {
         if slot_id == 0 || slot_id as usize >= self.slots.len() {
@@ -506,6 +492,21 @@ impl LanHost {
         if (slot_id as usize) < self.slots.len() && !self.in_race {
             self.slots[slot_id as usize] = None;
         }
+    }
+
+    /// Tells every client that the session is closing and forgets them.
+    ///
+    /// The notice is sent a few times instead of reliably, because nobody listens afterwards.
+    pub fn shutdown(&mut self, reason: &str) {
+        let notice = LobbyPacket::DisconnectNotice { reason: reason.to_string() };
+        if let Ok(encoded) = notice.encode() {
+            for _ in 0..3 {
+                for client in &self.clients {
+                    let _ = self.transport.send_to(&encoded, client.addr);
+                }
+            }
+        }
+        self.clients.clear();
     }
 
     /// Updates internal timers, processes incoming datagrams, and checks heartbeat timeouts.
@@ -741,17 +742,6 @@ impl LanHost {
             Packet::Lobby(LobbyPacket::DisconnectNotice { reason }) => {
                 if let Some(slot_id) = self.clients.iter().find(|c| c.addr == src_addr).map(|c| c.slot_id) {
                     self.drop_client(slot_id, &reason, false, events);
-                }
-            }
-
-            Packet::Input(input) => {
-                if let Some(client) = self.clients.iter().find(|c| c.addr == src_addr) {
-                    if client.slot_id == input.slot_id {
-                        events.push(HostEvent::PlayerInput {
-                            slot_id: input.slot_id,
-                            input,
-                        });
-                    }
                 }
             }
 
