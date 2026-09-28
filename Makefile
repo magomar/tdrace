@@ -173,7 +173,7 @@ bench: bench-rust bench-python ## Run both Rust physics and Python Gymnasium thr
 
 bench-rust: ## Run Rust physics stepping and collision benchmarks
 	@echo -e "$(CYAN)📊 Running Rust physics & collision benchmarks...$(RESET)"
-	cargo bench -p tdrace-core $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+	cargo bench -p wheelbase -p arcade-race-core $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
 
 bench-python: ## Run Python Gymnasium throughput benchmark vs CarRacing-v3
 	@echo -e "$(CYAN)📊 Running Gymnasium benchmark (TDRace vs CarRacing-v3)...$(RESET)"

@@ -21,15 +21,3 @@ miniz_oxide = "0.8"
 
 [dev-dependencies]
 serde_json = "1.0"
-
-[[bench]]
-name = "physics_bench"
-harness = false
-
-[[bench]]
-name = "collision_bench"
-harness = false
-
-[[bench]]
-name = "lidar_bench"
-harness = false
