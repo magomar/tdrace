@@ -7,7 +7,8 @@ One importer for the OpenStreetMap (OSM) circuits of four disciplines:
   gt     18 GT / F1 circuits, scaled to 0.5x the official FIA length
   kart   CIK-FIA kart circuits at 1:1
   rally  World RX rallycross circuits at 1:1 with asphalt/dirt surfaces
-  nascar NASCAR ovals and road courses: 1:1 under 3 km, 0.75x above, with banking per corner
+  nascar NASCAR ovals and road courses: 1:1 under 3 km, Road America 0.5x, the rest 0.75x,
+         with banking per corner
 
 With --json the waypoints go to tracks/<module>/<id>.json (spec 042: official circuits are JSON
 only); then run the printed `cargo run --bin track_bake -- ... --rebuild` command.
@@ -232,15 +233,17 @@ def heading_ahead(points, min_dist=60.0):
 
 
 def chain_segments(ways, segments):
-    """Node ids along (way id, first node or None) segments; each segment runs to its way's last node.
+    """Node ids along (way id, first node or None[, last node]) segments; a segment runs to its
+    way's last node unless a last node is given.
 
     Consecutive segments share their join node, which is kept once; a closing repeat of the first
     node is dropped. Returns [(node id, way id)].
     """
     chain = []
-    for wid, first in segments:
+    for wid, first, *last in segments:
         nds = ways[wid]["nodes"]
         nds = nds[nds.index(first):] if first is not None else nds
+        nds = nds[:nds.index(last[0]) + 1] if last else nds
         if chain and chain[-1][0] == nds[0]:
             nds = nds[1:]
         chain.extend((nid, wid) for nid in nds)
@@ -990,17 +993,19 @@ KART_TRACKS = {
         "fia_length": 1580.0,
         "default_width": 8.5,
         "straight_width": 9.2,
-        "num_waypoints": 32,
+        "num_waypoints": 80,  # ~20 m spacing keeps the lap within ~3 m of the OSM line
         "elevation_fn": None,
     },
     "valencia_kart": {
         "name": "Kartodromo Internacional Lucas Guerrero (Valencia)",
         "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
         "ways": [751513226],
+        # First node of the way, 143 m into the main straight: the 87 m start grid stays on the straight.
+        "start_node_id": 7025550140,
         "fia_length": 1428.0,
         "default_width": 8.5,
         "straight_width": 9.2,
-        "num_waypoints": 32,
+        "num_waypoints": 80,  # ~18 m spacing keeps the lap within ~3 m of the OSM line
         "elevation_fn": None,
     },
 }
@@ -1427,6 +1432,22 @@ RALLY_TRACKS = {
         "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
         "jump": None,
     },
+    "croft_rx": {
+        "name": "Croft Rallycross Circuit",
+        "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
+        # From the pit exit: Clervaux, Hawthorn, into the Chicane, then off onto the "Rallycross" way
+        # (no surface tag; the tarmac ways are tagged asphalt, so it is taken as the loose section).
+        "segments": [(222641546, None), (26261500, None), (26261494, None), (222641550, None, 1241209962),
+                     (108510895, None)],
+        "loose_ways": [108510895],
+        "start_offset_m": 125.0,  # 125 m down the pit straight, so the whole 12-car grid (~103 m) is on tarmac
+        # No official rallycross lap length is published; this is the mapped OSM loop (1:1).
+        "fia_length": 1251.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 52,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
+        "jump": None,
+    },
 }
 
 
@@ -1445,8 +1466,10 @@ def process_rally_track(track_id, cache_dir):
     # (node id, surface) along the lap
     raw_nodes_surf = []
     if "segments" in spec:
+        loose = set(spec.get("loose_ways", []))
         for nid, wid in chain_segments(ways, spec["segments"]):
-            raw_nodes_surf.append((nid, rally_way_surface(ways[wid].get("tags", {}))))
+            surf = "Dirt" if wid in loose else rally_way_surface(ways[wid].get("tags", {}))
+            raw_nodes_surf.append((nid, surf))
     elif track_id == "hell_rx":
         nodes_67 = ways[1069390967]["nodes"][1:]  # Skip start grid lane (node 0)
         nodes_68 = ways[1069390968]["nodes"]
@@ -1552,6 +1575,8 @@ def process_rally_track(track_id, cache_dir):
 
     # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
     if "segments" in spec:
+        if spec.get("start_offset_m"):
+            metric_pts, surfaces = shift_start(metric_pts, spec["start_offset_m"], surfaces)
         heading = heading_ahead(metric_pts)
     else:
         p_start = metric_pts[0]
@@ -1822,6 +1847,48 @@ NASCAR_TRACKS = {
         "corner_banks": [33.0],
         "bend_bank": 16.5,  # tri-oval
     },
+    "eldora": {
+        "name": "Eldora Speedway",
+        "segments": [(608397609, None)],
+        "start_node": 5764072235,  # mapped raceway=start-finish node
+        "official_length": 805.0,  # the OSM way is 686 m, the inside line
+        "scale": 1.0,
+        "num_waypoints": 16,
+        "width": 18.0,
+        "straight_bank": 8.0,
+        "corner_banks": [24.0],
+        "surface": "Dirt",
+    },
+    "iowa": {
+        "name": "Iowa Speedway",
+        "segments": [(119238784, None)],
+        "start_node": 1340393901,
+        "start_offset_m": 41.0,  # frontstretch, level with the middle of pit road
+        "official_length": 1408.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 20.0,
+        "straight_bank": 4.0,
+        "corner_banks": [14.0],
+        "bend_bank": 10.0,  # frontstretch dogleg
+    },
+    "road_america": {
+        "name": "Road America",
+        # Relation 6432758 ("Road America Circuit"), in race order from the main straight.
+        "segments": [(w, None) for w in (
+            122090289, 122090268, 122090299, 122090258, 122090260, 122090240, 122090275, 122090272, 122090284,
+            122090298, 110527567, 122090265, 122090279, 122090248, 122090267, 122090239, 122090291, 122090276,
+            122090286, 122090295, 122090252, 122090243, 122090251, 122090282, 122090297, 122090270, 122090263)],
+        "start_node": 1262000220,
+        "start_offset_m": 257.0,  # main straight, level with the middle of the pit lane
+        "official_length": 6515.0,
+        "scale": 0.5,
+        "num_waypoints": 80,  # ~41 m spacing keeps the lap within ~5 m of the OSM line
+        "width": 14.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
 }
 
 # Curvature classes, relative to the tightest waypoint of the lap.
@@ -1829,8 +1896,12 @@ NASCAR_CORNER_CURVATURE = 0.6
 NASCAR_BEND_CURVATURE = 0.12
 
 
-def shift_start(points, offset_m):
-    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted)."""
+def shift_start(points, offset_m, props=None):
+    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted).
+
+    `props` (optional, one value per point, as in resample_polyline) is rotated the same way;
+    then (points, props) is returned.
+    """
     n = len(points)
     left = offset_m
     for i in range(n):
@@ -1839,9 +1910,12 @@ def shift_start(points, offset_m):
         if left <= seg:
             t = left / seg if seg > 0 else 0.0
             p = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
-            return [p] + points[i + 1:] + points[:i + 1]
+            shifted = [p] + points[i + 1:] + points[:i + 1]
+            if props is None:
+                return shifted
+            return shifted, [props[i]] + props[i + 1:] + props[:i + 1]
         left -= seg
-    return points
+    return points if props is None else (points, props)
 
 
 def curvature_classes(points):

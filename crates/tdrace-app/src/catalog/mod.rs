@@ -155,9 +155,9 @@ impl RealCarModel {
         let brake_mult = (0.80 + 0.40 * self.stats.4).clamp(0.5, 1.5);
         cfg.max_brake_force = (cfg.max_brake_force * mass_ratio * brake_mult).max(100.0);
 
-        // 2. Pacejka Lateral Tire Grip: D_lateral = D_base * (0.85 + 0.30 * stats.2) clamped to [0.5, 1.8]
+        // 2. Tire Grip: grip = grip_base * (0.85 + 0.30 * stats.2) clamped to [0.5, 1.8]
         let grip_mult = 0.85 + 0.30 * self.stats.2;
-        cfg.tire.peak_d = (cfg.tire.peak_d * grip_mult).clamp(0.5, 1.8);
+        cfg.tire.grip = (cfg.tire.grip * grip_mult).clamp(0.5, 1.8);
 
         // 3. Directional Agility & Steering Rack Speed: omega_steer = omega_base_steer * (0.80 + 0.40 * stats.3) clamped to [2.0, 15.0]
         let steer_mult = 0.80 + 0.40 * self.stats.3;
@@ -256,7 +256,8 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        cfg
+        // Spec 043: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        cfg.finalized()
     }
 
     /// Returns the engine sound archetype for this real car model.
@@ -2810,7 +2811,7 @@ mod tests {
             assert!(cfg.top_speed_mps > 0.0 && cfg.top_speed_mps.is_finite(), "Car {} has invalid top_speed", car.id);
             assert!(cfg.max_engine_force > 0.0 && cfg.max_engine_force.is_finite(), "Car {} has invalid engine force", car.id);
             assert!(cfg.max_brake_force >= 100.0 && cfg.max_brake_force.is_finite(), "Car {} has invalid brake force", car.id);
-            assert!(cfg.tire.peak_d >= 0.5 && cfg.tire.peak_d <= 1.8, "Car {} tire.peak_d {} out of bounds [0.5, 1.8]", car.id, cfg.tire.peak_d);
+            assert!(cfg.tire.grip >= 0.5 && cfg.tire.grip <= 1.8, "Car {} tire.grip {} out of bounds [0.5, 1.8]", car.id, cfg.tire.grip);
             assert!(cfg.steer_speed >= 2.0 && cfg.steer_speed <= 15.0, "Car {} steer_speed {} out of bounds [2.0, 15.0]", car.id, cfg.steer_speed);
             assert!(cfg.inertia >= 10.0 && cfg.inertia.is_finite(), "Car {} inertia {} out of bounds", car.id, cfg.inertia);
             assert!(cfg.downforce_coefficient >= 0.0 && cfg.downforce_coefficient.is_finite(), "Car {} has invalid downforce", car.id);
@@ -2851,7 +2852,13 @@ mod tests {
         assert!(toyota_cfg.inertia < bmw_cfg.inertia, "Toyota should have lower yaw inertia");
 
         // 4. Lateral tire grip differentiation (Toyota higher grip)
-        assert!(toyota_cfg.tire.peak_d > bmw_cfg.tire.peak_d, "Toyota should have higher peak lateral tire grip");
+        assert!(toyota_cfg.tire.grip > bmw_cfg.tire.grip, "Toyota should have higher peak lateral tire grip");
+        // Spec 043: the grip stat must reach every wheel assembly the physics reads
+        for cfg in [&toyota_cfg, &bmw_cfg] {
+            for w in &cfg.wheels {
+                assert_eq!(w.tire_model.grip, cfg.tire.grip);
+            }
+        }
 
         // 5. Engine force differentiation (BMW has 450 BHP vs Toyota 430 BHP)
         assert!(bmw_cfg.max_engine_force > toyota_cfg.max_engine_force, "BMW should have higher engine tractive force");

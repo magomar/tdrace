@@ -625,11 +625,12 @@ impl ModuleCareerProgress {
                     self.ensure_track("bathurst");
                 }
 
-                // Tier 5 (3 circuits)
+                // Tier 5 (4 circuits)
                 if self.level >= 5 {
                     self.ensure_track("le_mans_sarthe");
                     self.ensure_track("monaco");
                     self.ensure_track("marina_bay");
+                    self.ensure_track("madring");
                 }
             }
             "nascar" => {
@@ -674,7 +675,7 @@ impl ModuleCareerProgress {
                 self.ensure_track("lydden_hill");
                 self.ensure_track("mettet_rx");
                 self.ensure_track("dreux_rx");
-                self.ensure_track("blyton_rx");
+                self.ensure_track("croft_rx");
 
                 // Tier 2 (3 circuits)
                 if self.level >= 2 {

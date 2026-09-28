@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::car::normalize_angle;
-use super::config::TireConfig;
+use super::config::PacejkaTireConfig;
 use super::surface::{SurfaceSampler, SurfaceType};
 use super::tire::{pacejka_lateral_force, solve_combined_slip_forces};
 
@@ -34,7 +34,7 @@ pub struct MotorbikeConfig {
     /// Aerodynamic drag coefficient.
     pub drag_coefficient: f32,
     /// Tire parameters for Pacejka slip solver.
-    pub tire: TireConfig,
+    pub tire: PacejkaTireConfig,
 }
 
 impl Default for MotorbikeConfig {
@@ -59,7 +59,7 @@ impl MotorbikeConfig {
             max_brake_rear: 1500.0,
             rolling_resistance: 18.0,
             drag_coefficient: 0.38,
-            tire: TireConfig::default(),
+            tire: PacejkaTireConfig::default(),
         }
     }
 
@@ -78,7 +78,7 @@ impl MotorbikeConfig {
             max_brake_rear: 1800.0,
             rolling_resistance: 24.0,
             drag_coefficient: 0.45,
-            tire: TireConfig::default(),
+            tire: PacejkaTireConfig::default(),
         }
     }
 }

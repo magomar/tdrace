@@ -70,8 +70,8 @@ laps = 5
 
 [[rounds]]
 order = 9
-track_id = "blyton_rx"
-name = "Blyton Park Driving Centre"
+track_id = "croft_rx"
+name = "Croft Circuit"
 laps = 5
 
 [[drivers]]

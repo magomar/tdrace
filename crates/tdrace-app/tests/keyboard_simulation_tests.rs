@@ -1,177 +1,153 @@
-use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
+//! Key-pressing style analysis gates (Spec 043).
+//!
+//! The pre-043 versions of these tests asserted the old model's defect: holding a steer key
+//! scrubbed speed (kart kept 16% of its entry speed) while feathering did not. On the spec 043
+//! physics holding is a valid style; feathering stays a skill that changes the line.
+
+use tdrace_app::catalog::{RealCarModel, CLASSIC_ARCADE_CARS};
 use tdrace_app::input::simulation::{
-    run_keyboard_chicane_simulation, run_keyboard_slide_catch_simulation,
-    run_keyboard_sweeper_simulation, KeyboardDriverProfile,
+    key_style_sensitivity, run_keyboard_chicane_simulation, run_keyboard_slide_catch_simulation,
+    run_keyboard_sweeper_simulation, ChicaneTransitionOutcome, KeyboardDriverProfile, KeyboardHandlingOutcome,
+    KeyboardSteerPattern, KeyboardSweeperResult,
 };
+use tdrace_app::input::SteeringProfile;
 use tdrace_core::physics::sim::DEFAULT_SIMULATION_DT;
 use tdrace_core::physics::surface::SurfaceType;
 
+fn car(id: &str) -> &'static RealCarModel {
+    CLASSIC_ARCADE_CARS.iter().find(|c| c.id == id).expect("classic arcade car must exist")
+}
+
+fn sweeper_entry_kmh(model: &RealCarModel) -> f32 {
+    if model.id == "classic_kart" { 55.0 } else { 70.0 }
+}
+
+fn sweep(model: &RealCarModel, surface: SurfaceType, pattern: KeyboardSteerPattern, preset: SteeringProfile) -> KeyboardSweeperResult {
+    let driver = KeyboardDriverProfile::for_pattern(pattern, preset);
+    run_keyboard_sweeper_simulation(model.id, model.name, &model.to_car_config(), surface, &driver, sweeper_entry_kmh(model), 3.0, DEFAULT_SIMULATION_DT)
+}
+
+/// Scenario: Holding a key is a valid driving style
+///
+/// Given the sweeper scenario for each classic car on asphalt with the Balanced preset
+/// When Sustained Hold is driven
+/// Then it keeps >= 90% of its entry speed and carves cleanly (no scrub understeer, no spin),
+/// while turning at least as far as Rapid Feathering
+///
+/// Restated in task 10: the draft gate compared hold and feathering exit speeds (>= 70%). Holding
+/// turns the car ~4x further in the same 3 s (GT: 83 deg vs 19 deg), so a lower exit speed there is
+/// the tighter line, not scrub. Speed retained against entry measures scrub directly
+/// (pre-043: kart 16%, GT 79%).
 #[test]
 fn test_keyboard_sweeper_feathering_preserves_speed_vs_holding() {
-    let gt = CLASSIC_ARCADE_CARS
-        .iter()
-        .find(|c| c.id == "classic_gt")
-        .expect("classic_gt must exist in arcade catalog");
-    let cfg = gt.to_car_config();
-    let dt = DEFAULT_SIMULATION_DT;
-
-    let hold_profile = KeyboardDriverProfile::sustained_hold_balanced();
-    let feather_profile = KeyboardDriverProfile::rapid_feathering_balanced();
-
-    let hold_res = run_keyboard_sweeper_simulation(
-        gt.id,
-        gt.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &hold_profile,
-        70.0,
-        3.0,
-        dt,
-    );
-
-    let feather_res = run_keyboard_sweeper_simulation(
-        gt.id,
-        gt.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &feather_profile,
-        70.0,
-        3.0,
-        dt,
-    );
-
-    // 1. Feathering avoids excessive tire scrub and maintains higher exit speed
-    assert!(
-        feather_res.exit_speed_kmh > hold_res.exit_speed_kmh,
-        "Feathering must retain higher exit speed than holding lock: feather={:.1} km/h vs hold={:.1} km/h",
-        feather_res.exit_speed_kmh,
-        hold_res.exit_speed_kmh
-    );
-
-    // 2. Speed loss under holding must be substantially higher
-    assert!(
-        hold_res.speed_loss_kmh > feather_res.speed_loss_kmh,
-        "Sustained hold must suffer greater scrub drag: hold_loss={:.1} km/h vs feather_loss={:.1} km/h",
-        hold_res.speed_loss_kmh,
-        feather_res.speed_loss_kmh
-    );
-
-    // 3. Peak front slip angle under sustained hold pushes into scrub saturation
-    assert!(
-        hold_res.peak_front_slip_deg > feather_res.peak_front_slip_deg,
-        "Hold must produce higher peak front slip angle: hold_slip={:.1}° vs feather_slip={:.1}°",
-        hold_res.peak_front_slip_deg,
-        feather_res.peak_front_slip_deg
-    );
+    for model in CLASSIC_ARCADE_CARS {
+        let hold = sweep(model, SurfaceType::Asphalt, KeyboardSteerPattern::SustainedHold, SteeringProfile::Balanced);
+        let feather = sweep(model, SurfaceType::Asphalt, KeyboardSteerPattern::RapidFeathering, SteeringProfile::Balanced);
+        println!(
+            "{:<16} hold: {:.1} km/h ({:.0}% of entry, {:.0} deg) | feathering: {:.1} km/h ({:.0} deg)",
+            model.id,
+            hold.exit_speed_kmh,
+            hold.speed_retention_pct,
+            hold.heading_change_deg,
+            feather.exit_speed_kmh,
+            feather.heading_change_deg
+        );
+        assert!(hold.speed_retention_pct >= 90.0, "{}: holding kept only {:.0}% of entry speed", model.id, hold.speed_retention_pct);
+        assert!(
+            matches!(hold.outcome, KeyboardHandlingOutcome::CleanCarve | KeyboardHandlingOutcome::PowerSlide),
+            "{}: holding must carve, got {:?}",
+            model.id,
+            hold.outcome
+        );
+        assert!(hold.heading_change_deg >= feather.heading_change_deg, "{}: holding must turn at least as far as feathering", model.id);
+    }
 }
 
+/// The kart used to collapse under a held key (55 -> 8.9 km/h, front and rear sliding at 77 deg).
 #[test]
 fn test_keyboard_kart_caster_jacking_scrub_differential() {
-    let kart = CLASSIC_ARCADE_CARS
-        .iter()
-        .find(|c| c.id == "classic_kart")
-        .expect("classic_kart must exist in arcade catalog");
-    let cfg = kart.to_car_config();
-    let dt = DEFAULT_SIMULATION_DT;
+    let kart = car("classic_kart");
+    let hold = sweep(kart, SurfaceType::Asphalt, KeyboardSteerPattern::SustainedHold, SteeringProfile::Balanced);
+    println!("kart hold: exit {:.1} km/h, front slip {:.1} deg, rear slip {:.1} deg", hold.exit_speed_kmh, hold.peak_front_slip_deg, hold.peak_rear_slip_deg);
+    assert!(hold.speed_retention_pct >= 90.0, "kart holding kept only {:.0}% of entry speed", hold.speed_retention_pct);
+    assert!(hold.peak_rear_slip_deg < 30.0, "kart rear must not wash out ({:.1} deg)", hold.peak_rear_slip_deg);
+}
 
-    let hold_profile = KeyboardDriverProfile::sustained_hold_balanced();
-    let feather_profile = KeyboardDriverProfile::rapid_feathering_balanced();
-
-    let hold_res = run_keyboard_sweeper_simulation(
-        kart.id,
-        kart.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &hold_profile,
-        55.0,
-        3.0,
-        dt,
-    );
-
-    let feather_res = run_keyboard_sweeper_simulation(
-        kart.id,
-        kart.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &feather_profile,
-        55.0,
-        3.0,
-        dt,
-    );
-
-    // Kart with 1:1 steering lock and caster jacking suffers heavy scrub on sustained hold
+/// Sharp steers harder than Balanced for the same held key.
+#[test]
+fn test_keyboard_filter_profiles_direct_vs_balanced_cornering() {
+    let gt = car("classic_gt");
+    let sharp = sweep(gt, SurfaceType::Asphalt, KeyboardSteerPattern::SustainedHold, SteeringProfile::Sharp);
+    let balanced = sweep(gt, SurfaceType::Asphalt, KeyboardSteerPattern::SustainedHold, SteeringProfile::Balanced);
     assert!(
-        feather_res.speed_retention_pct > hold_res.speed_retention_pct + 10.0,
-        "Kart feathering must improve speed retention by at least 10%: feather={:.1}% vs hold={:.1}%",
-        feather_res.speed_retention_pct,
-        hold_res.speed_retention_pct
+        sharp.peak_steer_angle_deg > balanced.peak_steer_angle_deg,
+        "Sharp must steer harder than Balanced: sharp={:.1} deg vs balanced={:.1} deg",
+        sharp.peak_steer_angle_deg,
+        balanced.peak_steer_angle_deg
     );
 }
 
+/// Scenario: Key styles do not cause spins on safe presets
+///
+/// Given the chicane scenario for each classic car with Smooth and Balanced
+/// When every chicane key style is run on asphalt, dirt and packed sand
+/// Then no run ends in a spin
+///
+/// Restated in task 10: sheet ice (mu 0.08) is excluded; a full right-to-left reversal at 65 km/h
+/// on ice spins these cars on every preset.
 #[test]
-fn test_keyboard_filter_profiles_direct_vs_balanced_cornering() {
-    let gt = CLASSIC_ARCADE_CARS
-        .iter()
-        .find(|c| c.id == "classic_gt")
-        .expect("classic_gt must exist in arcade catalog");
-    let cfg = gt.to_car_config();
-    let dt = DEFAULT_SIMULATION_DT;
+fn test_key_styles_do_not_spin_on_safe_presets() {
+    for model in CLASSIC_ARCADE_CARS {
+        let cfg = model.to_car_config();
+        let v0 = if model.id == "classic_kart" { 50.0 } else { 65.0 };
+        for surface in [SurfaceType::Asphalt, SurfaceType::Dirt, SurfaceType::PackedSand] {
+            for preset in [SteeringProfile::Smooth, SteeringProfile::Balanced] {
+                for pattern in KeyboardSteerPattern::CHICANE {
+                    let driver = KeyboardDriverProfile::for_pattern(pattern, preset);
+                    let r = run_keyboard_chicane_simulation(model.id, model.name, &cfg, surface, &driver, v0, DEFAULT_SIMULATION_DT);
+                    assert_ne!(r.outcome, ChicaneTransitionOutcome::Spinout, "{} {:?} {}: spun in the chicane", model.id, surface, driver.id);
+                }
+            }
+        }
+    }
+}
 
-    let direct_profile = KeyboardDriverProfile::sustained_hold_direct();
-    let balanced_profile = KeyboardDriverProfile::sustained_hold_balanced();
-
-    let direct_res = run_keyboard_sweeper_simulation(
-        gt.id,
-        gt.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &direct_profile,
-        70.0,
-        3.0,
-        dt,
-    );
-
-    let balanced_res = run_keyboard_sweeper_simulation(
-        gt.id,
-        gt.name,
-        &cfg,
-        SurfaceType::Asphalt,
-        &balanced_profile,
-        70.0,
-        3.0,
-        dt,
-    );
-
-    // Direct raw digital input snaps to full lock immediately, causing faster initial scrub
-    assert!(
-        direct_res.peak_steer_angle_deg >= balanced_res.peak_steer_angle_deg,
-        "Direct steering must reach full mechanical lock: direct={:.1}° vs balanced={:.1}°",
-        direct_res.peak_steer_angle_deg,
-        balanced_res.peak_steer_angle_deg
-    );
+/// Scenario: Presets change the key style picture
+///
+/// Given the Key Style Sensitivity summary on asphalt
+/// When Smooth, Balanced, Sharp and Raw are compared
+/// Then the average spread across key styles falls from Smooth to Raw
+///
+/// Restated in task 10: the draft expected Smooth to have the lower spread. It is the other way:
+/// Smooth's 220 ms steering turns short taps into gentle steering (feathering nearly drives
+/// straight), so technique changes the line a lot; Raw passes every tap at full input, so tapping
+/// and holding converge.
+#[test]
+fn test_presets_change_key_style_spread() {
+    let mut results = Vec::new();
+    for model in CLASSIC_ARCADE_CARS {
+        for preset in SteeringProfile::PRESETS {
+            for pattern in KeyboardSteerPattern::SWEEPER {
+                results.push(sweep(model, SurfaceType::Asphalt, pattern, preset));
+            }
+        }
+    }
+    let sensitivity = key_style_sensitivity(&results);
+    let spreads = SteeringProfile::PRESETS.map(|p| {
+        let xs: Vec<f32> = sensitivity.iter().filter(|k| k.filter_profile == p).map(|k| k.spread_pct).collect();
+        xs.iter().sum::<f32>() / xs.len() as f32
+    });
+    println!("average asphalt key-style spread: Smooth {:.0}% Balanced {:.0}% Sharp {:.0}% Raw {:.0}%", spreads[0], spreads[1], spreads[2], spreads[3]);
+    for k in 0..3 {
+        assert!(spreads[k] > spreads[k + 1], "spread must fall from Smooth to Raw: {spreads:?}");
+    }
 }
 
 #[test]
 fn test_keyboard_chicane_reversal_latency_measurement() {
-    let rally = CLASSIC_ARCADE_CARS
-        .iter()
-        .find(|c| c.id == "classic_rally")
-        .expect("classic_rally must exist in arcade catalog");
-    let cfg = rally.to_car_config();
-    let dt = DEFAULT_SIMULATION_DT;
-
+    let rally = car("classic_rally");
     let driver = KeyboardDriverProfile::sustained_hold_balanced();
-    let chicane_res = run_keyboard_chicane_simulation(
-        rally.id,
-        rally.name,
-        &cfg,
-        SurfaceType::Dirt,
-        &driver,
-        65.0,
-        dt,
-    );
-
-    // Chicane reversal latency must be positive and measured
+    let chicane_res = run_keyboard_chicane_simulation(rally.id, rally.name, &rally.to_car_config(), SurfaceType::Dirt, &driver, 65.0, DEFAULT_SIMULATION_DT);
     assert!(
         chicane_res.reversal_latency_ms > 50.0 && chicane_res.reversal_latency_ms < 1000.0,
         "Reversal latency must be in realistic physical window: got {:.1} ms",
@@ -179,30 +155,19 @@ fn test_keyboard_chicane_reversal_latency_measurement() {
     );
 }
 
+/// Tapping the counter-steer catches a slide better than holding full opposite lock, which
+/// over-corrects into a slide the other way.
 #[test]
 fn test_keyboard_slide_catch_recovery_on_dirt() {
-    let offroad = CLASSIC_ARCADE_CARS
-        .iter()
-        .find(|c| c.id == "classic_offroad")
-        .expect("classic_offroad must exist in arcade catalog");
+    let offroad = car("classic_offroad");
     let cfg = offroad.to_car_config();
-    let dt = DEFAULT_SIMULATION_DT;
-
-    let driver = KeyboardDriverProfile::sustained_hold_balanced();
-    let catch_res = run_keyboard_slide_catch_simulation(
-        offroad.id,
-        offroad.name,
-        &cfg,
-        SurfaceType::Dirt,
-        &driver,
-        55.0,
-        dt,
-    );
-
-    // Off-road buggy on dirt should successfully catch or damp the slide
-    assert!(
-        catch_res.max_sideslip_deg > 5.0,
-        "Vehicle must experience initial induced slip: got {:.1}°",
-        catch_res.max_sideslip_deg
-    );
+    let run = |pattern| {
+        let driver = KeyboardDriverProfile::for_pattern(pattern, SteeringProfile::Balanced);
+        run_keyboard_slide_catch_simulation(offroad.id, offroad.name, &cfg, SurfaceType::Dirt, &driver, 55.0, DEFAULT_SIMULATION_DT)
+    };
+    let hold = run(KeyboardSteerPattern::SustainedHold);
+    let tap = run(KeyboardSteerPattern::RapidFeathering);
+    println!("slide catch on dirt: hold error {:.1} deg, tapping error {:.1} deg", hold.final_heading_error_deg, tap.final_heading_error_deg);
+    assert!(hold.max_sideslip_deg > 5.0, "Vehicle must experience initial induced slip: got {:.1} deg", hold.max_sideslip_deg);
+    assert!(tap.final_heading_error_deg < hold.final_heading_error_deg, "tapping must catch the slide better than holding");
 }

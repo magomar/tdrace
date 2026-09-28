@@ -201,3 +201,16 @@ def test_runs_of_numbers_corners_from_waypoint_zero_and_joins_a_wrapping_run():
     runs, count = imp.runs_of(classes, ("corner",))
     assert count == 2
     assert runs == [0, -1, 1, 1, -1, -1, 0]
+
+
+def test_chain_segments_stops_at_an_optional_last_node():
+    ways = {1: {"nodes": ["a", "b", "c", "d"]}, 2: {"nodes": ["x", "y", "b"]}}
+    chain = imp.chain_segments(ways, [(2, None), (1, "b", "c")])
+    assert [n for n, _ in chain] == ["x", "y", "b", "c"]
+
+
+def test_shift_start_rotates_props_with_the_points():
+    square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+    pts, props = imp.shift_start(square, 150.0, ["A", "B", "C", "D"])
+    assert pts[0] == (100.0, 50.0)
+    assert props == ["B", "C", "D", "A", "B"]
