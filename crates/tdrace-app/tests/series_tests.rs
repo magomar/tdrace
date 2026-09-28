@@ -1318,13 +1318,16 @@ fn test_kart_championship_first_round_bots_move() {
         session.physics_step(RaceSession::FIXED_DT);
     }
 
-    // Every bot must have launched cleanly from the grid
+    // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
+    // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
+    // behind another can sit at ~4.8 m while rolling at ~3 m/s (2 of 50 random grids). A stalled
+    // launch (the regression this test guards: 1.7 m at 0.8 m/s) still fails.
     for i in 1..num_cars {
         let dist = session.cars[i].state.position.distance(initial_positions[i]);
         let speed = session.cars[i].state.speed;
         let prog = session.trackers[i].progress_distance;
         assert!(
-            dist > 5.0,
+            dist > 5.0 || (dist > 3.0 && speed > 2.5),
             "Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
             i, session.opponent_drivers[i - 1].name, dist, speed, prog
         );

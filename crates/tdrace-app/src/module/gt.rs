@@ -64,42 +64,40 @@ impl GtWorldChallengeModule {
             steer_speed: 9.0,
             steer_return_speed: 12.0,
             counter_steer_assist: 1.15,
-            speed_sensitive_steer_factor: 0.016,
 
             air_drag_coefficient: 0.65,
             lateral_drag_coefficient: 1.40,
             rolling_resistance_coefficient: 0.014,
             angular_damping: 180.0,
 
-            weight_transfer_longitudinal: 0.55,
-            weight_transfer_lateral: 0.45,
+            roll_balance: 0.50,
+            weight_transfer_hz: 4.0,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.22,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 2.10, // Strong GT3 aerodynamic package
 
             tire: TireConfig {
-                stiffness_b: 13.0,
-                shape_c: 1.45,
-                peak_d: 1.20,
-                curvature_e: -0.08,
-                drift_slide_friction: 0.82,
-                handbrake_lateral_friction_multiplier: 0.50,
+                grip: 1.20,
+                peak_slip_angle_deg: 8.0,
+                slide_grip: 0.82,
                 skid_threshold: 0.08,
                 skid_full_threshold: 0.24,
+                ..TireConfig::default()
             },
+            rear_axle: Default::default(),
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            player: Default::default(),
             wheels: CarConfig::default_wheel_assemblies_for(
                 TireConfig {
-                    stiffness_b: 13.0,
-                    shape_c: 1.45,
-                    peak_d: 1.20,
-                    curvature_e: -0.08,
-                    drift_slide_friction: 0.82,
-                    handbrake_lateral_friction_multiplier: 0.50,
+                    grip: 1.20,
+                    peak_slip_angle_deg: 8.0,
+                    slide_grip: 0.82,
                     skid_threshold: 0.08,
                     skid_full_threshold: 0.24,
+                    ..TireConfig::default()
                 },
                 0.65,
                 0.0,

@@ -1,7 +1,7 @@
 use wheelbase::car::{Car, CarControls};
 use wheelbase::config::{CarConfig, DriverAssistsConfig, WheelAssemblyConfig};
 use wheelbase::surface::SurfaceType;
-use wheelbase::tire::WheelAssembly;
+use wheelbase::tire::{combined_slip_forces, WheelAssembly};
 use wheelbase::Vec2;
 
 /// Scenario: Staggered tire dimensions on open-wheel kart
@@ -9,7 +9,8 @@ use wheelbase::Vec2;
 /// Given a classic_kart configured with narrow front tires (r=0.18m, w=0.12m)
 /// and wide rear tires (r=0.20m, w=0.21m)
 /// When standing acceleration and maximum lateral cornering tests are executed
-/// Then the rear axle must deliver at least 35% more peak lateral force than the front axle under equal normal load
+/// Then the rear axle must deliver more peak lateral force than the front axle under equal normal load
+/// (Spec 043: tire grip is a true friction scale, so the old 35% Pacejka D gap no longer applies)
 /// And rear wheel rotational inertia must measure larger than front wheel inertia (I_rear > I_front)
 #[test]
 fn test_staggered_tire_dimensions_on_open_wheel_kart() {
@@ -36,8 +37,12 @@ fn test_staggered_tire_dimensions_on_open_wheel_kart() {
     let slip_angle = 0.15;
     let mu = 1.0;
 
-    let fy_front = front_assembly.lateral_force(slip_angle, load, mu, false);
-    let fy_rear = rear_assembly.lateral_force(slip_angle, load, mu, false);
+    let lateral = |a: &WheelAssembly| {
+        let envelope = a.friction_envelope(load, load, mu);
+        combined_slip_forces(0.0, slip_angle, envelope, &a.config.tire_model).1
+    };
+    let fy_front = lateral(&front_assembly);
+    let fy_rear = lateral(&rear_assembly);
 
     let force_ratio = fy_rear / fy_front;
     println!(
@@ -46,8 +51,8 @@ fn test_staggered_tire_dimensions_on_open_wheel_kart() {
     );
 
     assert!(
-        force_ratio >= 1.35,
-        "Rear axle must deliver at least 35% more peak lateral force (got ratio {:.2})",
+        force_ratio > 1.05,
+        "Rear axle must deliver more peak lateral force (got ratio {:.2})",
         force_ratio
     );
 }
@@ -82,15 +87,17 @@ fn test_independent_front_wheel_brake_lockup_under_trail_braking() {
     }
 
     // Now apply 100% service brake while cornering without ABS
+    // steer > 0 turns right, so the front-inner wheel is front-right (index 1).
+    // (Spec 043: the pre-043 test read index 0, the outer wheel; the old model locked it first.)
     let trail_ctrl = CarControls::new(0.0, 0.45, 1.0, false);
     for _ in 0..30 {
         car.step(&trail_ctrl, SurfaceType::Asphalt, dt);
-        if car.state.wheels[0].is_locked {
+        if car.state.wheels[1].is_locked {
             break;
         }
     }
 
-    let fl_wheel = &car.state.wheels[0];
+    let fl_wheel = &car.state.wheels[1];
     let rr_wheel = &car.state.wheels[3];
 
     println!(
@@ -227,8 +234,11 @@ fn test_legacy_configuration_backward_compatibility() {
     let cfg: CarConfig = serde_json::from_str(legacy_json).expect("Legacy JSON must deserialize cleanly");
     assert_eq!(cfg.wheels.len(), 4);
     for i in 0..4 {
-        assert_eq!(cfg.wheels[i].tire_model.stiffness_b, 11.0);
-        assert_eq!(cfg.wheels[i].tire_model.peak_d, 1.18);
+        assert_eq!(cfg.wheels[i].tire_model.grip, 1.18);
+        let expected_peak = wheelbase::pacejka_peak_slip_angle_deg(11.0, 1.35, -0.15);
+        // Rear axle: default stiffer rear (peak at 0.85x the front, Spec 043)
+        let axle = if i < 2 { 1.0 } else { wheelbase::RearAxleTire::default().peak_slip_scale };
+        assert!((cfg.wheels[i].tire_model.peak_slip_angle_deg - expected_peak * axle).abs() < 1e-4);
         assert_eq!(cfg.wheels[i].tire_radius, 0.32);
         assert_eq!(cfg.wheels[i].rotational_inertia, 1.25);
     }
@@ -326,53 +336,39 @@ fn test_kart_caster_jacking_inside_rear_wheel_unloading() {
     );
 }
 
-/// Scenario: High-speed kart hairpin turning radius and lateral grip (Spec 032)
+/// Scenario: High-speed kart cornering grip (Spec 032, restated for Spec 043)
 ///
-/// Given a CarConfig::kart() cornering at high speed on dry asphalt
-/// When negotiating a sweeper or hairpin curve
-/// Then the steady-state turning circle diameter must not exceed 16.0 meters
-/// And lateral acceleration must reach at least 1.70g without front tire slip runaway
+/// Given a CarConfig::kart() cornering at ~50 km/h on dry asphalt with throttle
+/// When holding a strong steer input for one second
+/// Then the steady lateral acceleration (from tire forces) is at least 1.2 g
+/// And the kart stays under control (body sideslip < 0.35 rad, front slip < 30 deg)
+///
+/// The pre-043 version demanded a <= 16 m circle and >= 1.85 g computed as yaw rate x speed at
+/// 45-55 km/h. That is > 2 g of true lateral force; the old model only met it while spinning
+/// (front slip 74 deg). This version measures force-based lateral g and forbids the spin.
 #[test]
 fn test_kart_high_speed_tight_turning_radius_and_lateral_grip() {
-    let dt = 1.0 / 60.0;
-    let cfg = CarConfig::kart();
-    let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
-    // Initial speed ~50 km/h (13.9 m/s)
+    let dt = 1.0 / 120.0;
+    let mut car = Car::new(CarConfig::kart()).with_pose(Vec2::ZERO, 0.0);
     car.set_velocity(Vec2::new(50.0 / 3.6, 0.0));
 
-    // Corner at ~45-55 km/h with active throttle through curve
     let ctrl = CarControls::new(0.85, 0.70, 0.0, false);
-    for _ in 0..60 {
+    let (mut lat_g, mut max_beta) = (0.0f32, 0.0f32);
+    for step in 0..120 {
         car.step(&ctrl, SurfaceType::Asphalt, dt);
+        max_beta = max_beta.max(car.state().sideslip_angle.abs());
+        if step >= 60 {
+            lat_g += car.state().acceleration_local.y.abs() / 9.81 / 60.0;
+        }
     }
-
-    let speed = car.state().speed;
-    let yaw = car.state().angular_velocity.abs();
-    let radius = if yaw > 1e-3 { speed / yaw } else { 999.0 };
-    let diameter = radius * 2.0;
-    let lat_g = (speed * yaw) / 9.81;
     let front_slip_deg = car.state().wheels[0].slip_angle.abs().to_degrees();
-
     println!(
-        "Kart Curve Performance: Speed={:.1} km/h | Radius={:.2} m (Diameter={:.2} m) | Ay={:.2}g | FrontSlip={:.1}°",
-        speed * 3.6, radius, diameter, lat_g, front_slip_deg
+        "Kart Curve Performance: Speed={:.1} km/h | Ay={:.2}g | max sideslip={:.2} rad | FrontSlip={:.1} deg",
+        car.state().speed * 3.6, lat_g, max_beta, front_slip_deg
     );
-
-    assert!(
-        diameter <= 16.0,
-        "Kart turning circle diameter ({:.2} m) must be <= 16.0 m",
-        diameter
-    );
-    assert!(
-        lat_g >= 1.85,
-        "Kart lateral acceleration ({:.2}g) must exceed 1.85g",
-        lat_g
-    );
-    assert!(
-        front_slip_deg < 65.0,
-        "Front slip angle ({:.1}°) must remain stable without uncontrollable spinout",
-        front_slip_deg
-    );
+    assert!(lat_g >= 1.2, "Kart steady lateral acceleration ({lat_g:.2}g) must reach 1.2g");
+    assert!(max_beta < 0.35, "Kart must not spin (max sideslip {max_beta:.2} rad)");
+    assert!(front_slip_deg < 30.0, "Front slip angle ({front_slip_deg:.1} deg) must remain controlled");
 }
 
 /// Scenario: Low-speed geometric turning circle (Spec 032)

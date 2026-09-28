@@ -274,7 +274,7 @@ mod tests {
             let speed_scale = (1.0f32 / (1.0f32 + v0 * 0.018f32)).max(0.38f32);
             let ctrl = CarControls {
                 throttle: 0.5,
-                steer: 1.0 * speed_scale,
+                steer: 0.35 * speed_scale, // Spec 043: compare below the tire limit, where the result is not chaotic
                 brake: 0.0,
                 handbrake: false,
                 reverse: false,
@@ -306,10 +306,9 @@ mod tests {
             let temp_f = car_calibrated.state().wheel_assemblies[0].temperature;
             let _grip_f = car_calibrated.state().wheel_assemblies[0].thermal_grip_multiplier();
 
-            // 3. GT Car (0.016 factor + calibrated thermal dynamics)
+            // 3. GT Car (reduced lock + calibrated thermal dynamics)
             let mut gt_cfg = CarConfig::sports_car();
             gt_cfg.max_steer_angle = 0.50;
-            gt_cfg.speed_sensitive_steer_factor = 0.016;
             let mut car_gt = Car::new(gt_cfg).with_pose(glam::Vec2::ZERO, 0.0);
             car_gt.set_velocity(glam::Vec2::new(v0, 0.0));
             for _ in 0..180 {

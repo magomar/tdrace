@@ -258,9 +258,9 @@ fn test_deterministic_reproducibility() {
         "Generations evaluated must be identical"
     );
     assert_eq!(
-        result1.optimized_config.speed_sensitive_steer_factor,
-        result2.optimized_config.speed_sensitive_steer_factor,
-        "Optimized speed sensitive steer factor must be identical"
+        result1.optimized_config.tire.peak_slip_angle_deg,
+        result2.optimized_config.tire.peak_slip_angle_deg,
+        "Optimized tire peak slip angle must be identical"
     );
     assert_eq!(
         result1.optimized_config.caster_jacking_factor,

@@ -31,20 +31,20 @@ fn test_digital_input_filter_progressive_ramp() {
     let mut filter = DigitalInputFilter::default();
     let dt = 1.0 / 60.0;
 
-    let (s, t, b) = filter.update(1.0, 1.0, 0.0, 0.0, dt);
+    let (s, t, b) = filter.update(1.0, 1.0, 0.0, dt);
     assert!(s > 0.0 && s < 0.25);
     assert!(t > 0.0 && t < 0.25);
     assert_eq!(b, 0.0);
 
     // After 60 frames, steer and throttle reach 1.0
     for _ in 0..60 {
-        filter.update(1.0, 1.0, 0.0, 0.0, dt);
+        filter.update(1.0, 1.0, 0.0, dt);
     }
     assert_eq!(filter.current_steer, 1.0);
     assert_eq!(filter.current_throttle, 1.0);
 
     // Instant throttle cut
-    let (_, t_cut, _) = filter.update(0.0, 0.0, 0.0, 0.0, dt);
+    let (_, t_cut, _) = filter.update(0.0, 0.0, 0.0, dt);
     assert_eq!(t_cut, 0.0);
 }
 
@@ -1173,49 +1173,37 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
 
 #[test]
 fn test_arcade_settings_modal_controls_tab_widgets_and_rollback() {
-    use cabinet::input::SteeringProfile;
+    use cabinet::input::{DigitalInputConfig, SteeringProfile};
 
     let audio = AudioSettings::default();
     let gp = GamepadConfig::default();
     let mut modal = ArcadeSettingsModal::new(&audio, &gp);
 
-    // Initial state
-    modal.set_input_filter_state(SteeringProfile::Balanced, true, 4.0, 0.75, 8.0, 0.004);
+    // Initial state: Balanced preset (Spec 043 five-parameter keyboard handling)
+    let balanced = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
+    modal.set_input_filter_state(&balanced);
     modal.snapshot_initial();
-
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
-    assert!(modal.speed_sensitive_enabled());
-    assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
-    assert!((modal.selected_steer_rise_rate() - 8.0).abs() < 1e-3);
-    assert!((modal.selected_speed_sensitive_factor() - 0.004).abs() < 1e-4);
+    assert_eq!(modal.selected_input_config(), balanced);
     assert!(!modal.has_changes());
 
-    // Modify controls settings (including new switch and rise/factor sliders)
-    modal.steering_profile_dropdown.set_selected(1); // Smooth
-    modal.speed_sensitive_switch.set_selected(1); // Disabled
-    modal.hold_bleed_rate_slider.set_value(6.5);
-    modal.min_speed_steer_limit_slider.set_value(0.90);
-    modal.steer_rise_rate_slider.set_value(12.5);
-    modal.speed_sensitive_factor_slider.set_value(0.008);
-
-    assert_eq!(modal.selected_steering_profile(), SteeringProfile::Smooth);
-    assert!(!modal.speed_sensitive_enabled());
-    assert!((modal.selected_hold_bleed_rate() - 6.5).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.90).abs() < 1e-3);
-    assert!((modal.selected_steer_rise_rate() - 12.5).abs() < 1e-3);
-    assert!((modal.selected_speed_sensitive_factor() - 0.008).abs() < 1e-4);
+    // Editing a slider turns the preset into Custom and marks the modal dirty
+    modal.steer_authority_slider.set_value(125.0);
+    modal.pedal_time_slider.set_value(60.0);
+    let edited = modal.selected_input_config();
+    assert_eq!(edited.profile, SteeringProfile::Custom);
+    assert!((edited.steer_authority - 1.25).abs() < 1e-4);
+    assert!((edited.pedal_time_ms - 60.0).abs() < 1e-4);
     assert!(modal.has_changes());
+
+    // Choosing values that match a preset reports that preset again
+    modal.set_input_filter_state(&DigitalInputConfig::from_profile(SteeringProfile::Raw));
+    assert_eq!(modal.selected_input_config().profile, SteeringProfile::Raw);
 
     // Cancel / Rollback to snapshot
     modal.revert_to_snapshot();
-
     assert_eq!(modal.selected_steering_profile(), SteeringProfile::Balanced);
-    assert!(modal.speed_sensitive_enabled());
-    assert!((modal.selected_hold_bleed_rate() - 4.0).abs() < 1e-3);
-    assert!((modal.selected_min_speed_steer_limit() - 0.75).abs() < 1e-3);
-    assert!((modal.selected_steer_rise_rate() - 8.0).abs() < 1e-3);
-    assert!((modal.selected_speed_sensitive_factor() - 0.004).abs() < 1e-4);
+    assert_eq!(modal.selected_input_config(), balanced);
     assert!(!modal.has_changes());
 }
 
@@ -1241,40 +1229,15 @@ fn test_arcade_settings_modal_controls_subtabs_navigation_and_profile_presets() 
     assert_eq!(modal.controls_sub_tab, 0);
     assert_eq!(modal.nav.column_lengths[1], 7);
 
-    // Test profile preset population:
-    // 1. Direct (idx 3): Switch OFF, Limit 1.00, Bleed 8.0, Rise 12.0
-    let cfg_direct = SteeringProfile::Direct.to_config();
-    assert!(!cfg_direct.speed_sensitive_enabled);
-    assert_eq!(cfg_direct.min_speed_steer_limit, 1.0);
-    assert_eq!(cfg_direct.hold_bleed_rate, 8.0);
-    assert_eq!(cfg_direct.steer_rise_rate, 12.0);
-
-    // 2. Raw (idx 4): Switch OFF, Limit 1.00, Bleed 10.0, Rise 20.0
-    let cfg_raw = SteeringProfile::Raw.to_config();
-    assert!(!cfg_raw.speed_sensitive_enabled);
-    assert_eq!(cfg_raw.min_speed_steer_limit, 1.0);
-    assert_eq!(cfg_raw.hold_bleed_rate, 10.0);
-    assert_eq!(cfg_raw.steer_rise_rate, 20.0);
-
-    // 3. Agile (idx 2): Switch ON, Limit 0.80, Bleed 6.0, Rise 10.0
-    let cfg_agile = SteeringProfile::Agile.to_config();
-    assert!(cfg_agile.speed_sensitive_enabled);
-    assert_eq!(cfg_agile.min_speed_steer_limit, 0.80);
-    assert_eq!(cfg_agile.hold_bleed_rate, 6.0);
-    assert_eq!(cfg_agile.steer_rise_rate, 10.0);
-
-    // 4. Smooth (idx 1): Switch ON, Limit 0.60, Bleed 2.0, Rise 6.0
-    let cfg_smooth = SteeringProfile::Smooth.to_config();
-    assert!(cfg_smooth.speed_sensitive_enabled);
-    assert_eq!(cfg_smooth.min_speed_steer_limit, 0.60);
-    assert_eq!(cfg_smooth.hold_bleed_rate, 2.0);
-    assert_eq!(cfg_smooth.steer_rise_rate, 6.0);
-
-    // 5. Balanced (idx 0): Switch ON, Limit 0.75, Bleed 4.0, Rise 8.0
-    let cfg_balanced = SteeringProfile::Balanced.to_config();
-    assert!(cfg_balanced.speed_sensitive_enabled);
-    assert_eq!(cfg_balanced.min_speed_steer_limit, 0.75);
-    assert_eq!(cfg_balanced.hold_bleed_rate, 4.0);
-    assert_eq!(cfg_balanced.steer_rise_rate, 8.0);
+    // Spec 043 presets: every step from Smooth to Raw is quicker, more authoritative, more
+    // linear, has quicker pedals and less traction help.
+    let presets = SteeringProfile::PRESETS.map(|p| p.to_config());
+    assert_eq!(presets[1], SteeringProfile::Balanced.to_config());
+    for pair in presets.windows(2) {
+        assert!(pair[1].steer_time_ms < pair[0].steer_time_ms);
+        assert!(pair[1].steer_authority > pair[0].steer_authority);
+        assert!(pair[1].traction_help < pair[0].traction_help);
+    }
+    assert_eq!(SteeringProfile::Raw.to_config().pedal_time_ms, 0.0);
 }
 
