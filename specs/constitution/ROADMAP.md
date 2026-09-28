@@ -72,7 +72,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 8: Reusable Racing Platform for New Games (Priority: High)
 Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
 - `[ ]` **[Reusable Racing Platform Layers & Determinism Safety Net](../049_reusable_racing_platform_layers.md)**: Target layering, phase roadmap, golden state hashes, and tracks-free performance benches.
-- `[ ]` **`Body2D` Trait**: Collision, LIDAR, progress and surface sampling work for any rigid body, not only `wheelbase::Car`.
+- `[ ]` **[`Body2D` Trait](../050_body2d_trait_for_vehiclegeneric_collision_and_progress.md)**: Collision, LIDAR, progress and surface sampling work for any rigid body, not only `wheelbase::Car`.
 - `[ ]` **`race-kit` Headless Race World**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
 - `[ ]` **`race-ui` Rendering Primitives**: Course renderers with a mesh cache, multi-part vehicle sprites, chase camera, and HUD widgets outside `tdrace-app`.
 - `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
