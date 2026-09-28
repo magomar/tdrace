@@ -191,15 +191,19 @@ Work is done in phases. Each phase leaves `make test` green.
   - `crates/tdrace-app/tests/official_catalog_tests.rs` — count per module, order, every file loads and passes `validate_track`, alias resolution, dev-mode disk override, normal-mode ignores disk.
   - `crates/tdrace-app/tests/circuit_storage_tests.rs` — extended for single-copy dev save, six-module promote, `target_module`, normal-mode save-as-copy.
   - `tests/python/test_osm_importer.py` — `--json` output (existing and new circuit), provenance URLs from `tracks/`.
+- Scenario evidence:
+  - JSON edit in dev mode: `official_catalog_tests::test_dev_mode_reads_official_circuit_from_disk` (race loader and menu preview read the edited `tracks/gt/monza.json`).
+  - Importer: `osm_importer` `write_source_json` for a new GT circuit (`spa_new_test`) plus `track_bake` gave a file listed in dev mode (19 GT circuits), loaded, 0 validation errors; normal mode lists 18 until the next build embeds it.
+  - Python: `tests/python/test_official_tracks.py` (6 passed, asserts the loaded circuit name).
 - Grep check (no circuit generators left): `rg -n "fn (track_[a-z_]+|[a-z_]+_(rx|kart|speedway|raceway))\(\) -> Track" crates/` returns no hits.
 - Spec lint: `keel validate .`
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: A JSON edit is what the game shows**
-  - [ ] **Given** dev mode is on and `tracks/gt/monza.json` is checked out
-  - [ ] **When** the developer changes a kerb in that JSON and starts a Monza race
-  - [ ] **Then** the race shows the change with no Rust rebuild and no export step
+  - [x] **Given** dev mode is on and `tracks/gt/monza.json` is checked out
+  - [x] **When** the developer changes a kerb in that JSON and starts a Monza race
+  - [x] **Then** the race shows the change with no Rust rebuild and no export step
 - **Scenario: Release build runs with no tracks folder**
   - [ ] **Given** a release binary built from a checkout with the `tracks` submodule
   - [ ] **When** the binary runs from a folder with no `tracks/` next to it and dev mode off
@@ -229,13 +233,13 @@ Work is done in phases. Each phase leaves `make test` green.
   - [x] **When** the game loads it
   - [x] **Then** it resolves to `nascar/daytona_superspeedway.json`
 - **Scenario: Python can race any official circuit**
-  - [ ] **Given** the tdrace-py package is built
-  - [ ] **When** a script creates an env with `track_name="monza"` and one with `track_name="drift_park"`
-  - [ ] **Then** both envs reset and step without error
+  - [x] **Given** the tdrace-py package is built
+  - [x] **When** a script creates an env with `track_name="monza"` and one with `track_name="drift_park"`
+  - [x] **Then** both envs reset and step without error
 - **Scenario: Importer produces a raceable circuit without Rust edits**
-  - [ ] **Given** an OSM cache file for one GT circuit
-  - [ ] **When** the developer runs `osm_importer.py gt --track <slug> --json` and then `cargo run --bin track_bake -- tracks/gt/<slug>.json`
-  - [ ] **Then** the circuit appears in the GT list in dev mode and passes `validate_track`
+  - [x] **Given** an OSM cache file for one GT circuit
+  - [x] **When** the developer runs `osm_importer.py gt --track <slug> --json` and then `cargo run --bin track_bake -- tracks/gt/<slug>.json`
+  - [x] **Then** the circuit appears in the GT list in dev mode and passes `validate_track`
 - **Scenario: No circuit data is left in Rust**
   - [x] **Given** phase 6 is merged
   - [x] **When** the grep check above runs
