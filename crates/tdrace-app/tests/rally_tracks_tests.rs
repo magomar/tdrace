@@ -4,11 +4,7 @@ use tdrace_app::module::GameModule;
 use tdrace_app::track_manager::TrackManager;
 use tdrace_app::ui::menu::{resolve_track_for_menu, CarChoice, TrackChoice};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::{
-    catalunya_rx, dirt_figure_eight, essay_rx, estering_rx, hell_rx, holjes_rx, killarney_rx, kouvola_rx,
-    loheac_rx, lydden_hill, mettet_rx, montalegre_rx, nyirad_rx, riga_rx, silverstone_rx,
-    yas_marina_rx,
-};
+
 use tdrace_core::track::geometry::JumpRampCarExt;
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
@@ -48,7 +44,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     }
 
     for track_def in &tracks {
-        let track = (track_def.generator)();
+        let track = tdrace_core::catalog::official_track("rally", track_def.id);
         use std::io::Write;
         let _ = writeln!(std::io::stderr(), "Checking track: {}", track_def.id);
         let _ = std::io::stderr().flush();
@@ -90,7 +86,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
 
 #[test]
 fn test_dirt_figure_eight_horizontal_flat_dirt_arena() {
-    let fig8 = dirt_figure_eight();
+    let fig8 = tdrace_core::catalog::official_track("classic", "dirt_figure_eight");
     assert_eq!(fig8.name, "Dirt Figure-8 Arena");
 
     // 1. Verify horizontal orientation (width along X is substantially larger than height along Y)
@@ -133,7 +129,7 @@ fn test_dirt_figure_eight_jump_ramps_proportional_trajectory() {
     use tdrace_core::physics::car::{Car, CarControls};
     use tdrace_core::physics::config::CarConfig;
 
-    let fig8 = dirt_figure_eight();
+    let fig8 = tdrace_core::catalog::official_track("classic", "dirt_figure_eight");
     assert_eq!(fig8.geometry.jump_ramps.len(), 2);
 
     for ramp in &fig8.geometry.jump_ramps {
@@ -187,89 +183,89 @@ fn test_dirt_figure_eight_jump_ramps_proportional_trajectory() {
 
 #[test]
 fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
-    let holjes = holjes_rx();
-    assert_eq!(holjes.name, "Höljes Motorstadion (World RX Sweden)");
+    let holjes = tdrace_core::catalog::official_track("rally", "holjes_rx");
+    assert_eq!(holjes.name, "Höljes Motorstadion");
     assert!(!holjes.geometry.jump_ramps.is_empty(), "Höljes must have the iconic jump ramp");
     let holjes_breakdown = holjes.surface_breakdown();
     assert!(holjes_breakdown.len() >= 2, "Höljes must be mixed surface (asphalt & dirt)");
 
-    let lydden = lydden_hill();
-    assert_eq!(lydden.name, "Lydden Hill Circuit (World RX Great Britain)");
+    let lydden = tdrace_core::catalog::official_track("rally", "lydden_hill");
+    assert_eq!(lydden.name, "Lydden Hill Race Circuit");
     let lydden_breakdown = lydden.surface_breakdown();
     assert!(lydden_breakdown.len() >= 2, "Lydden Hill must be mixed surface");
 
-    let hell = hell_rx();
-    assert_eq!(hell.name, "Lånkebanen (World RX Norway)");
+    let hell = tdrace_core::catalog::official_track("rally", "hell_rx");
+    assert_eq!(hell.name, "Lånkebanen / Hell RX");
     assert!(!hell.geometry.jump_ramps.is_empty(), "Hell RX must have jump ramp");
     let hell_breakdown = hell.surface_breakdown();
     assert!(hell_breakdown.len() >= 2, "Hell RX must be mixed surface");
 
-    let loheac = loheac_rx();
-    assert_eq!(loheac.name, "Circuit de Lohéac (World RX France)");
+    let loheac = tdrace_core::catalog::official_track("rally", "loheac_rx");
+    assert_eq!(loheac.name, "Circuit de Lohéac");
     assert!(!loheac.geometry.jump_ramps.is_empty(), "Lohéac must have jump ramp");
     let loheac_breakdown = loheac.surface_breakdown();
     assert!(loheac_breakdown.len() >= 2, "Lohéac must be mixed surface");
 
-    let estering = estering_rx();
-    assert_eq!(estering.name, "Estering Buxtehude (World RX Germany)");
+    let estering = tdrace_core::catalog::official_track("rally", "estering_rx");
+    assert_eq!(estering.name, "Estering Buxtehude");
     let estering_breakdown = estering.surface_breakdown();
     assert!(estering_breakdown.len() >= 2, "Estering must be mixed surface");
 
-    let montalegre = montalegre_rx();
-    assert_eq!(montalegre.name, "Pista Automóvel de Montalegre (World RX Portugal)");
+    let montalegre = tdrace_core::catalog::official_track("rally", "montalegre_rx");
+    assert_eq!(montalegre.name, "Pista de Montalegre");
     assert!(!montalegre.geometry.jump_ramps.is_empty(), "Montalegre must have jump ramp");
     let montalegre_breakdown = montalegre.surface_breakdown();
     assert!(montalegre_breakdown.len() >= 2, "Montalegre must be mixed surface");
 
-    let nyirad = nyirad_rx();
-    assert_eq!(nyirad.name, "Nyirád Racing Center (Euro RX Hungary)");
+    let nyirad = tdrace_core::catalog::official_track("rally", "nyirad_rx");
+    assert_eq!(nyirad.name, "Nyirád Racing Center");
     let nyirad_breakdown = nyirad.surface_breakdown();
     assert!(nyirad_breakdown.len() >= 2, "Nyirád must be mixed surface");
 
-    let kouvola = kouvola_rx();
-    assert_eq!(kouvola.name, "Tykkimäen Moottorirata (World RX Finland)");
+    let kouvola = tdrace_core::catalog::official_track("rally", "kouvola_rx");
+    assert_eq!(kouvola.name, "Tykkimäen Moottorirata");
     assert!(!kouvola.geometry.jump_ramps.is_empty(), "Kouvola must have jump ramp");
     let kouvola_breakdown = kouvola.surface_breakdown();
     assert!(kouvola_breakdown.len() >= 2, "Kouvola must be mixed surface");
 
-    let catalunya = catalunya_rx();
-    assert_eq!(catalunya.name, "Circuit de Barcelona-Catalunya RX (World RX Spain)");
+    let catalunya = tdrace_core::catalog::official_track("rally", "catalunya_rx");
+    assert_eq!(catalunya.name, "Barcelona-Catalunya RX");
     assert!(!catalunya.geometry.jump_ramps.is_empty(), "Catalunya RX must have jump ramp");
     let catalunya_breakdown = catalunya.surface_breakdown();
     assert!(catalunya_breakdown.len() >= 2, "Catalunya RX must be mixed surface");
 
-    let mettet = mettet_rx();
-    assert_eq!(mettet.name, "Circuit Jules Tacheny Mettet (World RX Belgium)");
+    let mettet = tdrace_core::catalog::official_track("rally", "mettet_rx");
+    assert_eq!(mettet.name, "Circuit Jules Tacheny Mettet");
     assert!(!mettet.geometry.jump_ramps.is_empty(), "Mettet must have jump ramp");
     let mettet_breakdown = mettet.surface_breakdown();
     assert!(mettet_breakdown.len() >= 2, "Mettet must be mixed surface");
 
-    let silverstone = silverstone_rx();
-    assert_eq!(silverstone.name, "Silverstone Circuit RX (World RX Great Britain)");
+    let silverstone = tdrace_core::catalog::official_track("rally", "silverstone_rx");
+    assert_eq!(silverstone.name, "Silverstone Circuit RX");
     assert!(!silverstone.geometry.jump_ramps.is_empty(), "Silverstone RX must have jump ramp");
     let silverstone_breakdown = silverstone.surface_breakdown();
     assert!(silverstone_breakdown.len() >= 2, "Silverstone RX must be mixed surface");
 
-    let riga = riga_rx();
-    assert_eq!(riga.name, "Biķernieku Trase (World RX Latvia)");
+    let riga = tdrace_core::catalog::official_track("rally", "riga_rx");
+    assert_eq!(riga.name, "Biķernieku Trase / Riga RX");
     assert!(!riga.geometry.jump_ramps.is_empty(), "Riga RX must have jump ramp");
     let riga_breakdown = riga.surface_breakdown();
     assert!(riga_breakdown.len() >= 2, "Riga RX must be mixed surface");
 
-    let killarney = killarney_rx();
-    assert_eq!(killarney.name, "Killarney International Raceway (World RX South Africa)");
+    let killarney = tdrace_core::catalog::official_track("rally", "killarney_rx");
+    assert_eq!(killarney.name, "Killarney International Raceway RX");
     assert!(!killarney.geometry.jump_ramps.is_empty(), "Killarney must have jump ramp");
     let killarney_breakdown = killarney.surface_breakdown();
     assert!(killarney_breakdown.len() >= 2, "Killarney must be mixed surface");
 
-    let yas_marina = yas_marina_rx();
-    assert_eq!(yas_marina.name, "Yas Marina RX Arena (World RX Abu Dhabi)");
+    let yas_marina = tdrace_core::catalog::official_track("rally", "yas_marina_rx");
+    assert_eq!(yas_marina.name, "Yas Marina RX Arena");
     assert!(!yas_marina.geometry.jump_ramps.is_empty(), "Yas Marina RX must have jump ramp");
     let yas_marina_breakdown = yas_marina.surface_breakdown();
     assert!(yas_marina_breakdown.len() >= 2, "Yas Marina RX must be mixed surface");
 
-    let essay = essay_rx();
-    assert_eq!(essay.name, "Circuit des Ducs (Essay RX)");
+    let essay = tdrace_core::catalog::official_track("rally", "essay_rx");
+    assert_eq!(essay.name, "Circuit des Ducs / Essay RX");
     assert!(!essay.geometry.jump_ramps.is_empty(), "Essay RX must have jump ramp");
     let essay_breakdown = essay.surface_breakdown();
     assert!(essay_breakdown.len() >= 2, "Essay RX must be mixed surface");
@@ -362,18 +358,18 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
     use tdrace_core::track::geometry::SurfaceShape;
 
     let tracks = [
-        ("holjes_rx", holjes_rx()),
-        ("hell_rx", hell_rx()),
-        ("loheac_rx", loheac_rx()),
-        ("montalegre_rx", montalegre_rx()),
-        ("kouvola_rx", kouvola_rx()),
-        ("catalunya_rx", catalunya_rx()),
-        ("mettet_rx", mettet_rx()),
-        ("silverstone_rx", silverstone_rx()),
-        ("riga_rx", riga_rx()),
-        ("killarney_rx", killarney_rx()),
-        ("yas_marina_rx", yas_marina_rx()),
-        ("essay_rx", essay_rx()),
+        ("holjes_rx", tdrace_core::catalog::official_track("rally", "holjes_rx")),
+        ("hell_rx", tdrace_core::catalog::official_track("rally", "hell_rx")),
+        ("loheac_rx", tdrace_core::catalog::official_track("rally", "loheac_rx")),
+        ("montalegre_rx", tdrace_core::catalog::official_track("rally", "montalegre_rx")),
+        ("kouvola_rx", tdrace_core::catalog::official_track("rally", "kouvola_rx")),
+        ("catalunya_rx", tdrace_core::catalog::official_track("rally", "catalunya_rx")),
+        ("mettet_rx", tdrace_core::catalog::official_track("rally", "mettet_rx")),
+        ("silverstone_rx", tdrace_core::catalog::official_track("rally", "silverstone_rx")),
+        ("riga_rx", tdrace_core::catalog::official_track("rally", "riga_rx")),
+        ("killarney_rx", tdrace_core::catalog::official_track("rally", "killarney_rx")),
+        ("yas_marina_rx", tdrace_core::catalog::official_track("rally", "yas_marina_rx")),
+        ("essay_rx", tdrace_core::catalog::official_track("rally", "essay_rx")),
     ];
 
     for (slug, track) in &tracks {
@@ -618,7 +614,7 @@ fn test_rally_tracks_centerline_driving_and_no_wall_obstructions() {
     let tracks = module.tracks();
 
     for track_def in &tracks {
-        let track = (track_def.generator)();
+        let track = tdrace_core::catalog::official_track("rally", track_def.id);
         let name = &track.name;
 
         // 1. Verify that all starting grid slots spawn freely without any barrier collision
@@ -672,12 +668,12 @@ fn test_export_and_save_rally_tracks_to_disk() {
     let _ = fs::create_dir_all(&temp_dir);
 
     let presets_to_export = [
-        ("dirt_figure_eight", dirt_figure_eight()),
-        ("holjes_rx", holjes_rx()),
-        ("lydden_hill", lydden_hill()),
-        ("hell_rx", hell_rx()),
-        ("loheac_rx", loheac_rx()),
-        ("essay_rx", essay_rx()),
+        ("dirt_figure_eight", tdrace_core::catalog::official_track("classic", "dirt_figure_eight")),
+        ("holjes_rx", tdrace_core::catalog::official_track("rally", "holjes_rx")),
+        ("lydden_hill", tdrace_core::catalog::official_track("rally", "lydden_hill")),
+        ("hell_rx", tdrace_core::catalog::official_track("rally", "hell_rx")),
+        ("loheac_rx", tdrace_core::catalog::official_track("rally", "loheac_rx")),
+        ("essay_rx", tdrace_core::catalog::official_track("rally", "essay_rx")),
     ];
 
     for (slug, track) in &presets_to_export {

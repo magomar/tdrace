@@ -222,9 +222,8 @@ fn test_render_curve_indicator_headless_execution() {
     use tdrace_app::ui::curve_indicator::render_curve_indicator;
     use tdrace_core::physics::car::Car;
     use tdrace_core::physics::config::CarConfig;
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let car = Car::new(CarConfig::sports_car());
     if let Some(status) = track.spline.upcoming_curve(10.0, 20.0, 150.0) {
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {

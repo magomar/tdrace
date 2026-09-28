@@ -5,13 +5,12 @@ use tdrace_app::ui::circuit_viewer::{
 };
 use tdrace_app::ui::menu::track_select_preview_rect;
 use tdrace_core::track::geometry::Obstacle;
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::scenery::{Tree, TreeType};
 
 #[test]
 fn test_open_circuit_viewer_transitions_state_and_stores_state() {
     let mut session = RaceSession::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let title = "Monza Classic Grand Prix".to_string();
 
     session.open_circuit_viewer(track, title.clone(), CircuitViewerOrigin::Menu);
@@ -33,7 +32,7 @@ fn test_open_circuit_viewer_transitions_state_and_stores_state() {
 
 #[test]
 fn test_circuit_viewer_bounds_and_fit_zoom() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sw = 1920.0;
     let sh = 1080.0;
 
@@ -64,7 +63,7 @@ fn test_circuit_viewer_bounds_and_fit_zoom() {
 
 #[test]
 fn test_circuit_viewer_pan_and_reset_to_fit() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = CircuitViewerState::new(
         track,
         "Test Track".to_string(),
@@ -95,7 +94,7 @@ fn test_circuit_viewer_pan_and_reset_to_fit() {
 #[test]
 fn test_update_circuit_viewer_state_exit() {
     let mut session = RaceSession::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.open_circuit_viewer(track, "Classic GP".to_string(), CircuitViewerOrigin::Menu);
 
     assert_eq!(
@@ -109,7 +108,7 @@ fn test_update_circuit_viewer_state_exit() {
     assert_eq!(session.state, GameState::Menu);
 
     // Test StartingGrid origin
-    let track2 = classic_grand_prix();
+    let track2 = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.open_circuit_viewer(
         track2,
         "Classic GP".to_string(),
@@ -145,7 +144,7 @@ fn test_track_select_preview_rect_geometry() {
 
 #[test]
 fn test_compute_full_track_bounds_incorporates_scenery() {
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let (initial_min, initial_max) = compute_full_track_bounds(&track);
 
     // Add an obstacle far outside current bounds
@@ -239,7 +238,7 @@ fn test_global_settings_modal_opening_across_screens() {
 #[test]
 fn test_circuit_viewer_state_and_modal_global_integration() {
     let mut session = RaceSession::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.state = GameState::Menu;
 
     // Open circuit viewer from Menu

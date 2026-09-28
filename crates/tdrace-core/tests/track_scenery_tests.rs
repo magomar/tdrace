@@ -3,7 +3,7 @@ use tdrace_core::collision::wall::resolve_car_obstacle_collision;
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::BarrierType;
-use tdrace_core::track::presets::{catalunya_rx, estering_rx, yas_marina_rx};
+
 use tdrace_core::track::scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 use tdrace_core::track::Track;
 use wheelbase::CarConfig;
@@ -150,7 +150,7 @@ fn test_car_soft_canopy_aerodynamic_drag_deceleration() {
 #[test]
 fn test_presets_contain_scenery_and_sample_concrete() {
     // 1. Catalunya RX has stadium grandstands and Mediterranean palms
-    let cat = catalunya_rx();
+    let cat = tdrace_core::catalog::official_track("rally", "catalunya_rx");
     assert!(!cat.geometry.grandstands.is_empty(), "Catalunya RX must have grandstands");
     assert!(!cat.geometry.trees.is_empty(), "Catalunya RX must have trees");
 
@@ -159,14 +159,14 @@ fn test_presets_contain_scenery_and_sample_concrete() {
     assert_eq!(cat.sample_surface(stand.center), SurfaceType::Concrete);
 
     // 2. Estering RX has hillside bleachers and German forest pines/oaks
-    let est = estering_rx();
+    let est = tdrace_core::catalog::official_track("rally", "estering_rx");
     assert!(!est.geometry.grandstands.is_empty(), "Estering must have hillside bleachers");
     assert!(!est.geometry.trees.is_empty(), "Estering must have pines and oaks");
     assert!(est.geometry.trees.iter().any(|t| t.tree_type == TreeType::Pine));
     assert!(est.geometry.trees.iter().any(|t| t.tree_type == TreeType::Oak));
 
     // 3. Yas Marina RX has stadium grandstand and date palms
-    let yas = yas_marina_rx();
+    let yas = tdrace_core::catalog::official_track("rally", "yas_marina_rx");
     assert!(!yas.geometry.grandstands.is_empty(), "Yas Marina must have grandstands");
     assert!(!yas.geometry.trees.is_empty(), "Yas Marina must have palms");
     assert!(yas.geometry.trees.iter().all(|t| t.tree_type == TreeType::Palm));
@@ -179,7 +179,7 @@ fn test_presets_contain_scenery_and_sample_concrete() {
 
 #[test]
 fn test_track_json_serialization_preserves_all_scenery_fields() {
-    let track = estering_rx();
+    let track = tdrace_core::catalog::official_track("rally", "estering_rx");
     let original_grandstands = track.geometry.grandstands.clone();
     let original_trees = track.geometry.trees.clone();
 

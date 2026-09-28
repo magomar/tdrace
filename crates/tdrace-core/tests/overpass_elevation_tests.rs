@@ -156,6 +156,8 @@ fn test_lidar_elevation_filtering() {
         min_width: None,
         max_width: None,
         is_inspired: false,
+        tag: String::new(),
+        category_label: String::new(),
     };
 
     let scanner = LidarScanner::new(LidarConfig::forward_cone_16());

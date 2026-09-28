@@ -2897,11 +2897,10 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tdrace_core::track::presets::classic_grand_prix;
-
+    
     #[test]
     fn test_road_spline_tool_add_and_move_waypoint() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::RoadSpline;
@@ -2930,7 +2929,7 @@ mod tests {
 
     #[test]
     fn test_delete_selected_entity() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -2945,7 +2944,7 @@ mod tests {
 
     #[test]
     fn test_road_spline_tool_insert_relative_to_selection() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::RoadSpline;
@@ -3005,7 +3004,7 @@ mod tests {
 
     #[test]
     fn test_waypoint_duplication_and_delete() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -3028,9 +3027,8 @@ mod tests {
 
     #[test]
     fn test_road_spline_surface_inheritance_and_switching() {
-        use tdrace_core::track::presets::oasis_rally;
-
-        let track = oasis_rally();
+        
+        let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::RoadSpline;
@@ -3065,7 +3063,7 @@ mod tests {
 
     #[test]
     fn test_surface_zone_multi_shapes_and_layer_controls() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::SurfaceZone;
@@ -3154,7 +3152,7 @@ mod tests {
 
     #[test]
     fn test_multi_segment_selection_and_batch_editing() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -3214,7 +3212,7 @@ mod tests {
 
     #[test]
     fn test_select_all_for_active_tool_variants() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -3260,7 +3258,7 @@ mod tests {
 
     #[test]
     fn test_box_selection_and_multi_entity_drag_and_batch_ops() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::Select;
@@ -3318,7 +3316,7 @@ mod tests {
 
     #[test]
     fn test_jump_ramp_tools_rotation_and_resizing() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -3374,7 +3372,7 @@ mod tests {
 
     #[test]
     fn test_batch_set_walls_and_waypoint_wall_toggles() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 
@@ -3401,7 +3399,7 @@ mod tests {
 
     #[test]
     fn test_primary_button_select_and_box_select_and_drag() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
         tools.active_tool = EditorToolType::RoadSpline;
@@ -3432,7 +3430,7 @@ mod tests {
 
     #[test]
     fn test_secondary_button_places_elements_across_tools() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut state = EditorState::new(track);
         let mut tools = ToolSettings::default();
 

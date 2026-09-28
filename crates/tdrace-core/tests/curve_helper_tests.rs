@@ -3,7 +3,6 @@ use tdrace_core::track::curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach, CurveDirection,
     TrackCurve,
 };
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 
 #[test]
@@ -157,7 +156,7 @@ fn test_braking_urgency_calculation_and_relief() {
 
 #[test]
 fn test_classic_grand_prix_has_detected_curves() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert!(
         !track.spline.curves.is_empty(),
         "Classic Grand Prix must have pre-detected curves"

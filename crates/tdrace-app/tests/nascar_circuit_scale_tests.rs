@@ -38,7 +38,7 @@ fn test_nascar_tracks_follow_the_scale_rule() {
             _ => ("0.75x", 0.75),
         };
 
-        let track = (def.generator)();
+        let track = tdrace_core::catalog::official_track("nascar", def.id);
         assert_eq!(track.scale(), label, "{} ({} m real) must declare {}", def.id, official, label);
 
         // The spline rounds the OSM corners, so the lap is a little shorter than the target

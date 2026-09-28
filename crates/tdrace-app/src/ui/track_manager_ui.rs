@@ -40,7 +40,7 @@ pub enum TrackManagerModal {
         track_id: String,
         track_title: String,
         cursor_idx: usize,
-        selected_mask: [bool; 4],
+        selected_mask: [bool; PROMOTION_MODULE_COUNT],
     },
     CloneBeforeEdit {
         track_choice: TrackChoice,
@@ -60,12 +60,17 @@ pub enum TrackManagerModal {
 }
 
 /// Available motorsport modules for circuit promotion.
-pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); 4] = [
+pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); PROMOTION_MODULE_COUNT] = [
     ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
     ("rally", "Rally Cross Championship", "Dirt tracks, dunes & rugged mountain stages", Palette::NEON_GOLD),
     ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
     ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
+    ("nascar", "NASCAR Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
+    ("extreme_offroad", "Extreme Off-Road", "Desert raids, mud bogs, ice & stunt arenas", Palette::NEON_ORANGE),
 ];
+
+/// Number of modules offered in the promotion dialog (all six motorsport modules, spec 042).
+pub const PROMOTION_MODULE_COUNT: usize = 6;
 
 /// Action dispatched from Track Manager interactions.
 #[derive(Debug, Clone, PartialEq)]
@@ -875,13 +880,13 @@ fn render_promotion_modal(
     sh: f32,
     track_title: &str,
     cursor_idx: usize,
-    selected_mask: [bool; 4],
+    selected_mask: [bool; PROMOTION_MODULE_COUNT],
 ) {
     // Backdrop dimming
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
 
     let mw = scaler.s(540.0);
-    let mh = scaler.s(320.0);
+    let mh = scaler.s(116.0 + PROMOTION_MODULE_COUNT as f32 * 51.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
@@ -895,7 +900,7 @@ fn render_promotion_modal(
         Palette::NEON_GREEN,
     );
 
-    let prompt_msg = format!("Select categories for \"{}\" ([Space / 1-4] to toggle):", track_title);
+    let prompt_msg = format!("Select categories for \"{}\" ([Space / 1-6] to toggle):", track_title);
     fonts.draw_ui_regular(
         &prompt_msg,
         mx + scaler.s(20.0),
@@ -987,7 +992,7 @@ fn render_promotion_modal(
     }
 
     let btn_y = my + mh - scaler.s(20.0);
-    fonts.draw_ui_bold("[Space / 1-4] TOGGLE", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold("[Space / 1-6] TOGGLE", mx + scaler.s(20.0), btn_y, scaler.font_s(13.0), Palette::NEON_GOLD);
     fonts.draw_ui_bold("[Enter / A] CONFIRM CATEGORIES", mx + scaler.s(160.0), btn_y, scaler.font_s(13.0), Palette::NEON_GREEN);
     fonts.draw_ui_bold("[Esc / B] CANCEL", mx + mw - scaler.s(110.0), btn_y, scaler.font_s(13.0), Palette::NEON_CYAN);
 }

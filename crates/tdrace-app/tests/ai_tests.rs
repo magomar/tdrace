@@ -1,7 +1,7 @@
 use glam::Vec2;
 use tdrace_app::ai::{BotAiDriver, BotProfile};
 use tdrace_core::{Car, CarConfig};
-use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+
 
 #[test]
 fn test_bot_profiles_creation() {
@@ -17,7 +17,7 @@ fn test_bot_profiles_creation() {
 
 #[test]
 fn test_bot_ai_steering_and_throttle_on_straight() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Car is initialized facing spline direction
@@ -36,7 +36,7 @@ fn test_bot_ai_steering_and_throttle_on_straight() {
 
 #[test]
 fn test_bot_ai_collision_avoidance() {
-    let track = oval_speedway();
+    let track = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Car A (our bot) is traveling at 35 m/s at x=50, y=-60
@@ -57,7 +57,7 @@ fn test_bot_ai_collision_avoidance() {
 
 #[test]
 fn test_bot_ai_cornering_slowdown() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut bot = BotAiDriver::new(BotProfile::pro());
 
     // Approaching hairpin at high speed (x=240, y=300, heading right towards hairpin)
@@ -72,7 +72,7 @@ fn test_bot_ai_cornering_slowdown() {
 
 #[test]
 fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
-    let track = tdrace_core::track::presets::daytona_superspeedway();
+    let track = tdrace_core::catalog::official_track("nascar", "daytona_superspeedway");
     let mut bot = BotAiDriver::new(BotProfile::aggressive());
 
     // Bot car trailing 15m behind lead car on the back straight (heading left, angle PI)

@@ -8,11 +8,11 @@ use tdrace_core::lidar::{LidarConfig, LidarHitType, LidarScanner};
 use tdrace_core::physics::{Car, CarConfig, CarControls, SurfaceType};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::{BarrierType, WallBarrier};
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+
 
 #[test]
 fn test_adversarial_track_anti_cheat_scenarios() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let num_cps = track.checkpoints.len(); // 14 checkpoints (12 track + 2 pit)
     let mut tracker = TrackProgressTracker::new(num_cps, 3);
     let mut car = Car::new(CarConfig::sports_car());
@@ -188,7 +188,7 @@ fn test_dense_16_car_starting_grid_pileup_singularity_test() {
 
 #[test]
 fn test_split_mu_wheel_surface_dynamics_deep() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sample = track.spline.sample_at_distance(60.0);
     let half_w = sample.width * 0.5;
 
@@ -245,10 +245,10 @@ fn test_split_mu_wheel_surface_dynamics_deep() {
 #[test]
 fn test_lidar_precision_all_presets_and_target_types() {
     let presets = [
-        classic_grand_prix(),
-        oval_speedway(),
-        drift_park(),
-        kart_arena(),
+        tdrace_core::catalog::official_track("classic", "classic_grand_prix"),
+        tdrace_core::catalog::official_track("classic", "oval_speedway"),
+        tdrace_core::catalog::official_track("classic", "drift_park"),
+        tdrace_core::catalog::official_track("classic", "kart_arena"),
     ];
 
     let scanner = LidarScanner::new(LidarConfig::surround_32());
