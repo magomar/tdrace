@@ -234,7 +234,8 @@ def heading_ahead(points, min_dist=60.0):
 
 def chain_segments(ways, segments):
     """Node ids along (way id, first node or None[, last node]) segments; a segment runs to its
-    way's last node unless a last node is given.
+    way's last node unless a last node is given, and runs against the way's direction when the
+    last node comes before the first one.
 
     Consecutive segments share their join node, which is kept once; a closing repeat of the first
     node is dropped. Returns [(node id, way id)].
@@ -242,8 +243,9 @@ def chain_segments(ways, segments):
     chain = []
     for wid, first, *last in segments:
         nds = ways[wid]["nodes"]
-        nds = nds[nds.index(first):] if first is not None else nds
-        nds = nds[:nds.index(last[0]) + 1] if last else nds
+        i = nds.index(first) if first is not None else 0
+        j = nds.index(last[0]) if last else len(nds) - 1
+        nds = nds[i:j + 1] if i <= j else nds[j:i + 1][::-1]
         if chain and chain[-1][0] == nds[0]:
             nds = nds[1:]
         chain.extend((nid, wid) for nid in nds)
@@ -1270,11 +1272,27 @@ RALLY_TRACKS = {
     "nyirad_rx": {
         "name": "Nyirád Racing Center (Euro RX Hungary)",
         "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
+        # Longest simple loop of the 8 untagged raceway ways (1216 m, the official lap is 1220 m), in the
+        # old lap's direction. The web also holds shorter alternative paths; the game has no branching yet.
+        "segments": [(172413358, 1833190235, 1833190246), (172413356, 1833190246, 1833190241),
+                     (172413357, 1833190241, 1833190239), (172413360, 1833190239, 1833190218),
+                     (172413359, 1833190218, 1833190276), (172413357, 1833190276, 1833190231),
+                     (172413356, 1833190231, 1833190235)],
+        # Start on the long asphalt way 358, clear of the other sections of the web (at the 359/360
+        # junction the grid hit a wall of the neighbouring section); 280 m keeps the grid on asphalt
+        # with 64 m to the first corner.
+        "start_offset_m": 280.0,
+        # Clay on 356 and 357 as before; the rest is asphalt (~40% of the lap; docs/circuits/rally.md says 48%).
+        "loose_ways": [172413356, 172413357],
+        # The hairpins are single sharp nodes where two ways meet (up to 131 deg, one a narrow V):
+        # round them to 13 m, a normal rallycross hairpin, so the inner wall (10.25 m from the centre
+        # line) stays off the road. The rounding shortens the 1220 m lap to ~1080 m.
+        "min_radius_m": 13.0,
         "query": '[out:json][timeout:25];(way["highway"="raceway"](46.963,17.410,46.974,17.428););out body;>;out skel qt;',
         "fia_length": 1220.0,
         "default_width": 13.5,
         "straight_width": 14.5,
-        "num_waypoints": 30,
+        "num_waypoints": 80,  # ~14 m spacing: the 13 m hairpin arcs need several waypoints each
         "jump": None,
     },
     "kouvola_rx": {
@@ -1508,13 +1526,6 @@ def process_rally_track(track_id, cache_dir):
             raw_nodes_surf.append((nid, "Dirt"))
         for nid in ways[1096210265]["nodes"][:-1]:
             raw_nodes_surf.append((nid, "Asphalt"))
-    elif track_id == "nyirad_rx":
-        for nid in ways[172413359]["nodes"]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[172413357]["nodes"][:15]):
-            raw_nodes_surf.append((nid, "Dirt"))
-        for nid in ways[172413356]["nodes"][12:24]:
-            raw_nodes_surf.append((nid, "Dirt"))
     elif track_id == "kouvola_rx":
         for nid in ways[149713976]["nodes"][36:-1]:
             raw_nodes_surf.append((nid, "Asphalt"))
@@ -1575,6 +1586,13 @@ def process_rally_track(track_id, cache_dir):
 
     # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
     if "segments" in spec:
+        if spec.get("min_radius_m"):
+            # Scale from the OSM loop itself, then round: the rounding shortens the lap, and scaling
+            # after it would stretch the whole circuit back up.
+            raw_len = polyline_length(metric_pts, closed=True)
+            check_length_ratio(track_id, raw_len, spec["fia_length"])
+            f = spec["fia_length"] / raw_len
+            metric_pts, surfaces = fillet_corners([(x * f, y * f) for x, y in metric_pts], surfaces, spec["min_radius_m"])
         if spec.get("start_offset_m"):
             metric_pts, surfaces = shift_start(metric_pts, spec["start_offset_m"], surfaces)
         heading = heading_ahead(metric_pts)
@@ -1586,10 +1604,13 @@ def process_rally_track(track_id, cache_dir):
     # Rotate so start straight heads along +X
     rotated_pts = rotate_points(metric_pts, heading)
 
-    # Scale to exact FIA homologation length
+    # Scale to exact FIA homologation length (a rounded lap is already scaled)
     current_len = polyline_length(rotated_pts, closed=True)
-    check_length_ratio(track_id, current_len, spec["fia_length"])
-    scale_factor = spec["fia_length"] / current_len if current_len > 0 else 1.0
+    if spec.get("min_radius_m"):
+        scale_factor = 1.0
+    else:
+        check_length_ratio(track_id, current_len, spec["fia_length"])
+        scale_factor = spec["fia_length"] / current_len if current_len > 0 else 1.0
     scaled_pts = [((x * scale_factor), (y * scale_factor)) for x, y in rotated_pts]
 
     # Translate so start line is at x=0, y=0
@@ -1920,6 +1941,128 @@ def shift_start(points, offset_m, props=None):
             return shifted, [props[i]] + props[i + 1:] + props[:i + 1]
         left -= seg
     return points if props is None else (points, props)
+
+
+def point_along(pts, i, dist, step):
+    """(index of the segment start, point) `dist` m along a closed polyline from vertex i (dist < 0: backwards)."""
+    n = len(pts)
+    j = i
+    left = abs(dist)
+    while True:
+        k = (j + step) % n
+        seg = math.dist(pts[j], pts[k])
+        if left <= seg:
+            f = left / seg
+            p = (pts[j][0] + f * (pts[k][0] - pts[j][0]), pts[j][1] + f * (pts[k][1] - pts[j][1]))
+            return (j if step > 0 else k), p
+        left -= seg
+        j = k
+
+
+def round_hairpin(pts, props, i, radius, arc_step=2.0):
+    """Replace the narrow V hairpin at vertex i with a half circle between the first points on each
+    leg that are 2 * `radius` apart, bulging towards the apex."""
+    n = len(pts)
+    dist = radius
+    while True:
+        ja, a = point_along(pts, i, -dist, -1)
+        jb, b = point_along(pts, i, dist, 1)
+        if math.dist(a, b) >= 2 * radius or dist > polyline_length(pts) / 4:
+            break
+        dist += 1.0
+    centre = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    r = math.dist(a, b) / 2
+    start = math.atan2(a[1] - centre[1], a[0] - centre[0])
+    apex = math.atan2(pts[i][1] - centre[1], pts[i][0] - centre[0])
+    sweep = math.pi if math.cos(start + math.pi / 2 - apex) > 0 else -math.pi  # pass the apex side
+    m = max(4, round(r * math.pi / arc_step))
+    curve = [(centre[0] + r * math.cos(start + sweep * q / m), centre[1] + r * math.sin(start + sweep * q / m))
+             for q in range(m + 1)]
+    curve_props = [props[ja]] * (m // 2 + 1) + [props[jb]] * (m - m // 2)
+    removed = {q % n for q in range(ja + 1, jb + 1 if jb > ja else jb + n + 1)}
+    out_pts, out_props, placed = [], [], False
+    for q in range(n):
+        if q in removed:
+            if not placed:
+                out_pts += curve
+                out_props += curve_props
+                placed = True
+            continue
+        out_pts.append(pts[q])
+        out_props.append(props[q])
+    return out_pts, out_props
+
+
+def fillet_corners(points, props, radius, min_turn_deg=20.0, arc_step=2.0):
+    """Closed polyline with every node turning more than `min_turn_deg` replaced by a circular arc
+    of `radius` tangent to its two legs (a road-design fillet). When a leg is too short for the
+    arc, the corner takes in the next leg too. OSM draws some corners as one sharp node where two
+    ways meet; the spline would turn on a few metres there and the walls would fold into the road.
+    `props` has one value per point (its outgoing segment). Returns (points, props)."""
+    pts, props = list(points), list(props)
+    done = [False] * len(pts)
+
+    def turn(i):
+        n = len(pts)
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        h = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0])
+        return abs((h + math.pi) % (2 * math.pi) - math.pi)
+
+    while True:
+        n = len(pts)
+        todo = [i for i in range(n) if not done[i] and turn(i) > math.radians(min_turn_deg)]
+        if not todo:
+            return pts, props
+        i = max(todo, key=turn)
+        a, b = i - 1, i  # incoming and outgoing segment: pts[a] -> pts[a+1], pts[b] -> pts[b+1]
+        while True:
+            a0, a1 = pts[a % n], pts[(a + 1) % n]
+            b0, b1 = pts[b % n], pts[(b + 1) % n]
+            la, lb = math.dist(a0, a1), math.dist(b0, b1)
+            u = ((a1[0] - a0[0]) / la, (a1[1] - a0[1]) / la)
+            v = ((b1[0] - b0[0]) / lb, (b1[1] - b0[1]) / lb)
+            cross = u[0] * v[1] - u[1] * v[0]
+            if abs(cross) < 1e-6 or b - a > n // 3:
+                break
+            s_x = ((b0[0] - a0[0]) * v[1] - (b0[1] - a0[1]) * v[0]) / cross  # corner X = a0 + s_x * u
+            x = (a0[0] + s_x * u[0], a0[1] + s_x * u[1])
+            theta = math.acos(max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1])))
+            t = radius * math.tan(theta / 2)
+            s1 = s_x - t  # tangent point on the incoming line, from a0
+            s2 = (x[0] - b0[0]) * v[0] + (x[1] - b0[1]) * v[1] + t  # tangent point on the outgoing line, from b0
+            if s1 < 0:
+                a -= 1
+            elif s2 > lb:
+                b += 1
+            else:
+                break
+        done[i] = True
+        if abs(cross) < 1e-6 or b - a > n // 3:
+            # a narrow V hairpin: its legs run back almost parallel, so no arc of `radius` fits them
+            pts, props = round_hairpin(pts, props, i, radius, arc_step)
+            done = [False] * len(pts)  # indices moved; the curve itself turns less than min_turn_deg per point
+            continue
+        side = 1.0 if cross > 0 else -1.0
+        t1 = (a0[0] + s1 * u[0], a0[1] + s1 * u[1])
+        centre = (t1[0] - side * u[1] * radius, t1[1] + side * u[0] * radius)
+        start = math.atan2(t1[1] - centre[1], t1[0] - centre[0])
+        m = max(2, round(radius * theta / arc_step))
+        arc = [(centre[0] + radius * math.cos(start + side * theta * q / m),
+                centre[1] + radius * math.sin(start + side * theta * q / m)) for q in range(m + 1)]
+        arc_props = [props[a % n]] * (m // 2 + 1) + [props[b % n]] * (m - m // 2)
+        removed = {q % n for q in range(a + 1, b + 1)}
+        at = (a + 1) % n
+        new_pts, new_props, new_done = [], [], []
+        for q in range(n):
+            if q == at:
+                new_pts += arc
+                new_props += arc_props
+                new_done += [True] * len(arc)
+            if q not in removed:
+                new_pts.append(pts[q])
+                new_props.append(props[q])
+                new_done.append(done[q])
+        pts, props, done = new_pts, new_props, new_done
 
 
 def curvature_classes(points):

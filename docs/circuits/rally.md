@@ -50,7 +50,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 ### Tier 4: Red Cauldron & Forest Stages (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| **Nyirád Racing Center** | `nyirad_rx.json` | $1,220\text{ m}$ | $48\%$ Asphalt / $52\%$ Red Clay | Final Turn Sweep | The "Red Cauldron"; deep abrasive bauxite clay that degrades tires rapidly. |
+| **Nyirád Racing Center** | `nyirad_rx.json` | $1,220\text{ m}$ | $48\%$ Asphalt / $52\%$ Red Clay | Final Turn Sweep | The "Red Cauldron"; deep abrasive bauxite clay that degrades tires rapidly. In game: 1,081 m, the 1,216 m OSM loop at 1:1 with its junction hairpins rounded to 13 m. |
 | **Kouvola RX** | `kouvola_rx.json` | $1,060\text{ m}$ | $58\%$ Asphalt / $42\%$ Gravel | Turn 4 Outer Loop | Technical Finnish forest circuit with severe camber shifts. |
 | **Killarney International RX** | `killarney_rx.json` | $1,067\text{ m}$ | $60\%$ Asphalt / $40\%$ Sand/Gravel| Turn 3 Outer Hairpin | Tabletop jump ramp with Table Mountain backdrop; fine coastal sand dust. |
 

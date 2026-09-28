@@ -302,9 +302,10 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         "Montalegre 1:1 FIA length expected ~1050m, got {:.1}m",
         montalegre.spline.total_length()
     );
+    // Nyirád: the 1216 m OSM loop at 1:1 with its sharp junction hairpins rounded to 13 m (~1081 m).
     assert!(
-        nyirad.spline.total_length() >= 1170.0 && nyirad.spline.total_length() <= 1270.0,
-        "Nyirád 1:1 FIA length expected ~1220m, got {:.1}m",
+        nyirad.spline.total_length() >= 1040.0 && nyirad.spline.total_length() <= 1120.0,
+        "Nyirád 1:1 OSM lap with rounded hairpins expected ~1081m, got {:.1}m",
         nyirad.spline.total_length()
     );
     assert!(

@@ -2239,8 +2239,8 @@
     "min_width_meters": 11.5,
     "max_width_meters": 14.5,
     "is_inspired": false,
-    "length_meters": 1156.4,
-    "turns_count": 15,
+    "length_meters": 1075.0,
+    "turns_count": 26,
     "surfaces": [
       "Asphalt",
       "Dirt"
