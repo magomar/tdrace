@@ -11,6 +11,7 @@ use macroquad::shapes::draw_rectangle;
 use crate::input::NavGrid2D;
 use crate::net::host::{HostEvent, LanHost};
 use crate::net::protocol::LanCollisionMode;
+use crate::net::ui::{id_label, lan_livery_index, lan_livery_name, LanLobbyRequest, LAN_LIVERIES};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
 
@@ -25,19 +26,23 @@ fn safe_mouse_pos() -> (f32, f32) {
 }
 
 /// Authoritative Host Lobby screen for local network multiplayer.
+///
+/// The circuit and the host car are chosen by the game's own screens: the lobby
+/// raises a `LanLobbyRequest` and the game answers with `set_track` / `set_local_car`.
 pub struct CabinetLanHostScreen {
     /// Authoritative host instance.
     pub host: LanHost,
-    /// Available track names for selection cycling.
-    pub available_tracks: Vec<String>,
-    pub selected_track_idx: usize,
+    /// Display title of the selected circuit.
+    pub track_title: String,
     /// Available lap count options.
     pub lap_options: Vec<u8>,
     pub selected_laps_idx: usize,
     /// Available collision mode options.
     pub collision_options: Vec<LanCollisionMode>,
     pub selected_collision_idx: usize,
-    /// 2D navigation grid (Col 0: Slots 1..8, Col 1: Host Controls 0..5).
+    /// Host livery index into `LAN_LIVERIES`.
+    pub selected_livery_idx: usize,
+    /// 2D navigation grid (Col 0: Slots 1..8, Col 1: Host Controls 0..7).
     pub nav: NavGrid2D,
     /// User status message notification banner.
     pub status_message: String,
@@ -47,6 +52,10 @@ pub struct CabinetLanHostScreen {
     pub countdown_remaining_sec: Option<f32>,
     /// Whether user requested to disband and exit the lobby.
     pub exit_requested: bool,
+    /// Pending request for the game to open its circuit or car selector.
+    pending_request: Option<LanLobbyRequest>,
+    /// Resolves a car model id to its display name.
+    car_label: fn(&str) -> String,
     /// Pulse timer for animations.
     pulse_timer: f32,
 }
@@ -54,52 +63,67 @@ pub struct CabinetLanHostScreen {
 impl CabinetLanHostScreen {
     /// Creates a host lobby screen wrapping an active `LanHost` instance.
     pub fn new(host: LanHost) -> Self {
-        let available_tracks = vec![
-            "Circuit de Spa-Francorchamps".to_string(),
-            "Autodromo Nazionale Monza".to_string(),
-            "Silverstone GP Circuit".to_string(),
-            "Daytona International Speedway".to_string(),
-            "Lonato South Garda Karting".to_string(),
-        ];
         let lap_options = vec![1, 3, 5, 10, 15, 20];
         let collision_options = vec![
             LanCollisionMode::FullSatSolid,
             LanCollisionMode::GhostPassing,
             LanCollisionMode::VergeOnly,
         ];
+        let selected_livery_idx = host
+            .slots()
+            .first()
+            .and_then(|s| s.as_ref())
+            .map(|s| lan_livery_index(&s.color_scheme_id))
+            .unwrap_or(0);
+        let track_title = host.track_id().to_string();
 
         let mut screen = Self {
             host,
-            available_tracks,
-            selected_track_idx: 0,
+            track_title,
             lap_options,
             selected_laps_idx: 2, // 5 laps
             collision_options,
             selected_collision_idx: 0, // FullSatSolid
-            nav: NavGrid2D::new(vec![8, 6]),
+            selected_livery_idx,
+            nav: NavGrid2D::new(vec![8, 8]),
             status_message: "Room open. Broadcasting to local subnet on port 7776...".to_string(),
             copied_timer: 0.0,
             countdown_remaining_sec: None,
             exit_requested: false,
+            pending_request: None,
+            car_label: id_label,
             pulse_timer: 0.0,
         };
         screen.sync_host_rules();
         screen
     }
 
-    /// Sets custom track catalogue for host cycling.
-    pub fn with_tracks(mut self, tracks: Vec<String>) -> Self {
-        if !tracks.is_empty() {
-            self.available_tracks = tracks;
-            self.selected_track_idx = 0;
-            self.sync_host_rules();
-        }
+    /// Sets the resolver that turns car model ids into display names.
+    pub fn with_labels(mut self, car_label: fn(&str) -> String) -> Self {
+        self.car_label = car_label;
         self
+    }
+
+    /// Sets the race circuit chosen by the game's circuit selector.
+    pub fn set_track(&mut self, track_id: &str, title: &str) {
+        self.track_title = title.to_string();
+        self.host.set_track_and_rules(track_id.to_string(), self.host.laps(), self.host.collision_mode());
+    }
+
+    /// Sets the host car chosen by the game's car selector.
+    pub fn set_local_car(&mut self, car_model_id: &str) {
+        let livery = LAN_LIVERIES[self.selected_livery_idx].0;
+        self.host.update_host_slot(car_model_id, livery);
+    }
+
+    /// Takes the pending request for the game to open its circuit or car selector.
+    pub fn take_request(&mut self) -> Option<LanLobbyRequest> {
+        self.pending_request.take()
     }
 
     /// Synchronizes current UI rule selections down into the authoritative host.
     pub fn sync_host_rules(&mut self) {
-        let track = self.available_tracks.get(self.selected_track_idx).cloned().unwrap_or_else(|| "Spa".to_string());
+        let track = self.host.track_id().to_string();
         let laps = self.lap_options.get(self.selected_laps_idx).copied().unwrap_or(5);
         let collision = self.collision_options.get(self.selected_collision_idx).copied().unwrap_or(LanCollisionMode::FullSatSolid);
         self.host.set_track_and_rules(track, laps, collision);
@@ -125,14 +149,6 @@ impl CabinetLanHostScreen {
         self.host.is_in_race()
     }
 
-    /// Cycles track selection.
-    pub fn cycle_track(&mut self) {
-        if !self.available_tracks.is_empty() {
-            self.selected_track_idx = (self.selected_track_idx + 1) % self.available_tracks.len();
-            self.sync_host_rules();
-        }
-    }
-
     /// Cycles lap count.
     pub fn cycle_laps(&mut self) {
         if !self.lap_options.is_empty() {
@@ -149,6 +165,23 @@ impl CabinetLanHostScreen {
         }
     }
 
+    /// Cycles the host livery color.
+    pub fn cycle_livery(&mut self) {
+        self.selected_livery_idx = (self.selected_livery_idx + 1) % LAN_LIVERIES.len();
+        let car = self.host_car_model_id();
+        self.set_local_car(&car);
+    }
+
+    /// Car model id currently in the host slot.
+    fn host_car_model_id(&self) -> String {
+        self.host
+            .slots()
+            .first()
+            .and_then(|s| s.as_ref())
+            .map(|s| s.car_model_id.clone())
+            .unwrap_or_default()
+    }
+
     /// Copies host address to clipboard and starts confirmation flash.
     pub fn copy_address_to_clipboard(&mut self) {
         self.copied_timer = 2.0;
@@ -163,6 +196,50 @@ impl CabinetLanHostScreen {
             self.status_message = "All racers ready! Starting launch countdown...".to_string();
         }
     }
+
+    /// Pumps host packets, pings and timeouts without reading lobby input.
+    ///
+    /// The game calls this every frame while its circuit or car selector is open.
+    pub fn pump_network(&mut self, dt: f32) {
+        self.pump(dt);
+    }
+
+    /// Processes host network events and timers; returns the events for sound feedback.
+    fn pump(&mut self, dt: f32) -> Vec<HostEvent> {
+        self.pulse_timer += dt;
+        if self.copied_timer > 0.0 {
+            self.copied_timer = (self.copied_timer - dt).max(0.0);
+        }
+
+        let events = self.host.update(dt);
+        for event in &events {
+            match event {
+                HostEvent::PlayerJoined { slot_id, player_name, .. } => {
+                    self.status_message = format!("Racer '{}' connected into Slot {}!", player_name, slot_id + 1);
+                }
+                HostEvent::PlayerLeft { slot_id, reason } => {
+                    self.status_message = format!("Slot {} disconnected ({}).", slot_id + 1, reason);
+                }
+                HostEvent::PlayerSlotUpdated { slot_id, is_ready, .. } => {
+                    let ready_str = if *is_ready { "READY ⭐" } else { "selecting" };
+                    self.status_message = format!("Slot {} updated ({})", slot_id + 1, ready_str);
+                }
+                HostEvent::CountdownStarted { starts_in_millis } => {
+                    self.countdown_remaining_sec = Some(*starts_in_millis as f32 / 1000.0);
+                }
+                HostEvent::PlayerInput { .. } => {}
+            }
+        }
+
+        // Advance countdown timer if active
+        if let Some(ref mut time) = self.countdown_remaining_sec {
+            *time -= dt;
+            if *time <= 0.0 {
+                self.countdown_remaining_sec = None;
+            }
+        }
+        events
+    }
 }
 
 impl CabinetScreen for CabinetLanHostScreen {
@@ -175,40 +252,11 @@ impl CabinetScreen for CabinetLanHostScreen {
     }
 
     fn update(&mut self, ctx: &mut CabinetContext) -> ScreenAction {
-        self.pulse_timer += ctx.dt;
-        if self.copied_timer > 0.0 {
-            self.copied_timer = (self.copied_timer - ctx.dt).max(0.0);
-        }
-
-        // Pump authoritative host packets
-        let events = self.host.update(ctx.dt);
-        for event in events {
+        for event in self.pump(ctx.dt) {
             match event {
-                HostEvent::PlayerJoined { slot_id, player_name, .. } => {
-                    ctx.play_ui_select();
-                    self.status_message = format!("Racer '{}' connected into Slot {}!", player_name, slot_id + 1);
-                }
-                HostEvent::PlayerLeft { slot_id, reason } => {
-                    ctx.play_ui_cancel();
-                    self.status_message = format!("Slot {} disconnected ({}).", slot_id + 1, reason);
-                }
-                HostEvent::PlayerSlotUpdated { slot_id, is_ready, .. } => {
-                    let ready_str = if is_ready { "READY ⭐" } else { "selecting" };
-                    self.status_message = format!("Slot {} updated ({})", slot_id + 1, ready_str);
-                }
-                HostEvent::CountdownStarted { starts_in_millis } => {
-                    ctx.play_ui_select();
-                    self.countdown_remaining_sec = Some(starts_in_millis as f32 / 1000.0);
-                }
-                HostEvent::PlayerInput { .. } => {}
-            }
-        }
-
-        // Advance countdown timer if active
-        if let Some(ref mut time) = self.countdown_remaining_sec {
-            *time -= ctx.dt;
-            if *time <= 0.0 {
-                self.countdown_remaining_sec = None;
+                HostEvent::PlayerJoined { .. } | HostEvent::CountdownStarted { .. } => ctx.play_ui_select(),
+                HostEvent::PlayerLeft { .. } => ctx.play_ui_cancel(),
+                _ => {}
             }
         }
 
@@ -242,9 +290,9 @@ impl CabinetScreen for CabinetLanHostScreen {
         if self.nav.focused_col == 1 && is_confirmed {
             match self.nav.active_row() {
                 0 => {
-                    // Track
-                    ctx.play_ui_move();
-                    self.cycle_track();
+                    // Circuit: the game opens its circuit selector
+                    ctx.play_ui_select();
+                    self.pending_request = Some(LanLobbyRequest::PickCircuit);
                 }
                 1 => {
                     // Laps
@@ -257,12 +305,22 @@ impl CabinetScreen for CabinetLanHostScreen {
                     self.cycle_collision();
                 }
                 3 => {
+                    // My car: the game opens its car selector
+                    ctx.play_ui_select();
+                    self.pending_request = Some(LanLobbyRequest::PickCar);
+                }
+                4 => {
+                    // My livery
+                    ctx.play_ui_move();
+                    self.cycle_livery();
+                }
+                5 => {
                     // Ready toggle for Host (Slot 0)
                     ctx.play_ui_select();
                     let host_ready = self.host.slots().first().and_then(|s| s.as_ref()).map(|s| s.is_ready).unwrap_or(false);
                     self.host.set_host_ready(!host_ready);
                 }
-                4 => {
+                6 => {
                     // START RACE
                     if self.host.is_all_ready() {
                         ctx.play_ui_select();
@@ -272,7 +330,7 @@ impl CabinetScreen for CabinetLanHostScreen {
                         self.status_message = "Cannot launch race: all connected racers must be READY!".to_string();
                     }
                 }
-                5 => {
+                7 => {
                     // EXIT / DISBAND
                     ctx.play_ui_cancel();
                     return ScreenAction::Pop;
@@ -453,7 +511,7 @@ impl CabinetScreen for CabinetLanHostScreen {
                     Palette::WHITE,
                 );
 
-                let car_line = format!("• {}: {}", slot.car_model_id, slot.color_scheme_id);
+                let car_line = format!("• {} — {}", (self.car_label)(&slot.car_model_id), lan_livery_name(&slot.color_scheme_id));
                 fonts.draw_ui_regular(
                     &car_line,
                     pad_x + scaler.s(22.0),
@@ -522,11 +580,10 @@ impl CabinetScreen for CabinetLanHostScreen {
             Palette::NEON_CYAN,
         );
 
-        let ctrl_pad = scaler.s(10.0);
+        let ctrl_pad = scaler.s(8.0);
         let ctrl_start_y = content_y + scaler.s(38.0);
-        let ctrl_item_h = scaler.s(42.0);
+        let ctrl_item_h = scaler.s(42.0).min((content_h - scaler.s(46.0) - ctrl_pad * 7.0) / 8.0);
 
-        let track_name = self.available_tracks.get(self.selected_track_idx).map(|s| s.as_str()).unwrap_or("Spa");
         let laps_num = self.lap_options.get(self.selected_laps_idx).copied().unwrap_or(5);
         let collision_mode = self.collision_options.get(self.selected_collision_idx).copied().unwrap_or(LanCollisionMode::FullSatSolid);
         let collision_str = match collision_mode {
@@ -537,11 +594,16 @@ impl CabinetScreen for CabinetLanHostScreen {
 
         let host_ready = self.host.slots().first().and_then(|s| s.as_ref()).map(|s| s.is_ready).unwrap_or(false);
         let ready_button_text = if host_ready { "HOST STATUS: READY ⭐ [TOGGLE]" } else { "HOST STATUS: SELECTING [TOGGLE]" };
+        let car_name = (self.car_label)(&self.host_car_model_id());
+        let (_, livery_name, livery_color) = LAN_LIVERIES[self.selected_livery_idx];
+        let laps_str = format!("{} Laps", laps_num);
 
         let buttons_meta = [
-            ("TRACK", track_name, "[CHANGE]"),
-            ("LAPS", &format!("{} Laps", laps_num), "[CYCLE]"),
+            ("CIRCUIT", self.track_title.as_str(), "[SELECT]"),
+            ("LAPS", laps_str.as_str(), "[CYCLE]"),
             ("COLLISIONS", collision_str, "[TOGGLE]"),
+            ("MY CAR", car_name.as_str(), "[GARAGE]"),
+            ("MY LIVERY", livery_name, "[CYCLE]"),
             ("MY STATUS", ready_button_text, ""),
             ("START RACE", "Launch countdown", "[ENTER]"),
             ("DISBAND ROOM", "Exit to Modality Hub", "[ESC]"),
@@ -556,9 +618,9 @@ impl CabinetScreen for CabinetLanHostScreen {
                 && my >= by
                 && my <= by + ctrl_item_h;
 
-            let accent = if idx == 4 {
+            let accent = if idx == 6 {
                 if self.host.is_all_ready() { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER }
-            } else if idx == 5 {
+            } else if idx == 7 {
                 Palette::NEON_RED
             } else {
                 Palette::NEON_CYAN
@@ -575,21 +637,21 @@ impl CabinetScreen for CabinetLanHostScreen {
             );
 
             let text_y = by + ctrl_item_h * 0.62;
-            let title_line = if idx == 4 {
+            let title_line = if idx == 6 {
                 if self.host.is_all_ready() {
                     "🏁 [ START RACE ]".to_string()
                 } else {
                     "⏳ [ WAITING FOR RACERS TO BE READY ]".to_string()
                 }
-            } else if idx == 5 {
+            } else if idx == 7 {
                 "✕ DISBAND ROOM & EXIT".to_string()
-            } else if idx == 3 {
+            } else if idx == 5 {
                 ready_button_text.to_string()
             } else {
                 format!("{}: {}", label, val)
             };
 
-            let title_color = if idx == 4 && self.host.is_all_ready() {
+            let title_color = if idx == 6 && self.host.is_all_ready() {
                 Palette::WHITE
             } else if is_focused || is_hovered {
                 Palette::WHITE
@@ -605,7 +667,7 @@ impl CabinetScreen for CabinetLanHostScreen {
                 title_color,
             );
 
-            if !shortcut.is_empty() && idx != 4 && idx != 5 {
+            if !shortcut.is_empty() && idx != 6 && idx != 7 {
                 let sc_dim = fonts.measure_ui_bold(shortcut, scaler.font_s(11.0));
                 fonts.draw_ui_bold(
                     shortcut,
@@ -614,6 +676,12 @@ impl CabinetScreen for CabinetLanHostScreen {
                     scaler.font_s(11.0),
                     accent,
                 );
+            }
+
+            // Draw livery color swatch on livery row
+            if idx == 4 {
+                let swatch_x = right_x + scaler.s(24.0) + fonts.measure_ui_bold(&title_line, scaler.font_s(12.5)).width + scaler.s(10.0);
+                draw_rectangle(swatch_x, by + ctrl_item_h * 0.35, scaler.s(14.0), scaler.s(14.0), livery_color);
             }
         }
 

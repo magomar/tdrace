@@ -38,14 +38,12 @@ impl RallyGameModule {
         cfg.downforce_coefficient = 0.85;
 
         cfg.tire = TireConfig {
-            stiffness_b: 7.8, // Compliant tire sidewall for gravel/dirt
-            shape_c: 1.40,
-            peak_d: 1.05,
-            curvature_e: -0.18,
-            drift_slide_friction: 0.92, // High controllable slide grip
-            handbrake_lateral_friction_multiplier: 0.32,
+            grip: 1.05,
+            peak_slip_angle_deg: 14.2, // Compliant tire sidewall for gravel/dirt
+            slide_grip: 0.92,          // High controllable slide grip
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         cfg.assists = DriverAssistsConfig::sport();
         cfg
@@ -318,10 +316,10 @@ impl GameModule for RallyGameModule {
                     "kouvola_rx".to_string(),
                     "catalunya_rx".to_string(),
                     "mettet_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "riga_rx".to_string(),
                     "killarney_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                 ],
             },
@@ -339,10 +337,10 @@ impl GameModule for RallyGameModule {
                     "kouvola_rx".to_string(),
                     "catalunya_rx".to_string(),
                     "mettet_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "riga_rx".to_string(),
                     "killarney_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                 ],
                 laps_per_round: 5,

@@ -23,13 +23,10 @@ impl ClassicGameModule {
         cfg.downforce_coefficient = 0.95;
         cfg.steer_speed = 7.0;
         cfg.steer_return_speed = 9.0;
-        cfg.tire.drift_slide_friction = 0.94;
-        cfg.tire.stiffness_b = 10.5;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
+        cfg.tire.slide_grip = 0.94;
+        cfg.tire.peak_slip_angle_deg = 9.7;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 750 BHP Arcade Stock Car: roaring speedway V8, planted rear, spin-proof stability.
@@ -43,13 +40,10 @@ impl ClassicGameModule {
         cfg.steer_speed = 8.0;
         cfg.steer_return_speed = 10.5;
         cfg.downforce_coefficient = 1.45;
-        cfg.tire.drift_slide_friction = 0.93;
-        cfg.tire.stiffness_b = 11.0;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
+        cfg.tire.slide_grip = 0.93;
+        cfg.tire.peak_slip_angle_deg = 9.3;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 350 BHP Extreme Off-Road Buggy: high suspension travel, all-terrain forgiving grip.
@@ -62,15 +56,10 @@ impl ClassicGameModule {
         cfg.steer_speed = 9.0;
         cfg.steer_return_speed = 11.0;
         cfg.downforce_coefficient = 0.85;
-        cfg.tire.drift_slide_friction = 0.95;
-        cfg.tire.stiffness_b = 9.0;
-        cfg.weight_transfer_longitudinal = 0.65;
-        cfg.weight_transfer_lateral = 0.65;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
+        cfg.tire.slide_grip = 0.95;
+        cfg.tire.peak_slip_angle_deg = 11.3;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 
     /// 45 BHP 200cc Arcade Sprint Kart: 1:1 direct steering, ultra-light, razor apex grip.
@@ -82,13 +71,9 @@ impl ClassicGameModule {
         cfg.max_steer_angle = 0.65; // ~37.2 deg calibrated FIA benchmark (Spec 038)
         cfg.steer_speed = 10.5;
         cfg.steer_return_speed = 14.0;
-        cfg.tire.drift_slide_friction = 0.90;
-        cfg.tire.stiffness_b = 13.5;
-        for w in &mut cfg.wheels {
-            w.tire_model.drift_slide_friction = cfg.tire.drift_slide_friction;
-            w.tire_model.stiffness_b = cfg.tire.stiffness_b;
-        }
-        cfg
+        cfg.tire.slide_grip = 0.90;
+        cfg.tire.peak_slip_angle_deg = 7.0;
+        cfg.finalized()
     }
 
     /// 450 BHP Fantasy Group B Rally Beast: explosive 4WD acceleration, multi-surface suspension compliance, agile slide damping.
@@ -103,17 +88,10 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 12.0;
         cfg.downforce_coefficient = 1.10;
         cfg.drive_bias = 0.5; // 4WD 50:50 torque split
-        cfg.tire.drift_slide_friction = 0.94;
-        cfg.tire.stiffness_b = 10.0;
-        cfg.weight_transfer_longitudinal = 0.50;
-        cfg.weight_transfer_lateral = 0.50;
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-            w.drive_torque_factor = 0.25;
-            w.brake_bias_factor = 0.25;
-        }
+        cfg.tire.slide_grip = 0.94;
+        cfg.tire.peak_slip_angle_deg = 10.2;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg
+        cfg.finalized()
     }
 }
 

@@ -28,8 +28,8 @@ laps = 5
 
 [[rounds]]
 order = 2
-track_id = "yas_marina_rx"
-name = "Yas Marina Circuit RX"
+track_id = "lessay_rx"
+name = "Circuit de Lessay"
 laps = 5
 
 [[rounds]]
@@ -76,8 +76,8 @@ laps = 5
 
 [[rounds]]
 order = 10
-track_id = "silverstone_rx"
-name = "Silverstone RX Circuit"
+track_id = "lavare_rx"
+name = "Circuit de Lavaré"
 laps = 5
 
 [[rounds]]

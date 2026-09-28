@@ -1,9 +1,10 @@
 """
 Unit tests for the shared OSM circuit importer (scripts/osm_importer.py).
 
-They use small synthetic lat/lon data only: no network and no OSM cache needed.
+Most use small synthetic lat/lon data; the provenance test reads assets/osm and tracks/. No network.
 """
 
+import math
 import os
 import sys
 
@@ -201,3 +202,120 @@ def test_runs_of_numbers_corners_from_waypoint_zero_and_joins_a_wrapping_run():
     runs, count = imp.runs_of(classes, ("corner",))
     assert count == 2
     assert runs == [0, -1, 1, 1, -1, -1, 0]
+
+
+def test_chain_segments_stops_at_an_optional_last_node():
+    ways = {1: {"nodes": ["a", "b", "c", "d"]}, 2: {"nodes": ["x", "y", "b"]}}
+    chain = imp.chain_segments(ways, [(2, None), (1, "b", "c")])
+    assert [n for n, _ in chain] == ["x", "y", "b", "c"]
+
+
+def test_shift_start_rotates_props_with_the_points():
+    square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+    pts, props = imp.shift_start(square, 150.0, ["A", "B", "C", "D"])
+    assert pts[0] == (100.0, 50.0)
+    assert props == ["B", "C", "D", "A", "B"]
+
+
+def lap_and_osm(monkeypatch, discipline, track_id):
+    """(lap node ids, nodes, ways, relations) of one imported circuit, from its assets/osm file."""
+    import contextlib
+    import io
+    import xml.etree.ElementTree as ET
+
+    captured = []
+    original = imp.check_loop_joins
+
+    def spy(label, node_ids, coords, edges, *args, **kwargs):
+        captured.append([str(n) for n in node_ids])
+        return original(label, node_ids, coords, edges, *args, **kwargs)
+
+    monkeypatch.setattr(imp, "check_loop_joins", spy)
+    with contextlib.redirect_stderr(io.StringIO()):
+        imp.DISCIPLINES[discipline][1](track_id, imp.DEFAULT_CACHE_DIR)
+    root = ET.parse(imp.osm_file_path(imp.DEFAULT_CACHE_DIR, track_id)).getroot()
+    nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
+    ways = {w.get("id"): [n.get("ref") for n in w.findall("nd")] for w in root.findall("way")}
+    rels = {
+        r.get("id"): (
+            {m.get("ref") for m in r.findall("member") if m.get("type") == "way"},
+            {t.get("k"): t.get("v") for t in r.findall("tag")},
+        )
+        for r in root.findall("relation")
+    }
+    return captured[-1], nodes, ways, rels
+
+
+def test_every_osm_url_points_at_the_imported_lap(monkeypatch):
+    """osm_url is a way of the lap, or a relation holding every lap way (not the venue outline),
+    and its download area (+ config bbox) covers the whole lap. Reads assets/osm and tracks/."""
+    import json
+
+    problems = []
+    urls = {}
+    for discipline, (specs, _, _) in imp.DISCIPLINES.items():
+        for tid in specs:
+            cid = imp.catalog_id(discipline, tid, imp.TRACKS_DIR)
+            with open(os.path.join(imp.TRACKS_DIR, discipline, f"{cid}.json"), encoding="utf-8") as f:
+                urls[tid] = json.load(f)["osm_url"]
+            lap, nodes, ways, rels = lap_and_osm(monkeypatch, discipline, tid)
+            edge_way = {}
+            for wid, nds in ways.items():
+                for a, b in zip(nds, nds[1:]):  # noqa: RUF007 - itertools.pairwise needs 3.10
+                    edge_way.setdefault(frozenset((a, b)), wid)
+            used = {edge_way[frozenset(e)] for e in zip(lap, lap[1:] + lap[:1]) if frozenset(e) in edge_way}
+            kind, eid = urls[tid].rstrip("/").split("/")[-2:]
+            if kind == "way":
+                ok, element_ways = eid in used, [eid]
+            else:
+                members, tags = rels.get(eid, (set(), {}))
+                # a circuit/route/network relation of the lap, not a venue multipolygon
+                ok, element_ways = tags.get("type") != "multipolygon" and used <= members, members
+            if not ok:
+                problems.append(f"{tid}: {urls[tid]} is not the lap")
+                continue
+            pts = [nodes[n] for w in element_ways if w in ways for n in ways[w] if n in nodes]
+            s, w, n, e = imp.expand_bbox((min(p[0] for p in pts), min(p[1] for p in pts),
+                                          max(p[0] for p in pts), max(p[1] for p in pts)), imp.DOWNLOAD_MARGIN_M)
+            cfg = imp.config_bbox(tid)
+            if cfg:
+                s, w, n, e = min(s, cfg[0]), min(w, cfg[1]), max(n, cfg[2]), max(e, cfg[3])
+            if any(not (s <= nodes[x][0] <= n and w <= nodes[x][1] <= e) for x in lap):
+                problems.append(f"{tid}: the download area of {urls[tid]} misses part of the lap")
+    assert not problems, "\n".join(problems)
+
+
+def test_chain_segments_runs_backwards_when_last_comes_first():
+    ways = {1: {"nodes": ["a", "b", "c", "d"]}, 2: {"nodes": ["d", "e"]}}
+    chain = imp.chain_segments(ways, [(1, "c", "a"), (2, None)])
+    assert [n for n, _ in chain] == ["c", "b", "a"] + ["d", "e"]
+
+
+def radius_through(p, q, r):
+    area2 = abs((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1]))
+    return float("inf") if area2 < 1e-9 else math.dist(p, q) * math.dist(q, r) * math.dist(p, r) / (2 * area2)
+
+
+def test_fillet_corners_rounds_every_corner_to_the_radius():
+    square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+    pts, props = imp.fillet_corners(square, ["A", "B", "C", "D"], 20.0)
+    assert len(pts) == len(props) > 4
+    n = len(pts)
+    radii = [radius_through(pts[i - 1], pts[i], pts[(i + 1) % n]) for i in range(n)]
+    assert min(radii) > 19.0
+    # each 90 deg fillet of radius R swaps 2 * R of straight for a quarter circle: the lap loses 4 * (2 - pi / 2) * R
+    assert abs(imp.polyline_length(pts) - (400.0 - 4 * (2 - math.pi / 2) * 20.0)) < 1.0
+
+
+def test_fillet_corners_rounds_a_narrow_v_hairpin():
+    # a 40 deg V (legs every 20 m, as OSM draws them) closed by a wide far end
+    half = math.radians(20)
+    lower = [(x, -x * math.tan(half)) for x in range(200, 0, -20)]
+    upper = [(x, x * math.tan(half)) for x in range(20, 220, 20)]
+    loop = lower + [(0.0, 0.0)] + upper + [(300.0, 150.0), (300.0, -150.0)]
+    pts, _ = imp.fillet_corners(loop, ["x"] * len(loop), 13.0)
+    near_tip = sorted((p for p in pts if p[0] < 100.0), key=lambda p: math.atan2(p[1], p[0] - 100.0))
+    radii = [radius_through(near_tip[i - 1], near_tip[i], near_tip[i + 1]) for i in range(1, len(near_tip) - 1)]
+    assert min(radii) > 12.0
+    # the legs are 2 * 13 m apart at x = 13 / tan 20 deg = 36 m; the half circle bulges 13 m past that
+    assert 20.0 < min(p[0] for p in pts) < 30.0

@@ -26,13 +26,13 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "kouvola_rx",
         "catalunya_rx",
         "mettet_rx",
-        "silverstone_rx",
+        "lavare_rx",
         "riga_rx",
         "killarney_rx",
-        "yas_marina_rx",
+        "lessay_rx",
         "essay_rx",
         "dreux_rx",
-        "blyton_rx",
+        "croft_rx",
     ];
 
     for id in &expected_ids {
@@ -240,11 +240,11 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
     let mettet_breakdown = mettet.surface_breakdown();
     assert!(mettet_breakdown.len() >= 2, "Mettet must be mixed surface");
 
-    let silverstone = tdrace_core::catalog::official_track("rally", "silverstone_rx");
-    assert_eq!(silverstone.name, "Silverstone Circuit RX");
-    assert!(!silverstone.geometry.jump_ramps.is_empty(), "Silverstone RX must have jump ramp");
-    let silverstone_breakdown = silverstone.surface_breakdown();
-    assert!(silverstone_breakdown.len() >= 2, "Silverstone RX must be mixed surface");
+    // Lavaré replaced Silverstone RX (whose loose section is not in OSM); no jump is known there.
+    let lavare = tdrace_core::catalog::official_track("rally", "lavare_rx");
+    assert_eq!(lavare.name, "Circuit de Lavaré");
+    let lavare_breakdown = lavare.surface_breakdown();
+    assert!(lavare_breakdown.len() >= 2, "Lavaré must be mixed surface");
 
     let riga = tdrace_core::catalog::official_track("rally", "riga_rx");
     assert_eq!(riga.name, "Biķernieku Trase / Riga RX");
@@ -258,11 +258,11 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
     let killarney_breakdown = killarney.surface_breakdown();
     assert!(killarney_breakdown.len() >= 2, "Killarney must be mixed surface");
 
-    let yas_marina = tdrace_core::catalog::official_track("rally", "yas_marina_rx");
-    assert_eq!(yas_marina.name, "Yas Marina RX Arena");
-    assert!(!yas_marina.geometry.jump_ramps.is_empty(), "Yas Marina RX must have jump ramp");
-    let yas_marina_breakdown = yas_marina.surface_breakdown();
-    assert!(yas_marina_breakdown.len() >= 2, "Yas Marina RX must be mixed surface");
+    // Lessay replaced Yas Marina RX (whose loose section is not in OSM); no jump is known there.
+    let lessay = tdrace_core::catalog::official_track("rally", "lessay_rx");
+    assert_eq!(lessay.name, "Circuit de Lessay");
+    let lessay_breakdown = lessay.surface_breakdown();
+    assert!(lessay_breakdown.len() >= 2, "Lessay must be mixed surface");
 
     let essay = tdrace_core::catalog::official_track("rally", "essay_rx");
     assert_eq!(essay.name, "Circuit des Ducs / Essay RX");
@@ -302,9 +302,10 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         "Montalegre 1:1 FIA length expected ~1050m, got {:.1}m",
         montalegre.spline.total_length()
     );
+    // Nyirád: the 1216 m OSM loop at 1:1 with its sharp junction hairpins rounded to 13 m (~1081 m).
     assert!(
-        nyirad.spline.total_length() >= 1170.0 && nyirad.spline.total_length() <= 1270.0,
-        "Nyirád 1:1 FIA length expected ~1220m, got {:.1}m",
+        nyirad.spline.total_length() >= 1040.0 && nyirad.spline.total_length() <= 1120.0,
+        "Nyirád 1:1 OSM lap with rounded hairpins expected ~1081m, got {:.1}m",
         nyirad.spline.total_length()
     );
     assert!(
@@ -323,13 +324,14 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         mettet.spline.total_length()
     );
     assert!(
-        silverstone.spline.total_length() >= 920.0 && silverstone.spline.total_length() <= 1020.0,
-        "Silverstone RX 1:1 FIA length expected ~972m, got {:.1}m",
-        silverstone.spline.total_length()
+        lavare.spline.total_length() >= 1020.0 && lavare.spline.total_length() <= 1100.0,
+        "Lavaré 1:1 length expected ~1070m, got {:.1}m",
+        lavare.spline.total_length()
     );
+    // Riga: the mapped 1071 m OSM loop at 1:1 (the official 1294 m is 17% longer, beyond the 10% rule).
     assert!(
-        riga.spline.total_length() >= 1250.0 && riga.spline.total_length() <= 1400.0,
-        "Riga RX 1:1 FIA length expected ~1294m, got {:.1}m",
+        riga.spline.total_length() >= 1010.0 && riga.spline.total_length() <= 1090.0,
+        "Riga RX 1:1 OSM length expected ~1051m, got {:.1}m",
         riga.spline.total_length()
     );
     assert!(
@@ -338,9 +340,9 @@ fn test_world_rx_tracks_jump_ramps_and_mixed_surfaces() {
         killarney.spline.total_length()
     );
     assert!(
-        yas_marina.spline.total_length() >= 950.0 && yas_marina.spline.total_length() <= 1100.0,
-        "Yas Marina RX 1:1 FIA length expected ~1050m, got {:.1}m",
-        yas_marina.spline.total_length()
+        lessay.spline.total_length() >= 850.0 && lessay.spline.total_length() <= 920.0,
+        "Lessay 1:1 length expected ~886m, got {:.1}m",
+        lessay.spline.total_length()
     );
     assert!(
         essay.spline.total_length() >= 880.0 && essay.spline.total_length() <= 990.0,
@@ -365,10 +367,8 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
         ("kouvola_rx", tdrace_core::catalog::official_track("rally", "kouvola_rx")),
         ("catalunya_rx", tdrace_core::catalog::official_track("rally", "catalunya_rx")),
         ("mettet_rx", tdrace_core::catalog::official_track("rally", "mettet_rx")),
-        ("silverstone_rx", tdrace_core::catalog::official_track("rally", "silverstone_rx")),
         ("riga_rx", tdrace_core::catalog::official_track("rally", "riga_rx")),
         ("killarney_rx", tdrace_core::catalog::official_track("rally", "killarney_rx")),
-        ("yas_marina_rx", tdrace_core::catalog::official_track("rally", "yas_marina_rx")),
         ("essay_rx", tdrace_core::catalog::official_track("rally", "essay_rx")),
     ];
 
@@ -513,13 +513,13 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "kouvola_rx",
         "catalunya_rx",
         "mettet_rx",
-        "silverstone_rx",
+        "lavare_rx",
         "riga_rx",
         "killarney_rx",
-        "yas_marina_rx",
+        "lessay_rx",
         "essay_rx",
         "dreux_rx",
-        "blyton_rx",
+        "croft_rx",
     ];
 
     for id in &rally_ids {
@@ -558,10 +558,10 @@ fn test_rally_race_session_simulation_on_new_tracks() {
         "kouvola_rx",
         "catalunya_rx",
         "mettet_rx",
-        "silverstone_rx",
+        "lavare_rx",
         "riga_rx",
         "killarney_rx",
-        "yas_marina_rx",
+        "lessay_rx",
     ];
 
     for id in &test_tracks {
@@ -688,4 +688,27 @@ fn test_export_and_save_rally_tracks_to_disk() {
     }
 
     let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_blyton_ids_resolve_to_croft() {
+    // Blyton Park RX (not mapped in OSM) was replaced by Croft; old saves and series keep working.
+    for old in ["blyton_rx", "blyton_park", "blyton_park_rx"] {
+        assert_eq!(tdrace_core::catalog::canonical_id(old), Some("croft_rx"), "{} must alias croft_rx", old);
+    }
+    let croft = tdrace_core::catalog::official_track("rally", "blyton_rx");
+    assert_eq!(croft.name, "Croft Rallycross Circuit");
+    assert_eq!(croft.scale(), "1:1");
+    let lap = croft.spline.total_length();
+    assert!((lap - 1251.0).abs() / 1251.0 < 0.02, "Croft lap is {:.0} m", lap);
+}
+
+#[test]
+fn test_silverstone_and_yas_marina_ids_resolve_to_their_replacements() {
+    // Silverstone RX and Yas Marina RX (loose sections not in OSM) were replaced by Lavaré and Lessay.
+    for (old, new) in [("silverstone_rx", "lavare_rx"), ("yas_marina_rx", "lessay_rx"), ("yas_marina", "lessay_rx")] {
+        assert_eq!(tdrace_core::catalog::canonical_id(old), Some(new), "{} must alias {}", old, new);
+    }
+    assert_eq!(tdrace_core::catalog::official_track("rally", "silverstone_rx").name, "Circuit de Lavaré");
+    assert_eq!(tdrace_core::catalog::official_track("rally", "yas_marina_rx").name, "Circuit de Lessay");
 }

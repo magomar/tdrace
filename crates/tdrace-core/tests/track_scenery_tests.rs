@@ -165,11 +165,10 @@ fn test_presets_contain_scenery_and_sample_concrete() {
     assert!(est.geometry.trees.iter().any(|t| t.tree_type == TreeType::Pine));
     assert!(est.geometry.trees.iter().any(|t| t.tree_type == TreeType::Oak));
 
-    // 3. Yas Marina RX has stadium grandstand and date palms
-    let yas = tdrace_core::catalog::official_track("rally", "yas_marina_rx");
-    assert!(!yas.geometry.grandstands.is_empty(), "Yas Marina must have grandstands");
-    assert!(!yas.geometry.trees.is_empty(), "Yas Marina must have palms");
-    assert!(yas.geometry.trees.iter().all(|t| t.tree_type == TreeType::Palm));
+    // 3. Lessay RX has a grandstand on the start straight and trees
+    let lessay = tdrace_core::catalog::official_track("rally", "lessay_rx");
+    assert!(!lessay.geometry.grandstands.is_empty(), "Lessay must have a grandstand");
+    assert!(!lessay.geometry.trees.is_empty(), "Lessay must have trees");
 
     // 4. All scenery obstacles must be returned in all_obstacles_with_scenery
     let cat_obs = cat.geometry.all_obstacles_with_scenery();

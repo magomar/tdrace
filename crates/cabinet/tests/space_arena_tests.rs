@@ -18,7 +18,7 @@ fn test_space_arena_game_simulation_and_juice() {
 
     // Digital input smoothing for spaceship controls
     let mut filter = DigitalInputFilter::default();
-    let (steer, thrust, _) = filter.update(1.0, 1.0, 0.0, 0.0, 1.0 / 60.0);
+    let (steer, thrust, _) = filter.update(1.0, 1.0, 0.0, 1.0 / 60.0);
     assert!(steer > 0.0 && steer < 0.25);
     assert!(thrust > 0.0 && thrust < 0.25);
 }

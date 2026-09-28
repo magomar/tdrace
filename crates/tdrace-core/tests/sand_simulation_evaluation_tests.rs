@@ -126,6 +126,8 @@ fn test_sand_steering_authority_and_friction_ellipse_starvation() {
     let v_init_kmh = 40.0;
     let v_init_mps = v_init_kmh / 3.6;
 
+    // (heading change in 1 s, average front Fy) measured on asphalt, the first surface
+    let mut asphalt_ref = (0.0f32, 0.0f32);
     for &surf in &test_surfaces {
         let mut car = Car::new(CarConfig::sports_car());
         car.state.position = Vec2::ZERO;
@@ -202,25 +204,32 @@ fn test_sand_steering_authority_and_friction_ellipse_starvation() {
         println!("----------------------------------------------------------------------------------");
 
         if surf == SurfaceType::DeepSand {
-            // On DeepSand, the car plows straight ahead because lateral grip is starved by longitudinal drag
+            // On DeepSand (mu 0.30) the car plows: turn authority is well under half of asphalt's and
+            // lateral g stays below the surface friction. (Spec 043: the pre-043 thresholds, < 5 deg
+            // and < 0.15 g, came from drive force eating the friction circle even while TCS kept
+            // the wheels from spinning; 0.19 g at mu 0.30 is the physical sand limit.)
+            let (asphalt_heading, asphalt_fy) = asphalt_ref;
             assert!(
-                heading_change_1s < 5.0,
-                "DeepSand severely stunts yaw turn authority (got {:.1} deg in 1s vs Asphalt >30 deg)",
-                heading_change_1s
+                heading_change_1s < asphalt_heading * 0.5,
+                "DeepSand severely stunts yaw turn authority (got {:.1} deg in 1s vs Asphalt {:.1} deg)",
+                heading_change_1s,
+                asphalt_heading
             );
             assert!(
-                peak_lat_accel < 0.15,
-                "DeepSand lateral acceleration severely compromised ({:.2}g)",
+                peak_lat_accel < 0.25,
+                "DeepSand lateral acceleration must stay below the sand friction ({:.2}g)",
                 peak_lat_accel
             );
             assert!(
-                avg_front_fy < 800.0,
-                "Front steering grip collapsed by rolling resistance starvation ({:.0} N)",
-                avg_front_fy
+                avg_front_fy < asphalt_fy * 0.4,
+                "Front steering grip on sand ({:.0} N) must collapse vs asphalt ({:.0} N)",
+                avg_front_fy,
+                asphalt_fy
             );
         } else if surf == SurfaceType::Asphalt {
             assert!(peak_lat_accel > 0.65);
             assert!(heading_change_1s > 30.0);
+            asphalt_ref = (heading_change_1s, avg_front_fy);
         }
     }
 }

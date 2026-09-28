@@ -287,6 +287,45 @@ fn test_client_graceful_disconnect() {
 }
 
 #[test]
+fn test_lobby_pump_network_keeps_client_connected_and_syncs_car() {
+    use cabinet::net::{CabinetLanClientLobbyScreen, CabinetLanHostScreen};
+
+    let host = LanHost::bind_ephemeral("Pump Room", "HostRacer").expect("Bind host");
+    let host_addr = host.local_addr().expect("local addr");
+    let mut host_screen = CabinetLanHostScreen::new(host);
+
+    let client = LanClient::connect(host_addr, "Guest", "FRA", "gt_ferrari_296_gt3", "viper_green").expect("connect");
+    let mut lobby = CabinetLanClientLobbyScreen::new(client);
+    for _ in 0..100 {
+        host_screen.pump_network(0.016);
+        lobby.pump_network(0.016);
+        if lobby.client().is_connected() && host_screen.host.active_slots().len() == 2 {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    assert_eq!(host_screen.host.active_slots().len(), 2);
+
+    // Client picks a car and becomes not ready, as when the game opens its Garage.
+    lobby.set_ready(true);
+    lobby.set_local_car("gt_bmw_m4_gt4");
+    lobby.set_ready(false);
+
+    // Pump both sides for 6 s of game time: longer than both timeouts (3.5 s / 4.5 s).
+    let mut t = 0.0;
+    while t < 6.0 {
+        host_screen.pump_network(0.05);
+        assert!(lobby.pump_network(0.05), "client must stay connected while pumping");
+        t += 0.05;
+    }
+
+    let slot = host_screen.host.slots()[1].clone().expect("client slot");
+    assert_eq!(slot.car_model_id, "gt_bmw_m4_gt4");
+    assert_eq!(slot.color_scheme_id, "viper_green");
+    assert!(!slot.is_ready);
+}
+
+#[test]
 fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     use cabinet::net::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, LanCollisionMode};
 
@@ -301,8 +340,20 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     host_screen.cycle_collision();
     assert_eq!(host_screen.host.collision_mode(), LanCollisionMode::GhostPassing);
 
-    host_screen.cycle_track();
-    assert_eq!(host_screen.host.track_id(), "Autodromo Nazionale Monza");
+    host_screen.set_track("monza", "Autodromo Nazionale Monza");
+    assert_eq!(host_screen.host.track_id(), "monza");
+    assert_eq!(host_screen.track_title, "Autodromo Nazionale Monza");
+    assert_eq!(host_screen.host.laps(), 10, "set_track keeps the lap rule");
+
+    host_screen.set_local_car("gt_porsche_911_gt3r");
+    let host_slot = host_screen.host.slots()[0].clone().expect("host slot");
+    assert_eq!(host_slot.car_model_id, "gt_porsche_911_gt3r");
+
+    host_screen.cycle_livery();
+    let host_slot = host_screen.host.slots()[0].clone().expect("host slot");
+    assert_eq!(host_slot.car_model_id, "gt_porsche_911_gt3r", "livery change keeps the car");
+    assert_eq!(host_slot.color_scheme_id, cabinet::net::LAN_LIVERIES[host_screen.selected_livery_idx].0);
+    assert!(host_screen.take_request().is_none());
 
     host_screen.copy_address_to_clipboard();
     assert!(host_screen.copied_timer > 0.0);
@@ -321,9 +372,11 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     client_lobby.toggle_ready();
     assert!(client_lobby.is_ready);
 
-    let initial_car = client_lobby.car_models[client_lobby.selected_car_idx].0.clone();
-    client_lobby.cycle_car();
-    let cycled_car = client_lobby.car_models[client_lobby.selected_car_idx].0.clone();
-    assert_ne!(initial_car, cycled_car);
+    client_lobby.set_local_car("gt_bmw_m4_gt4");
+    assert_eq!(client_lobby.car_model_id, "gt_bmw_m4_gt4");
+
+    client_lobby.set_ready(false);
+    assert!(!client_lobby.is_ready);
+    assert!(client_lobby.take_request().is_none());
 }
 
