@@ -64,8 +64,7 @@ capped at the grip limit with overslip 1.5.
 Assists come from the assist profile (Arcade / Sport / Pro). TCS trims torque at the axle to the
 tire's slip target. ABS holds the braking slip at its target, and the target shrinks while you
 corner. The rear axle uses select-low and 0.6× the peak slip. ESC caps both the yaw error and the
-body sideslip. Module defaults are: GT = Pro (no aids), rally = Sport, all other modules =
-Arcade.
+body sideslip. Module defaults are: rally = Sport, all other modules (GT included) = Arcade.
 
 ## 4. Gates to run after tuning
 

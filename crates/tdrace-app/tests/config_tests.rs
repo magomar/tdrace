@@ -344,7 +344,8 @@ fn test_external_module_files_and_hierarchy_precedence() {
     let gt_cfg = base_cfg.for_module("gt");
     assert_eq!(gt_cfg.gameplay.default_track, "monza");
     assert_eq!(gt_cfg.gameplay.default_laps, 3);
-    assert_eq!(gt_cfg.gameplay.default_assist_profile, "pro");
+    // Spec 043: GT starts on Arcade aids (keyboard players get the stable car; Pro is one key away)
+    assert_eq!(gt_cfg.gameplay.default_assist_profile, "arcade");
     assert!((gt_cfg.camera.velocity_lookahead_time - 0.50).abs() < 1e-4);
     assert!((gt_cfg.camera.position_smoothing - 9.5).abs() < 1e-4);
 
