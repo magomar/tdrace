@@ -290,9 +290,9 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
 fn test_all_80_motorsport_cars_catalog_integrity() {
     use tdrace_app::catalog::ALL_REAL_CARS;
 
-    assert_eq!(ALL_REAL_CARS.len(), 86, "Catalog must contain exactly 86 authentic motorsport vehicles");
+    assert_eq!(ALL_REAL_CARS.len(), 101, "Catalog must contain exactly 101 authentic motorsport vehicles");
 
-    let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
+    let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart", "autocross"];
     for m in modules {
         let count = ALL_REAL_CARS.iter().filter(|c| c.module_id == m).count();
         if m == "gt" {
@@ -1548,6 +1548,13 @@ fn test_spec_031_all_catalog_cars_lighting_by_modality() {
             }
             "extreme_offroad" => {
                 assert_eq!(cfg, VehicleLightingConfig::extreme_offroad(), "Car {} in 'extreme_offroad' must have offroad lighting", car.id);
+            }
+            "autocross" => {
+                if car.tier == 4 {
+                    assert_eq!(cfg, VehicleLightingConfig::rally(), "Car {} in 'autocross' Tier 4 must have rally lighting", car.id);
+                } else {
+                    assert_eq!(cfg, VehicleLightingConfig::extreme_offroad(), "Car {} in 'autocross' must have offroad lighting", car.id);
+                }
             }
             other => panic!("Unexpected module_id '{}' for car {}", other, car.id),
         }

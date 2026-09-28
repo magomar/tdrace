@@ -79,7 +79,7 @@ fn test_menu_direct_garage_shortcut() {
 
 #[test]
 fn test_garage_shows_all_module_models_across_tiers() {
-    let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+    let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
 
     for mod_id in modules {
         let all_cars = get_models_for_module(mod_id);
@@ -106,8 +106,8 @@ fn test_garage_shows_all_module_models_across_tiers() {
     let global_models = get_all_models();
     assert_eq!(
         global_models.len(),
-        86,
-        "Expected exactly 86 real car models in catalog, got {}",
+        101,
+        "Expected exactly 101 real car models in catalog, got {}",
         global_models.len()
     );
 }
@@ -115,10 +115,10 @@ fn test_garage_shows_all_module_models_across_tiers() {
 #[test]
 fn test_all_80_real_cars_attributes_and_data_integrity() {
     let global_models = get_all_models();
-    assert_eq!(global_models.len(), 86);
+    assert_eq!(global_models.len(), 101);
 
     let mut seen_ids = std::collections::HashSet::new();
-    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
 
     for car in global_models {
         // Unique non-empty IDs and names
