@@ -125,9 +125,9 @@ impl Default for CameraConfig {
     }
 }
 
-/// Keyboard handling settings (Spec 042): a preset plus five values.
+/// Keyboard handling settings (Spec 043): a preset plus five values.
 ///
-/// Settings files from before Spec 042 still load: the old ten fields are ignored and the
+/// Settings files from before Spec 043 still load: the old ten fields are ignored and the
 /// five values come from the (renamed) preset, e.g. `"agile"` loads as Sharp.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(from = "InputConfigRaw")]

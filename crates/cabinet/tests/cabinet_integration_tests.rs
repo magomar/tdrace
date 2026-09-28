@@ -1179,7 +1179,7 @@ fn test_arcade_settings_modal_controls_tab_widgets_and_rollback() {
     let gp = GamepadConfig::default();
     let mut modal = ArcadeSettingsModal::new(&audio, &gp);
 
-    // Initial state: Balanced preset (Spec 042 five-parameter keyboard handling)
+    // Initial state: Balanced preset (Spec 043 five-parameter keyboard handling)
     let balanced = DigitalInputConfig::from_profile(SteeringProfile::Balanced);
     modal.set_input_filter_state(&balanced);
     modal.snapshot_initial();
@@ -1229,7 +1229,7 @@ fn test_arcade_settings_modal_controls_subtabs_navigation_and_profile_presets() 
     assert_eq!(modal.controls_sub_tab, 0);
     assert_eq!(modal.nav.column_lengths[1], 7);
 
-    // Spec 042 presets: every step from Smooth to Raw is quicker, more authoritative, more
+    // Spec 043 presets: every step from Smooth to Raw is quicker, more authoritative, more
     // linear, has quicker pedals and less traction help.
     let presets = SteeringProfile::PRESETS.map(|p| p.to_config());
     assert_eq!(presets[1], SteeringProfile::Balanced.to_config());

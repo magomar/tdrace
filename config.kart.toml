@@ -8,5 +8,5 @@ default_num_bots = 7
 default_assist_profile = "arcade"
 
 [input]
-# Karts steer quicker than the Balanced default (Spec 042 Steering Speed, ms to full input)
+# Karts steer quicker than the Balanced default (Spec 043 Steering Speed, ms to full input)
 steer_time_ms = 120.0

@@ -1,11 +1,11 @@
-//! # Keyboard Key-Style × Preset × Car Benchmark (Spec 042)
+//! # Keyboard Key-Style × Preset × Car Benchmark (Spec 043)
 //!
 //! Drives the five Classic Arcade Cars with six prototypical key-pressing styles on each of the
 //! four keyboard handling presets, across asphalt, dirt, packed sand and ice, in three scenarios
 //! (sweeper corner, S-chicane reversal, low-grip slide catch).
 //!
 //! Writes `reports/keyboard_input_car_control_report.{md,json}`. When
-//! `reports/keyboard_input_car_control_report_pre042.json` exists, the report adds an
+//! `reports/keyboard_input_car_control_report_pre043.json` exists, the report adds an
 //! old-vs-new comparison against it.
 
 use std::fs;
@@ -32,7 +32,7 @@ const SURFACES: [SurfaceType; 4] = [
     SurfaceType::PackedSand,
     SurfaceType::SheetIce,
 ];
-const PRE_042_JSON: &str = "reports/keyboard_input_car_control_report_pre042.json";
+const PRE_043_JSON: &str = "reports/keyboard_input_car_control_report_pre043.json";
 
 /// Benchmark entry for an arcade car across all tests.
 #[derive(Debug, Clone, Serialize)]
@@ -113,9 +113,9 @@ fn main() {
 
     let reports_dir = Path::new("reports");
     fs::create_dir_all(reports_dir).expect("Failed to create reports directory");
-    let pre042 = fs::read_to_string(PRE_042_JSON).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok());
+    let pre043 = fs::read_to_string(PRE_043_JSON).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok());
 
-    let md = generate_markdown_report(&timestamp, &fleet, &sensitivity, pre042.as_ref(), wall_s);
+    let md = generate_markdown_report(&timestamp, &fleet, &sensitivity, pre043.as_ref(), wall_s);
     let json = KeyStyleBenchmark {
         generated_at: timestamp,
         fleet,
@@ -138,9 +138,9 @@ fn sensitivity_of<'a>(s: &'a [KeyStyleSensitivity], vehicle: &str, surface: Surf
     s.iter().find(|k| k.vehicle_id == vehicle && k.surface == surface && k.filter_profile == preset)
 }
 
-/// Old (pre-042) asphalt sweeper exit speed for a driver profile id, from the saved JSON.
-fn old_exit(pre042: &serde_json::Value, vehicle: &str, driver_id: &str) -> Option<(f64, String)> {
-    let v = pre042.as_array()?.iter().find(|v| v["vehicle_id"] == vehicle)?;
+/// Old (pre-043) asphalt sweeper exit speed for a driver profile id, from the saved JSON.
+fn old_exit(pre043: &serde_json::Value, vehicle: &str, driver_id: &str) -> Option<(f64, String)> {
+    let v = pre043.as_array()?.iter().find(|v| v["vehicle_id"] == vehicle)?;
     let r = v["sweeper_results"]
         .as_array()?
         .iter()
@@ -156,15 +156,15 @@ fn generate_markdown_report(
     timestamp: &str,
     fleet: &[VehicleEvaluationReport],
     sensitivity: &[KeyStyleSensitivity],
-    pre042: Option<&serde_json::Value>,
+    pre043: Option<&serde_json::Value>,
     wall_s: f64,
 ) -> String {
     let presets = SteeringProfile::PRESETS;
     let mut s = String::new();
-    s.push_str("# Key Style × Preset × Car Report (Spec 042) ⌨️🏎️\n\n");
+    s.push_str("# Key Style × Preset × Car Report (Spec 043) ⌨️🏎️\n\n");
     s.push_str(&format!(
         "Generated `{timestamp}` by `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` in {wall_s:.2} s.  \n\
-         Physics: spec 042 slip-based tires, 120 Hz. Cars: {} classic arcade cars. Presets: Smooth, Balanced, Sharp, Raw.  \n\
+         Physics: spec 043 slip-based tires, 120 Hz. Cars: {} classic arcade cars. Presets: Smooth, Balanced, Sharp, Raw.  \n\
          Surfaces: asphalt, dirt, packed sand, sheet ice. Default arcade driver aids of each car.\n\n",
         fleet.len()
     ));
@@ -271,10 +271,10 @@ fn generate_markdown_report(
     }
 
     // 6. Old vs new
-    s.push_str("\n## 6. Old physics vs spec 042 (Balanced, asphalt sweeper)\n\n");
-    match pre042 {
+    s.push_str("\n## 6. Old physics vs spec 043 (Balanced, asphalt sweeper)\n\n");
+    match pre043 {
         Some(old) => {
-            s.push_str("Old numbers come from `reports/keyboard_input_car_control_report_pre042.json` (the pre-042 benchmark output).\n\n");
+            s.push_str("Old numbers come from `reports/keyboard_input_car_control_report_pre043.json` (the pre-043 benchmark output).\n\n");
             s.push_str("| Car | Hold old → new | Feathering old → new | Hold vs feathering old → new | Lift-off old → new |\n|---|---|---|---|---|\n");
             for v in fleet {
                 let new = |p| sweeper(v, SurfaceType::Asphalt, SteeringProfile::Balanced, p);
@@ -307,11 +307,11 @@ fn generate_markdown_report(
                 s.push_str(&format!("| {} | {} | {} | {ratio} | {lift} |\n", v.vehicle_name, fmt(&oh, nh), fmt(&of, nf)));
             }
         }
-        None => s.push_str("No pre-042 dataset found; comparison skipped.\n"),
+        None => s.push_str("No pre-043 dataset found; comparison skipped.\n"),
     }
 
     // 7. Gate summary
-    s.push_str("\n## 7. Spec 042 gates on this run\n\n");
+    s.push_str("\n## 7. Spec 043 gates on this run\n\n");
     let hold_ok = fleet.iter().all(|v| {
         sweeper(v, SurfaceType::Asphalt, SteeringProfile::Balanced, KeyboardSteerPattern::SustainedHold).is_some_and(|r| {
             r.speed_retention_pct >= 90.0

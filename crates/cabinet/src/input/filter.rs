@@ -1,4 +1,4 @@
-//! Digital keyboard handling settings (Spec 042).
+//! Digital keyboard handling settings (Spec 043).
 //!
 //! Five player parameters shape how keyboard input reaches the car. The filter owns the
 //! *timing* (steering speed, center precision, pedal speed); steering authority and traction
@@ -15,7 +15,7 @@ pub enum SteeringProfile {
     Smooth,
     /// Default: on the grip limit, moderate steering speed and traction help.
     Balanced,
-    /// Quick steering, a little past the limit, light traction help. (Pre-042 "agile"/"direct".)
+    /// Quick steering, a little past the limit, light traction help. (Pre-043 "agile"/"direct".)
     #[serde(alias = "agile", alias = "direct")]
     Sharp,
     /// Instant keys, well past the limit, no traction help.
@@ -92,7 +92,7 @@ impl SteeringProfile {
     }
 }
 
-/// The five keyboard handling parameters (Spec 042).
+/// The five keyboard handling parameters (Spec 043).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct DigitalInputConfig {
     /// Preset these values came from (`Custom` after a slider edit).

@@ -274,7 +274,7 @@ mod tests {
             let speed_scale = (1.0f32 / (1.0f32 + v0 * 0.018f32)).max(0.38f32);
             let ctrl = CarControls {
                 throttle: 0.5,
-                steer: 0.35 * speed_scale, // Spec 042: compare below the tire limit, where the result is not chaotic
+                steer: 0.35 * speed_scale, // Spec 043: compare below the tire limit, where the result is not chaotic
                 brake: 0.0,
                 handbrake: false,
                 reverse: false,

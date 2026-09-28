@@ -1,7 +1,7 @@
-//! Key-pressing style analysis gates (Spec 042).
+//! Key-pressing style analysis gates (Spec 043).
 //!
-//! The pre-042 versions of these tests asserted the old model's defect: holding a steer key
-//! scrubbed speed (kart kept 16% of its entry speed) while feathering did not. On the spec 042
+//! The pre-043 versions of these tests asserted the old model's defect: holding a steer key
+//! scrubbed speed (kart kept 16% of its entry speed) while feathering did not. On the spec 043
 //! physics holding is a valid style; feathering stays a skill that changes the line.
 
 use tdrace_app::catalog::{RealCarModel, CLASSIC_ARCADE_CARS};
@@ -37,7 +37,7 @@ fn sweep(model: &RealCarModel, surface: SurfaceType, pattern: KeyboardSteerPatte
 /// Restated in task 10: the draft gate compared hold and feathering exit speeds (>= 70%). Holding
 /// turns the car ~4x further in the same 3 s (GT: 83 deg vs 19 deg), so a lower exit speed there is
 /// the tighter line, not scrub. Speed retained against entry measures scrub directly
-/// (pre-042: kart 16%, GT 79%).
+/// (pre-043: kart 16%, GT 79%).
 #[test]
 fn test_keyboard_sweeper_feathering_preserves_speed_vs_holding() {
     for model in CLASSIC_ARCADE_CARS {

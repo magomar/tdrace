@@ -77,7 +77,7 @@ pub fn default_wheel_assemblies() -> [WheelAssemblyConfig; 4] {
 
 /// Classic Pacejka Magic Formula lateral tire parameters.
 ///
-/// Used by the motorbike model. Car tires use [`TireConfig`] (Spec 042).
+/// Used by the motorbike model. Car tires use [`TireConfig`] (Spec 043).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct PacejkaTireConfig {
     /// Pacejka B (Stiffness factor). Determines slope at low slip angles.
@@ -134,7 +134,7 @@ pub fn pacejka_peak_slip_angle_deg(b: f32, c: f32, e: f32) -> f32 {
     (0.5 * (lo + hi) / b).to_degrees().clamp(3.0, 25.0)
 }
 
-/// Car tire model (Spec 042): normalized combined slip with load sensitivity.
+/// Car tire model (Spec 043): normalized combined slip with load sensitivity.
 ///
 /// Every field is a designer knob expressed in a unit a driver can feel.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -208,7 +208,7 @@ struct TireConfigRaw {
     skid_threshold: Option<f32>,
     #[serde(default)]
     skid_full_threshold: Option<f32>,
-    // Legacy Pacejka shape (pre Spec 042): only used to derive the peak slip angle.
+    // Legacy Pacejka shape (pre Spec 043): only used to derive the peak slip angle.
     #[serde(default)]
     stiffness_b: Option<f32>,
     #[serde(default)]
@@ -251,7 +251,7 @@ pub struct DriverAssistsConfig {
     pub tcs_slip_threshold: f32,
     /// TCS torque reduction strength [0.0 = none, 1.0 = full cut down to grip limit].
     pub tcs_strength: f32,
-    /// TCS lateral trigger: rear slip angle (degrees) above which engine torque is cut (Spec 042).
+    /// TCS lateral trigger: rear slip angle (degrees) above which engine torque is cut (Spec 043).
     #[serde(default = "default_tcs_slip_angle_deg")]
     pub tcs_slip_angle_deg: f32,
 
@@ -431,7 +431,7 @@ impl Default for TerrainInteractionConfig {
     }
 }
 
-/// Rear tire relative to the front `tire` (Spec 042). Ratios, so every later tire change (catalog
+/// Rear tire relative to the front `tire` (Spec 043). Ratios, so every later tire change (catalog
 /// grip stat, module tuning) reaches both axles.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct RearAxleTire {
@@ -464,7 +464,7 @@ impl RearAxleTire {
     }
 }
 
-/// Per-driver handling aids (Spec 042). Set from the player's handling preset; bots use the default.
+/// Per-driver handling aids (Spec 043). Set from the player's handling preset; bots use the default.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct PlayerHandling {
     /// Grip-aware steering: full input maps to the largest angle the front tires can use at this
@@ -521,7 +521,7 @@ impl Default for DifferentialType {
     }
 }
 
-/// Default load transfer response (Hz). The pre-042 filter `alpha = dt * 15` was ~2.4 Hz.
+/// Default load transfer response (Hz). The pre-043 filter `alpha = dt * 15` was ~2.4 Hz.
 pub const DEFAULT_WEIGHT_TRANSFER_HZ: f32 = 3.0;
 
 pub fn default_front_differential() -> DifferentialType {
@@ -594,10 +594,10 @@ pub struct CarConfig {
     /// Yaw angular velocity damping coefficient in N*m*s/rad.
     pub angular_damping: f32,
 
-    /// Handling balance: front axle share of lateral load transfer [0.35-0.65] (Spec 042).
+    /// Handling balance: front axle share of lateral load transfer [0.35-0.65] (Spec 043).
     /// Higher = more understeer (the front tires lose grip first), lower = more oversteer.
     pub roll_balance: f32,
-    /// How fast load transfer follows the chassis acceleration, in Hz [2-10] (Spec 042).
+    /// How fast load transfer follows the chassis acceleration, in Hz [2-10] (Spec 043).
     /// Low = lazy, floaty weight shifts; high = sharp, twitchy.
     pub weight_transfer_hz: f32,
     /// Caster jacking diagonal load transfer factor [0.0 = cars with differential, ~1.0-1.5 = karts with solid axle].
@@ -606,7 +606,7 @@ pub struct CarConfig {
 
     /// Engine braking retarding coefficient on throttle release [0.0 = none, 0.15 = strong].
     pub engine_braking_coefficient: f32,
-    /// Front axle share of engine-braking retard [0.2-0.6] (Spec 042). Lower = more lift-off oversteer.
+    /// Front axle share of engine-braking retard [0.2-0.6] (Spec 043). Lower = more lift-off oversteer.
     pub engine_brake_front_share: f32,
     /// Aerodynamic downforce coefficient (0.5 * Cl * A * air_density) scaling vertical load with V^2.
     pub downforce_coefficient: f32,
@@ -652,14 +652,14 @@ struct CarConfigRaw {
     pub steer_speed: f32,
     pub steer_return_speed: f32,
     pub counter_steer_assist: f32,
-    // Legacy (pre Spec 042) physics steering attenuation: replaced by grip-aware authority.
+    // Legacy (pre Spec 043) physics steering attenuation: replaced by grip-aware authority.
     #[serde(default, rename = "speed_sensitive_steer_factor")]
     pub _speed_sensitive_steer_factor: Option<f32>,
     pub air_drag_coefficient: f32,
     pub lateral_drag_coefficient: f32,
     pub rolling_resistance_coefficient: f32,
     pub angular_damping: f32,
-    // Legacy (pre Spec 042) load transfer scales: accepted and ignored.
+    // Legacy (pre Spec 043) load transfer scales: accepted and ignored.
     #[serde(default, rename = "weight_transfer_longitudinal")]
     pub _weight_transfer_longitudinal: Option<f32>,
     #[serde(default, rename = "weight_transfer_lateral")]
@@ -801,7 +801,7 @@ impl CarConfig {
         ]
     }
 
-    /// Derives every per-wheel field from the axle-level settings (Spec 042 single source of truth).
+    /// Derives every per-wheel field from the axle-level settings (Spec 043 single source of truth).
     ///
     /// Tire model from `tire` / `rear_axle`, brake share from `brake_bias`, drive share from
     /// `drive_bias`. Wheel geometry (radius, width, inertia) stays per wheel. Idempotent.
@@ -1325,7 +1325,7 @@ mod tests {
         // Rear rotational inertia is greater than front: I_rear > I_front
         assert!(kart.wheels[2].rotational_inertia > kart.wheels[0].rotational_inertia);
 
-        // Wide rear slicks carry more grip than the narrow fronts (Spec 042: grip is a true mu scale)
+        // Wide rear slicks carry more grip than the narrow fronts (Spec 043: grip is a true mu scale)
         let f_front = kart.wheels[0].tire_model.grip;
         let f_rear = kart.wheels[2].tire_model.grip;
         assert!(f_rear > f_front, "rear grip ({}) should exceed front grip ({})", f_rear, f_front);

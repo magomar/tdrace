@@ -1,6 +1,6 @@
 //! 4-wheel top-down vehicle dynamics.
 //!
-//! Governed by `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
+//! Governed by `specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
 //! slip-based tire forces, implicit wheel spin and differential coupling, roll-balance load
 //! transfer, grip-aware steering authority for human drivers, and continuous assists.
 
@@ -421,7 +421,7 @@ impl Car {
     }
 
     /// Largest useful road-wheel steering angle at `speed` on a surface with friction `surface_mu`
-    /// (Spec 042 grip-aware authority), in radians.
+    /// (Spec 043 grip-aware authority), in radians.
     ///
     /// `atan(L / R_min) + (f(v) + steer_overslip - 1) * front peak slip angle`, where `R_min = v^2 / (mu * g_eff)`
     /// is the tightest radius the tires can hold (downforce included). At low speed `R_min` shrinks
@@ -500,7 +500,7 @@ impl Car {
         max_draft
     }
 
-/// Locking torque capacity of an axle differential (Spec 042), in N·m.
+/// Locking torque capacity of an axle differential (Spec 043), in N·m.
 ///
 /// Open: 0 (equal torque, no speed coupling). LimitedSlip: preload + ramp * |input torque|
 /// (power ramp under drive, coast ramp under engine braking). Spool: unbounded (rigid axle).
@@ -519,7 +519,7 @@ fn differential_lock_torque(diff_type: DifferentialType, input_torque: f32) -> f
     }
 }
 
-/// Implicit axle coupling after the wheel step (Spec 042).
+/// Implicit axle coupling after the wheel step (Spec 043).
 ///
 /// `t_equalize` is the torque difference (T_R - T_L) that removes the speed difference in one
 /// step given the tire-stiffened effective inertias. The differential passes at most its locking
@@ -616,13 +616,13 @@ fn couple_axle(
         self.state.local_velocity = Vec2::new(v_long, v_lat);
         self.state.speed = self.state.velocity.length();
 
-        // 1. Steering dynamics: grip-aware authority and counter-steer assist (Spec 042)
+        // 1. Steering dynamics: grip-aware authority and counter-steer assist (Spec 043)
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
 
         // Counter-steering: the wheels point towards where the body is sliding. v_lat < 0 means the
         // car moves to the left of its heading, and steer < 0 steers left, so the product is
-        // positive. (Pre-042 the test was `< -0.05`, which flagged normal cornering at speed, where
+        // positive. (Pre-043 the test was `< -0.05`, which flagged normal cornering at speed, where
         // the velocity also points outside the heading; with slip headroom that fed slides.)
         let is_counter_steering = (clamped_ctrl.steer * v_lat) > 0.05;
 
@@ -760,7 +760,7 @@ fn couple_axle(
 
         // Lateral load transfer is physical (m * a * h / track); `roll_balance` decides which axle
         // carries it. With load-sensitive tires, the axle that carries more transfer loses more
-        // grip, so roll_balance moves the handling balance (Spec 042).
+        // grip, so roll_balance moves the handling balance (Spec 043).
         let roll_balance = self.config.roll_balance.clamp(0.0, 1.0);
         let delta_fz_lat_total = self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll;
         let delta_fz_lat_f = delta_fz_lat_total * roll_balance;
@@ -796,7 +796,7 @@ fn couple_axle(
                 let steer_frac = (self.state.steer_angle.abs() / self.config.max_steer_angle.max(1e-3)).min(1.0);
                 // At walking pace there is no lateral load transfer to unload the inside rear, so the
                 // lift curve is front-loaded (steer_frac^0.4) to free the spool up to 4 m/s; by 14 m/s it returns
-                // to the racing curve (^1.15). Spec 042: with ^1.15 everywhere, weak karts pivoted in
+                // to the racing curve (^1.15). Spec 043: with ^1.15 everywhere, weak karts pivoted in
                 // place off the grid; with ^0.4 everywhere the kart spun at 50 km/h.
                 let crawl = 1.0 - ((self.state.speed - 4.0) / 10.0).clamp(0.0, 1.0);
                 let lift_exponent = 1.15 - 0.75 * crawl;
@@ -825,7 +825,7 @@ fn couple_axle(
             ((nom_fz_rr + delta_fz_caster_rr).max(min_load_r)) * ground_contact, // RR (right)
         ];
 
-        // 4. Tires, wheel spin and drivetrain (Spec 042)
+        // 4. Tires, wheel spin and drivetrain (Spec 043)
         //
         // Pass A: contact-patch kinematics and friction envelopes.
         // Pass B: drive / brake torques and implicit wheel spin (+ axle coupling).
@@ -880,11 +880,11 @@ fn couple_axle(
 
         // Engine Drag Reduction (EDR / MSR): fade engine braking out as body sideslip grows, so a lift
         // in a slide lets the rear tires regain lateral traction. Continuous in sideslip only: normal
-        // cornering yaw rates no longer switch engine braking off mid-corner (Spec 042).
+        // cornering yaw rates no longer switch engine braking off mid-corner (Spec 043).
         let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12).clamp(0.0, 1.0);
         let engine_brake_multiplier = 1.0 - 0.85 * slide_severity;
 
-        // Traction help (player aid, Spec 042): ease the throttle as the rear axle nears its limit,
+        // Traction help (player aid, Spec 043): ease the throttle as the rear axle nears its limit,
         // the way a good driver (and the AI) feeds throttle out of a corner. "Near the limit" is the
         // larger of the rear tires' combined force use and slip angle relative to peak: lateral
         // force alone drops as drive force grows, so it hid power oversteer until too late.
@@ -1137,7 +1137,7 @@ fn couple_axle(
                 }
             }
 
-            // Differential coupling (Spec 042): implicit locking torque between the two wheels.
+            // Differential coupling (Spec 043): implicit locking torque between the two wheels.
             if axle_driven || diff_type == DifferentialType::Spool {
                 let (wl, wr) = Self::couple_axle(
                     diff_type,
@@ -1323,7 +1323,7 @@ fn couple_axle(
             let downforce_load = self.config.downforce_coefficient * v_long * v_long;
             let effective_g = g + (downforce_load / self.config.mass.max(1.0));
             // The 0.60 rad/s floor only applies at parking speeds; above ~16 m/s it used to exceed
-            // the grip limit (mu*g/v) and switched ESC off in fast corners (Spec 042, review B6).
+            // the grip limit (mu*g/v) and switched ESC off in fast corners (Spec 043, review B6).
             let speed_fade = ((v_long.abs() - 8.0) / 8.0).clamp(0.0, 1.0);
             let low_speed_floor = 0.60 * (1.0 - speed_fade * speed_fade * (3.0 - 2.0 * speed_fade));
             // Effective surface grip (ice studs, dirt contamination) times tire grip
@@ -1348,7 +1348,7 @@ fn couple_axle(
                 }
             }
 
-            // Sideslip control (Spec 042): a real ESC also caps body slip. At the limit a car can
+            // Sideslip control (Spec 043): a real ESC also caps body slip. At the limit a car can
             // rotate slowly with a yaw error under the threshold while sideslip keeps growing
             // (sports car, 45 m/s, full input: +0.13 rad/s of sideslip with the yaw term alone).
             let beta = self.state.sideslip_angle;

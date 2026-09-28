@@ -1,7 +1,7 @@
 ---
 type: Guide
 title: "Vehicle Handling Tuning Guide"
-description: "Designer and player handling knobs of the spec 042 vehicle model, what each one changes, and the gates that check them."
+description: "Designer and player handling knobs of the spec 043 vehicle model, what each one changes, and the gates that check them."
 status: active
 category: engineering
 tags: [physics, tuning, tires, controls, presets]
@@ -10,7 +10,7 @@ tags: [physics, tuning, tires, controls, presets]
 # Vehicle Handling Tuning Guide
 
 This guide covers the handling model from
-[Spec 042](../../specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md). Each knob
+[Spec 043](../../specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md). Each knob
 is expressed in a unit that a driver can feel. After you tune, run the gates (see §4).
 
 ## 1. Car knobs (`wheelbase::CarConfig`)

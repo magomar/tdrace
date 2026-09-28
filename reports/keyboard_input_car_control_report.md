@@ -1,7 +1,7 @@
-# Key Style × Preset × Car Report (Spec 042) ⌨️🏎️
+# Key Style × Preset × Car Report (Spec 043) ⌨️🏎️
 
-Generated `2026-09-28T00:45:05.032963+00:00` by `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` in 0.21 s.  
-Physics: spec 042 slip-based tires, 120 Hz. Cars: 5 classic arcade cars. Presets: Smooth, Balanced, Sharp, Raw.  
+Generated `2026-09-28T06:49:40.108884+00:00` by `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` in 0.20 s.  
+Physics: spec 043 slip-based tires, 120 Hz. Cars: 5 classic arcade cars. Presets: Smooth, Balanced, Sharp, Raw.  
 Surfaces: asphalt, dirt, packed sand, sheet ice. Default arcade driver aids of each car.
 
 ## 1. What was driven
@@ -66,9 +66,9 @@ Average spread over all cars, per surface:
 | Sharp | 1 | 2 | 27 |
 | Raw | 1 | 1 | 28 |
 
-## 6. Old physics vs spec 042 (Balanced, asphalt sweeper)
+## 6. Old physics vs spec 043 (Balanced, asphalt sweeper)
 
-Old numbers come from `reports/keyboard_input_car_control_report_pre042.json` (the pre-042 benchmark output).
+Old numbers come from `reports/keyboard_input_car_control_report_pre043.json` (the pre-043 benchmark output).
 
 | Car | Hold old → new | Feathering old → new | Hold vs feathering old → new | Lift-off old → new |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ Old numbers come from `reports/keyboard_input_car_control_report_pre042.json` (t
 | Turbo Dart 200cc | 8.9 → 53.6 km/h | 83.3 → 83.0 km/h | 11% → 65% | 4.0 (Spinout) → 43.3 (CLEAN CARVE) |
 | Trailfire Turbo 4WD | 58.9 → 94.8 km/h | 135.4 → 139.7 km/h | 43% → 68% | 50.3 (CleanCarve) → 77.3 (CLEAN CARVE) |
 
-## 7. Spec 042 gates on this run
+## 7. Spec 043 gates on this run
 
 - PASS Holding keeps >= 90% of its entry speed and carves cleanly on every car (Balanced, asphalt).
 - PASS No chicane spinout on Smooth or Balanced on asphalt, dirt and packed sand (0 found).

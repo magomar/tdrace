@@ -96,7 +96,7 @@ fn test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor() 
 /// Then the Spool differential must deliver full drive thrust to the gripping wheel without one-wheel runaway
 /// And achieve higher forward acceleration than an Open differential
 ///
-/// Spec 042: both cars run full (arcade) traction control. An open diff under engine-torque TCS is
+/// Spec 043: both cars run full (arcade) traction control. An open diff under engine-torque TCS is
 /// held to twice the ice wheel's grip, while the spool passes torque to the asphalt side. With the
 /// stock car's mild sport TCS (0.40) half the axle torque already saturates the asphalt tire in both
 /// cases, so the two diffs are grip-limited alike (measured 4.69 vs 4.66 m/s): physically correct.
@@ -249,12 +249,12 @@ fn steady_yaw_rate(diff: DifferentialType, throttle: f32, steer: f32, v0: f32) -
     yaw
 }
 
-/// Scenario: A locked axle resists turning (Spec 042)
+/// Scenario: A locked axle resists turning (Spec 043)
 ///
 /// Given the same car with a Spool and with an Open rear differential
 /// When it holds the same moderate steer input at 15 m/s
 /// Then the Spool car turns with a lower steady yaw rate (the inner wheel is dragged forward and
-/// the outer wheel held back: an understeer moment, not the pre-042 torque-vectoring sign)
+/// the outer wheel held back: an understeer moment, not the pre-043 torque-vectoring sign)
 #[test]
 fn test_spool_produces_understeer_moment_versus_open() {
     let yaw_open = steady_yaw_rate(DifferentialType::Open, 0.3, 0.15, 15.0);
@@ -263,7 +263,7 @@ fn test_spool_produces_understeer_moment_versus_open() {
     assert!(yaw_spool < yaw_open * 0.97, "spool {yaw_spool:.3} must turn less than open {yaw_open:.3}");
 }
 
-/// Scenario: LSD power lock shapes corner-exit balance (Spec 042)
+/// Scenario: LSD power lock shapes corner-exit balance (Spec 043)
 ///
 /// Given an RWD car with LSD power_lock 0.0 and then 0.8
 /// When it drives through a corner on power, below the spin limit

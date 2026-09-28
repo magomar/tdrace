@@ -9,10 +9,10 @@ tags: [physics, controls, input-filtering, wheelbase, latency]
 
 # High-Speed Steering Responsiveness & Double-Attenuation Architecture
 
-> **Superseded by [Spec 042](../../specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)
+> **Superseded by [Spec 043](../../specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)
 > (2026-09-28).** The fix described here (zero physics attenuation, full mechanical lock at
 > speed) made steering non-monotonic: at 162 km/h full lock is about 3× past the front tire's
-> useful angle. Spec 042 replaces both speed-sensitivity layers with grip-aware steering
+> useful angle. Spec 043 replaces both speed-sensitivity layers with grip-aware steering
 > authority and removes the filter settings described below. See the
 > [review](vehicle_dynamics_review_and_tunable_handling_model.md) and the
 > [tuning guide](vehicle_handling_tuning_guide.md).

@@ -256,7 +256,7 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        // Spec 042: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        // Spec 043: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
         cfg.finalized()
     }
 
@@ -2853,7 +2853,7 @@ mod tests {
 
         // 4. Lateral tire grip differentiation (Toyota higher grip)
         assert!(toyota_cfg.tire.grip > bmw_cfg.tire.grip, "Toyota should have higher peak lateral tire grip");
-        // Spec 042: the grip stat must reach every wheel assembly the physics reads
+        // Spec 043: the grip stat must reach every wheel assembly the physics reads
         for cfg in [&toyota_cfg, &bmw_cfg] {
             for w in &cfg.wheels {
                 assert_eq!(w.tire_model.grip, cfg.tire.grip);

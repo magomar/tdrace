@@ -1319,7 +1319,7 @@ fn test_kart_championship_first_round_bots_move() {
     }
 
     // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
-    // Spec 042: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
+    // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
     // behind another can sit at ~4.8 m while rolling at ~3 m/s (2 of 50 random grids). A stalled
     // launch (the regression this test guards: 1.7 m at 0.8 m/s) still fails.
     for i in 1..num_cars {

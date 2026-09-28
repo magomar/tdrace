@@ -824,7 +824,7 @@ impl ArcadeSettingsModal {
         self.traction_help_slider.set_value(cfg.traction_help * 100.0);
     }
 
-    /// Keyboard handling settings as currently shown (Spec 042).
+    /// Keyboard handling settings as currently shown (Spec 043).
     pub fn selected_input_config(&self) -> DigitalInputConfig {
         let mut cfg = DigitalInputConfig {
             profile: SteeringProfile::from_index(self.steering_profile_dropdown.selected_index),
@@ -1420,7 +1420,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
 
                 if self.controls_sub_tab == 0 {
-                    // KEYBOARD HANDLING (Spec 042):
+                    // KEYBOARD HANDLING (Spec 043):
                     // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help, 6: Bottom Buttons
                     let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
                     let row = |k: f32| (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * k, content_w, ctrl_row_h);
@@ -1997,7 +1997,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 );
 
                 if self.controls_sub_tab == 0 {
-                    // KEYBOARD HANDLING (Spec 042):
+                    // KEYBOARD HANDLING (Spec 043):
                     // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help
                     let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
                     let mut y = ctrl_content_y;

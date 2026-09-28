@@ -9,7 +9,7 @@ tags: [physics, tires, drivetrain, differential, controls, tuning, review]
 
 # Vehicle Dynamics Review & Tunable Handling Model
 
-> **Implemented by [Spec 042](../../specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md).**
+> **Implemented by [Spec 043](../../specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md).**
 > The spec's implementation notes record where the build differs from this proposal: the
 > authority formula, human-only grip-aware steering, the rear axle ratios, the ESC sideslip
 > term, and the restated gates. Current knobs are in the

@@ -384,4 +384,4 @@ failures existed before this work (track assets, gamepad profile, evdev, LAN liv
 - `[x]` `docs/engineering/*.md` -> Mark the old steering report superseded. Document the new tuning knobs.
 
 ### Verification Assertions
-- `crates/wheelbase/src/tire.rs` and `crates/wheelbase/src/car.rs` reference `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md` in their module header comments.
+- `crates/wheelbase/src/tire.rs` and `crates/wheelbase/src/car.rs` reference `specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md` in their module header comments.

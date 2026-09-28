@@ -33,7 +33,7 @@ pub enum KeyboardSteerPattern {
 }
 
 impl KeyboardSteerPattern {
-    /// Styles driven through the sweeper corner (Spec 042 key style matrix).
+    /// Styles driven through the sweeper corner (Spec 043 key style matrix).
     pub const SWEEPER: [Self; 5] = [
         Self::SustainedHold,
         Self::RapidFeathering,
@@ -44,7 +44,7 @@ impl KeyboardSteerPattern {
     /// Styles driven through the chicane (the reversal itself is scripted by the scenario).
     pub const CHICANE: [Self; 3] = [Self::SustainedHold, Self::RapidFeathering, Self::CadencePulse];
 
-    /// Short stable id used in driver profile ids and reports (matches the pre-042 report ids).
+    /// Short stable id used in driver profile ids and reports (matches the pre-043 report ids).
     pub fn id(&self) -> &'static str {
         match self {
             Self::SustainedHold => "hold",
@@ -108,7 +108,7 @@ impl KeyboardDriverProfile {
         )
     }
 
-    /// Sustained hold with the quick Sharp preset (pre-042 "Direct").
+    /// Sustained hold with the quick Sharp preset (pre-043 "Direct").
     pub fn sustained_hold_sharp() -> Self {
         Self::new(
             "hold_sharp",
@@ -197,7 +197,7 @@ impl KeyboardDriverProfile {
         )
     }
 
-    /// Car-side handling aids this driver's keyboard settings apply (Spec 042).
+    /// Car-side handling aids this driver's keyboard settings apply (Spec 043).
     pub fn player_handling(&self) -> PlayerHandling {
         let cfg = self.filter_config();
         PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
@@ -317,7 +317,7 @@ fn default_pattern() -> KeyboardSteerPattern {
 }
 
 /// How much the key-pressing style changes the result for one car, surface and preset
-/// (Spec 042 Key Style Sensitivity).
+/// (Spec 043 Key Style Sensitivity).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct KeyStyleSensitivity {
     pub vehicle_id: String,
@@ -795,7 +795,7 @@ pub fn run_keyboard_slide_catch_simulation(
         surface,
         |t, car| {
             // Driver applies opposite lock. The induced slide rotates the car left (heading +15 deg,
-            // yaw +35 deg/s, counter-clockwise), so the catch is a RIGHT steer (+1.0). The pre-042
+            // yaw +35 deg/s, counter-clockwise), so the catch is a RIGHT steer (+1.0). The pre-043
             // harness steered -1.0 (into the slide), which is why every hold "spun out".
             let raw_steer = match driver.steer_pattern {
                 KeyboardSteerPattern::RapidFeathering => {

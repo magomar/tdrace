@@ -1,4 +1,4 @@
-//! Handling calibration gates (Spec 042).
+//! Handling calibration gates (Spec 043).
 //!
 //! Each test measures vehicle *behavior* (yaw, sideslip, axle saturation, distances), not
 //! internal parameters, so tuning can change freely as long as the feel targets hold.
@@ -103,10 +103,10 @@ fn test_steering_response_is_monotonic_at_every_speed() {
 /// Then traction control keeps >= 50% of the requested drive force on average and the exit
 /// speed is >= 20.7 m/s
 ///
-/// Spec 042 note: the draft gate counted TCS-active frames (<= 50%). This car asks for 6.8 kN at
+/// Spec 043 note: the draft gate counted TCS-active frames (<= 50%). This car asks for 6.8 kN at
 /// 20 m/s while its rear tires can transmit ~5 kN, so a correct TCS trims torque on every frame;
 /// the frame count measured "TCS present", not "TCS strangling". The delivered share measures the
-/// real complaint (pre-042: TCS cut deeply and exit speed fell 12%).
+/// real complaint (pre-043: TCS cut deeply and exit speed fell 12%).
 #[test]
 fn test_corner_exit_with_throttle_held_keeps_drive() {
     // TCS alone: traction help (a separate player aid) off.

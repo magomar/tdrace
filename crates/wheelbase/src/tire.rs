@@ -1,6 +1,6 @@
 //! Tire, wheel spin and contact models.
 //!
-//! Governed by `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
+//! Governed by `specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
 //! normalized combined-slip tire with load sensitivity, and implicit wheel spin.
 
 use glam::Vec2;
@@ -190,7 +190,7 @@ const CURVE_E: f32 = -0.15;
 /// `B` such that `C * atan(B - E * (B - atan(B))) = PI / 2` (peak at s = 1).
 const CURVE_B: f32 = 1.7646;
 
-/// Normalized tire curve (Spec 042): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
+/// Normalized tire curve (Spec 043): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
 /// to `slide_grip` over `falloff` peak-widths.
 #[inline]
 pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
@@ -218,7 +218,7 @@ pub fn tire_friction_envelope(normal_load: f32, nominal_load: f32, friction_coef
     friction_coeff * tire.grip * sensitivity * normal_load
 }
 
-/// Combined-slip tire forces on the normalized slip vector (Spec 042).
+/// Combined-slip tire forces on the normalized slip vector (Spec 043).
 ///
 /// `sx = slip_ratio / peak_slip_ratio`, `sy = tan(slip_angle) / tan(peak_slip_angle)`.
 /// The resultant `F = envelope * curve(|s|)` points along the slip vector, so wheelspin and
@@ -394,7 +394,7 @@ impl WheelAssembly {
         mult.clamp(0.82, 1.08)
     }
 
-    /// Unclamped longitudinal slip ratio `(omega*r - v) / max(|v|, SLIP_REFERENCE_SPEED)` (Spec 042).
+    /// Unclamped longitudinal slip ratio `(omega*r - v) / max(|v|, SLIP_REFERENCE_SPEED)` (Spec 043).
     ///
     /// Positive when the wheel spins faster than the road (drive), -1.0 when locked.
     #[inline]
@@ -415,7 +415,7 @@ impl WheelAssembly {
         (v_long + slip_ratio * v_long.abs().max(SLIP_REFERENCE_SPEED)) / self.config.tire_radius.max(1e-2)
     }
 
-    /// Integrates wheel spin with a linearized backward-Euler step (Spec 042):
+    /// Integrates wheel spin with a linearized backward-Euler step (Spec 043):
     ///
     /// `I * d(omega)/dt = T_drive - T_brake - r * Fx(slip)`
     ///

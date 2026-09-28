@@ -10,7 +10,7 @@ use wheelbase::Vec2;
 /// and wide rear tires (r=0.20m, w=0.21m)
 /// When standing acceleration and maximum lateral cornering tests are executed
 /// Then the rear axle must deliver more peak lateral force than the front axle under equal normal load
-/// (Spec 042: tire grip is a true friction scale, so the old 35% Pacejka D gap no longer applies)
+/// (Spec 043: tire grip is a true friction scale, so the old 35% Pacejka D gap no longer applies)
 /// And rear wheel rotational inertia must measure larger than front wheel inertia (I_rear > I_front)
 #[test]
 fn test_staggered_tire_dimensions_on_open_wheel_kart() {
@@ -88,7 +88,7 @@ fn test_independent_front_wheel_brake_lockup_under_trail_braking() {
 
     // Now apply 100% service brake while cornering without ABS
     // steer > 0 turns right, so the front-inner wheel is front-right (index 1).
-    // (Spec 042: the pre-042 test read index 0, the outer wheel; the old model locked it first.)
+    // (Spec 043: the pre-043 test read index 0, the outer wheel; the old model locked it first.)
     let trail_ctrl = CarControls::new(0.0, 0.45, 1.0, false);
     for _ in 0..30 {
         car.step(&trail_ctrl, SurfaceType::Asphalt, dt);
@@ -236,7 +236,7 @@ fn test_legacy_configuration_backward_compatibility() {
     for i in 0..4 {
         assert_eq!(cfg.wheels[i].tire_model.grip, 1.18);
         let expected_peak = wheelbase::pacejka_peak_slip_angle_deg(11.0, 1.35, -0.15);
-        // Rear axle: default stiffer rear (peak at 0.85x the front, Spec 042)
+        // Rear axle: default stiffer rear (peak at 0.85x the front, Spec 043)
         let axle = if i < 2 { 1.0 } else { wheelbase::RearAxleTire::default().peak_slip_scale };
         assert!((cfg.wheels[i].tire_model.peak_slip_angle_deg - expected_peak * axle).abs() < 1e-4);
         assert_eq!(cfg.wheels[i].tire_radius, 0.32);
@@ -336,14 +336,14 @@ fn test_kart_caster_jacking_inside_rear_wheel_unloading() {
     );
 }
 
-/// Scenario: High-speed kart cornering grip (Spec 032, restated for Spec 042)
+/// Scenario: High-speed kart cornering grip (Spec 032, restated for Spec 043)
 ///
 /// Given a CarConfig::kart() cornering at ~50 km/h on dry asphalt with throttle
 /// When holding a strong steer input for one second
 /// Then the steady lateral acceleration (from tire forces) is at least 1.2 g
 /// And the kart stays under control (body sideslip < 0.35 rad, front slip < 30 deg)
 ///
-/// The pre-042 version demanded a <= 16 m circle and >= 1.85 g computed as yaw rate x speed at
+/// The pre-043 version demanded a <= 16 m circle and >= 1.85 g computed as yaw rate x speed at
 /// 45-55 km/h. That is > 2 g of true lateral force; the old model only met it while spinning
 /// (front slip 74 deg). This version measures force-based lateral g and forbids the spin.
 #[test]

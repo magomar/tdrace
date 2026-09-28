@@ -1,4 +1,4 @@
-//! Keyboard handling filter tests (Spec 042: five parameters, four calibrated presets).
+//! Keyboard handling filter tests (Spec 043: five parameters, four calibrated presets).
 //! Speed sensitivity and hold bleed were removed; the car's grip-aware steering replaces them.
 
 use tdrace_app::input::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
@@ -166,7 +166,7 @@ fn test_keyboard_progressive_brake_tap_vs_hold() {
     assert_eq!(b_raw, 1.0);
 }
 
-/// Spec 042 successor of the double-attenuation regression test.
+/// Spec 043 successor of the double-attenuation regression test.
 ///
 /// Steering is shaped exactly once: the input filter only handles timing, and the car maps full
 /// input to its grip-aware authority. At 162 km/h full input must reach that authority (not 100%

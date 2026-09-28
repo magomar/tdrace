@@ -205,7 +205,7 @@ fn test_sand_steering_authority_and_friction_ellipse_starvation() {
 
         if surf == SurfaceType::DeepSand {
             // On DeepSand (mu 0.30) the car plows: turn authority is well under half of asphalt's and
-            // lateral g stays below the surface friction. (Spec 042: the pre-042 thresholds, < 5 deg
+            // lateral g stays below the surface friction. (Spec 043: the pre-043 thresholds, < 5 deg
             // and < 0.15 g, came from drive force eating the friction circle even while TCS kept
             // the wheels from spinning; 0.19 g at mu 0.30 is the physical sand limit.)
             let (asphalt_heading, asphalt_fy) = asphalt_ref;

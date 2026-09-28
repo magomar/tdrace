@@ -1,4 +1,4 @@
-//! Keyboard handling presets and settings plumbing (Spec 042).
+//! Keyboard handling presets and settings plumbing (Spec 043).
 
 use tdrace_app::config::{GameConfig, InputConfig};
 use tdrace_app::game::RaceSession;

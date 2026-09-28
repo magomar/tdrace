@@ -1320,13 +1320,13 @@ impl RaceSession {
         self.settings_modal.is_some()
     }
 
-    /// Car-side handling aids for a human driver's keyboard settings (Spec 042).
+    /// Car-side handling aids for a human driver's keyboard settings (Spec 043).
     fn player_handling(cfg: &DigitalInputConfig) -> PlayerHandling {
         PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
     }
 
     /// Applies the primary keyboard settings to the split-screen filter and to every human car.
-    /// The single place that syncs handling settings into live cars (Spec 042).
+    /// The single place that syncs handling settings into live cars (Spec 043).
     pub fn apply_player_handling(&mut self) {
         self.filter_p2.config = self.input.filter.config;
         let handling = Self::player_handling(&self.input.filter.config);
@@ -1356,7 +1356,7 @@ impl RaceSession {
                 };
                 self.set_assist_profile(chosen_assist);
 
-                // Apply and persist keyboard handling settings (Spec 042)
+                // Apply and persist keyboard handling settings (Spec 043)
                 self.input.filter.config = modal.selected_input_config();
                 self.config.input = InputConfig::from_filter_config(&self.input.filter.config);
                 self.apply_player_handling();
