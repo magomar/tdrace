@@ -9,9 +9,17 @@
 //! player car gets no input in tests (macroquad is not running), so it stays on the grid
 //! and the bots race around it.
 //!
+//! The race must not read state that other tests write. It uses `GameConfig::default()`,
+//! its own empty user folders, and an in-memory Hall of Fame database. The default
+//! database is `tdrace_records.db` in the working directory, which every test binary
+//! shares; its best laps set the grid order, and in a full `cargo test` run they changed
+//! this race (measured 2026-09-28).
+//!
 //! If a change is meant to alter physics results, re-record the constants below in a
 //! commit of its own and say why in the message.
 
+use tdrace_app::config::GameConfig;
+use tdrace_app::db::HallOfFameDb;
 use tdrace_app::game::RaceSession;
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 
@@ -34,9 +42,29 @@ fn fnv(h: u64, v: u64) -> u64 {
     (h ^ v).wrapping_mul(0x100000001B3)
 }
 
+/// Points every user folder at a fresh, empty directory owned by this test process.
+fn isolate_user_storage() {
+    let root = std::env::temp_dir().join(format!("tdrace_golden_session_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    for (var, sub) in [
+        ("TDRACE_USER_DATA_DIR", "data"),
+        ("TDRACE_USER_CONFIG_DIR", "config"),
+        ("TDRACE_USER_TRACKS_DIR", "tracks"),
+        ("TDRACE_USER_SERIES_DIR", "series"),
+    ] {
+        let dir = root.join(sub);
+        std::fs::create_dir_all(&dir).expect("create isolated user folder");
+        std::env::set_var(var, &dir);
+    }
+}
+
 /// Returns the hash and the largest progress distance any bot reached.
 fn run() -> (u64, f32) {
-    let mut session = RaceSession::new();
+    isolate_user_storage();
+    let mut session = RaceSession::new_with_config(GameConfig::default());
+    session.hof_db = Some(HallOfFameDb::open_in_memory().expect("in-memory Hall of Fame"));
+    // The constructor already read profile stats (best laps) from the shared DB; reload them.
+    session.refresh_profiles_and_stats();
     session.fixed_roster_seed = Some(SEED);
     session.track_choice = TrackChoice::ClassicGrandPrix;
     session.car_choice = CarChoice::SportsCar;

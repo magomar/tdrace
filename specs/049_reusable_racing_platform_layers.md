@@ -180,7 +180,7 @@ Later phases keep every existing file readable:
 
 - **Golden state hashes (Phase 0).**
   - `arcade-race-core/tests/golden_sim.rs` hashes a scripted 6-car race on generated tracks. It needs no `tracks/`.
-  - `tdrace-app/tests/golden_session.rs` hashes a real `RaceSession` step with a fixed roster seed (`RaceSession::fixed_roster_seed`; the game still seeds from the clock by default).
+  - `tdrace-app/tests/golden_session.rs` hashes a real `RaceSession` step with a fixed roster seed (`RaceSession::fixed_roster_seed`; the game still seeds from the clock by default). It uses the default config, its own empty user folders and an in-memory Hall of Fame, because the default `tdrace_records.db` is shared by every test binary and its best laps set the grid order (Beads `tdrace-f5up`).
   - The bot harness is already pinned by `test_human_layer_off_equals_pre_046_controller` in `tdrace-app/tests/bot_humanlike_driving_tests.rs`.
   - Every later phase must keep both hashes unchanged, unless its spec names the intended change and re-records the hash in its own commit.
   - Hashes are recorded per platform and build mode. On macOS the release optimizer merges `sin` and `cos` into `__sincosf_stret`, so debug and release results differ (gap E11, Beads `tdrace-d3m7`). A platform with no recorded hash checks run-to-run equality only.
