@@ -123,6 +123,7 @@ pub struct AuxiliaryAudioLayer {
     pub prev_throttle: f32,
     pub overrun_timer: f32,
     pub limiter_phase: f32,
+    pub is_active: bool,
 }
 
 impl AuxiliaryAudioLayer {
@@ -152,7 +153,18 @@ impl AuxiliaryAudioLayer {
             prev_throttle: 0.0,
             overrun_timer: 0.0,
             limiter_phase: 0.0,
+            is_active: true,
         }
+    }
+
+    /// Starts auxiliary looping voices if inactive.
+    pub fn start_voices(&mut self, backend: &mut AudioBackend) {
+        if self.is_active {
+            return;
+        }
+        self.whine_voice = backend.play(&self.whine_sound, 0.0, 1.0);
+        self.spool_voice = backend.play(&self.spool_sound, 0.0, 1.0);
+        self.is_active = true;
     }
 
     /// Updates auxiliary acoustic layers.
@@ -168,6 +180,9 @@ impl AuxiliaryAudioLayer {
         master_vol: f32,
         backend: &mut AudioBackend,
     ) -> f32 {
+        if !self.is_active {
+            self.start_voices(backend);
+        }
         let has_turbo = matches!(
             engine_type,
             EngineSoundType::Gt2Biturbo
@@ -286,5 +301,6 @@ impl AuxiliaryAudioLayer {
         self.whine_voice.stop(Duration::from_millis(15));
         self.spool_voice.stop(Duration::from_millis(15));
         self.turbo_spool_level = 0.0;
+        self.is_active = false;
     }
 }

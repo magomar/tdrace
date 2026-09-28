@@ -9231,7 +9231,10 @@ impl RaceSession {
         // 1. Turntable rotation & Revving state
         self.garage_turntable_angle += frame_dt * 0.45;
 
-        self.garage_revving = is_key_down(KeyCode::Space) || self.input.gamepad.snapshot.btn_a_pressed;
+        self.garage_revving = is_key_down(KeyCode::Space)
+            || self.input.gamepad.snapshot.btn_a_down
+            || self.input.gamepad.snapshot.btn_a_pressed
+            || self.input.gamepad.snapshot.throttle > 0.1;
         if self.garage_revving {
             self.garage_rev_rpm = (self.garage_rev_rpm + frame_dt * 3.5).min(1.0);
             self.garage_brake_heat = (self.garage_brake_heat + frame_dt * 0.4).min(1.0);

@@ -478,6 +478,7 @@ pub struct AudioManager {
     pub bank: SoundBank,
     pub current_music: Option<MusicTrack>,
     pub active_engine_type: EngineSoundType,
+    pub active_engine_config: Option<EngineSoundConfig>,
     pub is_engine_active: bool,
     pub is_skid_active: bool,
     pub engine_active_bands: [bool; NUM_RPM_BANDS],
@@ -552,6 +553,7 @@ impl AudioManager {
             bank: SoundBank::empty(),
             current_music: None,
             active_engine_type: EngineSoundType::Generic,
+            active_engine_config: Some(EngineSoundConfig::generic()),
             is_engine_active: false,
             is_engine_active_p2: false,
             is_skid_active: false,
@@ -572,16 +574,18 @@ impl AudioManager {
 
     /// Sets the active vehicle engine sound archetype, stopping prior engine loops if switching.
     pub fn set_engine_type(&mut self, engine_type: EngineSoundType) {
-        if self.active_engine_type != engine_type {
-            let config = EngineSoundConfig::from_sound_type(engine_type);
-            self.set_engine_type_with_config(engine_type, &config);
-        }
+        let config = EngineSoundConfig::from_sound_type(engine_type);
+        self.set_engine_type_with_config(engine_type, &config);
     }
 
     /// Sets the active vehicle engine sound archetype with custom physical parameters, synthesizing bespoke sample loops.
     pub fn set_engine_type_with_config(&mut self, engine_type: EngineSoundType, config: &EngineSoundConfig) {
+        if self.active_engine_type == engine_type && self.active_engine_config.as_ref() == Some(config) {
+            return;
+        }
         self.stop_all_loops();
         self.active_engine_type = engine_type;
+        self.active_engine_config = Some(*config);
         if let Some(sampled) = self.sampled_engine.as_mut() {
             let new_bank = ArchetypeSampleBank::generate_from_config(engine_type, config, DEFAULT_SAMPLE_RATE);
             sampled.set_bank(new_bank.clone(), &mut self.backend);
@@ -1113,5 +1117,55 @@ mod tests {
         // Stop Player 2 engine
         mgr.stop_player2_engine();
         assert_eq!(mgr.is_engine_active_p2, false);
+    }
+
+    #[test]
+    fn test_set_engine_type_with_config_caching_and_idempotency() {
+        let mut mgr = AudioManager::new();
+        let config_gt = EngineSoundConfig::gt4_clubsport();
+        mgr.set_engine_type_with_config(EngineSoundType::Gt4Clubsport, &config_gt);
+        assert_eq!(mgr.active_engine_type, EngineSoundType::Gt4Clubsport);
+        assert_eq!(mgr.active_engine_config, Some(config_gt));
+
+        // Start engine audio
+        mgr.update_engine_rpm(2000.0, 0.5, false);
+        assert!(mgr.is_engine_active);
+
+        // Calling with the exact same type and config MUST be idempotent and not stop active loops
+        mgr.set_engine_type_with_config(EngineSoundType::Gt4Clubsport, &config_gt);
+        assert!(mgr.is_engine_active);
+        assert_eq!(mgr.active_engine_type, EngineSoundType::Gt4Clubsport);
+        assert_eq!(mgr.active_engine_config, Some(config_gt));
+
+        // Calling with a different type must stop previous loops and update config
+        let config_v8 = EngineSoundConfig::late_model_v8();
+        mgr.set_engine_type_with_config(EngineSoundType::LateModelV8, &config_v8);
+        assert_eq!(mgr.active_engine_type, EngineSoundType::LateModelV8);
+        assert_eq!(mgr.active_engine_config, Some(config_v8));
+        assert!(!mgr.is_engine_active);
+    }
+
+    #[test]
+    fn test_auxiliary_audio_layer_resumes_after_stop() {
+        let mut backend = AudioBackend::new();
+        let mut aux = AuxiliaryAudioLayer::new(&mut backend);
+        assert!(aux.is_active);
+
+        aux.stop();
+        assert!(!aux.is_active);
+
+        // Updating auxiliary layer after stop must resume voices and not panic
+        let limiter = aux.update(
+            0.0,
+            1,
+            1500.0,
+            0.0,
+            EngineSoundType::Gt4Clubsport,
+            0.016,
+            0.8,
+            &mut backend,
+        );
+        assert!(aux.is_active);
+        assert!(limiter > 0.0);
     }
 }
