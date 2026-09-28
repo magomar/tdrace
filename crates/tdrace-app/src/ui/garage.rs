@@ -59,6 +59,7 @@ pub fn render_garage_screen(
     is_dev_mode: bool,
     unlocked_tier: u32,
     career_progress: Option<&ModuleCareerProgress>,
+    module_locked: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -109,17 +110,19 @@ pub fn render_garage_screen(
     let active_model: Option<&RealCarModel> = tier_models.get(garage_car_idx).copied();
     let category_name = active_model.map(|m| m.category_name).unwrap_or("Competition Spec");
 
+    // In LAN the module is fixed to the host discipline, so its key hint is hidden.
+    let module_keys = if module_locked { "" } else { "  [◄ 1..5 ►]" };
     let module_subtitle = if active_module_id == "classic" {
         "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
     } else if let Some(cp) = career_progress {
         format!(
-            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
-            mod_title, garage_tier, category_name.to_uppercase(), cp.xp
+            "MODULE: {}{}  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
+            mod_title, module_keys, garage_tier, category_name.to_uppercase(), cp.xp
         )
     } else {
         format!(
-            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]",
-            mod_title, garage_tier, category_name.to_uppercase()
+            "MODULE: {}{}  •  TIER {}: {}  [◄ Q/E ►]",
+            mod_title, module_keys, garage_tier, category_name.to_uppercase()
         )
     };
     fonts.draw_ui_regular_centered(
@@ -269,7 +272,11 @@ pub fn render_garage_screen(
     let tacho_w = stage_w - scaler.s(40.0);
     let tacho_h = scaler.s(8.0);
 
-    let rev_prompt = "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT  •  [C] FLEET GALLERY";
+    let rev_prompt = if module_locked {
+        "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT"
+    } else {
+        "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT  •  [C] FLEET GALLERY"
+    };
     fonts.draw_ui_bold(
         rev_prompt,
         tacho_x,
@@ -549,7 +556,11 @@ pub fn render_garage_screen(
 
     // Bottom Navigation Bar
     let bottom_y = sh - scaler.s(16.0);
-    let nav_prompt = "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN";
+    let nav_prompt = if module_locked {
+        "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN TO LOBBY"
+    } else {
+        "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN"
+    };
     fonts.draw_ui_bold_centered(
         nav_prompt,
         sw * 0.5,

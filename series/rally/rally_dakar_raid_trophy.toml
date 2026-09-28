@@ -58,8 +58,8 @@ laps = 5
 
 [[rounds]]
 order = 7
-track_id = "silverstone_rx"
-name = "Silverstone RX Circuit"
+track_id = "lavare_rx"
+name = "Circuit de Lavaré"
 laps = 5
 
 [[rounds]]

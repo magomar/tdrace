@@ -261,6 +261,8 @@ pub enum GarageOrigin {
     Menu,
     StartingGrid,
     CareerHub,
+    /// Opened from a LAN host or client lobby; returns to that lobby.
+    LanLobby,
 }
 
 /// Source screen that launched the Profile Manager view.
@@ -288,6 +290,8 @@ pub enum MenuOrigin {
     #[default]
     ModalitySelect,
     StartingGrid,
+    /// Opened from the LAN host lobby; returns to it with the chosen circuit.
+    LanHostLobby,
 }
 
 /// High-level game flow state machine.
@@ -2727,7 +2731,7 @@ impl RaceSession {
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
                     "dreux_rx".to_string(),
-                    "blyton_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             2 => (
@@ -2735,11 +2739,11 @@ impl RaceSession {
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
-                    "blyton_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             3 => (
@@ -2750,7 +2754,7 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
@@ -2767,7 +2771,7 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                 ],
             ),
@@ -2775,7 +2779,7 @@ impl RaceSession {
                 "Stadium Super Trucks World Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -5074,6 +5078,8 @@ impl RaceSession {
             self.init_race();
             return;
         }
+
+        self.pump_parked_lan_lobby(frame_dt);
 
         match self.state {
             GameState::Menu => {
@@ -8114,18 +8120,34 @@ impl RaceSession {
         self.audio.play_sfx(SfxType::UiSelect);
         let profile_livery = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
         if idx == 0 {
-            // Option 0: Host Room
+            // Option 0: Host Room. Clients only have the official circuits, so the lobby starts
+            // on the current circuit when it is an official, unlocked one of this module.
+            let presets: Vec<TrackChoice> = self
+                .track_manager
+                .preset_track_choices(self.active_module_id)
+                .into_iter()
+                .filter(|t| t.is_official_preset())
+                .collect();
+            let start_track = presets
+                .iter()
+                .find(|t| t.track_id() == self.track_choice.track_id() && self.is_track_unlocked(t.track_id()))
+                .or_else(|| presets.iter().find(|t| self.is_track_unlocked(t.track_id())))
+                .or_else(|| presets.first())
+                .cloned()
+                .unwrap_or(TrackChoice::ClassicGrandPrix);
+            let host_car = Self::lan_default_car(self.active_module_id, self.selected_car_model_id);
+
             let mut bound_host = None;
             for port in [cabinet::net::DEFAULT_GAME_PORT, 7778, 7779, 7780, 0] {
                 if let Ok(host) = cabinet::net::LanHost::bind(
                     format!("{}'s Grand Prix", self.active_profile.name),
                     &self.active_profile.name,
                     self.active_profile.country.as_deref().unwrap_or("ESP"),
-                    self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
+                    host_car,
                     profile_livery,
                     port,
                     8,
-                    self.track_choice.track_id(),
+                    start_track.track_id(),
                     self.active_module_id,
                     5,
                 ) {
@@ -8135,11 +8157,8 @@ impl RaceSession {
             }
 
             if let Some(host) = bound_host {
-                let track_names: Vec<String> = TrackChoice::ALL.iter().map(|tc| tc.track_id().to_string()).collect();
-                let mut screen = cabinet::net::CabinetLanHostScreen::new(host);
-                if !track_names.is_empty() {
-                    screen = screen.with_tracks(track_names);
-                }
+                let mut screen = cabinet::net::CabinetLanHostScreen::new(host).with_labels(Self::lan_car_label);
+                screen.set_track(start_track.track_id(), start_track.title());
                 self.lan_host_screen = Some(screen);
                 self.state = GameState::LanHostLobby;
             }
@@ -8156,10 +8175,44 @@ impl RaceSession {
         }
     }
 
+    /// Display name of a car model id in the LAN lobbies.
+    pub fn lan_car_label(car_model_id: &str) -> String {
+        crate::catalog::find_model_by_id(car_model_id)
+            .map(|m| m.name.to_string())
+            .unwrap_or_else(|| car_model_id.to_string())
+    }
+
+    /// Display title of an official circuit id in the LAN lobbies.
+    pub fn lan_track_label(track_id: &str) -> String {
+        tdrace_core::catalog::find(track_id, None)
+            .map(|c| c.name.to_string())
+            .unwrap_or_else(|| track_id.to_string())
+    }
+
+    /// The preferred car when it belongs to `module`, else the first tier-1 car of `module`.
+    pub fn lan_default_car(module: &str, preferred: Option<&'static str>) -> &'static str {
+        let models = crate::catalog::get_models_for_module(module);
+        preferred
+            .filter(|id| models.iter().any(|m| m.id == *id))
+            .or_else(|| models.iter().find(|m| m.tier == 1).or(models.first()).map(|m| m.id))
+            .unwrap_or("gt_ferrari_296_gt3")
+    }
+
+    /// Game module of the LAN lobby: the host's module, or the module of the host circuit on a client.
+    pub fn lan_lobby_module(&self) -> &'static str {
+        if let Some(ref screen) = self.lan_client_lobby_screen {
+            if let Some(c) = tdrace_core::catalog::find(screen.client().track_id(), None) {
+                return c.module;
+            }
+        }
+        self.active_module_id
+    }
+
     /// Updates authoritative host lobby screen, responds to ready changes, countdown, or disband.
     pub fn update_lan_host_lobby(&mut self, frame_dt: f32) {
         let mut launch = false;
         let mut exit = false;
+        let mut request = None;
 
         if let Some(ref mut screen) = self.lan_host_screen {
             let sw = screen_width_safe();
@@ -8174,9 +8227,17 @@ impl RaceSession {
                 exit = true;
             } else if screen.is_in_race() {
                 launch = true;
+            } else {
+                request = screen.take_request();
             }
         } else {
             exit = true;
+        }
+
+        match request {
+            Some(cabinet::net::LanLobbyRequest::PickCircuit) => return self.open_lan_circuit_selector(),
+            Some(cabinet::net::LanLobbyRequest::PickCar) => return self.open_lan_garage(),
+            None => {}
         }
 
         if exit {
@@ -8205,9 +8266,18 @@ impl RaceSession {
             if matches!(action, cabinet::state::stack::ScreenAction::Pop) {
                 exit = true;
             } else if let Some(lobby) = screen.take_connected_lobby_screen() {
-                self.lan_client_lobby_screen = Some(lobby);
+                self.lan_client_lobby_screen = Some(lobby.with_labels(Self::lan_car_label, Self::lan_track_label));
                 self.lan_join_screen = None;
                 self.state = GameState::LanClientLobby;
+                // The car must come from the host discipline.
+                let module = self.lan_lobby_module();
+                if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+                    let car = crate::catalog::find_model_by_id(&lobby.car_model_id).map(|m| m.id);
+                    let fixed = Self::lan_default_car(module, car);
+                    if car != Some(fixed) {
+                        lobby.set_local_car(fixed);
+                    }
+                }
                 return;
             }
         } else {
@@ -8225,6 +8295,7 @@ impl RaceSession {
     pub fn update_lan_client_lobby(&mut self, frame_dt: f32) {
         let mut exit = false;
         let mut launch = false;
+        let mut request = None;
 
         if let Some(ref mut screen) = self.lan_client_lobby_screen {
             let sw = screen_width_safe();
@@ -8239,9 +8310,15 @@ impl RaceSession {
                 exit = true;
             } else if screen.is_in_race() {
                 launch = true;
+            } else {
+                request = screen.take_request();
             }
         } else {
             exit = true;
+        }
+
+        if request == Some(cabinet::net::LanLobbyRequest::PickCar) {
+            return self.open_lan_garage();
         }
 
         if exit {
@@ -8252,6 +8329,138 @@ impl RaceSession {
             let client = self.lan_client_lobby_screen.take().unwrap().into_client();
             let slot_id = client.assigned_slot_id().unwrap_or(1);
             self.launch_lan_race_session(None, Some(client), slot_id);
+        }
+    }
+
+    /// Opens the full-screen circuit selector for the LAN host, on the official circuits of the host module.
+    pub fn open_lan_circuit_selector(&mut self) {
+        self.menu_origin = MenuOrigin::LanHostLobby;
+        self.menu_track_filter = TrackCatalogFilter::Presets;
+        let current = self.lan_host_screen.as_ref().map(|s| s.host().track_id().to_string());
+        let tracks = self.filtered_menu_tracks();
+        self.menu_track_idx = current
+            .and_then(|id| tracks.iter().position(|t| t.track_id() == id))
+            .unwrap_or(0);
+        self.state = GameState::Menu;
+    }
+
+    /// Opens the Garage for the local LAN player, on the lobby module and the current car.
+    pub fn open_lan_garage(&mut self) {
+        let module = self.lan_lobby_module();
+        let current_car = if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+            // The host must not start while this player is choosing.
+            lobby.set_ready(false);
+            lobby.car_model_id.clone()
+        } else if let Some(ref screen) = self.lan_host_screen {
+            screen.host().slots().first().cloned().flatten().map(|s| s.car_model_id).unwrap_or_default()
+        } else {
+            return;
+        };
+        let current = crate::catalog::find_model_by_id(&current_car).filter(|m| m.module_id == module);
+        self.active_module_id = module;
+        self.garage_tier = current.map(|m| m.tier).unwrap_or(1);
+        let tier_models = crate::catalog::get_models_for_module_and_tier(module, self.garage_tier);
+        self.garage_car_idx = current
+            .and_then(|m| tier_models.iter().position(|t| t.id == m.id))
+            .unwrap_or(0);
+        self.garage_gallery_mode = false;
+        self.garage_origin = GarageOrigin::LanLobby;
+        self.state = GameState::Garage(GarageOrigin::LanLobby);
+    }
+
+    /// Returns from the LAN circuit selector or Garage to the lobby that opened it.
+    fn return_to_lan_lobby(&mut self) {
+        self.menu_origin = MenuOrigin::ModalitySelect;
+        self.state = if self.lan_client_lobby_screen.is_some() {
+            GameState::LanClientLobby
+        } else if self.lan_host_screen.is_some() {
+            GameState::LanHostLobby
+        } else {
+            GameState::LanHub { selected_idx: 0 }
+        };
+    }
+
+    /// Keeps a parked LAN lobby connected while its circuit selector, circuit viewer or Garage is open.
+    pub fn pump_parked_lan_lobby(&mut self, dt: f32) {
+        let parked = match self.state {
+            GameState::Menu | GameState::CircuitViewer(CircuitViewerOrigin::Menu) => {
+                self.menu_origin == MenuOrigin::LanHostLobby
+            }
+            GameState::Garage(GarageOrigin::LanLobby) => true,
+            _ => false,
+        };
+        if !parked {
+            return;
+        }
+        if let Some(ref mut screen) = self.lan_host_screen {
+            screen.pump_network(dt);
+        }
+        let lost = self.lan_client_lobby_screen.as_mut().is_some_and(|lobby| !lobby.pump_network(dt));
+        if lost {
+            self.lan_client_lobby_screen = None;
+            self.circuit_viewer_state = None;
+            self.audio.stop_all_loops();
+            self.audio.play_sfx(SfxType::UiMove);
+            self.state = GameState::LanHub { selected_idx: 1 };
+        }
+    }
+
+    /// Circuit selector input when opened from the LAN host lobby: pick an official circuit of the host module.
+    fn update_menu_lan_host(&mut self) {
+        self.menu_track_filter = TrackCatalogFilter::Presets;
+
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.return_to_lan_lobby();
+            return;
+        }
+
+        let tracks = self.filtered_menu_tracks();
+        let n = tracks.len();
+        if n == 0 {
+            return;
+        }
+        if self.menu_track_idx >= n {
+            self.menu_track_idx = 0;
+        }
+
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_track_idx = (self.menu_track_idx + n - 1) % n;
+        }
+        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_track_idx = (self.menu_track_idx + 1) % n;
+        }
+
+        let choice = &tracks[self.menu_track_idx];
+
+        if is_key_pressed(KeyCode::V) || is_key_pressed(KeyCode::Z) || self.input.gamepad.snapshot.btn_x_pressed {
+            if let Some(loaded_track) = resolve_track_for_menu(choice) {
+                self.open_circuit_viewer(loaded_track, choice.title().to_string(), CircuitViewerOrigin::Menu);
+            }
+            return;
+        }
+
+        if is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            if !self.is_track_unlocked(choice.track_id()) {
+                self.audio.play_sfx(SfxType::UiMove);
+                return;
+            }
+            self.audio.play_sfx(SfxType::UiSelect);
+            if let Some(ref mut screen) = self.lan_host_screen {
+                screen.set_track(choice.track_id(), choice.title());
+            }
+            self.return_to_lan_lobby();
         }
     }
 
@@ -8936,6 +9145,9 @@ impl RaceSession {
                 GarageOrigin::StartingGrid => {
                     self.state = GameState::StartingGrid;
                 }
+                GarageOrigin::LanLobby => {
+                    self.return_to_lan_lobby();
+                }
                 GarageOrigin::CareerHub => {
                     let tier = self.active_career_progress.level.clamp(1, 5);
                     let calendar = if let Some(c) = &self.championship_session {
@@ -8965,7 +9177,10 @@ impl RaceSession {
         }
 
         // 4. Toggle Fleet Gallery (C / F / Gamepad X)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::F) || self.input.gamepad.snapshot.btn_x_pressed {
+        // Not in LAN: the gallery switches module, and a LAN car must come from the host discipline.
+        if origin != GarageOrigin::LanLobby
+            && (is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::F) || self.input.gamepad.snapshot.btn_x_pressed)
+        {
             self.audio.play_sfx(SfxType::UiMove);
             self.garage_gallery_mode = !self.garage_gallery_mode;
             if self.garage_gallery_mode {
@@ -9111,18 +9326,20 @@ impl RaceSession {
             return;
         }
 
-        // 5. Switching active module (1..=5)
+        // 5. Switching active module (1..=5); locked to the host discipline in LAN
         let prev_mod = self.active_module_id;
-        if is_key_pressed(KeyCode::Key1) {
-            self.active_module_id = "gt";
-        } else if is_key_pressed(KeyCode::Key2) {
-            self.active_module_id = "rally";
-        } else if is_key_pressed(KeyCode::Key3) {
-            self.active_module_id = "kart";
-        } else if is_key_pressed(KeyCode::Key4) {
-            self.active_module_id = "nascar";
-        } else if is_key_pressed(KeyCode::Key5) {
-            self.active_module_id = "extreme_offroad";
+        if origin != GarageOrigin::LanLobby {
+            if is_key_pressed(KeyCode::Key1) {
+                self.active_module_id = "gt";
+            } else if is_key_pressed(KeyCode::Key2) {
+                self.active_module_id = "rally";
+            } else if is_key_pressed(KeyCode::Key3) {
+                self.active_module_id = "kart";
+            } else if is_key_pressed(KeyCode::Key4) {
+                self.active_module_id = "nascar";
+            } else if is_key_pressed(KeyCode::Key5) {
+                self.active_module_id = "extreme_offroad";
+            }
         }
         if self.active_module_id != prev_mod {
             self.garage_car_idx = 0;
@@ -9221,6 +9438,15 @@ impl RaceSession {
                             GarageOrigin::Menu => {
                                 self.audio.stop_all_loops();
                                 self.state = GameState::Menu;
+                            }
+                            GarageOrigin::LanLobby => {
+                                self.audio.stop_all_loops();
+                                if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+                                    lobby.set_local_car(active_car.id);
+                                } else if let Some(ref mut screen) = self.lan_host_screen {
+                                    screen.set_local_car(active_car.id);
+                                }
+                                self.return_to_lan_lobby();
                             }
                             GarageOrigin::CareerHub => {
                                 self.audio.stop_all_loops();
@@ -9366,6 +9592,11 @@ impl RaceSession {
     pub fn update_menu(&mut self) {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
         self.input.gamepad.check_and_reload_profile();
+
+        if self.menu_origin == MenuOrigin::LanHostLobby {
+            self.update_menu_lan_host();
+            return;
+        }
 
         // If exit confirmation modal is currently open:
         if self.show_exit_confirm {
@@ -12050,6 +12281,7 @@ impl RaceSession {
                     self.is_dev_mode(),
                     unlocked_tier as u32,
                     Some(&self.active_career_progress),
+                    self.state == GameState::Garage(GarageOrigin::LanLobby),
                 );
             }
             GameState::CircuitViewer(_) => {
@@ -12057,7 +12289,13 @@ impl RaceSession {
             }
             GameState::Menu => {
                 let available_tracks = self.filtered_menu_tracks();
-                let filter_counts = self.menu_track_filter_counts();
+                let is_lan_host = self.menu_origin == MenuOrigin::LanHostLobby;
+                let filter_counts = if is_lan_host {
+                    // Clients only have the official circuits.
+                    (self.menu_track_filter_counts().0, 0)
+                } else {
+                    self.menu_track_filter_counts()
+                };
                 let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
                     "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
@@ -12071,7 +12309,9 @@ impl RaceSession {
                 } else {
                     None
                 };
-                let active_track_id = if self.game_mode == GameMode::Career {
+                let active_track_id = if is_lan_host {
+                    self.lan_host_screen.as_ref().map(|s| s.host().track_id())
+                } else if self.game_mode == GameMode::Career {
                     self.championship_session.as_ref().and_then(|c| c.current_track_id()).or(Some(self.track_choice.track_id()))
                 } else if self.menu_origin == MenuOrigin::StartingGrid {
                     Some(self.track_choice.track_id())
@@ -12095,6 +12335,7 @@ impl RaceSession {
                     self.is_dev_mode(),
                     active_track_id,
                     is_career,
+                    is_lan_host,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {

@@ -31,26 +31,26 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | **Lydden Hill** | `lydden_hill.json` | $1,300\text{ m}$ | $55\%$ Asphalt / $45\%$ Chalk/Dirt | Chessons Drift Outer Loop | The birthplace of rallycross; fast downhill entry into North Bend. |
 | **Mettet (Circuit Jules Tacheny)** | `mettet_rx.json` | $1,031\text{ m}$ | $61\%$ Asphalt / $39\%$ Dirt | Turn 6 Inner Apex | Technical asphalt section followed by banked dirt bowl. |
 | **Dreux RX (Circuit de l'Ouest Parisien)** | `dreux_rx.json` | $1,048\text{ m}$ | $62\%$ Asphalt / $38\%$ Dirt | Turn 4 Inner Hook | French Championship venue with high-speed sweeping tarmac and loose dirt hairpins. |
-| **Blyton Park RX** | `blyton_rx.json` | $1,180\text{ m}$ | $58\%$ Asphalt / $42\%$ Gravel | Airfield Outer Loop | British classic on former RAF airfield with flowing flat curves and jump ramp. |
+| **Croft Rallycross Circuit** | `croft_rx.json` | $1,251\text{ m}$ | $44\%$ Asphalt / $56\%$ Gravel | Circuit + Infield Loop | British RX venue in North Yorkshire: tarmac through Clervaux and Hawthorn, then a long loose loop through the infield. Replaced Blyton Park (not in OSM) on 2026-09-28. |
 
 ### Tier 2: Scandinavian & Continental Classics (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Lånkebanen (Hell RX)** | `hell_rx.json` | $1,019\text{ m}$ | $63\%$ Asphalt / $37\%$ Gravel | Turn 1 Outside Banking | Steep elevation changes; blind crests and sweeping gravel switchbacks. |
 | **Lohéac RX** | `loheac_rx.json` | $1,088\text{ m}$ | $66\%$ Asphalt / $34\%$ Gravel | Turn 3 Inside Shortcut | Ultra-wide asphalt launch grid; high-speed braking into tight gravel hairpin. |
-| **Silverstone RX** | `silverstone_rx.json`| $972\text{ m}$ | $50\%$ Asphalt / $50\%$ Gravel | Stowe Corner Detour | Technical gravel infield with high-banked dirt berms. |
+| **Circuit de Lavaré** | `lavare_rx.json` | $1,070\text{ m}$ | $35\%$ Asphalt / $65\%$ Dirt | 260 m Start Straight | French and European Rallycross venue in Sarthe; four dirt and four asphalt sections. Replaced Silverstone RX (loose section not in OSM) on 2026-09-28. |
 
 ### Tier 3: High-Octane European Supercar Tour (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Estering** | `estering_rx.json` | $952\text{ m}$ | $60\%$ Asphalt / $40\%$ Dirt | Final Turn Cut | Narrow, high-speed straight leading to dramatic first-corner hairpin contacts. |
 | **Montalegre RX** | `montalegre_rx.json`| $1,046\text{ m}$ | $60\%$ Asphalt / $40\%$ Dirt | First Turn Outside Loop | Altitude circuit in Portuguese mountains; wet weather transforms dirt into deep mud. |
-| **Bikernieki (Riga RX)** | `riga_rx.json` | $1,294\text{ m}$ | $60\%$ Asphalt / $40\%$ Parallel Gravel| Turn 2 Overpass Loop | Double jump ramps; zero runoff concrete barriers lined through pine forest. |
+| **Bikernieki (Riga RX)** | `riga_rx.json` | $1,294\text{ m}$ | $60\%$ Asphalt / $40\%$ Parallel Gravel| Turn 2 Overpass Loop | Double jump ramps; zero runoff concrete barriers lined through pine forest. In game: 1,051 m, the mapped 1,071 m OSM loop at 1:1. |
 
 ### Tier 4: Red Cauldron & Forest Stages (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| **Nyirád Racing Center** | `nyirad_rx.json` | $1,220\text{ m}$ | $48\%$ Asphalt / $52\%$ Red Clay | Final Turn Sweep | The "Red Cauldron"; deep abrasive bauxite clay that degrades tires rapidly. |
+| **Nyirád Racing Center** | `nyirad_rx.json` | $1,220\text{ m}$ | $48\%$ Asphalt / $52\%$ Red Clay | Final Turn Sweep | The "Red Cauldron"; deep abrasive bauxite clay that degrades tires rapidly. In game: 1,081 m, the 1,216 m OSM loop at 1:1 with its junction hairpins rounded to 13 m. |
 | **Kouvola RX** | `kouvola_rx.json` | $1,060\text{ m}$ | $58\%$ Asphalt / $42\%$ Gravel | Turn 4 Outer Loop | Technical Finnish forest circuit with severe camber shifts. |
 | **Killarney International RX** | `killarney_rx.json` | $1,067\text{ m}$ | $60\%$ Asphalt / $40\%$ Sand/Gravel| Turn 3 Outer Hairpin | Tabletop jump ramp with Table Mountain backdrop; fine coastal sand dust. |
 
@@ -58,7 +58,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Circuit de Barcelona-Catalunya RX**| `catalunya_rx.json`| $1,125\text{ m}$| $67\%$ Asphalt / $33\%$ Gravel | Stadium Sector Outer Loop | Built within the F1 stadium section; tight kerbs and loose gravel chicane. |
-| **Yas Marina RX** | `yas_marina_rx.json` | $1,010\text{ m}$ | $63\%$ Asphalt / $37\%$ Gravel | North Hairpin Sweep | Floodlit night racing venue; high-grip asphalt abruptly meeting fine desert gravel. |
+| **Circuit de Lessay** | `lessay_rx.json` | $886\text{ m}$ | $55\%$ Asphalt / $45\%$ Dirt | 200 m Start Straight | Normandy round of the French Rallycross Championship; compact alternating asphalt and dirt. Replaced Yas Marina RX (loose section not in OSM) on 2026-09-28. |
 | **Circuit des Ducs (Essay RX)** | `essay_rx.json` | $936\text{ m}$ | $65\%$ Asphalt / $35\%$ Dirt | La Butte Dirt Jump | Historic French rallycross proving ground in Normandy with high-speed launch, technical hairpins, and wooded perimeter. |
 
 ---

@@ -11,6 +11,7 @@ use macroquad::shapes::draw_rectangle;
 use crate::input::NavGrid2D;
 use crate::net::client::{ClientEvent, ClientState, LanClient};
 use crate::net::protocol::LobbySlot;
+use crate::net::ui::{id_label, lan_livery_index, lan_livery_name, LanLobbyRequest, LAN_LIVERIES};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
 
@@ -25,14 +26,15 @@ fn safe_mouse_pos() -> (f32, f32) {
 }
 
 /// Participant client waiting room lobby screen.
+///
+/// The car is chosen by the game's own car selector: the lobby raises a
+/// `LanLobbyRequest::PickCar` and the game answers with `set_local_car`.
 pub struct CabinetLanClientLobbyScreen {
     /// Active client connection to the host.
     pub client: LanClient,
-    /// Available vehicle models for cycling: (id, display_name)
-    pub car_models: Vec<(String, String)>,
-    pub selected_car_idx: usize,
-    /// Available livery colors for cycling: (id, display_name, color)
-    pub liveries: Vec<(String, String, Color)>,
+    /// Local car model id.
+    pub car_model_id: String,
+    /// Local livery index into `LAN_LIVERIES`.
     pub selected_livery_idx: usize,
     /// Local driver ready status.
     pub is_ready: bool,
@@ -42,6 +44,12 @@ pub struct CabinetLanClientLobbyScreen {
     pub status_message: String,
     /// Countdown remaining timer in seconds, if active.
     pub countdown_remaining_sec: Option<f32>,
+    /// Pending request for the game to open its car selector.
+    pending_request: Option<LanLobbyRequest>,
+    /// Resolves a car model id to its display name.
+    car_label: fn(&str) -> String,
+    /// Resolves a track id to its display title.
+    track_label: fn(&str) -> String,
     /// Pulse timer for animations.
     pulse_timer: f32,
 }
@@ -49,49 +57,29 @@ pub struct CabinetLanClientLobbyScreen {
 impl CabinetLanClientLobbyScreen {
     /// Creates a client lobby screen wrapping a connected `LanClient`.
     pub fn new(client: LanClient) -> Self {
-        let car_models = vec![
-            ("gt_ferrari_296_gt3".to_string(), "Ferrari 296 GT3".to_string()),
-            ("gt_porsche_911_gt3r".to_string(), "Porsche 911 GT3 R".to_string()),
-            ("gt_amg_gt3_evo".to_string(), "Mercedes-AMG GT3 Evo".to_string()),
-            ("gt_audi_r8_gt3_evo2".to_string(), "Audi R8 LMS GT3 Evo II".to_string()),
-            ("gt_bmw_m4_gt4".to_string(), "BMW M4 GT4".to_string()),
-            ("kart_birel_art_kz2".to_string(), "Birel ART KZ2 Shifter Kart".to_string()),
-        ];
-
-        let liveries = vec![
-            ("corsa_red".to_string(), "Rosso Corsa".to_string(), Palette::NEON_RED),
-            ("matte_cyan".to_string(), "Matte Cyan".to_string(), Palette::NEON_CYAN),
-            ("viper_green".to_string(), "Viper Green".to_string(), Palette::NEON_GREEN),
-            ("speed_yellow".to_string(), "Speed Yellow".to_string(), Palette::NEON_GOLD),
-            ("sunset_orange".to_string(), "Sunset Orange".to_string(), Palette::NEON_ORANGE),
-            ("synthwave_purple".to_string(), "Synthwave Purple".to_string(), Palette::NEON_MAGENTA),
-            ("stealth_black".to_string(), "Stealth Black".to_string(), Color::new(0.20, 0.22, 0.28, 1.0)),
-            ("glacier_white".to_string(), "Glacier White".to_string(), Palette::WHITE),
-            ("cyber_magenta".to_string(), "Cyber Magenta".to_string(), Color::new(0.90, 0.15, 0.60, 1.0)),
-        ];
-
-        let selected_car_idx = car_models
-            .iter()
-            .position(|(id, _)| id == client.car_model_id())
-            .unwrap_or(0);
-
-        let selected_livery_idx = liveries
-            .iter()
-            .position(|(id, _, _)| id == client.color_scheme_id())
-            .unwrap_or(0);
+        let car_model_id = client.car_model_id().to_string();
+        let selected_livery_idx = lan_livery_index(client.color_scheme_id());
 
         Self {
             client,
-            car_models,
-            selected_car_idx,
-            liveries,
+            car_model_id,
             selected_livery_idx,
             is_ready: false,
             nav: NavGrid2D::new(vec![8, 4]),
             status_message: "Connected to host lobby. Choose car and mark READY!".to_string(),
             countdown_remaining_sec: None,
+            pending_request: None,
+            car_label: id_label,
+            track_label: id_label,
             pulse_timer: 0.0,
         }
+    }
+
+    /// Sets the resolvers that turn car model ids and track ids into display names.
+    pub fn with_labels(mut self, car_label: fn(&str) -> String, track_label: fn(&str) -> String) -> Self {
+        self.car_label = car_label;
+        self.track_label = track_label;
+        self
     }
 
     /// Returns a reference to the underlying client.
@@ -114,33 +102,78 @@ impl CabinetLanClientLobbyScreen {
         matches!(self.client.state(), ClientState::StartingCountdown { .. } | ClientState::InRace { .. })
     }
 
-    /// Cycles local car model.
-    pub fn cycle_car(&mut self) {
-        if !self.car_models.is_empty() {
-            self.selected_car_idx = (self.selected_car_idx + 1) % self.car_models.len();
-            self.sync_slot_update();
-        }
+    /// Sets the local car chosen by the game's car selector.
+    pub fn set_local_car(&mut self, car_model_id: &str) {
+        self.car_model_id = car_model_id.to_string();
+        self.sync_slot_update();
     }
 
     /// Cycles local livery color.
     pub fn cycle_livery(&mut self) {
-        if !self.liveries.is_empty() {
-            self.selected_livery_idx = (self.selected_livery_idx + 1) % self.liveries.len();
-            self.sync_slot_update();
-        }
+        self.selected_livery_idx = (self.selected_livery_idx + 1) % LAN_LIVERIES.len();
+        self.sync_slot_update();
     }
 
     /// Toggles local driver ready check.
     pub fn toggle_ready(&mut self) {
-        self.is_ready = !self.is_ready;
+        self.set_ready(!self.is_ready);
+    }
+
+    /// Sets local driver ready check.
+    pub fn set_ready(&mut self, is_ready: bool) {
+        self.is_ready = is_ready;
         self.sync_slot_update();
+    }
+
+    /// Takes the pending request for the game to open its car selector.
+    pub fn take_request(&mut self) -> Option<LanLobbyRequest> {
+        self.pending_request.take()
     }
 
     /// Transmits slot customization update packet to host.
     pub fn sync_slot_update(&mut self) {
-        let (car_id, _) = &self.car_models[self.selected_car_idx];
-        let (livery_id, _, _) = &self.liveries[self.selected_livery_idx];
-        let _ = self.client.send_slot_update(car_id.clone(), livery_id.clone(), self.is_ready);
+        let livery_id = LAN_LIVERIES[self.selected_livery_idx].0;
+        let _ = self.client.send_slot_update(self.car_model_id.clone(), livery_id.to_string(), self.is_ready);
+    }
+
+    /// Pumps client packets, pings and timeouts without reading lobby input.
+    ///
+    /// The game calls this every frame while its car selector is open.
+    /// Returns false once the connection to the host is lost.
+    pub fn pump_network(&mut self, dt: f32) -> bool {
+        self.pump(dt);
+        self.client.is_connected()
+    }
+
+    /// Processes client network events and timers; returns the events for sound feedback.
+    fn pump(&mut self, dt: f32) -> Vec<ClientEvent> {
+        self.pulse_timer += dt;
+
+        // Advance countdown timer if active
+        if let Some(ref mut time) = self.countdown_remaining_sec {
+            *time -= dt;
+            if *time <= 0.0 {
+                self.countdown_remaining_sec = None;
+            }
+        }
+
+        let events = self.client.update(dt);
+        for event in &events {
+            match event {
+                ClientEvent::Connected { room_name, track_id, slot_id } => {
+                    self.status_message = format!("Joined '{}' ({}) in Slot {}!", room_name, (self.track_label)(track_id), slot_id + 1);
+                }
+                ClientEvent::LobbyUpdated { track_id, laps, .. } => {
+                    self.status_message = format!("Host updated track: {} ({} Laps)", (self.track_label)(track_id), laps);
+                }
+                ClientEvent::CountdownStarted { starts_in_millis, .. } => {
+                    self.countdown_remaining_sec = Some(*starts_in_millis as f32 / 1000.0);
+                    self.status_message = "Host launched starting countdown! Prepare for race...".to_string();
+                }
+                ClientEvent::Disconnected(_) | ClientEvent::WorldSnapshot(_) => {}
+            }
+        }
+        events
     }
 }
 
@@ -154,36 +187,14 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
     }
 
     fn update(&mut self, ctx: &mut CabinetContext) -> ScreenAction {
-        self.pulse_timer += ctx.dt;
-
-        // Advance countdown timer if active
-        if let Some(ref mut time) = self.countdown_remaining_sec {
-            *time -= ctx.dt;
-            if *time <= 0.0 {
-                self.countdown_remaining_sec = None;
-            }
-        }
-
-        // Pump client network events
-        let events = self.client.update(ctx.dt);
-        for event in events {
+        for event in self.pump(ctx.dt) {
             match event {
-                ClientEvent::Connected { room_name, track_id, slot_id } => {
-                    self.status_message = format!("Joined '{}' ({}) in Slot {}!", room_name, track_id, slot_id + 1);
-                }
-                ClientEvent::LobbyUpdated { track_id, laps, .. } => {
-                    self.status_message = format!("Host updated track: {} ({} Laps)", track_id, laps);
-                }
-                ClientEvent::CountdownStarted { starts_in_millis, .. } => {
-                    ctx.play_ui_select();
-                    self.countdown_remaining_sec = Some(starts_in_millis as f32 / 1000.0);
-                    self.status_message = "Host launched starting countdown! Prepare for race...".to_string();
-                }
-                ClientEvent::Disconnected(_reason) => {
+                ClientEvent::CountdownStarted { .. } => ctx.play_ui_select(),
+                ClientEvent::Disconnected(_) => {
                     ctx.play_ui_cancel();
                     return ScreenAction::Pop;
                 }
-                ClientEvent::WorldSnapshot(_) => {}
+                _ => {}
             }
         }
 
@@ -217,9 +228,9 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
         if self.nav.focused_col == 1 && is_confirmed {
             match self.nav.active_row() {
                 0 => {
-                    // Car model
-                    ctx.play_ui_move();
-                    self.cycle_car();
+                    // Car: the game opens its car selector
+                    ctx.play_ui_select();
+                    self.pending_request = Some(LanLobbyRequest::PickCar);
                 }
                 1 => {
                     // Livery color
@@ -305,7 +316,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
             1.2,
         );
 
-        let info_line = format!("TRACK: {}  •  LAPS: {} LAPS  •  HOST-AUTHORITATIVE SAT", track_name, laps);
+        let info_line = format!("CIRCUIT: {}  •  LAPS: {} LAPS  •  HOST-AUTHORITATIVE SAT", (self.track_label)(track_name), laps);
         fonts.draw_ui_bold(
             &info_line,
             pad_x + scaler.s(16.0),
@@ -396,7 +407,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
                     Palette::WHITE,
                 );
 
-                let car_line = format!("• {}: {}", slot.car_model_id, slot.color_scheme_id);
+                let car_line = format!("• {} — {}", (self.car_label)(&slot.car_model_id), lan_livery_name(&slot.color_scheme_id));
                 fonts.draw_ui_regular(
                     &car_line,
                     pad_x + scaler.s(22.0),
@@ -453,8 +464,8 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
         let ctrl_start_y = content_y + scaler.s(45.0);
         let ctrl_item_h = scaler.s(48.0);
 
-        let (_, car_name) = &self.car_models[self.selected_car_idx];
-        let (_, livery_name, livery_color) = &self.liveries[self.selected_livery_idx];
+        let car_name = (self.car_label)(&self.car_model_id);
+        let (_, livery_name, livery_color) = &LAN_LIVERIES[self.selected_livery_idx];
 
         let ready_button_title = if self.is_ready {
             "STATUS: READY ⭐ [PRESS ENTER]"
@@ -463,8 +474,8 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
         };
 
         let items_meta = [
-            ("VEHICLE", car_name.as_str(), "[CYCLE]"),
-            ("LIVERY", livery_name.as_str(), "[CYCLE]"),
+            ("MY CAR", car_name.as_str(), "[GARAGE]"),
+            ("MY LIVERY", *livery_name, "[CYCLE]"),
             ("READY CHECK", ready_button_title, ""),
             ("LEAVE LOBBY", "Disconnect & Return", "[ESC]"),
         ];
@@ -568,7 +579,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
             Palette::NEON_GOLD,
         );
 
-        let nav_hint = "[ARROWS / WASD] Navigate  •  [ENTER] Toggle / Cycle  •  [ESC] Leave";
+        let nav_hint = "[ARROWS / WASD] Navigate  •  [ENTER] Select  •  [ESC] Leave";
         let nav_dim = fonts.measure_ui_regular(nav_hint, scaler.font_s(11.0));
         fonts.draw_ui_regular(
             nav_hint,

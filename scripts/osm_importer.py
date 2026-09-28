@@ -233,15 +233,19 @@ def heading_ahead(points, min_dist=60.0):
 
 
 def chain_segments(ways, segments):
-    """Node ids along (way id, first node or None) segments; each segment runs to its way's last node.
+    """Node ids along (way id, first node or None[, last node]) segments; a segment runs to its
+    way's last node unless a last node is given, and runs against the way's direction when the
+    last node comes before the first one.
 
     Consecutive segments share their join node, which is kept once; a closing repeat of the first
     node is dropped. Returns [(node id, way id)].
     """
     chain = []
-    for wid, first in segments:
+    for wid, first, *last in segments:
         nds = ways[wid]["nodes"]
-        nds = nds[nds.index(first):] if first is not None else nds
+        i = nds.index(first) if first is not None else 0
+        j = nds.index(last[0]) if last else len(nds) - 1
+        nds = nds[i:j + 1] if i <= j else nds[j:i + 1][::-1]
         if chain and chain[-1][0] == nds[0]:
             nds = nds[1:]
         chain.extend((nid, wid) for nid in nds)
@@ -349,7 +353,25 @@ GT_CIRCUITS = {
     "monaco": {
         "name": "Circuit de Monaco",
         "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
-        "rel_id": 148194,
+        # Relation 148194 "Circuit de Monaco" without the pit lane (3324 m in OSM). Its ways leave two
+        # small gaps (18 m at Avenue d'Ostende / Casino, 6 m on Avenue de Monte-Carlo): the lap jumps them.
+        "segments": [
+            (1081401617, 1737389117, 1799099566), (168681959, 1799099566, 477617968), (60767229, 477617968, 25192130),
+            (4226740, 25192130, 1074585009), (1019174508, 1074585009, 1868404468), (166399479, 1868404468, 1726583852),
+            (1453878835, 1726583852, 6444966511), (1081401616, 6444966511, 1690130866), (157719644, 1690130866, 252387589),
+            (254596486, 252387589, 918118157), (1551240830, 12571844664, 14109303023), (1551240829, 14109303023, 21912962),
+            (161775592, 21912962, 1204288376), (1082515450, 1204288376, 7568749016), (161752645, 7568749016, 25240075),
+            (4229658, 25240075, 21913117), (4230009, 21913117, 1699777574), (4230006, 1699777574, 272637923),
+            (434567309, 272637923, 21914841), (166399501, 21914841, 1737114648), (568187257, 1737114648, 21914666),
+            (4230007, 21914666, 6485591888), (1148675745, 6485591888, 273246211), (1470365906, 273246211, 13484626647),
+            (1470365907, 13484626647, 10687075425), (1148199871, 10687075425, 1685061923), (41929969, 1685061923, 519323656),
+            (4230891, 519323656, 11407697331), (1230247123, 11407697331, 21914343), (160004393, 21914343, 6485591919),
+            (4229536, 6485591919, 13312466205), (1451501763, 13312466205, 6485591925), (348019480, 6485591925, 2422123083),
+            (1081401613, 2422123083, 1737389192), (485746484, 1737389192, 25193217), (503475642, 25193217, 6485591957),
+            (1081401614, 6485591957, 25191729), (214636589, 25191729, 2241375226), (1081401615, 2241375226, 25191634),
+            (39839529, 25191634, 1737389117),
+        ],
+        "start_node": "1868404468",  # Boulevard Albert 1er, the start straight
         "fia_length": 3337.0,
         "num_waypoints": 26,
         "default_width": 10.5,
@@ -358,8 +380,6 @@ GT_CIRCUITS = {
         "barrier_offset": 3.0,
         "default_laps": 3,
         "tag": "JEWEL IN THE CROWN",
-        "monaco_filter": True,
-        "start_way": "166399479",
         "elevations": {
             # Beau Rivage uphill
             2: 2.0, 3: 3.5,
@@ -432,7 +452,13 @@ GT_CIRCUITS = {
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
         "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
-        "way_id": "831804327",
+        # Relation 284540 "Grand Prix Circuit Without Chicane" (the current F1 layout, 4666 m in OSM);
+        # OSM split the old single way 831804327 on 2026-09-20.
+        "segments": [
+            (831804327, 1300807861, 1644327603), (1560896065, 1644327603, 9760170477), (1560896066, 9760170477, 7765791210),
+            (1560896061, 7765791210, 385973423), (893732520, 385973423, 8553774009), (831804325, 8553774009, 7765791228),
+            (990483278, 7765791228, 1300807861),
+        ],
         "fia_length": 4657.0,
         "num_waypoints": 28,
         "default_width": 13.0,
@@ -483,7 +509,43 @@ GT_CIRCUITS = {
     "marina_bay": {
         "name": "Marina Bay Street Circuit (Singapore)",
         "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
-        "rel_id": 421263,
+        # Relation 421263 "Marina Bay Street Circuit" without the pit lane: its only closed lap near the
+        # official length (4972 m in OSM), anticlockwise. Public-road oneway tags are ignored.
+        "segments": [
+            (465064165, 5411304502, 1161612993), (686323967, 1161612993, 6432919892), (686335799, 6432919892, 6433028833),
+            (686323968, 6433028833, 1446076215), (686335800, 1446076215, 6433028834), (21805129, 6433028834, 462263951),
+            (654223306, 462263951, 235070344), (672222982, 235070344, 3076643620), (174262763, 3076643620, 3736885019),
+            (383365018, 3736885019, 3736885022), (528537303, 3736885022, 5136090633), (383365019, 5136090633, 4726227141),
+            (584419619, 4726227141, 233879899), (176298699, 233879899, 233879872), (479540202, 233879872, 4600854642),
+            (633871920, 4600854642, 1832823668), (1415079998, 1832823668, 13003578482), (1415079999, 13003578482, 9946316973),
+            (633871919, 9946316973, 5864347585), (479745479, 5864347585, 4281759839), (479745478, 4281759839, 4727947772),
+            (649944021, 4727947772, 1720073406), (479540200, 1720073406, 1720073355), (635373148, 1720073355, 5270981855),
+            (545362403, 5270981855, 1832823705), (545362402, 1832823705, 5270981856), (723073393, 5270981856, 6782303341),
+            (173791997, 6782303341, 595497945), (75067163, 595497945, 233880373), (635375722, 233880373, 1720073397),
+            (649336906, 1720073397, 6094193512), (763525862, 6094193512, 3059486893), (1498693105, 3059486893, 233879798),
+            (21701074, 233879798, 3059486888), (763525863, 3059486888, 6355011388), (763525864, 6355011388, 233497179),
+            (51511352, 233497179, 172510077), (459186771, 172510077, 7759646003), (831044956, 7759646003, 1818164136),
+            (16688065, 1818164136, 233879753), (51511339, 233879753, 12071463879), (1303467716, 12071463879, 1398079475),
+            (156457347, 1398079475, 232353353), (650084964, 232353353, 4513378919), (634770511, 4513378919, 232353185),
+            (750071183, 232353185, 12522242619), (1392512181, 12522242619, 3071267396), (479565615, 3071267396, 232353226),
+            (173779754, 232353226, 232376467), (845894319, 232376467, 7891770123), (647084783, 7891770123, 6077839914),
+            (649520780, 6077839914, 6095372887), (480250096, 6095372887, 4732525705), (155907160, 4732525705, 232279092),
+            (21584500, 232279092, 6997023277), (747875236, 6997023277, 6997023278), (747875237, 6997023278, 232353925),
+            (475217889, 232353925, 6856578455), (759511978, 6856578455, 3010901912), (448084962, 3010901912, 6413721257),
+            (684544691, 6413721257, 6413721265), (1015882723, 6413721265, 9370421301), (1015882722, 9370421301, 4451336954),
+            (1121759130, 4451336954, 4451336947), (475215022, 4451336947, 6988663055), (480247943, 6988663055, 9370421307),
+            (29377119, 9370421307, 237054799), (1121759129, 237054799, 9569954749), (1121759131, 9569954749, 2511487801),
+            (1206760203, 2511487801, 237012287), (528539591, 237012287, 3010901881), (35037538, 3010901881, 410939418),
+            (767388313, 410939418, 1832823650), (750071184, 1832823650, 4726775785), (581766308, 4726775785, 233879421),
+            (479605911, 233879421, 4726775783), (479565613, 4726775783, 7138225045), (764062390, 7138225045, 233879440),
+            (479565612, 233879440, 1743939385), (634832601, 1743939385, 1764796980), (633311062, 1764796980, 1446076214),
+            (764062389, 1446076214, 5270623340), (303314681, 5270623340, 2466494363), (767388315, 2466494363, 1780184888),
+            (763531722, 1780184888, 1832823586), (633343709, 1832823586, 5978628576), (633340452, 5978628576, 233879574),
+            (479565608, 233879574, 1832823584), (842953325, 1832823584, 1832823583), (633340456, 1832823583, 1832823581),
+            (635394837, 1832823581, 1832823579), (180551367, 1832823579, 6340950179), (581942152, 6340950179, 5165925965),
+            (173791995, 5165925965, 479983003), (152783801, 479983003, 233879603), (479284866, 233879603, 634071195),
+            (303311924, 634071195, 3076643588), (686335806, 3076643588, 1161613127), (686335807, 1161613127, 5411304502),
+        ],
         "fia_length": 4940.0,
         "num_waypoints": 30,
         "default_width": 11.5,
@@ -492,7 +554,6 @@ GT_CIRCUITS = {
         "barrier_offset": 3.0,
         "default_laps": 3,
         "tag": "SINGAPORE NIGHT RACE",
-        "marina_filter": True,
         "start_node": "4281759834",
         "predefined_car": "hypercar_prototype",
         "module_id": "gt",
@@ -634,44 +695,21 @@ def process_gt_circuit(cid, cache_dir):
     nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
     ways = {w.get("id"): [nd.get("ref") for nd in w.findall("nd")] for w in root.findall("way")}
 
-    if "way_id" in cfg:
+    if "segments" in cfg:
+        seg_ways = {int(wid): {"nodes": [int(n) for n in nds]} for wid, nds in ways.items()}
+        chain_nodes = [str(nid) for nid, _ in chain_segments(seg_ways, cfg["segments"])]
+    elif "way_id" in cfg:
         chain_nodes = ways[cfg["way_id"]]
     else:
         rel = next(r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"]))
 
-        if cfg.get("monaco_filter"):
-            exclude = {
-                "850261588", "1388331347", "39839529", "161752645", "348019480",
-                "1551240829", "1551240830", "1082515450", "4230006", "434567309",
-                "160004393", "1230247123", "41929969", "1451501763", "60767229",
-                "1453878835"
-            }
-            w_ids = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("ref") not in exclude and m.get("ref") in ways]
-            seen = set()
-            ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
-            idx_start = ordered.index(cfg["start_way"])
-            ordered = ordered[idx_start:] + ordered[:idx_start]
-            chain_nodes = stitch_ways(cid, [ways[wid] for wid in ordered], nodes)
-        elif cfg.get("rbr_filter"):
+        if cfg.get("rbr_filter"):
             f1_ways = [
                 "822592410", "822592403", "822592404", "347958266", "822592398",
                 "822592399", "822592400", "822592401", "822592402", "822592405",
                 "822592406", "822592407", "822592408", "822592409"
             ]
             chain_nodes = stitch_ways(cid, [ways[wid] for wid in f1_ways if wid in ways], nodes)
-        elif cfg.get("marina_filter"):
-            way_members = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("role") != "pit_lane" and m.get("ref") in ways]
-            filtered = []
-            for wid in way_members:
-                w_elem = next(w for w in root.findall("way") if w.get("id") == wid)
-                tags = {t.get("k"): t.get("v") for t in w_elem.findall("tag")}
-                name = tags.get("name", "")
-                highway = tags.get("highway", "")
-                if "pit" not in name.lower() and highway != "service":
-                    filtered.append(wid)
-            seen = set()
-            ordered = [w for w in filtered if not (w in seen or seen.add(w))]
-            chain_nodes = stitch_ways(cid, [ways[wid] for wid in ordered], nodes)
         elif cfg.get("madring_filter"):
             way_members = [
                 m.get("ref") for m in rel.findall("member")
@@ -1268,11 +1306,27 @@ RALLY_TRACKS = {
     "nyirad_rx": {
         "name": "Nyirád Racing Center (Euro RX Hungary)",
         "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
+        # Longest simple loop of the 8 untagged raceway ways (1216 m, the official lap is 1220 m), in the
+        # old lap's direction. The web also holds shorter alternative paths; the game has no branching yet.
+        "segments": [(172413358, 1833190235, 1833190246), (172413356, 1833190246, 1833190241),
+                     (172413357, 1833190241, 1833190239), (172413360, 1833190239, 1833190218),
+                     (172413359, 1833190218, 1833190276), (172413357, 1833190276, 1833190231),
+                     (172413356, 1833190231, 1833190235)],
+        # Start on the long asphalt way 358, clear of the other sections of the web (at the 359/360
+        # junction the grid hit a wall of the neighbouring section); 280 m keeps the grid on asphalt
+        # with 64 m to the first corner.
+        "start_offset_m": 280.0,
+        # Clay on 356 and 357 as before; the rest is asphalt (~40% of the lap; docs/circuits/rally.md says 48%).
+        "loose_ways": [172413356, 172413357],
+        # The hairpins are single sharp nodes where two ways meet (up to 131 deg, one a narrow V):
+        # round them to 13 m, a normal rallycross hairpin, so the inner wall (10.25 m from the centre
+        # line) stays off the road. The rounding shortens the 1220 m lap to ~1080 m.
+        "min_radius_m": 13.0,
         "query": '[out:json][timeout:25];(way["highway"="raceway"](46.963,17.410,46.974,17.428););out body;>;out skel qt;',
         "fia_length": 1220.0,
         "default_width": 13.5,
         "straight_width": 14.5,
-        "num_waypoints": 30,
+        "num_waypoints": 80,  # ~14 m spacing: the 13 m hairpin arcs need several waypoints each
         "jump": None,
     },
     "kouvola_rx": {
@@ -1296,6 +1350,16 @@ RALLY_TRACKS = {
     "catalunya_rx": {
         "name": "Circuit de Barcelona-Catalunya RX (World RX Spain)",
         "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
+        # Relation 11362868 "World RX of Barcelona" without its joker_lap ways (1137 m in OSM). It runs
+        # against the F1 oneway tags; the two "unpaved" ways are the loose sections.
+        "segments": [
+            (967275593, 8553773977, 9719993934), (1560896064, 9719993934, 8553773972), (921317981, 8553773972, 14202158154),
+            (1560896060, 14202158154, 7765791210), (1560896061, 7765791210, 385973423), (893732520, 385973423, 8553774009),
+            (921317984, 8553774009, 8553774005), (921317983, 8553774005, 1644321708), (1560896062, 1644321708, 7765791151),
+            (1560896059, 7765791151, 8553773999), (921317982, 8553773999, 8553773977),
+        ],
+        "loose_ways": [921317981, 921317982],
+        "start_offset_m": 338.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](41.560,2.250,41.575,2.268););out body;>;out skel qt;',
         "fia_length": 1125.0,
         "default_width": 13.5,
@@ -1314,8 +1378,17 @@ RALLY_TRACKS = {
     "mettet_rx": {
         "name": "Circuit Jules Tacheny Mettet (World RX Belgium)",
         "description": "Belgian World RX showdown featuring rapid asphalt sweeps, banked dirt esses, and the notorious Mettet tabletop jump.",
+        # Loose as in the old lap (Mettet RX is ~60/40 tarmac/gravel); OSM tags 178240082 asphalt.
+        "loose_ways": [178240082, 178240080],
+        "start_offset_m": 68.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](50.295,4.640,50.310,4.665););out body;>;out skel qt;',
-        "way_ids": [178384323, 178384334, 178384335, 178384337, 178384345, 178384346, 178384349, 178384356, 178384358, 178384360, 178384364, 178384367, 178384383, 178384386],
+        # The raceway loop that matches the old lap best (1050 m in OSM, 0.91x the official 1149 m).
+        "segments": [
+            (178240082, 1886090191, 1886090150), (178384349, 1886090150, 1886090019), (178384323, 1886090019, 1886089974),
+            (178384345, 1886089974, 1886089890), (178384322, 1886089890, 1886089916), (178384358, 1886089916, 1886090017),
+            (178384335, 1886090017, 1886090080), (178384356, 1886090080, 1886090174), (178384337, 1886090174, 2463534884),
+            (178240080, 2463534884, 1886090408), (178240082, 1886090408, 1886090191),
+        ],
         "fia_length": 1149.0,
         "default_width": 13.0,
         "straight_width": 14.0,
@@ -1330,31 +1403,21 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
-    "silverstone_rx": {
-        "name": "Silverstone Circuit RX (World RX Great Britain)",
-        "description": "Speedmachine Festival circuit carved into the legendary Silverstone Stowe complex, featuring high-speed tarmac drifts and loose gravel switchbacks.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](52.060,-1.035,52.075,-1.005););out body;>;out skel qt;',
-        "way_ids": [169851260, 227310197, 259160216, 227339144],
-        "fia_length": 972.0,
-        "default_width": 13.0,
-        "straight_width": 14.0,
-        "num_waypoints": 28,
-        "jump": {
-            "name": "Silverstone Arena Dirt Jump",
-            "at_fraction": 0.55,
-            "height": 1.3,
-            "angle_deg": 5.5,
-            "launch_speed": 2.2,
-            "dist": 16.0,
-            "surface": "Dirt",
-        },
-    },
     "riga_rx": {
         "name": "Biķernieku Trase (World RX Latvia)",
         "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
+        "start_offset_m": 659.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](56.955,24.215,56.975,24.245););out body;>;out skel qt;',
-        "way_ids": [256784387, 945640986, 588947722, 588947720, 588947717, 588947719, 588947714],
-        "fia_length": 1294.0,
+        # The raceway loop that matches the old lap best (1071 m in OSM; the official 1294 m is 17% longer,
+        # so the lap stays at the mapped length). The three "gravel" ways are the loose sections.
+        "segments": [
+            (588947722, 5098958979, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
+            (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212), (1435177485, 1080703212, 1080702484),
+            (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
+            (945640986, 5363424528, 1080377982), (1120160990, 1080377982, 277946516), (523849729, 277946516, 5098958979),
+        ],
+        "loose_ways": [588947722, 588947717, 588947719],
+        "fia_length": 1071.0,  # mapped length (the official 1294 m is 17% longer)
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 30,
@@ -1387,25 +1450,6 @@ RALLY_TRACKS = {
             "surface": "Dirt",
         },
     },
-    "yas_marina_rx": {
-        "name": "Yas Marina RX Arena (World RX Abu Dhabi)",
-        "description": "Spectacular twilight rallycross inside the Yas Marina amphitheater, featuring stadium dirt jumps, tight desert hairpins and high-speed grandstand sweeps.",
-        "query": '[out:json][timeout:25];(way["highway"="raceway"](24.460,54.595,24.475,54.615););out body;>;out skel qt;',
-        "way_ids": [1083519983, 1083519984, 1083519985, 1083519986, 1083519987],
-        "fia_length": 1050.0,
-        "default_width": 13.0,
-        "straight_width": 14.0,
-        "num_waypoints": 28,
-        "jump": {
-            "name": "Yas Marina Arena Dirt Jump",
-            "at_fraction": 0.58,
-            "height": 1.3,
-            "angle_deg": 5.5,
-            "launch_speed": 2.2,
-            "dist": 16.0,
-            "surface": "Dirt",
-        },
-    },
     "essay_rx": {
         "name": "Circuit des Ducs (Essay RX)",
         "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
@@ -1430,6 +1474,58 @@ RALLY_TRACKS = {
         "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
         "jump": None,
     },
+    "lavare_rx": {
+        "name": "Circuit de Lavaré",
+        "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
+        # Relation 11752542 "Épreuve de rallycross de Lavaré" without its Tour Joker ways (1112 m in OSM,
+        # the official lap is 1070 m). The three "dirt" ways are 65% of the lap, as officially.
+        "segments": [
+            (858729749, 8004957286, 8004957299), (858729741, 8004957299, 8004957381),
+            (858729743, 8004957381, 8004957382), (858729744, 8004957382, 8004950346),
+            (858729745, 8004950346, 8004950363), (858729746, 8004950363, 8004957339),
+            (858729747, 8004957339, 8004957286),
+        ],
+        "start_offset_m": 150.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 64 m to the first corner
+        "fia_length": 1070.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 46,  # ~23 m spacing
+        "jump": None,
+    },
+    "lessay_rx": {
+        "name": "Circuit de Lessay",
+        "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
+        # The Circuit de Lessay raceways without the Tour Joker (887 m in OSM, the official lap is 886 m).
+        "segments": [
+            (788196384, 7369271960, 7369272031), (788196388, 7369272031, 7369272029),
+            (788196386, 7369272029, 7369272030), (788196387, 7369272030, 7369272032),
+            (788196389, 7369272032, 7369272033), (788196390, 7369272033, 7369271934),
+            (788196392, 7369271934, 7369271949), (788196393, 7369271949, 7369271950),
+            (788196394, 7369271950, 7369271960),
+        ],
+        "start_offset_m": 110.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 66 m to the first corner
+        "fia_length": 886.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 38,  # ~23 m spacing
+        "jump": None,
+    },
+    "croft_rx": {
+        "name": "Croft Rallycross Circuit",
+        "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
+        # From the pit exit: Clervaux, Hawthorn, into the Chicane, then off onto the "Rallycross" way
+        # (no surface tag; the tarmac ways are tagged asphalt, so it is taken as the loose section).
+        "segments": [(222641546, None), (26261500, None), (26261494, None), (222641550, None, 1241209962),
+                     (108510895, None)],
+        "loose_ways": [108510895],
+        "start_offset_m": 125.0,  # 125 m down the pit straight, so the whole 12-car grid (~103 m) is on tarmac
+        # No official rallycross lap length is published; this is the mapped OSM loop (1:1).
+        "fia_length": 1251.0,
+        "default_width": 13.5,
+        "straight_width": 14.5,
+        "num_waypoints": 52,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
+        "jump": None,
+    },
 }
 
 
@@ -1448,8 +1544,10 @@ def process_rally_track(track_id, cache_dir):
     # (node id, surface) along the lap
     raw_nodes_surf = []
     if "segments" in spec:
+        loose = set(spec.get("loose_ways", []))
         for nid, wid in chain_segments(ways, spec["segments"]):
-            raw_nodes_surf.append((nid, rally_way_surface(ways[wid].get("tags", {}))))
+            surf = "Dirt" if wid in loose else rally_way_surface(ways[wid].get("tags", {}))
+            raw_nodes_surf.append((nid, surf))
     elif track_id == "hell_rx":
         nodes_67 = ways[1069390967]["nodes"][1:]  # Skip start grid lane (node 0)
         nodes_68 = ways[1069390968]["nodes"]
@@ -1488,30 +1586,12 @@ def process_rally_track(track_id, cache_dir):
             raw_nodes_surf.append((nid, "Dirt"))
         for nid in ways[1096210265]["nodes"][:-1]:
             raw_nodes_surf.append((nid, "Asphalt"))
-    elif track_id == "nyirad_rx":
-        for nid in ways[172413359]["nodes"]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[172413357]["nodes"][:15]):
-            raw_nodes_surf.append((nid, "Dirt"))
-        for nid in ways[172413356]["nodes"][12:24]:
-            raw_nodes_surf.append((nid, "Dirt"))
     elif track_id == "kouvola_rx":
         for nid in ways[149713976]["nodes"][36:-1]:
             raw_nodes_surf.append((nid, "Asphalt"))
         for nid in ways[149713976]["nodes"][:7]:
             raw_nodes_surf.append((nid, "Asphalt"))
         for nid in ways[149713907]["nodes"][:40]:
-            raw_nodes_surf.append((nid, "Dirt"))
-    elif track_id == "catalunya_rx":
-        for nid in ways[831804327]["nodes"][200:-1]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in ways[831804327]["nodes"][:3]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[921317982]["nodes"]):
-            raw_nodes_surf.append((nid, "Dirt"))
-        for nid in reversed(ways[967275593]["nodes"][1:]):
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[921317981]["nodes"][1:-1]):
             raw_nodes_surf.append((nid, "Dirt"))
     elif track_id == "killarney_rx":
         w42_nodes = ways[42125321]["nodes"]
@@ -1555,6 +1635,15 @@ def process_rally_track(track_id, cache_dir):
 
     # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
     if "segments" in spec:
+        if spec.get("min_radius_m"):
+            # Scale from the OSM loop itself, then round: the rounding shortens the lap, and scaling
+            # after it would stretch the whole circuit back up.
+            raw_len = polyline_length(metric_pts, closed=True)
+            check_length_ratio(track_id, raw_len, spec["fia_length"])
+            f = spec["fia_length"] / raw_len
+            metric_pts, surfaces = fillet_corners([(x * f, y * f) for x, y in metric_pts], surfaces, spec["min_radius_m"])
+        if spec.get("start_offset_m"):
+            metric_pts, surfaces = shift_start(metric_pts, spec["start_offset_m"], surfaces)
         heading = heading_ahead(metric_pts)
     else:
         p_start = metric_pts[0]
@@ -1564,10 +1653,13 @@ def process_rally_track(track_id, cache_dir):
     # Rotate so start straight heads along +X
     rotated_pts = rotate_points(metric_pts, heading)
 
-    # Scale to exact FIA homologation length
+    # Scale to exact FIA homologation length (a rounded lap is already scaled)
     current_len = polyline_length(rotated_pts, closed=True)
-    check_length_ratio(track_id, current_len, spec["fia_length"])
-    scale_factor = spec["fia_length"] / current_len if current_len > 0 else 1.0
+    if spec.get("min_radius_m"):
+        scale_factor = 1.0
+    else:
+        check_length_ratio(track_id, current_len, spec["fia_length"])
+        scale_factor = spec["fia_length"] / current_len if current_len > 0 else 1.0
     scaled_pts = [((x * scale_factor), (y * scale_factor)) for x, y in rotated_pts]
 
     # Translate so start line is at x=0, y=0
@@ -1731,6 +1823,8 @@ NASCAR_TRACKS = {
     },
     "charlotte": {
         "name": "Charlotte Motor Speedway",
+        # (min_lon, min_lat, max_lon, max_lat) of the lap: the osm_url way alone does not cover it for download
+        "bbox": (-80.686, 35.347, -80.679, 35.356),
         "segments": [(396483278, None), (116034341, None), (402168709, None), (1052107104, None), (402168711, None)],
         "start_node": 9668619996,  # mapped raceway=start-finish node
         "official_length": 2414.0,
@@ -1815,6 +1909,8 @@ NASCAR_TRACKS = {
     },
     "talladega": {
         "name": "Talladega Superspeedway",
+        # (min_lon, min_lat, max_lon, max_lat) of the lap: the osm_url way alone does not cover it for download
+        "bbox": (-86.072, 33.559, -86.060, 33.575),
         "segments": [(426163860, None), (426163859, None), (532106116, None), (8835825, None)],
         "start_node": 13757090309,  # nearest lap node to the mapped raceway=start-finish node
         "official_length": 4281.0,
@@ -1874,8 +1970,12 @@ NASCAR_CORNER_CURVATURE = 0.6
 NASCAR_BEND_CURVATURE = 0.12
 
 
-def shift_start(points, offset_m):
-    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted)."""
+def shift_start(points, offset_m, props=None):
+    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted).
+
+    `props` (optional, one value per point, as in resample_polyline) is rotated the same way;
+    then (points, props) is returned.
+    """
     n = len(points)
     left = offset_m
     for i in range(n):
@@ -1884,9 +1984,134 @@ def shift_start(points, offset_m):
         if left <= seg:
             t = left / seg if seg > 0 else 0.0
             p = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
-            return [p] + points[i + 1:] + points[:i + 1]
+            shifted = [p] + points[i + 1:] + points[:i + 1]
+            if props is None:
+                return shifted
+            return shifted, [props[i]] + props[i + 1:] + props[:i + 1]
         left -= seg
-    return points
+    return points if props is None else (points, props)
+
+
+def point_along(pts, i, dist, step):
+    """(index of the segment start, point) `dist` m along a closed polyline from vertex i (dist < 0: backwards)."""
+    n = len(pts)
+    j = i
+    left = abs(dist)
+    while True:
+        k = (j + step) % n
+        seg = math.dist(pts[j], pts[k])
+        if left <= seg:
+            f = left / seg
+            p = (pts[j][0] + f * (pts[k][0] - pts[j][0]), pts[j][1] + f * (pts[k][1] - pts[j][1]))
+            return (j if step > 0 else k), p
+        left -= seg
+        j = k
+
+
+def round_hairpin(pts, props, i, radius, arc_step=2.0):
+    """Replace the narrow V hairpin at vertex i with a half circle between the first points on each
+    leg that are 2 * `radius` apart, bulging towards the apex."""
+    n = len(pts)
+    dist = radius
+    while True:
+        ja, a = point_along(pts, i, -dist, -1)
+        jb, b = point_along(pts, i, dist, 1)
+        if math.dist(a, b) >= 2 * radius or dist > polyline_length(pts) / 4:
+            break
+        dist += 1.0
+    centre = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    r = math.dist(a, b) / 2
+    start = math.atan2(a[1] - centre[1], a[0] - centre[0])
+    apex = math.atan2(pts[i][1] - centre[1], pts[i][0] - centre[0])
+    sweep = math.pi if math.cos(start + math.pi / 2 - apex) > 0 else -math.pi  # pass the apex side
+    m = max(4, round(r * math.pi / arc_step))
+    curve = [(centre[0] + r * math.cos(start + sweep * q / m), centre[1] + r * math.sin(start + sweep * q / m))
+             for q in range(m + 1)]
+    curve_props = [props[ja]] * (m // 2 + 1) + [props[jb]] * (m - m // 2)
+    removed = {q % n for q in range(ja + 1, jb + 1 if jb > ja else jb + n + 1)}
+    out_pts, out_props, placed = [], [], False
+    for q in range(n):
+        if q in removed:
+            if not placed:
+                out_pts += curve
+                out_props += curve_props
+                placed = True
+            continue
+        out_pts.append(pts[q])
+        out_props.append(props[q])
+    return out_pts, out_props
+
+
+def fillet_corners(points, props, radius, min_turn_deg=20.0, arc_step=2.0):
+    """Closed polyline with every node turning more than `min_turn_deg` replaced by a circular arc
+    of `radius` tangent to its two legs (a road-design fillet). When a leg is too short for the
+    arc, the corner takes in the next leg too. OSM draws some corners as one sharp node where two
+    ways meet; the spline would turn on a few metres there and the walls would fold into the road.
+    `props` has one value per point (its outgoing segment). Returns (points, props)."""
+    pts, props = list(points), list(props)
+    done = [False] * len(pts)
+
+    def turn(i):
+        n = len(pts)
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        h = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0])
+        return abs((h + math.pi) % (2 * math.pi) - math.pi)
+
+    while True:
+        n = len(pts)
+        todo = [i for i in range(n) if not done[i] and turn(i) > math.radians(min_turn_deg)]
+        if not todo:
+            return pts, props
+        i = max(todo, key=turn)
+        a, b = i - 1, i  # incoming and outgoing segment: pts[a] -> pts[a+1], pts[b] -> pts[b+1]
+        while True:
+            a0, a1 = pts[a % n], pts[(a + 1) % n]
+            b0, b1 = pts[b % n], pts[(b + 1) % n]
+            la, lb = math.dist(a0, a1), math.dist(b0, b1)
+            u = ((a1[0] - a0[0]) / la, (a1[1] - a0[1]) / la)
+            v = ((b1[0] - b0[0]) / lb, (b1[1] - b0[1]) / lb)
+            cross = u[0] * v[1] - u[1] * v[0]
+            if abs(cross) < 1e-6 or b - a > n // 3:
+                break
+            s_x = ((b0[0] - a0[0]) * v[1] - (b0[1] - a0[1]) * v[0]) / cross  # corner X = a0 + s_x * u
+            x = (a0[0] + s_x * u[0], a0[1] + s_x * u[1])
+            theta = math.acos(max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1])))
+            t = radius * math.tan(theta / 2)
+            s1 = s_x - t  # tangent point on the incoming line, from a0
+            s2 = (x[0] - b0[0]) * v[0] + (x[1] - b0[1]) * v[1] + t  # tangent point on the outgoing line, from b0
+            if s1 < 0:
+                a -= 1
+            elif s2 > lb:
+                b += 1
+            else:
+                break
+        done[i] = True
+        if abs(cross) < 1e-6 or b - a > n // 3:
+            # a narrow V hairpin: its legs run back almost parallel, so no arc of `radius` fits them
+            pts, props = round_hairpin(pts, props, i, radius, arc_step)
+            done = [False] * len(pts)  # indices moved; the curve itself turns less than min_turn_deg per point
+            continue
+        side = 1.0 if cross > 0 else -1.0
+        t1 = (a0[0] + s1 * u[0], a0[1] + s1 * u[1])
+        centre = (t1[0] - side * u[1] * radius, t1[1] + side * u[0] * radius)
+        start = math.atan2(t1[1] - centre[1], t1[0] - centre[0])
+        m = max(2, round(radius * theta / arc_step))
+        arc = [(centre[0] + radius * math.cos(start + side * theta * q / m),
+                centre[1] + radius * math.sin(start + side * theta * q / m)) for q in range(m + 1)]
+        arc_props = [props[a % n]] * (m // 2 + 1) + [props[b % n]] * (m - m // 2)
+        removed = {q % n for q in range(a + 1, b + 1)}
+        at = (a + 1) % n
+        new_pts, new_props, new_done = [], [], []
+        for q in range(n):
+            if q == at:
+                new_pts += arc
+                new_props += arc_props
+                new_done += [True] * len(arc)
+            if q not in removed:
+                new_pts.append(pts[q])
+                new_props.append(props[q])
+                new_done.append(done[q])
+        pts, props, done = new_pts, new_props, new_done
 
 
 def curvature_classes(points):
@@ -2067,10 +2292,11 @@ def element_bounds(osm_url):
 
 
 def config_bbox(track_id):
-    """(south, west, north, east) from a kart or rallycross config, when it has one."""
-    if "bbox" in KART_TRACKS.get(track_id, {}):
-        min_lon, min_lat, max_lon, max_lat = KART_TRACKS[track_id]["bbox"]
-        return min_lat, min_lon, max_lat, max_lon
+    """(south, west, north, east) from a kart, NASCAR or rallycross config, when it has one."""
+    for specs in (KART_TRACKS, NASCAR_TRACKS):
+        if "bbox" in specs.get(track_id, {}):
+            min_lon, min_lat, max_lon, max_lat = specs[track_id]["bbox"]
+            return min_lat, min_lon, max_lat, max_lon
     if "query" in RALLY_TRACKS.get(track_id, {}):
         m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", RALLY_TRACKS[track_id]["query"])
         lat1, lon1, lat2, lon2 = map(float, m.groups())

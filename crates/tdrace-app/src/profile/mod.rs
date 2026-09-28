@@ -675,13 +675,13 @@ impl ModuleCareerProgress {
                 self.ensure_track("lydden_hill");
                 self.ensure_track("mettet_rx");
                 self.ensure_track("dreux_rx");
-                self.ensure_track("blyton_rx");
+                self.ensure_track("croft_rx");
 
                 // Tier 2 (3 circuits)
                 if self.level >= 2 {
                     self.ensure_track("hell_rx");
                     self.ensure_track("loheac_rx");
-                    self.ensure_track("silverstone_rx");
+                    self.ensure_track("lavare_rx");
                 }
 
                 // Tier 3 (3 circuits)
@@ -701,7 +701,7 @@ impl ModuleCareerProgress {
                 // Tier 5 (3 circuits)
                 if self.level >= 5 {
                     self.ensure_track("catalunya_rx");
-                    self.ensure_track("yas_marina_rx");
+                    self.ensure_track("lessay_rx");
                     self.ensure_track("essay_rx");
                 }
             }
