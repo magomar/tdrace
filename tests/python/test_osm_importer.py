@@ -186,3 +186,18 @@ def test_provenance_urls_come_from_tracks_json(tmp_path):
     assert imp.provenance_osm_urls(str(tracks), str(tmp_path / "osm")) == {
         "autodromo": "https://www.openstreetmap.org/way/1"
     }
+
+
+def test_shift_start_moves_first_point_along_the_lap():
+    square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+    shifted = imp.shift_start(square, 150.0)
+    assert shifted[0] == (100.0, 50.0)
+    assert shifted[1:] == [(100.0, 100.0), (0.0, 100.0), (0.0, 0.0), (100.0, 0.0)]
+    assert imp.polyline_length(shifted) == 400.0
+
+
+def test_runs_of_numbers_corners_from_waypoint_zero_and_joins_a_wrapping_run():
+    classes = ["corner", "straight", "corner", "corner", "straight", "straight", "corner"]
+    runs, count = imp.runs_of(classes, ("corner",))
+    assert count == 2
+    assert runs == [0, -1, 1, 1, -1, -1, 0]
