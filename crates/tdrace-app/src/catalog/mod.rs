@@ -83,6 +83,7 @@ impl RealCarModel {
                     || self.category() == tdrace_core::CarCategory::Nascar
                     || self.category() == tdrace_core::CarCategory::Kart
                     || self.category() == tdrace_core::CarCategory::Rally
+                    || self.category() == tdrace_core::CarCategory::Autocross
                 {
                     Some("SURFACE WARNING: Vehicle has severe rolling drag handicap on Sand dunes.")
                 } else {
@@ -115,6 +116,7 @@ impl RealCarModel {
             "rally" => tdrace_core::CarCategory::Rally,
             "kart" => tdrace_core::CarCategory::Kart,
             "extreme_offroad" => tdrace_core::CarCategory::OffRoad,
+            "autocross" => tdrace_core::CarCategory::Autocross,
             "classic" => match self.id {
                 "classic_gt" => tdrace_core::CarCategory::Gt,
                 "classic_nascar" => tdrace_core::CarCategory::Nascar,
@@ -2833,6 +2835,7 @@ pub fn get_classic_model_for_category(category: tdrace_core::CarCategory) -> &'s
         tdrace_core::CarCategory::OffRoad => &CLASSIC_ARCADE_CARS[2], // classic_offroad (Vortex Dune Crusher)
         tdrace_core::CarCategory::Kart => &CLASSIC_ARCADE_CARS[3],   // classic_kart (Turbo Dart 200cc)
         tdrace_core::CarCategory::Rally => &CLASSIC_ARCADE_CARS[4],  // classic_rally (Trailfire Turbo 4WD)
+        tdrace_core::CarCategory::Autocross => &CLASSIC_ARCADE_CARS[2], // classic_offroad (Vortex Dune Crusher)
     }
 }
 
@@ -2894,6 +2897,12 @@ pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
         ("kart", 3) => "Tier 3: Shifter Kart 125cc KZ2",
         ("kart", 4) => "Tier 4: Racing Lawnmower",
         ("kart", 5) => "Tier 5: Superkart 250cc GP",
+
+        ("autocross", 1) => "Tier 1: Cross Car Junior (XC Jr)",
+        ("autocross", 2) => "Tier 2: Cross Car Senior (XC Sr)",
+        ("autocross", 3) => "Tier 3: Buggy1600 (B1600)",
+        ("autocross", 4) => "Tier 4: TouringAutocross (TAX)",
+        ("autocross", 5) => "Tier 5: SuperBuggy (SB)",
 
         _ => "Tier 1: Open Competition",
     }

@@ -485,6 +485,7 @@ impl CarChoice {
             CarCategory::Rally => Self::RallyCar,
             CarCategory::Kart => Self::Kart,
             CarCategory::OffRoad => Self::SandRail,
+            CarCategory::Autocross => Self::SandRail,
         }
     }
 
@@ -649,6 +650,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
                 tdrace_core::CarCategory::Rally => CarChoice::RallyCar,
                 tdrace_core::CarCategory::Kart => CarChoice::Kart,
                 tdrace_core::CarCategory::OffRoad => CarChoice::SandRail,
+                tdrace_core::CarCategory::Autocross => CarChoice::SandRail,
             }
         }
     } else {
@@ -658,6 +660,7 @@ pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,
             "extreme_offroad" => CarChoice::SandRail,
+            "autocross" => CarChoice::SandRail,
             _ => CarChoice::SportsCar,
         }
     }

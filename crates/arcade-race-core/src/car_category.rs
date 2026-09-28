@@ -15,18 +15,22 @@ pub enum CarCategory {
     /// Sand rail, dune buggy, and extreme off-road stunt racing.
     #[serde(rename = "off_road", alias = "offroad", alias = "off-road", alias = "extreme_offroad")]
     OffRoad,
+    /// FIA Autocross buggies, cross cars, and touring autocross.
+    #[serde(rename = "autocross", alias = "ax")]
+    Autocross,
 }
 
 impl CarCategory {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 6] = [
         Self::Gt,
         Self::Nascar,
         Self::Rally,
         Self::Kart,
         Self::OffRoad,
+        Self::Autocross,
     ];
 
-    /// Canonical identifier string (e.g. "gt", "nascar", "rally", "kart", "off_road").
+    /// Canonical identifier string (e.g. "gt", "nascar", "rally", "kart", "off_road", "autocross").
     pub fn id(&self) -> &'static str {
         match self {
             Self::Gt => "gt",
@@ -34,10 +38,11 @@ impl CarCategory {
             Self::Rally => "rally",
             Self::Kart => "kart",
             Self::OffRoad => "off_road",
+            Self::Autocross => "autocross",
         }
     }
 
-    /// Short uppercase title (e.g. "GT", "NASCAR", "RALLYCROSS", "KART", "OFF-ROAD").
+    /// Short uppercase title (e.g. "GT", "NASCAR", "RALLYCROSS", "KART", "OFF-ROAD", "AUTOCROSS").
     pub fn title(&self) -> &'static str {
         match self {
             Self::Gt => "GT",
@@ -45,6 +50,7 @@ impl CarCategory {
             Self::Rally => "RALLYCROSS",
             Self::Kart => "KART",
             Self::OffRoad => "OFF-ROAD",
+            Self::Autocross => "AUTOCROSS",
         }
     }
 
@@ -56,6 +62,7 @@ impl CarCategory {
             Self::Rally => "Rallycross",
             Self::Kart => "Karting",
             Self::OffRoad => "Extreme Off-Road",
+            Self::Autocross => "FIA Autocross",
         }
     }
 
@@ -71,6 +78,9 @@ impl CarCategory {
             "kart" | "classic_kart" | "shifter_kart_125" => Some(Self::Kart),
             "off_road" | "offroad" | "off-road" | "extreme_offroad" | "classic_offroad"
             | "sand_rail_buggy" | "sand_rail" => Some(Self::OffRoad),
+            "autocross" | "ax" | "cross_car" | "crosscar" | "superbuggy" | "buggy1600" => {
+                Some(Self::Autocross)
+            }
             _ => None,
         }
     }
