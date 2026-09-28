@@ -4,8 +4,11 @@ OSM NASCAR Track Importer for tdrace
 
 Extracts real-world motorsport raceway waypoints from OpenStreetMap (OSM),
 projects them to metric 2D Cartesian coordinates, scales them to target NASCAR lengths
-(road courses scaled to 0.5x), aligns the start/finish straight with the +X axis,
+(Road America scaled to 0.5x), aligns the start/finish straight with the +X axis,
 adds apex curbs, banking angles, and generates ready-to-use Rust track definitions.
+
+Only Eldora, Iowa and Road America still come from this script. Chicago and the other
+NASCAR circuits are built with `python3 scripts/osm_importer.py nascar`.
 """
 
 import math
@@ -13,7 +16,7 @@ import os
 import urllib.request
 import xml.etree.ElementTree as ET
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "target", "osm_cache")
+CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "osm")
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
@@ -137,42 +140,6 @@ def get_road_america_points():
     return [nodes[nid] for nid in ordered_nodes]
 
 
-def get_chicago_points():
-    xml_str = fetch_osm_xml(
-        "chicago_rel.osm",
-        "https://api.openstreetmap.org/api/0.6/relation/16546690/full",
-    )
-    tree = ET.fromstring(xml_str)
-    nodes = {int(n.get("id")): (float(n.get("lat")), float(n.get("lon"))) for n in tree.findall("node")}
-    ways = {int(w.get("id")): [int(nd.get("ref")) for nd in w.findall("nd")] for w in tree.findall("way")}
-    rel = tree.find("relation")
-    member_way_ids = [int(m.get("ref")) for m in rel.findall("member") if m.get("type") == "way"]
-
-    ordered_nodes = []
-    for wid in member_way_ids:
-        wnodes = ways.get(wid, [])
-        if not wnodes:
-            continue
-        if not ordered_nodes:
-            ordered_nodes.extend(wnodes)
-        else:
-            if ordered_nodes[-1] == wnodes[0]:
-                ordered_nodes.extend(wnodes[1:])
-            elif ordered_nodes[-1] == wnodes[-1]:
-                ordered_nodes.extend(list(reversed(wnodes))[1:])
-            else:
-                p_curr = nodes[ordered_nodes[-1]]
-                p_start = nodes[wnodes[0]]
-                p_end = nodes[wnodes[-1]]
-                d_start = math.hypot(p_curr[0] - p_start[0], p_curr[1] - p_start[1])
-                d_end = math.hypot(p_curr[0] - p_end[0], p_curr[1] - p_end[1])
-                if d_start < d_end:
-                    ordered_nodes.extend(wnodes[1:])
-                else:
-                    ordered_nodes.extend(list(reversed(wnodes))[1:])
-    return [nodes[nid] for nid in ordered_nodes]
-
-
 def process_circuit(raw_latlons, target_length, target_waypoints, is_dirt=False):
     lat0 = sum(p[0] for p in raw_latlons) / len(raw_latlons)
     lon0 = sum(p[1] for p in raw_latlons) / len(raw_latlons)
@@ -219,5 +186,3 @@ if __name__ == "__main__":
     ra_pts, l_ra = process_circuit(get_road_america_points(), 3257.5, 32)
     print(f"Road America: {len(ra_pts)} wps, len={l_ra:.1f}m")
 
-    chi_pts, l_chi = process_circuit(get_chicago_points(), 1770.0, 28)
-    print(f"Chicago: {len(chi_pts)} wps, len={l_chi:.1f}m")

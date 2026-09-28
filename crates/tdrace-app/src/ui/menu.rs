@@ -1502,7 +1502,7 @@ pub fn render_track_select_menu(
             if is_inspect_hover { 1.8 } else { 1.0 },
         );
         fonts.draw_ui_bold_centered(
-            "⛶ FULL CIRCUIT VIEW [X]",
+            "⛶ FULL CIRCUIT VIEW [V]",
             inspect_btn_x + inspect_btn_w * 0.5,
             inspect_btn_y + scaler.s(17.0),
             scaler.font_s(10.5),
@@ -1852,11 +1852,11 @@ pub fn render_track_select_menu(
     let btn_y = sh - btn_h - scaler.s(14.0);
 
     let footer_text = if is_career_mode {
-        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [X] Full Circuit View  •  [ESC] Return to Grid"
+        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
     } else if crate::storage::is_dev_mode() {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [X] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [O] Settings  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
     } else {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [X] Full Circuit View  •  [T] Circuit Manager  •  [O] Settings  •  [K] Controls  •  [ESC] Back"
+        "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [X] Settings  •  [K] Controls  •  [ESC] Back"
     };
 
     fonts.draw_ui_regular_centered(
@@ -2076,7 +2076,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     let items = [
         assist_item,
         audio_item,
-        "O / Y : Arcade Settings & Preferences".to_string(),
+        "X / Y : Arcade Settings & Preferences".to_string(),
         "D : Driver Cards & Opponents Dossier".to_string(),
         "K : Controls Guide | R : Restart Race".to_string(),
         "TAB / Left Stick Click : Camera View".to_string(),
@@ -2352,7 +2352,7 @@ pub fn render_controls_screen(
         ("Handling Preset", keyboard.profile.name()),
         ("Cycle Handling Preset", "S / P"),
         ("Steer Speed / Authority / Traction", handling_label.as_str()),
-        ("Open Controls Settings", "O"),
+        ("Open Controls Settings", "X / O"),
         ("Accelerate / Gas", throttle_label.as_str()),
         ("Brake / Reverse (at stop)", brake_label.as_str()),
         ("Steer Left / Right", steer_label.as_str()),
@@ -2418,7 +2418,7 @@ pub fn render_controls_screen(
     fonts.draw_ui_regular("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
-    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [B] BLEED  •  [O] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
+    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [B] BLEED  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
     fonts.draw_ui_bold_centered(
         back_prompt,
         sw * 0.5,

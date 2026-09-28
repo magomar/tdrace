@@ -2516,3 +2516,18 @@ fn test_concrete_surface_editing_and_batch_assignment() {
 
 
 
+
+#[test]
+fn test_editor_keeps_track_barrier_setup_on_rebuild() {
+    // Daytona is walled with 1.5 m concrete; opening it in the editor must not reset that to defaults.
+    let track = tdrace_core::track::presets::daytona_superspeedway();
+    let mut state = EditorState::new(track);
+    assert!((state.barrier_offset - 1.5).abs() < 0.11, "barrier offset {} should stay ~1.5 m", state.barrier_offset);
+    assert_eq!(state.barrier_type, BarrierType::Concrete);
+
+    state.rebuild_geometry();
+    let walls = state.track.geometry.inner_walls.iter().chain(&state.track.geometry.outer_walls);
+    assert!(walls.clone().count() > 0);
+    assert!(walls.clone().all(|w| w.barrier_type == BarrierType::Concrete));
+    assert!((state.track.effective_barrier_offset() - 1.5).abs() < 0.11);
+}

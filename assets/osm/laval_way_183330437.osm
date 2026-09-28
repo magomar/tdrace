@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="openstreetmap-cgimap 2.1.0 (3498739 spike-06.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="1937024380" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:54Z" user="l@ur3nt" uid="822467" lat="48.0361643" lon="-0.7440502"/>
+ <node id="1937024397" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:48:55Z" user="l@ur3nt" uid="822467" lat="48.0366593" lon="-0.7424892"/>
+ <node id="1937025716" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0368925" lon="-0.7433314"/>
+ <node id="1937025718" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0364213" lon="-0.7443769"/>
+ <node id="1937025719" visible="true" version="2" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0369866" lon="-0.7425576"/>
+ <node id="1937025720" visible="true" version="2" changeset="75423772" timestamp="2019-10-08T16:56:45Z" user="Olyon" uid="1443767" lat="48.0369220" lon="-0.7432134"/>
+ <node id="1937025721" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0366975" lon="-0.7441999"/>
+ <node id="1937025723" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0369140" lon="-0.7425482"/>
+ <node id="1937025724" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0365840" lon="-0.7444365"/>
+ <node id="1937025725" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0363006" lon="-0.7442487"/>
+ <node id="1937025726" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0361930" lon="-0.7441414"/>
+ <node id="1937025728" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:50Z" user="l@ur3nt" uid="822467" lat="48.0366437" lon="-0.7444306"/>
+ <node id="1937025729" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:51Z" user="l@ur3nt" uid="822467" lat="48.0370096" lon="-0.7429285"/>
+ <node id="1937025730" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:51Z" user="l@ur3nt" uid="822467" lat="48.0370526" lon="-0.7426764"/>
+ <node id="1937025732" visible="true" version="1" changeset="13287368" timestamp="2012-09-28T16:49:51Z" user="l@ur3nt" uid="822467" lat="48.0367526" lon="-0.7424999"/>
+ <node id="6860917926" visible="true" version="1" changeset="75423772" timestamp="2019-10-08T16:56:04Z" user="Olyon" uid="1443767" lat="48.0369498" lon="-0.7431838"/>
+ <node id="8209554019" visible="true" version="1" changeset="95552048" timestamp="2020-12-09T12:02:26Z" user="Kalepom" uid="392288" lat="48.0370434" lon="-0.7426110"/>
+ <way id="183330437" visible="true" version="5" changeset="184447580" timestamp="2026-06-22T19:54:57Z" user="YBau" uid="19282503">
+  <nd ref="1937024380"/>
+  <nd ref="1937025726"/>
+  <nd ref="1937025725"/>
+  <nd ref="1937025718"/>
+  <nd ref="1937025724"/>
+  <nd ref="1937025728"/>
+  <nd ref="1937025721"/>
+  <nd ref="1937025716"/>
+  <nd ref="1937025720"/>
+  <nd ref="6860917926"/>
+  <nd ref="1937025729"/>
+  <nd ref="1937025730"/>
+  <nd ref="8209554019"/>
+  <nd ref="1937025719"/>
+  <nd ref="1937025723"/>
+  <nd ref="1937025732"/>
+  <nd ref="1937024397"/>
+  <tag k="highway" v="raceway"/>
+  <tag k="oneway" v="yes"/>
+  <tag k="sport" v="karting"/>
+  <tag k="surface" v="asphalt"/>
+ </way>
+</osm>
