@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Reusable Racing Platform Layers"
 description: "Target layering (wheelbase, arcade-race-core, race-kit, race-ui, cabinet) and phase roadmap that let new top-down racing games (Roman chariot races first, then a streamed GPX rally-raid) reuse the TdRace engine from separate repos, plus the Phase 0 determinism safety net."
-status: approved
+status: implemented
 receipt: "docs/receipts/spec-049-receipt.md"
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T18:40:00Z }
