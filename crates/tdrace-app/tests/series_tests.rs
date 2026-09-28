@@ -417,8 +417,8 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
                 (1, "rally_grassroots_cup", 5, "rally_peugeot_208_rally4"),
                 (2, "rally_world_cup", 7, "rally_polo_rx"),
                 (3, "rally_group_b_masters", 9, "rally_audi_sport_quattro_s1"),
-                (4, "rally_dakar_raid_trophy", 10, "rally_toyota_hilux_t1_plus"),
-                (5, "rally_super_trucks_series", 12, "rally_sst_super_truck"),
+                (4, "rally_rx1e_electric_championship", 10, "rally_peugeot_208_rx1e"),
+                (5, "rally_nitrocross_group_e", 12, "rally_omse_fc1x"),
             ],
         ),
         (
@@ -1218,8 +1218,8 @@ fn test_championship_lap_calibration_across_all_modules() {
         "rally_grassroots_cup",
         "rally_world_cup",
         "rally_group_b_masters",
-        "rally_dakar_raid_trophy",
-        "rally_super_trucks_series",
+        "rally_rx1e_electric_championship",
+        "rally_nitrocross_group_e",
     ] {
         let def = mgr.get(slug).expect("Rallycross preset must exist");
         assert_eq!(def.series.laps_per_round, 5);

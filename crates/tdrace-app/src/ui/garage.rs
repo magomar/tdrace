@@ -71,7 +71,7 @@ pub fn render_garage_screen(
     // Module branding
     let (mod_title, mod_accent) = match active_module_id {
         "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", Palette::NEON_CYAN),
-        "rally" => ("RALLYCROSS & ALL-TERRAIN", Palette::NEON_GOLD),
+        "rally" => ("RALLYCROSS", Palette::NEON_GOLD),
         "kart" => ("KARTING & MICRO-RACERS", Palette::NEON_GREEN),
         "nascar" => ("NASCAR STOCK CAR RACING", Palette::YELLOW),
         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Palette::NEON_ORANGE),
@@ -112,17 +112,18 @@ pub fn render_garage_screen(
 
     // In LAN the module is fixed to the host discipline, so its key hint is hidden.
     let module_keys = if module_locked { "" } else { "  [◄ 1..5 ►]" };
+    let tier_label = if garage_tier > 5 { "UNRANKED".to_string() } else { format!("TIER {}", garage_tier) };
     let module_subtitle = if active_module_id == "classic" {
         "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
     } else if let Some(cp) = career_progress {
         format!(
-            "MODULE: {}{}  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
-            mod_title, module_keys, garage_tier, category_name.to_uppercase(), cp.xp
+            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
+            mod_title, module_keys, tier_label, category_name.to_uppercase(), cp.xp
         )
     } else {
         format!(
-            "MODULE: {}{}  •  TIER {}: {}  [◄ Q/E ►]",
-            mod_title, module_keys, garage_tier, category_name.to_uppercase()
+            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]",
+            mod_title, module_keys, tier_label, category_name.to_uppercase()
         )
     };
     fonts.draw_ui_regular_centered(
@@ -489,7 +490,11 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.35, 0.10, 0.10, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::RED);
 
-        let lock_title = format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier);
+        let lock_title = if active_car_tier > 5 {
+            "🔒 UNRANKED VEHICLE — DEV MODE ONLY".to_string()
+        } else {
+            format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier)
+        };
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
@@ -497,8 +502,13 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::RED,
         );
+        let lock_hint = if active_car_tier > 5 {
+            "Parked outside the five career tiers; drive it in dev mode"
+        } else {
+            "Advance career tier by earning championship podiums to unlock purchasing"
+        };
         fonts.draw_ui_regular_centered(
-            "Advance career tier by earning championship podiums to unlock purchasing",
+            lock_hint,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(38.0),
             scaler.font_s(10.0),
@@ -573,7 +583,7 @@ pub fn render_garage_screen(
 /// The 5 motorsport modules supported in the Fleet Gallery.
 pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("gt", "GT"),
-    ("rally", "RALLY"),
+    ("rally", "RALLYCROSS"),
     ("kart", "KART"),
     ("nascar", "NASCAR"),
     ("extreme_offroad", "OFF-ROAD"),

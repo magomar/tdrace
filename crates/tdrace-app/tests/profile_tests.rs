@@ -1264,7 +1264,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Dakar Rally Raid Trophy (Tier 4)",
+            "RX1e Electric Championship (Tier 4)",
             vec![
                 "nyirad_rx",
                 "kouvola_rx",
@@ -1279,7 +1279,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Stadium Super Trucks World Series (Tier 5)",
+            "Nitrocross Group E Series (Tier 5)",
             vec![
                 "catalunya_rx",
                 "yas_marina_rx",

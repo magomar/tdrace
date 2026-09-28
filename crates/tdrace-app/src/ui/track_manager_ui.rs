@@ -62,7 +62,7 @@ pub enum TrackManagerModal {
 /// Available motorsport modules for circuit promotion.
 pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); PROMOTION_MODULE_COUNT] = [
     ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
-    ("rally", "Rally Cross Championship", "Dirt tracks, dunes & rugged mountain stages", Palette::NEON_GOLD),
+    ("rally", "Rallycross Championship", "World RX & Euro RX mixed-surface circuits", Palette::NEON_GOLD),
     ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
     ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
     ("nascar", "NASCAR Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
@@ -446,7 +446,7 @@ pub fn render_track_manager_screen(
         } else {
             format!("CATEGORIES: {}", active_mods.iter().map(|m| match m.as_str() {
                 "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
-                "rally" => "RALLY",
+                "rally" => "RALLYCROSS",
                 "kart" => "KARTING",
                 "nascar" => "NASCAR",
                 _ => "CLASSIC",
@@ -846,7 +846,7 @@ fn render_delete_modal(
         let mod_id = module_filter.id().unwrap_or("classic");
         let mod_name = match mod_id {
             "classic" => "Classic",
-            "rally" => "Rally Cross",
+            "rally" => "Rallycross",
             "kart" => "Karting",
             "gt" | "gt_challenge" | "f1" => "GT World Challenge",
             "nascar" => "NASCAR Cup",
@@ -1023,7 +1023,7 @@ fn resolve_track_module_badge(
                 Palette::RED,
             ),
             "rally" => (
-                if is_dossier { "OFFICIAL PRESET • RALLY CROSS".to_string() } else { "OFFICIAL PRESET • RALLY".to_string() },
+                "OFFICIAL PRESET • RALLYCROSS".to_string(),
                 Palette::NEON_GOLD,
             ),
             "kart" => (
@@ -1047,7 +1047,7 @@ fn resolve_track_module_badge(
                 green,
             ),
             "rally" => (
-                if is_dossier { "CUSTOM CIRCUIT • RALLY CROSS".to_string() } else { "CUSTOM CIRCUIT • RALLY".to_string() },
+                "CUSTOM CIRCUIT • RALLYCROSS".to_string(),
                 green,
             ),
             "kart" => (

@@ -390,8 +390,8 @@ impl ModuleCareerProgress {
             ("rally", 1) => vec!["rally_peugeot_208_rally4".to_string()],
             ("rally", 2) => vec!["rally_audi_s1_wrx".to_string()],
             ("rally", 3) => vec!["rally_audi_sport_quattro_s1".to_string()],
-            ("rally", 4) => vec!["rally_toyota_hilux_dakar".to_string()],
-            ("rally", 5) => vec!["rally_robby_gordon_sst".to_string()],
+            ("rally", 4) => vec!["rally_peugeot_208_rx1e".to_string()],
+            ("rally", 5) => vec!["rally_omse_fc1x".to_string()],
 
             ("kart", 1) => vec!["kart_crg_hero_60".to_string()],
             ("kart", 2) => vec!["kart_tony_kart_racer_ok".to_string()],
@@ -742,12 +742,15 @@ impl ModuleCareerProgress {
                 }
             }
             "extreme_offroad" => {
-                // Tier 1 (5 circuits)
+                // Tier 1 (8 circuits, with the three Mint 400 desert-race circuits of spec 046)
                 self.ensure_track("sahara_dune_crossing");
                 self.ensure_track("dirt_figure_eight");
                 self.ensure_track("atacama_sand_basin");
                 self.ensure_track("glamis_dunes");
                 self.ensure_track("crandon_short_course");
+                self.ensure_track("mint400_short_course");
+                self.ensure_track("mint400_qualifying_loop");
+                self.ensure_track("mint400_grand_loop");
 
                 // Tier 2 (3 circuits)
                 if self.level >= 2 {

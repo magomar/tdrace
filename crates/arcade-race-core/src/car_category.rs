@@ -37,12 +37,12 @@ impl CarCategory {
         }
     }
 
-    /// Short uppercase title (e.g. "GT", "NASCAR", "RALLY", "KART", "OFF-ROAD").
+    /// Short uppercase title (e.g. "GT", "NASCAR", "RALLYCROSS", "KART", "OFF-ROAD").
     pub fn title(&self) -> &'static str {
         match self {
             Self::Gt => "GT",
             Self::Nascar => "NASCAR",
-            Self::Rally => "RALLY",
+            Self::Rally => "RALLYCROSS",
             Self::Kart => "KART",
             Self::OffRoad => "OFF-ROAD",
         }

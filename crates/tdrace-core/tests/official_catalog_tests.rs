@@ -26,8 +26,8 @@ fn test_every_embedded_circuit_equals_its_json_file() {
 #[test]
 fn test_catalog_counts_per_module() {
     let counts: Vec<usize> = MODULES.iter().map(|m| catalog::module_circuits(m).count()).collect();
-    assert_eq!(counts, vec![10, 17, 18, 17, 17, 17], "circuits per module {:?}", MODULES);
-    assert_eq!(catalog::circuits().len(), 96);
+    assert_eq!(counts, vec![10, 20, 18, 17, 17, 17], "circuits per module {:?}", MODULES);
+    assert_eq!(catalog::circuits().len(), 99);
 }
 
 #[test]

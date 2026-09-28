@@ -23,8 +23,8 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
     ("rally_world_cup", include_str!("../../../../series/rally/rally_world_cup.toml")),
     ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
-    ("rally_dakar_raid_trophy", include_str!("../../../../series/rally/rally_dakar_raid_trophy.toml")),
-    ("rally_super_trucks_series", include_str!("../../../../series/rally/rally_super_trucks_series.toml")),
+    ("rally_rx1e_electric_championship", include_str!("../../../../series/rally/rally_rx1e_electric_championship.toml")),
+    ("rally_nitrocross_group_e", include_str!("../../../../series/rally/rally_nitrocross_group_e.toml")),
     // Karting Championships (Tiers 1-5)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
     ("kart_national_championship", include_str!("../../../../series/kart/kart_national_championship.toml")),

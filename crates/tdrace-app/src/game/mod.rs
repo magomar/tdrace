@@ -2761,7 +2761,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "Dakar Rally Raid Trophy (Tier 4)",
+                "RX1e Electric Championship (Tier 4)",
                 vec![
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -2776,7 +2776,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "Stadium Super Trucks World Series (Tier 5)",
+                "Nitrocross Group E Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
                     "yas_marina_rx".to_string(),
@@ -9361,7 +9361,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
-            if self.garage_tier < 5 {
+            if self.garage_tier < crate::catalog::garage_tier_count(self.active_module_id) {
                 self.garage_tier += 1;
                 self.garage_car_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
