@@ -516,6 +516,10 @@ pub struct RaceSession {
     pub championship_editor_state: Option<ChampionshipEditorState>,
     pub random_car_assignment: bool,
     pub roster_seed: u64,
+    /// Seed for the grid roster, bot cars and AI randomness instead of the clock.
+    /// `None` (the default) keeps a new random grid every race. Tests set it to get a
+    /// repeatable race (spec 049 golden session).
+    pub fixed_roster_seed: Option<u64>,
     pub current_visual_type: VehicleVisualType,
     pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
@@ -826,6 +830,7 @@ impl RaceSession {
             championship_editor_state: None,
             random_car_assignment: true,
             roster_seed: 42,
+            fixed_roster_seed: None,
             current_visual_type: VehicleVisualType::TouringGT {
                 widebody: true,
                 gt_wing: true,
@@ -3531,10 +3536,14 @@ impl RaceSession {
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
 
-        let seed = (std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as u64)
-            .unwrap_or(42))
+        let seed = self
+            .fixed_roster_seed
+            .unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos() as u64)
+                    .unwrap_or(42)
+            })
             .wrapping_add((self.num_bots as u64) * 101);
 
         let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);

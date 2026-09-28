@@ -180,7 +180,8 @@ Later phases keep every existing file readable:
 
 - **Golden state hashes (Phase 0).**
   - `arcade-race-core/tests/golden_sim.rs` hashes a scripted 6-car race on generated tracks. It needs no `tracks/`.
-  - `tdrace-app/tests/golden_session.rs` hashes a real `RaceSession`, plus the bot harness `controls_hash`.
+  - `tdrace-app/tests/golden_session.rs` hashes a real `RaceSession` step with a fixed roster seed (`RaceSession::fixed_roster_seed`; the game still seeds from the clock by default).
+  - The bot harness is already pinned by `test_human_layer_off_equals_pre_046_controller` in `tdrace-app/tests/bot_humanlike_driving_tests.rs`.
   - Every later phase must keep both hashes unchanged, unless its spec names the intended change and re-records the hash in its own commit.
   - Hashes are recorded per platform and build mode. On macOS the release optimizer merges `sin` and `cos` into `__sincosf_stret`, so debug and release results differ (gap E11, Beads `tdrace-d3m7`). A platform with no recorded hash checks run-to-run equality only.
 - **Performance gates.**
@@ -208,9 +209,9 @@ Later phases keep every existing file readable:
   - [ ] **Then** both runs pass against the recorded hash, and at least one wall hit and one car-to-car contact occurred
 
 - **Scenario: Golden session pins the full game step**
-  - [ ] **Given** a default `RaceSession` after `init_race()`
-  - [ ] **When** `physics_step(FIXED_DT)` runs 3600 times and the bot harness runs one seeded grid
-  - [ ] **Then** the hash of all cars and trackers and the harness `controls_hash` match the recorded values
+  - [ ] **Given** a `RaceSession` on Classic Grand Prix with the sports car, 5 bots and `fixed_roster_seed` set, after `init_race()`
+  - [ ] **When** `physics_step(FIXED_DT)` runs 3600 times, in two separate test processes
+  - [ ] **Then** both runs give the recorded hash of all cars and trackers, and the bots have moved more than 100 m
 
 - **Scenario: Benches run without the tracks submodule**
   - [ ] **Given** the physics, collision and LIDAR benches in `wheelbase` and `arcade-race-core`
