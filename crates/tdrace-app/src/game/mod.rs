@@ -1588,7 +1588,7 @@ impl RaceSession {
         if self.is_dev_mode() {
             return true;
         }
-        if self.active_player_car_tier() > required_tier {
+        if required_tier > 0 && self.active_player_car_tier() > required_tier {
             return false;
         }
         let track_surface = self.track.default_surface;
@@ -1680,14 +1680,14 @@ impl RaceSession {
         false
     }
 
-    /// Returns the required motorsport category tier (1..=5) for the current race.
+    /// Returns the required motorsport category tier (1..=6, or 0 for unranked/heritage) for the current race.
     pub fn current_race_required_tier(&self) -> u8 {
         if self.active_module_id == "classic" {
             5
         } else if let Some(champ) = &self.championship_session {
-            (champ.tier as u8).clamp(1, 5)
+            champ.tier as u8
         } else if self.game_mode == GameMode::Career {
-            (self.active_career_progress.level as u8).clamp(1, 5)
+            self.active_career_progress.level as u8
         } else if self.free_car_selection {
             self.active_player_car_tier()
         } else {
@@ -2803,7 +2803,7 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Launches a Rallycross Career Championship Cup for the given tier (1..=5).
+    /// Launches a Rallycross Career Championship Cup for the given tier (1..=6).
     pub fn start_rally_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
@@ -2817,60 +2817,70 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "World Rallycross Challenge (Tier 2)",
+                "Supercar Lites Trophy (Tier 2)",
                 vec![
-                    "hell_rx".to_string(),
-                    "loheac_rx".to_string(),
-                    "lavare_rx".to_string(),
-                    "holjes_rx".to_string(),
-                    "lydden_hill".to_string(),
+                    "montalegre_rx".to_string(),
+                    "nyirad_rx".to_string(),
+                    "kouvola_rx".to_string(),
+                    "catalunya_rx".to_string(),
                     "mettet_rx".to_string(),
-                    "croft_rx".to_string(),
+                    "holjes_rx".to_string(),
                 ],
             ),
             3 => (
-                "Group B Masters Series (Tier 3)",
+                "Euro RX Challenge (Tier 3)",
                 vec![
-                    "estering_rx".to_string(),
-                    "montalegre_rx".to_string(),
-                    "riga_rx".to_string(),
-                    "hell_rx".to_string(),
-                    "loheac_rx".to_string(),
                     "lavare_rx".to_string(),
-                    "holjes_rx".to_string(),
-                    "lydden_hill".to_string(),
-                    "mettet_rx".to_string(),
+                    "riga_rx".to_string(),
+                    "killarney_rx".to_string(),
+                    "lessay_rx".to_string(),
+                    "essay_rx".to_string(),
+                    "dreux_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             4 => (
-                "RX1e Electric Championship (Tier 4)",
+                "FIA World RX Supercar Trophy (Tier 4)",
+                vec![
+                    "catalunya_rx".to_string(),
+                    "spa_rx".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
+                    "montalegre_rx".to_string(),
+                    "riga_rx".to_string(),
+                    "holjes_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                ],
+            ),
+            5 => (
+                "RX1e Electric Championship (Tier 5)",
                 vec![
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
                     "killarney_rx".to_string(),
                     "estering_rx".to_string(),
-                    "montalegre_rx".to_string(),
-                    "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
                     "lavare_rx".to_string(),
+                    "riga_rx".to_string(),
                     "holjes_rx".to_string(),
+                    "silverstone_rx".to_string(),
                 ],
             ),
             _ => (
-                "Nitrocross Group E Series (Tier 5)",
+                "Nitrocross Group E Series (Tier 6)",
                 vec![
                     "catalunya_rx".to_string(),
                     "lessay_rx".to_string(),
                     "essay_rx".to_string(),
+                    "estering_rx".to_string(),
+                    "hell_rx".to_string(),
+                    "loheac_rx".to_string(),
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
                     "killarney_rx".to_string(),
-                    "estering_rx".to_string(),
-                    "montalegre_rx".to_string(),
                     "riga_rx".to_string(),
-                    "hell_rx".to_string(),
-                    "loheac_rx".to_string(),
+                    "erx_motor_park".to_string(),
                     "holjes_rx".to_string(),
                 ],
             ),

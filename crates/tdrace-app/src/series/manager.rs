@@ -19,12 +19,14 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("nascar_national_tour", include_str!("../../../../series/nascar/nascar_national_tour.toml")),
     ("nascar_premier_speedway_trophy", include_str!("../../../../series/nascar/nascar_premier_speedway_trophy.toml")),
     ("nascar_cup_tier5", include_str!("../../../../series/nascar/nascar_cup_tier5.toml")),
-    // Rallycross Championships (Tiers 1-5)
+    // Rallycross Championships (Tiers 1-6 + Heritage)
     ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
-    ("rally_world_cup", include_str!("../../../../series/rally/rally_world_cup.toml")),
-    ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
+    ("rally_supercar_lites_trophy", include_str!("../../../../series/rally/rally_supercar_lites_trophy.toml")),
+    ("rally_euro_rx_challenge", include_str!("../../../../series/rally/rally_euro_rx_challenge.toml")),
+    ("rally_world_rx_supercars", include_str!("../../../../series/rally/rally_world_rx_supercars.toml")),
     ("rally_rx1e_electric_championship", include_str!("../../../../series/rally/rally_rx1e_electric_championship.toml")),
     ("rally_nitrocross_group_e", include_str!("../../../../series/rally/rally_nitrocross_group_e.toml")),
+    ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
     // Karting Championships (Tiers 1-5)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
     ("kart_national_championship", include_str!("../../../../series/kart/kart_national_championship.toml")),
@@ -124,7 +126,13 @@ impl SeriesManager {
 
     /// Retrieves a series definition by its unique identifier slug.
     pub fn get(&self, id: &str) -> Option<&SeriesDefinition> {
-        self.series.get(id)
+        self.series.get(id).or_else(|| {
+            if id == "rally_world_cup" {
+                self.series.get("rally_euro_rx_challenge")
+            } else {
+                None
+            }
+        })
     }
 
     /// Retrieves all series matching a motorsport module (e.g. "gt", "nascar").
