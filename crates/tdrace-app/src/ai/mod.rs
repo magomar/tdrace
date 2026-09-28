@@ -196,7 +196,7 @@ impl DriverQuality {
         match tier {
             DriverTier::Rookie => Self {
                 tier,
-                // Spec 045: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid.
+                // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid.
                 pace_limit: 0.82,
                 brake_padding: 0.22,
                 avoidance_padding: 2.5,
@@ -258,7 +258,7 @@ pub struct BotProfile {
     pub aggression: f32,
     /// Proximity avoidance safety radius in meters.
     pub avoidance_distance: f32,
-    /// Human variation and mistakes (spec 045). `HumanTraits::none()` for the fixed presets.
+    /// Human variation and mistakes (spec 046). `HumanTraits::none()` for the fixed presets.
     pub traits: HumanTraits,
 }
 
@@ -452,7 +452,7 @@ pub struct BotAiDriver {
     pub avoidance_lateral_bias: f32,
     pub stuck_timer: f32,
     pub reverse_recovery_timer: f32,
-    /// Track distance at the last 5 m of progress, and the time since (spec 045 watchdog).
+    /// Track distance at the last 5 m of progress, and the time since (spec 046 watchdog).
     pub progress_mark: f32,
     pub no_progress_timer: f32,
     /// Watchdog recoveries since the last progress. Each one reverses with the other lock.
@@ -467,7 +467,7 @@ impl BotAiDriver {
         Self::with_seed(profile, 0)
     }
 
-    /// A bot whose human layer (spec 045) draws from `seed`. The same seed gives the same race.
+    /// A bot whose human layer (spec 046) draws from `seed`. The same seed gives the same race.
     pub fn with_seed(profile: BotProfile, seed: u64) -> Self {
         Self {
             human: HumanDriver::new(profile.traits, seed),
@@ -553,7 +553,7 @@ impl BotAiDriver {
         if self.reverse_recovery_timer > 0.0 {
             self.reverse_recovery_timer -= dt;
             // Opposite lock to the forward turn: reversing then keeps turning the nose towards the
-            // target, as in a three-point turn (spec 045; the old sign undid each forward turn).
+            // target, as in a three-point turn (spec 046; the old sign undid each forward turn).
             let flip = if self.recovery_attempts.is_multiple_of(2) { 1.0 } else { -1.0 };
             let steer_rev = heading_error.signum() * flip;
             return CarControls {
@@ -574,7 +574,7 @@ impl BotAiDriver {
         self.total_distance_travelled += car_speed * dt;
 
         let car_alignment = car_fwd.dot(proj.tangent);
-        // Spec 045: a spun bot can stop nose-first against a wall while still on the track.
+        // Spec 046: a spun bot can stop nose-first against a wall while still on the track.
         let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2)
             || (car_alignment < -0.35 && car_speed < 1.5)
             || (car_alignment < 0.5 && car_speed < 1.2);
@@ -591,7 +591,7 @@ impl BotAiDriver {
             self.stuck_timer = (self.stuck_timer - dt * 2.0).max(0.0);
         }
 
-        // Spec 045: a spun bot can also circle slowly against a wall without ever stopping.
+        // Spec 046: a spun bot can also circle slowly against a wall without ever stopping.
         let lap_len = spline.total_length();
         let gained = (curr_dist - self.progress_mark).rem_euclid(lap_len);
         if self.total_distance_travelled <= 15.0 || (gained > 5.0 && gained < 0.5 * lap_len) {
@@ -638,7 +638,7 @@ impl BotAiDriver {
                 let m = self.human.corner_modifiers(scan_dist, spline.total_length());
                 let mut v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor * m.speed_mult;
                 let mut a_scan = a_brake;
-                // Spec 045 mistakes are set against the car's real grip, not the controller's
+                // Spec 046 mistakes are set against the car's real grip, not the controller's
                 // conservative `mu`.
                 if m.over_limit > 0.0 {
                     let limit_grip = car.config.tire.grip + bank_rad.tan().clamp(0.0, 0.75);
@@ -753,7 +753,7 @@ impl BotAiDriver {
             let steer_traction_limit = (1.0f32 - steer_cmd.abs() * 0.55).clamp(0.3, 1.0);
             throttle_limit *= steer_traction_limit;
         }
-        // Spec 045: turning round after a spin. Full throttle at full lock only spins a
+        // Spec 046: turning round after a spin. Full throttle at full lock only spins a
         // rear-drive car on the spot.
         let turning_round = car_speed <= 6.0 && heading_error.abs() > 0.8 && self.total_distance_travelled > 15.0;
         if heading_error.abs() > 1.15 && car_speed > 6.0 {

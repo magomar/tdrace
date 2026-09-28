@@ -285,7 +285,7 @@ The benchmark writes `reports/bot_behaviour_report.md`.
 - **Scenario: Human layer off equals current behaviour**
   - [x] **Given** the fixed `BotProfile` presets (`HumanTraits::none()`) on a six-car grid
   - [x] **When** they drive 2 laps of Classic GP and Kart Arena
-  - [x] **Then** every control output matches the pre-045 controller (hashes recorded at `754b034`)
+  - [x] **Then** every control output matches the pre-046 controller (hashes recorded at `754b034`)
 
 - **Scenario: Bots do not drive the same path every lap**
   - [x] **Given** one bot per tier, Balanced style, 10 laps on Classic GP
@@ -336,7 +336,7 @@ The benchmark writes `reports/bot_behaviour_report.md`.
   - [x] **Then** Mario beats the Tier 1 grid
   - [x] **And** Mario sees at least one bot spin or run wide in the Tier 1/2 race
   - [x] **And** the bots do not follow one another like a train on the same line
-  - Playtest sign-off (2026-09-28, Mario Gomez): "Feels good, close spec 045 and merge to main."
+  - Playtest sign-off (2026-09-28, Mario Gomez): "Feels good, close spec 046 and merge to main."
 
 ---
 
@@ -356,5 +356,5 @@ The benchmark writes `reports/bot_behaviour_report.md`.
 
 ### Verification Assertions
 
-- `crates/tdrace-app/src/ai/humanize.rs` names `specs/045_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md` in its header comment.
+- `crates/tdrace-app/src/ai/humanize.rs` names `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md` in its header comment.
 - Every gate that task 5 restates (a changed number or a changed measure) is recorded in this spec with the reason, as in spec 043.

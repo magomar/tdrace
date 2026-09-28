@@ -1,5 +1,5 @@
-//! Human-like bot driving gates (spec 045:
-//! `specs/045_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
+//! Human-like bot driving gates (spec 046:
+//! `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
 //!
 //! The tier and style gates share one sample: 6 styles x 5 tiers on 4 classic tracks, 10 laps,
 //! fixed seeds (`bot_harness::run_style_grids`). `bot_behaviour_benchmark` writes the same numbers
@@ -72,9 +72,9 @@ fn test_same_seed_gives_the_same_race() {
 ///
 /// Given the fixed `BotProfile` presets (`HumanTraits::none()`) on a six-car grid
 /// When they drive 2 laps of Classic GP and Kart Arena
-/// Then every control output matches the pre-045 controller (hashes recorded at 754b034)
+/// Then every control output matches the pre-046 controller (hashes recorded at 754b034)
 #[test]
-fn test_human_layer_off_equals_pre_045_controller() {
+fn test_human_layer_off_equals_pre_046_controller() {
     const GOLDEN: [(&str, [u64; 6]); 2] = [
         ("classic_grand_prix", [0x8b81b9ea87b0e85, 0x73907177aa5b6bd5, 0xd39a87ac6d040da5, 0x12299f59f2c33f51, 0x167ffe729e83f2d7, 0xc546e7d1b59a42d4]),
         ("kart_arena", [0x93bb5cf1cbc55305, 0xadb71717e21045ea, 0xca50ccee5d1eb8be, 0x5f79e619deec6a6a, 0x1caf49d90b3eb29f, 0xfdd254ffd21ba4e5]),
@@ -85,7 +85,7 @@ fn test_human_layer_off_equals_pre_045_controller() {
         let entries = profiles.iter().map(|p| HarnessEntry::bot(BotAiDriver::new(*p), CarConfig::sports_car())).collect();
         let results = run_harness_race(&track, entries, 2, 400.0);
         for (i, (r, want)) in results.iter().zip(hashes).enumerate() {
-            assert_eq!(r.controls_hash, want, "{slug} bot {i}: controls differ from the pre-045 controller");
+            assert_eq!(r.controls_hash, want, "{slug} bot {i}: controls differ from the pre-046 controller");
         }
     }
 }

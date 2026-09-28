@@ -1,10 +1,10 @@
-//! Human driver layer for bots (spec 045:
-//! `specs/045_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
+//! Human driver layer for bots (spec 046:
+//! `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
 //!
 //! Adds seeded variation and mistakes on top of the `BotAiDriver` controller. The tier sets how
 //! much a bot varies and how often it makes a mistake; the driving style sets its line and which
 //! kind of mistake it makes. `HumanTraits::none()` turns the layer off, and the controller then
-//! drives exactly as it did before spec 045.
+//! drives exactly as it did before spec 046.
 
 use tdrace_core::physics::car::{normalize_angle, Car};
 use tdrace_core::track::spline::{SplineProjection, TrackSpline};
@@ -40,7 +40,7 @@ const MAX_PRESSURE_CARS: u32 = 2;
 /// An "off" is more than this far past the track edge (m), so that kerb cuts do not count.
 const OFF_MARGIN: f32 = 1.5;
 
-/// The kinds of mistake a bot can make (spec 045 §3.2).
+/// The kinds of mistake a bot can make (spec 046 §3.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MistakeKind {
     /// Over-estimates the car's braking power by 30–60 % and arrives at the grip limit.
@@ -65,7 +65,7 @@ impl MistakeKind {
     }
 }
 
-/// Tier- and style-derived human behaviour settings (spec 045 §3).
+/// Tier- and style-derived human behaviour settings (spec 046 §3).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct HumanTraits {
     /// Standard deviation of the wandering line offset (m).
@@ -93,7 +93,7 @@ pub struct HumanTraits {
 }
 
 impl HumanTraits {
-    /// No variation and no mistakes: the pre-045 controller.
+    /// No variation and no mistakes: the pre-046 controller.
     pub const fn none() -> Self {
         Self {
             line_sigma_m: 0.0,

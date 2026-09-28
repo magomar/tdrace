@@ -1,5 +1,5 @@
-//! Headless bot race harness (spec 045:
-//! `specs/045_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
+//! Headless bot race harness (spec 046:
+//! `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
 //!
 //! Runs a grid of cars on an official track with the same physics step order as
 //! `RaceSession` (controls, surfaces, draft, road projection, per-wheel step, car and wall
@@ -225,7 +225,7 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     results
 }
 
-/// Tracks and cars of the spec 045 sample: (track slug in the classic module, car id).
+/// Tracks and cars of the spec 046 sample: (track slug in the classic module, car id).
 pub const SAMPLE_TRACKS: [(&str, &str); 4] = [
     ("classic_grand_prix", "classic_gt"),
     ("oval_speedway", "classic_nascar"),
