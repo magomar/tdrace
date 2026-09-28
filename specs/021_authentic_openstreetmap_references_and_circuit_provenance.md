@@ -123,7 +123,7 @@ Surveyed via `scripts/osm_importer.py rally` and `assets/osm/`:
 | `riga_rx` | Biķernieku Trase (World RX Latvia) | LV | [`way/256784387`](https://www.openstreetmap.org/way/256784387) | [`Biķernieki_Complex_Sports_Base`](https://en.wikipedia.org/wiki/Bi%C4%B7ernieki_Complex_Sports_Base) |
 | `killarney_rx` | Killarney International (World RX South Africa) | ZA | [`way/42125321`](https://www.openstreetmap.org/way/42125321) | [`Killarney_Motor_Racing_Complex`](https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex) |
 | `yas_marina_rx`| Yas Marina RX Arena (World RX Abu Dhabi)| AE | [`way/1083519983`](https://www.openstreetmap.org/way/1083519983) | [`Yas_Marina_Circuit`](https://en.wikipedia.org/wiki/Yas_Marina_Circuit) |
-| `blyton_rx` | Blyton Park Driving Centre RX | GB | [`way/129241665`](https://www.openstreetmap.org/way/129241665) | [`Blyton_Park`](https://en.wikipedia.org/wiki/Blyton) |
+| `croft_rx` | Croft Rallycross Circuit (replaced Blyton Park RX, 2026-09-28) | GB | [`relation/21228308`](https://www.openstreetmap.org/relation/21228308) | [`Croft_Circuit`](https://en.wikipedia.org/wiki/Croft_Circuit) |
 | `dreux_rx` | Circuit Pro'Pulsion (Dreux RX France) | FR | [`way/297738878`](https://www.openstreetmap.org/way/297738878) | [`Dreux`](https://en.wikipedia.org/wiki/Dreux) |
 | `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`way/788873788`](https://www.openstreetmap.org/way/788873788) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
 

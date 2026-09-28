@@ -675,7 +675,7 @@ impl ModuleCareerProgress {
                 self.ensure_track("lydden_hill");
                 self.ensure_track("mettet_rx");
                 self.ensure_track("dreux_rx");
-                self.ensure_track("blyton_rx");
+                self.ensure_track("croft_rx");
 
                 // Tier 2 (3 circuits)
                 if self.level >= 2 {

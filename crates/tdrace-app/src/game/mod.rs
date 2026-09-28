@@ -2766,7 +2766,7 @@ impl RaceSession {
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
                     "dreux_rx".to_string(),
-                    "blyton_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             2 => (
@@ -2778,7 +2778,7 @@ impl RaceSession {
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
-                    "blyton_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             3 => (

@@ -24,7 +24,7 @@ flowchart TD
     A[Grand Hub: ModalitySelect] -->|Select Rallycross Module| B[ModalitySelect Screen]
     B -->|Select Career Mode Tab| C[Career Standings & Tier Selection]
     C -->|View Tier 1: Rally Junior FWD| D[StartingGrid: Tier 1 World Cup]
-    D -->|Start Race| E[Live Race: Höljes / Lydden Hill / Mettet / Dreux / Blyton]
+    D -->|Start Race| E[Live Race: Höljes / Lydden Hill / Mettet / Dreux / Croft]
     E -->|Finish Heats, Semis & Finals| F[Podium & XP Award Sequence]
     F -->|Synchronize Progress| C
     C -->|1 Podium + Spendable XP| G[Unlock & Advance Tier]
@@ -115,7 +115,7 @@ impl GameApp {
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
                     "dreux_rx".to_string(),
-                    "blyton_rx".to_string(),
+                    "croft_rx".to_string(),
                 ],
             ),
             2 => (
@@ -286,7 +286,7 @@ impl GameApp {
  ├─ Lydden Hill Circuit (lydden_hill - 1.170 km 60% Tarmac 40% Chalk/Gravel Birthplace of RX)
  ├─ Circuit Jules Tacheny (mettet_rx - 1.149 km 61% Tarmac 39% Dirt Technical)
  ├─ Circuit de Dreux (dreux_rx - 1.050 km French Rallycross Classic)
- └─ Blyton Park RX (blyton_rx - 1.100 km Technical UK Airfield Proving Ground)
+ └─ Croft Rallycross Circuit (croft_rx - 1.251 km British RX circuit and infield loop; replaced Blyton Park RX on 2026-09-28)
  
 [Tier 2: Mixed Ovals & Rapid RX - 3 Circuits]
  ├─ Hell RX / Lånkebanen (hell_rx - 1.019 km 63% Tarmac 37% Gravel Downhill Plunge)
@@ -317,7 +317,7 @@ impl GameApp {
 
 | Career Level | Category | Tier Cup Name | Entry Car Cost | Car Unlocks | Circuit Unlocks (17 Total) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Level 1** | Rally Junior FWD | **Rallycross Grassroots Cup (Tier 1)** | $1,000\,\text{XP}$ *(Starter free)* | `rally_peugeot_208_rally4`, `rally_fiesta_rally4`, `rally_clio_rally4` | `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `blyton_rx` |
+| **Level 1** | Rally Junior FWD | **Rallycross Grassroots Cup (Tier 1)** | $1,000\,\text{XP}$ *(Starter free)* | `rally_peugeot_208_rally4`, `rally_fiesta_rally4`, `rally_clio_rally4` | `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `croft_rx` |
 | **Level 2** | WRC / RX Supercar | **World Rallycross Challenge (Tier 2)** | $2,000\,\text{XP}$ | `rally_hyundai_i20_rx`, `rally_polo_rx`, `rally_audi_s1_rx` | `hell_rx`, `loheac_rx`, `silverstone_rx` |
 | **Level 3** | Group B Beast | **Group B Masters Series (Tier 3)** | $3,000\,\text{XP}$ | `rally_audi_sport_quattro_s1`, `rally_peugeot_205_t16`, `rally_lancia_delta_s4` | `estering_rx`, `montalegre_rx`, `riga_rx` |
 | **Level 4** | Rally Raid T1+ | **Dakar Rally Raid Trophy (Tier 4)** | $4,000\,\text{XP}$ | `rally_toyota_hilux_t1_plus`, `rally_audi_rs_q_etron`, `rally_prodrive_hunter_t1` | `nyirad_rx`, `kouvola_rx`, `killarney_rx` |
@@ -352,7 +352,7 @@ Each Tier Cup consists of a realistic World RX weekend progression with standard
   - [x] **When** the player launches Career Mode via `start_rally_career_tier(1)`
   - [x] **Then** Tier 1 "Rallycross Grassroots Cup (Tier 1)" is active with `tier == 1`
   - [x] **And** cars "rally_peugeot_208_rally4", "rally_fiesta_rally4", and "rally_clio_rally4" are available
-  - [x] **And** the circuit calendar includes 5 circuits: "holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", and "blyton_rx"
+  - [x] **And** the circuit calendar includes 5 circuits: "holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", and "croft_rx"
 
 - **Scenario: Mandatory Joker Lap is validated at race finish**
   - [x] **Given** the player is competing in a career heat at "hell_rx"
