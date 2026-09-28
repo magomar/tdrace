@@ -208,20 +208,6 @@ pub fn render_track_detailed_preview(
         Palette::NEON_GOLD,
     );
 
-    let scale_part = if track.scale() != "1:1" {
-        format!(" | {}", track.scale())
-    } else {
-        String::new()
-    };
-    let len_badge = format!("{:.0}m | Width: {}{} | Off-Track: {}", track.total_length_m(), track.width_summary_string(), scale_part, track.default_surface.name());
-    fonts.draw_ui_bold(
-        &len_badge,
-        x + w - scaler.s(260.0),
-        y + scaler.s(14.0),
-        scaler.font_s(10.0),
-        Palette::NEON_CYAN,
-    );
-
     let render_preview_zones = |layer: tdrace_core::track::geometry::SurfaceLayer| {
         for zone in &track.geometry.surface_zones {
             if zone.layer != layer {
@@ -301,6 +287,9 @@ pub fn render_track_detailed_preview(
             }
         }
     };
+
+    // Surface zones can sit outside the spline bounds; keep them inside the card.
+    cabinet::ui::scaler::begin_clip_rect(x + 1.0, y + 1.0, w - 2.0, h - 2.0);
 
     // 1. Render BelowTrack Surface Zones (e.g. sand traps, lakes, off-track dirt)
     render_preview_zones(tdrace_core::track::geometry::SurfaceLayer::BelowTrack);
@@ -390,6 +379,7 @@ pub fn render_track_detailed_preview(
         draw_circle(f_mid.x, f_mid.y, scaler.s(3.5), Palette::NEON_GREEN);
         draw_circle_lines(f_mid.x, f_mid.y, scaler.s(3.5), 1.2, Palette::BLACK);
     }
+    cabinet::ui::scaler::end_clip_rect();
 
     // Bottom Surface Composition Mini-Legend Bar
     let legend_y = y + h - scaler.s(18.0);
@@ -416,5 +406,25 @@ pub fn render_track_detailed_preview(
         legend_y + scaler.s(10.0),
         scaler.font_s(10.0),
         Palette::WHITE,
+    );
+
+    // Geometry summary, right-aligned on the legend line (the top-right corner is left free
+    // for overlay buttons such as the circuit selector's FULL CIRCUIT VIEW).
+    let scale_part = if track.scale() != "1:1" {
+        format!(" | {}", track.scale())
+    } else {
+        String::new()
+    };
+    let len_badge = format!("{:.0}m | Width: {}{} | Off-Track: {}", track.total_length_m(), track.width_summary_string(), scale_part, track.default_surface.name());
+    let legend_w = fonts.measure_ui_bold(&legend_str, scaler.font_s(10.0)).width;
+    let badge_room = w - scaler.s(24.0) - legend_w - scaler.s(16.0);
+    let len_badge = fonts.fit_ui_bold(&len_badge, scaler.font_s(10.0), badge_room);
+    let badge_w = fonts.measure_ui_bold(&len_badge, scaler.font_s(10.0)).width;
+    fonts.draw_ui_bold(
+        &len_badge,
+        x + w - scaler.s(12.0) - badge_w,
+        legend_y + scaler.s(10.0),
+        scaler.font_s(10.0),
+        Palette::NEON_CYAN,
     );
 }

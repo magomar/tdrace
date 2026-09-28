@@ -368,7 +368,7 @@ pub fn render_championship_editor(
 
         scaler.draw_glass_card(x, tabs_y, tab_w, tab_h, bg, border, if is_sel { 1.6 } else { 1.0 });
         fonts.draw_ui_bold(
-            tab.title(),
+            &fonts.fit_ui_bold(tab.title(), scaler.font_s(11.0), tab_w - scaler.s(16.0)),
             x + scaler.s(10.0),
             tabs_y + scaler.s(20.0),
             scaler.font_s(11.0),
@@ -385,10 +385,10 @@ pub fn render_championship_editor(
     let btn_y = scaler.s(10.0);
 
     scaler.draw_glass_card(open_btn_x, btn_y, open_btn_w, btn_h, Color::new(0.08, 0.16, 0.28, 0.90), Palette::NEON_CYAN, 1.3);
-    fonts.draw_ui_bold("[O] OPEN CUP", open_btn_x + scaler.s(12.0), btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_CYAN);
+    fonts.draw_ui_bold_centered("[O] OPEN CUP", open_btn_x + open_btn_w * 0.5, btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_CYAN);
 
     scaler.draw_glass_card(new_btn_x, btn_y, new_btn_w, btn_h, Color::new(0.18, 0.14, 0.06, 0.90), Palette::NEON_GOLD, 1.3);
-    fonts.draw_ui_bold("[N] NEW CUP", new_btn_x + scaler.s(10.0), btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold_centered("[N] NEW CUP", new_btn_x + new_btn_w * 0.5, btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_GOLD);
 
     // Status Message Toast
     if let Some((ref msg, _)) = state.status_msg {
@@ -453,14 +453,17 @@ fn render_tab_rules(
 
     let module_upper = state.def.series.module_id.to_uppercase();
     let scoring_upper = state.def.scoring.system.to_uppercase();
+    // Owned per frame (the tier/laps labels used to be leaked with `String::leak` every frame).
+    let tier_label = format!("Tier {}", state.def.series.tier);
+    let laps_label = format!("{} Laps", state.def.series.laps_per_round);
 
     let fields = [
         ("Identifier Slug", state.def.series.id.as_str(), "[Click / Enter to Edit]"),
         ("Display Title", state.def.series.name.as_str(), "[Click / Enter to Edit]"),
         ("Description", state.def.series.description.as_str(), "[Click / Enter to Edit]"),
         ("Motorsport Module", module_upper.as_str(), "[Left/Right or Click to Cycle]"),
-        ("Career Tier", format!("Tier {}", state.def.series.tier).leak(), "[Left/Right or Click to Cycle]"),
-        ("Default Laps", format!("{} Laps", state.def.series.laps_per_round).leak(), "[Left/Right or Click +/-]"),
+        ("Career Tier", tier_label.as_str(), "[Left/Right or Click to Cycle]"),
+        ("Default Laps", laps_label.as_str(), "[Left/Right or Click +/-]"),
         ("Point System", scoring_upper.as_str(), "[Left/Right to Cycle]"),
         ("Fastest Lap Bonus", if state.def.scoring.fastest_lap_bonus { "ENABLED (+1 pt top 10)" } else { "DISABLED" }, "[Space/Enter to Toggle]"),
         ("Clean Race Bonus", if state.def.scoring.clean_race_bonus { "ENABLED" } else { "DISABLED" }, "[Space/Enter to Toggle]"),
@@ -483,9 +486,12 @@ fn render_tab_rules(
 
         scaler.draw_glass_card(col_x, card_y, col_w, card_h, bg, border, if is_sel { 1.5 } else { 1.0 });
 
+        // Hint on the label line (right-aligned) so long values get the full card width.
         fonts.draw_ui_regular(label, col_x + scaler.s(12.0), card_y + scaler.s(14.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(val, col_x + scaler.s(12.0), card_y + scaler.s(32.0), scaler.font_s(12.0), if is_sel { Palette::WHITE } else { COLOR_LIGHT_GRAY });
-        fonts.draw_ui_regular(hint, col_x + col_w - scaler.s(150.0), card_y + scaler.s(32.0), scaler.font_s(9.0), COLOR_DARK_GRAY);
+        let hint_w = fonts.measure_ui_regular(hint, scaler.font_s(9.0)).width;
+        fonts.draw_ui_regular(hint, col_x + col_w - scaler.s(12.0) - hint_w, card_y + scaler.s(14.0), scaler.font_s(9.0), COLOR_DARK_GRAY);
+        let val = fonts.fit_ui_bold(val, scaler.font_s(12.0), col_w - scaler.s(24.0));
+        fonts.draw_ui_bold(&val, col_x + scaler.s(12.0), card_y + scaler.s(32.0), scaler.font_s(12.0), if is_sel { Palette::WHITE } else { COLOR_LIGHT_GRAY });
     }
 }
 

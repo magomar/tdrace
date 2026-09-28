@@ -1222,10 +1222,10 @@ fn test_arcade_settings_modal_controls_subtabs_navigation_and_profile_presets() 
     assert_eq!(modal.controls_sub_tab, 0);
     assert_eq!(modal.nav.column_lengths[1], 7);
 
-    // Switch to Gamepad subtab (1) with 5 nav rows
+    // Switch to Gamepad subtab (1) with 6 nav rows (4 sliders, OPEN GAMEPAD MAPPER, bottom buttons)
     modal.switch_controls_subtab(1);
     assert_eq!(modal.controls_sub_tab, 1);
-    assert_eq!(modal.nav.column_lengths[1], 5);
+    assert_eq!(modal.nav.column_lengths[1], 6);
 
     // Switch back to Keyboard & Filter
     modal.switch_controls_subtab(0);
@@ -1244,3 +1244,24 @@ fn test_arcade_settings_modal_controls_subtabs_navigation_and_profile_presets() 
     assert_eq!(SteeringProfile::Raw.to_config().pedal_time_ms, 0.0);
 }
 
+
+#[test]
+fn test_arcade_settings_modal_sync_gamepad_config_is_not_an_unsaved_edit() {
+    let audio = AudioSettings::default();
+    let gp = GamepadConfig::default();
+    let mut modal = ArcadeSettingsModal::new(&audio, &gp);
+    modal.snapshot_initial();
+
+    // The gamepad mapper saved a new profile while the settings modal was open.
+    let mut mapped = gp;
+    mapped.stick_deadzone = 0.22;
+    mapped.trigger_deadzone = 0.08;
+    modal.sync_gamepad_config(&mapped);
+
+    let mut applied = GamepadConfig::default();
+    modal.apply_to_gamepad(&mut applied);
+    assert!((applied.stick_deadzone - 0.22).abs() < 0.011, "slider follows the new profile");
+    assert!((applied.trigger_deadzone - 0.08).abs() < 0.011);
+    assert_eq!(modal.current_snapshot(), modal.initial_snapshot, "no unsaved-changes prompt for a reload");
+    assert!(!modal.gamepad_mapper_requested);
+}

@@ -476,6 +476,8 @@ fn test_modality_select_column_3_options_garage_navigation() {
 #[test]
 fn test_garage_lifecycle_and_return() {
     let mut session = RaceSession::new();
+    // Opened from the Garage card: Options tab, index 1.
+    session.modality_cursor = (ModalityCategory::Options, 1);
     session.state = GameState::Garage(GarageOrigin::ModalitySelect);
     session.garage_tier = 2;
 

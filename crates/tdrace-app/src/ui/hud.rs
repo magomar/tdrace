@@ -538,11 +538,16 @@ fn render_speedometer(
 /// Small keyboard and gamepad controls tooltip in lower left corner.
 fn render_controls_guide(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32) {
     let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | 1-4: Car Aids | Tab: Cam | Esc: Pause";
+    let size = scaler.font_s(13.0);
+    // Dark pill behind the text so it stays readable over kerbs, asphalt and grass.
+    let text_w = fonts.measure_ui_regular(guide, size).width;
+    let pad = scaler.s(6.0);
+    draw_rectangle(x - pad, y - size * 0.95, text_w + pad * 2.0, size * 1.35, Color::new(0.0, 0.0, 0.0, 0.45));
     fonts.draw_ui_regular(
         guide,
         x,
         y,
-        scaler.font_s(13.0),
+        size,
         Color::new(0.85, 0.88, 0.95, 0.85),
     );
 }

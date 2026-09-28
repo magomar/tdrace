@@ -146,6 +146,15 @@ pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
     ("CLASSIC", Some("classic")),
 ];
 
+/// Short display label for a module id, from the telemetry filter names ("extreme_offroad" -> "OFF-ROAD").
+fn module_short_label(module_id: &str) -> String {
+    TELEMETRY_CATEGORY_FILTERS
+        .iter()
+        .find(|(_, id)| *id == Some(module_id))
+        .map(|(label, _)| label.to_string())
+        .unwrap_or_else(|| module_id.replace('_', " ").to_uppercase())
+}
+
 /// Focus area within the Player Profile Manager screen
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ProfileFocusArea {
@@ -250,14 +259,17 @@ pub fn render_profile_manager_screen(
         let title_dim = fonts.measure_display(&driver_title, scaler.font_s(21.0));
         let btn2_x = name_x + title_dim.width + scaler.s(12.0);
         let btn2_w = scaler.s(136.0);
+        // Sits on the name line only, so it never covers the metadata line below it.
+        let btn2_h = scaler.s(24.0);
+        let btn2_y = cur_y + scaler.s(13.0);
         let (b2_bg, b2_border, b2_text) = if focus_card {
             (Color::new(0.08, 0.25, 0.35, 0.95), Palette::WHITE, "[ENTER] MANAGE ▶")
         } else {
             (Color::new(0.12, 0.16, 0.24, 0.90), Palette::NEON_CYAN, "[E] MANAGE ▶")
         };
-        draw_rectangle(btn2_x, btn_y, btn2_w, btn_h, b2_bg);
-        draw_rectangle_lines(btn2_x, btn_y, btn2_w, btn_h, if focus_card { 2.0 } else { 1.2 }, b2_border);
-        fonts.draw_ui_bold_centered(b2_text, btn2_x + btn2_w * 0.5, btn_y + scaler.s(21.0), scaler.font_s(11.5), if focus_card { Palette::WHITE } else { Palette::NEON_CYAN });
+        draw_rectangle(btn2_x, btn2_y, btn2_w, btn2_h, b2_bg);
+        draw_rectangle_lines(btn2_x, btn2_y, btn2_w, btn2_h, if focus_card { 2.0 } else { 1.2 }, b2_border);
+        fonts.draw_ui_bold_centered(b2_text, btn2_x + btn2_w * 0.5, btn2_y + scaler.s(16.5), scaler.font_s(11.5), if focus_card { Palette::WHITE } else { Palette::NEON_CYAN });
 
         // Driver Metadata Subtitle
         let status_desc = if p.is_active { "PRIMARY ACTIVE DRIVER" } else { "BENCH DRIVER" };
@@ -625,12 +637,22 @@ fn render_overview_tab(
     };
 
     let ped_col_w = shelf_w / 3.0;
-    let ped_base_y = i_y + shelf_h - scaler.s(6.0);
+    let ped_base_y = i_y + shelf_h - scaler.s(8.0);
+
+    if top_awards.is_empty() {
+        fonts.draw_ui_regular_centered(
+            "Finish a championship in the top 3 to place its trophy here.",
+            shelf_x + shelf_w * 0.5,
+            i_y + shelf_h * 0.5,
+            scaler.font_s(11.0),
+            Palette::UI_TEXT_MUTED,
+        );
+    }
 
     for (idx, opt_award_idx) in slot_indices.iter().enumerate() {
         let ped_cx = shelf_x + ped_col_w * (idx as f32 + 0.5);
         let is_center = idx == 1;
-        let ped_h = if is_center { scaler.s(14.0) } else if idx == 0 { scaler.s(10.0) } else { scaler.s(7.0) };
+        let ped_h = if is_center { scaler.s(26.0) } else if idx == 0 { scaler.s(21.0) } else { scaler.s(17.0) };
         let ped_w = ped_col_w - scaler.s(16.0);
         let ped_x = ped_cx - ped_w * 0.5;
         let ped_y = ped_base_y - ped_h;
@@ -1007,7 +1029,7 @@ fn render_trophy_cabinet_tab(
 
         // Discipline Label on left
         fonts.draw_ui_bold(
-            disc_title,
+            &fonts.fit_ui_bold(disc_title, scaler.font_s(11.0), disc_label_w - scaler.s(16.0)),
             left_x + scaler.s(12.0),
             r_y + row_h * 0.5 + scaler.s(4.0),
             scaler.font_s(11.0),
@@ -1683,7 +1705,7 @@ fn render_championships_tab(
         // Row 2: Tag
         let disc_tag = format!(
             "{} • TIER {} • {} ROUNDS ({}) • {} PTS",
-            champ.series.module_id.to_uppercase(),
+            module_short_label(&champ.series.module_id),
             champ.series.tier,
             total_rounds,
             laps_label,
@@ -1908,7 +1930,7 @@ fn render_telemetry_tab(
             fonts.draw_ui_bold(&dyn_pos, c_pos, row_y, val_font_s, pos_col);
 
             // 2. CAT
-            let cat_label = entry.category.to_uppercase();
+            let cat_label = module_short_label(&entry.category);
             fonts.draw_ui_bold(&cat_label, c_cat, row_y, scaler.font_s(9.5), Palette::NEON_CYAN);
 
             // 3. TRACK
@@ -2390,7 +2412,7 @@ pub fn render_player_roster_manager_screen(
         Palette::UI_TEXT_MUTED,
     );
 
-    ry += scaler.s(36.0);
+    ry += scaler.s(50.0);  // room for the field labels drawn above each field
 
     let field_h = scaler.s(38.0);
     let field_w = (right_inner_w - scaler.s(12.0)) * 0.5;
@@ -2403,7 +2425,7 @@ pub fn render_player_roster_manager_screen(
     render_text_field(&scaler, fonts, col_right_x + right_pad, ry, field_w, field_h, "DRIVER FULL NAME", name_input, f0_sel, show_cursor && f0_sel, "Enter Name");
     render_text_field(&scaler, fonts, col_right_x + right_pad + field_w + scaler.s(12.0), ry, field_w, field_h, "CALLSIGN / ALIAS", alias_input, f1_sel, show_cursor && f1_sel, "Enter Alias");
 
-    ry += field_h + scaler.s(14.0);
+    ry += field_h + scaler.s(22.0);
 
     // Row 2: Field 2 (Country Banner) and Field 3 (Livery Theme)
     let f2_sel = active_column == 1 && field_idx == 2;
@@ -2447,7 +2469,7 @@ pub fn render_player_roster_manager_screen(
     let livery_name = format!("Theme #{}", (livery_idx % Palette::CAR_COLORS.len()) + 1);
     fonts.draw_ui_bold(&livery_name, sw_x + (sw_w + scaler.s(4.0)) * 3.0 + scaler.s(10.0), ry + scaler.s(24.0), scaler.font_s(12.5), Palette::WHITE);
 
-    ry += field_h + scaler.s(14.0);
+    ry += field_h + scaler.s(22.0);
 
     // Row 3: Field 4 (Assist Mode Profile) and Field 5 (Save Button)
     let f4_sel = active_column == 1 && field_idx == 4;
