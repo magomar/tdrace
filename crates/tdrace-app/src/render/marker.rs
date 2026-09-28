@@ -7,7 +7,7 @@ use macroquad::shapes::{
 use super::color::{CarColorScheme, Palette};
 use crate::camera::RaceCamera;
 use crate::ui::font::Fonts;
-use crate::ui::CurveColorScheme;
+use crate::ui::{CurveColorScheme, CurveIndicatorStyle};
 
 /// Runtime toggle flags and visual parameters for player car visibility and HUD driving aids.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -38,6 +38,8 @@ pub struct PlayerVisibilityOptions {
     pub curve_helper_brightness: f32,
     /// Active color scheme for the curve approaching helper (cycled via key 6).
     pub curve_color_scheme: CurveColorScheme,
+    /// Curve helper look: severity chevrons or rally pacenote icon.
+    pub curve_indicator_style: CurveIndicatorStyle,
     /// Option 6: In-race dynamic floating bot nameplates (toggled via Alt key).
     pub bot_nameplates: bool,
     /// Option 7: Expanding sonar / radar ping ripples when switching cameras or spinning out.
@@ -60,6 +62,7 @@ impl Default for PlayerVisibilityOptions {
             curve_helper_scale: 1.0,
             curve_helper_brightness: 1.0,
             curve_color_scheme: CurveColorScheme::Traffic,
+            curve_indicator_style: CurveIndicatorStyle::Chevrons,
             bot_nameplates: true,
             sonar_ping: true,
         }
@@ -88,6 +91,7 @@ impl From<&crate::config::PlayerHelpersConfig> for PlayerVisibilityOptions {
             curve_helper_scale: cfg.curve_helper_scale,
             curve_helper_brightness: cfg.curve_helper_brightness,
             curve_color_scheme,
+            curve_indicator_style: CurveIndicatorStyle::from_config_str(&cfg.curve_indicator_style),
             bot_nameplates: cfg.bot_nameplates,
             sonar_ping: cfg.radar_sonar_ping,
         }
@@ -115,6 +119,7 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
             curve_helper_scale: opts.curve_helper_scale,
             curve_helper_brightness: opts.curve_helper_brightness,
             curve_color_scheme,
+            curve_indicator_style: opts.curve_indicator_style.as_config_str().to_string(),
             adaptive_visibility: opts.adaptive_visibility,
             radar_sonar_ping: opts.sonar_ping,
             bot_nameplates: opts.bot_nameplates,

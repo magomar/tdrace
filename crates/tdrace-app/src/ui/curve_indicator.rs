@@ -1,10 +1,39 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::draw_line;
+use macroquad::shapes::{draw_circle, draw_line, draw_triangle};
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::car::Car;
-use tdrace_core::track::curve::{CurveApproachStatus, CurveDirection};
+use tdrace_core::track::curve::{CurveApproachStatus, CurveDirection, TrackCurve};
+use tdrace_core::track::spline::TrackSpline;
 use tdrace_core::track::Track;
+
+/// Visual style of the upcoming-curve indicator. Turning it off is `curve_helper = false`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum CurveIndicatorStyle {
+    /// Severity chevrons (`>>>`) beside the car: one chevron per degree.
+    #[default]
+    Chevrons,
+    /// Rally pacenote icon beside the car: a small drawing of the curve's own shape.
+    Pacenote,
+}
+
+impl CurveIndicatorStyle {
+    /// Name stored in `config.toml`.
+    pub const fn as_config_str(&self) -> &'static str {
+        match self {
+            Self::Chevrons => "chevrons",
+            Self::Pacenote => "pacenote",
+        }
+    }
+
+    /// Parses the `config.toml` name; unknown names fall back to chevrons.
+    pub fn from_config_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "pacenote" => Self::Pacenote,
+            _ => Self::Chevrons,
+        }
+    }
+}
 
 /// Available color schemes for the curve approaching & braking indicator.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -189,6 +218,13 @@ fn curve_side_vector(player_car: &Car, direction: CurveDirection) -> Vec2 {
     }
 }
 
+/// Distance (world units) from the car center to the inner edge of the curve indicator:
+/// half the car's track width, plus 0.5 m for the body, plus a 10 px gap on screen.
+#[inline]
+pub fn curve_indicator_inner_clearance(player_car: &Car, current_zoom: f32) -> f32 {
+    player_car.config.track_width * 0.5 + 0.5 + 10.0 / current_zoom.max(0.5)
+}
+
 /// Computes the world-space center of the curve alert chevron block next to the player car.
 ///
 /// Places the block on the car's own left or right side (perpendicular to its heading),
@@ -211,9 +247,8 @@ pub fn compute_curve_arrow_position(
     let chevron_w = 14.0 / zoom;
     let total_w = (deg as f32 - 1.0) * spacing + chevron_w;
 
-    // Guaranteed clearance between the car center and the nearest chevron
-    // (set to 56px / ~4.5m so multi-arrow clusters never encroach on the vehicle)
-    let inner_clearance = (56.0 / zoom).clamp(4.2, 8.5);
+    // Clearance between the car center and the nearest chevron
+    let inner_clearance = curve_indicator_inner_clearance(player_car, zoom);
 
     // Center of the chevron block is offset so the innermost chevron maintains `inner_clearance`
     let lateral_dist = inner_clearance + total_w * 0.5;
@@ -274,7 +309,7 @@ pub fn render_curve_indicator(
     // Car frame: `side` points from the car toward the curve, `fwd` along the car heading
     let side = curve_side_vector(player_car, status.curve.direction);
     let fwd = player_car.forward_vector();
-    let inner_clearance = (56.0 / zoom).clamp(4.2, 8.5);
+    let inner_clearance = curve_indicator_inner_clearance(player_car, zoom);
     let origin = player_car.state.position + Vec2::new(0.0, player_car.total_elevation());
 
     // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size, modulated by scale)
@@ -308,4 +343,138 @@ pub fn render_curve_indicator(
         draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
         draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
     }
+}
+
+/// Track length (meters) drawn before the curve entry and after its exit in the pacenote icon.
+const PACENOTE_LEAD_M: f32 = 12.0;
+/// Number of centerline points in the pacenote icon.
+const PACENOTE_SAMPLES: usize = 24;
+
+/// Builds the pacenote icon line: the curve's own centerline, from `PACENOTE_LEAD_M` before
+/// entry to `PACENOTE_LEAD_M` after exit, scaled so its longer side is `size` and centered on `center`.
+///
+/// The icon keeps the track's world orientation, so it matches the road on screen.
+pub fn compute_pacenote_polyline(
+    spline: &TrackSpline,
+    curve: &TrackCurve,
+    center: Vec2,
+    size: f32,
+) -> Vec<Vec2> {
+    let mut span = curve.exit_distance - curve.entry_distance;
+    if span < 0.0 {
+        span += spline.total_length();
+    }
+    let start = curve.entry_distance - PACENOTE_LEAD_M;
+    let length = span + 2.0 * PACENOTE_LEAD_M;
+
+    let raw: Vec<Vec2> = (0..PACENOTE_SAMPLES)
+        .map(|i| {
+            let t = i as f32 / (PACENOTE_SAMPLES - 1) as f32;
+            spline.sample_at_distance(start + length * t).point
+        })
+        .collect();
+
+    let (min, max) = raw
+        .iter()
+        .fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), p| (lo.min(*p), hi.max(*p)));
+    let extent = (max - min).max_element().max(1e-3);
+    let mid = (min + max) * 0.5;
+    raw.iter().map(|p| center + (*p - mid) * (size / extent)).collect()
+}
+
+/// Renders the rally pacenote curve icon beside the player car.
+///
+/// A dark disc holds a drawing of the upcoming curve's shape with an arrowhead at the exit,
+/// colored by the same scheme and urgency as the chevrons.
+pub fn render_curve_pacenote(
+    player_car: &Car,
+    status: &CurveApproachStatus,
+    spline: &TrackSpline,
+    scheme: CurveColorScheme,
+    current_zoom: f32,
+    anim_time: f32,
+    scale: f32,
+    brightness: f32,
+) {
+    let base_alpha = compute_indicator_alpha(
+        status.distance_to_entry,
+        status.distance_to_apex,
+        status.is_inside_curve,
+        player_car.state.speed,
+    );
+    let alpha = (base_alpha * brightness).clamp(0.0, 1.0);
+
+    if alpha <= 0.02 {
+        return;
+    }
+
+    let degree = status.curve.degree.clamp(1, 5);
+    let (color, _border_color) = compute_curve_colors(scheme, status.urgency, degree, alpha);
+
+    // Pulse scale when in critical braking envelope
+    let pulse_scale = if status.urgency >= 0.85 {
+        1.0 + (anim_time * 9.0).sin().abs() * 0.10
+    } else {
+        1.0
+    };
+
+    let zoom = current_zoom.max(0.5);
+    let size = (34.0 * pulse_scale * scale) / zoom;
+    let plate_radius = size * 0.92;
+    let thickness = (4.0 * pulse_scale * scale) / zoom;
+    let outline = thickness + 3.0 / zoom;
+
+    // Disc sits on the car's own left or right side, like the chevrons
+    let side = curve_side_vector(player_car, status.curve.direction);
+    let origin = player_car.state.position + Vec2::new(0.0, player_car.total_elevation());
+    let center = origin + side * (curve_indicator_inner_clearance(player_car, zoom) + plate_radius);
+
+    let points = compute_pacenote_polyline(spline, &status.curve, center, size);
+    let n = points.len();
+    if n < 2 {
+        return;
+    }
+
+    let plate_col = Color::new(0.02, 0.03, 0.06, (0.55 * alpha).min(1.0));
+    let shadow_col = Color::new(0.0, 0.0, 0.0, (0.80 * alpha).min(1.0));
+
+    draw_circle(center.x, center.y, plate_radius, plate_col);
+
+    // Arrowhead at the exit, pointing along the last segment
+    let dir = (points[n - 1] - points[n - 2]).normalize_or_zero();
+    let perp = Vec2::new(-dir.y, dir.x);
+    let head_len = size * 0.28;
+    let head_w = size * 0.18;
+    let tip = points[n - 1] + dir * head_len * 0.6;
+    let base = points[n - 1] - dir * head_len * 0.4;
+    let pad = 1.5 / zoom;
+
+    // 1. Dark outline under the line and arrowhead
+    for pair in points.windows(2) {
+        draw_line(pair[0].x, pair[0].y, pair[1].x, pair[1].y, outline, shadow_col);
+    }
+    for p in &points {
+        draw_circle(p.x, p.y, outline * 0.5, shadow_col);
+    }
+    let (t_o, l_o, r_o) = (
+        tip + dir * pad * 2.0,
+        base - dir * pad + perp * (head_w + pad * 1.5),
+        base - dir * pad - perp * (head_w + pad * 1.5),
+    );
+    draw_triangle(mq_vec(t_o), mq_vec(l_o), mq_vec(r_o), shadow_col);
+
+    // 2. Colored centerline with round joins, then the arrowhead
+    for pair in points.windows(2) {
+        draw_line(pair[0].x, pair[0].y, pair[1].x, pair[1].y, thickness, color);
+    }
+    for p in &points {
+        draw_circle(p.x, p.y, thickness * 0.5, color);
+    }
+    draw_triangle(mq_vec(tip), mq_vec(base + perp * head_w), mq_vec(base - perp * head_w), color);
+}
+
+/// Converts to macroquad's own `Vec2` (a different glam version) for `draw_triangle`.
+#[inline]
+fn mq_vec(v: Vec2) -> macroquad::math::Vec2 {
+    macroquad::math::Vec2::new(v.x, v.y)
 }

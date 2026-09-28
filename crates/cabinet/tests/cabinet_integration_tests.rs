@@ -1022,7 +1022,7 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((modal.helpers_state().aura_brightness - 1.80).abs() < 1e-4);
 
     // 4. Mutate ribbon and dropdowns
-    modal.ribbon_dropdown.set_selected(1); // Disabled
+    modal.ribbon_dropdown.set_selected(2); // Disabled (0 Chevrons, 1 Rally Pacenote)
     modal.ribbon_scale_slider.set_value(1.40);
     modal.ribbon_brightness_slider.set_value(2.20);
     modal.chevron_dropdown.set_selected(1);
@@ -1045,6 +1045,7 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
         aura_ratio: 0.50,
         aura_brightness: 0.80,
         ribbon_enabled: true,
+        ribbon_pacenote: true,
         ribbon_brightness: 1.25,
         ribbon_scale: 0.90,
         chevron_enabled: true,
@@ -1058,6 +1059,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((cur.aura_ratio - custom.aura_ratio).abs() < 1e-4);
     assert!((cur.aura_brightness - custom.aura_brightness).abs() < 1e-4);
     assert_eq!(cur.ribbon_enabled, custom.ribbon_enabled);
+    assert_eq!(cur.ribbon_pacenote, custom.ribbon_pacenote);
+    assert_eq!(modal.ribbon_dropdown.selected_index, 1, "Enabled pacenote maps to the Rally Pacenote option");
     assert!((cur.ribbon_brightness - custom.ribbon_brightness).abs() < 1e-4);
     assert!((cur.ribbon_scale - custom.ribbon_scale).abs() < 1e-4);
     assert_eq!(cur.chevron_enabled, custom.chevron_enabled);

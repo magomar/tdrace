@@ -1,6 +1,7 @@
 use tdrace_app::ui::curve_indicator::{
     compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
-    compute_smart_curve_arrow_position, curve_indicator_lookahead, CurveColorScheme,
+    compute_pacenote_polyline, compute_smart_curve_arrow_position, curve_indicator_inner_clearance,
+    curve_indicator_lookahead, CurveColorScheme, CurveIndicatorStyle,
 };
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::CarConfig;
@@ -178,19 +179,22 @@ fn test_curve_arrow_positioning_follows_car_heading_with_clearance() {
         assert!((pos_left - origin).dot(fwd).abs() < 1e-3, "Left arrow must be level with the car (angle {})", angle);
         assert!((pos_right - origin).dot(fwd).abs() < 1e-3, "Right arrow must be level with the car (angle {})", angle);
 
-        // 3. Spacing: generous clearance from car center
-        let dist_left = pos_left.distance(origin);
-        let dist_right = pos_right.distance(origin);
-        assert!(dist_left >= 4.0 && dist_left <= 12.0, "Left arrow clearance must be comfortable (got {})", dist_left);
-        assert!(dist_right >= 4.0 && dist_right <= 12.0, "Right arrow clearance must be comfortable (got {})", dist_right);
+        // 3. Spacing: close to the car, but clear of its body (half track width + 0.5 m)
+        let body_half_w = player_car.config.track_width * 0.5 + 0.5;
+        let total_w_3 = (2.0 * 16.0 + 14.0) / zoom;
+        for (name, pos) in [("Left", pos_left), ("Right", pos_right)] {
+            let inner_edge = pos.distance(origin) - total_w_3 * 0.5;
+            assert!(inner_edge > body_half_w, "{} arrow must clear the car body (got {:.2}m)", name, inner_edge);
+            assert!(inner_edge < 3.0, "{} arrow must sit close to the car (got {:.2}m)", name, inner_edge);
+        }
 
-        // 4. Multi-arrow expansion: even with 5 chevrons, the nearest chevron remains comfortably clear of the car
+        // 4. Multi-arrow expansion: even with 5 chevrons, the nearest chevron keeps the same clearance
         let pos_5 = compute_curve_arrow_position(&player_car, CurveDirection::Right, 5, zoom);
         let total_w_5 = (4.0 * 16.0 + 14.0) / zoom;
         let closest_chevron_dist = pos_5.distance(origin) - total_w_5 * 0.5;
         assert!(
-            closest_chevron_dist >= 4.0,
-            "Innermost chevron of 5-arrow alert must remain clear of car (got {:.2}m)",
+            (closest_chevron_dist - curve_indicator_inner_clearance(&player_car, zoom)).abs() < 1e-3,
+            "Innermost chevron of 5-arrow alert must keep the inner clearance (got {:.2}m)",
             closest_chevron_dist
         );
 
@@ -267,3 +271,46 @@ fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
 
 
 
+
+#[test]
+fn test_pacenote_polyline_draws_curve_shape_in_icon_box() {
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    assert!(!track.spline.curves.is_empty());
+    let center = glam::Vec2::new(100.0, -40.0);
+    let size = 3.0;
+
+    for curve in &track.spline.curves {
+        let pts = compute_pacenote_polyline(&track.spline, curve, center, size);
+        assert!(pts.len() >= 2);
+
+        // 1. Fits the icon box: longer side is `size`, centered on `center`
+        let (lo, hi) = pts.iter().fold(
+            (glam::Vec2::splat(f32::MAX), glam::Vec2::splat(f32::MIN)),
+            |(lo, hi), p| (lo.min(*p), hi.max(*p)),
+        );
+        assert!(((hi - lo).max_element() - size).abs() < 1e-3, "Curve {} icon must be {} wide", curve.id, size);
+        assert!(((lo + hi) * 0.5 - center).length() < 1e-3, "Curve {} icon must be centered", curve.id);
+
+        // 2. Turns the same way as the curve: summed signed heading change > 0 for Left (CCW)
+        let mut turn = 0.0f32;
+        for w in pts.windows(3) {
+            let a = w[1] - w[0];
+            let b = w[2] - w[1];
+            turn += a.perp_dot(b).atan2(a.dot(b));
+        }
+        match curve.direction {
+            CurveDirection::Left => assert!(turn > 0.0, "Left curve {} icon must turn left (got {:.2})", curve.id, turn),
+            CurveDirection::Right => assert!(turn < 0.0, "Right curve {} icon must turn right (got {:.2})", curve.id, turn),
+        }
+    }
+}
+
+#[test]
+fn test_curve_indicator_style_config_names() {
+    assert_eq!(CurveIndicatorStyle::default(), CurveIndicatorStyle::Chevrons);
+    for style in [CurveIndicatorStyle::Chevrons, CurveIndicatorStyle::Pacenote] {
+        assert_eq!(CurveIndicatorStyle::from_config_str(style.as_config_str()), style);
+    }
+    assert_eq!(CurveIndicatorStyle::from_config_str("PACENOTE"), CurveIndicatorStyle::Pacenote);
+    assert_eq!(CurveIndicatorStyle::from_config_str("bogus"), CurveIndicatorStyle::Chevrons);
+}

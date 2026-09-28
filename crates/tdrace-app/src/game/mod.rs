@@ -238,7 +238,7 @@ use crate::ui::track_manager_ui::{
 };
 use crate::ui::{
     confirm_modal_layout, curve_indicator_lookahead,
-    render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    render_curve_indicator, render_curve_pacenote, ArcadeSettingsModal, CurveIndicatorStyle, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -1294,6 +1294,8 @@ impl RaceSession {
             aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
             aura_brightness: self.config.player_helpers.ground_aura_brightness,
             ribbon_enabled: self.config.player_helpers.curve_helper,
+            ribbon_pacenote: CurveIndicatorStyle::from_config_str(&self.config.player_helpers.curve_indicator_style)
+                == CurveIndicatorStyle::Pacenote,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
@@ -1388,6 +1390,10 @@ impl RaceSession {
                 self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
                 self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
+                if h_state.ribbon_enabled {
+                    let style = if h_state.ribbon_pacenote { CurveIndicatorStyle::Pacenote } else { CurveIndicatorStyle::Chevrons };
+                    self.config.player_helpers.curve_indicator_style = style.as_config_str().to_string();
+                }
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
@@ -14094,15 +14100,27 @@ impl RaceSession {
                         focus_car.state.speed,
                         max_lookahead,
                     ) {
-                        render_curve_indicator(
-                            focus_car,
-                            &status,
-                            self.visibility_options.curve_color_scheme,
-                            camera.current_zoom,
-                            self.session_time,
-                            self.visibility_options.curve_helper_scale,
-                            self.visibility_options.curve_helper_brightness,
-                        );
+                        match self.visibility_options.curve_indicator_style {
+                            CurveIndicatorStyle::Chevrons => render_curve_indicator(
+                                focus_car,
+                                &status,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                            CurveIndicatorStyle::Pacenote => render_curve_pacenote(
+                                focus_car,
+                                &status,
+                                &self.track.spline,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                        }
                     }
                 }
             }

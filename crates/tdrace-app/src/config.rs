@@ -381,6 +381,8 @@ pub struct PlayerHelpersConfig {
     pub curve_helper_brightness: f32,
     /// Color scheme for the curve helper: "traffic" (green/yellow/red) or "themed" (accent color).
     pub curve_color_scheme: String,
+    /// Curve helper look: "chevrons" (severity arrows) or "pacenote" (rally icon of the curve's shape).
+    pub curve_indicator_style: String,
     /// Distance and speed adaptive visibility scaling when zooming out or travelling fast.
     pub adaptive_visibility: bool,
     /// Expanding radar / sonar ping shockwaves on camera zoom changes and spin-outs.
@@ -404,6 +406,7 @@ impl Default for PlayerHelpersConfig {
             curve_helper_scale: 1.0,
             curve_helper_brightness: 1.0,
             curve_color_scheme: "traffic".to_string(),
+            curve_indicator_style: "chevrons".to_string(),
             adaptive_visibility: true,
             radar_sonar_ping: true,
             bot_nameplates: true,

@@ -377,3 +377,65 @@ fn test_sonar_ping_key4_toggle_and_modal_governance() {
 }
 
 
+
+#[test]
+fn test_curve_indicator_style_selector_roundtrip() {
+    use tdrace_app::ui::CurveIndicatorStyle;
+    let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("curve_indicator_style_selector");
+    let mut session = RaceSession::new();
+
+    // Default look is chevrons, shown as option 0
+    session.open_settings_modal();
+    assert_eq!(session.settings_modal.as_ref().unwrap().ribbon_dropdown.selected_index, 0);
+    assert_eq!(session.settings_modal.as_ref().unwrap().ribbon_dropdown.options.len(), 3);
+
+    // 1. Pick "Rally Pacenote" (option 1): helper stays on and the look is stored
+    session.settings_modal.as_mut().unwrap().ribbon_dropdown.set_selected(1);
+    session.close_settings_modal(true);
+    assert!(session.config.player_helpers.curve_helper);
+    assert_eq!(session.config.player_helpers.curve_indicator_style, "pacenote");
+    assert!(session.visibility_options.curve_helper);
+    assert_eq!(session.visibility_options.curve_indicator_style, CurveIndicatorStyle::Pacenote);
+
+    session.open_settings_modal();
+    assert_eq!(session.settings_modal.as_ref().unwrap().ribbon_dropdown.selected_index, 1);
+
+    // 2. Pick "Disabled" (option 2): helper turns off, the chosen look is kept for later
+    session.settings_modal.as_mut().unwrap().ribbon_dropdown.set_selected(2);
+    session.close_settings_modal(true);
+    assert!(!session.config.player_helpers.curve_helper);
+    assert!(!session.visibility_options.curve_helper);
+    assert_eq!(session.config.player_helpers.curve_indicator_style, "pacenote");
+
+    session.open_settings_modal();
+    assert_eq!(session.settings_modal.as_ref().unwrap().ribbon_dropdown.selected_index, 2);
+
+    // 3. Presets: Full keeps an enabled pacenote look, and turns an Off helper back on as chevrons
+    let modal = session.settings_modal.as_mut().unwrap();
+    modal.ribbon_dropdown.set_selected(1);
+    modal.apply_visual_aids_preset(0);
+    assert_eq!(modal.ribbon_dropdown.selected_index, 1, "Full preset keeps the pacenote look");
+    assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 0);
+    modal.apply_visual_aids_preset(2);
+    assert_eq!(modal.ribbon_dropdown.selected_index, 2, "Off preset disables the indicator");
+    modal.apply_visual_aids_preset(0);
+    assert_eq!(modal.ribbon_dropdown.selected_index, 0, "Full preset from Off uses the default chevrons");
+    session.close_settings_modal(true);
+    assert!(session.visibility_options.curve_helper);
+    assert_eq!(session.visibility_options.curve_indicator_style, CurveIndicatorStyle::Chevrons);
+}
+
+#[test]
+fn test_render_curve_pacenote_headless_execution() {
+    use tdrace_app::ui::curve_indicator::render_curve_pacenote;
+    use tdrace_core::physics::car::Car;
+    use tdrace_core::physics::config::CarConfig;
+
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let car = Car::new(CarConfig::sports_car());
+    if let Some(status) = track.spline.upcoming_curve(10.0, 20.0, 150.0) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            render_curve_pacenote(&car, &status, &track.spline, CurveColorScheme::Rally, 12.0, 1.5, 1.25, 1.8);
+        }));
+    }
+}
