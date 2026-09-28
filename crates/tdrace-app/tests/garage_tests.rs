@@ -437,6 +437,55 @@ fn test_garage_stops_music_and_plays_engine() {
 }
 
 #[test]
+fn test_garage_engine_sound_config_cached_and_not_reset_per_frame() {
+    let mut session = RaceSession::new();
+    session.state = GameState::Garage(GarageOrigin::Menu);
+    session.active_module_id = "gt";
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+
+    // Frame 1: Initial garage update configures audio for the active car
+    session.update_garage(GarageOrigin::Menu, 0.016);
+    let expected_type = session.resolve_active_sound_type();
+    let expected_config = session.resolve_active_sound_config();
+    assert_eq!(session.audio.active_engine_type, expected_type);
+    assert_eq!(session.audio.active_engine_config, Some(expected_config));
+    assert!(session.audio.is_engine_active);
+
+    // Frame 2..10: Multi-frame idle in garage must preserve active sound without dropping loops
+    for _ in 0..10 {
+        session.update_garage(GarageOrigin::Menu, 0.016);
+        assert!(session.audio.is_engine_active);
+        assert_eq!(session.audio.active_engine_type, expected_type);
+        assert_eq!(session.audio.active_engine_config, Some(expected_config));
+    }
+
+    // Revving via gamepad button A held (btn_a_down)
+    session.input.gamepad.snapshot.btn_a_down = true;
+    session.update_garage(GarageOrigin::Menu, 0.05);
+    assert!(session.garage_revving);
+    assert!(session.garage_rev_rpm > 0.0);
+    assert!(session.audio.is_engine_active);
+
+    // Revving via analog throttle trigger
+    session.input.gamepad.snapshot.btn_a_down = false;
+    session.input.gamepad.snapshot.btn_a_pressed = false;
+    session.input.gamepad.snapshot.throttle = 0.85;
+    session.update_garage(GarageOrigin::Menu, 0.05);
+    assert!(session.garage_revving);
+    assert!(session.audio.is_engine_active);
+
+    // Switching vehicle in garage updates sound config cleanly
+    session.garage_car_idx = 1;
+    session.update_garage(GarageOrigin::Menu, 0.016);
+    let new_expected_type = session.resolve_active_sound_type();
+    let new_expected_config = session.resolve_active_sound_config();
+    assert_eq!(session.audio.active_engine_type, new_expected_type);
+    assert_eq!(session.audio.active_engine_config, Some(new_expected_config));
+    assert!(session.audio.is_engine_active);
+}
+
+#[test]
 fn test_starting_grid_card_0_enter_vs_space_reservation() {
     let mut session = RaceSession::new();
     session.init_race();
