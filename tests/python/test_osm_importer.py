@@ -84,3 +84,18 @@ def test_expand_bbox_adds_margin_in_meters():
     s, w, n, e = imp.expand_bbox((45.0, 9.0, 45.0, 9.0), 111.32)
     assert abs((n - s) - 0.002) < 1e-9
     assert abs((e - w) - 0.002 / 0.70710678) < 1e-6
+
+
+def test_shift_start_moves_first_point_along_the_lap():
+    square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
+    shifted = imp.shift_start(square, 150.0)
+    assert shifted[0] == (100.0, 50.0)
+    assert shifted[1:] == [(100.0, 100.0), (0.0, 100.0), (0.0, 0.0), (100.0, 0.0)]
+    assert imp.polyline_length(shifted) == 400.0
+
+
+def test_runs_of_numbers_corners_from_waypoint_zero_and_joins_a_wrapping_run():
+    classes = ["corner", "straight", "corner", "corner", "straight", "straight", "corner"]
+    runs, count = imp.runs_of(classes, ("corner",))
+    assert count == 2
+    assert runs == [0, -1, 1, 1, -1, -1, 0]

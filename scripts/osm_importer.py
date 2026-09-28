@@ -2,12 +2,14 @@
 """
 OSM Circuit Importer for tdrace
 
-One importer for the OpenStreetMap (OSM) circuits of three disciplines:
+One importer for the OpenStreetMap (OSM) circuits of four disciplines:
 
   gt     18 GT / F1 circuits, scaled to 0.5x the official FIA length
          (Rust output: a full `track_<id>()` for crates/tdrace-app/src/module/gt.rs)
   kart   CIK-FIA kart circuits at 1:1 (waypoint vec for crates/tdrace-app/src/module/kart.rs)
   rally  World RX rallycross circuits at 1:1 with asphalt/dirt surfaces
+         (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
+  nascar NASCAR ovals and road courses: 1:1 under 3 km, 0.75x above, with banking per corner
          (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
 
 Every circuit goes through the same steps: select the raceway nodes, project them to
@@ -1727,6 +1729,363 @@ def print_rally_summary(res):
 
 
 # ---------------------------------------------------------------------------
+# NASCAR ovals and road courses (1:1 under 3 km, 0.75x above; Road America 0.5x)
+# ---------------------------------------------------------------------------
+
+# Each lap is a list of (way id, first node or None) segments in race direction (see chain_segments).
+# start_node (+ start_offset_m along the lap) is the start/finish line: a mapped start-finish node, or
+# the middle of the pit road straight.
+# corner_banks lists the banking of each corner in lap order from the start line (one value is
+# used for all corners); bend_bank is for gentle bends such as a tri-oval or a dogleg.
+NASCAR_TRACKS = {
+    "bowman_gray": {
+        "name": "Bowman Gray Stadium",
+        "segments": [(914237156, None)],
+        "start_node": 8492580790,  # start of the south straight; no pit road is mapped
+        "start_offset_m": 40.0,  # middle of that straight
+        "official_length": 402.0,
+        "scale": 1.0,
+        "num_waypoints": 16,
+        "width": 14.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "bristol": {
+        "name": "Bristol Motor Speedway",
+        "segments": [(116606212, None)],
+        "start_node": 1314158509,  # both straights have pit road; the start straight is a guess
+        "start_offset_m": 84.0,  # middle of that straight
+        "official_length": 858.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 10.0,
+        "corner_banks": [28.0],
+        "surface": "Concrete",
+    },
+    "martinsville": {
+        "name": "Martinsville Speedway",
+        "segments": [(448515178, None), (448515177, None), (402168721, None)],
+        "start_node": 4045926977,  # middle of the straight before the First Turn Tower grandstand
+        "official_length": 847.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 0.0,
+        "corner_banks": [12.0],
+        "corner_surface": "Concrete",
+        "kerbs": True,
+    },
+    "north_wilkesboro": {
+        "name": "North Wilkesboro Speedway",
+        "segments": [(18928710, None)],
+        "start_node": 2313815791,
+        "start_offset_m": 58.0,  # middle of the pit road straight
+        "official_length": 1006.0,  # the OSM way is 846 m, the inside line
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 3.0,
+        "corner_banks": [14.0],
+        "straight_elevations": [-1.5, 2.0],  # downhill frontstretch, uphill backstretch
+        "kerbs": True,
+    },
+    "irp_oval": {
+        "name": "Lucas Oil Indianapolis Raceway Park",
+        "segments": [(123830268, None)],
+        "start_node": 1379538172,  # mapped motorsport=start-finish node
+        "official_length": 1104.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 16.0,
+        "straight_bank": 2.0,
+        "corner_banks": [12.0],
+        "kerbs": True,
+    },
+    "phoenix": {
+        "name": "Phoenix Raceway",
+        "segments": [(29333335, None)],
+        "start_node": 322700088,
+        "start_offset_m": 182.0,  # middle of the pit road straight
+        "official_length": 1645.0,
+        "scale": 1.0,
+        "num_waypoints": 32,
+        "width": 18.0,
+        "straight_bank": 3.0,
+        "corner_banks": [10.0],  # turns 1-2, the dogleg and turns 3-4 (as in the hand-made preset)
+        "kerbs": True,
+    },
+    "darlington": {
+        "name": "Darlington Raceway",
+        "segments": [(104277971, None)],
+        "start_node": 13658651458,
+        "start_offset_m": 147.0,  # middle of the pit road straight
+        "official_length": 2198.0,
+        "scale": 1.0,
+        "num_waypoints": 40,
+        "width": 18.0,
+        "straight_bank": 3.0,
+        "corner_banks": [25.0, 23.0],  # turns 1-2, turns 3-4
+    },
+    "charlotte": {
+        "name": "Charlotte Motor Speedway",
+        "segments": [(396483278, None), (116034341, None), (402168709, None), (1052107104, None), (402168711, None)],
+        "start_node": 9668619996,  # mapped raceway=start-finish node
+        "official_length": 2414.0,
+        "scale": 1.0,
+        "num_waypoints": 40,
+        "width": 20.0,
+        "straight_bank": 5.0,
+        "corner_banks": [24.0],
+        "bend_bank": 5.0,  # quad-oval frontstretch
+    },
+    "chicago": {
+        "name": "Chicago Street Course",
+        # Relation 16546690 lists its ways against the race direction; this is the list reversed.
+        "segments": [(w, None) for w in (
+            435561738, 435559503, 316907584, 435558482, 435558479, 25026604, 314943087, 255623675, 435559507,
+            621319020, 1377694368, 313874094, 313874095, 1377697560, 5010709, 372671686, 772541923, 33116710,
+            23888140, 435657099, 25026653, 435559504, 435559500, 435559499, 231237737, 435559505, 518573327,
+            435559501, 231237526, 435558483, 435558481, 25026606, 1227037106, 235741029, 435561742, 90707299,
+            1287253578, 435561319, 235714536)],
+        "start_node": 6061506190,  # Columbus Drive, halfway between Roosevelt Road and Balbo Drive
+        "official_length": 3541.0,
+        "scale": 0.75,
+        "num_waypoints": 64,  # ~45 m spacing keeps the lap within ~7 m of the OSM line
+        "width": 13.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "watkins_glen": {
+        "name": "Watkins Glen International",
+        # NASCAR short course: the Inner Loop, then the Short Course cut past the Boot.
+        "segments": [(293208067, None), (20163576, None), (293208063, None), (293208062, None), (293208064, None),
+                     (293208074, None), (428026652, None), (293208056, None), (293208060, None), (293208070, None),
+                     (293208065, None), (293208075, None)],
+        "start_node": 2967820339,  # pit entry on the front straight
+        "start_offset_m": 400.0,  # middle of pit road, ~170 m before the Ninety
+        "official_length": 3943.0,
+        "scale": 0.75,
+        "num_waypoints": 64,  # ~45 m spacing keeps the lap within ~7 m of the OSM line
+        "width": 16.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
+    },
+    "daytona": {
+        "name": "Daytona International Speedway",
+        "segments": [(11371365, None), (352067004, None), (352070311, None), (352070309, None), (352070316, None)],
+        "start_node": 101134873,
+        "start_offset_m": 12.0,  # tri-oval, level with the middle of pit road
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 22.0,
+        "straight_bank": 3.0,
+        "corner_banks": [31.0],
+        "bend_bank": 18.0,  # tri-oval
+    },
+    "indianapolis": {
+        "name": "Indianapolis Motor Speedway",
+        "segments": [(588780351, None), (588780349, None), (51308226, None), (588780333, None), (588780334, None),
+                     (588780335, None), (588780332, None), (588780343, None), (588780345, None), (588780347, None)],
+        "start_node": 654509391,  # nearest lap node to the painted IMS start-finish line
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 48,
+        "width": 20.0,
+        "straight_bank": 0.0,
+        "corner_banks": [9.2],
+    },
+    "pocono": {
+        "name": "Pocono Raceway",
+        "segments": [(109767460, None)],
+        "start_node": 1255320153,
+        "start_offset_m": 436.0,  # middle of the pit road straight
+        "official_length": 4023.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 18.0,
+        "straight_bank": 0.0,
+        "corner_banks": [14.0, 8.0, 6.0],  # turn 1, Tunnel Turn, turn 3
+        "kerbs": True,
+    },
+    "talladega": {
+        "name": "Talladega Superspeedway",
+        "segments": [(426163860, None), (426163859, None), (532106116, None), (8835825, None)],
+        "start_node": 13757090309,  # nearest lap node to the mapped raceway=start-finish node
+        "official_length": 4281.0,
+        "scale": 0.75,
+        "num_waypoints": 40,
+        "width": 24.0,
+        "straight_bank": 3.0,
+        "corner_banks": [33.0],
+        "bend_bank": 16.5,  # tri-oval
+    },
+}
+
+# Curvature classes, relative to the tightest waypoint of the lap.
+NASCAR_CORNER_CURVATURE = 0.6
+NASCAR_BEND_CURVATURE = 0.12
+
+
+def shift_start(points, offset_m):
+    """Closed polyline starting `offset_m` meters further along the lap (a new first point is inserted)."""
+    n = len(points)
+    left = offset_m
+    for i in range(n):
+        a, b = points[i], points[(i + 1) % n]
+        seg = math.hypot(b[0] - a[0], b[1] - a[1])
+        if left <= seg:
+            t = left / seg if seg > 0 else 0.0
+            p = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
+            return [p] + points[i + 1:] + points[:i + 1]
+        left -= seg
+    return points
+
+
+def curvature_classes(points):
+    """(class, signed smoothed curvature) per closed-loop point; class is corner, bend or straight."""
+    n = len(points)
+    turn = []
+    for i in range(n):
+        a, b, c = points[i - 1], points[i], points[(i + 1) % n]
+        h1 = math.atan2(b[1] - a[1], b[0] - a[0])
+        h2 = math.atan2(c[1] - b[1], c[0] - b[0])
+        dh = (h2 - h1 + math.pi) % (2 * math.pi) - math.pi
+        turn.append(dh / (0.5 * (math.dist(a, b) + math.dist(b, c))))
+    smooth = [(turn[i - 1] + 2 * turn[i] + turn[(i + 1) % n]) / 4 for i in range(n)]
+    k_max = max(abs(k) for k in smooth) or 1.0
+    classes = []
+    for k in smooth:
+        r = abs(k) / k_max
+        classes.append("corner" if r >= NASCAR_CORNER_CURVATURE else "bend" if r >= NASCAR_BEND_CURVATURE else "straight")
+    return classes, smooth
+
+
+def runs_of(classes, wanted):
+    """Index of each run of `wanted` classes in lap order (-1 elsewhere); a run through waypoint 0 is one run."""
+    n = len(classes)
+    run = [-1] * n
+    if all(c in wanted for c in classes):
+        return [0] * n, 1
+    start = next(i for i in range(n) if classes[i] not in wanted)  # begin outside a run
+    count = -1
+    for k in range(1, n + 1):
+        i = (start + k) % n
+        if classes[i] in wanted:
+            if classes[(i - 1) % n] not in wanted:
+                count += 1
+            run[i] = count
+    # renumber so that the first run met from waypoint 0 is run 0
+    order = []
+    for i in range(n):
+        if run[i] >= 0 and run[i] not in order:
+            order.append(run[i])
+    return [order.index(r) if r >= 0 else -1 for r in run], len(order)
+
+
+def process_nascar_track(track_id, cache_dir):
+    spec = NASCAR_TRACKS[track_id]
+    data = load_osm_elements(cache_dir, track_id)
+    nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
+    ways = {e["id"]: e for e in data["elements"] if e["type"] == "way"}
+
+    node_ids = [nid for nid, _ in chain_segments(ways, spec["segments"])]
+    k = node_ids.index(spec["start_node"])
+    node_ids = node_ids[k:] + node_ids[:k]
+    check_loop_joins(track_id, node_ids, nodes, way_edges(w["nodes"] for w in ways.values()))
+
+    lat0 = sum(nodes[n][0] for n in node_ids) / len(node_ids)
+    lon0 = sum(nodes[n][1] for n in node_ids) / len(node_ids)
+    metric_pts = [latlon_to_meters(*nodes[n], lat0, lon0) for n in node_ids]
+    if spec.get("start_offset_m"):
+        metric_pts = shift_start(metric_pts, spec["start_offset_m"])
+
+    raw_len = polyline_length(metric_pts, closed=True)
+    check_length_ratio(track_id, raw_len, spec["official_length"])
+    target_len = spec["official_length"] * spec["scale"]
+    factor = target_len / raw_len
+    scaled = [(x * factor, y * factor) for x, y in metric_pts]
+    x0, y0 = scaled[0]
+    scaled = [(x - x0, y - y0) for x, y in scaled]
+
+    resampled, _, _ = resample_polyline(scaled, spec["num_waypoints"])
+    # Start line along +X, from the first waypoint to the next one.
+    pts = rotate_points(resampled, math.atan2(resampled[1][1], resampled[1][0]))
+
+    classes, curv = curvature_classes(pts)
+    corner_run, n_corners = runs_of(classes, ("corner",))
+    banks = spec["corner_banks"]
+    if len(banks) > 1 and len(banks) != n_corners:
+        raise SystemExit(f"[{track_id}] {n_corners} corners found, but corner_banks has {len(banks)} values")
+    straight_run, n_straights = runs_of(classes, ("straight", "bend"))
+    elevs = spec.get("straight_elevations")
+    if elevs and len(elevs) != n_straights:
+        raise SystemExit(f"[{track_id}] {n_straights} straights found, but straight_elevations has {len(elevs)} values")
+
+    waypoints = []
+    for i, (x, y) in enumerate(pts):
+        cls = classes[i]
+        if cls == "corner":
+            bank = banks[corner_run[i]] if len(banks) > 1 else banks[0]
+        elif cls == "bend":
+            bank = spec.get("bend_bank", spec["straight_bank"])
+        else:
+            bank = spec["straight_bank"]
+        surface = spec.get("corner_surface") if cls == "corner" else None
+        surface = surface or spec.get("surface")
+        kerb = spec.get("kerbs", False) and cls == "corner"
+        waypoints.append({
+            "x": round(x, 1),
+            "y": round(y, 1),
+            "width": spec["width"],
+            "bank": bank,
+            "elevation": elevs[straight_run[i]] if elevs and straight_run[i] >= 0 else 0.0,
+            "surface": surface,
+            "left_curb": kerb and curv[i] > 0,
+            "right_curb": kerb and curv[i] < 0,
+        })
+
+    return {
+        "id": track_id,
+        "name": spec["name"],
+        "waypoints": waypoints,
+        "raw_length": round(raw_len, 1),
+        "target_length": round(target_len, 1),
+        "official_length": spec["official_length"],
+        "scale": spec["scale"],
+        "corners": n_corners,
+    }
+
+
+def generate_nascar_rust_code(track_data):
+    lines = ["    let waypoints = vec!["]
+    for w in track_data["waypoints"]:
+        s = f"        TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f})"
+        if w["elevation"]:
+            s += f".with_elevation({w['elevation']:.1f})"
+        if w["bank"]:
+            s += f".with_bank_angle({w['bank']:.1f})"
+        if w["surface"]:
+            s += f".with_surface(SurfaceType::{w['surface']})"
+        if w["left_curb"] or w["right_curb"]:
+            s += f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
+        lines.append(s + ",")
+    lines.append("    ];")
+    return "\n".join(lines)
+
+
+def print_nascar_summary(res):
+    print(f"=== {res['name']} ({res['id']}) ===")
+    print(f"  Waypoints: {len(res['waypoints'])}, target {res['target_length']} m "
+          f"({res['scale']}x of {res['official_length']} m; raw OSM loop {res['raw_length']} m), "
+          f"{res['corners']} corners")
+
+
+# ---------------------------------------------------------------------------
 # Download (all real circuits in the Rust provenance registry)
 # ---------------------------------------------------------------------------
 
@@ -1839,6 +2198,7 @@ DISCIPLINES = {
     "gt": (GT_CIRCUITS, process_gt_circuit, generate_gt_rust_code, print_gt_summary),
     "kart": (KART_TRACKS, process_kart_track, generate_kart_rust_code, print_kart_summary),
     "rally": (RALLY_TRACKS, process_rally_track, generate_rally_rust_code, print_rally_summary),
+    "nascar": (NASCAR_TRACKS, process_nascar_track, generate_nascar_rust_code, print_nascar_summary),
 }
 
 
