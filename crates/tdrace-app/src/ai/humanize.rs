@@ -27,7 +27,7 @@ const LINE_RAMP: f32 = 40.0;
 /// Margin kept to the track edge by the line offset (m).
 const EDGE_MARGIN: f32 = 1.5;
 /// Line wander time constant (s).
-const WANDER_TAU: f32 = 3.0;
+const WANDER_TAU: f32 = 6.0;
 /// Time constant of the line-offset smoothing (s).
 const LINE_SMOOTH_TAU: f32 = 0.5;
 /// A brake-point shift acts fully at this distance before a corner point, and fades to 0 at it (m).
@@ -95,6 +95,8 @@ pub struct HumanTraits {
     pub pressure_gain: f32,
     /// Longest delay before a bot commits to a pass (s).
     pub max_pass_delay_s: f32,
+    /// Distance (m) by which high-tier/aggressive bots may cut onto apex curbs.
+    pub curb_cut_m: f32,
 }
 
 impl HumanTraits {
@@ -112,6 +114,7 @@ impl HumanTraits {
             mistake_weights: [0.0; 5],
             pressure_gain: 0.0,
             max_pass_delay_s: 0.0,
+            curb_cut_m: 0.0,
         }
     }
 
@@ -132,6 +135,15 @@ impl HumanTraits {
             DrivingStyle::Bold => (1.3, 0.4, 0.7, 1.3, [0.20, 0.30, 0.30, 0.15, 0.05], 2.0),
             DrivingStyle::Balanced => (1.0, 0.5, 0.5, 1.0, [0.20, 0.20, 0.15, 0.15, 0.30], 2.0),
         };
+        let curb_cut = match quality.tier {
+            super::DriverTier::Legend => match style {
+                DrivingStyle::Aggressive => 0.9,
+                DrivingStyle::Bold => 0.8,
+                DrivingStyle::Tenacious => 0.4,
+                _ => 0.0,
+            },
+            _ => 0.0,
+        };
         Self {
             line_sigma_m: (0.3 + 3.5 * loose) * line_factor,
             entry_share: entry,
@@ -144,6 +156,7 @@ impl HumanTraits {
             mistake_weights: weights,
             pressure_gain: p_gain * nerves,
             max_pass_delay_s: 0.6 * (1.0 - aggression).max(0.0),
+            curb_cut_m: curb_cut,
         }
     }
 }
@@ -207,6 +220,8 @@ pub struct Corner {
     pub ramp_in: f32,
     /// Length of the wide exit ramp after the end (m).
     pub ramp_out: f32,
+    /// Whether the inside of the corner has an apex curb/rumble strip.
+    pub has_inside_curb: bool,
 }
 
 /// Distance from `from` forward to `to` on a closed track of length `len`.
@@ -257,13 +272,18 @@ pub fn find_corners(spline: &TrackSpline) -> Vec<Corner> {
         let corner_len = (i - first) as f32 * CORNER_STEP;
         if corner_len >= MIN_CORNER_LEN {
             let start = ((origin + first) % n) as f32 * CORNER_STEP;
+            let apex = (apex_i - first) as f32 * CORNER_STEP;
+            let apex_s = (start + apex).rem_euclid(len);
+            let apex_sample = spline.sample_at_distance(apex_s);
+            let has_inside_curb = if c > 0 { apex_sample.left_curb } else { apex_sample.right_curb };
             corners.push(Corner {
                 start,
-                apex: (apex_i - first) as f32 * CORNER_STEP,
+                apex,
                 len: corner_len,
                 turn: c as f32,
                 ramp_in: LINE_RAMP,
                 ramp_out: LINE_RAMP,
+                has_inside_curb,
             });
         }
     }
@@ -378,6 +398,12 @@ impl HumanDriver {
 
     pub fn is_active(&self) -> bool {
         self.active
+    }
+
+    /// Resets wander and smoothed line offset to zero during recovery from stuck situations.
+    pub fn reset_recovery_line(&mut self) {
+        self.wander_m = 0.0;
+        self.line_m = 0.0;
     }
 
     fn uniform(&mut self, lo: f32, hi: f32) -> f32 {
@@ -554,13 +580,19 @@ impl HumanDriver {
         let len = spline.total_length();
         let free = (width * 0.5 - EDGE_MARGIN).max(0.0);
         let mut shape = 0.0;
+        let mut curb_extension: f32 = 0.0;
         for (c, p) in self.corners.iter().zip(&self.plans) {
             if !p.in_window {
                 continue;
             }
             let x = ahead(c.start - c.ramp_in, s, len) - c.ramp_in;
             let outside = -c.turn * p.entry_share * free;
-            let inside = c.turn * p.apex_share * free;
+            let inside = if c.has_inside_curb && self.traits.curb_cut_m > 0.0 {
+                let apex_mult = (p.apex_share / 0.7).min(1.0);
+                c.turn * (p.apex_share * free + (EDGE_MARGIN + self.traits.curb_cut_m) * apex_mult)
+            } else {
+                c.turn * p.apex_share * free
+            };
             shape += if x < -c.ramp_in || x > c.len + c.ramp_out {
                 0.0
             } else if x < 0.0 {
@@ -572,8 +604,13 @@ impl HumanDriver {
             } else {
                 outside * (1.0 - (x - c.len) / c.ramp_out.max(1.0))
             };
+            if c.has_inside_curb && self.traits.curb_cut_m > 0.0 && x >= 0.0 && x <= c.len {
+                let apex_proximity = 1.0 - ((x - c.apex).abs() / c.apex.max(c.len - c.apex).max(1.0)).min(1.0);
+                curb_extension = curb_extension.max((EDGE_MARGIN + self.traits.curb_cut_m) * apex_proximity);
+            }
         }
-        let target = (self.wander_m + shape).clamp(-free, free);
+        let max_lat = free + curb_extension;
+        let target = (self.wander_m + shape).clamp(-max_lat, max_lat);
         self.line_m += (target - self.line_m) * (1.0 - (-dt / LINE_SMOOTH_TAU).exp());
         self.line_m
     }
@@ -623,24 +660,21 @@ impl HumanDriver {
         self.pass_timer = if had_pass_target { self.pass_timer + dt } else { 0.0 };
     }
 
-    /// Steering with over-correction and reaction lag applied.
-    pub fn shape_steer(&mut self, steer: f32, dt: f32) -> f32 {
+    /// Steering with over-correction applied. Closed-loop actuator phase lag has been
+    /// removed to eliminate self-sustaining straight-line limit cycle oscillations.
+    pub fn shape_steer(&mut self, steer: f32, _dt: f32) -> f32 {
         if !self.active {
             return steer;
         }
-        let steer = match self.event {
+        let shaped = match self.event {
             Event::OverCorrect(_) => (steer * 1.6).clamp(-1.0, 1.0),
             // The driver keeps the wheel turned into the corner while the rear steps out.
             Event::PowerStab(_, held) => held,
             _ => steer,
         };
-        if !self.has_steer || self.traits.reaction_tau_s <= 0.0 {
-            self.has_steer = true;
-            self.steer_out = steer;
-        } else {
-            self.steer_out += (steer - self.steer_out) * (1.0 - (-dt / self.traits.reaction_tau_s).exp());
-        }
-        self.steer_out
+        self.has_steer = true;
+        self.steer_out = shaped;
+        shaped
     }
 
     /// Throttle, brake and handbrake with a PowerStab or lift event applied.
