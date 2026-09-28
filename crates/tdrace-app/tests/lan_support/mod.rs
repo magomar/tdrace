@@ -1,7 +1,7 @@
 //! Shared helpers for headless LAN race tests on an in-memory network (spec 044).
 #![allow(dead_code)]
 
-use cabinet::net::{LanClient, LanHost, SimLinkConfig, SimNetwork};
+use cabinet::net::{LanClient, LanCollisionMode, LanHost, SimLinkConfig, SimNetwork};
 use tdrace_app::ai::{BotAiDriver, BotProfile};
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_core::physics::car::Car;
@@ -11,10 +11,20 @@ pub const FRAME_DT: f64 = 1.0 / 60.0;
 
 /// Host plus clients that joined in order. Slots follow join order unless one left.
 pub fn build_lobby(net: &SimNetwork, names: &[&str], track_id: &str, laps: u8) -> (LanHost, Vec<LanClient>) {
+    build_lobby_with(net, names, track_id, laps, LanCollisionMode::FullSatSolid)
+}
+
+pub fn build_lobby_with(
+    net: &SimNetwork,
+    names: &[&str],
+    track_id: &str,
+    laps: u8,
+    collision_mode: LanCollisionMode,
+) -> (LanHost, Vec<LanClient>) {
     let mut host = LanHost::with_transport(Box::new(net.endpoint()), "Sim GP", "Host")
         .unwrap()
         .with_max_players(8);
-    host.set_track_and_rules(track_id, laps, cabinet::net::LanCollisionMode::FullSatSolid);
+    host.set_track_and_rules(track_id, laps, collision_mode);
     let host_addr = host.local_addr().unwrap();
     let mut clients: Vec<LanClient> = Vec::new();
     for name in names {
