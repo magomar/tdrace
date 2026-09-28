@@ -712,9 +712,9 @@
     "country_code": "ES",
     "country_name": "Spain",
     "min_width_meters": 13.0,
-    "max_width_meters": 13.0,
+    "max_width_meters": 14.5,
     "is_inspired": false,
-    "length_meters": 2150.9,
+    "length_meters": 2167.0,
     "turns_count": 19,
     "surfaces": [
       "Asphalt"
@@ -834,7 +834,7 @@
     "min_width_meters": 11.5,
     "max_width_meters": 13.0,
     "is_inspired": false,
-    "length_meters": 2276.4,
+    "length_meters": 2275.5,
     "turns_count": 14,
     "surfaces": [
       "Asphalt"
@@ -858,7 +858,7 @@
     "min_width_meters": 10.5,
     "max_width_meters": 11.5,
     "is_inspired": false,
-    "length_meters": 1478.1,
+    "length_meters": 1480.2,
     "turns_count": 15,
     "surfaces": [
       "Asphalt"
@@ -1908,13 +1908,13 @@
     "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
     "scale": "1:1",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
-    "osm_url": "https://www.openstreetmap.org/way/831804327",
+    "osm_url": "https://www.openstreetmap.org/relation/11362868",
     "country_code": "ES",
     "country_name": "Spain",
-    "min_width_meters": 11.0,
+    "min_width_meters": 11.5,
     "max_width_meters": 14.5,
     "is_inspired": false,
-    "length_meters": 1080.2,
+    "length_meters": 1071.1,
     "turns_count": 18,
     "surfaces": [
       "Asphalt",
@@ -2183,13 +2183,13 @@
     "description": "Fast technical Belgian rallycross circuit featuring the iconic Mettet dirt jump, rapid asphalt sweeper and tight infield hairpin.",
     "scale": "1:1",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet",
-    "osm_url": "https://www.openstreetmap.org/relation/2380822",
+    "osm_url": "https://www.openstreetmap.org/way/178240082",
     "country_code": "BE",
     "country_name": "Belgium",
     "min_width_meters": 11.5,
-    "max_width_meters": 14.5,
+    "max_width_meters": 14.0,
     "is_inspired": false,
-    "length_meters": 1106.3,
+    "length_meters": 1106.1,
     "turns_count": 7,
     "surfaces": [
       "Asphalt",
@@ -2258,14 +2258,14 @@
     "description": "Historic Riga forest arena featuring high-grip parallel asphalt drags, double jump crests and heavy-braking sandy gravel switchbacks.",
     "scale": "1:1",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Bi%C4%B7ernieku_Kompleks%C4%81_Sporta_B%C4%81ze",
-    "osm_url": "https://www.openstreetmap.org/way/256784387",
+    "osm_url": "https://www.openstreetmap.org/way/588947722",
     "country_code": "LV",
     "country_name": "Latvia",
-    "min_width_meters": 12.0,
+    "min_width_meters": 11.5,
     "max_width_meters": 14.5,
     "is_inspired": false,
-    "length_meters": 1349.7,
-    "turns_count": 16,
+    "length_meters": 1039.9,
+    "turns_count": 12,
     "surfaces": [
       "Asphalt",
       "Dirt"

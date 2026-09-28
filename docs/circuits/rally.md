@@ -45,7 +45,7 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Estering** | `estering_rx.json` | $952\text{ m}$ | $60\%$ Asphalt / $40\%$ Dirt | Final Turn Cut | Narrow, high-speed straight leading to dramatic first-corner hairpin contacts. |
 | **Montalegre RX** | `montalegre_rx.json`| $1,046\text{ m}$ | $60\%$ Asphalt / $40\%$ Dirt | First Turn Outside Loop | Altitude circuit in Portuguese mountains; wet weather transforms dirt into deep mud. |
-| **Bikernieki (Riga RX)** | `riga_rx.json` | $1,294\text{ m}$ | $60\%$ Asphalt / $40\%$ Parallel Gravel| Turn 2 Overpass Loop | Double jump ramps; zero runoff concrete barriers lined through pine forest. |
+| **Bikernieki (Riga RX)** | `riga_rx.json` | $1,294\text{ m}$ | $60\%$ Asphalt / $40\%$ Parallel Gravel| Turn 2 Overpass Loop | Double jump ramps; zero runoff concrete barriers lined through pine forest. In game: 1,051 m, the mapped 1,071 m OSM loop at 1:1. |
 
 ### Tier 4: Red Cauldron & Forest Stages (3 Circuits)
 | Venue | File Key | Lap Length | Surface Split | Joker Lap Layout | Track Highlights |

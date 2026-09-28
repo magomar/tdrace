@@ -353,7 +353,25 @@ GT_CIRCUITS = {
     "monaco": {
         "name": "Circuit de Monaco",
         "description": "Legendary Monte Carlo street circuit with Loews Hairpin, Tunnel, and Swimming Pool.",
-        "rel_id": 148194,
+        # Relation 148194 "Circuit de Monaco" without the pit lane (3324 m in OSM). Its ways leave two
+        # small gaps (18 m at Avenue d'Ostende / Casino, 6 m on Avenue de Monte-Carlo): the lap jumps them.
+        "segments": [
+            (1081401617, 1737389117, 1799099566), (168681959, 1799099566, 477617968), (60767229, 477617968, 25192130),
+            (4226740, 25192130, 1074585009), (1019174508, 1074585009, 1868404468), (166399479, 1868404468, 1726583852),
+            (1453878835, 1726583852, 6444966511), (1081401616, 6444966511, 1690130866), (157719644, 1690130866, 252387589),
+            (254596486, 252387589, 918118157), (1551240830, 12571844664, 14109303023), (1551240829, 14109303023, 21912962),
+            (161775592, 21912962, 1204288376), (1082515450, 1204288376, 7568749016), (161752645, 7568749016, 25240075),
+            (4229658, 25240075, 21913117), (4230009, 21913117, 1699777574), (4230006, 1699777574, 272637923),
+            (434567309, 272637923, 21914841), (166399501, 21914841, 1737114648), (568187257, 1737114648, 21914666),
+            (4230007, 21914666, 6485591888), (1148675745, 6485591888, 273246211), (1470365906, 273246211, 13484626647),
+            (1470365907, 13484626647, 10687075425), (1148199871, 10687075425, 1685061923), (41929969, 1685061923, 519323656),
+            (4230891, 519323656, 11407697331), (1230247123, 11407697331, 21914343), (160004393, 21914343, 6485591919),
+            (4229536, 6485591919, 13312466205), (1451501763, 13312466205, 6485591925), (348019480, 6485591925, 2422123083),
+            (1081401613, 2422123083, 1737389192), (485746484, 1737389192, 25193217), (503475642, 25193217, 6485591957),
+            (1081401614, 6485591957, 25191729), (214636589, 25191729, 2241375226), (1081401615, 2241375226, 25191634),
+            (39839529, 25191634, 1737389117),
+        ],
+        "start_node": "1868404468",  # Boulevard Albert 1er, the start straight
         "fia_length": 3337.0,
         "num_waypoints": 26,
         "default_width": 10.5,
@@ -362,8 +380,6 @@ GT_CIRCUITS = {
         "barrier_offset": 3.0,
         "default_laps": 3,
         "tag": "JEWEL IN THE CROWN",
-        "monaco_filter": True,
-        "start_way": "166399479",
         "elevations": {
             # Beau Rivage uphill
             2: 2.0, 3: 3.5,
@@ -436,7 +452,13 @@ GT_CIRCUITS = {
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
         "description": "Famous Spanish GP circuit in Montmelo featuring Curva Renault, Campsa crest, and restored high-speed final sector.",
-        "way_id": "831804327",
+        # Relation 284540 "Grand Prix Circuit Without Chicane" (the current F1 layout, 4666 m in OSM);
+        # OSM split the old single way 831804327 on 2026-09-20.
+        "segments": [
+            (831804327, 1300807861, 1644327603), (1560896065, 1644327603, 9760170477), (1560896066, 9760170477, 7765791210),
+            (1560896061, 7765791210, 385973423), (893732520, 385973423, 8553774009), (831804325, 8553774009, 7765791228),
+            (990483278, 7765791228, 1300807861),
+        ],
         "fia_length": 4657.0,
         "num_waypoints": 28,
         "default_width": 13.0,
@@ -487,7 +509,43 @@ GT_CIRCUITS = {
     "marina_bay": {
         "name": "Marina Bay Street Circuit (Singapore)",
         "description": "High-intensity Singapore night race through the dazzling city streets and harbor waterfront.",
-        "rel_id": 421263,
+        # Relation 421263 "Marina Bay Street Circuit" without the pit lane: its only closed lap near the
+        # official length (4972 m in OSM), anticlockwise. Public-road oneway tags are ignored.
+        "segments": [
+            (465064165, 5411304502, 1161612993), (686323967, 1161612993, 6432919892), (686335799, 6432919892, 6433028833),
+            (686323968, 6433028833, 1446076215), (686335800, 1446076215, 6433028834), (21805129, 6433028834, 462263951),
+            (654223306, 462263951, 235070344), (672222982, 235070344, 3076643620), (174262763, 3076643620, 3736885019),
+            (383365018, 3736885019, 3736885022), (528537303, 3736885022, 5136090633), (383365019, 5136090633, 4726227141),
+            (584419619, 4726227141, 233879899), (176298699, 233879899, 233879872), (479540202, 233879872, 4600854642),
+            (633871920, 4600854642, 1832823668), (1415079998, 1832823668, 13003578482), (1415079999, 13003578482, 9946316973),
+            (633871919, 9946316973, 5864347585), (479745479, 5864347585, 4281759839), (479745478, 4281759839, 4727947772),
+            (649944021, 4727947772, 1720073406), (479540200, 1720073406, 1720073355), (635373148, 1720073355, 5270981855),
+            (545362403, 5270981855, 1832823705), (545362402, 1832823705, 5270981856), (723073393, 5270981856, 6782303341),
+            (173791997, 6782303341, 595497945), (75067163, 595497945, 233880373), (635375722, 233880373, 1720073397),
+            (649336906, 1720073397, 6094193512), (763525862, 6094193512, 3059486893), (1498693105, 3059486893, 233879798),
+            (21701074, 233879798, 3059486888), (763525863, 3059486888, 6355011388), (763525864, 6355011388, 233497179),
+            (51511352, 233497179, 172510077), (459186771, 172510077, 7759646003), (831044956, 7759646003, 1818164136),
+            (16688065, 1818164136, 233879753), (51511339, 233879753, 12071463879), (1303467716, 12071463879, 1398079475),
+            (156457347, 1398079475, 232353353), (650084964, 232353353, 4513378919), (634770511, 4513378919, 232353185),
+            (750071183, 232353185, 12522242619), (1392512181, 12522242619, 3071267396), (479565615, 3071267396, 232353226),
+            (173779754, 232353226, 232376467), (845894319, 232376467, 7891770123), (647084783, 7891770123, 6077839914),
+            (649520780, 6077839914, 6095372887), (480250096, 6095372887, 4732525705), (155907160, 4732525705, 232279092),
+            (21584500, 232279092, 6997023277), (747875236, 6997023277, 6997023278), (747875237, 6997023278, 232353925),
+            (475217889, 232353925, 6856578455), (759511978, 6856578455, 3010901912), (448084962, 3010901912, 6413721257),
+            (684544691, 6413721257, 6413721265), (1015882723, 6413721265, 9370421301), (1015882722, 9370421301, 4451336954),
+            (1121759130, 4451336954, 4451336947), (475215022, 4451336947, 6988663055), (480247943, 6988663055, 9370421307),
+            (29377119, 9370421307, 237054799), (1121759129, 237054799, 9569954749), (1121759131, 9569954749, 2511487801),
+            (1206760203, 2511487801, 237012287), (528539591, 237012287, 3010901881), (35037538, 3010901881, 410939418),
+            (767388313, 410939418, 1832823650), (750071184, 1832823650, 4726775785), (581766308, 4726775785, 233879421),
+            (479605911, 233879421, 4726775783), (479565613, 4726775783, 7138225045), (764062390, 7138225045, 233879440),
+            (479565612, 233879440, 1743939385), (634832601, 1743939385, 1764796980), (633311062, 1764796980, 1446076214),
+            (764062389, 1446076214, 5270623340), (303314681, 5270623340, 2466494363), (767388315, 2466494363, 1780184888),
+            (763531722, 1780184888, 1832823586), (633343709, 1832823586, 5978628576), (633340452, 5978628576, 233879574),
+            (479565608, 233879574, 1832823584), (842953325, 1832823584, 1832823583), (633340456, 1832823583, 1832823581),
+            (635394837, 1832823581, 1832823579), (180551367, 1832823579, 6340950179), (581942152, 6340950179, 5165925965),
+            (173791995, 5165925965, 479983003), (152783801, 479983003, 233879603), (479284866, 233879603, 634071195),
+            (303311924, 634071195, 3076643588), (686335806, 3076643588, 1161613127), (686335807, 1161613127, 5411304502),
+        ],
         "fia_length": 4940.0,
         "num_waypoints": 30,
         "default_width": 11.5,
@@ -496,7 +554,6 @@ GT_CIRCUITS = {
         "barrier_offset": 3.0,
         "default_laps": 3,
         "tag": "SINGAPORE NIGHT RACE",
-        "marina_filter": True,
         "start_node": "4281759834",
         "predefined_car": "hypercar_prototype",
         "module_id": "gt",
@@ -638,44 +695,21 @@ def process_gt_circuit(cid, cache_dir):
     nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
     ways = {w.get("id"): [nd.get("ref") for nd in w.findall("nd")] for w in root.findall("way")}
 
-    if "way_id" in cfg:
+    if "segments" in cfg:
+        seg_ways = {int(wid): {"nodes": [int(n) for n in nds]} for wid, nds in ways.items()}
+        chain_nodes = [str(nid) for nid, _ in chain_segments(seg_ways, cfg["segments"])]
+    elif "way_id" in cfg:
         chain_nodes = ways[cfg["way_id"]]
     else:
         rel = next(r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"]))
 
-        if cfg.get("monaco_filter"):
-            exclude = {
-                "850261588", "1388331347", "39839529", "161752645", "348019480",
-                "1551240829", "1551240830", "1082515450", "4230006", "434567309",
-                "160004393", "1230247123", "41929969", "1451501763", "60767229",
-                "1453878835"
-            }
-            w_ids = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("ref") not in exclude and m.get("ref") in ways]
-            seen = set()
-            ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
-            idx_start = ordered.index(cfg["start_way"])
-            ordered = ordered[idx_start:] + ordered[:idx_start]
-            chain_nodes = stitch_ways(cid, [ways[wid] for wid in ordered], nodes)
-        elif cfg.get("rbr_filter"):
+        if cfg.get("rbr_filter"):
             f1_ways = [
                 "822592410", "822592403", "822592404", "347958266", "822592398",
                 "822592399", "822592400", "822592401", "822592402", "822592405",
                 "822592406", "822592407", "822592408", "822592409"
             ]
             chain_nodes = stitch_ways(cid, [ways[wid] for wid in f1_ways if wid in ways], nodes)
-        elif cfg.get("marina_filter"):
-            way_members = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("role") != "pit_lane" and m.get("ref") in ways]
-            filtered = []
-            for wid in way_members:
-                w_elem = next(w for w in root.findall("way") if w.get("id") == wid)
-                tags = {t.get("k"): t.get("v") for t in w_elem.findall("tag")}
-                name = tags.get("name", "")
-                highway = tags.get("highway", "")
-                if "pit" not in name.lower() and highway != "service":
-                    filtered.append(wid)
-            seen = set()
-            ordered = [w for w in filtered if not (w in seen or seen.add(w))]
-            chain_nodes = stitch_ways(cid, [ways[wid] for wid in ordered], nodes)
         elif cfg.get("madring_filter"):
             way_members = [
                 m.get("ref") for m in rel.findall("member")
@@ -1316,6 +1350,16 @@ RALLY_TRACKS = {
     "catalunya_rx": {
         "name": "Circuit de Barcelona-Catalunya RX (World RX Spain)",
         "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
+        # Relation 11362868 "World RX of Barcelona" without its joker_lap ways (1137 m in OSM). It runs
+        # against the F1 oneway tags; the two "unpaved" ways are the loose sections.
+        "segments": [
+            (967275593, 8553773977, 9719993934), (1560896064, 9719993934, 8553773972), (921317981, 8553773972, 14202158154),
+            (1560896060, 14202158154, 7765791210), (1560896061, 7765791210, 385973423), (893732520, 385973423, 8553774009),
+            (921317984, 8553774009, 8553774005), (921317983, 8553774005, 1644321708), (1560896062, 1644321708, 7765791151),
+            (1560896059, 7765791151, 8553773999), (921317982, 8553773999, 8553773977),
+        ],
+        "loose_ways": [921317981, 921317982],
+        "start_offset_m": 338.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](41.560,2.250,41.575,2.268););out body;>;out skel qt;',
         "fia_length": 1125.0,
         "default_width": 13.5,
@@ -1334,8 +1378,17 @@ RALLY_TRACKS = {
     "mettet_rx": {
         "name": "Circuit Jules Tacheny Mettet (World RX Belgium)",
         "description": "Belgian World RX showdown featuring rapid asphalt sweeps, banked dirt esses, and the notorious Mettet tabletop jump.",
+        # Loose as in the old lap (Mettet RX is ~60/40 tarmac/gravel); OSM tags 178240082 asphalt.
+        "loose_ways": [178240082, 178240080],
+        "start_offset_m": 68.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](50.295,4.640,50.310,4.665););out body;>;out skel qt;',
-        "way_ids": [178384323, 178384334, 178384335, 178384337, 178384345, 178384346, 178384349, 178384356, 178384358, 178384360, 178384364, 178384367, 178384383, 178384386],
+        # The raceway loop that matches the old lap best (1050 m in OSM, 0.91x the official 1149 m).
+        "segments": [
+            (178240082, 1886090191, 1886090150), (178384349, 1886090150, 1886090019), (178384323, 1886090019, 1886089974),
+            (178384345, 1886089974, 1886089890), (178384322, 1886089890, 1886089916), (178384358, 1886089916, 1886090017),
+            (178384335, 1886090017, 1886090080), (178384356, 1886090080, 1886090174), (178384337, 1886090174, 2463534884),
+            (178240080, 2463534884, 1886090408), (178240082, 1886090408, 1886090191),
+        ],
         "fia_length": 1149.0,
         "default_width": 13.0,
         "straight_width": 14.0,
@@ -1372,9 +1425,18 @@ RALLY_TRACKS = {
     "riga_rx": {
         "name": "Biķernieku Trase (World RX Latvia)",
         "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
+        "start_offset_m": 659.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](56.955,24.215,56.975,24.245););out body;>;out skel qt;',
-        "way_ids": [256784387, 945640986, 588947722, 588947720, 588947717, 588947719, 588947714],
-        "fia_length": 1294.0,
+        # The raceway loop that matches the old lap best (1071 m in OSM; the official 1294 m is 17% longer,
+        # so the lap stays at the mapped length). The three "gravel" ways are the loose sections.
+        "segments": [
+            (588947722, 5098958979, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
+            (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212), (1435177485, 1080703212, 1080702484),
+            (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
+            (945640986, 5363424528, 1080377982), (1120160990, 1080377982, 277946516), (523849729, 277946516, 5098958979),
+        ],
+        "loose_ways": [588947722, 588947717, 588947719],
+        "fia_length": 1071.0,  # mapped length (the official 1294 m is 17% longer)
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 30,
@@ -1532,17 +1594,6 @@ def process_rally_track(track_id, cache_dir):
         for nid in ways[149713976]["nodes"][:7]:
             raw_nodes_surf.append((nid, "Asphalt"))
         for nid in ways[149713907]["nodes"][:40]:
-            raw_nodes_surf.append((nid, "Dirt"))
-    elif track_id == "catalunya_rx":
-        for nid in ways[831804327]["nodes"][200:-1]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in ways[831804327]["nodes"][:3]:
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[921317982]["nodes"]):
-            raw_nodes_surf.append((nid, "Dirt"))
-        for nid in reversed(ways[967275593]["nodes"][1:]):
-            raw_nodes_surf.append((nid, "Asphalt"))
-        for nid in reversed(ways[921317981]["nodes"][1:-1]):
             raw_nodes_surf.append((nid, "Dirt"))
     elif track_id == "killarney_rx":
         w42_nodes = ways[42125321]["nodes"]
