@@ -46,7 +46,7 @@ lower `brake_bias`.
 | Steering Authority | 80–140 % | Where full input sits relative to the front grip limit. At 160 km/h, extra authority past the limit shrinks to 30 %. |
 | Center Precision | 1.0–1.8 | Response curve. Higher = finer control near center. |
 | Pedal Speed | 0–300 ms | Throttle and brake time to full. 0 = instant. |
-| Traction Help | 0–100 % | Eases the throttle as the rear tires near their limit. |
+| Traction Help | 0–100 % | Eases the throttle as the rear tires near their limit (85–100 % use) while you corner. It never eases straight-line drive. |
 
 | Preset | Speed | Authority | Precision | Pedal | Traction Help |
 |---|---|---|---|---|---|
