@@ -991,7 +991,7 @@ KART_TRACKS = {
         "fia_length": 1580.0,
         "default_width": 8.5,
         "straight_width": 9.2,
-        "num_waypoints": 32,
+        "num_waypoints": 80,  # ~20 m spacing keeps the lap within ~3 m of the OSM line
         "elevation_fn": None,
     },
     "valencia_kart": {
@@ -1001,7 +1001,7 @@ KART_TRACKS = {
         "fia_length": 1428.0,
         "default_width": 8.5,
         "straight_width": 9.2,
-        "num_waypoints": 32,
+        "num_waypoints": 80,  # ~18 m spacing keeps the lap within ~3 m of the OSM line
         "elevation_fn": None,
     },
 }
