@@ -254,3 +254,61 @@ fn test_random_input_fuzz_is_numerically_stable() {
         }
     }
 }
+
+/// Seconds from a standstill to 25 m/s in a straight line with W held.
+fn launch_time(traction_help: f32) -> f32 {
+    let mut cfg = CarConfig::sports_car();
+    cfg.player = PlayerHandling::human(1.0, traction_help);
+    let mut car = Car::new(cfg);
+    for step in 0..(20 * 120) {
+        car.step(&CarControls::new(1.0, 0.0, 0.0, false), SurfaceType::Asphalt, DT);
+        if car.state.speed >= 25.0 {
+            return step as f32 * DT;
+        }
+    }
+    f32::INFINITY
+}
+
+/// Scenario: Traction help does not ease straight-line drive
+///
+/// Given the sports car at a standstill
+/// When W is held on a straight with traction help 0, 0.7 and 0.9
+/// Then the time to 25 m/s with help is within 2% of the time without it
+///
+/// Pre-fix: traction help counted the rear tires' drive force as "near the limit", so it cut the
+/// throttle on every launch and straight (a 92.8 s standing-start lap at 0.9) (tdrace-izlq).
+#[test]
+fn test_traction_help_does_not_ease_straight_line_drive() {
+    let base = launch_time(0.0);
+    for th in [0.7, 0.9] {
+        let t = launch_time(th);
+        println!("0-25 m/s: traction help 0 {base:.2} s, {th} {t:.2} s");
+        assert!(t <= base * 1.02, "traction help {th} slowed the launch: {t:.2} s vs {base:.2} s");
+    }
+}
+
+/// Scenario: Traction help still catches power oversteer
+///
+/// Given the sports car with all assists off at 20 m/s
+/// When full steer and W are held for 2 s
+/// Then it spins without traction help (peak sideslip > 1 rad) and not with 0.7 (< 0.15 rad)
+#[test]
+fn test_traction_help_catches_power_oversteer() {
+    let peak_sideslip = |traction_help: f32| {
+        let mut cfg = CarConfig::sports_car();
+        cfg.assists = DriverAssistsConfig::raw();
+        cfg.player = PlayerHandling::human(1.0, traction_help);
+        let mut car = Car::new(cfg);
+        car.set_velocity(Vec2::new(20.0, 0.0));
+        let mut peak = 0.0f32;
+        for _ in 0..240 {
+            car.step(&CarControls::new(1.0, 1.0, 0.0, false), SurfaceType::Asphalt, DT);
+            peak = peak.max(car.state.sideslip_angle.abs());
+        }
+        peak
+    };
+    let (off, on) = (peak_sideslip(0.0), peak_sideslip(0.7));
+    println!("power oversteer @20 m/s: peak sideslip {off:.3} rad without help, {on:.3} rad with 0.7");
+    assert!(off > 1.0, "the scenario must spin without help ({off:.3} rad)");
+    assert!(on < 0.15, "traction help 0.7 did not catch the slide ({on:.3} rad)");
+}
