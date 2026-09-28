@@ -8,9 +8,10 @@ const modules = [
   { label: 'All Modules', value: 'All Modules' },
   { label: 'Gran Turismo', value: 'Gran Turismo & Endurance' },
   { label: 'NASCAR', value: 'NASCAR Stock Car Racing' },
-  { label: 'Rally & All terrain', value: 'Rallycross & All-Terrain' },
-  { label: 'Extrem Off-Road', value: 'Extreme Off-Road & Arenas' },
+  { label: 'Rallycross', value: 'Rallycross' },
+  { label: 'Extreme Off-Road', value: 'Extreme Off-Road & Arenas' },
   { label: 'Karting', value: 'Karting & Micro-Racers' },
+  { label: 'Classic Arcade', value: 'classic' },
 ];
 ---
 
@@ -60,7 +61,11 @@ const modules = [
   <!-- Car Cards Grid -->
   <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
     {vehiclesData.map((car) => (
-      <div class="car-item" data-module={car.module} data-search={`${car.name} ${car.manufacturer || ''} ${car.category} ${car.class_badge} ${car.drivetrain}`.toLowerCase()}>
+      <div
+        class="car-item"
+        data-module={car.module}
+        data-search={`${car.name} ${car.manufacturer || ''} ${car.category} ${car.class_badge} ${car.drivetrain} ${car.module} ${car.id} ${car.id.startsWith('rally_') ? 'rally rallycross' : ''}`.toLowerCase()}
+      >
         <CarCard car={car} />
       </div>
     ))}
@@ -82,7 +87,12 @@ const modules = [
         const itemModule = item.dataset.module || '';
         const itemSearch = item.dataset.search || '';
 
-        const matchesModule = currentModule === 'All Modules' || itemModule === currentModule;
+        const matchesModule =
+          currentModule === 'All Modules' ||
+          itemModule === currentModule ||
+          (currentModule === 'Rallycross' && (itemModule === 'Rallycross' || itemModule === 'Rallycross & All-Terrain')) ||
+          (currentModule === 'Rallycross & All-Terrain' && (itemModule === 'Rallycross' || itemModule === 'Rallycross & All-Terrain')) ||
+          (currentModule === 'classic' && (itemModule === 'classic' || itemModule === 'Classic Arcade Motorsport'));
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
         if (matchesModule && matchesSearch) {
