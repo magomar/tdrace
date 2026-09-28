@@ -2157,6 +2157,7 @@ pub fn render_controls_screen(
     input_map: &cabinet::input::InputMap,
     preset_name: &str,
     keyboard: &cabinet::input::DigitalInputConfig,
+    mapper_status: Option<&str>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2282,6 +2283,22 @@ pub fn render_controls_screen(
         gp_row_y += scaler.s(21.0);
     }
 
+    // Gamepad mapper launcher (external calibration & remapping tool)
+    let mapper_h = scaler.s(52.0);
+    let mapper_x = col2_x + scaler.s(12.0);
+    let mapper_w = col_w - scaler.s(24.0);
+    let mapper_y = col_y + col_h - mapper_h - scaler.s(12.0);
+    scaler.draw_glass_card(mapper_x, mapper_y, mapper_w, mapper_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_MAGENTA, 1.2);
+    fonts.draw_ui_bold("[G] OPEN GAMEPAD MAPPER", mapper_x + scaler.s(12.0), mapper_y + scaler.s(21.0), scaler.font_s(13.0), Palette::NEON_MAGENTA);
+    let mapper_line = mapper_status.unwrap_or("Calibrate sticks and triggers or remap buttons; the profile loads when it closes.");
+    fonts.draw_ui_regular(
+        &fonts.fit_ui_regular(mapper_line, scaler.font_s(11.0), mapper_w - scaler.s(24.0)),
+        mapper_x + scaler.s(12.0),
+        mapper_y + scaler.s(40.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
     // Bottom Panel: Active Drive Assists Profile
     let bot_y = col_y + col_h + scaler.s(12.0);
     let bot_h = scaler.s(85.0);
@@ -2295,10 +2312,10 @@ pub fn render_controls_screen(
     };
     fonts.draw_ui_bold(&assist_title, banner_x + scaler.s(18.0), bot_y + scaler.s(24.0), scaler.font_s(16.0), assist_col);
     fonts.draw_ui_regular(assist_profile.description(), banner_x + scaler.s(18.0), bot_y + scaler.s(48.0), scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
-    fonts.draw_ui_regular("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_regular("Press [H] on keyboard or [R3] on Gamepad to switch assist difficulty here, on the grid, or during a race.", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
-    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [B] BLEED  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
+    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [G] GAMEPAD MAPPER  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
     fonts.draw_ui_bold_centered(
         back_prompt,
         sw * 0.5,

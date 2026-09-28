@@ -674,6 +674,10 @@ pub struct RaceSession {
     pub controls_help_return: Option<GameState>,
     /// Tab and highlighted card of the Race Modality screen, restored when coming back to it.
     pub modality_cursor: (ModalityCategory, usize),
+    /// The external gamepad-mapper tool, while it is open.
+    pub gamepad_mapper: Option<crate::input::mapper_launch::GamepadMapperProcess>,
+    /// Last gamepad-mapper status line, shown on the Controls screen.
+    pub gamepad_mapper_status: Option<String>,
     pub assist_profile: AssistProfile,
     pub assist_profile_p2: AssistProfile,
     pub show_exit_confirm: bool,
@@ -984,6 +988,8 @@ impl RaceSession {
             paused_countdown: None,
             controls_help_return: None,
             modality_cursor: (ModalityCategory::SinglePlayer, 0),
+            gamepad_mapper: None,
+            gamepad_mapper_status: None,
             show_exit_confirm: false,
             exit_confirm_modal: None,
             settings_modal: None,
@@ -4603,6 +4609,7 @@ impl RaceSession {
 
         // Handle gamepad input updates
         self.input.gamepad.update();
+        self.poll_gamepad_mapper();
 
         // Step active screen transition
         self.update_transition(frame_dt);
@@ -4643,11 +4650,17 @@ impl RaceSession {
             };
 
             let action = modal.update(&mut ctx);
+            let mapper_requested = std::mem::take(&mut modal.gamepad_mapper_requested);
             if matches!(action, ScreenAction::Pop) {
                 let saved = modal.is_saved;
                 self.close_settings_modal(saved);
                 if saved {
                     self.audio.play_sfx(SfxType::UiSelect);
+                }
+            } else if mapper_requested {
+                let status = self.launch_gamepad_mapper();
+                if let Some(modal) = self.settings_modal.as_mut() {
+                    modal.gamepad_mapper_note = Some(status);
                 }
             }
             return;
@@ -5561,6 +5574,11 @@ impl RaceSession {
                     let _ = self.config.save_to_first_existing_or_default();
                 }
 
+                if is_key_pressed(KeyCode::G) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.launch_gamepad_mapper();
+                }
+
                 if is_key_pressed(KeyCode::H)
                     || (self.input.gamepad.snapshot.btn_assist_toggle_pressed && !self.input.gamepad.snapshot.btn_back_pressed)
                 {
@@ -6204,6 +6222,52 @@ impl RaceSession {
         }
         self.menu_origin = MenuOrigin::ModalitySelect;
         GameState::Menu
+    }
+
+    /// Starts the external gamepad-mapper tool and returns the status line to show.
+    ///
+    /// The mapper writes its local profile into the TDRace config directory (its working
+    /// directory), so [`Self::poll_gamepad_mapper`] reloads it when the mapper closes.
+    pub fn launch_gamepad_mapper(&mut self) -> String {
+        use crate::input::mapper_launch::{find_gamepad_mapper, GamepadMapperProcess, ENV_GAMEPAD_MAPPER};
+        let status = if self.gamepad_mapper.is_some() {
+            "Gamepad mapper is already open.".to_string()
+        } else if let Some(exe) = find_gamepad_mapper() {
+            match GamepadMapperProcess::launch(&exe, &crate::storage::resolve_user_config_dir()) {
+                Ok(process) => {
+                    self.gamepad_mapper = Some(process);
+                    "Gamepad mapper open. TDRace ignores the controller until you close it.".to_string()
+                }
+                Err(e) => format!("Could not start gamepad-mapper: {}", e),
+            }
+        } else {
+            format!("gamepad-mapper not found: put it next to TDRace or on PATH, or set {}.", ENV_GAMEPAD_MAPPER)
+        };
+        self.gamepad_mapper_status = Some(status.clone());
+        status
+    }
+
+    /// While the gamepad mapper is open, drops this frame's gamepad presses (the mapper reads the
+    /// same controller). When it closes, reloads the profile it saved.
+    fn poll_gamepad_mapper(&mut self) {
+        let Some(process) = self.gamepad_mapper.as_mut() else {
+            return;
+        };
+        if !process.has_exited() {
+            self.input.gamepad.clear_frame_events();
+            return;
+        }
+        self.gamepad_mapper = None;
+        self.input.gamepad.check_and_reload_profile();
+        let status = match self.input.gamepad.custom_profile.as_ref().map(|p| p.device_name.trim()) {
+            Some(name) if !name.is_empty() => format!("Gamepad mapper closed. Profile for {} loaded.", name),
+            _ => "Gamepad mapper closed. Saved profile loaded.".to_string(),
+        };
+        if let Some(modal) = self.settings_modal.as_mut() {
+            modal.sync_gamepad_config(&self.input.gamepad.config);
+            modal.gamepad_mapper_note = Some(status.clone());
+        }
+        self.gamepad_mapper_status = Some(status);
     }
 
     /// The Race Modality screen on the tab and card the player last left it on.
@@ -12577,6 +12641,7 @@ impl RaceSession {
                     &self.input.input_map,
                     self.input.active_preset_name(),
                     &self.input.filter.config,
+                    self.gamepad_mapper_status.as_deref(),
                 );
             }
             GameState::DriverCards(_) => {

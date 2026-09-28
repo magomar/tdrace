@@ -421,6 +421,11 @@ pub struct ArcadeSettingsModal {
     pub is_subtab_focused: bool,
     pub selected_bottom_btn: usize,
     pub is_saved: bool,
+    /// Set when the player activates OPEN GAMEPAD MAPPER; the host game takes and clears it
+    /// and starts the external `gamepad-mapper` tool.
+    pub gamepad_mapper_requested: bool,
+    /// Status line under the OPEN GAMEPAD MAPPER button, written by the host game.
+    pub gamepad_mapper_note: Option<String>,
     pub initial_snapshot: SettingsSnapshot,
     pub unsaved_confirm_modal: Option<UnsavedSettingsModal>,
 }
@@ -561,6 +566,8 @@ impl ArcadeSettingsModal {
             is_subtab_focused: false,
             selected_bottom_btn: 1,
             is_saved: false,
+            gamepad_mapper_requested: false,
+            gamepad_mapper_note: None,
             initial_snapshot: SettingsSnapshot::default(),
             unsaved_confirm_modal: None,
         };
@@ -607,7 +614,8 @@ impl ArcadeSettingsModal {
     pub fn switch_controls_subtab(&mut self, subtab: usize) {
         self.controls_sub_tab = subtab;
         if subtab == 1 {
-            self.nav.set_column_len(1, 5);
+            // 4 sliders + OPEN GAMEPAD MAPPER + bottom buttons
+            self.nav.set_column_len(1, 6);
             self.nav.set_focus(1, 0);
         } else {
             self.nav.set_column_len(1, 7);
@@ -800,6 +808,19 @@ impl ArcadeSettingsModal {
         audio.sfx_volume = self.sfx_slider.normalized();
         audio.ui_volume = self.ui_slider.normalized();
         audio.is_muted = self.mute_dropdown.selected_index == 1;
+    }
+
+    /// Reloads the gamepad sliders from `gp` (for example after the gamepad mapper saved a new
+    /// profile) without turning that change into an unsaved edit.
+    pub fn sync_gamepad_config(&mut self, gp: &GamepadConfig) {
+        self.stick_deadzone_slider.set_value(gp.stick_deadzone);
+        self.trigger_deadzone_slider.set_value(gp.trigger_deadzone);
+        self.steer_sensitivity_slider.set_value(gp.steer_scale);
+        self.steer_exponent_slider.set_value(gp.steer_exponent);
+        self.initial_snapshot.stick_deadzone = self.stick_deadzone_slider.value;
+        self.initial_snapshot.trigger_deadzone = self.trigger_deadzone_slider.value;
+        self.initial_snapshot.steer_sensitivity = self.steer_sensitivity_slider.value;
+        self.initial_snapshot.steer_exponent = self.steer_exponent_slider.value;
     }
 
     /// Applies configured values to an external `GamepadConfig` struct.
@@ -1469,12 +1490,24 @@ impl CabinetScreen for ArcadeSettingsModal {
                     }
                 } else {
                     // GAMEPAD CONTROLLER:
-                    // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent, 4: Bottom Buttons
+                    // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent,
+                    // 4: Open Gamepad Mapper, 5: Bottom Buttons
                     let (gp_row_h, gp_row_gap, gp_content_y) = (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
                     let r0 = (content_x, gp_content_y, content_w, gp_row_h);
                     let r1 = (content_x, gp_content_y + (gp_row_h + gp_row_gap), content_w, gp_row_h);
                     let r2 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 2.0, content_w, gp_row_h);
                     let r3 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 3.0, content_w, gp_row_h);
+                    let r4 = gamepad_mapper_button_rect(content_x, gp_content_y, content_w, gp_row_h, gp_row_gap);
+
+                    let is_confirm = safe_key_pressed(KeyCode::Enter)
+                        || safe_key_pressed(KeyCode::KpEnter)
+                        || safe_key_pressed(KeyCode::Space)
+                        || ctx.gamepad.btn_confirm_pressed
+                        || ctx.gamepad.btn_a_pressed;
+                    if (active_row == 4 && is_confirm) || NavGrid2D::check_mouse_click(r4) {
+                        self.gamepad_mapper_requested = true;
+                        ctx.play_ui_select();
+                    }
 
                     if self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
                         ctx.play_ui_move();
@@ -2034,6 +2067,32 @@ impl CabinetScreen for ArcadeSettingsModal {
                     draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 2, false, accent);
                     y += gp_row_h + gp_row_gap;
                     draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 3, false, accent);
+
+                    // Row 4: Open the external gamepad-mapper calibration tool
+                    let r4 = gamepad_mapper_button_rect(content_x, gp_content_y, content_w, gp_row_h, gp_row_gap);
+                    let is_mapper_focused = active_row == 4;
+                    let mapper_active = is_mapper_focused || NavGrid2D::check_mouse_hover(r4);
+                    let mapper_bg = if mapper_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
+                    let mapper_border = if mapper_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+                    scaler.draw_glass_card(r4.0, r4.1, r4.2, r4.3, mapper_bg, mapper_border, if mapper_active { 2.0 } else { 1.0 });
+                    fonts.draw_ui_bold_centered(
+                        if is_mapper_focused { "[ENTER] OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔" } else { "OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔" },
+                        r4.0 + r4.2 * 0.5,
+                        r4.1 + r4.3 * 0.62,
+                        scaler.font_s(12.5),
+                        if mapper_active { Palette::NEON_CYAN } else { Palette::WHITE },
+                    );
+                    let note = self
+                        .gamepad_mapper_note
+                        .as_deref()
+                        .unwrap_or("Opens in its own window. The new profile loads here when the mapper closes.");
+                    fonts.draw_ui_regular_centered(
+                        &fonts.fit_ui_regular(note, scaler.font_s(11.0), content_w),
+                        r4.0 + r4.2 * 0.5,
+                        r4.1 + r4.3 + scaler.s(18.0),
+                        scaler.font_s(11.0),
+                        Palette::UI_TEXT_MUTED,
+                    );
                 }
             }
             2 => {
@@ -2339,4 +2398,9 @@ impl CabinetScreen for ArcadeSettingsModal {
             confirm_modal.draw(ctx);
         }
     }
+}
+
+/// Rectangle of the OPEN GAMEPAD MAPPER button, the row after the four gamepad sliders.
+fn gamepad_mapper_button_rect(content_x: f32, content_y: f32, content_w: f32, row_h: f32, row_gap: f32) -> (f32, f32, f32, f32) {
+    (content_x, content_y + (row_h + row_gap) * 4.0 + row_gap, content_w, row_h)
 }
