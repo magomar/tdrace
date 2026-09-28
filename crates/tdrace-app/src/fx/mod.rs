@@ -90,7 +90,12 @@ impl EffectsManager {
                         && (telemetry.skid_intensity > 0.08 || telemetry.slip_ratio.abs() > 0.12 || telemetry.slip_angle.abs() > 0.08)
                         && car.state.speed > 1.5
                     {
-                        self.particles.emit_dirt_roost(pos, surf, car.state.velocity);
+                        let roost_intensity = telemetry
+                            .skid_intensity
+                            .max(telemetry.slip_ratio.abs())
+                            .max(telemetry.slip_angle.abs());
+                        self.particles
+                            .emit_dirt_roost(pos, surf, car.state.velocity, roost_intensity);
                     }
 
                     // Water splash on puddles / water hazard
@@ -158,6 +163,11 @@ impl EffectsManager {
     /// Renders skidmarks in the ground pass.
     pub fn render_ground_fx(&self) {
         self.render_ground_fx_culled(None);
+    }
+
+    /// Renders off-track roost particles under the cars.
+    pub fn render_ground_debris(&self) {
+        self.particles.render_ground();
     }
 
     /// Renders airborne particles and drift popups.

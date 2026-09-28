@@ -42,7 +42,7 @@ fn test_particle_system_emission_and_updates() {
     assert!(ps.count() > 0);
 
     // Dirt roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Grass, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Grass, Vec2::new(10.0, 0.0), 1.0);
     assert!(ps.count() > 0);
 
     // Collision sparks
@@ -444,22 +444,59 @@ fn test_debris_roost_particle_emission_by_surface() {
     let mut ps = ParticleSystem::new(200);
 
     // Gravel roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Gravel, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Gravel, Vec2::new(10.0, 0.0), 1.0);
     let count_after_gravel = ps.count();
     assert!(count_after_gravel > 0, "Gravel should produce roost particles");
 
     // Mud roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::MudTrack, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::MudTrack, Vec2::new(10.0, 0.0), 1.0);
     let count_after_mud = ps.count();
     assert!(count_after_mud > count_after_gravel, "Mud should produce roost particles");
 
     // Snow roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedSnow, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedSnow, Vec2::new(10.0, 0.0), 1.0);
     let count_after_snow = ps.count();
     assert!(count_after_snow > count_after_mud, "Snow should produce roost particles");
 
     // Asphalt - should NOT produce roost particles
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Asphalt, Vec2::new(10.0, 0.0));
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Asphalt, Vec2::new(10.0, 0.0), 1.0);
     assert_eq!(ps.count(), count_after_snow, "Asphalt must NOT produce dirt roost particles");
+}
+
+#[test]
+fn test_dirt_roost_count_scales_with_intensity() {
+    // No slip: no roost.
+    let mut ps = ParticleSystem::new(2000);
+    for _ in 0..500 {
+        ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedSand, Vec2::new(10.0, 0.0), 0.0);
+    }
+    assert_eq!(ps.count(), 0, "Zero intensity must not emit roost");
+
+    // Full slip: exactly one particle per call (was 3 per call before).
+    let mut ps = ParticleSystem::new(2000);
+    for _ in 0..500 {
+        ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedSand, Vec2::new(10.0, 0.0), 1.0);
+    }
+    assert_eq!(ps.count(), 500, "Full intensity must emit one particle per call");
+
+    // Light slip: about a quarter of the calls emit.
+    let mut ps = ParticleSystem::new(2000);
+    for _ in 0..1000 {
+        ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Dirt, Vec2::new(10.0, 0.0), 0.25);
+    }
+    let n = ps.count();
+    assert!((180..=320).contains(&n), "Intensity 0.25 emitted {} of 1000", n);
+}
+
+#[test]
+fn test_dirt_roost_is_ground_layer_and_smoke_is_not() {
+    let mut ps = ParticleSystem::new(200);
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::DeepSand, Vec2::new(10.0, 0.0), 1.0);
+    assert_eq!(ps.ground_count(), ps.count(), "Roost must render in the ground pass");
+
+    ps.emit_tire_smoke(Vec2::ZERO, Vec2::new(5.0, 0.0), 0.8);
+    ps.emit_sparks(Vec2::ZERO, Vec2::new(-1.0, 0.0), 8.0);
+    assert_eq!(ps.ground_count(), 1, "Smoke and sparks must stay in the airborne pass");
+    assert!(ps.count() > ps.ground_count());
 }
 

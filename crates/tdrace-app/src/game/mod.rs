@@ -13950,6 +13950,9 @@ impl RaceSession {
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
+        // 3b. Off-track roost (Dirt, Sand, Gravel, ...) stays under the cars
+        self.fx.render_ground_debris();
+
         // 4. Ground-Level Vehicles
         let player_alpha = self.cars.get(focus_car_idx).map(|pc| {
             compute_adaptive_alpha(
