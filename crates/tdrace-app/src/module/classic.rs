@@ -78,10 +78,6 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 14.0;
         cfg.tire.slide_grip = 0.90;
         cfg.tire.peak_slip_angle_deg = 7.0;
-        if let Some(rear) = cfg.rear_tire.as_mut() {
-            rear.slide_grip = cfg.tire.slide_grip;
-            rear.peak_slip_angle_deg = cfg.tire.peak_slip_angle_deg;
-        }
         cfg.finalized()
     }
 

@@ -73,3 +73,80 @@ fn test_settings_apply_to_live_player_car_both_directions() {
         }
     }
 }
+
+mod preset_feel {
+    use tdrace_app::input::{DigitalInputFilter, SteeringProfile};
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::{CarConfig, PlayerHandling};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::Vec2;
+
+    const DT: f32 = 1.0 / 120.0;
+
+    /// A keyboard driver on `profile`: steer key held from t = 0, W held or a modulated
+    /// speed-holding throttle. Returns per-step (yaw rate, sideslip).
+    fn drive(profile: SteeringProfile, speed: f32, hold_w: bool, seconds: f32) -> Vec<(f32, f32)> {
+        let keys = profile.to_config();
+        let mut cfg = CarConfig::sports_car();
+        cfg.player = PlayerHandling::human(keys.steer_authority, keys.traction_help);
+        let mut car = Car::new(cfg);
+        car.set_velocity(Vec2::new(speed, 0.0));
+        let mut filter = DigitalInputFilter::new(keys);
+        let mut out = Vec::new();
+        for _ in 0..(seconds / DT) as usize {
+            // W held, or a driver who modulates throttle to hold the entry speed.
+            let raw_throttle = if hold_w { 1.0 } else { ((speed - car.state.speed) * 0.5).clamp(0.0, 1.0) };
+            let (steer, throttle, brake) = filter.update(1.0, raw_throttle, 0.0, DT);
+            car.step(&CarControls::new(throttle, steer, brake, false), SurfaceType::Asphalt, DT);
+            out.push((car.state.angular_velocity.abs(), car.state.sideslip_angle.abs()));
+        }
+        out
+    }
+
+    /// Scenario: Presets feel different in a measurable order (turn-in time)
+    ///
+    /// Given the 4 presets
+    /// When a steer key is pressed at 25 m/s
+    /// Then the time to 90% of steady yaw is ordered Smooth > Balanced > Sharp > Raw, each adjacent gap >= 15%
+    #[test]
+    fn test_turn_in_time_is_ordered_by_preset() {
+        let times = SteeringProfile::PRESETS.map(|p| {
+            let trace = drive(p, 25.0, false, 2.0);
+            let steady = trace[trace.len() - 60..].iter().map(|s| s.0).sum::<f32>() / 60.0;
+            let idx = trace.iter().position(|s| s.0 >= 0.9 * steady).unwrap_or(trace.len());
+            idx as f32 * DT * 1000.0
+        });
+        println!("time to 90% steady yaw @25 m/s (ms): Smooth {:.0} Balanced {:.0} Sharp {:.0} Raw {:.0}", times[0], times[1], times[2], times[3]);
+        for k in 0..3 {
+            assert!(times[k + 1] <= times[k] * 0.85, "preset {} must turn in >= 15% faster than {}: {times:?}", k + 1, k);
+        }
+    }
+
+    /// Scenario: Presets feel different in a measurable order (authority)
+    ///
+    /// Given the 4 presets
+    /// When the steer key is held at 45 m/s
+    /// Then the peak yaw is ordered Smooth < Balanced < Sharp < Raw, each adjacent gap >= 8%
+    #[test]
+    fn test_peak_yaw_at_speed_is_ordered_by_preset() {
+        let peaks = SteeringProfile::PRESETS.map(|p| drive(p, 45.0, false, 2.0).iter().map(|s| s.0).fold(0.0f32, f32::max));
+        println!("peak yaw @45 m/s (rad/s): Smooth {:.3} Balanced {:.3} Sharp {:.3} Raw {:.3}", peaks[0], peaks[1], peaks[2], peaks[3]);
+        for k in 0..3 {
+            assert!(peaks[k + 1] >= peaks[k] * 1.08, "preset {} must reach >= 8% more peak yaw than {}: {peaks:?}", k + 1, k);
+        }
+    }
+
+    /// Scenario: Safe presets do not spin on a held key
+    ///
+    /// Given Smooth or Balanced, at 45 m/s with W held
+    /// When full steer is held for 2 s
+    /// Then the peak body sideslip stays below 0.25 rad
+    #[test]
+    fn test_safe_presets_do_not_spin_on_held_key() {
+        for p in [SteeringProfile::Smooth, SteeringProfile::Balanced] {
+            let peak = drive(p, 45.0, true, 2.0).iter().map(|s| s.1).fold(0.0f32, f32::max);
+            println!("{p:?}: peak sideslip {peak:.3} rad (W + full steer held @45 m/s)");
+            assert!(peak < 0.25, "{p:?} spun: peak sideslip {peak:.3} rad");
+        }
+    }
+}

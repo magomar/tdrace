@@ -139,7 +139,7 @@ catalog/module builders after their mutations. `Car::new` debug-asserts that the
 | `TireConfig.peak_slip_angle_deg`, `peak_slip_ratio`, `falloff`, `load_sensitivity`, `power_slide` | New, with serde defaults. If `peak_slip_angle_deg` is missing, derive it from legacy `stiffness_b`/`shape_c`/`curvature_e`. |
 | `TireConfig.slide_grip` | New name for `drift_slide_friction` (serde alias). |
 | `TireConfig.stiffness_b`, `shape_c`, `curvature_e`, `handbrake_lateral_friction_multiplier` | Removed. Accepted on load and ignored (handbrake slide now comes from wheel lock-up). |
-| `CarConfig.rear_tire: Option<TireConfig>` | New. Per-axle tire override (karts). |
+| `CarConfig.rear_axle: RearAxleTire { grip_scale, peak_slip_scale }` | New. Rear tire relative to `tire` (karts: more grip; sports car: stiffer rear for stability). *Task 9 changed this from a full `Option<TireConfig>` copy, which did not follow later grip changes: the catalog grip stat missed the rear axle.* |
 | `CarConfig.roll_balance` (0.35–0.65), `weight_transfer_hz` (2–10) | New. Replace `weight_transfer_lateral` / `weight_transfer_longitudinal` (accepted, ignored). |
 | `CarConfig.engine_brake_front_share` | New. Default `0.35 + 0.30·drive_bias` when missing. |
 | `CarConfig.player: PlayerHandling { grip_aware_steering, steer_overslip, traction_help }` | New. Default `{false, 1.0, 0.0}` (bots). Human drivers get `PlayerHandling::human(..)`. |
@@ -159,15 +159,23 @@ Keyboard settings go from 10 parameters to 5:
 | Pedal Speed | 0–300 ms (0 → full) | throttle and brake rise |
 | Traction Help | 0–100 % | `player.traction_help` |
 
-Presets (starting values; the final values come from the calibration gates in the tests below):
+Presets (calibrated in task 9 against the gates below; draft values were 85/100/115/130 %
+authority and 80/50/20/0 % traction help):
 
 | Preset | Steering Speed | Authority | Center Precision | Pedal Speed | Traction Help |
 |---|---|---|---|---|---|
-| Smooth | 220 ms | 85 % | 1.5 | 220 ms | 80 % |
-| Balanced (default) | 140 ms | 100 % | 1.3 | 140 ms | 50 % |
-| Sharp | 90 ms | 115 % | 1.1 | 80 ms | 20 % |
-| Raw | 40 ms | 130 % | 1.0 | 0 ms | 0 % |
+| Smooth | 220 ms | 90 % | 1.5 | 220 ms | 90 % |
+| Balanced (default) | 140 ms | 100 % | 1.3 | 140 ms | 70 % |
+| Sharp | 90 ms | 107 % | 1.1 | 80 ms | 35 % |
+| Raw | 40 ms | 115 % | 1.0 | 0 ms | 0 % |
 | Custom | any slider edit | | | | |
+
+*Calibration notes (task 9):* the authority formula became
+`kinematic + (f(v) + beyond(overslip)) · α_peak`, where `f` = 0.30 up to 25 m/s and falls to 0.05
+at 45 m/s. `beyond = overslip − 1`, shrunk to 30 % at 45 m/s. Draft authorities above 115 %
+turned less tightly at 160 km/h (up to −33 % curvature), because the car slid and ESC braked the
+rotation. Measured on the sports car: turn-in to 90 % yaw at 25 m/s is 250 / 158 / 125 / 100 ms.
+Peak yaw at 45 m/s is 0.125 / 0.212 / 0.246 / 0.282 rad/s.
 
 Removed: Speed Sensitivity switch, speed factor, Minimum Steer Limit, Hold Bleed, the separate
 return, throttle and brake rates. One function, `RaceSession::apply_player_handling`, applies the
@@ -252,7 +260,10 @@ Not applicable. There are no network, credential or dependency changes. No new c
   - [ ] **Given** the 4 presets
   - [ ] **When** a steer key is pressed at 25 m/s
   - [ ] **Then** the time to 90 % of steady yaw is ordered Smooth > Balanced > Sharp > Raw, with each adjacent gap ≥ 15 %
-  - [ ] **And** the peak yaw with the key held at 45 m/s is ordered Smooth < Balanced < Sharp < Raw, with each adjacent gap ≥ 8 %
+  - [ ] **And** the peak yaw with the key held at 45 m/s (throttle modulated to hold speed) is ordered Smooth < Balanced < Sharp < Raw, with each adjacent gap ≥ 8 %
+  - *Clarified in task 9: the driver modulates throttle. With on/off throttle, Sharp and Raw
+    (little traction help) power-slide at the limit and ESC equalizes their yaw. The W-held case is
+    covered by the next scenario.*
 
 - **Scenario: Safe presets do not spin on a held key**
   - [ ] **Given** Smooth or Balanced, at 45 m/s with W held
@@ -262,7 +273,10 @@ Not applicable. There are no network, credential or dependency changes. No new c
 - **Scenario: Corner exit with W held keeps drive**
   - [ ] **Given** 20 m/s, steer 0.4, W held for 2 s, arcade assists
   - [ ] **When** the car exits the corner
-  - [ ] **Then** TCS is active on ≤ 50 % of frames and the exit speed is ≥ 20.7 m/s
+  - [ ] **Then** TCS keeps ≥ 50 % of the requested drive force on average and the exit speed is ≥ 20.7 m/s
+  - *Changed in task 9: the draft said "TCS active on ≤ 50 % of frames". This car asks for 6.8 kN
+    at 20 m/s, and its rear tires can take about 5 kN. A correct TCS therefore trims torque on
+    every frame. The frame count measured "TCS is present", not "TCS cuts too much".*
 
 - **Scenario: Lift-off is progressive**
   - [ ] **Given** 40 m/s, steer 0.25, throttle for 1 s and then released
@@ -276,7 +290,7 @@ Not applicable. There are no network, credential or dependency changes. No new c
 
 - **Scenario: Car tuning knobs reach the tires**
   - [ ] **Given** `tire.grip` 1.0 and then 1.3 (and the catalog grip stat)
-  - [ ] **When** a steady corner is driven at 30 m/s
+  - [ ] **When** the car drives a 30 m skidpad at its limit (protocol C)
   - [ ] **Then** the lateral g rises by ≥ 25 %
 
 - **Scenario: Roll balance flips the handling balance**

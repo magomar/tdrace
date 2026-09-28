@@ -121,10 +121,10 @@ impl DigitalInputConfig {
 
     pub fn from_profile(profile: SteeringProfile) -> Self {
         let (steer_time_ms, steer_authority, center_precision, pedal_time_ms, traction_help) = match profile {
-            SteeringProfile::Smooth => (220.0, 0.85, 1.5, 220.0, 0.8),
-            SteeringProfile::Balanced | SteeringProfile::Custom => (140.0, 1.00, 1.3, 140.0, 0.5),
-            SteeringProfile::Sharp => (90.0, 1.15, 1.1, 80.0, 0.2),
-            SteeringProfile::Raw => (40.0, 1.30, 1.0, 0.0, 0.0),
+            SteeringProfile::Smooth => (220.0, 0.90, 1.5, 220.0, 0.9),
+            SteeringProfile::Balanced | SteeringProfile::Custom => (140.0, 1.00, 1.3, 140.0, 0.7),
+            SteeringProfile::Sharp => (90.0, 1.07, 1.1, 80.0, 0.35),
+            SteeringProfile::Raw => (40.0, 1.15, 1.0, 0.0, 0.0),
         };
         Self {
             profile,

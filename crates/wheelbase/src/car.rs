@@ -417,7 +417,7 @@ impl Car {
     /// Largest useful road-wheel steering angle at `speed` on a surface with friction `surface_mu`
     /// (Spec 042 grip-aware authority), in radians.
     ///
-    /// `atan(L / R_min) + (0.25 + steer_overslip - 1) * front peak slip angle`, where `R_min = v^2 / (mu * g_eff)`
+    /// `atan(L / R_min) + (f(v) + steer_overslip - 1) * front peak slip angle`, where `R_min = v^2 / (mu * g_eff)`
     /// is the tightest radius the tires can hold (downforce included). At low speed `R_min` shrinks
     /// until the kinematic term alone exceeds mechanical lock, so parking-speed steering keeps full
     /// lock without a separate blend (a speed blend overshot the useful angle at 8-12 m/s).
@@ -433,11 +433,18 @@ impl Car {
         let mu = (surface_mu * tire.grip).max(0.01);
         let r_min = (speed * speed / (mu * g_eff)).max(1e-3);
         let kinematic = (self.config.wheelbase / r_min).atan();
-        // In a steady corner the rear tires slip too, so the front reaches its peak at about
-        // kinematic + LIMIT_SLIP_FRACTION * alpha_peak, not kinematic + alpha_peak. steer_overslip
-        // moves full input around that limit in units of the peak slip angle.
-        const LIMIT_SLIP_FRACTION: f32 = 0.25;
-        let slip_share = LIMIT_SLIP_FRACTION + (steer_overslip - 1.0);
+        // In a steady corner the rear tires slip too, so the car reaches its grip limit at about
+        // kinematic + f(v) * alpha_peak, not kinematic + alpha_peak. Measured across the factory
+        // presets and checked against the monotonic-steering gate: f = 0.30 up to 25 m/s, falling to
+        // 0.05 at 45 m/s (rally and kart hold more, so Balanced is conservative for them).
+        // steer_overslip moves full input around that limit in units of the peak slip angle.
+        let high_speed = ((speed - 25.0) / 20.0).clamp(0.0, 1.0);
+        let limit_fraction = 0.30 - 0.25 * high_speed;
+        // Past-the-limit authority (overslip > 1) shrinks to 30% at high speed: the stable window beyond
+        // the limit is ~0.1 peak-widths at 45 m/s (Sharp/Raw keep their extra bite in slow corners).
+        let beyond = steer_overslip - 1.0;
+        let beyond = if beyond > 0.0 { beyond * (1.0 - 0.7 * high_speed) } else { beyond };
+        let slip_share = limit_fraction + beyond;
         let grip_limit = kinematic + slip_share.max(0.0) * tire.peak_slip_angle();
         grip_limit.clamp(0.0, lock)
     }
@@ -607,8 +614,11 @@ fn couple_axle(
         // steer > 0 is steering right (clockwise, -steer_angle in Cartesian coords)
         // steer < 0 is steering left (counter-clockwise, +steer_angle in Cartesian coords)
 
-        // Check if player is counter-steering against a drift (opposite to lateral velocity / yaw)
-        let is_counter_steering = (clamped_ctrl.steer * v_lat) < -0.05;
+        // Counter-steering: the wheels point towards where the body is sliding. v_lat < 0 means the
+        // car moves to the left of its heading, and steer < 0 steers left, so the product is
+        // positive. (Pre-042 the test was `< -0.05`, which flagged normal cornering at speed, where
+        // the velocity also points outside the heading; with slip headroom that fed slides.)
+        let is_counter_steering = (clamped_ctrl.steer * v_lat) > 0.05;
 
         // Human drivers (grip-aware steering): full input maps to the largest road-wheel angle the
         // front tires can use at this speed, so more input never gives less turn. Counter-steering
@@ -778,7 +788,13 @@ fn couple_axle(
         let (delta_fz_caster_fl, delta_fz_caster_fr, delta_fz_caster_rl, delta_fz_caster_rr) =
             if self.config.caster_jacking_factor > 1e-4 && self.state.steer_angle.abs() > 1e-4 {
                 let steer_frac = (self.state.steer_angle.abs() / self.config.max_steer_angle.max(1e-3)).min(1.0);
-                let raw_delta = static_rear_load * 0.5 * self.config.caster_jacking_factor * steer_frac.powf(1.15);
+                // At walking pace there is no lateral load transfer to unload the inside rear, so the
+                // lift curve is front-loaded (steer_frac^0.4) to free the spool up to 4 m/s; by 14 m/s it returns
+                // to the racing curve (^1.15). Spec 042: with ^1.15 everywhere, weak karts pivoted in
+                // place off the grid; with ^0.4 everywhere the kart spun at 50 km/h.
+                let crawl = 1.0 - ((self.state.speed - 4.0) / 10.0).clamp(0.0, 1.0);
+                let lift_exponent = 1.15 - 0.75 * crawl;
+                let raw_delta = static_rear_load * 0.5 * self.config.caster_jacking_factor * steer_frac.powf(lift_exponent);
 
                 if self.state.steer_angle < 0.0 {
                     // Turning right (steer_angle < 0): RR (inside rear) unloads, RL (outside rear) and FR (inside front) load
@@ -862,19 +878,24 @@ fn couple_axle(
         let slide_severity = ((self.state.sideslip_angle.abs() - 0.08) / 0.12).clamp(0.0, 1.0);
         let engine_brake_multiplier = 1.0 - 0.85 * slide_severity;
 
-        // Traction help (player aid, Spec 042): ease the throttle as the rear axle nears its lateral
-        // limit, the way a good driver (and the AI) feeds throttle out of a corner.
+        // Traction help (player aid, Spec 042): ease the throttle as the rear axle nears its limit,
+        // the way a good driver (and the AI) feeds throttle out of a corner. "Near the limit" is the
+        // larger of the rear tires' combined force use and slip angle relative to peak: lateral
+        // force alone drops as drive force grows, so it hid power oversteer until too late.
         let traction_help = self.config.player.traction_help.clamp(0.0, 1.0);
         let throttle_scale = if traction_help > 0.0 && !clamped_ctrl.reverse {
             let rear_use = [2usize, 3]
                 .iter()
                 .map(|&j| {
                     let w = &self.state.wheels[j];
-                    let grip = self.state.wheel_assemblies[j].config.tire_model.grip;
-                    w.lateral_force.abs() / (w.normal_load * w.surface.friction_coefficient() * grip).max(1.0)
+                    let tire = &self.state.wheel_assemblies[j].config.tire_model;
+                    let envelope = (w.normal_load * w.surface.friction_coefficient() * tire.grip).max(1.0);
+                    let force_use = w.lateral_force.hypot(w.longitudinal_force) / envelope;
+                    let slip_use = w.slip_angle.abs() / tire.peak_slip_angle().max(1e-3);
+                    force_use.max(slip_use)
                 })
                 .fold(0.0f32, f32::max);
-            1.0 - traction_help * ((rear_use - 0.8) / 0.2).clamp(0.0, 1.0)
+            1.0 - traction_help * ((rear_use - 0.65) / 0.25).clamp(0.0, 1.0)
         } else {
             1.0
         };
@@ -1295,7 +1316,13 @@ fn couple_axle(
             // Max physical yaw rate governed by tire grip and aerodynamic downforce
             let downforce_load = self.config.downforce_coefficient * v_long * v_long;
             let effective_g = g + (downforce_load / self.config.mass.max(1.0));
-            let max_physical_yaw_rate = ((avg_surface_mu * effective_g) / v_long.abs().max(2.0)).max(0.60);
+            // The 0.60 rad/s floor only applies at parking speeds; above ~16 m/s it used to exceed
+            // the grip limit (mu*g/v) and switched ESC off in fast corners (Spec 042, review B6).
+            let speed_fade = ((v_long.abs() - 8.0) / 8.0).clamp(0.0, 1.0);
+            let low_speed_floor = 0.60 * (1.0 - speed_fade * speed_fade * (3.0 - 2.0 * speed_fade));
+            // Effective surface grip (ice studs, dirt contamination) times tire grip
+            let grip_mu = surface_mus.iter().sum::<f32>() * 0.25 * self.config.tire.grip;
+            let max_physical_yaw_rate = ((grip_mu * effective_g) / v_long.abs().max(2.0)).max(low_speed_floor);
             let target_yaw_rate = kinematic_yaw_rate.clamp(-max_physical_yaw_rate, max_physical_yaw_rate);
 
             let yaw_error = omega - target_yaw_rate;
@@ -1313,6 +1340,19 @@ fn couple_axle(
                     esc_torque = -excess_yaw * esc_gain;
                     esc_active = true;
                 }
+            }
+
+            // Sideslip control (Spec 042): a real ESC also caps body slip. At the limit a car can
+            // rotate slowly with a yaw error under the threshold while sideslip keeps growing
+            // (sports car, 45 m/s, full input: +0.13 rad/s of sideslip with the yaw term alone).
+            let beta = self.state.sideslip_angle;
+            let strength = self.config.assists.esc_strength.clamp(0.0, 1.0);
+            let beta_limit = 0.08 + 0.25 * (1.0 - strength);
+            if strength > 0.0 && beta.abs() > beta_limit {
+                let speed_boost = 1.0 + (self.state.speed / 20.0).min(3.5);
+                let beta_gain = self.config.inertia * 8.0 * speed_boost * strength;
+                esc_torque -= (beta.abs() - beta_limit) * beta.signum() * beta_gain;
+                esc_active = true;
             }
         }
         self.state.esc_active = esc_active;
