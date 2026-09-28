@@ -3,9 +3,9 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/045_lan_lobby_reuses_circuit_selector_and_garage.md"
 epic: "tdrace-l8uy"
-candidate_commit: "5b2115b8da3249ff58dd9175464f07f61b0dfb9c"
+candidate_commit: "8313fd0b09e2a160c177aa83ff54f94679e1a2d8"
 verifier: "local-user"
-evaluated_at: "2026-09-28T09:07:41Z"
+evaluated_at: "2026-09-28T09:08:09Z"
 command: "cargo test -p cabinet --test net_tests && cargo test -p tdrace-app --test lan_integration_tests -- --skip test_lan_livery_synchronization_and_countdown_handshake"
 exit_code: 0
 duration_ms: 2233
@@ -14,7 +14,7 @@ status: passed
 
 # 🧾 Validation Receipt: Spec 045
 
-- **Candidate Commit**: `5b2115b8da3249ff58dd9175464f07f61b0dfb9c`
+- **Candidate Commit**: `8313fd0b09e2a160c177aa83ff54f94679e1a2d8`
 - **Spec**: `specs/045_lan_lobby_reuses_circuit_selector_and_garage.md`
 - **Command**: `cargo test -p cabinet --test net_tests && cargo test -p tdrace-app --test lan_integration_tests -- --skip test_lan_livery_synchronization_and_countdown_handshake`
 - **Result**: `passed` (exit code: 0)
@@ -45,13 +45,13 @@ test test_lan_host_prevents_split_screen_and_applies_remote_inputs ... ok
 test test_lan_garage_round_trip_keep_alive_and_disconnect ... ok
 test test_lan_multiplayer_hub_lifecycle ... ok
 
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 1.90s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 1.92s
 
 
 stderr:
     Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
      Running tests/net_tests.rs (target/debug/deps/net_tests-f2efd039c955fb49)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
      Running tests/lan_integration_tests.rs (target/debug/deps/lan_integration_tests-abda6711a4825c9c)
 
 ```
