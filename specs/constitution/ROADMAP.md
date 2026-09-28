@@ -21,6 +21,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Extreme Off-Road & Stunt Arenas Career Mode](../003_extreme_offroad_and_stunt_arenas_career_mode.md)**: 5-tier off-road and stunt arena career progression with freestyle scoring.
 - `[x]` **[Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits](../048_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md)**: Rallycross on every screen, RX1e and Nitrocross Group E tiers, Rally Raid T1+ and SST cars parked in Extreme Off-Road, and three circuits from the official Mint 400 GPX files.
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
+- `[ ]` **[FIA Autocross Championship and Vehicle Roster](../050_fia_autocross_championship_and_vehicle_roster.md)**: Dedicated FIA Autocross discipline, 5 tiers (Cross Car Junior, Cross Car Senior, Buggy1600, TouringAutocross, SuperBuggy), 15 authentic vehicles (3 per tier), 17 dedicated European dirt circuits, pure off-road sprint racing format with no joker lap.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
 - `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
