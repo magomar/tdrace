@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Human-Like Bot Driving with Tiered Mistakes and Varied Lines"
 description: "Give each bot a seeded random driver model: a wandering line, per-corner line choice, braking-point and corner-speed variation, reaction lag, and tier- and style-driven mistakes (late braking, overdriving, power spins, over-correction, caution), so that Tier 1 and 2 bots are beatable and no two laps are the same."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-046-receipt.md"
 verified: { by: human:Mario Gomez, at: 2026-09-28T08:58:06Z }
 created: 2026-09-28
