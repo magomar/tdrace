@@ -332,6 +332,12 @@ fn get_wheel_geometry(
         "rally_audi_sport_quattro_s1" | "rally_peugeot_205_t16" | "rally_lancia_delta_s4" => {
             (cx + hl * 0.46, cx - hl * 0.44, 13.0 * s, WheelStyle::RallyGravel)
         }
+        "rally_peugeot_208_rx1e" | "rally_polo_rx1e" | "rally_lancia_delta_evo_e_rx" => {
+            (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel)
+        }
+        "rally_omse_fc1x" | "rally_vsc_fc1x" | "rally_dodge_hornet_fc1x" => {
+            (cx + hl * 0.50, cx - hl * 0.48, 13.5 * s, WheelStyle::RallyGravel)
+        }
         "rally_toyota_hilux_t1_plus" | "rally_audi_rs_q_etron" | "rally_prodrive_hunter_t1" => {
             (cx + hl * 0.52, cx - hl * 0.48, 16.5 * s, WheelStyle::MudTractorChevron)
         }
@@ -551,6 +557,13 @@ fn render_specific_body(
         "rally_audi_sport_quattro_s1" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_peugeot_205_t16" => render_rally_peugeot_205_t16(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_lancia_delta_s4" => render_rally_lancia_delta_s4(cx, cy, gy, hl, s, primary, secondary, helmet),
+        // Spec 048: the RX1e and FC1-X cars reuse the closest RX body until they get their own
+        "rally_peugeot_208_rx1e" => render_rally_peugeot_208(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_polo_rx1e" => render_rally_polo_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_lancia_delta_evo_e_rx" => render_rally_lancia_delta_s4(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_omse_fc1x" => render_rally_audi_s1_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_vsc_fc1x" => render_rally_hyundai_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "rally_dodge_hornet_fc1x" => render_rally_polo_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_toyota_hilux_t1_plus" => render_rally_hilux_t1(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_audi_rs_q_etron" => render_rally_audi_rs_q_etron(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_prodrive_hunter_t1" => render_rally_prodrive_hunter(cx, cy, gy, hl, s, primary, secondary, helmet),

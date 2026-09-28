@@ -484,6 +484,78 @@
     "rel_path": "tracks/extreme_offroad/louisiana_mud_swampland.json"
   },
   {
+    "id": "mint400_grand_loop",
+    "name": "Mint 400 Grand Loop",
+    "module": "extreme_offroad",
+    "category": "offroad",
+    "modality": "OFFROAD",
+    "description": "The whole 148 km Car/Truck/UTV course of the Mint 400, shrunk to a fast desert lap: the real shape of the Great American Off-Road Race, from the official 2026 course file.",
+    "scale": "0.05x",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+    "osm_url": null,
+    "country_code": "US",
+    "country_name": "United States",
+    "min_width_meters": 16.0,
+    "max_width_meters": 16.0,
+    "is_inspired": false,
+    "length_meters": 4395.5,
+    "turns_count": 0,
+    "surfaces": [
+      "PackedSand"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/extreme_offroad/mint400_grand_loop.svg",
+    "rel_path": "tracks/extreme_offroad/mint400_grand_loop.json"
+  },
+  {
+    "id": "mint400_qualifying_loop",
+    "name": "Mint 400 Qualifying Loop",
+    "module": "extreme_offroad",
+    "category": "offroad",
+    "modality": "OFFROAD",
+    "description": "The 9 km Mint 400 qualifying loop at Primm, Nevada: long desert straights, rocky switchbacks and a wide sweeper, from the official 2026 course file.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+    "osm_url": null,
+    "country_code": "US",
+    "country_name": "United States",
+    "min_width_meters": 16.0,
+    "max_width_meters": 16.0,
+    "is_inspired": false,
+    "length_meters": 9484.6,
+    "turns_count": 0,
+    "surfaces": [
+      "PackedSand"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/extreme_offroad/mint400_qualifying_loop.svg",
+    "rel_path": "tracks/extreme_offroad/mint400_qualifying_loop.json"
+  },
+  {
+    "id": "mint400_short_course",
+    "name": "Mint 400 Short Course",
+    "module": "extreme_offroad",
+    "category": "offroad",
+    "modality": "OFFROAD",
+    "description": "The 2.3 km Youth 170/250 loop of the Mint 400 at Primm, Nevada: tight desert sweepers and a hairpin, from the official 2026 course file.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+    "osm_url": null,
+    "country_code": "US",
+    "country_name": "United States",
+    "min_width_meters": 14.0,
+    "max_width_meters": 14.0,
+    "is_inspired": false,
+    "length_meters": 2128.7,
+    "turns_count": 0,
+    "surfaces": [
+      "PackedSand"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/extreme_offroad/mint400_short_course.svg",
+    "rel_path": "tracks/extreme_offroad/mint400_short_course.json"
+  },
+  {
     "id": "monster_colosseum",
     "name": "Monster Colosseum",
     "module": "extreme_offroad",

@@ -140,7 +140,7 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 fn module_label(module: &str) -> &'static str {
     match module {
         "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
-        "rally" => "RALLY CROSS",
+        "rally" => "RALLYCROSS",
         "kart" => "KARTING",
         "nascar" => "NASCAR CUP",
         "extreme_offroad" => "EXTREME OFF-ROAD",

@@ -776,7 +776,7 @@ mod tests {
         assert_eq!(offroad.id(), "extreme_offroad");
         assert_eq!(offroad.title(), "EXTREME OFF-ROAD & STUNT ARENAS");
         assert_eq!(offroad.vehicles().len(), 1);
-        assert_eq!(offroad.tracks().len(), 17);
+        assert_eq!(offroad.tracks().len(), 20);
         assert_eq!(offroad.drivers().len(), 12);
         assert_eq!(offroad.default_vehicle_id(), "sand_rail_buggy");
         assert_eq!(offroad.default_track_id(), "sahara_dune_crossing");

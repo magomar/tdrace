@@ -140,7 +140,7 @@ pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
     ("ALL", None),
     ("GT", Some("gt")),
     ("NASCAR", Some("nascar")),
-    ("RALLY", Some("rally")),
+    ("RALLYCROSS", Some("rally")),
     ("OFF-ROAD", Some("extreme_offroad")),
     ("KART", Some("kart")),
     ("CLASSIC", Some("classic")),

@@ -1,17 +1,17 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: Stadium Super Trucks World Series (Tier 5)
+# Rallycross Career Mode: RX1e Electric Championship (Tier 4)
 # ==============================================================================
 
 [championship]
-id = "rally_super_trucks_series"
-name = "Stadium Super Trucks World Series"
-description = "The wild world of 650 BHP V8 Stadium Super Trucks flying off steel ramps and cornering on three wheels across 12 world circuits."
+id = "rally_rx1e_electric_championship"
+name = "RX1e Electric Championship"
+description = "680 BHP all-electric RX1e supercars with instant torque, tackling 10 World RX mixed-surface circuits."
 module_id = "rally"
-tier = 5
+tier = 4
 laps_per_round = 5
 bot_count = 7
-ai_difficulty = "legend"
+ai_difficulty = "pro"
 icon = "dirt"
 
 [scoring]
@@ -22,20 +22,20 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "catalunya_rx"
-name = "Circuit de Barcelona-Catalunya RX"
+track_id = "nyirad_rx"
+name = "Nyirád Racing Center"
 laps = 5
 
 [[rounds]]
 order = 2
-track_id = "lessay_rx"
-name = "Circuit de Lessay"
+track_id = "kouvola_rx"
+name = "Tykkimäki Circuit Kouvola"
 laps = 5
 
 [[rounds]]
 order = 3
-track_id = "essay_rx"
-name = "Circuit des Ducs Essay"
+track_id = "killarney_rx"
+name = "Killarney International Raceway RX"
 laps = 5
 
 [[rounds]]
@@ -58,38 +58,26 @@ laps = 5
 
 [[rounds]]
 order = 7
-track_id = "nyirad_rx"
-name = "Nyirád Racing Center"
-laps = 5
-
-[[rounds]]
-order = 8
-track_id = "kouvola_rx"
-name = "Tykkimäki Circuit Kouvola"
-laps = 5
-
-[[rounds]]
-order = 9
-track_id = "killarney_rx"
-name = "Killarney International Raceway RX"
-laps = 5
-
-[[rounds]]
-order = 10
 track_id = "lavare_rx"
 name = "Circuit de Lavaré"
 laps = 5
 
 [[rounds]]
-order = 11
+order = 8
 track_id = "riga_rx"
 name = "Biķernieki Track Riga"
 laps = 5
 
 [[rounds]]
-order = 12
+order = 9
 track_id = "holjes_rx"
 name = "Höljes Motorstadion"
+laps = 5
+
+[[rounds]]
+order = 10
+track_id = "lydden_hill"
+name = "Lydden Hill Race Circuit"
 laps = 5
 
 [[drivers]]
@@ -97,7 +85,7 @@ id = "player"
 name = "Player"
 team = "Apex Rally Team"
 is_player = true
-car_model_id = "rally_sst_super_truck"
+car_model_id = "rally_peugeot_208_rx1e"
 country = "ESP"
 livery_idx = 0
 
@@ -105,7 +93,7 @@ livery_idx = 0
 id = "johan_kristoffersson"
 name = "Johan Kristoffersson"
 team = "KMS Volkswagen"
-car_model_id = "rally_sst_super_truck"
+car_model_id = "rally_polo_rx1e"
 country = "SWE"
 ai_character = "fast"
 livery_idx = 1
@@ -114,7 +102,7 @@ livery_idx = 1
 id = "mattias_ekstrom"
 name = "Mattias Ekström"
 team = "EKS Audi Sport"
-car_model_id = "rally_sst_robby_gordon"
+car_model_id = "rally_lancia_delta_evo_e_rx"
 country = "SWE"
 ai_character = "aggressive"
 livery_idx = 2
@@ -123,7 +111,7 @@ livery_idx = 2
 id = "timmy_hansen"
 name = "Timmy Hansen"
 team = "Hansen Motorsport"
-car_model_id = "rally_sst_traxxas_edition"
+car_model_id = "rally_peugeot_208_rx1e"
 country = "SWE"
 ai_character = "smooth"
 livery_idx = 3
@@ -132,7 +120,7 @@ livery_idx = 3
 id = "petter_solberg"
 name = "Petter Solberg"
 team = "PSRX Volkswagen Sweden"
-car_model_id = "rally_sst_robby_gordon"
+car_model_id = "rally_polo_rx1e"
 country = "NOR"
 ai_character = "tenacious"
 livery_idx = 4
@@ -141,7 +129,7 @@ livery_idx = 4
 id = "kevin_hansen"
 name = "Kevin Hansen"
 team = "Hansen Motorsport"
-car_model_id = "rally_sst_traxxas_edition"
+car_model_id = "rally_peugeot_208_rx1e"
 country = "SWE"
 ai_character = "strategic"
 livery_idx = 5
@@ -150,7 +138,7 @@ livery_idx = 5
 id = "niclas_gronholm"
 name = "Niclas Grönholm"
 team = "GRX Taneco"
-car_model_id = "rally_sst_super_truck"
+car_model_id = "rally_lancia_delta_evo_e_rx"
 country = "FIN"
 ai_character = "calculating"
 livery_idx = 6
@@ -159,7 +147,7 @@ livery_idx = 6
 id = "andreas_bakkerud"
 name = "Andreas Bakkerud"
 team = "Monster Energy RX"
-car_model_id = "rally_sst_traxxas_edition"
+car_model_id = "rally_lancia_delta_evo_e_rx"
 country = "NOR"
 ai_character = "aggressive"
 livery_idx = 7

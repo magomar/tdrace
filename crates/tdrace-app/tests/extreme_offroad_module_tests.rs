@@ -38,7 +38,7 @@ fn test_extreme_offroad_module_identity_and_vehicles() {
 fn test_extreme_offroad_tracks_and_geometry_validation() {
     let offroad = ExtremeOffRoadModule::new();
     let tracks = offroad.tracks();
-    assert_eq!(tracks.len(), 17, "Expected 17 Extreme Off-Road tracks & arenas");
+    assert_eq!(tracks.len(), 20, "Expected 20 Extreme Off-Road tracks & arenas");
 
     let expected_ids = [
         "sahara_dune_crossing",
@@ -58,6 +58,9 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
         "stunt_city_megastructure",
         "glamis_dunes",
         "crandon_short_course",
+        "mint400_short_course",
+        "mint400_qualifying_loop",
+        "mint400_grand_loop",
     ];
 
     let tracks_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

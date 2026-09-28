@@ -227,7 +227,7 @@ def generate_assets():
     MODULE_NAMES = {
         "gt": "Gran Turismo & Endurance",
         "nascar": "NASCAR Stock Car Racing",
-        "rally": "Rallycross & All-Terrain",
+        "rally": "Rallycross",
         "extreme_offroad": "Extreme Off-Road & Arenas",
         "kart": "Karting & Micro-Racers",
     }
@@ -235,8 +235,8 @@ def generate_assets():
     BADGES = {
         "gt": {1: "GT4", 2: "GT3", 3: "GT2", 4: "GT1", 5: "LMH"},
         "nascar": {1: "STREET", 2: "LATE", 3: "ARCA", 4: "TRUCK", 5: "TA1"},
-        "rally": {1: "RALLY4", 2: "WRX", 3: "GRPB", 4: "T1+", 5: "SST"},
-        "extreme_offroad": {1: "RAIL", 2: "TROPHY", 3: "ICE", 4: "MUD", 5: "MONSTER"},
+        "rally": {1: "RALLY4", 2: "WRX", 3: "GRPB", 4: "RX1E", 5: "GRP E"},
+        "extreme_offroad": {1: "RAIL", 2: "TROPHY", 3: "ICE", 4: "MUD", 5: "MONSTER", 6: "T1+", 7: "SST"},
         "kart": {1: "CADET", 2: "OK-J", 3: "KZ2", 4: "MOWER", 5: "SUPER"},
     }
 
@@ -278,7 +278,7 @@ def generate_assets():
             "downforce": int(round(raw_s[5] * 100)),
         }
 
-        force_per_bhp = 38.0 if mod_id == 'kart' else (14.0 if mod_id == 'extreme_offroad' and tier >= 4 else 17.5)
+        force_per_bhp = 38.0 if mod_id == 'kart' else (14.0 if mod_id == 'extreme_offroad' and 4 <= tier <= 5 else 17.5)
         engine_force = int(bhp * force_per_bhp)
         drive_bias = 1.0 if drivetrain == 'FWD' else (0.5 if drivetrain in ['AWD', '4WD'] else 0.0)
 

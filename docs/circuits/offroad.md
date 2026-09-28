@@ -13,9 +13,9 @@ The **Extreme Off-Road & Stunt Arenas** catalog covers 15 specialized motorsport
 
 ---
 
-## 📋 Extreme Venues Roster (17 Circuits)
+## 📋 Extreme Venues Roster (20 Circuits)
 
-### Tier 1: Desert Sand Sprint Series (5 Starter Circuits)
+### Tier 1: Desert Sand Sprint Series (8 Starter Circuits)
 | Venue | Identifier / Generator | Category | Surface Environment | Primary Hazards & Signature Features |
 | :--- | :--- | :--- | :--- | :--- |
 | **Sahara Dune Crossing** | `sahara_dune_crossing` | Desert Raid | Open Sand Dunes | High-speed sweeping desert crossing over cresting sand dunes with 3 tabletop jump ramps. |
@@ -23,6 +23,20 @@ The **Extreme Off-Road & Stunt Arenas** catalog covers 15 specialized motorsport
 | **Atacama Sand Basin** | `atacama_sand_basin` | Desert Raid | Dried Salt Flats & Fine Sand | Massive high-speed desert basin with sweeping sand curves and cresting jumps. |
 | **Glamis Imperial Sand Dunes** | `glamis_dunes` | Desert Raid | Open Sand Dunes | Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls. |
 | **Crandon International Off-Road** | `crandon_short_course` | Mud & Quarry | Short Course Clay | The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps. |
+| **Mint 400 Short Course** | `mint400_short_course` | Desert Race | Packed Desert Sand | The 2.1 km Youth 170/250 loop of the Mint 400 at Primm, Nevada, 1:1. |
+| **Mint 400 Qualifying Loop** | `mint400_qualifying_loop` | Desert Race | Packed Desert Sand | The 9.5 km Mint 400 qualifying loop, 1:1: long desert straights and rocky switchbacks. |
+| **Mint 400 Grand Loop** | `mint400_grand_loop` | Desert Race | Packed Desert Sand | The whole 148 km Car/Truck/UTV course at 0.05x (4.4 km lap), with its out-and-back spurs cut. |
+
+The three Mint 400 circuits (spec 048) come from the official 2026 GPX course files
+(<https://themint400.com/race-format/>), cached in `assets/gpx/`. Desert races are not in
+OpenStreetMap, so `scripts/gpx_importer.py` builds them: it scales the course, cuts the
+out-and-back spurs and the start spur (parts closer than 2.2 track widths), rounds the corners,
+and closes the loop. Then `track_bake` makes the walls, checkpoints and grid:
+
+```bash
+python3 scripts/gpx_importer.py --json
+cargo run --bin track_bake -- tracks/extreme_offroad/mint400_short_course.json --barrier-type TireWall
+```
 
 ### Tier 2: Canyon & Baja Trail Challenge (3 Circuits)
 | Venue | Identifier / Generator | Category | Surface Environment | Primary Hazards & Signature Features |

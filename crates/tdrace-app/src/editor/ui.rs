@@ -2550,7 +2550,7 @@ fn render_inspector(
             let categories = [
                 (CarCategory::Gt, "GT"),
                 (CarCategory::Nascar, "NASCAR"),
-                (CarCategory::Rally, "Rally"),
+                (CarCategory::Rally, "Rallycross"),
                 (CarCategory::Kart, "Kart"),
                 (CarCategory::OffRoad, "Off-Road"),
             ];
@@ -3966,7 +3966,7 @@ fn render_open_modal(
         ("ALL", "all"),
         ("CLASSIC", "classic"),
         ("GT", "gt"),
-        ("RALLY", "rally"),
+        ("RALLYCROSS", "rally"),
         ("KARTING", "kart"),
         ("CUSTOM", "custom"),
     ];

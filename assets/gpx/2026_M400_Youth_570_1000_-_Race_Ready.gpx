@@ -1,0 +1,1727 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:leadnav="http://www.leadnavsystems.com/GPX/Extensions/1" version="1.1" creator="LeadNav GPS http://www.leadnavsystems.com/">
+  <metadata>
+    <time>2026-03-01T20:11:27Z</time>
+  </metadata>
+  <wpt lat="35.616519" lon="-115.379611">
+    <name>Start Line</name>
+    <extensions>
+      <ogr:description>Time Started: 2/15/26, 9:28:55 AM PST</ogr:description>
+    </extensions>
+  </wpt>
+  <wpt lat="35.615185" lon="-115.379432">
+    <name>Finish Line</name>
+    <extensions>
+      <ogr:gx_media_links>https://lh3.googleusercontent.com/umsh/AN6v0v5sr0Zw9Z2nimN9M5zei-OmVvvQD-sMK7ZLZqJde8vQgCc2qmxgq5846uYrr-SjeAtnbKpK10VlXbFtD_ONUw4NQSDgLObBU2aHF-Y-zOHIWr71DDN8wrXr95foknRbmrtWWSc_qNMfTwz48zBDyZ2Df4Rgyno0PQx3dZFdghdUdhhTMHUjKmpsIClcpQyDCeTrX-DMAnlJqC1T8ckqJiE03_wsEFEWDCliqXaeteSy7Ce5Rt2r1TCbMrkiqswLlUYQDrtNqZiaHPhRKdhv6JP92xllm6MD-Kqmx-lCoRUidh6LSNruyChNbUyhNPSYav5ZlQlKShcNTV9XD5MgM7CoCk-9UKcMdLgeWto1nPQPUL_ZAW7tw2SyXhTsN9Jvwq8__Odik1yPNhNBTYdP0kpDYC7nSHCP64fQUCGyl6HfUWw8YHIA91y9BfxyOKr7JyvIlzzs-L3rQzsGHKZm5TkudxTjbZxE9OMTaR4uFnIgOXnu6CUIG_vSHSLtTvrdg7odKpaMZCgFbEtG0oq9akf4q66nfGXJxj208OeWOeKcAn1jlTVV1EwoSjtkhdrv6bxKhsO8_PXx49q53VmVYF67bl3PFs3L419GkuI5Z5PFt3bHVLPf796nNGxX9TlVEDpbHt0LL5RqQAJ10RW-FzTS-KyqpVF7riMuY79P5FwH_iFDuYYzzBOeLEnPdkn13RJdLdUjHD9eFZUI5p824ccF6HRLZqymbSDSHDgja997VZOaELhx7Cs8HcK-v2323pBVVcFh_vwTWgTMDy9CQ9LLQNVLylvDiA6RosvgPpcDFs5A6B7Tx86xkXe-W4mUWfK35WFNBREnUnq5K898XB3hHAUNuNUJPp3yz5dLgrh1KBz9y-UmK-Bt54mheOVxX6NjMkzZgIKBSsLGwzzOHImQcwiqk7yHzKLCUo_VzwNU4ay-WM8eA1bVSavb92mEi30czRaUDTptkF8Nrd58cBFskNzVn48_mDlvIAARsrj6niQkqO4Sq_e5uSBjdz1ZdJTeNmAItQrLVZ32EO-Ve_gfeJVFLBIPJxIPmImhuVgd</ogr:gx_media_links>
+      <ogr:Average_Moving_Speed>23.1 mph</ogr:Average_Moving_Speed>
+      <ogr:Average_Speed>23.1 mph</ogr:Average_Speed>
+      <ogr:Elevation_Gain>103.0 ft</ogr:Elevation_Gain>
+      <ogr:Max_Elevation>2,742.5 ft</ogr:Max_Elevation>
+      <ogr:Max_Speed>45.9 mph</ogr:Max_Speed>
+      <ogr:Min_Elevation>2,639.5 ft</ogr:Min_Elevation>
+      <ogr:Recorded>2/15/26, 9:28:55 AM PST</ogr:Recorded>
+      <ogr:Time_Stopped>2/15/95, 9:45:26 AM PST</ogr:Time_Stopped>
+      <ogr:Total_Distance>6.3 mi</ogr:Total_Distance>
+    </extensions>
+  </wpt>
+  <wpt lat="35.611613" lon="-115.371116">
+    <name>Danger Rocks</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.604277" lon="-115.369123">
+    <name>Danger Ahead</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.605967" lon="-115.368747">
+    <name>Double Danger Gout</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.613356" lon="-115.375601">
+    <name>RM 0.5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.611358" lon="-115.370627">
+    <name>RM 1</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.607955" lon="-115.373293">
+    <name>RM 1.5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.610049" lon="-115.379763">
+    <name>RM 2</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.604920" lon="-115.374620">
+    <name>RM 2.5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.599622" lon="-115.380492">
+    <name>RM 3</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.597311" lon="-115.373486">
+    <name>RM 3.5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.602157" lon="-115.369712">
+    <name>RM 4</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.609276" lon="-115.367989">
+    <name>RM 4.5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <wpt lat="35.614569" lon="-115.368449">
+    <name>RM 5</name>
+    <extensions>
+  </extensions>
+  </wpt>
+  <trk>
+    <name>2026 M400 Youth 570/1000 - Race Ready</name>
+    <trkseg>
+      <trkpt lat="35.616519" lon="-115.379611">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616117" lon="-115.379650">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615656" lon="-115.379664">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614804" lon="-115.379748">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614589" lon="-115.379744">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614352" lon="-115.379714">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613993" lon="-115.379563">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613426" lon="-115.379126">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613256" lon="-115.379009">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612836" lon="-115.378801">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612606" lon="-115.378665">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612497" lon="-115.378575">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612405" lon="-115.378466">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612272" lon="-115.378388">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612157" lon="-115.378294">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612024" lon="-115.378099">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611967" lon="-115.377988">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611907" lon="-115.377764">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611913" lon="-115.377451">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612006" lon="-115.377237">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612151" lon="-115.377066">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612588" lon="-115.376741">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612814" lon="-115.376345">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612997" lon="-115.376074">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613343" lon="-115.375628">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613441" lon="-115.375562">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613605" lon="-115.375472">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613681" lon="-115.375415">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613736" lon="-115.375386">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613792" lon="-115.375345">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613847" lon="-115.375272">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613927" lon="-115.375218">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614006" lon="-115.375142">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614079" lon="-115.375050">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614208" lon="-115.374823">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614377" lon="-115.374654">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614396" lon="-115.374537">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614375" lon="-115.374419">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614212" lon="-115.374087">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614171" lon="-115.373956">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614118" lon="-115.373646">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614115" lon="-115.373474">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614133" lon="-115.373294">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614167" lon="-115.373113">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614257" lon="-115.372740">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614366" lon="-115.372361">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614429" lon="-115.372002">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614434" lon="-115.371853">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614407" lon="-115.371709">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614343" lon="-115.371578">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614250" lon="-115.371479">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614153" lon="-115.371394">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614050" lon="-115.371339">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613942" lon="-115.371314">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613639" lon="-115.371304">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613191" lon="-115.371095">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613112" lon="-115.371068">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613027" lon="-115.371054">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612697" lon="-115.371083">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612572" lon="-115.371103">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612184" lon="-115.371204">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612109" lon="-115.371213">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611747" lon="-115.371199">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611634" lon="-115.371143">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611597" lon="-115.371098">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611530" lon="-115.370982">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611326" lon="-115.370520">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611287" lon="-115.370458">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611234" lon="-115.370409">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611185" lon="-115.370384">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611021" lon="-115.370347">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610919" lon="-115.370286">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610800" lon="-115.370250">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610681" lon="-115.370195">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610451" lon="-115.370032">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610316" lon="-115.369976">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609910" lon="-115.369733">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609777" lon="-115.369631">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609645" lon="-115.369548">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609269" lon="-115.369446">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609181" lon="-115.369368">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609081" lon="-115.369322">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608974" lon="-115.369320">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608850" lon="-115.369301">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608730" lon="-115.369256">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608621" lon="-115.369231">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608509" lon="-115.369242">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608421" lon="-115.369285">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608349" lon="-115.369357">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608045" lon="-115.369793">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607454" lon="-115.370547">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607361" lon="-115.370694">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607291" lon="-115.370838">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607236" lon="-115.370994">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607187" lon="-115.371280">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607201" lon="-115.371438">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607245" lon="-115.371605">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607303" lon="-115.371775">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607387" lon="-115.371943">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607586" lon="-115.372283">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607826" lon="-115.372750">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607869" lon="-115.372889">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607927" lon="-115.373195">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607991" lon="-115.373330">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608084" lon="-115.373435">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608191" lon="-115.373526">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608282" lon="-115.373650">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608479" lon="-115.373959">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608696" lon="-115.374231">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608768" lon="-115.374300">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608795" lon="-115.374321">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609033" lon="-115.374475">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609144" lon="-115.374535">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609208" lon="-115.374588">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609500" lon="-115.374952">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609572" lon="-115.375080">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609715" lon="-115.375409">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609796" lon="-115.375565">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609864" lon="-115.375683">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610035" lon="-115.375901">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610079" lon="-115.375990">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610112" lon="-115.376097">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610188" lon="-115.376513">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610183" lon="-115.376626">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610153" lon="-115.376756">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610135" lon="-115.376903">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610133" lon="-115.377042">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610164" lon="-115.377152">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610273" lon="-115.377363">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610314" lon="-115.377638">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610398" lon="-115.377958">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610538" lon="-115.378282">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610591" lon="-115.378451">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610652" lon="-115.378589">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610734" lon="-115.378738">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610887" lon="-115.379121">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610909" lon="-115.379220">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610920" lon="-115.379328">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610910" lon="-115.379440">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610867" lon="-115.379680">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610843" lon="-115.379744">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610793" lon="-115.379784">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610574" lon="-115.379768">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610025" lon="-115.379781">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609630" lon="-115.379811">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609364" lon="-115.379817">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.609101" lon="-115.379835">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608858" lon="-115.379810">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608607" lon="-115.379818">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608506" lon="-115.379786">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608428" lon="-115.379710">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608365" lon="-115.379599">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608305" lon="-115.379460">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.608150" lon="-115.379157">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607991" lon="-115.378870">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607324" lon="-115.377742">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607128" lon="-115.377445">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606938" lon="-115.377132">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606717" lon="-115.376831">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606098" lon="-115.375913">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605864" lon="-115.375541">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605314" lon="-115.374717">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605240" lon="-115.374631">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605152" lon="-115.374584">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605050" lon="-115.374586">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.604943" lon="-115.374626">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.604703" lon="-115.374767">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.604253" lon="-115.374964">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.604137" lon="-115.375045">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603992" lon="-115.375095">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603844" lon="-115.375167">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603612" lon="-115.375323">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603543" lon="-115.375421">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603484" lon="-115.375541">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603345" lon="-115.375743">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.602607" lon="-115.376684">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.602415" lon="-115.376914">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.601671" lon="-115.377888">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.601411" lon="-115.378202">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.600116" lon="-115.379867">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599735" lon="-115.380326">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599637" lon="-115.380452">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599554" lon="-115.380579">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599460" lon="-115.380686">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599362" lon="-115.380755">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599257" lon="-115.380790">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599139" lon="-115.380787">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.599015" lon="-115.380757">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598894" lon="-115.380706">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598789" lon="-115.380632">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598708" lon="-115.380522">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598632" lon="-115.380387">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598119" lon="-115.379761">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598073" lon="-115.379662">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598056" lon="-115.379561">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598065" lon="-115.379460">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598128" lon="-115.379244">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598121" lon="-115.379133">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.598088" lon="-115.379010">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597937" lon="-115.378589">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597919" lon="-115.378433">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597918" lon="-115.378266">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597955" lon="-115.377755">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597941" lon="-115.377599">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597905" lon="-115.377456">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597855" lon="-115.377320">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597789" lon="-115.377202">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597711" lon="-115.377099">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597652" lon="-115.376972">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597609" lon="-115.376821">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597524" lon="-115.376309">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597448" lon="-115.375986">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597433" lon="-115.375846">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597441" lon="-115.375712">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597481" lon="-115.375578">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597539" lon="-115.375444">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597578" lon="-115.375311">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597611" lon="-115.375039">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597609" lon="-115.374894">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597594" lon="-115.374759">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597539" lon="-115.374499">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597520" lon="-115.374333">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597459" lon="-115.374017">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597329" lon="-115.373526">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597309" lon="-115.373418">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597245" lon="-115.372850">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597167" lon="-115.372561">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597108" lon="-115.372421">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597064" lon="-115.372274">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597046" lon="-115.372115">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597045" lon="-115.371772">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597012" lon="-115.371407">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597017" lon="-115.371126">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597044" lon="-115.371036">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597096" lon="-115.370973">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597160" lon="-115.370944">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597241" lon="-115.370958">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597345" lon="-115.370962">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.597603" lon="-115.370910">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.601249" lon="-115.370010">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.602491" lon="-115.369622">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.603761" lon="-115.369278">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.604059" lon="-115.369184">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.605053" lon="-115.368930">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606180" lon="-115.368734">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606570" lon="-115.368640">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.606837" lon="-115.368561">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607236" lon="-115.368498">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.607684" lon="-115.368403">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.610858" lon="-115.367663">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611121" lon="-115.367615">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611394" lon="-115.367616">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611628" lon="-115.367727">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611746" lon="-115.367895">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611803" lon="-115.368011">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611861" lon="-115.368173">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611888" lon="-115.368350">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611912" lon="-115.369342">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611910" lon="-115.369698">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611933" lon="-115.369820">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.611999" lon="-115.369912">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612086" lon="-115.369971">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612202" lon="-115.369984">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612324" lon="-115.369976">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612457" lon="-115.369949">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.612750" lon="-115.369859">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613229" lon="-115.369733">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613362" lon="-115.369678">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613477" lon="-115.369575">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613907" lon="-115.368993">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614048" lon="-115.368850">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614204" lon="-115.368720">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614542" lon="-115.368481">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615071" lon="-115.368015">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615148" lon="-115.367995">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615217" lon="-115.368039">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615274" lon="-115.368121">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615349" lon="-115.368341">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615376" lon="-115.368459">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615388" lon="-115.368829">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615433" lon="-115.369167">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615679" lon="-115.370158">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615716" lon="-115.370363">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615729" lon="-115.370549">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615712" lon="-115.370937">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615688" lon="-115.371138">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615406" lon="-115.372857">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615151" lon="-115.373836">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614839" lon="-115.374903">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614562" lon="-115.376115">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614499" lon="-115.376266">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614375" lon="-115.376500">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614278" lon="-115.376620">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613724" lon="-115.377142">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613536" lon="-115.377383">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613194" lon="-115.377858">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613148" lon="-115.377965">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613146" lon="-115.378087">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613190" lon="-115.378195">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613301" lon="-115.378353">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613373" lon="-115.378436">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613441" lon="-115.378505">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613524" lon="-115.378573">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613589" lon="-115.378611">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613660" lon="-115.378656">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613901" lon="-115.378743">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614128" lon="-115.378802">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614206" lon="-115.378832">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.614289" lon="-115.378860">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615062" lon="-115.379077">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615223" lon="-115.379107">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615350" lon="-115.379119">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615765" lon="-115.379107">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615904" lon="-115.379093">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616052" lon="-115.379068">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616426" lon="-115.378979">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616535" lon="-115.378970">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616635" lon="-115.379007">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616696" lon="-115.379094">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616693" lon="-115.379212">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616627" lon="-115.379324">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.616519" lon="-115.379385">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615716" lon="-115.379417">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615462" lon="-115.379436">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.615185" lon="-115.379436">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+      <trkpt lat="35.613984" lon="-115.379434">
+        <extensions>
+          <leadnav:type>Serpentine</leadnav:type>
+        </extensions>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
