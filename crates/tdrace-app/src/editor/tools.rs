@@ -118,6 +118,10 @@ pub struct ToolSettings {
     // Bar control selection and inline manual text editing
     pub selected_bar: Option<String>,
     pub editing_bar: Option<(String, String)>,
+
+    /// Set when this frame's Escape already cancelled an unfinished polygon, so the
+    /// editor UI does not also treat it as "exit the editor".
+    pub escape_consumed: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -176,6 +180,7 @@ impl Default for ToolSettings {
             drag_initial_pit_box: None,
             selected_bar: None,
             editing_bar: None,
+            escape_consumed: false,
         }
     }
 }
