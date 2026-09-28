@@ -42,11 +42,11 @@ fn test_nascar_tracks_follow_the_scale_rule() {
         assert_eq!(track.scale(), label, "{} ({} m real) must declare {}", def.id, official, label);
 
         // The spline rounds the OSM corners, so the lap is a little shorter than the target
-        // (Road America, the oldest import, is 3.4% short).
+        // (Chicago, with its 90° street corners, is 2% short).
         let target = official * factor;
         let lap = track.spline.total_length();
         assert!(
-            (lap - target).abs() / target < 0.04,
+            (lap - target).abs() / target < 0.03,
             "{} lap is {:.0} m, expected {:.0} m ({} of {} m)",
             def.id,
             lap,

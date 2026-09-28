@@ -9,7 +9,8 @@ One importer for the OpenStreetMap (OSM) circuits of four disciplines:
   kart   CIK-FIA kart circuits at 1:1 (waypoint vec for crates/tdrace-app/src/module/kart.rs)
   rally  World RX rallycross circuits at 1:1 with asphalt/dirt surfaces
          (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
-  nascar NASCAR ovals and road courses: 1:1 under 3 km, 0.75x above, with banking per corner
+  nascar NASCAR ovals and road courses: 1:1 under 3 km, Road America 0.5x, the rest 0.75x,
+         with banking per corner
          (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
 
 Every circuit goes through the same steps: select the raceway nodes, project them to
@@ -1923,6 +1924,48 @@ NASCAR_TRACKS = {
         "straight_bank": 3.0,
         "corner_banks": [33.0],
         "bend_bank": 16.5,  # tri-oval
+    },
+    "eldora": {
+        "name": "Eldora Speedway",
+        "segments": [(608397609, None)],
+        "start_node": 5764072235,  # mapped raceway=start-finish node
+        "official_length": 805.0,  # the OSM way is 686 m, the inside line
+        "scale": 1.0,
+        "num_waypoints": 16,
+        "width": 18.0,
+        "straight_bank": 8.0,
+        "corner_banks": [24.0],
+        "surface": "Dirt",
+    },
+    "iowa": {
+        "name": "Iowa Speedway",
+        "segments": [(119238784, None)],
+        "start_node": 1340393901,
+        "start_offset_m": 41.0,  # frontstretch, level with the middle of pit road
+        "official_length": 1408.0,
+        "scale": 1.0,
+        "num_waypoints": 24,
+        "width": 20.0,
+        "straight_bank": 4.0,
+        "corner_banks": [14.0],
+        "bend_bank": 10.0,  # frontstretch dogleg
+    },
+    "road_america": {
+        "name": "Road America",
+        # Relation 6432758 ("Road America Circuit"), in race order from the main straight.
+        "segments": [(w, None) for w in (
+            122090289, 122090268, 122090299, 122090258, 122090260, 122090240, 122090275, 122090272, 122090284,
+            122090298, 110527567, 122090265, 122090279, 122090248, 122090267, 122090239, 122090291, 122090276,
+            122090286, 122090295, 122090252, 122090243, 122090251, 122090282, 122090297, 122090270, 122090263)],
+        "start_node": 1262000220,
+        "start_offset_m": 257.0,  # main straight, level with the middle of the pit lane
+        "official_length": 6515.0,
+        "scale": 0.5,
+        "num_waypoints": 80,  # ~41 m spacing keeps the lap within ~5 m of the OSM line
+        "width": 14.0,
+        "straight_bank": 0.0,
+        "corner_banks": [0.0],
+        "kerbs": True,
     },
 }
 

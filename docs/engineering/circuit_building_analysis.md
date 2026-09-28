@@ -320,12 +320,13 @@ the corridor with `*_wall_distance` and set `*_runoff_surface`.
 | `osm_track_importer.py` | 14 rallycross | OSM Map API bbox, then Overpass ×2 | waypoint vec |
 | `osm_f1_importer.py` | 18 GT | none (pre-downloaded `.osm`, not on disk) | full `track_<id>()` fn |
 | `osm_kart_importer.py` | 13 kart | Map API, then Overpass ×2 | waypoint vec |
-| [osm_nascar_importer.py](../../scripts/osm_nascar_importer.py) | 4 NASCAR | Map API bbox or `relation/<id>/full` | counts only |
+| `osm_nascar_importer.py` | 4 NASCAR | Map API bbox or `relation/<id>/full` | counts only |
 
 > **Update 2026-09-27:** the rallycross, GT and kart importers are now one script,
 > [osm_importer.py](../../scripts/osm_importer.py) (`gt`, `kart`, `rally` subcommands),
-> with D1 and D2 fixed and join and length checks for all three. The NASCAR importer is
-> still separate. The rest of this section describes the scripts as they were at `884a99b`.
+> with D1 and D2 fixed and join and length checks for all three.
+> **Update 2026-09-28:** a `nascar` subcommand now builds all 17 NASCAR circuits, and
+> `osm_nascar_importer.py` is deleted. The rest of this section describes the scripts as they were at `884a99b`.
 
 Guidance lives in [.agents/skills/osm-circuit-builder/SKILL.md](../../.agents/skills/osm-circuit-builder/SKILL.md).
 Cache: `target/osm_cache/<id>.json` (not committed; only 13 files exist in the main checkout).
