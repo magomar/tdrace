@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Vehicle Dynamics Rebuild and Simplified Handling Settings"
 description: "Rebuild wheelbase tire, wheel spin, differential and weight transfer physics around slip-based forces, add grip-aware steering authority, and replace the 10-parameter keyboard filter with a 5-parameter handling model and 4 calibrated presets."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-043-receipt.md"
 verified: { by: human:Mario Gomez, at: 2026-09-27T21:52:41Z }
 created: 2026-09-27
