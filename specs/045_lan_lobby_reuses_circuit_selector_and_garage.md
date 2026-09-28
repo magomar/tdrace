@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "LAN Lobby Reuses Circuit Selector and Garage"
 description: "The LAN host picks the circuit in the full-screen circuit selector and every LAN player picks the car in the Garage, instead of cycling hard-coded lists inside the lobby; the lobby keeps the network alive while those screens are open."
-status: draft
+status: in_progress
+verified: { by: "human:mario", at: "2026-09-28T07:05:00Z" }
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T07:00:00Z }
 ---
@@ -26,6 +27,8 @@ Quick Race, Career and Split Screen use two shared screens: the full-screen circ
 | L-5 | Slot rows show raw ids (`gt_ferrari_296_gt3: corsa_red`). The client header shows the track slug. | `host_screen.rs::draw`, `client_lobby_screen.rs::draw` |
 | L-6 | When the host changes the circuit, `LanHost.discipline` stays at the bind value, so the beacon can advertise the wrong discipline. | `host.rs::set_track_and_rules` |
 | L-7 | The host can pick a custom circuit (via `track_choice` at bind). A client does not have that file, so `launch_lan_race_session` falls back to `ClassicGrandPrix` on the client only. The two machines race on different tracks. | `game/mod.rs::launch_lan_race_session` |
+
+Related work: spec 044 (`feat/robust-lan-race-sync`) replaces the in-race netcode and also edits `host_screen.rs`, `client_lobby_screen.rs` and the LAN launch path in `game/mod.rs`. This spec changes only the lobby rows, the sub-screen flow and the keep-alive pump, not the launch or race packets. The branch merged second must resolve the overlap in those files.
 
 Out of scope (tracked separately): the LAN hub card screen, the join browser, and the failing test `test_lan_livery_synchronization_and_countdown_handshake` (`tdrace-lan-countdown-is-in-race-qj0h`).
 
@@ -91,7 +94,7 @@ While the host or client is in the circuit selector, the circuit viewer or the G
 
 ## ⚙️ Backend Models & API Endpoints
 
-No wire protocol change. `PROTOCOL_VERSION` stays 1.
+No wire protocol change. This spec adds no packet and does not change `PROTOCOL_VERSION`.
 
 ### `cabinet::net` API changes
 
