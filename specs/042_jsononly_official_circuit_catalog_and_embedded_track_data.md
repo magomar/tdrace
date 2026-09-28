@@ -4,6 +4,7 @@ template: architecture
 title: "JSON-Only Official Circuit Catalog and Embedded Track Data"
 description: "Makes tracks/<module>/<slug>.json the single source of truth for the 96 official circuits, removes the Rust-coded circuit presets, embeds a compressed copy of the JSON in the binary as the fallback, lets dev mode save official circuits back to their JSON for all six modules, keeps custom circuits in the user folder only, and makes the OSM importer emit JSON."
 status: in_progress
+receipt: "docs/receipts/spec-042-receipt.md"
 created: 2026-09-28
 verified: { by: "human:mario", at: "2026-09-27T22:33:11Z" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T00:00:00Z }
@@ -191,6 +192,7 @@ Work is done in phases. Each phase leaves `make test` green.
   - `crates/tdrace-app/tests/official_catalog_tests.rs` — count per module, order, every file loads and passes `validate_track`, alias resolution, dev-mode disk override, normal-mode ignores disk.
   - `crates/tdrace-app/tests/circuit_storage_tests.rs` — extended for single-copy dev save, six-module promote, `target_module`, normal-mode save-as-copy.
   - `tests/python/test_osm_importer.py` — `--json` output (existing and new circuit), provenance URLs from `tracks/`.
+- Release binary: `cargo build --release -p tdrace-app` gives a 16 MB binary that contains all 96 circuit names (embedded catalog). The game was not started, so the release scenario below is still open for a manual check.
 - Scenario evidence:
   - JSON edit in dev mode: `official_catalog_tests::test_dev_mode_reads_official_circuit_from_disk` (race loader and menu preview read the edited `tracks/gt/monza.json`).
   - Importer: `osm_importer` `write_source_json` for a new GT circuit (`spa_new_test`) plus `track_bake` gave a file listed in dev mode (19 GT circuits), loaded, 0 validation errors; normal mode lists 18 until the next build embeds it.
