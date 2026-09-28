@@ -4,6 +4,7 @@ template: feature
 title: "Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits"
 description: "The Rally module shows Rallycross everywhere on screen, its tiers 4 and 5 hold RX1e and Nitrocross Group E cars, the Rally Raid T1+ and Stadium Super Truck cars move to Extreme Off-Road as unranked tiers 6 and 7, and Extreme Off-Road gets three circuits built from the official Mint 400 GPX course files."
 status: implemented
+receipt: "docs/receipts/spec-046-receipt.md"
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T13:58:17Z }
 ---
