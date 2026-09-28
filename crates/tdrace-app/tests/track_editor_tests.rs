@@ -111,12 +111,8 @@ fn test_all_fifteen_extreme_offroad_presets_json_roundtrip_and_validation() {
         }
 
         // 3. Catalog Resolution
-        let resolved = TrackChoice::resolve_procedural_preset_by_slug(slug);
-        assert!(
-            resolved.is_some(),
-            "TrackChoice::resolve_procedural_preset_by_slug failed for {}",
-            slug
-        );
+        let resolved = tdrace_app::tracks::official::load(slug, None).and_then(|r| r.ok());
+        assert!(resolved.is_some(), "official catalog lookup failed for {}", slug);
 
         // 4. Validation Engine (Zero Errors)
         let diagnostics = validate_track(&roundtrip_track);

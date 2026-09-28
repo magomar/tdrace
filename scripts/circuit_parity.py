@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Spec 042 step 1: compare Rust-exported circuits with tracks/ JSON.
+"""Compare two folders of circuit JSON (`<dir>/<module>/<id>.json`), field by field.
 
 Usage:
-    TDRACE_EXPORT_DIR=<dir> cargo test -p tdrace-app --test track_manager_tests \
-        test_export_canonical_presets_to_git_repo -- --ignored
-    python3 scripts/circuit_parity.py <dir> tracks
+    python3 scripts/circuit_parity.py <dir_a> <dir_b>
 
-Prints one line per circuit: "same" or the list of fields that differ.
-Removed with the Rust generators (spec 042 step 6).
+Prints one line per circuit that differs, then "# N identical of M". Floats match
+within a relative tolerance of 1e-3. Used for spec 042: the Rust-to-JSON baseline,
+and checking that a re-import plus `track_bake --rebuild` reproduces a circuit.
 """
 
 import json

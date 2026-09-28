@@ -15,6 +15,8 @@ pub struct EmbeddedCircuit {
     pub description: &'static str,
     pub tag: &'static str,
     pub category_label: &'static str,
+    /// ISO 3166-1 alpha-2 code of a real venue, or "" for a fictional circuit.
+    pub country_code: &'static str,
     pub default_laps: u32,
     data: &'static [u8],
 }
@@ -39,6 +41,11 @@ pub fn circuits() -> &'static [EmbeddedCircuit] {
 /// Official circuits of one module, in list order.
 pub fn module_circuits(module: &str) -> impl Iterator<Item = &'static EmbeddedCircuit> + '_ {
     CIRCUITS.iter().filter(move |c| c.module == module)
+}
+
+/// Old or short circuit names and the catalog id each maps to (`tracks/.aliases.json`).
+pub fn aliases() -> &'static [(&'static str, &'static str)] {
+    ALIASES
 }
 
 /// Maps an old or short circuit name to its catalog id. Returns the input when it is already an id.

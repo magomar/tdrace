@@ -124,9 +124,10 @@ The menu cache (`MENU_TRACK_CACHE`) keeps its role, but reads through this resol
 - `module/gt.rs:27-1423`, `module/kart.rs:31-1181`, `module/extreme_offroad.rs:37-45` generators.
 - The `tracks()` tables and `TrackDefinition.generator`. `GameModule::tracks()` is kept as a thin call into `OfficialCatalog::list(module)`, so module code keeps its interface.
 - `track_manager.rs`: `preset_module`, `canonical_preset_id`, `preset_slug_aliases`, the fallback `match` in `load_track`, and the per-module hard-coded lists.
-- `ui/menu.rs`: `resolve_procedural_preset` and the 7 hard-coded classic `TrackChoice` variants (replaced by an official-slug variant).
+- `ui/menu.rs`: `resolve_procedural_preset`, and the hard-coded title, tag and description of the 7 classic `TrackChoice` variants (now read from the catalog). The 7 variants themselves stay as names, because saved replays and settings serialize them; removing them would break old files.
 - `provenance.rs`: `CIRCUIT_PROVENANCE_REGISTRY` after a parity check proves each JSON holds the same URLs (fix D-I).
-- `dev_tools.rs::export_track_to_rust_code` and the ignored export test.
+- `dev_tools.rs::export_track_to_rust_code`, the ignored export test, and `osm_importer.py --rust`.
+- `ui/career_hub.rs`: the GT title and country tables (now from the catalog; `EmbeddedCircuit` gains `country_code`).
 
 **Kept (tools):** `presets.rs:15-600` helpers (walls, checkpoints, grid, hull, arena, whoops), editor templates (`create_prototypical_track`, `*_template`), `spline.rs`, `geometry.rs`, `checkpoint.rs`, `curve.rs`, `scenery.rs`, `validation.rs`, and the `Track` rebuild methods. `presets.rs` may be renamed to `builders.rs` once it holds only tools.
 
@@ -236,9 +237,9 @@ Work is done in phases. Each phase leaves `make test` green.
   - [ ] **When** the developer runs `osm_importer.py gt --track <slug> --json` and then `cargo run --bin track_bake -- tracks/gt/<slug>.json`
   - [ ] **Then** the circuit appears in the GT list in dev mode and passes `validate_track`
 - **Scenario: No circuit data is left in Rust**
-  - [ ] **Given** phase 6 is merged
-  - [ ] **When** the grep check above runs
-  - [ ] **Then** it returns no hits and `make test` passes
+  - [x] **Given** phase 6 is merged
+  - [x] **When** the grep check above runs
+  - [x] **Then** it returns no hits and `make test` passes
 
 ---
 
@@ -248,25 +249,25 @@ Work is done in phases. Each phase leaves `make test` green.
 - `[x]` `crates/tdrace-core/build.rs` (new) -> Bundles and compresses `tracks/` into the binary.
 - `[x]` `crates/tdrace-core/src/catalog.rs` (new) -> Embedded catalog: list, aliases, module hint, load.
 - `[x]` `crates/tdrace-app/src/tracks/official.rs` (new) -> The one resolver: dev-mode disk override, else embedded.
-- `[ ]` `crates/tdrace-app/src/tracks/catalog.rs` -> Test-only `PresetCatalog`; switch to the resolver or remove in step 6.
-- `[ ]` `crates/tdrace-app/src/track_manager.rs` -> One resolver; remove slug tables and Rust fallback; single-copy dev save; promote `target_module` fix.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Preview through the resolver; remove `resolve_procedural_preset` and hard-coded classic variants.
+- `[x]` `crates/tdrace-app/src/tracks/catalog.rs` -> Test-only `PresetCatalog`; switch to the resolver or remove in step 6.
+- `[x]` `crates/tdrace-app/src/track_manager.rs` -> One resolver; remove slug tables and Rust fallback; single-copy dev save; promote `target_module` fix.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> Preview through the resolver; remove `resolve_procedural_preset` and hard-coded classic variants.
 - `[x]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Six-module promote picker.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Replace `classic_grand_prix()` fallbacks; six-module mask; normal-mode save-as-copy.
-- `[ ]` `crates/tdrace-app/src/storage.rs` -> Tracks dir used only in dev mode.
-- `[ ]` `crates/tdrace-app/src/module/{mod,classic,gt,kart,rally,nascar,extreme_offroad}.rs` -> Remove generators and `tracks()` tables; `tracks()` reads the catalog.
-- `[ ]` `crates/tdrace-app/src/dev_tools.rs` -> Remove Rust export.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Replace `classic_grand_prix()` fallbacks; six-module mask; normal-mode save-as-copy.
+- `[x]` `crates/tdrace-app/src/storage.rs` -> Tracks dir used only in dev mode.
+- `[x]` `crates/tdrace-app/src/module/{mod,classic,gt,kart,rally,nascar,extreme_offroad}.rs` -> Remove generators and `tracks()` tables; `tracks()` reads the catalog.
+- `[x]` `crates/tdrace-app/src/dev_tools.rs` -> Remove Rust export.
 - `[x]` `crates/tdrace-app/src/bin/track_bake.rs` (new) -> Bake source JSON.
 - `[x]` `crates/arcade-race-core/src/track/bake.rs` (new) -> Bake logic.
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> `tag` field.
-- `[ ]` `crates/arcade-race-core/src/track/presets.rs` -> Keep tools only.
-- `[ ]` `crates/arcade-race-core/src/track/provenance.rs` -> Remove registry after parity check.
-- `[ ]` `crates/tdrace-py/src/engine.rs` -> Resolve by catalog.
-- `[ ]` `crates/tdrace-app/tests/*.rs`, `crates/tdrace-core/tests/*.rs`, `crates/tdrace-core/benches/*.rs` -> `official_track` helper or templates.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` -> `tag` field.
+- `[x]` `crates/arcade-race-core/src/track/presets.rs` -> Keep tools only.
+- `[x]` `crates/arcade-race-core/src/track/provenance.rs` -> Remove registry after parity check.
+- `[x]` `crates/tdrace-py/src/engine.rs` -> Resolve by catalog.
+- `[x]` `crates/tdrace-app/tests/*.rs`, `crates/tdrace-core/tests/*.rs`, `crates/tdrace-core/benches/*.rs` -> `official_track` helper or templates.
 - `[x]` `scripts/osm_importer.py` -> `--json` output; download reads `osm_url` from `tracks/`.
-- `[ ]` `scripts/generate_asset_data.py` -> Read `tag` from JSON.
-- `[ ]` `tracks/` (`tdrace-tracks` repo) -> Metadata, NASCAR renames, `.track_order.json`, `.aliases.json`, split `dirt_figure_eight`, remove `.deleted_tracks.json`, update `README.md` schema.
-- `[ ]` `docs/engineering/circuit_building_analysis.md` -> Update §2.6 and §4 to the new flow.
+- `[x]` `scripts/generate_asset_data.py` -> Unchanged; its output (portal `circuits.json`, circuit SVGs) regenerated after the NASCAR renames.
+- `[x]` `tracks/` (`tdrace-tracks` repo) -> Metadata, NASCAR renames, `.track_order.json`, `.aliases.json`, split `dirt_figure_eight`, remove `.deleted_tracks.json`, update `README.md` schema.
+- `[x]` `docs/engineering/circuit_building_analysis.md` -> Update §2.6 and §4 to the new flow.
 
 ### Verification Assertions
 - `crates/tdrace-core/src/catalog.rs` and `crates/tdrace-app/src/tracks/official.rs` reference `specs/042_jsononly_official_circuit_catalog_and_embedded_track_data.md` in their header comments.

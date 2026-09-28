@@ -43,87 +43,28 @@ impl TrackChoice {
 
     pub fn title(&self) -> &str {
         match self {
-            Self::ClassicGrandPrix => "Classic Grand Prix",
-            Self::OvalSpeedway => "Oval Speedway",
-            Self::DriftPark => "Drift Park",
-            Self::KartArena => "Kart Arena",
-            Self::RampRaceway => "Ramp Raceway",
-            Self::OasisRally => "Oasis Rally",
-            Self::ClassicRallycross => "Classic Rallycross",
             Self::Custom { title, .. } => title.as_str(),
+            official => official_circuit(official.track_id()).map_or("", |c| c.name),
         }
     }
 
     pub fn tag(&self) -> &str {
         match self {
-            Self::ClassicGrandPrix => "FIA GP CIRCUIT",
-            Self::OvalSpeedway => "SUPERSPEEDWAY",
-            Self::DriftPark => "TECHNICAL DRIFT",
-            Self::KartArena => "AGILE SPRINT",
-            Self::RampRaceway => "DIRT STUNT RAMPS",
-            Self::OasisRally => "DESERT DIRT RALLY",
-            Self::ClassicRallycross => "HYBRID RALLYCROSS",
-            Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
-                    "RALLY CROSS"
-                } else if path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
-                    "GT WORLD CHALLENGE"
-                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "valencia_kart" | "valencia" | "campillos" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
-                    "KARTING"
-                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course") {
-                    "NASCAR CUP"
-                } else {
-                    "CLASSIC MOTORSPORT"
-                }
-            }
+            Self::Custom { id, path, .. } => custom_module_of(id, path).map_or("CLASSIC MOTORSPORT", module_label),
+            official => official_circuit(official.track_id()).map_or("", |c| c.tag),
         }
     }
 
     pub fn tag_for_module(&self, mod_id: &str) -> &str {
         match self {
-            Self::ClassicGrandPrix => {
-                if mod_id == "gt" || mod_id == "gt_challenge" { "GT GP CIRCUIT" } else { "FIA GP CIRCUIT" }
-            }
-            Self::OvalSpeedway => "SUPERSPEEDWAY",
-            Self::DriftPark => "TECHNICAL DRIFT",
-            Self::KartArena => "AGILE SPRINT",
-            Self::RampRaceway => "DIRT STUNT RAMPS",
-            Self::OasisRally => "DESERT DIRT RALLY",
-            Self::ClassicRallycross => "HYBRID RALLYCROSS",
-            Self::Custom { id, path, .. } => {
-                if path.contains("/rally/") || path.starts_with("rally/") || matches!(id.as_str(), "essay_rx" | "essay" | "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina") {
-                    "RALLY CROSS"
-                } else if path.contains("/gt/") || path.starts_with("gt/") || matches!(id.as_str(), "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "portimao" | "le_mans_sarthe" | "le_mans") {
-                    "GT WORLD CHALLENGE"
-                } else if path.contains("/kart/") || path.starts_with("kart/") || matches!(id.as_str(), "valencia_kart" | "valencia" | "campillos" | "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart") {
-                    "KARTING"
-                } else if path.contains("/nascar/") || path.starts_with("nascar/") || matches!(id.as_str(), "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course") {
-                    "NASCAR CUP"
-                } else if path.contains("/extreme_offroad/") || path.starts_with("extreme_offroad/") || matches!(id.as_str(), "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city") {
-                    "EXTREME OFF-ROAD"
-                } else {
-                    match mod_id {
-                        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
-                        "rally" => "RALLY CROSS",
-                        "kart" => "KARTING",
-                        "nascar" => "NASCAR CUP",
-                        "extreme_offroad" => "EXTREME OFF-ROAD",
-                        _ => "CLASSIC MOTORSPORT",
-                    }
-                }
-            }
+            Self::ClassicGrandPrix if mod_id == "gt" || mod_id == "gt_challenge" => "GT GP CIRCUIT",
+            Self::Custom { id, path, .. } => module_label(custom_module_of(id, path).unwrap_or(mod_id)),
+            official => official_circuit(official.track_id()).map_or("", |c| c.tag),
         }
     }
 
     pub fn description(&self) -> &str {
         match self {
-            Self::ClassicGrandPrix => "High-speed sweeping chicanes, hairpin sand traps & tactical pit lane.",
-            Self::OvalSpeedway => "Full-throttle banked superspeedway surrounded by concrete barriers.",
-            Self::DriftPark => "Technical hairpin slides, wide transitions & dynamic apex clipping zones.",
-            Self::KartArena => "Tight 90-degree corners, rapid switchbacks & aggressive rumble curbs.",
-            Self::RampRaceway => "High-speed dirt stadium circuit with launch ramps, hazard water puddles, gap jumps & banked dirt turns.",
-            Self::OasisRally => "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
-            Self::ClassicRallycross => "Dynamic 1.0 km mixed-surface rallycross circuit featuring asphalt launch straights, high-grip chicanes, sweeping dirt hairpins & tabletop jump ramps.",
             Self::Custom { description, .. } => {
                 if description.trim().is_empty() {
                     "User-created custom racing circuit."
@@ -131,6 +72,7 @@ impl TrackChoice {
                     description.as_str()
                 }
             }
+            official => official_circuit(official.track_id()).map_or("", |c| c.description),
         }
     }
 
@@ -178,6 +120,31 @@ impl TrackChoice {
     /// Returns true if this track choice represents a user-created custom or cloned circuit.
     pub fn is_user_custom(&self) -> bool {
         !self.is_official_preset()
+    }
+}
+
+/// The embedded official circuit for a classic `TrackChoice` variant (spec 042: text lives in tracks/ JSON).
+fn official_circuit(id: &str) -> Option<&'static tdrace_core::catalog::EmbeddedCircuit> {
+    tdrace_core::catalog::find(id, Some("classic"))
+}
+
+/// Module of a custom choice: from its `<module>/` path, else from the official catalog when the id is official.
+fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
+    ["rally", "gt", "kart", "nascar", "extreme_offroad"]
+        .into_iter()
+        .find(|m| path.starts_with(&format!("{}/", m)) || path.contains(&format!("/{}/", m)))
+        .or_else(|| tdrace_core::catalog::find(id, None).map(|c| c.module).filter(|m| *m != "classic"))
+}
+
+/// List badge for a module's circuits.
+fn module_label(module: &str) -> &'static str {
+    match module {
+        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
+        "rally" => "RALLY CROSS",
+        "kart" => "KARTING",
+        "nascar" => "NASCAR CUP",
+        "extreme_offroad" => "EXTREME OFF-ROAD",
+        _ => "CLASSIC MOTORSPORT",
     }
 }
 
@@ -355,120 +322,6 @@ fn resolve_track_for_menu_with_dir_uncached(
 
     // 3. Fallback to the official catalog (e.g. an alias id saved as a custom choice)
     crate::tracks::official::load(choice.track_id(), choice_module).and_then(|r| r.ok())
-}
-
-impl TrackChoice {
-    pub fn resolve_procedural_preset_by_slug(slug: &str) -> Option<tdrace_core::track::Track> {
-        let choice = match slug {
-            "classic_grand_prix" => Self::ClassicGrandPrix,
-            "oval_speedway" => Self::OvalSpeedway,
-            "drift_park" => Self::DriftPark,
-            "kart_arena" => Self::KartArena,
-            "ramp_raceway" => Self::RampRaceway,
-            "oasis_rally" => Self::OasisRally,
-            "classic_rallycross" => Self::ClassicRallycross,
-            other => Self::Custom {
-                id: other.to_string(),
-                title: other.to_string(),
-                description: String::new(),
-                path: String::new(),
-            },
-        };
-        Self::resolve_procedural_preset(&choice)
-    }
-
-    pub fn resolve_procedural_preset(choice: &TrackChoice) -> Option<tdrace_core::track::Track> {
-    match choice {
-        TrackChoice::ClassicGrandPrix => Some(tdrace_core::track::presets::classic_grand_prix()),
-        TrackChoice::OvalSpeedway => Some(tdrace_core::track::presets::oval_speedway()),
-        TrackChoice::DriftPark => Some(tdrace_core::track::presets::drift_park()),
-        TrackChoice::KartArena => Some(tdrace_core::track::presets::kart_arena()),
-        TrackChoice::RampRaceway => Some(tdrace_core::track::presets::ramp_raceway()),
-        TrackChoice::OasisRally => Some(tdrace_core::track::presets::oasis_rally()),
-        TrackChoice::ClassicRallycross => Some(tdrace_core::track::presets::classic_rallycross()),
-        TrackChoice::Custom { id, .. } => match id.as_str() {
-            "dirty_oval_speedway" | "dirty_oval" => Some(tdrace_core::track::presets::dirty_oval_speedway()),
-            "figure_eight" | "figure_8" => Some(tdrace_core::track::presets::figure_eight()),
-            "monza" => Some(crate::module::gt::GtWorldChallengeModule::track_monza()),
-            "spa" => Some(crate::module::gt::GtWorldChallengeModule::track_spa()),
-            "silverstone" => Some(crate::module::gt::GtWorldChallengeModule::track_silverstone()),
-            "monaco" => Some(crate::module::gt::GtWorldChallengeModule::track_monaco()),
-            "suzuka" => Some(crate::module::gt::GtWorldChallengeModule::track_suzuka()),
-            "interlagos" => Some(crate::module::gt::GtWorldChallengeModule::track_interlagos()),
-            "montreal" => Some(crate::module::gt::GtWorldChallengeModule::track_montreal()),
-            "red_bull_ring" => Some(crate::module::gt::GtWorldChallengeModule::track_red_bull_ring()),
-            "catalunya" => Some(crate::module::gt::GtWorldChallengeModule::track_catalunya()),
-            "zandvoort" => Some(crate::module::gt::GtWorldChallengeModule::track_zandvoort()),
-            "bahrain" => Some(crate::module::gt::GtWorldChallengeModule::track_bahrain()),
-            "marina_bay" | "singapore" | "singapur" => Some(crate::module::gt::GtWorldChallengeModule::track_marina_bay()),
-            "cota" => Some(crate::module::gt::GtWorldChallengeModule::track_cota()),
-            "madring" => Some(crate::module::gt::GtWorldChallengeModule::track_madring()),
-            "nurburgring_gp" | "nurburgring" => Some(crate::module::gt::GtWorldChallengeModule::track_nurburgring_gp()),
-            "bathurst" | "mount_panorama" => Some(crate::module::gt::GtWorldChallengeModule::track_bathurst()),
-            "portimao_gp" | "portimao" => Some(crate::module::gt::GtWorldChallengeModule::track_portimao_gp()),
-            "le_mans_sarthe" | "le_mans" => Some(crate::module::gt::GtWorldChallengeModule::track_le_mans_sarthe()),
-            "sahara" | "sahara_dunes" => Some(tdrace_core::track::presets::sahara_dunes()),
-            "dirt_figure_eight" | "dirt_eight" => Some(tdrace_core::track::presets::dirt_figure_eight()),
-            "holjes_rx" | "holjes" => Some(tdrace_core::track::presets::holjes_rx()),
-            "lydden_hill" | "lydden" => Some(tdrace_core::track::presets::lydden_hill()),
-            "hell_rx" | "hell" => Some(tdrace_core::track::presets::hell_rx()),
-            "loheac_rx" | "loheac" => Some(tdrace_core::track::presets::loheac_rx()),
-            "estering_rx" | "estering" => Some(tdrace_core::track::presets::estering_rx()),
-            "montalegre_rx" | "montalegre" => Some(tdrace_core::track::presets::montalegre_rx()),
-            "nyirad_rx" | "nyirad" => Some(tdrace_core::track::presets::nyirad_rx()),
-            "kouvola_rx" | "kouvola" => Some(tdrace_core::track::presets::kouvola_rx()),
-            "catalunya_rx" => Some(tdrace_core::track::presets::catalunya_rx()),
-            "mettet_rx" | "mettet" => Some(tdrace_core::track::presets::mettet_rx()),
-            "silverstone_rx" => Some(tdrace_core::track::presets::silverstone_rx()),
-            "riga_rx" | "riga" | "bikernieki" => Some(tdrace_core::track::presets::riga_rx()),
-            "killarney_rx" | "killarney" => Some(tdrace_core::track::presets::killarney_rx()),
-            "yas_marina_rx" | "yas_marina" => Some(tdrace_core::track::presets::yas_marina_rx()),
-            "essay_rx" | "essay" => Some(tdrace_core::track::presets::essay_rx()),
-            "lonato" => Some(crate::module::kart::KartGameModule::track_lonato()),
-            "sarno" => Some(crate::module::kart::KartGameModule::track_sarno()),
-            "genk" => Some(crate::module::kart::KartGameModule::track_genk()),
-            "pfi" => Some(crate::module::kart::KartGameModule::track_pfi()),
-            "zuera" => Some(crate::module::kart::KartGameModule::track_zuera()),
-            "le_mans_kart" => Some(crate::module::kart::KartGameModule::track_le_mans()),
-            "portimao_kart" => Some(crate::module::kart::KartGameModule::track_portimao()),
-            "franciacorta" => Some(crate::module::kart::KartGameModule::track_franciacorta()),
-            "wackersdorf" | "prokart_wackersdorf" => Some(crate::module::kart::KartGameModule::track_wackersdorf()),
-            "kristianstad" | "asum_ring" => Some(crate::module::kart::KartGameModule::track_kristianstad()),
-            "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => Some(crate::module::kart::KartGameModule::track_seven_laghi()),
-            "ampfing" | "schweppermannring" => Some(crate::module::kart::KartGameModule::track_ampfing()),
-            "silverstone_national_kart" | "silverstone_kart" => Some(crate::module::kart::KartGameModule::track_silverstone_national_kart()),
-            "valencia_kart" | "valencia" => Some(crate::module::kart::KartGameModule::track_valencia_kart()),
-            "campillos" => Some(crate::module::kart::KartGameModule::track_campillos()),
-            "daytona" | "daytona_superspeedway" => Some(tdrace_core::track::presets::daytona_superspeedway()),
-            "talladega" | "talladega_superspeedway" => Some(tdrace_core::track::presets::talladega_superspeedway()),
-            "watkins_glen" | "watkins_glen_nascar" => Some(tdrace_core::track::presets::watkins_glen_nascar()),
-            "bristol" | "bristol_motor_speedway" => Some(tdrace_core::track::presets::bristol_motor_speedway()),
-            "martinsville" | "martinsville_speedway" => Some(tdrace_core::track::presets::martinsville_speedway()),
-            "darlington" | "darlington_raceway" => Some(tdrace_core::track::presets::darlington_raceway()),
-            "charlotte" | "charlotte_motor_speedway" => Some(tdrace_core::track::presets::charlotte_motor_speedway()),
-            "indianapolis" | "indianapolis_motor_speedway" => Some(tdrace_core::track::presets::indianapolis_motor_speedway()),
-            "eldora" | "eldora_speedway" => Some(tdrace_core::track::presets::eldora_speedway()),
-            "iowa" | "iowa_speedway" => Some(tdrace_core::track::presets::iowa_speedway()),
-            "road_america" => Some(tdrace_core::track::presets::road_america()),
-            "chicago" | "chicago_street_course" => Some(tdrace_core::track::presets::chicago_street_course()),
-            "sahara_dune_crossing" => Some(tdrace_core::track::presets::sahara_dune_crossing()),
-            "atacama_sand_basin" | "atacama" => Some(tdrace_core::track::presets::atacama_sand_basin()),
-            "red_rock_canyon" | "red_rock" => Some(tdrace_core::track::presets::red_rock_canyon()),
-            "baja_500_desert_scrub" | "baja_500" | "baja" => Some(tdrace_core::track::presets::baja_500_desert_scrub()),
-            "mud_slough_arena" | "mud_slough" => Some(tdrace_core::track::presets::mud_slough_arena()),
-            "gravel_quarry_chasm" | "gravel_quarry" => Some(tdrace_core::track::presets::gravel_quarry_chasm()),
-            "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" => Some(tdrace_core::track::presets::louisiana_mud_swampland()),
-            "arctic_frozen_lake" | "frozen_lake" => Some(tdrace_core::track::presets::arctic_frozen_lake()),
-            "alpine_snow_ridge" | "alpine_snow" => Some(tdrace_core::track::presets::alpine_snow_ridge()),
-            "rovaniemi_ice_ring" | "rovaniemi" => Some(tdrace_core::track::presets::rovaniemi_ice_ring()),
-            "glacier_crest_pass" | "glacier_crest" => Some(tdrace_core::track::presets::glacier_crest_pass()),
-            "supercross_stadium_arena" | "supercross_stadium" | "supercross" => Some(tdrace_core::track::presets::supercross_stadium_arena()),
-            "monster_colosseum" => Some(tdrace_core::track::presets::monster_colosseum()),
-            "stunt_city_megastructure" | "stunt_city" => Some(tdrace_core::track::presets::stunt_city_megastructure()),
-            _ => None,
-        },
-    }
-}
 }
 
 /// Available vehicle model options.

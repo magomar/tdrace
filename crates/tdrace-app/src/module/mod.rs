@@ -7,7 +7,6 @@ pub mod rally;
 use macroquad::color::Color;
 use serde::{Deserialize, Serialize};
 use tdrace_core::physics::config::CarConfig;
-use tdrace_core::track::Track;
 
 use crate::ai::DriverCharacter;
 use crate::render::color::CarColorScheme;
@@ -87,7 +86,7 @@ impl VehicleModelDefinition {
     }
 }
 
-/// Track catalog entry for built-in or module-specific circuits.
+/// Track catalog entry for an official circuit of a module, read from the embedded catalog (spec 042).
 #[derive(Debug, Clone)]
 pub struct TrackDefinition {
     pub id: &'static str,
@@ -96,7 +95,20 @@ pub struct TrackDefinition {
     pub description: &'static str,
     pub category: &'static str,
     pub default_laps: u32,
-    pub generator: fn() -> Track,
+}
+
+/// The official circuits of `module`, in list order, from `tracks/<module>/*.json` as embedded at build time.
+pub fn catalog_tracks(module: &str) -> Vec<TrackDefinition> {
+    tdrace_core::catalog::module_circuits(module)
+        .map(|c| TrackDefinition {
+            id: c.id,
+            title: c.name,
+            tag: c.tag,
+            description: c.description,
+            category: c.category_label,
+            default_laps: c.default_laps,
+        })
+        .collect()
 }
 
 /// Theme, branding, and color palette for a game module.

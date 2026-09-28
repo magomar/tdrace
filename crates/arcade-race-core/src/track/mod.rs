@@ -3,12 +3,10 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod presets;
-pub mod provenance;
 pub mod scenery;
 pub mod spline;
 pub mod validation;
 
-pub use provenance::{get_circuit_provenance, CircuitProvenance, CIRCUIT_PROVENANCE_REGISTRY};
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
@@ -20,16 +18,7 @@ pub use geometry::{
 };
 pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 pub use presets::{
-    bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
-    classic_grand_prix, classic_rallycross, classic_template, cota, create_prototypical_track, darlington_raceway,
-    daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
-    dune_raid, eldora_speedway, essay_rx, estering_rx, figure_eight, generate_arena_grid, generate_checkpoints,
-    generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
-    generate_oval_waypoints, generate_walls_from_spline, gt_template, hell_rx, holjes_rx,
-    indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,
-    lydden_hill, martinsville_speedway, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally,
-    oval_speedway, rally_template, ramp_raceway, riga_rx, road_america, sahara_dunes,
-    silverstone_rx, talladega_superspeedway, watkins_glen_nascar, yas_marina_rx, RaceDirection, TrackShape,
+    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, gt_template, kart_template, rally_template, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
@@ -238,17 +227,6 @@ impl Track {
         self.country_name = Some(country_name.to_string());
         self.osm_url = Some(osm_url.to_string());
         self.wikipedia_url = Some(wikipedia_url.to_string());
-        self
-    }
-
-    /// Attaches authentic OpenStreetMap and Wikipedia provenance if this circuit matches a known venue.
-    pub fn with_provenance_if_known(mut self, id_or_slug: &str) -> Self {
-        if let Some(prov) = crate::track::provenance::get_circuit_provenance(id_or_slug) {
-            self.country_code = Some(prov.country_code.to_string());
-            self.country_name = Some(prov.country_name.to_string());
-            self.osm_url = Some(prov.osm_url.to_string());
-            self.wikipedia_url = Some(prov.wikipedia_url.to_string());
-        }
         self
     }
 
@@ -730,17 +708,9 @@ impl Track {
         }
     }
 
-    /// Chainable helper applying default runoff surfaces and authentic circuit provenance if known.
+    /// Chainable helper applying default runoff surfaces.
     pub fn with_default_runoff_surfaces(mut self) -> Self {
         self.apply_default_runoff_surfaces();
-        if self.osm_url.is_none() {
-            if let Some(prov) = provenance::get_circuit_provenance(&self.name) {
-                self.country_code = Some(prov.country_code.to_string());
-                self.country_name = Some(prov.country_name.to_string());
-                self.osm_url = Some(prov.osm_url.to_string());
-                self.wikipedia_url = Some(prov.wikipedia_url.to_string());
-            }
-        }
         self
     }
 
@@ -755,14 +725,6 @@ impl Track {
             );
         }
         track.apply_default_runoff_surfaces();
-        if track.osm_url.is_none() {
-            if let Some(prov) = provenance::get_circuit_provenance(&track.name) {
-                track.country_code = Some(prov.country_code.to_string());
-                track.country_name = Some(prov.country_name.to_string());
-                track.osm_url = Some(prov.osm_url.to_string());
-                track.wikipedia_url = Some(prov.wikipedia_url.to_string());
-            }
-        }
         Ok(track)
     }
 

@@ -1334,81 +1334,6 @@ fn test_workspace_rally_deletion_preserves_classic() {
 }
 
 #[test]
-#[ignore = "Manual export tool: cargo test --test track_manager_tests test_export_canonical_presets_to_git_repo -- --ignored"]
-fn test_export_canonical_presets_to_git_repo() {
-    use tdrace_app::module::{
-        classic::ClassicGameModule, extreme_offroad::ExtremeOffRoadModule,
-        gt::GtWorldChallengeModule, kart::KartGameModule, nascar::NascarGameModule,
-        rally::RallyGameModule, GameModule,
-    };
-    use tdrace_core::track::TrackCategory;
-
-    // TDRACE_EXPORT_DIR redirects the export, e.g. for the spec 042 parity baseline.
-    let repo_tracks_dir = std::env::var_os("TDRACE_EXPORT_DIR")
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks"));
-    if !repo_tracks_dir.exists() {
-        return;
-    }
-
-    let modules: Vec<Box<dyn GameModule>> = vec![
-        Box::new(ClassicGameModule::new()),
-        Box::new(GtWorldChallengeModule::new()),
-        Box::new(RallyGameModule::new()),
-        Box::new(KartGameModule::new()),
-        Box::new(NascarGameModule::new()),
-        Box::new(ExtremeOffRoadModule::new()),
-    ];
-
-    let mut total_exported = 0;
-    for module in modules {
-        let mod_id = module.id();
-        let target_dir = repo_tracks_dir.join(mod_id);
-        let _ = fs::create_dir_all(&target_dir);
-
-        for track_def in module.tracks() {
-            let mut track = (track_def.generator)();
-            track.category = TrackCategory::Main;
-            track.module_id = Some(mod_id.to_string());
-            if !track.modules.contains(&mod_id.to_string()) {
-                track.modules.push(mod_id.to_string());
-            }
-            let filename = track_def.id;
-            track.name = track_def.title.to_string();
-            track.description = track_def.description.to_string();
-            track.tag = track_def.tag.to_string();
-            track.category_label = track_def.category.to_string();
-            track = track.with_provenance_if_known(filename);
-            let file_path = target_dir.join(format!("{}.json", filename));
-            track.save_to_file(&file_path).expect("Failed to export canonical preset");
-
-            // Verify load
-            let loaded = tdrace_core::track::Track::load_from_file(&file_path)
-                .expect("Failed to load exported canonical preset");
-            assert_eq!(loaded.name, track.name);
-            assert_eq!(loaded.category, TrackCategory::Main);
-
-            if let Some(prov) = tdrace_core::track::get_circuit_provenance(filename) {
-                assert!(
-                    loaded.osm_url.is_some(),
-                    "Real circuit {} must have osm_url preserved in exported json",
-                    filename
-                );
-                assert_eq!(
-                    loaded.osm_url.as_deref(),
-                    Some(prov.osm_url),
-                    "OSM URL mismatch on {}",
-                    filename
-                );
-            }
-
-            total_exported += 1;
-        }
-    }
-    assert!(total_exported >= 80, "Must export all preset track definitions across modules");
-}
-
-#[test]
 fn test_category_ordering_presets_first_then_custom() {
     let temp_dir = std::env::temp_dir().join(format!(
         "tdrace_test_ordering_{}",
@@ -1952,7 +1877,8 @@ fn test_all_canonical_track_files_provenance_integrity() {
                 .unwrap_or_else(|e| panic!("Failed loading {}: {}", path.display(), e));
 
             let stem = path.file_stem().and_then(|s| s.to_str()).unwrap();
-            let is_real = tdrace_core::track::get_circuit_provenance(stem).is_some();
+            // Provenance lives only in the JSON (spec 042); the counts below lock it.
+            let is_real = track.osm_url.is_some();
 
             if is_real {
                 assert!(

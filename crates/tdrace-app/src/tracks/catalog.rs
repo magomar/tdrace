@@ -37,7 +37,7 @@ impl PresetCatalog {
         let aliases = crate::track_manager::TrackManager::preset_slug_aliases(slug);
         let mut candidates: Vec<&str> = vec![slug];
         for a in aliases {
-            if !candidates.contains(a) {
+            if !candidates.contains(&a) {
                 candidates.push(a);
             }
         }
@@ -55,12 +55,7 @@ impl PresetCatalog {
 
     /// Loads a preset track instance by slug.
     pub fn load_preset(slug: &str) -> Option<Track> {
-        if let Some(git_file) = Self::resolve_git_preset_file(slug, None) {
-            if let Ok(t) = Track::load_from_file(&git_file) {
-                return Some(t);
-            }
-        }
-        TrackChoice::resolve_procedural_preset_by_slug(slug)
+        crate::tracks::official::load(slug, None).and_then(|r| r.ok())
     }
 
     /// Returns the official preset choices for a given motorsport module.

@@ -85,13 +85,14 @@ fn main() {
             let default_laps = value.get("default_laps").and_then(|v| v.as_u64()).unwrap_or(3);
             writeln!(
                 generated,
-                "    EmbeddedCircuit {{ module: {:?}, id: {:?}, name: {:?}, description: {:?}, tag: {:?}, category_label: {:?}, default_laps: {}, data: include_bytes!({:?}) }},",
+                "    EmbeddedCircuit {{ module: {:?}, id: {:?}, name: {:?}, description: {:?}, tag: {:?}, category_label: {:?}, country_code: {:?}, default_laps: {}, data: include_bytes!({:?}) }},",
                 module,
                 id,
                 str_field(&value, "name"),
                 str_field(&value, "description"),
                 str_field(&value, "tag"),
                 str_field(&value, "category_label"),
+                str_field(&value, "country_code"),
                 default_laps,
                 blob_path.display().to_string(),
             )

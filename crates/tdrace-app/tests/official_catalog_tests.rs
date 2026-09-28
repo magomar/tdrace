@@ -31,7 +31,7 @@ fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> T {
     serde_json::from_str(&data).unwrap_or_else(|e| panic!("{}: {}", path.display(), e))
 }
 
-/// Until step 6 removes the Rust catalog, each `TrackDefinition` must match its JSON file.
+/// Each module's `TrackDefinition` list (read from the embedded catalog) must match its JSON file on disk.
 #[test]
 fn test_catalog_metadata_matches_json() {
     let root = tracks_dir();

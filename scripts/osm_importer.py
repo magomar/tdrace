@@ -5,12 +5,12 @@ OSM Circuit Importer for tdrace
 One importer for the OpenStreetMap (OSM) circuits of four disciplines:
 
   gt     18 GT / F1 circuits, scaled to 0.5x the official FIA length
-         (Rust output: a full `track_<id>()` for crates/tdrace-app/src/module/gt.rs)
-  kart   CIK-FIA kart circuits at 1:1 (waypoint vec for crates/tdrace-app/src/module/kart.rs)
+  kart   CIK-FIA kart circuits at 1:1
   rally  World RX rallycross circuits at 1:1 with asphalt/dirt surfaces
-         (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
   nascar NASCAR ovals and road courses: 1:1 under 3 km, 0.75x above, with banking per corner
-         (waypoint vec for crates/arcade-race-core/src/track/presets.rs)
+
+With --json the waypoints go to tracks/<module>/<id>.json (spec 042: official circuits are JSON
+only); then run the printed `cargo run --bin track_bake -- ... --rebuild` command.
 
 Every circuit goes through the same steps: select the raceway nodes, project them to
 metres, rotate the start straight onto +X, scale to the official length, resample to
@@ -28,7 +28,6 @@ length more than 10% away from the official length.
 
 Usage:
   python3 scripts/osm_importer.py download --track monza
-  python3 scripts/osm_importer.py gt --track monza --rust
   python3 scripts/osm_importer.py gt --track monza --json   # then run the printed track_bake command
   python3 scripts/osm_importer.py rally
   python3 scripts/osm_importer.py kart --cache-dir /path/to/osm_cache
@@ -797,75 +796,6 @@ def process_gt_circuit(cid, cache_dir):
     }
 
 
-def generate_gt_rust_code(cdata):
-    """Full `track_<id>()` in the template used by crates/tdrace-app/src/module/gt.rs."""
-    lines = []
-    lines.append(f"    /// {cdata['name']}: {cdata['description']}")
-    lines.append(f"    /// Surveyed from OpenStreetMap (OSM) scaled to 0.5x FIA length: {cdata['final_len']:.1f}m (Real FIA: {cdata['fia_length']:.0f}m).")
-    lines.append(f"    pub fn track_{cdata['id']}() -> Track {{")
-    lines.append("        let waypoints = vec![")
-
-    for w in cdata["waypoints"]:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        elev_str = ""
-        if w["elevation"] > 0.0 or w["elevation"] < 0.0:
-            elev_str = f".with_elevation({w['elevation']:.1f})"
-        wall_dist_str = ""
-        if "wall_dist" in w:
-            wall_dist_str = f".with_wall_distances(Some({w['wall_dist']:.1f}), Some({w['wall_dist']:.1f}))"
-        surf_str = ".with_surface(SurfaceType::Asphalt)"
-        lines.append(
-            f"            TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){surf_str}{curb_str}{elev_str}{wall_dist_str},"
-        )
-
-    lines.append("        ];")
-    lines.append("")
-    lines.append("        let spline = TrackSpline::new(waypoints, true);")
-    lines.append("        let (left_walls, right_walls, left_poly, right_poly) =")
-    lines.append(f"            generate_walls_from_spline(&spline, {cdata['barrier_offset']:.1f}, {cdata['barrier']});")
-    lines.append("")
-    lines.append("        let checkpoints = generate_checkpoints(&spline, 20, 3);")
-    lines.append("        let starting_grid = generate_grid_positions(&spline, 18, 10.0, 2.5);")
-    lines.append("")
-    lines.append("        Track {")
-    lines.append(f'            name: "{cdata["name"]}".to_string(),')
-    lines.append(f'            description: "{cdata["description"]}".to_string(),')
-    lines.append("            category: TrackCategory::Main,")
-    lines.append("            kind: TrackKind::Circuit,")
-    lines.append("            spline,")
-    lines.append("            geometry: TrackGeometry {")
-    lines.append("                inner_walls: left_walls,")
-    lines.append("                outer_walls: right_walls,")
-    lines.append("                obstacles: Vec::new(),")
-    lines.append("                surface_zones: Vec::new(),")
-    lines.append("                jump_ramps: Vec::new(),")
-    lines.append("                left_boundary_polyline: left_poly,")
-    lines.append("                right_boundary_polyline: right_poly,")
-    lines.append("                ..Default::default()")
-    lines.append("            },")
-    lines.append("            checkpoints,")
-    lines.append("            grid_positions: starting_grid,")
-    lines.append("            default_surface: SurfaceType::Grass,")
-    lines.append("            pit_box_area: None,")
-    lines.append(f"            default_laps: {cdata['default_laps']},")
-    lines.append("            car_category: CarCategory::Gt,")
-    lines.append('            module_id: Some("gt".to_string()),')
-    lines.append('            modules: vec!["gt".to_string()],')
-    lines.append('            scale: "0.5x".to_string(),')
-    lines.append("            wikipedia_url: None,")
-    lines.append("            osm_url: None,")
-    lines.append("            country_code: None,")
-    lines.append("            country_name: None,")
-    lines.append("            min_width: None,")
-    lines.append("            max_width: None,")
-    lines.append("            is_inspired: false,")
-    lines.append("        }.with_default_runoff_surfaces()")
-    lines.append("    }")
-    return "\n".join(lines)
-
-
 def print_gt_summary(data):
     print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, 0.5x FIA)")
 
@@ -1224,24 +1154,6 @@ def process_kart_track(track_id, cache_dir):
         "total_length": round(final_len, 1),
         "fia_length": spec["fia_length"],
     }
-
-
-def generate_kart_rust_code(track_data):
-    wps = track_data["waypoints"]
-    lines = []
-    lines.append("        let waypoints = vec![")
-    for w in wps:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        elev_str = ""
-        if w.get("elevation", 0.0) > 0.0:
-            elev_str = f".with_elevation({w['elevation']:.1f})"
-        lines.append(
-            f"            TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){elev_str}{curb_str},"
-        )
-    lines.append("        ];")
-    return "\n".join(lines)
 
 
 def print_kart_summary(res):
@@ -1706,22 +1618,6 @@ def process_rally_track(track_id, cache_dir):
     }
 
 
-def generate_rally_rust_code(track_data):
-    wps = track_data["waypoints"]
-    lines = []
-    lines.append("    let waypoints = vec![")
-    for w in wps:
-        curb_str = ""
-        if w["left_curb"] or w["right_curb"]:
-            curb_str = f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        surf_str = f".with_surface(SurfaceType::{w['surface']})"
-        lines.append(
-            f"        TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f}){surf_str}{curb_str},"
-        )
-    lines.append("    ];")
-    return "\n".join(lines)
-
-
 def print_rally_summary(res):
     print(f"=== {res['name']} ({res['id']}) ===")
     print(f"  Waypoints: {len(res['waypoints'])}, Total Length: {res['total_length']} m (FIA Target: {res['fia_length']} m)")
@@ -2063,23 +1959,6 @@ def process_nascar_track(track_id, cache_dir):
     }
 
 
-def generate_nascar_rust_code(track_data):
-    lines = ["    let waypoints = vec!["]
-    for w in track_data["waypoints"]:
-        s = f"        TrackWaypoint::new(Vec2::new({w['x']:.1f}, {w['y']:.1f}), {w['width']:.1f})"
-        if w["elevation"]:
-            s += f".with_elevation({w['elevation']:.1f})"
-        if w["bank"]:
-            s += f".with_bank_angle({w['bank']:.1f})"
-        if w["surface"]:
-            s += f".with_surface(SurfaceType::{w['surface']})"
-        if w["left_curb"] or w["right_curb"]:
-            s += f".with_curbs({str(w['left_curb']).lower()}, {str(w['right_curb']).lower()})"
-        lines.append(s + ",")
-    lines.append("    ];")
-    return "\n".join(lines)
-
-
 def print_nascar_summary(res):
     print(f"=== {res['name']} ({res['id']}) ===")
     print(f"  Waypoints: {len(res['waypoints'])}, target {res['target_length']} m "
@@ -2326,10 +2205,10 @@ def write_source_json(discipline, data, tracks_dir=None):
 
 
 DISCIPLINES = {
-    "gt": (GT_CIRCUITS, process_gt_circuit, generate_gt_rust_code, print_gt_summary),
-    "kart": (KART_TRACKS, process_kart_track, generate_kart_rust_code, print_kart_summary),
-    "rally": (RALLY_TRACKS, process_rally_track, generate_rally_rust_code, print_rally_summary),
-    "nascar": (NASCAR_TRACKS, process_nascar_track, generate_nascar_rust_code, print_nascar_summary),
+    "gt": (GT_CIRCUITS, process_gt_circuit, print_gt_summary),
+    "kart": (KART_TRACKS, process_kart_track, print_kart_summary),
+    "rally": (RALLY_TRACKS, process_rally_track, print_rally_summary),
+    "nascar": (NASCAR_TRACKS, process_nascar_track, print_nascar_summary),
 }
 
 
@@ -2337,10 +2216,9 @@ def main():
     parser = argparse.ArgumentParser(description="Extract and generate tdrace circuits from OpenStreetMap")
     parser.add_argument("--cache-dir", default=DEFAULT_CACHE_DIR, help="OSM cache directory (default: assets/osm)")
     sub = parser.add_subparsers(dest="discipline", required=True)
-    for name, (specs, _, _, _) in DISCIPLINES.items():
+    for name, (specs, _, _) in DISCIPLINES.items():
         p = sub.add_parser(name, help=f"{name} circuits")
         p.add_argument("--track", choices=list(specs.keys()), help="Process one circuit (default: all)")
-        p.add_argument("--rust", action="store_true", help="Print Rust code")
         p.add_argument(
             "--json", action="store_true", help="Write tracks/<module>/<id>.json and print the track_bake command"
         )
@@ -2354,14 +2232,11 @@ def main():
         download(args.track or real_ids, args.cache_dir, args.force)
         return
 
-    specs, process, generate_rust, print_summary = DISCIPLINES[args.discipline]
+    specs, process, print_summary = DISCIPLINES[args.discipline]
     track_ids = [args.track] if args.track else list(specs.keys())
     for tid in track_ids:
         data = process(tid, args.cache_dir)
         print_summary(data)
-        if args.rust:
-            print(generate_rust(data))
-            print()
         if args.json:
             path, bake_cmd = write_source_json(args.discipline, data)
             print(f"  Wrote {path}")
