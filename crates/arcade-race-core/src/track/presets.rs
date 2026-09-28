@@ -3325,29 +3325,49 @@ pub fn nascar_template(shape: TrackShape, direction: RaceDirection) -> Track {
 /// Premier 2.5-mile high-banked tri-oval featuring 31-degree banking in turns 1-4,
 /// 18-degree banking in the tri-oval, wide 22m track surface for 3-wide pack drafting,
 /// and perimeter SAFER/concrete barrier walls.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (3,017 m of the real 4,023 m).
 pub fn daytona_superspeedway() -> Track {
     let waypoints = vec![
-        // Tri-Oval front straight and dogleg (Finish line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -110.0), 22.0).with_bank_angle(18.0),
-        TrackWaypoint::new(Vec2::new(140.0, -100.0), 22.0).with_bank_angle(8.0),
-        TrackWaypoint::new(Vec2::new(260.0, -85.0), 22.0).with_bank_angle(4.0),
-        // Turn 1 & 2 (East 31-degree high-banked curve)
-        TrackWaypoint::new(Vec2::new(370.0, -40.0), 22.0).with_bank_angle(31.0),
-        TrackWaypoint::new(Vec2::new(430.0, 35.0), 22.0).with_bank_angle(31.0),
-        TrackWaypoint::new(Vec2::new(400.0, 110.0), 22.0).with_bank_angle(31.0),
-        TrackWaypoint::new(Vec2::new(320.0, 160.0), 22.0).with_bank_angle(20.0),
-        // Superstretch (Back straight)
-        TrackWaypoint::new(Vec2::new(180.0, 180.0), 22.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(0.0, 180.0), 22.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(-180.0, 180.0), 22.0).with_bank_angle(3.0),
-        // Turn 3 & 4 (West 31-degree high-banked curve)
-        TrackWaypoint::new(Vec2::new(-320.0, 160.0), 22.0).with_bank_angle(20.0),
-        TrackWaypoint::new(Vec2::new(-400.0, 110.0), 22.0).with_bank_angle(31.0),
-        TrackWaypoint::new(Vec2::new(-430.0, 35.0), 22.0).with_bank_angle(31.0),
-        TrackWaypoint::new(Vec2::new(-370.0, -40.0), 22.0).with_bank_angle(31.0),
-        // Turn 4 exit back to Tri-oval
-        TrackWaypoint::new(Vec2::new(-260.0, -85.0), 22.0).with_bank_angle(4.0),
-        TrackWaypoint::new(Vec2::new(-140.0, -100.0), 22.0).with_bank_angle(8.0),
+        TrackWaypoint::new(Vec2::new(-0.0, 0.0), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(75.2, 0.0), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(149.3, 13.0), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(221.8, 33.7), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(293.2, 57.8), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(364.6, 82.2), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(436.1, 106.2), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(506.2, 133.9), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(570.9, 172.5), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(620.3, 228.8), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(647.1, 299.0), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(650.7, 374.0), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(630.2, 446.2), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(586.7, 507.4), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(525.6, 551.1), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(453.8, 573.4), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(378.8, 580.4), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(303.5, 584.7), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(228.2, 588.9), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(152.8, 592.9), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(77.5, 597.0), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(2.2, 601.1), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-73.1, 605.0), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-148.5, 609.0), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-223.8, 613.0), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-299.1, 617.5), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(-374.3, 613.5), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-445.7, 590.0), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-505.5, 544.6), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-547.0, 482.1), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-566.5, 409.8), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-561.4, 334.9), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-531.8, 265.9), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-480.5, 211.1), 22.0).with_bank_angle(31.0),
+        TrackWaypoint::new(Vec2::new(-416.9, 170.8), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(-349.3, 137.5), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-281.0, 105.5), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-212.5, 73.9), 22.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-143.9, 42.5), 22.0).with_bank_angle(18.0),
+        TrackWaypoint::new(Vec2::new(-73.9, 14.7), 22.0).with_bank_angle(18.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3382,7 +3402,7 @@ pub fn daytona_superspeedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "1:1".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -3396,30 +3416,49 @@ pub fn daytona_superspeedway() -> Track {
 /// Preset: Talladega Superspeedway (NASCAR Monster Tri-Oval)
 /// Massive 2.66-mile superspeedway with extreme 33-degree banking in turns,
 /// 16.5-degree tri-oval, and the start/finish line located past the tri-oval toward turn 1.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (3,211 m of the real 4,281 m).
 pub fn talladega_superspeedway() -> Track {
     let waypoints = vec![
-        // Front Straight past tri-oval (Finish line near turn 1 entry)
-        TrackWaypoint::new(Vec2::new(100.0, -115.0), 24.0).with_bank_angle(6.0),
-        TrackWaypoint::new(Vec2::new(260.0, -95.0), 24.0).with_bank_angle(4.0),
-        // Turn 1 & 2 (Extreme 33-degree steep East curve)
-        TrackWaypoint::new(Vec2::new(410.0, -45.0), 24.0).with_bank_angle(33.0),
-        TrackWaypoint::new(Vec2::new(480.0, 45.0), 24.0).with_bank_angle(33.0),
-        TrackWaypoint::new(Vec2::new(440.0, 135.0), 24.0).with_bank_angle(33.0),
-        TrackWaypoint::new(Vec2::new(350.0, 195.0), 24.0).with_bank_angle(22.0),
-        // Alabama Gang Backstretch
-        TrackWaypoint::new(Vec2::new(200.0, 220.0), 24.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(0.0, 220.0), 24.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(-200.0, 220.0), 24.0).with_bank_angle(3.0),
-        // Turn 3 & 4 (Extreme 33-degree steep West curve)
-        TrackWaypoint::new(Vec2::new(-350.0, 195.0), 24.0).with_bank_angle(22.0),
-        TrackWaypoint::new(Vec2::new(-440.0, 135.0), 24.0).with_bank_angle(33.0),
-        TrackWaypoint::new(Vec2::new(-480.0, 45.0), 24.0).with_bank_angle(33.0),
-        TrackWaypoint::new(Vec2::new(-410.0, -45.0), 24.0).with_bank_angle(33.0),
-        // Turn 4 exit into Tri-oval
-        TrackWaypoint::new(Vec2::new(-280.0, -95.0), 24.0).with_bank_angle(4.0),
-        TrackWaypoint::new(Vec2::new(-130.0, -120.0), 24.0).with_bank_angle(16.5),
-        // Tri-Oval apex
-        TrackWaypoint::new(Vec2::new(-20.0, -135.0), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(80.3, 0.0), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(160.5, 0.0), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(240.8, 0.0), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(319.9, 11.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(392.7, 44.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(450.9, 99.3), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(487.3, 170.4), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(499.8, 249.3), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(483.7, 327.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(443.6, 396.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(384.0, 449.9), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(313.8, 488.6), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(240.1, 520.3), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(166.3, 552.0), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(92.6, 583.7), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(18.9, 615.4), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-54.9, 647.1), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-128.6, 678.8), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-202.4, 710.5), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-276.1, 742.2), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-349.9, 773.8), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-426.0, 799.3), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-505.8, 805.0), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-583.4, 786.8), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-650.6, 743.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-701.6, 682.0), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-728.4, 606.6), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-729.8, 526.8), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-705.9, 450.7), 24.0).with_bank_angle(33.0),
+        TrackWaypoint::new(Vec2::new(-659.0, 386.1), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-603.8, 327.9), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-548.3, 269.9), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-492.8, 211.9), 24.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-437.3, 153.9), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-378.9, 99.0), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-311.7, 55.2), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-238.4, 23.3), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-160.3, 5.3), 24.0).with_bank_angle(16.5),
+        TrackWaypoint::new(Vec2::new(-80.3, 0.0), 24.0).with_bank_angle(16.5),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3454,7 +3493,7 @@ pub fn talladega_superspeedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "1:1".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -3468,37 +3507,73 @@ pub fn talladega_superspeedway() -> Track {
 /// Preset: Watkins Glen International (NASCAR Short Course)
 /// Classic high-speed American road course featuring The Ninety, The Esses,
 /// the high-speed Inner Loop "Bus Stop" chicane, and the banked Carousel.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (2,951 m of the real 3,943 m).
 pub fn watkins_glen_nascar() -> Track {
     let waypoints = vec![
-        // Front Straight (Start/Finish at WP 0)
-        TrackWaypoint::new(Vec2::new(-60.0, -160.0), 16.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(80.0, -160.0), 16.0).with_bank_angle(0.0),
-        // Turn 1 (The Ninety)
-        TrackWaypoint::new(Vec2::new(170.0, -120.0), 16.0).with_curbs(false, true),
-        // The Esses (Rapid uphill S-curves)
-        TrackWaypoint::new(Vec2::new(150.0, -40.0), 16.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(180.0, 40.0), 16.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(160.0, 120.0), 16.0).with_curbs(true, false),
-        // Backstretch
-        TrackWaypoint::new(Vec2::new(150.0, 220.0), 16.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(140.0, 320.0), 16.0).with_bank_angle(0.0),
-        // The Bus Stop (Inner Loop Chicane)
-        TrackWaypoint::new(Vec2::new(125.0, 380.0), 14.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(145.0, 410.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(115.0, 440.0), 14.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(130.0, 470.0), 14.0).with_curbs(true, false),
-        // The Carousel (Banked 10-degree right sweeper)
-        TrackWaypoint::new(Vec2::new(60.0, 520.0), 16.0).with_bank_angle(10.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-20.0, 530.0), 16.0).with_bank_angle(10.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-90.0, 490.0), 16.0).with_bank_angle(10.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-110.0, 420.0), 16.0).with_bank_angle(5.0),
-        // The Chute / Infield
-        TrackWaypoint::new(Vec2::new(-110.0, 320.0), 16.0),
-        TrackWaypoint::new(Vec2::new(-130.0, 200.0), 16.0),
-        // Turn 10 & 11 onto front straight
-        TrackWaypoint::new(Vec2::new(-140.0, 80.0), 16.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-155.0, -30.0), 16.0).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-140.0, -110.0), 16.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(46.2, -0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(92.4, -0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(138.6, -0.5), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(176.4, -20.0), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(176.7, -65.8), 16.0),
+        TrackWaypoint::new(Vec2::new(172.2, -111.7), 16.0),
+        TrackWaypoint::new(Vec2::new(165.4, -157.4), 16.0),
+        TrackWaypoint::new(Vec2::new(159.4, -203.2), 16.0),
+        TrackWaypoint::new(Vec2::new(146.6, -247.5), 16.0),
+        TrackWaypoint::new(Vec2::new(118.5, -283.6), 16.0),
+        TrackWaypoint::new(Vec2::new(79.0, -307.4), 16.0),
+        TrackWaypoint::new(Vec2::new(34.6, -319.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-10.5, -329.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-50.8, -351.8), 16.0),
+        TrackWaypoint::new(Vec2::new(-83.1, -384.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-109.8, -422.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-141.3, -455.9), 16.0),
+        TrackWaypoint::new(Vec2::new(-178.5, -483.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-219.9, -503.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-264.5, -515.3), 16.0),
+        TrackWaypoint::new(Vec2::new(-310.4, -519.9), 16.0),
+        TrackWaypoint::new(Vec2::new(-356.4, -524.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-402.4, -529.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-448.4, -533.8), 16.0),
+        TrackWaypoint::new(Vec2::new(-494.3, -538.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-540.3, -543.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-586.3, -547.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-632.3, -552.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-678.2, -555.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-717.9, -534.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-764.0, -537.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-801.4, -562.3), 16.0),
+        TrackWaypoint::new(Vec2::new(-846.2, -572.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-892.2, -575.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-933.9, -557.4), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-962.2, -521.7), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-968.8, -476.6), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-951.9, -434.2), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-917.8, -404.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-873.8, -390.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-829.3, -378.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-784.8, -365.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-740.3, -352.8), 16.0),
+        TrackWaypoint::new(Vec2::new(-695.9, -340.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-651.5, -327.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-607.2, -314.3), 16.0),
+        TrackWaypoint::new(Vec2::new(-562.8, -301.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-518.5, -288.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-474.1, -275.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-431.6, -258.2), 16.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-406.2, -220.6), 16.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-404.0, -174.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-404.3, -128.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-404.5, -82.2), 16.0),
+        TrackWaypoint::new(Vec2::new(-401.6, -36.4), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-369.0, -5.1), 16.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-323.4, 0.4), 16.0),
+        TrackWaypoint::new(Vec2::new(-277.2, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-231.0, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-184.8, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-138.6, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-92.4, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(-46.2, 0.0), 16.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3533,7 +3608,7 @@ pub fn watkins_glen_nascar() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "1:1".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -3547,25 +3622,33 @@ pub fn watkins_glen_nascar() -> Track {
 /// Preset: Bristol Motor Speedway (The Last Great Colosseum)
 /// 0.533-mile high-banked concrete short track with 28-30 degree steep banking,
 /// tight walls, and non-stop paint-trading bumper action.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (858 m).
 pub fn bristol_motor_speedway() -> Track {
     let waypoints = vec![
-        // Front Straight (Finish Line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(75.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
-        // Turn 1 & 2 (High-banked concrete East curve)
-        TrackWaypoint::new(Vec2::new(135.0, -20.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
-        TrackWaypoint::new(Vec2::new(150.0, 25.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(30.0),
-        TrackWaypoint::new(Vec2::new(135.0, 70.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
-        // Back Straight
-        TrackWaypoint::new(Vec2::new(75.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(0.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
-        TrackWaypoint::new(Vec2::new(-75.0, 95.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
-        // Turn 3 & 4 (High-banked concrete West curve)
-        TrackWaypoint::new(Vec2::new(-135.0, 70.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
-        TrackWaypoint::new(Vec2::new(-150.0, 25.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(30.0),
-        TrackWaypoint::new(Vec2::new(-135.0, -20.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(28.0),
-        // Turn 4 exit to Front Straight
-        TrackWaypoint::new(Vec2::new(-75.0, -45.0), 16.0).with_surface(SurfaceType::Concrete).with_bank_angle(10.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(35.8, -0.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(71.5, -0.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(107.0, 3.0), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(138.5, 19.5), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(160.5, 47.4), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(168.9, 81.8), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(163.3, 116.8), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(143.9, 146.3), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(113.6, 164.6), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(78.4, 169.9), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(42.7, 168.6), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(6.9, 167.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-28.8, 165.4), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-64.5, 163.8), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-100.0, 160.3), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-132.0, 145.5), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-154.9, 118.4), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-164.8, 84.5), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-158.6, 49.6), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-137.9, 21.0), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-106.9, 3.9), 16.0).with_bank_angle(28.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-71.5, 0.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
+        TrackWaypoint::new(Vec2::new(-35.8, 0.0), 16.0).with_bank_angle(10.0).with_surface(SurfaceType::Concrete),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3614,27 +3697,33 @@ pub fn bristol_motor_speedway() -> Track {
 /// Preset: Martinsville Speedway (The Paperclip)
 /// Historic 0.526-mile flat short track: long straights, tight flat concrete turns with 12° banking,
 /// and intense heavy-braking bumper contact.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (847 m).
 pub fn martinsville_speedway() -> Track {
     let waypoints = vec![
-        // Frontstretch (Start/Finish Line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -35.0), 16.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(100.0, -35.0), 16.0).with_bank_angle(0.0),
-        // Turns 1 & 2 (Tight East concrete hairpin, 12-degree banking)
-        TrackWaypoint::new(Vec2::new(140.0, -25.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(160.0, 0.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(160.0, 30.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(140.0, 55.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        // Backstretch
-        TrackWaypoint::new(Vec2::new(100.0, 65.0), 16.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(0.0, 65.0), 16.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-100.0, 65.0), 16.0).with_bank_angle(0.0),
-        // Turns 3 & 4 (Tight West concrete hairpin, 12-degree banking)
-        TrackWaypoint::new(Vec2::new(-140.0, 55.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.0, 30.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.0, 0.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-140.0, -25.0), 16.0).with_bank_angle(8.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
-        // Approach to Start/Finish
-        TrackWaypoint::new(Vec2::new(-100.0, -35.0), 16.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(-0.0, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(35.3, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(70.6, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(105.9, 0.0), 16.0),
+        TrackWaypoint::new(Vec2::new(140.5, 4.8), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(168.3, 25.5), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(175.3, 59.3), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(160.7, 90.9), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(131.9, 110.1), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(96.9, 112.7), 16.0),
+        TrackWaypoint::new(Vec2::new(61.6, 112.7), 16.0),
+        TrackWaypoint::new(Vec2::new(26.4, 112.7), 16.0),
+        TrackWaypoint::new(Vec2::new(-8.9, 112.7), 16.0),
+        TrackWaypoint::new(Vec2::new(-44.2, 112.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-79.5, 112.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-114.8, 112.6), 16.0),
+        TrackWaypoint::new(Vec2::new(-149.4, 106.5), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-175.7, 84.0), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-183.9, 50.6), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-169.8, 19.3), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-140.5, 0.4), 16.0).with_bank_angle(12.0).with_surface(SurfaceType::Concrete).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-105.8, -3.7), 16.0),
+        TrackWaypoint::new(Vec2::new(-70.5, -2.5), 16.0),
+        TrackWaypoint::new(Vec2::new(-35.3, -1.2), 16.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3683,28 +3772,49 @@ pub fn martinsville_speedway() -> Track {
 /// Preset: Darlington Raceway (The Lady in Black / Too Tough to Tame)
 /// Legendary 1.366-mile egg-shaped asymmetrical speedway: wide 25° sweeping Turns 1 & 2,
 /// ultra-narrow 23° Turns 3 & 4 where stock cars brush the outside wall for the 'Darlington Stripe'.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (2,198 m).
 pub fn darlington_raceway() -> Track {
     let waypoints = vec![
-        // Frontstretch (Start/Finish Line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -85.0), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(120.0, -85.0), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(240.0, -78.0), 18.0).with_bank_angle(6.0),
-        // Turns 1 & 2 (Wide East sweeper, 25-degree banking)
-        TrackWaypoint::new(Vec2::new(340.0, -40.0), 18.0).with_bank_angle(25.0),
-        TrackWaypoint::new(Vec2::new(390.0, 30.0), 18.0).with_bank_angle(25.0),
-        TrackWaypoint::new(Vec2::new(360.0, 100.0), 18.0).with_bank_angle(25.0),
-        TrackWaypoint::new(Vec2::new(280.0, 145.0), 18.0).with_bank_angle(15.0),
-        // Backstretch
-        TrackWaypoint::new(Vec2::new(150.0, 160.0), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(0.0, 160.0), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(-120.0, 155.0), 18.0).with_bank_angle(4.0),
-        // Turns 3 & 4 (Narrow & tight West curve, 23-degree banking)
-        TrackWaypoint::new(Vec2::new(-210.0, 130.0), 18.0).with_bank_angle(23.0),
-        TrackWaypoint::new(Vec2::new(-260.0, 75.0), 18.0).with_bank_angle(23.0),
-        TrackWaypoint::new(Vec2::new(-270.0, 0.0), 18.0).with_bank_angle(23.0),
-        TrackWaypoint::new(Vec2::new(-230.0, -55.0), 18.0).with_bank_angle(18.0),
-        // Turn 4 exit to Frontstretch
-        TrackWaypoint::new(Vec2::new(-140.0, -80.0), 18.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(54.9, 0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(109.9, 0.1), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(164.8, 0.2), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(219.8, 0.4), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(274.7, 2.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(328.3, 13.2), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(374.8, 42.1), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(411.8, 82.5), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(437.2, 131.0), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(449.3, 184.4), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(448.0, 239.1), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(432.5, 291.7), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(404.1, 338.6), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(364.0, 375.9), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(316.0, 402.2), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(262.3, 412.9), 18.0).with_bank_angle(25.0),
+        TrackWaypoint::new(Vec2::new(207.6, 407.9), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(153.1, 401.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(98.6, 394.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(44.1, 387.1), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-10.4, 380.1), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-64.9, 373.2), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-119.5, 366.3), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-174.0, 359.3), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-228.5, 352.5), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-282.7, 344.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-334.8, 326.9), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-379.0, 294.5), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-410.6, 250.0), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-426.4, 197.6), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-425.2, 142.9), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-406.7, 91.3), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-373.1, 48.2), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-327.5, 18.1), 18.0).with_bank_angle(23.0),
+        TrackWaypoint::new(Vec2::new(-274.6, 4.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-219.8, 0.8), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-164.8, 0.5), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-109.9, 0.3), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-54.9, 0.2), 18.0).with_bank_angle(3.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3753,29 +3863,49 @@ pub fn darlington_raceway() -> Track {
 /// Preset: Charlotte Motor Speedway (The Beast of the Southeast)
 /// Iconic 1.5-mile quad-oval speedway featuring 24-degree banking in turns,
 /// frontstretch double dogleg, and multi-groove slipstream pack racing.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (2,414 m).
 pub fn charlotte_motor_speedway() -> Track {
     let waypoints = vec![
-        // Frontstretch quad-oval dogleg (Start/Finish at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -95.0), 20.0).with_bank_angle(5.0),
-        TrackWaypoint::new(Vec2::new(110.0, -90.0), 20.0).with_bank_angle(5.0),
-        TrackWaypoint::new(Vec2::new(220.0, -75.0), 20.0).with_bank_angle(8.0),
-        // Turns 1 & 2 (24° High Banked East Curve)
-        TrackWaypoint::new(Vec2::new(320.0, -35.0), 20.0).with_bank_angle(24.0),
-        TrackWaypoint::new(Vec2::new(370.0, 35.0), 20.0).with_bank_angle(24.0),
-        TrackWaypoint::new(Vec2::new(340.0, 105.0), 20.0).with_bank_angle(24.0),
-        TrackWaypoint::new(Vec2::new(260.0, 150.0), 20.0).with_bank_angle(14.0),
-        // Backstretch
-        TrackWaypoint::new(Vec2::new(140.0, 165.0), 20.0).with_bank_angle(5.0),
-        TrackWaypoint::new(Vec2::new(0.0, 165.0), 20.0).with_bank_angle(5.0),
-        TrackWaypoint::new(Vec2::new(-140.0, 165.0), 20.0).with_bank_angle(5.0),
-        // Turns 3 & 4 (24° High Banked West Curve)
-        TrackWaypoint::new(Vec2::new(-260.0, 150.0), 20.0).with_bank_angle(14.0),
-        TrackWaypoint::new(Vec2::new(-340.0, 105.0), 20.0).with_bank_angle(24.0),
-        TrackWaypoint::new(Vec2::new(-370.0, 35.0), 20.0).with_bank_angle(24.0),
-        TrackWaypoint::new(Vec2::new(-320.0, -35.0), 20.0).with_bank_angle(24.0),
-        // Quad-oval entry kink
-        TrackWaypoint::new(Vec2::new(-220.0, -75.0), 20.0).with_bank_angle(8.0),
-        TrackWaypoint::new(Vec2::new(-110.0, -90.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-0.0, 0.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(60.3, -0.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(120.6, 1.5), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(178.8, 17.2), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(235.7, 37.1), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(292.5, 57.6), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(348.5, 80.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(400.2, 110.8), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(443.2, 152.6), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(470.3, 206.3), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(480.7, 265.4), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(472.0, 324.9), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(447.3, 379.7), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(408.0, 425.1), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(357.2, 457.1), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(298.8, 472.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(238.8, 477.8), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(178.5, 476.7), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(118.1, 475.2), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(57.8, 474.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-2.5, 472.9), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-62.9, 472.1), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-123.2, 471.2), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-183.6, 470.0), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-243.9, 469.2), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-303.9, 463.6), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-362.1, 447.9), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-413.9, 417.6), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-453.8, 372.7), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-478.3, 317.9), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-485.1, 258.2), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-473.5, 199.1), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-444.9, 146.2), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-402.4, 103.7), 20.0).with_bank_angle(24.0),
+        TrackWaypoint::new(Vec2::new(-349.7, 74.7), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-293.4, 53.1), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-236.1, 34.1), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-179.2, 13.9), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-120.7, 0.2), 20.0).with_bank_angle(5.0),
+        TrackWaypoint::new(Vec2::new(-60.3, -0.0), 20.0).with_bank_angle(5.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3825,41 +3955,57 @@ pub fn charlotte_motor_speedway() -> Track {
 /// Legendary 2.5-mile rectangular speedway surveyed from OpenStreetMap (OSM):
 /// four distinct 90-degree banked corners at 9.2° banking, long 5/8-mile straights,
 /// 1/8-mile short chutes, and the iconic Yard of Bricks start/finish line.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (3,017 m of the real 4,023 m).
 pub fn indianapolis_motor_speedway() -> Track {
     let waypoints = vec![
-        // Frontstretch & Yard of Bricks (Start/Finish line at WP 0)
-        TrackWaypoint::new(Vec2::new(0.0, -180.0), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(83.8, -180.0), 20.0).with_bank_angle(0.0),
-        // Turn 1 (Southeast 90° curve, 9.2° banking)
-        TrackWaypoint::new(Vec2::new(167.6, -178.4), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(241.1, -141.7), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(277.6, -68.2), 20.0).with_bank_angle(9.2),
-        // South Short Chute
-        TrackWaypoint::new(Vec2::new(278.5, 15.6), 20.0).with_bank_angle(0.0),
-        // Turn 2 (Northeast 90° curve, 9.2° banking)
-        TrackWaypoint::new(Vec2::new(269.4, 98.2), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(215.6, 160.7), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(135.0, 178.4), 20.0).with_bank_angle(9.2),
-        // Backstretch
-        TrackWaypoint::new(Vec2::new(51.2, 178.6), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-32.6, 178.4), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-116.4, 178.1), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-200.2, 177.9), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-284.0, 177.7), 20.0).with_bank_angle(0.0),
-        // Turn 3 (Northwest 90° curve, 9.2° banking)
-        TrackWaypoint::new(Vec2::new(-367.8, 176.5), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(-441.4, 139.8), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(-477.9, 66.3), 20.0).with_bank_angle(9.2),
-        // North Short Chute
-        TrackWaypoint::new(Vec2::new(-478.8, -17.5), 20.0).with_bank_angle(0.0),
-        // Turn 4 (Southwest 90° curve, 9.2° banking)
-        TrackWaypoint::new(Vec2::new(-469.7, -100.1), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(-415.9, -162.3), 20.0).with_bank_angle(9.2),
-        TrackWaypoint::new(Vec2::new(-335.3, -180.4), 20.0).with_bank_angle(9.2),
-        // Approach to Start/Finish line
-        TrackWaypoint::new(Vec2::new(-251.5, -180.0), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-167.6, -180.0), 20.0).with_bank_angle(0.0),
-        TrackWaypoint::new(Vec2::new(-83.8, -180.0), 20.0).with_bank_angle(0.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(62.9, -0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(125.7, -0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(188.6, -0.1), 20.0),
+        TrackWaypoint::new(Vec2::new(251.3, 2.4), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(311.2, 20.1), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(361.5, 57.4), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(398.3, 108.0), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(416.3, 167.8), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(417.6, 230.6), 20.0),
+        TrackWaypoint::new(Vec2::new(417.7, 293.4), 20.0),
+        TrackWaypoint::new(Vec2::new(417.6, 356.3), 20.0),
+        TrackWaypoint::new(Vec2::new(404.1, 417.3), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(370.8, 470.3), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(323.3, 511.0), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(265.2, 534.2), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(202.5, 537.5), 20.0),
+        TrackWaypoint::new(Vec2::new(139.7, 538.1), 20.0),
+        TrackWaypoint::new(Vec2::new(76.8, 537.9), 20.0),
+        TrackWaypoint::new(Vec2::new(14.0, 537.7), 20.0),
+        TrackWaypoint::new(Vec2::new(-48.9, 537.5), 20.0),
+        TrackWaypoint::new(Vec2::new(-111.8, 537.3), 20.0),
+        TrackWaypoint::new(Vec2::new(-174.6, 537.1), 20.0),
+        TrackWaypoint::new(Vec2::new(-237.5, 536.9), 20.0),
+        TrackWaypoint::new(Vec2::new(-300.3, 536.8), 20.0),
+        TrackWaypoint::new(Vec2::new(-363.2, 536.6), 20.0),
+        TrackWaypoint::new(Vec2::new(-426.0, 536.4), 20.0),
+        TrackWaypoint::new(Vec2::new(-488.9, 536.3), 20.0),
+        TrackWaypoint::new(Vec2::new(-551.7, 534.7), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-611.6, 516.6), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-662.1, 479.6), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-699.4, 429.3), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-716.8, 369.3), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-718.1, 306.5), 20.0),
+        TrackWaypoint::new(Vec2::new(-718.2, 243.7), 20.0),
+        TrackWaypoint::new(Vec2::new(-718.2, 180.8), 20.0),
+        TrackWaypoint::new(Vec2::new(-704.5, 119.8), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-671.9, 66.5), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-623.8, 26.6), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-565.4, 3.9), 20.0).with_bank_angle(9.2),
+        TrackWaypoint::new(Vec2::new(-502.9, -0.5), 20.0),
+        TrackWaypoint::new(Vec2::new(-440.0, -0.2), 20.0),
+        TrackWaypoint::new(Vec2::new(-377.2, 0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(-314.3, 0.1), 20.0),
+        TrackWaypoint::new(Vec2::new(-251.4, 0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(-188.6, 0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(-125.7, 0.0), 20.0),
+        TrackWaypoint::new(Vec2::new(-62.9, 0.0), 20.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -3894,7 +4040,7 @@ pub fn indianapolis_motor_speedway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "1:1".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -4118,44 +4264,75 @@ pub fn road_america() -> Track {
 }
 
 /// Preset: Chicago Street Course (Grant Park 220)
-/// NASCAR's premier 2.2-mile 12-turn downtown street circuit surveyed from OpenStreetMap (OSM) at ~1:1 (3,380m of the real 3,541m):
+/// NASCAR's premier 2.2-mile 12-turn downtown street circuit surveyed from OpenStreetMap (OSM):
 /// tight 90° corners between concrete barrier walls along Columbus Drive, Balbo Drive, DuSable Lake Shore Drive, and Michigan Avenue.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (2,604 m of the real 3,541 m; the 90° street corners are rounded).
 pub fn chicago_street_course() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 13.0),
-        TrackWaypoint::new(Vec2::new(4.8, -101.3), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(97.5, -108.9), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(171.1, -55.5), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(228.9, 27.8), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(267.0, 120.8), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(269.9, 221.9), 13.0),
-        TrackWaypoint::new(Vec2::new(268.1, 323.3), 13.0),
-        TrackWaypoint::new(Vec2::new(266.5, 424.7), 13.0),
-        TrackWaypoint::new(Vec2::new(256.1, 518.1), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(154.8, 516.9), 13.0),
-        TrackWaypoint::new(Vec2::new(53.4, 515.8), 12.5).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-8.3, 563.7), 12.5).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-8.3, 665.0), 13.0),
-        TrackWaypoint::new(Vec2::new(-9.7, 766.4), 13.0),
-        TrackWaypoint::new(Vec2::new(-11.7, 867.7), 13.0),
-        TrackWaypoint::new(Vec2::new(-14.3, 969.1), 13.0),
-        TrackWaypoint::new(Vec2::new(-16.9, 1070.4), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-103.9, 1082.9), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-205.2, 1081.3), 13.0),
-        TrackWaypoint::new(Vec2::new(-306.6, 1079.8), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-304.5, 979.1), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-268.3, 891.6), 13.0),
-        TrackWaypoint::new(Vec2::new(-231.8, 799.6), 12.5).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-260.4, 704.4), 12.5).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-303.6, 621.5), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-301.4, 520.2), 12.5).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-212.0, 509.9), 13.0),
-        TrackWaypoint::new(Vec2::new(-110.7, 512.3), 13.0),
-        TrackWaypoint::new(Vec2::new(-13.6, 504.2), 12.5).with_curbs(false, true),
-        TrackWaypoint::new(Vec2::new(-7.4, 405.4), 13.0),
-        TrackWaypoint::new(Vec2::new(-5.9, 304.0), 13.0),
-        TrackWaypoint::new(Vec2::new(-4.1, 202.7), 13.0),
-        TrackWaypoint::new(Vec2::new(-1.9, 101.3), 13.0),
+        TrackWaypoint::new(Vec2::new(0.0, -0.0), 13.0),
+        TrackWaypoint::new(Vec2::new(41.5, -0.0), 13.0),
+        TrackWaypoint::new(Vec2::new(83.0, -0.1), 13.0),
+        TrackWaypoint::new(Vec2::new(124.5, -0.2), 13.0),
+        TrackWaypoint::new(Vec2::new(166.0, -0.3), 13.0),
+        TrackWaypoint::new(Vec2::new(207.5, -0.3), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(237.4, 10.1), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(237.1, 51.6), 13.0),
+        TrackWaypoint::new(Vec2::new(236.8, 93.1), 13.0),
+        TrackWaypoint::new(Vec2::new(236.6, 134.6), 13.0),
+        TrackWaypoint::new(Vec2::new(236.2, 176.1), 13.0),
+        TrackWaypoint::new(Vec2::new(236.1, 217.6), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(271.8, 223.5), 13.0),
+        TrackWaypoint::new(Vec2::new(313.3, 223.7), 13.0),
+        TrackWaypoint::new(Vec2::new(354.2, 222.6), 13.0),
+        TrackWaypoint::new(Vec2::new(382.6, 192.4), 13.0),
+        TrackWaypoint::new(Vec2::new(418.5, 172.2), 13.0),
+        TrackWaypoint::new(Vec2::new(459.3, 166.3), 13.0),
+        TrackWaypoint::new(Vec2::new(499.5, 174.5), 13.0),
+        TrackWaypoint::new(Vec2::new(534.2, 196.9), 13.0),
+        TrackWaypoint::new(Vec2::new(567.0, 219.9), 13.0),
+        TrackWaypoint::new(Vec2::new(608.5, 219.5), 13.0),
+        TrackWaypoint::new(Vec2::new(650.0, 219.6), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(674.3, 203.3), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(674.3, 161.8), 13.0),
+        TrackWaypoint::new(Vec2::new(674.2, 120.3), 13.0),
+        TrackWaypoint::new(Vec2::new(674.1, 78.9), 13.0),
+        TrackWaypoint::new(Vec2::new(674.2, 37.4), 13.0),
+        TrackWaypoint::new(Vec2::new(672.4, -1.9), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(630.9, -2.3), 13.0),
+        TrackWaypoint::new(Vec2::new(589.4, -2.6), 13.0),
+        TrackWaypoint::new(Vec2::new(547.9, -2.9), 13.0),
+        TrackWaypoint::new(Vec2::new(506.4, -3.2), 13.0),
+        TrackWaypoint::new(Vec2::new(464.9, -3.7), 13.0),
+        TrackWaypoint::new(Vec2::new(423.4, -3.4), 13.0),
+        TrackWaypoint::new(Vec2::new(382.0, -3.2), 13.0),
+        TrackWaypoint::new(Vec2::new(340.5, -2.9), 13.0),
+        TrackWaypoint::new(Vec2::new(299.0, -2.1), 13.0),
+        TrackWaypoint::new(Vec2::new(257.5, -1.7), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(237.4, -22.8), 13.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(237.3, -64.3), 13.0),
+        TrackWaypoint::new(Vec2::new(237.0, -105.8), 13.0),
+        TrackWaypoint::new(Vec2::new(236.7, -147.3), 13.0),
+        TrackWaypoint::new(Vec2::new(236.4, -188.8), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(215.7, -210.3), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(174.2, -210.4), 13.0),
+        TrackWaypoint::new(Vec2::new(132.7, -210.3), 13.0),
+        TrackWaypoint::new(Vec2::new(91.2, -210.3), 13.0),
+        TrackWaypoint::new(Vec2::new(49.7, -210.3), 13.0),
+        TrackWaypoint::new(Vec2::new(8.2, -210.2), 13.0),
+        TrackWaypoint::new(Vec2::new(-33.3, -210.1), 13.0),
+        TrackWaypoint::new(Vec2::new(-74.4, -205.3), 13.0),
+        TrackWaypoint::new(Vec2::new(-113.5, -191.7), 13.0),
+        TrackWaypoint::new(Vec2::new(-148.4, -169.4), 13.0),
+        TrackWaypoint::new(Vec2::new(-182.0, -145.1), 13.0),
+        TrackWaypoint::new(Vec2::new(-215.8, -121.0), 13.0),
+        TrackWaypoint::new(Vec2::new(-242.2, -93.0), 13.0),
+        TrackWaypoint::new(Vec2::new(-241.9, -51.5), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-241.9, -10.0), 13.0).with_curbs(false, true),
+        TrackWaypoint::new(Vec2::new(-207.5, -1.8), 13.0),
+        TrackWaypoint::new(Vec2::new(-166.0, -0.6), 13.0),
+        TrackWaypoint::new(Vec2::new(-124.5, -0.3), 13.0),
+        TrackWaypoint::new(Vec2::new(-83.0, -0.3), 13.0),
+        TrackWaypoint::new(Vec2::new(-41.5, -0.2), 13.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -4190,7 +4367,7 @@ pub fn chicago_street_course() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "1:1".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -5716,24 +5893,25 @@ pub fn stunt_city_megastructure() -> Track {
 /// Preset: Bowman Gray Stadium (The Madhouse)
 /// Historic 0.25-mile flat asphalt bullring short track in Winston-Salem, NC surveyed from OpenStreetMap (OSM):
 /// claustrophobic flat turns surrounded by football stadium grandstands and continuous bumper-to-bumper action.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (402 m).
 pub fn bowman_gray_stadium() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(25.1, -1.4), 14.0),
-        TrackWaypoint::new(Vec2::new(50.2, -2.8), 14.0),
-        TrackWaypoint::new(Vec2::new(75.3, -4.2), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(100.0, -1.7), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(118.5, 14.5), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(121.8, 38.8), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(106.8, 58.2), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(83.2, 66.0), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(58.1, 67.5), 14.0),
-        TrackWaypoint::new(Vec2::new(33.0, 68.7), 14.0),
-        TrackWaypoint::new(Vec2::new(7.9, 69.9), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-16.9, 67.3), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-35.6, 51.5), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-38.5, 27.3), 14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-23.7, 7.6), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+        TrackWaypoint::new(Vec2::new(25.1, 0.0), 14.0),
+        TrackWaypoint::new(Vec2::new(50.2, 0.9), 14.0),
+        TrackWaypoint::new(Vec2::new(71.8, 12.5), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(80.9, 35.2), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(71.9, 57.8), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(49.9, 69.2), 14.0),
+        TrackWaypoint::new(Vec2::new(24.9, 70.7), 14.0),
+        TrackWaypoint::new(Vec2::new(-0.3, 70.5), 14.0),
+        TrackWaypoint::new(Vec2::new(-25.4, 70.3), 14.0),
+        TrackWaypoint::new(Vec2::new(-50.4, 69.0), 14.0),
+        TrackWaypoint::new(Vec2::new(-72.3, 57.9), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-81.8, 35.3), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-72.0, 12.7), 14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-50.1, 1.4), 14.0),
+        TrackWaypoint::new(Vec2::new(-25.1, 0.0), 14.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5758,11 +5936,11 @@ pub fn bowman_gray_stadium() -> Track {
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
             grandstands: vec![
-                Grandstand::new(1, Vec2::new(40.0, -18.0), 90.0, 16.0, 0.0)
+                Grandstand::new(1, Vec2::new(0.0, -18.0), 90.0, 16.0, 0.0)
                     .with_style(GrandstandStyle::OpenBleachers)
                     .with_tiers(12)
                     .with_seat_color([0.80, 0.25, 0.20]),
-                Grandstand::new(2, Vec2::new(40.0, 85.0), 90.0, 16.0, std::f32::consts::PI)
+                Grandstand::new(2, Vec2::new(0.0, 88.6), 90.0, 16.0, std::f32::consts::PI)
                     .with_style(GrandstandStyle::OpenBleachers)
                     .with_tiers(12)
                     .with_seat_color([0.20, 0.45, 0.85]),
@@ -5791,28 +5969,33 @@ pub fn bowman_gray_stadium() -> Track {
 /// Preset: Lucas Oil Indianapolis Raceway Park (IRP)
 /// Classic 0.686-mile asphalt short oval in Clermont, Indiana surveyed from OpenStreetMap (OSM):
 /// 12° banking in turns 1-4, progressive transitions, and tight apron passing lines.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (1,104 m).
 pub fn lucas_oil_irp() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(55.1, -3.7), 16.0).with_bank_angle(2.0),
-        TrackWaypoint::new(Vec2::new(110.1, -7.5), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(162.0, 7.7), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(201.5, 45.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(219.0, 96.9), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(208.6, 150.4), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(174.5, 193.2), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(124.7, 215.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(69.7, 219.4), 16.0).with_bank_angle(2.0),
-        TrackWaypoint::new(Vec2::new(14.6, 223.6), 16.0).with_bank_angle(2.0),
-        TrackWaypoint::new(Vec2::new(-40.4, 227.8), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-95.5, 230.6), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-148.1, 216.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-187.9, 179.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-203.9, 126.9), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-194.3, 73.4), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-160.7, 30.5), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-109.9, 10.3), 16.0).with_bank_angle(12.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-55.0, 5.0), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(46.0, -0.0), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(92.0, -0.0), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(137.2, 5.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(175.6, 30.0), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(202.0, 66.9), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(211.9, 111.5), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(202.2, 156.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(175.1, 192.9), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(136.9, 217.7), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(91.5, 223.3), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(45.5, 223.7), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(-0.5, 224.1), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(-46.5, 224.4), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(-92.5, 224.8), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(-137.9, 218.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-177.1, 194.7), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-203.7, 157.6), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-212.0, 112.8), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-203.5, 68.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-176.5, 31.1), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-137.3, 8.3), 16.0).with_bank_angle(12.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-92.0, 2.2), 16.0).with_bank_angle(2.0),
+        TrackWaypoint::new(Vec2::new(-46.0, 1.1), 16.0).with_bank_angle(2.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5837,7 +6020,7 @@ pub fn lucas_oil_irp() -> Track {
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
             grandstands: vec![
-                Grandstand::new(1, Vec2::new(0.0, -22.0), 120.0, 16.0, 0.0)
+                Grandstand::new(1, Vec2::new(0.0, -23.0), 120.0, 16.0, 0.0)
                     .with_style(GrandstandStyle::CoveredStadium)
                     .with_tiers(10)
                     .with_seat_color([0.85, 0.30, 0.20]),
@@ -5866,28 +6049,33 @@ pub fn lucas_oil_irp() -> Track {
 /// Preset: North Wilkesboro Speedway
 /// Historic moonshine-era 0.625-mile short track in North Carolina surveyed from OpenStreetMap (OSM):
 /// distinctive downhill frontstretch, uphill backstretch, 14° turn banking, and abrasive high-tire-wear asphalt.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (1,006 m).
 pub fn north_wilkesboro_speedway() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, -0.0), 16.0).with_elevation(-1.5).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(50.2, -3.3), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(100.4, -6.6), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(150.5, -8.8), 16.0).with_elevation(-1.5).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(200.4, -3.5), 16.0).with_elevation(-1.5).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(246.7, 14.9), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(277.8, 53.3), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(282.2, 102.3), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(261.7, 147.5), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(221.8, 176.2), 16.0).with_elevation(2.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(172.6, 185.8), 16.0).with_elevation(2.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(122.4, 188.3), 16.0).with_elevation(2.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(72.1, 190.8), 16.0).with_elevation(2.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(21.9, 193.0), 16.0).with_elevation(2.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-28.2, 189.4), 16.0).with_elevation(2.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-74.8, 172.0), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-105.3, 133.6), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-109.8, 83.9), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-90.3, 38.5), 16.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-48.8, 11.9), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(41.9, -0.0), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(83.8, 0.5), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(125.5, 5.1), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(165.2, 17.6), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(196.5, 44.8), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(210.0, 83.7), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(207.3, 125.3), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(186.3, 161.2), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(151.1, 182.7), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(110.3, 192.0), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(68.6, 194.6), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(26.7, 195.2), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-15.2, 196.0), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-57.0, 195.3), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-98.5, 189.3), 16.0).with_elevation(2.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-137.7, 175.4), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-168.3, 147.7), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-185.0, 109.8), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-179.1, 68.7), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-158.3, 32.8), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-124.7, 9.1), 16.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-83.8, 1.2), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-41.9, -0.1), 16.0).with_elevation(-1.5).with_bank_angle(3.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5912,14 +6100,14 @@ pub fn north_wilkesboro_speedway() -> Track {
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
             grandstands: vec![
-                Grandstand::new(1, Vec2::new(80.0, -22.0), 100.0, 16.0, 0.0)
+                Grandstand::new(1, Vec2::new(0.0, -18.5), 100.0, 16.0, 0.0)
                     .with_style(GrandstandStyle::OpenBleachers)
                     .with_tiers(8)
                     .with_seat_color([0.70, 0.50, 0.30]),
             ],
             trees: vec![
-                Tree::new(1, Vec2::new(80.0, 210.0), TreeType::Oak).with_scale(1.4),
-                Tree::new(2, Vec2::new(140.0, 215.0), TreeType::Pine).with_scale(1.3),
+                Tree::new(1, Vec2::new(-68.5, 213.9), TreeType::Oak).with_scale(1.4),
+                Tree::new(2, Vec2::new(-5.8, 223.2), TreeType::Pine).with_scale(1.3),
             ],
         },
         checkpoints,
@@ -5942,34 +6130,51 @@ pub fn north_wilkesboro_speedway() -> Track {
 }
 
 /// Preset: Pocono Raceway (The Tricky Triangle)
-/// Legendary 2.5-mile tri-oval superspeedway in Long Pond, PA surveyed from OpenStreetMap (OSM) scaled to 0.5x (2,011.5m):
+/// Legendary 2.5-mile tri-oval superspeedway in Long Pond, PA surveyed from OpenStreetMap (OSM):
 /// three distinct turn radiuses and banking angles modeled after Trenton (14°), Indianapolis (8°), and Milwaukee (6°).
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 0.75x (3,017 m of the real 4,023 m).
 pub fn pocono_raceway() -> Track {
     let waypoints = vec![
         TrackWaypoint::new(Vec2::new(0.0, 0.0), 18.0),
-        TrackWaypoint::new(Vec2::new(83.7, -4.7), 18.0),
-        TrackWaypoint::new(Vec2::new(167.4, -8.8), 18.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(242.9, 22.7), 18.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(282.3, 95.2), 18.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(266.8, 175.9), 18.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(218.5, 244.3), 18.0).with_bank_angle(14.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(168.8, 311.9), 18.0).with_bank_angle(14.0),
-        TrackWaypoint::new(Vec2::new(119.1, 379.4), 18.0),
-        TrackWaypoint::new(Vec2::new(69.5, 446.9), 18.0),
-        TrackWaypoint::new(Vec2::new(19.8, 514.4), 18.0),
-        TrackWaypoint::new(Vec2::new(-29.4, 582.2), 18.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-79.4, 649.5), 18.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-152.9, 684.4), 18.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-229.3, 656.3), 18.0).with_bank_angle(8.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-262.3, 582.1), 18.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-256.6, 498.5), 18.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-249.5, 415.0), 18.0),
-        TrackWaypoint::new(Vec2::new(-242.6, 331.5), 18.0).with_bank_angle(6.0),
-        TrackWaypoint::new(Vec2::new(-235.7, 247.9), 18.0).with_bank_angle(6.0),
-        TrackWaypoint::new(Vec2::new(-228.9, 164.4), 18.0).with_bank_angle(6.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-218.4, 81.5), 18.0).with_bank_angle(6.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-165.4, 19.1), 18.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-83.7, 5.0), 18.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(75.4, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(150.9, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(226.3, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(301.7, -0.6), 18.0),
+        TrackWaypoint::new(Vec2::new(377.2, -1.2), 18.0),
+        TrackWaypoint::new(Vec2::new(452.5, 0.7), 18.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(521.4, 30.0), 18.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(568.7, 88.0), 18.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(583.3, 161.3), 18.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(564.2, 233.4), 18.0).with_bank_angle(14.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(513.0, 287.8), 18.0),
+        TrackWaypoint::new(Vec2::new(449.3, 328.0), 18.0),
+        TrackWaypoint::new(Vec2::new(384.9, 367.3), 18.0),
+        TrackWaypoint::new(Vec2::new(320.5, 406.7), 18.0),
+        TrackWaypoint::new(Vec2::new(256.2, 446.1), 18.0),
+        TrackWaypoint::new(Vec2::new(192.0, 485.7), 18.0),
+        TrackWaypoint::new(Vec2::new(127.8, 525.3), 18.0),
+        TrackWaypoint::new(Vec2::new(63.6, 564.8), 18.0),
+        TrackWaypoint::new(Vec2::new(-0.6, 604.4), 18.0),
+        TrackWaypoint::new(Vec2::new(-64.7, 644.2), 18.0),
+        TrackWaypoint::new(Vec2::new(-132.9, 675.4), 18.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-207.7, 676.6), 18.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-275.0, 644.4), 18.0).with_bank_angle(8.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-325.2, 588.3), 18.0),
+        TrackWaypoint::new(Vec2::new(-373.5, 530.3), 18.0),
+        TrackWaypoint::new(Vec2::new(-421.6, 472.3), 18.0),
+        TrackWaypoint::new(Vec2::new(-469.7, 414.1), 18.0),
+        TrackWaypoint::new(Vec2::new(-517.7, 356.0), 18.0),
+        TrackWaypoint::new(Vec2::new(-565.8, 297.8), 18.0),
+        TrackWaypoint::new(Vec2::new(-599.2, 230.9), 18.0).with_bank_angle(6.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-600.9, 156.1), 18.0).with_bank_angle(6.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-573.2, 86.5), 18.0).with_bank_angle(6.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-521.7, 32.5), 18.0).with_bank_angle(6.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-452.4, 4.1), 18.0),
+        TrackWaypoint::new(Vec2::new(-377.2, 0.2), 18.0),
+        TrackWaypoint::new(Vec2::new(-301.7, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(-226.3, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(-150.9, -0.0), 18.0),
+        TrackWaypoint::new(Vec2::new(-75.4, -0.0), 18.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -5994,14 +6199,14 @@ pub fn pocono_raceway() -> Track {
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
             grandstands: vec![
-                Grandstand::new(1, Vec2::new(0.0, -25.0), 160.0, 18.0, 0.0)
+                Grandstand::new(1, Vec2::new(0.0, -26.0), 160.0, 18.0, 0.0)
                     .with_style(GrandstandStyle::CoveredStadium)
                     .with_tiers(14)
                     .with_seat_color([0.20, 0.40, 0.80]),
             ],
             trees: vec![
-                Tree::new(1, Vec2::new(-100.0, 350.0), TreeType::Pine).with_scale(1.4),
-                Tree::new(2, Vec2::new(100.0, 350.0), TreeType::Pine).with_scale(1.5),
+                Tree::new(1, Vec2::new(-460.3, 194.4), TreeType::Pine).with_scale(1.4),
+                Tree::new(2, Vec2::new(361.8, 343.0), TreeType::Pine).with_scale(1.5),
             ],
         },
         checkpoints,
@@ -6012,7 +6217,7 @@ pub fn pocono_raceway() -> Track {
         car_category: CarCategory::Nascar,
         module_id: Some("nascar".to_string()),
         modules: vec!["nascar".to_string()],
-        scale: "0.5x".to_string(),
+        scale: "0.75x".to_string(),
         wikipedia_url: None,
         osm_url: None,
         country_code: None,
@@ -6026,32 +6231,41 @@ pub fn pocono_raceway() -> Track {
 /// Preset: Phoenix Raceway
 /// Premier 1.0-mile low-banked tri-oval in Avondale, Arizona surveyed from OpenStreetMap (OSM):
 /// 8°-11° progressive banking, frontstretch start/finish dogleg cut across the asphalt apron, and dramatic desert surroundings.
+/// Lap from OpenStreetMap (`scripts/osm_importer.py nascar`) at 1:1 (1,645 m).
 pub fn phoenix_raceway() -> Track {
     let waypoints = vec![
-        TrackWaypoint::new(Vec2::new(0.0, 0.0), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(66.9, -4.3), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(133.8, -8.6), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(200.7, -13.0), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(267.6, -17.3), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(334.5, -21.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(401.0, -19.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(457.3, 15.1), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(486.5, 74.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(479.9, 140.1), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(444.0, 196.2), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(396.1, 242.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(345.0, 286.3), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(287.9, 320.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(221.3, 325.1), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(154.4, 320.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(87.8, 312.5), 18.0).with_bank_angle(3.0),
-        TrackWaypoint::new(Vec2::new(21.3, 304.5), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-44.3, 291.7), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-98.0, 252.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-130.1, 194.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-135.3, 128.4), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-111.4, 66.1), 18.0).with_bank_angle(10.0).with_curbs(true, false),
-        TrackWaypoint::new(Vec2::new(-63.0, 20.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-0.0, 0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(51.4, -0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(102.8, -0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(154.2, -0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(205.6, 0.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(253.6, 17.5), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(290.1, 52.8), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(310.8, 99.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(309.4, 150.5), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(287.8, 196.6), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(254.3, 235.4), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(215.2, 268.8), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(173.9, 299.4), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(131.5, 328.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(84.3, 347.2), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(33.1, 347.2), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-18.0, 341.2), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-68.6, 332.5), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-119.2, 323.1), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-169.7, 313.7), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-220.1, 303.4), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-266.2, 281.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-301.5, 244.8), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-323.1, 198.3), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-329.8, 147.7), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-317.7, 98.0), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-292.1, 53.8), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-253.1, 20.9), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-205.5, 2.4), 18.0).with_bank_angle(10.0).with_curbs(true, false),
+        TrackWaypoint::new(Vec2::new(-154.2, 0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-102.8, 0.0), 18.0).with_bank_angle(3.0),
+        TrackWaypoint::new(Vec2::new(-51.4, 0.0), 18.0).with_bank_angle(3.0),
     ];
 
     let spline = TrackSpline::new(waypoints, true);
@@ -6076,7 +6290,7 @@ pub fn phoenix_raceway() -> Track {
             left_boundary_polyline: left_poly,
             right_boundary_polyline: right_poly,
             grandstands: vec![
-                Grandstand::new(1, Vec2::new(180.0, -25.0), 140.0, 16.0, 0.0)
+                Grandstand::new(1, Vec2::new(0.0, -21.0), 140.0, 16.0, 0.0)
                     .with_style(GrandstandStyle::CoveredStadium)
                     .with_tiers(12)
                     .with_seat_color([0.85, 0.40, 0.15]),

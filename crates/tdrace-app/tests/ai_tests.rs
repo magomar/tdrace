@@ -76,13 +76,13 @@ fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
     let mut bot = BotAiDriver::new(BotProfile::aggressive());
 
     // Bot car trailing 15m behind lead car on the back straight (heading left, angle PI)
-    // Superstretch is at y = 180.0, heading towards negative X
-    let mut trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(100.0, 180.0), std::f32::consts::PI);
+    // Superstretch runs at y ~= 596 near x = 100, heading towards negative X
+    let mut trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(100.0, 595.8), std::f32::consts::PI);
     trailing_car.state.speed = 65.0; // ~234 km/h
     trailing_car.state.velocity = Vec2::new(-65.0, 0.0);
 
-    // Lead car slightly offset laterally (e.g. y = 180.6)
-    let mut lead_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(85.0, 180.6), std::f32::consts::PI);
+    // Lead car slightly offset laterally (0.6 m)
+    let mut lead_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(85.0, 597.2), std::f32::consts::PI);
     lead_car.state.speed = 64.0;
     lead_car.state.velocity = Vec2::new(-64.0, 0.0);
 
@@ -93,7 +93,7 @@ fn test_bot_ai_slipstream_drafting_and_slingshot_pack_racing() {
     assert!(ctrl.throttle > 0.8, "Drafting bot should maintain full throttle");
 
     // When closing in closely (< 8m), bot executes slingshot lateral pass
-    let mut close_trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(92.0, 180.0), std::f32::consts::PI);
+    let mut close_trailing_car = Car::new(CarConfig::stock_car_ta1()).with_pose(Vec2::new(92.0, 596.2), std::f32::consts::PI);
     close_trailing_car.state.speed = 70.0;
     close_trailing_car.state.velocity = Vec2::new(-70.0, 0.0);
 
