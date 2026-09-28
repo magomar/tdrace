@@ -47,17 +47,17 @@ pub struct PlayerVisibilityOptions {
 }
 
 impl PlayerVisibilityOptions {
-    /// Key [5]: cycles the curve helper Chevrons -> Rally Pacenote -> Off -> Chevrons.
+    /// Key [5]: cycles the curve helper Rally Pacenote -> Chevrons -> Off -> Rally Pacenote.
     pub fn cycle_curve_indicator(&mut self) {
         match (self.curve_helper, self.curve_indicator_style) {
             (false, _) => {
                 self.curve_helper = true;
-                self.curve_indicator_style = CurveIndicatorStyle::Chevrons;
-            }
-            (true, CurveIndicatorStyle::Chevrons) => {
                 self.curve_indicator_style = CurveIndicatorStyle::Pacenote;
             }
             (true, CurveIndicatorStyle::Pacenote) => {
+                self.curve_indicator_style = CurveIndicatorStyle::Chevrons;
+            }
+            (true, CurveIndicatorStyle::Chevrons) => {
                 self.curve_helper = false;
             }
         }
@@ -89,7 +89,7 @@ impl Default for PlayerVisibilityOptions {
             curve_helper_scale: 1.0,
             curve_helper_brightness: 1.0,
             curve_color_scheme: CurveColorScheme::Traffic,
-            curve_indicator_style: CurveIndicatorStyle::Chevrons,
+            curve_indicator_style: CurveIndicatorStyle::Pacenote,
             bot_nameplates: true,
             sonar_ping: true,
         }

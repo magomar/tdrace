@@ -11,9 +11,9 @@ use tdrace_core::track::Track;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum CurveIndicatorStyle {
     /// Severity chevrons (`>>>`) beside the car: one chevron per degree.
-    #[default]
     Chevrons,
     /// Rally pacenote icon beside the car: a small drawing of the curve's own shape.
+    #[default]
     Pacenote,
 }
 
@@ -26,11 +26,11 @@ impl CurveIndicatorStyle {
         }
     }
 
-    /// Parses the `config.toml` name; unknown names fall back to chevrons.
+    /// Parses the `config.toml` name; unknown names fall back to the default (pacenote).
     pub fn from_config_str(s: &str) -> Self {
         match s.to_lowercase().as_str() {
-            "pacenote" => Self::Pacenote,
-            _ => Self::Chevrons,
+            "chevrons" => Self::Chevrons,
+            _ => Self::Pacenote,
         }
     }
 }

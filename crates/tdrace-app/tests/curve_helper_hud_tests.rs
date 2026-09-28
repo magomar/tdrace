@@ -307,10 +307,14 @@ fn test_pacenote_polyline_draws_curve_shape_in_icon_box() {
 
 #[test]
 fn test_curve_indicator_style_config_names() {
-    assert_eq!(CurveIndicatorStyle::default(), CurveIndicatorStyle::Chevrons);
+    assert_eq!(CurveIndicatorStyle::default(), CurveIndicatorStyle::Pacenote);
     for style in [CurveIndicatorStyle::Chevrons, CurveIndicatorStyle::Pacenote] {
         assert_eq!(CurveIndicatorStyle::from_config_str(style.as_config_str()), style);
     }
-    assert_eq!(CurveIndicatorStyle::from_config_str("PACENOTE"), CurveIndicatorStyle::Pacenote);
-    assert_eq!(CurveIndicatorStyle::from_config_str("bogus"), CurveIndicatorStyle::Chevrons);
+    assert_eq!(CurveIndicatorStyle::from_config_str("CHEVRONS"), CurveIndicatorStyle::Chevrons);
+    assert_eq!(CurveIndicatorStyle::from_config_str("bogus"), CurveIndicatorStyle::Pacenote);
+
+    // A config.toml written before this setting existed gets the pacenote default
+    let old: tdrace_app::config::PlayerHelpersConfig = toml::from_str("curve_helper = true").unwrap();
+    assert_eq!(CurveIndicatorStyle::from_config_str(&old.curve_indicator_style), CurveIndicatorStyle::Pacenote);
 }

@@ -406,7 +406,7 @@ impl Default for PlayerHelpersConfig {
             curve_helper_scale: 1.0,
             curve_helper_brightness: 1.0,
             curve_color_scheme: "traffic".to_string(),
-            curve_indicator_style: "chevrons".to_string(),
+            curve_indicator_style: "pacenote".to_string(),
             adaptive_visibility: true,
             radar_sonar_ping: true,
             bot_nameplates: true,

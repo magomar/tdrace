@@ -4818,7 +4818,7 @@ impl RaceSession {
                 });
             }
 
-            // [5] Cycle Approaching Curve Helper: Chevrons -> Rally Pacenote -> Off
+            // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
             if is_key_pressed(KeyCode::Key5) {
                 self.visibility_options.cycle_curve_indicator();
                 self.audio.play_sfx(SfxType::UiMove);

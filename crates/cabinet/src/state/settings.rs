@@ -128,7 +128,7 @@ impl Default for HelpersSettingsState {
             aura_ratio: 1.0,
             aura_brightness: 1.0,
             ribbon_enabled: true,
-            ribbon_pacenote: false,
+            ribbon_pacenote: true,
             ribbon_brightness: 1.0,
             ribbon_scale: 1.0,
             chevron_enabled: true,
@@ -558,7 +558,7 @@ impl ArcadeSettingsModal {
             aura_dropdown: DropdownWidget::new("GROUND AURA DISC", enabled_options.clone(), 0),
             aura_ratio_slider: SliderWidget::new("AURA GLOW RADIUS", 0.40, 1.80, 0.05, 1.00).with_suffix("x"),
             aura_brightness_slider: SliderWidget::new("AURA BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            ribbon_dropdown: DropdownWidget::new("CURVE INDICATOR", ribbon_options, RIBBON_CHEVRONS),
+            ribbon_dropdown: DropdownWidget::new("CURVE INDICATOR", ribbon_options, RIBBON_PACENOTE),
             ribbon_brightness_slider: SliderWidget::new("RIBBON BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
             ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00).with_suffix("x"),
             chevron_dropdown: DropdownWidget::new("OVERHEAD CHEVRON", enabled_options.clone(), 0),
@@ -688,10 +688,10 @@ impl ArcadeSettingsModal {
     }
 
     /// Turns the curve indicator on for a preset. An enabled look (chevrons or pacenote) is kept;
-    /// from Off it falls back to chevrons.
+    /// from Off it falls back to the default rally pacenote.
     fn enable_ribbon_keeping_style(&mut self) {
         if self.ribbon_dropdown.selected_index == RIBBON_OFF {
-            self.ribbon_dropdown.set_selected(RIBBON_CHEVRONS);
+            self.ribbon_dropdown.set_selected(RIBBON_PACENOTE);
         }
     }
 
