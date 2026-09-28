@@ -204,44 +204,44 @@ Later phases keep every existing file readable:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Golden sim is deterministic and recorded**
-  - [ ] **Given** a generated oval and a generated figure-eight, each with 6 sports cars and scripted controls that cause wall and car-to-car contact
-  - [ ] **When** `cargo test -p arcade-race-core --test golden_sim` runs twice
-  - [ ] **Then** both runs pass against the recorded hash, and at least one wall hit and one car-to-car contact occurred
+  - [x] **Given** a generated oval and a generated figure-eight, each with 6 sports cars and scripted controls that cause wall and car-to-car contact
+  - [x] **When** `cargo test -p arcade-race-core --test golden_sim` runs twice
+  - [x] **Then** both runs pass against the recorded hash, and at least one wall hit and one car-to-car contact occurred
 
 - **Scenario: Golden session pins the full game step**
-  - [ ] **Given** a `RaceSession` on Classic Grand Prix with the sports car, 5 bots and `fixed_roster_seed` set, after `init_race()`
-  - [ ] **When** `physics_step(FIXED_DT)` runs 3600 times, in two separate test processes
-  - [ ] **Then** both runs give the recorded hash of all cars and trackers, and the bots have moved more than 100 m
+  - [x] **Given** a `RaceSession` on Classic Grand Prix with the sports car, 5 bots and `fixed_roster_seed` set, after `init_race()`
+  - [x] **When** `physics_step(FIXED_DT)` runs 3600 times, in two separate test processes
+  - [x] **Then** both runs give the recorded hash of all cars and trackers, and the bots have moved more than 100 m
 
 - **Scenario: Benches run without the tracks submodule**
-  - [ ] **Given** the physics, collision and LIDAR benches in `wheelbase` and `arcade-race-core`
-  - [ ] **When** `make bench-rust` runs in release
-  - [ ] **Then** each bench prints its throughput and a pass or fail against its gate, and none of them loads the embedded circuit catalog
+  - [x] **Given** the physics, collision and LIDAR benches in `wheelbase` and `arcade-race-core`
+  - [x] **When** `make bench-rust` runs in release
+  - [x] **Then** each bench prints its throughput and a pass or fail against its gate, and none of them loads the embedded circuit catalog
 
 - **Scenario: Tracks folder can be overridden**
-  - [ ] **Given** `TDRACE_GIT_TRACKS_DIR` set to a folder with a valid `.track_order.json`
-  - [ ] **When** `tdrace-core` builds
-  - [ ] **Then** it embeds the circuits from that folder, and it still uses `../../tracks` when the variable is unset
+  - [x] **Given** `TDRACE_GIT_TRACKS_DIR` set to a folder with a valid `.track_order.json`
+  - [x] **When** `tdrace-core` builds
+  - [x] **Then** it embeds the circuits from that folder, and it still uses `../../tracks` when the variable is unset
 
 - **Scenario: Spec 006 status matches the code on main**
-  - [ ] **Given** spec 006, whose code is only on `origin/feat/road-split-branching-tracks`
-  - [ ] **When** `keel validate` runs
-  - [ ] **Then** spec 006 is `draft`, has no checked acceptance boxes, and maps to exactly one open Beads epic
+  - [x] **Given** spec 006, whose code is only on `origin/feat/road-split-branching-tracks`
+  - [x] **When** `keel validate` runs
+  - [x] **Then** spec 006 is `draft`, has no checked acceptance boxes, and maps to exactly one open Beads epic
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files (Phase 0)
-- `[ ]` [`docs/engineering/racing_platform_analysis.md`](../docs/engineering/racing_platform_analysis.md) -> As-built reuse analysis (gap ids).
-- `[ ]` `crates/arcade-race-core/tests/golden_sim.rs` -> Engine-level golden state hash.
-- `[ ]` `crates/tdrace-app/tests/golden_session.rs` -> Game-level golden state hash.
-- `[ ]` `crates/wheelbase/benches/physics_bench.rs` -> Physics throughput gate (moved from tdrace-core).
-- `[ ]` `crates/arcade-race-core/benches/{collision,lidar}_bench.rs` -> Collision and LIDAR gates (moved from tdrace-core).
-- `[ ]` `crates/tdrace-core/build.rs` -> `TDRACE_GIT_TRACKS_DIR` override.
-- `[ ]` `Makefile` -> `bench-rust` targets the engine crates.
-- `[ ]` [`specs/006_road_split_and_branching_tracks.md`](006_road_split_and_branching_tracks.md) -> Status reset to `draft`.
-- `[ ]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Phase 8 milestone list.
+- `[x]` [`docs/engineering/racing_platform_analysis.md`](../docs/engineering/racing_platform_analysis.md) -> As-built reuse analysis (gap ids).
+- `[x]` `crates/arcade-race-core/tests/golden_sim.rs` -> Engine-level golden state hash.
+- `[x]` `crates/tdrace-app/tests/golden_session.rs` -> Game-level golden state hash.
+- `[x]` `crates/wheelbase/benches/physics_bench.rs` -> Physics throughput gate (moved from tdrace-core).
+- `[x]` `crates/arcade-race-core/benches/{collision,lidar}_bench.rs` -> Collision and LIDAR gates (moved from tdrace-core).
+- `[x]` `crates/tdrace-core/build.rs` -> `TDRACE_GIT_TRACKS_DIR` override.
+- `[x]` `Makefile` -> `bench-rust` targets the engine crates.
+- `[x]` [`specs/006_road_split_and_branching_tracks.md`](006_road_split_and_branching_tracks.md) -> Status reset to `draft`.
+- `[x]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Phase 8 milestone list.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 049: Reusable Racing Platform Layers*.
