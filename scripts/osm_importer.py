@@ -998,6 +998,8 @@ KART_TRACKS = {
         "name": "Kartodromo Internacional Lucas Guerrero (Valencia)",
         "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
         "ways": [751513226],
+        # First node of the way, 143 m into the main straight: the 87 m start grid stays on the straight.
+        "start_node_id": 7025550140,
         "fia_length": 1428.0,
         "default_width": 8.5,
         "straight_width": 9.2,
