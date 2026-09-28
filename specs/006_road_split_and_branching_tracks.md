@@ -3,11 +3,19 @@ type: Architecture Spec
 template: architecture
 title: "Road Split Segments, Branching Splines & Alternative Circuit Layouts"
 description: "Directed Ribbon Graph (TrackNetwork) architecture enabling branching splines, Rallycross Joker Laps, and multi-layout tracks."
-status: implemented
+status: draft
 created: 2026-09-15
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
 ---
 # Architecture Spec: Road Split Segments, Branching Splines & Alternative Circuit Layouts 🏗️
+
+> **Status note (2026-09-28, spec 049):** This spec was marked `implemented`, but its code is
+> not on `main`. The `TrackNetwork` graph, `MultiRouteProgressTracker` and multi-route AI sit
+> only on the unmerged branch `origin/feat/road-split-branching-tracks` (`fa75275`, 456
+> commits behind `main`). Mario decided to park that branch. The status is back to `draft`
+> and the acceptance boxes are unchecked. Branching returns later as a `Course`
+> implementation on top of the layers in
+> [spec 049](049_reusable_racing_platform_layers.md). Beads: `tdrace-m2jk` (closed with this decision).
 
 A comprehensive technical architecture introducing the **Directed Ribbon Graph (`TrackNetwork`)** in **TdRace**. This architecture replaces the legacy single-spline limitation with a flexible topological network capable of modeling road bifurcations, branching splines, Rallycross Joker Laps, pit lane loops, and multiple named track configurations within a single circuit definition.
 
@@ -114,28 +122,28 @@ When loading any legacy track file without a `network` block:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: C1 continuity across split socket**
-  - [x] **Given** a road split junction connecting a trunk segment to two branch segments
-  - [x] **When** waypoints are sampled across the socket seam
-  - [x] **Then** the tangent angle divergence $\Delta \theta$ is strictly less than $10^{-4}$ radians with zero lateral acceleration spikes
+  - [ ] **Given** a road split junction connecting a trunk segment to two branch segments
+  - [ ] **When** waypoints are sampled across the socket seam
+  - [ ] **Then** the tangent angle divergence $\Delta \theta$ is strictly less than $10^{-4}$ radians with zero lateral acceleration spikes
 
 - **Scenario: Dynamic Joker Lap detection**
-  - [x] **Given** a Rallycross track with Main Line (`CP 2A`) and Joker Lap (`CP 2B`)
-  - [x] **When** a vehicle enters the Joker branch and crosses `CP 2B`
-  - [x] **Then** the tracker registers the Joker Lap as completed and updates the HUD display accordingly
+  - [ ] **Given** a Rallycross track with Main Line (`CP 2A`) and Joker Lap (`CP 2B`)
+  - [ ] **When** a vehicle enters the Joker branch and crosses `CP 2B`
+  - [ ] **Then** the tracker registers the Joker Lap as completed and updates the HUD display accordingly
 
 - **Scenario: Backward compatibility for legacy tracks**
-  - [x] **Given** a legacy track file serialized without a `network` block
-  - [x] **When** parsed via `Track::from_json` and initialized with `ensure_network()`
-  - [x] **Then** a 1-segment cyclic network is synthesized and all race laps complete without error
+  - [ ] **Given** a legacy track file serialized without a `network` block
+  - [ ] **When** parsed via `Track::from_json` and initialized with `ensure_network()`
+  - [ ] **Then** a 1-segment cyclic network is synthesized and all race laps complete without error
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Crates
-- `[x]` [`crates/arcade-race-core/src/track/mod.rs`](../crates/arcade-race-core/src/track/mod.rs) -> `TrackNetwork`, `RoadSegment`, `RoadJunction`, and `SplineSocket`.
-- `[x]` [`crates/arcade-race-core/src/track/checkpoint.rs`](../crates/arcade-race-core/src/track/checkpoint.rs) -> `MultiRouteProgressTracker` and branch gate validation.
-- `[x]` [`crates/tdrace-app/src/editor/tools.rs`](../crates/tdrace-app/src/editor/tools.rs) -> Road split and branch extension track editor tooling.
+- `[ ]` [`crates/arcade-race-core/src/track/mod.rs`](../crates/arcade-race-core/src/track/mod.rs) -> `TrackNetwork`, `RoadSegment`, `RoadJunction`, and `SplineSocket`.
+- `[ ]` [`crates/arcade-race-core/src/track/checkpoint.rs`](../crates/arcade-race-core/src/track/checkpoint.rs) -> `MultiRouteProgressTracker` and branch gate validation.
+- `[ ]` [`crates/tdrace-app/src/editor/tools.rs`](../crates/tdrace-app/src/editor/tools.rs) -> Road split and branch extension track editor tooling.
 
 ### Beads Epic Mapping
-- Governed by completed Epic `tdrace-road-split-branching-tracks-kjl6` (*Road Split Segments, Branching Splines & Alternative Circuit Layouts*).
+- Governed by Epic `tdrace-road-split-branching-tracks-kjl6`, reopened on 2026-09-28 because the work never reached `main`.
