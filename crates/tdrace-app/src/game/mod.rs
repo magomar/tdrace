@@ -1589,12 +1589,17 @@ impl RaceSession {
         }
     }
 
+    /// Every module except Classic gates its circuits by career tier.
+    pub fn has_track_career_locks(&self) -> bool {
+        self.active_module_id != "classic"
+    }
+
     /// Checks whether the specified track is unlocked under the active profile's career progress.
     pub fn is_track_unlocked(&self, track_id: &str) -> bool {
         if self.is_dev_mode() {
             return true;
         }
-        if self.active_module_id == "gt" {
+        if self.has_track_career_locks() {
             self.active_career_progress.is_track_unlocked(track_id, self.is_dev_mode())
         } else {
             true
@@ -9752,7 +9757,7 @@ impl RaceSession {
             let (px, py, pw, ph) = crate::ui::track_select_preview_rect(
                 sw,
                 sh,
-                self.active_module_id == "gt",
+                self.has_track_career_locks(),
                 has_status_banner,
                 track_choice.is_user_custom(),
             );
@@ -12134,7 +12139,7 @@ impl RaceSession {
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                     _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
                 };
-                let cp_ref = if self.active_module_id == "gt" {
+                let cp_ref = if self.has_track_career_locks() {
                     Some(&self.active_career_progress)
                 } else {
                     None
