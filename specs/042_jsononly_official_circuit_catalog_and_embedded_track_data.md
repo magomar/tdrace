@@ -206,25 +206,25 @@ Work is done in phases. Each phase leaves `make test` green.
   - [x] **When** the developer runs `cargo build`
   - [x] **Then** the build stops with an error that names `git submodule update --init tracks`
 - **Scenario: Dev mode saves an official circuit in every module**
-  - [ ] **Given** dev mode is on
-  - [ ] **When** the developer opens and saves one official circuit in each of classic, gt, rally, kart, nascar and extreme_offroad
-  - [ ] **Then** each save changes only `tracks/<module>/<slug>.json` and writes nothing to the user folder
+  - [x] **Given** dev mode is on
+  - [x] **When** the developer opens and saves one official circuit in each of classic, gt, rally, kart, nascar and extreme_offroad
+  - [x] **Then** each save changes only `tracks/<module>/<slug>.json` and writes nothing to the user folder
 - **Scenario: Promote honours the chosen module**
-  - [ ] **Given** dev mode is on and a custom circuit with `module_id` = `classic`
-  - [ ] **When** the developer promotes it and picks `nascar` (all six modules are offered)
-  - [ ] **Then** the file is written to `tracks/nascar/<slug>.json` and the user copy is removed
+  - [x] **Given** dev mode is on and a custom circuit with `module_id` = `classic`
+  - [x] **When** the developer promotes it and picks `nascar` (all six modules are offered)
+  - [x] **Then** the file is written to `tracks/nascar/<slug>.json` and the user copy is removed
 - **Scenario: Normal mode cannot overwrite an official circuit**
-  - [ ] **Given** dev mode is off
-  - [ ] **When** the player edits an official circuit and saves
-  - [ ] **Then** a new custom circuit is written to the user folder and `tracks/` is unchanged
+  - [x] **Given** dev mode is off
+  - [x] **When** the player edits an official circuit and saves
+  - [x] **Then** a new custom circuit is written to the user folder and `tracks/` is unchanged
 - **Scenario: A user file cannot shadow an official circuit**
-  - [ ] **Given** the user folder holds `monza.json` with different waypoints
-  - [ ] **When** the player opens Monza in the menu preview and then in a race
-  - [ ] **Then** both show the official Monza, and the log names the ignored user file
+  - [x] **Given** the user folder holds `monza.json` with different waypoints
+  - [x] **When** the player opens Monza in the menu preview and then in a race
+  - [x] **Then** both show the official Monza, and the log names the ignored user file
 - **Scenario: Old NASCAR slugs still load**
-  - [ ] **Given** a saved series or order file that uses the short slug `daytona`
-  - [ ] **When** the game loads it
-  - [ ] **Then** it resolves to `nascar/daytona_superspeedway.json`
+  - [x] **Given** a saved series or order file that uses the short slug `daytona`
+  - [x] **When** the game loads it
+  - [x] **Then** it resolves to `nascar/daytona_superspeedway.json`
 - **Scenario: Python can race any official circuit**
   - [ ] **Given** the tdrace-py package is built
   - [ ] **When** a script creates an env with `track_name="monza"` and one with `track_name="drift_park"`
@@ -249,7 +249,7 @@ Work is done in phases. Each phase leaves `make test` green.
 - `[ ]` `crates/tdrace-app/src/tracks/catalog.rs` -> Test-only `PresetCatalog`; switch to the resolver or remove in step 6.
 - `[ ]` `crates/tdrace-app/src/track_manager.rs` -> One resolver; remove slug tables and Rust fallback; single-copy dev save; promote `target_module` fix.
 - `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Preview through the resolver; remove `resolve_procedural_preset` and hard-coded classic variants.
-- `[ ]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Six-module promote picker.
+- `[x]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Six-module promote picker.
 - `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Replace `classic_grand_prix()` fallbacks; six-module mask; normal-mode save-as-copy.
 - `[ ]` `crates/tdrace-app/src/storage.rs` -> Tracks dir used only in dev mode.
 - `[ ]` `crates/tdrace-app/src/module/{mod,classic,gt,kart,rally,nascar,extreme_offroad}.rs` -> Remove generators and `tracks()` tables; `tracks()` reads the catalog.

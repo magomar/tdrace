@@ -198,7 +198,7 @@ fn test_dev_mode_promote_custom_track_and_demote_preset() {
 
     // 2. Promote custom track to git preset via dev shortcut method
     let promo_path = manager
-        .promote_custom_track_to_git_preset(slug)
+        .promote_custom_track_to_git_preset(slug, None)
         .expect("Dev mode must promote custom track to git preset");
     assert!(promo_path.exists());
     assert!(promo_path.to_string_lossy().contains("tracks/classic/nordic_sprint.json"));

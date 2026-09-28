@@ -169,6 +169,7 @@ impl TrackChoice {
                         || path.starts_with("rally/")
                         || path.starts_with("kart/")
                         || path.starts_with("nascar/")
+                        || path.starts_with("extreme_offroad/")
                         || path.starts_with("classic/"))
             }
         }
@@ -265,6 +266,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         dir.join("rally").join(&file_name),
         dir.join("kart").join(&file_name),
         dir.join("nascar").join(&file_name),
+        dir.join("extreme_offroad").join(&file_name),
         dir.join("drafts").join(&file_name),
     ];
     for p in &user_candidates {
@@ -339,6 +341,7 @@ fn resolve_track_for_menu_with_dir_uncached(
             git_tracks_dir.join("rally").join(&file_name),
             git_tracks_dir.join("kart").join(&file_name),
             git_tracks_dir.join("nascar").join(&file_name),
+            git_tracks_dir.join("extreme_offroad").join(&file_name),
             git_tracks_dir.join(&file_name),
         ];
         for p in &git_candidates {

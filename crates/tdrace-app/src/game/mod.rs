@@ -10057,6 +10057,14 @@ impl RaceSession {
                     selected_mask[3] = !selected_mask[3];
                     cursor_idx = 3;
                     self.audio.play_sfx(SfxType::UiMove);
+                } else if is_key_pressed(KeyCode::Key5) {
+                    selected_mask[4] = !selected_mask[4];
+                    cursor_idx = 4;
+                    self.audio.play_sfx(SfxType::UiMove);
+                } else if is_key_pressed(KeyCode::Key6) {
+                    selected_mask[5] = !selected_mask[5];
+                    cursor_idx = 5;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::W)
                     || is_key_pressed(KeyCode::Left)
@@ -10245,7 +10253,10 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
                     let tid = track_id.clone();
-                    if let Ok(_p) = self.track_manager.promote_custom_track_to_git_preset(&tid) {
+                    if let Ok(_p) = self.track_manager.promote_custom_track_to_git_preset(
+                        &tid,
+                        Some(target_module.as_str()).filter(|m| !matches!(*m, "drafts" | "all")),
+                    ) {
                         self.audio.play_sfx(SfxType::UiSelect);
                     } else {
                         self.audio.play_sfx(SfxType::UiMove);
@@ -10690,7 +10701,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     } else {
                         self.audio.play_sfx(SfxType::UiSelect);
-                        let mut selected_mask = [false; 4];
+                        let mut selected_mask = [false; PROMOTION_MODULES.len()];
                         let mut has_any_selected = false;
                         for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
                             if self.track_manager.is_track_in_module(&tid, mod_id) {
@@ -10698,12 +10709,10 @@ impl RaceSession {
                                 has_any_selected = true;
                             }
                         }
-                        let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
-                            "rally" => 1,
-                            "kart" => 2,
-                            "gt" => 3,
-                            _ => 0,
-                        };
+                        let default_mod_idx = PROMOTION_MODULES
+                            .iter()
+                            .position(|(m, _, _, _)| *m == TrackManager::normalize_module_id(module_filter.id().unwrap_or(self.active_module_id)))
+                            .unwrap_or(0);
                         if !has_any_selected {
                             selected_mask[default_mod_idx] = true;
                         }
@@ -10732,7 +10741,7 @@ impl RaceSession {
                             self.audio.play_sfx(SfxType::UiMove);
                         } else {
                             self.audio.play_sfx(SfxType::UiSelect);
-                            let mut selected_mask = [false; 4];
+                            let mut selected_mask = [false; PROMOTION_MODULES.len()];
                             let mut has_any_selected = false;
                             for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
                                 if self.track_manager.is_track_in_module(&tid, mod_id) {
@@ -10740,12 +10749,10 @@ impl RaceSession {
                                     has_any_selected = true;
                                 }
                             }
-                            let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
-                                "rally" => 1,
-                                "kart" => 2,
-                                "gt" => 3,
-                                _ => 0,
-                            };
+                            let default_mod_idx = PROMOTION_MODULES
+                            .iter()
+                            .position(|(m, _, _, _)| *m == TrackManager::normalize_module_id(module_filter.id().unwrap_or(self.active_module_id)))
+                            .unwrap_or(0);
                             if !has_any_selected {
                                 selected_mask[default_mod_idx] = true;
                             }
@@ -13600,7 +13607,11 @@ impl RaceSession {
                                 state.is_dirty = false;
                             }
                             self.editor_save_toast_timer = 2.5;
-                            if overwrite {
+                            let saved_as_copy = !crate::storage::is_dev_mode()
+                                && target_slug.as_deref().is_some_and(|s| saved_slug.as_deref() != Some(s) && TrackManager::is_preset_slug(s));
+                            if saved_as_copy {
+                                self.editor_save_toast_msg = format!("Official circuit unchanged. Saved a copy: {}", path);
+                            } else if overwrite {
                                 self.editor_save_toast_msg = format!("Track overwritten: {}", path);
                             } else {
                                 self.editor_save_toast_msg = format!("Track saved: {}", path);

@@ -76,7 +76,7 @@ fn test_player_role_isolation_and_immutable_presets() {
     assert!(reorder_down.is_err(), "Player mode must reject preset reordering");
 
     // 3. Promotion to git preset is forbidden for player
-    let promo_res = manager.promote_custom_track_to_git_preset("some_circuit");
+    let promo_res = manager.promote_custom_track_to_git_preset("some_circuit", None);
     assert!(promo_res.is_err(), "Player mode must reject git preset promotion");
 
     // 4. "My Circuits" library (module_custom_tracks) strictly lists user tracks, never presets

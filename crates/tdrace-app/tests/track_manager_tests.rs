@@ -910,15 +910,15 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // 1. In normal user mode, official presets cannot be overwritten directly
+    // 1. In normal user mode, official presets are never overwritten: the edit is saved as a copy (spec 042)
     let mut oval = oval_speedway();
     oval.name = "Oval Speedway (Modified)".to_string();
     oval.description = "Customized banked oval.".to_string();
 
-    let err_oval = manager
+    let copy_path = manager
         .save_custom_track_with_options(&oval, Some("oval_speedway"), true)
-        .expect_err("Normal user mode must reject overwriting official preset");
-    assert!(err_oval.contains("is an official preset and cannot be modified directly"));
+        .expect("Normal user mode must save an edited official preset as a copy");
+    assert!(copy_path.contains("oval_speedway_copy"), "{}", copy_path);
 
     // Official presets remain untouched in the catalog
     let loaded_oval = manager.load_track(&TrackChoice::OvalSpeedway).unwrap();
@@ -930,7 +930,7 @@ fn test_preset_circuits_edit_overwrite_and_persistence_across_modules() {
         .expect("Clone preset to drafts");
     assert!(copy_path.contains("oval_speedway_clone"));
     assert_eq!(cloned_oval.category, TrackCategory::Draft);
-    assert_eq!(manager.draft_track_choices().len(), 1);
+    assert_eq!(manager.draft_track_choices().len(), 2, "the saved copy and the clone");
 
     // 3. In Developer Mode (TDRACE_DEV=1), official presets can be modified directly
     {

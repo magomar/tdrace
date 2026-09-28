@@ -905,11 +905,11 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     let custom_saved_track = Track::load_from_file(&custom_filename_path).expect("Load custom filename file");
     assert_eq!(custom_saved_track.name, "Updated Circuit");
 
-    // 7. Verify preset immutability in normal user mode
-    let err = manager
+    // 7. Verify preset immutability in normal user mode: the save becomes a custom copy (spec 042)
+    let copy_path = manager
         .save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true)
-        .expect_err("Saving directly to an official preset in normal mode must fail");
-    assert!(err.contains("is an official preset and cannot be modified directly"));
+        .expect("Saving an official preset in normal mode must save a copy");
+    assert!(copy_path.ends_with("classic_grand_prix_copy.json"), "{}", copy_path);
 
     let loaded_preset_choice = manager
         .load_track(&TrackChoice::ClassicGrandPrix)
@@ -2163,11 +2163,9 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
         assert_eq!(git_on_disk.name, modified_name);
         assert_eq!(git_on_disk.description, modified_desc);
 
-        // Verify user storage file was ALSO written (dual persistence)
+        // Spec 042: the official circuit has one copy, in tracks/; no user storage copy is written
         let user_file = user_tracks_dir.join("classic_grand_prix.json");
-        assert!(user_file.exists(), "User storage copy must exist for durability against git operations");
-        let user_on_disk = Track::load_from_file(&user_file).expect("Load user storage file");
-        assert_eq!(user_on_disk.name, modified_name);
+        assert!(!user_file.exists(), "Dev save of an official circuit must not write a user storage copy");
 
         // Verify TrackManager reloads the modified track
         let reloaded = session.track_manager.load_track(&choice).expect("Reload preset");
@@ -2220,7 +2218,7 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
         assert_eq!(reloaded.description, modified_desc);
     }
 
-    // --- Test 3: Standard mode rejects preset overwrite ---
+    // --- Test 3: Standard mode never overwrites a preset; it saves a copy (spec 042) ---
     {
         std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
         std::env::set_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR, &mock_git_tracks);
@@ -2239,12 +2237,19 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
         session.handle_editor_action(EditorAction::SaveTrack {
             name: "Hacked Preset Name".to_string(),
             filename: "classic_grand_prix".to_string(),
-            description: "Should fail in standard mode".to_string(),
+            description: "Saved as a copy in standard mode".to_string(),
             overwrite: true,
             exit_after: false,
         });
 
-        assert!(session.editor_save_toast_msg.contains("cannot be modified directly"));
+        assert!(session.editor_save_toast_msg.contains("Saved a copy"), "{}", session.editor_save_toast_msg);
+        let copy = Track::load_from_file(user_tracks_dir.join("classic_grand_prix_copy.json")).expect("Copy in user storage");
+        assert_eq!(copy.name, "Hacked Preset Name (copy)");
+        assert_eq!(copy.category, tdrace_core::track::TrackCategory::Draft);
+        let git_file = Track::load_from_file(mock_git_tracks.join("classic").join("classic_grand_prix.json")).unwrap();
+        assert_ne!(git_file.name, "Hacked Preset Name", "Standard mode must not touch tracks/");
+        let reloaded = session.track_manager.load_track(&choice).unwrap();
+        assert_eq!(reloaded, tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
     }
 
     let _ = fs::remove_dir_all(&temp_dir);

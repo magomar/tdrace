@@ -161,6 +161,8 @@ impl CustomTrackInfo {
                 "gt" | "gt_challenge" => "GT World Challenge",
                 "rally" => "Rally Cross",
                 "kart" => "Karting",
+                "nascar" => "NASCAR Cup",
+                "extreme_offroad" | "offroad" => "Extreme Off-Road",
                 _ => "Classic",
             }
         } else if self.belongs_to_module("gt") {
@@ -169,8 +171,26 @@ impl CustomTrackInfo {
             "Rally Cross"
         } else if self.belongs_to_module("kart") {
             "Karting"
+        } else if self.belongs_to_module("nascar") {
+            "NASCAR Cup"
+        } else if self.belongs_to_module("extreme_offroad") {
+            "Extreme Off-Road"
         } else {
             "Classic"
+        }
+    }
+}
+
+/// Logs, once per file and run, a user-folder file that has an official circuit's id.
+/// Such a file is ignored: official circuits come only from the official catalog (spec 042).
+fn log_ignored_official_shadow(path: &Path) {
+    static LOGGED: std::sync::Mutex<Option<std::collections::HashSet<PathBuf>>> = std::sync::Mutex::new(None);
+    if let Ok(mut guard) = LOGGED.lock() {
+        if guard.get_or_insert_with(Default::default).insert(path.to_path_buf()) {
+            eprintln!(
+                "user track {} has the id of an official circuit and is ignored; rename it to keep it as a custom circuit",
+                path.display()
+            );
         }
     }
 }
@@ -314,7 +334,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -388,6 +408,7 @@ impl TrackManager {
                         let mut module_id = track.module_id.clone();
 
                         if category != TrackCategory::Draft && !is_demoted && Self::is_preset_slug(&stem) {
+                            log_ignored_official_shadow(&path);
                             continue;
                         }
 
@@ -771,7 +792,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -1148,7 +1169,7 @@ impl TrackManager {
                 modules.push(m);
             }
         }
-        for m in ["classic", "gt", "rally", "kart", "nascar"] {
+        for m in ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"] {
             if !modules.contains(&m) {
                 modules.push(m);
             }
@@ -1216,6 +1237,7 @@ impl TrackManager {
             || self.tracks_dir.join("rally").join(&file_name).exists()
             || self.tracks_dir.join("kart").join(&file_name).exists()
             || self.tracks_dir.join("nascar").join(&file_name).exists()
+            || self.tracks_dir.join("extreme_offroad").join(&file_name).exists()
             || self.resolve_preset_git_file(slug, None).is_some()
     }
 
@@ -1239,6 +1261,7 @@ impl TrackManager {
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
             self.tracks_dir.join("nascar").join(&file_name),
+            self.tracks_dir.join("extreme_offroad").join(&file_name),
             self.tracks_dir.join("drafts").join(&file_name),
         ];
         for cand in &candidates {
@@ -1270,10 +1293,8 @@ impl TrackManager {
         // Saving to user storage ensures edits are immune to git branch changes, checkouts, and test runs.
         if Self::is_preset_slug(&base_slug) && !self.is_preset_demoted(&base_slug) {
             if !crate::storage::is_dev_mode() {
-                return Err(format!(
-                    "'{}' is an official preset and cannot be modified directly. Please clone it to My Circuits / Drafts.",
-                    base_slug
-                ));
+                // Standard mode never overwrites an official circuit: save the edit as a new custom copy (spec 042 §2.5).
+                return self.save_official_edit_as_copy(&track_to_save, &base_slug);
             }
 
             let mod_hint = track_to_save.module_id.clone().or_else(|| {
@@ -1295,28 +1316,22 @@ impl TrackManager {
                 track_to_save.modules.push(mod_id.clone());
             }
 
-            // 1. Dual persistence: save a copy to user storage (immune to git operations, branch changes, and tests)
-            let _ = fs::create_dir_all(&self.tracks_dir);
-            let user_file = self.track_path_for_slug(&base_slug);
-            let _ = track_to_save.save_to_file(&user_file);
-
-            // 2. Save directly to the repository's git-tracked tracks/<module>/ directory
-            let mut saved_path = user_file.to_string_lossy().to_string();
-            if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                let target_git_file = self.resolve_preset_git_file(&base_slug, Some(&mod_id)).unwrap_or_else(|| {
-                    let git_dir = git_tracks_dir.join(&mod_id);
-                    let _ = fs::create_dir_all(&git_dir);
-                    git_dir.join(format!("{}.json", base_slug))
-                });
-                track_to_save
-                    .save_to_file(&target_git_file)
-                    .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
-                saved_path = target_git_file.to_string_lossy().to_string();
-            }
+            // Dev mode: the official circuit has one copy, tracks/<module>/<id>.json (spec 042 §2.5).
+            let git_tracks_dir = crate::storage::resolve_git_tracks_dir()
+                .ok_or_else(|| "Git repository tracks directory not found.".to_string())?;
+            let canonical_slug = tdrace_core::catalog::canonical_id(&base_slug).unwrap_or(&base_slug);
+            let target_git_file = self.resolve_preset_git_file(canonical_slug, Some(&mod_id)).unwrap_or_else(|| {
+                let git_dir = git_tracks_dir.join(&mod_id);
+                let _ = fs::create_dir_all(&git_dir);
+                git_dir.join(format!("{}.json", canonical_slug))
+            });
+            track_to_save
+                .save_to_file(&target_git_file)
+                .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
 
             let _ = self.scan_custom_tracks();
             crate::ui::menu::clear_menu_track_cache();
-            return Ok(saved_path);
+            return Ok(target_git_file.to_string_lossy().to_string());
         }
 
         // If file already exists and was Main category, keep its category and module when overwriting.
@@ -1678,6 +1693,31 @@ impl TrackManager {
     /// Clones an existing circuit (preset or custom), creating an exact duplicate in the user circuits storage.
     /// Appends "(clone)" to the track name, sets category to Draft, and writes to `<slug>_clone.json`.
     /// Returns the cloned Track instance and its saved file path.
+    /// Saves a standard-mode edit of an official circuit as a new draft in the user folder.
+    fn save_official_edit_as_copy(&mut self, track: &Track, official_slug: &str) -> Result<String, String> {
+        let mut copy = track.clone();
+        copy.name = format!("{} (copy)", track.name.trim());
+        copy.category = TrackCategory::Draft;
+        copy.module_id = None;
+        copy.modules.clear();
+
+        let base_slug = format!("{}_copy", Self::sanitize_slug(official_slug));
+        let mut file_slug = base_slug.clone();
+        let mut counter = 1;
+        while self.track_file_exists(&file_slug) {
+            file_slug = format!("{}_{}", base_slug, counter);
+            counter += 1;
+        }
+        let _ = fs::create_dir_all(&self.tracks_dir);
+        let path = self.tracks_dir.join(format!("{}.json", file_slug));
+        copy.save_to_file(&path)
+            .map_err(|e| format!("Failed to save copy of official circuit: {}", e))?;
+
+        let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
+        Ok(path.to_string_lossy().to_string())
+    }
+
     pub fn clone_track(&mut self, choice: &TrackChoice) -> Result<(Track, String), String> {
         let original_track = self.load_track(choice)?;
         let mut cloned_track = original_track.clone();
@@ -1906,8 +1946,9 @@ impl TrackManager {
     }
 
     /// Promotes a custom track to an official git-tracked preset (dev mode only).
-    /// Saves the track JSON into `tracks/<module>/<slug>.json` while retaining a persistent user copy.
-    pub fn promote_custom_track_to_git_preset(&mut self, id: &str) -> Result<PathBuf, String> {
+    /// Moves the track JSON to `tracks/<module>/<slug>.json`; the user copy is backed up and removed (spec 042 §2.5).
+    /// `target_module` is the module picked in the promote dialog; without it the track's own module is used.
+    pub fn promote_custom_track_to_git_preset(&mut self, id: &str, target_module: Option<&str>) -> Result<PathBuf, String> {
         if !crate::storage::is_dev_mode() {
             return Err("Promoting tracks to preset circuits is only allowed in developer mode.".to_string());
         }
@@ -1926,13 +1967,15 @@ impl TrackManager {
             (t, None)
         };
 
-        let target_module = track.module_id.clone()
+        let target_module = target_module
+            .map(|m| Self::normalize_module_id(m).to_string())
+            .or_else(|| track.module_id.clone())
             .or_else(|| track.modules.first().cloned())
             .unwrap_or_else(|| "classic".to_string());
 
         track.category = TrackCategory::Main;
-        if track.modules.is_empty() {
-            track.modules = vec![target_module.clone()];
+        if !track.modules.contains(&target_module) {
+            track.modules.insert(0, target_module.clone());
         }
         track.module_id = Some(target_module.clone());
 
@@ -1943,24 +1986,15 @@ impl TrackManager {
         track.save_to_file(&target_path)
             .map_err(|e| format!("Failed to save git preset '{}': {}", target_path.display(), e))?;
 
-        // DUAL PERSISTENCE: Maintain a persistent copy in user storage with Main category.
-        // This guarantees that if git operations, branch changes, or automated tests clean the repo,
-        // the user's hard work is never destroyed.
+        // The official circuit now lives only in tracks/. Back up and remove the user copies,
+        // so a custom copy never sits next to the official one (recoverable from `.backup/`).
         let user_file = self.tracks_dir.join(format!("{}.json", id));
-        let _ = track.save_to_file(&user_file);
-        Self::backup_track_file(&user_file, &self.tracks_dir);
-
-        // If a separate draft copy existed in drafts/ or elsewhere, back it up and clean the drafts folder
-        if let Some(p) = local_path {
-            if p != user_file && p.exists() {
+        let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
+        for p in [Some(user_file), Some(draft_cand), local_path].into_iter().flatten() {
+            if p.exists() && p.starts_with(&self.tracks_dir) {
                 Self::backup_track_file(&p, &self.tracks_dir);
                 let _ = fs::remove_file(p);
             }
-        }
-        let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
-        if draft_cand != user_file && draft_cand.exists() {
-            Self::backup_track_file(&draft_cand, &self.tracks_dir);
-            let _ = fs::remove_file(draft_cand);
         }
 
         // Clean up any deleted_presets marker for this track

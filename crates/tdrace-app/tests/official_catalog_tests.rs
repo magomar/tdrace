@@ -219,3 +219,73 @@ fn test_old_short_slug_and_module_hint_resolve() {
     assert_eq!(manager.load_track(&offroad_eight).unwrap(), expected);
     assert_eq!(resolve_track_for_menu_with_dir(&offroad_eight, &user).unwrap(), expected);
 }
+
+// --- Saving (spec 042 §2.5) ---
+
+fn json_files_under(dir: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(dir).into_iter().flatten().flatten() {
+        let p = entry.path();
+        let name = p.file_name().unwrap().to_string_lossy().into_owned();
+        if name.starts_with('.') {
+            continue;
+        }
+        if p.is_dir() {
+            out.extend(json_files_under(&p));
+        } else if p.extension().is_some_and(|e| e == "json") {
+            out.push(p);
+        }
+    }
+    out
+}
+
+#[test]
+fn test_dev_save_writes_only_the_official_json_in_every_module() {
+    let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let _env = EnvGuard;
+    let git = temp_dir("git_save");
+    std::env::set_var(ENV_DEV_MODE, "1");
+    std::env::set_var(ENV_GIT_TRACKS_DIR, &git);
+
+    let user = temp_dir("user_save");
+    let mut manager = TrackManager::new(&user);
+    for module in ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"] {
+        let circuit = tdrace_core::catalog::module_circuits(module).next().unwrap();
+        let mut track = circuit.load().unwrap();
+        track.description = format!("dev edit of {}", circuit.id);
+        let saved = manager.save_custom_track_with_options(&track, Some(circuit.id), true).unwrap();
+        let expected = git.join(module).join(format!("{}.json", circuit.id));
+        assert_eq!(Path::new(&saved).canonicalize().unwrap(), expected.canonicalize().unwrap(), "{}", module);
+        assert_eq!(Track::load_from_file(&expected).unwrap().description, track.description);
+    }
+    assert!(json_files_under(&user).is_empty(), "user folder must stay empty: {:?}", json_files_under(&user));
+}
+
+#[test]
+fn test_promote_uses_the_picked_module_and_removes_the_user_copy() {
+    let _lock = ENV_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    let _env = EnvGuard;
+    let git = temp_dir("git_promote");
+    std::env::set_var(ENV_DEV_MODE, "1");
+    std::env::set_var(ENV_GIT_TRACKS_DIR, &git);
+
+    let user = temp_dir("user_promote");
+    let mut manager = TrackManager::new(&user);
+    let mut custom = tdrace_core::track::presets::create_prototypical_track(
+        "classic",
+        tdrace_core::track::presets::TrackShape::Oval,
+        tdrace_core::track::presets::RaceDirection::Right,
+    );
+    custom.name = "Promo Oval".to_string();
+    custom.module_id = Some("classic".to_string());
+    custom.modules = vec!["classic".to_string()];
+    manager.save_custom_track_with_options(&custom, Some("promo_oval"), true).unwrap();
+    assert!(user.join("promo_oval.json").exists());
+
+    let promoted = manager.promote_custom_track_to_git_preset("promo_oval", Some("nascar")).unwrap();
+    assert_eq!(promoted.canonicalize().unwrap(), git.join("nascar").join("promo_oval.json").canonicalize().unwrap());
+    let on_disk = Track::load_from_file(&promoted).unwrap();
+    assert_eq!(on_disk.module_id.as_deref(), Some("nascar"));
+    assert!(!user.join("promo_oval.json").exists(), "user copy must be removed");
+    assert!(user.join(".backup").join("promo_oval.json").exists(), "user copy must be backed up");
+}
