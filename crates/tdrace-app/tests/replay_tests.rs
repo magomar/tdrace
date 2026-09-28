@@ -2,12 +2,11 @@ use tdrace_app::replay::{PlaybackSpeed, Replay, ReplayPlayer, ReplayRecorder};
 use tdrace_app::ui::menu::{CarChoice, TrackChoice};
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::CarConfig;
 
 #[test]
 fn test_record_and_playback_1000_step_determinism() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let car_choice = CarChoice::SportsCar;
     let track_choice = TrackChoice::ClassicGrandPrix;
     let seed = 123456789;

@@ -41,7 +41,7 @@ fn test_kart_module_tracks_integrity_and_validation() {
     }
 
     for track_def in &tracks {
-        let track = (track_def.generator)();
+        let track = tdrace_core::catalog::official_track("kart", track_def.id);
         assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
         assert!(track.spline.total_length() > 200.0, "Track length too short for {}", track_def.id);
         assert!(track.checkpoints.len() >= 8, "Too few checkpoints for {}", track_def.id);
@@ -66,8 +66,8 @@ fn test_kart_module_tracks_integrity_and_validation() {
 
 #[test]
 fn test_pfi_flyover_bridge_elevation() {
-    let pfi = KartGameModule::track_pfi();
-    assert_eq!(pfi.name, "PF International Kart Circuit (PFI)");
+    let pfi = tdrace_core::catalog::official_track("kart", "pfi");
+    assert_eq!(pfi.name, "PF International Kart Circuit");
 
     // Check that there is a bridge section with elevation >= 4.0m
     let max_elevation = pfi
@@ -206,7 +206,7 @@ fn test_kart_tracks_centerline_driving_and_no_wall_obstructions() {
     let tracks = module.tracks();
 
     for track_def in &tracks {
-        let track = (track_def.generator)();
+        let track = tdrace_core::catalog::official_track("kart", track_def.id);
         let name = &track.name;
 
         // 1. Verify that all starting grid slots spawn freely without any barrier collision

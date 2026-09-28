@@ -99,7 +99,7 @@ impl DevTrackStore {
 
         let mut track = user_store
             .load_track(slug)
-            .or_else(|| crate::ui::menu::TrackChoice::resolve_procedural_preset_by_slug(slug))
+            .or_else(|| crate::tracks::official::load(slug, None).and_then(|r| r.ok()))
             .ok_or_else(|| format!("Preset '{}' not found.", slug))?;
 
         track.category = TrackCategory::Draft;

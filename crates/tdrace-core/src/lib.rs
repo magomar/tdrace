@@ -5,6 +5,8 @@
 //! - [`wheelbase`]: Dedicated 2D/2.5D wheeled vehicle dynamics and Pacejka tire solver.
 //! - [`arcade_race_core`]: 2D course geometry, continuous SAT collisions, sector gates, and racing LIDAR.
 
+pub mod catalog;
+
 pub use arcade_race_core::collision;
 pub use arcade_race_core::lidar;
 pub use arcade_race_core::track;

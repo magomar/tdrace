@@ -14,7 +14,7 @@ fn deflection_sine(points: &[glam::Vec2], i: usize) -> f32 {
 #[test]
 fn test_gt_kerbs_only_on_real_corners() {
     for def in GtWorldChallengeModule::new().tracks() {
-        let track = (def.generator)();
+        let track = tdrace_core::catalog::official_track("gt", def.id);
         let points: Vec<glam::Vec2> = track.spline.waypoints.iter().map(|wp| wp.point).collect();
 
         for (i, wp) in track.spline.waypoints.iter().enumerate() {
@@ -33,7 +33,7 @@ fn test_gt_kerbs_only_on_real_corners() {
 #[test]
 fn test_gt_tracks_declare_half_scale() {
     for def in GtWorldChallengeModule::new().tracks() {
-        let track = (def.generator)();
+        let track = tdrace_core::catalog::official_track("gt", def.id);
         assert_eq!(track.scale(), "0.5x", "{} is imported at 0.5x FIA length", def.id);
     }
 }

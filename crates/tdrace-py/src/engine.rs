@@ -12,10 +12,7 @@ use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::WallBarrier;
-use tdrace_core::track::presets::{
-    classic_grand_prix, drift_park, kart_arena, oasis_rally, oval_speedway,
-    ramp_raceway,
-};
+use tdrace_core::catalog;
 use tdrace_core::track::Track;
 
 use crate::config::{parse_car_config, parse_lidar_config, RewardConfig};
@@ -97,15 +94,19 @@ impl PyEngine {
         terminate_on_wall_crash: bool,
     ) -> Self {
         let num_agents = num_agents.max(1);
-        let track = match track_name.to_lowercase().as_str() {
-            "drift" | "drift_park" => drift_park(),
-            "oval" | "oval_speedway" => oval_speedway(),
-            "kart" | "kart_arena" => kart_arena(),
-            "ramp" | "ramp_raceway" => ramp_raceway(),
-            "oasis" | "oasis_rally" | "dune" | "dune_raid" | "sahara" | "sahara_dunes" | "sand" => {
-                oasis_rally()
-            }
-            _ => classic_grand_prix(),
+        // Any official circuit id or alias (spec 042), plus the historic short names; unknown names use the default.
+        let name = track_name.to_lowercase();
+        let slug = match name.as_str() {
+            "drift" => "drift_park",
+            "oval" => "oval_speedway",
+            "kart" => "kart_arena",
+            "ramp" => "ramp_raceway",
+            "oasis" | "dune" | "sand" => "oasis_rally",
+            other => other,
+        };
+        let track = match catalog::find(slug, None) {
+            Some(circuit) => circuit.load().unwrap_or_else(|e| panic!("official circuit '{}': {}", slug, e)),
+            None => catalog::official_track("classic", "classic_grand_prix"),
         };
 
         let walls: Vec<WallBarrier> = track

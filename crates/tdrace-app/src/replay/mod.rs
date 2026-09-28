@@ -5,7 +5,6 @@ use std::io::{Read, Write};
 use std::path::Path;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::CarConfig;
 
 use crate::ui::menu::{CarChoice, TrackChoice};
@@ -313,7 +312,7 @@ impl ReplayPlayer {
     /// Returns `Ok(max_error_distance)` if determinism passes, or `Err(diagnostic)` if mismatch occurs.
     pub fn verify_determinism(&self) -> Result<f32, String> {
         let track = crate::ui::menu::resolve_track_for_menu(&self.replay.header.track_choice)
-            .unwrap_or_else(classic_grand_prix);
+            .unwrap_or_else(crate::tracks::official::fallback_track);
 
         let config = match self.replay.header.car_choice {
             CarChoice::SportsCar => CarConfig::sports_car(),

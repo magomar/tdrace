@@ -1,13 +1,12 @@
+pub mod bake;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod presets;
-pub mod provenance;
 pub mod scenery;
 pub mod spline;
 pub mod validation;
 
-pub use provenance::{get_circuit_provenance, CircuitProvenance, CIRCUIT_PROVENANCE_REGISTRY};
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
@@ -19,16 +18,7 @@ pub use geometry::{
 };
 pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 pub use presets::{
-    bristol_motor_speedway, catalunya_rx, charlotte_motor_speedway, chicago_street_course,
-    classic_grand_prix, classic_rallycross, classic_template, cota, create_prototypical_track, darlington_raceway,
-    daytona_superspeedway, dirt_figure_eight, dirt_oval_speedway, dirty_oval_speedway, drift_park,
-    dune_raid, eldora_speedway, essay_rx, estering_rx, figure_eight, generate_arena_grid, generate_checkpoints,
-    generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints,
-    generate_oval_waypoints, generate_walls_from_spline, gt_template, hell_rx, holjes_rx,
-    indianapolis_motor_speedway, iowa_speedway, kart_arena, kart_template, killarney_rx, kouvola_rx, loheac_rx,
-    lydden_hill, martinsville_speedway, mettet_rx, montalegre_rx, nyirad_rx, oasis_rally,
-    oval_speedway, rally_template, ramp_raceway, riga_rx, road_america, sahara_dunes,
-    silverstone_rx, talladega_superspeedway, watkins_glen_nascar, yas_marina_rx, RaceDirection, TrackShape,
+    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, gt_template, kart_template, rally_template, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
@@ -156,6 +146,12 @@ pub struct Track {
     pub max_width: Option<f32>,
     #[serde(default)]
     pub is_inspired: bool,
+    /// Short uppercase catalog badge, e.g. "WORLD RX SWEDEN".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub tag: String,
+    /// Catalog class shown in circuit lists, e.g. "World RX" or "Superspeedway".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub category_label: String,
 }
 
 impl Default for Track {
@@ -183,6 +179,8 @@ impl Default for Track {
             min_width: None,
             max_width: None,
             is_inspired: false,
+            tag: String::new(),
+            category_label: String::new(),
         }
     }
 }
@@ -229,17 +227,6 @@ impl Track {
         self.country_name = Some(country_name.to_string());
         self.osm_url = Some(osm_url.to_string());
         self.wikipedia_url = Some(wikipedia_url.to_string());
-        self
-    }
-
-    /// Attaches authentic OpenStreetMap and Wikipedia provenance if this circuit matches a known venue.
-    pub fn with_provenance_if_known(mut self, id_or_slug: &str) -> Self {
-        if let Some(prov) = crate::track::provenance::get_circuit_provenance(id_or_slug) {
-            self.country_code = Some(prov.country_code.to_string());
-            self.country_name = Some(prov.country_name.to_string());
-            self.osm_url = Some(prov.osm_url.to_string());
-            self.wikipedia_url = Some(prov.wikipedia_url.to_string());
-        }
         self
     }
 
@@ -616,6 +603,18 @@ impl Track {
     }
 
     /// Returns the track-level barrier offset in meters, inferring from wall geometry or car category / module.
+    /// Most common wall type on the track, or `None` when it has no walls.
+    pub fn dominant_barrier_type(&self) -> Option<BarrierType> {
+        let mut counts: Vec<(BarrierType, usize)> = Vec::new();
+        for wall in self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls) {
+            match counts.iter_mut().find(|(t, _)| *t == wall.barrier_type) {
+                Some((_, n)) => *n += 1,
+                None => counts.push((wall.barrier_type, 1)),
+            }
+        }
+        counts.into_iter().max_by_key(|(_, n)| *n).map(|(t, _)| t)
+    }
+
     pub fn effective_barrier_offset(&self) -> f32 {
         // Infer from inner/outer wall geometry if available
         let walls = if !self.geometry.inner_walls.is_empty() {
@@ -709,17 +708,9 @@ impl Track {
         }
     }
 
-    /// Chainable helper applying default runoff surfaces and authentic circuit provenance if known.
+    /// Chainable helper applying default runoff surfaces.
     pub fn with_default_runoff_surfaces(mut self) -> Self {
         self.apply_default_runoff_surfaces();
-        if self.osm_url.is_none() {
-            if let Some(prov) = provenance::get_circuit_provenance(&self.name) {
-                self.country_code = Some(prov.country_code.to_string());
-                self.country_name = Some(prov.country_name.to_string());
-                self.osm_url = Some(prov.osm_url.to_string());
-                self.wikipedia_url = Some(prov.wikipedia_url.to_string());
-            }
-        }
         self
     }
 
@@ -734,14 +725,6 @@ impl Track {
             );
         }
         track.apply_default_runoff_surfaces();
-        if track.osm_url.is_none() {
-            if let Some(prov) = provenance::get_circuit_provenance(&track.name) {
-                track.country_code = Some(prov.country_code.to_string());
-                track.country_name = Some(prov.country_name.to_string());
-                track.osm_url = Some(prov.osm_url.to_string());
-                track.wikipedia_url = Some(prov.wikipedia_url.to_string());
-            }
-        }
         Ok(track)
     }
 
@@ -926,6 +909,15 @@ impl Track {
     }
 }
 
+/// Test fixture: loads an official circuit from the repository's `tracks/<module>/<id>.json`
+/// (spec 042; the Rust circuit generators are gone, and this crate cannot see `tdrace_core::catalog`).
+#[cfg(test)]
+pub(crate) fn test_circuit(module: &str, id: &str) -> Track {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tracks").join(module).join(format!("{}.json", id));
+    Track::load_from_file(&path)
+        .unwrap_or_else(|e| panic!("{}: {} (run `git submodule update --init tracks`)", path.display(), e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -933,23 +925,23 @@ mod tests {
 
     #[test]
     fn test_track_presets_creation() {
-        let gp = classic_grand_prix();
+        let gp = crate::track::test_circuit("classic", "classic_grand_prix");
         assert_eq!(gp.name, "Classic Grand Prix");
         assert!(gp.checkpoints.len() >= 10);
         assert!(!gp.grid_positions.is_empty());
 
-        let oval = oval_speedway();
+        let oval = crate::track::test_circuit("classic", "oval_speedway");
         assert_eq!(oval.name, "Oval Speedway");
         assert!(oval.spline.total_length() > 400.0);
 
-        let drift = drift_park();
+        let drift = crate::track::test_circuit("classic", "drift_park");
         assert_eq!(drift.name, "Drift Park");
         assert!(!drift.geometry.surface_zones.is_empty());
 
-        let kart = kart_arena();
+        let kart = crate::track::test_circuit("classic", "kart_arena");
         assert_eq!(kart.name, "Kart Arena");
 
-        let rx = classic_rallycross();
+        let rx = crate::track::test_circuit("classic", "classic_rallycross");
         assert_eq!(rx.name, "Classic Rallycross");
         assert!(rx.spline.total_length() >= 950.0 && rx.spline.total_length() <= 1100.0, "Classic Rallycross must be ~1km (got {})", rx.spline.total_length());
         assert_eq!(rx.car_category, CarCategory::Rally);
@@ -1029,18 +1021,18 @@ mod tests {
     #[test]
     fn test_track_json_serialization_roundtrip() {
         let presets = [
-            classic_grand_prix(),
-            oval_speedway(),
-            drift_park(),
-            kart_arena(),
-            ramp_raceway(),
-            oasis_rally(),
-            classic_rallycross(),
-            dirt_figure_eight(),
-            holjes_rx(),
-            lydden_hill(),
-            hell_rx(),
-            loheac_rx(),
+            crate::track::test_circuit("classic", "classic_grand_prix"),
+            crate::track::test_circuit("classic", "oval_speedway"),
+            crate::track::test_circuit("classic", "drift_park"),
+            crate::track::test_circuit("classic", "kart_arena"),
+            crate::track::test_circuit("classic", "ramp_raceway"),
+            crate::track::test_circuit("classic", "oasis_rally"),
+            crate::track::test_circuit("classic", "classic_rallycross"),
+            crate::track::test_circuit("classic", "dirt_figure_eight"),
+            crate::track::test_circuit("rally", "holjes_rx"),
+            crate::track::test_circuit("rally", "lydden_hill"),
+            crate::track::test_circuit("rally", "hell_rx"),
+            crate::track::test_circuit("rally", "loheac_rx"),
         ];
 
         for track in &presets {
@@ -1059,7 +1051,7 @@ mod tests {
 
     #[test]
     fn test_track_rebuild_geometry() {
-        let mut track = classic_grand_prix();
+        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
         track.rebuild_geometry(5.0, BarrierType::Concrete);
         assert!(!track.geometry.inner_walls.is_empty());
         assert_eq!(track.geometry.inner_walls.first().unwrap().barrier_type, BarrierType::Concrete);
@@ -1068,7 +1060,7 @@ mod tests {
 
     #[test]
     fn test_track_surface_sampling() {
-        let track = classic_grand_prix();
+        let track = crate::track::test_circuit("classic", "classic_grand_prix");
 
         // Sample on start line center (should be Asphalt)
         let surf_start = track.sample_surface(Vec2::new(0.0, 0.0));
@@ -1102,7 +1094,7 @@ mod tests {
 
     #[test]
     fn test_track_surface_breakdown() {
-        let gp = classic_grand_prix();
+        let gp = crate::track::test_circuit("classic", "classic_grand_prix");
         let gp_breakdown = gp.surface_breakdown();
         assert_eq!(gp_breakdown.len(), 1);
         assert_eq!(gp_breakdown[0].0, SurfaceType::Asphalt);
@@ -1110,7 +1102,7 @@ mod tests {
         assert_eq!(gp.surface_summary_string(), "100% Asphalt");
         assert!(gp.total_length_m() > 400.0);
 
-        let rally = oasis_rally();
+        let rally = crate::track::test_circuit("classic", "oasis_rally");
         let rally_breakdown = rally.surface_breakdown();
         assert_eq!(rally_breakdown.len(), 1);
         assert_eq!(rally_breakdown[0].0, SurfaceType::Dirt);
@@ -1118,7 +1110,7 @@ mod tests {
         assert_eq!(rally.surface_summary_string(), "100% Dirt");
 
         // Custom mixed-surface spline
-        let mut mixed = classic_grand_prix();
+        let mut mixed = crate::track::test_circuit("classic", "classic_grand_prix");
         let n = mixed.spline.waypoints.len();
         for i in 0..n / 2 {
             mixed.spline.waypoints[i].surface = Some(SurfaceType::Dirt);
@@ -1132,7 +1124,7 @@ mod tests {
 
     #[test]
     fn test_surface_layer_precedence_and_shapes() {
-        let mut track = classic_grand_prix();
+        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
         track.geometry.surface_zones.clear();
 
         // 1. BelowTrack Sand Zone overlapping the start line (0,0)
@@ -1183,7 +1175,7 @@ mod tests {
 
     #[test]
     fn test_grandstand_and_tree_scenery_sampling_and_serialization() {
-        let mut track = classic_grand_prix();
+        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
         let stand = Grandstand::new(1, Vec2::new(0.0, 50.0), 30.0, 10.0, 0.0);
         let tree = Tree::new(2, Vec2::new(100.0, 100.0), TreeType::Palm).with_scale(1.5);
 

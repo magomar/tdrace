@@ -12,7 +12,7 @@ use tdrace_core::physics::sim::{
     run_path_simulation, PathSimulationStatus, SimPath, DEFAULT_SIMULATION_DT,
 };
 use tdrace_core::physics::{CarConfig, SurfaceType};
-use tdrace_core::track::presets::{atacama_sand_basin, glamis_sand_dunes, sahara_dune_crossing};
+
 use tdrace_core::track::Track;
 
 const G_ACCEL: f32 = 9.80665;
@@ -332,9 +332,9 @@ fn test_real_game_sand_circuits_end_to_end_behavior() {
     println!("==================================================================================");
 
     let tracks: [(&str, Track); 3] = [
-        ("Sahara Dune Crossing", sahara_dune_crossing()),
-        ("Glamis Imperial Sand Dunes", glamis_sand_dunes()),
-        ("Atacama Sand Basin", atacama_sand_basin()),
+        ("Sahara Dune Crossing", tdrace_core::catalog::official_track("extreme_offroad", "sahara_dune_crossing")),
+        ("Glamis Imperial Sand Dunes", tdrace_core::catalog::official_track("extreme_offroad", "glamis_dunes")),
+        ("Atacama Sand Basin", tdrace_core::catalog::official_track("extreme_offroad", "atacama_sand_basin")),
     ];
 
     let dt = DEFAULT_SIMULATION_DT;
