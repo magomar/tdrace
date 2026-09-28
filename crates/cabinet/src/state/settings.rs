@@ -99,6 +99,11 @@ impl Default for SettingsSnapshot {
     }
 }
 
+/// Curve indicator dropdown options, in display order.
+pub const RIBBON_CHEVRONS: usize = 0;
+pub const RIBBON_PACENOTE: usize = 1;
+pub const RIBBON_OFF: usize = 2;
+
 /// Serializable / translatable state for the 10 player helpers settings widgets.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HelpersSettingsState {
@@ -106,6 +111,8 @@ pub struct HelpersSettingsState {
     pub aura_ratio: f32,
     pub aura_brightness: f32,
     pub ribbon_enabled: bool,
+    /// Curve indicator look when enabled: `true` = rally pacenote icon, `false` = chevrons.
+    pub ribbon_pacenote: bool,
     pub ribbon_brightness: f32,
     pub ribbon_scale: f32,
     pub chevron_enabled: bool,
@@ -121,6 +128,7 @@ impl Default for HelpersSettingsState {
             aura_ratio: 1.0,
             aura_brightness: 1.0,
             ribbon_enabled: true,
+            ribbon_pacenote: true,
             ribbon_brightness: 1.0,
             ribbon_scale: 1.0,
             chevron_enabled: true,
@@ -498,6 +506,7 @@ impl ArcadeSettingsModal {
             "Custom...".to_string(),
         ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
+        let ribbon_options = vec!["Chevrons".to_string(), "Rally Pacenote".to_string(), "Disabled".to_string()];
         let steering_profile_options: Vec<String> = SteeringProfile::PRESETS
             .iter()
             .chain(std::iter::once(&SteeringProfile::Custom))
@@ -554,7 +563,7 @@ impl ArcadeSettingsModal {
             aura_dropdown: DropdownWidget::new("GROUND AURA DISC", enabled_options.clone(), 0),
             aura_ratio_slider: SliderWidget::new("AURA GLOW RADIUS", 0.40, 1.80, 0.05, 1.00).with_suffix("x"),
             aura_brightness_slider: SliderWidget::new("AURA BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            ribbon_dropdown: DropdownWidget::new("BRAKING RIBBON (CURVE)", enabled_options.clone(), 0),
+            ribbon_dropdown: DropdownWidget::new("CURVE INDICATOR", ribbon_options, RIBBON_PACENOTE),
             ribbon_brightness_slider: SliderWidget::new("RIBBON BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
             ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00).with_suffix("x"),
             chevron_dropdown: DropdownWidget::new("OVERHEAD CHEVRON", enabled_options.clone(), 0),
@@ -643,7 +652,7 @@ impl ArcadeSettingsModal {
                 self.aura_dropdown.set_selected(0);
                 self.aura_ratio_slider.set_value(1.00);
                 self.aura_brightness_slider.set_value(1.00);
-                self.ribbon_dropdown.set_selected(0);
+                self.enable_ribbon_keeping_style();
                 self.ribbon_brightness_slider.set_value(1.00);
                 self.ribbon_scale_slider.set_value(1.00);
                 self.chevron_dropdown.set_selected(0);
@@ -657,7 +666,7 @@ impl ArcadeSettingsModal {
                 self.aura_dropdown.set_selected(1); // Disabled
                 self.aura_ratio_slider.set_value(0.80);
                 self.aura_brightness_slider.set_value(0.80);
-                self.ribbon_dropdown.set_selected(0); // Enabled
+                self.enable_ribbon_keeping_style();
                 self.ribbon_brightness_slider.set_value(0.80);
                 self.ribbon_scale_slider.set_value(0.80);
                 self.chevron_dropdown.set_selected(0); // Enabled
@@ -671,7 +680,7 @@ impl ArcadeSettingsModal {
                 self.aura_dropdown.set_selected(1);
                 self.aura_ratio_slider.set_value(1.00);
                 self.aura_brightness_slider.set_value(1.00);
-                self.ribbon_dropdown.set_selected(1);
+                self.ribbon_dropdown.set_selected(RIBBON_OFF);
                 self.ribbon_brightness_slider.set_value(1.00);
                 self.ribbon_scale_slider.set_value(1.00);
                 self.chevron_dropdown.set_selected(1);
@@ -686,13 +695,21 @@ impl ArcadeSettingsModal {
         }
     }
 
+    /// Turns the curve indicator on for a preset. An enabled look (chevrons or pacenote) is kept;
+    /// from Off it falls back to the default rally pacenote.
+    fn enable_ribbon_keeping_style(&mut self) {
+        if self.ribbon_dropdown.selected_index == RIBBON_OFF {
+            self.ribbon_dropdown.set_selected(RIBBON_PACENOTE);
+        }
+    }
+
     /// Evaluates current helper widget values to determine matching preset index (0: Full, 1: Minimal, 2: Off, 3: Custom).
     pub fn compute_matching_preset(&self) -> usize {
         // Full (0)
         if self.aura_dropdown.selected_index == 0
             && (self.aura_ratio_slider.value - 1.00).abs() < 1e-3
             && (self.aura_brightness_slider.value - 1.00).abs() < 1e-3
-            && self.ribbon_dropdown.selected_index == 0
+            && self.ribbon_dropdown.selected_index != RIBBON_OFF
             && (self.ribbon_brightness_slider.value - 1.00).abs() < 1e-3
             && (self.ribbon_scale_slider.value - 1.00).abs() < 1e-3
             && self.chevron_dropdown.selected_index == 0
@@ -707,7 +724,7 @@ impl ArcadeSettingsModal {
         if self.aura_dropdown.selected_index == 1
             && (self.aura_ratio_slider.value - 0.80).abs() < 1e-3
             && (self.aura_brightness_slider.value - 0.80).abs() < 1e-3
-            && self.ribbon_dropdown.selected_index == 0
+            && self.ribbon_dropdown.selected_index != RIBBON_OFF
             && (self.ribbon_brightness_slider.value - 0.80).abs() < 1e-3
             && (self.ribbon_scale_slider.value - 0.80).abs() < 1e-3
             && self.chevron_dropdown.selected_index == 0
@@ -720,7 +737,7 @@ impl ArcadeSettingsModal {
 
         // Off (2)
         if self.aura_dropdown.selected_index == 1
-            && self.ribbon_dropdown.selected_index == 1
+            && self.ribbon_dropdown.selected_index == RIBBON_OFF
             && self.chevron_dropdown.selected_index == 1
             && self.adaptive_dropdown.selected_index == 1
             && self.radar_ping_dropdown.selected_index == 1
@@ -743,7 +760,8 @@ impl ArcadeSettingsModal {
             aura_enabled: self.aura_dropdown.selected_index == 0,
             aura_ratio: self.aura_ratio_slider.value,
             aura_brightness: self.aura_brightness_slider.value,
-            ribbon_enabled: self.ribbon_dropdown.selected_index == 0,
+            ribbon_enabled: self.ribbon_dropdown.selected_index != RIBBON_OFF,
+            ribbon_pacenote: self.ribbon_dropdown.selected_index == RIBBON_PACENOTE,
             ribbon_brightness: self.ribbon_brightness_slider.value,
             ribbon_scale: self.ribbon_scale_slider.value,
             chevron_enabled: self.chevron_dropdown.selected_index == 0,
@@ -758,7 +776,13 @@ impl ArcadeSettingsModal {
         self.aura_dropdown.set_selected(if state.aura_enabled { 0 } else { 1 });
         self.aura_ratio_slider.set_value(state.aura_ratio);
         self.aura_brightness_slider.set_value(state.aura_brightness);
-        self.ribbon_dropdown.set_selected(if state.ribbon_enabled { 0 } else { 1 });
+        self.ribbon_dropdown.set_selected(if !state.ribbon_enabled {
+            RIBBON_OFF
+        } else if state.ribbon_pacenote {
+            RIBBON_PACENOTE
+        } else {
+            RIBBON_CHEVRONS
+        });
         self.ribbon_brightness_slider.set_value(state.ribbon_brightness);
         self.ribbon_scale_slider.set_value(state.ribbon_scale);
         self.chevron_dropdown.set_selected(if state.chevron_enabled { 0 } else { 1 });
