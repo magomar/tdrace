@@ -192,7 +192,7 @@ Work is done in phases. Each phase leaves `make test` green.
   - `crates/tdrace-app/tests/official_catalog_tests.rs` — count per module, order, every file loads and passes `validate_track`, alias resolution, dev-mode disk override, normal-mode ignores disk.
   - `crates/tdrace-app/tests/circuit_storage_tests.rs` — extended for single-copy dev save, six-module promote, `target_module`, normal-mode save-as-copy.
   - `tests/python/test_osm_importer.py` — `--json` output (existing and new circuit), provenance URLs from `tracks/`.
-- Release binary: `cargo build --release -p tdrace-app` gives a 16 MB binary that contains all 96 circuit names (embedded catalog). The game was not started, so the release scenario below is still open for a manual check.
+- Release binary: `cargo build --release -p tdrace-app` gives a 16 MB binary that contains all 96 circuit names (embedded catalog). Started by mario from `/tmp` (no `tracks/` next to it, dev mode off) on 2026-09-28: circuits listed and races loaded ("release check passed").
 - Scenario evidence:
   - JSON edit in dev mode: `official_catalog_tests::test_dev_mode_reads_official_circuit_from_disk` (race loader and menu preview read the edited `tracks/gt/monza.json`).
   - Importer: `osm_importer` `write_source_json` for a new GT circuit (`spa_new_test`) plus `track_bake` gave a file listed in dev mode (19 GT circuits), loaded, 0 validation errors; normal mode lists 18 until the next build embeds it.
@@ -207,9 +207,9 @@ Work is done in phases. Each phase leaves `make test` green.
   - [x] **When** the developer changes a kerb in that JSON and starts a Monza race
   - [x] **Then** the race shows the change with no Rust rebuild and no export step
 - **Scenario: Release build runs with no tracks folder**
-  - [ ] **Given** a release binary built from a checkout with the `tracks` submodule
-  - [ ] **When** the binary runs from a folder with no `tracks/` next to it and dev mode off
-  - [ ] **Then** all 96 official circuits are listed and each one loads a race
+  - [x] **Given** a release binary built from a checkout with the `tracks` submodule
+  - [x] **When** the binary runs from a folder with no `tracks/` next to it and dev mode off
+  - [x] **Then** all 96 official circuits are listed and each one loads a race
 - **Scenario: Build fails without circuit data**
   - [x] **Given** a fresh clone where `tracks/` is empty
   - [x] **When** the developer runs `cargo build`
