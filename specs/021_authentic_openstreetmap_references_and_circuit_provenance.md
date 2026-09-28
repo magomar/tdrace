@@ -46,7 +46,7 @@ When a player or developer navigates the showroom web catalog (`portals/option-b
 
 ```mermaid
 flowchart TD
-    A["Verified OSM Catalog<br/>(scripts/osm_importer.py, scripts/osm_nascar_importer.py & assets/osm)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
+    A["Verified OSM Catalog<br/>(scripts/osm_importer.py & assets/osm)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
     B -->|cargo test test_export_canonical_presets_to_git_repo| C["Canonical Track Files<br/>(tracks/**/*.json)"]
     C -->|python3 scripts/generate_asset_data.py| D["Portal Catalog<br/>(portals/shared/data/circuits.json)"]
     D -->|Astro SSG Build| E["Interactive Showroom<br/>(CircuitCard.astro)"]
@@ -128,7 +128,7 @@ Surveyed via `scripts/osm_importer.py rally` and `assets/osm/`:
 | `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`way/788873788`](https://www.openstreetmap.org/way/788873788) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
 
 ### 4. NASCAR Cup Series & Trans-Am (17 Circuits)
-Surveyed via `scripts/osm_nascar_importer.py` and `assets/osm/`:
+Surveyed via `scripts/osm_importer.py nascar` and `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |
