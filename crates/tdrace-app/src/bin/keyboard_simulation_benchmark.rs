@@ -1,10 +1,12 @@
-//! # Keyboard Input Dynamics & Car Control Benchmark Runner
+//! # Keyboard Key-Style × Preset × Car Benchmark (Spec 042)
 //!
-//! Evaluates how digital keyboard inputs impact vehicle handling, cornering authority,
-//! tire scrub drag, yaw stability, and transition dynamics across prototypical driving profiles
-//! and surfaces using the deterministic simulation harness.
+//! Drives the five Classic Arcade Cars with six prototypical key-pressing styles on each of the
+//! four keyboard handling presets, across asphalt, dirt, packed sand and ice, in three scenarios
+//! (sweeper corner, S-chicane reversal, low-grip slide catch).
 //!
-//! Generates Markdown and JSON reports saved to `reports/`.
+//! Writes `reports/keyboard_input_car_control_report.{md,json}`. When
+//! `reports/keyboard_input_car_control_report_pre042.json` exists, the report adds an
+//! old-vs-new comparison against it.
 
 use std::fs;
 use std::path::Path;
@@ -15,12 +17,22 @@ use serde::Serialize;
 
 use tdrace_app::catalog::{RealCarModel, CLASSIC_ARCADE_CARS};
 use tdrace_app::input::simulation::{
-    run_keyboard_chicane_simulation, run_keyboard_slide_catch_simulation,
-    run_keyboard_sweeper_simulation, KeyboardChicaneResult, KeyboardDriverProfile,
-    KeyboardSlideCatchResult, KeyboardSweeperResult,
+    key_style_sensitivity, run_keyboard_chicane_simulation, run_keyboard_slide_catch_simulation,
+    run_keyboard_sweeper_simulation, ChicaneTransitionOutcome, KeyStyleSensitivity, KeyboardChicaneResult,
+    KeyboardDriverProfile, KeyboardHandlingOutcome, KeyboardSlideCatchResult, KeyboardSteerPattern,
+    KeyboardSweeperResult, SlideCatchOutcome,
 };
+use tdrace_app::input::SteeringProfile;
 use tdrace_core::physics::sim::DEFAULT_SIMULATION_DT;
 use tdrace_core::physics::surface::SurfaceType;
+
+const SURFACES: [SurfaceType; 4] = [
+    SurfaceType::Asphalt,
+    SurfaceType::Dirt,
+    SurfaceType::PackedSand,
+    SurfaceType::SheetIce,
+];
+const PRE_042_JSON: &str = "reports/keyboard_input_car_control_report_pre042.json";
 
 /// Benchmark entry for an arcade car across all tests.
 #[derive(Debug, Clone, Serialize)]
@@ -37,135 +49,50 @@ pub struct VehicleEvaluationReport {
     pub catch_results: Vec<KeyboardSlideCatchResult>,
 }
 
-fn main() {
-    println!("================================================================================");
-    println!("🔬 TDRACE KEYBOARD INPUT DYNAMICS & CAR CONTROL SIMULATION BENCHMARK");
-    println!("   Evaluating Prototypical Human Keyboard Profiles Across Arcade Cars & Surfaces");
-    println!("================================================================================");
+/// Full JSON export.
+#[derive(Debug, Clone, Serialize)]
+pub struct KeyStyleBenchmark {
+    pub generated_at: String,
+    pub fleet: Vec<VehicleEvaluationReport>,
+    pub key_style_sensitivity: Vec<KeyStyleSensitivity>,
+}
 
+fn main() {
     let start_wall = Instant::now();
     let timestamp = Utc::now().to_rfc3339();
-
-    // 1. Define Arcade Car Fleet
-    let arcade_cars: Vec<&RealCarModel> = CLASSIC_ARCADE_CARS.iter().collect();
-    println!("Loaded {} Classic Arcade Vehicles:", arcade_cars.len());
-    for car in &arcade_cars {
-        println!(" - {:<16} | {:<24} | {} BHP | {} kg | {}", car.id, car.name, car.bhp, car.weight_kg, car.drivetrain);
-    }
-    println!("--------------------------------------------------------------------------------");
-
-    // 2. Define Surface Matrix
-    let surfaces = [
-        SurfaceType::Asphalt,
-        SurfaceType::Dirt,
-        SurfaceType::PackedSand,
-        SurfaceType::SheetIce,
-    ];
-
-    // 3. Define Driver Profiles to Evaluate
-    let sweeper_driver_profiles = vec![
-        KeyboardDriverProfile::sustained_hold_balanced(),
-        KeyboardDriverProfile::sustained_hold_direct(),
-        KeyboardDriverProfile::sustained_hold_smooth(),
-        KeyboardDriverProfile::rapid_feathering_balanced(),
-        KeyboardDriverProfile::cadence_pulse_balanced(),
-        KeyboardDriverProfile::tap_and_coast_balanced(),
-        KeyboardDriverProfile::lift_off_turn_balanced(),
-    ];
-
-    let chicane_driver_profiles = vec![
-        KeyboardDriverProfile::sustained_hold_balanced(),
-        KeyboardDriverProfile::sustained_hold_direct(),
-        KeyboardDriverProfile::sustained_hold_smooth(),
-        KeyboardDriverProfile::rapid_feathering_balanced(),
-    ];
-
-    let catch_driver_profiles = vec![
-        KeyboardDriverProfile::sustained_hold_balanced(),
-        KeyboardDriverProfile::rapid_feathering_balanced(),
-    ];
-
-    let mut fleet_reports: Vec<VehicleEvaluationReport> = Vec::with_capacity(arcade_cars.len());
-
     let dt = DEFAULT_SIMULATION_DT;
+    let cars: Vec<&RealCarModel> = CLASSIC_ARCADE_CARS.iter().collect();
 
-    for (car_idx, model) in arcade_cars.iter().enumerate() {
-        let car_start = Instant::now();
+    println!("Key style x preset x car benchmark: {} cars, {} presets, {} surfaces", cars.len(), SteeringProfile::PRESETS.len(), SURFACES.len());
+
+    let mut fleet = Vec::with_capacity(cars.len());
+    for model in &cars {
         let cfg = model.to_car_config();
+        // Entry speeds tailored to car capability: 70 km/h baseline, 55 km/h for the kart
+        let is_kart = model.id == "classic_kart";
+        let (v_sweeper, v_chicane, v_catch) = if is_kart { (55.0, 50.0, 45.0) } else { (70.0, 65.0, 55.0) };
 
-        println!(
-            "[{}/{}] Simulating vehicle: {:<16} ({}) ...",
-            car_idx + 1,
-            arcade_cars.len(),
-            model.id,
-            model.name
-        );
-
-        // Entry speed tailored to car capabilities: 70 km/h baseline, 55 km/h for kart
-        let v0_sweeper = if model.id == "classic_kart" { 55.0 } else { 70.0 };
-        let v0_chicane = if model.id == "classic_kart" { 50.0 } else { 65.0 };
-        let v0_catch = if model.id == "classic_kart" { 45.0 } else { 55.0 };
-
-        let mut sweeper_results = Vec::new();
-        let mut chicane_results = Vec::new();
-        let mut catch_results = Vec::new();
-
-        for &surface in &surfaces {
-            // A. Sweeper Tests
-            for driver in &sweeper_driver_profiles {
-                let res = run_keyboard_sweeper_simulation(
-                    model.id,
-                    model.name,
-                    &cfg,
-                    surface,
-                    driver,
-                    v0_sweeper,
-                    3.0,
-                    dt,
-                );
-                sweeper_results.push(res);
-            }
-
-            // B. Chicane Direction Reversal Tests
-            for driver in &chicane_driver_profiles {
-                let res = run_keyboard_chicane_simulation(
-                    model.id,
-                    model.name,
-                    &cfg,
-                    surface,
-                    driver,
-                    v0_chicane,
-                    dt,
-                );
-                chicane_results.push(res);
-            }
-
-            // C. Low-grip slide catch tests (Dirt, Sand, Ice only)
-            if surface != SurfaceType::Asphalt {
-                for driver in &catch_driver_profiles {
-                    let res = run_keyboard_slide_catch_simulation(
-                        model.id,
-                        model.name,
-                        &cfg,
-                        surface,
-                        driver,
-                        v0_catch,
-                        dt,
-                    );
-                    catch_results.push(res);
+        let (mut sweeper, mut chicane, mut catch) = (Vec::new(), Vec::new(), Vec::new());
+        for &surface in &SURFACES {
+            for preset in SteeringProfile::PRESETS {
+                for pattern in KeyboardSteerPattern::SWEEPER {
+                    let driver = KeyboardDriverProfile::for_pattern(pattern, preset);
+                    sweeper.push(run_keyboard_sweeper_simulation(model.id, model.name, &cfg, surface, &driver, v_sweeper, 3.0, dt));
+                }
+                for pattern in KeyboardSteerPattern::CHICANE {
+                    let driver = KeyboardDriverProfile::for_pattern(pattern, preset);
+                    chicane.push(run_keyboard_chicane_simulation(model.id, model.name, &cfg, surface, &driver, v_chicane, dt));
+                }
+                if surface != SurfaceType::Asphalt {
+                    for pattern in [KeyboardSteerPattern::SustainedHold, KeyboardSteerPattern::RapidFeathering] {
+                        let driver = KeyboardDriverProfile::for_pattern(pattern, preset);
+                        catch.push(run_keyboard_slide_catch_simulation(model.id, model.name, &cfg, surface, &driver, v_catch, dt));
+                    }
                 }
             }
         }
-
-        println!(
-            "   Completed in {:.2?} (sweeper: {}, chicane: {}, catch: {})",
-            car_start.elapsed(),
-            sweeper_results.len(),
-            chicane_results.len(),
-            catch_results.len()
-        );
-
-        fleet_reports.push(VehicleEvaluationReport {
+        println!(" - {:<16} sweeper {} | chicane {} | catch {}", model.id, sweeper.len(), chicane.len(), catch.len());
+        fleet.push(VehicleEvaluationReport {
             vehicle_id: model.id.to_string(),
             vehicle_name: model.name.to_string(),
             category: model.category_name.to_string(),
@@ -173,313 +100,245 @@ fn main() {
             power_bhp: model.bhp,
             drivetrain: model.drivetrain.to_string(),
             top_speed_kmh: model.top_speed_kmh,
-            sweeper_results,
-            chicane_results,
-            catch_results,
+            sweeper_results: sweeper,
+            chicane_results: chicane,
+            catch_results: catch,
         });
     }
 
-    let total_elapsed = start_wall.elapsed();
-    println!("--------------------------------------------------------------------------------");
-    println!(
-        "✅ Fleet simulation finished across all configurations in {:.2?} s",
-        total_elapsed.as_secs_f64()
-    );
-    println!("--------------------------------------------------------------------------------");
+    let all_sweeper: Vec<KeyboardSweeperResult> = fleet.iter().flat_map(|v| v.sweeper_results.iter().cloned()).collect();
+    let sensitivity = key_style_sensitivity(&all_sweeper);
+    let wall_s = start_wall.elapsed().as_secs_f64();
+    println!("Simulated in {wall_s:.2} s");
 
-    // 4. Generate Reports
     let reports_dir = Path::new("reports");
-    if !reports_dir.exists() {
-        fs::create_dir_all(reports_dir).expect("Failed to create reports directory");
-    }
+    fs::create_dir_all(reports_dir).expect("Failed to create reports directory");
+    let pre042 = fs::read_to_string(PRE_042_JSON).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok());
 
-    // JSON export
-    let json_data = serde_json::to_string_pretty(&fleet_reports)
-        .expect("Failed to serialize telemetry data to JSON");
+    let md = generate_markdown_report(&timestamp, &fleet, &sensitivity, pre042.as_ref(), wall_s);
+    let json = KeyStyleBenchmark {
+        generated_at: timestamp,
+        fleet,
+        key_style_sensitivity: sensitivity,
+    };
     let json_path = reports_dir.join("keyboard_input_car_control_report.json");
-    fs::write(&json_path, json_data).expect("Failed to write JSON report");
-    println!("📊 JSON Telemetry Dataset saved: {}", json_path.display());
-
-    // Markdown report
-    let md_report = generate_markdown_report(&timestamp, &fleet_reports, total_elapsed.as_secs_f64());
+    fs::write(&json_path, serde_json::to_string_pretty(&json).expect("serialize report")).expect("write JSON report");
     let md_path = reports_dir.join("keyboard_input_car_control_report.md");
-    fs::write(&md_path, md_report).expect("Failed to write Markdown report");
-    println!("📄 Markdown Technical Report saved: {}", md_path.display());
+    fs::write(&md_path, md).expect("write Markdown report");
+    println!("Wrote {} and {}", md_path.display(), json_path.display());
+}
 
-    println!("================================================================================");
+fn sweeper<'a>(v: &'a VehicleEvaluationReport, surface: SurfaceType, preset: SteeringProfile, pattern: KeyboardSteerPattern) -> Option<&'a KeyboardSweeperResult> {
+    v.sweeper_results
+        .iter()
+        .find(|r| r.surface == surface && r.filter_profile == preset && r.steer_pattern == pattern)
+}
+
+fn sensitivity_of<'a>(s: &'a [KeyStyleSensitivity], vehicle: &str, surface: SurfaceType, preset: SteeringProfile) -> Option<&'a KeyStyleSensitivity> {
+    s.iter().find(|k| k.vehicle_id == vehicle && k.surface == surface && k.filter_profile == preset)
+}
+
+/// Old (pre-042) asphalt sweeper exit speed for a driver profile id, from the saved JSON.
+fn old_exit(pre042: &serde_json::Value, vehicle: &str, driver_id: &str) -> Option<(f64, String)> {
+    let v = pre042.as_array()?.iter().find(|v| v["vehicle_id"] == vehicle)?;
+    let r = v["sweeper_results"]
+        .as_array()?
+        .iter()
+        .find(|r| r["surface"] == "Asphalt" && r["driver_profile_id"] == driver_id)?;
+    Some((r["exit_speed_kmh"].as_f64()?, r["outcome"].as_str()?.to_string()))
+}
+
+fn outcome_label(o: KeyboardHandlingOutcome) -> &'static str {
+    o.badge()
 }
 
 fn generate_markdown_report(
     timestamp: &str,
-    fleet_reports: &[VehicleEvaluationReport],
-    wall_duration_s: f64,
+    fleet: &[VehicleEvaluationReport],
+    sensitivity: &[KeyStyleSensitivity],
+    pre042: Option<&serde_json::Value>,
+    wall_s: f64,
 ) -> String {
+    let presets = SteeringProfile::PRESETS;
     let mut s = String::new();
-    s.push_str("# Engineering Report: Keyboard Input Impact on Vehicle Control & Dynamics 🏎️⌨️\n\n");
+    s.push_str("# Key Style × Preset × Car Report (Spec 042) ⌨️🏎️\n\n");
     s.push_str(&format!(
-        "**Date & Timestamp**: `{}`  \n**Simulation Run Time**: `{:.3}s`  \n**Vehicles Evaluated**: `{}` Classic Arcade Models  \n**Surfaces Tested**: `Asphalt (mu=1.0)`, `Dirt (mu=0.78)`, `PackedSand (mu=0.62)`, `SheetIce (mu=0.08)`  \n**Timestep**: `120 Hz (dt = 8.33ms)` deterministic physics integration  \n\n",
-        timestamp,
-        wall_duration_s,
-        fleet_reports.len()
+        "Generated `{timestamp}` by `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` in {wall_s:.2} s.  \n\
+         Physics: spec 042 slip-based tires, 120 Hz. Cars: {} classic arcade cars. Presets: Smooth, Balanced, Sharp, Raw.  \n\
+         Surfaces: asphalt, dirt, packed sand, sheet ice. Default arcade driver aids of each car.\n\n",
+        fleet.len()
     ));
 
-    s.push_str("---\n\n");
-    s.push_str("## 1. Executive Summary & Core Physics Findings 🎯\n\n");
-    s.push_str("Digital keyboard controls present a fundamental dichotomy in arcade racing games: players can only toggle binary inputs (0% or 100%), whereas pneumatic racing tires follow non-linear Pacejka curves where cornering traction peaks at modest slip angles (typically 8°–14°), beyond which grip drops and induced drag ($F_{\\text{drag}} = F_y \\cdot \\sin\\delta$) escalates dramatically.\n\n");
-
-    s.push_str("This empirical study utilized the deterministic headless simulation harness to systematically assess how **prototypical keyboard driving profiles** impact vehicle control across all five **Classic Arcade Cars** on diverse road and hazard surfaces. Three key phenomena were identified:\n\n");
-
-    s.push_str("1. **The Scrub Drag Penalty of Sustained Hold Lock**:\n");
-    s.push_str("   - Holding a turn key continuously (`Sustained Hold`) engages progressive hold-lock bleed, steering the front wheels to 100% mechanical lock ($28^\\circ\\text{--}42^\\circ$).\n");
-    s.push_str("   - On Asphalt, this generates massive induced scrub drag, causing speed retention to drop to **55%–72%** (losing **20–31 km/h** in a 3-second corner) and pushing front slip angles well past peak traction ($> 20^\\circ$).\n");
-    s.push_str("   - On low-friction surfaces (Dirt, Sand, and especially Sheet Ice), sustained hold either induces heavy plow understeer or catastrophic spinout.\n\n");
-
-    s.push_str("2. **Micro-Feathering & Cadence Pulsing as Slip Angle Modulators**:\n");
-    s.push_str("   - Rapid feathering (75ms ON / 75ms OFF, ~6.67 Hz) and cadence pulsing (180ms ON / 120ms OFF, ~3.33 Hz) prevent steering lock from saturating.\n");
-    s.push_str("   - Because steering releases reset the input filter's `steer_hold_factor` before hold-lock bleed can accumulate, effective steer angles hover between **18% and 42%** of lock.\n");
-    s.push_str("   - This preserves forward momentum: **Speed retention improves from 62.4% to 88.7%** on Asphalt, and speed loss is reduced by **50%–75%**, while turning radius remains tight and controllable.\n\n");
-
-    s.push_str("3. **Filter Profiles: Direct (Raw) vs Balanced vs Smooth**:\n");
-    s.push_str("   - **Direct (Raw)** digital input causes instant 100% steering snap within ~80ms. While delivering instantaneous yaw response, on high-powered RWD cars (Thunderbolt Stock V8) or low-friction surfaces, it induces severe snap-oversteer or massive scrub choking.\n");
-    s.push_str("   - **Balanced (Progressive)** allows players to gently steer into high-speed arcs, bleeding into tighter lock only if held, and recovering cleanly on key release.\n");
-    s.push_str("   - **Smooth (Arcade)** provides maximum stabilization for relaxed driving at the cost of slight turn-in latency in rapid chicanes.\n\n");
-
-    s.push_str("---\n\n");
-    s.push_str("## 2. Tested Vehicle Fleet & Surface Archetypes 🏎️🌍\n\n");
-
-    s.push_str("### 2.1 Classic Arcade Vehicle Fleet\n\n");
-    s.push_str("| Vehicle ID | Name | Category | BHP | Mass | Drivetrain | Top Speed | Distinguishing Physics DNA |\n");
-    s.push_str("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |\n");
-    for v in fleet_reports {
-        let dna = match v.vehicle_id.as_str() {
-            "classic_gt" => "Balanced 50:50 RWD sports coupe, razor turn-in, progressive slide recovery.",
-            "classic_nascar" => "Heavy 1280kg RWD stock car, locked Spool differential, massive 750 BHP torque.",
-            "classic_offroad" => "Lightweight 680kg sand rail buggy, long suspension travel, boxer rear engine.",
-            "classic_kart" => "Ultra-light 180kg sprint kart, solid rear axle spool, caster jacking, 37.2° steering lock.",
-            "classic_rally" => "1050kg 4WD Group B rally weapon, 450 BHP turbo, active torque split, agile slide balance.",
-            _ => "Standard arcade vehicle dynamics.",
+    s.push_str("## 1. What was driven\n\n");
+    s.push_str("| Key style | Keys |\n|---|---|\n");
+    for p in KeyboardSteerPattern::SWEEPER.iter().chain([KeyboardSteerPattern::SnapCountersteer].iter()) {
+        let keys = match p {
+            KeyboardSteerPattern::SustainedHold => "steer key held, W held",
+            KeyboardSteerPattern::RapidFeathering => "steer 75 ms on / 75 ms off, W held",
+            KeyboardSteerPattern::CadencePulse => "steer 180 ms on / 120 ms off, W held",
+            KeyboardSteerPattern::TapAndCoast => "250 ms tap, 200 ms coast, then 100/100 ms taps, W held",
+            KeyboardSteerPattern::LiftOffTurn => "steer held, W released for the first 600 ms",
+            KeyboardSteerPattern::SnapCountersteer => "chicane: right 1 s, left 1 s, centre (scripted by the scenario)",
         };
+        s.push_str(&format!("| {} | {keys} |\n", p.name()));
+    }
+    s.push_str("\nScenarios: **sweeper** (3 s corner from 70 km/h, kart 55 km/h), **chicane** (full right then full left from 65 km/h, kart 50 km/h, styles: hold, feathering, cadence), **slide catch** (15° / 35°·s⁻¹ induced slide on dirt, sand and ice, styles: hold, feathering).\n\n");
+
+    // 2. Headline: Balanced on asphalt
+    s.push_str("## 2. Balanced preset on asphalt: exit speed by key style (km/h)\n\n");
+    s.push_str("| Car | Hold | Feathering | Cadence | Tap-and-coast | Lift-off | Hold vs feathering |\n|---|---|---|---|---|---|---|\n");
+    for v in fleet {
+        let cell = |p| {
+            sweeper(v, SurfaceType::Asphalt, SteeringProfile::Balanced, p)
+                .map(|r| format!("{:.1} ({})", r.exit_speed_kmh, outcome_label(r.outcome)))
+                .unwrap_or_default()
+        };
+        let hvf = sensitivity_of(sensitivity, &v.vehicle_id, SurfaceType::Asphalt, SteeringProfile::Balanced)
+            .map(|k| format!("{:.0}%", k.hold_vs_feathering_pct))
+            .unwrap_or_default();
         s.push_str(&format!(
-            "| `{}` | **{}** | {} | {} | {} kg | {} | {} km/h | {} |\n",
-            v.vehicle_id, v.vehicle_name, v.category, v.power_bhp, v.mass_kg, v.drivetrain, v.top_speed_kmh, dna
+            "| {} | {} | {} | {} | {} | {} | {hvf} |\n",
+            v.vehicle_name,
+            cell(KeyboardSteerPattern::SustainedHold),
+            cell(KeyboardSteerPattern::RapidFeathering),
+            cell(KeyboardSteerPattern::CadencePulse),
+            cell(KeyboardSteerPattern::TapAndCoast),
+            cell(KeyboardSteerPattern::LiftOffTurn),
         ));
     }
-    s.push_str("\n");
 
-    s.push_str("### 2.2 Surface Friction & Drag Properties\n\n");
-    s.push_str("| Surface | Friction $\\mu$ | Rolling Resistance | Surface Drag | Character in Cornering |\n");
-    s.push_str("| :--- | :---: | :---: | :---: | :--- |\n");
-    s.push_str("| **Asphalt** | 1.00 | $1.0\\times$ | $1.0\\times$ | Peak grip; high scrub drag penalty at saturated slip angles. |\n");
-    s.push_str("| **Dirt** | 0.78 | $1.2\\times$ | $1.1\\times$ | Moderate slide traction; responsive to rhythmic throttle-steer drift. |\n");
-    s.push_str("| **PackedSand** | 0.62 | $5.2\\times$ | $2.1\\times$ | Heavy longitudinal drag; high power required to sustain cornering speed. |\n");
-    s.push_str("| **SheetIce** | 0.08 | $0.4\\times$ | $0.9\\times$ | Ultra-low grip hazard; steering authority virtually nil without countersteer. |\n\n");
-
-    s.push_str("---\n\n");
-    s.push_str("## 3. Sweeper Cornering Telemetry: Sustained Hold vs. Rapid Feathering 📊\n\n");
-    s.push_str("Evaluating the performance delta across all vehicles in a 3-second sustained corner at entry speed ($70\\text{ km/h}$, Kart at $55\\text{ km/h}$):\n\n");
-
-    s.push_str("### 3.1 Asphalt Cornering Matrix\n\n");
-    s.push_str("| Vehicle | Driver Profile | Exit Speed | Speed Loss | Retention | Lat G (Avg/Peak) | Slip $\\alpha_f / \\alpha_r$ | Effective Radius | Handling Outcome |\n");
-    s.push_str("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n");
-
-    for v in fleet_reports {
-        let asphalt_sweepers: Vec<&KeyboardSweeperResult> = v
-            .sweeper_results
+    // 3. Key style sensitivity
+    s.push_str("\n## 3. Key Style Sensitivity (asphalt sweeper)\n\n");
+    s.push_str("Spread = how much the exit speed changes between the best and the worst key style for the same car and preset. A small spread means *how* you press matters little; a large spread means technique matters.\n\n");
+    s.push_str("| Car | Smooth | Balanced | Sharp | Raw |\n|---|---|---|---|---|\n");
+    for v in fleet {
+        let cells: Vec<String> = presets
             .iter()
-            .filter(|r| r.surface == SurfaceType::Asphalt)
-            .collect();
-
-        for r in asphalt_sweepers {
-            s.push_str(&format!(
-                "| `{}` | {} | {:.1} km/h | -{:.1} km/h | {:.1}% | {:.2}g / {:.2}g | {:.1}° / {:.1}° | {:.1}m | `{}` |\n",
-                r.vehicle_id,
-                r.driver_profile_name,
-                r.exit_speed_kmh,
-                r.speed_loss_kmh,
-                r.speed_retention_pct,
-                r.avg_lateral_g,
-                r.peak_lateral_g,
-                r.peak_front_slip_deg,
-                r.peak_rear_slip_deg,
-                r.effective_radius_m,
-                r.outcome.badge()
-            ));
-        }
-    }
-    s.push_str("\n");
-
-    s.push_str("### 3.2 Dirt Rally Track Cornering Matrix\n\n");
-    s.push_str("| Vehicle | Driver Profile | Exit Speed | Speed Loss | Retention | Lat G (Avg/Peak) | Slip $\\alpha_f / \\alpha_r$ | Effective Radius | Handling Outcome |\n");
-    s.push_str("| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |\n");
-
-    for v in fleet_reports {
-        let dirt_sweepers: Vec<&KeyboardSweeperResult> = v
-            .sweeper_results
-            .iter()
-            .filter(|r| r.surface == SurfaceType::Dirt)
-            .collect();
-
-        for r in dirt_sweepers {
-            s.push_str(&format!(
-                "| `{}` | {} | {:.1} km/h | -{:.1} km/h | {:.1}% | {:.2}g / {:.2}g | {:.1}° / {:.1}° | {:.1}m | `{}` |\n",
-                r.vehicle_id,
-                r.driver_profile_name,
-                r.exit_speed_kmh,
-                r.speed_loss_kmh,
-                r.speed_retention_pct,
-                r.avg_lateral_g,
-                r.peak_lateral_g,
-                r.peak_front_slip_deg,
-                r.peak_rear_slip_deg,
-                r.effective_radius_m,
-                r.outcome.badge()
-            ));
-        }
-    }
-    s.push_str("\n");
-
-    s.push_str("### 3.3 Packed Sand & Sheet Ice High-Risk Hazard Matrices\n\n");
-    s.push_str("| Vehicle | Surface | Profile | Exit Speed | Retention | Peak Lat G | Front/Rear Slip | Outcome |\n");
-    s.push_str("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |\n");
-
-    for v in fleet_reports {
-        let hazard_sweepers: Vec<&KeyboardSweeperResult> = v
-            .sweeper_results
-            .iter()
-            .filter(|r| r.surface == SurfaceType::PackedSand || r.surface == SurfaceType::SheetIce)
-            .filter(|r| {
-                r.driver_profile_id == "hold_balanced"
-                    || r.driver_profile_id == "feathering_balanced"
-                    || r.driver_profile_id == "hold_direct"
+            .map(|&p| {
+                sensitivity_of(sensitivity, &v.vehicle_id, SurfaceType::Asphalt, p)
+                    .map(|k| format!("{:.0}% (best {}, worst {})", k.spread_pct, k.fastest_style.id(), k.slowest_style.id()))
+                    .unwrap_or_default()
             })
             .collect();
-
-        for r in hazard_sweepers {
-            s.push_str(&format!(
-                "| `{}` | {:?} | {} | {:.1} km/h | {:.1}% | {:.2}g | {:.1}° / {:.1}° | `{}` |\n",
-                r.vehicle_id,
-                r.surface,
-                r.driver_profile_name,
-                r.exit_speed_kmh,
-                r.speed_retention_pct,
-                r.peak_lateral_g,
-                r.peak_front_slip_deg,
-                r.peak_rear_slip_deg,
-                r.outcome.badge()
-            ));
-        }
+        s.push_str(&format!("| {} | {} |\n", v.vehicle_name, cells.join(" | ")));
     }
-    s.push_str("\n");
-
-    s.push_str("---\n\n");
-    s.push_str("## 4. S-Chicane Transient Direction Reversal & Agility 🔄\n\n");
-    s.push_str("Evaluating direction reversal latency (switching full Right to full Left) and secondary fishtail pendulum oscillations across input filters:\n\n");
-
-    s.push_str("| Vehicle | Surface | Profile | Reversal Latency | Peak Overshoot | Fishtails | Lateral Excursion | Transition Status |\n");
-    s.push_str("| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |\n");
-
-    for v in fleet_reports {
-        for ch in &v.chicane_results {
-            if ch.surface == SurfaceType::Asphalt || ch.surface == SurfaceType::Dirt {
-                s.push_str(&format!(
-                    "| `{}` | {:?} | {} | {:.1} ms | {:.1}°/s | {} | {:.2}m | `{}` |\n",
-                    ch.vehicle_id,
-                    ch.surface,
-                    ch.driver_profile_id,
-                    ch.reversal_latency_ms,
-                    ch.peak_yaw_overshoot_deg_s,
-                    ch.fishtail_oscillation_count,
-                    ch.max_lateral_displacement_m,
-                    ch.outcome.badge()
-                ));
-            }
-        }
+    s.push_str("\nAverage spread over all cars, per surface:\n\n| Surface | Smooth | Balanced | Sharp | Raw |\n|---|---|---|---|---|\n");
+    for &surface in &SURFACES {
+        let cells: Vec<String> = presets
+            .iter()
+            .map(|&p| {
+                let xs: Vec<f32> = sensitivity.iter().filter(|k| k.surface == surface && k.filter_profile == p).map(|k| k.spread_pct).collect();
+                format!("{:.0}%", xs.iter().sum::<f32>() / xs.len().max(1) as f32)
+            })
+            .collect();
+        s.push_str(&format!("| {surface:?} | {} |\n", cells.join(" | ")));
     }
-    s.push_str("\n");
 
-    s.push_str("---\n\n");
-    s.push_str("## 5. Low-Grip Slide Catch & Countersteer Recovery 🛞💨\n\n");
-    s.push_str("Assessing recovery from an induced $15^\\circ$ yaw perturbation on slippery surfaces:\n\n");
-
-    s.push_str("| Vehicle | Surface | Countersteer Technique | Recovery Time | Max Sideslip | Final Error | Status |\n");
-    s.push_str("| :--- | :--- | :--- | :---: | :---: | :---: | :--- |\n");
-
-    for v in fleet_reports {
-        for sc in &v.catch_results {
-            let time_str = match sc.recovery_time_s {
-                Some(t) => format!("{:.2} s", t),
-                None => "Failed / Spun".to_string(),
-            };
-            s.push_str(&format!(
-                "| `{}` | {:?} | {} | {} | {:.1}° | {:.1}° | `{}` |\n",
-                sc.vehicle_id,
-                sc.surface,
-                if sc.driver_profile_id == "feathering_balanced" { "Feathered Taps" } else { "Sustained Opposite Lock" },
-                time_str,
-                sc.max_sideslip_deg,
-                sc.final_heading_error_deg,
-                sc.outcome.badge()
-            ));
-        }
-    }
-    s.push_str("\n");
-
-    s.push_str("---\n\n");
-    s.push_str("## 6. Vehicle-by-Vehicle Analytical Breakdown 🚗\n\n");
-
-    for v in fleet_reports {
-        s.push_str(&format!("### 6.{} `{}` — {}\n\n", v.vehicle_id, v.vehicle_name, v.category));
+    // 4. Chicane
+    s.push_str("\n## 4. Chicane reversal outcomes (all cars, surfaces and styles)\n\n| Preset | Crisp | Mild pendulum | Snap oversteer | Spinout | Mean reversal latency |\n|---|---|---|---|---|---|\n");
+    for &p in &presets {
+        let rs: Vec<&KeyboardChicaneResult> = fleet
+            .iter()
+            .flat_map(|v| v.chicane_results.iter())
+            .filter(|r| r.driver_profile_id.ends_with(&format!("_{}", p.to_string().to_lowercase())))
+            .collect();
+        let count = |o: ChicaneTransitionOutcome| rs.iter().filter(|r| r.outcome == o).count();
+        let latency = rs.iter().map(|r| r.reversal_latency_ms).sum::<f32>() / rs.len().max(1) as f32;
         s.push_str(&format!(
-            "- **Specifications**: {} BHP | {} kg | Drivetrain: {} | Top Speed: {} km/h\n",
-            v.power_bhp, v.mass_kg, v.drivetrain, v.top_speed_kmh
+            "| {p} | {} | {} | {} | {} | {latency:.0} ms |\n",
+            count(ChicaneTransitionOutcome::CrispTransition),
+            count(ChicaneTransitionOutcome::MildDampedPendulum),
+            count(ChicaneTransitionOutcome::ViolentSnapOversteer),
+            count(ChicaneTransitionOutcome::Spinout),
         ));
-
-        // Find Asphalt Hold vs Feathering
-        let hold_asphalt = v.sweeper_results.iter().find(|r| r.surface == SurfaceType::Asphalt && r.driver_profile_id == "hold_balanced");
-        let feather_asphalt = v.sweeper_results.iter().find(|r| r.surface == SurfaceType::Asphalt && r.driver_profile_id == "feathering_balanced");
-        let direct_asphalt = v.sweeper_results.iter().find(|r| r.surface == SurfaceType::Asphalt && r.driver_profile_id == "hold_direct");
-
-        if let (Some(h), Some(f), Some(d)) = (hold_asphalt, feather_asphalt, direct_asphalt) {
-            s.push_str(&format!(
-                "- **Asphalt Speed Retention**: Sustained Hold retained **{:.1}%** ({:.1} km/h loss) vs Feathering retained **{:.1}%** ({:.1} km/h loss) vs Direct Raw retained **{:.1}%** ({:.1} km/h loss).\n",
-                h.speed_retention_pct, h.speed_loss_kmh, f.speed_retention_pct, f.speed_loss_kmh, d.speed_retention_pct, d.speed_loss_kmh
-            ));
-            s.push_str(&format!(
-                "- **Cornering Radius & Scrub**: Sustained Hold yielded an effective radius of **{:.1}m** with front tire slip of **{:.1}°**; Feathering produced **{:.1}m** with front tire slip of **{:.1}°**.\n",
-                h.effective_radius_m, h.peak_front_slip_deg, f.effective_radius_m, f.peak_front_slip_deg
-            ));
-        }
-
-        match v.vehicle_id.as_str() {
-            "classic_gt" => {
-                s.push_str("- **Dynamics Summary**: Apex Phantom GT represents the quintessential balanced GT car. While Direct raw input causes noticeable front scrub, the default Balanced filter allows high-speed sweeping arcs with minimal twitch. Micro-feathering is the optimal competitive technique on Asphalt, yielding +18 km/h higher corner exit speed.\n\n");
-            }
-            "classic_nascar" => {
-                s.push_str("- **Dynamics Summary**: Thunderbolt Stock V8's locked rear spool differential makes it highly sensitive to sudden digital inputs. Raw direct lock snaps the rear loose into power oversteer. Under Balanced filtering with progressive hold bleed, the car turns smoothly. In chicanes, rhythmic countersteering is required to prevent the heavy 1280kg rear from pendulum swinging.\n\n");
-            }
-            "classic_offroad" => {
-                s.push_str("- **Dynamics Summary**: Vortex Dune Crusher excels on Dirt and Packed Sand. On sand dunes, sustained hold leads to severe speed loss due to the 5.2x sand rolling resistance and high tire cutting. The Tap-and-Coast flick entry initiates an immediate, controllable power slide that maintains momentum.\n\n");
-            }
-            "classic_kart" => {
-                s.push_str("- **Dynamics Summary**: Turbo Dart 200cc features 1:1 steering lock and caster jacking. Because holding the key lifts the inside rear wheel, sustained lock causes sharp turning but substantial scrub drag (retention drops to 52%). High-frequency feathering (6.67 Hz) is remarkably effective, keeping both rear wheels driving forward and boosting exit speed by over 20 km/h.\n\n");
-            }
-            "classic_rally" => {
-                s.push_str("- **Dynamics Summary**: Trailfire Turbo 4WD's all-wheel-drive powertrain provides unmatched traction on loose surfaces. On Dirt and Packed Sand, it powers through corners cleanly under all profiles. In slide recovery tests, it stabilizes faster than any RWD vehicle (recovering in under 0.6s).\n\n");
-            }
-            _ => {
-                s.push_str("- **Dynamics Summary**: Exhibited typical top-down arcade vehicle handling dynamics.\n\n");
-            }
-        }
     }
 
-    s.push_str("---\n\n");
-    s.push_str("## 7. Conclusions & Strategic Recommendations for Arcade Players 🏆\n\n");
-    s.push_str("1. **Master the Tap (Feathering vs Holding)**: In top-down arcade racing games, continuous key holding should be reserved strictly for tight hairpins or deliberate low-speed drift initiation. On sweepers and medium curves, **rapid feathering (5–7 taps/sec) delivers up to 35% higher exit speed** by keeping tires in their peak traction zone.\n\n");
-    s.push_str("2. **Steering Profile Selection Guide**:\n");
-    s.push_str("   - Use **Balanced** (Default) for 90% of racing. It provides soft center micro-adjustments on straights and progressive hold bleed for sharp hairpins.\n");
-    s.push_str("   - Use **Smooth** on slippery or hazard tracks (Ice, Sand, Mud) to prevent snap-oversteer.\n");
-    s.push_str("   - Reserve **Direct** for grassroots Karting or experienced keyboard veterans who modulate steering purely via micro-second tapping.\n\n");
-    s.push_str("3. **Countersteering on Low-Mu Surfaces**: On Dirt and Snow, sustained opposite lock frequently leads to secondary snap-oversteer ('tank-slapper'). Feathering countersteer pulses dampens the pendulum effect and snaps the chassis straight within 0.8 seconds.\n\n");
+    // 5. Slide catch
+    s.push_str("\n## 5. Slide catch outcomes (dirt, sand, ice)\n\n| Preset | Recovered | Delayed | Spun out |\n|---|---|---|---|\n");
+    for &p in &presets {
+        let rs: Vec<&KeyboardSlideCatchResult> = fleet
+            .iter()
+            .flat_map(|v| v.catch_results.iter())
+            .filter(|r| r.driver_profile_id.ends_with(&format!("_{}", p.to_string().to_lowercase())))
+            .collect();
+        let count = |o: SlideCatchOutcome| rs.iter().filter(|r| r.outcome == o).count();
+        s.push_str(&format!(
+            "| {p} | {} | {} | {} |\n",
+            count(SlideCatchOutcome::Recovered),
+            count(SlideCatchOutcome::DelayedRecovery),
+            count(SlideCatchOutcome::SpunOut),
+        ));
+    }
 
+    // 6. Old vs new
+    s.push_str("\n## 6. Old physics vs spec 042 (Balanced, asphalt sweeper)\n\n");
+    match pre042 {
+        Some(old) => {
+            s.push_str("Old numbers come from `reports/keyboard_input_car_control_report_pre042.json` (the pre-042 benchmark output).\n\n");
+            s.push_str("| Car | Hold old → new | Feathering old → new | Hold vs feathering old → new | Lift-off old → new |\n|---|---|---|---|---|\n");
+            for v in fleet {
+                let new = |p| sweeper(v, SurfaceType::Asphalt, SteeringProfile::Balanced, p);
+                let (oh, of, ol) = (
+                    old_exit(old, &v.vehicle_id, "hold_balanced"),
+                    old_exit(old, &v.vehicle_id, "feathering_balanced"),
+                    old_exit(old, &v.vehicle_id, "lift_off_balanced"),
+                );
+                let (nh, nf, nl) = (
+                    new(KeyboardSteerPattern::SustainedHold),
+                    new(KeyboardSteerPattern::RapidFeathering),
+                    new(KeyboardSteerPattern::LiftOffTurn),
+                );
+                let fmt = |o: &Option<(f64, String)>, n: Option<&KeyboardSweeperResult>| match (o, n) {
+                    (Some((ov, _)), Some(n)) => format!("{ov:.1} → {:.1} km/h", n.exit_speed_kmh),
+                    _ => "n/a".to_string(),
+                };
+                let ratio = match (&oh, &of, nh, nf) {
+                    (Some((h, _)), Some((f, _)), Some(nh), Some(nf)) => format!(
+                        "{:.0}% → {:.0}%",
+                        h / f.max(1e-3) * 100.0,
+                        nh.exit_speed_kmh / nf.exit_speed_kmh.max(1e-3) * 100.0
+                    ),
+                    _ => "n/a".to_string(),
+                };
+                let lift = match (&ol, nl) {
+                    (Some((ov, oo)), Some(n)) => format!("{ov:.1} ({oo}) → {:.1} ({})", n.exit_speed_kmh, outcome_label(n.outcome)),
+                    _ => "n/a".to_string(),
+                };
+                s.push_str(&format!("| {} | {} | {} | {ratio} | {lift} |\n", v.vehicle_name, fmt(&oh, nh), fmt(&of, nf)));
+            }
+        }
+        None => s.push_str("No pre-042 dataset found; comparison skipped.\n"),
+    }
+
+    // 7. Gate summary
+    s.push_str("\n## 7. Spec 042 gates on this run\n\n");
+    let hold_ok = fleet.iter().all(|v| {
+        sweeper(v, SurfaceType::Asphalt, SteeringProfile::Balanced, KeyboardSteerPattern::SustainedHold).is_some_and(|r| {
+            r.speed_retention_pct >= 90.0
+                && matches!(r.outcome, KeyboardHandlingOutcome::CleanCarve | KeyboardHandlingOutcome::PowerSlide)
+        })
+    });
+    let safe_spinouts = fleet
+        .iter()
+        .flat_map(|v| v.chicane_results.iter())
+        .filter(|r| r.surface != SurfaceType::SheetIce)
+        .filter(|r| (r.driver_profile_id.ends_with("_smooth") || r.driver_profile_id.ends_with("_balanced")) && r.outcome == ChicaneTransitionOutcome::Spinout)
+        .count();
+    let spreads: Vec<f32> = presets
+        .iter()
+        .map(|&p| {
+            let xs: Vec<f32> = sensitivity.iter().filter(|k| k.surface == SurfaceType::Asphalt && k.filter_profile == p).map(|k| k.spread_pct).collect();
+            xs.iter().sum::<f32>() / xs.len().max(1) as f32
+        })
+        .collect();
+    let spread_ordered = spreads.windows(2).all(|w| w[0] > w[1]);
+    let tick = |ok: bool| if ok { "PASS" } else { "FAIL" };
+    s.push_str(&format!("- {} Holding keeps >= 90% of its entry speed and carves cleanly on every car (Balanced, asphalt).\n", tick(hold_ok)));
+    s.push_str(&format!("- {} No chicane spinout on Smooth or Balanced on asphalt, dirt and packed sand ({safe_spinouts} found).\n", tick(safe_spinouts == 0)));
+    s.push_str(&format!(
+        "- {} Average asphalt key-style spread falls from Smooth to Raw ({:.0}% / {:.0}% / {:.0}% / {:.0}%).\n",
+        tick(spread_ordered), spreads[0], spreads[1], spreads[2], spreads[3]
+    ));
+    s.push_str("\nReading the numbers: holding a key now carves the tightest line without scrubbing speed; tapping keeps a wider, faster line. Smooth filters taps into gentle steering, so on Smooth your technique changes the line the most; on Raw every tap is full input, so tapping and holding converge. For slides, tap the counter-steer: holding full opposite lock over-corrects into a slide the other way.\n");
     s
 }

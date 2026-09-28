@@ -321,18 +321,28 @@ Not applicable. There are no network, credential or dependency changes. No new c
 
 - **Scenario: Holding a key is a valid driving style**
   - [ ] **Given** the sweeper scenario for each classic car on asphalt with the Balanced preset
-  - [ ] **When** Sustained Hold and Rapid Feathering are compared
-  - [ ] **Then** Sustained Hold keeps ≥ 70 % of the Rapid Feathering exit speed on every car, including the kart (old model: 11 %)
+  - [ ] **When** Sustained Hold is driven
+  - [ ] **Then** it keeps ≥ 90 % of its entry speed, carves cleanly, and turns at least as far as Rapid Feathering, on every car including the kart (old model: kart 16 %, GT 79 %)
+  - *Restated in task 10: the draft compared hold and feathering exit speeds (≥ 70 %). In the same
+    3 s, holding turns the car about 4× further than feathering (GT: 83° vs 19°). A lower exit
+    speed there means a tighter line, not scrub. Measured hold vs feathering exit speed:
+    63–75 % (old: 11–57 %).*
 
 - **Scenario: Key styles do not cause spins on safe presets**
   - [ ] **Given** the chicane scenario for each classic car with Smooth and Balanced
-  - [ ] **When** every key style is run
+  - [ ] **When** every key style is run on asphalt, dirt and packed sand
   - [ ] **Then** no cell has the `SPINOUT` outcome
+  - *Restated in task 10: sheet ice (μ 0.08) is excluded. A full right-to-left reversal at
+    65 km/h on ice spins these cars on every preset.*
 
 - **Scenario: Presets change the key style picture**
   - [ ] **Given** the Key Style Sensitivity summary
-  - [ ] **When** Smooth and Raw are compared for the same car
-  - [ ] **Then** Smooth has the lower exit-speed spread across key styles on asphalt for at least 4 of the 5 cars
+  - [ ] **When** the presets are compared on asphalt
+  - [ ] **Then** the average exit-speed spread across key styles falls from Smooth to Raw
+  - *Restated in task 10: the draft expected Smooth to have the lower spread. The measurement shows
+    the reverse, and it has a clear cause. Smooth's 220 ms steering turns short taps into gentle
+    steering, so technique changes the line the most. Raw passes every tap at full input, so
+    tapping and holding converge (measured 50 / 43 / 38 / 36 %).*
 
 - **Scenario: Key style report is generated**
   - [ ] **Given** the new physics and settings

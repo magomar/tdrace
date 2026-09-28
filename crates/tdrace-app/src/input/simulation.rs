@@ -33,6 +33,29 @@ pub enum KeyboardSteerPattern {
 }
 
 impl KeyboardSteerPattern {
+    /// Styles driven through the sweeper corner (Spec 042 key style matrix).
+    pub const SWEEPER: [Self; 5] = [
+        Self::SustainedHold,
+        Self::RapidFeathering,
+        Self::CadencePulse,
+        Self::TapAndCoast,
+        Self::LiftOffTurn,
+    ];
+    /// Styles driven through the chicane (the reversal itself is scripted by the scenario).
+    pub const CHICANE: [Self; 3] = [Self::SustainedHold, Self::RapidFeathering, Self::CadencePulse];
+
+    /// Short stable id used in driver profile ids and reports (matches the pre-042 report ids).
+    pub fn id(&self) -> &'static str {
+        match self {
+            Self::SustainedHold => "hold",
+            Self::RapidFeathering => "feathering",
+            Self::CadencePulse => "cadence",
+            Self::TapAndCoast => "tap_coast",
+            Self::SnapCountersteer => "snap",
+            Self::LiftOffTurn => "lift_off",
+        }
+    }
+
     pub fn name(&self) -> &'static str {
         match self {
             Self::SustainedHold => "Sustained Hold (Full Lock)",
@@ -85,10 +108,10 @@ impl KeyboardDriverProfile {
         )
     }
 
-    /// Sustained hold with Direct (raw esports, no smoothing/attenuation) filter profile.
-    pub fn sustained_hold_direct() -> Self {
+    /// Sustained hold with the quick Sharp preset (pre-042 "Direct").
+    pub fn sustained_hold_sharp() -> Self {
         Self::new(
-            "hold_direct",
+            "hold_sharp",
             "Sustained Hold (Sharp)",
             "Continuous key press on the quick Sharp preset",
             KeyboardSteerPattern::SustainedHold,
@@ -162,7 +185,18 @@ impl KeyboardDriverProfile {
         )
     }
 
-    /// Resolves the concrete filter configuration.
+    /// A driver pressing keys in `pattern` on handling preset `profile`.
+    /// Id: `{pattern id}_{preset}`, e.g. `hold_balanced`.
+    pub fn for_pattern(pattern: KeyboardSteerPattern, profile: SteeringProfile) -> Self {
+        Self::new(
+            format!("{}_{}", pattern.id(), profile.to_string().to_lowercase()),
+            format!("{} ({})", pattern.name(), profile),
+            format!("{} on the {} handling preset", pattern.name(), profile),
+            pattern,
+            profile,
+        )
+    }
+
     /// Car-side handling aids this driver's keyboard settings apply (Spec 042).
     pub fn player_handling(&self) -> PlayerHandling {
         let cfg = self.filter_config();
@@ -257,6 +291,8 @@ pub struct KeyboardSweeperResult {
     pub driver_profile_id: String,
     pub driver_profile_name: String,
     pub filter_profile: SteeringProfile,
+    #[serde(default = "default_pattern")]
+    pub steer_pattern: KeyboardSteerPattern,
     pub entry_speed_kmh: f32,
     pub exit_speed_kmh: f32,
     pub min_speed_kmh: f32,
@@ -274,6 +310,68 @@ pub struct KeyboardSweeperResult {
     pub peak_rear_slip_deg: f32,
     pub understeer_slip_delta_deg: f32,
     pub outcome: KeyboardHandlingOutcome,
+}
+
+fn default_pattern() -> KeyboardSteerPattern {
+    KeyboardSteerPattern::SustainedHold
+}
+
+/// How much the key-pressing style changes the result for one car, surface and preset
+/// (Spec 042 Key Style Sensitivity).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyStyleSensitivity {
+    pub vehicle_id: String,
+    pub surface: SurfaceType,
+    pub filter_profile: SteeringProfile,
+    pub min_exit_kmh: f32,
+    pub max_exit_kmh: f32,
+    /// (max - min) / max exit speed across styles, in percent.
+    pub spread_pct: f32,
+    pub fastest_style: KeyboardSteerPattern,
+    pub slowest_style: KeyboardSteerPattern,
+    /// Sustained Hold exit speed as a percentage of Rapid Feathering exit speed.
+    pub hold_vs_feathering_pct: f32,
+}
+
+/// Groups sweeper results by (vehicle, surface, preset) and measures the spread across key styles.
+pub fn key_style_sensitivity(results: &[KeyboardSweeperResult]) -> Vec<KeyStyleSensitivity> {
+    let mut groups: Vec<(String, SurfaceType, SteeringProfile, Vec<&KeyboardSweeperResult>)> = Vec::new();
+    for r in results {
+        match groups
+            .iter_mut()
+            .find(|g| g.0 == r.vehicle_id && g.1 == r.surface && g.2 == r.filter_profile)
+        {
+            Some(g) => g.3.push(r),
+            None => groups.push((r.vehicle_id.clone(), r.surface, r.filter_profile, vec![r])),
+        }
+    }
+    groups
+        .into_iter()
+        .filter(|g| g.3.len() > 1)
+        .map(|(vehicle_id, surface, filter_profile, rs)| {
+            let fastest = rs.iter().max_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh)).unwrap();
+            let slowest = rs.iter().min_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh)).unwrap();
+            let exit_of = |p: KeyboardSteerPattern| rs.iter().find(|r| r.steer_pattern == p).map(|r| r.exit_speed_kmh);
+            let hold_vs_feathering_pct = match (
+                exit_of(KeyboardSteerPattern::SustainedHold),
+                exit_of(KeyboardSteerPattern::RapidFeathering),
+            ) {
+                (Some(h), Some(f)) if f > 1e-3 => h / f * 100.0,
+                _ => 0.0,
+            };
+            KeyStyleSensitivity {
+                vehicle_id,
+                surface,
+                filter_profile,
+                min_exit_kmh: slowest.exit_speed_kmh,
+                max_exit_kmh: fastest.exit_speed_kmh,
+                spread_pct: (fastest.exit_speed_kmh - slowest.exit_speed_kmh) / fastest.exit_speed_kmh.max(1e-3) * 100.0,
+                fastest_style: fastest.steer_pattern,
+                slowest_style: slowest.steer_pattern,
+                hold_vs_feathering_pct,
+            }
+        })
+        .collect()
 }
 
 /// Categorical transition outcome in the S-chicane direction reversal test.
@@ -498,6 +596,7 @@ pub fn run_keyboard_sweeper_simulation(
         driver_profile_id: driver.id.clone(),
         driver_profile_name: driver.name.clone(),
         filter_profile: driver.filter_profile,
+        steer_pattern: driver.steer_pattern,
         entry_speed_kmh: v0_kmh,
         exit_speed_kmh,
         min_speed_kmh: min_speed_mps * 3.6,
@@ -695,13 +794,15 @@ pub fn run_keyboard_slide_catch_simulation(
         total_duration,
         surface,
         |t, car| {
-            // Driver applies opposite lock countersteering (-1.0)
+            // Driver applies opposite lock. The induced slide rotates the car left (heading +15 deg,
+            // yaw +35 deg/s, counter-clockwise), so the catch is a RIGHT steer (+1.0). The pre-042
+            // harness steered -1.0 (into the slide), which is why every hold "spun out".
             let raw_steer = match driver.steer_pattern {
                 KeyboardSteerPattern::RapidFeathering => {
                     let phase = t % 0.150;
-                    if phase < 0.075 { -1.0 } else { 0.0 }
+                    if phase < 0.075 { 1.0 } else { 0.0 }
                 }
-                _ => -1.0, // Sustained countersteer hold
+                _ => 1.0, // Sustained countersteer hold
             };
 
             let (steer, throttle, brake) = filter.update(raw_steer, 0.8, 0.0, dt);
