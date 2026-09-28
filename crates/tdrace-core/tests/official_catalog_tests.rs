@@ -56,3 +56,54 @@ fn test_aliases_and_module_hint() {
     assert_eq!(first_gt, vec!["monza", "red_bull_ring"]);
     assert_eq!(catalog::official_track("gt", "monza").name, "Monza Autodromo Nazionale");
 }
+
+/// Relative float tolerance for comparing a re-baked circuit with the original.
+fn json_close(a: &serde_json::Value, b: &serde_json::Value, path: &str) -> Result<(), String> {
+    use serde_json::Value;
+    match (a, b) {
+        (Value::Object(x), Value::Object(y)) => {
+            for (k, va) in x {
+                let vb = y.get(k).ok_or_else(|| format!("{}.{} missing", path, k))?;
+                json_close(va, vb, &format!("{}.{}", path, k))?;
+            }
+            if y.len() != x.len() {
+                return Err(format!("{}: key count {} vs {}", path, x.len(), y.len()));
+            }
+            Ok(())
+        }
+        (Value::Array(x), Value::Array(y)) => {
+            if x.len() != y.len() {
+                return Err(format!("{}: len {} vs {}", path, x.len(), y.len()));
+            }
+            x.iter().zip(y).enumerate().try_for_each(|(i, (va, vb))| json_close(va, vb, &format!("{}[{}]", path, i)))
+        }
+        (Value::Number(x), Value::Number(y)) => {
+            let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
+            if (x - y).abs() > 1e-3 * x.abs().max(y.abs()).max(1.0) {
+                return Err(format!("{}: {} vs {}", path, x, y));
+            }
+            Ok(())
+        }
+        _ if a == b => Ok(()),
+        _ => Err(format!("{}: {} vs {}", path, a, b)),
+    }
+}
+
+/// `track_bake --rebuild` must reproduce every OSM-built circuit from its waypoints and current setup, so a
+/// re-import cannot silently move walls, checkpoints or the grid (spec 042 §2.7).
+#[test]
+fn test_rebuild_reproduces_every_osm_circuit() {
+    use tdrace_core::track::bake::{bake, BakeOptions};
+    let opts = BakeOptions { rebuild: true, ..Default::default() };
+    let mut failures = Vec::new();
+    for c in catalog::circuits().iter().filter(|c| ["gt", "kart", "nascar", "rally"].contains(&c.module)) {
+        let original = c.load().unwrap();
+        let mut rebuilt = original.clone();
+        bake(&mut rebuilt, &opts).unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
+        let (a, b) = (serde_json::to_value(&rebuilt).unwrap(), serde_json::to_value(&original).unwrap());
+        if let Err(e) = json_close(&a, &b, "") {
+            failures.push(format!("{}/{}: {}", c.module, c.id, e));
+        }
+    }
+    assert!(failures.is_empty(), "{:#?}", failures);
+}

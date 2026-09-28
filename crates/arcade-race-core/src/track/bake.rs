@@ -19,8 +19,10 @@ pub struct BakeOptions {
     pub barrier_offset: Option<f32>,
     /// `None`: keep the most common type of the track's current walls, or `Steel` when it has none.
     pub barrier_type: Option<BarrierType>,
-    pub checkpoint_count: usize,
-    pub sector_count: usize,
+    /// `None`: keep the track's current checkpoint count, or 20 when it has none.
+    pub checkpoint_count: Option<usize>,
+    /// `None`: keep the track's current sector count, or 3 when it has no checkpoints.
+    pub sector_count: Option<usize>,
 }
 
 impl Default for BakeOptions {
@@ -29,8 +31,8 @@ impl Default for BakeOptions {
             rebuild: false,
             barrier_offset: None,
             barrier_type: None,
-            checkpoint_count: 20,
-            sector_count: 3,
+            checkpoint_count: None,
+            sector_count: None,
         }
     }
 }
@@ -57,17 +59,22 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
 
     // Read the current wall setup before the spline is regenerated from new waypoints.
     let has_walls = !track.geometry.inner_walls.is_empty() || !track.geometry.outer_walls.is_empty();
-    let barrier_offset = opts.barrier_offset.unwrap_or_else(|| {
-        if has_walls && !track.spline.samples.is_empty() {
-            (track.effective_barrier_offset() * 10.0).round() / 10.0
-        } else {
-            4.0
-        }
-    });
+    let barrier_offset = opts
+        .barrier_offset
+        .or_else(|| has_walls.then(|| current_wall_offset(track)).flatten())
+        .unwrap_or(4.0);
     let barrier_type = opts
         .barrier_type
         .or_else(|| track.dominant_barrier_type())
         .unwrap_or(BarrierType::Steel);
+    let checkpoint_count = opts
+        .checkpoint_count
+        .unwrap_or(if track.checkpoints.is_empty() { 20 } else { track.checkpoints.len() });
+    let sector_count = opts
+        .sector_count
+        .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
+        .unwrap_or(3);
+    let grid_layout = current_grid_layout(track);
 
     track.apply_default_runoff_surfaces();
     if opts.rebuild || track.spline.samples.is_empty() {
@@ -89,20 +96,70 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         report.walls = true;
     }
     if opts.rebuild || track.checkpoints.is_empty() {
-        track.checkpoints = generate_checkpoints(&track.spline, opts.checkpoint_count, opts.sector_count);
+        track.checkpoints = generate_checkpoints(&track.spline, checkpoint_count, sector_count);
         report.checkpoints = true;
     }
     if opts.rebuild || track.grid_positions.is_empty() {
-        if opts.rebuild {
-            track.grid_positions.clear();
-        }
-        if !track.auto_generate_grid_default() {
+        // Keeps the current grid size and slot layout, or the module defaults when there is no grid.
+        let placed = match grid_layout {
+            Some((spacing, stagger)) => track.auto_generate_grid(track.grid_positions.len(), spacing, stagger),
+            None => track.auto_generate_grid_default(),
+        };
+        if !placed {
             return Err(format!("'{}': cannot place a starting grid (no finish line)", track.name));
         }
         report.grid = true;
     }
     track.apply_default_runoff_surfaces();
     Ok(report)
+}
+
+/// The default wall distance the current walls were built with.
+///
+/// The wall generator puts each wall vertex (a segment start) at `width / 2 + offset` from its sample, along the
+/// normal, so where no waypoint sets its own wall distance that gap is exactly the default offset. The most common
+/// gap wins; waypoint distances, curves, bridges and removed crossing points only add scattered values.
+fn current_wall_offset(track: &Track) -> Option<f32> {
+    let samples = &track.spline.samples;
+    if samples.is_empty() {
+        return None;
+    }
+    let mut counts: Vec<(i32, usize)> = Vec::new();
+    let geometry = &track.geometry;
+    for walls in [&geometry.inner_walls, &geometry.outer_walls] {
+        for v in walls.iter().map(|w| &w.segment.start) {
+            let s = samples
+                .iter()
+                .min_by(|a, b| a.point.distance_squared(*v).total_cmp(&b.point.distance_squared(*v)))?;
+            if s.is_bridge {
+                continue;
+            }
+            let gap = ((s.point.distance(*v) - s.width * 0.5) * 20.0).round() as i32; // 0.05 m bins
+            match counts.iter_mut().find(|(g, _)| *g == gap) {
+                Some((_, n)) => *n += 1,
+                None => counts.push((gap, 1)),
+            }
+        }
+    }
+    counts.into_iter().max_by_key(|(_, n)| *n).map(|(g, _)| g as f32 / 20.0).filter(|g| *g > 0.0)
+}
+
+/// (spacing, lateral stagger) of the current starting grid, measured along the current spline.
+/// The grid generator puts slot `i` at `finish - 15 - i * spacing`, alternating `-stagger` / `+stagger`.
+fn current_grid_layout(track: &Track) -> Option<(f32, f32)> {
+    let grid = &track.grid_positions;
+    if grid.len() < 3 || track.spline.samples.len() < 2 {
+        return None;
+    }
+    // Slots 0 and 2k sit on the same side, so the lateral stagger does not skew their arc distance.
+    let last_same_side = (grid.len() - 1) / 2 * 2;
+    let total = track.spline.total_length();
+    let p0 = track.spline.project_point(grid[0].position);
+    let pk = track.spline.project_point(grid[last_same_side].position);
+    let spacing = (p0.progress_distance - pk.progress_distance).rem_euclid(total) / last_same_side as f32;
+    let stagger = p0.lateral_offset.abs();
+    (spacing > 0.1 && spacing * (last_same_side as f32) < total * 0.5)
+        .then(|| ((spacing * 10.0).round() / 10.0, (stagger * 10.0).round() / 10.0))
 }
 
 #[cfg(test)]
@@ -152,6 +209,15 @@ mod tests {
     }
 
     #[test]
+    fn test_rebuild_keeps_checkpoint_and_grid_counts() {
+        let baked = crate::track::test_circuit("nascar", "daytona_superspeedway");
+        let mut rebuilt = baked.clone();
+        bake(&mut rebuilt, &BakeOptions { rebuild: true, ..Default::default() }).unwrap();
+        assert_eq!(rebuilt.checkpoints.len(), baked.checkpoints.len());
+        assert_eq!(rebuilt.grid_positions.len(), baked.grid_positions.len());
+    }
+
+    #[test]
     fn test_rebuild_keeps_the_wall_setup_of_the_track() {
         let baked = crate::track::test_circuit("nascar", "daytona_superspeedway");
         let (offset, wall_type) = (baked.effective_barrier_offset(), baked.dominant_barrier_type());
@@ -168,3 +234,4 @@ mod tests {
         assert!(bake(&mut track, &BakeOptions::default()).is_err());
     }
 }
+

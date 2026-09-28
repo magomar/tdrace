@@ -8,7 +8,8 @@
 //! cargo run --bin track_bake -- tracks/gt/monza.json [more.json ...]
 //!     [--rebuild] [--barrier-offset 4.0] [--barrier-type Steel] [--checkpoints 20] [--sectors 3]
 //! ```
-//! Without `--barrier-offset` / `--barrier-type`, the current walls of the file set them (4.0 m Steel when it has none).
+//! Options left out keep the file's current setup: wall distance and type (else 4.0 m Steel), checkpoint and
+//! sector count (else 20 and 3), and grid size (else the module default).
 //! A file with validation errors is not written, and the exit code is 1.
 
 use std::process::ExitCode;
@@ -48,11 +49,11 @@ fn main() -> ExitCode {
                 Ok(())
             }),
             "--checkpoints" => value(&arg).and_then(|v| {
-                opts.checkpoint_count = v.parse().map_err(|e| format!("--checkpoints {}: {}", v, e))?;
+                opts.checkpoint_count = Some(v.parse().map_err(|e| format!("--checkpoints {}: {}", v, e))?);
                 Ok(())
             }),
             "--sectors" => value(&arg).and_then(|v| {
-                opts.sector_count = v.parse().map_err(|e| format!("--sectors {}: {}", v, e))?;
+                opts.sector_count = Some(v.parse().map_err(|e| format!("--sectors {}: {}", v, e))?);
                 Ok(())
             }),
             "-h" | "--help" => return usage(),
