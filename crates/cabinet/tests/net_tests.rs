@@ -327,3 +327,116 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     assert_ne!(initial_car, cycled_car);
 }
 
+
+// ---------------------------------------------------------------------------
+// Spec 044 reproductions of the sync defects found on 2026-09-28.
+// ---------------------------------------------------------------------------
+
+use cabinet::net::{SimLinkConfig, SimNetwork, MAX_DATAGRAM_SIZE};
+
+fn sim_pump(net: &SimNetwork, host: &mut LanHost, clients: &mut [&mut LanClient], frames: usize) {
+    for _ in 0..frames {
+        net.advance(0.016);
+        host.update(0.016);
+        for c in clients.iter_mut() {
+            c.update(0.016);
+        }
+    }
+}
+
+fn sim_host_with_clients(net: &SimNetwork, names: &[&str]) -> (LanHost, Vec<LanClient>) {
+    let mut host = LanHost::with_transport(Box::new(net.endpoint()), "Sim Room", "Host").unwrap();
+    let host_addr = host.local_addr().unwrap();
+    let mut clients = Vec::new();
+    for name in names {
+        let mut c = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, *name, "ESP", "gt_ferrari_296_gt3", "red").unwrap();
+        for _ in 0..30 {
+            net.advance(0.016);
+            host.update(0.016);
+            for other in clients.iter_mut() {
+                let other: &mut LanClient = other;
+                other.update(0.016);
+            }
+            c.update(0.016);
+            if c.is_connected() {
+                break;
+            }
+        }
+        assert!(c.is_connected(), "{name} must join");
+        clients.push(c);
+    }
+    (host, clients)
+}
+
+#[test]
+#[ignore = "spec 044 D1: fixed by the binary wire format (tdrace-6d87.2)"]
+fn test_d1_eight_car_world_snapshot_fits_one_datagram() {
+    let cars = (0..8u8)
+        .map(|i| CarStateSnapshot {
+            slot_id: i,
+            pos_x: -1234.5678,
+            pos_y: 876.54321,
+            velocity_x: -45.123456,
+            velocity_y: 12.345678,
+            heading_rad: -2.3456789,
+            angular_velocity: 0.12345678,
+            steer_angle_rad: -0.0345678,
+            current_lap: 2,
+            checkpoint_idx: 17,
+            best_lap_time_ms: Some(83456),
+            last_lap_time_ms: Some(84567),
+            is_finished: false,
+        })
+        .collect();
+    let snapshot = WorldSnapshotPacket { tick: 12345, session_elapsed_sec: 95.1, cars };
+    let encoded = snapshot.encode().expect("8-car world state must encode");
+    assert!(encoded.len() < MAX_DATAGRAM_SIZE);
+}
+
+#[test]
+#[ignore = "spec 044 D4: fixed by the stored slot id (tdrace-6d87.3)"]
+fn test_d4_client_in_slot_three_keeps_its_slot_after_launch() {
+    let net = SimNetwork::new(SimLinkConfig::default(), 1);
+    let (mut host, mut clients) = sim_host_with_clients(&net, &["A", "B", "C"]);
+    assert_eq!(clients[2].assigned_slot_id(), Some(3));
+
+    host.start_countdown(3000).unwrap();
+    {
+        let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
+        sim_pump(&net, &mut host, &mut refs, 5);
+    }
+    assert_eq!(clients[2].assigned_slot_id(), Some(3), "slot during countdown");
+    {
+        let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
+        sim_pump(&net, &mut host, &mut refs, 250);
+    }
+    assert_eq!(clients[2].assigned_slot_id(), Some(3), "slot in race");
+}
+
+#[test]
+#[ignore = "spec 044 D5: fixed by reliable StateSync and the RaceLaunch roster (tdrace-6d87.3)"]
+fn test_d5_lost_state_sync_does_not_change_the_client_roster() {
+    let net = SimNetwork::new(SimLinkConfig::default(), 2);
+    let (mut host, mut clients) = sim_host_with_clients(&net, &["A"]);
+    // Client A is the only client, so the next StateSync goes to A. Drop it.
+    let first = std::sync::Arc::new(std::sync::Mutex::new(true));
+    net.set_drop_filter(Some(Box::new(move |bytes, _from, _to| {
+        let mut first = first.lock().unwrap();
+        if *first && bytes.windows(9).any(|w| w == b"StateSync") {
+            *first = false;
+            return true;
+        }
+        false
+    })));
+
+    let host_addr = host.local_addr().unwrap();
+    let mut b = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, "B", "ESP", "gt_ferrari_296_gt3", "red").unwrap();
+    {
+        let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
+        refs.push(&mut b);
+        sim_pump(&net, &mut host, &mut refs, 60);
+    }
+    let host_names: Vec<String> = host.active_slots().iter().map(|s| s.player_name.clone()).collect();
+    let a_names: Vec<String> = clients[0].slots().iter().map(|s| s.player_name.clone()).collect();
+    assert_eq!(a_names, host_names, "client A must see the same roster as the host");
+}

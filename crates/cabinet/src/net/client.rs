@@ -4,8 +4,9 @@
 //! lobby state caching, input datagram streaming, and snapshot reception.
 
 use std::io;
-use std::net::{SocketAddr, UdpSocket};
+use std::net::SocketAddr;
 
+use super::transport::{Transport, UdpTransport};
 use super::protocol::{
     sanitize_string, ClientInputPacket, JoinResult, LanCollisionMode,
     LobbyPacket, LobbySlot, Packet, ProtocolError, WorldSnapshotPacket,
@@ -72,7 +73,7 @@ pub enum ClientEvent {
 
 /// Client endpoint for connecting to and participating in LAN games.
 pub struct LanClient {
-    socket: UdpSocket,
+    transport: Box<dyn Transport + Send>,
     host_addr: SocketAddr,
     state: ClientState,
     player_name: String,
@@ -100,16 +101,26 @@ impl LanClient {
         car_model_id: impl Into<String>,
         color_scheme_id: impl Into<String>,
     ) -> Result<Self, io::Error> {
-        let socket = UdpSocket::bind("0.0.0.0:0")?;
-        socket.set_nonblocking(true)?;
+        let transport = Box::new(UdpTransport::bind("0.0.0.0:0")?);
+        Self::connect_with_transport(transport, host_addr, player_name, country_code, car_model_id, color_scheme_id)
+    }
 
+    /// Creates a client on a given transport and sends the join handshake.
+    pub fn connect_with_transport(
+        transport: Box<dyn Transport + Send>,
+        host_addr: SocketAddr,
+        player_name: impl Into<String>,
+        country_code: impl Into<String>,
+        car_model_id: impl Into<String>,
+        color_scheme_id: impl Into<String>,
+    ) -> Result<Self, io::Error> {
         let player_name = sanitize_string(&player_name.into(), MAX_NAME_LENGTH);
         let country_code = country_code.into();
         let car_model_id = car_model_id.into();
         let color_scheme_id = color_scheme_id.into();
 
         let mut client = Self {
-            socket,
+            transport,
             host_addr,
             state: ClientState::Connecting {
                 host_addr,
@@ -260,7 +271,7 @@ impl LanClient {
         };
 
         let encoded = packet.encode()?;
-        let _ = self.socket.send_to(&encoded, self.host_addr);
+        let _ = self.transport.send_to(&encoded, self.host_addr);
         Ok(())
     }
 
@@ -328,7 +339,7 @@ impl LanClient {
 
         // 4. Pump incoming packets
         loop {
-            match self.socket.recv_from(&mut self.recv_buf) {
+            match self.transport.recv_from(&mut self.recv_buf) {
                 Ok((bytes_read, src_addr)) => {
                     if src_addr == self.host_addr {
                         self.last_seen_sec = 0.0;
@@ -480,7 +491,7 @@ impl LanClient {
 
     fn send_to_host(&self, packet: &LobbyPacket) -> Result<(), ProtocolError> {
         let encoded = packet.encode()?;
-        let _ = self.socket.send_to(&encoded, self.host_addr);
+        let _ = self.transport.send_to(&encoded, self.host_addr);
         Ok(())
     }
 }

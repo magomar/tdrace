@@ -4,10 +4,11 @@
 //! beacon discovery broadcasting, player readiness, and game snapshot dispatch.
 
 use std::io;
-use std::net::{Ipv4Addr, SocketAddr, UdpSocket};
+use std::net::{Ipv4Addr, SocketAddr};
 
 use super::beacon::LanBeaconBroadcaster;
 use super::ip::LocalIpResolver;
+use super::transport::{Transport, UdpTransport};
 use super::protocol::{
     sanitize_string, ClientInputPacket, JoinResult, LanBeacon, LanCollisionMode,
     LobbyPacket, LobbySlot, Packet, ProtocolError, WorldSnapshotPacket,
@@ -56,7 +57,7 @@ struct ConnectedClient {
 
 /// Authoritative session host managing the socket, slots, and synchronization.
 pub struct LanHost {
-    socket: UdpSocket,
+    transport: Box<dyn Transport + Send>,
     port: u16,
     room_name: String,
     track_id: String,
@@ -104,11 +105,11 @@ impl LanHost {
         let mut chosen_socket = None;
         let mut bound_port = preferred_port;
 
-        if let Ok(s) = UdpSocket::bind(format!("0.0.0.0:{}", preferred_port)) {
+        if let Ok(s) = UdpTransport::bind(&format!("0.0.0.0:{}", preferred_port)) {
             chosen_socket = Some(s);
         } else {
             for p in (preferred_port + 1)..=(preferred_port + 10) {
-                if let Ok(s) = UdpSocket::bind(format!("0.0.0.0:{}", p)) {
+                if let Ok(s) = UdpTransport::bind(&format!("0.0.0.0:{}", p)) {
                     chosen_socket = Some(s);
                     bound_port = p;
                     break;
@@ -118,14 +119,12 @@ impl LanHost {
 
         let socket = match chosen_socket {
             Some(s) => s,
-            None => UdpSocket::bind("0.0.0.0:0")?,
+            None => UdpTransport::bind("0.0.0.0:0")?,
         };
 
         if bound_port == 0 {
             bound_port = socket.local_addr()?.port();
         }
-
-        socket.set_nonblocking(true)?;
 
         // Slot 0 is reserved for Host
         let host_slot = LobbySlot {
@@ -160,7 +159,7 @@ impl LanHost {
         let broadcaster = LanBeaconBroadcaster::new(beacon, DEFAULT_BEACON_PORT).ok();
 
         Ok(Self {
-            socket,
+            transport: Box::new(socket),
             port: bound_port,
             room_name: room_name_sanitized,
             track_id,
@@ -184,9 +183,16 @@ impl LanHost {
         room_name: impl Into<String>,
         host_player_name: impl Into<String>,
     ) -> Result<Self, io::Error> {
-        let socket = UdpSocket::bind("127.0.0.1:0")?;
-        let port = socket.local_addr()?.port();
-        socket.set_nonblocking(true)?;
+        Self::with_transport(Box::new(UdpTransport::bind("127.0.0.1:0")?), room_name, host_player_name)
+    }
+
+    /// Creates a host on a given transport (no beacon), with the same defaults as `bind_ephemeral`.
+    pub fn with_transport(
+        transport: Box<dyn Transport + Send>,
+        room_name: impl Into<String>,
+        host_player_name: impl Into<String>,
+    ) -> Result<Self, io::Error> {
+        let port = transport.local_addr()?.port();
 
         let host_slot = LobbySlot {
             slot_id: 0,
@@ -207,7 +213,7 @@ impl LanHost {
         }
 
         Ok(Self {
-            socket,
+            transport,
             port,
             room_name: sanitize_string(&room_name.into(), MAX_NAME_LENGTH),
             track_id: "monza".to_string(),
@@ -228,7 +234,7 @@ impl LanHost {
 
     /// Local socket address of this game session.
     pub fn local_addr(&self) -> io::Result<SocketAddr> {
-        self.socket.local_addr()
+        self.transport.local_addr()
     }
 
     /// Primary resolved IPv4 address of the local machine.
@@ -345,7 +351,7 @@ impl LanHost {
     pub fn broadcast_snapshot(&mut self, snapshot: &WorldSnapshotPacket) -> Result<(), ProtocolError> {
         let encoded = snapshot.encode()?;
         for client in &self.clients {
-            let _ = self.socket.send_to(&encoded, client.addr);
+            let _ = self.transport.send_to(&encoded, client.addr);
         }
         Ok(())
     }
@@ -362,7 +368,7 @@ impl LanHost {
                 reason: reason.to_string(),
             };
             if let Ok(encoded) = notice.encode() {
-                let _ = self.socket.send_to(&encoded, client.addr);
+                let _ = self.transport.send_to(&encoded, client.addr);
             }
         }
 
@@ -396,7 +402,7 @@ impl LanHost {
 
         // 4. Pump incoming socket packets
         loop {
-            match self.socket.recv_from(&mut self.recv_buf) {
+            match self.transport.recv_from(&mut self.recv_buf) {
                 Ok((bytes_read, src_addr)) => {
                     if let Ok(packet) = Packet::decode(&self.recv_buf[..bytes_read]) {
                         self.handle_packet(packet, src_addr, &mut events);
@@ -675,14 +681,14 @@ impl LanHost {
     fn broadcast_lobby_packet(&self, packet: &LobbyPacket) -> Result<(), ProtocolError> {
         let encoded = packet.encode()?;
         for client in &self.clients {
-            let _ = self.socket.send_to(&encoded, client.addr);
+            let _ = self.transport.send_to(&encoded, client.addr);
         }
         Ok(())
     }
 
     fn send_to_addr(&self, packet: &LobbyPacket, addr: SocketAddr) -> Result<(), ProtocolError> {
         let encoded = packet.encode()?;
-        let _ = self.socket.send_to(&encoded, addr);
+        let _ = self.transport.send_to(&encoded, addr);
         Ok(())
     }
 }

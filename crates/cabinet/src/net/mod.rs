@@ -8,6 +8,7 @@ pub mod client;
 pub mod host;
 pub mod ip;
 pub mod protocol;
+pub mod transport;
 pub mod ui;
 
 pub use beacon::{DiscoveredHost, LanBeaconBroadcaster, LanBeaconScanner};
@@ -20,5 +21,6 @@ pub use protocol::{
     DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES, MAX_DATAGRAM_SIZE,
     MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
+pub use transport::{SimDropFilter, SimLinkConfig, SimNetwork, SimTransport, Transport, UdpTransport};
 pub use ui::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction};
 
