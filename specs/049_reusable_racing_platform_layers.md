@@ -182,6 +182,7 @@ Later phases keep every existing file readable:
   - `arcade-race-core/tests/golden_sim.rs` hashes a scripted 6-car race on generated tracks. It needs no `tracks/`.
   - `tdrace-app/tests/golden_session.rs` hashes a real `RaceSession`, plus the bot harness `controls_hash`.
   - Every later phase must keep both hashes unchanged, unless its spec names the intended change and re-records the hash in its own commit.
+  - Hashes are recorded per platform and build mode. On macOS the release optimizer merges `sin` and `cos` into `__sincosf_stret`, so debug and release results differ (gap E11, Beads `tdrace-d3m7`). A platform with no recorded hash checks run-to-run equality only.
 - **Performance gates.**
   - The benches move out of `tdrace-core` into `wheelbase` and `arcade-race-core`, so they run without `tracks/`.
   - Targets: physics ≥4.0M steps/s, SAT ≥22M checks/s, LIDAR ≥1M rays/s, all in release.

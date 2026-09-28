@@ -85,6 +85,7 @@ Line numbers in those files may be a few lines off.
 | E8 | `SurfaceType` is a closed enum. `Car` reads friction from the enum and ignores the numeric `SurfaceProperties`. | `surface.rs:6-38`; `car.rs:573-582,643` |
 | E9 | `tdrace-core/build.rs` hardcodes `../../tracks` and embeds every tdrace circuit in anything that depends on it. | `tdrace-core/build.rs:29` |
 | E10 | Weak determinism net. The `.tdr` replay check re-simulates only the player car, with no walls, opponents or trackers. The benches assert 500k steps/s, but the roadmap target is 4.0M. | `replay/mod.rs:313-371`; `tdrace-core/benches/physics_bench.rs:57` |
+| E11 | Physics is not bit-identical across build modes or platforms. On macOS the release optimizer merges `sin` and `cos` of one angle into `__sincosf_stret`, which rounds differently. A debug replay therefore diverges in release. Spec 005's claim of cross-platform bit-identity does not hold for sine and cosine. Measured 2026-09-28. | `arcade-race-core/tests/golden_sim.rs`; Beads `tdrace-d3m7` |
 
 ---
 
