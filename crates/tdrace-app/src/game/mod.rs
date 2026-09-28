@@ -6370,54 +6370,7 @@ impl RaceSession {
             match current_view {
                 FinishedScreenView::Results => {
                     if self.championship_session.is_some() {
-                        let mut awarded_trophy: Option<ChampionshipAward> = None;
-                        if let Some(round_results) = self.pending_championship_results.take() {
-                            let car_model_id = self.selected_car_model_id
-                                .map(|s| s.to_string())
-                                .unwrap_or_else(|| self.active_player_car_choice().title().to_string());
-                            let profile_id = self.active_profile.id.unwrap_or(1);
-                            let module_id = self.active_module_id.to_string();
-
-                            if let Some(champ) = &mut self.championship_session {
-                                champ.submit_round_results(&self.track.name, round_results);
-                                if champ.is_completed {
-                                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
-                                        let finish_pos = (pos + 1) as u32;
-                                        match pos {
-                                            0 => self.active_career_progress.trophies_gold += 1,
-                                            1 => self.active_career_progress.trophies_silver += 1,
-                                            2 => self.active_career_progress.trophies_bronze += 1,
-                                            _ => {}
-                                        }
-                                        if finish_pos <= 3 {
-                                            awarded_trophy = Some(ChampionshipAward {
-                                                profile_id,
-                                                championship_id: champ.name.to_lowercase().replace(' ', "_"),
-                                                module_id,
-                                                tier: champ.tier,
-                                                position: finish_pos,
-                                                points: champ.standings[pos].points,
-                                                car_model_id,
-                                                achieved_at: chrono::Utc::now().to_rfc3339(),
-                                            });
-                                        }
-                                    }
-                                    self.active_career_progress.active_championship = None;
-                                } else {
-                                    self.active_career_progress.active_championship = Some(champ.clone());
-                                }
-                                if let Some(db) = &self.hof_db {
-                                    let _ = db.save_module_progress(&self.active_career_progress);
-                                }
-                                self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
-                            }
-                        }
-                        if let Some(award) = awarded_trophy {
-                            if let Some(db) = &self.hof_db {
-                                let _ = db.save_championship_award(&award);
-                            }
-                            self.refresh_profile_awards();
-                        }
+                        self.submit_pending_championship_round();
 
                         self.audio.play_sfx(SfxType::UiSelect);
                         if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
@@ -6478,7 +6431,9 @@ impl RaceSession {
                 }
                 FinishedScreenView::Results => {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.pending_championship_results = None;
+                    // Leaving keeps the round: it is scored exactly as ENTER scores it. [R] is the
+                    // way to throw a round away (it re-runs it).
+                    self.submit_pending_championship_round();
                     let target = self.race_exit_target();
                     if matches!(target, GameState::CareerHub { .. }) {
                         self.state = target;
@@ -6489,6 +6444,62 @@ impl RaceSession {
                 }
             }
             return;
+        }
+    }
+
+    /// Scores the finished round in the running championship (standings, trophies, saved
+    /// progress). Does nothing when there is no championship or the round was already scored.
+    fn submit_pending_championship_round(&mut self) {
+        if self.championship_session.is_none() {
+            return;
+        }
+        let mut awarded_trophy: Option<ChampionshipAward> = None;
+        if let Some(round_results) = self.pending_championship_results.take() {
+            let car_model_id = self.selected_car_model_id
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| self.active_player_car_choice().title().to_string());
+            let profile_id = self.active_profile.id.unwrap_or(1);
+            let module_id = self.active_module_id.to_string();
+
+            if let Some(champ) = &mut self.championship_session {
+                champ.submit_round_results(&self.track.name, round_results);
+                if champ.is_completed {
+                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
+                        let finish_pos = (pos + 1) as u32;
+                        match pos {
+                            0 => self.active_career_progress.trophies_gold += 1,
+                            1 => self.active_career_progress.trophies_silver += 1,
+                            2 => self.active_career_progress.trophies_bronze += 1,
+                            _ => {}
+                        }
+                        if finish_pos <= 3 {
+                            awarded_trophy = Some(ChampionshipAward {
+                                profile_id,
+                                championship_id: champ.name.to_lowercase().replace(' ', "_"),
+                                module_id,
+                                tier: champ.tier,
+                                position: finish_pos,
+                                points: champ.standings[pos].points,
+                                car_model_id,
+                                achieved_at: chrono::Utc::now().to_rfc3339(),
+                            });
+                        }
+                    }
+                    self.active_career_progress.active_championship = None;
+                } else {
+                    self.active_career_progress.active_championship = Some(champ.clone());
+                }
+                if let Some(db) = &self.hof_db {
+                    let _ = db.save_module_progress(&self.active_career_progress);
+                }
+                self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
+            }
+        }
+        if let Some(award) = awarded_trophy {
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_championship_award(&award);
+            }
+            self.refresh_profile_awards();
         }
     }
 
@@ -12947,7 +12958,9 @@ impl RaceSession {
 
             let tracks = self.track_manager.main_track_choices();
             let available_champs = self.championship_manager.all_sorted();
-            let action = handle_championship_editor_input(&mut state, &tracks, &available_champs, self.is_dev_mode());
+            let pad = &self.input.gamepad.snapshot;
+            let gamepad_back = pad.btn_b_pressed || pad.btn_back_pressed || pad.btn_cancel_pressed;
+            let action = handle_championship_editor_input(&mut state, &tracks, &available_champs, self.is_dev_mode(), gamepad_back);
             match action {
                 ChampionshipEditorAction::None => {
                     self.championship_editor_state = Some(state);
