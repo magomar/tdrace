@@ -1,6 +1,5 @@
 use tdrace_app::input::{DebugOverlays, InputController};
 use tdrace_core::{Car, CarConfig};
-use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
 fn test_debug_overlays_default_and_flags() {
@@ -20,7 +19,7 @@ fn test_debug_overlays_default_and_flags() {
 #[test]
 fn test_input_controller_lidar_scan() {
     let controller = InputController::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let car = Car::new(CarConfig::sports_car());
     let opponents = vec![Car::new(CarConfig::sports_car())];
 

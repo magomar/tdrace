@@ -298,7 +298,7 @@ fn test_race_session_circuit_history_cleared_on_editor_modify() {
     let _ = std::fs::create_dir_all(&temp_dir);
     session.track_manager.tracks_dir = temp_dir.clone();
 
-    let custom_track = tdrace_core::track::presets::oval_speedway();
+    let custom_track = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let saved_path = session.track_manager.save_custom_track(&custom_track, Some("my_oval")).expect("Save track");
     let track_id = "my_oval";
 
@@ -358,7 +358,7 @@ fn test_race_session_save_new_circuit_does_not_clear_other_tracks() {
     session.track_manager.tracks_dir = temp_dir.clone();
 
     // 1. Establish records on track_existing
-    let track_existing = tdrace_core::track::presets::oval_speedway();
+    let track_existing = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let saved_path_a = session.track_manager.save_custom_track(&track_existing, Some("track_existing")).expect("Save track");
     session.track_choice = TrackChoice::Custom {
         id: "track_existing".to_string(),
@@ -375,7 +375,7 @@ fn test_race_session_save_new_circuit_does_not_clear_other_tracks() {
     assert_eq!(session.active_profile_stats.best_times.get("track_existing"), Some(&13.0));
 
     // 2. Open editor with a new track and save as "track_brand_new" (overwrite = false)
-    let new_track = tdrace_core::track::presets::kart_arena();
+    let new_track = tdrace_core::catalog::official_track("classic", "kart_arena");
     session.enter_track_editor_with_path(new_track.clone(), None);
 
     session.handle_editor_action(EditorAction::SaveTrack {

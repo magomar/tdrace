@@ -7,7 +7,7 @@ use tdrace_core::collision::car_collision::{resolve_multi_car_collisions, CarCar
 use tdrace_core::collision::wall::{resolve_all_wall_collisions, WallCollisionEvent};
 use tdrace_core::{Car, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+
 
 #[test]
 fn test_long_race_fx_memory_boundedness() {
@@ -92,7 +92,7 @@ fn test_long_race_fx_memory_boundedness() {
 #[test]
 fn test_camera_extreme_edge_cases_and_teleportation() {
     let mut camera = RaceCamera::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     camera.setup_for_track_with_viewport(&track, 1920.0, 1080.0);
 
     let mut car = Car::new(CarConfig::sports_car());
@@ -147,10 +147,10 @@ fn test_camera_extreme_edge_cases_and_teleportation() {
 #[test]
 fn test_bot_ai_multi_track_lap_progression() {
     let tracks = [
-        ("Classic GP", classic_grand_prix()),
-        ("Oval Speedway", oval_speedway()),
-        ("Drift Park", drift_park()),
-        ("Kart Arena", kart_arena()),
+        ("Classic GP", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
+        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
     ];
 
     for (name, track) in &tracks {

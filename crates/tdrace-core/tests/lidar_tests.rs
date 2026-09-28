@@ -3,11 +3,11 @@ use glam::Vec2;
 use tdrace_core::lidar::{LidarConfig, LidarHitType, LidarScanner};
 use tdrace_core::physics::{Car, CarConfig};
 use tdrace_core::track::geometry::{Obstacle, WallBarrier, BarrierType};
-use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+
 
 #[test]
 fn test_lidar_raycast_accuracy_and_normal() {
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     // Add an exact test wall at x = 10.0 from y=-10 to y=10 with normal pointing -X
     track.geometry.inner_walls.push(WallBarrier::new(
         Vec2::new(10.0, -10.0),
@@ -41,7 +41,7 @@ fn test_lidar_raycast_accuracy_and_normal() {
 
 #[test]
 fn test_lidar_distance_normalization_and_miss() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let scanner = LidarScanner::new(LidarConfig::surround_32());
     let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
 
@@ -59,7 +59,7 @@ fn test_lidar_distance_normalization_and_miss() {
 
 #[test]
 fn test_lidar_obstacle_and_opponent_detection() {
-    let mut track = oval_speedway();
+    let mut track = tdrace_core::catalog::official_track("classic", "oval_speedway");
     track.geometry.obstacles.push(Obstacle::circle(
         99,
         Vec2::new(8.0, 0.0),
@@ -92,7 +92,7 @@ fn test_lidar_obstacle_and_opponent_detection() {
 
 #[test]
 fn test_lidar_throughput_benchmark_exceeds_1m_rays_per_sec() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let scanner = LidarScanner::new(LidarConfig::surround_32());
     let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), 0.0);
 

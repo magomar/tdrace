@@ -1753,9 +1753,8 @@ mod tests {
 
     #[test]
     fn test_textured_rendering_across_quality_levels() {
-        use tdrace_core::track::presets::classic_grand_prix;
-
-        let track = classic_grand_prix();
+        
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let qualities = [
             SurfaceTextureQuality::Off,
             SurfaceTextureQuality::Standard,

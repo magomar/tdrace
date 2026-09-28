@@ -1,14 +1,6 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::{
-    alpine_snow_ridge, arctic_frozen_lake, atacama_sand_basin, baja_500_desert_scrub,
-    crandon_short_course, dirt_figure_eight, glacier_crest_pass, glamis_sand_dunes,
-    gravel_quarry_chasm, louisiana_mud_swampland, monster_colosseum, mud_slough_arena,
-    red_rock_canyon, rovaniemi_ice_ring, sahara_dune_crossing, stunt_city_megastructure,
-    supercross_stadium_arena,
-};
-
 use super::{
     EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition,
     VehicleVisualType,
@@ -31,16 +23,6 @@ impl ExtremeOffRoadModule {
     /// 300 BHP Sand Rail Buggy Preset (Ultralight Chromoly Cage, RWD, Paddle Tires, Long-Travel).
     pub fn car_sand_rail() -> CarConfig {
         CarConfig::sand_rail()
-    }
-
-    /// Dirt Figure Eight track configured for Extreme Off-Road with 12 grid slots.
-    pub fn track_dirt_figure_eight() -> tdrace_core::track::Track {
-        let mut track = dirt_figure_eight();
-        let (spacing, stagger) = track.default_grid_spacing_and_stagger();
-        track.auto_generate_grid(12, spacing, stagger);
-        track.module_id = Some("extreme_offroad".to_string());
-        track.modules = vec!["extreme_offroad".to_string()];
-        track
     }
 }
 
@@ -104,161 +86,7 @@ impl GameModule for ExtremeOffRoadModule {
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {
-        vec![
-            TrackDefinition {
-                id: "sahara_dune_crossing",
-                title: "Sahara Dune Crossing",
-                tag: "DESERT RAID",
-                description: "High-speed sweeping desert crossing over cresting sand dunes.",
-                category: "Desert Raid",
-                default_laps: 3,
-                generator: sahara_dune_crossing,
-            },
-            TrackDefinition {
-                id: "dirt_figure_eight",
-                title: "Dirt Figure Eight",
-                tag: "STADIUM FIGURE 8",
-                description: "High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms.",
-                category: "Stunt Arenas",
-                default_laps: 5,
-                generator: Self::track_dirt_figure_eight,
-            },
-            TrackDefinition {
-                id: "atacama_sand_basin",
-                title: "Atacama Sand Basin",
-                tag: "HIGH-SPEED BASIN",
-                description: "Massive high-speed desert basin with sweeping sand curves and cresting jumps.",
-                category: "Desert Raid",
-                default_laps: 3,
-                generator: atacama_sand_basin,
-            },
-            TrackDefinition {
-                id: "red_rock_canyon",
-                title: "Red Rock Canyon",
-                tag: "CANYON RAID",
-                description: "Narrow technical gorge between red sandstone towers with rough dirt trails and hairpin climbs.",
-                category: "Desert Raid",
-                default_laps: 4,
-                generator: red_rock_canyon,
-            },
-            TrackDefinition {
-                id: "mud_slough_arena",
-                title: "Mud Slough Arena",
-                tag: "MUD BOWL ARENA",
-                description: "Enclosed stadium mud bowl arena with deep viscous mud ruts, raised dirt berms and tabletop jumps.",
-                category: "Mud & Quarry",
-                default_laps: 3,
-                generator: mud_slough_arena,
-            },
-            TrackDefinition {
-                id: "baja_500_desert_scrub",
-                title: "Baja 500 Desert Scrub",
-                tag: "BAJA ENDURO",
-                description: "Punishing open desert enduro course across arid scrubland, silt flats, washboard whoops, and high-speed jumps.",
-                category: "Desert Raid",
-                default_laps: 3,
-                generator: baja_500_desert_scrub,
-            },
-            TrackDefinition {
-                id: "arctic_frozen_lake",
-                title: "Arctic Frozen Lake",
-                tag: "ICE ARENA",
-                description: "Wide-open frozen glacial lake arena with slick blue ice, compacted snow banks, and perimeter snow berms.",
-                category: "Arctic Frost",
-                default_laps: 5,
-                generator: arctic_frozen_lake,
-            },
-            TrackDefinition {
-                id: "alpine_snow_ridge",
-                title: "Alpine Snow Ridge",
-                tag: "SNOW RIDGE",
-                description: "Sub-zero mountain climb along high snow ridges, icy switchbacks, and sheer cliff edges.",
-                category: "Arctic Frost",
-                default_laps: 4,
-                generator: alpine_snow_ridge,
-            },
-            TrackDefinition {
-                id: "rovaniemi_ice_ring",
-                title: "Rovaniemi Ice Ring",
-                tag: "FINNISH ICE RING",
-                description: "Finnish high-speed ice racing circuit with packed snow chicanes and high-velocity drift arcs.",
-                category: "Arctic Frost",
-                default_laps: 4,
-                generator: rovaniemi_ice_ring,
-            },
-            TrackDefinition {
-                id: "supercross_stadium_arena",
-                title: "Supercross Stadium Arena",
-                tag: "SUPERCROSS ARENA",
-                description: "Indoor supercross colosseum featuring rhythmic triple jumps, whoop sections, and banked bowl turns.",
-                category: "Stunt Arenas",
-                default_laps: 5,
-                generator: supercross_stadium_arena,
-            },
-            TrackDefinition {
-                id: "gravel_quarry_chasm",
-                title: "Gravel Quarry Chasm",
-                tag: "QUARRY CHASM",
-                description: "Multi-tiered industrial quarry chasm with vertical drops, loose gravel slides, and rock walls.",
-                category: "Mud & Quarry",
-                default_laps: 4,
-                generator: gravel_quarry_chasm,
-            },
-            TrackDefinition {
-                id: "louisiana_mud_swampland",
-                title: "Louisiana Mud Swampland",
-                tag: "SWAMP BASIN",
-                description: "Treacherous bayou basin featuring deep mud bogs, slippery cypress roots, and submerged dirt roads.",
-                category: "Mud & Quarry",
-                default_laps: 4,
-                generator: louisiana_mud_swampland,
-            },
-            TrackDefinition {
-                id: "monster_colosseum",
-                title: "Monster Colosseum",
-                tag: "COLOSSEUM ARENA",
-                description: "Massive open-floor monster truck arena with multiple crossing ramps, mud pits, and perimeter grandstands.",
-                category: "Stunt Arenas",
-                default_laps: 3,
-                generator: monster_colosseum,
-            },
-            TrackDefinition {
-                id: "glacier_crest_pass",
-                title: "Glacier Crest Pass",
-                tag: "GLACIAL PASS",
-                description: "Treacherous high-altitude circuit over blue glacial ice crevasses, frozen tunnels, and blinding snow ridges.",
-                category: "Arctic Frost",
-                default_laps: 4,
-                generator: glacier_crest_pass,
-            },
-            TrackDefinition {
-                id: "stunt_city_megastructure",
-                title: "Stunt City Megastructure",
-                tag: "STUNT MEGASTRUCTURE",
-                description: "Colossal multi-level concrete and asphalt stunt arena with high-flyer ramps, elevated cross-bridges, and drift bowls.",
-                category: "Stunt Arenas",
-                default_laps: 3,
-                generator: stunt_city_megastructure,
-            },
-            TrackDefinition {
-                id: "glamis_dunes",
-                title: "Glamis Imperial Sand Dunes",
-                tag: "DESERT RAID",
-                description: "Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls.",
-                category: "Desert Raid",
-                default_laps: 3,
-                generator: glamis_sand_dunes,
-            },
-            TrackDefinition {
-                id: "crandon_short_course",
-                title: "Crandon International Off-Road",
-                tag: "SHORT COURSE",
-                description: "The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps.",
-                category: "Mud & Quarry",
-                default_laps: 3,
-                generator: crandon_short_course,
-            },
-        ]
+        crate::module::catalog_tracks("extreme_offroad")
     }
 
     fn default_track_id(&self) -> &'static str {
