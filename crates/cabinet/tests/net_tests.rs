@@ -332,7 +332,7 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
 // Spec 044 reproductions of the sync defects found on 2026-09-28.
 // ---------------------------------------------------------------------------
 
-use cabinet::net::{SimLinkConfig, SimNetwork, MAX_DATAGRAM_SIZE};
+use cabinet::net::{NetCarState, SimLinkConfig, SimNetwork, WorldState, MAX_DATAGRAM_SIZE};
 
 fn sim_pump(net: &SimNetwork, host: &mut LanHost, clients: &mut [&mut LanClient], frames: usize) {
     for _ in 0..frames {
@@ -369,28 +369,27 @@ fn sim_host_with_clients(net: &SimNetwork, names: &[&str]) -> (LanHost, Vec<LanC
 }
 
 #[test]
-#[ignore = "spec 044 D1: fixed by the binary wire format (tdrace-6d87.2)"]
-fn test_d1_eight_car_world_snapshot_fits_one_datagram() {
+fn test_d1_eight_car_world_state_fits_one_datagram() {
     let cars = (0..8u8)
-        .map(|i| CarStateSnapshot {
-            slot_id: i,
+        .map(|slot| NetCarState {
+            slot,
+            time_ms: 95_123,
             pos_x: -1234.5678,
             pos_y: 876.54321,
-            velocity_x: -45.123456,
-            velocity_y: 12.345678,
-            heading_rad: -2.3456789,
+            vel_x: -45.123456,
+            vel_y: 12.345678,
+            angle: -2.3456789,
             angular_velocity: 0.12345678,
-            steer_angle_rad: -0.0345678,
-            current_lap: 2,
-            checkpoint_idx: 17,
-            best_lap_time_ms: Some(83456),
-            last_lap_time_ms: Some(84567),
-            is_finished: false,
+            steer_angle: -0.0345678,
+            lap: 2,
+            checkpoint: 17,
+            progress: 0.5,
+            ..Default::default()
         })
         .collect();
-    let snapshot = WorldSnapshotPacket { tick: 12345, session_elapsed_sec: 95.1, cars };
-    let encoded = snapshot.encode().expect("8-car world state must encode");
-    assert!(encoded.len() < MAX_DATAGRAM_SIZE);
+    let world = WorldState { host_time_ms: 95_130, cars };
+    let encoded = world.encode().expect("8-car world state must encode");
+    assert!(encoded.len() < MAX_DATAGRAM_SIZE, "{} bytes", encoded.len());
 }
 
 #[test]

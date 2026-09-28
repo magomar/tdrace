@@ -6,6 +6,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::wire;
+
 /// Magic header bytes identifying TdRace / Cabinet LAN packets: "TDLN" (0x54, 0x44, 0x4C, 0x4E).
 pub const MAGIC_BYTES: [u8; 4] = [0x54, 0x44, 0x4C, 0x4E];
 
@@ -13,7 +15,7 @@ pub const MAGIC_BYTES: [u8; 4] = [0x54, 0x44, 0x4C, 0x4E];
 pub const LAN_MAGIC: [u8; 4] = MAGIC_BYTES;
 
 /// Current supported wire protocol version.
-pub const PROTOCOL_VERSION: u8 = 1;
+pub const PROTOCOL_VERSION: u8 = 2;
 
 /// Default UDP port for local subnet discovery beacons.
 pub const DEFAULT_BEACON_PORT: u16 = 7776;
@@ -404,38 +406,35 @@ impl Packet {
     /// The wire format consists of:
     /// - 4 bytes: Magic header [`MAGIC_BYTES`] (`b"TDLN"`)
     /// - 1 byte:  Protocol version [`PROTOCOL_VERSION`]
-    /// - N bytes: Serialized payload
+    /// - 1 byte:  Datagram kind [`wire::KIND_JSON`]
+    /// - N bytes: Serialized JSON payload
     pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
         let payload = serde_json::to_vec(self)
             .map_err(|e| ProtocolError::SerializationFailed(e.to_string()))?;
-        let total_len = 5 + payload.len();
+        let total_len = wire::HEADER_LEN + payload.len();
         if total_len > MAX_DATAGRAM_SIZE {
             return Err(ProtocolError::PacketTooLarge(total_len));
         }
-        let mut buf = Vec::with_capacity(total_len);
-        buf.extend_from_slice(&MAGIC_BYTES);
-        buf.push(PROTOCOL_VERSION);
+        let mut buf = wire::begin(wire::KIND_JSON, payload.len());
         buf.extend_from_slice(&payload);
         Ok(buf)
     }
 
     /// Decodes and validates a packet from raw received UDP datagram bytes.
     pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        if bytes.len() > MAX_DATAGRAM_SIZE {
-            return Err(ProtocolError::PacketTooLarge(bytes.len()));
+        let (kind, payload) = wire::split(bytes)?;
+        if kind != wire::KIND_JSON {
+            return Err(ProtocolError::DeserializationFailed(format!(
+                "datagram kind {} is not a JSON packet",
+                kind
+            )));
         }
-        if bytes.len() < 5 {
-            return Err(ProtocolError::PacketTooShort(bytes.len()));
-        }
-        if bytes[0..4] != MAGIC_BYTES {
-            return Err(ProtocolError::InvalidMagic([
-                bytes[0], bytes[1], bytes[2], bytes[3],
-            ]));
-        }
-        if bytes[4] != PROTOCOL_VERSION {
-            return Err(ProtocolError::VersionMismatch(bytes[4]));
-        }
-        serde_json::from_slice(&bytes[5..])
+        Self::decode_json(payload)
+    }
+
+    /// Decodes the JSON payload of a [`wire::KIND_JSON`] datagram (after the header).
+    pub fn decode_json(payload: &[u8]) -> Result<Self, ProtocolError> {
+        serde_json::from_slice(payload)
             .map_err(|e| ProtocolError::DeserializationFailed(e.to_string()))
     }
 
@@ -505,7 +504,7 @@ mod tests {
         assert_eq!(MAGIC_BYTES, [0x54, 0x44, 0x4C, 0x4E]);
         assert_eq!(LAN_MAGIC, MAGIC_BYTES);
         assert_eq!(&MAGIC_BYTES, b"TDLN");
-        assert_eq!(PROTOCOL_VERSION, 1);
+        assert_eq!(PROTOCOL_VERSION, 2);
         assert_eq!(DEFAULT_BEACON_PORT, 7776);
         assert_eq!(DEFAULT_GAME_PORT, 7777);
         assert_eq!(MAX_DATAGRAM_SIZE, 1400);
@@ -539,7 +538,8 @@ mod tests {
 
         let encoded = beacon.encode().expect("Failed to encode beacon");
         assert_eq!(&encoded[0..4], b"TDLN");
-        assert_eq!(encoded[4], 1);
+        assert_eq!(encoded[4], PROTOCOL_VERSION);
+        assert_eq!(encoded[5], wire::KIND_JSON);
 
         let decoded = LanBeacon::decode(&encoded).expect("Failed to decode beacon");
         assert_eq!(beacon, decoded);

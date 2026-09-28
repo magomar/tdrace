@@ -9,6 +9,7 @@ pub mod host;
 pub mod ip;
 pub mod protocol;
 pub mod transport;
+pub mod wire;
 pub mod ui;
 
 pub use beacon::{DiscoveredHost, LanBeaconBroadcaster, LanBeaconScanner};
@@ -22,5 +23,6 @@ pub use protocol::{
     MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 pub use transport::{SimDropFilter, SimLinkConfig, SimNetwork, SimTransport, Transport, UdpTransport};
+pub use wire::{NetCarState, WorldState};
 pub use ui::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction};
 
