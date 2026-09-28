@@ -135,7 +135,7 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
             car.module_id,
             car.id
         );
-        // Extreme Off-Road parks the Rally Raid T1+ and SST cars at unranked tiers 6 and 7 (spec 046)
+        // Extreme Off-Road parks the Rally Raid T1+ and SST cars at unranked tiers 6 and 7 (spec 048)
         let max_tier = if car.module_id == "extreme_offroad" { 7 } else { 5 };
         assert!((1..=max_tier).contains(&car.tier), "Invalid tier {} on car {}", car.tier, car.id);
 

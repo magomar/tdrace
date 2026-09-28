@@ -557,7 +557,7 @@ fn render_specific_body(
         "rally_audi_sport_quattro_s1" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_peugeot_205_t16" => render_rally_peugeot_205_t16(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_lancia_delta_s4" => render_rally_lancia_delta_s4(cx, cy, gy, hl, s, primary, secondary, helmet),
-        // Spec 046: the RX1e and FC1-X cars reuse the closest RX body until they get their own
+        // Spec 048: the RX1e and FC1-X cars reuse the closest RX body until they get their own
         "rally_peugeot_208_rx1e" => render_rally_peugeot_208(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_polo_rx1e" => render_rally_polo_rx(cx, cy, gy, hl, s, primary, secondary, helmet),
         "rally_lancia_delta_evo_e_rx" => render_rally_lancia_delta_s4(cx, cy, gy, hl, s, primary, secondary, helmet),

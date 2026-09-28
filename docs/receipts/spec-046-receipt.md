@@ -1,22 +1,22 @@
 ---
 type: validation_receipt
 schema_version: "1.0"
-spec: "specs/046_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md"
-epic: "tdrace-9pae"
-candidate_commit: "b54d0a68412df90b666a2cccca2f5018734a6ccb"
+spec: "specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md"
+epic: "tdrace-y3k5"
+candidate_commit: "bc77e8d42d44b3603996d059fd931dc481223ce6"
 verifier: "local-user"
-evaluated_at: "2026-09-28T14:12:04Z"
-command: "cargo test -p tdrace-app --test garage_tests --test track_manager_tests --test extreme_offroad_module_tests --test series_tests --test module_track_unlock_tests --test render_tests --test profile_tests --test audio_tier_tests --test grid_positions_sync_tests"
+evaluated_at: "2026-09-28T12:51:01Z"
+command: "cargo test -p wheelbase && cargo test -p tdrace-app --test bot_humanlike_driving_tests --test ai_tests --test adversarial_piece4_tests --test orthogonal_ai_styles_and_tiers_tests --test predefined_driver_behaviours_tests --test driver_character_tests --test dynamic_roster_and_tier_tests --test handling_presets_tests --test keyboard_simulation_tests --test input_smoothing_tests --test config_tests"
 exit_code: 0
-duration_ms: 126957
+duration_ms: 134434
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 046
 
-- **Candidate Commit**: `b54d0a68412df90b666a2cccca2f5018734a6ccb`
-- **Spec**: `specs/046_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md`
-- **Command**: `cargo test -p tdrace-app --test garage_tests --test track_manager_tests --test extreme_offroad_module_tests --test series_tests --test module_track_unlock_tests --test render_tests --test profile_tests --test audio_tier_tests --test grid_positions_sync_tests`
+- **Candidate Commit**: `bc77e8d42d44b3603996d059fd931dc481223ce6`
+- **Spec**: `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`
+- **Command**: `cargo test -p wheelbase && cargo test -p tdrace-app --test bot_humanlike_driving_tests --test ai_tests --test adversarial_piece4_tests --test orthogonal_ai_styles_and_tiers_tests --test predefined_driver_behaviours_tests --test driver_character_tests --test dynamic_roster_and_tier_tests --test handling_presets_tests --test keyboard_simulation_tests --test input_smoothing_tests --test config_tests`
 - **Result**: `passed` (exit code: 0)
 
 ### Verified Criteria
@@ -26,238 +26,303 @@ This receipt records only the explicit command result. It does not assert covera
 ```
 stdout:
 
+running 56 tests
+test bike::tests::test_motorbike_initialization ... ok
+test bike::tests::test_motorbike_acceleration_and_wheelie ... ok
+test bike::tests::test_motorbike_lean_and_camber_cornering ... ok
+test car::tests::test_ackermann_angles ... ok
+test config::tests::test_config_presets ... ok
+test config::tests::test_finalize_derives_wheels_from_axle_settings ... ok
+test car::tests::test_car_initialization ... ok
+test config::tests::test_pacejka_peak_slip_angle_migration ... ok
+test car::tests::test_reverse_drive_bias_distribution ... ok
+test car::tests::test_crest_unloading ... ok
+test config::tests::test_staggered_kart_wheel_assemblies ... ok
+test sim::playground::tests::test_composite_gauntlet_structure ... ok
+test sim::playground::tests::test_parametric_turn_generators ... ok
+test car::tests::test_stopped_car_on_superelevated_segment_remains_static ... ok
+test config::tests::test_legacy_config_deserialization_backward_compatibility ... ok
+test car::tests::test_straight_line_step ... ok
+test car::tests::test_step_with_sampler ... ok
+test sim::playground::tests::test_protocol_g_wall_contact_hierarchy_and_anti_wall_riding ... ok
+test car::tests::test_state_save_restore ... ok
+test car::tests::test_reverse_heading_stability_and_steering_symmetry ... ok
+test car::tests::test_grade_slope_resistance ... ok
+test sim::tests::test_headless_harness_straight_line ... ok
+test sim::tests::test_braking_in_turn_simulation ... ok
+test car::tests::test_terrain_interaction_flotation_and_ice_studs ... ok
+test car::tests::test_is_braking_state_off_throttle_vs_braking ... ok
+test car::tests::test_reverse_handbrake ... ok
+test car::tests::test_reverse_straight_line_neutral_steer ... ok
+test sim::tests::test_braking_split_mu_simulation ... ok
+test surface::tests::test_surface_properties ... ok
+test surface::tests::test_surface_taxonomy_and_properties ... ok
+test surface::tests::test_uniform_surface_sampler ... ok
+test tire::tests::test_combined_slip_peak_and_symmetry ... ok
+test tire::tests::test_curve_constant_places_peak_at_one ... ok
+test tire::tests::test_friction_circle_clamping ... ok
+test tire::tests::test_implicit_wheel_step_holds_peak_traction_under_moderate_drive ... ok
+test tire::tests::test_load_sensitivity_reduces_grip_per_newton ... ok
+test tire::tests::test_normalized_curve_peaks_at_one_and_falls_to_slide_grip ... ok
+test tire::tests::test_pacejka_lateral_force ... ok
+test sim::tests::test_braking_cadence_simulation ... ok
+test tire::tests::test_wheel_assembly_numerical_stability ... ok
+test tire::tests::test_wheel_assembly_rotational_inertia_and_lockup ... ok
+test tire::tests::test_wheel_assembly_thermal_fade_and_wear ... ok
+test tire::tests::test_wheelspin_erodes_lateral_grip_and_resultant_stays_in_envelope ... ok
+test sim::tests::test_reverse_straight_line_simulation ... ok
+test sim::tests::test_protocol_a_acceleration ... ok
+test sim::playground::tests::test_playground_runner_execution ... ok
+test sim::tests::test_reverse_step_steer_simulation ... ok
+test car::tests::test_reverse_simulation_extended ... ok
+test sim::tests::test_systematic_steering_calibration_speed_sweep ... ok
+test sim::tests::test_braking_straight_line_simulation ... ok
+test sim::tests::test_protocol_b_braking ... ok
+test sim::tests::test_protocol_c_skidpad ... ok
+test sim::tests::test_reverse_simulation_battery_fleet ... ok
+test sim::tests::test_protocol_e_coast_down ... ok
+test sim::tests::test_path_simulation_hypothetical_circuit_surfaces ... ok
+test sim::tests::test_path_simulation_straight_with_turns_surfaces ... ok
+
+test result: ok. 56 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
 running 5 tests
-test test_classic_arcade_vehicles_preserve_tier_one_mapping ... ok
-test test_all_25_tiers_resolve_unique_dedicated_archetypes ... ok
-test test_vehicles_within_same_category_have_distinct_audio ... ok
-test test_dsp_synthesis_all_25_archetypes_valid_buffers ... ok
-test test_garage_showroom_dynamic_vehicle_switching_sound_resolution ... ok
+test test_deterministic_reproducibility ... ok
+test test_infeasible_constraint_detection_and_graceful_fallback ... ok
+test test_throughput_sla_performance ... ok
+test test_spool_constrained_optimization_satisfies_turning_diameter_limit ... ok
+test test_salisbury_rwd_optimization_enforces_power_coast_delta_and_stability ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
-
-
-running 6 tests
-test test_extreme_offroad_roster_integrity ... ok
-test test_extreme_offroad_module_identity_and_vehicles ... ok
-test test_extreme_offroad_tournament_formats ... ok
-test test_extreme_offroad_session_switch_and_car_choice ... ok
-test test_extreme_offroad_championship_flow ... ok
-test test_extreme_offroad_tracks_and_geometry_validation ... ok
-
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.99s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
 
 
-running 17 tests
-test test_fleet_gallery_filter_conversions ... ok
-test test_fleet_gallery_module_tabs_only_and_no_all_tab ... ok
-test test_fleet_gallery_tab_and_card_geometry ... ok
-test test_garage_shows_all_module_models_across_tiers ... ok
-test test_garage_geometry_and_car_card_carousel_layout ... ok
-test test_garage_view_modes ... ok
-test test_all_80_real_cars_attributes_and_data_integrity ... ok
-test test_starting_grid_footer_prompt_space_reserved_for_launch ... ok
-test test_starting_grid_garage_button_rect_geometry ... ok
-test test_roster_featured_cars_have_valid_lateral_assets ... ok
-test test_menu_direct_garage_shortcut ... ok
-test test_fleet_gallery_session_navigation_by_module ... ok
-test test_starting_grid_car_card_1_direct_garage_transition ... ok
-test test_starting_grid_card_0_enters_garage ... ok
-test test_starting_grid_card_0_enter_vs_space_reservation ... ok
-test test_career_tier_gating_in_garage ... ok
-test test_garage_stops_music_and_plays_engine ... ok
+running 9 tests
+test test_thermal_grip_degradation_under_prolonged_power_drifting ... ok
+test test_staggered_tire_dimensions_on_open_wheel_kart ... ok
+test test_independent_front_wheel_brake_lockup_under_trail_braking ... ok
+test test_legacy_configuration_backward_compatibility ... ok
+test test_kart_caster_jacking_inside_rear_wheel_unloading ... ok
+test test_kart_cornering_under_throttle_preserves_drive_and_prevents_runaway_wheelspin ... ok
+test test_kart_high_speed_tight_turning_radius_and_lateral_grip ... ok
+test test_kart_low_speed_geometric_turning_circle ... ok
+test test_headless_simulation_throughput_sla ... ok
 
-test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
 
 
-running 1 test
-test test_all_96_tracks_grid_positions_count_and_validation has been running for over 60 seconds
-test test_all_96_tracks_grid_positions_count_and_validation ... ok
+running 7 tests
+test test_open_differential_equalizes_torque_and_limits_power_on_split_mu ... ok
+test test_kart_spool_with_caster_jacking_maintains_drive_and_turning_circle ... ok
+test test_spool_differential_locks_wheel_rotational_velocities ... ok
+test test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor ... ok
+test test_spool_differential_transfers_100_percent_torque_when_one_wheel_unloaded ... ok
+test test_lsd_power_lock_changes_corner_exit_yaw ... ok
+test test_spool_produces_understeer_moment_versus_open ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 85.59s
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test test_corner_exit_with_throttle_held_keeps_drive ... ok
+test test_lift_off_is_progressive ... ok
+test test_traction_help_catches_power_oversteer ... ok
+test test_small_steer_does_not_weaken_brakes ... ok
+test test_roll_balance_flips_which_axle_saturates_first ... ok
+test test_traction_help_does_not_ease_straight_line_drive ... ok
+test test_grip_knob_moves_lateral_g ... ok
+test test_steering_response_is_monotonic_at_every_speed ... ok
+test test_random_input_fuzz_is_numerically_stable ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 
 running 4 tests
-test test_gt_madring_unlocks_at_tier_five ... ok
-test test_every_module_locks_circuits_above_tier_one ... ok
-test test_every_module_circuit_unlocks_by_max_level ... ok
-test test_session_locks_circuits_in_every_module_but_classic ... ok
+test test_ui_and_hud_formatting_corner_cases ... ok
+test test_camera_extreme_edge_cases_and_teleportation ... ok
+test test_long_race_fx_memory_boundedness ... ok
+test test_bot_ai_multi_track_lap_progression ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
-
-
-running 34 tests
-test test_car_purchasing_with_spendable_xp_and_deduction ... ok
-test test_country_registry_and_banner_metadata ... ok
-test test_metric_distance_lap_xp_rounding_and_first_time_bonus ... ok
-test test_gt_career_hub_calendar_helpers_and_customization ... ok
-test test_championship_award_persistence_and_upgrade ... ok
-test test_multi_level_career_stunt_and_collision_metrics ... ok
-test test_module_career_progress_persistence_and_xp_leveling ... ok
-test test_championship_car_original_sprite_factory_colors ... ok
-test test_championships_sorted_by_tier_ascending ... ok
-test test_profile_schema_and_crud ... ok
-test test_race_history_logging_and_career_stats ... ok
-test test_profile_focus_hierarchy_and_filter_selection ... ok
-test test_profile_champ_tab_navigation_and_scroll ... ok
-test test_player_card_focus_and_roster_manager_navigation ... ok
-test test_profile_editing_workflow ... ok
-test test_tier_1_starter_cars_single_entry_vehicle ... ok
-test test_option_a_tabbed_dashboard_navigation_and_filters ... ok
-test test_trophy_filename_and_asset_resolution ... ok
-test test_two_condition_tier_advancement_gates ... ok
-test test_career_hub_focus_and_navigation ... ok
-test test_circuit_defaults_unlocked_and_dev_mode_unblocks_all ... ok
-test test_resolve_championship_car_model_id_fallback_and_history ... ok
-test test_real_championships_listing_and_filter ... ok
-test test_clear_profile_history_and_hall_of_fame ... ok
-test test_race_session_profile_integration_and_race_finish_logging ... ok
-test test_championship_completion_podium_trophy_awarded ... ok
-test test_module_career_progress_isolation_and_xp_crediting ... ok
-test test_race_finish_records_authentic_model_title_in_history ... ok
-test test_trophy_cabinet_grid_navigation_and_provenance_display ... ok
-test test_championship_navigation_selection_and_launch ... ok
-test test_gt_career_tier_launch_with_custom_calendar ... ok
-test test_rally_championship_track_choice_sync_across_rounds ... ok
-test test_gt_career_session_gating_and_cup_launch ... ok
-test test_all_modules_career_tier_launch_and_calendar_counts ... ok
-
-test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.08s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.32s
 
 
-running 43 tests
-test test_all_80_motorsport_cars_catalog_integrity ... ok
-test test_car_body_roll_and_geometry ... ok
-test test_cabinet_color_utilities_and_theme_reexport ... ok
-test test_classic_arcade_fantasy_sprites_presence ... ok
-test test_palette_and_car_color_schemes ... ok
-test test_porsche_gt3r_lateral_sprite_asset_presence ... ok
-test test_porsche_gt3r_topdown_sprite_asset_presence ... ok
-test test_macro_modulation_value_range_and_spatial_continuity ... ok
-test test_sand_rail_visual_archetype_and_liveries ... ok
-test test_scenery_culling_and_grandstand_render_geometry ... ok
-test test_spec_026_steered_wheel_config_lookup_and_legacy_fallback ... ok
-test test_spec_026_steered_wheel_ground_shadow_alignment_and_jump_scaling ... ok
-test test_spec_026_wheel_steering_ackermann_deflection_across_classic_cars ... ok
-test test_spec_031_all_catalog_cars_lighting_by_modality ... ok
-test test_spec_031_modality_realistic_lighting_profiles ... ok
-test test_spec_031_procedural_archetype_lighting_fallbacks ... ok
-test test_stock_car_visual_archetype_and_liveries ... ok
-test test_procedural_surface_image_generators_all_15_surfaces ... ok
-test test_surface_material_quality_and_properties ... ok
-test test_spline_ribbon_and_world_space_uv_mappings ... ok
-test test_all_modality_emblem_assets_and_integrity ... ok
-test test_track_backdrop_colors ... ok
-test test_surface_asset_files_exist_and_are_valid_png ... ok
-test test_track_wear_state_phase_2_hooks ... ok
-test test_tree_cenital_canopy_and_alpha_modulation ... ok
-test test_vehicle_asset_registry_color_helpers ... ok
-test test_vehicle_lighting_toggle_switch_on_off ... ok
-test test_seamless_periodic_grass_and_asphalt_generators ... ok
-test test_segment_curvature_and_apex_rubbering_lateral_distribution ... ok
-test test_spec_026_standalone_wheel_texture_asset_integrity ... ok
-test test_peugeot_208_rally4_topdown_sprite_orientation ... ok
-test test_classic_kart_topdown_sprite_orientation ... ok
-test test_spec_026_colorway_tinting_consistency_on_decomposed_kart ... ok
-test test_track_presets_geometry_for_rendering ... ok
-test test_tony_kart_topdown_sprite_orientation ... ok
-test test_vortex_dune_crusher_topdown_sprite_orientation ... ok
-test test_classic_mask_tinting_transforms_bodywork_pixels ... ok
-test test_gt_models_mask_tinting_transforms_bodywork_pixels ... ok
-test test_classic_cars_dual_sprites_showroom_and_chassis ... ok
-test test_backdrop_ground_pass_execution ... ok
-test test_classic_mode_bot_color_schemes_distinct_from_player_sprite ... ok
-test test_track_render_execution_under_all_quality_tiers_headless_safety ... ok
-test test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory ... ok
+running 6 tests
+test test_bot_profiles_creation ... ok
+test test_bot_ai_collision_avoidance ... ok
+test test_bot_ai_steering_and_throttle_on_straight ... ok
+test test_bot_ai_cornering_slowdown ... ok
+test test_bot_ai_slipstream_drafting_and_slingshot_pack_racing ... ok
+test test_bot_ai_on_kart_grid_positions ... ok
 
-test result: ok. 43 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.69s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
 
 
-running 28 tests
-test test_modality_select_championship_editor_option ... ok
-test test_all_embedded_presets_are_valid ... ok
-test test_championship_manager_discovery_and_saving ... ok
-test test_championship_editor_open_and_load_modal ... ok
-test test_gt_tiers_1_to_5_specifications ... ok
-test test_all_motorsport_modules_tiers_1_to_5_specifications ... ok
-test test_primary_confirm_action_does_not_engage_handbrake ... ok
-test test_nascar_and_kart_module_switch_defaults_to_tier_1_starter ... ok
-test test_series_toml_syntax_and_session ... ok
-test test_to_session_runtime_bridging ... ok
-test test_toml_deserialization_and_validation ... ok
-test test_toml_roundtrip_fidelity ... ok
-test test_validation_rejects_invalid ... ok
-test test_game_session_championship_editor_integration ... ok
-test test_championship_cancel_latest_round_rolls_back_points_and_history ... ok
-test test_player_throttle_in_kart_championship ... ok
-test test_rally_tier_1_championship_starting_grid_eligibility ... ok
-test test_post_race_rerun_cancels_uncommitted_results_and_restarts_round ... ok
-test test_championship_standings_screen_rerun_rolls_back_and_restarts_round ... ok
-test test_kart_and_gt_championship_rosters_match_modules ... ok
-test test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_rounds ... ok
-test test_reset_championship_clears_session_and_database_history ... ok
-test test_kart_career_tiers_1_to_5_launch_eligibility ... ok
-test test_nascar_career_tiers_1_to_5_launch_eligibility ... ok
-test test_kart_championship_first_round_bots_move ... ok
-test test_all_modules_tier_1_championship_starters_are_eligible_and_unlocked ... ok
-test test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars ... ok
-test test_championship_lap_calibration_across_all_modules ... ok
+running 8 tests
+test test_same_seed_gives_the_same_race ... ok
+test test_human_layer_off_equals_pre_046_controller ... ok
+test test_bots_do_not_drive_the_same_path_every_lap ... ok
+test test_mistakes_follow_the_tier ... ok
+test test_tier_1_is_relatively_easy_to_beat ... ok
+test test_no_bot_gets_stuck ... ok
+test test_bots_keep_their_driving_style ... ok
+test test_keyboard_reference_driver_beats_tier_1 has been running for over 60 seconds
+test test_keyboard_reference_driver_beats_tier_1 ... ok
 
-test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.39s
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 88.03s
 
 
-running 38 tests
-test test_portal_circuits_catalog_provenance_integrity ... ok
-test test_custom_circuit_promoted_to_preset_classified_as_official_preset ... ok
-test test_consistent_module_categorization_in_module_view ... ok
-test test_custom_circuit_multi_category_assignment ... ok
-test test_dev_mode_reorder_preset_tracks_up_and_down ... ok
-test test_multi_module_promotion_and_distribution ... ok
-test test_metadata_editing ... ok
-test test_draft_creation_and_isolation_from_main_menu ... ok
-test test_marina_bay_singapore_aliases_and_osm_calibration ... ok
-test test_module_subdirectories_and_file_movement ... ok
-test test_track_categories_initial_presets ... ok
-test test_track_deletion ... ok
-test test_promotion_and_demotion_lifecycle ... ok
-test test_module_filter_filtering_and_presets_in_classic ... ok
-test test_track_manager_clone_preset_to_drafts ... ok
-test test_re_promoting_already_promoted_track_to_different_modules ... ok
-test test_module_scoped_track_deletion_preserves_other_modules ... ok
-test test_category_ordering_presets_first_then_custom ... ok
-test test_create_new_draft_track_with_module_templates ... ok
-test test_predefined_track_demote_promote_and_delete ... ok
-test test_track_manager_promotion_mask_resolution_for_promoted_track ... ok
-test test_track_manager_tab_and_module_cycling ... ok
-test test_preset_circuits_edit_overwrite_and_persistence_across_modules ... ok
-test test_track_manager_repeated_cloning_unique_slugs ... ok
-test test_preset_reordering_persistence ... ok
-test test_reordering_boundary_conditions ... ok
-test test_session_active_module_tracks_reflects_reordered_presets ... ok
-test test_standard_mode_rejects_preset_reordering ... ok
-test test_track_manager_confirm_delete_modal_arrow_switching ... ok
-test test_track_manager_drafts_category_browsing_and_shortcut_9 ... ok
-test test_track_manager_delete_with_backspace ... ok
-test test_track_manager_confirm_delete_modal ... ok
-test test_empty_module_tracks_resilience ... ok
-test test_track_manager_open_in_track_editor ... ok
-test test_track_manager_clone_and_open_in_track_editor ... ok
-test test_race_session_with_track_manager_flow ... ok
-test test_all_canonical_track_files_provenance_integrity ... ok
-test test_workspace_rally_deletion_preserves_classic ... ok
+running 17 tests
+test test_deep_merge_toml_partial_overrides ... ok
+test test_config_load_invalid_toml_fallback ... ok
+test test_in_file_module_override_merging ... ok
+test test_external_module_files_and_hierarchy_precedence ... ok
+test test_display_config_vehicle_shadows_setting ... ok
+test test_display_resolution_and_window_config_roundtrip ... ok
+test test_default_config_roundtrip_toml ... ok
+test test_custom_car_specs_override ... ok
+test test_custom_camera_zoom_levels_configuration ... ok
+test test_config_save_and_load_from_path ... ok
+test test_display_config_surface_texture_quality_roundtrip ... ok
+test test_surface_texture_settings_ui_lifecycle ... ok
+test test_session_initialization_with_custom_config ... ok
+test test_session_module_switching_applies_effective_config ... ok
+test test_user_config_installation_and_project_file_protection ... ok
+test test_user_module_config_overrides_default_template ... ok
+test test_default_gameplay_pilot_count_and_toml_override ... ok
 
-test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.18s
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.66s
+
+
+running 8 tests
+test test_driver_roster_integrity_and_distinct_properties ... ok
+test test_driver_roster_sampling_uniqueness ... ok
+test test_no_preset_character_uses_player_default_colors ... ok
+test test_all_six_modules_driving_style_distribution ... ok
+test test_all_roster_bios_wrap_within_dossier_width ... ok
+test test_driver_cards_navigation_state ... ok
+test test_starting_grid_flow_and_roster_presentation ... ok
+test test_race_session_driver_spawning_and_names ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.83s
+
+
+running 19 tests
+test test_spec024_scenario_bell_curve_tier_distribution_contender ... ok
+test test_bell_curve_weights_specification_and_sampling ... ok
+test test_career_roster_initialization_and_tier1_centering ... ok
+test test_spec024_scenario_72_characters_alignment_and_no_baked_in_tiers ... ok
+test test_spec024_scenario_boundary_tier_distributions_rookie_and_legend ... ok
+test test_uniform_style_roster_sampling_determinism ... ok
+test test_career_roster_evolution_end_to_end_multitier_progression ... ok
+test test_module_career_progress_advance_tier_evolution ... ok
+test test_spec024_scenario_career_10_car_grid_90_10_churn ... ok
+test test_career_roster_evolution_90_10_churn_and_replacements ... ok
+test test_championship_session_trigger_roster_evolution ... ok
+test test_sqlite_persistence_of_career_rivals ... ok
+test test_uniform_style_roster_sampling_quotas_and_uniqueness ... ok
+test test_career_roster_probabilistic_skill_progression_distribution ... ok
+test test_uniform_distribution_across_styles_over_many_trials ... ok
+test test_career_roster_uniform_replacement_style_distribution ... ok
+test test_career_roster_rank_dependent_skill_advancement ... ok
+test test_spec024_scenario_uniform_sampling_12_driver_rosters_across_1000_seeds ... ok
+test test_session_casual_race_dynamic_difficulty_and_bell_curve ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+
+
+running 7 tests
+test test_input_config_round_trips_through_filter_config ... ok
+test test_legacy_settings_file_loads_as_sharp ... ok
+test preset_feel::test_safe_presets_do_not_spin_on_held_key ... ok
+test preset_feel::test_peak_yaw_at_speed_is_ordered_by_preset ... ok
+test preset_feel::test_turn_in_time_is_ordered_by_preset ... ok
+test test_catalog_random_input_fuzz_is_numerically_stable ... ok
+test test_settings_apply_to_live_player_car_both_directions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
+
+
+running 7 tests
+test test_non_linear_center_micro_corrections ... ok
+test test_digital_input_filter_progressive_rise_and_centering ... ok
+test test_steering_profiles_configuration_and_cycling ... ok
+test test_steering_speed_setting_changes_time_to_full_input ... ok
+test test_keyboard_progressive_brake_tap_vs_hold ... ok
+test test_player_car_physics_receives_unattenuated_steering_when_direct_or_raw ... ok
+test test_vehicle_high_speed_turn_stability_with_smoothed_input ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 7 tests
+test test_keyboard_kart_caster_jacking_scrub_differential ... ok
+test test_keyboard_chicane_reversal_latency_measurement ... ok
+test test_keyboard_filter_profiles_direct_vs_balanced_cornering ... ok
+test test_keyboard_slide_catch_recovery_on_dirt ... ok
+test test_keyboard_sweeper_feathering_preserves_speed_vs_holding ... ok
+test test_key_styles_do_not_spin_on_safe_presets ... ok
+test test_presets_change_key_style_spread ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+
+running 7 tests
+test test_monotonic_braking_safety_padding_across_tiers ... ok
+test test_monotonic_avoidance_distance_padding_across_tiers ... ok
+test test_monotonic_pace_scaling_across_tiers ... ok
+test test_all_30_combinations_generate_valid_bounded_profiles ... ok
+test test_driver_character_classification ... ok
+test test_compound_and_legacy_archetype_resolution ... ok
+test test_series_toml_with_orthogonal_style_and_tier ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.06s
+
+
+running 7 tests
+test test_index_based_archetypes ... ok
+test test_behavior_archetypes_diversity ... ok
+test test_seeded_sampling_variation_and_determinism ... ok
+test test_find_global_resolves_all_modules ... ok
+test test_all_across_modules_integrity_and_distinct_ids ... ok
+test test_series_ai_character_propagation_and_distinct_profiles ... ok
+test test_all_modules_standard_race_instantiates_predefined_characters ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.11s
 
 
 stderr:
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
-     Running tests/audio_tier_tests.rs (target/debug/deps/audio_tier_tests-4b665630d59399f8)
-     Running tests/extreme_offroad_module_tests.rs (target/debug/deps/extreme_offroad_module_tests-26035a64bb39e10b)
-     Running tests/garage_tests.rs (target/debug/deps/garage_tests-b727b916195e46e1)
-     Running tests/grid_positions_sync_tests.rs (target/debug/deps/grid_positions_sync_tests-a7086a441471eb68)
-     Running tests/module_track_unlock_tests.rs (target/debug/deps/module_track_unlock_tests-c83beb60f1192272)
-     Running tests/profile_tests.rs (target/debug/deps/profile_tests-d160dee18ef2e852)
-     Running tests/render_tests.rs (target/debug/deps/render_tests-86067efe8e4d8b03)
-     Running tests/series_tests.rs (target/debug/deps/series_tests-abe67902621632e1)
-     Running tests/track_manager_tests.rs (target/debug/deps/track_manager_tests-5b4a293af7adb8e9)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (target/debug/deps/wheelbase-803e088669f423cb)
+     Running unittests src/bin/auto_tune.rs (target/debug/deps/auto_tune-72ec9574f31cd182)
+     Running tests/auto_calibration_tests.rs (target/debug/deps/auto_calibration_tests-f8d5d5fb626fa03c)
+     Running tests/decoupled_tire_physics_tests.rs (target/debug/deps/decoupled_tire_physics_tests-16b86e1223464c35)
+     Running tests/differential_dynamics_tests.rs (target/debug/deps/differential_dynamics_tests-401438944c103383)
+     Running tests/handling_calibration_tests.rs (target/debug/deps/handling_calibration_tests-56637bf6000dc95f)
+   Doc-tests wheelbase
+   Compiling tdrace-core v0.1.0 (/Users/mario.gomez/workspace/games/tdrace/.claude/worktrees/tdrace-vehicle-dynamics-83fc42/crates/tdrace-core)
+   Compiling cabinet v0.1.0 (/Users/mario.gomez/workspace/games/tdrace/.claude/worktrees/tdrace-vehicle-dynamics-83fc42/crates/cabinet)
+   Compiling tdrace-app v0.1.0 (/Users/mario.gomez/workspace/games/tdrace/.claude/worktrees/tdrace-vehicle-dynamics-83fc42/crates/tdrace-app)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 14.91s
+     Running tests/adversarial_piece4_tests.rs (target/debug/deps/adversarial_piece4_tests-4f6f0ca7e51f6c4b)
+     Running tests/ai_tests.rs (target/debug/deps/ai_tests-28006b9857ed0ed7)
+     Running tests/bot_humanlike_driving_tests.rs (target/debug/deps/bot_humanlike_driving_tests-3cc3ca984176912c)
+     Running tests/config_tests.rs (target/debug/deps/config_tests-17d73a05371599dd)
+     Running tests/driver_character_tests.rs (target/debug/deps/driver_character_tests-39609d31e6a1d437)
+     Running tests/dynamic_roster_and_tier_tests.rs (target/debug/deps/dynamic_roster_and_tier_tests-e297145f84aa2b7a)
+     Running tests/handling_presets_tests.rs (target/debug/deps/handling_presets_tests-2ef47fe3794716ce)
+     Running tests/input_smoothing_tests.rs (target/debug/deps/input_smoothing_tests-e9f89b364db7b9ae)
+     Running tests/keyboard_simulation_tests.rs (target/debug/deps/keyboard_simulation_tests-01e3341db3fbc2eb)
+     Running tests/orthogonal_ai_styles_and_tiers_tests.rs (target/debug/deps/orthogonal_ai_styles_and_tiers_tests-a594cf3059f8d981)
+     Running tests/predefined_driver_behaviours_tests.rs (target/debug/deps/predefined_driver_behaviours_tests-c064bf5b7c4e8b0f)
 
 ```

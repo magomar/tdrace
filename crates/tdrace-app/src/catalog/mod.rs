@@ -15,7 +15,7 @@ pub struct RealCarModel {
     pub year: u16,
     pub module_id: &'static str,
     pub category_name: &'static str,
-    pub tier: u8, // 1..=5 (Extreme Off-Road parks unranked cars at 6..=7, spec 046)
+    pub tier: u8, // 1..=5 (Extreme Off-Road parks unranked cars at 6..=7, spec 048)
     pub bhp: u16,
     pub torque_nm: u16,
     pub weight_kg: u16,
@@ -2151,7 +2151,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         secondary_color: Color::new(0.95, 0.85, 0.15, 1.0),
     },
 
-    // Unranked tier 6: Rally Raid T1+ (spec 046: parked outside the five career tiers)
+    // Unranked tier 6: Rally Raid T1+ (spec 048: parked outside the five career tiers)
     RealCarModel {
         id: "rally_toyota_hilux_t1_plus",
         name: "Toyota GR DKR Hilux T1+",
@@ -2224,7 +2224,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.85, 0.15, 0.20, 1.0),
         secondary_color: Color::new(0.12, 0.12, 0.15, 1.0),
     },
-    // Unranked tier 7: Stadium Super Truck (spec 046: parked outside the five career tiers)
+    // Unranked tier 7: Stadium Super Truck (spec 048: parked outside the five career tiers)
     RealCarModel {
         id: "rally_sst_super_truck",
         name: "Stadium Super Truck V8",
@@ -2820,7 +2820,7 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
 }
 
 /// Highest garage tier page of a module: the five career tiers, plus the unranked tiers that
-/// Extreme Off-Road uses to park the Rally Raid T1+ and Stadium Super Truck cars (spec 046).
+/// Extreme Off-Road uses to park the Rally Raid T1+ and Stadium Super Truck cars (spec 048).
 pub fn garage_tier_count(module_id: &str) -> u8 {
     get_models_for_module(module_id).iter().map(|c| c.tier).max().unwrap_or(1).max(5)
 }

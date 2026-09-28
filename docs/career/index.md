@@ -264,10 +264,10 @@ Tier 5: +3 tracks (17 total unlocked)
 
 #### 🌲 Rallycross & All-Terrain (`rally`)
 - **Tier 1 (5 circuits)**: `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `croft_rx`
-- **Tier 2 (3 circuits)**: `hell_rx`, `loheac_rx`, `silverstone_rx`
+- **Tier 2 (3 circuits)**: `hell_rx`, `loheac_rx`, `lavare_rx`
 - **Tier 3 (3 circuits)**: `estering_rx`, `montalegre_rx`, `riga_rx`
 - **Tier 4 (3 circuits)**: `nyirad_rx`, `kouvola_rx`, `killarney_rx`
-- **Tier 5 (3 circuits)**: `catalunya_rx`, `yas_marina_rx`, `essay_rx`
+- **Tier 5 (3 circuits)**: `catalunya_rx`, `lessay_rx`, `essay_rx`
 
 #### ⚡ Karting & Micro-Racers (`kart`)
 - **Tier 1 (5 circuits)**: `lonato`, `genk`, `wackersdorf`, `laval_kart`, `whilton_mill`

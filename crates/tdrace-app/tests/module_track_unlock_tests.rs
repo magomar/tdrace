@@ -40,7 +40,7 @@ fn test_every_module_locks_circuits_above_tier_one() {
         let progress = ModuleCareerProgress::default_for_module(1, module_id);
         let total = module.tracks().len();
         let unlocked = module.tracks().iter().filter(|t| progress.is_track_unlocked(t.id, false)).count();
-        // Extreme Off-Road also opens the three Mint 400 circuits at Tier 1 (spec 046)
+        // Extreme Off-Road also opens the three Mint 400 circuits at Tier 1 (spec 048)
         let expected = if module_id == "extreme_offroad" { 8 } else { 5 };
         assert_eq!(unlocked, expected, "{module_id}: Tier 1 should open {expected} circuits");
         assert!(total > unlocked, "{module_id}: some circuits should stay locked at Tier 1");

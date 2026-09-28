@@ -19,7 +19,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[NASCAR Career Mode](../001_nascar_career_mode.md)**: 5-tier stock car & Trans-Am career progression with stage racing and pack drafting.
 - `[x]` **[Rallycross & All-Terrain Career Mode](../002_rallycross_and_allterrain_career_mode.md)**: 5-tier World RX and desert raid career progression with joker lap rules.
 - `[x]` **[Extreme Off-Road & Stunt Arenas Career Mode](../003_extreme_offroad_and_stunt_arenas_career_mode.md)**: 5-tier off-road and stunt arena career progression with freestyle scoring.
-- `[x]` **[Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits](../046_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md)**: Rallycross on every screen, RX1e and Nitrocross Group E tiers, Rally Raid T1+ and SST cars parked in Extreme Off-Road, and three circuits from the official Mint 400 GPX files.
+- `[x]` **[Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits](../048_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md)**: Rallycross on every screen, RX1e and Nitrocross Group E tiers, Rally Raid T1+ and SST cars parked in Extreme Off-Road, and three circuits from the official Mint 400 GPX files.
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
@@ -64,6 +64,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Interactive Controls Settings for Steering Smoothing and Progressive Hold Bleed](../040_interactive_controls_settings_for_steering_smoothing_and_hold_bleed.md)**: Extends ArcadeSettingsModal Controls tab and the in-game Controls Guide screen with interactive widgets and real-time adjustment for steering smoothing profiles, hold-lock bleed rate, and speed-sensitive steering limits.
 - `[ ]` **[5-Tier Steering Profiles, Speed Sensitivity Switch, and Subtab Controls Separation](../041_five_tier_steering_profiles_speed_switch_and_subtab_controls.md)**: Expands keyboard steering smoothing to 5 distinct profiles (Balanced, Smooth, Agile, Direct, Raw), introduces a master Speed Sensitivity Switch, exposes granular steering filter parameters, and separates keyboard from gamepad controls via sub-tabs within the ArcadeSettingsModal Controls tab.
 - `[x]` **[Vehicle Dynamics Rebuild and Simplified Handling Settings](../043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)**: Slip-based tire, implicit wheel spin and differential coupling, roll-balance load transfer, grip-aware steering authority, and a 5-parameter keyboard handling model with 4 calibrated presets.
+- `[x]` **[Human-Like Bot Driving with Tiered Mistakes and Varied Lines](../046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md)**: Seeded per-bot driver model with line wander, per-corner line choice, braking-point and corner-speed variation, reaction lag, and tier- and style-driven mistakes, so Tier 1 and 2 bots are beatable and no two laps are the same.
 
 
 ---

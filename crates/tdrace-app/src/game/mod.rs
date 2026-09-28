@@ -2739,7 +2739,7 @@ impl RaceSession {
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
@@ -2754,7 +2754,7 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
@@ -2771,7 +2771,7 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                 ],
             ),
@@ -2779,7 +2779,7 @@ impl RaceSession {
                 "Nitrocross Group E Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -4191,7 +4191,9 @@ impl RaceSession {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
             let bot_profile = character.resolve_profile(bot_tier);
-            self.ai_drivers.push(BotAiDriver::new(bot_profile));
+            // Spec 046: the grid entry seed (session seed + bot index) drives the human layer.
+            let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
+            self.ai_drivers.push(BotAiDriver::with_seed(bot_profile, bot_seed));
         }
     }
 

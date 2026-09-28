@@ -96,8 +96,8 @@ laps = 4
 
 [[rounds]]
 order = 3
-track_id = "silverstone_rx"
-name = "Silverstone RX"
+track_id = "lavare_rx"
+name = "Circuit de Lavaré"
 laps = 4
 ```
 
@@ -123,7 +123,7 @@ impl GameApp {
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                 ],
             ),
             3 => (
@@ -146,7 +146,7 @@ impl GameApp {
                 "Stadium Super Trucks World Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                 ],
             ),
@@ -291,7 +291,7 @@ impl GameApp {
 [Tier 2: Mixed Ovals & Rapid RX - 3 Circuits]
  ├─ Hell RX / Lånkebanen (hell_rx - 1.019 km 63% Tarmac 37% Gravel Downhill Plunge)
  ├─ Circuit de Lohéac (loheac_rx - 1.150 km 33% Tarmac 67% Loose Dirt Crowd Favorite)
- └─ Silverstone RX (silverstone_rx - 0.972 km 60% Tarmac 40% Gravel Wing Arena)
+ └─ Circuit de Lavaré (lavare_rx - 1.070 km 35% Tarmac 65% Dirt; replaced Silverstone RX on 2026-09-28)
  
 [Tier 3: Historic Proving Grounds - 3 Circuits]
  ├─ Estering Buxtehude (estering_rx - 0.952 km 60% Tarmac 40% Dirt Hairpin Flick)
@@ -305,7 +305,7 @@ impl GameApp {
  
 [Tier 5: Monumental Stadiums & All-Terrain Extremes - 3 Circuits]
  ├─ Barcelona-Catalunya RX (catalunya_rx - 1.125 km 67% Tarmac 33% Gravel Stadium Bowl)
- ├─ Yas Marina RX Arena (yas_marina_rx - 1.100 km Floodlit Desert Launch Kickers)
+ ├─ Circuit de Lessay (lessay_rx - 0.886 km 55% Tarmac 45% Dirt; replaced Yas Marina RX on 2026-09-28)
  └─ Circuit des Ducs / Essay RX (essay_rx - 1.115 km Historic French Technical Arena)
 ```
 
@@ -318,10 +318,10 @@ impl GameApp {
 | Career Level | Category | Tier Cup Name | Entry Car Cost | Car Unlocks | Circuit Unlocks (17 Total) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Level 1** | Rally Junior FWD | **Rallycross Grassroots Cup (Tier 1)** | $1,000\,\text{XP}$ *(Starter free)* | `rally_peugeot_208_rally4`, `rally_fiesta_rally4`, `rally_clio_rally4` | `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `croft_rx` |
-| **Level 2** | WRC / RX Supercar | **World Rallycross Challenge (Tier 2)** | $2,000\,\text{XP}$ | `rally_hyundai_i20_rx`, `rally_polo_rx`, `rally_audi_s1_rx` | `hell_rx`, `loheac_rx`, `silverstone_rx` |
+| **Level 2** | WRC / RX Supercar | **World Rallycross Challenge (Tier 2)** | $2,000\,\text{XP}$ | `rally_hyundai_i20_rx`, `rally_polo_rx`, `rally_audi_s1_rx` | `hell_rx`, `loheac_rx`, `lavare_rx` |
 | **Level 3** | Group B Beast | **Group B Masters Series (Tier 3)** | $3,000\,\text{XP}$ | `rally_audi_sport_quattro_s1`, `rally_peugeot_205_t16`, `rally_lancia_delta_s4` | `estering_rx`, `montalegre_rx`, `riga_rx` |
 | **Level 4** | Rally Raid T1+ | **Dakar Rally Raid Trophy (Tier 4)** | $4,000\,\text{XP}$ | `rally_toyota_hilux_t1_plus`, `rally_audi_rs_q_etron`, `rally_prodrive_hunter_t1` | `nyirad_rx`, `kouvola_rx`, `killarney_rx` |
-| **Level 5** | Stadium Super Truck | **Stadium Super Trucks World Series (Tier 5)** | $5,000\,\text{XP}$ | `rally_sst_super_truck`, `rally_sst_robby_gordon`, `rally_sst_traxxas_edition` | `catalunya_rx`, `yas_marina_rx`, `essay_rx` |
+| **Level 5** | Stadium Super Truck | **Stadium Super Trucks World Series (Tier 5)** | $5,000\,\text{XP}$ | `rally_sst_super_truck`, `rally_sst_robby_gordon`, `rally_sst_traxxas_edition` | `catalunya_rx`, `lessay_rx`, `essay_rx` |
 
 ### 3.2 Tournament Rules & Scoring System
 Each Tier Cup consists of a realistic World RX weekend progression with standard championship points (`PointSystem::Standard` or FIA RX progression):
@@ -364,7 +364,7 @@ Each Tier Cup consists of a realistic World RX weekend progression with standard
   - [x] **Given** the player finishes Tier 1 with at least 1 podium trophy and 2,000 spendable XP
   - [x] **When** `advance_tier()` is invoked on `ModuleCareerProgress`
   - [x] **Then** the player career level advances to 2
-  - [x] **And** "hell_rx", "loheac_rx", and "silverstone_rx" are unlocked in the track registry
+  - [x] **And** "hell_rx", "loheac_rx", and "lavare_rx" are unlocked in the track registry
   - [x] **And** RX Supercar models ("rally_hyundai_i20_rx", etc.) become selectable
 
 ---

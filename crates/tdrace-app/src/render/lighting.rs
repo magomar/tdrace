@@ -132,7 +132,7 @@ pub fn resolve_vehicle_lighting(
 ) -> VehicleLightingConfig {
     if let Some(m_id) = model_id {
         // 1. Catalog module_id lookup for real cars (first, because the Rally Raid T1+ and Stadium
-        //    Super Truck cars keep their rally_* ids in Extreme Off-Road, spec 046)
+        //    Super Truck cars keep their rally_* ids in Extreme Off-Road, spec 048)
         if let Some(model) = crate::catalog::find_model_by_id(m_id) {
             match model.module_id {
                 "kart" => return VehicleLightingConfig::none(),

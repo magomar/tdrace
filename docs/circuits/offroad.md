@@ -27,7 +27,7 @@ The **Extreme Off-Road & Stunt Arenas** catalog covers 15 specialized motorsport
 | **Mint 400 Qualifying Loop** | `mint400_qualifying_loop` | Desert Race | Packed Desert Sand | The 9.5 km Mint 400 qualifying loop, 1:1: long desert straights and rocky switchbacks. |
 | **Mint 400 Grand Loop** | `mint400_grand_loop` | Desert Race | Packed Desert Sand | The whole 148 km Car/Truck/UTV course at 0.05x (4.4 km lap), with its out-and-back spurs cut. |
 
-The three Mint 400 circuits (spec 046) come from the official 2026 GPX course files
+The three Mint 400 circuits (spec 048) come from the official 2026 GPX course files
 (<https://themint400.com/race-format/>), cached in `assets/gpx/`. Desert races are not in
 OpenStreetMap, so `scripts/gpx_importer.py` builds them: it scales the course, cuts the
 out-and-back spurs and the start spur (parts closer than 2.2 track widths), rounds the corners,

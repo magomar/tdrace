@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds Extreme Off-Road circuits from official desert-race GPX course files (spec 046).
+"""Builds Extreme Off-Road circuits from official desert-race GPX course files (spec 048).
 
 Desert races are not mapped in OpenStreetMap, so these circuits come from the course files that
 the organisers publish (cached in assets/gpx/). The pipeline reuses the OSM importer helpers:

@@ -25,6 +25,16 @@ pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
 /// Steering overslip cap for bots and scripted controllers (linear mapping, see `step_per_wheel`).
 pub const BOT_STEER_OVERSLIP: f32 = 1.5;
 
+/// Traction help starts to ease the throttle at this rear-axle limit use, and reaches its full
+/// cut `TH_WIDTH` later.
+const TH_START: f32 = 0.80;
+const TH_WIDTH: f32 = 0.20;
+/// Lateral acceleration (m/s^2, speed x yaw rate) at which traction help acts fully. Below it (and
+/// below `TH_CORNERING_STEER`) the cut fades out, so straight-line drive is never eased.
+const TH_CORNERING_ACCEL: f32 = 4.0;
+/// Steering input at which traction help acts fully.
+const TH_CORNERING_STEER: f32 = 0.25;
+
 /// Normalizes an angle in radians to (-PI, PI].
 #[inline]
 pub fn normalize_angle(mut angle: f32) -> f32 {
@@ -890,6 +900,13 @@ fn couple_axle(
         // force alone drops as drive force grows, so it hid power oversteer until too late.
         let traction_help = self.config.player.traction_help.clamp(0.0, 1.0);
         let throttle_scale = if traction_help > 0.0 && !clamped_ctrl.reverse {
+            // Force use counts only while cornering: straight-line drive (a launch, a straight)
+            // uses the rear grip fully without any risk of power oversteer, and TCS already limits
+            // wheelspin there. Steering input counts as cornering too, because in a direction
+            // change the yaw rate passes through zero. Slip angle is a lateral signal by itself.
+            let cornering = (self.state.speed * self.state.angular_velocity.abs() / TH_CORNERING_ACCEL)
+                .max(clamped_ctrl.steer.abs() / TH_CORNERING_STEER)
+                .clamp(0.0, 1.0);
             let rear_use = [2usize, 3]
                 .iter()
                 .map(|&j| {
@@ -898,10 +915,10 @@ fn couple_axle(
                     let envelope = (w.normal_load * w.surface.friction_coefficient() * tire.grip).max(1.0);
                     let force_use = w.lateral_force.hypot(w.longitudinal_force) / envelope;
                     let slip_use = w.slip_angle.abs() / tire.peak_slip_angle().max(1e-3);
-                    force_use.max(slip_use)
+                    (force_use * cornering).max(slip_use)
                 })
                 .fold(0.0f32, f32::max);
-            1.0 - traction_help * ((rear_use - 0.65) / 0.25).clamp(0.0, 1.0)
+            1.0 - traction_help * ((rear_use - TH_START) / TH_WIDTH).clamp(0.0, 1.0)
         } else {
             1.0
         };

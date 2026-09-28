@@ -852,7 +852,7 @@ fn test_empty_module_tracks_resilience() {
         "dirty_oval_speedway".into(), "figure_eight".into(),
         "sahara".into(), "sahara_dunes".into(), "dirt_figure_eight".into(), "holjes_rx".into(), "lydden_hill".into(),
         "hell_rx".into(), "loheac_rx".into(), "estering_rx".into(), "montalegre_rx".into(), "nyirad_rx".into(), "kouvola_rx".into(), "catalunya_rx".into(),
-        "mettet_rx".into(), "silverstone_rx".into(), "riga_rx".into(), "killarney_rx".into(), "yas_marina_rx".into(), "essay_rx".into(),
+        "mettet_rx".into(), "lavare_rx".into(), "riga_rx".into(), "killarney_rx".into(), "lessay_rx".into(), "essay_rx".into(),
         "dreux_rx".into(), "croft_rx".into(),
         "lonato".into(), "sarno".into(), "genk".into(), "pfi".into(),
         "zuera".into(), "le_mans_kart".into(), "portimao_kart".into(), "franciacorta".into(),
@@ -1938,7 +1938,7 @@ fn test_all_canonical_track_files_provenance_integrity() {
     assert_eq!(total_tracks, 99, "Must have exactly 99 total track files");
     assert_eq!(real_tracks_with_osm, 71, "Must have exactly 71 real circuits with verified OSM URLs");
     assert_eq!(real_tracks_with_wiki, 71, "Must have exactly 71 real circuits with verified Wikipedia URLs");
-    // 25 fictional / inspired tracks + 3 Mint 400 circuits built from GPX course files (spec 046)
+    // 25 fictional / inspired tracks + 3 Mint 400 circuits built from GPX course files (spec 048)
     assert_eq!(fictional_tracks, 28, "Must have exactly 28 tracks without OSM data");
 
     // Specific regression validations for circuits highlighted in user issue
@@ -2003,7 +2003,7 @@ fn test_portal_circuits_catalog_provenance_integrity() {
     }
 
     assert_eq!(osm_count, 71, "Exactly 71 circuits in portal catalog must possess OSM URL");
-    // 71 OSM circuits + the 3 Mint 400 GPX circuits, which link the Mint 400 article (spec 046)
+    // 71 OSM circuits + the 3 Mint 400 GPX circuits, which link the Mint 400 article (spec 048)
     assert_eq!(wiki_count, 74, "Exactly 74 circuits in portal catalog must possess Wikipedia URL");
 }
 
