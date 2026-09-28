@@ -166,7 +166,6 @@ use tdrace_core::physics::config::AssistProfile;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
@@ -778,7 +777,7 @@ impl RaceSession {
         let assist_profile_p2 = AssistProfile::Arcade;
 
         let track_manager = TrackManager::default();
-        let track = track_manager.load_track(&track_choice).unwrap_or_else(|_| classic_grand_prix());
+        let track = track_manager.load_track(&track_choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
 
         let mut audio = AudioManager::new();
         audio.settings.master_volume = config.audio.master_volume;
@@ -1942,7 +1941,7 @@ impl RaceSession {
 
     /// Loads the track corresponding to a TrackChoice respecting specialized modules.
     pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
-        self.track_manager.load_track(choice).unwrap_or_else(|_| classic_grand_prix())
+        self.track_manager.load_track(choice).unwrap_or_else(|_| crate::tracks::official::fallback_track())
     }
 
     /// Resolves and applies the effective configuration for the given module ID
@@ -3393,7 +3392,7 @@ impl RaceSession {
                 self.track = self
                     .track_manager
                     .load_track_by_slug(&track_id)
-                    .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
+                    .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                 self.init_race();
             } else {
                 if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
@@ -6424,7 +6423,7 @@ impl RaceSession {
                     self.track = self
                         .track_manager
                         .load_track_by_slug(&track_id)
-                        .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
+                        .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                     self.init_race();
                     self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                     return;
@@ -8895,7 +8894,7 @@ impl RaceSession {
                     self.track = self
                         .track_manager
                         .load_track_by_slug(&track_id)
-                        .unwrap_or_else(|_| tdrace_core::track::presets::classic_grand_prix());
+                        .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                     self.init_race();
                     self.transition_iris_to(GameState::Countdown(3.5), 0.45);
                     return;
@@ -10063,6 +10062,14 @@ impl RaceSession {
                     selected_mask[3] = !selected_mask[3];
                     cursor_idx = 3;
                     self.audio.play_sfx(SfxType::UiMove);
+                } else if is_key_pressed(KeyCode::Key5) {
+                    selected_mask[4] = !selected_mask[4];
+                    cursor_idx = 4;
+                    self.audio.play_sfx(SfxType::UiMove);
+                } else if is_key_pressed(KeyCode::Key6) {
+                    selected_mask[5] = !selected_mask[5];
+                    cursor_idx = 5;
+                    self.audio.play_sfx(SfxType::UiMove);
                 } else if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::W)
                     || is_key_pressed(KeyCode::Left)
@@ -10175,7 +10182,7 @@ impl RaceSession {
                         let track = self
                             .track_manager
                             .load_track(track_choice)
-                            .unwrap_or_else(|_| classic_grand_prix());
+                            .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                         let file_path = if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
                             let mod_id = TrackManager::preset_module(track_choice.track_id()).unwrap_or("classic");
                             Some(git_tracks_dir.join(mod_id).join(format!("{}.json", track_choice.track_id())).to_string_lossy().to_string())
@@ -10251,7 +10258,10 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_a_pressed
                 {
                     let tid = track_id.clone();
-                    if let Ok(_p) = self.track_manager.promote_custom_track_to_git_preset(&tid) {
+                    if let Ok(_p) = self.track_manager.promote_custom_track_to_git_preset(
+                        &tid,
+                        Some(target_module.as_str()).filter(|m| !matches!(*m, "drafts" | "all")),
+                    ) {
                         self.audio.play_sfx(SfxType::UiSelect);
                     } else {
                         self.audio.play_sfx(SfxType::UiMove);
@@ -10597,7 +10607,7 @@ impl RaceSession {
                         let track = self
                             .track_manager
                             .load_track(track_choice)
-                            .unwrap_or_else(|_| classic_grand_prix());
+                            .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                         let file_path = if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
                             let mod_id = TrackManager::preset_module(track_choice.track_id()).unwrap_or("classic");
                             Some(git_tracks_dir.join(mod_id).join(format!("{}.json", track_choice.track_id())).to_string_lossy().to_string())
@@ -10644,7 +10654,7 @@ impl RaceSession {
                 let track = self
                     .track_manager
                     .load_track(track_choice)
-                    .unwrap_or_else(|_| classic_grand_prix());
+                    .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                 self.track = track.clone();
                 self.editor_return_track_manager = Some((active_tab, module_filter, selected_idx));
                 self.enter_track_editor_with_path(track, file_path);
@@ -10696,7 +10706,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     } else {
                         self.audio.play_sfx(SfxType::UiSelect);
-                        let mut selected_mask = [false; 4];
+                        let mut selected_mask = [false; PROMOTION_MODULES.len()];
                         let mut has_any_selected = false;
                         for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
                             if self.track_manager.is_track_in_module(&tid, mod_id) {
@@ -10704,12 +10714,10 @@ impl RaceSession {
                                 has_any_selected = true;
                             }
                         }
-                        let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
-                            "rally" => 1,
-                            "kart" => 2,
-                            "gt" => 3,
-                            _ => 0,
-                        };
+                        let default_mod_idx = PROMOTION_MODULES
+                            .iter()
+                            .position(|(m, _, _, _)| *m == TrackManager::normalize_module_id(module_filter.id().unwrap_or(self.active_module_id)))
+                            .unwrap_or(0);
                         if !has_any_selected {
                             selected_mask[default_mod_idx] = true;
                         }
@@ -10738,7 +10746,7 @@ impl RaceSession {
                             self.audio.play_sfx(SfxType::UiMove);
                         } else {
                             self.audio.play_sfx(SfxType::UiSelect);
-                            let mut selected_mask = [false; 4];
+                            let mut selected_mask = [false; PROMOTION_MODULES.len()];
                             let mut has_any_selected = false;
                             for (idx, (mod_id, _, _, _)) in PROMOTION_MODULES.iter().enumerate() {
                                 if self.track_manager.is_track_in_module(&tid, mod_id) {
@@ -10746,12 +10754,10 @@ impl RaceSession {
                                     has_any_selected = true;
                                 }
                             }
-                            let default_mod_idx = match module_filter.id().unwrap_or(self.active_module_id) {
-                                "rally" => 1,
-                                "kart" => 2,
-                                "gt" => 3,
-                                _ => 0,
-                            };
+                            let default_mod_idx = PROMOTION_MODULES
+                            .iter()
+                            .position(|(m, _, _, _)| *m == TrackManager::normalize_module_id(module_filter.id().unwrap_or(self.active_module_id)))
+                            .unwrap_or(0);
                             if !has_any_selected {
                                 selected_mask[default_mod_idx] = true;
                             }
@@ -13506,9 +13512,9 @@ impl RaceSession {
             }
             EditorAction::NewFromTemplate(preset) => {
                 let track = match preset.as_str() {
-                    "Oval Speedway" => tdrace_core::track::presets::oval_speedway(),
-                    "Oasis Rally" => tdrace_core::track::presets::oasis_rally(),
-                    "Classic Grand Prix" => tdrace_core::track::presets::classic_grand_prix(),
+                    "Oval Speedway" => tdrace_core::catalog::official_track("classic", "oval_speedway"),
+                    "Oasis Rally" => tdrace_core::catalog::official_track("classic", "oasis_rally"),
+                    "Classic Grand Prix" => tdrace_core::catalog::official_track("classic", "classic_grand_prix"),
                     _ => tdrace_core::track::presets::create_prototypical_track(
                         self.active_module_id,
                         tdrace_core::track::presets::TrackShape::Oval,
@@ -13606,7 +13612,11 @@ impl RaceSession {
                                 state.is_dirty = false;
                             }
                             self.editor_save_toast_timer = 2.5;
-                            if overwrite {
+                            let saved_as_copy = !crate::storage::is_dev_mode()
+                                && target_slug.as_deref().is_some_and(|s| saved_slug.as_deref() != Some(s) && TrackManager::is_preset_slug(s));
+                            if saved_as_copy {
+                                self.editor_save_toast_msg = format!("Official circuit unchanged. Saved a copy: {}", path);
+                            } else if overwrite {
                                 self.editor_save_toast_msg = format!("Track overwritten: {}", path);
                             } else {
                                 self.editor_save_toast_msg = format!("Track saved: {}", path);

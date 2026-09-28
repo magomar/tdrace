@@ -78,7 +78,7 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
             def.default_laps
         );
 
-        let track = (def.generator)();
+        let track = tdrace_core::catalog::official_track("extreme_offroad", def.id);
         let target_file = tracks_dir.join(format!("{}.json", def.id));
         if !target_file.exists() {
             if let Ok(json_str) = serde_json::to_string_pretty(&track) {
@@ -195,7 +195,7 @@ fn test_extreme_offroad_session_switch_and_car_choice() {
     assert_eq!(tag, "300 BHP RWD ULTRALIGHT");
     assert!(spd > 0.8 && acc > 0.9 && grp > 0.7 && dft > 0.8);
 
-    let track = tdrace_core::track::presets::sahara_dune_crossing();
+    let track = tdrace_core::catalog::official_track("extreme_offroad", "sahara_dune_crossing");
     assert_eq!(
         resolve_predefined_car_for_track(Some(&track), "extreme_offroad"),
         CarChoice::SandRail

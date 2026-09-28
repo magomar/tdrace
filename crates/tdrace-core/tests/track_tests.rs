@@ -2,11 +2,11 @@ use std::f32::consts::PI;
 use glam::Vec2;
 use tdrace_core::physics::{Car, CarConfig, SurfaceType};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::presets::{classic_grand_prix, oval_speedway};
+
 
 #[test]
 fn test_track_lap_counting_and_best_lap_time() {
-    let track = oval_speedway();
+    let track = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 2);
     let mut car = Car::new(CarConfig::sports_car());
 
@@ -43,7 +43,7 @@ fn test_track_lap_counting_and_best_lap_time() {
 
 #[test]
 fn test_checkpoint_sequence_enforcement_anti_cheat() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
 
@@ -69,7 +69,7 @@ fn test_checkpoint_sequence_enforcement_anti_cheat() {
 
 #[test]
 fn test_wrong_way_detection() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     // Heading PI (opposite to track direction +X at start line)
     let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), PI);
@@ -91,7 +91,7 @@ fn test_wrong_way_detection() {
 
 #[test]
 fn test_off_track_detection_and_surfaces() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
 
     // On track centerline
@@ -117,7 +117,7 @@ fn test_off_track_detection_and_surfaces() {
 
 #[test]
 fn test_pit_lane_and_pit_stop_trigger() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
 
@@ -145,7 +145,7 @@ fn test_pit_lane_and_pit_stop_trigger() {
 
 #[test]
 fn test_per_wheel_split_mu_sampling() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sample = track.spline.sample_at_distance(50.0);
     let half_track_w = sample.width * 0.5;
     let heading = sample.tangent.y.atan2(sample.tangent.x);
@@ -175,15 +175,15 @@ fn test_per_wheel_split_mu_sampling() {
 
 #[test]
 fn test_all_track_presets_grid_positions_valid() {
-    use tdrace_core::track::presets::{classic_grand_prix, oval_speedway, drift_park, kart_arena};
+    
     use tdrace_core::physics::{Car, CarConfig};
     use tdrace_core::collision::wall::resolve_all_wall_collisions;
 
     let tracks = [
-        ("Classic Grand Prix", classic_grand_prix()),
-        ("Oval Speedway", oval_speedway()),
-        ("Drift Park", drift_park()),
-        ("Kart Arena", kart_arena()),
+        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
+        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
     ];
 
     for (name, track) in &tracks {
@@ -225,15 +225,15 @@ fn test_all_track_presets_grid_positions_valid() {
 
 #[test]
 fn test_track_walls_do_not_block_drivable_track_and_do_not_self_intersect() {
-    use tdrace_core::track::presets::{classic_grand_prix, oval_speedway, drift_park, kart_arena};
+    
     use tdrace_core::physics::{Car, CarConfig};
     use tdrace_core::collision::wall::resolve_all_wall_collisions;
 
     let tracks = [
-        ("Classic Grand Prix", classic_grand_prix()),
-        ("Oval Speedway", oval_speedway()),
-        ("Drift Park", drift_park()),
-        ("Kart Arena", kart_arena()),
+        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
+        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
     ];
 
     for (name, track) in &tracks {
@@ -498,10 +498,10 @@ fn test_banked_curves_spline_interpolation_and_cross_slope() {
 
 #[test]
 fn test_oval_speedway_and_dirty_oval_presets_have_banking() {
-    use tdrace_core::track::presets::{dirty_oval_speedway, oval_speedway};
+    
     use tdrace_core::track::validation::validate_track;
 
-    let asphalt_oval = oval_speedway();
+    let asphalt_oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
     let max_asphalt_bank = asphalt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
     assert!(
         max_asphalt_bank >= 20.0,
@@ -515,7 +515,7 @@ fn test_oval_speedway_and_dirty_oval_presets_have_banking() {
         asphalt_errors
     );
 
-    let dirt_oval = dirty_oval_speedway();
+    let dirt_oval = tdrace_core::catalog::official_track("classic", "dirty_oval_speedway");
     let max_dirt_bank = dirt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
     assert!(
         max_dirt_bank >= 16.0,
@@ -578,9 +578,8 @@ fn test_banking_incline_physics_and_centripetal_downhill_force() {
 
 #[test]
 fn test_sync_dirty_oval_json() {
-    use tdrace_core::track::presets::dirty_oval_speedway;
-    use tdrace_core::track::Track;
-    let track = dirty_oval_speedway();
+        use tdrace_core::track::Track;
+    let track = tdrace_core::catalog::official_track("classic", "dirty_oval_speedway");
     let temp_file = std::env::temp_dir().join(format!("test_dirty_oval_{}.json", std::process::id()));
     track.save_to_file(&temp_file).expect("Failed to save dirty_oval_speedway.json");
     let loaded = Track::load_from_file(&temp_file).expect("Failed to load dirty_oval_speedway.json");
@@ -706,7 +705,7 @@ fn test_waypoint_wall_distance_json_backwards_compatibility() {
 
 #[test]
 fn test_auto_generate_grid_requires_finish_line() {
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     // Remove all checkpoints
     track.checkpoints.clear();
     track.grid_positions.clear();
@@ -733,7 +732,7 @@ fn test_auto_generate_grid_requires_finish_line() {
 
 #[test]
 fn test_auto_generate_grid_positioned_relative_to_finish_line() {
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.auto_generate_checkpoints(8, 3);
     assert!(track.has_finish_line());
 
@@ -929,27 +928,22 @@ fn test_prototypical_track_templates_all_combinations() {
 
 #[test]
 fn test_nascar_track_presets_and_validation() {
-    use tdrace_core::track::presets::{
-        bristol_motor_speedway, charlotte_motor_speedway, chicago_street_course,
-        darlington_raceway, daytona_superspeedway, eldora_speedway, indianapolis_motor_speedway,
-        iowa_speedway, martinsville_speedway, road_america, talladega_superspeedway,
-        watkins_glen_nascar,
-    };
+    
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
     let track_pairs = [
-        ("daytona.json", daytona_superspeedway()),
-        ("talladega.json", talladega_superspeedway()),
-        ("watkins_glen.json", watkins_glen_nascar()),
-        ("bristol.json", bristol_motor_speedway()),
-        ("martinsville.json", martinsville_speedway()),
-        ("darlington.json", darlington_raceway()),
-        ("charlotte.json", charlotte_motor_speedway()),
-        ("indianapolis.json", indianapolis_motor_speedway()),
-        ("eldora.json", eldora_speedway()),
-        ("iowa.json", iowa_speedway()),
-        ("road_america.json", road_america()),
-        ("chicago.json", chicago_street_course()),
+        ("daytona.json", tdrace_core::catalog::official_track("nascar", "daytona_superspeedway")),
+        ("talladega.json", tdrace_core::catalog::official_track("nascar", "talladega_superspeedway")),
+        ("watkins_glen.json", tdrace_core::catalog::official_track("nascar", "watkins_glen_nascar")),
+        ("bristol.json", tdrace_core::catalog::official_track("nascar", "bristol_motor_speedway")),
+        ("martinsville.json", tdrace_core::catalog::official_track("nascar", "martinsville_speedway")),
+        ("darlington.json", tdrace_core::catalog::official_track("nascar", "darlington_raceway")),
+        ("charlotte.json", tdrace_core::catalog::official_track("nascar", "charlotte_motor_speedway")),
+        ("indianapolis.json", tdrace_core::catalog::official_track("nascar", "indianapolis_motor_speedway")),
+        ("eldora.json", tdrace_core::catalog::official_track("nascar", "eldora_speedway")),
+        ("iowa.json", tdrace_core::catalog::official_track("nascar", "iowa_speedway")),
+        ("road_america.json", tdrace_core::catalog::official_track("nascar", "road_america")),
+        ("chicago.json", tdrace_core::catalog::official_track("nascar", "chicago_street_course")),
     ];
 
     for (_filename, track) in &track_pairs {

@@ -2,7 +2,6 @@ use std::fs;
 use std::path::Path;
 use tdrace_app::module::classic::ClassicGameModule;
 use tdrace_app::module::extreme_offroad::ExtremeOffRoadModule;
-use tdrace_app::module::gt::GtWorldChallengeModule;
 use tdrace_app::module::kart::KartGameModule;
 use tdrace_app::module::rally::RallyGameModule;
 use tdrace_app::module::GameModule;
@@ -27,7 +26,7 @@ fn test_all_96_tracks_grid_positions_count_and_validation() {
         let mod_id = module.id();
 
         for track_def in module.tracks() {
-            let gen_track = (track_def.generator)();
+            let gen_track = tdrace_core::catalog::official_track(mod_id, track_def.id);
             assert_eq!(
                 gen_track.grid_positions.len(),
                 target_slots,
@@ -82,29 +81,29 @@ fn test_all_96_tracks_grid_positions_count_and_validation() {
     }
 
     // GT World Challenge: all 18 tracks
-    let gt_tracks: Vec<(&str, fn() -> Track)> = vec![
-        ("monza", GtWorldChallengeModule::track_monza),
-        ("spa", GtWorldChallengeModule::track_spa),
-        ("silverstone", GtWorldChallengeModule::track_silverstone),
-        ("monaco", GtWorldChallengeModule::track_monaco),
-        ("suzuka", GtWorldChallengeModule::track_suzuka),
-        ("interlagos", GtWorldChallengeModule::track_interlagos),
-        ("montreal", GtWorldChallengeModule::track_montreal),
-        ("red_bull_ring", GtWorldChallengeModule::track_red_bull_ring),
-        ("catalunya", GtWorldChallengeModule::track_catalunya),
-        ("zandvoort", GtWorldChallengeModule::track_zandvoort),
-        ("bahrain", GtWorldChallengeModule::track_bahrain),
-        ("marina_bay", GtWorldChallengeModule::track_marina_bay),
-        ("cota", GtWorldChallengeModule::track_cota),
-        ("madring", GtWorldChallengeModule::track_madring),
-        ("nurburgring_gp", GtWorldChallengeModule::track_nurburgring_gp),
-        ("bathurst", GtWorldChallengeModule::track_bathurst),
-        ("portimao_gp", GtWorldChallengeModule::track_portimao_gp),
-        ("le_mans_sarthe", GtWorldChallengeModule::track_le_mans_sarthe),
+    let gt_tracks: Vec<&str> = vec![
+        "monza",
+        "spa",
+        "silverstone",
+        "monaco",
+        "suzuka",
+        "interlagos",
+        "montreal",
+        "red_bull_ring",
+        "catalunya",
+        "zandvoort",
+        "bahrain",
+        "marina_bay",
+        "cota",
+        "madring",
+        "nurburgring_gp",
+        "bathurst",
+        "portimao_gp",
+        "le_mans_sarthe",
     ];
 
-    for (id, generator) in gt_tracks {
-        let gen_track = generator();
+    for id in gt_tracks {
+        let gen_track = tdrace_core::catalog::official_track("gt", id);
         assert_eq!(
             gen_track.grid_positions.len(),
             18,

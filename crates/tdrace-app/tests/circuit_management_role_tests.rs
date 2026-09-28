@@ -2,7 +2,6 @@ use std::fs;
 use std::sync::Mutex;
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::tracks::{DevTrackStore, UserTrackStore};
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
 
 static ROLE_TEST_MUTEX: Mutex<()> = Mutex::new(());
@@ -76,7 +75,7 @@ fn test_player_role_isolation_and_immutable_presets() {
     assert!(reorder_down.is_err(), "Player mode must reject preset reordering");
 
     // 3. Promotion to git preset is forbidden for player
-    let promo_res = manager.promote_custom_track_to_git_preset("some_circuit");
+    let promo_res = manager.promote_custom_track_to_git_preset("some_circuit", None);
     assert!(promo_res.is_err(), "Player mode must reject git preset promotion");
 
     // 4. "My Circuits" library (module_custom_tracks) strictly lists user tracks, never presets
@@ -91,7 +90,7 @@ fn test_player_role_isolation_and_immutable_presets() {
     );
 
     // 5. Creating a custom track in Player mode
-    let mut custom = classic_grand_prix();
+    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     custom.name = "Player Special".to_string();
     custom.category = TrackCategory::Main;
     custom.modules = vec!["classic".to_string()];
@@ -116,7 +115,7 @@ fn test_data_loss_immunity_and_dual_persistence() {
 
     // 1. Player creates a custom circuit (e.g. Ramp Raceway redesign)
     let slug = "ramp_raceway_v2";
-    let mut custom_track = classic_grand_prix();
+    let mut custom_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     custom_track.name = "Ramp Raceway V2".to_string();
     custom_track.description = "Revamped with massive tabletop jumps.".to_string();
     custom_track.category = TrackCategory::Draft;
@@ -183,11 +182,11 @@ fn test_safe_deletion_with_auto_backup_archive() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create two distinct custom tracks
-    let mut t1 = classic_grand_prix();
+    let mut t1 = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     t1.name = "Track Alpha".to_string();
     manager.save_custom_track(&t1, Some("track_alpha")).unwrap();
 
-    let mut t2 = classic_grand_prix();
+    let mut t2 = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     t2.name = "Track Beta".to_string();
     manager.save_custom_track(&t2, Some("track_beta")).unwrap();
 
@@ -307,7 +306,7 @@ fn test_circuit_manager_preset_visibility_and_cloning_to_drafts() {
     assert!(classic_tracks.iter().any(|t| t.is_official_preset()));
 
     // Add a custom circuit for Classic
-    let mut custom = classic_grand_prix();
+    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     custom.name = "Custom Speed Ring".to_string();
     custom.category = TrackCategory::Main;
     custom.modules = vec!["classic".to_string()];

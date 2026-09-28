@@ -63,18 +63,17 @@ fn test_car_and_track_choices_metadata() {
 #[test]
 fn test_resolve_predefined_car_for_track_and_modules() {
     use tdrace_app::ui::menu::resolve_predefined_car_for_track;
-    use tdrace_core::track::presets;
 
-    let gp_track = presets::classic_grand_prix();
+    let gp_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert_eq!(resolve_predefined_car_for_track(Some(&gp_track), "classic"), CarChoice::SportsCar);
 
-    let oasis = presets::oasis_rally();
+    let oasis = tdrace_core::catalog::official_track("classic", "oasis_rally");
     assert_eq!(resolve_predefined_car_for_track(Some(&oasis), "rally"), CarChoice::SandRail);
 
-    let kart = presets::kart_arena();
+    let kart = tdrace_core::catalog::official_track("classic", "kart_arena");
     assert_eq!(resolve_predefined_car_for_track(Some(&kart), "kart"), CarChoice::Kart);
 
-    let drift = presets::drift_park();
+    let drift = tdrace_core::catalog::official_track("classic", "drift_park");
     assert_eq!(resolve_predefined_car_for_track(Some(&drift), "classic"), CarChoice::SportsCar);
 
     // Module fallbacks when track is None

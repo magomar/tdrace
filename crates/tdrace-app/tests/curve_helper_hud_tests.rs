@@ -5,7 +5,6 @@ use tdrace_app::ui::curve_indicator::{
 use tdrace_core::physics::car::Car;
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::curve::{evaluate_curve_approach, CurveDirection, TrackCurve};
-use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
 fn test_color_scheme_cycling() {
@@ -74,7 +73,7 @@ fn test_compute_curve_colors_rally_pacenote_schema() {
 
 #[test]
 fn test_classic_grand_prix_curve_evaluation_at_speed() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert!(!track.spline.curves.is_empty(), "Track must contain detected curves");
 
     // Player approaching first corner on main straight (say progress_dist = 50m) at 55 m/s (198 km/h)
@@ -133,7 +132,7 @@ fn test_indicator_alpha_quick_fade_past_apex() {
 
 #[test]
 fn test_curve_arrow_positioning_horizontal_and_clearance() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sample = &track.spline.samples[0];
     let player_car = Car::new(CarConfig::sports_car())
         .with_pose(sample.point, 0.0);

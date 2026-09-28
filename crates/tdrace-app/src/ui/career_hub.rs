@@ -157,54 +157,17 @@ pub fn cycle_calendar_slot(tier: u32, calendar: &mut [String], slot_idx: usize, 
     true
 }
 
-/// Human-readable circuit title.
+/// Human-readable circuit title, from the official catalog (spec 042).
 pub fn track_title(track_id: &str) -> &'static str {
-    match track_id {
-        "red_bull_ring" => "Red Bull Ring (Spielberg)",
-        "zandvoort" => "Circuit Zandvoort",
-        "nurburgring_gp" => "Nürburgring GP-Strecke",
-        "portimao_gp" => "Autódromo do Algarve (Portimão)",
-        "montreal" => "Circuit Gilles Villeneuve",
-        "monza" => "Monza Autodromo Nazionale",
-        "silverstone" => "Silverstone GP Circuit",
-        "catalunya" => "Circuit de Barcelona-Catalunya",
-        "spa" => "Circuit de Spa-Francorchamps",
-        "cota" => "Circuit of the Americas (COTA)",
-        "bahrain" => "Bahrain International Circuit",
-        "suzuka" => "Suzuka International Racing Course",
-        "interlagos" => "Autódromo de Interlagos",
-        "bathurst" => "Mount Panorama (Bathurst)",
-        "le_mans_sarthe" => "Circuit de la Sarthe (24h Le Mans)",
-        "monaco" => "Circuit de Monaco",
-        "marina_bay" => "Marina Bay Street Circuit",
-        "madring" => "Circuito Madring",
-        _ => "Motorsport Circuit",
-    }
+    tdrace_core::catalog::find(track_id, None).map_or("Motorsport Circuit", |c| c.name)
 }
 
-/// 2-Letter ISO country code for circuit flag banner.
+/// 2-Letter ISO country code for circuit flag banner, from the official catalog (spec 042).
 pub fn track_country(track_id: &str) -> &'static str {
-    match track_id {
-        "red_bull_ring" => "AT",
-        "zandvoort" => "NL",
-        "nurburgring_gp" => "DE",
-        "portimao_gp" => "PT",
-        "montreal" => "CA",
-        "monza" => "IT",
-        "silverstone" => "GB",
-        "catalunya" => "ES",
-        "spa" => "BE",
-        "cota" => "US",
-        "bahrain" => "BH",
-        "suzuka" => "JP",
-        "interlagos" => "BR",
-        "bathurst" => "AU",
-        "le_mans_sarthe" => "FR",
-        "monaco" => "MC",
-        "marina_bay" => "SG",
-        "madring" => "ES",
-        _ => "--",
-    }
+    tdrace_core::catalog::find(track_id, None)
+        .map(|c| c.country_code)
+        .filter(|code| !code.is_empty())
+        .unwrap_or("--")
 }
 
 /// Approximate circuit length in meters.

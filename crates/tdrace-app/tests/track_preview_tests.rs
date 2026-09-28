@@ -1,7 +1,6 @@
 use tdrace_app::ui::menu::{resolve_track_for_menu, TrackChoice};
 use tdrace_app::ui::track_preview::{compute_track_bounds, surface_preview_color};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::classic_grand_prix;
 
 #[test]
 fn test_surface_preview_colors_coverage() {
@@ -68,7 +67,7 @@ fn test_menu_track_resolver_special_modules() {
 
 #[test]
 fn test_track_preview_surface_breakdown_percentages() {
-    let gp = classic_grand_prix();
+    let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let breakdown = gp.surface_breakdown();
     assert_eq!(breakdown.len(), 1);
     assert_eq!(breakdown[0].0, SurfaceType::Asphalt);
@@ -78,8 +77,7 @@ fn test_track_preview_surface_breakdown_percentages() {
 
 #[test]
 fn test_suzuka_circuit_grid_and_crossover_geometry() {
-    use tdrace_app::module::gt::GtWorldChallengeModule;
-    let suzuka = GtWorldChallengeModule::track_suzuka();
+    let suzuka = tdrace_core::catalog::official_track("gt", "suzuka");
 
     assert_eq!(suzuka.grid_positions.len(), 18);
 
@@ -113,21 +111,18 @@ fn test_validate_all_circuits_and_presets() {
     use tdrace_app::module::gt::GtWorldChallengeModule;
     use tdrace_app::module::kart::KartGameModule;
     use tdrace_app::module::GameModule;
-    use tdrace_core::track::presets::{
-        classic_grand_prix, drift_park, dune_raid, kart_arena, oasis_rally,
-        oval_speedway, ramp_raceway, sahara_dunes,
-    };
+    
     use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
     let preset_tracks = [
-        ("Classic Grand Prix", classic_grand_prix()),
-        ("Oval Speedway", oval_speedway()),
-        ("Drift Park", drift_park()),
-        ("Kart Arena", kart_arena()),
-        ("Ramp Raceway", ramp_raceway()),
-        ("Oasis Rally", oasis_rally()),
-        ("Sahara Dunes", sahara_dunes()),
-        ("Dune Raid", dune_raid()),
+        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
+        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
+        ("Ramp Raceway", tdrace_core::catalog::official_track("classic", "ramp_raceway")),
+        ("Oasis Rally", tdrace_core::catalog::official_track("classic", "oasis_rally")),
+        ("Sahara Dunes", tdrace_core::catalog::official_track("classic", "oasis_rally")),
+        ("Dune Raid", tdrace_core::catalog::official_track("classic", "oasis_rally")),
     ];
 
     let gt_module = GtWorldChallengeModule::new();
@@ -149,7 +144,7 @@ fn test_validate_all_circuits_and_presets() {
     }
 
     for t_def in &gt_tracks {
-        let track = (t_def.generator)();
+        let track = tdrace_core::catalog::official_track("gt", t_def.id);
         let diags = validate_track(&track);
         let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
         let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
@@ -166,7 +161,7 @@ fn test_validate_all_circuits_and_presets() {
     }
 
     for t_def in &kart_tracks {
-        let track = (t_def.generator)();
+        let track = tdrace_core::catalog::official_track("kart", t_def.id);
         let diags = validate_track(&track);
         let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
         let warns: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Warning).collect();
@@ -273,7 +268,7 @@ fn test_thumbnail_refresh_when_overwriting_custom_circuit() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create and save initial circuit
-    let mut initial_track = classic_grand_prix();
+    let mut initial_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     initial_track.name = "Thumbnail Test Circuit".to_string();
     let initial_wp_count = initial_track.spline.waypoints.len();
     let path = manager
@@ -341,8 +336,7 @@ fn test_thumbnail_refresh_when_overwriting_preset_in_dev_mode() {
     use std::fs;
     use tdrace_app::track_manager::TrackManager;
     use tdrace_app::ui::menu::{clear_menu_track_cache, resolve_track_for_menu};
-    use tdrace_core::track::presets::classic_grand_prix;
-    use tdrace_core::track::spline::TrackWaypoint;
+        use tdrace_core::track::spline::TrackWaypoint;
 
     clear_menu_track_cache();
 
@@ -362,7 +356,7 @@ fn test_thumbnail_refresh_when_overwriting_preset_in_dev_mode() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Initial resolution of official preset
-    let canonical = classic_grand_prix();
+    let canonical = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let initial_wp_count = canonical.spline.waypoints.len();
     let initial_resolved = resolve_track_for_menu(&TrackChoice::ClassicGrandPrix)
         .expect("Canonical preset must resolve");

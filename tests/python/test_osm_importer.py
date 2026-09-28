@@ -86,6 +86,108 @@ def test_expand_bbox_adds_margin_in_meters():
     assert abs((e - w) - 0.002 / 0.70710678) < 1e-6
 
 
+# --- JSON output (spec 042) ---
+
+import json
+
+
+def _mini_tracks(tmp_path):
+    """A tracks/ folder with one GT circuit and the order/alias files."""
+    (tmp_path / "gt").mkdir()
+    existing = {
+        "name": "Monza Autodromo Nazionale",
+        "tag": "TEMPLE OF SPEED",
+        "osm_url": "https://www.openstreetmap.org/way/1",
+        "spline": {
+            "waypoints": [{"point": [0, 0]}],
+            "closed": True,
+            "samples": [1],
+            "total_length": 5.0,
+        },
+        "geometry": {"trees": [{"x": 1}]},
+    }
+    (tmp_path / "gt" / "monza.json").write_text(json.dumps(existing))
+    (tmp_path / ".track_order.json").write_text(json.dumps({"gt": ["monza"]}))
+    (tmp_path / ".aliases.json").write_text(json.dumps({"autodromo": "monza"}))
+    return tmp_path
+
+
+def _data(track_id):
+    wps = [
+        {
+            "x": 1.04,
+            "y": 2.0,
+            "width": 12.0,
+            "left_curb": True,
+            "right_curb": False,
+            "wall_dist": 3.25,
+        }
+    ]
+    return {
+        "id": track_id,
+        "name": "New GT",
+        "description": "d",
+        "tag": "T",
+        "default_laps": 4,
+        "barrier": "BarrierType::Concrete",
+        "barrier_offset": 2.5,
+        "waypoints": wps,
+    }
+
+
+def test_write_source_json_updates_only_waypoints_of_existing_circuit(tmp_path):
+    tracks = _mini_tracks(tmp_path)
+    path, cmd = imp.write_source_json("gt", _data("autodromo"), str(tracks))
+    assert path == str(tracks / "gt" / "monza.json")
+    track = json.loads((tracks / "gt" / "monza.json").read_text())
+    assert (
+        track["name"] == "Monza Autodromo Nazionale"
+        and track["tag"] == "TEMPLE OF SPEED"
+    )
+    assert track["geometry"]["trees"] == [{"x": 1}]
+    assert track["spline"]["waypoints"] == [
+        {
+            "point": [1.0, 2.0],
+            "width": 12.0,
+            "left_curb": True,
+            "right_curb": False,
+            "surface": "Asphalt",
+            "elevation": 0.0,
+            "left_wall_distance": 3.2,
+            "right_wall_distance": 3.2,
+        }
+    ]
+    assert cmd.endswith("--rebuild") and "track_bake" in cmd
+
+
+def test_write_source_json_creates_new_circuit_and_lists_it(tmp_path):
+    tracks = _mini_tracks(tmp_path)
+    _path, cmd = imp.write_source_json("gt", _data("imola"), str(tracks))
+    track = json.loads((tracks / "gt" / "imola.json").read_text())
+    assert (
+        track["name"] == "New GT"
+        and track["module_id"] == "gt"
+        and track["scale"] == "0.5x"
+    )
+    assert track["checkpoints"] == [] and track["spline"]["samples"] == []
+    assert json.loads((tracks / ".track_order.json").read_text()) == {
+        "gt": ["monza", "imola"]
+    }
+    assert cmd.endswith("--barrier-offset 2.5 --barrier-type Concrete")
+
+
+def test_provenance_urls_come_from_tracks_json(tmp_path):
+    tracks = _mini_tracks(tmp_path)
+    assert imp.provenance_osm_urls(str(tracks), str(tmp_path / "osm")) == {
+        "monza": "https://www.openstreetmap.org/way/1"
+    }
+    (tmp_path / "osm").mkdir()
+    (tmp_path / "osm" / "autodromo.osm").write_text("")
+    assert imp.provenance_osm_urls(str(tracks), str(tmp_path / "osm")) == {
+        "autodromo": "https://www.openstreetmap.org/way/1"
+    }
+
+
 def test_shift_start_moves_first_point_along_the_lap():
     square = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
     shifted = imp.shift_start(square, 150.0)

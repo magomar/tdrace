@@ -2,9 +2,6 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::presets::{
-    classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway, ramp_raceway,
-};
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::module::classic::ClassicGameModule;
@@ -161,6 +158,8 @@ impl CustomTrackInfo {
                 "gt" | "gt_challenge" => "GT World Challenge",
                 "rally" => "Rally Cross",
                 "kart" => "Karting",
+                "nascar" => "NASCAR Cup",
+                "extreme_offroad" | "offroad" => "Extreme Off-Road",
                 _ => "Classic",
             }
         } else if self.belongs_to_module("gt") {
@@ -169,8 +168,26 @@ impl CustomTrackInfo {
             "Rally Cross"
         } else if self.belongs_to_module("kart") {
             "Karting"
+        } else if self.belongs_to_module("nascar") {
+            "NASCAR Cup"
+        } else if self.belongs_to_module("extreme_offroad") {
+            "Extreme Off-Road"
         } else {
             "Classic"
+        }
+    }
+}
+
+/// Logs, once per file and run, a user-folder file that has an official circuit's id.
+/// Such a file is ignored: official circuits come only from the official catalog (spec 042).
+fn log_ignored_official_shadow(path: &Path) {
+    static LOGGED: std::sync::Mutex<Option<std::collections::HashSet<PathBuf>>> = std::sync::Mutex::new(None);
+    if let Ok(mut guard) = LOGGED.lock() {
+        if guard.get_or_insert_with(Default::default).insert(path.to_path_buf()) {
+            eprintln!(
+                "user track {} has the id of an official circuit and is ignored; rename it to keep it as a custom circuit",
+                path.display()
+            );
         }
     }
 }
@@ -233,7 +250,7 @@ impl TrackManager {
                 }
             }
         }
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
             let git_path = git_tracks_dir.join(".track_order.json");
             if git_path.exists() {
                 if let Ok(data) = fs::read_to_string(&git_path) {
@@ -314,7 +331,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -388,6 +405,7 @@ impl TrackManager {
                         let mut module_id = track.module_id.clone();
 
                         if category != TrackCategory::Draft && !is_demoted && Self::is_preset_slug(&stem) {
+                            log_ignored_official_shadow(&path);
                             continue;
                         }
 
@@ -637,8 +655,8 @@ impl TrackManager {
 
         let mut list = raw;
 
-        // In dev mode or when git_tracks_dir exists, discover promoted presets
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+        // In dev mode, discover presets promoted to tracks/ that are not embedded yet
+        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
             let scan_modules: Vec<&str> = match module_id {
                 "gt" | "gt_challenge" => vec!["gt"],
                 _ => vec![module_id],
@@ -771,7 +789,7 @@ impl TrackManager {
         if module_id == "all" {
             let has_scoped_deletion = self.deleted_presets.iter().any(|d| d.ends_with(&format!(":{}", id)));
             if has_scoped_deletion {
-                let active_in_any = ["classic", "gt", "rally", "kart", "nascar"].iter().any(|m| {
+                let active_in_any = ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"].iter().any(|m| {
                     let m_scoped = format!("{}:{}", m, id);
                     if self.deleted_presets.iter().any(|d| d == &m_scoped) {
                         return false;
@@ -800,10 +818,17 @@ impl TrackManager {
             "classic_rallycross" => TrackChoice::ClassicRallycross,
             "oasis_rally" => TrackChoice::OasisRally,
             custom_id => {
-                // If it exists in git_tracks_dir, load directly from the git preset file
-                if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
-                    return Track::load_from_file(&git_file)
-                        .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
+                if !self.is_preset_demoted(custom_id) {
+                    if let Some(result) = crate::tracks::official::load(custom_id, None) {
+                        return result;
+                    }
+                    // Dev mode: a circuit promoted to tracks/ in this session is not embedded yet.
+                    if crate::storage::is_dev_mode() {
+                        if let Some(git_file) = self.resolve_preset_git_file(custom_id, None) {
+                            return Track::load_from_file(&git_file)
+                                .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
+                        }
+                    }
                 }
                 let path = self.track_path_for_slug(custom_id).to_string_lossy().to_string();
                 TrackChoice::Custom {
@@ -815,12 +840,6 @@ impl TrackManager {
             }
         };
         self.load_track(&choice)
-    }
-
-    /// Loads the canonical procedural version of an official preset track.
-    pub fn load_procedural_preset(&self, choice: &TrackChoice) -> Result<Track, String> {
-        TrackChoice::resolve_procedural_preset(choice)
-            .ok_or_else(|| format!("Not an official procedural preset: {}", choice.track_id()))
     }
 
     /// Loads a `Track` from a `TrackChoice`.
@@ -852,79 +871,22 @@ impl TrackManager {
             }
         };
 
-        // Official presets load from git preset files first, then user storage overrides, then procedural generator.
+        // Official presets load only from the official catalog (spec 042); the user folder never shadows them.
         if choice.is_official_preset() {
-            if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
-                if let Ok(t) = Track::load_from_file(&git_file) {
-                    return Ok(t);
+            if let Some(result) = crate::tracks::official::load(choice.track_id(), choice_module) {
+                return result;
+            }
+            // Dev mode: a circuit promoted to tracks/ in this session is not embedded yet.
+            if crate::storage::is_dev_mode() {
+                if let Some(git_file) = self.resolve_preset_git_file(choice.track_id(), choice_module) {
+                    return Track::load_from_file(&git_file)
+                        .map_err(|e| format!("Failed to load git preset '{}': {}", git_file.display(), e));
                 }
             }
-            let user_path = self.track_path_for_slug(choice.track_id());
-            if user_path.exists() && user_path.starts_with(&self.tracks_dir) {
-                if let Ok(t) = Track::load_from_file(&user_path) {
-                    return Ok(t);
-                }
-            }
-            return self.load_procedural_preset(choice);
+            return Err(format!("Official circuit not found: {}", choice.track_id()));
         }
 
         match choice {
-            TrackChoice::ClassicGrandPrix => {
-                let p = self.track_path_for_slug("classic_grand_prix");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(classic_grand_prix()))
-                } else {
-                    Ok(classic_grand_prix())
-                }
-            }
-            TrackChoice::OvalSpeedway => {
-                let p = self.track_path_for_slug("oval_speedway");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(oval_speedway()))
-                } else {
-                    Ok(oval_speedway())
-                }
-            }
-            TrackChoice::DriftPark => {
-                let p = self.track_path_for_slug("drift_park");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(drift_park()))
-                } else {
-                    Ok(drift_park())
-                }
-            }
-            TrackChoice::KartArena => {
-                let p = self.track_path_for_slug("kart_arena");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(kart_arena()))
-                } else {
-                    Ok(kart_arena())
-                }
-            }
-            TrackChoice::RampRaceway => {
-                let p = self.track_path_for_slug("ramp_raceway");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(ramp_raceway()))
-                } else {
-                    Ok(ramp_raceway())
-                }
-            }
-            TrackChoice::ClassicRallycross => {
-                let p = self.track_path_for_slug("classic_rallycross");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(classic_rallycross()))
-                } else {
-                    Ok(classic_rallycross())
-                }
-            }
-            TrackChoice::OasisRally => {
-                let p = self.track_path_for_slug("oasis_rally");
-                if p.exists() {
-                    Track::load_from_file(&p).or_else(|_| Ok(oasis_rally()))
-                } else {
-                    Ok(oasis_rally())
-                }
-            }
             TrackChoice::Custom { id, path, .. } => {
                 let file_path = Path::new(path);
                 if file_path.exists() {
@@ -932,7 +894,7 @@ impl TrackManager {
                         return Ok(t);
                     }
                 }
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
+                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
                     let git_rel = git_tracks_dir.join(path);
                     if git_rel.exists() {
                         if let Ok(t) = Track::load_from_file(&git_rel) {
@@ -946,9 +908,11 @@ impl TrackManager {
                         }
                     }
                 }
-                if let Some(git_file) = self.resolve_preset_git_file(id, choice_module) {
-                    if let Ok(t) = Track::load_from_file(&git_file) {
-                        return Ok(t);
+                if crate::storage::is_dev_mode() {
+                    if let Some(git_file) = self.resolve_preset_git_file(id, choice_module) {
+                        if let Ok(t) = Track::load_from_file(&git_file) {
+                            return Ok(t);
+                        }
                     }
                 }
                 let alt_path = self.track_path_for_slug(id);
@@ -963,248 +927,39 @@ impl TrackManager {
                         return Ok(t);
                     }
                 }
-                match id.as_str() {
-                    "classic_rallycross" => Ok(tdrace_core::track::presets::classic_rallycross()),
-                    "dirty_oval_speedway" => Ok(tdrace_core::track::presets::dirty_oval_speedway()),
-                    "figure_eight" => Ok(tdrace_core::track::presets::figure_eight()),
-                    "monza" => Ok(crate::module::gt::GtWorldChallengeModule::track_monza()),
-                    "spa" => Ok(crate::module::gt::GtWorldChallengeModule::track_spa()),
-                    "silverstone" => Ok(crate::module::gt::GtWorldChallengeModule::track_silverstone()),
-                    "monaco" => Ok(crate::module::gt::GtWorldChallengeModule::track_monaco()),
-                    "suzuka" => Ok(crate::module::gt::GtWorldChallengeModule::track_suzuka()),
-                    "interlagos" => Ok(crate::module::gt::GtWorldChallengeModule::track_interlagos()),
-                    "montreal" => Ok(crate::module::gt::GtWorldChallengeModule::track_montreal()),
-                    "red_bull_ring" => Ok(crate::module::gt::GtWorldChallengeModule::track_red_bull_ring()),
-                    "catalunya" => Ok(crate::module::gt::GtWorldChallengeModule::track_catalunya()),
-                    "zandvoort" => Ok(crate::module::gt::GtWorldChallengeModule::track_zandvoort()),
-                    "bahrain" => Ok(crate::module::gt::GtWorldChallengeModule::track_bahrain()),
-                    "marina_bay" | "singapore" | "singapur" => Ok(crate::module::gt::GtWorldChallengeModule::track_marina_bay()),
-                    "cota" => Ok(crate::module::gt::GtWorldChallengeModule::track_cota()),
-                    "madring" => Ok(crate::module::gt::GtWorldChallengeModule::track_madring()),
-                    "nurburgring_gp" | "nurburgring" => Ok(crate::module::gt::GtWorldChallengeModule::track_nurburgring_gp()),
-                    "bathurst" | "mount_panorama" => Ok(crate::module::gt::GtWorldChallengeModule::track_bathurst()),
-                    "portimao_gp" | "portimao" => Ok(crate::module::gt::GtWorldChallengeModule::track_portimao_gp()),
-                    "le_mans_sarthe" | "le_mans" => Ok(crate::module::gt::GtWorldChallengeModule::track_le_mans_sarthe()),
-                    "sahara" | "sahara_dunes" => Ok(tdrace_core::track::presets::sahara_dunes()),
-                    "dirt_figure_eight" | "dirt_eight" => Ok(tdrace_core::track::presets::dirt_figure_eight()),
-                    "holjes_rx" | "holjes" => Ok(tdrace_core::track::presets::holjes_rx()),
-                    "lydden_hill" | "lydden" => Ok(tdrace_core::track::presets::lydden_hill()),
-                    "hell_rx" | "hell" => Ok(tdrace_core::track::presets::hell_rx()),
-                    "loheac_rx" | "loheac" => Ok(tdrace_core::track::presets::loheac_rx()),
-                    "estering_rx" | "estering" => Ok(tdrace_core::track::presets::estering_rx()),
-                    "montalegre_rx" | "montalegre" => Ok(tdrace_core::track::presets::montalegre_rx()),
-                    "nyirad_rx" | "nyirad" => Ok(tdrace_core::track::presets::nyirad_rx()),
-                    "kouvola_rx" | "kouvola" => Ok(tdrace_core::track::presets::kouvola_rx()),
-                    "catalunya_rx" => Ok(tdrace_core::track::presets::catalunya_rx()),
-                    "mettet_rx" | "mettet" => Ok(tdrace_core::track::presets::mettet_rx()),
-                    "silverstone_rx" => Ok(tdrace_core::track::presets::silverstone_rx()),
-                    "riga_rx" | "riga" | "bikernieki" => Ok(tdrace_core::track::presets::riga_rx()),
-                    "killarney_rx" | "killarney" => Ok(tdrace_core::track::presets::killarney_rx()),
-                    "yas_marina_rx" | "yas_marina" => Ok(tdrace_core::track::presets::yas_marina_rx()),
-                    "essay_rx" | "essay" => Ok(tdrace_core::track::presets::essay_rx()),
-                    "lonato" => Ok(crate::module::kart::KartGameModule::track_lonato()),
-                    "sarno" => Ok(crate::module::kart::KartGameModule::track_sarno()),
-                    "genk" => Ok(crate::module::kart::KartGameModule::track_genk()),
-                    "pfi" => Ok(crate::module::kart::KartGameModule::track_pfi()),
-                    "zuera" => Ok(crate::module::kart::KartGameModule::track_zuera()),
-                    "le_mans_kart" => Ok(crate::module::kart::KartGameModule::track_le_mans()),
-                    "portimao_kart" => Ok(crate::module::kart::KartGameModule::track_portimao()),
-                    "franciacorta" => Ok(crate::module::kart::KartGameModule::track_franciacorta()),
-                    "wackersdorf" | "prokart_wackersdorf" => Ok(crate::module::kart::KartGameModule::track_wackersdorf()),
-                    "kristianstad" | "asum_ring" => Ok(crate::module::kart::KartGameModule::track_kristianstad()),
-                    "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => Ok(crate::module::kart::KartGameModule::track_seven_laghi()),
-                    "ampfing" | "schweppermannring" => Ok(crate::module::kart::KartGameModule::track_ampfing()),
-                    "silverstone_national_kart" | "silverstone_kart" => Ok(crate::module::kart::KartGameModule::track_silverstone_national_kart()),
-                    "valencia_kart" | "valencia" => Ok(crate::module::kart::KartGameModule::track_valencia_kart()),
-                    "campillos" => Ok(crate::module::kart::KartGameModule::track_campillos()),
-                    "daytona" | "daytona_superspeedway" => Ok(tdrace_core::track::presets::daytona_superspeedway()),
-                    "talladega" | "talladega_superspeedway" => Ok(tdrace_core::track::presets::talladega_superspeedway()),
-                    "watkins_glen" | "watkins_glen_nascar" => Ok(tdrace_core::track::presets::watkins_glen_nascar()),
-                    "bristol" | "bristol_motor_speedway" => Ok(tdrace_core::track::presets::bristol_motor_speedway()),
-                    "martinsville" | "martinsville_speedway" => Ok(tdrace_core::track::presets::martinsville_speedway()),
-                    "darlington" | "darlington_raceway" => Ok(tdrace_core::track::presets::darlington_raceway()),
-                    "charlotte" | "charlotte_motor_speedway" => Ok(tdrace_core::track::presets::charlotte_motor_speedway()),
-                    "indianapolis" | "indianapolis_motor_speedway" => Ok(tdrace_core::track::presets::indianapolis_motor_speedway()),
-                    "eldora" | "eldora_speedway" => Ok(tdrace_core::track::presets::eldora_speedway()),
-                    "iowa" | "iowa_speedway" => Ok(tdrace_core::track::presets::iowa_speedway()),
-                    "road_america" => Ok(tdrace_core::track::presets::road_america()),
-                    "chicago" | "chicago_street_course" => Ok(tdrace_core::track::presets::chicago_street_course()),
-                    "bowman_gray" | "bowman_gray_stadium" => Ok(tdrace_core::track::presets::bowman_gray_stadium()),
-                    "irp_oval" | "lucas_oil_irp" => Ok(tdrace_core::track::presets::lucas_oil_irp()),
-                    "north_wilkesboro" | "north_wilkesboro_speedway" => Ok(tdrace_core::track::presets::north_wilkesboro_speedway()),
-                    "pocono" | "pocono_raceway" => Ok(tdrace_core::track::presets::pocono_raceway()),
-                    "phoenix" | "phoenix_raceway" => Ok(tdrace_core::track::presets::phoenix_raceway()),
-                    "dreux_rx" | "dreux" => Ok(tdrace_core::track::presets::dreux_rx()),
-                    "blyton_rx" | "blyton_park" | "blyton_park_rx" => Ok(tdrace_core::track::presets::blyton_park_rx()),
-                    "laval_kart" | "laval" => Ok(tdrace_core::track::presets::laval_kart()),
-                    "whilton_mill" | "whilton_mill_kart" => Ok(tdrace_core::track::presets::whilton_mill_kart()),
-                    "glamis_dunes" | "glamis" | "glamis_sand_dunes" => Ok(tdrace_core::track::presets::glamis_sand_dunes()),
-                    "crandon_short_course" | "crandon" => Ok(tdrace_core::track::presets::crandon_short_course()),
-                    _ => Err(format!("Track file not found: {}", path)),
-                }
+                crate::tracks::official::load(id, choice_module)
+                    .unwrap_or_else(|| Err(format!("Track file not found: {}", path)))
             }
+            // The classic variants are official circuits and were resolved above.
+            other => Err(format!("Official circuit not found: {}", other.track_id())),
         }
     }
 
-    /// Returns the built-in motorsport module ID for a preset track slug, if applicable.
+    /// Returns the motorsport module of an official circuit id or alias, if it is one.
     pub fn preset_module(slug: &str) -> Option<&'static str> {
-        match slug {
-            "classic_grand_prix" | "oval_speedway" | "dirty_oval_speedway" | "figure_eight" | "dirt_figure_eight" | "dirt_eight" | "drift_park" | "kart_arena" | "ramp_raceway" | "classic_rallycross" | "oasis_rally" | "sahara" | "sahara_dunes" => Some("classic"),
-            "holjes_rx" | "holjes" | "lydden_hill" | "lydden" | "hell_rx" | "hell" | "loheac_rx" | "loheac" | "estering_rx" | "estering" | "montalegre_rx" | "montalegre" | "nyirad_rx" | "nyirad" | "kouvola_rx" | "kouvola" | "catalunya_rx" | "mettet_rx" | "mettet" | "silverstone_rx" | "riga_rx" | "riga" | "bikernieki" | "killarney_rx" | "killarney" | "yas_marina_rx" | "yas_marina" | "essay_rx" | "essay" | "dreux_rx" | "dreux" | "blyton_rx" | "blyton_park" | "blyton_park_rx" => Some("rally"),
-            "lonato" | "sarno" | "genk" | "pfi" | "zuera" | "le_mans_kart" | "portimao_kart" | "franciacorta" | "wackersdorf" | "prokart_wackersdorf" | "kristianstad" | "asum_ring" | "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" | "ampfing" | "schweppermannring" | "silverstone_national_kart" | "silverstone_kart" | "valencia_kart" | "valencia" | "campillos" | "laval_kart" | "laval" | "whilton_mill" | "whilton_mill_kart" => Some("kart"),
-            "monza" | "spa" | "silverstone" | "monaco" | "suzuka" | "interlagos" | "montreal" | "red_bull_ring" | "catalunya" | "zandvoort" | "bahrain" | "marina_bay" | "singapore" | "singapur" | "cota" | "madring" | "nurburgring_gp" | "nurburgring" | "bathurst" | "mount_panorama" | "portimao_gp" | "le_mans_sarthe" => Some("gt"),
-            "daytona" | "daytona_superspeedway" | "talladega" | "talladega_superspeedway" | "watkins_glen" | "watkins_glen_nascar" | "bristol" | "bristol_motor_speedway" | "martinsville" | "martinsville_speedway" | "darlington" | "darlington_raceway" | "charlotte" | "charlotte_motor_speedway" | "indianapolis" | "indianapolis_motor_speedway" | "eldora" | "eldora_speedway" | "iowa" | "iowa_speedway" | "road_america" | "chicago" | "chicago_street_course" | "bowman_gray" | "bowman_gray_stadium" | "irp_oval" | "lucas_oil_irp" | "north_wilkesboro" | "north_wilkesboro_speedway" | "pocono" | "pocono_raceway" | "phoenix" | "phoenix_raceway" => Some("nascar"),
-            "sahara_dune_crossing" | "atacama_sand_basin" | "atacama" | "red_rock_canyon" | "red_rock" | "baja_500_desert_scrub" | "baja_500" | "baja" | "mud_slough_arena" | "mud_slough" | "gravel_quarry_chasm" | "gravel_quarry" | "louisiana_mud_swampland" | "louisiana_swampland" | "louisiana" | "arctic_frozen_lake" | "frozen_lake" | "alpine_snow_ridge" | "alpine_snow" | "rovaniemi_ice_ring" | "rovaniemi" | "glacier_crest_pass" | "glacier_crest" | "supercross_stadium_arena" | "supercross_stadium" | "supercross" | "monster_colosseum" | "stunt_city_megastructure" | "stunt_city" | "glamis_dunes" | "glamis" | "glamis_sand_dunes" | "crandon_short_course" | "crandon" => Some("extreme_offroad"),
-            _ => {
-                if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                    for m in ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"] {
-                        if git_tracks_dir.join(m).join(format!("{}.json", slug)).exists() {
-                            return match m {
-                                "classic" => Some("classic"),
-                                "rally" => Some("rally"),
-                                "kart" => Some("kart"),
-                                "gt" => Some("gt"),
-                                "nascar" => Some("nascar"),
-                                "extreme_offroad" => Some("extreme_offroad"),
-                                _ => None,
-                            };
-                        }
-                    }
-                }
-                None
-            }
+        if let Some(circuit) = tdrace_core::catalog::find(slug, None) {
+            return Some(circuit.module);
         }
+        // Dev mode: a circuit promoted to tracks/ in this session is not embedded yet.
+        let git_tracks_dir = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode())?;
+        ["classic", "rally", "kart", "gt", "nascar", "extreme_offroad"]
+            .into_iter()
+            .find(|m| git_tracks_dir.join(m).join(format!("{}.json", slug)).exists())
     }
 
-    /// Returns the canonical preset ID for aliases (e.g. "sahara" -> "sahara_dunes").
+    /// Returns the catalog id for an official circuit alias (e.g. "daytona" -> "daytona_superspeedway").
     pub fn canonical_preset_id(slug: &str) -> &str {
-        match slug {
-            "sahara" => "sahara_dunes",
-            "hell" => "hell_rx",
-            "holjes" => "holjes_rx",
-            "lydden" => "lydden_hill",
-            "loheac" => "loheac_rx",
-            "estering" => "estering_rx",
-            "montalegre" => "montalegre_rx",
-            "nyirad" => "nyirad_rx",
-            "kouvola" => "kouvola_rx",
-            "dirt_eight" => "dirt_figure_eight",
-            "daytona" => "daytona_superspeedway",
-            "talladega" => "talladega_superspeedway",
-            "watkins_glen" => "watkins_glen_nascar",
-            "bristol" => "bristol_motor_speedway",
-            "martinsville" => "martinsville_speedway",
-            "darlington" => "darlington_raceway",
-            "charlotte" => "charlotte_motor_speedway",
-            "indianapolis" => "indianapolis_motor_speedway",
-            "eldora" => "eldora_speedway",
-            "iowa" => "iowa_speedway",
-            "chicago" => "chicago_street_course",
-            "bowman_gray" => "bowman_gray_stadium",
-            "irp_oval" => "lucas_oil_irp",
-            "north_wilkesboro" => "north_wilkesboro_speedway",
-            "pocono" => "pocono_raceway",
-            "phoenix" => "phoenix_raceway",
-            "mettet" => "mettet_rx",
-            "riga" | "bikernieki" => "riga_rx",
-            "killarney" => "killarney_rx",
-            "yas_marina" => "yas_marina_rx",
-            "dreux" => "dreux_rx",
-            "blyton_park" | "blyton_park_rx" => "blyton_rx",
-            "laval" => "laval_kart",
-            "whilton_mill_kart" => "whilton_mill",
-            "atacama" => "atacama_sand_basin",
-            "red_rock" => "red_rock_canyon",
-            "baja" | "baja_500" => "baja_500_desert_scrub",
-            "mud_slough" => "mud_slough_arena",
-            "gravel_quarry" => "gravel_quarry_chasm",
-            "louisiana" | "louisiana_swampland" => "louisiana_mud_swampland",
-            "frozen_lake" => "arctic_frozen_lake",
-            "alpine_snow" => "alpine_snow_ridge",
-            "rovaniemi" => "rovaniemi_ice_ring",
-            "glacier_crest" => "glacier_crest_pass",
-            "supercross" | "supercross_stadium" => "supercross_stadium_arena",
-            "stunt_city" => "stunt_city_megastructure",
-            "glamis" | "glamis_sand_dunes" => "glamis_dunes",
-            "crandon" => "crandon_short_course",
-            "nurburgring" => "nurburgring_gp",
-            "mount_panorama" => "bathurst",
-            "portimao" => "portimao_gp",
-            "le_mans" => "le_mans_sarthe",
-            "singapore" | "singapur" => "marina_bay",
-            other => other,
-        }
+        tdrace_core::catalog::canonical_id(slug).unwrap_or(slug)
     }
 
-    /// Returns all known alias variations for a preset track slug (including short filenames and long catalog IDs).
-    pub fn preset_slug_aliases(slug: &str) -> &'static [&'static str] {
-        match slug {
-            "marina_bay" | "singapore" | "singapur" => &["marina_bay", "singapore", "singapur"],
-            "nurburgring" | "nurburgring_gp" => &["nurburgring_gp", "nurburgring"],
-            "bathurst" | "mount_panorama" => &["bathurst", "mount_panorama"],
-            "portimao" | "portimao_gp" => &["portimao_gp", "portimao"],
-            "le_mans" | "le_mans_sarthe" => &["le_mans_sarthe", "le_mans"],
-            "daytona" | "daytona_superspeedway" => &["daytona", "daytona_superspeedway"],
-            "talladega" | "talladega_superspeedway" => &["talladega", "talladega_superspeedway"],
-            "watkins_glen" | "watkins_glen_nascar" => &["watkins_glen", "watkins_glen_nascar"],
-            "bristol" | "bristol_motor_speedway" => &["bristol", "bristol_motor_speedway"],
-            "martinsville" | "martinsville_speedway" => &["martinsville", "martinsville_speedway"],
-            "darlington" | "darlington_raceway" => &["darlington", "darlington_raceway"],
-            "charlotte" | "charlotte_motor_speedway" => &["charlotte", "charlotte_motor_speedway"],
-            "indianapolis" | "indianapolis_motor_speedway" => &["indianapolis", "indianapolis_motor_speedway"],
-            "eldora" | "eldora_speedway" => &["eldora", "eldora_speedway"],
-            "iowa" | "iowa_speedway" => &["iowa", "iowa_speedway"],
-            "road_america" => &["road_america"],
-            "chicago" | "chicago_street_course" => &["chicago", "chicago_street_course"],
-            "bowman_gray" | "bowman_gray_stadium" => &["bowman_gray_stadium", "bowman_gray"],
-            "irp_oval" | "lucas_oil_irp" => &["lucas_oil_irp", "irp_oval"],
-            "north_wilkesboro" | "north_wilkesboro_speedway" => &["north_wilkesboro_speedway", "north_wilkesboro"],
-            "pocono" | "pocono_raceway" => &["pocono_raceway", "pocono"],
-            "phoenix" | "phoenix_raceway" => &["phoenix_raceway", "phoenix"],
-            "sahara" | "sahara_dunes" => &["sahara_dunes", "sahara"],
-            "dirt_eight" | "dirt_figure_eight" => &["dirt_figure_eight", "dirt_eight"],
-            "holjes" | "holjes_rx" => &["holjes_rx", "holjes"],
-            "lydden" | "lydden_hill" => &["lydden_hill", "lydden"],
-            "hell" | "hell_rx" => &["hell_rx", "hell"],
-            "loheac" | "loheac_rx" => &["loheac_rx", "loheac"],
-            "estering" | "estering_rx" => &["estering_rx", "estering"],
-            "montalegre" | "montalegre_rx" => &["montalegre_rx", "montalegre"],
-            "nyirad" | "nyirad_rx" => &["nyirad_rx", "nyirad"],
-            "kouvola" | "kouvola_rx" => &["kouvola_rx", "kouvola"],
-            "mettet" | "mettet_rx" => &["mettet_rx", "mettet"],
-            "silverstone_rx" => &["silverstone_rx"],
-            "riga" | "riga_rx" | "bikernieki" => &["riga_rx", "riga", "bikernieki"],
-            "killarney" | "killarney_rx" => &["killarney_rx", "killarney"],
-            "yas_marina" | "yas_marina_rx" => &["yas_marina_rx", "yas_marina"],
-            "dreux" | "dreux_rx" => &["dreux_rx", "dreux"],
-            "blyton_rx" | "blyton_park" | "blyton_park_rx" => &["blyton_rx", "blyton_park_rx", "blyton_park"],
-            "dirty_oval" | "dirty_oval_speedway" => &["dirty_oval_speedway", "dirty_oval"],
-            "figure_8" | "figure_eight" => &["figure_eight", "figure_8"],
-            "wackersdorf" | "prokart_wackersdorf" => &["wackersdorf", "prokart_wackersdorf"],
-            "kristianstad" | "asum_ring" => &["kristianstad", "asum_ring"],
-            "seven_laghi" | "7laghi" | "castelletto_kart" | "castelletto" => &["seven_laghi", "7laghi", "castelletto_kart", "castelletto"],
-            "ampfing" | "schweppermannring" => &["ampfing", "schweppermannring"],
-            "silverstone_national_kart" | "silverstone_kart" => &["silverstone_national_kart", "silverstone_kart"],
-            "laval" | "laval_kart" => &["laval_kart", "laval"],
-            "whilton_mill" | "whilton_mill_kart" => &["whilton_mill", "whilton_mill_kart"],
-            "sahara_dune_crossing" => &["sahara_dune_crossing"],
-            "atacama" | "atacama_sand_basin" => &["atacama_sand_basin", "atacama"],
-            "red_rock" | "red_rock_canyon" => &["red_rock_canyon", "red_rock"],
-            "baja" | "baja_500" | "baja_500_desert_scrub" => &["baja_500_desert_scrub", "baja_500", "baja"],
-            "mud_slough" | "mud_slough_arena" => &["mud_slough_arena", "mud_slough"],
-            "gravel_quarry" | "gravel_quarry_chasm" => &["gravel_quarry_chasm", "gravel_quarry"],
-            "louisiana" | "louisiana_swampland" | "louisiana_mud_swampland" => &["louisiana_mud_swampland", "louisiana_swampland", "louisiana"],
-            "frozen_lake" | "arctic_frozen_lake" => &["arctic_frozen_lake", "frozen_lake"],
-            "alpine_snow" | "alpine_snow_ridge" => &["alpine_snow_ridge", "alpine_snow"],
-            "rovaniemi" | "rovaniemi_ice_ring" => &["rovaniemi_ice_ring", "rovaniemi"],
-            "glacier_crest" | "glacier_crest_pass" => &["glacier_crest_pass", "glacier_crest"],
-            "supercross" | "supercross_stadium" | "supercross_stadium_arena" => &["supercross_stadium_arena", "supercross_stadium", "supercross"],
-            "monster_colosseum" => &["monster_colosseum"],
-            "stunt_city" | "stunt_city_megastructure" => &["stunt_city_megastructure", "stunt_city"],
-            "glamis_dunes" | "glamis" | "glamis_sand_dunes" => &["glamis_dunes", "glamis", "glamis_sand_dunes"],
-            "crandon" | "crandon_short_course" => &["crandon_short_course", "crandon"],
-            _ => &[],
-        }
+    /// Returns the catalog id and every alias of an official circuit (empty for other slugs).
+    pub fn preset_slug_aliases(slug: &str) -> Vec<&'static str> {
+        let Some(id) = tdrace_core::catalog::canonical_id(slug) else {
+            return Vec::new();
+        };
+        std::iter::once(id)
+            .chain(tdrace_core::catalog::aliases().iter().filter(|(_, target)| *target == id).map(|(alias, _)| *alias))
+            .collect()
     }
 
     /// Resolves the canonical file path in `git_tracks_dir` for a preset track slug,
@@ -1223,7 +978,7 @@ impl TrackManager {
                 modules.push(m);
             }
         }
-        for m in ["classic", "gt", "rally", "kart", "nascar"] {
+        for m in ["classic", "gt", "rally", "kart", "nascar", "extreme_offroad"] {
             if !modules.contains(&m) {
                 modules.push(m);
             }
@@ -1233,7 +988,7 @@ impl TrackManager {
         let mut candidates: Vec<&str> = Vec::new();
         candidates.push(slug);
         for a in aliases {
-            if !candidates.contains(a) {
+            if !candidates.contains(&a) {
                 candidates.push(a);
             }
         }
@@ -1291,6 +1046,7 @@ impl TrackManager {
             || self.tracks_dir.join("rally").join(&file_name).exists()
             || self.tracks_dir.join("kart").join(&file_name).exists()
             || self.tracks_dir.join("nascar").join(&file_name).exists()
+            || self.tracks_dir.join("extreme_offroad").join(&file_name).exists()
             || self.resolve_preset_git_file(slug, None).is_some()
     }
 
@@ -1314,6 +1070,7 @@ impl TrackManager {
             self.tracks_dir.join("rally").join(&file_name),
             self.tracks_dir.join("kart").join(&file_name),
             self.tracks_dir.join("nascar").join(&file_name),
+            self.tracks_dir.join("extreme_offroad").join(&file_name),
             self.tracks_dir.join("drafts").join(&file_name),
         ];
         for cand in &candidates {
@@ -1345,10 +1102,8 @@ impl TrackManager {
         // Saving to user storage ensures edits are immune to git branch changes, checkouts, and test runs.
         if Self::is_preset_slug(&base_slug) && !self.is_preset_demoted(&base_slug) {
             if !crate::storage::is_dev_mode() {
-                return Err(format!(
-                    "'{}' is an official preset and cannot be modified directly. Please clone it to My Circuits / Drafts.",
-                    base_slug
-                ));
+                // Standard mode never overwrites an official circuit: save the edit as a new custom copy (spec 042 §2.5).
+                return self.save_official_edit_as_copy(&track_to_save, &base_slug);
             }
 
             let mod_hint = track_to_save.module_id.clone().or_else(|| {
@@ -1370,28 +1125,22 @@ impl TrackManager {
                 track_to_save.modules.push(mod_id.clone());
             }
 
-            // 1. Dual persistence: save a copy to user storage (immune to git operations, branch changes, and tests)
-            let _ = fs::create_dir_all(&self.tracks_dir);
-            let user_file = self.track_path_for_slug(&base_slug);
-            let _ = track_to_save.save_to_file(&user_file);
-
-            // 2. Save directly to the repository's git-tracked tracks/<module>/ directory
-            let mut saved_path = user_file.to_string_lossy().to_string();
-            if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir() {
-                let target_git_file = self.resolve_preset_git_file(&base_slug, Some(&mod_id)).unwrap_or_else(|| {
-                    let git_dir = git_tracks_dir.join(&mod_id);
-                    let _ = fs::create_dir_all(&git_dir);
-                    git_dir.join(format!("{}.json", base_slug))
-                });
-                track_to_save
-                    .save_to_file(&target_git_file)
-                    .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
-                saved_path = target_git_file.to_string_lossy().to_string();
-            }
+            // Dev mode: the official circuit has one copy, tracks/<module>/<id>.json (spec 042 §2.5).
+            let git_tracks_dir = crate::storage::resolve_git_tracks_dir()
+                .ok_or_else(|| "Git repository tracks directory not found.".to_string())?;
+            let canonical_slug = tdrace_core::catalog::canonical_id(&base_slug).unwrap_or(&base_slug);
+            let target_git_file = self.resolve_preset_git_file(canonical_slug, Some(&mod_id)).unwrap_or_else(|| {
+                let git_dir = git_tracks_dir.join(&mod_id);
+                let _ = fs::create_dir_all(&git_dir);
+                git_dir.join(format!("{}.json", canonical_slug))
+            });
+            track_to_save
+                .save_to_file(&target_git_file)
+                .map_err(|e| format!("Failed to save git-tracked preset: {}", e))?;
 
             let _ = self.scan_custom_tracks();
             crate::ui::menu::clear_menu_track_cache();
-            return Ok(saved_path);
+            return Ok(target_git_file.to_string_lossy().to_string());
         }
 
         // If file already exists and was Main category, keep its category and module when overwriting.
@@ -1753,6 +1502,31 @@ impl TrackManager {
     /// Clones an existing circuit (preset or custom), creating an exact duplicate in the user circuits storage.
     /// Appends "(clone)" to the track name, sets category to Draft, and writes to `<slug>_clone.json`.
     /// Returns the cloned Track instance and its saved file path.
+    /// Saves a standard-mode edit of an official circuit as a new draft in the user folder.
+    fn save_official_edit_as_copy(&mut self, track: &Track, official_slug: &str) -> Result<String, String> {
+        let mut copy = track.clone();
+        copy.name = format!("{} (copy)", track.name.trim());
+        copy.category = TrackCategory::Draft;
+        copy.module_id = None;
+        copy.modules.clear();
+
+        let base_slug = format!("{}_copy", Self::sanitize_slug(official_slug));
+        let mut file_slug = base_slug.clone();
+        let mut counter = 1;
+        while self.track_file_exists(&file_slug) {
+            file_slug = format!("{}_{}", base_slug, counter);
+            counter += 1;
+        }
+        let _ = fs::create_dir_all(&self.tracks_dir);
+        let path = self.tracks_dir.join(format!("{}.json", file_slug));
+        copy.save_to_file(&path)
+            .map_err(|e| format!("Failed to save copy of official circuit: {}", e))?;
+
+        let _ = self.scan_custom_tracks();
+        crate::ui::menu::clear_menu_track_cache();
+        Ok(path.to_string_lossy().to_string())
+    }
+
     pub fn clone_track(&mut self, choice: &TrackChoice) -> Result<(Track, String), String> {
         let original_track = self.load_track(choice)?;
         let mut cloned_track = original_track.clone();
@@ -1981,8 +1755,9 @@ impl TrackManager {
     }
 
     /// Promotes a custom track to an official git-tracked preset (dev mode only).
-    /// Saves the track JSON into `tracks/<module>/<slug>.json` while retaining a persistent user copy.
-    pub fn promote_custom_track_to_git_preset(&mut self, id: &str) -> Result<PathBuf, String> {
+    /// Moves the track JSON to `tracks/<module>/<slug>.json`; the user copy is backed up and removed (spec 042 §2.5).
+    /// `target_module` is the module picked in the promote dialog; without it the track's own module is used.
+    pub fn promote_custom_track_to_git_preset(&mut self, id: &str, target_module: Option<&str>) -> Result<PathBuf, String> {
         if !crate::storage::is_dev_mode() {
             return Err("Promoting tracks to preset circuits is only allowed in developer mode.".to_string());
         }
@@ -2001,13 +1776,15 @@ impl TrackManager {
             (t, None)
         };
 
-        let target_module = track.module_id.clone()
+        let target_module = target_module
+            .map(|m| Self::normalize_module_id(m).to_string())
+            .or_else(|| track.module_id.clone())
             .or_else(|| track.modules.first().cloned())
             .unwrap_or_else(|| "classic".to_string());
 
         track.category = TrackCategory::Main;
-        if track.modules.is_empty() {
-            track.modules = vec![target_module.clone()];
+        if !track.modules.contains(&target_module) {
+            track.modules.insert(0, target_module.clone());
         }
         track.module_id = Some(target_module.clone());
 
@@ -2018,24 +1795,15 @@ impl TrackManager {
         track.save_to_file(&target_path)
             .map_err(|e| format!("Failed to save git preset '{}': {}", target_path.display(), e))?;
 
-        // DUAL PERSISTENCE: Maintain a persistent copy in user storage with Main category.
-        // This guarantees that if git operations, branch changes, or automated tests clean the repo,
-        // the user's hard work is never destroyed.
+        // The official circuit now lives only in tracks/. Back up and remove the user copies,
+        // so a custom copy never sits next to the official one (recoverable from `.backup/`).
         let user_file = self.tracks_dir.join(format!("{}.json", id));
-        let _ = track.save_to_file(&user_file);
-        Self::backup_track_file(&user_file, &self.tracks_dir);
-
-        // If a separate draft copy existed in drafts/ or elsewhere, back it up and clean the drafts folder
-        if let Some(p) = local_path {
-            if p != user_file && p.exists() {
+        let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
+        for p in [Some(user_file), Some(draft_cand), local_path].into_iter().flatten() {
+            if p.exists() && p.starts_with(&self.tracks_dir) {
                 Self::backup_track_file(&p, &self.tracks_dir);
                 let _ = fs::remove_file(p);
             }
-        }
-        let draft_cand = self.tracks_dir.join("drafts").join(format!("{}.json", id));
-        if draft_cand != user_file && draft_cand.exists() {
-            Self::backup_track_file(&draft_cand, &self.tracks_dir);
-            let _ = fs::remove_file(draft_cand);
         }
 
         // Clean up any deleted_presets marker for this track
@@ -2168,7 +1936,7 @@ mod tests {
         let choices = manager.all_track_choices();
         assert_eq!(choices.len(), 95); // 10 classic + 18 gt + 17 rally + 17 kart + 17 nascar + 16 unique extreme off-road
 
-        let mut gp = classic_grand_prix();
+        let mut gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         gp.name = "My Custom GP".to_string();
         gp.description = "A custom testing GP".to_string();
         gp.category = TrackCategory::Draft;
@@ -2228,7 +1996,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
 
-        let mut track = classic_grand_prix();
+        let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         track.name = "Awesome Track".to_string();
 
         // 1. Initial save
@@ -2332,7 +2100,7 @@ mod tests {
         assert_eq!(all_tracks.len(), 95);
 
         // Save a custom circuit assigned to classic and rally
-        let mut custom_circuit = classic_grand_prix();
+        let mut custom_circuit = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         custom_circuit.name = "Custom Category Circuit".to_string();
         custom_circuit.modules = vec!["classic".to_string(), "rally".to_string()];
         let _ = manager.save_custom_track_with_options(&custom_circuit, Some("custom_cat_circuit"), false);
