@@ -25,7 +25,7 @@ Quick Race, Career and Split Screen use two shared screens: the full-screen circ
 | L-3 | The host can not change the own car or livery in the lobby. The host car is the car that was selected before the lobby opened. Spec 036 wireframe 2 shows "[C] Change My Car / Livery", but `C` copies the IP. | `host_screen.rs` |
 | L-4 | The client cycles six hard-coded cars (5 GT + 1 kart) and nine hard-coded liveries. The list ignores the host discipline, career unlocks and the catalog. | `client_lobby_screen.rs::new` |
 | L-5 | Slot rows show raw ids (`gt_ferrari_296_gt3: corsa_red`). The client header shows the track slug. | `host_screen.rs::draw`, `client_lobby_screen.rs::draw` |
-| L-6 | When the host changes the circuit, `LanHost.discipline` stays at the bind value, so the beacon can advertise the wrong discipline. | `host.rs::set_track_and_rules` |
+| L-6 | When the host changes the circuit, `LanHost.discipline` stays at the bind value, so the beacon can advertise the wrong discipline. Fixed by design: the selector only offers circuits of the bind module, so no setter is needed. | `host.rs::set_track_and_rules` |
 | L-7 | The host can pick a custom circuit (via `track_choice` at bind). A client does not have that file, so `launch_lan_race_session` falls back to `ClassicGrandPrix` on the client only. The two machines race on different tracks. | `game/mod.rs::launch_lan_race_session` |
 
 Related work: spec 044 (`feat/robust-lan-race-sync`) replaces the in-race netcode and also edits `host_screen.rs`, `client_lobby_screen.rs` and the LAN launch path in `game/mod.rs`. This spec changes only the lobby rows, the sub-screen flow and the keep-alive pump, not the launch or race packets. The branch merged second must resolve the overlap in those files.
@@ -55,13 +55,13 @@ stateDiagram-v2
   - shows only official circuits of the host module (the Custom tab is not available, see L-7);
   - on confirm, sets the host track and returns to `GameState::LanHostLobby`. It does **not** call `init_race`;
   - on ESC, returns to `GameState::LanHostLobby` with no change;
-  - disables the shortcuts that leave the LAN flow (Garage `G`, Track Manager `T`, championship `F`, Profile `P`, Controls `K`, Settings `X`/`O`). The circuit viewer (`V`) stays available and returns to the selector.
+  - disables the shortcuts that leave the LAN flow (Garage `G`, Track Manager `T`, championship `F`, Profile `P`, Controls `K`, Settings `X`/`O`) and hides their key hints. The circuit viewer (`V`) stays available and returns to the selector.
   - The confirm hint reads `SET AS LAN CIRCUIT` instead of `TO RACE`.
 - New `GarageOrigin::LanLobby`. In this origin the Garage:
   - opens on the lobby module and on the tier of the current car;
   - on select, sets the player car and returns to the lobby that opened it;
   - on ESC, returns to that lobby with no change;
-  - disables module switching (keys `1..5` and the fleet gallery module tabs), so the car is always from the host discipline;
+  - disables module switching (keys `1..5`) and the fleet gallery (its tabs switch module), so the car is always from the host discipline, and hides their key hints;
   - keeps the normal career unlock and buy rules.
 
 ### 2. Lobby rows
@@ -119,9 +119,6 @@ impl CabinetLanClientLobbyScreen {
     pub fn with_labels(self, car_label: fn(&str) -> String, track_label: fn(&str) -> String) -> Self;
 }
 
-impl LanHost {
-    pub fn set_discipline(&mut self, discipline: &str);       // fixes L-6
-}
 ```
 
 Livery lists stay in `cabinet`, shared by both screens (one const table instead of the client-only list).
@@ -129,7 +126,8 @@ Livery lists stay in `cabinet`, shared by both screens (one const table instead 
 ### `tdrace-app` changes
 - `MenuOrigin::LanHostLobby`, `GarageOrigin::LanLobby`.
 - `RaceSession::lan_lobby_module()` returns the lobby module: `active_module_id` on the host; the module of the loaded host track on the client.
-- On host open: if `track_choice` is not an official circuit of the active module, the lobby starts on the first official circuit of that module.
+- On host open: if `track_choice` is not an official, unlocked circuit of the active module, the lobby starts on the first unlocked official circuit of that module.
+- On client join: if the car sent in the join request is not from the lobby module, the client lobby replaces it with a tier-1 car of that module.
 
 ---
 
@@ -147,73 +145,69 @@ Livery lists stay in `cabinet`, shared by both screens (one const table instead 
 - `cargo test -p cabinet --test net_tests`
 - `cargo test -p tdrace-app --test lan_integration_tests`
 - `cargo test --workspace --exclude tdrace-py` (known unrelated failures are listed in Beads)
-- Screenshots with `tdrace-app --gt --lan-host --screenshot <png>` for the host lobby and for the selector in LAN origin.
+- Screenshots with `tdrace-app --gt --lan-host [circuit|car] --screenshot <png>` for the host lobby, the selector and the Garage in LAN origin.
+- Open: the module-key lock in the Garage needs a real key press (`2`, `C`), which the headless tests can not send. Check it by hand: `tdrace-app --gt --lan-host car`, press `2` and `C`, the module must stay GT.
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Host picks the circuit in the full-screen selector**
-  - [ ] **Given** a host lobby in the GT module
-  - [ ] **When** the host presses ENTER on the CIRCUIT row
-  - [ ] **Then** the full-screen circuit selector opens with only official GT circuits
-  - [ ] **When** the host presses ENTER on a circuit
-  - [ ] **Then** the game returns to the host lobby, the CIRCUIT row shows that circuit title, and `LanHost::track_id()` is its slug
+  - [x] **Given** a host lobby in the GT module
+  - [x] **When** the host presses ENTER on the CIRCUIT row
+  - [x] **Then** the full-screen circuit selector opens with only official GT circuits
+  - [x] **When** the host presses ENTER on a circuit
+  - [x] **Then** the game returns to the host lobby, the CIRCUIT row shows that circuit title, and `LanHost::track_id()` is its slug
 
 - **Scenario: ESC from the selector keeps the circuit**
-  - [ ] **Given** the circuit selector opened from the host lobby
-  - [ ] **When** the host presses ESC
-  - [ ] **Then** the game returns to the host lobby and the track is unchanged
+  - [x] **Given** the circuit selector opened from the host lobby
+  - [x] **When** the host presses ESC
+  - [x] **Then** the game returns to the host lobby and the track is unchanged
 
 - **Scenario: Host picks the own car in the Garage**
-  - [ ] **Given** a host lobby
-  - [ ] **When** the host presses ENTER on MY CAR and selects an unlocked car in the Garage
-  - [ ] **Then** the game returns to the host lobby and slot 1 shows that car name
-  - [ ] **And** the client lobby shows the new car in slot 1
+  - [x] **Given** a host lobby
+  - [x] **When** the host presses ENTER on MY CAR and selects an unlocked car in the Garage
+  - [x] **Then** the game returns to the host lobby and slot 1 shows that car name
+  - [x] **And** the client lobby shows the new car in slot 1
 
 - **Scenario: Client picks the car in the Garage**
-  - [ ] **Given** a client in the lobby of a GT host, marked READY
-  - [ ] **When** the client presses ENTER on MY CAR
-  - [ ] **Then** the Garage opens on GT cars and the client slot becomes not ready on the host
-  - [ ] **When** the client selects a car
-  - [ ] **Then** the game returns to the client lobby and the host shows the new car name in the client slot
+  - [x] **Given** a client in the lobby of a GT host, marked READY
+  - [x] **When** the client presses ENTER on MY CAR
+  - [x] **Then** the Garage opens on GT cars and the client slot becomes not ready on the host
+  - [x] **When** the client selects a car
+  - [x] **Then** the game returns to the client lobby and the host shows the new car name in the client slot
 
 - **Scenario: Garage in LAN origin stays in the host discipline**
   - [ ] **Given** the Garage opened from a LAN lobby of a GT host
-  - [ ] **When** the player presses `2` (rally) or opens the fleet gallery and changes module tab
-  - [ ] **Then** the module stays GT
+  - [ ] **When** the player presses `2` (rally) or `C` (fleet gallery)
+  - [ ] **Then** the module stays GT and the fleet gallery does not open
 
 - **Scenario: Network stays alive while a sub-screen is open**
-  - [ ] **Given** a host and a client in the lobby
-  - [ ] **When** the client stays in the Garage for 10 s
-  - [ ] **Then** the client is still in slot 2 on the host and still connected
+  - [x] **Given** a host and a client in the lobby
+  - [x] **When** the client stays in the Garage for 10 s
+  - [x] **Then** the client is still in slot 2 on the host and still connected
 
 - **Scenario: Disconnect while in the Garage**
-  - [ ] **Given** a client in the Garage opened from the client lobby
-  - [ ] **When** the host disbands the room
-  - [ ] **Then** the client returns to `GameState::LanHub { selected_idx: 1 }`
+  - [x] **Given** a client in the Garage opened from the client lobby
+  - [x] **When** the host disbands the room
+  - [x] **Then** the client returns to `GameState::LanHub { selected_idx: 1 }`
 
 - **Scenario: Custom circuits are not offered**
-  - [ ] **Given** a profile with custom circuits and the selector opened from the host lobby
-  - [ ] **When** the host presses LEFT / RIGHT / TAB
-  - [ ] **Then** the filter stays on official circuits
-
-- **Scenario: Beacon discipline follows the host module**
-  - [ ] **Given** a host
-  - [ ] **When** `set_discipline("kart")` is called
-  - [ ] **Then** the next beacon advertises `discipline = "kart"`
+  - [x] **Given** a profile with custom circuits and the selector opened from the host lobby
+  - [x] **When** the host presses LEFT / RIGHT / TAB
+  - [x] **Then** the filter stays on official circuits
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/cabinet/src/net/ui/host_screen.rs` -> CIRCUIT / MY CAR / MY LIVERY rows, `LanLobbyRequest`, `pump_network`, labels.
-- `[ ]` `crates/cabinet/src/net/ui/client_lobby_screen.rs` -> MY CAR / MY LIVERY rows, `LanLobbyRequest`, `pump_network`, labels; hard-coded car list removed.
-- `[ ]` `crates/cabinet/src/net/ui/mod.rs`, `crates/cabinet/src/net/mod.rs` -> export `LanLobbyRequest` and the shared livery table.
-- `[ ]` `crates/cabinet/src/net/host.rs` -> `set_discipline`.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> new origins, open/return paths, keep-alive pump, lobby module.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> confirm hint for the LAN origin.
-- `[ ]` `crates/tdrace-app/src/main.rs` -> `--lan-host` flag for screenshots.
-- `[ ]` `crates/cabinet/tests/net_tests.rs`, `crates/tdrace-app/tests/lan_integration_tests.rs` -> tests for the scenarios above.
+- `[x]` `crates/cabinet/src/net/ui/host_screen.rs` -> CIRCUIT / MY CAR / MY LIVERY rows, `LanLobbyRequest`, `pump_network`, labels.
+- `[x]` `crates/cabinet/src/net/ui/client_lobby_screen.rs` -> MY CAR / MY LIVERY rows, `LanLobbyRequest`, `pump_network`, labels; hard-coded car list removed.
+- `[x]` `crates/cabinet/src/net/ui/mod.rs`, `crates/cabinet/src/net/mod.rs` -> export `LanLobbyRequest` and the shared livery table.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> new origins, open/return paths, keep-alive pump, lobby module.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> confirm hint, subtitle and footer for the LAN origin; Circuit Manager badge hidden.
+- `[x]` `crates/tdrace-app/src/ui/garage.rs` -> module and gallery key hints hidden when the module is locked.
+- `[x]` `crates/tdrace-app/src/main.rs` -> `--lan-host [circuit|car]` flag for screenshots.
+- `[x]` `crates/cabinet/tests/net_tests.rs`, `crates/tdrace-app/tests/lan_integration_tests.rs` -> tests for the scenarios above.
 
 ### Verification Assertions
 - `grep -n "cycle_track\|cycle_car\|available_tracks\|car_models" crates/cabinet/src/net/ui` returns nothing.

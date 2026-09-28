@@ -97,6 +97,14 @@ async fn main() {
             session.state = tdrace_app::game::GameState::Racing;
         } else if clean_arg == "lan" || clean_arg == "lan-hub" {
             session.state = tdrace_app::game::GameState::LanHub { selected_idx: 0 };
+        } else if clean_arg == "lan-host" {
+            // Optional value opens a lobby sub-screen: `--lan-host circuit` or `--lan-host car`
+            session.select_lan_hub_option(0);
+            match args.get(i + 1).map(|s| s.as_str()) {
+                Some("circuit") => session.open_lan_circuit_selector(),
+                Some("car") => session.open_lan_garage(),
+                _ => {}
+            }
         }
     }
 

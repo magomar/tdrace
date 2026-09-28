@@ -848,6 +848,7 @@ pub fn render_track_select_menu(
     dev_mode: bool,
     active_track_id: Option<&str>,
     is_career_mode: bool,
+    is_lan_host: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -867,7 +868,9 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
-    let sub_str = if is_career_mode {
+    let sub_str = if is_lan_host {
+        format!("{} • LAN Host Circuit Selector • [ESC] Return to Lobby", module_subtitle)
+    } else if is_career_mode {
         format!("{} • Career Event Circuit Explorer • [ESC] Return to Starting Grid", module_subtitle)
     } else {
         format!("{} • [ESC] Return to Grand Hub", module_subtitle)
@@ -948,25 +951,28 @@ pub fn render_track_select_menu(
         module_accent,
     );
 
-    let tm_badge_w = scaler.s(165.0);
-    let tm_badge_h = scaler.s(22.0);
-    let tm_badge_x = col1_x + col_w - tm_badge_w;
-    scaler.draw_glass_card(
-        tm_badge_x,
-        curr_y - scaler.s(2.0),
-        tm_badge_w,
-        tm_badge_h,
-        Color::new(0.18, 0.08, 0.30, 0.90),
-        Palette::NEON_MAGENTA,
-        1.2,
-    );
-    fonts.draw_ui_bold_centered(
-        "[T] CIRCUIT MANAGER",
-        tm_badge_x + tm_badge_w * 0.5,
-        curr_y + scaler.s(13.0),
-        scaler.font_s(10.5),
-        Palette::NEON_GOLD,
-    );
+    // The Circuit Manager is not reachable from the LAN host lobby.
+    if !is_lan_host {
+        let tm_badge_w = scaler.s(165.0);
+        let tm_badge_h = scaler.s(22.0);
+        let tm_badge_x = col1_x + col_w - tm_badge_w;
+        scaler.draw_glass_card(
+            tm_badge_x,
+            curr_y - scaler.s(2.0),
+            tm_badge_w,
+            tm_badge_h,
+            Color::new(0.18, 0.08, 0.30, 0.90),
+            Palette::NEON_MAGENTA,
+            1.2,
+        );
+        fonts.draw_ui_bold_centered(
+            "[T] CIRCUIT MANAGER",
+            tm_badge_x + tm_badge_w * 0.5,
+            curr_y + scaler.s(13.0),
+            scaler.font_s(10.5),
+            Palette::NEON_GOLD,
+        );
+    }
 
     curr_y += scaler.s(20.0);
 
@@ -1695,13 +1701,21 @@ pub fn render_track_select_menu(
         (
             Color::new(0.08, 0.44, 0.22, 0.92),
             Palette::NEON_GREEN,
-            "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
+            if is_lan_host {
+                "▶ CURRENT LAN CIRCUIT • [ENTER / ESC] RETURN TO LOBBY".to_string()
+            } else {
+                "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string()
+            },
         )
     } else if total_tracks > 0 {
         (
             Color::new(0.12, 0.65, 0.32, 0.95),
             Palette::NEON_GREEN,
-            "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string(),
+            if is_lan_host {
+                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO SET AS LAN CIRCUIT".to_string()
+            } else {
+                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string()
+            },
         )
     } else {
         (
@@ -1715,7 +1729,9 @@ pub fn render_track_select_menu(
     let btn_x = (sw - btn_w) * 0.5;
     let btn_y = sh - btn_h - scaler.s(14.0);
 
-    let footer_text = if is_career_mode {
+    let footer_text = if is_lan_host {
+        "[Up / Down] Select Circuit  •  [V] Full Circuit View  •  [ENTER] Set LAN Circuit  •  [ESC] Return to Lobby"
+    } else if is_career_mode {
         "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
     } else if crate::storage::is_dev_mode() {
         "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
