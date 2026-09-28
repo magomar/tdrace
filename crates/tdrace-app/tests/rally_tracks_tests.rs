@@ -32,7 +32,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "yas_marina_rx",
         "essay_rx",
         "dreux_rx",
-        "blyton_rx",
+        "croft_rx",
     ];
 
     for id in &expected_ids {
@@ -519,7 +519,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "yas_marina_rx",
         "essay_rx",
         "dreux_rx",
-        "blyton_rx",
+        "croft_rx",
     ];
 
     for id in &rally_ids {
@@ -688,4 +688,17 @@ fn test_export_and_save_rally_tracks_to_disk() {
     }
 
     let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_blyton_ids_resolve_to_croft() {
+    // Blyton Park RX (not mapped in OSM) was replaced by Croft; old saves and series keep working.
+    for old in ["blyton_rx", "blyton_park", "blyton_park_rx"] {
+        assert_eq!(tdrace_core::catalog::canonical_id(old), Some("croft_rx"), "{} must alias croft_rx", old);
+    }
+    let croft = tdrace_core::catalog::official_track("rally", "blyton_rx");
+    assert_eq!(croft.name, "Croft Rallycross Circuit");
+    assert_eq!(croft.scale(), "1:1");
+    let lap = croft.spline.total_length();
+    assert!((lap - 1251.0).abs() / 1251.0 < 0.02, "Croft lap is {:.0} m", lap);
 }

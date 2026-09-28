@@ -150,7 +150,7 @@ fn test_top_speed_governor_preserves_cornering_drive_thrust() {
 
 /// Scenario: Digital keyboard steering progressive tap response (Spec 038)
 ///
-/// Given a DigitalInputFilter with tuned steer_exponent and rise rate
+/// Given a DigitalInputFilter with the default center precision and steering speed
 /// When a turn key is tapped for 66 ms (4 frames at 60 Hz)
 /// Then the resulting steer value must be between 0.15 and 0.45 (progressive modulation)
 /// And when held for 250 ms (15 frames) it smoothly saturates toward 1.0
@@ -162,7 +162,7 @@ fn test_digital_keyboard_progressive_steering_modulation() {
     // 4-frame tap (~66ms) at 15 m/s (~54 km/h)
     let mut tap_steer = 0.0;
     for _ in 0..4 {
-        let (s, _, _) = filter.update(1.0, 0.0, 0.0, 15.0, dt);
+        let (s, _, _) = filter.update(1.0, 0.0, 0.0, dt);
         tap_steer = s;
     }
     println!("4-frame keyboard tap steer value: {:.3}", tap_steer);
@@ -175,9 +175,9 @@ fn test_digital_keyboard_progressive_steering_modulation() {
 
     // Releasing key returns towards zero
     for _ in 0..6 {
-        filter.update(0.0, 0.0, 0.0, 15.0, dt);
+        filter.update(0.0, 0.0, 0.0, dt);
     }
-    let (center_steer, _, _) = filter.update(0.0, 0.0, 0.0, 15.0, dt);
+    let (center_steer, _, _) = filter.update(0.0, 0.0, 0.0, dt);
     assert!(
         center_steer.abs() < 0.10,
         "Steering must quickly return near center on key release (was {:.3})",
@@ -201,7 +201,7 @@ fn test_high_speed_sustained_key_hold_achieves_full_turning_authority() {
     // Hold full steer right with throttle for 25 frames (~0.42 seconds)
     let mut final_steer = 0.0;
     for _ in 0..25 {
-        let (steer, throttle, _) = filter.update(1.0, 1.0, 0.0, car.state().speed, dt);
+        let (steer, throttle, _) = filter.update(1.0, 1.0, 0.0, dt);
         final_steer = steer;
         let ctrl = CarControls::new(throttle, steer, 0.0, false);
         car.step(&ctrl, SurfaceType::Asphalt, dt);

@@ -1234,7 +1234,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
                 "lydden_hill",
                 "mettet_rx",
                 "dreux_rx",
-                "blyton_rx",
+                "croft_rx",
             ],
         ),
         (
@@ -1246,7 +1246,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
                 "holjes_rx",
                 "lydden_hill",
                 "mettet_rx",
-                "blyton_rx",
+                "croft_rx",
             ],
         ),
         (

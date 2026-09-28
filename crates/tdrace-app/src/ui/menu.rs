@@ -10,7 +10,7 @@ use super::scaler::UiScaler;
 use crate::audio::{AudioSettings, EngineSoundType};
 use crate::game::XpAwardReceipt;
 use crate::render::color::{CarColorScheme, Palette};
-use cabinet::input::{GamepadSnapshot, SteeringProfile};
+use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
@@ -1065,13 +1065,7 @@ pub fn render_track_select_menu(
                     false
                 };
 
-                let bg_col = if is_locked {
-                    if is_sel {
-                        Color::new(0.20, 0.06, 0.06, 0.95)
-                    } else {
-                        Color::new(0.08, 0.04, 0.04, 0.85)
-                    }
-                } else if is_active_track {
+                let bg_col = if is_active_track {
                     if is_sel {
                         Color::new(0.12, 0.25, 0.18, 0.95)
                     } else {
@@ -1082,13 +1076,7 @@ pub fn render_track_select_menu(
                 } else {
                     Palette::UI_CARD_BG
                 };
-                let border_col = if is_locked {
-                    if is_sel {
-                        Palette::RED
-                    } else {
-                        Color::new(0.45, 0.15, 0.15, 0.70)
-                    }
-                } else if is_active_track {
+                let border_col = if is_active_track {
                     Palette::NEON_GOLD
                 } else if is_sel {
                     module_accent
@@ -1126,7 +1114,12 @@ pub fn render_track_select_menu(
                     };
                     (lbl, Palette::UI_TEXT_MUTED)
                 } else if is_locked {
-                    ("🔒 LOCKED • ADVANCE CAREER LEVEL".to_string(), Palette::RED)
+                    let lbl = if let Some(ref tr) = loaded_track {
+                        format!("LOCKED • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                    } else {
+                        "LOCKED".to_string()
+                    };
+                    (lbl, Palette::UI_TEXT_MUTED)
                 } else if is_custom {
                     let lbl = if let Some(ref tr) = loaded_track {
                         format!("CUSTOM CIRCUIT • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
@@ -1182,7 +1175,7 @@ pub fn render_track_select_menu(
 
                 // Track title
                 let (title_str, title_col) = if is_locked {
-                    (format!("🔒 {}", track_opt.title()), if is_sel { Color::new(1.0, 0.75, 0.75, 1.0) } else { Color::new(0.70, 0.50, 0.50, 0.85) })
+                    (track_opt.title().to_string(), if is_sel { Color::new(0.75, 0.78, 0.82, 1.0) } else { Color::new(0.55, 0.58, 0.62, 1.0) })
                 } else {
                     (track_opt.title().to_string(), if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) })
                 };
@@ -1200,7 +1193,7 @@ pub fn render_track_select_menu(
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
-                    if is_locked { Color::new(0.60, 0.45, 0.45, 0.70) } else { Palette::UI_TEXT_MUTED },
+                    if is_locked { Color::new(0.45, 0.48, 0.52, 0.80) } else { Palette::UI_TEXT_MUTED },
                 );
             } else {
                 // Dedicated Track Manager Card with distinct purple / magenta theme
@@ -1299,13 +1292,13 @@ pub fn render_track_select_menu(
             }
             c2_y += scaler.s(26.0);
         } else if is_sel_locked {
-            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.30, 0.08, 0.08, 0.90), Palette::RED, 1.2);
+            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
             fonts.draw_ui_bold_centered(
-                "🔒 CIRCUIT LOCKED — ADVANCE CAREER LEVEL TO UNLOCK",
+                "CIRCUIT LOCKED — ADVANCE CAREER LEVEL TO UNLOCK",
                 col2_x + col_w * 0.5,
                 c2_y + scaler.s(15.0),
                 scaler.font_s(11.0),
-                Palette::WHITE,
+                Palette::UI_TEXT_MUTED,
             );
             c2_y += scaler.s(26.0);
         } else if is_sel_active {
@@ -1693,9 +1686,9 @@ pub fn render_track_select_menu(
         }
     } else if is_sel_locked {
         (
-            Color::new(0.35, 0.10, 0.10, 0.95),
-            Palette::RED,
-            "🔒 CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
+            Palette::UI_CARD_BG,
+            Palette::UI_CARD_BORDER,
+            "CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
         )
     } else if is_sel_active {
         (
@@ -2156,8 +2149,7 @@ pub fn render_controls_screen(
     gamepad_name: &str,
     input_map: &cabinet::input::InputMap,
     preset_name: &str,
-    steering_profile: SteeringProfile,
-    hold_bleed_rate: f32,
+    keyboard: &cabinet::input::DigitalInputConfig,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2223,12 +2215,16 @@ pub fn render_controls_screen(
     );
     let handbrake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Action3);
 
-    let bleed_label = format!("{:.1}x/s", hold_bleed_rate);
+    let handling_label = format!(
+        "{:.0} ms / {:.0}% / {:.0}%",
+        keyboard.steer_time_ms,
+        keyboard.steer_authority * 100.0,
+        keyboard.traction_help * 100.0
+    );
     let kb_rows = [
-        ("Steering Smoothing", steering_profile.name()),
-        ("Cycle Steering Profile", "S / P"),
-        ("Hold-Lock Bleed Rate", bleed_label.as_str()),
-        ("Cycle Bleed Rate", "B"),
+        ("Handling Preset", keyboard.profile.name()),
+        ("Cycle Handling Preset", "S / P"),
+        ("Steer Speed / Authority / Traction", handling_label.as_str()),
         ("Open Controls Settings", "X / O"),
         ("Accelerate / Gas", throttle_label.as_str()),
         ("Brake / Reverse (at stop)", brake_label.as_str()),

@@ -263,7 +263,7 @@ Tier 5: +3 tracks (17 total unlocked)
 - **Tier 5 (3 circuits)**: `daytona_superspeedway`, `talladega_superspeedway`, `phoenix_raceway`
 
 #### 🌲 Rallycross & All-Terrain (`rally`)
-- **Tier 1 (5 circuits)**: `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `blyton_rx`
+- **Tier 1 (5 circuits)**: `holjes_rx`, `lydden_hill`, `mettet_rx`, `dreux_rx`, `croft_rx`
 - **Tier 2 (3 circuits)**: `hell_rx`, `loheac_rx`, `silverstone_rx`
 - **Tier 3 (3 circuits)**: `estering_rx`, `montalegre_rx`, `riga_rx`
 - **Tier 4 (3 circuits)**: `nyirad_rx`, `kouvola_rx`, `killarney_rx`

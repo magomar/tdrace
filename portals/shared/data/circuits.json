@@ -29,7 +29,7 @@
     "module": "classic",
     "category": "rally",
     "modality": "RALLY",
-    "description": "Dynamic 1.0 km mixed-surface rallycross circuit with asphalt straights, dirt hairpins & tabletop jumps.",
+    "description": "Dynamic 1.0 km mixed-surface rallycross circuit featuring asphalt launch straights, high-grip chicanes, sweeping dirt hairpins & tabletop jump ramps.",
     "scale": "1:1",
     "wikipedia_url": null,
     "osm_url": null,
@@ -174,7 +174,7 @@
     "module": "classic",
     "category": "rally",
     "modality": "RALLY",
-    "description": "Pure dirt desert rally circuit with oasis water hazards & sand traps.",
+    "description": "Pure dirt desert rally circuit with oasis water hazards, perilous sand traps & high-sliding rally dynamics.",
     "scale": "1:1",
     "wikipedia_url": null,
     "osm_url": null,
@@ -222,7 +222,7 @@
     "module": "classic",
     "category": "offroad",
     "modality": "OFFROAD",
-    "description": "High-speed dirt stadium circuit with launch ramps, water hazards & gap jumps.",
+    "description": "High-speed dirt stadium circuit with launch ramps, hazard water puddles, gap jumps & banked dirt turns.",
     "scale": "1:1",
     "wikipedia_url": null,
     "osm_url": null,
@@ -1122,8 +1122,8 @@
     "min_width_meters": 8.0,
     "max_width_meters": 9.2,
     "is_inspired": false,
-    "length_meters": 1391.8,
-    "turns_count": 24,
+    "length_meters": 1535.1,
+    "turns_count": 41,
     "surfaces": [
       "Asphalt"
     ],
@@ -1215,11 +1215,11 @@
     "osm_url": "https://www.openstreetmap.org/way/183330357",
     "country_code": "FR",
     "country_name": "France",
-    "min_width_meters": 8.5,
-    "max_width_meters": 8.5,
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.2,
     "is_inspired": false,
-    "length_meters": 1156.6,
-    "turns_count": 28,
+    "length_meters": 1198.8,
+    "turns_count": 29,
     "surfaces": [
       "Asphalt"
     ],
@@ -1410,8 +1410,8 @@
     "min_width_meters": 8.0,
     "max_width_meters": 9.2,
     "is_inspired": false,
-    "length_meters": 1325.2,
-    "turns_count": 24,
+    "length_meters": 1396.7,
+    "turns_count": 36,
     "surfaces": [
       "Asphalt"
     ],
@@ -1455,11 +1455,11 @@
     "osm_url": "https://www.openstreetmap.org/way/149913876",
     "country_code": "GB",
     "country_name": "United Kingdom",
-    "min_width_meters": 8.5,
-    "max_width_meters": 8.5,
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.2,
     "is_inspired": false,
-    "length_meters": 1157.2,
-    "turns_count": 29,
+    "length_meters": 1021.5,
+    "turns_count": 20,
     "surfaces": [
       "Asphalt"
     ],
@@ -1506,8 +1506,8 @@
     "min_width_meters": 14.0,
     "max_width_meters": 14.0,
     "is_inspired": false,
-    "length_meters": 397.5,
-    "turns_count": 12,
+    "length_meters": 397.2,
+    "turns_count": 6,
     "surfaces": [
       "Asphalt"
     ],
@@ -1530,7 +1530,7 @@
     "min_width_meters": 16.0,
     "max_width_meters": 16.0,
     "is_inspired": false,
-    "length_meters": 749.7,
+    "length_meters": 853.4,
     "turns_count": 0,
     "surfaces": [
       "Concrete"
@@ -1554,7 +1554,7 @@
     "min_width_meters": 20.0,
     "max_width_meters": 20.0,
     "is_inspired": false,
-    "length_meters": 1687.5,
+    "length_meters": 2409.0,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1570,16 +1570,16 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "NASCAR's premier 2.2-mile downtown street circuit through Grant Park navigating 12 tight 90-degree corners between concrete canyon walls.",
-    "scale": "0.5x",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Chicago_Street_Course",
     "osm_url": "https://www.openstreetmap.org/relation/16546690",
     "country_code": "US",
     "country_name": "United States",
-    "min_width_meters": 12.5,
+    "min_width_meters": 13.0,
     "max_width_meters": 13.0,
     "is_inspired": false,
-    "length_meters": 3345.2,
-    "turns_count": 17,
+    "length_meters": 2589.5,
+    "turns_count": 12,
     "surfaces": [
       "Asphalt"
     ],
@@ -1602,7 +1602,7 @@
     "min_width_meters": 18.0,
     "max_width_meters": 18.0,
     "is_inspired": false,
-    "length_meters": 1547.0,
+    "length_meters": 2193.8,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1618,7 +1618,7 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "The World Center of Racing: 4.0 km tri-oval featuring 31\u00b0 high banks, 18\u00b0 tri-oval frontstretch, and intense high-speed pack drafting.",
-    "scale": "1:1",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Daytona_International_Speedway",
     "osm_url": "https://www.openstreetmap.org/way/352074880",
     "country_code": "US",
@@ -1626,7 +1626,7 @@
     "min_width_meters": 22.0,
     "max_width_meters": 22.0,
     "is_inspired": false,
-    "length_meters": 1945.4,
+    "length_meters": 3010.9,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1650,7 +1650,7 @@
     "min_width_meters": 18.0,
     "max_width_meters": 18.0,
     "is_inspired": false,
-    "length_meters": 796.3,
+    "length_meters": 798.5,
     "turns_count": 0,
     "surfaces": [
       "Dirt"
@@ -1666,7 +1666,7 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "The Brickyard: 2.5-mile historic rectangular speedway with 9.2\u00b0 banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.",
-    "scale": "1:1",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Indianapolis_Motor_Speedway",
     "osm_url": "https://www.openstreetmap.org/way/589668075",
     "country_code": "US",
@@ -1674,7 +1674,7 @@
     "min_width_meters": 20.0,
     "max_width_meters": 20.0,
     "is_inspired": false,
-    "length_meters": 1997.9,
+    "length_meters": 3011.6,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1698,7 +1698,7 @@
     "min_width_meters": 20.0,
     "max_width_meters": 20.0,
     "is_inspired": false,
-    "length_meters": 1393.7,
+    "length_meters": 1400.4,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1722,8 +1722,8 @@
     "min_width_meters": 16.0,
     "max_width_meters": 16.0,
     "is_inspired": false,
-    "length_meters": 1095.2,
-    "turns_count": 16,
+    "length_meters": 1098.1,
+    "turns_count": 14,
     "surfaces": [
       "Asphalt"
     ],
@@ -1746,8 +1746,8 @@
     "min_width_meters": 16.0,
     "max_width_meters": 16.0,
     "is_inspired": false,
-    "length_meters": 753.0,
-    "turns_count": 8,
+    "length_meters": 840.4,
+    "turns_count": 10,
     "surfaces": [
       "Concrete"
     ],
@@ -1770,8 +1770,8 @@
     "min_width_meters": 16.0,
     "max_width_meters": 16.0,
     "is_inspired": false,
-    "length_meters": 997.0,
-    "turns_count": 16,
+    "length_meters": 999.6,
+    "turns_count": 12,
     "surfaces": [
       "Asphalt"
     ],
@@ -1794,8 +1794,8 @@
     "min_width_meters": 18.0,
     "max_width_meters": 18.0,
     "is_inspired": false,
-    "length_meters": 1600.6,
-    "turns_count": 19,
+    "length_meters": 1638.9,
+    "turns_count": 15,
     "surfaces": [
       "Asphalt"
     ],
@@ -1810,7 +1810,7 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
-    "scale": "0.5x",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Pocono_Raceway",
     "osm_url": "https://www.openstreetmap.org/way/109767460",
     "country_code": "US",
@@ -1818,8 +1818,8 @@
     "min_width_meters": 18.0,
     "max_width_meters": 18.0,
     "is_inspired": false,
-    "length_meters": 1996.0,
-    "turns_count": 15,
+    "length_meters": 3008.5,
+    "turns_count": 12,
     "surfaces": [
       "Asphalt"
     ],
@@ -1840,9 +1840,9 @@
     "country_code": "US",
     "country_name": "United States",
     "min_width_meters": 14.0,
-    "max_width_meters": 15.0,
+    "max_width_meters": 14.0,
     "is_inspired": false,
-    "length_meters": 3104.3,
+    "length_meters": 3221.4,
     "turns_count": 17,
     "surfaces": [
       "Asphalt"
@@ -1858,7 +1858,7 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "The biggest, fastest superspeedway in motorsport: 4.3 km tri-oval with extreme 33\u00b0 banking where slipstream draft slingshots decide victory.",
-    "scale": "1:1",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Talladega_Superspeedway",
     "osm_url": "https://www.openstreetmap.org/way/405961241",
     "country_code": "US",
@@ -1866,7 +1866,7 @@
     "min_width_meters": 24.0,
     "max_width_meters": 24.0,
     "is_inspired": false,
-    "length_meters": 2188.9,
+    "length_meters": 3203.8,
     "turns_count": 0,
     "surfaces": [
       "Asphalt"
@@ -1882,47 +1882,22 @@
     "category": "nascar",
     "modality": "NASCAR",
     "description": "Historic 5.4 km upstate New York road course: the uphill Esses, Inner Loop Bus Stop chicane, high-speed Carousel, and Boot complex.",
-    "scale": "1:1",
+    "scale": "0.75x",
     "wikipedia_url": "https://en.wikipedia.org/wiki/Watkins_Glen_International",
     "osm_url": "https://www.openstreetmap.org/way/702671615",
     "country_code": "US",
     "country_name": "United States",
-    "min_width_meters": 14.0,
+    "min_width_meters": 16.0,
     "max_width_meters": 16.0,
     "is_inspired": false,
-    "length_meters": 1812.6,
-    "turns_count": 14,
+    "length_meters": 2941.9,
+    "turns_count": 10,
     "surfaces": [
       "Asphalt"
     ],
     "has_jumps": false,
     "image_url": "/textures/circuits/nascar/watkins_glen_nascar.svg",
     "rel_path": "tracks/nascar/watkins_glen_nascar.json"
-  },
-  {
-    "id": "blyton_rx",
-    "name": "Blyton Park Rallycross Circuit",
-    "module": "rally",
-    "category": "rally",
-    "modality": "RALLY",
-    "description": "Renowned UK mixed-surface proving ground with technical chalk/dirt transitions and jump crests.",
-    "scale": "1:1",
-    "wikipedia_url": "https://en.wikipedia.org/wiki/Blyton_Park",
-    "osm_url": "https://www.openstreetmap.org/way/129241665",
-    "country_code": "GB",
-    "country_name": "United Kingdom",
-    "min_width_meters": 13.5,
-    "max_width_meters": 13.5,
-    "is_inspired": false,
-    "length_meters": 1154.9,
-    "turns_count": 23,
-    "surfaces": [
-      "Asphalt",
-      "Gravel"
-    ],
-    "has_jumps": false,
-    "image_url": "/textures/circuits/rally/blyton_rx.svg",
-    "rel_path": "tracks/rally/blyton_rx.json"
   },
   {
     "id": "catalunya_rx",
@@ -1950,6 +1925,31 @@
     "rel_path": "tracks/rally/catalunya_rx.json"
   },
   {
+    "id": "croft_rx",
+    "name": "Croft Rallycross Circuit",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Croft_Circuit",
+    "osm_url": "https://www.openstreetmap.org/relation/21228308",
+    "country_code": "GB",
+    "country_name": "United Kingdom",
+    "min_width_meters": 11.5,
+    "max_width_meters": 14.5,
+    "is_inspired": false,
+    "length_meters": 1239.2,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/rally/croft_rx.svg",
+    "rel_path": "tracks/rally/croft_rx.json"
+  },
+  {
     "id": "dreux_rx",
     "name": "Dreux Circuit de l'Ouest Parisien",
     "module": "rally",
@@ -1961,11 +1961,11 @@
     "osm_url": "https://www.openstreetmap.org/way/297738878",
     "country_code": "FR",
     "country_name": "France",
-    "min_width_meters": 13.5,
-    "max_width_meters": 13.5,
+    "min_width_meters": 11.5,
+    "max_width_meters": 14.5,
     "is_inspired": false,
-    "length_meters": 1034.0,
-    "turns_count": 22,
+    "length_meters": 1037.8,
+    "turns_count": 23,
     "surfaces": [
       "Asphalt",
       "Dirt"
@@ -1986,11 +1986,11 @@
     "osm_url": "https://www.openstreetmap.org/way/788873788",
     "country_code": "FR",
     "country_name": "France",
-    "min_width_meters": 13.0,
+    "min_width_meters": 11.5,
     "max_width_meters": 14.0,
     "is_inspired": false,
-    "length_meters": 905.6,
-    "turns_count": 12,
+    "length_meters": 915.2,
+    "turns_count": 13,
     "surfaces": [
       "Asphalt",
       "Dirt"

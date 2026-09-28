@@ -46,7 +46,7 @@ When a player or developer navigates the showroom web catalog (`portals/option-b
 
 ```mermaid
 flowchart TD
-    A["Verified OSM Catalog<br/>(scripts/osm_importer.py, scripts/osm_nascar_importer.py & assets/osm)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
+    A["Verified OSM Catalog<br/>(scripts/osm_importer.py & assets/osm)"] -->|Embed URLs & Country| B["Rust Track Presets<br/>(presets.rs & module/*.rs)"]
     B -->|cargo test test_export_canonical_presets_to_git_repo| C["Canonical Track Files<br/>(tracks/**/*.json)"]
     C -->|python3 scripts/generate_asset_data.py| D["Portal Catalog<br/>(portals/shared/data/circuits.json)"]
     D -->|Astro SSG Build| E["Interactive Showroom<br/>(CircuitCard.astro)"]
@@ -123,12 +123,12 @@ Surveyed via `scripts/osm_importer.py rally` and `assets/osm/`:
 | `riga_rx` | Biķernieku Trase (World RX Latvia) | LV | [`way/256784387`](https://www.openstreetmap.org/way/256784387) | [`Biķernieki_Complex_Sports_Base`](https://en.wikipedia.org/wiki/Bi%C4%B7ernieki_Complex_Sports_Base) |
 | `killarney_rx` | Killarney International (World RX South Africa) | ZA | [`way/42125321`](https://www.openstreetmap.org/way/42125321) | [`Killarney_Motor_Racing_Complex`](https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex) |
 | `yas_marina_rx`| Yas Marina RX Arena (World RX Abu Dhabi)| AE | [`way/1083519983`](https://www.openstreetmap.org/way/1083519983) | [`Yas_Marina_Circuit`](https://en.wikipedia.org/wiki/Yas_Marina_Circuit) |
-| `blyton_rx` | Blyton Park Driving Centre RX | GB | [`way/129241665`](https://www.openstreetmap.org/way/129241665) | [`Blyton_Park`](https://en.wikipedia.org/wiki/Blyton) |
+| `croft_rx` | Croft Rallycross Circuit (replaced Blyton Park RX, 2026-09-28) | GB | [`relation/21228308`](https://www.openstreetmap.org/relation/21228308) | [`Croft_Circuit`](https://en.wikipedia.org/wiki/Croft_Circuit) |
 | `dreux_rx` | Circuit Pro'Pulsion (Dreux RX France) | FR | [`way/297738878`](https://www.openstreetmap.org/way/297738878) | [`Dreux`](https://en.wikipedia.org/wiki/Dreux) |
 | `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`way/788873788`](https://www.openstreetmap.org/way/788873788) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
 
 ### 4. NASCAR Cup Series & Trans-Am (17 Circuits)
-Surveyed via `scripts/osm_nascar_importer.py` and `assets/osm/`:
+Surveyed via `scripts/osm_importer.py nascar` and `assets/osm/`:
 
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |

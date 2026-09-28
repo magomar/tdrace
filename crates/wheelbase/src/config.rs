@@ -9,11 +9,11 @@ pub struct WheelAssemblyConfig {
     pub tire_width: f32,
     /// Rotational polar moment of inertia (kg·m²).
     pub rotational_inertia: f32,
-    /// Pacejka Magic Formula compound configuration for this wheel.
+    /// Tire model of this wheel. Derived from `CarConfig::tire` / `rear_axle` by `CarConfig::finalize()`.
     pub tire_model: TireConfig,
-    /// Brake torque distribution factor for this wheel [0.0 = none, 1.0 = full].
+    /// Brake torque share of this wheel. Derived from `CarConfig::brake_bias` by `CarConfig::finalize()`.
     pub brake_bias_factor: f32,
-    /// Drive torque distribution factor from differential [0.0 = unpowered, 1.0 = spool/locked].
+    /// Drive torque share of this wheel. Derived from `CarConfig::drive_bias` by `CarConfig::finalize()`.
     pub drive_torque_factor: f32,
 }
 
@@ -75,9 +75,11 @@ pub fn default_wheel_assemblies() -> [WheelAssemblyConfig; 4] {
     [WheelAssemblyConfig::default(); 4]
 }
 
-/// Tire parameters using an adapted Pacejka Magic Formula curve tuned for arcade drifting.
+/// Classic Pacejka Magic Formula lateral tire parameters.
+///
+/// Used by the motorbike model. Car tires use [`TireConfig`] (Spec 043).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct TireConfig {
+pub struct PacejkaTireConfig {
     /// Pacejka B (Stiffness factor). Determines slope at low slip angles.
     pub stiffness_b: f32,
     /// Pacejka C (Shape factor). Controls shape and peak prominence (typically ~1.4 - 1.6).
@@ -87,7 +89,6 @@ pub struct TireConfig {
     /// Pacejka E (Curvature factor). Controls drop-off after peak.
     pub curvature_e: f32,
     /// Friction retention ratio during high slip drift (slide friction / peak friction).
-    /// Ensures controllable drifts without instant spinouts.
     pub drift_slide_friction: f32,
     /// Rear tire lateral friction multiplier when handbrake is engaged (allows rear breakout).
     pub handbrake_lateral_friction_multiplier: f32,
@@ -97,7 +98,7 @@ pub struct TireConfig {
     pub skid_full_threshold: f32,
 }
 
-impl Default for TireConfig {
+impl Default for PacejkaTireConfig {
     fn default() -> Self {
         Self {
             stiffness_b: 9.5,
@@ -112,16 +113,147 @@ impl Default for TireConfig {
     }
 }
 
+/// Slip angle (degrees) at which a Pacejka curve with the given B, C, E peaks.
+///
+/// Solves `C * atan(B*a - E*(B*a - atan(B*a))) = PI/2` for `a`. Used to migrate legacy
+/// Pacejka tire configs to [`TireConfig::peak_slip_angle_deg`].
+pub fn pacejka_peak_slip_angle_deg(b: f32, c: f32, e: f32) -> f32 {
+    if b <= 1e-3 || c <= 1.0 {
+        return TireConfig::DEFAULT_PEAK_SLIP_ANGLE_DEG;
+    }
+    let target = (std::f32::consts::FRAC_PI_2 / c).tan();
+    let f = |y: f32| y - e * (y - y.atan()) - target;
+    let (mut lo, mut hi) = (0.0f32, 50.0f32);
+    if f(hi) < 0.0 {
+        return TireConfig::DEFAULT_PEAK_SLIP_ANGLE_DEG;
+    }
+    for _ in 0..60 {
+        let mid = 0.5 * (lo + hi);
+        if f(mid) < 0.0 { lo = mid; } else { hi = mid; }
+    }
+    (0.5 * (lo + hi) / b).to_degrees().clamp(3.0, 25.0)
+}
+
+/// Car tire model (Spec 043): normalized combined slip with load sensitivity.
+///
+/// Every field is a designer knob expressed in a unit a driver can feel.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(from = "TireConfigRaw")]
+pub struct TireConfig {
+    /// Grip multiplier on the surface friction coefficient (1.0 = road tire on asphalt).
+    pub grip: f32,
+    /// Slip angle in degrees where lateral grip peaks (sharp turn-in: 6-8, lazy: 12-14).
+    pub peak_slip_angle_deg: f32,
+    /// Longitudinal slip ratio where traction/braking grip peaks (0.08-0.15).
+    pub peak_slip_ratio: f32,
+    /// Grip retained deep in a slide relative to peak (0.6 = snappy, 1.0 = flat plateau).
+    pub slide_grip: f32,
+    /// Width of the post-peak grip fall, in multiples of the peak slip (1.0-3.0).
+    pub falloff: f32,
+    /// Load sensitivity: grip per newton drops as load rises above nominal (0 = linear, 0.1-0.25 = real).
+    pub load_sensitivity: f32,
+    /// How much longitudinal slip steals lateral grip (1.0 = physical slip-vector direction,
+    /// 0.0 = lateral keeps the whole friction-circle budget left after Fx; arcade ~0.6-0.85).
+    pub power_slide: f32,
+    /// Minimum slip angle (radians) to trigger tire squeal and skid marks.
+    pub skid_threshold: f32,
+    /// Slip angle (radians) corresponding to 100% skid intensity and dense tire smoke.
+    pub skid_full_threshold: f32,
+}
+
+impl TireConfig {
+    pub const DEFAULT_PEAK_SLIP_ANGLE_DEG: f32 = 10.5;
+
+    /// Peak lateral slip angle in radians.
+    #[inline]
+    pub fn peak_slip_angle(&self) -> f32 {
+        self.peak_slip_angle_deg.to_radians()
+    }
+}
+
+impl Default for TireConfig {
+    fn default() -> Self {
+        Self {
+            grip: 1.0,
+            peak_slip_angle_deg: Self::DEFAULT_PEAK_SLIP_ANGLE_DEG,
+            peak_slip_ratio: 0.10,
+            slide_grip: 0.88,
+            falloff: 1.5,
+            load_sensitivity: 0.15,
+            power_slide: 0.85,
+            skid_threshold: 0.10,
+            skid_full_threshold: 0.35,
+        }
+    }
+}
+
+/// Serde input for [`TireConfig`] that also accepts the legacy Pacejka field names.
+#[derive(Deserialize)]
+struct TireConfigRaw {
+    #[serde(default, alias = "peak_d")]
+    grip: Option<f32>,
+    #[serde(default)]
+    peak_slip_angle_deg: Option<f32>,
+    #[serde(default)]
+    peak_slip_ratio: Option<f32>,
+    #[serde(default, alias = "drift_slide_friction")]
+    slide_grip: Option<f32>,
+    #[serde(default)]
+    falloff: Option<f32>,
+    #[serde(default)]
+    load_sensitivity: Option<f32>,
+    #[serde(default)]
+    power_slide: Option<f32>,
+    #[serde(default)]
+    skid_threshold: Option<f32>,
+    #[serde(default)]
+    skid_full_threshold: Option<f32>,
+    // Legacy Pacejka shape (pre Spec 043): only used to derive the peak slip angle.
+    #[serde(default)]
+    stiffness_b: Option<f32>,
+    #[serde(default)]
+    shape_c: Option<f32>,
+    #[serde(default)]
+    curvature_e: Option<f32>,
+    // Legacy handbrake grip multiplier: handbrake slides now come from rear wheel lock-up.
+    #[serde(default, rename = "handbrake_lateral_friction_multiplier")]
+    _handbrake_lateral_friction_multiplier: Option<f32>,
+}
+
+impl From<TireConfigRaw> for TireConfig {
+    fn from(raw: TireConfigRaw) -> Self {
+        let d = TireConfig::default();
+        let legacy_peak = raw.stiffness_b.map(|b| {
+            pacejka_peak_slip_angle_deg(b, raw.shape_c.unwrap_or(1.45), raw.curvature_e.unwrap_or(-0.15))
+        });
+        Self {
+            grip: raw.grip.unwrap_or(d.grip),
+            peak_slip_angle_deg: raw.peak_slip_angle_deg.or(legacy_peak).unwrap_or(d.peak_slip_angle_deg),
+            peak_slip_ratio: raw.peak_slip_ratio.unwrap_or(d.peak_slip_ratio),
+            slide_grip: raw.slide_grip.unwrap_or(d.slide_grip),
+            falloff: raw.falloff.unwrap_or(d.falloff),
+            load_sensitivity: raw.load_sensitivity.unwrap_or(d.load_sensitivity),
+            power_slide: raw.power_slide.unwrap_or(d.power_slide),
+            skid_threshold: raw.skid_threshold.unwrap_or(d.skid_threshold),
+            skid_full_threshold: raw.skid_full_threshold.unwrap_or(d.skid_full_threshold),
+        }
+    }
+}
+
 /// Configuration for electronic driver assists (TCS, ESC, Counter-Steer Drift Recovery).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct DriverAssistsConfig {
     /// Traction Control System (TCS) enabled.
     /// Prevents excessive drive wheel slip under acceleration to eliminate snap power-oversteer.
     pub tcs_enabled: bool,
-    /// TCS sensitivity / slip threshold: wheel slip ratio above which drive torque is modulated.
+    /// TCS longitudinal slip target. 0.18 holds driven wheels at the tire's peak slip ratio;
+    /// higher values allow proportionally more wheelspin (0.30 = 1.67x peak).
     pub tcs_slip_threshold: f32,
     /// TCS torque reduction strength [0.0 = none, 1.0 = full cut down to grip limit].
     pub tcs_strength: f32,
+    /// TCS lateral trigger: rear slip angle (degrees) above which engine torque is cut (Spec 043).
+    #[serde(default = "default_tcs_slip_angle_deg")]
+    pub tcs_slip_angle_deg: f32,
 
     /// Electronic Stability Control (ESC) enabled.
     /// Applies corrective stabilizing yaw moment when unintended sideslip/yaw rate occurs.
@@ -140,7 +272,8 @@ pub struct DriverAssistsConfig {
     /// Anti-lock Braking System (ABS) enabled.
     /// Prevents excessive brake lockup to preserve lateral steering grip during braking.
     pub abs_enabled: bool,
-    /// ABS target lateral grip retention factor [0.0 = none, 1.0 = full lateral priority].
+    /// ABS braking slip target. 0.15 holds braked wheels at the tire's peak slip ratio;
+    /// higher values allow proportionally deeper slip. The target shrinks while cornering.
     pub abs_slip_threshold: f32,
     /// ABS modulation strength [0.0 = disabled, 1.0 = full pressure modulation].
     pub abs_strength: f32,
@@ -148,6 +281,10 @@ pub struct DriverAssistsConfig {
     /// Handbrake bypass: whether holding the handbrake temporarily disengages TCS and relaxes ESC
     /// so intentional handbrake power-drifts are 100% responsive and uninhibited.
     pub handbrake_bypass: bool,
+}
+
+fn default_tcs_slip_angle_deg() -> f32 {
+    12.0
 }
 
 impl Default for DriverAssistsConfig {
@@ -163,6 +300,7 @@ impl DriverAssistsConfig {
             tcs_enabled: true,
             tcs_slip_threshold: 0.18,
             tcs_strength: 0.75,
+            tcs_slip_angle_deg: 12.0,
             esc_enabled: true,
             esc_yaw_threshold: 0.10,
             esc_strength: 0.85,
@@ -181,6 +319,7 @@ impl DriverAssistsConfig {
             tcs_enabled: true,
             tcs_slip_threshold: 0.30,
             tcs_strength: 0.40,
+            tcs_slip_angle_deg: 16.0,
             esc_enabled: true,
             esc_yaw_threshold: 0.22,
             esc_strength: 0.50,
@@ -199,6 +338,7 @@ impl DriverAssistsConfig {
             tcs_enabled: false,
             tcs_slip_threshold: 0.50,
             tcs_strength: 0.0,
+            tcs_slip_angle_deg: 30.0,
             esc_enabled: false,
             esc_yaw_threshold: 1.0,
             esc_strength: 0.0,
@@ -291,6 +431,67 @@ impl Default for TerrainInteractionConfig {
     }
 }
 
+/// Rear tire relative to the front `tire` (Spec 043). Ratios, so every later tire change (catalog
+/// grip stat, module tuning) reaches both axles.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct RearAxleTire {
+    /// Rear grip / front grip.
+    pub grip_scale: f32,
+    /// Rear peak slip angle / front peak slip angle (< 1 = stiffer rear = more stable).
+    pub peak_slip_scale: f32,
+}
+
+impl Default for RearAxleTire {
+    /// A slightly stiffer rear (peak at 0.85x the front slip angle): a stable understeer gradient
+    /// in the linear range. With equal tires the factory cars were neutral and several GT,
+    /// stock-car and kart models diverged into slow spins above ~40 m/s with a steer key held.
+    fn default() -> Self {
+        Self { grip_scale: 1.0, peak_slip_scale: 0.85 }
+    }
+}
+
+impl RearAxleTire {
+    /// Identical front and rear tires (neutral linear balance, lively rear).
+    pub const NEUTRAL: Self = Self { grip_scale: 1.0, peak_slip_scale: 1.0 };
+
+    /// The rear tire for a given front tire.
+    pub fn apply(&self, front: &TireConfig) -> TireConfig {
+        TireConfig {
+            grip: front.grip * self.grip_scale,
+            peak_slip_angle_deg: front.peak_slip_angle_deg * self.peak_slip_scale,
+            ..*front
+        }
+    }
+}
+
+/// Per-driver handling aids (Spec 043). Set from the player's handling preset; bots use the default.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PlayerHandling {
+    /// Grip-aware steering: full input maps to the largest angle the front tires can use at this
+    /// speed. On for human drivers. Off (linear full-lock mapping) for bots and scripted
+    /// controllers, whose closed-loop steering gains were tuned for the linear mapping.
+    #[serde(default)]
+    pub grip_aware_steering: bool,
+    /// Steering authority: where full input sits relative to the front grip limit, in units of the
+    /// front peak slip angle (0.85 = just short of the limit, 1.0 = on the limit, 1.3 = past it).
+    pub steer_overslip: f32,
+    /// Traction help [0, 1]: eases throttle as the rear axle nears its lateral limit.
+    pub traction_help: f32,
+}
+
+impl Default for PlayerHandling {
+    fn default() -> Self {
+        Self { grip_aware_steering: false, steer_overslip: 1.0, traction_help: 0.0 }
+    }
+}
+
+impl PlayerHandling {
+    /// Human-driver handling with grip-aware steering on.
+    pub fn human(steer_overslip: f32, traction_help: f32) -> Self {
+        Self { grip_aware_steering: true, steer_overslip, traction_help }
+    }
+}
+
 /// Type and mechanical characteristics of an axle differential.
 ///
 /// Governs dynamic cross-axle torque distribution and rotational speed coupling
@@ -319,6 +520,9 @@ impl Default for DifferentialType {
         Self::Open
     }
 }
+
+/// Default load transfer response (Hz). The pre-043 filter `alpha = dt * 15` was ~2.4 Hz.
+pub const DEFAULT_WEIGHT_TRANSFER_HZ: f32 = 3.0;
 
 pub fn default_front_differential() -> DifferentialType {
     DifferentialType::Open
@@ -380,8 +584,6 @@ pub struct CarConfig {
     pub steer_return_speed: f32,
     /// Steering speed multiplier when player is counter-steering during a drift.
     pub counter_steer_assist: f32,
-    /// Factor reducing maximum steer lock at high vehicle speeds to stabilize fast corners.
-    pub speed_sensitive_steer_factor: f32,
 
     /// Aerodynamic drag coefficient (0.5 * Cd * A * air_density).
     pub air_drag_coefficient: f32,
@@ -392,25 +594,35 @@ pub struct CarConfig {
     /// Yaw angular velocity damping coefficient in N*m*s/rad.
     pub angular_damping: f32,
 
-    /// Longitudinal weight transfer scaling factor (squat & dive).
-    pub weight_transfer_longitudinal: f32,
-    /// Lateral weight transfer scaling factor (cornering body roll).
-    pub weight_transfer_lateral: f32,
+    /// Handling balance: front axle share of lateral load transfer [0.35-0.65] (Spec 043).
+    /// Higher = more understeer (the front tires lose grip first), lower = more oversteer.
+    pub roll_balance: f32,
+    /// How fast load transfer follows the chassis acceleration, in Hz [2-10] (Spec 043).
+    /// Low = lazy, floaty weight shifts; high = sharp, twitchy.
+    pub weight_transfer_hz: f32,
     /// Caster jacking diagonal load transfer factor [0.0 = cars with differential, ~1.0-1.5 = karts with solid axle].
     #[serde(default)]
     pub caster_jacking_factor: f32,
 
     /// Engine braking retarding coefficient on throttle release [0.0 = none, 0.15 = strong].
     pub engine_braking_coefficient: f32,
+    /// Front axle share of engine-braking retard [0.2-0.6] (Spec 043). Lower = more lift-off oversteer.
+    pub engine_brake_front_share: f32,
     /// Aerodynamic downforce coefficient (0.5 * Cl * A * air_density) scaling vertical load with V^2.
     pub downforce_coefficient: f32,
 
-    /// Tire friction and slip parameters.
+    /// Tire model. The rear axle uses it scaled by `rear_axle`.
     pub tire: TireConfig,
+    /// Rear tire relative to `tire` (staggered tires, stability tuning).
+    #[serde(default)]
+    pub rear_axle: RearAxleTire,
     /// Driver electronic stability and traction assistance settings.
     pub assists: DriverAssistsConfig,
     /// Terrain interaction modifiers (sand flotation, mud paddles, ice studs).
     pub terrain: TerrainInteractionConfig,
+    /// Per-driver handling aids set from the player's settings (bots keep the defaults).
+    #[serde(default)]
+    pub player: PlayerHandling,
     /// Decoupled wheel assembly configurations for all 4 corners [FL, FR, RL, RR].
     #[serde(default = "default_wheel_assemblies")]
     pub wheels: [WheelAssemblyConfig; 4],
@@ -440,21 +652,36 @@ struct CarConfigRaw {
     pub steer_speed: f32,
     pub steer_return_speed: f32,
     pub counter_steer_assist: f32,
-    pub speed_sensitive_steer_factor: f32,
+    // Legacy (pre Spec 043) physics steering attenuation: replaced by grip-aware authority.
+    #[serde(default, rename = "speed_sensitive_steer_factor")]
+    pub _speed_sensitive_steer_factor: Option<f32>,
     pub air_drag_coefficient: f32,
     pub lateral_drag_coefficient: f32,
     pub rolling_resistance_coefficient: f32,
     pub angular_damping: f32,
-    pub weight_transfer_longitudinal: f32,
-    pub weight_transfer_lateral: f32,
+    // Legacy (pre Spec 043) load transfer scales: accepted and ignored.
+    #[serde(default, rename = "weight_transfer_longitudinal")]
+    pub _weight_transfer_longitudinal: Option<f32>,
+    #[serde(default, rename = "weight_transfer_lateral")]
+    pub _weight_transfer_lateral: Option<f32>,
+    #[serde(default)]
+    pub roll_balance: Option<f32>,
+    #[serde(default)]
+    pub weight_transfer_hz: Option<f32>,
     #[serde(default)]
     pub caster_jacking_factor: f32,
     pub engine_braking_coefficient: f32,
+    #[serde(default)]
+    pub engine_brake_front_share: Option<f32>,
     pub downforce_coefficient: f32,
     pub tire: TireConfig,
+    #[serde(default)]
+    pub rear_axle: RearAxleTire,
     pub assists: DriverAssistsConfig,
     #[serde(default)]
     pub terrain: TerrainInteractionConfig,
+    #[serde(default)]
+    pub player: PlayerHandling,
     #[serde(default)]
     pub wheels: Option<[WheelAssemblyConfig; 4]>,
 }
@@ -474,7 +701,7 @@ impl From<CarConfigRaw> for CarConfig {
             }
         });
 
-        Self {
+        let mut cfg = Self {
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -495,21 +722,29 @@ impl From<CarConfigRaw> for CarConfig {
             steer_speed: raw.steer_speed,
             steer_return_speed: raw.steer_return_speed,
             counter_steer_assist: raw.counter_steer_assist,
-            speed_sensitive_steer_factor: raw.speed_sensitive_steer_factor,
             air_drag_coefficient: raw.air_drag_coefficient,
             lateral_drag_coefficient: raw.lateral_drag_coefficient,
             rolling_resistance_coefficient: raw.rolling_resistance_coefficient,
             angular_damping: raw.angular_damping,
-            weight_transfer_longitudinal: raw.weight_transfer_longitudinal,
-            weight_transfer_lateral: raw.weight_transfer_lateral,
+            roll_balance: raw
+                .roll_balance
+                .unwrap_or(raw.cg_to_rear / (raw.cg_to_front + raw.cg_to_rear).max(1e-3)),
+            weight_transfer_hz: raw.weight_transfer_hz.unwrap_or(DEFAULT_WEIGHT_TRANSFER_HZ),
             caster_jacking_factor: raw.caster_jacking_factor,
             engine_braking_coefficient: raw.engine_braking_coefficient,
+            engine_brake_front_share: raw
+                .engine_brake_front_share
+                .unwrap_or(0.35 + 0.30 * raw.drive_bias.clamp(0.0, 1.0)),
             downforce_coefficient: raw.downforce_coefficient,
             tire: raw.tire,
+            rear_axle: raw.rear_axle,
             assists: raw.assists,
             terrain: raw.terrain,
+            player: raw.player,
             wheels,
-        }
+        };
+        cfg.finalize();
+        cfg
     }
 }
 
@@ -566,6 +801,30 @@ impl CarConfig {
         ]
     }
 
+    /// Derives every per-wheel field from the axle-level settings (Spec 043 single source of truth).
+    ///
+    /// Tire model from `tire` / `rear_axle`, brake share from `brake_bias`, drive share from
+    /// `drive_bias`. Wheel geometry (radius, width, inertia) stays per wheel. Idempotent.
+    /// Called by every preset, by deserialization, and by `Car::new` / `Car::set_config`.
+    pub fn finalize(&mut self) {
+        let rear_tire = self.rear_axle.apply(&self.tire);
+        let bb = self.brake_bias.clamp(0.0, 1.0);
+        let db = self.drive_bias.clamp(0.0, 1.0);
+        for (i, w) in self.wheels.iter_mut().enumerate() {
+            let front = i < 2;
+            w.tire_model = if front { self.tire } else { rear_tire };
+            w.brake_bias_factor = if front { bb * 0.5 } else { (1.0 - bb) * 0.5 };
+            w.drive_torque_factor = if front { db * 0.5 } else { (1.0 - db) * 0.5 };
+        }
+    }
+
+    /// Builder form of [`CarConfig::finalize`].
+    #[must_use]
+    pub fn finalized(mut self) -> Self {
+        self.finalize();
+        self
+    }
+
     /// Standard balanced sports car tuned for GeneRally-style arcade drift racing.
     pub fn sports_car() -> Self {
         let tire = TireConfig::default();
@@ -596,25 +855,30 @@ impl CarConfig {
             steer_speed: 5.5,
             steer_return_speed: 7.0,
             counter_steer_assist: 1.3,
-            speed_sensitive_steer_factor: 0.0045,
 
             air_drag_coefficient: 0.42,
             lateral_drag_coefficient: 1.20,
             rolling_resistance_coefficient: 0.015,
             angular_damping: 120.0,
 
-            weight_transfer_longitudinal: 1.0,
-            weight_transfer_lateral: 1.12,
+            roll_balance: 0.66,
+            weight_transfer_hz: DEFAULT_WEIGHT_TRANSFER_HZ,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.12,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.65,
 
             tire,
+            // Rear tires peak earlier (stiffer) than the fronts: a stable understeer gradient in
+            // the linear range. With equal tires the car is neutral and diverges above ~40 m/s.
+            rear_axle: RearAxleTire { grip_scale: 1.0, peak_slip_scale: 0.81 },
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
+            player: PlayerHandling::default(),
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
         }
+        .finalized()
     }
 
     /// Dedicated drift machine: aggressive rear power, loose tail, quick counter-steer.
@@ -626,15 +890,13 @@ impl CarConfig {
         cfg.max_reverse_force = 5330.0;
         cfg.max_steer_angle = 0.78; // ~45 deg wide drift lock
         cfg.counter_steer_assist = 1.6;
-        cfg.speed_sensitive_steer_factor = 0.0037;
         cfg.angular_damping = 114.0;
-        cfg.weight_transfer_lateral = 1.05;
-        cfg.weight_transfer_longitudinal = 0.71;
+        cfg.roll_balance = 0.50;
         cfg.brake_bias = 0.56;
         cfg.engine_braking_coefficient = 0.10;
         cfg.downforce_coefficient = 0.45;
-        cfg.tire.drift_slide_friction = 0.92;
-        cfg.tire.handbrake_lateral_friction_multiplier = 0.30;
+        cfg.tire.slide_grip = 0.92;
+        cfg.rear_axle = RearAxleTire::NEUTRAL; // a drift car keeps a lively rear
         cfg.drive_bias = 0.0;
         cfg.rear_differential = DifferentialType::LimitedSlip {
             power_lock: 0.48,
@@ -642,10 +904,7 @@ impl CarConfig {
             preload_nm: 62.0,
         };
         cfg.assists = DriverAssistsConfig::sport();
-        for w in &mut cfg.wheels {
-            w.tire_model = cfg.tire;
-        }
-        cfg
+        cfg.finalized()
     }
 
     /// Go-kart preset: ultra-responsive, lightweight, high lateral grip, direct steering.
@@ -653,25 +912,16 @@ impl CarConfig {
     /// and wide rear tires (r=0.20m, w=0.21m) delivering >= 35% higher peak lateral force.
     pub fn kart() -> Self {
         let front_tire = TireConfig {
-            stiffness_b: 13.5,
-            shape_c: 1.50,
-            peak_d: 1.35,
-            curvature_e: -0.20,
-            drift_slide_friction: 0.88,
-            handbrake_lateral_friction_multiplier: 0.35,
+            grip: 1.35, // sticky kart slicks (real karts pull ~1.5-2 g)
+            peak_slip_angle_deg: 7.0,
+            slide_grip: 0.88,
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
-        let rear_tire = TireConfig {
-            stiffness_b: 13.5,
-            shape_c: 1.50,
-            peak_d: 1.85, // >= 35% higher peak lateral force than front axle under equal load (1.85 >= 1.35 * 1.35)
-            curvature_e: -0.20,
-            drift_slide_friction: 0.88,
-            handbrake_lateral_friction_multiplier: 0.35,
-            skid_threshold: 0.08,
-            skid_full_threshold: 0.28,
-        };
+        // Wide rear slicks: more grip than the narrow fronts (1.50 vs 1.35)
+        let rear_axle = RearAxleTire { grip_scale: 1.50 / 1.35, peak_slip_scale: 0.85 };
+        let rear_tire = rear_axle.apply(&front_tire);
         // I_front = 0.15 kg*m^2, I_rear = 0.24 kg*m^2 (I_rear > I_front)
         let wheels = [
             WheelAssemblyConfig {
@@ -731,25 +981,27 @@ impl CarConfig {
             steer_speed: 10.5,
             steer_return_speed: 14.0,
             counter_steer_assist: 1.25,
-            speed_sensitive_steer_factor: 0.0008,
 
             air_drag_coefficient: 0.35,
             lateral_drag_coefficient: 1.00,
             rolling_resistance_coefficient: 0.018,
             angular_damping: 35.0,
 
-            weight_transfer_longitudinal: 1.0,
-            weight_transfer_lateral: 0.83,
+            roll_balance: 0.50,
+            weight_transfer_hz: 5.0,
             caster_jacking_factor: 1.25,
 
             engine_braking_coefficient: 0.18,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.10,
 
             tire: front_tire,
+            rear_axle,
             assists: DriverAssistsConfig {
                 tcs_enabled: true,
                 tcs_slip_threshold: 0.16,
                 tcs_strength: 0.70,
+                tcs_slip_angle_deg: 12.0,
                 esc_enabled: false, // Pure analog chassis yaw rotation for karts
                 esc_yaw_threshold: 0.40,
                 esc_strength: 0.0,
@@ -765,8 +1017,10 @@ impl CarConfig {
                 mud_flotation: 1.0,
                 ice_grip_multiplier: 0.80,
             },
+            player: PlayerHandling::default(),
             wheels,
         }
+        .finalized()
     }
 
     /// Alias for `kart()` representing the classic 200cc sprint kart.
@@ -778,10 +1032,9 @@ impl CarConfig {
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
         cfg.drive_bias = 0.5; // AWD
-        cfg.speed_sensitive_steer_factor = 0.0010;
         cfg.angular_damping = 126.0;
-        cfg.weight_transfer_lateral = 1.24;
-        cfg.weight_transfer_longitudinal = 0.70;
+        cfg.engine_brake_front_share = 0.50;
+        cfg.weight_transfer_hz = 2.5;
         cfg.brake_bias = 0.62;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.60,
@@ -798,8 +1051,8 @@ impl CarConfig {
         cfg.max_reverse_force = 4875.0;
         cfg.engine_braking_coefficient = 0.14;
         cfg.downforce_coefficient = 0.70;
-        cfg.tire.stiffness_b = 8.0;
-        cfg.tire.drift_slide_friction = 0.90;
+        cfg.tire.peak_slip_angle_deg = 12.7;
+        cfg.tire.slide_grip = 0.90;
         cfg.terrain = TerrainInteractionConfig {
             sand_flotation: 0.70,
             mud_flotation: 0.70,
@@ -809,11 +1062,8 @@ impl CarConfig {
             w.tire_radius = 0.33;
             w.tire_width = 0.22;
             w.rotational_inertia = 1.30;
-            w.tire_model = cfg.tire;
-            w.drive_torque_factor = 0.25; // AWD 4-wheel drive distribution
-            w.brake_bias_factor = 0.25;
         }
-        cfg
+        cfg.finalized()
     }
 
     /// 850 BHP Trans-Am TA1 / NASCAR Cup tubular spaceframe V8 stock car spec.
@@ -824,14 +1074,12 @@ impl CarConfig {
     /// planted and controllable at high superspeedway speeds.
     pub fn stock_car_ta1() -> Self {
         let tire = TireConfig {
-            stiffness_b: 11.5,
-            shape_c: 1.48,
-            peak_d: 1.15,
-            curvature_e: -0.12,
-            drift_slide_friction: 0.86,
-            handbrake_lateral_friction_multiplier: 0.42,
+            grip: 1.10,
+            peak_slip_angle_deg: 8.5,
+            slide_grip: 0.86,
             skid_threshold: 0.09,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         let wheels = [
             WheelAssemblyConfig {
@@ -891,25 +1139,28 @@ impl CarConfig {
             steer_speed: 7.5,
             steer_return_speed: 10.0,
             counter_steer_assist: 1.35,
-            speed_sensitive_steer_factor: 0.00145,
 
             air_drag_coefficient: 0.52,
             lateral_drag_coefficient: 1.35,
             rolling_resistance_coefficient: 0.013,
             angular_damping: 148.0,
 
-            weight_transfer_longitudinal: 0.99,
-            weight_transfer_lateral: 0.81,
+            roll_balance: 0.51,
+            weight_transfer_hz: DEFAULT_WEIGHT_TRANSFER_HZ,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.18,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 1.25, // Moderate downforce package
 
             tire,
+            rear_axle: RearAxleTire::default(),
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig::default(),
+            player: PlayerHandling::default(),
             wheels,
         }
+        .finalized()
     }
 
     /// Alias for `stock_car_ta1()` representing the 850 BHP Trans-Am TA1 spaceframe racer.
@@ -921,14 +1172,13 @@ impl CarConfig {
     /// rear-biased weight, high-travel suspension compliance, and paddle tire grip.
     pub fn sand_rail() -> Self {
         let tire = TireConfig {
-            stiffness_b: 8.2,
-            shape_c: 1.35,
-            peak_d: 1.12,
-            curvature_e: -0.15,
-            drift_slide_friction: 0.94,
-            handbrake_lateral_friction_multiplier: 0.35,
+            grip: 1.20,
+            peak_slip_angle_deg: 15.0,
+            slide_grip: 0.94,
+            load_sensitivity: 0.10, // compliant off-road carcass
             skid_threshold: 0.08,
             skid_full_threshold: 0.28,
+            ..TireConfig::default()
         };
         let wheels = [
             WheelAssemblyConfig {
@@ -988,29 +1238,32 @@ impl CarConfig {
             steer_speed: 8.5,
             steer_return_speed: 9.5,
             counter_steer_assist: 1.55,
-            speed_sensitive_steer_factor: 0.00167,
 
             air_drag_coefficient: 0.48,
             lateral_drag_coefficient: 1.40,
             rolling_resistance_coefficient: 0.018,
             angular_damping: 135.7,
 
-            weight_transfer_longitudinal: 1.06,
-            weight_transfer_lateral: 1.65,
+            roll_balance: 0.42,
+            weight_transfer_hz: 2.5,
             caster_jacking_factor: 0.0,
 
             engine_braking_coefficient: 0.14,
+            engine_brake_front_share: 0.35,
             downforce_coefficient: 0.35,
 
             tire,
+            rear_axle: RearAxleTire::default(),
             assists: DriverAssistsConfig::sport(),
             terrain: TerrainInteractionConfig {
                 sand_flotation: 0.30,
                 mud_flotation: 0.65,
                 ice_grip_multiplier: 1.50,
             },
+            player: PlayerHandling::default(),
             wheels,
         }
+        .finalized()
     }
 }
 
@@ -1072,10 +1325,52 @@ mod tests {
         // Rear rotational inertia is greater than front: I_rear > I_front
         assert!(kart.wheels[2].rotational_inertia > kart.wheels[0].rotational_inertia);
 
-        // Rear delivers >= 35% higher peak lateral force than front under equal load
-        let f_front = kart.wheels[0].tire_model.peak_d;
-        let f_rear = kart.wheels[2].tire_model.peak_d;
-        assert!(f_rear >= f_front * 1.35, "f_rear ({}) should be >= 1.35 * f_front ({})", f_rear, f_front);
+        // Wide rear slicks carry more grip than the narrow fronts (Spec 043: grip is a true mu scale)
+        let f_front = kart.wheels[0].tire_model.grip;
+        let f_rear = kart.wheels[2].tire_model.grip;
+        assert!(f_rear > f_front, "rear grip ({}) should exceed front grip ({})", f_rear, f_front);
+    }
+
+    #[test]
+    fn test_finalize_derives_wheels_from_axle_settings() {
+        let mut cfg = CarConfig::sports_car();
+        cfg.tire.grip = 1.3;
+        cfg.drive_bias = 1.0;
+        cfg.brake_bias = 0.70;
+        cfg.finalize();
+        for i in 0..4 {
+            assert_eq!(cfg.wheels[i].tire_model.grip, 1.3);
+        }
+        assert!((cfg.wheels[0].drive_torque_factor - 0.5).abs() < 1e-6);
+        assert_eq!(cfg.wheels[2].drive_torque_factor, 0.0);
+        assert!((cfg.wheels[0].brake_bias_factor - 0.35).abs() < 1e-6);
+        assert!((cfg.wheels[3].brake_bias_factor - 0.15).abs() < 1e-6);
+
+        // Rear override (staggered kart)
+        let kart = CarConfig::kart();
+        assert_eq!(kart.wheels[0].tire_model, kart.tire);
+        assert_eq!(kart.wheels[2].tire_model, kart.rear_axle.apply(&kart.tire));
+        assert!(kart.wheels[2].tire_model.grip > kart.wheels[0].tire_model.grip);
+
+        // A later tire change reaches both axles (the catalog grip stat does this)
+        let mut sports = CarConfig::sports_car();
+        sports.tire.grip = 1.3;
+        sports.finalize();
+        assert!((sports.wheels[2].tire_model.grip - 1.3).abs() < 1e-6);
+        assert!(sports.wheels[2].tire_model.peak_slip_angle_deg < sports.wheels[0].tire_model.peak_slip_angle_deg);
+
+        // Idempotent
+        let again = cfg.finalized();
+        assert_eq!(again, cfg);
+    }
+
+    #[test]
+    fn test_pacejka_peak_slip_angle_migration() {
+        // Default legacy sports tire (B=9.5, C=1.45, E=-0.15) peaks at ~10.7 deg
+        let peak = pacejka_peak_slip_angle_deg(9.5, 1.45, -0.15);
+        assert!((peak - 10.72).abs() < 0.05, "peak = {peak}");
+        // Stiffer tire peaks earlier
+        assert!(pacejka_peak_slip_angle_deg(13.5, 1.45, -0.15) < peak);
     }
 
     #[test]
@@ -1144,10 +1439,14 @@ mod tests {
         assert!(deserialized.is_ok(), "Failed to deserialize legacy config: {:?}", deserialized.err());
         let config = deserialized.unwrap();
 
-        // Check that all 4 wheels inherited the custom tire model (stiffness_b = 15.0, peak_d = 1.10)
+        // All 4 wheels inherit the migrated tire: peak_d -> grip, Pacejka B/C/E -> peak slip angle
+        let expected_peak = pacejka_peak_slip_angle_deg(15.0, 1.45, -0.15);
         for i in 0..4 {
-            assert_eq!(config.wheels[i].tire_model.stiffness_b, 15.0);
-            assert_eq!(config.wheels[i].tire_model.peak_d, 1.10);
+            assert_eq!(config.wheels[i].tire_model.grip, 1.10);
+            // Rear axle: default stiffer rear (peak at 0.85x the front)
+            let axle = if i < 2 { 1.0 } else { RearAxleTire::default().peak_slip_scale };
+            assert!((config.wheels[i].tire_model.peak_slip_angle_deg - expected_peak * axle).abs() < 1e-4);
+            assert_eq!(config.wheels[i].tire_model.slide_grip, 0.88);
             assert_eq!(config.wheels[i].tire_radius, 0.32);
             assert_eq!(config.wheels[i].rotational_inertia, 1.25);
         }

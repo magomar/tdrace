@@ -184,9 +184,8 @@ impl InputController {
 
         let kb_handbrake = self.input_map.is_key_down(ArcadeAction::Action3);
 
-        let speed_abs = current_speed_fwd.abs();
         let (steer, mut throttle, mut brake) =
-            self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+            self.filter.update(raw_steer, raw_throttle, raw_brake, dt);
         let mut reverse = false;
 
         if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle <= 0.05 {
@@ -288,9 +287,8 @@ impl InputController {
             raw_brake = 1.0;
         }
 
-        let speed_abs = current_speed_fwd.abs();
         let (steer, mut throttle, mut brake) =
-            filter_p2.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+            filter_p2.update(raw_steer, raw_throttle, raw_brake, dt);
         let mut reverse = false;
 
         if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
@@ -334,11 +332,10 @@ impl InputController {
         dt: f32,
         current_speed_fwd: f32,
     ) -> CarControls {
-        let speed_abs = current_speed_fwd.abs();
         let (raw_steer, raw_throttle, raw_brake, kb_handbrake) = raw_kb;
 
         // Apply progressive smoothing filter to keyboard inputs
-        let (kb_steer, kb_throttle, kb_brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, speed_abs, dt);
+        let (kb_steer, kb_throttle, kb_brake) = self.filter.update(raw_steer, raw_throttle, raw_brake, dt);
 
         // Blend Keyboard and Analog Gamepad controls seamlessly
         let gp = &self.gamepad.snapshot;
