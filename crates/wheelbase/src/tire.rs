@@ -1,8 +1,20 @@
+//! Tire, wheel spin and contact models.
+//!
+//! Governed by `specs/043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
+//! normalized combined-slip tire with load sensitivity, and implicit wheel spin.
+
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use super::config::{TireConfig, WheelAssemblyConfig};
+use super::config::{PacejkaTireConfig, TireConfig, WheelAssemblyConfig};
 use super::surface::SurfaceType;
+
+/// Floor on the slip-ratio reference speed (m/s).
+///
+/// Keeps the slip definition finite at standstill and bounds the longitudinal tire stiffness
+/// seen by the explicit chassis integrator: with `C / (v_ref * m_corner) * dt < 2` the
+/// wheel-chassis contact stays stable down to 0 m/s at 60 Hz and 120 Hz.
+pub const SLIP_REFERENCE_SPEED: f32 = 4.0;
 
 /// Default baseline tire temperature (nominal warm tire in °C).
 pub fn default_tire_temperature() -> f32 {
@@ -126,13 +138,14 @@ impl Default for WheelTelemetry {
 
 /// Computes pure lateral force using the Pacejka Magic Formula curve adapted for arcade drifting.
 ///
+/// Used by the motorbike model. Car tires use [`combined_slip_forces`].
 /// Returns lateral force Fy in Newtons.
 #[inline]
 pub fn pacejka_lateral_force(
     slip_angle: f32,
     normal_load: f32,
     friction_coeff: f32,
-    config: &TireConfig,
+    config: &PacejkaTireConfig,
     is_handbraking: bool,
 ) -> f32 {
     if normal_load <= 1e-4 {
@@ -167,6 +180,89 @@ pub fn pacejka_lateral_force(
     } else {
         base_force
     }
+}
+
+/// Shape of the rising branch: a Pacejka curve (C = 1.45, E = -0.15) rescaled so it peaks at s = 1.
+/// Its initial slope (B * C = 2.56) matches a real tire's cornering stiffness at a given peak slip;
+/// a softer rise (e.g. s * (2 - s), slope 2) under-damps the chassis yaw.
+const CURVE_C: f32 = 1.45;
+const CURVE_E: f32 = -0.15;
+/// `B` such that `C * atan(B - E * (B - atan(B))) = PI / 2` (peak at s = 1).
+const CURVE_B: f32 = 1.7646;
+
+/// Normalized tire curve (Spec 043): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
+/// to `slide_grip` over `falloff` peak-widths.
+#[inline]
+pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
+    let s = s.abs();
+    if s <= 1.0 {
+        let bs = CURVE_B * s;
+        (CURVE_C * (bs - CURVE_E * (bs - bs.atan())).atan()).sin().min(1.0)
+    } else {
+        let t = ((s - 1.0) / tire.falloff.max(0.1)).min(1.0);
+        1.0 - (1.0 - tire.slide_grip) * t * t * (3.0 - 2.0 * t)
+    }
+}
+
+/// Load-sensitive friction envelope `mu_eff * Fz` in Newtons.
+///
+/// Heavily loaded tires deliver less grip per newton of load, so lateral load transfer
+/// reduces an axle's total grip and the roll balance moves the handling balance.
+#[inline]
+pub fn tire_friction_envelope(normal_load: f32, nominal_load: f32, friction_coeff: f32, tire: &TireConfig) -> f32 {
+    if normal_load <= 1e-4 {
+        return 0.0;
+    }
+    let load_ratio = normal_load / nominal_load.max(1.0);
+    let sensitivity = (1.0 - tire.load_sensitivity * (load_ratio - 1.0)).clamp(0.5, 1.3);
+    friction_coeff * tire.grip * sensitivity * normal_load
+}
+
+/// Combined-slip tire forces on the normalized slip vector (Spec 043).
+///
+/// `sx = slip_ratio / peak_slip_ratio`, `sy = tan(slip_angle) / tan(peak_slip_angle)`.
+/// The resultant `F = envelope * curve(|s|)` points along the slip vector, so wheelspin and
+/// lock-up erode lateral grip naturally. `power_slide < 1` blends towards the friction-circle
+/// budget, which keeps more lateral grip under longitudinal slip (arcade). Returns `(Fx, Fy)` in the wheel frame: `Fx > 0` pushes the car
+/// forward (wheel spinning faster than the road), `Fy` has the sign of `slip_angle`.
+#[inline]
+pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> (f32, f32) {
+    if envelope <= 1e-4 {
+        return (0.0, 0.0);
+    }
+    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
+    let sy = slip_angle.tan() / tire.peak_slip_angle().tan().max(1e-3);
+    let s = (sx * sx + sy * sy).sqrt();
+    if s < 1e-6 {
+        return (0.0, 0.0);
+    }
+    let f = envelope * normalized_grip_curve(s, tire);
+    let fx = f * sx / s;
+    let mut fy = f * sy / s;
+    let arcade = 1.0 - tire.power_slide.clamp(0.0, 1.0);
+    if arcade > 0.0 {
+        // Lateral force may use whatever the friction circle leaves after Fx.
+        let fy_pure = envelope * normalized_grip_curve(sy, tire) * sy.signum();
+        let budget = (1.0 - (fx / envelope).powi(2)).max(0.0).sqrt();
+        let fy_circle = fy_pure * budget;
+        if fy_circle.abs() > fy.abs() {
+            fy += (fy_circle - fy) * arcade;
+        }
+    }
+    (fx, fy)
+}
+
+/// Longitudinal stiffness `dFx/d(slip_ratio)` at the given combined slip state (N per unit slip).
+///
+/// Used by the implicit wheel spin integrator. Evaluated by central difference and floored at a
+/// small positive value so the implicit step stays well conditioned past the peak.
+#[inline]
+pub fn longitudinal_slip_stiffness(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
+    let h = tire.peak_slip_ratio.max(1e-3) * 0.05;
+    let (fx_hi, _) = combined_slip_forces(slip_ratio + h, slip_angle, envelope, tire);
+    let (fx_lo, _) = combined_slip_forces(slip_ratio - h, slip_angle, envelope, tire);
+    let slope = (fx_hi - fx_lo) / (2.0 * h);
+    slope.max(envelope * 0.05)
 }
 
 /// Applies the friction circle / ellipse limit to combine longitudinal and lateral forces.
@@ -298,43 +394,55 @@ impl WheelAssembly {
         mult.clamp(0.82, 1.08)
     }
 
-    /// Computes the exact kinematic longitudinal slip ratio s_i.
+    /// Unclamped longitudinal slip ratio `(omega*r - v) / max(|v|, SLIP_REFERENCE_SPEED)` (Spec 043).
     ///
-    /// s = (omega * r - v_long) / max(|v_long|, |omega * r|, 0.10)
-    /// Clamped to [-1.0, 1.0].
+    /// Positive when the wheel spins faster than the road (drive), -1.0 when locked.
     #[inline]
-    pub fn compute_slip_ratio(&self, v_long: f32) -> f32 {
-        let r = self.config.tire_radius;
-        let v_wheel = self.angular_velocity * r;
-        let denom = v_long.abs().max(v_wheel.abs()).max(0.10);
-        ((v_wheel - v_long) / denom).clamp(-1.0, 1.0)
+    pub fn slip_ratio_raw(&self, v_long: f32) -> f32 {
+        let v_wheel = self.angular_velocity * self.config.tire_radius;
+        (v_wheel - v_long) / v_long.abs().max(SLIP_REFERENCE_SPEED)
     }
 
-    /// Integrates wheel rotational dynamics:
+    /// Longitudinal slip ratio clamped to [-1.0, 1.0] for telemetry, skid and audio consumers.
+    #[inline]
+    pub fn compute_slip_ratio(&self, v_long: f32) -> f32 {
+        self.slip_ratio_raw(v_long).clamp(-1.0, 1.0)
+    }
+
+    /// Wheel angular velocity that produces the given slip ratio at road speed `v_long`.
+    #[inline]
+    pub fn omega_for_slip(&self, slip_ratio: f32, v_long: f32) -> f32 {
+        (v_long + slip_ratio * v_long.abs().max(SLIP_REFERENCE_SPEED)) / self.config.tire_radius.max(1e-2)
+    }
+
+    /// Integrates wheel spin with a linearized backward-Euler step (Spec 043):
     ///
-    /// I * d(omega)/dt = T_drive - T_brake - F_x * r
+    /// `I * d(omega)/dt = T_drive - T_brake - r * Fx(slip)`
+    ///
+    /// The tire force is linearized around the current slip, so the step stays stable at any
+    /// road speed. Brake torque can stop the wheel but never reverse it.
     ///
     /// Parameters:
-    /// - `drive_torque`: Tractive drive torque applied from the powertrain (N·m).
-    /// - `brake_torque`: Retarding brake torque applied from service brake and handbrake (N·m, >= 0).
-    /// - `fx`: Longitudinal contact patch force against the road (N, + = forward acceleration force).
-    /// - `v_long`: Longitudinal contact patch speed relative to ground (m/s).
-    /// - `dt`: Timestep in seconds.
-    pub fn step_rotation(
+    /// - `drive_torque`: powertrain torque at the hub (N·m, sign = drive direction; coast torque is negative).
+    /// - `brake_torque`: service brake + handbrake torque magnitude (N·m, >= 0).
+    /// - `v_long`: contact patch speed along the wheel heading (m/s).
+    /// - `slip_angle`: current slip angle (rad), for the combined-slip force.
+    /// - `envelope`: current friction envelope of this tire (N).
+    pub fn step_implicit(
         &mut self,
         drive_torque: f32,
         brake_torque: f32,
-        fx: f32,
         v_long: f32,
+        slip_angle: f32,
+        envelope: f32,
         dt: f32,
     ) {
         let inertia = self.config.rotational_inertia.max(1e-3);
-        let r = self.config.tire_radius;
-        let target_omega = v_long / r;
+        let r = self.config.tire_radius.max(1e-2);
+        let brake_torque = brake_torque.max(0.0);
 
-        // Numerical instability check / recovery: reset to kinematic match if corrupt or divergent spike
-        if drive_torque.abs() > 50_000.0 || brake_torque > 50_000.0 || self.angular_velocity.is_nan() {
-            self.angular_velocity = target_omega;
+        if !self.angular_velocity.is_finite() || !drive_torque.is_finite() || !brake_torque.is_finite() {
+            self.angular_velocity = v_long / r;
             self.is_locked = false;
             return;
         }
@@ -346,76 +454,42 @@ impl WheelAssembly {
             return;
         }
 
-        // Road grip torque capability
-        let road_grip_torque = fx.abs() * r;
-
-        // Net torque evaluation when both drive and braking are applied:
-        // Drive torque accelerates the wheel (positive forward, negative reverse).
-        // Brake torque magnitude opposes rotation / drive torque.
-        let (net_fwd_drive, net_rev_drive, net_brake) = if drive_torque >= 0.0 {
-            let fwd = (drive_torque - brake_torque).max(0.0);
-            let brk = (brake_torque - drive_torque).max(0.0);
-            (fwd, 0.0, brk)
+        let tire = &self.config.tire_model;
+        let slip = self.slip_ratio_raw(v_long);
+        let (fx0, _) = combined_slip_forces(slip, slip_angle, envelope, tire);
+        let stiffness = if envelope > 1e-4 {
+            longitudinal_slip_stiffness(slip, slip_angle, envelope, tire)
         } else {
-            let rev = (-drive_torque - brake_torque).max(0.0);
-            let brk = (brake_torque - (-drive_torque)).max(0.0);
-            (0.0, rev, brk)
+            0.0
+        };
+        let k = r * r * stiffness / v_long.abs().max(SLIP_REFERENCE_SPEED);
+        let effective_inertia = inertia + dt * k;
+
+        let omega_free = self.angular_velocity + dt * (drive_torque - r * fx0) / effective_inertia;
+        let brake_dw = dt * brake_torque / effective_inertia;
+        self.angular_velocity = if omega_free.abs() <= brake_dw {
+            0.0
+        } else {
+            omega_free - brake_dw * omega_free.signum()
         };
 
-        if net_fwd_drive > road_grip_torque {
-            // Forward wheelspin: drive torque exceeds brake hold and road traction
-            let excess_torque = net_fwd_drive - road_grip_torque;
-            let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
-            self.angular_velocity += angular_accel * dt;
-        } else if net_rev_drive > road_grip_torque {
-            // Reverse wheelspin: reverse drive torque exceeds brake hold and road traction
-            let excess_torque = net_rev_drive - road_grip_torque;
-            let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
-            self.angular_velocity -= angular_accel * dt;
-        } else if net_brake > road_grip_torque {
-            // Over-braking: net brake torque exceeds available road traction -> decelerate towards lockup
-            // As tire slips heavily (|omega| < 0.6 * |target_omega|), dynamic slide friction drops road spinup resistance
-            let effective_road_grip = if self.angular_velocity.abs() < target_omega.abs() * 0.6 {
-                road_grip_torque * 0.60
-            } else {
-                road_grip_torque
-            };
-            let excess_torque = net_brake - effective_road_grip;
-            let angular_accel = (excess_torque / inertia).clamp(0.0, 5000.0);
-            if v_long >= 0.0 {
-                self.angular_velocity = (self.angular_velocity - angular_accel * dt).clamp(0.0, target_omega);
-            } else {
-                self.angular_velocity = (self.angular_velocity + angular_accel * dt).clamp(target_omega, 0.0);
-            }
-        } else if (self.angular_velocity - target_omega).abs() > (target_omega.abs() * 0.05).max(0.5) {
-            // Spin recovery (from wheelspin or lockup): road grip restores synchronous rolling
-            let recovery_torque = if net_brake > 0.0 {
-                (road_grip_torque - net_brake).max(3500.0)
-            } else if drive_torque.abs() > 0.0 {
-                (road_grip_torque - drive_torque.abs()).max(2000.0)
-            } else {
-                road_grip_torque.max(3500.0)
-            };
-            let spinup_dir = (target_omega - self.angular_velocity).signum();
-            let angular_accel = (recovery_torque / inertia) * spinup_dir;
-            let prev_omega = self.angular_velocity;
-            self.angular_velocity += angular_accel * dt;
-            if (prev_omega - target_omega).signum() != (self.angular_velocity - target_omega).signum() {
-                self.angular_velocity = target_omega;
-            }
-        } else {
-            // Normal rolling regime: tire rolls synchronously with the contact patch
-            self.angular_velocity = target_omega;
-        }
-
-        // Clamp to physical rotational limit (-550 to +550 rad/s ~ >600 km/h)
+        // Physical rotational limit (-550 to +550 rad/s ~ >600 km/h)
         self.angular_velocity = self.angular_velocity.clamp(-550.0, 550.0);
+        self.is_locked = v_long.abs() > 0.5 && self.angular_velocity.abs() < 1e-3 && brake_torque > 0.0;
+    }
 
-        // Lockup detection and caliper static holding clamp
-        self.is_locked = v_long.abs() > 0.5 && self.angular_velocity.abs() < 0.5 && brake_torque > 0.0;
-        if self.is_locked {
-            self.angular_velocity = 0.0;
+    /// Effective rotational inertia `I + dt * r^2 * dFx/dslip / v_ref` seen by the implicit step.
+    ///
+    /// Used by the differential coupling so locking torques stay consistent with the tire.
+    pub fn effective_inertia(&self, v_long: f32, slip_angle: f32, envelope: f32, dt: f32) -> f32 {
+        let inertia = self.config.rotational_inertia.max(1e-3);
+        if envelope <= 1e-4 {
+            return inertia;
         }
+        let r = self.config.tire_radius.max(1e-2);
+        let slip = self.slip_ratio_raw(v_long);
+        let stiffness = longitudinal_slip_stiffness(slip, slip_angle, envelope, &self.config.tire_model);
+        inertia + dt * r * r * stiffness / v_long.abs().max(SLIP_REFERENCE_SPEED)
     }
 
     /// Integrates thermal dissipation and mechanical tread wear over dt.
@@ -464,24 +538,17 @@ impl WheelAssembly {
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
     }
 
-    /// Computes pure lateral force Fy taking thermal degradation and mechanical wear into account.
-    pub fn lateral_force(
-        &self,
-        slip_angle: f32,
-        normal_load: f32,
-        friction_coeff: f32,
-        is_handbraking: bool,
-    ) -> f32 {
-        let thermal_mult = self.thermal_grip_multiplier();
+    /// Surface friction coefficient scaled by tread temperature and wear.
+    #[inline]
+    pub fn effective_friction(&self, friction_coeff: f32) -> f32 {
         let wear_mult = (1.0 - 0.20 * self.wear).max(0.50);
-        let effective_mu = friction_coeff * thermal_mult * wear_mult;
-        pacejka_lateral_force(
-            slip_angle,
-            normal_load,
-            effective_mu,
-            &self.config.tire_model,
-            is_handbraking,
-        )
+        friction_coeff * self.thermal_grip_multiplier() * wear_mult
+    }
+
+    /// Load-sensitive friction envelope of this tire including thermal and wear effects (N).
+    #[inline]
+    pub fn friction_envelope(&self, normal_load: f32, nominal_load: f32, friction_coeff: f32) -> f32 {
+        tire_friction_envelope(normal_load, nominal_load, self.effective_friction(friction_coeff), &self.config.tire_model)
     }
 }
 
@@ -491,7 +558,7 @@ mod tests {
 
     #[test]
     fn test_pacejka_lateral_force() {
-        let cfg = TireConfig::default();
+        let cfg = PacejkaTireConfig::default();
         let normal_load = 2500.0;
         let friction_coeff = 1.0;
 
@@ -511,6 +578,71 @@ mod tests {
         // Handbrake reduces lateral grip
         let f_hb = pacejka_lateral_force(0.1, normal_load, friction_coeff, &cfg, true);
         assert!(f_hb < f_small);
+    }
+
+    #[test]
+    fn test_curve_constant_places_peak_at_one() {
+        let tire = TireConfig::default();
+        let at_peak = normalized_grip_curve(1.0, &tire);
+        assert!((at_peak - 1.0).abs() < 1e-4, "curve(1) = {at_peak}");
+        assert!(normalized_grip_curve(0.98, &tire) < 1.0);
+        // Initial slope ~ B * C = 2.56
+        let slope = normalized_grip_curve(0.01, &tire) / 0.01;
+        assert!((slope - 2.56).abs() < 0.05, "slope = {slope}");
+    }
+
+    #[test]
+    fn test_normalized_curve_peaks_at_one_and_falls_to_slide_grip() {
+        let tire = TireConfig::default();
+        assert_eq!(normalized_grip_curve(0.0, &tire), 0.0);
+        assert!((normalized_grip_curve(1.0, &tire) - 1.0).abs() < 1e-4);
+        assert!(normalized_grip_curve(0.5, &tire) < 1.0);
+        assert!(normalized_grip_curve(1.2, &tire) < 1.0);
+        let deep = normalized_grip_curve(1.0 + tire.falloff + 1.0, &tire);
+        assert!((deep - tire.slide_grip).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_combined_slip_peak_and_symmetry() {
+        let tire = TireConfig { power_slide: 1.0, ..TireConfig::default() };
+        let env = 3000.0;
+        let (_, fy_peak) = combined_slip_forces(0.0, tire.peak_slip_angle(), env, &tire);
+        assert!((fy_peak - env).abs() < 1.0, "pure lateral peak equals envelope, got {fy_peak}");
+        let (_, fy_neg) = combined_slip_forces(0.0, -tire.peak_slip_angle(), env, &tire);
+        assert!((fy_peak + fy_neg).abs() < 1e-3);
+        let (fx_peak, _) = combined_slip_forces(tire.peak_slip_ratio, 0.0, env, &tire);
+        assert!((fx_peak - env).abs() < 1.0);
+        let (fx_neg, _) = combined_slip_forces(-tire.peak_slip_ratio, 0.0, env, &tire);
+        assert!(fx_neg < 0.0);
+    }
+
+    #[test]
+    fn test_wheelspin_erodes_lateral_grip_and_resultant_stays_in_envelope() {
+        let tire = TireConfig { power_slide: 1.0, ..TireConfig::default() };
+        let env = 3000.0;
+        let alpha = tire.peak_slip_angle() * 0.8;
+        let (_, fy_free) = combined_slip_forces(0.0, alpha, env, &tire);
+        let (fx_spin, fy_spin) = combined_slip_forces(0.4, alpha, env, &tire);
+        assert!(fy_spin < fy_free * 0.5, "spinning wheel keeps {fy_spin} of {fy_free}");
+        assert!((fx_spin * fx_spin + fy_spin * fy_spin).sqrt() <= env + 1e-2);
+
+        // Arcade power_slide keeps more lateral grip under the same wheelspin
+        let arcade = TireConfig { power_slide: 0.4, ..tire };
+        let (_, fy_arcade) = combined_slip_forces(0.4, alpha, env, &arcade);
+        assert!(fy_arcade > fy_spin);
+    }
+
+    #[test]
+    fn test_load_sensitivity_reduces_grip_per_newton() {
+        let tire = TireConfig::default();
+        let nominal = 2500.0;
+        let light = tire_friction_envelope(1500.0, nominal, 1.0, &tire) / 1500.0;
+        let heavy = tire_friction_envelope(3500.0, nominal, 1.0, &tire) / 3500.0;
+        assert!(light > heavy);
+        // Transferring load across an axle loses total grip
+        let even = 2.0 * tire_friction_envelope(2500.0, nominal, 1.0, &tire);
+        let split = tire_friction_envelope(1500.0, nominal, 1.0, &tire) + tire_friction_envelope(3500.0, nominal, 1.0, &tire);
+        assert!(split < even);
     }
 
     #[test]
@@ -537,37 +669,61 @@ mod tests {
             brake_bias_factor: 0.30,
             drive_torque_factor: 0.50,
         });
+        let envelope = 2500.0;
+        let dt = 1.0 / 120.0;
 
         // Initial standstill state
         assert_eq!(wheel.angular_velocity, 0.0);
         assert!(!wheel.is_locked);
         assert_eq!(wheel.compute_slip_ratio(0.0), 0.0);
 
-        // Step acceleration with drive torque (wheel speeds up)
-        let dt = 1.0 / 60.0;
-        wheel.step_rotation(1500.0, 0.0, 2000.0, 10.0, dt);
+        // Drive torque spins the wheel up from rest
+        wheel.step_implicit(600.0, 0.0, 0.0, 0.0, envelope, dt);
         assert!(wheel.angular_velocity > 0.0);
 
-        // Vehicle traveling at 33.3 m/s (~120 km/h), wheel rolling at 33.3 / 0.32 = 104 rad/s
+        // Rolling at 33.3 m/s (~120 km/h) with no torque stays synchronous
         wheel.angular_velocity = 33.3 / 0.32;
-        let slip_rolling = wheel.compute_slip_ratio(33.3);
-        assert!(slip_rolling.abs() < 0.05);
-
-        // Heavy braking: apply 5000 N*m brake torque for several steps without drive torque
         for _ in 0..10 {
-            wheel.step_rotation(0.0, 5000.0, 2500.0, 33.3, dt);
+            wheel.step_implicit(0.0, 0.0, 33.3, 0.0, envelope, dt);
         }
+        assert!(wheel.compute_slip_ratio(33.3).abs() < 0.01);
 
-        // Wheel should lock up: angular velocity reaches 0 while vehicle is still moving
+        // Heavy braking far above the tire's torque capacity locks the wheel
+        for _ in 0..30 {
+            wheel.step_implicit(0.0, 5000.0, 33.3, 0.0, envelope, dt);
+        }
         assert_eq!(wheel.angular_velocity, 0.0);
         assert!(wheel.is_locked);
-        let slip_locked = wheel.compute_slip_ratio(33.3);
-        assert_eq!(slip_locked, -1.0);
+        assert_eq!(wheel.compute_slip_ratio(33.3), -1.0);
 
-        // Skid telemetry should register maximum intensity (1.0) under lockup
-        let (intensity, is_skidding) = compute_skid_telemetry(0.0, slip_locked, 33.3, false, &wheel.config.tire_model, SurfaceType::Asphalt);
+        // Skid telemetry registers maximum intensity (1.0) under lockup
+        let (intensity, is_skidding) = compute_skid_telemetry(0.0, -1.0, 33.3, false, &wheel.config.tire_model, SurfaceType::Asphalt);
         assert_eq!(intensity, 1.0);
         assert!(is_skidding);
+
+        // Releasing the brake lets the road spin the wheel back up to rolling speed
+        for _ in 0..60 {
+            wheel.step_implicit(0.0, 0.0, 33.3, 0.0, envelope, dt);
+        }
+        assert!(!wheel.is_locked);
+        assert!(wheel.compute_slip_ratio(33.3).abs() < 0.02);
+    }
+
+    #[test]
+    fn test_implicit_wheel_step_holds_peak_traction_under_moderate_drive() {
+        // A drive torque below the tire's capacity settles at a small, steady slip (no runaway)
+        let mut wheel = WheelAssembly::new(WheelAssemblyConfig::default());
+        let envelope = 2500.0;
+        let r = wheel.config.tire_radius;
+        let torque = 0.6 * envelope * r;
+        wheel.angular_velocity = 20.0 / r;
+        for _ in 0..240 {
+            wheel.step_implicit(torque, 0.0, 20.0, 0.0, envelope, 1.0 / 120.0);
+        }
+        let slip = wheel.slip_ratio_raw(20.0);
+        let (fx, _) = combined_slip_forces(slip, 0.0, envelope, &wheel.config.tire_model);
+        assert!(slip > 0.0 && slip < wheel.config.tire_model.peak_slip_ratio, "slip = {slip}");
+        assert!((fx * r - torque).abs() < torque * 0.02, "tire torque balances drive torque");
     }
 
     #[test]
@@ -599,12 +755,17 @@ mod tests {
     #[test]
     fn test_wheel_assembly_numerical_stability() {
         let mut wheel = WheelAssembly::new(WheelAssemblyConfig::default());
-        wheel.angular_velocity = 50.0;
-
-        // Extremely divergent torque spike (glitch)
-        wheel.step_rotation(1_000_000.0, 0.0, 0.0, 20.0, 0.016);
-        // Should recover to kinematic match (20.0 / 0.32 = 62.5 rad/s) rather than exploding to NaN
-        assert!(!wheel.angular_velocity.is_nan());
+        wheel.angular_velocity = f32::NAN;
+        wheel.step_implicit(100.0, 0.0, 20.0, 0.0, 2500.0, 0.016);
+        // Recovers to kinematic match (20.0 / 0.32 = 62.5 rad/s) rather than propagating NaN
         assert!((wheel.angular_velocity - (20.0 / 0.32)).abs() < 1e-3);
+
+        // Stiff low-speed case: dt*k >> I must not oscillate or blow up
+        let mut wheel = WheelAssembly::new(WheelAssemblyConfig::default());
+        for step in 0..600 {
+            let v = 0.02 * step as f32 / 60.0;
+            wheel.step_implicit(800.0, 0.0, v, 0.0, 2500.0, 1.0 / 120.0);
+            assert!(wheel.angular_velocity.is_finite() && wheel.angular_velocity.abs() <= 550.0);
+        }
     }
 }

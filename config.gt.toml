@@ -5,7 +5,7 @@
 default_track = "monza"
 default_laps = 3
 default_num_bots = 7
-default_assist_profile = "pro"
+default_assist_profile = "arcade"
 
 [camera]
 velocity_lookahead_time = 0.50

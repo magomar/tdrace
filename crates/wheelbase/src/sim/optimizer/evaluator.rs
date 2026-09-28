@@ -43,15 +43,16 @@ impl OptimizationEvaluator {
             let val = bound.from_normalized(normalized_params[i]);
             match bound.name.as_str() {
                 "caster_jacking_factor" => cfg.caster_jacking_factor = val,
-                "speed_sensitive_steer_factor" => cfg.speed_sensitive_steer_factor = val,
+                "tire_grip" => cfg.tire.grip = val,
+                "tire_peak_slip_angle_deg" => cfg.tire.peak_slip_angle_deg = val,
                 "angular_damping" => cfg.angular_damping = val,
                 "brake_bias" => cfg.brake_bias = val,
                 "drive_bias" => cfg.drive_bias = val,
                 "max_steer_angle" => cfg.max_steer_angle = val,
                 "steer_speed" => cfg.steer_speed = val,
                 "steer_return_speed" => cfg.steer_return_speed = val,
-                "weight_transfer_lateral" => cfg.weight_transfer_lateral = val,
-                "weight_transfer_longitudinal" => cfg.weight_transfer_longitudinal = val,
+                "roll_balance" => cfg.roll_balance = val,
+                "weight_transfer_hz" => cfg.weight_transfer_hz = val,
                 "downforce_coefficient" => cfg.downforce_coefficient = val,
                 "air_drag_coefficient" => cfg.air_drag_coefficient = val,
                 "power_lock" => {
@@ -88,7 +89,7 @@ impl OptimizationEvaluator {
         // Project hard constraints (equality manifolds, locked spools, power/coast deltas)
         self.constraint.project_hard_constraints(&mut cfg);
 
-        cfg
+        cfg.finalized()
     }
 
     /// Evaluates candidate parameters by executing dynamic simulations and returns composite loss.

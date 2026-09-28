@@ -10,7 +10,7 @@ use super::scaler::UiScaler;
 use crate::audio::{AudioSettings, EngineSoundType};
 use crate::game::XpAwardReceipt;
 use crate::render::color::{CarColorScheme, Palette};
-use cabinet::input::{GamepadSnapshot, SteeringProfile};
+use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
@@ -2133,8 +2133,7 @@ pub fn render_controls_screen(
     gamepad_name: &str,
     input_map: &cabinet::input::InputMap,
     preset_name: &str,
-    steering_profile: SteeringProfile,
-    hold_bleed_rate: f32,
+    keyboard: &cabinet::input::DigitalInputConfig,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2200,12 +2199,16 @@ pub fn render_controls_screen(
     );
     let handbrake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Action3);
 
-    let bleed_label = format!("{:.1}x/s", hold_bleed_rate);
+    let handling_label = format!(
+        "{:.0} ms / {:.0}% / {:.0}%",
+        keyboard.steer_time_ms,
+        keyboard.steer_authority * 100.0,
+        keyboard.traction_help * 100.0
+    );
     let kb_rows = [
-        ("Steering Smoothing", steering_profile.name()),
-        ("Cycle Steering Profile", "S / P"),
-        ("Hold-Lock Bleed Rate", bleed_label.as_str()),
-        ("Cycle Bleed Rate", "B"),
+        ("Handling Preset", keyboard.profile.name()),
+        ("Cycle Handling Preset", "S / P"),
+        ("Steer Speed / Authority / Traction", handling_label.as_str()),
         ("Open Controls Settings", "X / O"),
         ("Accelerate / Gas", throttle_label.as_str()),
         ("Brake / Reverse (at stop)", brake_label.as_str()),

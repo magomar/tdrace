@@ -713,7 +713,7 @@ mod tests {
 
         let offroad = ClassicGameModule::car_classic_offroad();
         assert_eq!(offroad.mass, 680.0);
-        assert!(offroad.tire.drift_slide_friction >= 0.94);
+        assert!(offroad.tire.slide_grip >= 0.94);
 
         let kart = ClassicGameModule::car_classic_kart();
         assert_eq!(kart.mass, 180.0);
