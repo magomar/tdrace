@@ -1753,6 +1753,8 @@ NASCAR_TRACKS = {
     },
     "charlotte": {
         "name": "Charlotte Motor Speedway",
+        # (min_lon, min_lat, max_lon, max_lat) of the lap: the osm_url way alone does not cover it for download
+        "bbox": (-80.686, 35.347, -80.679, 35.356),
         "segments": [(396483278, None), (116034341, None), (402168709, None), (1052107104, None), (402168711, None)],
         "start_node": 9668619996,  # mapped raceway=start-finish node
         "official_length": 2414.0,
@@ -1837,6 +1839,8 @@ NASCAR_TRACKS = {
     },
     "talladega": {
         "name": "Talladega Superspeedway",
+        # (min_lon, min_lat, max_lon, max_lat) of the lap: the osm_url way alone does not cover it for download
+        "bbox": (-86.072, 33.559, -86.060, 33.575),
         "segments": [(426163860, None), (426163859, None), (532106116, None), (8835825, None)],
         "start_node": 13757090309,  # nearest lap node to the mapped raceway=start-finish node
         "official_length": 4281.0,
@@ -2096,10 +2100,11 @@ def element_bounds(osm_url):
 
 
 def config_bbox(track_id):
-    """(south, west, north, east) from a kart or rallycross config, when it has one."""
-    if "bbox" in KART_TRACKS.get(track_id, {}):
-        min_lon, min_lat, max_lon, max_lat = KART_TRACKS[track_id]["bbox"]
-        return min_lat, min_lon, max_lat, max_lon
+    """(south, west, north, east) from a kart, NASCAR or rallycross config, when it has one."""
+    for specs in (KART_TRACKS, NASCAR_TRACKS):
+        if "bbox" in specs.get(track_id, {}):
+            min_lon, min_lat, max_lon, max_lat = specs[track_id]["bbox"]
+            return min_lat, min_lon, max_lat, max_lon
     if "query" in RALLY_TRACKS.get(track_id, {}):
         m = re.search(r"\(([-0-9.]+),([-0-9.]+),([-0-9.]+),([-0-9.]+)\)", RALLY_TRACKS[track_id]["query"])
         lat1, lon1, lat2, lon2 = map(float, m.groups())

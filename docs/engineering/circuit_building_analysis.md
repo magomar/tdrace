@@ -420,7 +420,7 @@ marina_bay, bahrain, montreal, cota.
 | D8 | Dashed centre line on race asphalt | `track.rs:1511-1514` | Road look, not circuit look. |
 | D9 | Editor resets barrier to 4.0 m Steel; slider sets both sides | `editor/state.rs:534`, `ui.rs:995` | Editing destroys per-track wall tuning. |
 | D10 | Spec 006 (branching / `TrackNetwork`) says `implemented`; code only on `origin/feat/road-split-branching-tracks` | `specs/006_…md` | No pit-lane or joker branch possible in `main`. |
-| D11 | Five `osm_url`s point to a venue polygon, not the imported ways | `provenance.rs` | Wrong provenance. |
+| D11 | Five `osm_url`s point to a venue polygon, not the imported ways | `provenance.rs` | Wrong provenance. **Fixed 2026-09-28:** 17 were wrong; all 69 now point at the lap (tdrace-08jt). |
 | D12 | No ODbL attribution anywhere | — | Licence obligation not met. |
 | D13 | Doc/spec drift: barrier coefficients, spec 012 editor tools, spec 016 textures/mowing stripes | `docs/physics/walls_barriers.md`, specs 012/016 | Docs describe features that do not exist. |
 

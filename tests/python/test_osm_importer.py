@@ -1,7 +1,7 @@
 """
 Unit tests for the shared OSM circuit importer (scripts/osm_importer.py).
 
-They use small synthetic lat/lon data only: no network and no OSM cache needed.
+Most use small synthetic lat/lon data; the provenance test reads assets/osm and tracks/. No network.
 """
 
 import os
@@ -214,3 +214,71 @@ def test_shift_start_rotates_props_with_the_points():
     pts, props = imp.shift_start(square, 150.0, ["A", "B", "C", "D"])
     assert pts[0] == (100.0, 50.0)
     assert props == ["B", "C", "D", "A", "B"]
+
+
+def lap_and_osm(monkeypatch, discipline, track_id):
+    """(lap node ids, nodes, ways, relations) of one imported circuit, from its assets/osm file."""
+    import contextlib
+    import io
+    import xml.etree.ElementTree as ET
+
+    captured = []
+    original = imp.check_loop_joins
+
+    def spy(label, node_ids, coords, edges, *args, **kwargs):
+        captured.append([str(n) for n in node_ids])
+        return original(label, node_ids, coords, edges, *args, **kwargs)
+
+    monkeypatch.setattr(imp, "check_loop_joins", spy)
+    with contextlib.redirect_stderr(io.StringIO()):
+        imp.DISCIPLINES[discipline][1](track_id, imp.DEFAULT_CACHE_DIR)
+    root = ET.parse(imp.osm_file_path(imp.DEFAULT_CACHE_DIR, track_id)).getroot()
+    nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
+    ways = {w.get("id"): [n.get("ref") for n in w.findall("nd")] for w in root.findall("way")}
+    rels = {
+        r.get("id"): (
+            {m.get("ref") for m in r.findall("member") if m.get("type") == "way"},
+            {t.get("k"): t.get("v") for t in r.findall("tag")},
+        )
+        for r in root.findall("relation")
+    }
+    return captured[-1], nodes, ways, rels
+
+
+def test_every_osm_url_points_at_the_imported_lap(monkeypatch):
+    """osm_url is a way of the lap, or a relation holding every lap way (not the venue outline),
+    and its download area (+ config bbox) covers the whole lap. Reads assets/osm and tracks/."""
+    import json
+
+    problems = []
+    urls = {}
+    for discipline, (specs, _, _) in imp.DISCIPLINES.items():
+        for tid in specs:
+            cid = imp.catalog_id(discipline, tid, imp.TRACKS_DIR)
+            with open(os.path.join(imp.TRACKS_DIR, discipline, f"{cid}.json"), encoding="utf-8") as f:
+                urls[tid] = json.load(f)["osm_url"]
+            lap, nodes, ways, rels = lap_and_osm(monkeypatch, discipline, tid)
+            edge_way = {}
+            for wid, nds in ways.items():
+                for a, b in zip(nds, nds[1:]):  # noqa: RUF007 - itertools.pairwise needs 3.10
+                    edge_way.setdefault(frozenset((a, b)), wid)
+            used = {edge_way[frozenset(e)] for e in zip(lap, lap[1:] + lap[:1]) if frozenset(e) in edge_way}
+            kind, eid = urls[tid].rstrip("/").split("/")[-2:]
+            if kind == "way":
+                ok, element_ways = eid in used, [eid]
+            else:
+                members, tags = rels.get(eid, (set(), {}))
+                # a circuit/route/network relation of the lap, not a venue multipolygon
+                ok, element_ways = tags.get("type") != "multipolygon" and used <= members, members
+            if not ok:
+                problems.append(f"{tid}: {urls[tid]} is not the lap")
+                continue
+            pts = [nodes[n] for w in element_ways if w in ways for n in ways[w] if n in nodes]
+            s, w, n, e = imp.expand_bbox((min(p[0] for p in pts), min(p[1] for p in pts),
+                                          max(p[0] for p in pts), max(p[1] for p in pts)), imp.DOWNLOAD_MARGIN_M)
+            cfg = imp.config_bbox(tid)
+            if cfg:
+                s, w, n, e = min(s, cfg[0]), min(w, cfg[1]), max(n, cfg[2]), max(e, cfg[3])
+            if any(not (s <= nodes[x][0] <= n and w <= nodes[x][1] <= e) for x in lap):
+                problems.append(f"{tid}: the download area of {urls[tid]} misses part of the lap")
+    assert not problems, "\n".join(problems)
