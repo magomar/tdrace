@@ -1,6 +1,5 @@
 use std::fs;
 use tdrace_app::tracks::{DevTrackStore, UserTrackStore};
-use tdrace_core::track::presets::classic_grand_prix;
 use tdrace_core::track::TrackCategory;
 
 #[test]
@@ -14,7 +13,7 @@ fn test_user_track_store_lifecycle_and_auto_backup() {
     let store = UserTrackStore::new(&temp_dir);
 
     // 1. Initial save creates file and backup snapshot
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Test Circuit".to_string();
     track.category = TrackCategory::Draft;
 
@@ -64,7 +63,7 @@ fn test_dev_track_store_dual_persistence_and_standard_mode_safety() {
     let store = UserTrackStore::new(&user_dir);
     let dev_store = DevTrackStore::new();
 
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Alpine Sprint".to_string();
     track.category = TrackCategory::Draft;
     store.save_track(&track, "alpine_sprint", true).expect("Save initial draft");

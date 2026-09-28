@@ -401,11 +401,10 @@ fn intersect_ray_obb(
 mod tests {
     use super::*;
     use wheelbase::CarConfig;
-    use crate::track::presets::classic_grand_prix;
 
     #[test]
     fn test_lidar_scanner_basic() {
-        let track = classic_grand_prix();
+        let track = crate::track::test_circuit("classic", "classic_grand_prix");
         let scanner = LidarScanner::new(LidarConfig::surround_32());
         let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
 
@@ -420,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_lidar_opponent_detection() {
-        let track = classic_grand_prix();
+        let track = crate::track::test_circuit("classic", "classic_grand_prix");
         let scanner = LidarScanner::new(LidarConfig::forward_cone_16());
         let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
         let opponent = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(15.0, 0.0), 0.0);
@@ -434,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_lidar_ignores_virtual_barrier() {
-        let mut track = classic_grand_prix();
+        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
         // Insert a virtual barrier right in front of the car at x=5.0
         track.geometry.outer_walls.push(crate::track::geometry::WallBarrier::new(
             Vec2::new(5.0, -10.0),

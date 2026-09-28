@@ -30,7 +30,7 @@ fn test_gt_tracks_predefined_car_and_resolve_predefined_car() {
     assert_eq!(track_defs.len(), 18);
 
     for t_def in &track_defs {
-        let track = (t_def.generator)();
+        let track = tdrace_core::catalog::official_track("gt", t_def.id);
         assert_eq!(
             track.car_category,
             tdrace_core::CarCategory::Gt,

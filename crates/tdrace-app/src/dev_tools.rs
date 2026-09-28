@@ -1,13 +1,6 @@
 use tdrace_core::track::validation::{validate_track, TrackValidationError, ValidationSeverity};
 use tdrace_core::track::Track;
 
-use crate::module::classic::ClassicGameModule;
-use crate::module::extreme_offroad::ExtremeOffRoadModule;
-use crate::module::gt::GtWorldChallengeModule;
-use crate::module::kart::KartGameModule;
-use crate::module::nascar::NascarGameModule;
-use crate::module::rally::RallyGameModule;
-use crate::module::GameModule;
 
 /// Serializes a track to formatted JSON string suitable for preset files or sharing.
 pub fn export_track_to_json(track: &Track) -> Result<String, serde_json::Error> {
@@ -106,29 +99,32 @@ pub fn export_track_to_rust_code(track: &Track, fn_name: &str) -> String {
     out
 }
 
-/// Validates all official presets across all registered modules, returning any errors or warnings.
+/// Validates all official circuits in the embedded catalog, returning any errors or warnings.
 pub fn validate_all_official_presets() -> Vec<(String, Vec<TrackValidationError>)> {
     let mut results = Vec::new();
-    let modules: Vec<Box<dyn GameModule>> = vec![
-        Box::new(ClassicGameModule::new()),
-        Box::new(GtWorldChallengeModule::new()),
-        Box::new(RallyGameModule::new()),
-        Box::new(KartGameModule::new()),
-        Box::new(NascarGameModule::new()),
-        Box::new(ExtremeOffRoadModule::new()),
-    ];
-
-    for module in &modules {
-        for track_def in module.tracks() {
-            let track = (track_def.generator)();
-            let diags = validate_track(&track);
-            let errors_or_warnings: Vec<_> = diags
-                .into_iter()
-                .filter(|d| d.severity == ValidationSeverity::Error || d.severity == ValidationSeverity::Warning)
-                .collect();
-            if !errors_or_warnings.is_empty() {
-                results.push((format!("{}:{}", module.id(), track_def.id), errors_or_warnings));
+    for circuit in tdrace_core::catalog::circuits() {
+        let track = match circuit.load() {
+            Ok(track) => track,
+            Err(e) => {
+                results.push((
+                    format!("{}:{}", circuit.module, circuit.id),
+                    vec![TrackValidationError {
+                        severity: ValidationSeverity::Error,
+                        code: "LOAD_FAILED",
+                        message: e.to_string(),
+                        details: None,
+                        entity_index: None,
+                    }],
+                ));
+                continue;
             }
+        };
+        let errors_or_warnings: Vec<_> = validate_track(&track)
+            .into_iter()
+            .filter(|d| d.severity == ValidationSeverity::Error || d.severity == ValidationSeverity::Warning)
+            .collect();
+        if !errors_or_warnings.is_empty() {
+            results.push((format!("{}:{}", circuit.module, circuit.id), errors_or_warnings));
         }
     }
 
@@ -138,11 +134,10 @@ pub fn validate_all_official_presets() -> Vec<(String, Vec<TrackValidationError>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tdrace_core::track::presets::classic_grand_prix;
-
+    
     #[test]
     fn test_dev_tools_export_to_json_and_rust() {
-        let gp = classic_grand_prix();
+        let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let json = export_track_to_json(&gp).expect("Must serialize track to JSON");
         assert!(json.contains("Classic Grand Prix"));
 

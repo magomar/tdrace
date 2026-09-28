@@ -1,7 +1,7 @@
 use glam::Vec2;
 use tdrace_app::render::color::{CarColorScheme, Palette};
 use tdrace_core::{Car, CarConfig};
-use tdrace_core::track::presets::{classic_grand_prix, drift_park, kart_arena, oval_speedway};
+
 
 #[test]
 fn test_palette_and_car_color_schemes() {
@@ -41,10 +41,10 @@ fn test_cabinet_color_utilities_and_theme_reexport() {
 #[test]
 fn test_track_presets_geometry_for_rendering() {
     let tracks = [
-        classic_grand_prix(),
-        oval_speedway(),
-        drift_park(),
-        kart_arena(),
+        tdrace_core::catalog::official_track("classic", "classic_grand_prix"),
+        tdrace_core::catalog::official_track("classic", "oval_speedway"),
+        tdrace_core::catalog::official_track("classic", "drift_park"),
+        tdrace_core::catalog::official_track("classic", "kart_arena"),
     ];
 
     for t in &tracks {
@@ -918,9 +918,8 @@ fn test_surface_asset_files_exist_and_are_valid_png() {
 
 #[test]
 fn test_spline_ribbon_and_world_space_uv_mappings() {
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert!(track.spline.samples.len() > 10);
 
     // Verify distance monotonically increases along spline samples
@@ -1021,8 +1020,7 @@ fn test_track_wear_state_phase_2_hooks() {
 #[test]
 fn test_segment_curvature_and_apex_rubbering_lateral_distribution() {
     use tdrace_app::render::track::compute_segment_curvature;
-    use tdrace_core::track::presets::classic_grand_prix;
-    let base_sample = classic_grand_prix().spline.samples[0].clone();
+        let base_sample = tdrace_core::catalog::official_track("classic", "classic_grand_prix").spline.samples[0].clone();
 
     // 1. Synthetic straight segment
     let mut s_straight_0 = base_sample.clone();
@@ -1059,7 +1057,7 @@ fn test_segment_curvature_and_apex_rubbering_lateral_distribution() {
     assert!(k_right < 0.0, "Right turn curvature must be negative: {}", k_right);
 
     // 4. Verify on realistic track spline
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let samples = &track.spline.samples;
     let mut max_k = 0.0f32;
     for i in 0..samples.len() - 1 {
@@ -1073,9 +1071,9 @@ fn test_segment_curvature_and_apex_rubbering_lateral_distribution() {
 fn test_track_render_execution_under_all_quality_tiers_headless_safety() {
     use tdrace_app::render::track::{render_track, set_surface_texture_quality};
     use tdrace_app::render::surface_material::SurfaceTextureQuality;
-    use tdrace_core::track::presets::{classic_grand_prix, drift_park, oval_speedway};
+    
 
-    let tracks = [classic_grand_prix(), oval_speedway(), drift_park()];
+    let tracks = [tdrace_core::catalog::official_track("classic", "classic_grand_prix"), tdrace_core::catalog::official_track("classic", "oval_speedway"), tdrace_core::catalog::official_track("classic", "drift_park")];
     let qualities = [
         SurfaceTextureQuality::Off,
         SurfaceTextureQuality::Standard,
@@ -1122,10 +1120,9 @@ fn test_seamless_periodic_grass_and_asphalt_generators() {
 fn test_backdrop_ground_pass_execution() {
     use tdrace_app::render::track::{render_backdrop_ground_pass, render_ground_track_culled, set_surface_texture_quality};
     use tdrace_app::render::surface_material::SurfaceTextureQuality;
-    use tdrace_core::track::presets::classic_grand_prix;
-    use glam::Vec2;
+        use glam::Vec2;
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let bounds = Some((Vec2::new(-50.0, -50.0), Vec2::new(300.0, 300.0)));
 
     for &q in &[SurfaceTextureQuality::Off, SurfaceTextureQuality::Standard, SurfaceTextureQuality::High] {

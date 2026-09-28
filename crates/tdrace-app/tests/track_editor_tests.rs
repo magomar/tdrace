@@ -9,13 +9,7 @@ use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceShape, SurfaceZone};
-use tdrace_core::track::presets::{
-    alpine_snow_ridge, arctic_frozen_lake, atacama_sand_basin, baja_500_desert_scrub,
-    classic_grand_prix, dirt_figure_eight, drift_park, glacier_crest_pass, gravel_quarry_chasm,
-    kart_arena, louisiana_mud_swampland, monster_colosseum, mud_slough_arena, oasis_rally,
-    oval_speedway, ramp_raceway, red_rock_canyon, rovaniemi_ice_ring,
-    sahara_dune_crossing, stunt_city_megastructure, supercross_stadium_arena,
-};
+
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use tdrace_core::track::Track;
@@ -25,12 +19,12 @@ static DEV_MODE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 #[test]
 fn test_all_six_presets_json_roundtrip_and_validation() {
     let presets: Vec<(&str, Track)> = vec![
-        ("Classic Grand Prix", classic_grand_prix()),
-        ("Oval Speedway", oval_speedway()),
-        ("Drift Park", drift_park()),
-        ("Kart Arena", kart_arena()),
-        ("Oasis Rally", oasis_rally()),
-        ("Ramp Raceway", ramp_raceway()),
+        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
+        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
+        ("Oasis Rally", tdrace_core::catalog::official_track("classic", "oasis_rally")),
+        ("Ramp Raceway", tdrace_core::catalog::official_track("classic", "ramp_raceway")),
     ];
 
     for (name, track) in presets {
@@ -66,21 +60,21 @@ fn test_all_six_presets_json_roundtrip_and_validation() {
 #[test]
 fn test_all_fifteen_extreme_offroad_presets_json_roundtrip_and_validation() {
     let presets: Vec<(&str, &str, Track)> = vec![
-        ("sahara_dune_crossing", "Sahara Dune Crossing", sahara_dune_crossing()),
-        ("dirt_figure_eight", "Dirt Figure-8 Arena", dirt_figure_eight()),
-        ("atacama_sand_basin", "Atacama Sand Basin", atacama_sand_basin()),
-        ("red_rock_canyon", "Red Rock Canyon", red_rock_canyon()),
-        ("baja_500_desert_scrub", "Baja 500 Desert Scrub", baja_500_desert_scrub()),
-        ("mud_slough_arena", "Mud Slough Arena", mud_slough_arena()),
-        ("gravel_quarry_chasm", "Gravel Quarry Chasm", gravel_quarry_chasm()),
-        ("louisiana_mud_swampland", "Louisiana Mud Swampland", louisiana_mud_swampland()),
-        ("arctic_frozen_lake", "Arctic Frozen Lake", arctic_frozen_lake()),
-        ("alpine_snow_ridge", "Alpine Snow Ridge", alpine_snow_ridge()),
-        ("rovaniemi_ice_ring", "Rovaniemi Ice Ring", rovaniemi_ice_ring()),
-        ("glacier_crest_pass", "Glacier Crest Pass", glacier_crest_pass()),
-        ("supercross_stadium_arena", "Supercross Stadium Arena", supercross_stadium_arena()),
-        ("monster_colosseum", "Monster Colosseum", monster_colosseum()),
-        ("stunt_city_megastructure", "Stunt City Megastructure", stunt_city_megastructure()),
+        ("sahara_dune_crossing", "Sahara Dune Crossing", tdrace_core::catalog::official_track("extreme_offroad", "sahara_dune_crossing")),
+        ("dirt_figure_eight", "Dirt Figure-8 Arena", tdrace_core::catalog::official_track("classic", "dirt_figure_eight")),
+        ("atacama_sand_basin", "Atacama Sand Basin", tdrace_core::catalog::official_track("extreme_offroad", "atacama_sand_basin")),
+        ("red_rock_canyon", "Red Rock Canyon", tdrace_core::catalog::official_track("extreme_offroad", "red_rock_canyon")),
+        ("baja_500_desert_scrub", "Baja 500 Desert Scrub", tdrace_core::catalog::official_track("extreme_offroad", "baja_500_desert_scrub")),
+        ("mud_slough_arena", "Mud Slough Arena", tdrace_core::catalog::official_track("extreme_offroad", "mud_slough_arena")),
+        ("gravel_quarry_chasm", "Gravel Quarry Chasm", tdrace_core::catalog::official_track("extreme_offroad", "gravel_quarry_chasm")),
+        ("louisiana_mud_swampland", "Louisiana Mud Swampland", tdrace_core::catalog::official_track("extreme_offroad", "louisiana_mud_swampland")),
+        ("arctic_frozen_lake", "Arctic Frozen Lake", tdrace_core::catalog::official_track("extreme_offroad", "arctic_frozen_lake")),
+        ("alpine_snow_ridge", "Alpine Snow Ridge", tdrace_core::catalog::official_track("extreme_offroad", "alpine_snow_ridge")),
+        ("rovaniemi_ice_ring", "Rovaniemi Ice Ring", tdrace_core::catalog::official_track("extreme_offroad", "rovaniemi_ice_ring")),
+        ("glacier_crest_pass", "Glacier Crest Pass", tdrace_core::catalog::official_track("extreme_offroad", "glacier_crest_pass")),
+        ("supercross_stadium_arena", "Supercross Stadium Arena", tdrace_core::catalog::official_track("extreme_offroad", "supercross_stadium_arena")),
+        ("monster_colosseum", "Monster Colosseum", tdrace_core::catalog::official_track("extreme_offroad", "monster_colosseum")),
+        ("stunt_city_megastructure", "Stunt City Megastructure", tdrace_core::catalog::official_track("extreme_offroad", "stunt_city_megastructure")),
     ];
 
     assert_eq!(presets.len(), 15);
@@ -151,7 +145,7 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
     let mut manager = TrackManager::new(temp_dir.clone());
 
     // 1. Create a custom track from scratch
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Test Ring Raceway".to_string();
     track.geometry.surface_zones.clear();
     track.geometry.jump_ramps.clear();
@@ -229,7 +223,7 @@ fn test_track_editor_custom_circuit_lifecycle_and_io() {
 
 #[test]
 fn test_track_editor_state_undo_redo_and_selection() {
-    let initial_track = classic_grand_prix();
+    let initial_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(initial_track.clone());
 
     assert_eq!(state.history.undo_count(), 0);
@@ -256,7 +250,7 @@ fn test_track_editor_state_undo_redo_and_selection() {
 #[test]
 fn test_validation_engine_catches_flaws() {
     // 1. Incomplete circuit (< 4 waypoints)
-    let mut broken_track = classic_grand_prix();
+    let mut broken_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     broken_track.name = "Broken Short Track".to_string();
     broken_track.spline.waypoints = vec![
         TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
@@ -277,7 +271,7 @@ fn test_validation_engine_catches_flaws() {
 #[test]
 fn test_race_session_test_drive_time_trial_flow_and_editor_return() {
     let mut session = RaceSession::new();
-    let track = oval_speedway();
+    let track = tdrace_core::catalog::official_track("classic", "oval_speedway");
 
     // 1. Enter Track Studio
     session.enter_track_editor(track);
@@ -324,7 +318,7 @@ fn test_race_session_test_drive_time_trial_flow_and_editor_return() {
 #[test]
 fn test_test_drive_exit_from_starting_grid_and_finished_states() {
     let mut session = RaceSession::new();
-    let track = oasis_rally();
+    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
 
     session.enter_track_editor(track);
     assert_eq!(session.state, GameState::TrackEditor);
@@ -363,7 +357,7 @@ fn test_test_drive_exit_from_starting_grid_and_finished_states() {
 #[test]
 fn test_test_drive_preserves_unsaved_track_edits() {
     let mut session = RaceSession::new();
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
 
     session.enter_track_editor(track);
     let original_wp_count = session.editor_state.as_ref().unwrap().track.spline.waypoints.len();
@@ -557,7 +551,7 @@ fn test_obstacle_duplication_and_undo() {
     use tdrace_app::editor::{Selection, ToolSettings};
     use tdrace_core::track::geometry::Obstacle;
 
-    let mut state = EditorState::new(classic_grand_prix());
+    let mut state = EditorState::new(tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
     state.track.geometry.obstacles.push(Obstacle::circle(1, Vec2::new(100.0, 50.0), 1.5, "Editor Test Obstacle"));
     let initial_obs_count = state.track.geometry.obstacles.len();
     assert!(initial_obs_count > 0);
@@ -590,7 +584,7 @@ fn test_polygon_obstacle_tool_vertex_placement() {
     use tdrace_app::editor::{EditorToolType, ObstacleShapeType, Selection, ToolSettings};
     use tdrace_core::track::geometry::ObstacleShape;
 
-    let mut state = EditorState::new(classic_grand_prix());
+    let mut state = EditorState::new(tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
     let mut tools = ToolSettings::default();
     tools.active_tool = EditorToolType::Obstacle;
     tools.active_obstacle_shape = ObstacleShapeType::Polygon;
@@ -658,7 +652,7 @@ fn test_editor_camera_arrow_panning_and_speed_scaling() {
 fn test_road_spline_add_relative_to_current_or_last_point() {
     use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
     tools.active_tool = EditorToolType::RoadSpline;
@@ -702,7 +696,7 @@ fn test_all_entity_duplications_and_undo() {
     use tdrace_core::track::geometry::{JumpRamp, SurfaceShape, SurfaceZone};
     use tdrace_core::physics::surface::SurfaceType;
 
-    let mut state = EditorState::new(classic_grand_prix());
+    let mut state = EditorState::new(tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
     let mut tools = ToolSettings::default();
 
     // 1. Surface Zone Duplication
@@ -776,7 +770,7 @@ fn test_all_entity_duplications_and_undo() {
 fn test_track_editor_spline_surface_inheritance_and_switching() {
     use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
 
-    let track = oasis_rally();
+    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
     tools.active_tool = EditorToolType::RoadSpline;
@@ -855,7 +849,7 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     let mut manager = TrackManager::new(temp_dir.clone());
 
     // 1. Initial track creation and save
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Original Circuit".to_string();
     let initial_path = manager
         .save_custom_track_with_options(&track, Some("original_circuit"), true)
@@ -924,7 +918,7 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     assert!(tdrace_app::storage::is_dev_mode());
     let dev_save_result = manager.save_custom_track_with_options(&editor_state.track, Some("classic_grand_prix"), true);
     assert!(dev_save_result.is_ok());
-    let canonical = classic_grand_prix();
+    let canonical = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let _ = manager.save_custom_track_with_options(&canonical, Some("classic_grand_prix"), true);
     std::env::remove_var(tdrace_app::storage::ENV_DEV_MODE);
     std::env::remove_var(tdrace_app::storage::ENV_GIT_TRACKS_DIR);
@@ -945,7 +939,7 @@ fn test_track_editor_unsaved_changes_exit_flow() {
     let mut session = RaceSession::new();
     session.track_manager = TrackManager::new(temp_dir.clone());
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.enter_track_editor(track);
 
     assert_eq!(session.state, GameState::TrackEditor);
@@ -957,7 +951,7 @@ fn test_track_editor_unsaved_changes_exit_flow() {
     assert!(matches!(session.state, GameState::TrackManager { .. }));
 
     // 2. Re-enter and modify track to make state dirty
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.enter_track_editor(track);
     session.editor_state.as_mut().unwrap().record_undo();
     session.editor_state.as_mut().unwrap().track.name = "Modified GP".to_string();
@@ -999,7 +993,7 @@ fn test_track_editing_snapshot_regeneration_and_persistence() {
     let mut session = RaceSession::default();
     session.track_manager = TrackManager::new(&temp_dir);
 
-    let initial_track = classic_grand_prix();
+    let initial_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let initial_wp_count = initial_track.spline.waypoints.len();
     let (initial_min, initial_max) = tdrace_app::ui::compute_track_bounds(&initial_track);
 
@@ -1046,7 +1040,7 @@ fn test_track_editing_snapshot_regeneration_and_persistence() {
 
 #[test]
 fn test_save_modal_track_name_integrity_and_initialization() {
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.name = "Silverstone International".to_string();
     track.description = "Historic high-speed circuit.".to_string();
 
@@ -1096,9 +1090,8 @@ fn test_save_modal_track_name_integrity_and_initialization() {
 #[test]
 fn test_track_editor_surface_shapes_and_layering_e2e() {
     use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape, SurfaceZone};
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let mut track = classic_grand_prix();
+    
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let sample_road_pt = track.spline.waypoints[0].point;
 
     // 1. BelowTrack zone under the road should be overridden by road surface
@@ -1169,9 +1162,8 @@ fn test_track_editor_surface_shapes_and_layering_e2e() {
 #[test]
 fn test_track_editor_multi_segment_batch_operations_e2e() {
     use tdrace_app::editor::{EditorState, Selection, ToolSettings};
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -1217,10 +1209,9 @@ fn test_track_editor_multi_segment_batch_operations_e2e() {
 fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
     use tdrace_app::editor::{EditorState, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
-    use tdrace_core::track::presets::classic_grand_prix;
-    use tdrace_core::track::Track;
+        use tdrace_core::track::Track;
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -1266,11 +1257,10 @@ fn test_track_editor_default_offtrack_surface_mutation_and_cycling() {
 #[test]
 fn test_track_editor_car_category_mutation_and_cycling() {
     use tdrace_app::editor::{EditorState, ToolSettings};
-    use tdrace_core::track::presets::classic_grand_prix;
-    use tdrace_core::track::Track;
+        use tdrace_core::track::Track;
     use tdrace_core::CarCategory;
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -1311,9 +1301,8 @@ fn test_track_editor_car_category_mutation_and_cycling() {
 fn test_track_editor_select_all_and_marquee_box_selection() {
     use tdrace_app::editor::{EditorState, EditorToolType, Selection, ToolSettings};
     use tdrace_core::track::geometry::{Obstacle, SurfaceShape};
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let mut track = classic_grand_prix();
+    
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     // Add custom obstacle and pit box
     track.geometry.obstacles.push(Obstacle::circle(1, Vec2::new(10.0, 10.0), 3.0, "Obs 1"));
     track.pit_box_area = Some(SurfaceShape::Aabb {
@@ -1381,7 +1370,7 @@ fn test_track_editor_jump_ramp_turn_angle_and_change_size() {
     use tdrace_app::editor::{Selection, ToolSettings};
     use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
 
-    let mut track = classic_grand_prix();
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     track.geometry.jump_ramps.push(JumpRamp::new(
         1,
         SurfaceShape::OrientedBox {
@@ -1467,10 +1456,9 @@ fn test_track_editor_jump_ramp_turn_angle_and_change_size() {
 #[test]
 fn test_track_editor_jump_ramp_arbitrary_angle_degrees() {
     use tdrace_app::editor::{Selection, ToolSettings};
-    use tdrace_core::track::presets::oasis_rally;
-    use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
+        use tdrace_core::track::geometry::{JumpRamp, SurfaceShape};
 
-    let mut track = oasis_rally();
+    let mut track = tdrace_core::catalog::official_track("classic", "oasis_rally");
     track.geometry.jump_ramps.clear();
     track.geometry.jump_ramps.push(JumpRamp::new(
         1,
@@ -1539,9 +1527,8 @@ fn test_track_editor_jump_ramp_arbitrary_angle_degrees() {
 #[test]
 fn test_jump_ramp_surface_tools_and_surface_sampling() {
     use tdrace_app::editor::{EditorToolType, Selection, ToolSettings};
-    use tdrace_core::track::presets::oasis_rally;
-
-    let mut track = oasis_rally();
+    
+    let mut track = tdrace_core::catalog::official_track("classic", "oasis_rally");
     track.geometry.jump_ramps.clear();
 
     let mut state = EditorState::new(track);
@@ -1613,7 +1600,7 @@ fn test_waypoint_banking_editor_controls_and_batch_operations() {
     use tdrace_app::editor::tools::{EditorToolType, ToolSettings};
     use tdrace_app::editor::Selection;
 
-    let mut state = EditorState::new(classic_grand_prix());
+    let mut state = EditorState::new(tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
     let mut tools = ToolSettings::default();
 
     // 1. Configure active placement banking angle
@@ -1677,7 +1664,7 @@ fn test_track_editor_wall_distance_editing_and_batch_operations() {
     use tdrace_app::editor::tools::{EditorToolType, ToolSettings};
     use tdrace_app::editor::Selection;
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -1733,7 +1720,7 @@ fn test_track_editor_wall_distance_editing_and_batch_operations() {
 
 #[test]
 fn test_primary_selection_and_secondary_placement_interaction_model() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -1873,9 +1860,8 @@ fn test_editor_ui_hover_detection_and_inspector_click_safety() {
 #[test]
 fn test_auto_grid_placement_and_circuit_property() {
     use tdrace_app::editor::EditorState;
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let mut track = classic_grand_prix();
+    
+    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     // Clear checkpoints and grid positions
     track.checkpoints.clear();
     track.grid_positions.clear();
@@ -1937,7 +1923,7 @@ fn test_auto_grid_placement_and_circuit_property() {
 
 #[test]
 fn test_track_editor_wall_type_selection_and_batch_operations() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -2102,11 +2088,11 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
     let _ = fs::create_dir_all(&user_tracks_dir);
 
     // Seed mock git tracks
-    let mut gp_initial = classic_grand_prix();
+    let mut gp_initial = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     gp_initial.name = "Classic Grand Prix Original".to_string();
     gp_initial.save_to_file(mock_git_tracks.join("classic").join("classic_grand_prix.json")).unwrap();
 
-    let mut daytona_initial = tdrace_core::track::presets::oval_speedway();
+    let mut daytona_initial = tdrace_core::catalog::official_track("classic", "oval_speedway");
     daytona_initial.name = "Daytona Original".to_string();
     daytona_initial.save_to_file(mock_git_tracks.join("nascar").join("daytona_superspeedway.json")).unwrap();
 
@@ -2314,7 +2300,7 @@ fn test_track_editor_exit_returns_to_track_manager() {
     };
     session.editor_return_track_manager = Some((TrackManagerTab::Main, ModuleFilter::Rally, 2));
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     session.enter_track_editor(track);
     assert_eq!(session.state, GameState::TrackEditor);
 
@@ -2380,10 +2366,9 @@ fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
     use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
     use tdrace_core::track::geometry::BarrierType;
-    use tdrace_core::track::presets::classic_grand_prix;
-    use tdrace_core::track::TrackKind;
+        use tdrace_core::track::TrackKind;
 
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -2429,9 +2414,8 @@ fn test_whoop_section_tool_placement_and_spacing() {
     use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
     use tdrace_core::track::geometry::SurfaceShape;
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -2469,9 +2453,8 @@ fn test_whoop_section_tool_placement_and_spacing() {
 fn test_stunt_ramp_tool_high_launch_and_multiplier() {
     use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -2498,9 +2481,8 @@ fn test_stunt_ramp_tool_high_launch_and_multiplier() {
 fn test_concrete_surface_editing_and_batch_assignment() {
     use tdrace_app::editor::{EditorState, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
-    use tdrace_core::track::presets::classic_grand_prix;
-
-    let track = classic_grand_prix();
+    
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
@@ -2525,7 +2507,7 @@ fn test_concrete_surface_editing_and_batch_assignment() {
 #[test]
 fn test_editor_keeps_track_barrier_setup_on_rebuild() {
     // Daytona is walled with 1.5 m concrete; opening it in the editor must not reset that to defaults.
-    let track = tdrace_core::track::presets::daytona_superspeedway();
+    let track = tdrace_core::catalog::official_track("nascar", "daytona_superspeedway");
     let mut state = EditorState::new(track);
     assert!((state.barrier_offset - 1.5).abs() < 0.11, "barrier offset {} should stay ~1.5 m", state.barrier_offset);
     assert_eq!(state.barrier_type, BarrierType::Concrete);

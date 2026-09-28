@@ -1,39 +1,36 @@
 use tdrace_app::game::{GameState, ProfileOrigin, RaceSession, StartingGridFocus};
 use tdrace_app::ui::menu::{CarChoice, GameMode, TrackChoice};
-use tdrace_core::track::presets::{
-    classic_grand_prix, classic_rallycross, drift_park, kart_arena, oasis_rally, oval_speedway,
-    ramp_raceway,
-};
+
 use tdrace_core::track::Track;
 use tdrace_core::CarCategory;
 
 #[test]
 fn test_preset_tracks_predefined_cars_and_balanced_laps() {
-    let gp = classic_grand_prix();
+    let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert_eq!(gp.default_laps, 5);
     assert_eq!(gp.car_category, CarCategory::Gt);
 
-    let oval = oval_speedway();
+    let oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
     assert_eq!(oval.default_laps, 5);
     assert_eq!(oval.car_category, CarCategory::Nascar);
 
-    let drift = drift_park();
+    let drift = tdrace_core::catalog::official_track("classic", "drift_park");
     assert_eq!(drift.default_laps, 5);
     assert_eq!(drift.car_category, CarCategory::Gt);
 
-    let kart = kart_arena();
+    let kart = tdrace_core::catalog::official_track("classic", "kart_arena");
     assert_eq!(kart.default_laps, 5);
     assert_eq!(kart.car_category, CarCategory::Kart);
 
-    let ramp = ramp_raceway();
+    let ramp = tdrace_core::catalog::official_track("classic", "ramp_raceway");
     assert_eq!(ramp.default_laps, 5);
     assert_eq!(ramp.car_category, CarCategory::Rally);
 
-    let oasis = oasis_rally();
+    let oasis = tdrace_core::catalog::official_track("classic", "oasis_rally");
     assert_eq!(oasis.default_laps, 5);
     assert_eq!(oasis.car_category, CarCategory::OffRoad);
 
-    let rx = classic_rallycross();
+    let rx = tdrace_core::catalog::official_track("classic", "classic_rallycross");
     assert_eq!(rx.default_laps, 5);
     assert_eq!(rx.car_category, CarCategory::Rally);
 }
@@ -139,7 +136,7 @@ fn test_roster_driver_count_modification() {
 
 #[test]
 fn test_track_serde_default_laps_and_car_category_roundtrip() {
-    let track = classic_grand_prix();
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let json = track.to_json_pretty().expect("Must serialize to JSON");
 
     let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
@@ -240,7 +237,7 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
     assert_eq!(custom_c, 0);
 
     // 2. Add a custom circuit
-    let mut custom_track = classic_grand_prix();
+    let mut custom_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     custom_track.name = "My Test Custom Circuit".to_string();
     custom_track.description = "A custom track created by user.".to_string();
     let _ = session.track_manager.save_custom_track(&custom_track, Some("my_test_custom_circuit"));

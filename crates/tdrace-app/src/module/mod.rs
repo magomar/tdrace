@@ -576,7 +576,7 @@ mod tests {
         assert_eq!(gt.default_vehicle_id(), "gt4_clubsport");
         assert_eq!(gt.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
-        let monza = GtWorldChallengeModule::track_monza();
+        let monza = tdrace_core::catalog::official_track("gt", "monza");
         assert_eq!(monza.name, "Monza Autodromo Nazionale");
         assert!(!monza.checkpoints.is_empty());
 
@@ -598,7 +598,7 @@ mod tests {
 
         // Verify that every single GT World Challenge track definition generates a valid track with 0 validation errors
         for track_def in gt.tracks() {
-            let track = (track_def.generator)();
+            let track = tdrace_core::catalog::official_track("gt", track_def.id);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
             assert!(track.checkpoints.len() >= 10, "Checkpoints too few for {}", track_def.id);
@@ -653,7 +653,7 @@ mod tests {
 
         // Verify that every single Kart track definition generates a valid track with 0 validation errors
         for track_def in kart.tracks() {
-            let track = (track_def.generator)();
+            let track = tdrace_core::catalog::official_track("kart", track_def.id);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 200.0, "Track length too short for {}", track_def.id);
             assert!(track.checkpoints.len() >= 8, "Checkpoints too few for {}", track_def.id);
@@ -736,7 +736,7 @@ mod tests {
 
         for track_def in nascar.tracks() {
             assert!(track_def.default_laps >= 3 && track_def.default_laps <= 5);
-            let track = (track_def.generator)();
+            let track = tdrace_core::catalog::official_track("nascar", track_def.id);
             assert!(track.default_laps >= 3 && track.default_laps <= 5);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.spline.total_length() > 300.0, "Track length too short for {}", track_def.id);
@@ -777,7 +777,7 @@ mod tests {
 
         for track_def in offroad.tracks() {
             assert!(track_def.default_laps >= 2 && track_def.default_laps <= 5);
-            let track = (track_def.generator)();
+            let track = tdrace_core::catalog::official_track("extreme_offroad", track_def.id);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
             assert!(track.grid_positions.len() >= 8, "Grid slots check for {}", track_def.id);
 

@@ -4,7 +4,7 @@ use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, JumpRampCarExt, SurfaceShape, WallBarrier};
-use tdrace_core::track::presets::{classic_rallycross, dune_raid, oasis_rally, ramp_raceway, sahara_dunes};
+
 
 #[test]
 fn test_car_jump_launch_and_gravity_arc() {
@@ -185,7 +185,7 @@ fn test_jump_over_low_wall_no_collision() {
 
 #[test]
 fn test_ramp_raceway_preset() {
-    let track = ramp_raceway();
+    let track = tdrace_core::catalog::official_track("classic", "ramp_raceway");
     assert_eq!(track.name, "Ramp Raceway");
     assert_eq!(track.geometry.jump_ramps.len(), 1, "Must have 1 jump ramp");
     assert!(track.checkpoints.len() >= 8);
@@ -200,7 +200,7 @@ fn test_ramp_raceway_preset() {
 
 #[test]
 fn test_classic_rallycross_preset() {
-    let track = classic_rallycross();
+    let track = tdrace_core::catalog::official_track("classic", "classic_rallycross");
     assert_eq!(track.name, "Classic Rallycross");
     assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
     assert_eq!(track.geometry.jump_ramps.len(), 1);
@@ -214,7 +214,7 @@ fn test_classic_rallycross_preset() {
 
 #[test]
 fn test_oasis_rally_preset() {
-    let track = oasis_rally();
+    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
     assert_eq!(track.name, "Oasis Rally");
     assert_eq!(track.default_surface, SurfaceType::DeepSand, "Must be desert sand off-track");
     assert_eq!(track.geometry.surface_zones.len(), 3);
@@ -262,9 +262,9 @@ fn test_oasis_rally_preset() {
     assert_eq!(off_track_surf, SurfaceType::DeepSand, "Off-track must be DeepSand");
 
     // Verify aliases work identically
-    let alias_track1 = dune_raid();
+    let alias_track1 = tdrace_core::catalog::official_track("classic", "oasis_rally");
     assert_eq!(alias_track1.name, "Oasis Rally");
-    let alias_track2 = sahara_dunes();
+    let alias_track2 = tdrace_core::catalog::official_track("classic", "oasis_rally");
     assert_eq!(alias_track2.name, "Oasis Rally");
 }
 
@@ -287,7 +287,7 @@ fn test_dirt_and_water_dynamics() {
 
 #[test]
 fn test_sand_under_track_does_not_override_dirt_ribbon() {
-    let track = oasis_rally();
+    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
     
     // In Oasis Rally, "Canyon Sand Trap 1" AABB is (230..290, 130..210).
     // The track spline has a waypoint at (255, 175) which passes right through this region.

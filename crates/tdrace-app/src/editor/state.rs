@@ -733,8 +733,7 @@ impl EditorState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tdrace_core::track::presets::classic_grand_prix;
-
+    
     #[test]
     fn test_grid_snap_steps() {
         let snap = GridSnapSetting::Snap5m;
@@ -748,7 +747,7 @@ mod tests {
 
     #[test]
     fn test_history_undo_redo_stack() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut editor = EditorState::new(track.clone());
 
         // Perform edit 1
@@ -771,7 +770,7 @@ mod tests {
 
     #[test]
     fn test_waypoint_selection_and_last_selected_tracking() {
-        let track = classic_grand_prix();
+        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         let mut editor = EditorState::new(track);
 
         assert_eq!(editor.selection, Selection::None);
