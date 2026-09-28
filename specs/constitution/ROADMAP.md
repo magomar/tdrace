@@ -19,6 +19,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[NASCAR Career Mode](../001_nascar_career_mode.md)**: 5-tier stock car & Trans-Am career progression with stage racing and pack drafting.
 - `[x]` **[Rallycross & All-Terrain Career Mode](../002_rallycross_and_allterrain_career_mode.md)**: 5-tier World RX and desert raid career progression with joker lap rules.
 - `[x]` **[Extreme Off-Road & Stunt Arenas Career Mode](../003_extreme_offroad_and_stunt_arenas_career_mode.md)**: 5-tier off-road and stunt arena career progression with freestyle scoring.
+- `[x]` **[Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits](../046_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md)**: Rallycross on every screen, RX1e and Nitrocross Group E tiers, Rally Raid T1+ and SST cars parked in Extreme Off-Road, and three circuits from the official Mint 400 GPX files.
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
