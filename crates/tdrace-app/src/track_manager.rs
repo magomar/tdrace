@@ -61,6 +61,15 @@ impl ModuleFilter {
         }
     }
 
+    /// Compact label for narrow tabs.
+    pub fn short_label(&self) -> &'static str {
+        match self {
+            Self::Gt => "GT",
+            Self::ExtremeOffRoad => "OFF-ROAD",
+            other => other.label(),
+        }
+    }
+
     pub fn shortcut_number(&self) -> u8 {
         match self {
             Self::Classic => 1,

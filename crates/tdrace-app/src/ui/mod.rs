@@ -39,7 +39,8 @@ pub use career_hub::{
 
 pub use curve_indicator::{
     compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
-    compute_smart_curve_arrow_position, render_curve_indicator, CurveColorScheme,
+    compute_smart_curve_arrow_position, curve_indicator_lookahead, render_curve_indicator,
+    render_curve_pacenote, CurveColorScheme, CurveIndicatorStyle,
 };
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;

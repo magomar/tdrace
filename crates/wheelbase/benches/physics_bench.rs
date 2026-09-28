@@ -1,5 +1,11 @@
 use std::time::Instant;
-use tdrace_core::physics::{Car, CarConfig, CarControls, SurfaceType};
+use wheelbase::{Car, CarConfig, CarControls, SurfaceType};
+
+/// Regression floor: about 15% under the throughput measured on macOS aarch64 (2026-09-28).
+/// A refactor that drops below it has made the step slower.
+const FLOOR_STEPS_PER_SEC: f64 = 1_500_000.0;
+/// Target from `specs/constitution/ROADMAP.md` (Technical Debt: Performance).
+const ROADMAP_STEPS_PER_SEC: f64 = 4_000_000.0;
 
 fn main() {
     println!("============================================================");
@@ -46,13 +52,15 @@ fn main() {
     println!("Elapsed Time:        {:.4} s", seconds);
     println!("Throughput:          {:.2} steps/second", steps_per_sec);
     println!("Latency per step:    {:.2} ns/step", nanoseconds_per_step);
-    println!("Target Bar:          > 500,000 steps/second");
-    if steps_per_sec >= 500_000.0 {
-        println!("Status:              ✅ PASS (Exceeds target by {:.1}x)", steps_per_sec / 500_000.0);
+    println!("Regression floor:    {:.0} steps/second", FLOOR_STEPS_PER_SEC);
+    println!("Roadmap target:      {:.0} steps/second ({})", ROADMAP_STEPS_PER_SEC,
+        if steps_per_sec >= ROADMAP_STEPS_PER_SEC { "met" } else { "not met" });
+    if steps_per_sec >= FLOOR_STEPS_PER_SEC {
+        println!("Status:              ✅ PASS (floor)");
     } else {
-        println!("Status:              ❌ FAIL (Below 500k target)");
+        println!("Status:              ❌ FAIL (below floor)");
     }
     println!("============================================================");
 
-    assert!(steps_per_sec >= 500_000.0, "Throughput must exceed 500,000 steps/sec");
+    assert!(steps_per_sec >= FLOOR_STEPS_PER_SEC, "Physics throughput fell below the regression floor");
 }

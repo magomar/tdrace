@@ -1,14 +1,20 @@
 use std::time::Instant;
 use glam::Vec2;
-use tdrace_core::lidar::{LidarConfig, LidarScanner};
-use tdrace_core::physics::{Car, CarConfig};
+use arcade_race_core::lidar::{LidarConfig, LidarScanner};
+use arcade_race_core::track::{create_prototypical_track, RaceDirection, TrackShape};
+use wheelbase::{Car, CarConfig};
+
+/// Regression floor: about 15% under the throughput measured on macOS aarch64 (2026-09-28).
+const FLOOR_RAYS_PER_SEC: f64 = 14_000_000.0;
 
 fn main() {
     println!("============================================================");
     println!("📡 TDRace High-Speed LIDAR Raycasting Benchmark");
     println!("============================================================");
 
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    // Generated track, so the bench needs no `tracks/` checkout. Before spec 049 this used
+    // the official Classic Grand Prix, which has more walls: numbers are not comparable.
+    let track = create_prototypical_track("classic", TrackShape::Oval, RaceDirection::Right);
     let scanner = LidarScanner::new(LidarConfig::surround_32());
     let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), 0.0);
 
@@ -46,13 +52,13 @@ fn main() {
     println!("LIDAR Sweeps/sec:    {:.2} sweeps/second", sweeps_per_sec);
     println!("Throughput:          {:.2} rays/second", rays_per_sec);
     println!("Latency per ray:     {:.2} ns/ray", ns_per_ray);
-    println!("Target Bar:          > 1,000,000 rays/second");
-    if rays_per_sec >= 1_000_000.0 {
-        println!("Status:              ✅ PASS (Exceeds target by {:.1}x)", rays_per_sec / 1_000_000.0);
+    println!("Regression floor:    {:.0} rays/second", FLOOR_RAYS_PER_SEC);
+    if rays_per_sec >= FLOOR_RAYS_PER_SEC {
+        println!("Status:              ✅ PASS (floor)");
     } else {
-        println!("Status:              ❌ FAIL");
+        println!("Status:              ❌ FAIL (below floor)");
     }
     println!("============================================================");
 
-    assert!(rays_per_sec >= 1_000_000.0, "LIDAR throughput must exceed 1,000,000 rays/sec");
+    assert!(rays_per_sec >= FLOOR_RAYS_PER_SEC, "LIDAR throughput fell below the regression floor");
 }

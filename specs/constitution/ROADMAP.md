@@ -69,6 +69,19 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 7: Steam Release Readiness (Priority: High)
 - `[ ]` **[Fictional Branding and Real-World IP Removal for Steam Release](../047_fictional_branding_and_realworld_ip_removal_for_steam_release.md)**: Replaces real car, series, team, driver, sponsor, and circuit names with fictional ones, removes unlicensed photos and logo-bearing sprites, keeps real track layouts, adds OpenStreetMap attribution, and gates the build with a real-world IP denylist test.
 
+### Phase 8: Reusable Racing Platform for New Games (Priority: High)
+Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
+- `[ ]` **[Reusable Racing Platform Layers & Determinism Safety Net](../049_reusable_racing_platform_layers.md)**: Target layering, phase roadmap, golden state hashes, and tracks-free performance benches.
+- `[ ]` **`Body2D` Trait**: Collision, LIDAR, progress and surface sampling work for any rigid body, not only `wheelbase::Car`.
+- `[ ]` **`race-kit` Headless Race World**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
+- `[ ]` **`race-ui` Rendering Primitives**: Course renderers with a mesh cache, multi-part vehicle sprites, chase camera, and HUD widgets outside `tdrace-app`.
+- `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
+- `[ ]` **Chariot Vehicle Model & Chariot Game**: Horse-drawn chariot physics with stamina, wrecks and overturns, and the `chariot-app` repo.
+- `[ ]` **Open Point-to-Point Courses**: Start and finish gates, a lap-free tracker, and open-spline bake, grid and validation.
+- `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries and origin rebasing.
+- `[ ]` **Rally-Raid Game**: GPX-driven procedural stage generator and the `rallyraid-app` repo.
+- `[ ]` **Platform Cleanup**: Settings modal out of `cabinet`, gamepad fork removed, product categories out of `arcade-race-core`.
+
 
 ---
 

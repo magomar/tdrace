@@ -6,18 +6,28 @@ use serde::{Deserialize, Serialize};
 
 static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 
+thread_local! {
+    static INJECTED_KEY_PRESSES: std::cell::RefCell<Vec<KeyCode>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Test hook: while no window exists, `is_key_pressed` reports exactly these keys as pressed.
+///
+/// Lets headless tests drive keyboard navigation through `RaceSession::update()`.
+/// The keys stay pressed until the next call; pass `&[]` to release them.
+#[doc(hidden)]
+pub fn inject_key_presses_for_tests(keys: &[KeyCode]) {
+    INJECTED_KEY_PRESSES.with(|k| *k.borrow_mut() = keys.to_vec());
+}
+
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
-        return false;
-    }
-    match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
+    if MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
+            Ok(v) => return v,
+            Err(_) => MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed),
         }
     }
+    INJECTED_KEY_PRESSES.with(|keys| keys.borrow().contains(&k))
 }
 
 #[inline]
@@ -237,8 +247,8 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    confirm_modal_layout,
-    render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    confirm_modal_layout, curve_indicator_lookahead,
+    render_curve_indicator, render_curve_pacenote, ArcadeSettingsModal, CurveIndicatorStyle, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -363,6 +373,48 @@ pub enum GameState {
     LanHostLobby,
     LanJoinBrowser,
     LanClientLobby,
+}
+
+/// Keyboard shortcuts that `RaceSession::update()` checks before the active screen's own input.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GlobalHotkey {
+    /// K: Controls & Driving Assists screen.
+    Controls,
+    /// D: Driver Cards dossier.
+    DriverCards,
+    /// X: Arcade Settings modal.
+    Settings,
+    /// H (gamepad R3 / Select): cycle the driver assist profile.
+    AssistCycle,
+    /// S toggles sound effects; [ and ] change the master volume.
+    SoundKeys,
+    /// F11: Championship Editor.
+    ChampionshipEditor,
+}
+
+impl GameState {
+    /// Whether a global shortcut may act in this state.
+    ///
+    /// Global keys run before the screen's own input, so a state is only listed when it does not
+    /// use the key itself: D steers right in a WASD race and pages the dossier, S moves down in
+    /// most menus, and [ ] edit the starting grid, career calendar and track editor.
+    pub fn allows_global_hotkey(&self, key: GlobalHotkey) -> bool {
+        use GameState::*;
+        match key {
+            GlobalHotkey::Controls => matches!(
+                self,
+                ModuleSelect { .. } | ModalitySelect { .. } | Menu | StartingGrid | Countdown(_) | Racing | Paused
+            ),
+            GlobalHotkey::DriverCards => matches!(self, Paused),
+            GlobalHotkey::Settings => !matches!(
+                self,
+                CircuitViewer(_) | ControlsHelp(_) | LanHostLobby | LanJoinBrowser | LanClientLobby
+            ),
+            GlobalHotkey::AssistCycle => matches!(self, StartingGrid | Countdown(_) | Racing | Paused),
+            GlobalHotkey::SoundKeys => matches!(self, Countdown(_) | Racing | Paused | Finished),
+            GlobalHotkey::ChampionshipEditor => matches!(self, ModuleSelect { .. } | ModalitySelect { .. } | Menu),
+        }
+    }
 }
 
 /// Active view within the post-race Finished state.
@@ -516,6 +568,10 @@ pub struct RaceSession {
     pub championship_editor_state: Option<ChampionshipEditorState>,
     pub random_car_assignment: bool,
     pub roster_seed: u64,
+    /// Seed for the grid roster, bot cars and AI randomness instead of the clock.
+    /// `None` (the default) keeps a new random grid every race. Tests set it to get a
+    /// repeatable race (spec 049 golden session).
+    pub fixed_roster_seed: Option<u64>,
     pub current_visual_type: VehicleVisualType,
     pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
@@ -616,6 +672,16 @@ pub struct RaceSession {
     pub starting_grid_roster_idx: usize,
     pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
+    /// Countdown time left when the race was paused before the start, resumed instead of racing.
+    pub paused_countdown: Option<f32>,
+    /// Screen the Controls & Driving Assists view returns to.
+    pub controls_help_return: Option<GameState>,
+    /// Tab and highlighted card of the Race Modality screen, restored when coming back to it.
+    pub modality_cursor: (ModalityCategory, usize),
+    /// The external gamepad-mapper tool, while it is open.
+    pub gamepad_mapper: Option<crate::input::mapper_launch::GamepadMapperProcess>,
+    /// Last gamepad-mapper status line, shown on the Controls screen.
+    pub gamepad_mapper_status: Option<String>,
     pub assist_profile: AssistProfile,
     pub assist_profile_p2: AssistProfile,
     pub show_exit_confirm: bool,
@@ -826,6 +892,7 @@ impl RaceSession {
             championship_editor_state: None,
             random_car_assignment: true,
             roster_seed: 42,
+            fixed_roster_seed: None,
             current_visual_type: VehicleVisualType::TouringGT {
                 widebody: true,
                 gt_wing: true,
@@ -923,6 +990,11 @@ impl RaceSession {
             starting_grid_roster_idx: 0,
             pause_nav: NavGrid2D::new(vec![1, 1]),
             pause_selected_btn: 0,
+            paused_countdown: None,
+            controls_help_return: None,
+            modality_cursor: (ModalityCategory::SinglePlayer, 0),
+            gamepad_mapper: None,
+            gamepad_mapper_status: None,
             show_exit_confirm: false,
             exit_confirm_modal: None,
             settings_modal: None,
@@ -1294,6 +1366,8 @@ impl RaceSession {
             aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
             aura_brightness: self.config.player_helpers.ground_aura_brightness,
             ribbon_enabled: self.config.player_helpers.curve_helper,
+            ribbon_pacenote: CurveIndicatorStyle::from_config_str(&self.config.player_helpers.curve_indicator_style)
+                == CurveIndicatorStyle::Pacenote,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
@@ -1388,6 +1462,10 @@ impl RaceSession {
                 self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
                 self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
+                if h_state.ribbon_enabled {
+                    let style = if h_state.ribbon_pacenote { CurveIndicatorStyle::Pacenote } else { CurveIndicatorStyle::Chevrons };
+                    self.config.player_helpers.curve_indicator_style = style.as_config_str().to_string();
+                }
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
@@ -3525,10 +3603,14 @@ impl RaceSession {
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
 
-        let seed = (std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as u64)
-            .unwrap_or(42))
+        let seed = self
+            .fixed_roster_seed
+            .unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos() as u64)
+                    .unwrap_or(42)
+            })
             .wrapping_add((self.num_bots as u64) * 101);
 
         let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
@@ -4199,6 +4281,7 @@ impl RaceSession {
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
     pub fn init_race(&mut self) {
+        self.paused_countdown = None;
         self.recent_hof_id = None;
         self.recent_congrats = None;
         self.show_hall_of_fame = false;
@@ -4390,6 +4473,15 @@ impl RaceSession {
 
     /// Pauses the race session and activates the static full-circuit overview camera.
     pub fn pause_race(&mut self) {
+        if self.state != GameState::Paused {
+            self.paused_countdown = match self.state {
+                GameState::Countdown(remaining) => Some(remaining),
+                _ => None,
+            };
+            // Every pause opens with RESUME focused, so Start / A never quits by accident.
+            self.pause_nav.set_focus(0, 0);
+            self.pause_selected_btn = 0;
+        }
         self.audio.stop_all_loops();
         self.state = GameState::Paused;
         self.camera.set_paused_overview();
@@ -4400,7 +4492,10 @@ impl RaceSession {
 
     /// Resumes the race session from pause, restoring the active follow driving camera.
     pub fn resume_race(&mut self) {
-        self.state = GameState::Racing;
+        self.state = match self.paused_countdown.take() {
+            Some(remaining) => GameState::Countdown(remaining),
+            None => GameState::Racing,
+        };
         let player_car = self.cars.get(self.player_car_index());
         self.camera.resume_from_pause(player_car);
         if self.is_split_screen() {
@@ -4529,6 +4624,7 @@ impl RaceSession {
 
         // Handle gamepad input updates
         self.input.gamepad.update();
+        self.poll_gamepad_mapper();
 
         // Step active screen transition
         self.update_transition(frame_dt);
@@ -4569,11 +4665,17 @@ impl RaceSession {
             };
 
             let action = modal.update(&mut ctx);
+            let mapper_requested = std::mem::take(&mut modal.gamepad_mapper_requested);
             if matches!(action, ScreenAction::Pop) {
                 let saved = modal.is_saved;
                 self.close_settings_modal(saved);
                 if saved {
                     self.audio.play_sfx(SfxType::UiSelect);
+                }
+            } else if mapper_requested {
+                let status = self.launch_gamepad_mapper();
+                if let Some(modal) = self.settings_modal.as_mut() {
+                    modal.gamepad_mapper_note = Some(status);
                 }
             }
             return;
@@ -4625,16 +4727,17 @@ impl RaceSession {
 
         let is_wasd_racing = matches!(self.state, GameState::Racing | GameState::Countdown(_))
             && self.input.input_map == cabinet::input::InputMap::wasd_racing();
-        if !is_typing_or_tm && !is_wasd_racing && is_key_pressed(KeyCode::S) {
+        let sound_keys = self.state.allows_global_hotkey(GlobalHotkey::SoundKeys);
+        if sound_keys && !is_wasd_racing && is_key_pressed(KeyCode::S) {
             self.audio.toggle_sfx();
         }
 
         // Adjust Master Volume (LeftBracket / RightBracket)
-        if is_key_pressed(KeyCode::LeftBracket) {
+        if sound_keys && is_key_pressed(KeyCode::LeftBracket) {
             let v = (self.audio.settings.master_volume - 0.1).clamp(0.0, 1.0);
             self.audio.set_master_volume(v);
         }
-        if is_key_pressed(KeyCode::RightBracket) {
+        if sound_keys && is_key_pressed(KeyCode::RightBracket) {
             let v = (self.audio.settings.master_volume + 0.1).clamp(0.0, 1.0);
             self.audio.set_master_volume(v);
         }
@@ -4663,8 +4766,14 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
         }
 
+        // A quit prompt owns the keyboard until it is answered.
+        let quit_prompt_open = self.show_exit_confirm;
+
         // Open Championship Editor studio (F11 key)
-        if is_key_pressed(KeyCode::F11) {
+        if !quit_prompt_open
+            && self.state.allows_global_hotkey(GlobalHotkey::ChampionshipEditor)
+            && is_key_pressed(KeyCode::F11)
+        {
             self.enter_championship_editor(None);
             return;
         }
@@ -4812,11 +4921,11 @@ impl RaceSession {
                 });
             }
 
-            // [5] Toggle Approaching Curve & Dynamic Braking Helper
+            // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
             if is_key_pressed(KeyCode::Key5) {
-                self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                self.visibility_options.cycle_curve_indicator();
                 self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
+                let state_str = self.visibility_options.curve_indicator_label();
                 let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                 if let Some(pos) = my_pos {
                     self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
@@ -5010,43 +5119,41 @@ impl RaceSession {
             }
         }
 
-        // Open Controls & Driving Assists Screen (K key)
-        if is_key_pressed(KeyCode::K) {
+        // Open Controls & Driving Assists Screen (K key), remembering the screen to return to
+        if !quit_prompt_open && self.state.allows_global_hotkey(GlobalHotkey::Controls) && is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
+            if matches!(self.state, GameState::Racing | GameState::Countdown(_)) {
+                self.pause_race();
+            }
+            let from_paused = self.state == GameState::Paused;
+            self.controls_help_return = Some(self.state.clone());
             self.state = GameState::ControlsHelp(from_paused);
             return;
         }
 
-        // Open Driver Cards Dossier Screen (D key)
-        if is_key_pressed(KeyCode::D) && !matches!(self.state, GameState::Garage(_) | GameState::ModalitySelect { .. } | GameState::CareerHub { .. }) {
+        // Open Driver Cards Dossier Screen (D key) from the pause menu
+        if self.state.allows_global_hotkey(GlobalHotkey::DriverCards) && is_key_pressed(KeyCode::D) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let origin = match self.state {
-                GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
-                GameState::Racing | GameState::Paused | GameState::Countdown(_) => DriverCardsOrigin::Paused,
-                _ => DriverCardsOrigin::Menu,
-            };
-            self.state = GameState::DriverCards(origin);
+            self.state = GameState::DriverCards(DriverCardsOrigin::Paused);
             return;
         }
 
         // Open Arcade Settings Modal globally (X key)
-        if is_key_pressed(KeyCode::X) && !matches!(self.state, GameState::CircuitViewer(_)) {
+        if !quit_prompt_open && self.state.allows_global_hotkey(GlobalHotkey::Settings) && is_key_pressed(KeyCode::X) {
             self.audio.play_sfx(SfxType::UiSelect);
             if matches!(self.state, GameState::Racing | GameState::Countdown(_)) {
-                self.state = GameState::Paused;
-                self.audio.stop_all_loops();
+                self.pause_race();
             }
-            if matches!(self.state, GameState::ControlsHelp(_)) {
-                self.open_settings_modal_tab(1);
-            } else {
-                self.open_settings_modal();
-            }
+            self.open_settings_modal();
             return;
         }
 
-        // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen)
-        if is_key_pressed(KeyCode::H) || (!self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed) {
+        // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen).
+        // Gamepad Select doubles as "back" outside the race itself, so it only cycles assists while driving.
+        let assist_keys = self.state.allows_global_hotkey(GlobalHotkey::AssistCycle);
+        let pad_assist = self.input.gamepad.snapshot.btn_assist_toggle_pressed
+            && (matches!(self.state, GameState::Racing | GameState::Countdown(_)) || !self.input.gamepad.snapshot.btn_back_pressed);
+        if assist_keys && (is_key_pressed(KeyCode::H) || (!self.is_split_screen() && pad_assist)) {
             let next_mode = self.assist_profile.next();
             self.set_assist_profile(next_mode);
             self.audio.play_sfx(SfxType::UiMove);
@@ -5058,7 +5165,7 @@ impl RaceSession {
                 );
             }
         }
-        if self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+        if assist_keys && self.is_split_screen() && pad_assist {
             self.assist_profile_p2 = self.assist_profile_p2.next();
             self.audio.play_sfx(SfxType::UiMove);
             if let Some(p2_car) = self.cars.get_mut(1) {
@@ -5220,6 +5327,13 @@ impl RaceSession {
                     self.camera_p2.resume_from_pause(p2_car);
                 }
 
+                // Pause trigger (Escape / Pause key or Gamepad Start). Checked before LAN input polling,
+                // which re-reads the gamepad and would clear this frame's Start press.
+                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
+                    self.pause_race();
+                    return;
+                }
+
                 // LAN Packet Networking
                 if self.is_lan_multiplayer {
                     if self.is_lan_host {
@@ -5269,12 +5383,6 @@ impl RaceSession {
                             }
                         }
                     }
-                }
-
-                // Pause trigger (Escape / Pause key or Gamepad Start)
-                if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
-                    self.pause_race();
-                    return;
                 }
 
                 self.session_time += frame_dt;
@@ -5405,44 +5513,8 @@ impl RaceSession {
 
                 self.pause_selected_btn = self.pause_nav.focused_col;
 
-                // Action confirmation on highlighted button or click
-                let is_confirmed = is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || is_key_pressed(KeyCode::Space)
-                    || self.pause_nav.is_confirmed(
-                        self.input.gamepad.snapshot.btn_confirm_pressed
-                            || self.input.gamepad.snapshot.btn_a_pressed,
-                    );
-
-                if is_confirmed || resume_clicked || exit_clicked {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let action_idx = if resume_clicked {
-                        0
-                    } else if exit_clicked {
-                        1
-                    } else {
-                        self.pause_selected_btn
-                    };
-
-                    if action_idx == 0 {
-                        self.resume_race();
-                        return;
-                    } else {
-                        self.camera.resume_from_pause(None);
-                        if self.is_split_screen() {
-                            self.camera_p2.resume_from_pause(None);
-                        }
-                        if self.return_to_editor_on_exit {
-                            self.return_to_editor_on_exit = false;
-                            self.transition_fade_to(GameState::TrackEditor, 0.35);
-                        } else {
-                            self.transition_fade_to(GameState::Menu, 0.35);
-                        }
-                        return;
-                    }
-                }
-
-                // Direct shortcut triggers
+                // Direct shortcut triggers. Checked before the focused-button confirm, because
+                // gamepad Start also counts as "confirm" and must always resume, as labelled.
                 if is_key_pressed(KeyCode::Escape)
                     || is_key_pressed(KeyCode::Pause)
                     || self.input.gamepad.snapshot.btn_start_pressed
@@ -5458,15 +5530,25 @@ impl RaceSession {
                     || exit_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.camera.resume_from_pause(None);
-                    if self.is_split_screen() {
-                        self.camera_p2.resume_from_pause(None);
-                    }
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    self.exit_paused_race();
+                    return;
+                }
+
+                // Action confirmation on highlighted button
+                let is_confirmed = is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.pause_nav.is_confirmed(
+                        self.input.gamepad.snapshot.btn_confirm_pressed
+                            || self.input.gamepad.snapshot.btn_a_pressed,
+                    );
+
+                if is_confirmed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if self.pause_selected_btn == 0 {
+                        self.resume_race();
                     } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
+                        self.exit_paused_race();
                     }
                     return;
                 }
@@ -5507,9 +5589,17 @@ impl RaceSession {
                     let _ = self.config.save_to_first_existing_or_default();
                 }
 
-                if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+                if is_key_pressed(KeyCode::G) {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.assist_profile = self.assist_profile.next();
+                    self.launch_gamepad_mapper();
+                }
+
+                if is_key_pressed(KeyCode::H)
+                    || (self.input.gamepad.snapshot.btn_assist_toggle_pressed && !self.input.gamepad.snapshot.btn_back_pressed)
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let next_mode = self.assist_profile.next();
+                    self.set_assist_profile(next_mode);
                 }
 
                 if is_key_pressed(KeyCode::Escape)
@@ -5523,11 +5613,8 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_b_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    if from_paused {
-                        self.state = GameState::Paused;
-                    } else {
-                        self.state = GameState::Menu;
-                    }
+                    let fallback = if from_paused { GameState::Paused } else { GameState::Menu };
+                    self.state = self.controls_help_return.take().unwrap_or(fallback);
                 }
             }
 
@@ -6112,31 +6199,121 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_b_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            if self.return_to_editor_on_exit {
-                self.return_to_editor_on_exit = false;
-                self.transition_fade_to(GameState::TrackEditor, 0.35);
-            } else if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                let tier = self.active_career_progress.level.clamp(1, 5);
-                let calendar = if let Some(c) = &self.championship_session {
-                    c.track_ids.clone()
-                } else {
-                    crate::ui::gt_default_calendar(tier)
-                };
-                self.career_hub_focus = CareerHubFocus::Tabs;
-                self.transition_fade_to(
-                    GameState::CareerHub {
-                        selected_tier: tier,
-                        selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                        calendar_tracks: calendar,
-                        showing_standings: false,
-                    },
-                    0.35,
-                );
-            } else {
-                self.transition_fade_to(GameState::Menu, 0.35);
-            }
+            let target = self.race_exit_target();
+            self.transition_fade_to(target, 0.35);
             return;
         }
+    }
+
+    /// Screen a player lands on when leaving a race: the track editor after a test drive,
+    /// the LAN hub after a network race (closing the session), the Career Hub in a GT career,
+    /// and the circuit selector otherwise.
+    pub fn race_exit_target(&mut self) -> GameState {
+        if self.return_to_editor_on_exit {
+            self.return_to_editor_on_exit = false;
+            return GameState::TrackEditor;
+        }
+        if self.is_lan_multiplayer {
+            self.exit_lan_session();
+            return GameState::LanHub { selected_idx: 0 };
+        }
+        if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+            let tier = self.active_career_progress.level.clamp(1, 5);
+            let calendar = if let Some(c) = &self.championship_session {
+                c.track_ids.clone()
+            } else {
+                crate::ui::gt_default_calendar(tier)
+            };
+            self.career_hub_focus = CareerHubFocus::Tabs;
+            return GameState::CareerHub {
+                selected_tier: tier,
+                selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                calendar_tracks: calendar,
+                showing_standings: false,
+            };
+        }
+        if self.game_mode == GameMode::Career {
+            return self.career_select_state_for(self.active_module_id);
+        }
+        self.menu_origin = MenuOrigin::ModalitySelect;
+        GameState::Menu
+    }
+
+    /// Starts the external gamepad-mapper tool and returns the status line to show.
+    ///
+    /// The mapper writes its local profile into the TDRace config directory (its working
+    /// directory), so [`Self::poll_gamepad_mapper`] reloads it when the mapper closes.
+    pub fn launch_gamepad_mapper(&mut self) -> String {
+        use crate::input::mapper_launch::{find_gamepad_mapper, GamepadMapperProcess, ENV_GAMEPAD_MAPPER};
+        let status = if self.gamepad_mapper.is_some() {
+            "Gamepad mapper is already open.".to_string()
+        } else if let Some(exe) = find_gamepad_mapper() {
+            match GamepadMapperProcess::launch(&exe, &crate::storage::resolve_user_config_dir()) {
+                Ok(process) => {
+                    self.gamepad_mapper = Some(process);
+                    "Gamepad mapper open. TDRace ignores the controller until you close it.".to_string()
+                }
+                Err(e) => format!("Could not start gamepad-mapper: {}", e),
+            }
+        } else {
+            format!("gamepad-mapper not found: put it next to TDRace or on PATH, or set {}.", ENV_GAMEPAD_MAPPER)
+        };
+        self.gamepad_mapper_status = Some(status.clone());
+        status
+    }
+
+    /// While the gamepad mapper is open, drops this frame's gamepad presses (the mapper reads the
+    /// same controller). When it closes, reloads the profile it saved.
+    fn poll_gamepad_mapper(&mut self) {
+        let Some(process) = self.gamepad_mapper.as_mut() else {
+            return;
+        };
+        if !process.has_exited() {
+            self.input.gamepad.clear_frame_events();
+            return;
+        }
+        self.gamepad_mapper = None;
+        self.input.gamepad.check_and_reload_profile();
+        let status = match self.input.gamepad.custom_profile.as_ref().map(|p| p.device_name.trim()) {
+            Some(name) if !name.is_empty() => format!("Gamepad mapper closed. Profile for {} loaded.", name),
+            _ => "Gamepad mapper closed. Saved profile loaded.".to_string(),
+        };
+        if let Some(modal) = self.settings_modal.as_mut() {
+            modal.sync_gamepad_config(&self.input.gamepad.config);
+            modal.gamepad_mapper_note = Some(status.clone());
+        }
+        self.gamepad_mapper_status = Some(status);
+    }
+
+    /// The Race Modality screen on the tab and card the player last left it on.
+    pub fn modality_return_state(&self) -> GameState {
+        let (category, selected_idx) = self.modality_cursor;
+        GameState::ModalitySelect { category, selected_idx, modal: None }
+    }
+
+    /// The Career Selection screen with the given discipline's card highlighted.
+    pub fn career_select_state_for(&self, module_id: &str) -> GameState {
+        let module_id = if module_id == "gt_challenge" { "gt" } else { module_id };
+        let (cards, _) = crate::ui::career_select::build_career_select_cards(
+            &self.championship_manager,
+            &self.profile_module_progress,
+            &self.active_career_progress,
+            self.championship_session.as_ref(),
+            &self.profile_history,
+        );
+        let selected_idx = cards.iter().position(|c| c.module_id == module_id).unwrap_or(0);
+        GameState::CareerSelect { selected_idx }
+    }
+
+    /// Leaves a paused race through the pause menu's EXIT RACE action.
+    fn exit_paused_race(&mut self) {
+        self.paused_countdown = None;
+        self.camera.resume_from_pause(None);
+        if self.is_split_screen() {
+            self.camera_p2.resume_from_pause(None);
+        }
+        let target = self.race_exit_target();
+        self.transition_fade_to(target, 0.35);
     }
 
     /// Updates input and state progression when in the post-race Finished state.
@@ -6264,12 +6441,8 @@ impl RaceSession {
                 }
                 FinishedScreenView::HallOfFame => {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
-                    } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
-                    }
+                    let target = self.race_exit_target();
+                    self.transition_fade_to(target, 0.35);
                     return;
                 }
                 FinishedScreenView::Statistics => {
@@ -6301,25 +6474,11 @@ impl RaceSession {
                 FinishedScreenView::Results => {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.pending_championship_results = None;
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
-                    } else if self.championship_session.is_some() && self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                        let tier = self.active_career_progress.level.clamp(1, 5);
-                        let calendar = if let Some(c) = &self.championship_session {
-                            c.track_ids.clone()
-                        } else {
-                            crate::ui::gt_default_calendar(tier)
-                        };
-                        self.career_hub_focus = CareerHubFocus::Tabs;
-                        self.state = GameState::CareerHub {
-                            selected_tier: tier,
-                            selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                            calendar_tracks: calendar,
-                            showing_standings: false,
-                        };
+                    let target = self.race_exit_target();
+                    if matches!(target, GameState::CareerHub { .. }) {
+                        self.state = target;
                     } else {
-                        self.transition_fade_to(GameState::Menu, 0.35);
+                        self.transition_fade_to(target, 0.35);
                     }
                     return;
                 }
@@ -6366,23 +6525,7 @@ impl RaceSession {
         }
         if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
-            if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                let tier = self.active_career_progress.level.clamp(1, 5);
-                let calendar = if let Some(c) = &self.championship_session {
-                    c.track_ids.clone()
-                } else {
-                    crate::ui::gt_default_calendar(tier)
-                };
-                self.career_hub_focus = CareerHubFocus::Tabs;
-                self.state = GameState::CareerHub {
-                    selected_tier: tier,
-                    selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                    calendar_tracks: calendar,
-                    showing_standings: false,
-                };
-            } else {
-                self.state = GameState::Menu;
-            }
+            self.state = self.race_exit_target();
         }
     }
 
@@ -6955,11 +7098,7 @@ impl RaceSession {
             self.refresh_profiles_and_stats();
             match self.profile_origin {
                 ProfileOrigin::ModalitySelect => {
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 0,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 ProfileOrigin::ModuleSelect => {
                     self.state = GameState::ModuleSelect { selected_idx: 0 };
@@ -7692,6 +7831,7 @@ impl RaceSession {
         // New Profile (N key or Gamepad X)
         if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.profile_origin = ProfileOrigin::ModuleSelect;
             let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
             self.state = GameState::ProfileCreate {
                 editing_id: None,
@@ -7766,6 +7906,7 @@ impl RaceSession {
             }
             return;
         }
+        self.modality_cursor = (category, selected_idx);
 
         // Direct Garage Showroom shortcut (G key)
         if is_key_pressed(KeyCode::G) {
@@ -7928,6 +8069,7 @@ impl RaceSession {
             || mouse_confirmed_card
         {
             if let Some(&item) = items.get(selected_idx) {
+                self.modality_cursor = (category, selected_idx);
                 match item {
                     ModalityItem::PlayerProfile => {
                         self.audio.play_sfx(SfxType::UiSelect);
@@ -8104,11 +8246,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiMove);
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::Multiplayer,
-                selected_idx: 1, // LAN Play card
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -9075,14 +9213,8 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.transition_fade_to(
-                GameState::ModalitySelect {
-                    category: ModalityCategory::SinglePlayer,
-                    selected_idx: 2,
-                    modal: None,
-                },
-                0.3,
-            );
+            let target = self.career_select_state_for(self.active_module_id);
+            self.transition_fade_to(target, 0.3);
             return;
         }
 
@@ -9133,11 +9265,7 @@ impl RaceSession {
             self.audio.stop_all_loops();
             match origin {
                 GarageOrigin::ModalitySelect => {
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 1,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 GarageOrigin::Menu => {
                     self.state = GameState::Menu;
@@ -9660,15 +9788,16 @@ impl RaceSession {
             return;
         }
 
-        // Return to Modality Selection Screen or Starting Grid (Escape key or Gamepad B / Cancel / Back / Tab)
+        // Return to Modality Selection Screen or Starting Grid (Escape key or Gamepad B / Cancel / Back).
+        // Tab is not "back" here: it cycles the catalog filter below.
         if is_key_pressed(KeyCode::Escape)
-            || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_origin == MenuOrigin::StartingGrid {
+                self.menu_origin = MenuOrigin::ModalitySelect;
                 self.state = GameState::StartingGrid;
                 return;
             }
@@ -9958,6 +10087,7 @@ impl RaceSession {
                         .unwrap_or_else(|| self.track_choice.track_id());
                     if track_id == active_id {
                         self.audio.play_sfx(SfxType::UiSelect);
+                        self.menu_origin = MenuOrigin::ModalitySelect;
                         self.state = GameState::StartingGrid;
                         return;
                     } else {
@@ -9970,6 +10100,12 @@ impl RaceSession {
                     return;
                 }
                 self.audio.play_sfx(SfxType::UiSelect);
+                self.menu_origin = MenuOrigin::ModalitySelect;
+                if self.game_mode != GameMode::Career {
+                    // Picking a circuit starts a single race: drop a quick championship left open.
+                    self.championship_session = None;
+                    self.pending_championship_results = None;
+                }
                 self.track_choice = track_choice.clone();
                 let loaded = resolve_track_for_menu(&self.track_choice);
                 let effective_module = loaded.as_ref().and_then(|t| t.module_id.as_deref()).unwrap_or(self.active_module_id);
@@ -11040,8 +11176,11 @@ impl RaceSession {
             }
         }
 
-        // 11. Back to Main Menu (Escape / Gamepad Back)
-        if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_back_pressed {
+        // 11. Back to Main Menu (Escape / Gamepad B / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_back_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+        {
             self.audio.play_sfx(SfxType::UiMove);
             self.state = GameState::Menu;
             return;
@@ -12302,7 +12441,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
+                    _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                 };
                 let cp_ref = if self.has_track_career_locks() {
                     Some(&self.active_career_progress)
@@ -12336,6 +12475,7 @@ impl RaceSession {
                     active_track_id,
                     is_career,
                     is_lan_host,
+                    self.menu_origin == MenuOrigin::StartingGrid,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
@@ -12486,10 +12626,16 @@ impl RaceSession {
                         );
                     }
                     FinishedScreenView::Statistics => {
+                        // Same vehicle name as the results and Hall of Fame (the model, not the base class).
+                        let vehicle_name = self
+                            .selected_car_model_id
+                            .and_then(crate::catalog::find_model_by_id)
+                            .map(|m| m.name)
+                            .unwrap_or_else(|| self.car_choice.title());
                         render_race_stats_screen(
                             &self.fonts,
                             &self.track.name,
-                            self.car_choice.title(),
+                            vehicle_name,
                             &self.player_race_stats,
                             self.session_time,
                             self.finished_prev_view == FinishedScreenView::HallOfFame,
@@ -12510,6 +12656,7 @@ impl RaceSession {
                     &self.input.input_map,
                     self.input.active_preset_name(),
                     &self.input.filter.config,
+                    self.gamepad_mapper_status.as_deref(),
                 );
             }
             GameState::DriverCards(_) => {
@@ -12729,11 +12876,7 @@ impl RaceSession {
                 ChampionshipEditorAction::Exit => {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.championship_editor_state = None;
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 3,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 ChampionshipEditorAction::LoadChampionship(new_def) => {
                     self.audio.play_sfx(SfxType::UiSelect);
@@ -13030,11 +13173,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_cancel_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::SinglePlayer,
-                selected_idx: 0,
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -13129,11 +13268,7 @@ impl RaceSession {
 
         if self.editor_origin == EditorOrigin::ModalitySelect {
             self.editor_origin = EditorOrigin::TrackManager;
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::Options,
-                selected_idx: 2,
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -13418,6 +13553,7 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Escape) {
             if !self.editor_tools.active_polygon_vertices.is_empty() {
                 self.editor_tools.active_polygon_vertices.clear();
+                self.editor_tools.escape_consumed = true;
                 self.audio.play_sfx(SfxType::UiMove);
             }
         }
@@ -14091,21 +14227,33 @@ impl RaceSession {
             }
             if self.visibility_options.curve_helper {
                 if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
-                    let max_lookahead = (focus_car.state.speed * 3.5).clamp(130.0, 220.0);
+                    let max_lookahead = curve_indicator_lookahead(focus_car.state.speed);
                     if let Some(status) = self.track.spline.upcoming_curve(
                         focus_tracker.progress_distance,
                         focus_car.state.speed,
                         max_lookahead,
                     ) {
-                        render_curve_indicator(
-                            focus_car,
-                            &status,
-                            self.visibility_options.curve_color_scheme,
-                            camera.current_zoom,
-                            self.session_time,
-                            self.visibility_options.curve_helper_scale,
-                            self.visibility_options.curve_helper_brightness,
-                        );
+                        match self.visibility_options.curve_indicator_style {
+                            CurveIndicatorStyle::Chevrons => render_curve_indicator(
+                                focus_car,
+                                &status,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                            CurveIndicatorStyle::Pacenote => render_curve_pacenote(
+                                focus_car,
+                                &status,
+                                &self.track.spline,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                        }
                     }
                 }
             }

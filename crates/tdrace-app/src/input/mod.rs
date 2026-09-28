@@ -1,5 +1,6 @@
 pub mod filter;
 pub mod gamepad;
+pub mod mapper_launch;
 pub mod simulation;
 pub mod touch;
 

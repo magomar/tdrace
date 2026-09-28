@@ -254,13 +254,22 @@ pub fn render_track_manager_screen(
 
         scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_chip_active { 2.0 } else { 1.0 });
 
+        // Narrow tabs switch to the short module name (the shortcut keys are listed in the header).
         let shortcut_num = filter.shortcut_number();
-        let label = format!("{} [{}] [{}]", filter.label(), count, shortcut_num);
+        let label_fs = scaler.font_s(11.5);
+        let label_room = chip_w - scaler.s(12.0);
+        let label = [
+            format!("{} [{}] [{}]", filter.label(), count, shortcut_num),
+            format!("{} [{}] [{}]", filter.short_label(), count, shortcut_num),
+        ]
+        .into_iter()
+        .find(|l| fonts.measure_ui_bold(l, label_fs).width <= label_room)
+        .unwrap_or_else(|| fonts.fit_ui_bold(&format!("{} [{}]", filter.short_label(), count), label_fs, label_room));
         fonts.draw_ui_bold_centered(
             &label,
             chip_x + chip_w * 0.5,
             tab_y + scaler.s(23.0),
-            scaler.font_s(11.5),
+            label_fs,
             text_col,
         );
     }

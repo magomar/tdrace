@@ -75,6 +75,14 @@ const MODALITY_CATALOG: &[ModalityMeta] = &[
     },
 ];
 
+/// Short discipline label that fits the row badge ("extreme_offroad" is too long for it).
+fn module_badge_label(module_id: &str) -> String {
+    match module_id {
+        "extreme_offroad" => "OFF-ROAD".to_string(),
+        other => other.to_uppercase(),
+    }
+}
+
 /// Builds the ordered list of career select cards.
 /// Active championships appear first, followed by available disciplines without an active championship.
 pub fn build_career_select_cards(
@@ -340,7 +348,7 @@ pub fn render_career_select_screen(
             draw_rectangle(tag_x, tag_y, tag_w, tag_h, Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.20));
             draw_rectangle_lines(tag_x, tag_y, tag_w, tag_h, 1.0, card.accent_color);
             fonts.draw_ui_bold_centered(
-                &card.module_id.to_uppercase(),
+                &module_badge_label(&card.module_id),
                 tag_x + tag_w * 0.5,
                 tag_y + scaler.s(15.0),
                 scaler.font_s(11.0),
@@ -490,7 +498,7 @@ pub fn render_career_select_screen(
             draw_rectangle(tag_x, tag_y, tag_w, tag_h, Color::new(card.accent_color.r, card.accent_color.g, card.accent_color.b, 0.16));
             draw_rectangle_lines(tag_x, tag_y, tag_w, tag_h, 1.0, card.accent_color);
 
-            let tag_text = card.module_id.to_uppercase();
+            let tag_text = module_badge_label(&card.module_id);
             fonts.draw_ui_bold_centered(
                 &tag_text,
                 tag_x + tag_w * 0.5,
