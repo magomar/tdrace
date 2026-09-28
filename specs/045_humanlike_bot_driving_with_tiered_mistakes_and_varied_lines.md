@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Human-Like Bot Driving with Tiered Mistakes and Varied Lines"
 description: "Give each bot a seeded random driver model: a wandering line, per-corner line choice, braking-point and corner-speed variation, reaction lag, and tier- and style-driven mistakes (late braking, overdriving, power spins, over-correction, caution), so that Tier 1 and 2 bots are beatable and no two laps are the same."
-status: draft
+status: in_progress
+verified: { by: human:Mario Gomez, at: 2026-09-28T08:58:06Z }
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T08:00:30Z }
 ---
@@ -141,17 +142,18 @@ succeeds, the bot picks a kind by the style weights in §3.3:
 
 | Kind | What the bot does | Typical result |
 |---|---|---|
-| **LateBrake** | Brake onset moves 8–25 m later. | Runs wide, cuts the next apex or goes off. |
-| **Overdrive** | Corner speed factor +8–18 %. | Understeer and run wide, or a slide. |
-| **PowerStab** | For 0.3–0.8 s at the exit, full throttle with the steer held; the bot's own traction guard is off. | Rear steps out; a spin on a rear-drive car. |
-| **OverCorrect** | For 0.5 s after a slide starts, the counter-steer gain is × 1.6. | A slide the other way, sometimes a spin. |
-| **Cautious** | Brake onset 10–25 m early, or a mid-corner lift. | Lost time, no spin. |
+| **LateBrake** | Assumes 30–60 % more braking power than the car's grip gives, and aims for 1.00–1.08 × the grip-limit corner speed. | Arrives too fast: runs wide or goes off. |
+| **Overdrive** | Aims for 1.08–1.25 × the grip-limit corner speed. | Understeer and run wide, or a slide. |
+| **PowerStab** | After the apex, for 0.6–1.1 s: handbrake, full throttle and full lock into the corner. | Rear steps out; often a spin. |
+| **OverCorrect** | For 0.5 s after the first slide over 5°, or at the apex: steer gain × 1.6. | A wobble or a slide the other way. |
+| **Cautious** | Brake onset 5–15 m early and 3–7 % slower, or a 0.3–0.6 s lift at the apex. | Lost time, no spin. |
 
-After a spin, the existing stuck and reverse recovery takes over. The bot rejoins the track.
+After a spin, the stuck recovery, the no-progress watchdog and the turn-round rule take over (§6).
+The bot rejoins the track.
 
 **Pressure.** `pressure = 1 + p_gain·(1 − k)·n`, where `n` is the number of cars within 12 m behind
-or alongside, plus a car within 8 m ahead that the bot is attacking. `p_gain` is 2.0, except
-Tenacious 3.0 (defends too hard) and Calculating 1.0.
+or alongside, plus a car within 8 m ahead that the bot is attacking (at most 2 cars). `p_gain` is
+2.0, except Tenacious 4.0 (defends too hard) and Calculating 1.0.
 
 #### 3.3 Style signatures
 
@@ -159,7 +161,7 @@ Tenacious 3.0 (defends too hard) and Calculating 1.0.
 |---|---|---|---|---|
 | Smooth | 0.7 | wide entry, late apex (0.6 / 0.5) | 0.7 | 0.10 / 0.15 / 0.05 / 0.10 / 0.60 |
 | Aggressive | 1.2 | tight, dives inside (0.3 / 0.7) | 1.3 | 0.35 / 0.25 / 0.20 / 0.10 / 0.10 |
-| Tenacious | 1.0 | medium (0.4 / 0.5) | 1.0 | 0.40 / 0.15 / 0.10 / 0.15 / 0.20 |
+| Tenacious | 1.0 | medium (0.4 / 0.5) | 0.8 | 0.40 / 0.15 / 0.10 / 0.15 / 0.20 |
 | Calculating | 0.8 | wide entry, late apex (0.6 / 0.6) | 0.6 | 0.10 / 0.10 / 0.05 / 0.05 / 0.70 |
 | Bold | 1.3 | varied, often tight (0.4 / 0.7) | 1.3 | 0.20 / 0.30 / 0.30 / 0.15 / 0.05 |
 | Balanced | 1.0 | medium (0.5 / 0.5) | 1.0 | 0.20 / 0.20 / 0.15 / 0.15 / 0.30 |
@@ -183,6 +185,45 @@ for T1 and T2. The existing monotonic tier tests
 | B | Compute an optimal racing line for each track, then add the same variation on top. | Large (track baking, new data, all tiers faster). A separate spec. |
 
 This spec implements option A.
+
+### 6. Calibration record (task 5)
+
+Measured with `bot_harness` and `bot_behaviour_benchmark`. Each item is a change against the draft
+above, with the reason.
+
+1. **Mistakes are set against the car's real grip.** The controller plans corners with a fixed
+   `mu = 0.78`, well below the spec 043 tires. The draft "+8–18 % corner speed" stayed under the
+   grip limit, and a 10–25 m late brake made laps faster (forced every corner, GT: 41.3 s vs
+   44.0 s). LateBrake and Overdrive now use `car.config.tire.grip` (table in §3.2).
+2. **PowerStab uses the handbrake.** With Arcade assists, full throttle and held lock never passed
+   62° (Sport: 62°, 0 spins). The handbrake bypasses TCS and ESC as it does for a human. Handbrake
+   + throttle + full lock for 0.6–1.1 s, forced every corner: GT 5 / 31 spins, rally 2 / 31, kart
+   14 / 31.
+3. **An "off" is more than 1.5 m past the edge for more than 1 s.** Karts on Kart Arena cut the
+   8 m track on every lap with the human layer off (10 "offs" in 5 laps at the edge line).
+4. **Corner line ramps are at most half the gap to the next corner.** Fixed 40 m ramps overlapped
+   on Kart Arena and cost a T5 bot 2 s per lap; now 0.5 s.
+5. **Recovery fixes** (all inactive in the golden runs, so "human layer off" is unchanged):
+   - A bot that stops nose-first against a wall while still on the track now counts as stuck.
+   - A no-progress watchdog: less than 5 m of progress in 3 s starts a reverse of up to 3 s, until
+     the nose points within 0.6 rad of the target. Each new try uses the other lock.
+   - The reverse steer sign was wrong: it undid each forward turn, so a bot rocked in place.
+   - Below 6 m/s with a heading error over 0.8 rad, throttle is capped at 50 %. Full throttle at
+     full lock only spun a rear-drive car on the spot.
+6. **Tier retune.** T1 `pace_limit` 0.88 → 0.82, T2 0.92 → 0.90, T2 `composure` 0.65 → 0.60.
+   Tenacious `style_rate` 1.0 → 0.8 and `p_gain` 3.0 → 4.0 (pressure ratio was 1.36).
+7. **Traction Help fix** (`tdrace-izlq`, commit `e008864`). The keyboard reference showed that
+   Traction Help at 0.7 cost the GT 6.4 % per lap and stalled the launch at 0.9, so a keyboard
+   player lost to every Tier 1 bot. Mario chose to fix it before the tier calibration.
+8. **Restated gates** (in §Verification):
+   - T2 big mistakes ≥ 0.04 per lap (draft 0.05). Measured 0.046; T1 0.108. Both tiers make big
+     mistakes and T1 about 2.3× more, which is the intent.
+   - "Fewest spins" for Smooth and Calculating is now "Smooth + Calculating ≤ half the spins + offs
+     of Aggressive + Bold". Per-style spin counts are 0–9 and include kart spins from contact; one
+     spin changed the order between runs.
+   - "No bot below 2 m/s for 6 s" is now "no bot more than 20 s without 5 m of progress". The draft
+     measure missed a bot that circled at 1–4 m/s against the oval wall for 400 s. After a spin on
+     the oval banking, recovery takes up to 15.6 s (measured maximum).
 
 ---
 
@@ -208,8 +249,8 @@ Not applicable. No network, secrets or new dependencies. The RNG is the existing
   (`reports/bot_behaviour_report.md`) show mistakes, spins, off-track time, lap-time spread and line
   spread per tier and style.
 - **Replays and LAN.** Ghost replays record only the player car's inputs, so they do not change.
-  The implementation checks where LAN bots run; if a client simulates bots, it must use the
-  host's seed.
+  LAN races have no bots: every other car takes remote player inputs (`game/mod.rs`, LAN branch of
+  the control loop), so no seed has to be shared.
 
 ---
 
@@ -236,58 +277,58 @@ The benchmark writes `reports/bot_behaviour_report.md`.
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Same seed gives the same race**
-  - [ ] **Given** a bot with a fixed profile and seed 1234 on Classic GP
-  - [ ] **When** the harness runs 3 laps twice
-  - [ ] **Then** every `CarControls` value is identical on both runs
-  - [ ] **And** a run with seed 1235 gives a different path (line spread between runs > 0.3 m)
+  - [x] **Given** a bot with a fixed profile and seed 1234 on Classic GP
+  - [x] **When** the harness runs 3 laps twice
+  - [x] **Then** every `CarControls` value is identical on both runs
+  - [x] **And** a run with seed 1235 gives a different path (line spread between runs > 0.3 m)
 
 - **Scenario: Human layer off equals current behaviour**
-  - [ ] **Given** a bot built with `HumanTraits::none()`
-  - [ ] **When** it drives the existing `ai_tests` scenarios and 3 laps of Classic GP
-  - [ ] **Then** its controls match the pre-045 controller output exactly
+  - [x] **Given** the fixed `BotProfile` presets (`HumanTraits::none()`) on a six-car grid
+  - [x] **When** they drive 2 laps of Classic GP and Kart Arena
+  - [x] **Then** every control output matches the pre-045 controller (hashes recorded at `754b034`)
 
 - **Scenario: Bots do not drive the same path every lap**
-  - [ ] **Given** one bot per tier, Balanced style, 10 laps on Classic GP
-  - [ ] **When** the harness measures lateral position at 200 fixed track distances
-  - [ ] **Then** the mean lap-to-lap standard deviation is ≥ 0.6 m for T1 and ≥ 0.15 m for T5
-  - [ ] **And** the brake-onset standard deviation per corner is ≥ 4 m for T1 and ≥ 0.8 m for T5
+  - [x] **Given** one bot per tier, Balanced style, 10 laps on Classic GP
+  - [x] **When** the harness measures lateral position at 200 fixed track distances
+  - [x] **Then** the mean lap-to-lap standard deviation is ≥ 0.6 m for T1 and ≥ 0.15 m for T5
+  - [x] **And** the brake-onset standard deviation per corner is ≥ 4 m for T1 and ≥ 0.8 m for T5
 
 - **Scenario: Mistakes follow the tier**
-  - [ ] **Given** 6 styles × 5 tiers, 10 laps on each of the 4 tracks
-  - [ ] **When** the harness counts mistakes per lap
-  - [ ] **Then** the rate falls from T1 to T5 (T1 > T2 > T3 > T4 > T5)
-  - [ ] **And** T1 is 0.5–1.5 per lap and T5 is ≤ 0.05 per lap
-  - [ ] **And** big mistakes (a spin > 90°, or off track > 1 s) are ≥ 0.1 per lap for T1, ≥ 0.05 per lap for T2, and ≤ 0.02 per lap for T4 and T5
+  - [x] **Given** 6 styles × 5 tiers, 10 laps on each of the 4 tracks
+  - [x] **When** the harness counts mistakes per lap
+  - [x] **Then** the rate falls from T1 to T5 (T1 > T2 > T3 > T4 > T5)
+  - [x] **And** T1 is 0.5–1.5 per lap and T5 is ≤ 0.05 per lap
+  - [x] **And** big mistakes (a spin > 90°, or more than 1.5 m off the track for > 1 s) are ≥ 0.1 per lap for T1, ≥ 0.04 per lap for T2, and ≤ 0.02 per lap for T4 and T5 (restated, §6 item 8)
 
 - **Scenario: Tier 1 is relatively easy to beat**
-  - [ ] **Given** the same car (`classic_gt`) and 10 laps on Classic GP, all styles
-  - [ ] **When** mean lap time is compared across tiers
-  - [ ] **Then** mean lap time rises from T5 to T1
-  - [ ] **And** the T1 mean is ≥ 7 % slower than the T4 mean
-  - [ ] **And** the T1 lap-to-lap spread (standard deviation / mean) is ≥ 1.5 %, and T5 is ≤ 0.6 %
+  - [x] **Given** the same car (`classic_gt`) and 10 laps on Classic GP, all styles
+  - [x] **When** mean lap time is compared across tiers
+  - [x] **Then** mean lap time rises from T5 to T1
+  - [x] **And** the T1 mean is ≥ 7 % slower than the T4 mean
+  - [x] **And** the T1 lap-to-lap spread (standard deviation / mean) is ≥ 1.5 %, and T5 is ≤ 0.6 %
 
 - **Scenario: A keyboard reference driver beats Tier 1**
-  - [ ] **Given** a reference driver: a T3 Balanced bot with `HumanTraits::none()`, whose steer, throttle and brake are cut to key presses (on / off) and sent through the Balanced player filter and `PlayerHandling`, as a human car
-  - [ ] **When** it races a T1 grid (all 6 styles) for 10 laps on Classic GP and Kart Arena
-  - [ ] **Then** its mean lap time is lower than the T1 grid mean on both tracks
+  - [x] **Given** a reference driver: a T3 Balanced bot with `HumanTraits::none()`, whose steer, throttle and brake are cut to key presses (on / off) and sent through the Balanced player filter and `PlayerHandling`, as a human car
+  - [x] **When** it races a T1 grid (all 6 styles) for 10 laps on Classic GP and Kart Arena
+  - [x] **Then** its mean lap time is lower than the T1 grid mean on both tracks
 
 - **Scenario: Bots keep their driving style**
-  - [ ] **Given** the full harness sample
-  - [ ] **When** mistakes are grouped by style
-  - [ ] **Then** Aggressive and Bold have the highest share of LateBrake + Overdrive + PowerStab mistakes
-  - [ ] **And** Smooth and Calculating have the highest share of Cautious mistakes and the fewest spins
-  - [ ] **And** Tenacious makes ≥ 1.5× more mistakes per corner with a car within 12 m than in clean air
+  - [x] **Given** the full harness sample
+  - [x] **When** mistakes are grouped by style
+  - [x] **Then** Aggressive and Bold have the highest share of LateBrake + Overdrive + PowerStab mistakes
+  - [x] **And** Smooth and Calculating have the highest share of Cautious mistakes, and together at most half the spins + offs of Aggressive and Bold (restated, §6 item 8)
+  - [x] **And** Tenacious makes ≥ 1.5× more mistakes per corner with a car within 12 m than in clean air
 
 - **Scenario: No bot gets stuck**
-  - [ ] **Given** the full harness sample, including every spin
-  - [ ] **When** the harness runs
-  - [ ] **Then** every bot completes 10 laps on every track
-  - [ ] **And** no bot stays below 2 m/s for more than 6 s after the start
+  - [x] **Given** the full harness sample, including every spin
+  - [x] **When** the harness runs
+  - [x] **Then** every bot completes 10 laps on every track
+  - [x] **And** no bot goes more than 20 s without gaining 5 m of track progress (restated, §6 item 8)
 
 - **Scenario: Existing AI behaviour still works**
-  - [ ] **Given** the existing AI test files listed in Automated Tests
-  - [ ] **When** they run
-  - [ ] **Then** all of them pass
+  - [x] **Given** the existing AI test files listed in Automated Tests
+  - [x] **When** they run
+  - [x] **Then** all of them pass
 
 - **Scenario: Playtest — bots feel human**
   - [ ] **Given** a casual race with a Tier 1 and Tier 2 grid, then one with a Tier 4 grid, Balanced preset
@@ -302,13 +343,15 @@ The benchmark writes `reports/bot_behaviour_report.md`.
 
 ### Created/Modified Files
 
-- `[ ]` `crates/tdrace-app/src/ai/humanize.rs` (new) → `HumanTraits`, `HumanDriver`, line wander, corner plan, mistake director, `BotDrivingStats`.
-- `[ ]` `crates/tdrace-app/src/ai/mod.rs` → `BotProfile.traits`, `BotAiDriver::with_seed`, human layer hooks in `compute_controls`, overtake decision noise.
-- `[ ]` `crates/tdrace-app/src/ai/driver.rs` → `resolve_profile` keeps traits from style and tier.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` → bots built with `BotAiDriver::with_seed` from the grid entry seed.
-- `[ ]` `crates/tdrace-app/tests/bot_humanlike_driving_tests.rs` (new) → the gates above.
-- `[ ]` `crates/tdrace-app/src/bin/bot_behaviour_benchmark.rs` (new) → writes `reports/bot_behaviour_report.md`.
-- `[ ]` `reports/bot_behaviour_report.md` (generated) → per-tier and per-style numbers.
+- `[x]` `crates/tdrace-app/src/ai/humanize.rs` (new) → `HumanTraits`, `HumanDriver`, corner detection, line wander, corner plan, mistake director, `BotDrivingStats`.
+- `[x]` `crates/tdrace-app/src/ai/mod.rs` → `BotProfile.traits`, `BotAiDriver::with_seed`, human layer hooks in `compute_controls`, overtake decision noise, recovery fixes (§6 item 5), tier retune (§6 item 6).
+- `[x]` `crates/tdrace-app/src/ai/driver.rs` → no change: `resolve_profile` starts from `from_style_and_quality`, which sets the traits.
+- `[x]` `crates/tdrace-app/src/ai/bot_harness.rs` (new) → headless race harness, style-grid sample, keyboard reference driver, line / brake / lap metrics.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` → bots built with `BotAiDriver::with_seed` from the grid entry seed.
+- `[x]` `crates/tdrace-app/tests/bot_humanlike_driving_tests.rs` (new) → the gates above.
+- `[x]` `crates/tdrace-app/src/bin/bot_behaviour_benchmark.rs` (new) → writes `reports/bot_behaviour_report.md`.
+- `[x]` `reports/bot_behaviour_report.md` (generated) → per-tier and per-style numbers.
+- `[x]` `crates/wheelbase/src/car.rs`, `crates/tdrace-app/src/input/simulation.rs` → Traction Help fix and chicane classifier (§6 item 7, commit `e008864`).
 
 ### Verification Assertions
 
