@@ -844,7 +844,10 @@ impl Track {
             16
         } else if self.belongs_to_module("kart") {
             14
-        } else if self.belongs_to_module("rally") || self.belongs_to_module("extreme_offroad") {
+        } else if self.belongs_to_module("rally")
+            || self.belongs_to_module("extreme_offroad")
+            || self.belongs_to_module("autocross")
+        {
             12
         } else {
             10
