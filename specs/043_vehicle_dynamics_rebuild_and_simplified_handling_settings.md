@@ -356,9 +356,12 @@ Not applicable. There are no network, credential or dependency changes. No new c
 failures existed before this work (track assets, gamepad profile, evdev, LAN livery).
 
 - **Scenario: Player playtest (human)**
-  - [ ] **Given** the Balanced preset on keyboard, sports/GT class, Tier 1 bots
-  - [ ] **When** Mario races 3 races
-  - [ ] **Then** Mario reports feeling in control, clearly noticeable preset changes, and that Tier 1 bots can be beaten
+  - [x] **Given** the Balanced preset on keyboard, sports/GT class, Tier 1 bots
+  - [x] **When** Mario races 3 races
+  - [x] **Then** Mario reports feeling in control, clearly noticeable preset changes, and that Tier 1 bots can be beaten
+  - *Playtest 2026-09-28 on commit `7e80e2b`. Mario's verdict: "Feels good, close spec 043 and merge
+    to main." The verdict did not comment on preset differences or Tier 1 bots one by one. Bot
+    difficulty per tier is follow-up work in `tdrace-9bq5`.*
 
 ---
 
