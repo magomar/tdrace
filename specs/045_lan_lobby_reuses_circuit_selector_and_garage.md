@@ -147,7 +147,7 @@ Livery lists stay in `cabinet`, shared by both screens (one const table instead 
 - `cargo test -p tdrace-app --test lan_integration_tests`
 - `cargo test --workspace --exclude tdrace-py` (known unrelated failures are listed in Beads)
 - Screenshots with `tdrace-app --gt --lan-host [circuit|car] --screenshot <png>` for the host lobby, the selector and the Garage in LAN origin.
-- Open: the module-key lock in the Garage needs a real key press (`2`, `C`), which the headless tests can not send. Check it by hand: `tdrace-app --gt --lan-host car`, press `2` and `C`, the module must stay GT.
+- Manual: the module-key lock in the Garage needs a real key press (`2`, `C`), which the headless tests can not send. Checked by hand by human:mario on 2026-09-28 with `tdrace-app --gt --lan-host car`: pressing `2` and `C` kept the module on GT and the gallery closed.
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
@@ -177,9 +177,9 @@ Livery lists stay in `cabinet`, shared by both screens (one const table instead 
   - [x] **Then** the game returns to the client lobby and the host shows the new car name in the client slot
 
 - **Scenario: Garage in LAN origin stays in the host discipline**
-  - [ ] **Given** the Garage opened from a LAN lobby of a GT host
-  - [ ] **When** the player presses `2` (rally) or `C` (fleet gallery)
-  - [ ] **Then** the module stays GT and the fleet gallery does not open
+  - [x] **Given** the Garage opened from a LAN lobby of a GT host
+  - [x] **When** the player presses `2` (rally) or `C` (fleet gallery)
+  - [x] **Then** the module stays GT and the fleet gallery does not open
 
 - **Scenario: Network stays alive while a sub-screen is open**
   - [x] **Given** a host and a client in the lobby
