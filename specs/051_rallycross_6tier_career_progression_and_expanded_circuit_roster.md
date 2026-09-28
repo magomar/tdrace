@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Rallycross 6-Tier Career Progression and Expanded Circuit Roster"
 description: "Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data."
-status: approved
+status: in_progress
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-28T22:45:00Z }
 verified: { by: "human:mario", at: 2026-09-28T22:39:42Z }
