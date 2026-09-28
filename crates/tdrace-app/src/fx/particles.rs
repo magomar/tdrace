@@ -19,6 +19,8 @@ pub struct Particle {
     pub remaining_life: f32,
     pub drag: f32,
     pub is_spark: bool,
+    /// Drawn in the ground pass, under the cars, instead of the airborne pass.
+    pub is_ground: bool,
 }
 
 /// Particle manager handling tire smoke, off-track dirt/grass, and collision sparks.
@@ -95,12 +97,16 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: 3.5,
                 is_spark: false,
+                is_ground: false,
             });
         }
     }
 
     /// Emits dirt/grass/sand roost particles when wheels slide or accelerate off-track.
-    pub fn emit_dirt_roost(&mut self, pos: Vec2, surface: SurfaceType, wheel_vel: Vec2) {
+    ///
+    /// `intensity` in [0.0, 1.0] is the expected number of particles for this call, so a
+    /// light slide throws a thin trail and only a full slide throws one particle every step.
+    pub fn emit_dirt_roost(&mut self, pos: Vec2, surface: SurfaceType, wheel_vel: Vec2, intensity: f32) {
         if self.particles.len() >= self.max_particles {
             return;
         }
@@ -127,7 +133,7 @@ impl ParticleSystem {
             _ => (2.8, 3.0, 0.08),
         };
 
-        let count = 3;
+        let count = (intensity.clamp(0.0, 1.0) + self.rand_f32()) as usize;
         for _ in 0..count {
             if self.particles.len() >= self.max_particles {
                 break;
@@ -157,6 +163,7 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag,
                 is_spark: false,
+                is_ground: true,
             });
         }
     }
@@ -243,6 +250,7 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: if is_petal { 1.8 } else { 2.6 },
                 is_spark: false,
+                is_ground: false,
             });
         }
     }
@@ -286,6 +294,7 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: 3.2,
                 is_spark: false,
+                is_ground: false,
             });
         }
     }
@@ -330,6 +339,7 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: 4.5,
                 is_spark: true,
+                is_ground: false,
             });
         }
     }
@@ -385,6 +395,7 @@ impl ParticleSystem {
                 remaining_life: life,
                 drag: 3.5,
                 is_spark: false,
+                is_ground: false,
             });
         }
     }
@@ -410,25 +421,41 @@ impl ParticleSystem {
         }
     }
 
-    /// Renders all active particles.
+    /// Count of active particles drawn in the ground pass.
+    pub fn ground_count(&self) -> usize {
+        self.particles.iter().filter(|p| p.is_ground).count()
+    }
+
+    /// Renders ground-layer particles (off-track roost), to be called before the cars.
+    pub fn render_ground(&self) {
+        for p in self.particles.iter().filter(|p| p.is_ground) {
+            Self::draw_particle(p);
+        }
+    }
+
+    /// Renders airborne particles (smoke, sparks, splashes, foliage, landing dust).
     pub fn render(&self) {
-        for p in &self.particles {
-            let t = 1.0 - (p.remaining_life / p.lifetime).clamp(0.0, 1.0);
-            let current_size = p.size_start + (p.size_end - p.size_start) * t;
+        for p in self.particles.iter().filter(|p| !p.is_ground) {
+            Self::draw_particle(p);
+        }
+    }
 
-            let r = p.color_start.r + (p.color_end.r - p.color_start.r) * t;
-            let g = p.color_start.g + (p.color_end.g - p.color_start.g) * t;
-            let b = p.color_start.b + (p.color_end.b - p.color_start.b) * t;
-            let a = p.color_start.a + (p.color_end.a - p.color_start.a) * t;
-            let col = Color::new(r, g, b, a);
+    fn draw_particle(p: &Particle) {
+        let t = 1.0 - (p.remaining_life / p.lifetime).clamp(0.0, 1.0);
+        let current_size = p.size_start + (p.size_end - p.size_start) * t;
 
-            if p.is_spark {
-                // Spark streak line in direction of velocity
-                let tail = p.pos - p.vel * 0.025;
-                draw_line(p.pos.x, p.pos.y, tail.x, tail.y, current_size * 1.5, col);
-            } else {
-                draw_circle(p.pos.x, p.pos.y, current_size, col);
-            }
+        let r = p.color_start.r + (p.color_end.r - p.color_start.r) * t;
+        let g = p.color_start.g + (p.color_end.g - p.color_start.g) * t;
+        let b = p.color_start.b + (p.color_end.b - p.color_start.b) * t;
+        let a = p.color_start.a + (p.color_end.a - p.color_start.a) * t;
+        let col = Color::new(r, g, b, a);
+
+        if p.is_spark {
+            // Spark streak line in direction of velocity
+            let tail = p.pos - p.vel * 0.025;
+            draw_line(p.pos.x, p.pos.y, tail.x, tail.y, current_size * 1.5, col);
+        } else {
+            draw_circle(p.pos.x, p.pos.y, current_size, col);
         }
     }
 }
