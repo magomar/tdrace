@@ -1,3 +1,4 @@
+pub mod bake;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
@@ -624,6 +625,18 @@ impl Track {
     }
 
     /// Returns the track-level barrier offset in meters, inferring from wall geometry or car category / module.
+    /// Most common wall type on the track, or `None` when it has no walls.
+    pub fn dominant_barrier_type(&self) -> Option<BarrierType> {
+        let mut counts: Vec<(BarrierType, usize)> = Vec::new();
+        for wall in self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls) {
+            match counts.iter_mut().find(|(t, _)| *t == wall.barrier_type) {
+                Some((_, n)) => *n += 1,
+                None => counts.push((wall.barrier_type, 1)),
+            }
+        }
+        counts.into_iter().max_by_key(|(_, n)| *n).map(|(t, _)| t)
+    }
+
     pub fn effective_barrier_offset(&self) -> f32 {
         // Infer from inner/outer wall geometry if available
         let walls = if !self.geometry.inner_walls.is_empty() {

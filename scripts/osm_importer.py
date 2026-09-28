@@ -27,6 +27,7 @@ length more than 10% away from the official length.
 Usage:
   python3 scripts/osm_importer.py download --track monza
   python3 scripts/osm_importer.py gt --track monza --rust
+  python3 scripts/osm_importer.py gt --track monza --json   # then run the printed track_bake command
   python3 scripts/osm_importer.py rally
   python3 scripts/osm_importer.py kart --cache-dir /path/to/osm_cache
 
@@ -34,6 +35,7 @@ Map data (c) OpenStreetMap contributors, available under the Open Database Licen
 """
 
 import argparse
+import json
 import math
 import os
 import re
@@ -1727,21 +1729,39 @@ def print_rally_summary(res):
 
 
 # ---------------------------------------------------------------------------
-# Download (all real circuits in the Rust provenance registry)
+# Download (all real circuits with an osm_url in tracks/)
 # ---------------------------------------------------------------------------
 
-PROVENANCE_RS = os.path.join(REPO_ROOT, "crates", "arcade-race-core", "src", "track", "provenance.rs")
 # Extra ground around the circuit, so barriers, gravel traps and grandstands are included.
 DOWNLOAD_MARGIN_M = 300.0
 MAP_API = "https://api.openstreetmap.org/api/0.6"
 OVERPASS_API = "https://overpass-api.de/api/interpreter"
 
 
-def provenance_osm_urls():
-    """{circuit id: osm_url} for every real circuit in the Rust provenance registry."""
-    with open(PROVENANCE_RS, "r", encoding="utf-8") as f:
-        src = f.read()
-    return dict(re.findall(r'id: "([^"]+)",\s*name: "[^"]*",.*?osm_url: "([^"]+)"', src, re.DOTALL))
+def provenance_osm_urls(tracks_dir=None, cache_dir=DEFAULT_CACHE_DIR):
+    """{circuit id: osm_url} for every official circuit JSON in tracks/ that has an osm_url.
+
+    The id is the catalog id, or an older alias when the OSM file is already saved under that alias
+    (e.g. the NASCAR files `daytona.osm`), so existing map files keep working.
+    """
+    tracks_dir = tracks_dir or TRACKS_DIR
+    aliases = load_aliases(tracks_dir)
+    urls = {}
+    for module in sorted(os.listdir(tracks_dir)):
+        module_dir = os.path.join(tracks_dir, module)
+        if module.startswith(".") or not os.path.isdir(module_dir):
+            continue
+        for name in sorted(os.listdir(module_dir)):
+            if not name.endswith(".json"):
+                continue
+            with open(os.path.join(module_dir, name), "r", encoding="utf-8") as f:
+                osm_url = json.load(f).get("osm_url")
+            if not osm_url:
+                continue
+            cid = name[: -len(".json")]
+            saved_as = [a for a, target in aliases.items() if target == cid and os.path.exists(osm_file_path(cache_dir, a))]
+            urls[saved_as[0] if saved_as and not os.path.exists(osm_file_path(cache_dir, cid)) else cid] = osm_url
+    return urls
 
 
 def http_get(url, data=None, timeout=120):
@@ -1835,6 +1855,113 @@ def download(track_ids, cache_dir, force=False):
 # Command line
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# JSON output (spec 042): official circuits live only in tracks/<module>/<id>.json
+# ---------------------------------------------------------------------------
+
+TRACKS_DIR = os.path.join(REPO_ROOT, "tracks")
+BAKE_COMMAND = "cargo run --bin track_bake --"
+
+
+def load_aliases(tracks_dir):
+    path = os.path.join(tracks_dir, ".aliases.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def catalog_id(module, track_id, tracks_dir):
+    """The catalog id (file name) for an importer track id, following tracks/.aliases.json."""
+    if os.path.exists(os.path.join(tracks_dir, module, f"{track_id}.json")):
+        return track_id
+    return load_aliases(tracks_dir).get(track_id, track_id)
+
+
+def source_waypoint(w, discipline):
+    """One importer waypoint as a Track JSON waypoint (the fields the Rust code used to set)."""
+    surface = w.get("surface") or ("Asphalt" if discipline == "gt" else None)
+    wp = {
+        "point": [round(w["x"], 1), round(w["y"], 1)],
+        "width": round(w["width"], 1),
+        "left_curb": bool(w["left_curb"]),
+        "right_curb": bool(w["right_curb"]),
+        "surface": surface,
+        "elevation": round(w.get("elevation", 0.0), 1),
+    }
+    if "wall_dist" in w:
+        wp["left_wall_distance"] = wp["right_wall_distance"] = round(w["wall_dist"], 1)
+    return wp
+
+
+def write_source_json(discipline, data, tracks_dir=None):
+    """Writes the imported waypoints to tracks/<module>/<id>.json; returns (path, track_bake command).
+
+    An existing circuit keeps every other field (names, tag, provenance, scenery, walls); only the waypoints
+    change, and `track_bake --rebuild` then regenerates spline, walls, checkpoints and grid from them, keeping
+    the current wall setup. A new circuit gets a minimal file and is appended to tracks/.track_order.json.
+    """
+    tracks_dir = tracks_dir or TRACKS_DIR
+    module = discipline
+    cid = catalog_id(module, data["id"], tracks_dir)
+    path = os.path.join(tracks_dir, module, f"{cid}.json")
+    waypoints = [source_waypoint(w, discipline) for w in data["waypoints"]]
+
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            track = json.load(f)
+        track["spline"]["waypoints"] = waypoints
+        track["spline"]["closed"] = True
+        bake_args = ["--rebuild"]
+    else:
+        track = {
+            "name": data["name"],
+            "description": data.get("description", ""),
+            "category": "main",
+            "kind": {"type": "circuit"},
+            "spline": {"waypoints": waypoints, "closed": True, "samples": [], "total_length": 0.0, "curves": []},
+            "geometry": {
+                "inner_walls": [],
+                "outer_walls": [],
+                "obstacles": [],
+                "surface_zones": [],
+                "jump_ramps": [],
+                "left_boundary_polyline": [],
+                "right_boundary_polyline": [],
+            },
+            "checkpoints": [],
+            "grid_positions": [],
+            "default_surface": "Grass",
+            "pit_box_area": None,
+            "default_laps": data.get("default_laps", 3),
+            "car_category": module,
+            "module_id": module,
+            "modules": [module],
+            "scale": "0.5x" if module == "gt" else "1:1",
+            "is_inspired": False,
+        }
+        if data.get("tag"):
+            track["tag"] = data["tag"]
+        order_path = os.path.join(tracks_dir, ".track_order.json")
+        with open(order_path, "r", encoding="utf-8") as f:
+            order = json.load(f)
+        if cid not in order.setdefault(module, []):
+            order[module].append(cid)
+            with open(order_path, "w", encoding="utf-8") as f:
+                json.dump(order, f, indent=2, ensure_ascii=False)
+        bake_args = []
+        if "barrier_offset" in data:
+            bake_args += ["--barrier-offset", f"{data['barrier_offset']:.1f}"]
+        if "barrier" in data:
+            bake_args += ["--barrier-type", data["barrier"].split("::")[-1]]
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(track, f, indent=2, ensure_ascii=False)
+    rel = os.path.relpath(path, REPO_ROOT)
+    return path, " ".join([BAKE_COMMAND, rel] + bake_args)
+
+
 DISCIPLINES = {
     "gt": (GT_CIRCUITS, process_gt_circuit, generate_gt_rust_code, print_gt_summary),
     "kart": (KART_TRACKS, process_kart_track, generate_kart_rust_code, print_kart_summary),
@@ -1850,8 +1977,11 @@ def main():
         p = sub.add_parser(name, help=f"{name} circuits")
         p.add_argument("--track", choices=list(specs.keys()), help="Process one circuit (default: all)")
         p.add_argument("--rust", action="store_true", help="Print Rust code")
+        p.add_argument(
+            "--json", action="store_true", help="Write tracks/<module>/<id>.json and print the track_bake command"
+        )
     real_ids = list(provenance_osm_urls().keys())
-    p = sub.add_parser("download", help="Download OSM map data for the real circuits in provenance.rs")
+    p = sub.add_parser("download", help="Download OSM map data for the real circuits in tracks/")
     p.add_argument("--track", choices=real_ids, action="append", help="Circuit id (repeatable; default: all)")
     p.add_argument("--force", action="store_true", help="Download again even if the file exists")
     args = parser.parse_args()
@@ -1868,6 +1998,10 @@ def main():
         if args.rust:
             print(generate_rust(data))
             print()
+        if args.json:
+            path, bake_cmd = write_source_json(args.discipline, data)
+            print(f"  Wrote {path}")
+            print(f"  Next: {bake_cmd}")
 
 
 if __name__ == "__main__":

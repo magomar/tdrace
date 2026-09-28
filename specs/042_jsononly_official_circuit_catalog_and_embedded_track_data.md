@@ -132,9 +132,11 @@ The menu cache (`MENU_TRACK_CACHE`) keeps its role, but reads through this resol
 
 #### 2.7 Importers and baking
 
-- `scripts/osm_importer.py` gains `--json <path>`. It writes a **source** JSON: name, metadata, provenance, `spline.waypoints`, and scale. `--rust` is removed. `scripts/osm_nascar_importer.py` gets the same flag.
-- A new Rust bin, `track-bake` (in `tdrace-app`), reads a source JSON, runs the existing builders (samples, walls, boundary polylines, checkpoints, grid, default runoff), runs `validate_track`, and writes the baked JSON in place. Command: `cargo run --bin track-bake -- tracks/gt/monza.json`.
-- The editor keeps its current baked save. Hand edits to walls in a baked file are kept; `track-bake` only fills fields that are empty, unless `--rebuild` is passed.
+- `scripts/osm_importer.py gt|kart|rally --json` writes the imported waypoints to `tracks/<module>/<id>.json` (ids follow `tracks/.aliases.json`) and prints the bake command. For an existing circuit only `spline.waypoints` changes; names, tag, provenance, scenery and walls stay. A new circuit gets a minimal file and is appended to `tracks/.track_order.json`. `--rust` is removed in step 6.
+- The `download` command reads `osm_url` from `tracks/**/*.json`, not from `provenance.rs`. It keeps the file name of an existing `assets/osm/<alias>.osm` (the 16 NASCAR short names).
+- `scripts/osm_nascar_importer.py` only prints point counts (no widths, kerbs or banking), so it gets no `--json`; follow-up bead: bring NASCAR into `osm_importer.py`.
+- A new Rust bin, `track_bake` (in `tdrace-app`; logic in `arcade_race_core::track::bake`), fills the empty derived parts (samples, walls, boundary polylines, checkpoints, grid, default runoff), runs `validate_track`, and writes the file in place; a file with validation errors is not written. `--rebuild` regenerates all of them. The wall distance and type default to the file's current walls (the editor's rule), else 4.0 m Steel; `--barrier-offset` / `--barrier-type` override. Command: `cargo run --bin track_bake -- tracks/gt/monza.json`.
+- Verified: re-importing Monza from `assets/osm/monza.osm` with `--json` and baking with `--rebuild` gives a file identical to the official `gt/monza.json` (`scripts/circuit_parity.py`).
 
 #### 2.8 Tests and bindings
 
@@ -187,7 +189,7 @@ Work is done in phases. Each phase leaves `make test` green.
 - New tests:
   - `crates/tdrace-app/tests/official_catalog_tests.rs` — count per module, order, every file loads and passes `validate_track`, alias resolution, dev-mode disk override, normal-mode ignores disk.
   - `crates/tdrace-app/tests/circuit_storage_tests.rs` — extended for single-copy dev save, six-module promote, `target_module`, normal-mode save-as-copy.
-  - `tests/python/test_osm_importer.py` — `--json` output shape.
+  - `tests/python/test_osm_importer.py` — `--json` output (existing and new circuit), provenance URLs from `tracks/`.
 - Grep check (no circuit generators left): `rg -n "fn (track_[a-z_]+|[a-z_]+_(rx|kart|speedway|raceway))\(\) -> Track" crates/` returns no hits.
 - Spec lint: `keel validate .`
 
@@ -231,7 +233,7 @@ Work is done in phases. Each phase leaves `make test` green.
   - [ ] **Then** both envs reset and step without error
 - **Scenario: Importer produces a raceable circuit without Rust edits**
   - [ ] **Given** an OSM cache file for one GT circuit
-  - [ ] **When** the developer runs `osm_importer.py gt --json tracks/gt/<slug>.json` and then `cargo run --bin track-bake -- tracks/gt/<slug>.json`
+  - [ ] **When** the developer runs `osm_importer.py gt --track <slug> --json` and then `cargo run --bin track_bake -- tracks/gt/<slug>.json`
   - [ ] **Then** the circuit appears in the GT list in dev mode and passes `validate_track`
 - **Scenario: No circuit data is left in Rust**
   - [ ] **Given** phase 6 is merged
@@ -254,13 +256,14 @@ Work is done in phases. Each phase leaves `make test` green.
 - `[ ]` `crates/tdrace-app/src/storage.rs` -> Tracks dir used only in dev mode.
 - `[ ]` `crates/tdrace-app/src/module/{mod,classic,gt,kart,rally,nascar,extreme_offroad}.rs` -> Remove generators and `tracks()` tables; `tracks()` reads the catalog.
 - `[ ]` `crates/tdrace-app/src/dev_tools.rs` -> Remove Rust export.
-- `[ ]` `crates/tdrace-app/src/bin/track_bake.rs` (new) -> Bake source JSON.
+- `[x]` `crates/tdrace-app/src/bin/track_bake.rs` (new) -> Bake source JSON.
+- `[x]` `crates/arcade-race-core/src/track/bake.rs` (new) -> Bake logic.
 - `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> `tag` field.
 - `[ ]` `crates/arcade-race-core/src/track/presets.rs` -> Keep tools only.
 - `[ ]` `crates/arcade-race-core/src/track/provenance.rs` -> Remove registry after parity check.
 - `[ ]` `crates/tdrace-py/src/engine.rs` -> Resolve by catalog.
 - `[ ]` `crates/tdrace-app/tests/*.rs`, `crates/tdrace-core/tests/*.rs`, `crates/tdrace-core/benches/*.rs` -> `official_track` helper or templates.
-- `[ ]` `scripts/osm_importer.py`, `scripts/osm_nascar_importer.py` -> `--json` output.
+- `[x]` `scripts/osm_importer.py` -> `--json` output; download reads `osm_url` from `tracks/`.
 - `[ ]` `scripts/generate_asset_data.py` -> Read `tag` from JSON.
 - `[ ]` `tracks/` (`tdrace-tracks` repo) -> Metadata, NASCAR renames, `.track_order.json`, `.aliases.json`, split `dirt_figure_eight`, remove `.deleted_tracks.json`, update `README.md` schema.
 - `[ ]` `docs/engineering/circuit_building_analysis.md` -> Update §2.6 and §4 to the new flow.

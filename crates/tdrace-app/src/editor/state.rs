@@ -514,18 +514,6 @@ pub struct EditorState {
     pub barrier_type: BarrierType,
 }
 
-/// Most common wall type on the track, or `None` when it has no walls.
-fn dominant_barrier_type(track: &Track) -> Option<BarrierType> {
-    let mut counts: Vec<(BarrierType, usize)> = Vec::new();
-    for wall in track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls) {
-        match counts.iter_mut().find(|(t, _)| *t == wall.barrier_type) {
-            Some((_, n)) => *n += 1,
-            None => counts.push((wall.barrier_type, 1)),
-        }
-    }
-    counts.into_iter().max_by_key(|(_, n)| *n).map(|(t, _)| t)
-}
-
 impl EditorState {
     pub fn new(mut track: Track) -> Self {
         if track.grid_positions.is_empty() && (track.spline.samples.len() >= 2 || track.is_arena()) {
@@ -534,7 +522,7 @@ impl EditorState {
         let diagnostics = validate_track(&track);
         // Keep the track's own wall setup so a rebuild does not reset it to editor defaults.
         let barrier_offset = (track.effective_barrier_offset() * 10.0).round() / 10.0;
-        let barrier_type = dominant_barrier_type(&track).unwrap_or(BarrierType::Steel);
+        let barrier_type = track.dominant_barrier_type().unwrap_or(BarrierType::Steel);
         Self {
             track,
             history: HistoryStack::default(),

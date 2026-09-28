@@ -348,6 +348,12 @@ Cache: `target/osm_cache/<id>.json` (not committed; only 13 files exist in the m
    one barrier type and offset per circuit.
 9. **Paste** the printed Rust into the preset file by hand.
 
+> **Update 2026-09-28 (spec 042):** official circuits are JSON only. Step 9 is now
+> `python3 scripts/osm_importer.py <gt|kart|rally> --track <id> --json`, which writes the
+> waypoints into `tracks/<module>/<id>.json` (other fields stay), then the printed
+> `cargo run --bin track_bake -- tracks/<module>/<id>.json --rebuild`, which regenerates
+> spline, walls, checkpoints and grid. Commit the result in `tdrace-tracks`.
+
 ### 4.3 What OSM data is ignored
 
 Only node `lat/lon`, way `nodes`, and (rallycross) `surface`/`name` are read.
