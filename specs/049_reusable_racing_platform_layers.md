@@ -171,7 +171,7 @@ Later phases keep every existing file readable:
   - `wheelbase`, `arcade-race-core` and `race-kit` do no disk, network or clock I/O.
   - They keep compiling for `wasm32-unknown-unknown`.
 - **Build reproducibility:**
-  - `tdrace-core` reads `TDRACE_TRACKS_DIR` when it is set, and otherwise falls back to `../../tracks` as today.
+  - `tdrace-core` reads `TDRACE_GIT_TRACKS_DIR` (the variable the app already uses for dev-mode reads) when it is set, and otherwise falls back to `../../tracks` as today.
   - No shared crate reads the `tracks/` submodule.
 
 ---
@@ -219,7 +219,7 @@ Later phases keep every existing file readable:
   - [ ] **Then** each bench prints its throughput and a pass or fail against its gate, and none of them loads the embedded circuit catalog
 
 - **Scenario: Tracks folder can be overridden**
-  - [ ] **Given** `TDRACE_TRACKS_DIR` set to a folder with a valid `.track_order.json`
+  - [ ] **Given** `TDRACE_GIT_TRACKS_DIR` set to a folder with a valid `.track_order.json`
   - [ ] **When** `tdrace-core` builds
   - [ ] **Then** it embeds the circuits from that folder, and it still uses `../../tracks` when the variable is unset
 
@@ -238,7 +238,7 @@ Later phases keep every existing file readable:
 - `[ ]` `crates/tdrace-app/tests/golden_session.rs` -> Game-level golden state hash.
 - `[ ]` `crates/wheelbase/benches/physics_bench.rs` -> Physics throughput gate (moved from tdrace-core).
 - `[ ]` `crates/arcade-race-core/benches/{collision,lidar}_bench.rs` -> Collision and LIDAR gates (moved from tdrace-core).
-- `[ ]` `crates/tdrace-core/build.rs` -> `TDRACE_TRACKS_DIR` override.
+- `[ ]` `crates/tdrace-core/build.rs` -> `TDRACE_GIT_TRACKS_DIR` override.
 - `[ ]` `Makefile` -> `bench-rust` targets the engine crates.
 - `[ ]` [`specs/006_road_split_and_branching_tracks.md`](006_road_split_and_branching_tracks.md) -> Status reset to `draft`.
 - `[ ]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Phase 8 milestone list.

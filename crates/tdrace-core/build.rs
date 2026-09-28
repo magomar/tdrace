@@ -9,7 +9,11 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const SUBMODULE_HINT: &str = "run `git submodule update --init tracks`";
+const SUBMODULE_HINT: &str = "run `git submodule update --init tracks`, or set TDRACE_GIT_TRACKS_DIR";
+
+/// Same variable the app uses for dev-mode reads (`storage.rs`, `tracks/README.md`).
+/// A relative path is taken from the workspace root.
+const TRACKS_DIR_ENV: &str = "TDRACE_GIT_TRACKS_DIR";
 
 fn fail(msg: String) -> ! {
     panic!("\n\ntdrace-core: cannot embed official circuits: {}\n\n", msg);
@@ -26,7 +30,12 @@ fn str_field(value: &serde_json::Value, key: &str) -> String {
 
 fn main() {
     let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let tracks_dir = manifest_dir.join("../../tracks");
+    let workspace_root = manifest_dir.join("../..");
+    println!("cargo:rerun-if-env-changed={}", TRACKS_DIR_ENV);
+    let tracks_dir = match std::env::var(TRACKS_DIR_ENV) {
+        Ok(dir) if !dir.trim().is_empty() => workspace_root.join(dir.trim()),
+        _ => workspace_root.join("tracks"),
+    };
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
     println!("cargo:rerun-if-changed={}", tracks_dir.display());
