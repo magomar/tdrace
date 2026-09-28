@@ -42,7 +42,7 @@ The **NASCAR & Stock Car** track catalog in [`tracks/nascar/`](../../tracks/nasc
 | Venue | File Key | Lap Distance | Turn Banking | Track Type | Racing Characteristics |
 | :--- | :--- | :---: | :---: | :--- | :--- |
 | **Indianapolis Motor Speedway** | `indianapolis.json` | $4,023\text{ m}$ ($2.5\text{ mi}$) | $9^\circ$ | Rectangular Oval | Historic Brickyard, low banking requiring heavy braking into 4 distinct corners. |
-| **Pocono Raceway** | `pocono.json` | $2,011.5\text{ m}$ ($1.25\text{ mi}$) | $14^\circ / 8^\circ / 6^\circ$ | Tri-Oval "Tricky Triangle" ($0.5\times$ scale) | 3 completely different corner radiuses and banking angles connected by massive straights. Scaled at $0.5\times$ for competitive gameplay pacing. |
+| **Pocono Raceway** | `pocono.json` | $4,023\text{ m}$ ($2.5\text{ mi}$) | $14^\circ / 8^\circ / 6^\circ$ | Tri-Oval "Tricky Triangle" | 3 completely different corner radiuses and banking angles connected by massive straights. |
 | **Chicago Street Course** | `chicago.json` | $3,540\text{ m}$ ($2.2\text{ mi}$) | Flat ($0^\circ$) | Urban Street Circuit | Concrete barrier-lined streets, sharp $90^\circ$ intersections, manhole covers. |
 
 ### Tier 5: World Championship Superspeedways (3 Circuits)
@@ -51,6 +51,8 @@ The **NASCAR & Stock Car** track catalog in [`tracks/nascar/`](../../tracks/nasc
 | **Daytona International** | `daytona.json` | $4,023\text{ m}$ ($2.5\text{ mi}$) | $31^\circ$ | Superspeedway | Wide tri-oval, high-speed pack drafting, double yellow line boundary. |
 | **Talladega Superspeedway** | `talladega.json` | $4,280\text{ m}$ ($2.66\text{ mi}$) | $33^\circ$ | Superspeedway | Steepest banking, 4-wide pack racing, high risk of multi-car pileups. |
 | **Phoenix Raceway** | `phoenix.json` | $1,609\text{ m}$ ($1.0\text{ mi}$) | $8^\circ-11^\circ$ | Dogleg Desert Oval | Asymmetric tri-oval with radical banked dogleg cutting opportunity. |
+
+In game, laps under 3 km are 1:1, Road America is 0.5× and every other circuit is 0.75× (see the [circuit scale rule](index.md#-circuit-scale-rule)). The lap distances above are the real ones.
 
 ---
 
