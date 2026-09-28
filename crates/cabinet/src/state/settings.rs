@@ -1845,8 +1845,8 @@ impl CabinetScreen for ArcadeSettingsModal {
         let fonts = ctx.fonts;
         let accent = ctx.theme.accent_primary;
 
-        // Semi-transparent backdrop dimming
-        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.75));
+        // Backdrop dimming: dark enough that the screen behind (and its footer hints) recede
+        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.86));
 
         // Dialog box
         let box_w = (sw * 0.72).clamp(scaler.s(560.0), scaler.s(820.0));
@@ -1854,7 +1854,9 @@ impl CabinetScreen for ArcadeSettingsModal {
         let box_x = (sw - box_w) * 0.5;
         let box_y = (sh - box_h) * 0.5;
 
-        scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, accent, 2.2);
+        // Opaque card: rows of the screen behind must not show through the settings list
+        let card_bg = Color { a: 1.0, ..Palette::UI_CARD_BG };
+        scaler.draw_glass_card(box_x, box_y, box_w, box_h, card_bg, accent, 2.2);
 
         // Header Title
         fonts.draw_display_centered_with_shadow(

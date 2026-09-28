@@ -493,7 +493,11 @@ pub fn render_career_hub_screen(
 
     // Right Column Sub-Header
     let round_count = calendar.len();
-    let subhead_text = format!("CHAMPIONSHIP CALENDAR — {} ROUNDS", round_count);
+    let subhead_text = if showing_standings {
+        format!("CHAMPIONSHIP STANDINGS — {} ROUNDS", round_count)
+    } else {
+        format!("CHAMPIONSHIP CALENDAR — {} ROUNDS", round_count)
+    };
     fonts.draw_ui_bold(&subhead_text, right_inner_x, ry + scaler.s(14.0), scaler.font_s(14.0), Palette::WHITE);
 
     // Standings toggle badge

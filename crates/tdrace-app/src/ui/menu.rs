@@ -849,6 +849,7 @@ pub fn render_track_select_menu(
     active_track_id: Option<&str>,
     is_career_mode: bool,
     is_lan_host: bool,
+    returns_to_grid: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -868,12 +869,13 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
+    let back_label = if returns_to_grid { "Return to Starting Grid" } else { "Back to Race Modes" };
     let sub_str = if is_lan_host {
         format!("{} • LAN Host Circuit Selector • [ESC] Return to Lobby", module_subtitle)
     } else if is_career_mode {
-        format!("{} • Career Event Circuit Explorer • [ESC] Return to Starting Grid", module_subtitle)
+        format!("{} • Career Event Circuit Explorer • [ESC] {}", module_subtitle, back_label)
     } else {
-        format!("{} • [ESC] Return to Grand Hub", module_subtitle)
+        format!("{} • [ESC] {}", module_subtitle, back_label)
     };
     fonts.draw_ui_regular_centered(
         &sub_str,
@@ -1136,6 +1138,9 @@ pub fn render_track_select_menu(
                     };
                     (lbl, if is_sel { module_accent } else { Palette::UI_TEXT_MUTED })
                 };
+                // Text must stay left of the thumbnail (and of the right-hand tags on the first line).
+                let text_room = col_w - thumb_w - scaler.s(30.0);
+                let tag_label = fonts.fit_ui_bold(&tag_label, scaler.font_s(10.0), col_w - thumb_w - scaler.s(100.0));
                 fonts.draw_ui_bold(
                     &tag_label,
                     col1_x + scaler.s(14.0),
@@ -1179,6 +1184,7 @@ pub fn render_track_select_menu(
                 } else {
                     (track_opt.title().to_string(), if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) })
                 };
+                let title_str = fonts.fit_ui_bold(&title_str, scaler.font_s(15.5), text_room);
                 fonts.draw_ui_bold(
                     &title_str,
                     col1_x + scaler.s(14.0),
@@ -1189,7 +1195,7 @@ pub fn render_track_select_menu(
 
                 // Description
                 fonts.draw_ui_regular(
-                    track_opt.description(),
+                    &fonts.fit_ui_regular(track_opt.description(), scaler.font_s(10.5), text_room),
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
@@ -1377,14 +1383,7 @@ pub fn render_track_select_menu(
         // 1. Circuit Overview & Classification Glass Card
         scaler.draw_glass_card(col2_x, c2_y, col_w, card1_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
-        // Circuit Name & Tag
-        fonts.draw_ui_bold(
-            track_opt.title(),
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(16.0),
-            scaler.font_s(15.5),
-            Palette::WHITE,
-        );
+        // Circuit Name & Tag (tag right-aligned; the name gives way to it)
         let right_tag = if track_opt.is_user_custom() {
             "CUSTOM CIRCUIT"
         } else {
@@ -1395,9 +1394,17 @@ pub fn render_track_select_menu(
         } else {
             module_accent
         };
+        let right_tag_w = fonts.measure_ui_bold(right_tag, scaler.font_s(10.0)).width;
+        fonts.draw_ui_bold(
+            &fonts.fit_ui_bold(track_opt.title(), scaler.font_s(15.5), col_w - right_tag_w - scaler.s(42.0)),
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(16.0),
+            scaler.font_s(15.5),
+            Palette::WHITE,
+        );
         fonts.draw_ui_bold(
             right_tag,
-            col2_x + col_w - scaler.s(140.0),
+            col2_x + col_w - scaler.s(14.0) - right_tag_w,
             c2_y + scaler.s(16.0),
             scaler.font_s(10.0),
             right_tag_col,
@@ -1405,7 +1412,7 @@ pub fn render_track_select_menu(
 
         // Circuit Description
         fonts.draw_ui_regular(
-            track_opt.description(),
+            &fonts.fit_ui_regular(track_opt.description(), scaler.font_s(10.5), col_w - scaler.s(28.0)),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(32.0),
             scaler.font_s(10.5),
@@ -1923,7 +1930,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         Palette::WHITE,
     );
     fonts.draw_ui_regular_centered(
-        "Main Menu | Gamepad B",
+        "Leave Race | Gamepad B",
         ex + ew * 0.5,
         ey + scaler.s(37.0),
         scaler.font_s(11.0),

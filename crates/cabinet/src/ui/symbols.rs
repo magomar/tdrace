@@ -44,6 +44,8 @@ pub enum SymbolIcon {
     Ruler,
     Cart,
     Save,
+    Search,
+    Globe,
     /// Zero-width marks (variation selectors, flag letters) that are simply skipped.
     Hidden,
 }
@@ -83,6 +85,8 @@ pub fn symbol_icon(ch: char) -> Option<SymbolIcon> {
         '📐' => Ruler,
         '🛒' => Cart,
         '💾' => Save,
+        '🔍' | '🔎' => Search,
+        '🌐' => Globe,
         '\u{FE0F}' | '\u{200D}' | '\u{1F1E6}'..='\u{1F1FF}' => Hidden,
         _ => return None,
     })
@@ -96,7 +100,7 @@ impl SymbolIcon {
             Hidden => 0.0,
             DotFilled | DotHollow => 0.5,
             TriLeft | TriRight | TriUp | TriDown | Bolt | Hourglass => 0.62,
-            Check | Cross | Lock | Medal(_) | NoEntry | Person | Ruler | Save | Fullscreen => 0.75,
+            Check | Cross | Lock | Medal(_) | NoEntry | Person | Ruler | Save | Fullscreen | Search => 0.75,
             Car => 1.05,
             _ => 0.82,
         }
@@ -267,6 +271,17 @@ impl SymbolIcon {
                 draw_rectangle_lines(c.x - h * 0.85, c.y - h * 0.85, h * 1.7, h * 1.7, t, color);
                 draw_rectangle(c.x - h * 0.45, c.y - h * 0.85, h * 0.9, h * 0.55, color);
                 draw_rectangle(c.x - h * 0.5, c.y + h * 0.2, h, h * 0.45, color);
+            }
+            Globe => {
+                draw_circle_lines(c.x, c.y, h * 0.85, t, color);
+                line(p(-0.85, 0.0), p(0.85, 0.0), t * 0.8);
+                line(p(0.0, -0.85), p(0.0, 0.85), t * 0.8);
+                line(p(-0.4, -0.75), p(-0.4, 0.75), t * 0.6);
+                line(p(0.4, -0.75), p(0.4, 0.75), t * 0.6);
+            }
+            Search => {
+                draw_circle_lines(c.x - h * 0.2, c.y - h * 0.2, h * 0.55, t * 1.1, color);
+                line(p(0.2, 0.2), p(0.85, 0.85), t * 1.6);
             }
         }
     }

@@ -12362,7 +12362,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
+                    _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                 };
                 let cp_ref = if self.has_track_career_locks() {
                     Some(&self.active_career_progress)
@@ -12396,6 +12396,7 @@ impl RaceSession {
                     active_track_id,
                     is_career,
                     is_lan_host,
+                    self.menu_origin == MenuOrigin::StartingGrid,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
@@ -12546,10 +12547,16 @@ impl RaceSession {
                         );
                     }
                     FinishedScreenView::Statistics => {
+                        // Same vehicle name as the results and Hall of Fame (the model, not the base class).
+                        let vehicle_name = self
+                            .selected_car_model_id
+                            .and_then(crate::catalog::find_model_by_id)
+                            .map(|m| m.name)
+                            .unwrap_or_else(|| self.car_choice.title());
                         render_race_stats_screen(
                             &self.fonts,
                             &self.track.name,
-                            self.car_choice.title(),
+                            vehicle_name,
                             &self.player_race_stats,
                             self.session_time,
                             self.finished_prev_view == FinishedScreenView::HallOfFame,

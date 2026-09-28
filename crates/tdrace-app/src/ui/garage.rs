@@ -140,14 +140,16 @@ pub fn render_garage_screen(
     let stage_w = sw * 0.58 - scaler.safe_pad_x;
     let stage_h = sh * 0.58;
 
-    // Ambient spotlight glow behind vehicle
-    let center_x = stage_x + stage_w * 0.50;
-    let center_y = stage_y + stage_h * 0.52;
-    draw_circle(center_x, center_y - scaler.s(20.0), scaler.s(220.0), Color::new(0.08, 0.16, 0.28, 0.22));
-    draw_circle(center_x, center_y - scaler.s(10.0), scaler.s(150.0), Color::new(0.12, 0.22, 0.35, 0.18));
-
     // Hero Showroom Stage Card
     scaler.draw_glass_card(stage_x, stage_y, stage_w, stage_h, Palette::UI_CARD_BG, mod_accent, 1.4);
+
+    // Ambient spotlight glow behind vehicle, kept inside the stage (it used to spill over the header)
+    let center_x = stage_x + stage_w * 0.50;
+    let center_y = stage_y + stage_h * 0.52;
+    cabinet::ui::scaler::begin_clip_rect(stage_x + 1.0, stage_y + 1.0, stage_w - 2.0, stage_h - 2.0);
+    draw_circle(center_x, center_y - scaler.s(20.0), scaler.s(220.0), Color::new(0.08, 0.16, 0.28, 0.22));
+    draw_circle(center_x, center_y - scaler.s(10.0), scaler.s(150.0), Color::new(0.12, 0.22, 0.35, 0.18));
+    cabinet::ui::scaler::end_clip_rect();
 
     let is_tier_unlocked = active_module_id == "classic" || is_dev_mode || garage_tier as u32 <= unlocked_tier;
 
@@ -174,9 +176,10 @@ pub fn render_garage_screen(
     } else {
         Palette::RED
     };
+    let unlock_w = fonts.measure_ui_bold(unlock_badge, scaler.font_s(11.0)).width;
     fonts.draw_ui_bold(
         unlock_badge,
-        stage_x + stage_w - scaler.s(190.0),
+        stage_x + stage_w - scaler.s(16.0) - unlock_w,
         stage_y + scaler.s(20.0),
         scaler.font_s(11.0),
         unlock_col,
@@ -334,7 +337,7 @@ pub fn render_garage_screen(
         }
 
         fonts.draw_ui_bold(
-            model.name,
+            &fonts.fit_ui_bold(model.name, scaler.font_s(10.0), cw - scaler.s(16.0)),
             cx + scaler.s(8.0),
             cy + scaler.s(30.0),
             scaler.font_s(10.0),

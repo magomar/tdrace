@@ -322,12 +322,15 @@ impl CabinetScreen for CabinetLanJoinScreen {
 
         if discovered.is_empty() {
             // No LAN games active prompt
-            let no_games_msg = "No active LAN hosts detected on your subnet.\nMake sure the host is running and connected to the same Wi-Fi/Ethernet,\nor enter their IP directly in the panel on the right.";
-            fonts.draw_ui_regular(
+            // Wrapped to the panel: the single-line draw rendered "\n" as a box and ran into the keypad.
+            let no_games_msg = "No active LAN hosts detected on your subnet. Make sure the host is running and connected to the same Wi-Fi/Ethernet, or enter their IP directly in the panel on the right.";
+            fonts.draw_ui_regular_multiline(
                 no_games_msg,
                 pad_x + scaler.s(20.0),
                 table_start_y + scaler.s(30.0),
                 scaler.font_s(12.0),
+                scaler.s(17.0),
+                left_w - scaler.s(40.0),
                 Palette::UI_TEXT_MUTED,
             );
 

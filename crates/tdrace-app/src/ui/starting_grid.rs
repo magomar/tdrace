@@ -199,7 +199,7 @@ pub fn render_starting_grid_screen(
         &scaler,
     );
 
-    let p_name_str = format!("{}  (\"{}\")", player_profile.name, player_profile.alias);
+    let p_name_str = format!("{}  \"{}\"", player_profile.name, player_profile.alias);
     fonts.draw_ui_bold(
         &p_name_str,
         col1_x + scaler.s(52.0),
@@ -978,7 +978,9 @@ fn render_grid_stat_bar(
     pct: f32,
     fill_col: Color,
 ) {
-    let lbl_w = scaler.s(92.0);
+    // Label column grows with the text when font_s hits its minimum size on small windows.
+    let label_fs = scaler.font_s(9.5);
+    let lbl_w = scaler.s(92.0) * (label_fs / scaler.s(9.5)).max(1.0);
     let bar_h = scaler.s(7.0);
     let actual_bar_w = w - lbl_w - scaler.s(45.0);
 
@@ -986,7 +988,7 @@ fn render_grid_stat_bar(
         label,
         x,
         y + scaler.s(7.0),
-        scaler.font_s(9.5),
+        label_fs,
         Palette::UI_TEXT_MUTED,
     );
 
@@ -1159,11 +1161,9 @@ fn render_participant_row(
     fonts.draw_ui_regular("Team Livery", car_x + scaler.s(58.0), s_y + scaler.s(8.5), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
 
     let driver_label = if is_selected {
-        format!("{}  (\"{}\")  [ENTER / D: DOSSIER]", name, alias)
-    } else if is_player {
-        format!("{}  (\"{}\")", name, alias)
+        format!("{}  \"{}\"  [ENTER / D: DOSSIER]", name, alias)
     } else {
-        format!("{}  (\"{}\")", name, alias)
+        format!("{}  \"{}\"", name, alias)
     };
 
     let name_color = if is_selected {
@@ -1181,7 +1181,8 @@ fn render_participant_row(
         Color::new(0.60, 0.85, 0.95, 1.0)
     };
 
-    // Line 1: Driver Name & Alias
+    // Line 1: Driver Name & Alias (kept left of the vehicle column)
+    let driver_label = fonts.fit_ui_bold(&driver_label, scaler.font_s(13.5), sep_x - text_start_x - scaler.s(8.0));
     fonts.draw_ui_bold(&driver_label, text_start_x, y + scaler.s(21.0), scaler.font_s(13.5), name_color);
 
     // Line 2: Profile / Style stats

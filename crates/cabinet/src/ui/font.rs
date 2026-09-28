@@ -187,8 +187,19 @@ impl Fonts {
     }
 }
 
+/// Line advance used when a string contains explicit "\n" line breaks.
+const LINE_HEIGHT_EM: f32 = 1.35;
+
 /// Draws text, replacing symbols the font has no glyph for with vector icons.
+/// Explicit "\n" breaks start a new line below (fonts have no glyph for it).
 fn draw_pieces(font: Option<&Font>, text: &str, x: f32, y: f32, size: f32, color: Color) {
+    for (i, line) in text.split('\n').enumerate() {
+        draw_line_pieces(font, line, x, y + i as f32 * size * LINE_HEIGHT_EM, size, color);
+    }
+}
+
+/// Draws one line of text, with vector icons for missing glyphs.
+fn draw_line_pieces(font: Option<&Font>, text: &str, x: f32, y: f32, size: f32, color: Color) {
     let params = TextParams {
         font,
         font_size: size.round() as u16,
@@ -212,8 +223,27 @@ fn draw_pieces(font: Option<&Font>, text: &str, x: f32, y: f32, size: f32, color
     }
 }
 
-/// Measures text the same way [`draw_pieces`] lays it out.
+/// Measures text the same way [`draw_pieces`] lays it out: the widest line, and the full
+/// height of all lines.
 fn measure_pieces(font: Option<&Font>, text: &str, size: f32) -> TextDimensions {
+    if !text.contains('\n') {
+        return measure_line_pieces(font, text, size);
+    }
+    let mut dims = TextDimensions { width: 0.0, height: 0.0, offset_y: 0.0 };
+    let line_count = text.split('\n').count();
+    for (i, line) in text.split('\n').enumerate() {
+        let d = measure_line_pieces(font, line, size);
+        dims.width = dims.width.max(d.width);
+        if i == 0 {
+            dims.offset_y = d.offset_y;
+        }
+    }
+    dims.height = dims.offset_y + (line_count - 1) as f32 * size * LINE_HEIGHT_EM;
+    dims
+}
+
+/// Measures one line of text, including vector icons.
+fn measure_line_pieces(font: Option<&Font>, text: &str, size: f32) -> TextDimensions {
     let font_size = size.round() as u16;
     if !has_symbols(text) {
         return measure_text(text, font, font_size, 1.0);

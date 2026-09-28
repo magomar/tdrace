@@ -144,17 +144,21 @@ pub fn render_real_car_lateral_by_id(
 
     // Optional Showroom Mirror Floor Reflection
     if draw_reflection {
-        let refl_fade = Color::new(primary.r * 0.6, primary.g * 0.6, primary.b * 0.6, 0.15);
-        let refl_w_col = Color::new(0.08, 0.09, 0.11, 0.22);
-        draw_rectangle(
-            center_x - half_len * 0.75,
-            ground_y + 2.0 * s,
-            half_len * 1.50,
-            12.0 * s,
-            refl_fade,
-        );
-        draw_circle(wf_x, ground_y + 6.0 * s, r_wheel * 0.75, refl_w_col);
-        draw_circle(wr_x, ground_y + 6.0 * s, r_wheel * 0.75, refl_w_col);
+        // Soft body-colored glow that fades out below the floor line. (A hard slab with fixed
+        // wheel discs looked like a second car body, and the discs missed the sprite's wheels.)
+        let strips = 6;
+        let strip_h = 12.0 * s / strips as f32;
+        for i in 0..strips {
+            let fade = 1.0 - i as f32 / strips as f32;
+            let inset = half_len * 0.08 * i as f32 / strips as f32;
+            draw_rectangle(
+                center_x - half_len * 0.75 + inset,
+                ground_y + 2.0 * s + i as f32 * strip_h,
+                half_len * 1.50 - inset * 2.0,
+                strip_h,
+                Color::new(primary.r * 0.6, primary.g * 0.6, primary.b * 0.6, 0.15 * fade),
+            );
+        }
     }
 
     // Floor contact baseline
