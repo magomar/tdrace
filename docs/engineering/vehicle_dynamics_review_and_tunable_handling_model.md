@@ -2,12 +2,18 @@
 type: Architecture Review
 title: "Vehicle Dynamics Review & Tunable Handling Model"
 description: "Critical review of the wheelbase per-wheel/differential model and the steering double-attenuation fix, with measured A/B evidence and a proposed designer-tunable handling architecture."
-status: draft
+status: active
 category: engineering
 tags: [physics, tires, drivetrain, differential, controls, tuning, review]
 ---
 
 # Vehicle Dynamics Review & Tunable Handling Model
+
+> **Implemented by [Spec 042](../../specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md).**
+> The spec's implementation notes record where the build differs from this proposal: the
+> authority formula, human-only grip-aware steering, the rear axle ratios, the ESC sideslip
+> term, and the restated gates. Current knobs are in the
+> [tuning guide](vehicle_handling_tuning_guide.md).
 
 Reviewed: `docs/engineering/high_speed_steering_responsiveness_and_double_attenuation.md`,
 `crates/wheelbase/src/{car.rs,tire.rs,config.rs}`, `crates/cabinet/src/input/filter.rs`,

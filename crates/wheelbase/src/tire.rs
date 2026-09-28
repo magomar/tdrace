@@ -1,3 +1,8 @@
+//! Tire, wheel spin and contact models.
+//!
+//! Governed by `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
+//! normalized combined-slip tire with load sensitivity, and implicit wheel spin.
+
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 

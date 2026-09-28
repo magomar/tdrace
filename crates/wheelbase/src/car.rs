@@ -1,3 +1,9 @@
+//! 4-wheel top-down vehicle dynamics.
+//!
+//! Governed by `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md`:
+//! slip-based tire forces, implicit wheel spin and differential coupling, roll-balance load
+//! transfer, grip-aware steering authority for human drivers, and continuous assists.
+
 use std::f32::consts::PI;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
