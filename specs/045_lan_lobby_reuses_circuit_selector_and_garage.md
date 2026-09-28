@@ -4,6 +4,7 @@ template: feature
 title: "LAN Lobby Reuses Circuit Selector and Garage"
 description: "The LAN host picks the circuit in the full-screen circuit selector and every LAN player picks the car in the Garage, instead of cycling hard-coded lists inside the lobby; the lobby keeps the network alive while those screens are open."
 status: in_progress
+receipt: "docs/receipts/spec-045-receipt.md"
 verified: { by: "human:mario", at: "2026-09-28T07:05:00Z" }
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T07:00:00Z }
