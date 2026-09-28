@@ -1,6 +1,7 @@
 pub mod display;
 pub mod font;
 pub mod scaler;
+pub mod symbols;
 pub mod theme;
 pub mod widgets;
 

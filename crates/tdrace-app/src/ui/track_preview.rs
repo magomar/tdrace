@@ -302,6 +302,9 @@ pub fn render_track_detailed_preview(
         }
     };
 
+    // Surface zones can sit outside the spline bounds; keep them inside the card.
+    cabinet::ui::scaler::begin_clip_rect(x + 1.0, y + 1.0, w - 2.0, h - 2.0);
+
     // 1. Render BelowTrack Surface Zones (e.g. sand traps, lakes, off-track dirt)
     render_preview_zones(tdrace_core::track::geometry::SurfaceLayer::BelowTrack);
 
@@ -390,6 +393,7 @@ pub fn render_track_detailed_preview(
         draw_circle(f_mid.x, f_mid.y, scaler.s(3.5), Palette::NEON_GREEN);
         draw_circle_lines(f_mid.x, f_mid.y, scaler.s(3.5), 1.2, Palette::BLACK);
     }
+    cabinet::ui::scaler::end_clip_rect();
 
     // Bottom Surface Composition Mini-Legend Bar
     let legend_y = y + h - scaler.s(18.0);

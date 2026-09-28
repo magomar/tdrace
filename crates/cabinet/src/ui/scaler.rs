@@ -1,6 +1,29 @@
 use macroquad::color::Color;
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 
+/// Clips all following drawing to the logical-pixel rectangle `(x, y, w, h)` until
+/// [`end_clip_rect`] is called.
+///
+/// Use it for content that can extend past its card (circuit maps, zoomed previews).
+/// Clips do not nest.
+pub fn begin_clip_rect(x: f32, y: f32, w: f32, h: f32) {
+    let dpi = macroquad::miniquad::window::dpi_scale();
+    let clip = (
+        (x * dpi).floor() as i32,
+        (y * dpi).floor() as i32,
+        (w * dpi).ceil().max(0.0) as i32,
+        (h * dpi).ceil().max(0.0) as i32,
+    );
+    // SAFETY: only changes macroquad's batching state, from the render thread.
+    unsafe { macroquad::window::get_internal_gl() }.quad_gl.scissor(Some(clip));
+}
+
+/// Removes the clip set by [`begin_clip_rect`].
+pub fn end_clip_rect() {
+    // SAFETY: see `begin_clip_rect`.
+    unsafe { macroquad::window::get_internal_gl() }.quad_gl.scissor(None);
+}
+
 /// Responsive UI scaling and viewport adaptation for mobile and desktop screens.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct UiScaler {
