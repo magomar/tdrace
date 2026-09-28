@@ -1,0 +1,123 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Autocross Career Mode: FIA SuperBuggy World Series (Tier 5)
+# ==============================================================================
+
+[championship]
+id = "autocross_superbuggy_world_series"
+name = "FIA SuperBuggy World Series"
+description = "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on the most legendary European autocross cathedrals."
+module_id = "autocross"
+tier = 5
+laps_per_round = 6
+bot_count = 7
+ai_difficulty = "master"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "nova_paka_ax"
+name = "Štikovská rokle Nová Paka"
+laps = 6
+
+[[rounds]]
+order = 2
+track_id = "st_georges_ax"
+name = "Circuit du Bouvreau Saint-Georges"
+laps = 6
+
+[[rounds]]
+order = 3
+track_id = "matschenberg_ax"
+name = "Offroad Arena Matschenberg Cunewalde"
+laps = 6
+
+[[rounds]]
+order = 4
+track_id = "prerov_ax"
+name = "Přerovská rokle Přerov"
+laps = 6
+
+[[rounds]]
+order = 5
+track_id = "maggiora_ax"
+name = "Autodromo Pragiarolo Maggiora"
+laps = 6
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex SuperBuggy Racing"
+is_player = true
+car_model_id = "autocross_peters_superbuggy"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "bernd_stubbe"
+name = "Bernd Stubbe"
+team = "Stubbe SuperBuggy"
+car_model_id = "autocross_alfa_racing_superbuggy"
+country = "DEU"
+ai_character = "fast"
+livery_idx = 1
+
+[[drivers]]
+id = "petr_nikodem"
+name = "Petr Nikodém"
+team = "Caravan Metropol"
+car_model_id = "autocross_alfa_racing_superbuggy"
+country = "CZE"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "vincent_mercier"
+name = "Vincent Mercier"
+team = "Mercier Competition"
+car_model_id = "autocross_peters_superbuggy"
+country = "FRA"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "mike_bartelen"
+name = "Mike Bartelen"
+team = "Bartelen Motorsport"
+car_model_id = "autocross_fast_speed_superbuggy"
+country = "NLD"
+ai_character = "balanced"
+livery_idx = 4
+
+[[drivers]]
+id = "radek_jordak"
+name = "Radek Jordák"
+team = "Jordák Motorsport"
+car_model_id = "autocross_alfa_racing_superbuggy"
+country = "CZE"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "johnny_feuillade"
+name = "Johnny Feuillade"
+team = "Feuillade Racing"
+car_model_id = "autocross_alfa_racing_superbuggy"
+country = "FRA"
+ai_character = "balanced"
+livery_idx = 6
+
+[[drivers]]
+id = "terry_callaghan"
+name = "Terry Callaghan"
+team = "Fast & Speed Holland"
+car_model_id = "autocross_fast_speed_superbuggy"
+country = "NLD"
+ai_character = "cautious"
+livery_idx = 7

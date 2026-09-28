@@ -1,0 +1,117 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Autocross Career Mode: European Cross Car Challenge (Tier 2)
+# ==============================================================================
+
+[championship]
+id = "autocross_crosscar_senior_challenge"
+name = "European Cross Car Challenge"
+description = "High-powered 145 BHP motorcycle-engined sprint weapons with locked rear axles racing across 4 premier Iberian, Baltic, and German venues."
+module_id = "autocross"
+tier = 2
+laps_per_round = 5
+bot_count = 7
+ai_difficulty = "challenging"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "arteixo_ax"
+name = "Circuito José Ramón Losada Arteixo"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "uelzen_ax"
+name = "Uhlenköper-Ring Uelzen"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "musa_ax"
+name = "Mūsa Raceland Bauska"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "castelo_branco_ax"
+name = "Parque de Desportos Motorizados Castelo Branco"
+laps = 5
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Senior Racing"
+is_player = true
+car_model_id = "autocross_lifelive_tn11_senior"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "david_mendez"
+name = "David Méndez"
+team = "Speedcar Factory Team"
+car_model_id = "autocross_speedcar_wonder"
+country = "ESP"
+ai_character = "fast"
+livery_idx = 1
+
+[[drivers]]
+id = "ivan_pina"
+name = "Iván Piña"
+team = "Semog Racing Team"
+car_model_id = "autocross_semog_bravo_sport"
+country = "ESP"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "kobe_pauwels"
+name = "Kobe Pauwels"
+team = "LifeLive Senior Team"
+car_model_id = "autocross_lifelive_tn11_senior"
+country = "BEL"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "simone_firenze"
+name = "Simone Firenze"
+team = "Semog Italia"
+car_model_id = "autocross_semog_bravo_sport"
+country = "IT"
+ai_character = "balanced"
+livery_idx = 4
+
+[[drivers]]
+id = "arunas_gibieza"
+name = "Arūnas Gibieža"
+team = "Baltic XC Works"
+car_model_id = "autocross_speedcar_wonder"
+country = "LT"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "alexandre_calvet"
+name = "Alexandre Calvet"
+team = "Calvet Cross Car"
+car_model_id = "autocross_lifelive_tn11_senior"
+country = "FR"
+ai_character = "balanced"
+livery_idx = 6
+
+[[drivers]]
+id = "rui_nunes"
+name = "Rui Nunes"
+team = "Semog Portugal"
+car_model_id = "autocross_semog_bravo_sport"
+country = "PT"
+ai_character = "cautious"
+livery_idx = 7

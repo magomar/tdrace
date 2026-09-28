@@ -441,6 +441,16 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
                 (5, "extreme_ultimate_championship", 12, "offroad_grave_crusher"),
             ],
         ),
+        (
+            "autocross",
+            vec![
+                (1, "autocross_crosscar_junior_trophy", 3, "autocross_lifelive_tn5_junior"),
+                (2, "autocross_crosscar_senior_challenge", 4, "autocross_lifelive_tn11_senior"),
+                (3, "autocross_buggy1600_championship", 4, "autocross_peters_buggy1600"),
+                (4, "autocross_touring_masters", 4, "autocross_skoda_fabia_tax"),
+                (5, "autocross_superbuggy_world_series", 5, "autocross_peters_superbuggy"),
+            ],
+        ),
     ];
 
     for (module_id, expected_tiers) in modules_and_expected {
@@ -861,6 +871,7 @@ fn test_all_modules_tier_1_championship_starters_are_eligible_and_unlocked() {
         ("nascar", "nascar_short_track_series", 1),
         ("kart", "kart_world_cup", 1),
         ("extreme_offroad", "extreme_desert_sand_sprint", 1),
+        ("autocross", "autocross_crosscar_junior_trophy", 1),
     ];
 
     let mgr = tdrace_app::series::ChampionshipManager::new();
@@ -980,7 +991,7 @@ fn test_kart_career_tiers_1_to_5_launch_eligibility() {
 }
 
 #[test]
-fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
+fn test_all_preset_championships_launch_with_eligible_and_unlocked_cars() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
@@ -989,7 +1000,7 @@ fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
 
     let mgr = ChampionshipManager::new();
     let presets = mgr.all_sorted();
-    assert_eq!(presets.len(), 25, "There should be 25 presets (5 modules x 5 tiers)");
+    assert_eq!(presets.len(), 30, "There should be 30 presets (6 modules x 5 tiers)");
 
     for def in &presets {
         session.launch_or_resume_championship(def);
@@ -1300,6 +1311,33 @@ fn test_championship_lap_calibration_across_all_modules() {
                 session.init_race();
             }
         }
+    }
+
+    // 6. Autocross Championships: Tier 1 (4 laps), Tiers 2-4 (5 laps), Tier 5 (6 laps)
+    for tier in 1..=5 {
+        session.start_autocross_career_tier(tier);
+        let expected_laps = match tier {
+            1 => 4,
+            5 => 6,
+            _ => 5,
+        };
+        assert_eq!(session.total_laps, expected_laps, "Autocross Tier {} must run {} laps", tier, expected_laps);
+    }
+    let autocross_slugs = &[
+        ("autocross_crosscar_junior_trophy", 4),
+        ("autocross_crosscar_senior_challenge", 5),
+        ("autocross_buggy1600_championship", 5),
+        ("autocross_touring_masters", 5),
+        ("autocross_superbuggy_world_series", 6),
+    ];
+    for (slug, expected_laps) in autocross_slugs {
+        let def = mgr.get(slug).expect("Autocross preset must exist");
+        assert_eq!(def.series.laps_per_round, *expected_laps);
+        for round in &def.rounds {
+            assert_eq!(round.laps, Some(*expected_laps), "Autocross {} round {} laps", slug, round.order);
+        }
+        session.launch_or_resume_championship(def);
+        assert_eq!(session.total_laps, *expected_laps, "Autocross preset {} must run {} laps", slug, expected_laps);
     }
 }
 
