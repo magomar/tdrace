@@ -9,7 +9,7 @@ generated: { by: agent/claude-code, at: 2026-09-28T00:00:00Z }
 ---
 
 
-# Architecture Spec 042: Fictional Branding and Real-World IP Removal for Steam Release 🏷️
+# Architecture Spec 044: Fictional Branding and Real-World IP Removal for Steam Release 🏷️
 
 TdRace will be sold on Steam. Today the build ships real car brands, real series names, real and look-alike drivers, real team and sponsor names, real circuit names, Wikimedia Commons photos without licence data, and car sprites that carry real logos (Ferrari prancing horse, Shell, Pirelli, DENSO, Michelin, Traxxas, Goodyear). Any rights holder can send Valve a takedown notice. Valve then removes the game.
 
@@ -198,5 +198,5 @@ IDs that break rule 8 get renamed (for example `gt_ferrari_296_gt3`, `joey_logan
 - `[ ]` `README.md` -> OSM attribution.
 
 ### Verification Assertions
-- `tests/test_ip_denylist.py` references `specs/042_fictional_branding_and_realworld_ip_removal_for_steam_release.md` in its module docstring.
+- `tests/test_ip_denylist.py` references `specs/044_fictional_branding_and_realworld_ip_removal_for_steam_release.md` in its module docstring.
 - The Credits screen source references this spec in its header comment.

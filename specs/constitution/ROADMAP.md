@@ -63,7 +63,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[ ]` **[5-Tier Steering Profiles, Speed Sensitivity Switch, and Subtab Controls Separation](../041_five_tier_steering_profiles_speed_switch_and_subtab_controls.md)**: Expands keyboard steering smoothing to 5 distinct profiles (Balanced, Smooth, Agile, Direct, Raw), introduces a master Speed Sensitivity Switch, exposes granular steering filter parameters, and separates keyboard from gamepad controls via sub-tabs within the ArcadeSettingsModal Controls tab.
 
 ### Phase 7: Steam Release Readiness (Priority: High)
-- `[ ]` **[Fictional Branding and Real-World IP Removal for Steam Release](../042_fictional_branding_and_realworld_ip_removal_for_steam_release.md)**: Replaces real car, series, team, driver, sponsor, and circuit names with fictional ones, removes unlicensed photos and logo-bearing sprites, keeps real track layouts, adds OpenStreetMap attribution, and gates the build with a real-world IP denylist test.
+- `[ ]` **[Fictional Branding and Real-World IP Removal for Steam Release](../044_fictional_branding_and_realworld_ip_removal_for_steam_release.md)**: Replaces real car, series, team, driver, sponsor, and circuit names with fictional ones, removes unlicensed photos and logo-bearing sprites, keeps real track layouts, adds OpenStreetMap attribution, and gates the build with a real-world IP denylist test.
 
 
 ---
