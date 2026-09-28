@@ -252,102 +252,108 @@ Not applicable. There are no network, credential or dependency changes. No new c
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Steering response is monotonic at every speed**
-  - [ ] **Given** each preset and speeds of 10, 25 and 45 m/s, with throttle holding speed
-  - [ ] **When** a held steer input sweeps 0.1 → 1.0
-  - [ ] **Then** the steady yaw rate never drops by more than 3 % as input grows
+  - [x] **Given** each preset and speeds of 10, 25 and 45 m/s, with throttle holding speed
+  - [x] **When** a held steer input sweeps 0.1 → 1.0
+  - [x] **Then** the steady yaw rate never drops by more than 3 % as input grows
 
 - **Scenario: Presets feel different in a measurable order**
-  - [ ] **Given** the 4 presets
-  - [ ] **When** a steer key is pressed at 25 m/s
-  - [ ] **Then** the time to 90 % of steady yaw is ordered Smooth > Balanced > Sharp > Raw, with each adjacent gap ≥ 15 %
-  - [ ] **And** the peak yaw with the key held at 45 m/s (throttle modulated to hold speed) is ordered Smooth < Balanced < Sharp < Raw, with each adjacent gap ≥ 8 %
+  - [x] **Given** the 4 presets
+  - [x] **When** a steer key is pressed at 25 m/s
+  - [x] **Then** the time to 90 % of steady yaw is ordered Smooth > Balanced > Sharp > Raw, with each adjacent gap ≥ 15 %
+  - [x] **And** the peak yaw with the key held at 45 m/s (throttle modulated to hold speed) is ordered Smooth < Balanced < Sharp < Raw, with each adjacent gap ≥ 8 %
   - *Clarified in task 9: the driver modulates throttle. With on/off throttle, Sharp and Raw
     (little traction help) power-slide at the limit and ESC equalizes their yaw. The W-held case is
     covered by the next scenario.*
 
 - **Scenario: Safe presets do not spin on a held key**
-  - [ ] **Given** Smooth or Balanced, at 45 m/s with W held
-  - [ ] **When** full steer is held for 2 s
-  - [ ] **Then** the peak body sideslip stays below 0.25 rad
+  - [x] **Given** Smooth or Balanced, at 45 m/s with W held
+  - [x] **When** full steer is held for 2 s
+  - [x] **Then** the peak body sideslip stays below 0.25 rad
 
 - **Scenario: Corner exit with W held keeps drive**
-  - [ ] **Given** 20 m/s, steer 0.4, W held for 2 s, arcade assists
-  - [ ] **When** the car exits the corner
-  - [ ] **Then** TCS keeps ≥ 50 % of the requested drive force on average and the exit speed is ≥ 20.7 m/s
+  - [x] **Given** 20 m/s, steer 0.4, W held for 2 s, arcade assists
+  - [x] **When** the car exits the corner
+  - [x] **Then** TCS keeps ≥ 50 % of the requested drive force on average and the exit speed is ≥ 20.7 m/s
   - *Changed in task 9: the draft said "TCS active on ≤ 50 % of frames". This car asks for 6.8 kN
     at 20 m/s, and its rear tires can take about 5 kN. A correct TCS therefore trims torque on
     every frame. The frame count measured "TCS is present", not "TCS cuts too much".*
 
 - **Scenario: Lift-off is progressive**
-  - [ ] **Given** 40 m/s, steer 0.25, throttle for 1 s and then released
-  - [ ] **When** the car coasts for 1.5 s
-  - [ ] **Then** the peak sideslip is ≤ 0.705 rad
+  - [x] **Given** 40 m/s, steer 0.25, throttle for 1 s and then released
+  - [x] **When** the car coasts for 1.5 s
+  - [x] **Then** the peak sideslip is ≤ 0.705 rad
 
 - **Scenario: A small steer input does not weaken the brakes**
-  - [ ] **Given** braking from 40 to 10 m/s
-  - [ ] **When** steer is 0.00 and then 0.05
-  - [ ] **Then** the stopping distances differ by < 3 %
+  - [x] **Given** braking from 40 to 10 m/s
+  - [x] **When** steer is 0.00 and then 0.05
+  - [x] **Then** the stopping distances differ by < 3 %
 
 - **Scenario: Car tuning knobs reach the tires**
-  - [ ] **Given** `tire.grip` 1.0 and then 1.3 (and the catalog grip stat)
-  - [ ] **When** the car drives a 30 m skidpad at its limit (protocol C)
-  - [ ] **Then** the lateral g rises by ≥ 25 %
+  - [x] **Given** `tire.grip` 1.0 and then 1.3 (and the catalog grip stat)
+  - [x] **When** the car drives a 30 m skidpad at its limit (protocol C)
+  - [x] **Then** the lateral g rises by ≥ 25 %
 
 - **Scenario: Roll balance flips the handling balance**
-  - [ ] **Given** `roll_balance` 0.40 and then 0.60
-  - [ ] **When** the steer input ramps at 30 m/s
-  - [ ] **Then** the rear axle saturates first at 0.40 and the front axle saturates first at 0.60
+  - [x] **Given** `roll_balance` 0.40 and then 0.60
+  - [x] **When** the steer input ramps at 30 m/s
+  - [x] **Then** the rear axle saturates first at 0.40 and the front axle saturates first at 0.60
 
 - **Scenario: Differentials behave physically**
-  - [ ] **Given** an RWD car with LSD `power_lock` 0.0 and then 0.8
-  - [ ] **When** it exits a corner with W held
-  - [ ] **Then** the exit yaw rates differ by ≥ 10 %
-  - [ ] **And** a spool gives a lower steady yaw rate than an open differential at the same input
+  - [x] **Given** an RWD car with LSD `power_lock` 0.0 and then 0.8
+  - [x] **When** it exits a corner with W held
+  - [x] **Then** the exit yaw rates differ by ≥ 10 %
+  - [x] **And** a spool gives a lower steady yaw rate than an open differential at the same input
 
 - **Scenario: The model is numerically stable**
-  - [ ] **Given** every factory `CarConfig` preset and catalog car
-  - [ ] **When** 60 s of random inputs run from 0 to 70 m/s, including full throttle, full brake, handbrake and reverse at standstill
-  - [ ] **Then** no state becomes non-finite, |ω_wheel| stays ≤ 550 rad/s and the reset counter stays 0
+  - [x] **Given** every factory `CarConfig` preset and catalog car
+  - [x] **When** 60 s of random inputs run from 0 to 70 m/s, including full throttle, full brake, handbrake and reverse at standstill
+  - [x] **Then** no state becomes non-finite, |ω_wheel| stays ≤ 550 rad/s and the reset counter stays 0
 
 - **Scenario: Old settings files still load**
-  - [ ] **Given** a settings file saved with `steering_profile = "agile"` and the old 10 fields
-  - [ ] **When** the game loads it
-  - [ ] **Then** the Sharp preset is active and no error is raised
+  - [x] **Given** a settings file saved with `steering_profile = "agile"` and the old 10 fields
+  - [x] **When** the game loads it
+  - [x] **Then** the Sharp preset is active and no error is raised
 
 - **Scenario: Settings apply to the live car in both directions**
-  - [ ] **Given** a race running with Raw
-  - [ ] **When** the player switches to Smooth and back to Raw
-  - [ ] **Then** the player car's steering authority and traction help match the active preset each time
+  - [x] **Given** a race running with Raw
+  - [x] **When** the player switches to Smooth and back to Raw
+  - [x] **Then** the player car's steering authority and traction help match the active preset each time
 
 - **Scenario: Holding a key is a valid driving style**
-  - [ ] **Given** the sweeper scenario for each classic car on asphalt with the Balanced preset
-  - [ ] **When** Sustained Hold is driven
-  - [ ] **Then** it keeps ≥ 90 % of its entry speed, carves cleanly, and turns at least as far as Rapid Feathering, on every car including the kart (old model: kart 16 %, GT 79 %)
+  - [x] **Given** the sweeper scenario for each classic car on asphalt with the Balanced preset
+  - [x] **When** Sustained Hold is driven
+  - [x] **Then** it keeps ≥ 90 % of its entry speed, carves cleanly, and turns at least as far as Rapid Feathering, on every car including the kart (old model: kart 16 %, GT 79 %)
   - *Restated in task 10: the draft compared hold and feathering exit speeds (≥ 70 %). In the same
     3 s, holding turns the car about 4× further than feathering (GT: 83° vs 19°). A lower exit
     speed there means a tighter line, not scrub. Measured hold vs feathering exit speed:
     63–75 % (old: 11–57 %).*
 
 - **Scenario: Key styles do not cause spins on safe presets**
-  - [ ] **Given** the chicane scenario for each classic car with Smooth and Balanced
-  - [ ] **When** every key style is run on asphalt, dirt and packed sand
-  - [ ] **Then** no cell has the `SPINOUT` outcome
+  - [x] **Given** the chicane scenario for each classic car with Smooth and Balanced
+  - [x] **When** every key style is run on asphalt, dirt and packed sand
+  - [x] **Then** no cell has the `SPINOUT` outcome
   - *Restated in task 10: sheet ice (μ 0.08) is excluded. A full right-to-left reversal at
     65 km/h on ice spins these cars on every preset.*
 
 - **Scenario: Presets change the key style picture**
-  - [ ] **Given** the Key Style Sensitivity summary
-  - [ ] **When** the presets are compared on asphalt
-  - [ ] **Then** the average exit-speed spread across key styles falls from Smooth to Raw
+  - [x] **Given** the Key Style Sensitivity summary
+  - [x] **When** the presets are compared on asphalt
+  - [x] **Then** the average exit-speed spread across key styles falls from Smooth to Raw
   - *Restated in task 10: the draft expected Smooth to have the lower spread. The measurement shows
     the reverse, and it has a clear cause. Smooth's 220 ms steering turns short taps into gentle
     steering, so technique changes the line the most. Raw passes every tap at full input, so
     tapping and holding converge (measured 50 / 43 / 38 / 36 %).*
 
 - **Scenario: Key style report is generated**
-  - [ ] **Given** the new physics and settings
-  - [ ] **When** `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` runs
-  - [ ] **Then** `reports/keyboard_input_car_control_report.md` and `.json` contain the key style × preset × car matrix, the sensitivity summary and the old-vs-new comparison
+  - [x] **Given** the new physics and settings
+  - [x] **When** `cargo run -p tdrace-app --bin keyboard_simulation_benchmark` runs
+  - [x] **Then** `reports/keyboard_input_car_control_report.md` and `.json` contain the key style × preset × car matrix, the sensitivity summary and the old-vs-new comparison
+
+*Verification evidence (2026-09-28, merged tree `468981b` + catalog fuzz):*
+`handling_calibration_tests` 7/7, `handling_presets_tests` 7/7, `keyboard_simulation_tests` 7/7,
+`differential_dynamics_tests` 7/7, and a catalog fuzz of 85 cars × bot/human.
+`keyboard_simulation_benchmark` reports its 3 gates as PASS. Workspace: 1130 pass / 7 fail. All 7
+failures existed before this work (track assets, gamepad profile, evdev, LAN livery).
 
 - **Scenario: Player playtest (human)**
   - [ ] **Given** the Balanced preset on keyboard, sports/GT class, Tier 1 bots
@@ -359,23 +365,23 @@ Not applicable. There are no network, credential or dependency changes. No new c
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/wheelbase/src/tire.rs` -> Normalized combined-slip tire, implicit wheel step, `PacejkaTireConfig` for the bike.
-- `[ ]` `crates/wheelbase/src/config.rs` -> New fields, serde migration, `finalize()`, preset retune.
-- `[ ]` `crates/wheelbase/src/car.rs` -> Steering authority, load transfer, drive/brake/diff, continuous assists.
-- `[ ]` `crates/wheelbase/src/bike.rs` -> Uses `PacejkaTireConfig`.
-- `[ ]` `crates/wheelbase/src/sim/{mod,protocols}.rs`, `sim/optimizer/*` -> New parameter space.
-- `[ ]` `crates/wheelbase/tests/handling_calibration_tests.rs` -> New calibration gates.
-- `[ ]` `crates/wheelbase/tests/{decoupled_tire_physics,differential_dynamics,auto_calibration}_tests.rs` -> Intent-preserving rewrites.
-- `[ ]` `crates/cabinet/src/input/filter.rs`, `crates/cabinet/src/state/settings.rs` -> 5-param model, presets, UI state.
-- `[ ]` `crates/tdrace-app/src/config.rs` -> Persisted settings and migration.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> `apply_player_handling`, removal of 5 patch sites.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` (+ settings modal) -> New sliders and labels.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs`, `src/module/*.rs` -> Use new fields, call `finalize()`.
-- `[ ]` `crates/tdrace-app/tests/handling_presets_tests.rs` -> Preset ordering, migration, live apply.
-- `[ ]` `crates/tdrace-app/tests/{input_smoothing,config,controls_ui,kart_steering_stability,braking_stability}_tests.rs`, `crates/cabinet/tests/cabinet_integration_tests.rs` -> Intent-preserving rewrites.
-- `[ ]` `crates/tdrace-app/src/input/simulation.rs`, `src/bin/keyboard_simulation_benchmark.rs`, `tests/keyboard_simulation_tests.rs` -> Key style × preset × car matrix and gates.
-- `[ ]` `reports/keyboard_input_car_control_report.{md,json}` -> Regenerated key style analysis.
-- `[ ]` `docs/engineering/*.md` -> Mark the old steering report superseded. Document the new tuning knobs.
+- `[x]` `crates/wheelbase/src/tire.rs` -> Normalized combined-slip tire, implicit wheel step, `PacejkaTireConfig` for the bike.
+- `[x]` `crates/wheelbase/src/config.rs` -> New fields, serde migration, `finalize()`, preset retune.
+- `[x]` `crates/wheelbase/src/car.rs` -> Steering authority, load transfer, drive/brake/diff, continuous assists.
+- `[x]` `crates/wheelbase/src/bike.rs` -> Uses `PacejkaTireConfig`.
+- `[x]` `crates/wheelbase/src/sim/{mod,protocols}.rs`, `sim/optimizer/*` -> New parameter space.
+- `[x]` `crates/wheelbase/tests/handling_calibration_tests.rs` -> New calibration gates.
+- `[x]` `crates/wheelbase/tests/{decoupled_tire_physics,differential_dynamics,auto_calibration}_tests.rs` -> Intent-preserving rewrites.
+- `[x]` `crates/cabinet/src/input/filter.rs`, `crates/cabinet/src/state/settings.rs` -> 5-param model, presets, UI state.
+- `[x]` `crates/tdrace-app/src/config.rs` -> Persisted settings and migration.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> `apply_player_handling`, removal of 5 patch sites.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` (+ settings modal) -> New sliders and labels.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs`, `src/module/*.rs` -> Use new fields, call `finalize()`.
+- `[x]` `crates/tdrace-app/tests/handling_presets_tests.rs` -> Preset ordering, migration, live apply.
+- `[x]` `crates/tdrace-app/tests/{input_smoothing,config,controls_ui,kart_steering_stability,braking_stability}_tests.rs`, `crates/cabinet/tests/cabinet_integration_tests.rs` -> Intent-preserving rewrites.
+- `[x]` `crates/tdrace-app/src/input/simulation.rs`, `src/bin/keyboard_simulation_benchmark.rs`, `tests/keyboard_simulation_tests.rs` -> Key style × preset × car matrix and gates.
+- `[x]` `reports/keyboard_input_car_control_report.{md,json}` -> Regenerated key style analysis.
+- `[x]` `docs/engineering/*.md` -> Mark the old steering report superseded. Document the new tuning knobs.
 
 ### Verification Assertions
 - `crates/wheelbase/src/tire.rs` and `crates/wheelbase/src/car.rs` reference `specs/042_vehicle_dynamics_rebuild_and_simplified_handling_settings.md` in their module header comments.

@@ -150,3 +150,55 @@ mod preset_feel {
         }
     }
 }
+
+/// Scenario: The model is numerically stable (catalog part)
+///
+/// Given every catalog car (real and classic arcade), as a bot and as a Raw-preset human
+/// When 20 s of random inputs run, including full throttle, full brake, handbrake and reverse
+/// Then no state becomes non-finite, |omega_wheel| stays <= 550 rad/s and speed stays bounded
+#[test]
+fn test_catalog_random_input_fuzz_is_numerically_stable() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::PlayerHandling;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    let surfaces = [SurfaceType::Asphalt, SurfaceType::Gravel, SurfaceType::Grass, SurfaceType::SheetIce, SurfaceType::DeepSand];
+    for model in ALL_REAL_CARS.iter().chain(CLASSIC_ARCADE_CARS.iter()) {
+        for human in [false, true] {
+            let mut cfg = model.to_car_config();
+            if human {
+                cfg.player = PlayerHandling::human(1.15, 0.0);
+            }
+            let top = cfg.top_speed_mps;
+            let mut car = Car::new(cfg);
+            let mut state: u64 = 0x2545_F491_4F6C_DD1D ^ model.id.len() as u64;
+            let mut rng = move || {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                ((state >> 33) as f32) / (u32::MAX >> 1) as f32
+            };
+            let (mut ctrl, mut surf) = (CarControls::default(), SurfaceType::Asphalt);
+            for step in 0..(20 * 120) {
+                if step % 30 == 0 {
+                    ctrl = CarControls {
+                        throttle: if rng() > 0.3 { 1.0 } else { rng() },
+                        steer: rng() * 2.0 - 1.0,
+                        brake: if rng() > 0.8 { rng() } else { 0.0 },
+                        handbrake: rng() > 0.9,
+                        reverse: car.state.speed < 1.0 && rng() > 0.8,
+                    };
+                    surf = surfaces[(rng() * surfaces.len() as f32) as usize % surfaces.len()];
+                }
+                car.step(&ctrl, surf, 1.0 / 120.0);
+                let s = &car.state;
+                assert!(
+                    s.position.is_finite() && s.velocity.is_finite() && s.angular_velocity.is_finite(),
+                    "{} (human={human}) non-finite state at step {step}",
+                    model.id
+                );
+                assert!(s.wheel_assemblies.iter().all(|w| w.angular_velocity.is_finite() && w.angular_velocity.abs() <= 550.0));
+                assert!(s.speed < top * 1.3 + 5.0, "{} (human={human}) runaway speed {:.1} m/s", model.id, s.speed);
+            }
+        }
+    }
+}
