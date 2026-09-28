@@ -1395,3 +1395,59 @@ fn test_primary_confirm_action_does_not_engage_handbrake() {
     );
 }
 
+
+#[test]
+fn test_post_race_esc_keeps_the_championship_round() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.init_race();
+    session.trackers[0].current_lap = session.total_laps + 1;
+    session.trackers[0].best_lap_time = Some(24.0);
+    session.session_time = 75.0;
+    session.check_race_finish();
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+    assert!(session.pending_championship_results.is_some());
+
+    // Esc on the results screen used to throw the round away.
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 1, "the round is scored");
+    assert_eq!(champ.history.len(), 1);
+    assert!(session.pending_championship_results.is_none());
+    assert_eq!(
+        session.active_career_progress.active_championship.as_ref().map(|c| c.current_round),
+        Some(1),
+        "the scored round is saved to career progress"
+    );
+    assert!(
+        matches!(session.pending_state, Some(GameState::CareerSelect { .. })),
+        "leaves to Career Select, got {:?}",
+        session.pending_state
+    );
+}
+
+#[test]
+fn test_championship_studio_exits_with_gamepad_b() {
+    let mut session = RaceSession::new();
+    session.modality_cursor = (ModalityCategory::Options, 3); // Series Editor card
+    session.enter_championship_editor(None);
+    assert_eq!(session.state, GameState::ChampionshipEditor);
+
+    session.input.gamepad.snapshot.btn_b_pressed = true;
+    session.update_championship_editor(0.016);
+    session.input.gamepad.snapshot.btn_b_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::Options, selected_idx: 3, modal: None }
+    );
+    assert!(session.championship_editor_state.is_none());
+}
