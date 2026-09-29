@@ -2,6 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use wheelbase::Car;
+use crate::body::{Body2D, BodyHull};
 use crate::track::geometry::LineSegment;
 
 /// 2D Oriented Bounding Box (OBB) representing a car chassis or rectangular obstacle.
@@ -23,19 +24,25 @@ impl OrientedBox {
 
     /// Constructs an OBB bounding volume enclosing a car instance.
     pub fn from_car(car: &Car) -> Self {
-        let fwd = car.forward_vector();
-        let total_length = car.config.cg_to_front + car.config.cg_to_rear;
-        // Geometric center offset relative to CG
-        let cg_offset = (car.config.cg_to_front - car.config.cg_to_rear) * 0.5;
-        let geometric_center = car.state.position + fwd * cg_offset;
+        Self::from_body(car)
+    }
 
-        let half_length = total_length * 0.5 + 0.15; // bumper margin
-        let half_width = car.config.track_width * 0.5 + 0.15; // fender margin
+    /// Constructs an OBB bounding volume enclosing any rigid body's hull.
+    pub fn from_body<B: Body2D>(body: &B) -> Self {
+        let hull = body.hull();
+        let fwd = body.forward_vector();
+        let total_length = hull.front + hull.rear;
+        // Geometric center offset relative to CG
+        let cg_offset = (hull.front - hull.rear) * 0.5;
+        let geometric_center = body.position() + fwd * cg_offset;
+
+        let half_length = total_length * 0.5 + BodyHull::MARGIN; // bumper margin
+        let half_width = hull.half_width + BodyHull::MARGIN; // fender margin
 
         Self {
             center: geometric_center,
             half_extents: Vec2::new(half_length, half_width),
-            angle: car.state.angle,
+            angle: body.angle(),
         }
     }
 
