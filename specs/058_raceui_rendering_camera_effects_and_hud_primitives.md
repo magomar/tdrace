@@ -3,8 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "race-ui Rendering, Camera, Effects and HUD Primitives"
 description: "Phase 3 of spec 049: a new race-ui crate that holds the track, barrier and scenery renderers, surface materials, the race camera, particles and skid marks, the curve indicator and the basic HUD widgets, so a new game can draw a race without tdrace-app; tdrace-app re-exports everything and looks the same."
-status: implemented
-receipt: "docs/receipts/spec-057-receipt.md"
+status: in_progress
+receipt: "docs/receipts/spec-058-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T13:30:00Z }
 verified: { by: human:mario, at: 2026-09-29T14:00:00Z }
@@ -173,4 +173,4 @@ No data format changes. `CameraConfig` keeps its serde shape, so saved `config.t
 - `[x]` `docs/engineering/terminology.md` -> `race-ui` added to the platform architecture section.
 
 ### Beads Epic Mapping
-- Governed by epic *Fulfill Spec 057: race-ui Rendering, Camera, Effects and HUD Primitives*.
+- Governed by epic *Fulfill Spec 058: race-ui Rendering, Camera, Effects and HUD Primitives*.

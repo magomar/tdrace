@@ -9,7 +9,7 @@ use wheelbase::surface::SurfaceType;
 static ASSET_ROOT: Mutex<Option<PathBuf>> = Mutex::new(None);
 
 /// Sets the game's asset folder (the folder that holds `textures/surfaces/`). Surface textures
-/// are then looked up there first. Spec 057.
+/// are then looked up there first. Spec 058.
 pub fn set_asset_root(root: impl Into<PathBuf>) {
     if let Ok(mut r) = ASSET_ROOT.lock() {
         *r = Some(root.into());

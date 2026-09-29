@@ -1,7 +1,7 @@
 ---
 type: validation_receipt
 schema_version: "1.0"
-spec: "specs/057_raceui_rendering_camera_effects_and_hud_primitives.md"
+spec: "specs/058_raceui_rendering_camera_effects_and_hud_primitives.md"
 epic: "tdrace-l27r"
 candidate_commit: "1218b984c6338240503d817610270ce32cd3032f"
 verifier: "local-user"
@@ -15,7 +15,7 @@ status: passed
 # 🧾 Validation Receipt: Spec 057
 
 - **Candidate Commit**: `1218b984c6338240503d817610270ce32cd3032f`
-- **Spec**: `specs/057_raceui_rendering_camera_effects_and_hud_primitives.md`
+- **Spec**: `specs/058_raceui_rendering_camera_effects_and_hud_primitives.md`
 - **Command**: `cargo test -p race-ui && cargo test -p tdrace-app --test render_tests --test camera_tests --test fx_tests --test auxiliary_fx_tests --test curve_helper_hud_tests --test golden_session`
 - **Result**: `passed` (exit code: 0)
 

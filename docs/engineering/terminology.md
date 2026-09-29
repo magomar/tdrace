@@ -90,7 +90,7 @@ The `race-kit` crate runs a race with no window, sound or database ([spec 056](.
 
 ### 2.3. Drawing Primitives (`crates/race-ui`)
 
-The `race-ui` crate holds the drawing code that any top-down racing game can use ([spec 057](../../specs/057_raceui_rendering_camera_effects_and_hud_primitives.md)). `tdrace-app` re-exports it at the old paths:
+The `race-ui` crate holds the drawing code that any top-down racing game can use ([spec 058](../../specs/058_raceui_rendering_camera_effects_and_hud_primitives.md)). `tdrace-app` re-exports it at the old paths:
 
 - [`render`](../../crates/race-ui/src/render/mod.rs): track, barrier, scenery and surface material renderers, the colour palette, and `set_asset_root` for a game's own texture folder.
 - [`camera`](../../crates/race-ui/src/camera/mod.rs): `RaceCamera`, which follows any `Body2D`, split-screen layouts and zoom levels.

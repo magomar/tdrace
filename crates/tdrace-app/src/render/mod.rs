@@ -1,4 +1,4 @@
-// Moved to race-ui (spec 057); re-exported so `crate::render::` paths keep working.
+// Moved to race-ui (spec 058); re-exported so `crate::render::` paths keep working.
 pub use race_ui::render::{barrier, color, scenery, surface_material, track};
 
 pub mod car;

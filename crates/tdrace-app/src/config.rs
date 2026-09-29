@@ -6,7 +6,7 @@ use cabinet::input::{DigitalInputConfig, SteeringProfile};
 use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
 
-// Camera settings moved to race-ui (spec 057); re-exported so `crate::config::` paths keep working.
+// Camera settings moved to race-ui (spec 058); re-exported so `crate::config::` paths keep working.
 pub use race_ui::camera::{CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH};
 
 /// Keyboard handling settings (Spec 043): a preset plus five values.

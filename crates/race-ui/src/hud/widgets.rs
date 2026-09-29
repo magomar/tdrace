@@ -1,5 +1,5 @@
 //! Basic HUD widgets: lap time text, position and lap badge, lap timer and minimap.
-//! Moved from `tdrace-app/src/ui/hud.rs` (spec 057).
+//! Moved from `tdrace-app/src/ui/hud.rs` (spec 058).
 
 use arcade_race_core::track::{Track, TrackProgressTracker};
 use arcade_race_core::Body2D;

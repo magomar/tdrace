@@ -1,4 +1,4 @@
-//! Spec 057 (`specs/057_raceui_rendering_camera_effects_and_hud_primitives.md`): a game points
+//! Spec 058 (`specs/058_raceui_rendering_camera_effects_and_hud_primitives.md`): a game points
 //! the surface textures at its own asset folder.
 
 use race_ui::render::set_asset_root;

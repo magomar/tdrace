@@ -1,4 +1,4 @@
-//! Camera zoom levels and follow settings. Moved from `tdrace-app/src/config.rs` (spec 057).
+//! Camera zoom levels and follow settings. Moved from `tdrace-app/src/config.rs` (spec 058).
 
 use serde::{Deserialize, Serialize};
 

@@ -1,4 +1,4 @@
-//! Spec 057 (`specs/057_raceui_rendering_camera_effects_and_hud_primitives.md`): the race camera
+//! Spec 058 (`specs/058_raceui_rendering_camera_effects_and_hud_primitives.md`): the race camera
 //! follows any `Body2D`, not only a `wheelbase::Car`.
 
 use arcade_race_core::{Body2D, BodyHull};
