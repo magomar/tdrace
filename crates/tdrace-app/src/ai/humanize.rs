@@ -26,6 +26,11 @@ const APPROACH: f32 = 120.0;
 const LINE_RAMP: f32 = 40.0;
 /// Margin kept to the track edge by the line offset (m).
 const EDGE_MARGIN: f32 = 1.5;
+/// The apex curb cut fades in with track width: none at `CURB_CUT_MIN_WIDTH`, all of it from
+/// `CURB_CUT_FULL_WIDTH` (m). On an 8 m kart track the cut almost doubles the corner swing of a
+/// 2.5 m free lane, and it cost a T5 kart 1.6 s per lap on Kart Arena (tdrace-d538).
+const CURB_CUT_MIN_WIDTH: f32 = 8.0;
+const CURB_CUT_FULL_WIDTH: f32 = 12.0;
 /// Line wander time constant (s).
 const WANDER_TAU: f32 = 6.0;
 /// Time constant of the line-offset smoothing (s).
@@ -581,6 +586,8 @@ impl HumanDriver {
         let free = (width * 0.5 - EDGE_MARGIN).max(0.0);
         let mut shape = 0.0;
         let mut curb_extension: f32 = 0.0;
+        let room = ((width - CURB_CUT_MIN_WIDTH) / (CURB_CUT_FULL_WIDTH - CURB_CUT_MIN_WIDTH)).clamp(0.0, 1.0);
+        let cut = (EDGE_MARGIN + self.traits.curb_cut_m) * room;
         for (c, p) in self.corners.iter().zip(&self.plans) {
             if !p.in_window {
                 continue;
@@ -589,7 +596,7 @@ impl HumanDriver {
             let outside = -c.turn * p.entry_share * free;
             let inside = if c.has_inside_curb && self.traits.curb_cut_m > 0.0 {
                 let apex_mult = (p.apex_share / 0.7).min(1.0);
-                c.turn * (p.apex_share * free + (EDGE_MARGIN + self.traits.curb_cut_m) * apex_mult)
+                c.turn * (p.apex_share * free + cut * apex_mult)
             } else {
                 c.turn * p.apex_share * free
             };
@@ -606,7 +613,7 @@ impl HumanDriver {
             };
             if c.has_inside_curb && self.traits.curb_cut_m > 0.0 && x >= 0.0 && x <= c.len {
                 let apex_proximity = 1.0 - ((x - c.apex).abs() / c.apex.max(c.len - c.apex).max(1.0)).min(1.0);
-                curb_extension = curb_extension.max((EDGE_MARGIN + self.traits.curb_cut_m) * apex_proximity);
+                curb_extension = curb_extension.max(cut * apex_proximity);
             }
         }
         let max_lat = free + curb_extension;
