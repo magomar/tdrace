@@ -169,6 +169,14 @@ fn screen_height_safe() -> f32 {
         }
     }
 }
+
+/// True when a bridge deck (a sample 2.5 m or more above `elevation`) covers `pos`: a car there is hidden
+/// under the deck, so its markers are drawn above it.
+pub fn is_under_bridge_deck(track: &Track, pos: Vec2, elevation: f32) -> bool {
+    track.spline.samples.iter().any(|s| {
+        s.is_bridge && s.elevation - elevation >= 2.5 && s.point.distance(pos) < s.width * 0.5 + 1.0
+    })
+}
 use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
@@ -14117,9 +14125,12 @@ impl RaceSession {
         let mut elevated_cars = Vec::new();
         for i in 0..self.world.vehicles.len() {
             let car = &self.world.vehicles[i];
+            // The same projection as the physics (near the car's last lap distance): the nearest point of the
+            // whole lap can be the deck above, which drew a car passing under a bridge on top of it.
+            let hint = self.world.trackers.get(i).map(|t| t.progress_distance).unwrap_or(0.0);
             let is_elevated = car.state.elevation > 0.05
                 || car.state.ramp_elevation > 0.05
-                || self.track.spline.project_point(car.state.position).is_bridge;
+                || self.track.spline.project_point_continuity(car.state.position, hint, 50.0).is_bridge;
             if is_elevated {
                 elevated_cars.push(i);
             } else {
@@ -14152,7 +14163,14 @@ impl RaceSession {
             )
         }).unwrap_or(1.0);
 
-        if self.visibility_options.ground_aura && ground_cars.contains(&focus_car_idx) {
+        // A car under a bridge deck is hidden by the deck; its markers are drawn above the deck instead.
+        let focus_under_deck = ground_cars.contains(&focus_car_idx)
+            && self
+                .world
+                .vehicles
+                .get(focus_car_idx)
+                .is_some_and(|c| is_under_bridge_deck(&self.track, c.state.position, c.total_elevation()));
+        if self.visibility_options.ground_aura && ground_cars.contains(&focus_car_idx) && !focus_under_deck {
             if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(
@@ -14227,8 +14245,8 @@ impl RaceSession {
         // 7. Elevated Bridge Barriers & Guardrails (drawn on top of the bridge deck, touching the track)
         render_elevated_barriers_and_obstacles_culled(&self.track, view_bounds);
 
-        // 8. Elevated Vehicles (drawn on top of the bridge deck)
-        if self.visibility_options.ground_aura && elevated_cars.contains(&focus_car_idx) {
+        // 8. Elevated Vehicles (drawn on top of the bridge deck); the aura of a car under the deck also goes here
+        if self.visibility_options.ground_aura && (elevated_cars.contains(&focus_car_idx) || focus_under_deck) {
             if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(

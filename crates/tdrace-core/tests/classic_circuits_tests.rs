@@ -253,3 +253,49 @@ fn test_kart_circuits_run_straight_for_20_m_after_each_bridge() {
         }
     }
 }
+
+/// Scenario: No turn under a bridge
+///
+/// Given the 3 karting circuits
+/// When a kart drives on the lower road under a bridge deck (a bridge sample 2.5 m or more above, closer
+///   than the two half widths plus 1 m)
+/// Then the lower road runs straight there: its heading changes by 5 degrees or less
+#[test]
+fn test_kart_circuits_do_not_turn_under_a_bridge() {
+    for (id, ..) in KART {
+        let t = catalog::official_track("classic", id);
+        let s = &t.spline.samples;
+        let under: Vec<bool> = s
+            .iter()
+            .map(|l| {
+                !l.is_bridge
+                    && s.iter().any(|b| {
+                        b.is_bridge
+                            && b.elevation - l.elevation >= 2.5
+                            && b.point.distance(l.point) < (b.width + l.width) * 0.5 + 1.0
+                    })
+            })
+            .collect();
+        let heading = |i: usize| s[i].tangent.y.atan2(s[i].tangent.x);
+        let mut i = 0;
+        while i < s.len() {
+            if !under[i] {
+                i += 1;
+                continue;
+            }
+            let start = i;
+            while i + 1 < s.len() && under[i + 1] {
+                i += 1;
+            }
+            let worst = (start..=i)
+                .map(|k| {
+                    let d = (heading(k) - heading(start) + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU)
+                        - std::f32::consts::PI;
+                    d.abs().to_degrees()
+                })
+                .fold(0.0, f32::max);
+            assert!(worst <= 5.0, "{}: the road turns {:.0} deg under a bridge at {:.0} m", id, worst, s[start].distance);
+            i += 1;
+        }
+    }
+}
