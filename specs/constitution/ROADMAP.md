@@ -77,7 +77,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
 - `[ ]` **[Reusable Racing Platform Layers & Determinism Safety Net](../049_reusable_racing_platform_layers.md)**: Target layering, phase roadmap, golden state hashes, and tracks-free performance benches.
 - `[x]` **[`Body2D` Trait](../054_body2d_trait_for_vehiclegeneric_collision_and_progress.md)**: Collision, LIDAR, progress tracking and pit checks work for any rigid body, not only `wheelbase::Car`.
-- `[ ]` **`race-kit` Headless Race World**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
+- `[ ]` **[`race-kit` Headless Race World](../056_racekit_headless_race_world.md)**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
 - `[ ]` **`race-ui` Rendering Primitives**: Course renderers with a mesh cache, multi-part vehicle sprites, chase camera, and HUD widgets outside `tdrace-app`.
 - `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
 - `[ ]` **Chariot Vehicle Model & Chariot Game**: Horse-drawn chariot physics with stamina, wrecks and overturns, and the `chariot-app` repo.
