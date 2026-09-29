@@ -219,66 +219,66 @@ pub fn calculate_spatial_audio(
 
 #### Phase 1: Proximity Audio & Distance Attenuation
 - **Scenario: Opponent vehicle audible on approach**
-  - [ ] **Given** the player's car is driving down the straight at constant velocity
-  - [ ] **When** an opponent car approaches from behind, closing the distance from $90\text{ m}$ to $10\text{ m}$
-  - [ ] **Then** the opponent's engine sound should be completely silent at $> 75\text{ m}$
-  - [ ] **And** it should smoothly fade in and increase in volume as the car closes to $10\text{ m}$
+  - [x] **Given** the player's car is driving down the straight at constant velocity
+  - [x] **When** an opponent car approaches from behind, closing the distance from $90\text{ m}$ to $10\text{ m}$
+  - [x] **Then** the opponent's engine sound should be completely silent at $> 75\text{ m}$
+  - [x] **And** it should smoothly fade in and increase in volume as the car closes to $10\text{ m}$
 
 - **Scenario: Distance-based attenuation at cutoff boundary**
-  - [ ] **Given** an opponent car is driving at a distance of $80\text{ m}$ from the player
-  - [ ] **When** the distance increases to $100\text{ m}$
-  - [ ] **Then** the opponent's engine volume remains $0.0$ and uses zero active audio voice resources
+  - [x] **Given** an opponent car is driving at a distance of $80\text{ m}$ from the player
+  - [x] **When** the distance increases to $100\text{ m}$
+  - [x] **Then** the opponent's engine volume remains $0.0$ and uses zero active audio voice resources
 
 - **Scenario: Directional stereo panning across screen**
-  - [ ] **Given** an opponent car is overtaking the player on the left side (negative X relative to player)
-  - [ ] **When** the car is alongside at $(-15.0\text{ m}, 0.0\text{ m})$
-  - [ ] **Then** the engine sound should pan prominently to the left audio channel
-  - [ ] **When** the car crosses over to the right side $(+15.0\text{ m}, 0.0\text{ m})$
-  - [ ] **Then** the engine sound should smoothly transition to the right audio channel
+  - [x] **Given** an opponent car is overtaking the player on the left side (negative X relative to player)
+  - [x] **When** the car is alongside at $(-15.0\text{ m}, 0.0\text{ m})$
+  - [x] **Then** the engine sound should pan prominently to the left audio channel
+  - [x] **When** the car crosses over to the right side $(+15.0\text{ m}, 0.0\text{ m})$
+  - [x] **Then** the engine sound should smoothly transition to the right audio channel
 
 - **Scenario: Multi-car pack voice allocation budgeting**
-  - [ ] **Given** a dense pack of 8 opponent vehicles surrounding the player
-  - [ ] **When** audio frames are processed
-  - [ ] **Then** exactly the 3 closest opponent vehicles within $75\text{ m}$ are allocated active audio voices
-  - [ ] **And** the remaining 5 more distant vehicles are culled without audio glitches or voice starvation
+  - [x] **Given** a dense pack of 8 opponent vehicles surrounding the player
+  - [x] **When** audio frames are processed
+  - [x] **Then** exactly the 3 closest opponent vehicles within $75\text{ m}$ are allocated active audio voices
+  - [x] **And** the remaining 5 more distant vehicles are culled without audio glitches or voice starvation
 
 #### Phase 2: Doppler Shift Simulation
 - **Scenario: Approaching vehicle exhibits higher-frequency Doppler pitch shift**
-  - [ ] **Given** Phase 2 Doppler simulation is enabled with $c_{\text{arcade}} = 160.0\text{ m/s}$
-  - [ ] **When** an opponent car approaches the player head-on with a relative approach velocity of $40.0\text{ m/s}$
-  - [ ] **Then** the observed Doppler factor should be approximately $1.33$ ($\frac{160}{160 - 40}$)
-  - [ ] **And** the engine playback rate should be shifted up by $\approx 33\%$ relative to its resting RPM pitch
+  - [x] **Given** Phase 2 Doppler simulation is enabled with $c_{\text{arcade}} = 160.0\text{ m/s}$
+  - [x] **When** an opponent car approaches the player head-on with a relative approach velocity of $40.0\text{ m/s}$
+  - [x] **Then** the observed Doppler factor should be approximately $1.33$ ($\frac{160}{160 - 40}$)
+  - [x] **And** the engine playback rate should be shifted up by $\approx 33\%$ relative to its resting RPM pitch
 
 - **Scenario: Receding vehicle exhibits lower-frequency Doppler pitch shift**
-  - [ ] **Given** an opponent car has completed an overtake and is pulling away at a relative receding velocity of $-30.0\text{ m/s}$
-  - [ ] **When** the spatial audio rate is evaluated
-  - [ ] **Then** the observed Doppler factor should be approximately $0.84$ ($\frac{160}{160 + 30}$)
-  - [ ] **And** the engine playback rate should be shifted down below its intrinsic RPM pitch
+  - [x] **Given** an opponent car has completed an overtake and is pulling away at a relative receding velocity of $-30.0\text{ m/s}$
+  - [x] **When** the spatial audio rate is evaluated
+  - [x] **Then** the observed Doppler factor should be approximately $0.84$ ($\frac{160}{160 + 30}$)
+  - [x] **And** the engine playback rate should be shifted down below its intrinsic RPM pitch
 
 - **Scenario: Rapid flyby produces characteristic pitch drop transition**
-  - [ ] **Given** the player is parked near the track edge and an opponent passes at $50.0\text{ m/s}$
-  - [ ] **When** the opponent transitions from approaching ($+50\text{ m/s}$) to receding ($-50\text{ m/s}$) through the closest point of approach
-  - [ ] **Then** the playback rate should smoothly transition from pitch-elevated to pitch-lowered without click or pop artifacts
+  - [x] **Given** the player is parked near the track edge and an opponent passes at $50.0\text{ m/s}$
+  - [x] **When** the opponent transitions from approaching ($+50\text{ m/s}$) to receding ($-50\text{ m/s}$) through the closest point of approach
+  - [x] **Then** the playback rate should smoothly transition from pitch-elevated to pitch-lowered without click or pop artifacts
 
 - **Scenario: Extreme collision relative speed remains safely clamped**
-  - [ ] **Given** a high-speed collision produces an instantaneous relative velocity spike exceeding $120.0\text{ m/s}$
-  - [ ] **When** the Doppler shift calculation is executed
-  - [ ] **Then** the Doppler multiplier must be clamped to the safe ceiling of $1.45$
-  - [ ] **And** no `NaN`, infinity, or audio thread panics occur
+  - [x] **Given** a high-speed collision produces an instantaneous relative velocity spike exceeding $120.0\text{ m/s}$
+  - [x] **When** the Doppler shift calculation is executed
+  - [x] **Then** the Doppler multiplier must be clamped to the safe ceiling of $1.45$
+  - [x] **And** no `NaN`, infinity, or audio thread panics occur
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created Files
-- `[ ]` `crates/tdrace-app/src/audio/proximity.rs` -> Spatial proximity evaluator, distance attenuation, stereo panning, and Doppler calculations.
-- `[ ]` `crates/tdrace-app/tests/proximity_audio_tests.rs` -> Unit and integration tests for distance falloff, panning math, voice allocation, and Doppler pitch factor bounds.
+- `[x]` `crates/tdrace-app/src/audio/proximity.rs` -> Spatial proximity evaluator, distance attenuation, stereo panning, and Doppler calculations.
+- `[x]` `crates/tdrace-app/tests/proximity_audio_tests.rs` -> Unit and integration tests for distance falloff, panning math, voice allocation, and Doppler pitch factor bounds.
 
 ### Modified Files
-- `[ ]` `crates/tdrace-app/src/audio/mod.rs` -> Exports `proximity` module and associated types.
-- `[ ]` `crates/tdrace-app/src/audio/manager.rs` -> Extends `AudioManager` with `ProximityVoiceSlot` pool, voice allocation, and dynamic telemetry feed.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Collects all opponent car positions, velocities, and telemetry in the race loop and updates proximity audio.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 061 under Phase 2 audio milestones.
+- `[x]` `crates/tdrace-app/src/audio/mod.rs` -> Exports `proximity` module and associated types.
+- `[x]` `crates/tdrace-app/src/audio/manager.rs` -> Extends `AudioManager` with `ProximityVoiceSlot` pool, voice allocation, and dynamic telemetry feed.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Collects all opponent car positions, velocities, and telemetry in the race loop and updates proximity audio.
+- `[x]` `specs/constitution/ROADMAP.md` -> Links Spec 061 under Phase 2 audio milestones.
 
 ---
 
