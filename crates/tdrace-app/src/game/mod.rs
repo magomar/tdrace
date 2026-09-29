@@ -11292,6 +11292,8 @@ impl RaceSession {
                 let my_idx = self.player_car_index();
                 if my_idx == 0 {
                     self.lan_own_controls(dt, 0)
+                } else if let Some(slot) = self.lan_race.as_ref().and_then(|l| l.slot_of(0)) {
+                    self.lan_race.as_ref().and_then(|l| l.remote_controls.get(&slot)).copied().unwrap_or_default()
                 } else {
                     CarControls::default()
                 }
@@ -11313,6 +11315,8 @@ impl RaceSession {
                 let bot_ctrl = if self.lan_race.is_some() {
                     if i == self.player_car_index() {
                         self.lan_own_controls(dt, i)
+                    } else if let Some(slot) = self.lan_race.as_ref().and_then(|l| l.slot_of(i)) {
+                        self.lan_race.as_ref().and_then(|l| l.remote_controls.get(&slot)).copied().unwrap_or_default()
                     } else {
                         CarControls::default()
                     }
@@ -11585,92 +11589,101 @@ impl RaceSession {
         // Dynamic Accelerating Engine Audio (motor sound only) (Spec 038)
         // Engine RPM rev flare must strictly reflect driven wheels' longitudinal slip ratio,
         // isolating engine acoustics from unpowered front steer wheels' lateral slip angles.
-        if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
-            let driven_slip_ratio = player_car.state.wheel_assemblies.iter()
-                .zip(player_car.state.wheels.iter())
-                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
-                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
-                .fold(0.0f32, f32::max);
-            let slip_intensity = driven_slip_ratio;
+        if self.state != GameState::Paused {
+            if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
+                let driven_slip_ratio = player_car.state.wheel_assemblies.iter()
+                    .zip(player_car.state.wheels.iter())
+                    .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                    .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                    .fold(0.0f32, f32::max);
+                let slip_intensity = driven_slip_ratio;
 
-            let my_ctrl = controls_all.get(my_car_idx).copied().unwrap_or_default();
-            let forward_speed = player_car.state.local_velocity.x;
-            let effective_throttle = if my_ctrl.reverse {
-                -my_ctrl.throttle
-            } else {
-                my_ctrl.throttle - my_ctrl.brake
-            };
-            let (rpm, is_shift) = self.engine_rpm.update(forward_speed, effective_throttle, slip_intensity, dt);
-            self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
-        }
-
-        if is_split && self.world.vehicles.len() >= 2 {
-            let p2_car = &self.world.vehicles[1];
-            let driven_slip_ratio = p2_car.state.wheel_assemblies.iter()
-                .zip(p2_car.state.wheels.iter())
-                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
-                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
-                .fold(0.0f32, f32::max);
-            let slip_intensity = driven_slip_ratio;
-
-            let p2_ctrl = controls_all[1];
-            let forward_speed = p2_car.state.local_velocity.x;
-            let effective_throttle = if p2_ctrl.reverse {
-                -p2_ctrl.throttle
-            } else {
-                p2_ctrl.throttle - p2_ctrl.brake
-            };
-            let (rpm2, is_shift2) = self.engine_rpm_p2.update(forward_speed, effective_throttle, slip_intensity, dt);
-            self.audio.update_engine_telemetry_p2(rpm2, effective_throttle, is_shift2, forward_speed, self.engine_rpm_p2.current_gear, dt);
-        } else {
-            self.audio.stop_player2_engine();
-        }
-
-        // Proximity Opponent Engine Audio & Doppler Shift (Spec 061)
-        let (listener_pos, listener_vel) = if let Some(p_car) = self.world.vehicles.get(my_car_idx) {
-            (p_car.state.position, p_car.state.velocity)
-        } else {
-            (self.camera.current_pos, Vec2::ZERO)
-        };
-
-        let mut proximity_sources = Vec::with_capacity(self.world.vehicles.len());
-        for (i, car) in self.world.vehicles.iter().enumerate() {
-            if i == my_car_idx || (is_split && i == 1) {
-                continue;
+                let my_ctrl = controls_all.get(my_car_idx).copied().unwrap_or_default();
+                let forward_speed = player_car.state.local_velocity.x;
+                let effective_throttle = if my_ctrl.reverse {
+                    -my_ctrl.throttle
+                } else {
+                    my_ctrl.throttle - my_ctrl.brake
+                };
+                let (rpm, is_shift) = self.engine_rpm.update(forward_speed, effective_throttle, slip_intensity, dt);
+                self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
             }
-            let driven_slip_ratio = car.state.wheel_assemblies.iter()
-                .zip(car.state.wheels.iter())
-                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
-                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
-                .fold(0.0f32, f32::max);
 
-            let ctrl = controls_all.get(i).copied().unwrap_or_default();
-            let forward_speed = car.state.local_velocity.x;
-            let effective_throttle = if ctrl.reverse {
-                -ctrl.throttle
+            if is_split && self.world.vehicles.len() >= 2 {
+                let p2_car = &self.world.vehicles[1];
+                let driven_slip_ratio = p2_car.state.wheel_assemblies.iter()
+                    .zip(p2_car.state.wheels.iter())
+                    .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                    .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                    .fold(0.0f32, f32::max);
+                let slip_intensity = driven_slip_ratio;
+
+                let p2_ctrl = controls_all[1];
+                let forward_speed = p2_car.state.local_velocity.x;
+                let effective_throttle = if p2_ctrl.reverse {
+                    -p2_ctrl.throttle
+                } else {
+                    p2_ctrl.throttle - p2_ctrl.brake
+                };
+                let (rpm2, is_shift2) = self.engine_rpm_p2.update(forward_speed, effective_throttle, slip_intensity, dt);
+                self.audio.update_engine_telemetry_p2(rpm2, effective_throttle, is_shift2, forward_speed, self.engine_rpm_p2.current_gear, dt);
             } else {
-                ctrl.throttle - ctrl.brake
+                self.audio.stop_player2_engine();
+            }
+
+            // Proximity Opponent Engine Audio & Doppler Shift (Spec 061)
+            let (listener_pos, listener_vel) = if let Some(p_car) = self.world.vehicles.get(my_car_idx) {
+                (p_car.state.position, p_car.state.velocity)
+            } else {
+                (self.camera.current_pos, Vec2::ZERO)
             };
 
-            let engine_type = if let Some(Some(mid)) = self.car_model_ids.get(i) {
-                crate::catalog::find_model_by_id(mid)
-                    .map(|m| m.sound_type())
-                    .unwrap_or_else(|| self.resolve_active_sound_type())
-            } else {
-                self.resolve_active_sound_type()
-            };
+            let mut proximity_sources = Vec::with_capacity(self.world.vehicles.len());
+            for (i, car) in self.world.vehicles.iter().enumerate() {
+                if i == my_car_idx || (is_split && i == 1) {
+                    continue;
+                }
+                if self.lan_car_left(i) {
+                    continue;
+                }
+                let driven_slip_ratio = if self.lan_is_remote_car(i) {
+                    if car.state.is_drifting { 0.40 } else { 0.0 }
+                } else {
+                    car.state.wheel_assemblies.iter()
+                        .zip(car.state.wheels.iter())
+                        .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                        .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                        .fold(0.0f32, f32::max)
+                };
 
-            proximity_sources.push(crate::audio::VehicleAudioSource {
-                vehicle_id: i,
-                engine_type,
-                position: car.state.position,
-                velocity: car.state.velocity,
-                forward_speed,
-                throttle: effective_throttle,
-                slip_ratio: driven_slip_ratio,
-            });
+                let ctrl = controls_all.get(i).copied().unwrap_or_default();
+                let forward_speed = car.state.local_velocity.x;
+                let effective_throttle = if ctrl.reverse {
+                    -ctrl.throttle
+                } else {
+                    ctrl.throttle - ctrl.brake
+                };
+
+                let engine_type = if let Some(Some(mid)) = self.car_model_ids.get(i) {
+                    crate::catalog::find_model_by_id(mid)
+                        .map(|m| m.sound_type())
+                        .unwrap_or_else(|| self.resolve_active_sound_type())
+                } else {
+                    self.resolve_active_sound_type()
+                };
+
+                proximity_sources.push(crate::audio::VehicleAudioSource {
+                    vehicle_id: i,
+                    engine_type,
+                    position: car.state.position,
+                    velocity: car.state.velocity,
+                    forward_speed,
+                    throttle: effective_throttle,
+                    slip_ratio: driven_slip_ratio,
+                });
+            }
+            self.audio.update_proximity_engines(&proximity_sources, listener_pos, listener_vel, dt);
         }
-        self.audio.update_proximity_engines(&proximity_sources, listener_pos, listener_vel, dt);
 
 
         // Lap and sector split audio feedback
