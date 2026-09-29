@@ -4155,12 +4155,11 @@ impl RaceSession {
             });
         let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         player_car.config.player = Self::player_handling(&self.input.filter.config);
-        self.world.vehicles.push(player_car);
+        self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
         self.car_model_ids.push(player_model_id);
         self.car_lights_on.push(true);
-        self.world.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
             let p2_slot = 1;
@@ -4183,12 +4182,11 @@ impl RaceSession {
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             p2_car.config.player = Self::player_handling(&self.filter_p2.config);
-            self.world.vehicles.push(p2_car);
+            self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
             self.car_model_ids.push(player_model_id);
             self.car_lights_on.push(true);
-            self.world.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
@@ -4260,12 +4258,11 @@ impl RaceSession {
 
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
-            self.world.vehicles.push(bot_car);
+            self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
             self.car_model_ids.push(bot_model_id);
             self.car_lights_on.push(true);
-            self.world.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             let bot_tier = if let Some(champ) = &self.championship_session {
                 champ
                     .standings
@@ -8817,9 +8814,6 @@ impl RaceSession {
             self.car_model_ids.push(Some(canonical_id));
             self.car_lights_on.push(true);
 
-            let tracker = TrackProgressTracker::new(num_cps, num_sectors);
-            self.world.trackers.push(tracker);
-
             self.grid_participants.push(GridParticipant {
                 is_player: is_me,
                 bot_index: None,
@@ -8845,7 +8839,7 @@ impl RaceSession {
                 car.config.player = Self::player_handling(&self.input.filter.config);
             }
 
-            self.world.vehicles.push(car);
+            self.world.spawn(car, TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         self.camera.setup_for_track(&self.track);
@@ -11979,7 +11973,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::RaceFinish);
 
             let track_id = self.track_choice_id().to_string();
-            let player_time = self.session_time;
+            let player_time = self.results.iter().find(|r| r.car_idx == my_car_idx).map(|r| r.total_time).unwrap_or(self.session_time);
             let player_best_lap = self.world.trackers.get(my_car_idx).and_then(|t| t.best_lap_time);
 
             // 1. Check personal best lap against active profile stats before updating
@@ -12021,8 +12015,9 @@ impl RaceSession {
             // 3. Automatically record all race finishers (player + bots) into the Hall of Fame
             let mut player_hof_id: Option<i64> = None;
             if let Some(db) = &self.hof_db {
-                let standings = self.compute_standings();
-                for (rank, &car_idx) in standings.iter().enumerate() {
+                let race_results = self.world.results(&self.track);
+                for row in &race_results {
+                    let car_idx = row.car;
                     let is_me = car_idx == my_car_idx;
                     let is_p2 = self.is_split_screen() && car_idx == 1;
                     let (driver_name, vehicle_name) = if is_me {
@@ -12052,15 +12047,13 @@ impl RaceSession {
                         }
                     };
 
-                    let tracker = &self.world.trackers[car_idx];
-                    let total_time = self.session_time + (rank as f32 * 0.65);
                     let entry = HallOfFameEntry {
                         id: None,
                         track_id: track_id.clone(),
                         player_name: driver_name,
                         car_name: vehicle_name,
-                        total_time,
-                        best_lap: tracker.best_lap_time,
+                        total_time: row.time,
+                        best_lap: row.best_lap,
                         laps: self.total_laps,
                         created_at: String::new(),
                     };
@@ -12299,32 +12292,20 @@ impl RaceSession {
         }
     }
 
-    /// Computes real-time race standings.
+    /// Computes real-time race standings: finished cars in finish order, then by lap and progress.
     pub fn compute_standings(&self) -> Vec<usize> {
-        let mut indices: Vec<usize> = (0..self.world.vehicles.len()).collect();
-        indices.sort_by(|&a, &b| {
-            let tr_a = &self.world.trackers[a];
-            let tr_b = &self.world.trackers[b];
-
-            // Primary: Lap number descending
-            if tr_a.current_lap != tr_b.current_lap {
-                return tr_b.current_lap.cmp(&tr_a.current_lap);
-            }
-            // Secondary: Normalized track progress descending
-            tr_b.normalized_progress
-                .partial_cmp(&tr_a.normalized_progress)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        indices
+        self.world.standings()
     }
 
     /// Builds the final results standings table.
     fn build_results(&mut self) {
         let my_car_idx = self.player_car_index();
-        let standings = self.compute_standings();
+        let race_results = self.world.results(&self.track);
         self.results.clear();
+        let leader_time = race_results.first().map(|r| r.time).unwrap_or(0.0);
 
-        for (rank, &car_idx) in standings.iter().enumerate() {
+        for row in &race_results {
+            let (rank, car_idx) = (row.position - 1, row.car);
             let is_player = car_idx == my_car_idx || (self.is_split_screen() && car_idx == 1);
             let car_name = if car_idx == my_car_idx {
                 if self.is_split_screen() {
@@ -12353,20 +12334,18 @@ impl RaceSession {
                 }
             };
 
-            let tracker = &self.world.trackers[car_idx];
-            let total_time = self.session_time + (rank as f32 * 0.65);
-            let leader_time = self.session_time;
-            let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
+            let delta = if rank == 0 { 0.0 } else { row.time - leader_time };
 
             self.results.push(RaceResultEntry {
                 position: rank + 1,
                 car_name,
                 is_player,
-                total_time,
-                best_lap: tracker.best_lap_time,
+                total_time: row.time,
+                best_lap: row.best_lap,
                 delta_to_leader: delta,
                 car_idx,
                 points_awarded: 0,
+                projected: row.projected,
             });
         }
     }
