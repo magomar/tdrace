@@ -280,7 +280,7 @@ fn test_race_session_test_drive_time_trial_flow_and_editor_return() {
     assert_eq!(session.game_mode, GameMode::TimeTrial);
     assert!(session.is_time_attack);
     assert!(session.return_to_editor_on_exit);
-    assert_eq!(session.cars.len(), 1);
+    assert_eq!(session.world.vehicles.len(), 1);
     assert_eq!(session.car_choice, session.resolve_predefined_car());
     assert!(session.editor_state.is_some());
 
@@ -293,9 +293,9 @@ fn test_race_session_test_drive_time_trial_flow_and_editor_return() {
         session.physics_step(1.0 / 60.0);
     }
 
-    let car = session.cars.first().unwrap();
+    let car = session.world.vehicles.first().unwrap();
     assert!(car.state.position.is_finite());
-    assert_eq!(session.trackers.len(), 1);
+    assert_eq!(session.world.trackers.len(), 1);
 
     // 4. Pause race and exit to Track Editor
     session.state = GameState::Paused;

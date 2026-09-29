@@ -1,7 +1,7 @@
 pub mod career_hub;
 pub mod series_editor;
 pub use series_editor as championship_editor;
-pub mod curve_indicator;
+pub use race_ui::hud::curve_indicator;
 pub mod driver_card;
 pub mod font;
 pub mod garage;

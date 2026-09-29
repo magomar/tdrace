@@ -22,7 +22,7 @@ fn test_new_championship_expands_to_circuit_slots() {
 
     let grid_slots = session.max_grid_participants();
     assert_eq!(grid_slots, 18, "Monza circuit has 18 starting grid slots");
-    assert_eq!(session.cars.len(), 18, "Cars count must expand to circuit grid slots");
+    assert_eq!(session.world.vehicles.len(), 18, "Cars count must expand to circuit grid slots");
     assert_eq!(session.grid_participants.len(), 18, "Grid participants must expand to circuit grid slots");
 
     let champ_ref = session.championship_session.as_ref().unwrap();
@@ -53,7 +53,7 @@ fn test_new_championship_trims_to_circuit_slots_preserving_player() {
 
     let grid_slots = session.max_grid_participants();
     assert_eq!(grid_slots, 10, "Classic Rallycross circuit has 10 starting grid slots");
-    assert_eq!(session.cars.len(), 10, "Cars count must trim to circuit grid slots");
+    assert_eq!(session.world.vehicles.len(), 10, "Cars count must trim to circuit grid slots");
     assert_eq!(session.grid_participants.len(), 10, "Grid participants must trim to circuit grid slots");
 
     let champ_ref = session.championship_session.as_ref().unwrap();
@@ -89,7 +89,7 @@ fn test_round_with_fewer_slots_admits_top_ranked_and_player_without_discarding_o
 
     // Round 0 (Monza): expanded to 18 drivers
     assert_eq!(session.max_grid_participants(), 18);
-    assert_eq!(session.cars.len(), 18);
+    assert_eq!(session.world.vehicles.len(), 18);
 
     // Simulate completion of Round 0 where AI drivers score points
     // Let player finish 4th, ai_1 1st, ai_2 2nd, ai_3 3rd, ai_4 5th, ai_5 6th, ai_6 7th, ai_7 8th, ai_8 9th, etc.
@@ -122,7 +122,7 @@ fn test_round_with_fewer_slots_admits_top_ranked_and_player_without_discarding_o
     session.init_race();
 
     assert_eq!(session.max_grid_participants(), 10, "Round 1 has 10 grid slots");
-    assert_eq!(session.cars.len(), 10, "Only 10 cars participate in Round 1");
+    assert_eq!(session.world.vehicles.len(), 10, "Only 10 cars participate in Round 1");
     assert_eq!(session.grid_participants.len(), 10);
 
     // Human player is in the grid
@@ -226,11 +226,11 @@ fn test_human_player_always_qualifies_even_when_ranked_last() {
     session.init_race();
 
     assert_eq!(session.max_grid_participants(), 10);
-    assert_eq!(session.cars.len(), 10);
+    assert_eq!(session.world.vehicles.len(), 10);
     // Player MUST still be on the grid in slot 0 despite being 18th in standings!
     let player_participant = session.grid_participants.iter().find(|p| p.is_player);
     assert!(player_participant.is_some(), "Human player must ALWAYS qualify for the round");
-    assert_eq!(session.cars.len(), 10);
+    assert_eq!(session.world.vehicles.len(), 10);
 }
 
 #[test]
@@ -260,7 +260,7 @@ fn test_subsequent_round_with_more_slots_allows_all_qualified_drivers_to_race_ag
 
     // Round 0 (Monza): 18 slots
     session.init_race();
-    assert_eq!(session.cars.len(), 18);
+    assert_eq!(session.world.vehicles.len(), 18);
 
     // Finish Round 0
     let r0_results: Vec<RoundDriverResult> = session
@@ -292,7 +292,7 @@ fn test_subsequent_round_with_more_slots_allows_all_qualified_drivers_to_race_ag
 
     // Round 1 (Classic Rallycross: 10 slots)
     session.init_race();
-    assert_eq!(session.cars.len(), 10, "Round 1 restricted to 10 slots");
+    assert_eq!(session.world.vehicles.len(), 10, "Round 1 restricted to 10 slots");
     assert_eq!(session.championship_session.as_ref().unwrap().standings.len(), 18);
 
     // Finish Round 1 with only the 10 participating drivers
@@ -312,7 +312,7 @@ fn test_subsequent_round_with_more_slots_allows_all_qualified_drivers_to_race_ag
 
     // Round 2 (Monza: 18 slots again!)
     session.init_race();
-    assert_eq!(session.cars.len(), 18, "Round 2 expands back to 18 slots for all drivers");
+    assert_eq!(session.world.vehicles.len(), 18, "Round 2 expands back to 18 slots for all drivers");
     assert_eq!(session.grid_participants.len(), 18);
     assert_eq!(session.championship_session.as_ref().unwrap().standings.len(), 18);
 }
@@ -460,11 +460,11 @@ fn test_successive_round_grid_position_matches_standings_ranking() {
     // Verify actual car spawn coordinates:
     // Player car (cars[0]) must be at grid_positions[2]
     let player_expected_pos = session.track.grid_positions[2].position;
-    assert!((session.cars[0].state.position - player_expected_pos).length() < 0.01, "Player car must spawn at grid slot 2");
+    assert!((session.world.vehicles[0].state.position - player_expected_pos).length() < 0.01, "Player car must spawn at grid slot 2");
 
     // Bot Bravo car must be at grid_positions[0]
     let bravo_bot_idx = session.opponent_drivers.iter().position(|d| d.id == "bot_bravo").unwrap();
-    let bravo_car_pos = session.cars[1 + bravo_bot_idx].state.position;
+    let bravo_car_pos = session.world.vehicles[1 + bravo_bot_idx].state.position;
     let bravo_expected_pos = session.track.grid_positions[0].position;
     assert!((bravo_car_pos - bravo_expected_pos).length() < 0.01, "Bot Bravo car must spawn at pole (grid slot 0)");
 }
@@ -533,5 +533,5 @@ fn test_successive_round_player_wins_gets_pole_position() {
     assert_eq!(session.grid_participants[2].name, "Bot Bravo", "3rd in standings must start in Grid Slot 2");
 
     let player_expected_pos = session.track.grid_positions[0].position;
-    assert!((session.cars[0].state.position - player_expected_pos).length() < 0.01, "Player car must spawn at pole (grid slot 0)");
+    assert!((session.world.vehicles[0].state.position - player_expected_pos).length() < 0.01, "Player car must spawn at pole (grid slot 0)");
 }

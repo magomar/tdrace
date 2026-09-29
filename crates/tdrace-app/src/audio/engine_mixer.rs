@@ -166,12 +166,14 @@ impl EngineAudioMixer {
         Self::compute_voice_parameters_bounded(rpm, throttle, master_vol, IDLE_RPM, MID_RPM, HIGH_RPM)
     }
 
-    /// Updates dynamic playback rate and volume across all active engine voices with sub-frame tweening.
-    pub fn update(
+    /// Updates dynamic playback rate, volume, stereo pan, and Doppler pitch multiplier across all active engine voices.
+    pub fn update_spatial(
         &mut self,
         rpm: f32,
         throttle: f32,
         master_vol: f32,
+        pan: f32,
+        pitch_multiplier: f32,
         backend: &mut AudioBackend,
     ) {
         if !self.voices.is_active {
@@ -190,21 +192,38 @@ impl EngineAudioMixer {
             self.bank.high_on.rpm,
         );
         let tween_dur = Duration::from_millis(8);
+        let p_mult = pitch_multiplier.max(0.01);
 
-        self.voices.idle.set_playback_rate(params[0].0, tween_dur);
+        self.voices.idle.set_playback_rate(params[0].0 * p_mult, tween_dur);
         self.voices.idle.set_volume(params[0].1, tween_dur);
+        self.voices.idle.set_panning(pan, tween_dur);
 
-        self.voices.mid_on.set_playback_rate(params[1].0, tween_dur);
+        self.voices.mid_on.set_playback_rate(params[1].0 * p_mult, tween_dur);
         self.voices.mid_on.set_volume(params[1].1, tween_dur);
+        self.voices.mid_on.set_panning(pan, tween_dur);
 
-        self.voices.mid_off.set_playback_rate(params[2].0, tween_dur);
+        self.voices.mid_off.set_playback_rate(params[2].0 * p_mult, tween_dur);
         self.voices.mid_off.set_volume(params[2].1, tween_dur);
+        self.voices.mid_off.set_panning(pan, tween_dur);
 
-        self.voices.high_on.set_playback_rate(params[3].0, tween_dur);
+        self.voices.high_on.set_playback_rate(params[3].0 * p_mult, tween_dur);
         self.voices.high_on.set_volume(params[3].1, tween_dur);
+        self.voices.high_on.set_panning(pan, tween_dur);
 
-        self.voices.high_off.set_playback_rate(params[4].0, tween_dur);
+        self.voices.high_off.set_playback_rate(params[4].0 * p_mult, tween_dur);
         self.voices.high_off.set_volume(params[4].1, tween_dur);
+        self.voices.high_off.set_panning(pan, tween_dur);
+    }
+
+    /// Updates dynamic playback rate and volume across all active engine voices with sub-frame tweening.
+    pub fn update(
+        &mut self,
+        rpm: f32,
+        throttle: f32,
+        master_vol: f32,
+        backend: &mut AudioBackend,
+    ) {
+        self.update_spatial(rpm, throttle, master_vol, 0.0, 1.0, backend);
     }
 
     /// Stops playback and mutes all voices immediately.

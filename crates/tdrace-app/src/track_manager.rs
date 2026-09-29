@@ -25,11 +25,12 @@ pub enum ModuleFilter {
     Nascar,
     ExtremeOffRoad,
     Autocross,
+    Vault,
     Drafts,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
@@ -37,6 +38,7 @@ impl ModuleFilter {
         Self::Nascar,
         Self::ExtremeOffRoad,
         Self::Autocross,
+        Self::Vault,
         Self::Drafts,
     ];
 
@@ -49,6 +51,7 @@ impl ModuleFilter {
             Self::Nascar => Some("nascar"),
             Self::ExtremeOffRoad => Some("extreme_offroad"),
             Self::Autocross => Some("autocross"),
+            Self::Vault => Some("vault"),
             Self::Drafts => Some("drafts"),
         }
     }
@@ -62,6 +65,7 @@ impl ModuleFilter {
             Self::Nascar => "NASCAR",
             Self::ExtremeOffRoad => "EXTREME OFF-ROAD",
             Self::Autocross => "FIA AUTOCROSS",
+            Self::Vault => "THE VAULT",
             Self::Drafts => "DRAFTS",
         }
     }
@@ -72,6 +76,7 @@ impl ModuleFilter {
             Self::Gt => "GT",
             Self::ExtremeOffRoad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
+            Self::Vault => "VAULT",
             other => other.label(),
         }
     }
@@ -85,6 +90,7 @@ impl ModuleFilter {
             Self::Nascar => 5,
             Self::ExtremeOffRoad => 6,
             Self::Autocross => 7,
+            Self::Vault => 8,
             Self::Drafts => 9,
         }
     }
@@ -97,7 +103,8 @@ impl ModuleFilter {
             Self::Gt => Self::Nascar,
             Self::Nascar => Self::ExtremeOffRoad,
             Self::ExtremeOffRoad => Self::Autocross,
-            Self::Autocross => Self::Drafts,
+            Self::Autocross => Self::Vault,
+            Self::Vault => Self::Drafts,
             Self::Drafts => Self::Classic,
         }
     }
@@ -111,7 +118,8 @@ impl ModuleFilter {
             Self::Nascar => Self::Gt,
             Self::ExtremeOffRoad => Self::Nascar,
             Self::Autocross => Self::ExtremeOffRoad,
-            Self::Drafts => Self::Autocross,
+            Self::Vault => Self::Autocross,
+            Self::Drafts => Self::Vault,
         }
     }
 
@@ -123,6 +131,7 @@ impl ModuleFilter {
             "nascar" => Self::Nascar,
             "extreme_offroad" | "offroad" => Self::ExtremeOffRoad,
             "autocross" | "ax" => Self::Autocross,
+            "vault" => Self::Vault,
             "drafts" => Self::Drafts,
             _ => Self::Classic,
         }
@@ -530,6 +539,7 @@ impl TrackManager {
             ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
             ModuleFilter::ExtremeOffRoad => self.module_catalog_tracks("extreme_offroad"),
             ModuleFilter::Autocross => self.module_catalog_tracks("autocross"),
+            ModuleFilter::Vault => self.module_catalog_tracks("vault"),
             ModuleFilter::Drafts => self.draft_track_choices(),
         }
     }
@@ -1969,7 +1979,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 115); // 10 classic + 18 gt + 17 rally + 17 kart + 17 nascar + 19 unique extreme off-road + 17 autocross
+        assert_eq!(choices.len(), 124); // 13 classic + 18 gt + 20 rally + 20 kart + 17 nascar + 19 unique extreme off-road + 17 autocross
 
         let mut gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         gp.name = "My Custom GP".to_string();
@@ -1981,8 +1991,8 @@ mod tests {
             .expect("Must save custom track");
         assert!(Path::new(&saved_path).exists());
 
-        // Since gp was saved as Draft, main choices is still 115, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 115);
+        // Since gp was saved as Draft, main choices is still 124, but draft choices has 1
+        assert_eq!(manager.main_track_choices().len(), 124);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -1991,7 +2001,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 116);
+        assert_eq!(manager.main_track_choices().len(), 125);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -2002,18 +2012,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[115]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[124]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 115);
+        assert_eq!(manager.main_track_choices().len(), 124);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 115);
+        assert_eq!(manager.main_track_choices().len(), 124);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -2089,7 +2099,7 @@ mod tests {
 
         // Classic tracks
         let classic_tracks = manager.module_catalog_tracks("classic");
-        assert_eq!(classic_tracks.len(), 10);
+        assert_eq!(classic_tracks.len(), 13);
 
         // GT tracks
         let gt_tracks = manager.module_catalog_tracks("gt");
@@ -2101,13 +2111,13 @@ mod tests {
 
         // Rally tracks
         let rally_tracks = manager.module_catalog_tracks("rally");
-        assert_eq!(rally_tracks.len(), 17);
+        assert_eq!(rally_tracks.len(), 20);
         assert!(rally_tracks.iter().any(|t| t.title().contains("Circuit des Ducs")));
         assert!(rally_tracks.iter().any(|t| t.title().contains("Höljes")));
 
         // Kart tracks
         let kart_tracks = manager.module_catalog_tracks("kart");
-        assert_eq!(kart_tracks.len(), 17);
+        assert_eq!(kart_tracks.len(), 20);
         assert!(kart_tracks.iter().any(|t| t.title().contains("Lonato")));
         assert!(kart_tracks.iter().any(|t| t.title().contains("Sarno")));
         assert!(kart_tracks.iter().any(|t| t.title().contains("Genk")));
@@ -2138,7 +2148,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 115);
+        assert_eq!(all_tracks.len(), 124);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
@@ -2148,21 +2158,21 @@ mod tests {
 
         // Classic category: 10 presets first, then 1 custom track
         let classic_after = manager.module_catalog_tracks("classic");
-        assert_eq!(classic_after.len(), 11);
+        assert_eq!(classic_after.len(), 14);
         for track in &classic_after[..10] {
             assert!(track.is_official_preset(), "Presets must appear first in catalog: {}", track.title());
         }
-        assert!(classic_after[10].is_user_custom(), "Custom circuit must appear after presets");
-        assert_eq!(classic_after[10].title(), "Custom Category Circuit");
+        assert!(classic_after[13].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(classic_after[13].title(), "Custom Category Circuit");
 
-        // Rally category: 17 presets first, then 1 custom track
+        // Rally category: 20 presets first, then 1 custom track
         let rally_after = manager.module_catalog_tracks("rally");
-        assert_eq!(rally_after.len(), 18);
-        for track in &rally_after[..17] {
+        assert_eq!(rally_after.len(), 21);
+        for track in &rally_after[..20] {
             assert!(track.is_official_preset(), "Presets must appear first in rally: {}", track.title());
         }
-        assert!(rally_after[17].is_user_custom(), "Custom circuit must appear after presets");
-        assert_eq!(rally_after[17].title(), "Custom Category Circuit");
+        assert!(rally_after[20].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(rally_after[20].title(), "Custom Category Circuit");
 
         // GT and Kart: Must not contain this custom track
         let gt_after = manager.module_catalog_tracks("gt");
@@ -2170,7 +2180,7 @@ mod tests {
         assert!(!gt_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let kart_after = manager.module_catalog_tracks("kart");
-        assert_eq!(kart_after.len(), 17);
+        assert_eq!(kart_after.len(), 20);
         assert!(!kart_after.iter().any(|t| t.title() == "Custom Category Circuit"));
 
         let _ = fs::remove_dir_all(&temp_dir);
@@ -2199,9 +2209,9 @@ mod tests {
         assert!(cloned_gp.modules.is_empty());
         assert!(Path::new(&path_gp).exists());
 
-        // Cloned track must appear in drafts, and main count stays 115
+        // Cloned track must appear in drafts, and main count stays 124
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 115);
+        assert_eq!(manager.main_track_choices().len(), 124);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug

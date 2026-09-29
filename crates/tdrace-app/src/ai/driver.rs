@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use macroquad::color::Color;
-use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle};
+use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle, LcgRng};
 use crate::catalog::RealCarModel;
 use crate::module::GameModule;
 use crate::render::color::CarColorScheme;
@@ -883,7 +883,8 @@ impl DriverCharacter {
     /// If discipline is "classic", tier is strictly normalized to Tier 1.
     pub fn favorite_car_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> Option<&'static str> {
         let norm_disc = Self::normalize_discipline(discipline);
-        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, 5) };
+        let max_tier = if norm_disc == "rally" || norm_disc == "kart" { 6 } else { 5 };
+        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, max_tier) };
 
         // 1. Exact match for discipline and tier
         if let Some(fav) = self.favorite_cars.iter().find(|f| f.discipline == norm_disc && f.tier == effective_tier) {
@@ -935,34 +936,3 @@ impl DriverCharacter {
         }
     }
 }
-
-/// Deterministic linear congruential generator for reproducible roster sampling.
-#[derive(Debug, Clone)]
-pub struct LcgRng(pub u64);
-
-impl LcgRng {
-    pub fn new(seed: u64) -> Self {
-        Self(seed.wrapping_add(1442695040888963407))
-    }
-
-    pub fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1);
-        self.0
-    }
-
-    pub fn next_u32(&mut self) -> u32 {
-        (self.next_u64() >> 32) as u32
-    }
-
-    pub fn next_f32(&mut self) -> f32 {
-        (self.next_u32() as f32) / (u32::MAX as f32)
-    }
-
-    pub fn shuffle<T>(&mut self, slice: &mut [T]) {
-        for i in (1..slice.len()).rev() {
-            let j = (self.next_u64() >> 33) as usize % (i + 1);
-            slice.swap(i, j);
-        }
-    }
-}
-

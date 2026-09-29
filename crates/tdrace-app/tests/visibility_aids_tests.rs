@@ -313,7 +313,7 @@ fn test_render_sonar_ping_headless_and_session_triggers() {
     // Zoom cycle triggers sonar ping when enabled
     session.cycle_camera_zoom();
     assert_eq!(session.sonar_ping_timer, 0.75);
-    if let Some(pos) = session.cars.first().map(|c| c.state.position) {
+    if let Some(pos) = session.world.vehicles.first().map(|c| c.state.position) {
         assert_eq!(session.sonar_ping_origin, pos);
     }
 
@@ -328,10 +328,10 @@ fn test_render_sonar_ping_headless_and_session_triggers() {
     session.sonar_ping_timer = 0.0;
     session.sonar_ping_cooldown = 0.0;
     session.state = tdrace_app::game::GameState::Racing;
-    if let Some(pc) = session.cars.first_mut() {
+    if let Some(pc) = session.world.vehicles.first_mut() {
         pc.state.angular_velocity = 5.2; // > 4.5 rad/s
     }
-    let expected_pos = session.cars.first().map(|c| c.state.position).unwrap();
+    let expected_pos = session.world.vehicles.first().map(|c| c.state.position).unwrap();
     session.update();
     assert_eq!(session.sonar_ping_timer, 0.75);
     assert_eq!(session.sonar_ping_origin, expected_pos);

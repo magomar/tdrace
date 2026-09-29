@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::geometry::LineSegment;
 use super::spline::TrackSpline;
-use wheelbase::Car;
+use crate::body::Body2D;
 
 /// Directional crossing result when testing car trajectory across a checkpoint gate.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -211,22 +211,22 @@ impl TrackProgressTracker {
     }
 
     /// Updates race progression given the car's state, track spline, checkpoints, and timestep.
-    pub fn update(
+    pub fn update<B: Body2D>(
         &mut self,
-        car: &Car,
+        car: &B,
         spline: &TrackSpline,
         checkpoints: &[Checkpoint],
         dt: f32,
     ) {
         self.lap_completed = false;
-        let car_pos = car.state.position;
+        let car_pos = car.position();
 
         // 1. Advance timing clocks
         self.lap_time += dt;
         if self.current_sector < self.sector_times.len() {
             self.sector_times[self.current_sector] += dt;
         }
-        self.total_distance_travelled += car.state.speed * dt;
+        self.total_distance_travelled += car.speed() * dt;
 
         // 2. Project onto spline centerline with continuity constraint
         let proj = if self.last_position.is_some() && self.total_distance_travelled > 0.0 {
@@ -366,7 +366,7 @@ impl TrackProgressTracker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wheelbase::CarConfig;
+    use wheelbase::{Car, CarConfig};
 
     #[test]
     fn test_checkpoint_crossing() {

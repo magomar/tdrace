@@ -176,6 +176,16 @@ pub struct CustomButtonBinding {
     pub alternate: Option<String>,
 }
 
+static APP_ID: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+/// Sets the game's folder name for gamepad profile files (`../<id>/` and `~/.config/<id>/`).
+/// Without it the tdrace folders are searched. Spec 059.
+pub fn set_app_id(id: &str) {
+    if let Ok(mut app_id) = APP_ID.lock() {
+        *app_id = Some(id.to_string());
+    }
+}
+
 /// Cross-platform Gamepad Manager supporting hot-plugging, analog axes, and button events.
 pub struct GamepadManager {
     #[cfg(feature = "gamepad")]
@@ -280,7 +290,33 @@ impl GamepadManager {
     }
 
     /// Candidate search paths for gamepad mapping profiles in order of priority.
+    /// They follow the game name set with [`set_app_id`]; without it, the tdrace list is used.
     pub fn candidate_profile_paths() -> Vec<std::path::PathBuf> {
+        let app_id = APP_ID.lock().ok().and_then(|id| id.clone());
+        Self::candidate_profile_paths_for(app_id.as_deref())
+    }
+
+    /// Candidate search paths for `app_id`: the working directory, the sibling `gamepad-mapper`
+    /// and `<app_id>` folders, then `~/.config/gamepad-mapper` and `~/.config/<app_id>`.
+    /// `None` gives the original list with the `tdrace` and `asteroids` folders.
+    pub fn candidate_profile_paths_for(app_id: Option<&str>) -> Vec<std::path::PathBuf> {
+        let Some(app_id) = app_id else {
+            return Self::legacy_profile_paths();
+        };
+        let mut paths = vec![
+            std::path::PathBuf::from("gamepad_profile.json"),
+            std::path::PathBuf::from("../gamepad-mapper/gamepad_profile.json"),
+            std::path::PathBuf::from("..").join(app_id).join("gamepad_profile.json"),
+        ];
+        if let Some(home) = std::env::var_os("HOME") {
+            let h = std::path::PathBuf::from(home);
+            paths.push(h.join(".config").join("gamepad-mapper").join("gamepad_profile.json"));
+            paths.push(h.join(".config").join(app_id).join("gamepad_profile.json"));
+        }
+        paths
+    }
+
+    fn legacy_profile_paths() -> Vec<std::path::PathBuf> {
         let mut paths = Vec::new();
         // 1. Current working directory
         paths.push(std::path::PathBuf::from("gamepad_profile.json"));
@@ -305,9 +341,15 @@ impl GamepadManager {
 
     /// Finds and parses the best-matching profile for the specified device, prioritizing matched devices over generic profiles.
     pub fn find_and_load_profile_for_device(target_device: Option<&str>) -> Option<CustomGamepadProfile> {
+        Self::find_and_load_profile_in(&Self::candidate_profile_paths(), target_device)
+    }
+
+    /// Picks the best profile for `target_device` among `paths`: a device-name match first, then the
+    /// newest file.
+    pub fn find_and_load_profile_in(paths: &[std::path::PathBuf], target_device: Option<&str>) -> Option<CustomGamepadProfile> {
         let mut candidates = Vec::new();
 
-        for path in Self::candidate_profile_paths() {
+        for path in paths {
             if path.exists() {
                 if let Ok(metadata) = std::fs::metadata(&path) {
                     if let Ok(modified) = metadata.modified() {
@@ -852,13 +894,11 @@ impl GamepadManager {
     }
 
     /// Checks whether a Gilrs button is currently held down on the active gamepad.
+    #[cfg(feature = "gamepad")]
     pub fn is_button_down(&self, btn: Button) -> bool {
-        #[cfg(feature = "gamepad")]
-        {
-            if let (Some(ref gilrs), Some(id)) = (&self.gilrs, self.active_gamepad) {
-                if let Some(gp) = gilrs.connected_gamepad(id) {
-                    return gp.is_pressed(btn);
-                }
+        if let (Some(ref gilrs), Some(id)) = (&self.gilrs, self.active_gamepad) {
+            if let Some(gp) = gilrs.connected_gamepad(id) {
+                return gp.is_pressed(btn);
             }
         }
         false
@@ -920,7 +960,20 @@ mod tests {
 
     #[test]
     fn test_custom_gamepad_profile_loading() {
-        let profile = GamepadManager::find_and_load_profile_for_device(Some("shanwan Twin USB Joystick"));
+        // The repo's own profile (not whatever sits in this machine's ~/.config), beside a newer
+        // generic one: the device-name match must win over the newer file.
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../gamepad_profile.json");
+        let dir = std::env::temp_dir().join(format!("cabinet_profile_loading_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let shanwan = dir.join("shanwan.json");
+        let generic = dir.join("generic.json");
+        std::fs::copy(&fixture, &shanwan).expect("repo gamepad_profile.json fixture");
+        let generic_profile = CustomGamepadProfile { device_name: "Standard Gamepad".to_string(), ..Default::default() };
+        std::fs::write(&generic, serde_json::to_string(&generic_profile).unwrap()).unwrap();
+
+        let profile = GamepadManager::find_and_load_profile_in(&[shanwan, generic], Some("shanwan Twin USB Joystick"));
+        let _ = std::fs::remove_dir_all(&dir);
         assert!(profile.is_some(), "Custom profile should be found in candidate paths");
         let prof = profile.unwrap();
         assert_eq!(prof.device_name, "shanwan Twin USB Joystick");

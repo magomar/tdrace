@@ -225,6 +225,23 @@ above, with the reason.
    - "No bot below 2 m/s for 6 s" is now "no bot more than 20 s without 5 m of progress". The draft
      measure missed a bot that circled at 1–4 m/s against the oval wall for 400 s. After a spin on
      the oval banking, recovery takes up to 15.6 s (measured maximum).
+9. **Corner-exit mistakes wait for the launch** (`tdrace-flaky-kart-bots-test-07kw`). A kart grid
+   sits just past an apex, so a PowerStab planned for that corner fired at ~1 m/s off the grid:
+   the handbrake locked a cadet kart for ~2 s (14 of 2200 launches, seeds 0–199). PowerStab and
+   the Cautious lift now fire only after the bot first reaches 6 m/s. A plain "speed ≥ 6 m/s"
+   gate also removed slow hairpin-exit stabs and dropped T1 big mistakes to 0.096 per lap, under
+   the 0.1 gate, so the gate is on the launch only.
+10. **Gates restated for the bot driving fixes** (`tdrace-bot-driving-enhancements-703o`, commit
+   `6f03867`: no steering lag, looser throttle in bends, T5 apex curb cutting). Mario accepted the
+   new behaviour and asked for the gates to follow it. "Measured" is the debug test build after
+   `6f03867`; "was" is the release report before it.
+   - T5 lap spread ≤ 0.7 % (was ≤ 0.6 %). Classic GP measured 0.63 % (was 0.50 %).
+   - No progress ≤ 25 s (was ≤ 20 s). Kart Arena T1 measured 21.8 s (was 8.8 s).
+   - The curb cut first also made Legend karts spin on the Kart Arena curbs and lap 3.2 % slower
+     than T4, so T5 big mistakes were let up to 0.03 per lap. `tdrace-d538` fixed the cause: the
+     cut now fades in with track width, none at 8 m and all of it from 12 m. On Kart Arena
+     (7.5–8 m) T5 laps 26.53 s against T4 27.23 s (release, 8 seed sets); the 12–14 m tracks
+     keep their times. The T5 gate is back at ≤ 0.02.
 
 ---
 
@@ -306,7 +323,7 @@ The benchmark writes `reports/bot_behaviour_report.md`.
   - [x] **When** mean lap time is compared across tiers
   - [x] **Then** mean lap time rises from T5 to T1
   - [x] **And** the T1 mean is ≥ 7 % slower than the T4 mean
-  - [x] **And** the T1 lap-to-lap spread (standard deviation / mean) is ≥ 1.5 %, and T5 is ≤ 0.6 %
+  - [x] **And** the T1 lap-to-lap spread (standard deviation / mean) is ≥ 1.5 %, and T5 is ≤ 0.7 % (restated, §6 item 10)
 
 - **Scenario: A keyboard reference driver beats Tier 1**
   - [x] **Given** a reference driver: a T3 Balanced bot with `HumanTraits::none()`, whose steer, throttle and brake are cut to key presses (on / off) and sent through the Balanced player filter and `PlayerHandling`, as a human car
@@ -324,7 +341,7 @@ The benchmark writes `reports/bot_behaviour_report.md`.
   - [x] **Given** the full harness sample, including every spin
   - [x] **When** the harness runs
   - [x] **Then** every bot completes 10 laps on every track
-  - [x] **And** no bot goes more than 20 s without gaining 5 m of track progress (restated, §6 item 8)
+  - [x] **And** no bot goes more than 25 s without gaining 5 m of track progress (restated, §6 items 8 and 10)
 
 - **Scenario: Existing AI behaviour still works**
   - [x] **Given** the existing AI test files listed in Automated Tests

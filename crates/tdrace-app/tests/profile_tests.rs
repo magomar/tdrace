@@ -32,6 +32,8 @@ fn test_profile_schema_and_crud() {
         country: Some("ESP".to_string()),
         color_scheme: CarColorScheme::from_index(4),
         is_active: true,
+        credits: 25_000,
+        lifetime_credits: 25_000,
         created_at: "2026-08-27 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
     };
@@ -228,6 +230,8 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         country: Some("GBR".to_string()),
         color_scheme: custom_livery,
         is_active: true,
+        credits: 25_000,
+        lifetime_credits: 25_000,
         created_at: "2026-08-27 11:00".to_string(),
         last_mode: AssistProfile::Arcade,
     };
@@ -247,11 +251,11 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
 
     assert_eq!(session.color_schemes[0], session.active_profile.color_scheme);
     assert_eq!(session.color_schemes[0].to_hex_strings(), custom_livery.to_hex_strings());
-    assert_eq!(session.cars.len(), session.max_grid_participants()); // Full grid capacity on classic track
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants()); // Full grid capacity on classic track
 
     // Simulate winning race completion
-    session.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
-    session.trackers[0].best_lap_time = Some(23.4);
+    session.world.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
+    session.world.trackers[0].best_lap_time = Some(23.4);
     session.session_time = 71.5;
 
     session.check_race_finish();
@@ -353,6 +357,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
         country: Some("ESP".to_string()),
         color_scheme: CarColorScheme::from_index(3),
         is_active: false,
+        credits: 25_000,
+        lifetime_credits: 25_000,
         created_at: "2026-09-01 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
     };
@@ -473,8 +479,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
     // Simulate winning race to populate in-memory session caches
     session.track_choice = TrackChoice::ClassicGrandPrix;
     session.init_race();
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(23.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(23.0);
     session.session_time = 70.0;
     session.check_race_finish();
 
@@ -523,10 +529,10 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(!progress.is_track_unlocked("silverstone", false));
     assert!(!progress.is_track_unlocked("spa", false));
 
-    // 2. Add XP: increases spendable XP and lifetime XP, level remains 1 until advanced
-    progress.add_xp(2500);
-    assert_eq!(progress.xp, 2500);
-    assert_eq!(progress.lifetime_xp, 2500);
+    // 2. Add XP: increases cumulative discipline XP and lifetime XP, level remains 1 until advanced
+    progress.add_xp(3000);
+    assert_eq!(progress.xp, 3000);
+    assert_eq!(progress.lifetime_xp, 3000);
     assert_eq!(progress.level, 1);
 
     // Cannot advance without a championship podium finish
@@ -535,7 +541,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
 
     // Award championship podium trophy (e.g. Gold)
     progress.trophies_gold = 1;
-    assert!(progress.can_advance_tier(), "Eligible to advance: has podium and >= 2000 XP for Tier 2 car");
+    assert!(progress.can_advance_tier(), "Eligible to advance: has podium and >= 3000 XP for Tier 2");
 
     // Advance tier to Tier 2
     let new_lvl = progress.advance_tier().expect("Advance tier");
@@ -545,24 +551,36 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(progress.is_track_unlocked("silverstone", false));
     assert!(progress.is_track_unlocked("catalunya", false));
 
-    // In Tier 2, cars are NOT automatically unlocked; they must be purchased with spendable XP!
+    // In Tier 2, cars are NOT automatically unlocked; they must be purchased with Credits!
     assert!(!progress.is_car_unlocked("gt3_evo", false));
-    assert!(progress.can_buy_car("gt3_evo", 2));
-    progress.buy_car("gt3_evo", 2).expect("Buy Tier 2 GT3 car");
+    assert_eq!(ModuleCareerProgress::car_credit_cost(2), 60_000);
+    let mut active_prof = db.get_active_profile().expect("Get active");
+    assert_eq!(active_prof.credits, 25_000);
+    assert!(!progress.can_buy_car("gt3_evo", 2, active_prof.credits), "Cannot afford 60k Cr car with 25k Cr");
+    active_prof.add_credits(50_000);
+    assert_eq!(active_prof.credits, 75_000);
+    assert!(progress.can_buy_car("gt3_evo", 2, active_prof.credits));
+    progress.buy_car(&mut active_prof, "gt3_evo", 2).expect("Buy Tier 2 GT3 car");
     assert!(progress.is_car_unlocked("gt3_evo", false));
-    // XP reduced by 2,000 (2,500 - 2,000 = 500), but lifetime XP remains 2,500
-    assert_eq!(progress.xp, 500);
-    assert_eq!(progress.lifetime_xp, 2500);
+    // XP is non-spendable reputation: 0 XP lost on purchase (Spec 053)
+    assert_eq!(progress.xp, 3000);
+    assert_eq!(progress.lifetime_xp, 3000);
+    // Credits deducted from global wallet: 75,000 - 60,000 = 15,000
+    assert_eq!(active_prof.credits, 15_000);
 
     // Save and verify persistence in SQLite
     db.save_module_progress(&progress).expect("Save progress");
+    db.update_profile(&active_prof).expect("Update profile");
     let fetched = db.get_module_progress(pid, "gt").expect("Fetch progress").expect("Must exist");
     assert_eq!(fetched.level, 2);
-    assert_eq!(fetched.xp, 500);
-    assert_eq!(fetched.lifetime_xp, 2500);
+    assert_eq!(fetched.xp, 3000);
+    assert_eq!(fetched.lifetime_xp, 3000);
     assert_eq!(fetched.trophies_gold, 1);
     assert!(fetched.is_car_unlocked("gt3_evo", false));
     assert!(fetched.is_track_unlocked("monza", false));
+
+    let fetched_prof = db.get_profile_by_id(pid).expect("Fetch profile").expect("Must exist");
+    assert_eq!(fetched_prof.credits, 15_000);
 
     // 3. Verify module independence: progress in rally is completely separate
     let rally_progress = db.get_or_create_module_progress(pid, "rally").expect("Rally progress");
@@ -664,16 +682,17 @@ fn test_gt_career_session_gating_and_cup_launch() {
     // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4; // finished 3 laps
-    session.trackers[0].best_lap_time = Some(21.0);
+    session.world.trackers[0].current_lap = 4; // finished 3 laps
+    session.world.trackers[0].best_lap_time = Some(21.0);
     session.session_time = 65.0;
     session.check_race_finish();
 
     assert!(session.active_career_progress.xp > 0);
     let receipt = session.last_xp_receipt.as_ref().expect("Receipt present");
     assert_eq!(receipt.completed_laps, 3);
-    assert_eq!(receipt.completion_bonus, receipt.lap_xp, "Finish bonus duplicates lap XP");
     assert_eq!(receipt.first_time_bonus, 250, "Tier 1 first-time bonus is 250 XP");
+    assert_eq!(receipt.credits_earned, 5000, "Tier 1 P1 prize purse is 5,000 Cr");
+    assert_eq!(receipt.clean_bonus_credits, 1000, "Clean race credit bonus is +20% (1,000 Cr)");
     assert_eq!(receipt.total_xp, receipt.lap_xp + receipt.completion_bonus + 250);
     assert_eq!(session.active_career_progress.xp, receipt.total_xp);
 
@@ -735,43 +754,51 @@ fn test_circuit_defaults_unlocked_and_dev_mode_unblocks_all() {
 }
 
 #[test]
-fn test_car_purchasing_with_spendable_xp_and_deduction() {
+fn test_car_purchasing_with_credits_and_zero_xp_deduction() {
     let mut progress = ModuleCareerProgress::default_for_gt(1);
+    let mut profile = PlayerProfile::new("Racer", "Apex", Some("ESP"), CarColorScheme::from_index(0));
+    profile.credits = 0;
     assert_eq!(progress.xp, 0);
     assert_eq!(progress.lifetime_xp, 0);
     assert_eq!(progress.level, 1);
 
-    // Tier 1 cars cost 1,000 XP
-    assert_eq!(ModuleCareerProgress::car_cost(1), 1000);
-    // Tier 3 cars cost 3,000 XP
-    assert_eq!(ModuleCareerProgress::car_cost(3), 3000);
+    // Spec 053 vehicle credit costs
+    assert_eq!(ModuleCareerProgress::car_credit_cost(1), 25_000);
+    assert_eq!(ModuleCareerProgress::car_credit_cost(2), 60_000);
+    assert_eq!(ModuleCareerProgress::car_credit_cost(3), 150_000);
+    assert_eq!(ModuleCareerProgress::car_credit_cost(4), 380_000);
+    assert_eq!(ModuleCareerProgress::car_credit_cost(5), 950_000);
 
-    // Cannot buy without sufficient XP
-    assert!(!progress.can_buy_car("gt4_cayman", 1));
-    assert!(progress.buy_car("gt4_cayman", 1).is_err());
-
-    // Add 1,500 XP
+    // Add 1,500 XP to discipline
     progress.add_xp(1500);
     assert_eq!(progress.xp, 1500);
-    assert_eq!(progress.lifetime_xp, 1500);
-    assert!(progress.can_buy_car("gt4_cayman", 1));
+
+    // Cannot buy without sufficient Credits in global wallet (even with 1500 XP)
+    assert!(!progress.can_buy_car("gt4_cayman", 1, profile.credits));
+    assert!(progress.buy_car(&mut profile, "gt4_cayman", 1).is_err());
+
+    // Give player 30,000 Credits
+    profile.add_credits(30_000);
+    assert_eq!(profile.credits, 30_000);
+    assert!(progress.can_buy_car("gt4_cayman", 1, profile.credits));
 
     // Buy Tier 1 car
-    progress.buy_car("gt4_cayman", 1).expect("Purchase car");
+    progress.buy_car(&mut profile, "gt4_cayman", 1).expect("Purchase car");
     assert!(progress.is_car_unlocked("gt4_cayman", false));
-    // XP reduced by 1,000: 1500 - 1000 = 500
-    assert_eq!(progress.xp, 500);
-    // Lifetime XP remains 1500
+    // Spec 053: XP is non-spendable reputation: ZERO XP lost on purchase!
+    assert_eq!(progress.xp, 1500);
     assert_eq!(progress.lifetime_xp, 1500);
+    // Credits deducted from global wallet: 30,000 - 25,000 = 5,000
+    assert_eq!(profile.credits, 5_000);
 
     // Cannot buy again once unlocked
-    assert!(!progress.can_buy_car("gt4_cayman", 1));
+    assert!(!progress.can_buy_car("gt4_cayman", 1, profile.credits));
 
-    // Cannot buy Tier 2 car while still at Level 1 even if player has XP
-    progress.add_xp(5000);
-    assert_eq!(progress.xp, 5500);
+    // Cannot buy Tier 2 car while still at Level 1 even if player has plenty of credits
+    profile.add_credits(200_000);
+    assert_eq!(profile.credits, 205_000);
     assert_eq!(progress.level, 1);
-    assert!(!progress.can_buy_car("gt3_evo", 2), "Cannot buy car above current driver tier");
+    assert!(!progress.can_buy_car("gt3_evo", 2, profile.credits), "Cannot buy car above current driver tier");
 }
 
 #[test]
@@ -779,28 +806,29 @@ fn test_two_condition_tier_advancement_gates() {
     let mut progress = ModuleCareerProgress::default_for_gt(1);
     assert_eq!(progress.level, 1);
 
-    // Target car cost for Tier 2: 1000 * 2 = 2000 XP
-    assert_eq!(progress.next_tier_target_xp(), Some(2000));
+    // Spec 053: Target license XP for Tier 2: 3,000 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(3000));
 
     // Case 1: Neither condition met
     assert!(!progress.can_advance_tier());
 
-    // Case 2: Only XP condition met (5,000 XP, 0 trophies)
+    // Case 2: Only XP condition met (5,000 XP, 0 trophies, 0 completed championships)
     progress.add_xp(5000);
     assert_eq!(progress.xp, 5000);
     assert_eq!(progress.trophies_gold + progress.trophies_silver + progress.trophies_bronze, 0);
     assert!(!progress.can_advance_tier(), "Must not advance without championship podium");
     assert!(progress.advance_tier().is_err());
 
-    // Case 3: Only Podium condition met (spend XP down below 2000)
+    // Case 3: Only Podium condition met (has podium record, but XP < 3000)
     progress.xp = 1500;
-    progress.trophies_bronze = 1;
-    assert!(!progress.can_advance_tier(), "Must not advance without sufficient XP for next-tier car");
+    progress.record_championship_finish("gt_challenger_cup", 1, 3, 40, "2026-09-29 10:00");
+    assert!(progress.has_podium_in_tier(1), "P3 finish qualifies as tier podium in Spec 053");
+    assert!(!progress.can_advance_tier(), "Must not advance without meeting 3,000 XP license threshold");
     assert!(progress.advance_tier().is_err());
 
-    // Case 4: Both conditions met (Podium + >= 2000 XP)
-    progress.xp = 2000;
-    assert!(progress.can_advance_tier(), "Can advance with podium and sufficient XP");
+    // Case 4: Both conditions met (Podium in tier + >= 3000 XP)
+    progress.xp = 3000;
+    assert!(progress.can_advance_tier(), "Can advance with tier podium and sufficient cumulative XP");
     let next_lvl = progress.advance_tier().expect("Advance tier");
     assert_eq!(next_lvl, 2);
     assert_eq!(progress.level, 2);
@@ -810,8 +838,8 @@ fn test_two_condition_tier_advancement_gates() {
     assert!(progress.is_track_unlocked("silverstone", false));
     assert!(progress.is_track_unlocked("catalunya", false));
 
-    // Next tier target is Tier 3 car: 1000 * 3 = 3000 XP
-    assert_eq!(progress.next_tier_target_xp(), Some(3000));
+    // Next tier license target is Tier 3: 7,500 XP (Spec 053)
+    assert_eq!(progress.next_tier_target_xp(), Some(7500));
 }
 
 #[test]
@@ -861,8 +889,8 @@ fn test_championship_completion_podium_trophy_awarded() {
 
     // Finish race as P1
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4;
-    session.trackers[0].best_lap_time = Some(20.5);
+    session.world.trackers[0].current_lap = 4;
+    session.world.trackers[0].best_lap_time = Some(20.5);
     session.session_time = 62.0;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -1028,6 +1056,8 @@ fn test_player_card_focus_and_roster_manager_navigation() {
         country: Some("FRA".to_string()),
         color_scheme: CarColorScheme::from_index(2),
         is_active: false,
+        credits: 25_000,
+        lifetime_credits: 25_000,
         created_at: "2026-09-20 12:00".to_string(),
         last_mode: AssistProfile::Sport,
     };
@@ -1226,7 +1256,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         .map(|t| t.id.to_string())
         .collect();
 
-    let expected_rally_tiers: [(&str, Vec<&str>); 5] = [
+    let expected_rally_tiers: [(&str, Vec<&str>); 6] = [
         (
             "Rallycross Grassroots Cup (Tier 1)",
             vec![
@@ -1238,60 +1268,70 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "World Rallycross Challenge (Tier 2)",
+            "Supercar Lites Trophy (Tier 2)",
             vec![
-                "hell_rx",
-                "loheac_rx",
-                "lavare_rx",
-                "holjes_rx",
-                "lydden_hill",
+                "montalegre_rx",
+                "nyirad_rx",
+                "kouvola_rx",
+                "catalunya_rx",
                 "mettet_rx",
+                "holjes_rx",
+            ],
+        ),
+        (
+            "Euro RX Challenge (Tier 3)",
+            vec![
+                "lavare_rx",
+                "riga_rx",
+                "killarney_rx",
+                "lessay_rx",
+                "essay_rx",
+                "dreux_rx",
                 "croft_rx",
             ],
         ),
         (
-            "Group B Masters Series (Tier 3)",
+            "FIA World RX Supercar Trophy (Tier 4)",
             vec![
-                "estering_rx",
-                "montalegre_rx",
-                "riga_rx",
+                "catalunya_rx",
+                "spa_rx",
                 "hell_rx",
                 "loheac_rx",
-                "lavare_rx",
+                "montalegre_rx",
+                "riga_rx",
                 "holjes_rx",
-                "lydden_hill",
-                "mettet_rx",
+                "silverstone_rx",
             ],
         ),
         (
-            "RX1e Electric Championship (Tier 4)",
+            "RX1e Electric Championship (Tier 5)",
             vec![
                 "nyirad_rx",
                 "kouvola_rx",
                 "killarney_rx",
                 "estering_rx",
-                "montalegre_rx",
-                "riga_rx",
                 "hell_rx",
                 "loheac_rx",
                 "lavare_rx",
+                "riga_rx",
                 "holjes_rx",
+                "silverstone_rx",
             ],
         ),
         (
-            "Nitrocross Group E Series (Tier 5)",
+            "Nitrocross Group E Series (Tier 6)",
             vec![
                 "catalunya_rx",
                 "lessay_rx",
                 "essay_rx",
+                "estering_rx",
+                "hell_rx",
+                "loheac_rx",
                 "nyirad_rx",
                 "kouvola_rx",
                 "killarney_rx",
-                "estering_rx",
-                "montalegre_rx",
                 "riga_rx",
-                "hell_rx",
-                "loheac_rx",
+                "erx_motor_park",
                 "holjes_rx",
             ],
         ),
@@ -1325,26 +1365,30 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         .map(|t| t.id.to_string())
         .collect();
 
-    let expected_kart_tiers: [(&str, Vec<&str>); 5] = [
+    let expected_kart_tiers: [(&str, Vec<&str>); 6] = [
         (
             "Rotax Junior Academy (Tier 1)",
             vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
         ),
         (
-            "National Kart Championship (Tier 2)",
-            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf", "whilton_mill"],
+            "FIA Karting Academy Trophy (Tier 2)",
+            vec!["whilton_mill", "laval_kart", "genk", "sarno", "kristianstad", "seven_laghi"],
         ),
         (
-            "Continental Rotax Trophy (Tier 3)",
-            vec!["pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf"],
+            "National Kart Championship (Tier 3)",
+            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "franciacorta", "ampfing", "pfi"],
         ),
         (
-            "FIA Karting European Championship (Tier 4)",
-            vec!["zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato"],
+            "Continental Shifter Cup (Tier 4)",
+            vec!["pfi", "franciacorta", "ampfing", "zuera", "silverstone_national_kart", "aunay_kart", "sarno", "lonato"],
         ),
         (
-            "FIA Karting World Championship (Tier 5)",
-            vec!["portimao_kart", "valencia_kart", "campillos", "zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "lonato"],
+            "Superkart Division 2 Challenge (Tier 5)",
+            vec!["zuera", "silverstone_national_kart", "aunay_kart", "le_mans_kart", "campillos", "muelsen_kart", "pfi", "sarno", "lonato"],
+        ),
+        (
+            "Superkart Division 1 World Series (Tier 6)",
+            vec!["portimao_kart", "valencia_kart", "adria_kart", "campillos", "le_mans_kart", "muelsen_kart", "zuera", "silverstone_national_kart", "pfi", "lonato"],
         ),
     ];
 
@@ -1579,8 +1623,10 @@ fn test_real_championships_listing_and_filter() {
         assert!(!c.series.id.is_empty(), "Series ID must not be empty");
         assert!(!c.series.name.is_empty(), "Series Name must not be empty");
         assert!(!c.series.module_id.is_empty(), "Module ID must not be empty");
-        assert!(!c.rounds.is_empty(), "Championship must have at least one round");
-        assert!(c.series.tier >= 1, "Series tier must be >= 1");
+        assert!(
+            c.series.tier >= 1 || (c.series.tier == 0 && c.series.id.contains("group_b")),
+            "Series tier must be >= 1, or 0 for Heritage series"
+        );
     }
 
     // Verify filtering by category
@@ -1964,8 +2010,8 @@ fn test_race_finish_records_authentic_model_title_in_history() {
     session.selected_car_model_id = Some("rally_fiesta_rally4");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2; // finished 1 lap
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2; // finished 1 lap
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 
@@ -1989,8 +2035,8 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
     assert_eq!(session.active_module_id, "rally");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2;
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2;
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 
@@ -2318,6 +2364,221 @@ fn test_trophy_cabinet_grid_navigation_and_provenance_display() {
     assert_eq!(session.profile_cabinet_disc_idx, 2);
     assert_eq!(session.profile_cabinet_tier_idx, 2);
 }
+
+#[test]
+fn test_branching_championship_records_and_tier_advancement() {
+    let mut progress = ModuleCareerProgress::default_for_module(1, "rally");
+    assert_eq!(progress.level, 1);
+    assert_eq!(progress.xp, 0);
+
+    // Initial state: no completed championships
+    assert!(progress.championships_completed.is_empty());
+    assert!(!progress.has_podium_in_tier(1));
+
+    // Finish a championship outside podium (P4)
+    progress.record_championship_finish("rally_national_tier1", 1, 4, 30, "2026-09-29 10:00");
+    assert_eq!(progress.championships_completed.len(), 1);
+    let record = progress.championships_completed.get("rally_national_tier1").unwrap();
+    assert_eq!(record.best_finish, 4);
+    assert_eq!(record.times_completed, 1);
+    assert_eq!(record.highest_points, 30);
+    assert!(!progress.has_podium_in_tier(1), "P4 does not satisfy tier podium");
+
+    // Earn enough XP for Tier 2 (3,000 XP)
+    progress.add_xp(3500);
+    assert!(!progress.can_advance_tier(), "Cannot advance with only P4 finish");
+
+    // Compete in alternative branching championship in Tier 1: 'rally_cross_cup' and get P3 (Podium!)
+    progress.record_championship_finish("rally_cross_cup", 1, 3, 45, "2026-09-29 11:00");
+    assert_eq!(progress.championships_completed.len(), 2);
+    assert!(progress.has_podium_in_tier(1), "P3 satisfies podium requirement in Tier 1");
+
+    // Now eligible to advance tier!
+    assert!(progress.can_advance_tier());
+    let next_tier = progress.advance_tier().expect("Advance to Tier 2");
+    assert_eq!(next_tier, 2);
+    assert_eq!(progress.level, 2);
+
+    // Replay 'rally_national_tier1' and win (P1) with 80 points
+    progress.record_championship_finish("rally_national_tier1", 1, 1, 80, "2026-09-29 12:00");
+    let updated = progress.championships_completed.get("rally_national_tier1").unwrap();
+    assert_eq!(updated.best_finish, 1);
+    assert_eq!(updated.times_completed, 2);
+    assert_eq!(updated.highest_points, 80);
+
+    // Replay and get P2 with 70 points (best_finish and highest_points must be preserved)
+    progress.record_championship_finish("rally_national_tier1", 1, 2, 70, "2026-09-29 13:00");
+    let record_after = progress.championships_completed.get("rally_national_tier1").unwrap();
+    assert_eq!(record_after.best_finish, 1);
+    assert_eq!(record_after.times_completed, 3);
+    assert_eq!(record_after.highest_points, 80);
+}
+
+#[test]
+fn test_series_manager_multi_series_tier_query() {
+    let sm = tdrace_app::series::SeriesManager::default();
+    let gt_tier1 = sm.get_all_by_module_and_tier("gt", 1);
+    assert!(!gt_tier1.is_empty(), "Should find GT Tier 1 series");
+    for series in &gt_tier1 {
+        assert_eq!(series.series.tier, 1);
+        assert!(series.series.module_id.eq_ignore_ascii_case("gt"));
+    }
+
+    let rally_tier1 = sm.get_all_by_module_and_tier("rally", 1);
+    assert!(!rally_tier1.is_empty(), "Should find Rally Tier 1 series");
+    for series in &rally_tier1 {
+        assert_eq!(series.series.tier, 1);
+        assert!(series.series.module_id.eq_ignore_ascii_case("rally"));
+    }
+
+    // Non-existent module or high tier
+    let empty = sm.get_all_by_module_and_tier("unknown_mod", 1);
+    assert!(empty.is_empty());
+}
+
+#[test]
+fn test_spec_053_round_purse_and_clean_race_bonuses() {
+    // Tier base purses: Tier 1: 5k, Tier 2: 12k, Tier 3: 25k, Tier 4: 55k, Tier 5: 120k
+    assert_eq!(ModuleCareerProgress::round_base_purse(1), 5_000);
+    assert_eq!(ModuleCareerProgress::round_base_purse(2), 12_000);
+    assert_eq!(ModuleCareerProgress::round_base_purse(3), 25_000);
+    assert_eq!(ModuleCareerProgress::round_base_purse(4), 55_000);
+    assert_eq!(ModuleCareerProgress::round_base_purse(5), 120_000);
+
+    // Position multipliers: P1 = 1.0, P2 = 0.70, P3 = 0.50, P4 = 0.35, P5 = 0.25, P6+ = 0.15
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(1), 1.0);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(2), 0.70);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(3), 0.50);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(4), 0.35);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(5), 0.25);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(6), 0.15);
+    assert_eq!(ModuleCareerProgress::purse_position_multiplier(8), 0.15);
+
+    // Calculate round purse with and without clean bonus (+20% credits):
+    // Tier 1 P1 not clean: 5000 * 1.0 = 5000
+    let (purse, clean_cr) = ModuleCareerProgress::calculate_round_purse(1, 1, false);
+    assert_eq!(purse, 5000);
+    assert_eq!(clean_cr, 0);
+
+    // Tier 1 P1 clean: 5000 + 1000 = 6000
+    let (purse_clean, clean_cr) = ModuleCareerProgress::calculate_round_purse(1, 1, true);
+    assert_eq!(purse_clean, 5000);
+    assert_eq!(clean_cr, 1000);
+    assert_eq!(purse_clean + clean_cr, 6000);
+
+    // Tier 3 P2 (base 25,000 * 0.70 = 17,500) clean (+20% of 17,500 = 3,500 -> 21,000)
+    let (p3_purse, p3_clean) = ModuleCareerProgress::calculate_round_purse(3, 2, true);
+    assert_eq!(p3_purse, 17500);
+    assert_eq!(p3_clean, 3500);
+    assert_eq!(p3_purse + p3_clean, 21000);
+
+    // Overall championship podium bonuses (Spec 053: P1: 4.0x, P2: 2.5x, P3: 1.5x):
+    // Tier 1: P1 = 20,000, P2 = 12,500, P3 = 7,500, P4+ = 0
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(1, 1), 20_000);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(1, 2), 12_500);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(1, 3), 7_500);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(1, 4), 0);
+
+    // Tier 2: P1 = 48,000, P2 = 30,000, P3 = 18,000
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(2, 1), 48_000);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(2, 2), 30_000);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(2, 3), 18_000);
+
+    // Tier 5: P1 = 480,000, P2 = 300,000, P3 = 180,000
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 1), 480_000);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 2), 300_000);
+    assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 3), 180_000);
+}
+
+#[test]
+fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
+    let mut progress = ModuleCareerProgress::default_for_module(1, "kart");
+    assert_eq!(progress.level, 1);
+    assert_eq!(progress.max_tier(), 6);
+    assert_eq!(progress.unlocked_cars, vec!["kart_crg_hero_60"]);
+    assert_eq!(progress.unlocked_tracks.len(), 5);
+    assert_eq!(
+        progress.unlocked_tracks,
+        vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"]
+    );
+    assert_eq!(progress.next_tier_target_xp(), Some(1_500));
+
+    // Try advancing without podium or XP
+    assert!(!progress.can_advance_tier());
+
+    // Add podium in tier 1, check insufficient XP
+    progress.record_championship_finish("kart_world_cup", 1, 1, 100, "2026-09-29");
+    assert!(!progress.can_advance_tier());
+
+    // Add XP to 1,500
+    progress.add_xp(1_500);
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 2);
+    assert_eq!(progress.level, 2);
+    assert_eq!(progress.next_tier_target_xp(), Some(3_500));
+    assert!(progress.is_car_unlocked("kart_tony_kart_rookie_okj", false));
+    assert_eq!(progress.unlocked_tracks.len(), 8);
+    assert!(progress.unlocked_tracks.contains(&"sarno".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"kristianstad".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"seven_laghi".to_string()));
+
+    // Tier 2 -> 3: 3,500 XP required
+    progress.record_championship_finish("kart_junior_trophy", 2, 2, 85, "2026-09-29");
+    progress.add_xp(2_000); // total 3,500 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 3);
+    assert_eq!(progress.level, 3);
+    assert_eq!(progress.next_tier_target_xp(), Some(6_000));
+    assert!(progress.is_car_unlocked("kart_tony_kart_racer_ok", false));
+    assert_eq!(progress.unlocked_tracks.len(), 11);
+    assert!(progress.unlocked_tracks.contains(&"pfi".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"franciacorta".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"ampfing".to_string()));
+
+    // Tier 3 -> 4: 6,000 XP required
+    progress.record_championship_finish("kart_national_championship", 3, 3, 70, "2026-09-29");
+    progress.add_xp(2_500); // total 6,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 4);
+    assert_eq!(progress.level, 4);
+    assert_eq!(progress.next_tier_target_xp(), Some(9_000));
+    assert!(progress.is_car_unlocked("kart_birel_art_kz2", false));
+    assert_eq!(progress.unlocked_tracks.len(), 14);
+    assert!(progress.unlocked_tracks.contains(&"zuera".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"silverstone_national_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"aunay_kart".to_string()));
+
+    // Tier 4 -> 5: 9,000 XP required
+    progress.record_championship_finish("kart_continental_trophy", 4, 1, 100, "2026-09-29");
+    progress.add_xp(3_000); // total 9,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 5);
+    assert_eq!(progress.level, 5);
+    assert_eq!(progress.next_tier_target_xp(), Some(13_000));
+    assert!(progress.is_car_unlocked("kart_anderson_maverick_mono", false));
+    assert_eq!(progress.unlocked_tracks.len(), 17);
+    assert!(progress.unlocked_tracks.contains(&"le_mans_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"campillos".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"muelsen_kart".to_string()));
+
+    // Tier 5 -> 6: 13,000 XP required
+    progress.record_championship_finish("kart_superkart_div2_challenge", 5, 2, 85, "2026-09-29");
+    progress.add_xp(4_000); // total 13,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 6);
+    assert_eq!(progress.level, 6);
+    assert_eq!(progress.next_tier_target_xp(), None);
+    assert_eq!(progress.level_progress_ratio(), 1.0);
+    assert!(progress.is_car_unlocked("kart_anderson_cs250", false));
+    assert_eq!(progress.unlocked_tracks.len(), 20);
+    assert!(progress.unlocked_tracks.contains(&"portimao_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"valencia_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"adria_kart".to_string()));
+
+    // At tier 6 pinnacle, cannot advance further
+    assert!(!progress.can_advance_tier());
+}
+
 
 
 

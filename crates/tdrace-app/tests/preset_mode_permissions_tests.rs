@@ -73,7 +73,7 @@ fn test_standard_mode_blocks_preset_modification() {
 
     // 5. Official presets must remain in catalog unmodified
     let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
-    assert_eq!(classic_tracks.len(), 10);
+    assert_eq!(classic_tracks.len(), 13);
     assert!(classic_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
 
     let gt_tracks = manager.filtered_main_track_choices(ModuleFilter::Gt);
@@ -109,7 +109,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     assert!(!manager.is_track_in_module("my_custom_speedway", "kart"));
 
     let custom_choices = manager.filtered_main_track_choices(ModuleFilter::Classic);
-    assert_eq!(custom_choices.len(), 11);
+    assert_eq!(custom_choices.len(), 14);
 
     // 3. Metadata update is permitted for custom tracks
     manager
@@ -127,7 +127,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     // 3. Demoting custom track to Drafts is permitted
     manager.demote_track("my_custom_speedway").unwrap();
     assert_eq!(manager.draft_track_choices().len(), 1);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 10);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 13);
 
     // 4. Deleting custom track is permitted
     manager.delete_custom_track("my_custom_speedway").unwrap();

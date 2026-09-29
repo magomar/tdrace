@@ -42,7 +42,7 @@ This guide details the **6-dimensional telemetry standard**, the engineering arc
 
 ## 📊 Unified 6-Dimensional Telemetry Standard
 
-Every vehicle across the 25 progression tiers is rated along **6 unified telemetry metrics**, shared between the **In-Game Garage HUD** (`crates/tdrace-app/src/ui/garage.rs`) and the **Web Showroom** (`portals/option-b-showroom/src/components/CarCard.astro`):
+Every vehicle across the 25 progression tiers is rated along **6 unified telemetry metrics**, shared between the **In-Game Garage HUD** (`crates/tdrace-app/src/ui/garage.rs`) and the **Web Showroom** (`portals/showroom/src/components/CarCard.astro`):
 
 | # | Metric | Short Label | Signature Color | Visual Icon | Engine Variable | Physical Role in Simulation |
 | :-: | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -162,7 +162,7 @@ The telemetry pipeline guarantees mathematical and visual alignment across all s
 ```
 ┌─────────────────────────────────┐       ┌─────────────────────────────────┐
 │       IN-GAME GARAGE HUD        │       │       WEB SHOWROOM PORTAL       │
-│   crates/tdrace-app/src/ui/     │       │     portals/option-b-showroom   │
+│   crates/tdrace-app/src/ui/     │       │     portals/showroom            │
 │   garage.rs:draw_garage_hud()   │       │     src/components/CarCard.astro│
 ├─────────────────────────────────┤       ├─────────────────────────────────┤
 │ Speed     [████████░░░░]  78%   │       │ [🏎️] Speed     [████████░░░░] 78%│

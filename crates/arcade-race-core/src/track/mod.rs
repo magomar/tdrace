@@ -518,9 +518,9 @@ impl wheelbase::SurfaceSampler for Track {
 
 impl Track {
     /// Tests if a car's center is currently inside the pit box servicing zone.
-    pub fn is_in_pit_box(&self, car: &Car) -> bool {
+    pub fn is_in_pit_box<B: crate::body::Body2D>(&self, car: &B) -> bool {
         if let Some(pit_shape) = &self.pit_box_area {
-            pit_shape.contains(car.state.position)
+            pit_shape.contains(car.position())
         } else {
             false
         }
@@ -977,6 +977,34 @@ mod tests {
             ..Default::default()
         }
         .with_default_runoff_surfaces()
+    }
+
+    /// Kart-style stadium: 40 m straights, 6 m radius U-turns, a 7 m road, waypoints about 3 m apart and
+    /// walls 0.3 m out. Anticlockwise, so the left walls are the inner ones.
+    fn tight_stadium_waypoints() -> Vec<TrackWaypoint> {
+        let mut points = Vec::new();
+        for (cx, start) in [(20.0f32, -std::f32::consts::FRAC_PI_2), (-20.0, std::f32::consts::FRAC_PI_2)] {
+            for k in 0..7 {
+                let x = if cx > 0.0 { -20.0 + k as f32 * 40.0 / 7.0 } else { 20.0 - k as f32 * 40.0 / 7.0 };
+                points.push(Vec2::new(x, if cx > 0.0 { -6.0 } else { 6.0 }));
+            }
+            for k in 0..6 {
+                let a = start + k as f32 * std::f32::consts::PI / 6.0;
+                points.push(Vec2::new(cx, 0.0) + Vec2::new(a.cos(), a.sin()) * 6.0);
+            }
+        }
+        points.into_iter().map(|p| TrackWaypoint::new(p, 7.0).with_wall_distances(Some(0.3), Some(0.3))).collect()
+    }
+
+    #[test]
+    fn test_short_inner_walls_of_tight_turns_are_kept() {
+        let spline = TrackSpline::new(tight_stadium_waypoints(), true);
+        let (inner, _outer, left_poly, _right_poly) = generate_walls_from_spline(&spline, 0.6, BarrierType::TireWall);
+        // The inner wall pieces of the U-turns are shorter than 0.10 m; trimming used to drop them all.
+        let poly_len: f32 = (0..left_poly.len()).map(|i| left_poly[i].distance(left_poly[(i + 1) % left_poly.len()])).sum();
+        let wall_len: f32 = inner.iter().map(|w| w.segment.length()).sum();
+        assert!(inner.iter().any(|w| w.segment.length() < 0.10), "the test needs short inner wall pieces");
+        assert!(wall_len > 0.99 * poly_len, "inner walls cover {:.1} m of the {:.1} m wall line", wall_len, poly_len);
     }
 
     #[test]

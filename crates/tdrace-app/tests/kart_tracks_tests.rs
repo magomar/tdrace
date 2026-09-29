@@ -10,7 +10,7 @@ fn test_kart_module_tracks_integrity_and_validation() {
     let module = KartGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 17, "Kart module should have 17 tracks (13 famous + 2 national + 2 cadet)");
+    assert_eq!(tracks.len(), 20, "Kart module should have 20 tracks (17 existing + 3 new OSM tracks)");
 
     let expected_ids = [
         "lonato",
@@ -30,6 +30,9 @@ fn test_kart_module_tracks_integrity_and_validation() {
         "campillos",
         "laval_kart",
         "whilton_mill",
+        "aunay_kart",
+        "muelsen_kart",
+        "adria_kart",
     ];
 
     for id in &expected_ids {
@@ -168,8 +171,8 @@ fn test_kart_race_session_simulation_on_lonato_and_sarno() {
         session.num_bots = 5;
         session.init_race();
 
-        assert_eq!(session.cars.len(), 6, "1 player + 5 bots = 6 karts for {}", id);
-        assert_eq!(session.trackers.len(), 6);
+        assert_eq!(session.world.vehicles.len(), 6, "1 player + 5 bots = 6 karts for {}", id);
+        assert_eq!(session.world.trackers.len(), 6);
         assert!(!session.track.name.is_empty());
         assert_eq!(session.track_choice_id(), *id);
 
@@ -178,7 +181,7 @@ fn test_kart_race_session_simulation_on_lonato_and_sarno() {
             session.update();
         }
 
-        for (i, car) in session.cars.iter().enumerate() {
+        for (i, car) in session.world.vehicles.iter().enumerate() {
             assert!(
                 car.state.position.is_finite(),
                 "Kart #{} position is non-finite on {}: {:?}",

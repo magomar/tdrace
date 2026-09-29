@@ -1,6 +1,6 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: Group B Masters Series (Tier 3)
+# Rallycross Career Mode: Group B Masters Series (Heritage)
 # ==============================================================================
 
 [championship]
@@ -8,7 +8,7 @@ id = "rally_group_b_masters"
 name = "Group B Masters Series"
 description = "Legendary 550 BHP twin-charged Group B monsters competing across 9 demanding European rallycross and stadium circuits."
 module_id = "rally"
-tier = 3
+tier = 0
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "pro"

@@ -159,7 +159,7 @@ fn test_race_session_game_mode_roster_behaviors() {
     session.car_choice = CarChoice::DriftCar; // Ignored in StandardRace
     session.init_race();
 
-    assert_eq!(session.cars.len(), 5);
+    assert_eq!(session.world.vehicles.len(), 5);
     let pred_car = session.resolve_predefined_car();
     assert_eq!(session.active_player_car_choice(), pred_car);
     let classic_model = tdrace_app::catalog::get_classic_model_for_category(session.track.car_category);
@@ -173,7 +173,7 @@ fn test_race_session_game_mode_roster_behaviors() {
     session.car_choice = CarChoice::StockCar;
     session.rebuild_roster_participants();
 
-    assert_eq!(session.cars.len(), 5);
+    assert_eq!(session.world.vehicles.len(), 5);
     assert_eq!(session.active_player_car_choice(), CarChoice::StockCar);
     let stock_model = tdrace_app::catalog::get_classic_model_for_category(tdrace_core::CarCategory::Nascar);
     for p in &session.grid_participants {
@@ -187,7 +187,7 @@ fn test_race_session_game_mode_roster_behaviors() {
     session.car_choice = CarChoice::HypercarPrototype;
     session.rebuild_roster_participants();
 
-    assert_eq!(session.cars.len(), 1);
+    assert_eq!(session.world.vehicles.len(), 1);
     assert_eq!(session.active_player_car_choice(), CarChoice::HypercarPrototype);
     assert_eq!(session.grid_participants.len(), 1);
     assert!(session.grid_participants[0].is_player);
@@ -199,7 +199,7 @@ fn test_race_session_game_mode_roster_behaviors() {
     session.car_choice = CarChoice::RallyCar;
     session.rebuild_roster_participants();
 
-    assert_eq!(session.cars.len(), 1);
+    assert_eq!(session.world.vehicles.len(), 1);
     assert_eq!(session.active_player_car_choice(), CarChoice::RallyCar);
     assert_eq!(session.grid_participants.len(), 1);
     assert!(session.grid_participants[0].is_player);

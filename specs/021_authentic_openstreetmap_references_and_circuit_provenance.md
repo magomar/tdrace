@@ -35,13 +35,13 @@ A comprehensive architectural and data specification establishing authentic **Op
    - Store `osm_url`, `wikipedia_url`, `country_code`, and `country_name` directly within the Rust preset definitions in `crates/arcade-race-core/src/track/presets.rs` and `crates/tdrace-app/src/module/*.rs`.
    - Ensure the canonical track export tool (`test_export_canonical_presets_to_git_repo`) serializes these fields to `tracks/**/*.json`.
    - Update `scripts/generate_asset_data.py` to ingest the verified references and write clean records into `portals/shared/data/circuits.json`.
-   - Ensure `portals/option-b-showroom` reliably renders clickable `OSM ↗` and `Wikipedia ↗` badges on every real-world track card.
+   - Ensure `portals/showroom` reliably renders clickable `OSM ↗` and `Wikipedia ↗` badges on every real-world track card.
 
 ---
 
 ## 🗺️ User Flow & Interface Design
 
-When a player or developer navigates the showroom web catalog (`portals/option-b-showroom`):
+When a player or developer navigates the showroom web catalog (`portals/showroom`):
 1. **Catalog Exploration**: The user views the circuit grid filtered by motorsport category (All, GT, NASCAR, Rallycross, Karting, Off-Road, Classic).
 2. **Provenance Badges**: For real-world circuits, the card renders provenance metadata including a country flag code, an authentic `OSM ↗` button, and an optional `Wiki ↗` link.
 3. **Interactive OSM Inspection**: Clicking `OSM ↗` opens OpenStreetMap centered on the exact raceway relation or way in an external tab, confirming geometry fidelity.

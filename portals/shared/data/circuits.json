@@ -577,6 +577,78 @@
     "rel_path": "tracks/classic/kart_arena.json"
   },
   {
+    "id": "kart_hangar_sprint",
+    "name": "Hangar Sprint",
+    "module": "classic",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Indoor figure-eight with one bridge, a tight hairpin pocket and a chicane.",
+    "scale": "1:1",
+    "wikipedia_url": null,
+    "osm_url": null,
+    "country_code": null,
+    "country_name": null,
+    "min_width_meters": 8.0,
+    "max_width_meters": 8.0,
+    "is_inspired": false,
+    "length_meters": 344.1,
+    "turns_count": 17,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "image_url": "/textures/circuits/classic/kart_hangar_sprint.svg",
+    "rel_path": "tracks/classic/kart_hangar_sprint.json"
+  },
+  {
+    "id": "kart_tower_labyrinth",
+    "name": "Tower Labyrinth",
+    "module": "classic",
+    "category": "gt",
+    "modality": "GT",
+    "description": "A raised run bridges a crossover and both legs of a deep pocket; double hairpin, tightening turn.",
+    "scale": "1:1",
+    "wikipedia_url": null,
+    "osm_url": null,
+    "country_code": null,
+    "country_name": null,
+    "min_width_meters": 6.5,
+    "max_width_meters": 6.5,
+    "is_inspired": false,
+    "length_meters": 634.2,
+    "turns_count": 12,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "image_url": "/textures/circuits/classic/kart_tower_labyrinth.svg",
+    "rel_path": "tracks/classic/kart_tower_labyrinth.json"
+  },
+  {
+    "id": "kart_warehouse_twister",
+    "name": "Warehouse Twister",
+    "module": "classic",
+    "category": "gt",
+    "modality": "GT",
+    "description": "Three hairpin pockets; the long one dives twice under the raised back straight.",
+    "scale": "1:1",
+    "wikipedia_url": null,
+    "osm_url": null,
+    "country_code": null,
+    "country_name": null,
+    "min_width_meters": 7.0,
+    "max_width_meters": 7.0,
+    "is_inspired": false,
+    "length_meters": 470.1,
+    "turns_count": 13,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": true,
+    "image_url": "/textures/circuits/classic/kart_warehouse_twister.svg",
+    "rel_path": "tracks/classic/kart_warehouse_twister.json"
+  },
+  {
     "id": "oasis_rally",
     "name": "Oasis Rally",
     "module": "classic",
@@ -1564,6 +1636,30 @@
     "rel_path": "tracks/gt/zandvoort.json"
   },
   {
+    "id": "adria_kart",
+    "name": "Adria Karting Raceway",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "State-of-the-art night-illuminated Italian international kart circuit with elevated paddock bridge and sweeping switchbacks.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/798432703",
+    "country_code": "IT",
+    "country_name": "Italy",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.5,
+    "is_inspired": false,
+    "length_meters": 1226.7,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/adria_kart.svg",
+    "rel_path": "tracks/kart/adria_kart.json"
+  },
+  {
     "id": "ampfing",
     "name": "Schweppermannring Ampfing",
     "module": "kart",
@@ -1586,6 +1682,30 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/kart/ampfing.svg",
     "rel_path": "tracks/kart/ampfing.json"
+  },
+  {
+    "id": "aunay_kart",
+    "name": "Circuit International d'Aunay-les-Bois",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Prestigious CIK-FIA Grade 1 karting circuit in Normandy featuring downhill Parabolique and fast technical chicanes.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/121084004",
+    "country_code": "FR",
+    "country_name": "France",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.2,
+    "is_inspired": false,
+    "length_meters": 1132.7,
+    "turns_count": 20,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/aunay_kart.svg",
+    "rel_path": "tracks/kart/aunay_kart.json"
   },
   {
     "id": "campillos",
@@ -1754,6 +1874,30 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/kart/lonato.svg",
     "rel_path": "tracks/kart/lonato.json"
+  },
+  {
+    "id": "muelsen_kart",
+    "name": "Motorsport Arena M\u00fclsen (Arena E)",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Ultra-modern German CIK-FIA Grade 1 arena with high-speed drafting straights, banked esses, and challenging hairpins.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/814876031",
+    "country_code": "DE",
+    "country_name": "Germany",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.5,
+    "is_inspired": false,
+    "length_meters": 1225.2,
+    "turns_count": 18,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/muelsen_kart.svg",
+    "rel_path": "tracks/kart/muelsen_kart.json"
   },
   {
     "id": "pfi",
@@ -2455,6 +2599,31 @@
     "rel_path": "tracks/rally/dreux_rx.json"
   },
   {
+    "id": "erx_motor_park",
+    "name": "ERX Motor Park RX",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Premier Nitrocross all-dirt amphitheater in Minnesota featuring the iconic 70-foot stadium gap jump, banked clay switchbacks and rolling rhythm rollers.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Nitrocross",
+    "osm_url": "https://www.openstreetmap.org/way/1023648273",
+    "country_code": "US",
+    "country_name": "United States",
+    "min_width_meters": 13.5,
+    "max_width_meters": 14.5,
+    "is_inspired": false,
+    "length_meters": 1136.0,
+    "turns_count": 15,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": true,
+    "image_url": "/textures/circuits/rally/erx_motor_park.svg",
+    "rel_path": "tracks/rally/erx_motor_park.json"
+  },
+  {
     "id": "essay_rx",
     "name": "Circuit des Ducs / Essay RX",
     "module": "rally",
@@ -2803,5 +2972,79 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/rally/riga_rx.svg",
     "rel_path": "tracks/rally/riga_rx.json"
+  },
+  {
+    "id": "silverstone_rx",
+    "name": "Silverstone Circuit RX",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+    "osm_url": "https://www.openstreetmap.org/way/169851260",
+    "country_code": "GB",
+    "country_name": "United Kingdom",
+    "min_width_meters": 11.5,
+    "max_width_meters": 14.0,
+    "is_inspired": false,
+    "length_meters": 949.8,
+    "turns_count": 9,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/rally/silverstone_rx.svg",
+    "rel_path": "tracks/rally/silverstone_rx.json"
+  },
+  {
+    "id": "spa_rx",
+    "name": "Spa-Francorchamps RX",
+    "module": "rally",
+    "category": "rally",
+    "modality": "RALLY",
+    "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
+    "osm_url": "https://www.openstreetmap.org/way/234804574",
+    "country_code": "BE",
+    "country_name": "Belgium",
+    "min_width_meters": 13.0,
+    "max_width_meters": 14.0,
+    "is_inspired": false,
+    "length_meters": 1018.8,
+    "turns_count": 14,
+    "surfaces": [
+      "Asphalt",
+      "Dirt"
+    ],
+    "has_jumps": true,
+    "image_url": "/textures/circuits/rally/spa_rx.svg",
+    "rel_path": "tracks/rally/spa_rx.json"
+  },
+  {
+    "id": "MANIFEST",
+    "name": "Manifest",
+    "module": "vault",
+    "category": "vault",
+    "modality": "VAULT",
+    "description": "The Vault Provenance Registry for archived, temporal, and decommissioned assets",
+    "scale": "1:1",
+    "wikipedia_url": null,
+    "osm_url": null,
+    "country_code": null,
+    "country_name": null,
+    "min_width_meters": 12.0,
+    "max_width_meters": 12.0,
+    "is_inspired": false,
+    "length_meters": 2500.0,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": null,
+    "rel_path": "tracks/vault/MANIFEST.json"
   }
 ]

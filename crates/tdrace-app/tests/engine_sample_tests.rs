@@ -93,7 +93,7 @@ fn test_sample_bank_disk_serialization_and_reloading() {
 }
 
 #[test]
-fn test_save_canonical_engine_assets_to_repo() {
+fn test_canonical_engine_assets_integrity() {
     let repo_assets = if std::path::Path::new("assets/audio/engines").exists() {
         std::path::Path::new("assets/audio/engines")
     } else if std::path::Path::new("../../assets/audio/engines").exists() {
@@ -102,14 +102,27 @@ fn test_save_canonical_engine_assets_to_repo() {
         return;
     };
 
-    for archetype in [
+    let archetypes = [
         EngineSoundType::SportGT,
         EngineSoundType::NascarV8,
         EngineSoundType::Kart125cc,
         EngineSoundType::RallyTurbo,
         EngineSoundType::SandRailBoxer,
-    ] {
-        let bank = ArchetypeSampleBank::generate(archetype, 44100);
-        let _ = bank.save_to_dir(repo_assets);
+    ];
+
+    let sample_points = ["idle.wav", "mid_on.wav", "mid_off.wav", "high_on.wav", "high_off.wav"];
+
+    for archetype in archetypes {
+        let arch_dir = repo_assets.join(ArchetypeSampleBank::slug(archetype));
+        assert!(arch_dir.exists(), "Archetype directory {:?} must exist on disk", arch_dir);
+
+        for point in sample_points {
+            let wav_path = arch_dir.join(point);
+            assert!(wav_path.exists(), "Sample file {:?} must exist", wav_path);
+            let bytes = std::fs::read(&wav_path)
+                .unwrap_or_else(|e| panic!("Failed to read {:?}: {}", wav_path, e));
+            assert!(bytes.starts_with(b"RIFF"), "{:?} must be a valid RIFF WAV file", wav_path);
+            assert!(bytes.len() > 1000, "{:?} must contain non-trivial audio payload", wav_path);
+        }
     }
 }

@@ -9,6 +9,8 @@ description = "Cross-platform 2D arcade top-down racing game renderer, UI, effec
 
 [dependencies]
 tdrace-core = { path = "../tdrace-core" }
+race-kit = { path = "../race-kit" }
+race-ui = { path = "../race-ui" }
 cabinet = { path = "../cabinet" }
 macroquad = { version = "0.4" }
 glam = { version = "0.29", features = ["serde"] }

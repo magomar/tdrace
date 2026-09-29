@@ -67,10 +67,11 @@ pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); PROMO
     ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
     ("nascar", "NASCAR Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
     ("extreme_offroad", "Extreme Off-Road", "Desert raids, mud bogs, ice & stunt arenas", Palette::NEON_ORANGE),
+    ("vault", "The Vault (Archive)", "Decommissioned circuits & cold storage", macroquad::color::Color::new(1.0, 0.65, 0.0, 1.0)),
 ];
 
-/// Number of modules offered in the promotion dialog (all six motorsport modules, spec 042).
-pub const PROMOTION_MODULE_COUNT: usize = 6;
+/// Number of modules offered in the promotion dialog (all motorsport modules + vault).
+pub const PROMOTION_MODULE_COUNT: usize = 7;
 
 /// Action dispatched from Track Manager interactions.
 #[derive(Debug, Clone, PartialEq)]
@@ -200,7 +201,8 @@ pub fn render_track_manager_screen(
             ModuleFilter::Nascar => 4,
             ModuleFilter::ExtremeOffRoad => 5,
             ModuleFilter::Autocross => 6,
-            ModuleFilter::Drafts => 7,
+            ModuleFilter::Vault => 7,
+            ModuleFilter::Drafts => 8,
         };
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
         let is_filter_drafts = *filter == ModuleFilter::Drafts;
@@ -223,6 +225,7 @@ pub fn render_track_manager_screen(
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
             ModuleFilter::ExtremeOffRoad => Color::new(1.0, 0.40, 0.05, 1.0),
             ModuleFilter::Autocross => Color::new(1.0, 0.45, 0.05, 1.0),
+            ModuleFilter::Vault => Color::new(1.0, 0.65, 0.0, 1.0),
             ModuleFilter::Drafts => Palette::NEON_GOLD,
         };
 
@@ -863,6 +866,7 @@ fn render_delete_modal(
             "kart" => "Karting",
             "gt" | "gt_challenge" | "f1" => "GT World Challenge",
             "nascar" => "NASCAR Cup",
+            "vault" => "The Vault",
             _ => mod_id,
         };
         (

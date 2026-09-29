@@ -6,6 +6,8 @@
 use tdrace_app::game::{GameState, RaceSession};
 use tdrace_app::ui::menu::ModalityCategory;
 
+mod lan_support;
+
 #[test]
 fn test_lan_multiplayer_hub_lifecycle() {
     let mut session = RaceSession::new();
@@ -99,8 +101,8 @@ fn test_lan_launch_session_and_nameplates() {
     assert!(session.is_lan_host);
     assert_eq!(session.lan_player_slot, 0);
     assert_eq!(session.player_car_index(), 0);
-    assert_eq!(session.cars.len(), 1);
-    assert_eq!(session.trackers.len(), 1);
+    assert_eq!(session.world.vehicles.len(), 1);
+    assert_eq!(session.world.trackers.len(), 1);
     assert_eq!(session.grid_participants.len(), 1);
     assert_eq!(session.car_model_ids[0], Some("gt_ferrari_296_gt3"));
     assert!(matches!(session.state, GameState::Countdown(_)));
@@ -121,8 +123,8 @@ fn test_lan_launch_session_and_nameplates() {
         random_seed: 99,
         driver_tier: None,
     });
-    session.cars.push(tdrace_core::car::Car::new(session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar)));
-    session.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3));
+    session.world.vehicles.push(tdrace_core::car::Car::new(session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar)));
+    session.world.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3));
 
     let nameplates = session.collect_bot_nameplates(0);
     assert_eq!(nameplates.len(), 1);
@@ -161,8 +163,8 @@ fn test_lan_client_perspective_targeting_and_helpers() {
     let mut client_car = tdrace_core::car::Car::new(base_cfg.clone());
     client_car.config.assists = AssistProfile::Sport.to_config();
 
-    session.cars = vec![host_car, client_car];
-    session.trackers = vec![
+    session.world.vehicles = vec![host_car, client_car];
+    session.world.trackers = vec![
         tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
         tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
     ];
@@ -204,8 +206,8 @@ fn test_lan_client_perspective_targeting_and_helpers() {
 
     // Changing assist profile must modify client's car (index 1), NOT host's car (index 0)
     session.set_assist_profile(AssistProfile::Pro);
-    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+    assert_eq!(session.world.vehicles[1].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Arcade.to_config());
 
     // Collecting nameplates for client must focus on host (car_idx 0)
     let client_focus = session.player_car_index();
@@ -217,101 +219,48 @@ fn test_lan_client_perspective_targeting_and_helpers() {
 }
 
 #[test]
-fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
-    let mut session = RaceSession::new();
+fn test_lan_host_prevents_split_screen_and_does_not_simulate_remote_cars() {
+    let net = lan_support::quiet_net(11);
+    let (host, clients) = lan_support::build_lobby(&net, &["RemoteClient"], "classic_grand_prix", 3);
+    let mut sessions = lan_support::launch(&net, host, clients);
 
-    // 1. Suppose user previously selected SplitScreen mode in menus
-    session.game_mode = tdrace_app::ui::menu::GameMode::SplitScreen;
-    assert!(session.is_split_screen());
+    // The LAN launch resets any earlier split-screen choice: one player per machine.
+    assert_eq!(sessions[0].game_mode, tdrace_app::ui::menu::GameMode::StandardRace);
+    assert!(sessions[0].is_lan_multiplayer);
+    assert!(sessions[0].is_lan_host);
+    assert!(!sessions[0].is_split_screen(), "LAN session must never run in split screen mode");
+    assert_eq!(sessions[0].player_car_index(), 0);
 
-    // 2. Launch LAN race session as host (slot 0)
-    let host = cabinet::net::LanHost::bind(
-        "Host Split Prevention Room",
-        "HostPlayer",
-        "ESP",
-        "gt_ferrari_296_gt3",
-        "corsa_red",
-        0,
-        4,
-        "classic_grand_prix",
-        "classic",
-        3,
-    ).expect("failed to bind host");
+    lan_support::run_until_racing(&net, &mut sessions);
 
-    session.launch_lan_race_session(Some(host), None, 0);
-
-    // 3. Verify is_split_screen is strictly false and game_mode reset to StandardRace
-    assert!(session.is_lan_multiplayer);
-    assert!(session.is_lan_host);
-    assert_eq!(session.lan_player_slot, 0);
-    assert_eq!(session.player_car_index(), 0);
-    assert_eq!(session.game_mode, tdrace_app::ui::menu::GameMode::StandardRace);
-    assert!(!session.is_split_screen(), "LAN session must never run in split screen mode");
-
-    // 4. Add remote client car (slot 1)
-    let base_cfg = session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar);
-    let client_car = tdrace_core::car::Car::new(base_cfg);
-    session.cars.push(client_car);
-    session.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(
-        session.track.checkpoints.len(),
-        3,
-    ));
-    session.grid_participants.push(tdrace_app::game::GridParticipant {
-        is_player: false,
-        bot_index: None,
-        name: "RemoteClient".to_string(),
-        alias: "RemoteClient".to_string(),
-        country: Some("FRA".to_string()),
-        car_title: "Porsche 911 GT3 R".to_string(),
-        car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
-        color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
-        model_id: Some("gt_porsche_911_gt3r"),
-        best_lap: None,
-        best_circuit_time: None,
-        random_seed: 10,
-        driver_tier: None,
-    });
-
-    assert_eq!(session.cars.len(), 2);
-
-    // Initial position & velocity of client car
-    let initial_pos = session.cars[1].state.position;
-    let initial_speed = session.cars[1].state.speed;
-    assert_eq!(initial_speed, 0.0);
-
-    // 5. Host receives remote input packet from slot 1 (full throttle)
-    session.lan_remote_inputs.insert(
-        1,
-        cabinet::net::ClientInputPacket {
-            sequence_num: 1,
-            slot_id: 1,
-            steering: 0.0,
-            throttle: 1.0,
-            brake: 0.0,
-            handbrake: false,
-            reverse: false,
-        },
-    );
-
-    // Step physics multiple times
-    for _ in 0..10 {
-        session.physics_step(1.0 / 60.0);
+    // Host drives its own car; the client car stays still on the host until the client moves it.
+    let throttle = tdrace_core::physics::car::CarControls { throttle: 1.0, ..Default::default() };
+    sessions[0].lan_race.as_mut().unwrap().input_override = Some(throttle);
+    let remote_start = sessions[0].world.vehicles[1].state.position;
+    let own_start = sessions[0].world.vehicles[0].state.position;
+    for _ in 0..30 {
+        net.advance(lan_support::FRAME_DT);
+        sessions[0].update();
     }
+    assert!(sessions[0].world.vehicles[0].state.speed > 0.0, "own car must accelerate");
+    assert_ne!(sessions[0].world.vehicles[0].state.position, own_start);
+    assert_eq!(sessions[0].world.vehicles[1].state.position, remote_start, "host must not simulate the client car");
 
-    // 6. Verify client car moved due to remote input applied by host physics_step
-    assert!(
-        session.cars[1].state.speed > 0.0,
-        "Remote client car must accelerate from remote throttle input"
-    );
-    assert_ne!(
-        session.cars[1].state.position,
-        initial_pos,
-        "Remote client car position must change under host simulation"
-    );
+    // The client drives; the host shows the client car where the client put it.
+    sessions[1].lan_race.as_mut().unwrap().input_override = Some(throttle);
+    for _ in 0..90 {
+        lan_support::step(&net, &mut sessions);
+    }
+    let on_client = sessions[1].world.vehicles[1].state.position;
+    let on_host = sessions[0].world.vehicles[1].state.position;
+    assert_ne!(on_host, remote_start, "host must follow the client car");
+    assert!(on_host.distance(on_client) < 5.0, "host view {on_host:?} vs owner {on_client:?}");
 
-    // Exit cleanly
-    session.exit_lan_session();
-    assert!(!session.is_lan_multiplayer);
+    for s in sessions.iter_mut() {
+        s.exit_lan_session();
+        assert!(!s.is_lan_multiplayer);
+        assert!(s.lan_race.is_none());
+    }
 }
 
 #[test]
@@ -320,13 +269,16 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
     use tdrace_app::render::color::CarColorScheme;
 
     // 1. Host creates room with Corsa Red (index 0)
-    let mut host = LanHost::bind_ephemeral("Livery Sync GP", "RedHost")
-        .expect("failed to bind test host");
-
+    let net = lan_support::quiet_net(5);
+    let mut host = LanHost::with_transport(Box::new(net.endpoint()), "Livery Sync GP", "RedHost")
+        .expect("failed to create test host");
+    host.update_host_slot("gt_ferrari_296_gt3", "corsa_red");
+    host.set_track_and_rules("classic_grand_prix", 3, cabinet::net::LanCollisionMode::FullSatSolid);
     let host_addr = host.local_addr().expect("local addr");
 
     // 2. Client connects with Viper Green (index 2)
-    let mut client = LanClient::connect(
+    let mut client = LanClient::connect_with_transport(
+        Box::new(net.endpoint()),
         host_addr,
         "GreenRacer",
         "FRA",
@@ -334,14 +286,10 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
         "viper_green",
     ).expect("failed to connect");
 
-    // Exchange handshake packets
-    for _ in 0..50 {
+    for _ in 0..60 {
+        net.advance(0.016);
         let _ = client.update(0.016);
         let _ = host.update(0.016);
-        if client.is_connected() && host.active_slots().len() >= 2 {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(5));
     }
 
     assert!(client.is_connected());
@@ -354,124 +302,71 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
     assert_eq!(client_lobby.car_model_id, "gt_porsche_911_gt3r", "Porsche 911 GT3 R must be selected");
     assert!(!client_lobby.is_in_race(), "Lobby must not be in race before launch");
 
-    // 4. Host initiates countdown
-    host.start_countdown(3000).expect("countdown launch");
-
-    // Pump packets so client receives LaunchCountdown
-    let _ = host.update(0.01);
-    let _ = client_lobby.client_mut().update(0.01);
-
-    // Client lobby must immediately signal is_in_race == true for StartingCountdown
-    assert!(
-        client_lobby.is_in_race(),
-        "Client lobby must trigger is_in_race as soon as countdown begins"
-    );
-
+    // 4. Host launches the race
+    host.launch_race().expect("race launch");
+    for _ in 0..30 {
+        net.advance(0.016);
+        let _ = host.update(0.016);
+        let _ = client_lobby.client_mut().update(0.016);
+        if client_lobby.is_in_race() {
+            break;
+        }
+    }
+    assert!(client_lobby.is_in_race(), "Client lobby must enter the race once RaceLaunch arrives");
     let client_inner = client_lobby.into_client();
-    let remaining = client_inner.countdown_remaining_sec();
-    assert!(remaining.is_some());
-    assert!(remaining.unwrap() > 0.0 && remaining.unwrap() <= 3.0);
+    let slot = client_inner.assigned_slot_id().expect("slot");
+    assert_eq!(slot, 1);
 
-    // 5. Host launches race session
+    // 5. Both sessions build the grid from the same frozen roster
     let mut host_session = RaceSession::new();
     host_session.launch_lan_race_session(Some(host), None, 0);
-
-    // 6. Client launches race session
     let mut client_session = RaceSession::new();
-    client_session.launch_lan_race_session(None, Some(client_inner), 1);
+    client_session.launch_lan_race_session(None, Some(client_inner), slot);
 
-    // Verify liveries on Host session:
-    // Slot 0 is Red (index 0)
-    // Slot 1 is Green (index 2)
-    assert_eq!(host_session.color_schemes.len(), 2);
-    assert_eq!(host_session.color_schemes[0], CarColorScheme::from_index(0));
-    assert_eq!(host_session.color_schemes[1], CarColorScheme::from_index(2));
-
-    // Verify liveries on Client session:
-    // Slot 0 is Red (index 0)
-    // Slot 1 is Green (index 2)
-    assert_eq!(client_session.color_schemes.len(), 2);
-    assert_eq!(client_session.color_schemes[0], CarColorScheme::from_index(0));
-    assert_eq!(client_session.color_schemes[1], CarColorScheme::from_index(2));
-
-    // Verify client session countdown initialized synchronously
-    match client_session.state {
-        GameState::Countdown(rem) => {
-            assert!(rem > 0.0 && rem <= 3.0);
-        }
-        other => panic!("Expected GameState::Countdown, got {:?}", other),
+    for s in [&host_session, &client_session] {
+        assert_eq!(s.color_schemes.len(), 2);
+        assert_eq!(s.color_schemes[0], CarColorScheme::from_index(0));
+        assert_eq!(s.color_schemes[1], CarColorScheme::from_index(2));
+        assert_eq!(s.state, GameState::Countdown(tdrace_app::game::LAN_WAITING_COUNTDOWN));
     }
+    assert_eq!(client_session.player_car_index(), 1);
 
-    // 7. Verify snapshot arrival during Countdown snaps client to GameState::Racing
-    let snap_packet = cabinet::net::WorldSnapshotPacket {
-        tick: 1,
-        session_elapsed_sec: 0.1,
-        cars: vec![
-            cabinet::net::CarStateSnapshot {
-                slot_id: 0,
-                pos_x: 100.0,
-                pos_y: 200.0,
-                velocity_x: 10.0,
-                velocity_y: 0.0,
-                heading_rad: 1.5,
-                angular_velocity: 0.0,
-                steer_angle_rad: 0.0,
-                current_lap: 1,
-                checkpoint_idx: 0,
-                best_lap_time_ms: None,
-                last_lap_time_ms: None,
-                is_finished: false,
-            }
-        ],
-    };
-
-    if let Some(ref mut host) = host_session.lan_host {
-        let _ = host.broadcast_snapshot(&snap_packet);
+    // 6. Everyone is loaded: both machines count down to the same green light
+    let mut sessions = vec![host_session, client_session];
+    for _ in 0..20 {
+        lan_support::step(&net, &mut sessions);
     }
-
-    // Advance client session countdown frame
-    client_session.state = GameState::Countdown(2.5);
-    match client_session.state {
-        GameState::Countdown(ref mut rem) => {
-            *rem -= 0.016;
-            if client_session.is_lan_multiplayer {
-                if let Some(ref mut client) = client_session.lan_client {
-                    let events = client.update(0.016);
-                    for event in events {
-                        if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
-                            for car_snap in snapshot.cars {
-                                let idx = car_snap.slot_id as usize;
-                                if idx < client_session.cars.len() && idx != (client_session.lan_player_slot as usize) {
-                                    let car = &mut client_session.cars[idx];
-                                    car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
-                                }
-                            }
-                            client_session.state = GameState::Racing;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        _ => {}
+    let (h, c) = (sessions[0].lan_race_clock().unwrap(), sessions[1].lan_race_clock().unwrap());
+    assert!(h < 0.0 && h > -3.0, "host countdown {h}");
+    assert!((h - c).abs() < 0.02, "shared clock: host {h}, client {c}");
+    for s in &sessions {
+        assert!(matches!(s.state, GameState::Countdown(r) if r > 0.0 && r <= 3.0));
     }
+    lan_support::run_until_racing(&net, &mut sessions);
 
-    assert_eq!(
-        client_session.state,
-        GameState::Racing,
-        "Snapshot arrival must transition client immediately to GameState::Racing"
-    );
-    assert_eq!(
-        client_session.cars[0].state.position,
-        glam::Vec2::new(100.0, 200.0),
-        "Host car position must be synchronized from snapshot"
-    );
-
-    // Clean up
-    host_session.exit_lan_session();
-    client_session.exit_lan_session();
+    for s in sessions.iter_mut() {
+        s.exit_lan_session();
+    }
 }
 
+#[test]
+fn test_d5_slot_gap_maps_every_player_to_its_own_car() {
+    // Slots 0 (host), 1, 2, 3 join; slot 1 leaves before the launch -> roster 0, 2, 3.
+    let net = lan_support::quiet_net(8);
+    let (mut host, mut clients) = lan_support::build_lobby(&net, &["Leaver", "Second", "Third"], "classic_grand_prix", 3);
+    let mut leaver = clients.remove(0);
+    leaver.disconnect().unwrap();
+    lan_support::pump_lobby(&net, &mut host, &mut clients, 60);
+    assert_eq!(host.active_slots().iter().map(|s| s.slot_id).collect::<Vec<_>>(), vec![0, 2, 3]);
+
+    let sessions = lan_support::launch(&net, host, clients);
+    let names = ["Host", "Second", "Third"];
+    for (s, me) in sessions.iter().zip(names) {
+        let roster: Vec<&str> = s.grid_participants.iter().map(|p| p.name.as_str()).collect();
+        assert_eq!(roster, names, "same car list on every machine");
+        assert_eq!(s.grid_participants[s.player_car_index()].name, me, "own car");
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Spec 045: the LAN lobbies reuse the circuit selector and the Garage.
