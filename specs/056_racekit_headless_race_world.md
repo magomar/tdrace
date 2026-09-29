@@ -134,7 +134,7 @@ pub enum RaceEvent {
 - `TimeAttack`: nobody finishes.
 - A wreck: `on_impact` returns `Some(cause)`. The world then sets `Dnf`, emits `Wrecked` once, and ignores that vehicle's controls from then on. The wreck stays in the world, and other vehicles still hit it.
 - `standings()` puts finished vehicles first, in finish order. Next come the racing vehicles, by lap and then by progress, as `compute_standings` (`:12384`) does today. DNF vehicles come last.
-- `results()` gives each vehicle its real finish time. A vehicle that is still racing when the app ends the race gets a projected time: its race time plus the distance it still has to drive, divided by its average speed so far. The result marks the time as projected.
+- `results()` gives each vehicle its real finish time. A vehicle that is still racing when the app ends the race gets a projected time: its race time plus the distance it still has to drive, divided by its average speed so far (at least 1 m/s). A projected time never comes before the row above it. The result marks the time as projected, and the tdrace results table shows it with a leading `~`.
 
 **AI.** `ai/mod.rs` (`BotAiDriver`, `BotProfile`, `DriverTier`, `DrivingStyle`, `DriverQuality`), `ai/humanize.rs` and `LcgRng` move to `race-kit/src/ai/` with `git mv`. They use no tdrace content today. They stay typed to `Car` until Phase 5. `tdrace-app/src/ai/mod.rs` re-exports them, so every `crate::ai::` path keeps working. The roster code (`ai/driver.rs`, `ai/career.rs`) stays in the app.
 
@@ -211,51 +211,55 @@ graph TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: The world gives bit-identical results for current cars**
-  - [ ] **Given** the golden hashes recorded for debug and release on macOS aarch64
-  - [ ] **When** `golden_world` runs the `golden_sim` race through `RaceWorld<Car>`, and `golden_session` runs the app through the world
-  - [ ] **Then** `golden_world` gives the `golden_sim` hashes, and `golden_session` keeps its hashes
+  - [x] **Given** the golden hashes recorded for debug and release on macOS aarch64
+  - [x] **When** `golden_world` runs the `golden_sim` race through `RaceWorld<Car>`, and `golden_session` runs the app through the world
+  - [x] **Then** `golden_world` gives the `golden_sim` hashes, and `golden_session` keeps its hashes
 
 - **Scenario: A laps race finishes with real times**
-  - [ ] **Given** 3 cars driven by `race_kit::ai::BotAiDriver` in `Laps(2)` on the prototypical oval
-  - [ ] **When** the world steps until every car finishes
-  - [ ] **Then** every car is `Finished`, positions are 1, 2 and 3 in finish order, times go up with position, and each time equals `world.time` at the step the car crossed the line
+  - [x] **Given** 3 cars driven by `race_kit::ai::BotAiDriver` in `Laps(2)` on the prototypical oval
+  - [x] **When** the world steps until every car finishes
+  - [x] **Then** every car is `Finished`, positions are 1, 2 and 3 in finish order, times go up with position, and each time equals `world.time` at the step the car crossed the line
 
 - **Scenario: A wreck gives a DNF**
-  - [ ] **Given** a test vehicle whose `on_impact` returns a cause above 5 m/s, driven into a wall at 10 m/s
-  - [ ] **When** the world steps
-  - [ ] **Then** the vehicle is `Dnf`, one `Wrecked` event is emitted, its controls are ignored from then on, and a second vehicle that drives into it still collides with it
+  - [x] **Given** a test vehicle whose `on_impact` returns a cause above 5 m/s, driven into a wall at 10 m/s
+  - [x] **When** the world steps
+  - [x] **Then** the vehicle is `Dnf`, one `Wrecked` event is emitted, its controls are ignored from then on, and a second vehicle that drives into it still collides with it
 
 - **Scenario: race-kit stands alone**
-  - [ ] **Given** the `race-kit` crate
-  - [ ] **When** `cargo tree -p race-kit -e normal` runs and the crate builds for `wasm32-unknown-unknown`
-  - [ ] **Then** the tree has no `macroquad`, `cabinet`, `rusqlite`, `chrono` or `tdrace-core`, and the build succeeds
+  - [x] **Given** the `race-kit` crate
+  - [x] **When** `cargo tree -p race-kit -e normal` runs and the crate builds for `wasm32-unknown-unknown`
+  - [x] **Then** the tree has no `macroquad`, `cabinet`, `rusqlite`, `chrono` or `tdrace-core`, and the build succeeds
 
 - **Scenario: The race step exists in one place**
-  - [ ] **Given** `tdrace-app` after the change
-  - [ ] **When** you search `crates/tdrace-app/src` for `resolve_multi_car_collisions` and `step_per_wheel`
-  - [ ] **Then** the only call left is the single-car replay check in `replay/mod.rs`, and both `RaceSession` and the bot harness call `RaceWorld::step`
+  - [x] **Given** `tdrace-app` after the change
+  - [x] **When** you search `crates/tdrace-app/src` for `resolve_multi_car_collisions` and `step_per_wheel`
+  - [x] **Then** the only call left is the single-car replay check in `replay/mod.rs`, and both `RaceSession` and the bot harness call `RaceWorld::step`
 
 - **Scenario: tdrace results show real times**
-  - [ ] **Given** a tdrace race where the player finishes first and the bots are still racing
-  - [ ] **When** the results screen is built
-  - [ ] **Then** the player's time is the world finish time, each bot's time is marked projected, and no time comes from `rank * 0.65`
+  - [x] **Given** a tdrace race where the player finishes first and the bots are still racing
+  - [x] **When** the results screen is built
+  - [x] **Then** the player's time is the world finish time, each bot's time is marked projected, and no time comes from `rank * 0.65`
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/race-kit/Cargo.toml`, `crates/race-kit/src/lib.rs` -> new crate, workspace member.
-- `[ ]` `crates/race-kit/src/vehicle.rs` -> `Vehicle`, `DriveControls`, `impl Vehicle for Car`.
-- `[ ]` `crates/race-kit/src/world.rs` -> `RaceWorld`, `RaceRules`, `RaceFormat`, `FinishState`, `ParticipantResult`.
-- `[ ]` `crates/race-kit/src/events.rs` -> `RaceEvent`, `DnfCause`.
-- `[ ]` `crates/race-kit/src/ai/` -> moved from `tdrace-app/src/ai/{mod,humanize}.rs`, plus `LcgRng`.
-- `[ ]` `crates/race-kit/tests/world_tests.rs` -> laps race and wreck scenarios.
-- `[ ]` `crates/race-kit/tests/golden_world.rs` -> the `golden_sim` race through `RaceWorld<Car>`, same hashes.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> `world` field, `physics_step` on events, standings and results from the world.
-- `[ ]` `crates/tdrace-app/src/ai/{mod,bot_harness}.rs` -> re-exports, harness on the world.
-- `[ ]` `crates/tdrace-app/tests/*.rs` -> `cars` and `trackers` renamed to `world.vehicles` and `world.trackers`.
-- `[ ]` `docs/engineering/terminology.md` -> `race-kit` added to the crate list.
+- `[x]` `crates/race-kit/Cargo.toml`, `crates/race-kit/src/lib.rs` -> new crate, workspace member.
+- `[x]` `crates/race-kit/src/vehicle.rs` -> `Vehicle`, `DriveControls`, `impl Vehicle for Car`.
+- `[x]` `crates/race-kit/src/world.rs` -> `RaceWorld`, `RaceRules`, `RaceFormat`, `FinishState`, `ParticipantResult`.
+- `[x]` `crates/race-kit/src/events.rs` -> `RaceEvent`, `DnfCause`.
+- `[x]` `crates/race-kit/src/ai/` -> moved from `tdrace-app/src/ai/{mod,humanize}.rs`, plus `LcgRng`.
+- `[x]` `crates/race-kit/tests/world_tests.rs` -> laps race and wreck scenarios.
+- `[x]` `crates/race-kit/tests/golden_world.rs` -> the `golden_sim` race through `RaceWorld<Car>`, same hashes.
+- `[x]` `crates/race-kit/src/ai/rng.rs` -> `LcgRng`, moved from `tdrace-app/src/ai/driver.rs`.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> `world` field, `physics_step` on events, roster via `world.spawn`, standings and results from the world.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> `RaceResultEntry.projected`, shown with a leading `~`.
+- `[x]` `crates/tdrace-app/src/ai/{mod,bot_harness}.rs` -> re-exports, harness on the world.
+- `[x]` `crates/tdrace-app/tests/*.rs` -> `cars` and `trackers` renamed to `world.vehicles` and `world.trackers`.
+- `[x]` `crates/tdrace-app/tests/race_results_tests.rs` -> the tdrace results scenario.
+- `[x]` `crates/tdrace-app/tests/hall_of_fame_tests.rs` -> fakes its finish in the world instead of `session_time`.
+- `[x]` `docs/engineering/terminology.md` -> `race-kit` added to the crate list.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 056: race-kit Headless Race World*.
