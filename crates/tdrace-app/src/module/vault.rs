@@ -146,6 +146,57 @@ impl GameModule for VaultGameModule {
                 ],
                 audio_profile: Some(EngineAudioProfile::kart_cadet_60()),
             },
+            VehicleModelDefinition {
+                id: "kart_honda_mean_mower",
+                name: "Honda Mean Mower V2 Tuned",
+                tag: "DECOMMISSIONED MOWER",
+                description: "Guinness World Record 999cc CBR1000RR powered monster transferred from Karting.",
+                config: Self::car_vault_prototype_mower(),
+                visual_type: VehicleVisualType::GoKart {
+                    exposed_driver: true,
+                    side_bumpers: false,
+                },
+                stats: (0.78, 0.88, 0.70, 0.92),
+                default_schemes: vec![
+                    CarColorScheme::from_index(2),
+                    CarColorScheme::from_index(0),
+                ],
+                audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
+            },
+            VehicleModelDefinition {
+                id: "kart_john_deere_racing_mower",
+                name: "John Deere Spec Racing Mower",
+                tag: "DECOMMISSIONED MOWER",
+                description: "Classic green & yellow 850cc V-Twin racing mower transferred from Karting.",
+                config: Self::car_vault_prototype_mower(),
+                visual_type: VehicleVisualType::GoKart {
+                    exposed_driver: true,
+                    side_bumpers: false,
+                },
+                stats: (0.76, 0.86, 0.70, 0.93),
+                default_schemes: vec![
+                    CarColorScheme::from_index(5),
+                    CarColorScheme::from_index(1),
+                ],
+                audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
+            },
+            VehicleModelDefinition {
+                id: "kart_viking_t6_tractor",
+                name: "Viking T6 Racing Tractor",
+                tag: "DECOMMISSIONED TRACTOR",
+                description: "Austrian modified 1000cc V-Twin racing tractor transferred from Karting.",
+                config: Self::car_vault_prototype_mower(),
+                visual_type: VehicleVisualType::GoKart {
+                    exposed_driver: true,
+                    side_bumpers: false,
+                },
+                stats: (0.79, 0.88, 0.71, 0.92),
+                default_schemes: vec![
+                    CarColorScheme::from_index(3),
+                    CarColorScheme::from_index(2),
+                ],
+                audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
+            },
         ]
     }
 
@@ -190,7 +241,7 @@ mod tests {
         assert_eq!(vault.id(), "vault");
         assert_eq!(vault.title(), "THE VAULT");
         assert_eq!(vault.default_vehicle_id(), "vault_test_mule");
-        assert_eq!(vault.vehicles().len(), 3);
+        assert_eq!(vault.vehicles().len(), 6);
         assert_eq!(vault.theme().header_badge, "COLD STORAGE / DEV ARCHIVE");
         assert_eq!(vault.theme().primary_accent, Color::new(1.0, 0.65, 0.0, 1.0));
         assert!(!vault.supported_game_modes().is_empty());

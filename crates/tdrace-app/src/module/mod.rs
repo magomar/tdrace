@@ -657,7 +657,7 @@ mod tests {
         assert!(!kart.vehicles().is_empty());
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
-        assert_eq!(kart.tracks().len(), 17);
+        assert_eq!(kart.tracks().len(), 20);
         assert_eq!(kart.drivers().len(), 12);
         assert_eq!(kart.default_vehicle_id(), "shifter_kart_125");
         assert_eq!(kart.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
