@@ -7,10 +7,10 @@
 //! drives exactly as it did before spec 046.
 
 use arcade_race_core::track::spline::{SplineProjection, TrackSpline};
-use wheelbase::{normalize_angle, Car};
+use wheelbase::normalize_angle;
 
 use super::rng::LcgRng;
-use super::{DriverQuality, DrivingStyle};
+use super::{BotVehicle, DriverQuality, DrivingStyle};
 
 /// Curvature (1/m) above which the track counts as a corner (radius below 250 m).
 const CORNER_CURVATURE: f32 = 1.0 / 250.0;
@@ -483,15 +483,15 @@ impl HumanDriver {
 
     /// Updates statistics, line wander and corner plans. Call once per tick before the
     /// controller reads any other hook.
-    pub fn begin_tick(&mut self, car: &Car, spline: &TrackSpline, proj: &SplineProjection, others: &[&Car], dt: f32) {
+    pub fn begin_tick<V: BotVehicle>(&mut self, car: &V, spline: &TrackSpline, proj: &SplineProjection, others: &[&V], dt: f32) {
         let len = spline.total_length();
         let curr_dist = proj.progress_distance;
         let track_dir = spline.sample_at_distance(curr_dist).tangent;
         let heading_off = car.forward_vector().dot(track_dir);
-        if car.state.speed > 1.0 {
+        if car.speed() > 1.0 {
             self.stats.peak_heading_off_deg = self.stats.peak_heading_off_deg.max(heading_off.clamp(-1.0, 1.0).acos().to_degrees());
         }
-        if !self.spin_latched && heading_off < 0.0 && car.state.speed > 1.0 {
+        if !self.spin_latched && heading_off < 0.0 && car.speed() > 1.0 {
             self.spin_latched = true;
             self.stats.spins += 1;
         } else if self.spin_latched && heading_off > 0.866 {
@@ -534,7 +534,7 @@ impl HumanDriver {
             }
         }
 
-        self.launched |= car.state.speed >= LAUNCH_SPEED;
+        self.launched |= car.speed() >= LAUNCH_SPEED;
         self.event = match self.event {
             Event::PowerStab(t, steer) if t > dt => Event::PowerStab(t - dt, steer),
             Event::Lift(t) if t > dt => Event::Lift(t - dt),
@@ -547,8 +547,8 @@ impl HumanDriver {
             let plan = &mut self.plans[i];
             if !plan.event_done && into < c.len + LINE_RAMP {
                 let past_apex = into >= c.apex;
-                let v = car.state.velocity;
-                let slip = if car.state.speed > 8.0 { v.dot(car.right_vector()).atan2(v.dot(car.forward_vector())).abs() } else { 0.0 };
+                let v = car.velocity();
+                let slip = if car.speed() > 8.0 { v.dot(car.right_vector()).atan2(v.dot(car.forward_vector())).abs() } else { 0.0 };
                 let event = match plan.mistake {
                     Some(MistakeKind::PowerStab) if past_apex && self.launched => Some(Event::PowerStab(plan.stab_s, -c.turn)),
                     Some(MistakeKind::Cautious) if past_apex && self.launched && plan.lift_s > 0.0 => Some(Event::Lift(plan.lift_s)),
@@ -563,12 +563,12 @@ impl HumanDriver {
         }
     }
 
-    fn pressure_cars(&self, car: &Car, others: &[&Car]) -> u32 {
+    fn pressure_cars<V: BotVehicle>(&self, car: &V, others: &[&V]) -> u32 {
         let fwd = car.forward_vector();
         others
             .iter()
             .filter(|o| {
-                let to = o.state.position - car.state.position;
+                let to = o.position() - car.position();
                 let along = to.dot(fwd);
                 let dist = to.length();
                 (dist < PRESSURE_BEHIND && along <= 2.5) || (along > 0.0 && along < PRESSURE_AHEAD && to.dot(car.right_vector()).abs() < 3.0)
