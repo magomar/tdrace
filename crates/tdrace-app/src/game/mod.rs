@@ -760,73 +760,7 @@ pub struct RaceSession {
 
 
 
-/// Dynamic vehicle transmission gear and engine RPM simulation model.
-#[derive(Debug, Clone)]
-pub struct EngineRpmModel {
-    pub current_rpm: f32,
-    pub current_gear: usize,
-    pub shift_cooldown: f32,
-}
-
-impl Default for EngineRpmModel {
-    fn default() -> Self {
-        Self {
-            current_rpm: 1100.0,
-            current_gear: 1,
-            shift_cooldown: 0.0,
-        }
-    }
-}
-
-impl EngineRpmModel {
-    pub fn update(&mut self, forward_speed: f32, throttle: f32, max_slip: f32, dt: f32) -> (f32, bool) {
-        self.shift_cooldown = (self.shift_cooldown - dt).max(0.0);
-        let speed_abs = forward_speed.abs();
-        let is_reverse = forward_speed < -0.5 && throttle < 0.0;
-
-        let (new_gear, target_rpm) = if is_reverse {
-            let rpm = (1100.0 + (speed_abs / 12.0) * 5500.0).clamp(1100.0, 7200.0);
-            (0, rpm)
-        } else if speed_abs < 1.0 {
-            // Stationary launch revs / idle
-            let throttle_revs = if throttle > 0.05 {
-                1100.0 + throttle * 5500.0
-            } else {
-                1100.0
-            };
-            (1, throttle_revs)
-        } else {
-            // 5-speed forward sequential transmission
-            let (gear, base_rpm) = if speed_abs < 12.5 {
-                (1, 1200.0 + (speed_abs / 12.5) * 5800.0)
-            } else if speed_abs < 23.5 {
-                (2, 3800.0 + ((speed_abs - 12.5) / 11.0) * 3400.0)
-            } else if speed_abs < 35.5 {
-                (3, 4200.0 + ((speed_abs - 23.5) / 12.0) * 3000.0)
-            } else if speed_abs < 47.5 {
-                (4, 4600.0 + ((speed_abs - 35.5) / 12.0) * 2600.0)
-            } else {
-                (5, 5000.0 + ((speed_abs - 47.5) / 16.0) * 2500.0)
-            };
-
-            // Wheelspin rev-flare (power drift / burnout)
-            let slip_flare = if max_slip > 0.3 { (max_slip - 0.3) * 2500.0 } else { 0.0 };
-            (gear, (base_rpm + slip_flare).clamp(1100.0, 7800.0))
-        };
-
-        let is_upshift = new_gear > self.current_gear && self.current_gear > 0 && self.shift_cooldown <= 0.0;
-        if is_upshift {
-            self.shift_cooldown = 0.22;
-        }
-        self.current_gear = new_gear;
-
-        // Smooth RPM interpolation with realistic engine inertia
-        let responsiveness = if target_rpm > self.current_rpm { 16.0 } else { 10.0 };
-        self.current_rpm += (target_rpm - self.current_rpm) * (dt * responsiveness).min(1.0);
-
-        (self.current_rpm, is_upshift)
-    }
-}
+pub use crate::audio::EngineRpmModel;
 
 impl Default for RaceSession {
     fn default() -> Self {
@@ -11691,6 +11625,52 @@ impl RaceSession {
         } else {
             self.audio.stop_player2_engine();
         }
+
+        // Proximity Opponent Engine Audio & Doppler Shift (Spec 061)
+        let (listener_pos, listener_vel) = if let Some(p_car) = self.world.vehicles.get(my_car_idx) {
+            (p_car.state.position, p_car.state.velocity)
+        } else {
+            (self.camera.current_pos, Vec2::ZERO)
+        };
+
+        let mut proximity_sources = Vec::with_capacity(self.world.vehicles.len());
+        for (i, car) in self.world.vehicles.iter().enumerate() {
+            if i == my_car_idx || (is_split && i == 1) {
+                continue;
+            }
+            let driven_slip_ratio = car.state.wheel_assemblies.iter()
+                .zip(car.state.wheels.iter())
+                .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
+                .map(|(_, telemetry)| telemetry.slip_ratio.abs())
+                .fold(0.0f32, f32::max);
+
+            let ctrl = controls_all.get(i).copied().unwrap_or_default();
+            let forward_speed = car.state.local_velocity.x;
+            let effective_throttle = if ctrl.reverse {
+                -ctrl.throttle
+            } else {
+                ctrl.throttle - ctrl.brake
+            };
+
+            let engine_type = if let Some(Some(mid)) = self.car_model_ids.get(i) {
+                crate::catalog::find_model_by_id(mid)
+                    .map(|m| m.sound_type())
+                    .unwrap_or_else(|| self.resolve_active_sound_type())
+            } else {
+                self.resolve_active_sound_type()
+            };
+
+            proximity_sources.push(crate::audio::VehicleAudioSource {
+                vehicle_id: i,
+                engine_type,
+                position: car.state.position,
+                velocity: car.state.velocity,
+                forward_speed,
+                throttle: effective_throttle,
+                slip_ratio: driven_slip_ratio,
+            });
+        }
+        self.audio.update_proximity_engines(&proximity_sources, listener_pos, listener_vel, dt);
 
 
         // Lap and sector split audio feedback

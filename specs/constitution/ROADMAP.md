@@ -33,6 +33,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Cross-Module AI Character Rosters and Dynamic Tier Assignment](../024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md)**: Decouples experience tiers from character definitions, aligns 72 drivers across 6 styles, introduces uniform style sampling from the global pool, normal-distribution difficulty tiering for casual races, and persistent career rosters with 90% retention and probabilistic tier advancement.
 - `[x]` **[Per-Tier Engine Sound Banks and Physical Synthesis](../022_per_tier_engine_sound_banks_and_synthesis.md)**: Expands motor audio synthesis to 25 authentic physical archetypes across all 5 tiers of the 5 motorsport disciplines with turbo flutter, blower whine, and hybrid motor acoustics.
 - `[x]` **[Floating Bot Names and Dynamic Proximity Nameplates](../029_floating_bot_names_and_dynamic_proximity_nameplates.md)**: In-race dynamic overhead floating bot nameplates with proximity culling, distance-based alpha fading, anti-crowding deconfliction, and Alt key toggle.
+- `[x]` **[Proximity Engine Audio and Doppler Shift Simulation](../061_proximity_engine_audio_and_doppler_shift_simulation.md)**: Dynamic spatial proximity engine audio for nearby opponent vehicles with distance attenuation, stereo panning, and physical Doppler shift pitch modulation across two structured phases.
 
 ### Phase 3: Physics Simulation Harness & Technical Asset Portals (Priority: High)
 - `[x]` **[Systematic Computational Simulation of Surface-Car Dynamics](../010_surface_car_interaction_simulation.md)**: Headless computational simulation harness and benchmarking suite to measure vehicle acceleration, braking, and cornering dynamics across all surface types without graphics.
@@ -114,9 +115,10 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 - **Terrain Synthesis**: Seed-based procedural track ribbon generation with elevation contours and surface hazards.
 - **Dynamic Track Grip & Rubbering-In**: Racing line rubbers in over consecutive laps, while off-line sections collect marbles and lose grip.
 
-### 3. Arcade Damage Modelling & Pitstop Repairs
-- **Vehicle Durability & Health Bar**: 0–100% HP damage model from barrier and vehicle SAT collisions with progressive handling penalties (minor scrapes, engine smoke, limp-mode, spinout).
-- **Tactical Pitlane Service**: Branching pit lane spline with rapid 2–3s arcade pitstop countdowns and floating repair popups.
+### 3. Arcade Damage Modelling, Pitstops & Multi-Tier Academy
+- `[ ]` **[Circuit Pit Lanes and Interactive Pit Stop Procedures](../062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md)**: Physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences.
+- `[ ]` **[Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy](../063_damage_modelling_inrace_field_repairs_and_garage_maintenance_economy.md)**: 0–100% vehicle durability model driven by SAT collision impulse energy, progressive visual and handling degradation, in-race emergency patching, persistent car condition, and a balanced post-race garage repair economy with anti-bankruptcy safeguards.
+- `[ ]` **[Classic Module Multi-Tier Academy Missions and Degradation Curriculum](../064_classic_module_multitier_academy_missions_and_degradation_curriculum.md)**: 4-tier progressive Academy curriculum across the 18 revamped circuits, taking players from damage-free grassroots basics to technical tire wear management and pit stop mastery, while serving as a reliable credit-earning engine.
 
 ### 4. Dedicated Stunt & Acrobatic Competition Mode
 - **Acrobatic Rulesets**: Gymkhana precision drift slaloms, donut clipping zones, and freestyle arena trick attack with combo multipliers.
