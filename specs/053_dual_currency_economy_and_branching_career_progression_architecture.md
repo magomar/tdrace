@@ -4,6 +4,7 @@ template: architecture
 title: "Dual-Currency Economy and Branching Career Progression Architecture"
 description: "Architectural blueprint establishing a decoupled dual-currency economy (XP + Credits), multi-championship branching paths per tier, and non-linear career progression."
 status: implemented
+receipt: "docs/receipts/spec-053-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T00:48:36Z }
 verified: { by: human:mario, at: 2026-09-29T00:56:13Z }
