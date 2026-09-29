@@ -70,7 +70,7 @@ def test_resample_polyline_keeps_segment_props():
 
 def test_provenance_registry_lists_all_real_circuits():
     urls = imp.provenance_osm_urls()
-    assert len(urls) == 77
+    assert len(urls) == 94
     assert all(u.startswith("https://www.openstreetmap.org/") for u in urls.values())
 
 
