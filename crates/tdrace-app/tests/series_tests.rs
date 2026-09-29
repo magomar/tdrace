@@ -1305,42 +1305,49 @@ fn test_championship_lap_calibration_across_all_modules() {
 
 #[test]
 fn test_kart_championship_first_round_bots_move() {
-    let mut session = RaceSession::new();
-    session.switch_to_kart();
-    session.start_kart_career_tier(1);
-    session.state = GameState::Racing;
+    // Fixed grids (fixed_roster_seed), so a failure reproduces. Seeds 40 and 51 put a
+    // PowerStab-prone rookie on a grid slot just past an apex. Before corner-exit mistakes waited
+    // for the launch (humanize LAUNCH_SPEED), its handbrake locked the cadet kart at ~1 m/s for
+    // ~2 s and it covered 1.4-2.2 m in 5 s (14 of 2200 launches over seeds 0-199).
+    for seed in [0u64, 40, 51] {
+        let mut session = RaceSession::new();
+        session.fixed_roster_seed = Some(seed);
+        session.switch_to_kart();
+        session.start_kart_career_tier(1);
+        session.state = GameState::Racing;
 
-    let initial_positions: Vec<_> = session.cars.iter().map(|c| c.state.position).collect();
-    let num_cars = session.cars.len();
+        let initial_positions: Vec<_> = session.cars.iter().map(|c| c.state.position).collect();
+        let num_cars = session.cars.len();
 
-    // Step 300 frames (5.0 seconds of racing)
-    for _ in 0..300 {
-        session.physics_step(RaceSession::FIXED_DT);
-    }
+        // Step 300 frames (5.0 seconds of racing)
+        for _ in 0..300 {
+            session.physics_step(RaceSession::FIXED_DT);
+        }
 
-    // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
-    // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
-    // behind another can sit at ~4.8 m while rolling at ~3 m/s (2 of 50 random grids). A stalled
-    // launch (the regression this test guards: 1.7 m at 0.8 m/s) still fails.
-    for i in 1..num_cars {
-        let dist = session.cars[i].state.position.distance(initial_positions[i]);
-        let speed = session.cars[i].state.speed;
-        let prog = session.trackers[i].progress_distance;
-        assert!(
-            dist > 5.0 || (dist > 3.0 && speed > 2.5),
-            "Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
-            i, session.opponent_drivers[i - 1].name, dist, speed, prog
-        );
-        assert!(
-            speed > 1.5,
-            "Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
-            i, session.opponent_drivers[i - 1].name, speed
-        );
-        assert_eq!(
-            session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
-            "Bot {} ({}) entered reverse recovery on the starting grid!",
-            i, session.opponent_drivers[i - 1].name
-        );
+        // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
+        // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
+        // behind another can sit at ~4.8 m while rolling at ~3 m/s (3 of 2200 launches over seeds
+        // 0-199 fall just under these limits that way, in traffic). A stalled launch still fails.
+        for i in 1..num_cars {
+            let dist = session.cars[i].state.position.distance(initial_positions[i]);
+            let speed = session.cars[i].state.speed;
+            let prog = session.trackers[i].progress_distance;
+            assert!(
+                dist > 5.0 || (dist > 3.0 && speed > 2.5),
+                "seed {}: Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
+                seed, i, session.opponent_drivers[i - 1].name, dist, speed, prog
+            );
+            assert!(
+                speed > 1.5,
+                "seed {}: Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
+                seed, i, session.opponent_drivers[i - 1].name, speed
+            );
+            assert_eq!(
+                session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
+                "seed {}: Bot {} ({}) entered reverse recovery on the starting grid!",
+                seed, i, session.opponent_drivers[i - 1].name
+            );
+        }
     }
 }
 

@@ -225,6 +225,12 @@ above, with the reason.
    - "No bot below 2 m/s for 6 s" is now "no bot more than 20 s without 5 m of progress". The draft
      measure missed a bot that circled at 1–4 m/s against the oval wall for 400 s. After a spin on
      the oval banking, recovery takes up to 15.6 s (measured maximum).
+9. **Corner-exit mistakes wait for the launch** (`tdrace-flaky-kart-bots-test-07kw`). A kart grid
+   sits just past an apex, so a PowerStab planned for that corner fired at ~1 m/s off the grid:
+   the handbrake locked a cadet kart for ~2 s (14 of 2200 launches, seeds 0–199). PowerStab and
+   the Cautious lift now fire only after the bot first reaches 6 m/s. A plain "speed ≥ 6 m/s"
+   gate also removed slow hairpin-exit stabs and dropped T1 big mistakes to 0.096 per lap, under
+   the 0.1 gate, so the gate is on the launch only.
 
 ---
 

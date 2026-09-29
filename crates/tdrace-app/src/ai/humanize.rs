@@ -39,6 +39,11 @@ const PRESSURE_AHEAD: f32 = 8.0;
 const MAX_PRESSURE_CARS: u32 = 2;
 /// An "off" is more than this far past the track edge (m), so that kerb cuts do not count.
 const OFF_MARGIN: f32 = 1.5;
+/// A bot counts as launched once it first reaches this speed (m/s), the top of the 6 m/s
+/// low-speed regime of the throttle cap. Corner-exit mistakes (PowerStab, the Cautious lift) wait
+/// for it: on a grid just past an apex, a PowerStab's handbrake locked a cadet kart at ~1 m/s for
+/// ~2 s. After the launch they fire as calibrated, low-speed hairpin exits included.
+const LAUNCH_SPEED: f32 = 6.0;
 
 /// The kinds of mistake a bot can make (spec 046 §3.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -341,6 +346,8 @@ pub struct HumanDriver {
     pass_timer: f32,
     spin_latched: bool,
     off_timer: f32,
+    /// Set once the bot first reaches `LAUNCH_SPEED` in this race.
+    launched: bool,
     pub stats: BotDrivingStats,
 }
 
@@ -364,6 +371,7 @@ impl HumanDriver {
             pass_timer: 0.0,
             spin_latched: false,
             off_timer: 0.0,
+            launched: false,
             stats: BotDrivingStats::default(),
         }
     }
@@ -495,6 +503,7 @@ impl HumanDriver {
             }
         }
 
+        self.launched |= car.state.speed >= LAUNCH_SPEED;
         self.event = match self.event {
             Event::PowerStab(t, steer) if t > dt => Event::PowerStab(t - dt, steer),
             Event::Lift(t) if t > dt => Event::Lift(t - dt),
@@ -510,8 +519,8 @@ impl HumanDriver {
                 let v = car.state.velocity;
                 let slip = if car.state.speed > 8.0 { v.dot(car.right_vector()).atan2(v.dot(car.forward_vector())).abs() } else { 0.0 };
                 let event = match plan.mistake {
-                    Some(MistakeKind::PowerStab) if past_apex => Some(Event::PowerStab(plan.stab_s, -c.turn)),
-                    Some(MistakeKind::Cautious) if past_apex && plan.lift_s > 0.0 => Some(Event::Lift(plan.lift_s)),
+                    Some(MistakeKind::PowerStab) if past_apex && self.launched => Some(Event::PowerStab(plan.stab_s, -c.turn)),
+                    Some(MistakeKind::Cautious) if past_apex && self.launched && plan.lift_s > 0.0 => Some(Event::Lift(plan.lift_s)),
                     Some(MistakeKind::OverCorrect) if past_apex || slip > 5f32.to_radians() => Some(Event::OverCorrect(0.5)),
                     _ => None,
                 };
