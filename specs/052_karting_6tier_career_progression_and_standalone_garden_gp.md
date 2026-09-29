@@ -4,6 +4,7 @@ template: feature
 title: "Karting 6-Tier Career Progression and Expanded 20-Circuit Roster"
 description: "Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault module (Spec 054), and expands the circuit roster from 17 to 20 tracks (5 starter + 3 unlocked per tier) using verified OpenStreetMap data."
 status: implemented
+receipt: "docs/receipts/spec-052-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T00:53:00Z }
 verified: { by: "human:mario", at: "2026-09-29T11:40:20Z" }
