@@ -1,6 +1,6 @@
 pub mod ai;
 pub mod audio;
-pub mod camera;
+pub use race_ui::camera;
 pub mod catalog;
 pub mod config;
 pub mod db;

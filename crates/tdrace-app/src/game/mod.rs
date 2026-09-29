@@ -6313,9 +6313,9 @@ impl RaceSession {
     /// Leaves a paused race through the pause menu's EXIT RACE action.
     fn exit_paused_race(&mut self) {
         self.paused_countdown = None;
-        self.camera.resume_from_pause(None);
+        self.camera.resume_from_pause(None::<&Car>);
         if self.is_split_screen() {
-            self.camera_p2.resume_from_pause(None);
+            self.camera_p2.resume_from_pause(None::<&Car>);
         }
         let target = self.race_exit_target();
         self.transition_fade_to(target, 0.35);
