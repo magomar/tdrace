@@ -6,6 +6,7 @@
 //!
 //! No window, sound, database or clock: the crate builds for `wasm32-unknown-unknown`.
 
+pub mod ai;
 pub mod events;
 pub mod vehicle;
 pub mod world;
