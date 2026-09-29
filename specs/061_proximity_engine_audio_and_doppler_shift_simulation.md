@@ -4,6 +4,7 @@ template: feature
 title: "Proximity Engine Audio and Doppler Shift Simulation"
 description: "Introduces dynamic spatial proximity engine audio for nearby opponent vehicles with distance attenuation, stereo panning, and physical Doppler shift pitch modulation across two structured phases."
 status: in_progress
+receipt: "docs/receipts/spec-061-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:01:11Z }
 verified: { by: human:mario, at: 2026-09-29T16:03:40Z }
