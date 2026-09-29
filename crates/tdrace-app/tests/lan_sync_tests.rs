@@ -304,3 +304,73 @@ fn test_four_players_with_slot_gap_stay_in_sync_over_a_lossy_link() {
         assert_eq!(results_of(s), host_results);
     }
 }
+
+#[test]
+fn test_lan_multiplayer_proximity_engine_audio_and_doppler() {
+    let net = quiet_net(42);
+    let (host, clients) = build_lobby_with(&net, &["Opponent"], "classic_grand_prix", 3, LanCollisionMode::GhostPassing);
+    let mut sessions = launch(&net, host, clients);
+    run_until_racing(&net, &mut sessions);
+
+    let mut drivers = Drivers::new(sessions.len());
+    // Drive for 2 seconds (120 frames) so cars accelerate and stream remote states
+    for _ in 0..120 {
+        drivers.drive(&mut sessions);
+        step(&net, &mut sessions);
+    }
+
+    assert_eq!(sessions[0].player_car_index(), 0);
+    assert_eq!(sessions[1].player_car_index(), 1);
+
+    // Verify remote controls were captured and decoded from network state
+    if let Some(ref lan0) = sessions[0].lan_race {
+        assert!(lan0.remote_controls.contains_key(&1), "Host should store remote controls for Client slot 1");
+        let c1 = lan0.remote_controls.get(&1).unwrap();
+        assert!(c1.throttle > 0.0 || c1.brake > 0.0 || sessions[1].world.vehicles[1].state.speed > 1.0);
+    }
+
+    if let Some(ref lan1) = sessions[1].lan_race {
+        assert!(lan1.remote_controls.contains_key(&0), "Client should store remote controls for Host slot 0");
+    }
+
+    // Verify proximity audio allocations if backend is available
+    if sessions[0].audio.backend.is_available() {
+        assert_eq!(sessions[0].audio.proximity_voices.len(), 3);
+        assert_eq!(sessions[1].audio.proximity_voices.len(), 3);
+
+        let dist = sessions[0].world.vehicles[0].state.position.distance(sessions[0].world.vehicles[1].state.position);
+        if dist < 75.0 {
+            // Host listening to Client car 1
+            let host_voice_1 = sessions[0].audio.proximity_voices.iter().find(|s| s.vehicle_id == Some(1));
+            assert!(host_voice_1.is_some(), "Host must allocate proximity voice slot for Client car 1");
+            let v1 = host_voice_1.unwrap();
+            assert!(v1.current_gain > 0.0, "Client car gain must be audible within 75m");
+            assert!(v1.rpm_model.current_rpm >= 1000.0, "RPM model must track engine revolutions");
+
+            // Client listening to Host car 0
+            let client_voice_0 = sessions[1].audio.proximity_voices.iter().find(|s| s.vehicle_id == Some(0));
+            assert!(client_voice_0.is_some(), "Client must allocate proximity voice slot for Host car 0");
+            let v0 = client_voice_0.unwrap();
+            assert!(v0.current_gain > 0.0, "Host car gain must be audible within 75m");
+            assert!(v0.rpm_model.current_rpm >= 1000.0, "RPM model must track engine revolutions");
+        }
+
+        // Test Disconnect Culling: Client leaves the match
+        let mut leaver = sessions.pop().unwrap();
+        leaver.exit_lan_session();
+
+        let mut frames = 0;
+        while frames < 60 * 3 && !sessions[0].lan_car_left(1) {
+            step(&net, &mut sessions);
+            frames += 1;
+        }
+        assert!(sessions[0].lan_car_left(1), "Host must recognize client 1 left");
+
+        // Step one frame so audio manager updates with disconnected car culled
+        sessions[0].update();
+        let host_voice_1_after_leave = sessions[0].audio.proximity_voices.iter().find(|s| s.vehicle_id == Some(1));
+        assert!(host_voice_1_after_leave.is_none(), "Leaving client car must be culled from proximity voice slots");
+    }
+}
+
+

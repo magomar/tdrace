@@ -40,6 +40,8 @@ pub struct LanRaceState {
     pub config: RaceConfig,
     /// Interpolation buffers of the other players' cars, by slot.
     pub remote: HashMap<u8, RemoteCarBuffer>,
+    /// Sampled driver controls received from the other players' cars, by slot.
+    pub remote_controls: HashMap<u8, CarControls>,
     /// Slots that left the race.
     pub left: Vec<u8>,
     /// Finish order from the host.
@@ -69,6 +71,7 @@ impl LanRaceState {
         Self {
             config,
             remote: HashMap::new(),
+            remote_controls: HashMap::new(),
             left: Vec::new(),
             standings: Vec::new(),
             results: None,
@@ -245,6 +248,7 @@ impl RaceSession {
         }
         lan.left.push(slot_id);
         lan.remote.remove(&slot_id);
+        lan.remote_controls.remove(&slot_id);
         let car_idx = lan.config.car_index_of(slot_id);
         let name = car_idx.and_then(|i| lan.config.roster.get(i)).map(|e| e.player_name.clone()).unwrap_or_default();
         if let Some(car) = car_idx.and_then(|i| self.world.vehicles.get_mut(i)) {
@@ -331,6 +335,14 @@ impl RaceSession {
             car.state.is_airborne = s.has_flag(flags::AIRBORNE);
             car.state.is_braking = s.has_flag(flags::BRAKING);
             car.state.is_drifting = s.has_flag(flags::DRIFTING);
+            let ctrl = CarControls {
+                throttle: (s.throttle as f32) / 255.0,
+                brake: (s.brake as f32) / 255.0,
+                steer: s.steer_angle,
+                handbrake: s.has_flag(flags::HANDBRAKE),
+                reverse: s.has_flag(flags::REVERSE),
+            };
+            lan.remote_controls.insert(entry.slot_id, ctrl);
             if let Some(lights) = self.car_lights_on.get_mut(i) {
                 *lights = s.has_flag(flags::LIGHTS);
             }
