@@ -15,7 +15,7 @@ use wheelbase::car::Car;
 use wheelbase::surface::SurfaceType;
 use wheelbase::WheelTelemetry;
 
-/// What the effects need from a vehicle besides its [`Body2D`] state. Spec 061.
+/// What the effects need from a vehicle besides its [`Body2D`] state. Spec 065.
 pub trait FxVehicle: Body2D {
     /// Four ground contact points: the wheels of a car; for a chariot, e.g. its two wheels and
     /// two hoof groups.

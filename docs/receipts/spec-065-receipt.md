@@ -1,7 +1,7 @@
 ---
 type: validation_receipt
 schema_version: "1.0"
-spec: "specs/061_vehiclegeneric_bot_ai_and_effects.md"
+spec: "specs/065_vehiclegeneric_bot_ai_and_effects.md"
 epic: "tdrace-lt1c"
 candidate_commit: "6d70903d09fcc0e4a095a0df74b0ea3437c7aa37"
 verifier: "local-user"
@@ -12,10 +12,10 @@ duration_ms: 20592
 status: passed
 ---
 
-# 🧾 Validation Receipt: Spec 061
+# 🧾 Validation Receipt: Spec 065
 
 - **Candidate Commit**: `6d70903d09fcc0e4a095a0df74b0ea3437c7aa37`
-- **Spec**: `specs/061_vehiclegeneric_bot_ai_and_effects.md`
+- **Spec**: `specs/065_vehiclegeneric_bot_ai_and_effects.md`
 - **Command**: `cargo test -p race-kit --test bot_vehicle_tests --test golden_world && cargo test -p race-ui --test fx_vehicle_tests && cargo test -p tdrace-app --test fx_tests --test golden_session`
 - **Result**: `passed` (exit code: 0)
 

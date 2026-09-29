@@ -82,7 +82,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 - `[x]` **[`race-kit` Headless Race World](../056_racekit_headless_race_world.md)**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
 - `[x]` **[`race-ui` Rendering, Camera, Effects & HUD Primitives](../058_raceui_rendering_camera_effects_and_hud_primitives.md)**: Track renderers, race camera, particles and skid marks, curve indicator and HUD widgets outside `tdrace-app`.
 - `[x]` **[Publish-Ready Shared Crates](../059_publishready_shared_crates.md)**: Tagged crates that a separate repo can build without the `tracks/` submodule.
-- `[ ]` **Chariot Game**: the `tdchariots` repo with its own horse-drawn chariot physics, sprites and race, measured against Qvadriga. The tdrace side is [Vehicle-Generic Bot AI and Effects](../061_vehiclegeneric_bot_ai_and_effects.md).
+- `[ ]` **Chariot Game**: the `tdchariots` repo with its own horse-drawn chariot physics, sprites and race, measured against Qvadriga. The tdrace side is [Vehicle-Generic Bot AI and Effects](../065_vehiclegeneric_bot_ai_and_effects.md).
 - `[ ]` **Open Point-to-Point Courses**: Start and finish gates, a lap-free tracker, and open-spline bake, grid and validation.
 - `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries, a per-chunk mesh cache, and origin rebasing.
 - `[ ]` **Rally-Raid Game**: GPX-driven procedural stage generator, chase camera with rotation, and the `rallyraid-app` repo.

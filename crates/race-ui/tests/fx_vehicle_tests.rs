@@ -1,4 +1,4 @@
-//! Spec 061 (`specs/061_vehiclegeneric_bot_ai_and_effects.md`): the effects follow any vehicle
+//! Spec 065 (`specs/065_vehiclegeneric_bot_ai_and_effects.md`): the effects follow any vehicle
 //! that implements `FxVehicle`, not only `wheelbase::Car`.
 
 use arcade_race_core::{Body2D, BodyHull};

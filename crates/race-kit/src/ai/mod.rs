@@ -1,7 +1,7 @@
 //! Bot driver AI: the line-following controller, driver tiers and styles, and the human layer.
 //!
 //! Moved from `tdrace-app/src/ai/` for spec 056 (`specs/056_racekit_headless_race_world.md`).
-//! It drives any vehicle that implements [`BotVehicle`] (spec 061), including `wheelbase::Car`.
+//! It drives any vehicle that implements [`BotVehicle`] (spec 065), including `wheelbase::Car`.
 
 pub mod humanize;
 pub mod rng;
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use arcade_race_core::track::Track;
 use wheelbase::{normalize_angle, Car, CarControls};
 
-/// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 061.
+/// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 065.
 pub trait BotVehicle: Body2D {
     /// Unit vector to the vehicle's right.
     fn right_vector(&self) -> Vec2;

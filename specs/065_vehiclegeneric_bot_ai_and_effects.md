@@ -3,8 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Vehicle-Generic Bot AI and Effects"
 description: "Phase 5, tdrace side, of spec 049: the race-kit bot driver and the race-ui effects (dust, smoke, skid marks and ruts, drift popups) work for any vehicle model through two small traits, so the tdchariots repo can drive and draw chariots with them; today's cars give bit-identical results, and the change ships as tag platform-v0.2.0."
-status: implemented
-receipt: "docs/receipts/spec-061-receipt.md"
+status: in_progress
+receipt: "docs/receipts/spec-065-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T16:50:00Z }
 verified: { by: human:mario, at: 2026-09-29T17:03:07Z }
@@ -155,4 +155,4 @@ No new dependencies. No `unsafe`.
 - `[x]` git tag `platform-v0.2.0` -> created locally. Mario pushes it.
 
 ### Beads Epic Mapping
-- Governed by epic *Fulfill Spec 061: Vehicle-Generic Bot AI and Effects*.
+- Governed by epic *Fulfill Spec 065: Vehicle-Generic Bot AI and Effects*.

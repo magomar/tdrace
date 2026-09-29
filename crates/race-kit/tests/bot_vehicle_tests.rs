@@ -1,4 +1,4 @@
-//! Spec 061 (`specs/061_vehiclegeneric_bot_ai_and_effects.md`): the bot driver drives any
+//! Spec 065 (`specs/065_vehiclegeneric_bot_ai_and_effects.md`): the bot driver drives any
 //! vehicle that implements `BotVehicle`, not only `wheelbase::Car`.
 
 use arcade_race_core::track::{create_prototypical_track, RaceDirection, SplineProjection, Track, TrackProgressTracker, TrackShape};

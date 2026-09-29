@@ -13,7 +13,7 @@ tag for all of them. The plan is in [spec 049](../../specs/049_reusable_racing_p
 ## platform-v0.2.0 (2026-09-29)
 
 Any vehicle model can use the bot driver and the effects, so the chariot game can bring its own
-chariot physics. ([spec 061](../../specs/061_vehiclegeneric_bot_ai_and_effects.md))
+chariot physics. ([spec 065](../../specs/065_vehiclegeneric_bot_ai_and_effects.md))
 
 ### race-kit
 - `ai::BotVehicle` (right vector, top speed, grip). `BotAiDriver::compute_controls` and the human
