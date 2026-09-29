@@ -3,14 +3,15 @@ type: Feature Spec
 template: feature
 title: "Classic Academy and Grassroots Career Onboarding"
 description: "Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase."
-status: draft
+status: approved
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T14:42:47Z }
+verified: { by: "human:mario", at: "2026-09-29T20:24:27Z" }
 ---
 
 # Feature Spec: Classic Academy and Grassroots Career Onboarding 🎓🏁💰
 
-A comprehensive specification defining the **Grassroots Career Onboarding Loop** for **TdRace**. Under this model, new player profiles initialize with **$0\text{ XP}$ and $\$0\text{ Cr}$ (Bank Credits)** with **zero free career vehicles**. To enter competitive motorsport, rookies must complete the **Classic Academy** within the Classic Arcade module. By mastering vehicle handling fundamentals across four structured driving challenges, players earn their **National Grassroots Racing License** and a seed credit purse of **$\$7,000 – \$14,500\text{ Cr}$**, granting them the purchasing power to acquire their first competition machine in entry-level grassroots categories (**Karting**, **Autocross**, or **Rallycross**).
+A comprehensive specification defining the **Grassroots Career Onboarding Loop** for **TdRace**. Under this model, new player profiles initialize with **0 XP and 0 Cr (Bank Credits)** with **zero free career vehicles**. To enter competitive motorsport, rookies must complete the **Classic Academy** within the Classic Arcade module. By mastering vehicle handling fundamentals across four structured driving challenges, players earn their **National Grassroots Racing License** and a seed credit purse of **7,000 – 14,500 Cr**, granting them the purchasing power to acquire their first competition machine in entry-level grassroots categories (**Karting**, **Autocross**, or **Rallycross**).
 
 ---
 
@@ -24,7 +25,7 @@ In legacy career structures ([Spec 013](013_player_profile_enhancement_and_caree
 
 ### 1.2 Core Design Principles
 This specification enacts a foundational shift in how players begin their motorsport journey:
-- **Zero-Start Initial State**: Every new driver dossier starts with **$0\text{ XP}$**, **$\$0\text{ Cr}$**, and an **empty career garage**.
+- **Zero-Start Initial State**: Every new driver dossier starts with **0 XP**, **0 Cr**, and an **empty career garage**.
 - **No Free Career Vehicles**: Absolutely every vehicle in dedicated motorsport disciplines (Karting, Autocross, Rallycross, GT, NASCAR, Extreme Off-Road) must be purchased from the Showroom using earned Credits.
 - **Classic Arcade Always Playable**: Casual arcade modes (Quick Race, Single Race, Time Trial) in the **Classic Module** remain unlocked immediately from day one, utilizing the built-in arcade fantasy cars (Classic Red, Blue, Yellow, Green, etc.).
 - **The Classic Academy as the Gate to Career**: Positioned within the Classic Module, the Academy serves as an interactive racing school. Completing its curriculum awards the **National Grassroots License** and a tiered credit purse.
@@ -34,35 +35,50 @@ This specification enacts a foundational shift in how players begin their motors
 
 ## 🏎️ Grassroots Hierarchy & Vehicle Pricing Reference Table
 
-To deliver a credible sense of progression, in-game Credit costs ($\text{Cr}$) are scaled against real-world turnkey racing costs (turnkey race-ready chassis, engine homologation, and safety equipment).
+To deliver a credible sense of progression, in-game Credit costs (Cr) are scaled against real-world turnkey racing costs (turnkey race-ready chassis, engine homologation, and safety equipment).
 
 ### 2.1 Grassroots Vehicle Pricing Reference Table
 
-| Motorsport Discipline | Class / Homologation Spec | In-Game Tier | Typical Real-World Cost (Turnkey / Season Ready) | In-Game Price (Credits / $\text{Cr}$) | Economic Pacing & Accessibility |
+The table below details all tiers across the three primary grassroots disciplines—**Karting** (6 Tiers per [Spec 052](052_karting_6tier_career_progression_and_standalone_garden_gp.md)), **Autocross** (5 Tiers per [Spec 050](050_fia_autocross_championship_and_vehicle_roster.md)), and **Rallycross** (6 Tiers per [Spec 051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md)). Prices are calibrated against authentic real-world turnkey acquisition costs:
+
+| Motorsport Discipline | Class / Homologation Spec | In-Game Tier | Typical Real-World Cost (Turnkey / Season Ready) | In-Game Price (Credits) | Economic Pacing & Accessibility |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Karting** | **Cadet 60cc** (Mini ROK / IAME Swift) | Tier 1 | $\$3,500 - \$5,500$ | **$\$5,000\text{ Cr}$** | **Starter Entry**: Affordable immediately with all-Bronze Academy completion ($\$7,000\text{ Cr}$ purse). |
-| **Karting** | **OK-Junior 125cc** (TaG 2-Stroke, direct drive) | Tier 2 | $\$7,000 - \$10,000$ | **$\$8,500\text{ Cr}$** | **Grassroots Step-Up**: Affordable with all-Silver Academy performance. |
-| **Karting** | **KZ2 Shifter 125cc** (6-speed sequential, $45\text{ hp}$) | Tier 3 | $\$12,000 - \$16,000$ | **$\$14,000\text{ Cr}$** | **Advanced Grassroots**: Affordable with all-Gold Academy mastery. |
-| **Karting** | **Superkart 250cc Twin** (Full aerodynamic bodywork, $230\text{ km/h}$) | Tier 4 | $\$25,000 - \$35,000$ | **$\$30,000\text{ Cr}$** | **Discipline Apex**: Requires career earnings from lower karting tiers. |
-| **Autocross** | **Cross Car Junior** (FIA 600cc spec, restricted $75\text{ hp}$, spaceframe) | Tier 1 | $\$16,000 - $\$22,000$ | **$\$12,000\text{ Cr}$** | **Starter Entry**: Accessible with all-Silver Academy + 1 exhibition race, or high Gold. |
-| **Autocross** | **Cross Car Senior XC** (850cc MT09 engine, $130\text{ hp}$, $312\text{ kg}$) | Tier 2 | $\$26,000 - $\$36,000$ | **$\$20,000\text{ Cr}$** | **Grassroots Step-Up**: Mid-level off-road investment. |
-| **Autocross** | **Buggy 1600** (FIA 4WD, 1.6L atmospheric, $220\text{ hp}$, sequential) | Tier 3 | $\$45,000 - $\$65,000$ | **$\$38,000\text{ Cr}$** | **Advanced Off-Road**: Requires seasoned career winnings. |
-| **Autocross** | **SuperBuggy** (FIA 4WD, up to 4.0L atmospheric / turbo, $500+\text{ hp}$) | Tier 4 | $\$80,000 - $\$130,000$ | **$\$75,000\text{ Cr}$** | **Discipline Apex**: Premier off-road investment. |
-| **Rallycross** | **Junior RX / Swift Cup** (FWD, $1.4\text{L} / 1.6\text{L}$ Production Cup spec) | Tier 1 | $\$20,000 - $\$32,000$ | **$\$15,000\text{ Cr}$** | **Starter Entry**: Accessible with all-Gold Academy ($\$14,500\text{ Cr}$) plus one quick arcade win. |
-| **Rallycross** | **RX3 / Super1600** (FIA FWD, $1.6\text{L}$ high-revving, Sadev dogbox) | Tier 2 | $\$55,000 - $\$75,000$ | **$\$35,000\text{ Cr}$** | **Grassroots Step-Up**: Professional customer touring platform. |
-| **Rallycross** | **RX2e / Supercar Lites** (Mid-engine 4WD / 250kW Electric tubular) | Tier 3 | $\$120,000 - $\$160,000$ | **$\$65,000\text{ Cr}$** | **Advanced Platform**: High-tier feeder series car. |
-| **Rallycross** | **RX1 Supercar** (FIA 4WD, $2.0\text{L}$ turbo, $600\text{ hp}$, $0-100$ in $1.9\text{s}$) | Tier 4 | $\$350,000 - $\$550,000+$ | **$\$160,000\text{ Cr}$** | **Discipline Apex**: Premier international championship machinery. |
+| **Karting** | **Cadet 60cc** (CRG Hero, Birel C28, Tony Kart Neos) | Tier 1 | 3,500 – 5,500 USD | **5,000 Cr** | **Starter Entry**: Affordable immediately with all-Bronze Academy completion (7,000 Cr purse), leaving 2,000 Cr buffer. |
+| **Karting** | **OK-Junior 125cc** (Tony Kart Rookie, CRG Black Mirror) | Tier 2 | 7,000 – 10,000 USD | **8,500 Cr** | **Junior Feeder Step-Up**: Affordable with all-Silver Academy performance (10,750 Cr). |
+| **Karting** | **Senior OK 125cc** (Tony Kart Racer 401 RR, CRG KT2) | Tier 3 | 9,500 – 13,500 USD | **12,000 Cr** | **Senior Direct-Drive**: Affordable with all-Gold Academy mastery (14,500 Cr). |
+| **Karting** | **KZ2 Shifter 125cc** (Birel ART KZ2, CRG Road Rebel) | Tier 4 | 13,500 – 17,500 USD | **18,000 Cr** | **Advanced Shifter**: Requires career earnings from lower karting tiers. |
+| **Karting** | **Superkart Div 2 Mono 250cc** (Anderson Maverick, MS Kart) | Tier 5 | 19,000 – 26,000 USD | **26,000 Cr** | **Aero Road-Racing Feeder**: Long-circuit single-cylinder aerodynamic racer. |
+| **Karting** | **Superkart Div 1 Twin GP 250cc** (Anderson CS250, VIPER Twin) | Tier 6 | 30,000 – 42,000 USD | **38,000 Cr** | **Discipline Apex**: Premier 100 BHP twin-cylinder ballistic road kart. |
+| **Autocross** | **Cross Car Junior** (FIA XC Academy Trophy, 600cc / 75 hp) | Tier 1 | 16,000 – 22,000 USD | **12,000 Cr** | **Starter Entry**: Affordable with all-Gold Academy (14,500 Cr), or all-Silver + 1 exhibition race. |
+| **Autocross** | **Cross Car Senior XC** (FIA XC, 850cc MT09 triple, 130 hp) | Tier 2 | 28,000 – 38,000 USD | **24,000 Cr** | **Senior Dirt Weapon**: Unrestricted RWD gravel drift machine. |
+| **Autocross** | **Buggy 1600** (FIA Buggy1600 4WD, 1.6L atmo, 220 hp) | Tier 3 | 50,000 – 70,000 USD | **45,000 Cr** | **Intermediate 4WD Buggy**: Requires seasoned dirt career prize money. |
+| **Autocross** | **TouringAutocross** (FIA TAX, 4WD Turbo Silhouette, 450+ hp) | Tier 4 | 75,000 – 110,000 USD | **70,000 Cr** | **Closed-Cockpit Dirt Monster**: High-level unpaved competition. |
+| **Autocross** | **SuperBuggy** (FIA SuperBuggy 4WD, 4.0L V8 / Turbo, 500+ hp) | Tier 5 | 95,000 – 150,000+ USD | **95,000 Cr** | **Discipline Apex**: Premier international open-wheel dirt king. |
+| **Rallycross** | **Junior FWD / Rally4** (Peugeot 208, Fiesta, Clio Rally4) | Tier 1 | 35,000 – 55,000 USD | **16,000 Cr** | **Starter Entry**: Accessible with all-Gold Academy (14,500 Cr) + 1–2 quick exhibition races. |
+| **Rallycross** | **Supercar Lites & RX2** (OMSE Lites, Avitas Lites, QEV RX2e) | Tier 2 | 125,000 – 165,000 USD | **48,000 Cr** | **Feeder Spec**: 4WD mid-engine / spec electric step-up platform. |
+| **Rallycross** | **Euro RX National Supercars** (Polo RX, Audi S1 RX, i20 RX) | Tier 3 | 220,000 – 320,000 USD | **85,000 Cr** | **Continental Supercars**: 4WD 2.0L Turbo 400 BHP touring platform. |
+| **Rallycross** | **FIA World RX Supercars** (Peugeot 208 WRX, Focus RS RX) | Tier 4 | 400,000 – 600,000 USD | **150,000 Cr** | **World ICE Pinnacle**: 4WD 600 BHP, 900 Nm, 0-100 in 1.9s. |
+| **Rallycross** | **RX1e Electric Championship** (Peugeot 208 RX1e, Polo RX1e) | Tier 5 | 500,000 – 750,000 USD | **190,000 Cr** | **Electric World RX**: Dual-motor 680 BHP instant-torque monsters. |
+| **Rallycross** | **Nitrocross Group E** (OMSE FC1-X, VSC FC1-X, Dodge Hornet) | Tier 6 | 650,000 – 900,000 USD | **240,000 Cr** | **Discipline Apex**: Quad-motor 1,070 BHP, 100ft jump stadium platform. |
 
-### 2.2 Perspective Comparison: Circuit GT & Stock Car Categories
+### 2.2 Perspective Comparison: Circuit GT, Stock Car & Extreme Off-Road
 
-To emphasize the hierarchy of motorsport costs, professional asphalt circuit disciplines carry realistic commercial pricing that prevents rookies from bypassing the grassroots ranks:
+To emphasize the hierarchy of motorsport costs, asphalt circuit, stock car, and extreme off-road disciplines carry realistic commercial pricing that prevents rookies from bypassing the grassroots ranks:
 
-| Discipline | Class / Homologation Spec | In-Game Tier | Typical Real-World Cost | In-Game Price (Credits / $\text{Cr}$) | Rationale |
+| Discipline | Class / Homologation Spec | In-Game Tier | Typical Real-World Cost | In-Game Price (Credits) | Rationale |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Stock Car** | **Late Model** (Crate V8, perimeter chassis, short-track) | Tier 1 | $\$45,000 - $\$70,000$ | **$\$40,000\text{ Cr}$** | Requires saving prize money from junior grassroots series. |
-| **Stock Car** | **NASCAR Cup Next Gen** (Spec chassis, $670\text{ hp}$ V8, sequential transaxle) | Tier 3 | $\$250,000 - $\$400,000$ | **$\$150,000\text{ Cr}$** | Elite oval racing investment. |
-| **GT Racing** | **GT4 Clubman** (Factory homologated production race car, e.g. M4 GT4) | Tier 1 | $\$180,000 - $\$230,000$ | **$\$70,000\text{ Cr}$** | Professional sports car entry; unattainable without prior career earnings. |
-| **GT Racing** | **GT3** (Full carbon aero, FIA homologated, e.g. 911 GT3 R, 296 GT3) | Tier 3 | $\$550,000 - $\$700,000$ | **$\$180,000\text{ Cr}$** | Pinnacle customer GT sports car. |
+| **Stock Car** | **Street Stock V8** (Camaro, Mustang, Challenger Street Stock) | Tier 1 | 20,000 – 35,000 USD | **25,000 Cr** | Grassroots short-track entry; attainable after junior karting career. |
+| **Stock Car** | **Late Model Stock** (Perimeter spaceframe crate V8, 400 hp) | Tier 2 | 45,000 – 70,000 USD | **48,000 Cr** | Mid-level short-track racer. |
+| **Stock Car** | **ARCA Menards Series** (Steel body, 700 hp spec V8) | Tier 3 | 80,000 – 130,000 USD | **85,000 Cr** | National intermediate speedway feeder. |
+| **Stock Car** | **Craftsman Truck** (Spec chassis, composite truck body) | Tier 4 | 140,000 – 210,000 USD | **130,000 Cr** | Major national series platform. |
+| **Stock Car** | **Trans-Am TA1 / NASCAR Cup** (850 BHP tube frame / Next Gen) | Tier 5 | 250,000 – 400,000 USD | **180,000 Cr** | Pinnacle American spaceframe / Cup machinery. |
+| **GT Racing** | **GT4 Clubsport** (Factory production race car, e.g. M4 GT4) | Tier 1 | 180,000 – 230,000 USD | **70,000 Cr** | Professional sports car entry; unattainable without prior career earnings. |
+| **GT Racing** | **GT3 Evo / FIA GT3** (Full carbon aero, e.g. 911 GT3 R, 296 GT3) | Tier 2 | 550,000 – 700,000 USD | **160,000 Cr** | Premier international customer GT sports car. |
+| **GT Racing** | **GT2 Biturbo** (High-horsepower track weapon, e.g. 911 GT2 RS CS) | Tier 3 | 650,000 – 850,000 USD | **200,000 Cr** | High-horsepower gentleman/pro racer. |
+| **GT Racing** | **GT1 Legend** (90s Le Mans homologation specials) | Tier 4 | 1,200,000+ USD | **280,000 Cr** | Historic apex GT racers. |
+| **GT Racing** | **LMH & LMDh Hypercar Prototype** (Le Mans top class) | Tier 5 | 3,000,000+ USD | **450,000 Cr** | Pinnacle global endurance prototype. |
+| **Off-Road** | **Sand Rail Buggy** (Lightweight VW/LS buggy) | Tier 1 | 25,000 – 45,000 USD | **28,000 Cr** | Entry off-road dunes vehicle. |
+| **Off-Road** | **Trophy Truck 4x4** (Unlimited desert raid truck, 900 hp) | Tier 2 | 250,000 – 500,000 USD | **120,000 Cr** | Premier Baja / desert racer. |
 
 ---
 
@@ -110,7 +126,7 @@ stateDiagram-v2
   - **Lesson 2: Threshold Braking & Weight Transfer** (Classic GP Chicane)
   - **Lesson 3: Mixed-Surface Transition & Car Control** (Classic Mixed-Surface Arena)
   - **Lesson 4: Academy Graduation Sprint** (2-Lap Final Exam against AI Pace Instructor)
-- Displays Personal Best Time, earned Medal Badge (None / Bronze / Silver / Gold), and Purse preview (`Earn up to $2,000 Cr`).
+- Displays Personal Best Time, earned Medal Badge (None / Bronze / Silver / Gold), and Purse preview (`Earn up to 2,000 Cr`).
 - Next lesson unlocks automatically upon achieving at least Bronze in the preceding lesson.
 
 #### C. Challenge HUD & Real-Time Feedback
@@ -121,13 +137,13 @@ stateDiagram-v2
 #### D. Academy Graduation Ceremony & Showroom Navigation
 - Upon completing Lesson 4 with at least Bronze:
   - Full-screen fanfare with custom vector **National Grassroots Racing License** card displaying the driver's name, profile avatar, issue date, and Academy star rating (4/4 to 12/12).
-  - Payout Summary tallying total credits credited to the driver's Bank Balance ($$7,000 - $14,500\text{ Cr}$$).
+  - Payout Summary tallying total credits credited to the driver's Bank Balance (7,000 – 14,500 Cr).
   - Primary Action Button: `[ Visit Showroom (Select Your Starter Car) ]`.
 - Showroom automatically highlights **Grassroots Starter Vehicles**:
-  - **Cadet Kart 60cc** ($\$5,000\text{ Cr}$) — Marked `AFFORDABLE (Recommended Entry)`
-  - **Cross Car Junior** ($\$12,000\text{ Cr}$) — Marked `AFFORDABLE` (if Silver/Gold earned)
-  - **Junior RX** ($\$15,000\text{ Cr}$) — Marked `CURRENTLY UNAFFORDABLE` (unless 1 exhibition race won)
-  - GT and NASCAR vehicles display padlock icons with tooltips: `Requires Tier 1 License & $70,000 Cr`.
+  - **Cadet Kart 60cc** (5,000 Cr) — Marked `AFFORDABLE (Recommended Entry)`
+  - **Cross Car Junior** (12,000 Cr) — Marked `AFFORDABLE` (if Silver/Gold earned)
+  - **Junior FWD / Rally4** (16,000 Cr) — Marked `CURRENTLY UNAFFORDABLE` (accessible after all-Gold Academy + 1–2 quick exhibition races)
+  - GT and NASCAR vehicles display padlock icons with tooltips: `Requires Tier 1 License & 25,000 - 70,000 Cr`.
 - Purchasing a vehicle triggers a delivery animation, adds the car to `owned_cars`, and unlocks Career Mode permanently.
 
 ---
@@ -304,17 +320,17 @@ impl PlayerProfile {
 - **Scenario: Fresh rookie profile initialization**
   - [ ] **Given** a brand-new player profile created in the driver dossier
   - [ ] **When** the profile's initial state is inspected
-  - [ ] **Then** the driver has $0\text{ Credits}$ ($\text{Cr}$), $0\text{ XP}$ across all modules, an empty owned car collection, and an ungranted racing license.
+  - [ ] **Then** the driver has 0 Credits (Cr), 0 XP across all modules, an empty owned car collection, and an ungranted racing license.
 
 - **Scenario: Classic arcade access with locked career**
-  - [ ] **Given** a fresh rookie profile with $0\text{ Cr}$ and no racing license
+  - [ ] **Given** a fresh rookie profile with 0 Cr and no racing license
   - [ ] **When** the player views the Main Menu
   - [ ] **Then** the Classic Arcade module is fully accessible with arcade fantasy cars, but Career Mode displays a lock badge requiring the National Grassroots License.
 
 - **Scenario: Progressive academy lesson execution and credit bounties**
   - [ ] **Given** a rookie driver undertaking Lesson 1 of the Classic Academy
   - [ ] **When** the player finishes Sector 1 with a lap time qualifying for a Silver medal
-  - [ ] **Then** the system awards both the Bronze ($\$1,000\text{ Cr}$) and Silver ($\$500\text{ Cr}$) bounties for a total of $\$1,500\text{ Cr}$, credits the profile wallet, and unlocks Lesson 2.
+  - [ ] **Then** the system awards both the Bronze (1,000 Cr) and Silver (500 Cr) bounties for a total of 1,500 Cr, credits the profile wallet, and unlocks Lesson 2.
 
 - **Scenario: Bounty claim idempotency on replay**
   - [ ] **Given** a player who has already claimed the Gold bounty on Lesson 1
@@ -327,9 +343,9 @@ impl PlayerProfile {
   - [ ] **Then** the National Grassroots Racing License is permanently granted, the driver dossier records the award timestamp, and a graduation prompt directs the player to the Showroom.
 
 - **Scenario: Grassroots car purchase with earned academy purse**
-  - [ ] **Given** an Academy graduate with $\$7,000\text{ Cr}$ earned from all-Bronze lesson completions
+  - [ ] **Given** an Academy graduate with 7,000 Cr earned from all-Bronze lesson completions
   - [ ] **When** the player navigates to the Showroom
-  - [ ] **Then** the Cadet Kart 60cc ($\$5,000\text{ Cr}$) is marked affordable and can be purchased, leaving $\$2,000\text{ Cr}$ in the player's wallet and adding the Cadet Kart to `owned_cars`.
+  - [ ] **Then** the Cadet Kart 60cc (5,000 Cr) is marked affordable and can be purchased, leaving 2,000 Cr in the player's wallet and adding the Cadet Kart to `owned_cars`.
 
 - **Scenario: Unlocking career mode upon first vehicle purchase**
   - [ ] **Given** a licensed Academy graduate who just purchased their first Cadet Kart
@@ -337,8 +353,8 @@ impl PlayerProfile {
   - [ ] **Then** the Career Mode button is fully unlocked and active, allowing the player to enter the Karting Tier 1 Championship.
 
 - **Scenario: Prevention of premature high-tier entry**
-  - [ ] **Given** a fresh Academy graduate holding $\$14,500\text{ Cr}$ from all-Gold completions
-  - [ ] **When** the player attempts to purchase a GT4 Clubman car ($\$70,000\text{ Cr}$) or enter a GT championship
+  - [ ] **Given** a fresh Academy graduate holding 14,500 Cr from all-Gold completions
+  - [ ] **When** the player attempts to purchase a GT4 Clubsport car (70,000 Cr) or enter a GT championship
   - [ ] **Then** the purchase is blocked due to insufficient funds, and GT championship entry is blocked because no eligible GT car is owned.
 
 ---
