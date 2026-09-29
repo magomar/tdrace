@@ -1,14 +1,14 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: Continental Rotax Trophy (Tier 3)
+# Karting Career Mode: Continental Shifter Cup (Tier 4)
 # ==============================================================================
 
 [championship]
 id = "kart_continental_trophy"
-name = "Continental Rotax Trophy"
-description = "Brutal 125cc 6-speed KZ2 shifter karts pulling 3.5G lateral cornering grip and 0-100 km/h in 2.8s across 9 international kart circuits."
+name = "Continental Shifter Cup"
+description = "Brutal 125cc 6-speed KZ2 shifter karts pulling 3.5G lateral cornering grip and 0-100 km/h in 2.8s across 8 international circuits."
 module_id = "kart"
-tier = 3
+tier = 4
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "pro"
@@ -35,43 +35,37 @@ laps = 5
 [[rounds]]
 order = 3
 track_id = "ampfing"
-name = "Kartshop Ampfing"
+name = "Schweppermannring Ampfing"
 laps = 5
 
 [[rounds]]
 order = 4
+track_id = "zuera"
+name = "Circuito Internacional de Zuera"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "silverstone_national_kart"
+name = "Silverstone National Kart Circuit"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "aunay_kart"
+name = "Circuit d'Aunay-les-Bois"
+laps = 5
+
+[[rounds]]
+order = 7
 track_id = "sarno"
 name = "Circuito Internazionale Napoli Sarno"
 laps = 5
 
 [[rounds]]
-order = 5
-track_id = "kristianstad"
-name = "Åsum Ring Kristianstad"
-laps = 5
-
-[[rounds]]
-order = 6
-track_id = "seven_laghi"
-name = "Circuito 7 Laghi Castelletto"
-laps = 5
-
-[[rounds]]
-order = 7
+order = 8
 track_id = "lonato"
 name = "South Garda Karting Lonato"
-laps = 5
-
-[[rounds]]
-order = 8
-track_id = "wackersdorf"
-name = "Prokart Raceland Wackersdorf"
-laps = 5
-
-[[rounds]]
-order = 9
-track_id = "whilton_mill"
-name = "Whilton Mill Kart Circuit"
 laps = 5
 
 [[drivers]]
@@ -123,7 +117,7 @@ livery_idx = 4
 id = "finn_korhonen"
 name = "Finn Korhonen"
 team = "Sodi Kart"
-car_model_id = "kart_birel_art_kz2"
+car_model_id = "kart_crg_road_rebel_kz"
 country = "FIN"
 ai_character = "fast"
 livery_idx = 5
@@ -132,7 +126,7 @@ livery_idx = 5
 id = "leo_dupont"
 name = "Leo Dupont"
 team = "Energy Corse"
-car_model_id = "kart_crg_road_rebel_kz"
+car_model_id = "kart_birel_art_kz2"
 country = "FRA"
 ai_character = "balanced"
 livery_idx = 6

@@ -1,6 +1,6 @@
 use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
-use macroquad::shapes::{draw_circle, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 use serde::{Deserialize, Serialize};
 
@@ -2371,6 +2371,24 @@ fn draw_classic_arcade_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Colo
     );
 }
 
+/// Renders an industrial safe / vault dial emblem for The Vault module.
+fn draw_vault_archive_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Color) {
+    let r = 20.0 * s;
+    if is_sel {
+        draw_circle(cx, cy, r * 1.3, accent.with_alpha(0.35));
+    }
+    // Safe body
+    draw_rectangle(cx - r, cy - r, r * 2.0, r * 2.0, Color::new(0.12, 0.14, 0.18, 1.0));
+    draw_rectangle_lines(cx - r, cy - r, r * 2.0, r * 2.0, 2.0 * s, accent);
+    // Safe door wheel / dial
+    draw_circle(cx, cy, r * 0.55, Color::new(0.20, 0.23, 0.30, 1.0));
+    draw_circle_lines(cx, cy, r * 0.55, 1.5 * s, Palette::WHITE);
+    draw_circle(cx, cy, r * 0.22, accent);
+    // Spokes
+    draw_line(cx - r * 0.45, cy, cx + r * 0.45, cy, 1.5 * s, Palette::WHITE);
+    draw_line(cx, cy - r * 0.45, cx, cy + r * 0.45, 1.5 * s, Palette::WHITE);
+}
+
 /// Returns bounding box (x, y, w, h) for the Grand Hub profile badge.
 pub fn module_select_badge_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
@@ -2551,6 +2569,9 @@ pub fn render_module_select_menu(
                     0.0,
                     false,
                 );
+            }
+            "vault" => {
+                draw_vault_archive_icon(icon_cx, icon_cy, scaler.s(0.95), is_sel, *accent_col);
             }
             _ => {}
         }

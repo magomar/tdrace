@@ -1,9 +1,12 @@
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::prelude::{screen_height, screen_width};
 use glam::Vec2;
-use tdrace_core::physics::car::Car;
-use tdrace_core::track::Track;
-pub use crate::config::{
+use arcade_race_core::track::Track;
+use arcade_race_core::Body2D;
+
+mod config;
+
+pub use config::{
     CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
 };
 
@@ -300,22 +303,22 @@ impl RaceCamera {
 
     /// Resumes normal smooth follow driving camera from paused overview mode.
     /// Restores the saved driving zoom level and snaps camera directly to the player vehicle with lookahead.
-    pub fn resume_from_pause(&mut self, target_car: Option<&Car>) {
+    pub fn resume_from_pause<B: Body2D>(&mut self, target_car: Option<&B>) {
         let saved_idx = self.paused_from_follow.take().unwrap_or(self.current_level_idx);
         self.set_zoom_level(saved_idx);
         self.mode = CameraMode::SmoothFollow;
 
         if let Some(car) = target_car {
-            let lookahead = car.state.velocity * self.velocity_lookahead_time;
-            self.target_pos = car.state.position + lookahead;
+            let lookahead = car.velocity() * self.velocity_lookahead_time;
+            self.target_pos = car.position() + lookahead;
             self.current_pos = self.target_pos;
 
-            let speed = car.state.speed;
+            let speed = car.speed();
             let speed_ratio = (speed / 50.0).clamp(0.0, 1.0);
             self.target_zoom = self.max_zoom_scale
                 - speed_ratio * (self.max_zoom_scale - self.min_zoom_scale);
             self.current_zoom = self.target_zoom;
-            self.clamp_to_car(car.state.position);
+            self.clamp_to_car(car.position());
         }
     }
 
@@ -437,7 +440,7 @@ impl RaceCamera {
     }
 
     /// Updates camera positioning, speed-dependent zoom, and shake.
-    pub fn update(&mut self, target_car: &Car, dt: f32) {
+    pub fn update<B: Body2D>(&mut self, target_car: &B, dt: f32) {
         // Safely check if screen height changed at runtime (e.g. window resize)
         if let Ok(live_sh) = std::panic::catch_unwind(screen_height) {
             self.set_screen_height(live_sh);
@@ -455,9 +458,9 @@ impl RaceCamera {
         match self.mode {
             CameraMode::SmoothFollow => {
                 // Velocity lookahead: look forward in travel direction proportional to speed
-                let speed = target_car.state.speed;
-                let lookahead = target_car.state.velocity * self.velocity_lookahead_time;
-                self.target_pos = target_car.state.position + lookahead;
+                let speed = target_car.speed();
+                let lookahead = target_car.velocity() * self.velocity_lookahead_time;
+                self.target_pos = target_car.position() + lookahead;
 
                 // Speed-dependent zoom: zoom out as car accelerates
                 let speed_ratio = (speed / 50.0).clamp(0.0, 1.0);
@@ -471,7 +474,7 @@ impl RaceCamera {
                 let zoom_blend = 1.0 - (-self.zoom_smoothing * dt).exp();
                 self.current_zoom += (self.target_zoom - self.current_zoom) * zoom_blend;
 
-                self.clamp_to_car(target_car.state.position);
+                self.clamp_to_car(target_car.position());
             }
             CameraMode::StaticOverview => {
                 let pos_blend = 1.0 - (-self.position_smoothing * dt).exp();

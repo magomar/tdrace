@@ -1156,6 +1156,30 @@
     "rel_path": "tracks/gt/zandvoort.json"
   },
   {
+    "id": "adria_kart",
+    "name": "Adria Karting Raceway",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "State-of-the-art night-illuminated Italian international kart circuit with elevated paddock bridge and sweeping switchbacks.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/798432703",
+    "country_code": "IT",
+    "country_name": "Italy",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.5,
+    "is_inspired": false,
+    "length_meters": 1226.7,
+    "turns_count": 21,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/adria_kart.svg",
+    "rel_path": "tracks/kart/adria_kart.json"
+  },
+  {
     "id": "ampfing",
     "name": "Schweppermannring Ampfing",
     "module": "kart",
@@ -1178,6 +1202,30 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/kart/ampfing.svg",
     "rel_path": "tracks/kart/ampfing.json"
+  },
+  {
+    "id": "aunay_kart",
+    "name": "Circuit International d'Aunay-les-Bois",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Prestigious CIK-FIA Grade 1 karting circuit in Normandy featuring downhill Parabolique and fast technical chicanes.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/121084004",
+    "country_code": "FR",
+    "country_name": "France",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.2,
+    "is_inspired": false,
+    "length_meters": 1132.7,
+    "turns_count": 20,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/aunay_kart.svg",
+    "rel_path": "tracks/kart/aunay_kart.json"
   },
   {
     "id": "campillos",
@@ -1346,6 +1394,30 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/kart/lonato.svg",
     "rel_path": "tracks/kart/lonato.json"
+  },
+  {
+    "id": "muelsen_kart",
+    "name": "Motorsport Arena M\u00fclsen (Arena E)",
+    "module": "kart",
+    "category": "kart",
+    "modality": "KART",
+    "description": "Ultra-modern German CIK-FIA Grade 1 arena with high-speed drafting straights, banked esses, and challenging hairpins.",
+    "scale": "1:1",
+    "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+    "osm_url": "https://www.openstreetmap.org/way/814876031",
+    "country_code": "DE",
+    "country_name": "Germany",
+    "min_width_meters": 8.0,
+    "max_width_meters": 9.5,
+    "is_inspired": false,
+    "length_meters": 1225.2,
+    "turns_count": 18,
+    "surfaces": [
+      "Asphalt"
+    ],
+    "has_jumps": false,
+    "image_url": "/textures/circuits/kart/muelsen_kart.svg",
+    "rel_path": "tracks/kart/muelsen_kart.json"
   },
   {
     "id": "pfi",
@@ -2395,5 +2467,29 @@
     "has_jumps": false,
     "image_url": "/textures/circuits/rally/riga_rx.svg",
     "rel_path": "tracks/rally/riga_rx.json"
+  },
+  {
+    "id": "MANIFEST",
+    "name": "Manifest",
+    "module": "vault",
+    "category": "vault",
+    "modality": "VAULT",
+    "description": "The Vault Provenance Registry for archived, temporal, and decommissioned assets",
+    "scale": "1:1",
+    "wikipedia_url": null,
+    "osm_url": null,
+    "country_code": null,
+    "country_name": null,
+    "min_width_meters": 12.0,
+    "max_width_meters": 12.0,
+    "is_inspired": false,
+    "length_meters": 2500.0,
+    "turns_count": 0,
+    "surfaces": [
+      "Dirt"
+    ],
+    "has_jumps": false,
+    "image_url": null,
+    "rel_path": "tracks/vault/MANIFEST.json"
   }
 ]

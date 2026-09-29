@@ -1,8 +1,8 @@
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_line};
 use glam::Vec2;
-use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::scenery::TreeType;
+use wheelbase::surface::SurfaceType;
+use arcade_race_core::track::scenery::TreeType;
 
 use crate::render::color::Palette;
 
