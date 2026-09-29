@@ -6,11 +6,11 @@ pub use drift_popup::{DriftPopup, DriftPopupManager};
 pub use particles::{Particle, ParticleSystem};
 pub use skidmarks::{SkidSegment, SkidmarkBuffer};
 
-use tdrace_core::collision::car_collision::CarCarCollisionEvent;
-use tdrace_core::collision::wall::WallCollisionEvent;
-use tdrace_core::physics::car::Car;
-use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::BarrierType;
+use arcade_race_core::collision::car_collision::CarCarCollisionEvent;
+use arcade_race_core::collision::wall::WallCollisionEvent;
+use wheelbase::car::Car;
+use wheelbase::surface::SurfaceType;
+use arcade_race_core::track::geometry::BarrierType;
 
 /// Unified visual effects coordinator managing skidmarks, smoke, dirt, collision sparks, and drift popups.
 #[derive(Debug, Clone)]

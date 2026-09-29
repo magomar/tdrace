@@ -6,7 +6,7 @@ pub mod config;
 pub mod db;
 pub mod dev_tools;
 pub mod editor;
-pub mod fx;
+pub use race_ui::fx;
 pub mod game;
 pub mod input;
 pub mod module;

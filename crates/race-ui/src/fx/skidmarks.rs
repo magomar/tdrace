@@ -1,7 +1,7 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use tdrace_core::physics::car::Car;
-use tdrace_core::physics::surface::SurfaceType;
+use wheelbase::car::Car;
+use wheelbase::surface::SurfaceType;
 
 #[inline]
 fn skid_noise(p: Vec2, seed: u32) -> f32 {

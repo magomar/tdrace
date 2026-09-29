@@ -4,4 +4,5 @@
 //! can use them. Spec 057 (`specs/057_raceui_rendering_camera_effects_and_hud_primitives.md`).
 
 pub mod camera;
+pub mod fx;
 pub mod render;
