@@ -70,12 +70,12 @@ fn run() -> (u64, f32) {
     session.car_choice = CarChoice::SportsCar;
     session.num_bots = 5;
     session.init_race();
-    assert_eq!(session.cars.len(), 6);
+    assert_eq!(session.world.vehicles.len(), 6);
 
     let mut hash: u64 = 0xcbf29ce484222325;
     for step in 0..STEPS {
         session.physics_step(RaceSession::FIXED_DT);
-        for (car, tracker) in session.cars.iter().zip(&session.trackers) {
+        for (car, tracker) in session.world.vehicles.iter().zip(&session.world.trackers) {
             let s = &car.state;
             for v in [
                 s.position.x,
@@ -94,7 +94,7 @@ fn run() -> (u64, f32) {
             hash = fnv(hash, tracker.next_checkpoint_idx as u64);
         }
     }
-    let furthest = session.trackers[1..].iter().map(|t| t.progress_distance).fold(0.0f32, f32::max);
+    let furthest = session.world.trackers[1..].iter().map(|t| t.progress_distance).fold(0.0f32, f32::max);
     (hash, furthest)
 }
 

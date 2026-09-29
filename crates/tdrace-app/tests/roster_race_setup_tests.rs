@@ -48,14 +48,14 @@ fn test_enforced_predefined_car_in_race_session() {
     assert_eq!(session.total_laps, 5);
     assert_eq!(session.resolve_predefined_car(), CarChoice::Kart);
     assert_eq!(session.active_player_car_choice(), CarChoice::Kart);
-    assert_eq!(session.cars.len(), 5); // 1 player + 4 bots
+    assert_eq!(session.world.vehicles.len(), 5); // 1 player + 4 bots
 
     // Verify player car top speed matches Kart specs (~32 m/s)
-    let player_car = &session.cars[0];
+    let player_car = &session.world.vehicles[0];
     assert!((player_car.config.top_speed_mps - 32.0).abs() < 1.0);
 
     // Verify all bot cars use Kart specs when free car selection is disabled
-    for bot_car in &session.cars[1..] {
+    for bot_car in &session.world.vehicles[1..] {
         assert!((bot_car.config.top_speed_mps - 32.0).abs() < 1.0);
     }
 
@@ -70,7 +70,7 @@ fn test_enforced_predefined_car_in_race_session() {
     assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
 
     // Verify sports car top speed (~58 m/s)
-    for car in &session.cars {
+    for car in &session.world.vehicles {
         assert!((car.config.top_speed_mps - 58.0).abs() < 1.0);
     }
 }
@@ -94,7 +94,7 @@ fn test_free_car_selection_toggle_in_race_session() {
 
     // Now player gets SportsCar
     assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
-    assert!((session.cars[0].config.top_speed_mps - 58.0).abs() < 1.0);
+    assert!((session.world.vehicles[0].config.top_speed_mps - 58.0).abs() < 1.0);
 
     // AI bots use their distinct preferred vehicles
     let bot_choices: Vec<CarChoice> = session
@@ -112,25 +112,25 @@ fn test_roster_driver_count_modification() {
     session.num_bots = 3;
     session.init_race();
 
-    assert_eq!(session.cars.len(), 4);
+    assert_eq!(session.world.vehicles.len(), 4);
     assert_eq!(session.opponent_drivers.len(), 3);
 
     // Modify driver count to 7 bots (8 racers)
     session.num_bots = 7;
     session.rebuild_roster_participants();
 
-    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.world.vehicles.len(), 8);
     assert_eq!(session.opponent_drivers.len(), 7);
-    assert_eq!(session.trackers.len(), 8);
+    assert_eq!(session.world.trackers.len(), 8);
     assert_eq!(session.ai_drivers.len(), 7);
 
     // Modify driver count to 1 bot (2 racers)
     session.num_bots = 1;
     session.rebuild_roster_participants();
 
-    assert_eq!(session.cars.len(), 2);
+    assert_eq!(session.world.vehicles.len(), 2);
     assert_eq!(session.opponent_drivers.len(), 1);
-    assert_eq!(session.trackers.len(), 2);
+    assert_eq!(session.world.trackers.len(), 2);
     assert_eq!(session.ai_drivers.len(), 1);
 }
 

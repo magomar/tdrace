@@ -159,7 +159,7 @@ fn test_default_gameplay_pilot_count_and_toml_override() {
     // Casual races initialize with full track grid capacity per tdrace-xwey
     let grid_slots = session.max_grid_participants();
     session.init_race();
-    assert_eq!(session.cars.len(), grid_slots, "Initial casual race spawns full grid slots");
+    assert_eq!(session.world.vehicles.len(), grid_slots, "Initial casual race spawns full grid slots");
     assert_eq!(session.opponent_drivers.len(), grid_slots - 1);
 
     // 2. Custom TOML configuring bot count
@@ -178,7 +178,7 @@ default_assist_profile = "sport"
     assert_eq!(custom_session.config.gameplay.default_num_bots, 3);
     custom_session.set_num_bots(3);
     custom_session.init_race();
-    assert_eq!(custom_session.cars.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
+    assert_eq!(custom_session.world.vehicles.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
 }
 
 #[test]

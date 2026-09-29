@@ -99,8 +99,8 @@ fn test_lan_launch_session_and_nameplates() {
     assert!(session.is_lan_host);
     assert_eq!(session.lan_player_slot, 0);
     assert_eq!(session.player_car_index(), 0);
-    assert_eq!(session.cars.len(), 1);
-    assert_eq!(session.trackers.len(), 1);
+    assert_eq!(session.world.vehicles.len(), 1);
+    assert_eq!(session.world.trackers.len(), 1);
     assert_eq!(session.grid_participants.len(), 1);
     assert_eq!(session.car_model_ids[0], Some("gt_ferrari_296_gt3"));
     assert!(matches!(session.state, GameState::Countdown(_)));
@@ -121,8 +121,8 @@ fn test_lan_launch_session_and_nameplates() {
         random_seed: 99,
         driver_tier: None,
     });
-    session.cars.push(tdrace_core::car::Car::new(session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar)));
-    session.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3));
+    session.world.vehicles.push(tdrace_core::car::Car::new(session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar)));
+    session.world.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3));
 
     let nameplates = session.collect_bot_nameplates(0);
     assert_eq!(nameplates.len(), 1);
@@ -161,8 +161,8 @@ fn test_lan_client_perspective_targeting_and_helpers() {
     let mut client_car = tdrace_core::car::Car::new(base_cfg.clone());
     client_car.config.assists = AssistProfile::Sport.to_config();
 
-    session.cars = vec![host_car, client_car];
-    session.trackers = vec![
+    session.world.vehicles = vec![host_car, client_car];
+    session.world.trackers = vec![
         tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
         tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3),
     ];
@@ -204,8 +204,8 @@ fn test_lan_client_perspective_targeting_and_helpers() {
 
     // Changing assist profile must modify client's car (index 1), NOT host's car (index 0)
     session.set_assist_profile(AssistProfile::Pro);
-    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+    assert_eq!(session.world.vehicles[1].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Arcade.to_config());
 
     // Collecting nameplates for client must focus on host (car_idx 0)
     let client_focus = session.player_car_index();
@@ -251,8 +251,8 @@ fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
     // 4. Add remote client car (slot 1)
     let base_cfg = session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar);
     let client_car = tdrace_core::car::Car::new(base_cfg);
-    session.cars.push(client_car);
-    session.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(
+    session.world.vehicles.push(client_car);
+    session.world.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(
         session.track.checkpoints.len(),
         3,
     ));
@@ -272,11 +272,11 @@ fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
         driver_tier: None,
     });
 
-    assert_eq!(session.cars.len(), 2);
+    assert_eq!(session.world.vehicles.len(), 2);
 
     // Initial position & velocity of client car
-    let initial_pos = session.cars[1].state.position;
-    let initial_speed = session.cars[1].state.speed;
+    let initial_pos = session.world.vehicles[1].state.position;
+    let initial_speed = session.world.vehicles[1].state.speed;
     assert_eq!(initial_speed, 0.0);
 
     // 5. Host receives remote input packet from slot 1 (full throttle)
@@ -300,11 +300,11 @@ fn test_lan_host_prevents_split_screen_and_applies_remote_inputs() {
 
     // 6. Verify client car moved due to remote input applied by host physics_step
     assert!(
-        session.cars[1].state.speed > 0.0,
+        session.world.vehicles[1].state.speed > 0.0,
         "Remote client car must accelerate from remote throttle input"
     );
     assert_ne!(
-        session.cars[1].state.position,
+        session.world.vehicles[1].state.position,
         initial_pos,
         "Remote client car position must change under host simulation"
     );
@@ -452,8 +452,8 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
                             if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
                                 for car_snap in snapshot.cars {
                                     let idx = car_snap.slot_id as usize;
-                                    if idx < client_session.cars.len() && idx != (client_session.lan_player_slot as usize) {
-                                        let car = &mut client_session.cars[idx];
+                                    if idx < client_session.world.vehicles.len() && idx != (client_session.lan_player_slot as usize) {
+                                        let car = &mut client_session.world.vehicles[idx];
                                         car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
                                     }
                                 }
@@ -478,7 +478,7 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
         "Snapshot arrival must transition client immediately to GameState::Racing"
     );
     assert_eq!(
-        client_session.cars[0].state.position,
+        client_session.world.vehicles[0].state.position,
         glam::Vec2::new(100.0, 200.0),
         "Host car position must be synchronized from snapshot"
     );
