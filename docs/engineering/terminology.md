@@ -79,13 +79,22 @@ The `cabinet` platform crate is the reusable, arcade-grade foundation designed f
    - [`CabinetTheme`](../../crates/cabinet/src/ui/theme.rs) & [`Palette`](../../crates/cabinet/src/ui/theme.rs): Color tokens (neon accents, glass cards, text variants).
    - [`Fonts`](../../crates/cabinet/src/ui/font.rs): Typography loader and text rendering routines.
 
-### 2.2. Game Application Layer (`crates/tdrace-app`)
+### 2.2. Race World (`crates/race-kit`)
+
+The `race-kit` crate runs a race with no window, sound or database ([spec 056](../../specs/056_racekit_headless_race_world.md)). New games and `tdrace-app` share it:
+
+- [`RaceWorld`](../../crates/race-kit/src/world.rs): the race step (surfaces, draft, vehicle step, canopy, ramps, collisions, lap tracking), finish order, real finish times, DNF, standings and results.
+- [`Vehicle`](../../crates/race-kit/src/vehicle.rs): the interface a vehicle model gives to the world. `wheelbase::Car` implements it.
+- [`RaceEvent`](../../crates/race-kit/src/events.rs): what happened in a step. The game plays sounds and effects from these events.
+- [`race_kit::ai`](../../crates/race-kit/src/ai/mod.rs): the bot driver (`BotAiDriver`, tiers, styles, human layer).
+
+### 2.3. Game Application Layer (`crates/tdrace-app`)
 
 The `tdrace-app` crate implements motorsport domain logic and concrete game screens by consuming Cabinet primitives:
 
 - The top-level [`GameState`](../../crates/tdrace-app/src/game/mod.rs) enum representing game states.
 - Domain-specific multi-view screen layouts (`StartingGrid`, `Menu`, `Garage`, `TrackManager`, `Finished`).
-- Physics simulation and telemetry HUD overlays (`render_hud`, `render_curve_indicator`).
+- Race presentation from `race-kit` events, and telemetry HUD overlays (`render_hud`, `render_curve_indicator`).
 - Vector track spline preview and rendering (`render_track_detailed_preview`, `render_track_thumbnail`).
 - Track CAD Editor toolbars and Bezier node canvas (`GameState::TrackEditor`).
 
