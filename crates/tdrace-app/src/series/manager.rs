@@ -142,6 +142,17 @@ impl SeriesManager {
             .find(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
     }
 
+    /// Returns all championships matching module_id and tier, sorted by name (Spec 053).
+    pub fn get_all_by_module_and_tier(&self, module_id: &str, tier: u32) -> Vec<&SeriesDefinition> {
+        let mut list: Vec<&SeriesDefinition> = self
+            .series
+            .values()
+            .filter(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
+            .collect();
+        list.sort_by(|a, b| a.series.name.cmp(&b.series.name));
+        list
+    }
+
     /// Returns a list of all known series definitions sorted by module, tier, and name.
     pub fn all_sorted(&self) -> Vec<&SeriesDefinition> {
         let mut list: Vec<&SeriesDefinition> = self.series.values().collect();

@@ -7,7 +7,8 @@ pub type Result<T> = std::result::Result<T, String>;
 use serde::{Deserialize, Serialize};
 
 use crate::profile::{
-    ChampionshipAward, ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry,
+    ChampionshipAward, ChampionshipRecord, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
+    RaceHistoryEntry,
 };
 use crate::render::color::CarColorScheme;
 use tdrace_core::physics::config::AssistProfile;
@@ -100,7 +101,9 @@ impl HallOfFameDb {
                 helmet_color TEXT NOT NULL,
                 is_active INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
-                last_mode TEXT NOT NULL DEFAULT 'arcade'
+                last_mode TEXT NOT NULL DEFAULT 'arcade',
+                credits INTEGER NOT NULL DEFAULT 25000,
+                lifetime_credits INTEGER NOT NULL DEFAULT 25000
             );
 
             CREATE TABLE IF NOT EXISTS race_history (
@@ -138,6 +141,7 @@ impl HallOfFameDb {
                 trophies_bronze INTEGER NOT NULL DEFAULT 0,
                 career_rivals TEXT NOT NULL DEFAULT '[]',
                 active_championship TEXT,
+                championships_completed TEXT NOT NULL DEFAULT '{}',
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (profile_id, module_id),
                 FOREIGN KEY(profile_id) REFERENCES player_profiles(id) ON DELETE CASCADE
@@ -165,6 +169,14 @@ impl HallOfFameDb {
             [],
         );
         let _ = self.conn.execute(
+            "ALTER TABLE player_profiles ADD COLUMN credits INTEGER NOT NULL DEFAULT 25000",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE player_profiles ADD COLUMN lifetime_credits INTEGER NOT NULL DEFAULT 25000",
+            [],
+        );
+        let _ = self.conn.execute(
             "ALTER TABLE profile_module_progress ADD COLUMN lifetime_xp INTEGER NOT NULL DEFAULT 0",
             [],
         );
@@ -178,6 +190,10 @@ impl HallOfFameDb {
         );
         let _ = self.conn.execute(
             "ALTER TABLE profile_module_progress ADD COLUMN active_championship TEXT",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE profile_module_progress ADD COLUMN championships_completed TEXT NOT NULL DEFAULT '{}'",
             [],
         );
         let _ = self.conn.execute(
@@ -207,7 +223,8 @@ impl HallOfFameDb {
     /// Retrieves all player profiles ordered by active status descending, then creation date ascending.
     pub fn get_all_profiles(&self) -> Result<Vec<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
+                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
              FROM player_profiles
              ORDER BY is_active DESC, id ASC",
         )?;
@@ -218,6 +235,8 @@ impl HallOfFameDb {
             let h_hex: String = row.get(6)?;
             let is_active_int: i32 = row.get(7)?;
             let mode_str: String = row.get(9)?;
+            let credits: i64 = row.get(10)?;
+            let lifetime_credits: i64 = row.get(11)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -228,6 +247,8 @@ impl HallOfFameDb {
                 is_active: is_active_int != 0,
                 created_at: row.get(8)?,
                 last_mode: mode_from_str(&mode_str),
+                credits: credits as u64,
+                lifetime_credits: lifetime_credits as u64,
             })
         })?;
 
@@ -241,7 +262,8 @@ impl HallOfFameDb {
     /// Retrieves the currently active player profile or creates a default if none exists.
     pub fn get_active_profile(&self) -> Result<PlayerProfile> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
+                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
              FROM player_profiles
              WHERE is_active = 1
              LIMIT 1",
@@ -252,6 +274,8 @@ impl HallOfFameDb {
             let s_hex: String = row.get(5)?;
             let h_hex: String = row.get(6)?;
             let mode_str: String = row.get(9)?;
+            let credits: i64 = row.get(10)?;
+            let lifetime_credits: i64 = row.get(11)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -262,6 +286,8 @@ impl HallOfFameDb {
                 is_active: true,
                 created_at: row.get(8)?,
                 last_mode: mode_from_str(&mode_str),
+                credits: credits as u64,
+                lifetime_credits: lifetime_credits as u64,
             })
         })?;
 
@@ -276,7 +302,8 @@ impl HallOfFameDb {
     /// Fetches a profile by ID.
     pub fn get_profile_by_id(&self, id: i64) -> Result<Option<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade')
+            "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
+                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
              FROM player_profiles
              WHERE id = ?1",
         )?;
@@ -287,6 +314,8 @@ impl HallOfFameDb {
             let h_hex: String = row.get(6)?;
             let is_active_int: i32 = row.get(7)?;
             let mode_str: String = row.get(9)?;
+            let credits: i64 = row.get(10)?;
+            let lifetime_credits: i64 = row.get(11)?;
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -297,6 +326,8 @@ impl HallOfFameDb {
                 is_active: is_active_int != 0,
                 created_at: row.get(8)?,
                 last_mode: mode_from_str(&mode_str),
+                credits: credits as u64,
+                lifetime_credits: lifetime_credits as u64,
             })
         })?;
 
@@ -322,8 +353,8 @@ impl HallOfFameDb {
         }
 
         self.conn.execute(
-            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, last_mode)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, last_mode, credits, lifetime_credits)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
                 profile.name.trim(),
                 profile.alias.trim(),
@@ -334,6 +365,8 @@ impl HallOfFameDb {
                 if profile.is_active { 1 } else { 0 },
                 created_at,
                 mode_to_str(profile.last_mode),
+                profile.credits as i64,
+                profile.lifetime_credits as i64,
             ],
         )?;
 
@@ -349,8 +382,9 @@ impl HallOfFameDb {
             }
             self.conn.execute(
                 "UPDATE player_profiles
-                 SET name = ?1, alias = ?2, country = ?3, primary_color = ?4, secondary_color = ?5, helmet_color = ?6, is_active = ?7, last_mode = ?8
-                 WHERE id = ?9",
+                 SET name = ?1, alias = ?2, country = ?3, primary_color = ?4, secondary_color = ?5, helmet_color = ?6, is_active = ?7, last_mode = ?8,
+                     credits = ?9, lifetime_credits = ?10
+                 WHERE id = ?11",
                 params![
                     profile.name.trim(),
                     profile.alias.trim(),
@@ -360,10 +394,30 @@ impl HallOfFameDb {
                     h_hex,
                     if profile.is_active { 1 } else { 0 },
                     mode_to_str(profile.last_mode),
+                    profile.credits as i64,
+                    profile.lifetime_credits as i64,
                     id,
                 ],
             )?;
         }
+        Ok(())
+    }
+
+    /// Atomically deducts credits from a profile wallet if sufficient balance exists (Spec 053).
+    pub fn deduct_credits(&self, profile_id: i64, amount: u64) -> Result<bool> {
+        let affected = self.conn.execute(
+            "UPDATE player_profiles SET credits = credits - ?1 WHERE id = ?2 AND credits >= ?1",
+            params![amount as i64, profile_id],
+        )?;
+        Ok(affected > 0)
+    }
+
+    /// Atomically adds credits to a profile wallet and lifetime credits (Spec 053).
+    pub fn add_credits(&self, profile_id: i64, amount: u64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE player_profiles SET credits = credits + ?1, lifetime_credits = lifetime_credits + ?1 WHERE id = ?2",
+            params![amount as i64, profile_id],
+        )?;
         Ok(())
     }
 
@@ -431,6 +485,8 @@ impl HallOfFameDb {
                 is_active: true,
                 created_at: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
                 last_mode: AssistProfile::Arcade,
+                credits: PlayerProfile::STARTING_CREDITS,
+                lifetime_credits: PlayerProfile::STARTING_CREDITS,
             };
             let new_id = self.create_profile(&default_profile)?;
             let mut seeded = default_profile;
@@ -792,7 +848,8 @@ impl HallOfFameDb {
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
                     trophies_gold, trophies_silver, trophies_bronze, updated_at,
                     COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]'),
-                    COALESCE(career_rivals, '[]'), active_championship
+                    COALESCE(career_rivals, '[]'), active_championship,
+                    COALESCE(championships_completed, '{}')
              FROM profile_module_progress
              WHERE profile_id = ?1 AND module_id = ?2",
         )?;
@@ -805,6 +862,7 @@ impl HallOfFameDb {
             let visited_json: String = row.get(12)?;
             let rivals_json: String = row.get(13)?;
             let active_champ_json: Option<String> = row.get(14)?;
+            let champs_json: String = row.get(15)?;
 
             let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
             let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
@@ -813,6 +871,29 @@ impl HallOfFameDb {
             let career_rivals: Vec<crate::ai::CareerRivalEntry> = serde_json::from_str(&rivals_json).unwrap_or_default();
             let active_championship: Option<crate::series::ChampionshipSession> =
                 active_champ_json.and_then(|s| serde_json::from_str(&s).ok());
+            let mut championships_completed: std::collections::HashMap<String, ChampionshipRecord> =
+                serde_json::from_str(&champs_json).unwrap_or_default();
+
+            // Spec 053: Backfill from existing awards if empty
+            if championships_completed.is_empty() {
+                if let Ok(awards) = self.get_championship_awards(profile_id) {
+                    for award in awards {
+                        if award.module_id.eq_ignore_ascii_case(module_id) {
+                            championships_completed.insert(
+                                award.championship_id.clone(),
+                                ChampionshipRecord {
+                                    championship_id: award.championship_id,
+                                    tier: award.tier,
+                                    best_finish: award.position,
+                                    times_completed: 1,
+                                    highest_points: award.points,
+                                    last_completed_at: award.achieved_at,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
 
             Ok(ModuleCareerProgress {
                 profile_id: row.get(0)?,
@@ -830,6 +911,7 @@ impl HallOfFameDb {
                 updated_at: row.get(10)?,
                 career_rivals,
                 active_championship,
+                championships_completed,
             })
         })?;
 
@@ -846,7 +928,8 @@ impl HallOfFameDb {
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
                     trophies_gold, trophies_silver, trophies_bronze, updated_at,
                     COALESCE(lifetime_xp, xp), COALESCE(visited_tracks, '[]'),
-                    COALESCE(career_rivals, '[]'), active_championship
+                    COALESCE(career_rivals, '[]'), active_championship,
+                    COALESCE(championships_completed, '{}')
              FROM profile_module_progress
              WHERE profile_id = ?1",
         )?;
@@ -859,6 +942,7 @@ impl HallOfFameDb {
             let visited_json: String = row.get(12)?;
             let rivals_json: String = row.get(13)?;
             let active_champ_json: Option<String> = row.get(14)?;
+            let champs_json: String = row.get(15)?;
 
             let unlocked_cars: Vec<String> = serde_json::from_str(&cars_json).unwrap_or_default();
             let unlocked_tracks: Vec<String> = serde_json::from_str(&tracks_json).unwrap_or_default();
@@ -867,10 +951,34 @@ impl HallOfFameDb {
             let career_rivals: Vec<crate::ai::CareerRivalEntry> = serde_json::from_str(&rivals_json).unwrap_or_default();
             let active_championship: Option<crate::series::ChampionshipSession> =
                 active_champ_json.and_then(|s| serde_json::from_str(&s).ok());
+            let mut championships_completed: std::collections::HashMap<String, ChampionshipRecord> =
+                serde_json::from_str(&champs_json).unwrap_or_default();
+
+            let module_id: String = row.get(1)?;
+            // Spec 053: Backfill from existing awards if empty
+            if championships_completed.is_empty() {
+                if let Ok(awards) = self.get_championship_awards(profile_id) {
+                    for award in awards {
+                        if award.module_id.eq_ignore_ascii_case(&module_id) {
+                            championships_completed.insert(
+                                award.championship_id.clone(),
+                                ChampionshipRecord {
+                                    championship_id: award.championship_id,
+                                    tier: award.tier,
+                                    best_finish: award.position,
+                                    times_completed: 1,
+                                    highest_points: award.points,
+                                    last_completed_at: award.achieved_at,
+                                },
+                            );
+                        }
+                    }
+                }
+            }
 
             Ok(ModuleCareerProgress {
                 profile_id: row.get(0)?,
-                module_id: row.get(1)?,
+                module_id,
                 xp: row.get::<_, i64>(2)? as u64,
                 lifetime_xp: lifetime_xp as u64,
                 level: row.get::<_, i64>(3)? as u32,
@@ -884,6 +992,7 @@ impl HallOfFameDb {
                 updated_at: row.get(10)?,
                 career_rivals,
                 active_championship,
+                championships_completed,
             })
         })?;
 
@@ -904,12 +1013,13 @@ impl HallOfFameDb {
         let events_json = serde_json::to_string(&progress.completed_events).unwrap_or_else(|_| "[]".to_string());
         let rivals_json = serde_json::to_string(&progress.career_rivals).unwrap_or_else(|_| "[]".to_string());
         let champ_json = progress.active_championship.as_ref().and_then(|c| serde_json::to_string(c).ok());
+        let champs_json = serde_json::to_string(&progress.championships_completed).unwrap_or_else(|_| "{}".to_string());
 
         self.conn.execute(
             "INSERT INTO profile_module_progress (
                 profile_id, module_id, xp, lifetime_xp, level, unlocked_cars, unlocked_tracks, visited_tracks, completed_events,
-                trophies_gold, trophies_silver, trophies_bronze, career_rivals, updated_at, active_championship
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+                trophies_gold, trophies_silver, trophies_bronze, career_rivals, updated_at, active_championship, championships_completed
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
             ON CONFLICT(profile_id, module_id) DO UPDATE SET
                 xp = excluded.xp,
                 lifetime_xp = excluded.lifetime_xp,
@@ -923,7 +1033,8 @@ impl HallOfFameDb {
                 trophies_bronze = excluded.trophies_bronze,
                 career_rivals = excluded.career_rivals,
                 updated_at = excluded.updated_at,
-                active_championship = excluded.active_championship",
+                active_championship = excluded.active_championship,
+                championships_completed = excluded.championships_completed",
             params![
                 progress.profile_id,
                 progress.module_id,
@@ -939,7 +1050,8 @@ impl HallOfFameDb {
                 progress.trophies_bronze as i64,
                 rivals_json,
                 now,
-                champ_json
+                champ_json,
+                champs_json,
             ],
         )?;
         Ok(())
@@ -1210,6 +1322,25 @@ impl HallOfFameDb {
         Ok(())
     }
 
+    pub fn deduct_credits(&self, profile_id: i64, amount: u64) -> Result<bool> {
+        let mut guard = self.profiles.lock().unwrap();
+        if let Some(p) = guard.iter_mut().find(|p| p.id == Some(profile_id)) {
+            if p.credits >= amount {
+                p.credits -= amount;
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    pub fn add_credits(&self, profile_id: i64, amount: u64) -> Result<()> {
+        let mut guard = self.profiles.lock().unwrap();
+        if let Some(p) = guard.iter_mut().find(|p| p.id == Some(profile_id)) {
+            p.add_credits(amount);
+        }
+        Ok(())
+    }
+
     pub fn set_active_profile(&self, profile_id: i64) -> Result<()> {
         let mut guard = self.profiles.lock().unwrap();
         for p in guard.iter_mut() {
@@ -1253,6 +1384,8 @@ impl HallOfFameDb {
                 is_active: true,
                 created_at: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
                 last_mode: AssistProfile::Arcade,
+                credits: PlayerProfile::STARTING_CREDITS,
+                lifetime_credits: PlayerProfile::STARTING_CREDITS,
             };
             guard.push(default_profile.clone());
             Ok(default_profile)

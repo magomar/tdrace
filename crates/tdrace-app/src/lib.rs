@@ -57,8 +57,8 @@ pub use track_manager::{CustomTrackInfo, TrackManager};
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};
 pub use profile::{
-    draw_country_banner, ChampionshipAward, CountryInfo, CountryRegistry, PlayerProfile,
-    ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
+    draw_country_banner, ChampionshipAward, ChampionshipRecord, CountryInfo, CountryRegistry,
+    ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
 };
 pub use render::color::{CarColorScheme, Palette};
 pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
