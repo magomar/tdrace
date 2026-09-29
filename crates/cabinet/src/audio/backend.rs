@@ -76,6 +76,25 @@ impl ActiveSoundHandle {
         let _ = (volume_linear, tween_duration);
     }
 
+    /// Dynamically alters stereo panning [-1.0..1.0] with smooth tweening.
+    /// -1.0 = hard left, 0.0 = center, 1.0 = hard right.
+    pub fn set_panning(&mut self, pan: f32, tween_duration: Duration) {
+        #[cfg(all(feature = "kira", not(target_arch = "wasm32")))]
+        if let Some(h) = self.handle.as_mut() {
+            let clamped_pan = pan.clamp(-1.0, 1.0);
+            h.set_panning(
+                clamped_pan,
+                Tween {
+                    duration: tween_duration,
+                    ..Default::default()
+                },
+            );
+        }
+
+        #[cfg(not(all(feature = "kira", not(target_arch = "wasm32"))))]
+        let _ = (pan, tween_duration);
+    }
+
     /// Stops the sound with an optional fade-out tween.
     pub fn stop(&mut self, fade_duration: Duration) {
         #[cfg(all(feature = "kira", not(target_arch = "wasm32")))]
