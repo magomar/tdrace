@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "race-kit Headless Race World"
 description: "Phase 2 of spec 049: a new race-kit crate with a headless RaceWorld that runs the race step once for every game, gives each vehicle a finish position and a real finish time, supports wrecks and DNF, reports race events instead of side effects, and carries the bot AI, with bit-identical results for today's cars."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-056-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T10:30:00Z }
