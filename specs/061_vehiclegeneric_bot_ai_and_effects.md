@@ -122,36 +122,36 @@ No new dependencies. No `unsafe`.
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: A bot drives a vehicle that is not a car**
-  - [ ] **Given** a test vehicle that implements `Vehicle` and `BotVehicle` with simple point-mass physics, on the prototypical oval
-  - [ ] **When** a `BotAiDriver` drives it in a `RaceWorld` for 2 laps
-  - [ ] **Then** it finishes both laps, and it never stays below 2 m/s for more than 3 s after the start
+  - [x] **Given** a test vehicle that implements `Vehicle` and `BotVehicle` with simple point-mass physics, on the prototypical oval
+  - [x] **When** a `BotAiDriver` drives it in a `RaceWorld` for 2 laps
+  - [x] **Then** it finishes both laps, and it never stays below 2 m/s for more than 3 s after the start
 
 - **Scenario: The effects follow a vehicle that is not a car**
-  - [ ] **Given** a test vehicle that implements `FxVehicle`, sliding on sand with high slip on its four contact points
-  - [ ] **When** `EffectsManager::update` runs for 1 s
-  - [ ] **Then** skid or rut segments are laid at its contact points, and dust particles are emitted
+  - [x] **Given** a test vehicle that implements `FxVehicle`, sliding on sand with high slip on its four contact points
+  - [x] **When** `EffectsManager::update` runs for 1 s
+  - [x] **Then** skid or rut segments are laid at its contact points, and dust particles are emitted
 
 - **Scenario: Cars give the same results**
-  - [ ] **Given** the golden hashes and the bot control hashes measured on `main` before this spec
-  - [ ] **When** the goldens and the bot tests run on this branch in debug and release
-  - [ ] **Then** every hash is the same as before
+  - [x] **Given** the golden hashes and the bot control hashes measured on `main` before this spec
+  - [x] **When** the goldens and the bot tests run on this branch in debug and release
+  - [x] **Then** every hash is the same as before
 
 - **Scenario: Existing callers compile unchanged**
-  - [ ] **Given** `tdrace-app`, the bot harness, the `minimal_race` example and the tests, with no edits to callers
-  - [ ] **When** the workspace builds
-  - [ ] **Then** everything compiles, with no new warnings
+  - [x] **Given** `tdrace-app`, the bot harness, the `minimal_race` example and the tests, with no edits to callers
+  - [x] **When** the workspace builds
+  - [x] **Then** everything compiles, with no new warnings
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/race-kit/src/ai/mod.rs`, `ai/humanize.rs` -> `BotVehicle`, generic AI, `impl BotVehicle for Car`.
-- `[ ]` `crates/race-ui/src/fx/mod.rs`, `fx/skidmarks.rs` -> `FxVehicle`, generic effects, `impl FxVehicle for Car`.
-- `[ ]` `crates/race-kit/tests/bot_vehicle_tests.rs` -> a bot drives a non-car vehicle.
-- `[ ]` `crates/race-ui/tests/fx_vehicle_tests.rs` -> effects follow a non-car vehicle.
-- `[ ]` `docs/platform/CHANGELOG.md` -> the `platform-v0.2.0` entry.
-- `[ ]` git tag `platform-v0.2.0` -> created locally. Mario pushes it.
+- `[x]` `crates/race-kit/src/ai/mod.rs`, `ai/humanize.rs` -> `BotVehicle`, generic AI, `impl BotVehicle for Car`.
+- `[x]` `crates/race-ui/src/fx/mod.rs`, `fx/skidmarks.rs` -> `FxVehicle`, generic effects, `impl FxVehicle for Car`.
+- `[x]` `crates/race-kit/tests/bot_vehicle_tests.rs` -> a bot drives a non-car vehicle.
+- `[x]` `crates/race-ui/tests/fx_vehicle_tests.rs` -> effects follow a non-car vehicle.
+- `[x]` `docs/platform/CHANGELOG.md` -> the `platform-v0.2.0` entry.
+- `[x]` git tag `platform-v0.2.0` -> created locally. Mario pushes it.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 061: Vehicle-Generic Bot AI and Effects*.
