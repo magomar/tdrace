@@ -4,6 +4,7 @@ template: architecture
 title: "Vault Module for Archived and Deprecated Content"
 description: "Structured cold-storage module ('vault') isolating retired circuits, novelty vehicles, and deprecated mechanics from production gameplay while keeping them accessible in Dev Mode and Track Studio."
 status: implemented
+receipt: "docs/receipts/spec-057-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T08:55:35Z }
 verified: { by: "human:mario", at: "2026-09-29T09:09:48Z" }
