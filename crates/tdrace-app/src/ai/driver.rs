@@ -883,7 +883,8 @@ impl DriverCharacter {
     /// If discipline is "classic", tier is strictly normalized to Tier 1.
     pub fn favorite_car_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> Option<&'static str> {
         let norm_disc = Self::normalize_discipline(discipline);
-        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, 5) };
+        let max_tier = if norm_disc == "rally" { 6 } else { 5 };
+        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, max_tier) };
 
         // 1. Exact match for discipline and tier
         if let Some(fav) = self.favorite_cars.iter().find(|f| f.discipline == norm_disc && f.tier == effective_tier) {

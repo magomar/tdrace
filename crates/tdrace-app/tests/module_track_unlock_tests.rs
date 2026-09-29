@@ -23,7 +23,7 @@ fn test_every_module_circuit_unlocks_by_max_level() {
     let mut never_unlock = Vec::new();
     for (module_id, module) in modules() {
         let mut progress = ModuleCareerProgress::default_for_module(1, module_id);
-        progress.level = 5;
+        progress.level = progress.max_tier();
         progress.sync_unlocks_for_level();
         for track in module.tracks() {
             if !progress.is_track_unlocked(track.id, false) {
@@ -32,6 +32,40 @@ fn test_every_module_circuit_unlocks_by_max_level() {
         }
     }
     assert!(never_unlock.is_empty(), "circuits that never unlock: {never_unlock:?}");
+}
+
+#[test]
+fn test_rally_six_tier_circuit_unlock_matrix() {
+    let expected_steps = [
+        (1, 5, vec!["holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", "croft_rx"]),
+        (2, 8, vec!["lessay_rx", "essay_rx", "lavare_rx"]),
+        (3, 11, vec!["kouvola_rx", "montalegre_rx", "nyirad_rx"]),
+        (4, 14, vec!["estering_rx", "hell_rx", "loheac_rx"]),
+        (5, 17, vec!["riga_rx", "killarney_rx", "catalunya_rx"]),
+        (6, 20, vec!["spa_rx", "silverstone_rx", "erx_motor_park"]),
+    ];
+
+    for (lvl, total_count, new_tracks) in expected_steps {
+        let mut progress = ModuleCareerProgress::default_for_module(1, "rally");
+        progress.level = lvl;
+        progress.sync_unlocks_for_level();
+
+        let rally = RallyGameModule::new();
+        let unlocked_count = rally.tracks().iter().filter(|t| progress.is_track_unlocked(t.id, false)).count();
+        assert_eq!(
+            unlocked_count, total_count,
+            "Rally Tier {} must unlock exactly {} circuits, found {}",
+            lvl, total_count, unlocked_count
+        );
+
+        for track_id in new_tracks {
+            assert!(
+                progress.is_track_unlocked(track_id, false),
+                "Rally Tier {} must have track '{}' unlocked",
+                lvl, track_id
+            );
+        }
+    }
 }
 
 #[test]

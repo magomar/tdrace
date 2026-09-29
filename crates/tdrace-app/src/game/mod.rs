@@ -8880,7 +8880,7 @@ impl RaceSession {
         let x = (sw - full_w) * 0.5;
         let tab_bar_y = scaler.s(14.0) + scaler.s(56.0) + scaler.s(10.0);
         let tab_bar_h = scaler.s(40.0);
-        let tier_count = 5;
+        let tier_count = self.active_career_progress.max_tier() as usize;
         let tab_gap = scaler.s(8.0);
         let tab_w = (full_w - tab_gap * (tier_count as f32 - 1.0)) / tier_count as f32;
 
@@ -8902,7 +8902,7 @@ impl RaceSession {
             }
         }
 
-        // 2. Direct Number Key Shortcuts (1-5) for immediate tier selection
+        // 2. Direct Number Key Shortcuts (1-6) for immediate tier selection
         if is_key_pressed(KeyCode::Key1) {
             if selected_tier != 1 {
                 selected_tier = 1;
@@ -8934,6 +8934,13 @@ impl RaceSession {
         } else if is_key_pressed(KeyCode::Key5) {
             if selected_tier != 5 {
                 selected_tier = 5;
+                tier_changed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+            self.career_hub_focus = CareerHubFocus::Tabs;
+        } else if is_key_pressed(KeyCode::Key6) && tier_count >= 6 {
+            if selected_tier != 6 {
+                selected_tier = 6;
                 tier_changed = true;
                 self.audio.play_sfx(SfxType::UiMove);
             }
@@ -8970,7 +8977,7 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_rb_pressed {
-            if selected_tier < 5 {
+            if selected_tier < tier_count as u32 {
                 self.audio.play_sfx(SfxType::UiMove);
                 selected_tier += 1;
                 tier_changed = true;
@@ -9000,7 +9007,7 @@ impl RaceSession {
                     selected_tier -= 1;
                     tier_changed = true;
                     self.audio.play_sfx(SfxType::UiMove);
-                } else if next_tab && selected_tier < 5 {
+                } else if next_tab && selected_tier < tier_count as u32 {
                     selected_tier += 1;
                     tier_changed = true;
                     self.audio.play_sfx(SfxType::UiMove);

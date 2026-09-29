@@ -289,10 +289,10 @@ pub fn render_career_hub_screen(
     cur_y += header_h + scaler.s(10.0);
 
     // =========================================================================
-    // 2. TIER SELECTOR TAB BAR [TIER 1 .. 5] WITH REPLAY SELECTOR [◄ Q / E ►]
+    // 2. TIER SELECTOR TAB BAR [TIER 1 .. 6] WITH REPLAY SELECTOR [◄ Q / E ►]
     // =========================================================================
     let tab_bar_h = scaler.s(40.0);
-    let tier_count = 5;
+    let tier_count = career.max_tier();
     let tab_gap = scaler.s(8.0);
     let tab_w = (full_w - tab_gap * (tier_count as f32 - 1.0)) / tier_count as f32;
 
@@ -398,8 +398,8 @@ pub fn render_career_hub_screen(
         fonts.draw_ui_bold(comp_msg, left_inner_x, ly + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_GREEN);
         ly += scaler.s(24.0);
     } else if selected_tier == career.level {
-        if career.level >= 5 {
-            fonts.draw_ui_bold("★ PINNACLE TIER REACHED — WORLD ENDURANCE APEX", left_inner_x, ly + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_GOLD);
+        if career.level >= career.max_tier() {
+            fonts.draw_ui_bold("★ PINNACLE TIER REACHED — MAXIMUM APEX", left_inner_x, ly + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_GOLD);
             ly += scaler.s(24.0);
         } else {
             let next_tier = career.level + 1;
