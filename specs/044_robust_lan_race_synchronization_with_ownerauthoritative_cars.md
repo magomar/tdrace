@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Robust LAN Race Synchronization with Owner-Authoritative Cars"
 description: "Replaces the LAN in-race netcode: each machine simulates only its own car and streams compact binary state; the host relays a world packet and referees laps, finish order and results; remote cars are interpolated; lobby and race-control messages become reliable; the race roster is fixed by one launch message; pause, finish and disconnects no longer break the session."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-044-receipt.md"
 created: 2026-09-28
 verified: { by: "human:mario", at: "2026-09-28T07:52:09Z" }
@@ -208,68 +208,68 @@ No database or save-file change. Work is done in phases. Each phase leaves `make
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Five or more players stay in sync**
-  - [ ] **Given** a LAN race with 5 or more players on at least 2 real machines
-  - [ ] **When** the race runs for 3 laps
-  - [ ] **Then** every screen shows every car moving smoothly for the whole race, and the dev net HUD shows zero encode errors
+  - [x] **Given** a LAN race with 5 or more players on at least 2 real machines
+  - [x] **When** the race runs for 3 laps
+  - [x] **Then** every screen shows every car moving smoothly for the whole race, and the dev net HUD shows zero encode errors
 - **Scenario: Player in slot 3 can drive**
-  - [ ] **Given** a lobby with 4 players where the player in slot 1 left before the start
-  - [ ] **When** the host starts the race
-  - [ ] **Then** each player controls their own car, and the host and every client show the same driver name on each car
+  - [x] **Given** a lobby with 4 players where the player in slot 1 left before the start
+  - [x] **When** the host starts the race
+  - [x] **Then** each player controls their own car, and the host and every client show the same driver name on each car
 - **Scenario: Own car never jumps back**
-  - [ ] **Given** a 2-player LAN race over Wi-Fi
-  - [ ] **When** the client drives a full lap with hard braking and drifts
-  - [ ] **Then** the client's own car never snaps or rubber-bands, and the host sees it follow the same line
+  - [x] **Given** a 2-player LAN race over Wi-Fi
+  - [x] **When** the client drives a full lap with hard braking and drifts
+  - [x] **Then** the client's own car never snaps or rubber-bands, and the host sees it follow the same line
 - **Scenario: Shared green light**
-  - [ ] **Given** all players are in the lobby and ready
-  - [ ] **When** the host starts the race and one machine loads the track slowly
-  - [ ] **Then** all machines show the green light at the same moment (within 50 ms by eye/video), after every machine has loaded
+  - [x] **Given** all players are in the lobby and ready
+  - [x] **When** the host starts the race and one machine loads the track slowly
+  - [x] **Then** all machines show the green light at the same moment (within 50 ms by eye/video), after every machine has loaded
 - **Scenario: Pause does not break the race**
-  - [ ] **Given** a LAN race is running
-  - [ ] **When** the host opens the pause menu for 10 seconds and closes it
-  - [ ] **Then** no player is disconnected, the other cars kept racing, and the host's car stood still with brakes on
+  - [x] **Given** a LAN race is running
+  - [x] **When** the host opens the pause menu for 10 seconds and closes it
+  - [x] **Then** no player is disconnected, the other cars kept racing, and the host's car stood still with brakes on
 - **Scenario: Same results on every machine**
-  - [ ] **Given** a 3-player LAN race
-  - [ ] **When** the players finish in a close order
-  - [ ] **Then** every machine shows the same finishing order and times, and a player who finished first can watch the others until the race ends
+  - [x] **Given** a 3-player LAN race
+  - [x] **When** the players finish in a close order
+  - [x] **Then** every machine shows the same finishing order and times, and a player who finished first can watch the others until the race ends
 - **Scenario: A player leaves mid-race**
-  - [ ] **Given** a 3-player LAN race
-  - [ ] **When** one client quits the game
-  - [ ] **Then** within 5 seconds that car is parked as a ghost and marked DNF on the other machines, and the race goes on
+  - [x] **Given** a 3-player LAN race
+  - [x] **When** one client quits the game
+  - [x] **Then** within 5 seconds that car is parked as a ghost and marked DNF on the other machines, and the race goes on
 - **Scenario: The host leaves mid-race**
-  - [ ] **Given** a 3-player LAN race
-  - [ ] **When** the host quits the game
-  - [ ] **Then** each client shows "Host left the race", then the last standings, then returns to the LAN hub
+  - [x] **Given** a 3-player LAN race
+  - [x] **When** the host quits the game
+  - [x] **Then** each client shows "Host left the race", then the last standings, then returns to the LAN hub
 - **Scenario: Ghost collision mode**
-  - [ ] **Given** the host set collision mode to Ghost
-  - [ ] **When** two cars drive through each other
-  - [ ] **Then** neither car is pushed on either machine
+  - [x] **Given** the host set collision mode to Ghost
+  - [x] **When** two cars drive through each other
+  - [x] **Then** neither car is pushed on either machine
 - **Scenario: Old build is rejected**
-  - [ ] **Given** a host on this build (protocol v2)
-  - [ ] **When** a client on an older build (protocol v1) joins
-  - [ ] **Then** the old client shows its version-mismatch message and gets no slot (a v1 host cannot answer a v2 client; that client times out with "Host did not respond")
+  - [x] **Given** a host on this build (protocol v2)
+  - [x] **When** a client on an older build (protocol v1) joins
+  - [x] **Then** the old client shows its version-mismatch message and gets no slot (a v1 host cannot answer a v2 client; that client times out with "Host did not respond")
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/cabinet/src/net/protocol.rs` -> v2 envelope with `kind` byte; reliable lobby/race-control messages; `RaceLaunch` roster; remove input and JSON snapshot types.
-- `[ ]` `crates/cabinet/src/net/wire.rs` (new) -> Binary `CarState` / `WorldState` encode/decode with bounds checks.
-- `[ ]` `crates/cabinet/src/net/reliable.rs` (new) -> Seq/ack/resend/dedup channel.
-- `[ ]` `crates/cabinet/src/net/transport.rs` (new) -> `Transport` trait, `UdpTransport`, test `SimTransport` (loss, delay, jitter, reorder).
-- `[ ]` `crates/cabinet/src/net/interp.rs` (new) -> `RemoteCarBuffer`, Hermite interpolation, bounded extrapolation.
-- `[ ]` `crates/cabinet/src/net/clock.rs` (new) -> Clock offset from pings, `race_tick` ↔ local time.
-- `[ ]` `crates/cabinet/src/net/stats.rs` (new) -> `NetStats`.
-- `[ ]` `crates/cabinet/src/net/host.rs` -> World relay, referee (loaded, start, finish order, results), `PlayerLeft`, per-slot address check.
-- `[ ]` `crates/cabinet/src/net/client.rs` -> Stored `assigned_slot_id`, clock sync, car-state send, world-state receive, reliable channel.
-- `[ ]` `crates/cabinet/src/net/mod.rs` -> Exports.
-- `[ ]` `crates/cabinet/src/net/ui/client_lobby_screen.rs`, `host_screen.rs` -> `RaceLaunch` flow; `roster_rev`.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> `SlotMap`, `pump_lan`, own-car-only physics, remote interpolation, collision restore, LAN pause overlay, finish/results from host, remove `lan_remote_inputs`.
-- `[ ]` `crates/tdrace-app/src/ui/lan_ui.rs` -> "Finished, waiting" view, "Host left" message, dev net HUD.
-- `[ ]` `crates/cabinet/tests/net_tests.rs` -> Wire, reliable, interp, transport tests.
-- `[ ]` `crates/tdrace-app/tests/lan_integration_tests.rs` -> Rewrite for v2 flow; fix the failing countdown test.
-- `[ ]` `crates/tdrace-app/tests/lan_sync_tests.rs` (new) -> Headless multi-session sync and lifecycle tests.
-- `[ ]` `docs/engineering/lan_netcode.md` (new) -> How LAN sync works, packet table, tuning constants.
+- `[x]` `crates/cabinet/src/net/protocol.rs` -> v2 envelope with `kind` byte; reliable lobby/race-control messages; `RaceLaunch` roster; remove input and JSON snapshot types.
+- `[x]` `crates/cabinet/src/net/wire.rs` (new) -> Binary `CarState` / `WorldState` encode/decode with bounds checks.
+- `[x]` `crates/cabinet/src/net/reliable.rs` (new) -> Seq/ack/resend/dedup channel.
+- `[x]` `crates/cabinet/src/net/transport.rs` (new) -> `Transport` trait, `UdpTransport`, test `SimTransport` (loss, delay, jitter, reorder).
+- `[x]` `crates/cabinet/src/net/interp.rs` (new) -> `RemoteCarBuffer`, Hermite interpolation, bounded extrapolation.
+- `[x]` `crates/cabinet/src/net/clock.rs` (new) -> Clock offset from pings, `race_tick` ↔ local time.
+- `[x]` `crates/cabinet/src/net/stats.rs` (new) -> `NetStats`.
+- `[x]` `crates/cabinet/src/net/host.rs` -> World relay, referee (loaded, start, finish order, results), `PlayerLeft`, per-slot address check.
+- `[x]` `crates/cabinet/src/net/client.rs` -> Stored `assigned_slot_id`, clock sync, car-state send, world-state receive, reliable channel.
+- `[x]` `crates/cabinet/src/net/mod.rs` -> Exports.
+- `[x]` `crates/cabinet/src/net/ui/client_lobby_screen.rs`, `host_screen.rs` -> `RaceLaunch` flow; `roster_rev`.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> `SlotMap`, `pump_lan`, own-car-only physics, remote interpolation, collision restore, LAN pause overlay, finish/results from host, remove `lan_remote_inputs`.
+- `[x]` `crates/tdrace-app/src/ui/lan_ui.rs` -> "Finished, waiting" view, "Host left" message, dev net HUD.
+- `[x]` `crates/cabinet/tests/net_tests.rs` -> Wire, reliable, interp, transport tests.
+- `[x]` `crates/tdrace-app/tests/lan_integration_tests.rs` -> Rewrite for v2 flow; fix the failing countdown test.
+- `[x]` `crates/tdrace-app/tests/lan_sync_tests.rs` (new) -> Headless multi-session sync and lifecycle tests.
+- `[x]` `docs/engineering/lan_netcode.md` (new) -> How LAN sync works, packet table, tuning constants.
 
 ### Verification Assertions
 - `crates/cabinet/src/net/wire.rs`, `reliable.rs` and `interp.rs` reference `specs/044_robust_lan_race_synchronization_with_ownerauthoritative_cars.md` in their header comments.
