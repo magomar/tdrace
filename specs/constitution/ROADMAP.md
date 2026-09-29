@@ -105,6 +105,7 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 
 ### 1. Multiplayer Networking & Online Lobbies
 - `[x]` **[Local Network LAN Multiplayer & Cabinet Arcade Lobby](../036_local_network_lan_multiplayer_and_cabinet_lobby.md)**: Zero-configuration local network multiplayer architecture, authoritative UDP host-client netcode, automatic LAN beacon discovery, direct IP connect, and reusable Cabinet lobby shell.
+- `[ ]` **[Robust LAN Race Synchronization with Owner-Authoritative Cars](../044_robust_lan_race_synchronization_with_ownerauthoritative_cars.md)**: Owner-authoritative car states in compact binary packets, host relay and race referee, interpolated remote cars, reliable lobby and race-control messages, a roster fixed at launch, and pause/finish/disconnect handling that keeps the session alive.
 - **Authoritative Relay & Netcode**: Client-server architecture with dead-reckoning prediction, delta compression, and rollback collision arbitration.
 - **Matchmaking & Lobbies**: Dedicated room lobbies with synchronized car selection and spectator director slots.
 
