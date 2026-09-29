@@ -782,10 +782,10 @@ fn render_footer(
     scaler.draw_glass_card(0.0, y, sw, 1.0, COLOR_TRANSPARENT, Palette::UI_CARD_BORDER, 1.0);
 
     let hints = match state.active_tab {
-        ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc] Exit",
-        ChampionshipEditorTab::Calendar => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [A] Add Round • [Up/Down] Reorder • [D] Delete Round • [Esc] Exit",
-        ChampionshipEditorTab::Grid => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc] Exit",
-        ChampionshipEditorTab::Export => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [L / F5] Launch Test Cup • [S] Save TOML • [Esc] Exit",
+        ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc / B] Exit",
+        ChampionshipEditorTab::Calendar => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [A] Add Round • [Up/Down] Reorder • [D] Delete Round • [Esc / B] Exit",
+        ChampionshipEditorTab::Grid => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc / B] Exit",
+        ChampionshipEditorTab::Export => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [L / F5] Launch Test Cup • [S] Save TOML • [Esc / B] Exit",
     };
 
     fonts.draw_ui_regular(hints, scaler.s(24.0), y + scaler.s(22.0), scaler.font_s(11.0), COLOR_LIGHT_GRAY);
@@ -945,11 +945,15 @@ pub fn handle_championship_editor_input(
     all_tracks: &[TrackChoice],
     available_championships: &[&ChampionshipDefinition],
     is_dev: bool,
+    gamepad_back: bool,
 ) -> ChampionshipEditorAction {
+    // Gamepad B / Back does what Escape does: close the open dialog, else leave the studio.
+    let back_pressed = gamepad_back || is_key_pressed(KeyCode::Escape);
+
     // 1. Modal Input Handling
     match state.modal {
         ChampionshipEditorModal::OpenChampionship { ref mut selected_idx } => {
-            if is_key_pressed(KeyCode::Escape) {
+            if back_pressed {
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
@@ -997,7 +1001,7 @@ pub fn handle_championship_editor_input(
             return ChampionshipEditorAction::None;
         }
         ChampionshipEditorModal::AddTrack { ref mut selected_idx } => {
-            if is_key_pressed(KeyCode::Escape) {
+            if back_pressed {
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
@@ -1025,7 +1029,7 @@ pub fn handle_championship_editor_input(
         }
         ChampionshipEditorModal::SelectCarModel { driver_idx, ref mut selected_idx } => {
             let models = crate::catalog::get_models_for_module(&state.def.series.module_id);
-            if is_key_pressed(KeyCode::Escape) {
+            if back_pressed {
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
@@ -1051,7 +1055,7 @@ pub fn handle_championship_editor_input(
             ref mut value,
             ..
         } => {
-            if is_key_pressed(KeyCode::Escape) {
+            if back_pressed {
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
@@ -1095,7 +1099,7 @@ pub fn handle_championship_editor_input(
     }
 
     // 2. Global Hotkeys
-    if is_key_pressed(KeyCode::Escape) {
+    if back_pressed {
         return ChampionshipEditorAction::Exit;
     }
 

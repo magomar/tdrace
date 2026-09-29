@@ -41,17 +41,35 @@ const { car } = Astro.props;
 
 const badgeColors: Record<string, string> = {
   'Gran Turismo & Endurance': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  'Gran Turismo': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
   'NASCAR Stock Car Racing': 'bg-red-500/15 text-red-400 border-red-500/30',
+  'Stock cars': 'bg-red-500/15 text-red-400 border-red-500/30',
+  'Rallycross': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   'Rallycross & All-Terrain': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  'Autocross': 'bg-orange-500/15 text-orange-400 border-orange-500/30',
+  'FIA Autocross': 'bg-orange-500/15 text-orange-400 border-orange-500/30',
   'Extreme Off-Road & Arenas': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  'All terrain': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  'All-Terrain': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   'Karting & Micro-Racers': 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  'Karting': 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  'classic': 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  'Classic Arcade Motorsport': 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+  'Arcade': 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
 };
 
 const moduleColor = badgeColors[car.module] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
 const hasVisuals = Boolean(car.image_lateral || car.image_topdown || car.image_ref);
 
 
-const isWideTrack = car.module === 'Karting & Micro-Racers' || car.module === 'Extreme Off-Road & Arenas' || car.id === 'classic_kart';
+const isWideTrack =
+  car.module === 'Karting & Micro-Racers' ||
+  car.module === 'Karting' ||
+  car.module === 'Extreme Off-Road & Arenas' ||
+  car.module === 'All terrain' ||
+  car.module === 'All-Terrain' ||
+  car.module === 'Autocross' ||
+  car.id === 'classic_kart';
 const topdownCropStyle = isWideTrack
   ? 'object-view-box: inset(12% 0% 12% 0%);'
   : 'object-view-box: inset(18% 0% 18% 0%);';
@@ -133,7 +151,7 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
                 src={imageLateralSrc}
                 alt={`${car.name} Side View`}
                 class="max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
+                decoding="async"
               />
               <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
             </div>
@@ -150,7 +168,7 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
                 alt={`${car.name} Top View`}
                 class="max-h-28 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300"
                 style={topdownCropStyle}
-                loading="lazy"
+                decoding="async"
               />
               <div class="w-3/4 h-1 bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent blur-[1px] mt-1"></div>
             </div>
@@ -163,7 +181,7 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
               src={imageRefSrc}
               alt={`${car.name} Real Motorsport Reference`}
               class="w-full h-full object-cover rounded border border-racing-border/40"
-              loading="lazy"
+              decoding="async"
             />
             <div class="absolute bottom-1 right-2 text-[9px] font-mono bg-black/60 px-1.5 py-0.5 rounded text-white/80">
               Real Trackside
@@ -371,6 +389,10 @@ const brakingPct = Math.min(100, Math.max(0, brakingVal));
       if (view === effectiveView) {
         el.classList.remove('hidden');
         el.classList.add('flex');
+        const img = el.querySelector('img');
+        if (img && img.loading === 'lazy') {
+          img.loading = 'eager';
+        }
       } else {
         el.classList.add('hidden');
         el.classList.remove('flex');

@@ -579,3 +579,99 @@ fn test_roster_featured_cars_have_valid_lateral_assets() {
     }
 }
 
+
+// --- Browsing other disciplines vs. switching (tdrace-garage-module-switch-z4iy) ---
+
+use macroquad::input::KeyCode;
+use tdrace_app::game::inject_key_presses_for_tests;
+use tdrace_app::ui::menu::GameMode;
+
+/// Runs one Garage frame with `keys` pressed.
+fn garage_press(session: &mut RaceSession, origin: GarageOrigin, keys: &[KeyCode]) {
+    inject_key_presses_for_tests(keys);
+    session.update_garage(origin, 0.016);
+    inject_key_presses_for_tests(&[]);
+}
+
+/// Opens the Garage from `origin` in the GT discipline, then views the Rallycross cars (key 2)
+/// with their first tier-1 car unlocked. Returns that car's id.
+fn gt_garage_viewing_rally(session: &mut RaceSession, origin: GarageOrigin) -> &'static str {
+    session.switch_to_gt();
+    session.game_mode = GameMode::StandardRace;
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+    session.state = GameState::Garage(origin);
+    garage_press(session, origin, &[KeyCode::Key2]);
+    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_career_progress.module_id, "rally", "prices and unlocks come from the viewed class");
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+    let car = get_models_for_module_and_tier("rally", 1)[0];
+    session.active_career_progress.ensure_car(car.id);
+    car.id
+}
+
+#[test]
+fn browsing_another_discipline_then_esc_restores_the_session_discipline() {
+    let mut session = RaceSession::new();
+    gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Escape]);
+
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.active_module_id, "gt");
+    assert_eq!(session.active_career_progress.module_id, "gt");
+    assert_eq!((session.garage_tier, session.garage_car_idx), (1, 0));
+}
+
+#[test]
+fn picking_another_disciplines_car_from_the_circuit_menu_switches_fully() {
+    let mut session = RaceSession::new();
+    let car_id = gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Enter]);
+
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.selected_car_model_id, Some(car_id), "the picked car survives the switch");
+    let rally_tracks = session.track_manager.module_catalog_tracks("rally");
+    assert!(
+        rally_tracks.iter().any(|t| t.track_id() == session.track_choice.track_id()),
+        "the circuit menu now offers Rallycross circuits"
+    );
+
+    // Leaving the Garage must not undo the switch.
+    session.update();
+    assert_eq!(session.active_module_id, "rally");
+}
+
+#[test]
+fn a_set_up_race_refuses_a_car_from_another_discipline() {
+    let mut session = RaceSession::new();
+    session.switch_to_gt();
+    session.init_race();
+    let grid_car = session.selected_car_model_id;
+    gt_garage_viewing_rally(&mut session, GarageOrigin::StartingGrid);
+
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Enter]);
+
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid), "stays in the garage");
+    assert_eq!(session.selected_car_model_id, grid_car);
+
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Escape]);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.active_module_id, "gt");
+}
+
+#[test]
+fn leaving_the_garage_by_any_path_restores_the_discipline() {
+    let mut session = RaceSession::new();
+    gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    // e.g. a LAN lobby dropping out, or any code that changes the state directly
+    session.state = GameState::Menu;
+    session.update();
+
+    assert_eq!(session.active_module_id, "gt");
+    assert_eq!(session.garage_entry, None);
+}

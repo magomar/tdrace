@@ -2135,7 +2135,7 @@ pub fn render_results_screen(
 
     // Bottom action prompt
     let prompt = if is_championship {
-        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Exit"
+        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Save & Exit"
     } else {
         "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu"
     };

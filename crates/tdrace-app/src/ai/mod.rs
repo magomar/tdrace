@@ -201,21 +201,21 @@ impl DriverQuality {
                 brake_padding: 0.22,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
-                composure: 0.50,
+                composure: 0.48,
             },
             DriverTier::Amateur => Self {
                 tier,
                 pace_limit: 0.90,
-                brake_padding: 0.14,
-                avoidance_padding: 1.5,
+                brake_padding: 0.12,
+                avoidance_padding: 1.4,
                 consistency: 0.72,
                 composure: 0.60,
             },
             DriverTier::Contender => Self {
                 tier,
                 pace_limit: 0.96,
-                brake_padding: 0.07,
-                avoidance_padding: 0.8,
+                brake_padding: 0.06,
+                avoidance_padding: 0.7,
                 consistency: 0.83,
                 composure: 0.78,
             },
@@ -552,6 +552,7 @@ impl BotAiDriver {
         }
         if self.reverse_recovery_timer > 0.0 {
             self.reverse_recovery_timer -= dt;
+            self.human.reset_recovery_line();
             // Opposite lock to the forward turn: reversing then keeps turning the nose towards the
             // target, as in a three-point turn (spec 046; the old sign undid each forward turn).
             let flip = if self.recovery_attempts.is_multiple_of(2) { 1.0 } else { -1.0 };
@@ -750,7 +751,15 @@ impl BotAiDriver {
                 let align_factor = (1.0f32 - (heading_error.abs() - 0.45) / 0.85).clamp(0.2, 1.0);
                 throttle_limit *= align_factor;
             }
-            let steer_traction_limit = (1.0f32 - steer_cmd.abs() * 0.55).clamp(0.3, 1.0);
+            let steer_traction_limit = if self.human.is_active() {
+                if steer_cmd.abs() > 0.20 {
+                    (1.0f32 - (steer_cmd.abs() - 0.20) * 0.60).clamp(0.35, 1.0)
+                } else {
+                    1.0
+                }
+            } else {
+                (1.0f32 - steer_cmd.abs() * 0.55).clamp(0.3, 1.0)
+            };
             throttle_limit *= steer_traction_limit;
         }
         // Spec 046: turning round after a spin. Full throttle at full lock only spins a
