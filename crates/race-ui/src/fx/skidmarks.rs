@@ -1,7 +1,8 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use wheelbase::car::Car;
 use wheelbase::surface::SurfaceType;
+
+use super::FxVehicle;
 
 #[inline]
 fn skid_noise(p: Vec2, seed: u32) -> f32 {
@@ -84,7 +85,7 @@ impl SkidmarkBuffer {
     }
 
     /// Updates the skid mark buffer for a set of active cars on the track.
-    pub fn update_for_cars(&mut self, cars: &[Car], surfaces: &[[SurfaceType; 4]]) {
+    pub fn update_for_cars<V: FxVehicle>(&mut self, cars: &[V], surfaces: &[[SurfaceType; 4]]) {
         // Ensure tracking storage matches cars length
         if self.prev_wheel_positions.len() < cars.len() {
             self.prev_wheel_positions.resize(cars.len(), [None; 4]);
@@ -92,31 +93,31 @@ impl SkidmarkBuffer {
         }
 
         for (car_idx, car) in cars.iter().enumerate() {
-            if car.state.is_airborne || car.state.elevation > 0.0 {
+            if car.is_airborne() || car.jump_height() > 0.0 {
                 for wheel_id in 0..4 {
                     self.prev_wheel_positions[car_idx][wheel_id] = None;
                 }
                 continue;
             }
 
-            let wheel_positions = car.wheel_positions_world();
+            let wheel_positions = car.contact_points();
             let car_right = car.right_vector();
             let half_tire_w = 0.16;
 
             for wheel_id in 0..4 {
                 let curr_pos = wheel_positions[wheel_id];
-                let telemetry = &car.state.wheels[wheel_id];
+                let telemetry = &car.contact_telemetry()[wheel_id];
                 let surface = surfaces.get(car_idx).map(|s| s[wheel_id]).unwrap_or(SurfaceType::Asphalt);
 
                 // Mark trigger: active tire slip OR rolling indentation on loose/deformable terrain OR dirt contamination transfer on pavement
                 let has_slip = telemetry.skid_intensity > 0.025
                     || telemetry.is_skidding
-                    || car.state.is_drifting
+                    || car.is_drifting()
                     || telemetry.slip_ratio.abs() > 0.10
                     || telemetry.slip_angle.abs() > 0.07;
 
-                let is_rolling_loose = surface.leaves_rolling_rut() && car.state.speed > 1.2;
-                let is_transferring_dirt = surface.is_rigid_pavement() && telemetry.dirt_contamination > 0.03 && car.state.speed > 1.2;
+                let is_rolling_loose = surface.leaves_rolling_rut() && car.speed() > 1.2;
+                let is_transferring_dirt = surface.is_rigid_pavement() && telemetry.dirt_contamination > 0.03 && car.speed() > 1.2;
 
                 let leaves_mark = has_slip || is_rolling_loose || is_transferring_dirt;
 
