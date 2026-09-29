@@ -10,7 +10,7 @@ fn test_kart_module_tracks_integrity_and_validation() {
     let module = KartGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 17, "Kart module should have 17 tracks (13 famous + 2 national + 2 cadet)");
+    assert_eq!(tracks.len(), 20, "Kart module should have 20 tracks (17 existing + 3 new OSM tracks)");
 
     let expected_ids = [
         "lonato",
@@ -30,6 +30,9 @@ fn test_kart_module_tracks_integrity_and_validation() {
         "campillos",
         "laval_kart",
         "whilton_mill",
+        "aunay_kart",
+        "muelsen_kart",
+        "adria_kart",
     ];
 
     for id in &expected_ids {

@@ -398,12 +398,12 @@ pub fn render_career_hub_screen(
         fonts.draw_ui_bold(comp_msg, left_inner_x, ly + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_GREEN);
         ly += scaler.s(24.0);
     } else if selected_tier == career.level {
-        if career.level >= 5 {
+        if career.level >= career.max_tier() {
             fonts.draw_ui_bold("★ PINNACLE TIER REACHED — WORLD ENDURANCE APEX", left_inner_x, ly + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_GOLD);
             ly += scaler.s(24.0);
         } else {
             let next_tier = career.level + 1;
-            let req_xp = ModuleCareerProgress::tier_license_xp(next_tier);
+            let req_xp = ModuleCareerProgress::tier_license_xp_for_module(&career.module_id, next_tier);
             let has_podium = career.has_podium_in_tier(career.level);
             let has_xp = career.xp >= req_xp;
 

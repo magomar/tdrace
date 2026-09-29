@@ -27,12 +27,15 @@ fn test_vault_game_module_identity_and_traits() {
     assert_eq!(theme.primary_accent, Color::new(1.0, 0.65, 0.0, 1.0));
 
     let vehicles = vault.vehicles();
-    assert_eq!(vehicles.len(), 3, "Vault should provide 3 decommissioned prototype vehicle models");
+    assert_eq!(vehicles.len(), 6, "Vault should provide 6 decommissioned vehicle models");
 
     let ids: Vec<&str> = vehicles.iter().map(|v| v.id).collect();
     assert!(ids.contains(&"vault_test_mule"));
     assert!(ids.contains(&"vault_prototype_mower"));
     assert!(ids.contains(&"vault_drift_trike"));
+    assert!(ids.contains(&"kart_honda_mean_mower"));
+    assert!(ids.contains(&"kart_john_deere_racing_mower"));
+    assert!(ids.contains(&"kart_viking_t6_tractor"));
 
     assert_eq!(vault.default_vehicle_id(), "vault_test_mule");
     assert!(vault.drivers().is_empty(), "Vault must not register drivers in official championship grids");

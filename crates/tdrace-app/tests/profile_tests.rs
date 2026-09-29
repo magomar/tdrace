@@ -1355,26 +1355,30 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         .map(|t| t.id.to_string())
         .collect();
 
-    let expected_kart_tiers: [(&str, Vec<&str>); 5] = [
+    let expected_kart_tiers: [(&str, Vec<&str>); 6] = [
         (
             "Rotax Junior Academy (Tier 1)",
             vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
         ),
         (
-            "National Kart Championship (Tier 2)",
-            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf", "whilton_mill"],
+            "FIA Karting Academy Trophy (Tier 2)",
+            vec!["whilton_mill", "laval_kart", "genk", "sarno", "kristianstad", "seven_laghi"],
         ),
         (
-            "Continental Rotax Trophy (Tier 3)",
-            vec!["pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf"],
+            "National Kart Championship (Tier 3)",
+            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "franciacorta", "ampfing", "pfi"],
         ),
         (
-            "FIA Karting European Championship (Tier 4)",
-            vec!["zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato"],
+            "Continental Shifter Cup (Tier 4)",
+            vec!["pfi", "franciacorta", "ampfing", "zuera", "silverstone_national_kart", "aunay_kart", "sarno", "lonato"],
         ),
         (
-            "FIA Karting World Championship (Tier 5)",
-            vec!["portimao_kart", "valencia_kart", "campillos", "zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "lonato"],
+            "Superkart Division 2 Challenge (Tier 5)",
+            vec!["zuera", "silverstone_national_kart", "aunay_kart", "le_mans_kart", "campillos", "muelsen_kart", "pfi", "sarno", "lonato"],
+        ),
+        (
+            "Superkart Division 1 World Series (Tier 6)",
+            vec!["portimao_kart", "valencia_kart", "adria_kart", "campillos", "le_mans_kart", "muelsen_kart", "zuera", "silverstone_national_kart", "pfi", "lonato"],
         ),
     ];
 
@@ -2473,6 +2477,96 @@ fn test_spec_053_round_purse_and_clean_race_bonuses() {
     assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 2), 300_000);
     assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 3), 180_000);
 }
+
+#[test]
+fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
+    let mut progress = ModuleCareerProgress::default_for_module(1, "kart");
+    assert_eq!(progress.level, 1);
+    assert_eq!(progress.max_tier(), 6);
+    assert_eq!(progress.unlocked_cars, vec!["kart_crg_hero_60"]);
+    assert_eq!(progress.unlocked_tracks.len(), 5);
+    assert_eq!(
+        progress.unlocked_tracks,
+        vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"]
+    );
+    assert_eq!(progress.next_tier_target_xp(), Some(1_500));
+
+    // Try advancing without podium or XP
+    assert!(!progress.can_advance_tier());
+
+    // Add podium in tier 1, check insufficient XP
+    progress.record_championship_finish("kart_world_cup", 1, 1, 100, "2026-09-29");
+    assert!(!progress.can_advance_tier());
+
+    // Add XP to 1,500
+    progress.add_xp(1_500);
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 2);
+    assert_eq!(progress.level, 2);
+    assert_eq!(progress.next_tier_target_xp(), Some(3_500));
+    assert!(progress.is_car_unlocked("kart_tony_kart_rookie_okj", false));
+    assert_eq!(progress.unlocked_tracks.len(), 8);
+    assert!(progress.unlocked_tracks.contains(&"sarno".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"kristianstad".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"seven_laghi".to_string()));
+
+    // Tier 2 -> 3: 3,500 XP required
+    progress.record_championship_finish("kart_junior_trophy", 2, 2, 85, "2026-09-29");
+    progress.add_xp(2_000); // total 3,500 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 3);
+    assert_eq!(progress.level, 3);
+    assert_eq!(progress.next_tier_target_xp(), Some(6_000));
+    assert!(progress.is_car_unlocked("kart_tony_kart_racer_ok", false));
+    assert_eq!(progress.unlocked_tracks.len(), 11);
+    assert!(progress.unlocked_tracks.contains(&"pfi".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"franciacorta".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"ampfing".to_string()));
+
+    // Tier 3 -> 4: 6,000 XP required
+    progress.record_championship_finish("kart_national_championship", 3, 3, 70, "2026-09-29");
+    progress.add_xp(2_500); // total 6,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 4);
+    assert_eq!(progress.level, 4);
+    assert_eq!(progress.next_tier_target_xp(), Some(9_000));
+    assert!(progress.is_car_unlocked("kart_birel_art_kz2", false));
+    assert_eq!(progress.unlocked_tracks.len(), 14);
+    assert!(progress.unlocked_tracks.contains(&"zuera".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"silverstone_national_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"aunay_kart".to_string()));
+
+    // Tier 4 -> 5: 9,000 XP required
+    progress.record_championship_finish("kart_continental_trophy", 4, 1, 100, "2026-09-29");
+    progress.add_xp(3_000); // total 9,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 5);
+    assert_eq!(progress.level, 5);
+    assert_eq!(progress.next_tier_target_xp(), Some(13_000));
+    assert!(progress.is_car_unlocked("kart_anderson_maverick_mono", false));
+    assert_eq!(progress.unlocked_tracks.len(), 17);
+    assert!(progress.unlocked_tracks.contains(&"le_mans_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"campillos".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"muelsen_kart".to_string()));
+
+    // Tier 5 -> 6: 13,000 XP required
+    progress.record_championship_finish("kart_superkart_div2_challenge", 5, 2, 85, "2026-09-29");
+    progress.add_xp(4_000); // total 13,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 6);
+    assert_eq!(progress.level, 6);
+    assert_eq!(progress.next_tier_target_xp(), None);
+    assert_eq!(progress.level_progress_ratio(), 1.0);
+    assert!(progress.is_car_unlocked("kart_anderson_cs250", false));
+    assert_eq!(progress.unlocked_tracks.len(), 20);
+    assert!(progress.unlocked_tracks.contains(&"portimao_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"valencia_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"adria_kart".to_string()));
+
+    // At tier 6 pinnacle, cannot advance further
+    assert!(!progress.can_advance_tier());
+}
+
 
 
 
