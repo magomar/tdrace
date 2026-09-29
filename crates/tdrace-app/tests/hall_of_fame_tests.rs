@@ -1,3 +1,4 @@
+use race_kit::FinishState;
 use tdrace_app::db::{HallOfFameDb, HallOfFameEntry};
 use tdrace_app::editor::EditorAction;
 use tdrace_app::game::{FinishedScreenView, GameState, RaceSession};
@@ -171,8 +172,10 @@ fn test_race_session_hof_automatic_logging_and_congratulations() {
     assert_eq!(session.track_choice_id(), "classic_grand_prix");
     assert!(session.hof_entries.is_empty(), "Hall of Fame should start empty");
 
-    // Simulate player completing race in 1st place with a personal best
-    session.session_time = 45.0;
+    // Simulate player completing race in 1st place with a personal best. Result times come
+    // from the race world's clock (spec 056), not from session_time.
+    session.world.time = 45.0;
+    session.world.finish[0] = FinishState::Finished { time: 45.0, position: 1 };
     session.world.trackers[0].current_lap = session.total_laps + 1;
     session.world.trackers[0].best_lap_time = Some(15.0);
 
