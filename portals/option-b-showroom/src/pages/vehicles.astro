@@ -5,13 +5,14 @@ import GlobalViewSwitcher from '../components/GlobalViewSwitcher.astro';
 import vehiclesData from '../../../shared/data/vehicles.json';
 
 const modules = [
-  { label: 'All Modules', value: 'All Modules' },
-  { label: 'Gran Turismo', value: 'Gran Turismo & Endurance' },
-  { label: 'NASCAR', value: 'NASCAR Stock Car Racing' },
-  { label: 'Rallycross', value: 'Rallycross' },
-  { label: 'Extreme Off-Road', value: 'Extreme Off-Road & Arenas' },
+  { label: 'All modules', value: 'All Modules' },
+  { label: 'Arcade', value: 'classic' },
   { label: 'Karting', value: 'Karting & Micro-Racers' },
-  { label: 'Classic Arcade', value: 'classic' },
+  { label: 'Rallycross', value: 'Rallycross' },
+  { label: 'Autocross', value: 'Autocross' },
+  { label: 'All terrain', value: 'Extreme Off-Road & Arenas' },
+  { label: 'Gran Turismo', value: 'Gran Turismo & Endurance' },
+  { label: 'Stock cars', value: 'NASCAR Stock Car Racing' },
 ];
 ---
 
@@ -64,11 +65,21 @@ const modules = [
       <div
         class="car-item"
         data-module={car.module}
-        data-search={`${car.name} ${car.manufacturer || ''} ${car.category} ${car.class_badge} ${car.drivetrain} ${car.module} ${car.id} ${car.id.startsWith('rally_') ? 'rally rallycross' : ''}`.toLowerCase()}
+        data-search={`${car.name} ${car.manufacturer || ''} ${car.category} ${car.class_badge} ${car.drivetrain} ${car.module} ${car.id} ${car.id.startsWith('rally_') ? 'rally rallycross' : ''} ${car.module === 'Extreme Off-Road & Arenas' ? 'all terrain all-terrain offroad off-road' : ''} ${car.module === 'NASCAR Stock Car Racing' ? 'stock cars stockcar nascar' : ''} ${car.module === 'classic' ? 'arcade classic' : ''}`.toLowerCase()}
       >
         <CarCard car={car} />
       </div>
     ))}
+
+    <div id="no-cars-notice" class="hidden col-span-full py-16 text-center">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-racing-surface border border-racing-border text-2xl mb-3">
+        🏁
+      </div>
+      <h3 class="text-lg font-bold text-white font-mono">No Vehicles Found</h3>
+      <p class="text-xs text-racing-muted font-mono mt-1" id="no-cars-msg">
+        No vehicles currently match the selected module or search query.
+      </p>
+    </div>
   </div>
 </Layout>
 
@@ -77,11 +88,14 @@ const modules = [
     const filterBtns = document.querySelectorAll('.filter-btn');
     const searchInput = document.getElementById('car-search') as HTMLInputElement;
     const items = document.querySelectorAll('.car-item');
+    const noCarsNotice = document.getElementById('no-cars-notice');
+    const noCarsMsg = document.getElementById('no-cars-msg');
 
     let currentModule = 'All Modules';
     let searchQuery = '';
 
     function applyFilter() {
+      let visibleCount = 0;
       items.forEach((el) => {
         const item = el as HTMLElement;
         const itemModule = item.dataset.module || '';
@@ -89,18 +103,43 @@ const modules = [
 
         const matchesModule =
           currentModule === 'All Modules' ||
+          currentModule === 'All modules' ||
           itemModule === currentModule ||
-          (currentModule === 'Rallycross' && (itemModule === 'Rallycross' || itemModule === 'Rallycross & All-Terrain')) ||
-          (currentModule === 'Rallycross & All-Terrain' && (itemModule === 'Rallycross' || itemModule === 'Rallycross & All-Terrain')) ||
-          (currentModule === 'classic' && (itemModule === 'classic' || itemModule === 'Classic Arcade Motorsport'));
+          (currentModule === 'classic' && (itemModule === 'classic' || itemModule === 'Classic Arcade Motorsport' || itemModule === 'Arcade')) ||
+          (currentModule === 'Arcade' && (itemModule === 'classic' || itemModule === 'Classic Arcade Motorsport' || itemModule === 'Arcade')) ||
+          (currentModule === 'Karting & Micro-Racers' && (itemModule === 'Karting & Micro-Racers' || itemModule === 'Karting' || itemModule === 'kart')) ||
+          (currentModule === 'Karting' && (itemModule === 'Karting & Micro-Racers' || itemModule === 'Karting' || itemModule === 'kart')) ||
+          (currentModule === 'Rallycross' && (itemModule === 'Rallycross' || itemModule === 'Rallycross & All-Terrain' || itemModule === 'rally')) ||
+          (currentModule === 'Autocross' && (itemModule === 'Autocross' || itemModule === 'FIA Autocross' || itemModule === 'autocross')) ||
+          (currentModule === 'Extreme Off-Road & Arenas' && (itemModule === 'Extreme Off-Road & Arenas' || itemModule === 'All terrain' || itemModule === 'All-Terrain' || itemModule === 'extreme_offroad' || itemModule === 'offroad')) ||
+          ((currentModule === 'All terrain' || currentModule === 'All-Terrain') && (itemModule === 'Extreme Off-Road & Arenas' || itemModule === 'All terrain' || itemModule === 'All-Terrain' || itemModule === 'extreme_offroad' || itemModule === 'offroad')) ||
+          (currentModule === 'Gran Turismo & Endurance' && (itemModule === 'Gran Turismo & Endurance' || itemModule === 'Gran Turismo' || itemModule === 'gt')) ||
+          (currentModule === 'Gran Turismo' && (itemModule === 'Gran Turismo & Endurance' || itemModule === 'Gran Turismo' || itemModule === 'gt')) ||
+          (currentModule === 'NASCAR Stock Car Racing' && (itemModule === 'NASCAR Stock Car Racing' || itemModule === 'Stock cars' || itemModule === 'nascar')) ||
+          (currentModule === 'Stock cars' && (itemModule === 'NASCAR Stock Car Racing' || itemModule === 'Stock cars' || itemModule === 'nascar'));
+
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
         if (matchesModule && matchesSearch) {
           item.style.display = '';
+          visibleCount++;
         } else {
           item.style.display = 'none';
         }
       });
+
+      if (noCarsNotice) {
+        if (visibleCount === 0) {
+          noCarsNotice.classList.remove('hidden');
+          if (currentModule === 'Autocross') {
+            if (noCarsMsg) noCarsMsg.textContent = 'FIA Autocross vehicles are currently being constructed (Spec 050). Check back soon!';
+          } else {
+            if (noCarsMsg) noCarsMsg.textContent = 'No vehicles currently match the selected filter or search query.';
+          }
+        } else {
+          noCarsNotice.classList.add('hidden');
+        }
+      }
     }
 
     filterBtns.forEach((btn) => {
