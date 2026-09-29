@@ -3,7 +3,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use crate::collision::sat::OrientedBox;
-use wheelbase::Car;
+use crate::body::Body2D;
 use crate::track::Track;
 
 /// Target classification for LIDAR beam impacts.
@@ -154,18 +154,18 @@ impl LidarScanner {
     }
 
     /// Performs a full LIDAR sweep from the car's perspective against track boundaries, obstacles, and opponent cars.
-    pub fn scan(&self, car: &Car, track: &Track, opponents: &[Car]) -> Vec<LidarHit> {
+    pub fn scan<B: Body2D>(&self, car: &B, track: &Track, opponents: &[B]) -> Vec<LidarHit> {
         let mut results = vec![LidarHit::default(); self.config.num_rays];
         self.scan_into(car, track, opponents, &mut results);
         results
     }
 
     /// Zero-allocation LIDAR sweep writing directly into a pre-allocated output buffer.
-    pub fn scan_into(
+    pub fn scan_into<B: Body2D>(
         &self,
-        car: &Car,
+        car: &B,
         track: &Track,
-        opponents: &[Car],
+        opponents: &[B],
         out_hits: &mut [LidarHit],
     ) {
         let n = self.config.num_rays.min(out_hits.len());
@@ -174,8 +174,8 @@ impl LidarScanner {
         }
 
         let fwd = car.forward_vector();
-        let sensor_pos = car.state.position + fwd * self.config.offset_forward;
-        let car_heading = car.state.angle;
+        let sensor_pos = car.position() + fwd * self.config.offset_forward;
+        let car_heading = car.angle();
         let is_full_360 = (self.config.fov_radians - 2.0 * PI).abs() < 1e-3;
 
         let max_range = self.config.max_range;
@@ -202,7 +202,7 @@ impl LidarScanner {
         let opponent_obbs: Vec<(OrientedBox, Vec2)> = opponents
             .iter()
             .filter(|opp| (car_elev - opp.total_elevation()).abs() <= 2.0)
-            .map(|opp| (OrientedBox::from_car(opp), opp.state.velocity))
+            .map(|opp| (OrientedBox::from_body(opp), opp.velocity()))
             .collect();
 
         for i in 0..n {
@@ -221,7 +221,7 @@ impl LidarScanner {
             out_hits[i] = self.cast_ray_candidates(
                 sensor_pos,
                 ray_dir,
-                car.state.velocity,
+                car.velocity(),
                 &candidate_walls,
                 &track.geometry.obstacles,
                 &opponent_obbs,
@@ -400,7 +400,7 @@ fn intersect_ray_obb(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wheelbase::CarConfig;
+    use wheelbase::{Car, CarConfig};
 
     #[test]
     fn test_lidar_scanner_basic() {

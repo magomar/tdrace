@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::sat::OrientedBox;
-use wheelbase::Car;
+use crate::body::Body2D;
 use crate::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
 
 /// Detailed telemetry and physics result of a vehicle-wall collision impact.
@@ -40,15 +40,15 @@ impl WallCollisionEvent {
 }
 
 /// Resolves collision between a vehicle and a static line barrier.
-pub fn resolve_car_wall_collision(
-    car: &mut Car,
+pub fn resolve_car_wall_collision<B: Body2D>(
+    car: &mut B,
     wall: &WallBarrier,
 ) -> Option<WallCollisionEvent> {
     if !wall.is_physical() {
         return None;
     }
 
-    if (car.total_elevation() - wall.elevation).abs() > 1.8 || car.state.elevation > 1.2 {
+    if (car.total_elevation() - wall.elevation).abs() > 1.8 || car.jump_height() > 1.2 {
         return None;
     }
 
@@ -58,18 +58,19 @@ pub fn resolve_car_wall_collision(
         return None;
     }
 
-    // Fast broad-phase AABB rejection: car bounding radius + margin
-    let car_reach = 3.6f32;
+    // Fast broad-phase AABB rejection: body bounding radius + margin. Never below the
+    // 3.6 m every car used before spec 054, so car results are unchanged.
+    let car_reach = car.hull().reach().max(3.6f32);
     let min_x = seg.start.x.min(seg.end.x) - car_reach;
     let max_x = seg.start.x.max(seg.end.x) + car_reach;
     let min_y = seg.start.y.min(seg.end.y) - car_reach;
     let max_y = seg.start.y.max(seg.end.y) + car_reach;
-    let pos = car.state.position;
+    let pos = car.position();
     if pos.x < min_x || pos.x > max_x || pos.y < min_y || pos.y > max_y {
         return None;
     }
 
-    let obb = OrientedBox::from_car(car);
+    let obb = OrientedBox::from_body(car);
     let corners = obb.corners();
 
     let seg_ab = seg.end - seg.start;
@@ -77,7 +78,7 @@ pub fn resolve_car_wall_collision(
     let seg_dir = if seg_len > 1e-6 { seg_ab / seg_len } else { Vec2::X };
     let wall_norm = Vec2::new(-seg_dir.y, seg_dir.x);
     // Determine which side of the wall the car center is on
-    let car_center_side = (car.state.position - seg.start).dot(wall_norm);
+    let car_center_side = (car.position() - seg.start).dot(wall_norm);
     let (approach_normal, is_positive_side) = if car_center_side >= 0.0 {
         (wall_norm, true)
     } else {
@@ -186,19 +187,19 @@ pub fn resolve_car_wall_collision(
 
     // 1. Positional pushout to resolve penetration
     let pushout = normal * (deepest_penetration + 0.002);
-    car.state.position += pushout;
+    car.translate(pushout);
 
     // 2. Rigid body impulse resolution
-    let r = contact_point - car.state.position; // Vector from CG to contact point
-    let omega = car.state.angular_velocity;
+    let r = contact_point - car.position(); // Vector from CG to contact point
+    let omega = car.angular_velocity();
     // Velocity at contact point: V_c = V + omega x r
     let v_rot = Vec2::new(-omega * r.y, omega * r.x);
-    let v_contact = car.state.velocity + v_rot;
+    let v_contact = car.velocity() + v_rot;
 
     let v_n = v_contact.dot(normal);
 
-    let mass = car.config.mass;
-    let inertia = car.config.inertia;
+    let mass = car.mass();
+    let inertia = car.inertia();
 
     let mut j_n = 0.0;
     if v_n < 0.0 {
@@ -209,12 +210,12 @@ pub fn resolve_car_wall_collision(
 
         // Apply normal impulse
         let impulse_n = normal * j_n;
-        car.state.velocity += impulse_n / mass;
-        car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
+        car.add_velocity(impulse_n / mass);
+        car.add_angular_velocity((r.x * impulse_n.y - r.y * impulse_n.x) / inertia);
     }
 
     // 3. Tangential sliding friction and contact braking resistance
-    let v_contact_after_n = car.state.velocity + Vec2::new(-car.state.angular_velocity * r.y, car.state.angular_velocity * r.x);
+    let v_contact_after_n = car.velocity() + Vec2::new(-car.angular_velocity() * r.y, car.angular_velocity() * r.x);
     let v_tangent_vec = v_contact_after_n - normal * v_contact_after_n.dot(normal);
     let v_t_mag = v_tangent_vec.length();
 
@@ -245,10 +246,10 @@ pub fn resolve_car_wall_collision(
         };
 
         let impulse_t = tangent * j_t;
-        car.state.velocity += impulse_t / mass;
+        car.add_velocity(impulse_t / mass);
         let base_snag = wall.barrier_type.snag_torque_factor();
         let torque_fraction = impact_ratio + (1.0 - impact_ratio) * base_snag;
-        car.state.angular_velocity += ((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * torque_fraction;
+        car.add_angular_velocity(((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * torque_fraction);
     }
 
     Some(WallCollisionEvent {
@@ -263,14 +264,14 @@ pub fn resolve_car_wall_collision(
 }
 
 /// Resolves collision between a vehicle and a static obstacle.
-pub fn resolve_car_obstacle_collision(
-    car: &mut Car,
+pub fn resolve_car_obstacle_collision<B: Body2D>(
+    car: &mut B,
     obstacle: &Obstacle,
 ) -> Option<WallCollisionEvent> {
-    if (car.total_elevation() - obstacle.elevation).abs() > 1.8 || car.state.elevation > 1.0 {
+    if (car.total_elevation() - obstacle.elevation).abs() > 1.8 || car.jump_height() > 1.0 {
         return None;
     }
-    let obb = OrientedBox::from_car(car);
+    let obb = OrientedBox::from_body(car);
 
     let manifold = match &obstacle.shape {
         ObstacleShape::Circle { center, radius } => {
@@ -299,22 +300,22 @@ pub fn resolve_car_obstacle_collision(
         .contact_points
         .first()
         .copied()
-        .unwrap_or(car.state.position);
+        .unwrap_or(car.position());
 
     // Positional correction
     let pushout = normal * (manifold.penetration + 0.002);
-    car.state.position += pushout;
+    car.translate(pushout);
 
     // Impulse
-    let r = contact_pt - car.state.position;
-    let omega = car.state.angular_velocity;
+    let r = contact_pt - car.position();
+    let omega = car.angular_velocity();
     let v_rot = Vec2::new(-omega * r.y, omega * r.x);
-    let v_contact = car.state.velocity + v_rot;
+    let v_contact = car.velocity() + v_rot;
 
     let v_n = v_contact.dot(normal);
 
-    let mass = car.config.mass;
-    let inertia = car.config.inertia;
+    let mass = car.mass();
+    let inertia = car.inertia();
 
     let mut j_n = 0.0;
     if v_n < 0.0 {
@@ -324,12 +325,12 @@ pub fn resolve_car_obstacle_collision(
         j_n = (-(1.0 + restitution) * v_n) / k_n;
 
         let impulse_n = normal * j_n;
-        car.state.velocity += impulse_n / mass;
-        car.state.angular_velocity += (r.x * impulse_n.y - r.y * impulse_n.x) / inertia;
+        car.add_velocity(impulse_n / mass);
+        car.add_angular_velocity((r.x * impulse_n.y - r.y * impulse_n.x) / inertia);
     }
 
     // Tangential sliding friction and contact resistance
-    let v_contact_after_n = car.state.velocity + Vec2::new(-car.state.angular_velocity * r.y, car.state.angular_velocity * r.x);
+    let v_contact_after_n = car.velocity() + Vec2::new(-car.angular_velocity() * r.y, car.angular_velocity() * r.x);
     let v_tangent_vec = v_contact_after_n - normal * v_contact_after_n.dot(normal);
     let v_t_mag = v_tangent_vec.length();
 
@@ -348,8 +349,8 @@ pub fn resolve_car_obstacle_collision(
         j_t_applied = j_t.abs();
 
         let impulse_t = tangent * j_t;
-        car.state.velocity += impulse_t / mass;
-        car.state.angular_velocity += ((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * 0.2;
+        car.add_velocity(impulse_t / mass);
+        car.add_angular_velocity(((r.x * impulse_t.y - r.y * impulse_t.x) / inertia) * 0.2);
     }
 
     Some(WallCollisionEvent {
@@ -364,8 +365,8 @@ pub fn resolve_car_obstacle_collision(
 }
 
 /// Resolves all wall and obstacle collisions for a car against track barriers.
-pub fn resolve_all_wall_collisions(
-    car: &mut Car,
+pub fn resolve_all_wall_collisions<B: Body2D>(
+    car: &mut B,
     walls: &[WallBarrier],
     obstacles: &[Obstacle],
 ) -> Vec<WallCollisionEvent> {
@@ -390,7 +391,7 @@ pub fn resolve_all_wall_collisions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wheelbase::CarConfig;
+    use wheelbase::{Car, CarConfig};
     use crate::track::geometry::BarrierType;
 
     #[test]
