@@ -204,3 +204,94 @@ fn test_spatial_audio_evaluator_composite() {
     assert!((res.pan - (17.5 / DEFAULT_PAN_RADIUS)).abs() < 1e-3);
     assert!(res.doppler_factor > 1.0); // Approaching
 }
+
+#[test]
+fn test_audio_manager_proximity_voice_allocation_and_hysteresis() {
+    use tdrace_app::audio::AudioManager;
+
+    let mut audio = AudioManager::new();
+    if !audio.backend.is_available() {
+        return; // Skip voice loop checks in headless environments lacking hardware audio
+    }
+
+    let listener_pos = Vec2::ZERO;
+    let listener_vel = Vec2::ZERO;
+
+    // 4 sources with ascending distances
+    let mut sources = vec![
+        VehicleAudioSource {
+            vehicle_id: 1,
+            engine_type: EngineSoundType::Generic,
+            position: Vec2::new(0.0, 10.0),
+            velocity: Vec2::ZERO,
+            forward_speed: 10.0,
+            throttle: 0.8,
+            slip_ratio: 0.0,
+        },
+        VehicleAudioSource {
+            vehicle_id: 2,
+            engine_type: EngineSoundType::SportGT,
+            position: Vec2::new(0.0, 20.0),
+            velocity: Vec2::ZERO,
+            forward_speed: 15.0,
+            throttle: 0.7,
+            slip_ratio: 0.0,
+        },
+        VehicleAudioSource {
+            vehicle_id: 3,
+            engine_type: EngineSoundType::Kart125cc,
+            position: Vec2::new(0.0, 30.0),
+            velocity: Vec2::ZERO,
+            forward_speed: 20.0,
+            throttle: 0.9,
+            slip_ratio: 0.0,
+        },
+        VehicleAudioSource {
+            vehicle_id: 4,
+            engine_type: EngineSoundType::LateModelV8,
+            position: Vec2::new(0.0, 40.0),
+            velocity: Vec2::ZERO,
+            forward_speed: 25.0,
+            throttle: 0.6,
+            slip_ratio: 0.0,
+        },
+    ];
+
+    // Frame 1: Top 3 should be 1, 2, 3
+    audio.update_proximity_engines(&sources, listener_pos, listener_vel, 0.016);
+    let mut active_vids: Vec<usize> = audio
+        .proximity_voices
+        .iter()
+        .filter_map(|s| s.vehicle_id)
+        .collect();
+    active_vids.sort();
+    assert_eq!(active_vids, vec![1, 2, 3]);
+
+    // Frame 2: Vehicle 4 moves to 28m (closer than vehicle 3 at 30m, but within 3m hysteresis buffer)
+    sources[3].position = Vec2::new(0.0, 28.0);
+    audio.update_proximity_engines(&sources, listener_pos, listener_vel, 0.016);
+    let mut active_vids_hysteresis: Vec<usize> = audio
+        .proximity_voices
+        .iter()
+        .filter_map(|s| s.vehicle_id)
+        .collect();
+    active_vids_hysteresis.sort();
+    // Vehicle 3 should still be retained because 28.0 + 3.0 > 30.0
+    assert_eq!(active_vids_hysteresis, vec![1, 2, 3]);
+
+    // Frame 3: Vehicle 4 moves to 22m (more than 3m closer than vehicle 3 at 30m)
+    sources[3].position = Vec2::new(0.0, 22.0);
+    audio.update_proximity_engines(&sources, listener_pos, listener_vel, 0.016);
+    let mut active_vids_displaced: Vec<usize> = audio
+        .proximity_voices
+        .iter()
+        .filter_map(|s| s.vehicle_id)
+        .collect();
+    active_vids_displaced.sort();
+    // Vehicle 3 displaced by vehicle 4
+    assert_eq!(active_vids_displaced, vec![1, 2, 4]);
+
+    // Stop all loops clears all proximity voice allocations
+    audio.stop_all_loops();
+    assert!(audio.proximity_voices.iter().all(|s| s.vehicle_id.is_none()));
+}
