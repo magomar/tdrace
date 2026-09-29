@@ -465,12 +465,14 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::Gt);
     assert_eq!(ModuleFilter::Gt.next(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::ExtremeOffRoad);
-    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::Vault.next(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
 
     // Verify filter cycle (.prev())
     assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
-    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::ExtremeOffRoad);
+    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.prev(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.prev(), ModuleFilter::Gt);
     assert_eq!(ModuleFilter::Gt.prev(), ModuleFilter::Kart);
@@ -558,6 +560,8 @@ fn test_track_manager_tab_and_module_cycling() {
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::ExtremeOffRoad);
     module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Vault);
+    module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Drafts);
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Classic);
@@ -565,6 +569,8 @@ fn test_track_manager_tab_and_module_cycling() {
     // Module cycling backward (Left arrow)
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Drafts);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Vault);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::ExtremeOffRoad);
     module_filter = module_filter.prev();
@@ -1717,7 +1723,7 @@ fn test_session_active_module_tracks_reflects_reordered_presets() {
 #[test]
 fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
     // 1. Verify ModuleFilter metadata
-    assert_eq!(ModuleFilter::ALL.len(), 7);
+    assert_eq!(ModuleFilter::ALL.len(), 8);
     assert_eq!(ModuleFilter::Drafts.id(), Some("drafts"));
     assert_eq!(ModuleFilter::Drafts.label(), "DRAFTS");
     assert_eq!(ModuleFilter::Drafts.shortcut_number(), 9);
@@ -1725,10 +1731,12 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
     // 2. Verify navigation cycle
     assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::ExtremeOffRoad);
-    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Drafts);
+    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::Vault.next(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
     assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
-    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::ExtremeOffRoad);
+    assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.prev(), ModuleFilter::Nascar);
 
     // 3. Verify track resolution for Drafts category
@@ -1753,8 +1761,8 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
     // 4. Verify initial state and cycling into Drafts
     let mut filter = ModuleFilter::Classic;
-    // Step forward 6 times: Classic -> Rally -> Kart -> GT -> Nascar -> ExtremeOffRoad -> Drafts
-    for _ in 0..6 {
+    // Step forward 7 times: Classic -> Rally -> Kart -> GT -> Nascar -> ExtremeOffRoad -> Vault -> Drafts
+    for _ in 0..7 {
         filter = filter.next();
     }
     assert_eq!(filter, ModuleFilter::Drafts);

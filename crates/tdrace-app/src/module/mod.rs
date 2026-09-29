@@ -3,6 +3,7 @@ pub mod extreme_offroad;
 pub mod gt;
 pub mod kart;
 pub mod rally;
+pub mod vault;
 
 use macroquad::color::Color;
 use serde::{Deserialize, Serialize};
@@ -566,6 +567,7 @@ pub use gt::GtWorldChallengeModule;
 pub use kart::KartGameModule;
 pub use nascar::NascarGameModule;
 pub use rally::RallyGameModule;
+pub use vault::VaultGameModule;
 
 pub mod nascar;
 

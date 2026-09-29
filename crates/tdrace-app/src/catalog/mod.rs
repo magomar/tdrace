@@ -2792,10 +2792,89 @@ pub static CLASSIC_ARCADE_CARS: &[RealCarModel] = &[
     },
 ];
 
+/// Archived and deprecated prototype vehicle models (The Vault).
+pub static VAULT_ARCHIVE_CARS: &[RealCarModel] = &[
+    RealCarModel {
+        id: "vault_test_mule",
+        name: "Modular Development Mule",
+        manufacturer: "Apex R&D",
+        year: 2026,
+        module_id: "vault",
+        category_name: "Engineering Test Chassis",
+        tier: 1,
+        bhp: 400,
+        torque_nm: 480,
+        weight_kg: 1100,
+        top_speed_kmh: 216,
+        accel_0_100: 3.4,
+        drivetrain: "AWD",
+        engine_desc: "Modular Calibration Dyno Test Engine",
+        aero_downforce: "Cl 1.00 / Cd 0.35",
+        brakes_desc: "Telemetry Calibrated 6-Piston Brakes",
+        history_bio: "Neutral 50:50 weight distribution test bench chassis for physics sensor calibration and benchmarking.",
+        stats: (0.80, 0.85, 0.85, 0.80, 0.85, 0.70),
+        visual_type: VehicleVisualType::TouringGT { widebody: false, gt_wing: true, diffuser: true },
+        base_car_choice: CarChoice::SportsCar,
+        primary_color: Color::new(1.0, 0.65, 0.0, 1.0),
+        secondary_color: Color::new(0.2, 0.2, 0.25, 1.0),
+    },
+    RealCarModel {
+        id: "vault_prototype_mower",
+        name: "Prototype Racing Lawnmower V1",
+        manufacturer: "Apex Grassworks",
+        year: 2025,
+        module_id: "vault",
+        category_name: "Decommissioned Novelty",
+        tier: 1,
+        bhp: 28,
+        torque_nm: 45,
+        weight_kg: 210,
+        top_speed_kmh: 90,
+        accel_0_100: 6.8,
+        drivetrain: "RWD",
+        engine_desc: "Single-Cylinder High-RPM OHV",
+        aero_downforce: "Cl 0.05 / Cd 0.75",
+        brakes_desc: "Single Solid Rear Axle Disc",
+        history_bio: "Experimental narrow-track lawn tractor with high center of gravity and bumpy curb hopping.",
+        stats: (0.45, 0.60, 0.70, 0.50, 0.50, 0.20),
+        visual_type: VehicleVisualType::GoKart { exposed_driver: true, side_bumpers: false },
+        base_car_choice: CarChoice::Kart,
+        primary_color: Color::new(0.85, 0.25, 0.15, 1.0),
+        secondary_color: Color::new(0.15, 0.15, 0.18, 1.0),
+    },
+    RealCarModel {
+        id: "vault_drift_trike",
+        name: "Slick Drift Trike 150cc",
+        manufacturer: "Apex Slide Lab",
+        year: 2025,
+        module_id: "vault",
+        category_name: "Prototype Slide Vehicle",
+        tier: 1,
+        bhp: 18,
+        torque_nm: 25,
+        weight_kg: 120,
+        top_speed_kmh: 79,
+        accel_0_100: 7.2,
+        drivetrain: "FWD",
+        engine_desc: "150cc 4-Stroke Slide Engine",
+        aero_downforce: "Cl 0.00 / Cd 0.85",
+        brakes_desc: "Front Caliper Rim Brake",
+        history_bio: "Low-friction rear slide rings for effortless continuous pendulum drifting and 360 entries.",
+        stats: (0.40, 0.70, 0.50, 0.99, 0.40, 0.10),
+        visual_type: VehicleVisualType::GoKart { exposed_driver: true, side_bumpers: false },
+        base_car_choice: CarChoice::Kart,
+        primary_color: Color::new(0.20, 0.60, 0.95, 1.0),
+        secondary_color: Color::new(0.10, 0.10, 0.12, 1.0),
+    },
+];
+
 /// Returns all vehicles belonging to the specified module ID.
 pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
     if module_id == "classic" {
         return CLASSIC_ARCADE_CARS.iter().collect();
+    }
+    if module_id == "vault" {
+        return VAULT_ARCHIVE_CARS.iter().collect();
     }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
@@ -2808,6 +2887,9 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
 pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static RealCarModel> {
     if module_id == "classic" {
         return CLASSIC_ARCADE_CARS.iter().collect();
+    }
+    if module_id == "vault" {
+        return VAULT_ARCHIVE_CARS.iter().filter(|c| c.tier == tier).collect();
     }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
@@ -2901,7 +2983,11 @@ pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
 
 /// Searches for a vehicle model by its string identifier.
 pub fn find_model_by_id(id: &str) -> Option<&'static RealCarModel> {
-    CLASSIC_ARCADE_CARS.iter().chain(ALL_REAL_CARS.iter()).find(|c| c.id == id)
+    CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .chain(VAULT_ARCHIVE_CARS.iter())
+        .find(|c| c.id == id)
 }
 
 /// Returns the entire master collection of authentic real-world vehicles.

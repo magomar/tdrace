@@ -23,17 +23,19 @@ pub enum ModuleFilter {
     Gt,
     Nascar,
     ExtremeOffRoad,
+    Vault,
     Drafts,
 }
 
 impl ModuleFilter {
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
         Self::Gt,
         Self::Nascar,
         Self::ExtremeOffRoad,
+        Self::Vault,
         Self::Drafts,
     ];
 
@@ -45,6 +47,7 @@ impl ModuleFilter {
             Self::Gt => Some("gt"),
             Self::Nascar => Some("nascar"),
             Self::ExtremeOffRoad => Some("extreme_offroad"),
+            Self::Vault => Some("vault"),
             Self::Drafts => Some("drafts"),
         }
     }
@@ -57,6 +60,7 @@ impl ModuleFilter {
             Self::Gt => "GT WORLD CHALLENGE",
             Self::Nascar => "NASCAR",
             Self::ExtremeOffRoad => "EXTREME OFF-ROAD",
+            Self::Vault => "THE VAULT",
             Self::Drafts => "DRAFTS",
         }
     }
@@ -66,6 +70,7 @@ impl ModuleFilter {
         match self {
             Self::Gt => "GT",
             Self::ExtremeOffRoad => "OFF-ROAD",
+            Self::Vault => "VAULT",
             other => other.label(),
         }
     }
@@ -78,6 +83,7 @@ impl ModuleFilter {
             Self::Gt => 4,
             Self::Nascar => 5,
             Self::ExtremeOffRoad => 6,
+            Self::Vault => 7,
             Self::Drafts => 9,
         }
     }
@@ -89,7 +95,8 @@ impl ModuleFilter {
             Self::Kart => Self::Gt,
             Self::Gt => Self::Nascar,
             Self::Nascar => Self::ExtremeOffRoad,
-            Self::ExtremeOffRoad => Self::Drafts,
+            Self::ExtremeOffRoad => Self::Vault,
+            Self::Vault => Self::Drafts,
             Self::Drafts => Self::Classic,
         }
     }
@@ -102,7 +109,8 @@ impl ModuleFilter {
             Self::Gt => Self::Kart,
             Self::Nascar => Self::Gt,
             Self::ExtremeOffRoad => Self::Nascar,
-            Self::Drafts => Self::ExtremeOffRoad,
+            Self::Vault => Self::ExtremeOffRoad,
+            Self::Drafts => Self::Vault,
         }
     }
 
@@ -113,6 +121,7 @@ impl ModuleFilter {
             "kart" => Self::Kart,
             "nascar" => Self::Nascar,
             "extreme_offroad" | "offroad" => Self::ExtremeOffRoad,
+            "vault" => Self::Vault,
             "drafts" => Self::Drafts,
             _ => Self::Classic,
         }
@@ -516,6 +525,7 @@ impl TrackManager {
             ModuleFilter::Kart => self.module_catalog_tracks("kart"),
             ModuleFilter::Nascar => self.module_catalog_tracks("nascar"),
             ModuleFilter::ExtremeOffRoad => self.module_catalog_tracks("extreme_offroad"),
+            ModuleFilter::Vault => self.module_catalog_tracks("vault"),
             ModuleFilter::Drafts => self.draft_track_choices(),
         }
     }

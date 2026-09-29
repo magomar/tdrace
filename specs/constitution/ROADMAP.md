@@ -23,7 +23,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 - `[ ]` **[FIA Autocross Championship and Vehicle Roster](../050_fia_autocross_championship_and_vehicle_roster.md)**: Dedicated FIA Autocross discipline, 5 tiers (Cross Car Junior, Cross Car Senior, Buggy1600, TouringAutocross, SuperBuggy), 15 authentic vehicles (3 per tier), 17 dedicated European dirt circuits, pure off-road sprint racing format with no joker lap.
 - `[ ]` **[Rallycross 6-Tier Career Progression and Expanded Circuit Roster](../051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md)**: Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
-- `[ ]` **[Karting 6-Tier Career Progression and Standalone Garden GP](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), relocates novelty racing lawnmowers to a dedicated standalone Garden GP Invitational Cup, and eliminates performance gaps across 18 authentic karts.
+- `[ ]` **[Karting 6-Tier Career Progression and Expanded 20-Circuit Roster](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault (Spec 054), and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
 - `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
@@ -94,6 +94,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 Living list of security audits, performance profiling targets, or general workspace cleanup routines:
 - **Performance**: Simulation throughput benchmarks ($\ge 4.0\text{M steps/sec}$) and collision checks ($\ge 22.0\text{M checks/sec}$).
 - **Hygiene**: Spec-Driven Development alignment via `keel doctor` and `keel validate`.
+- `[x]` **[Vault Module for Archived and Deprecated Content](../054_vault_module_for_archived_and_deprecated_content.md)**: Structured cold-storage repository for retired circuits, novelty vehicles, prototype rulesets, and deprecated mechanics, isolated from production gameplay and accessible via Dev Mode and Track Studio.
 
 ---
 
