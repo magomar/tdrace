@@ -357,11 +357,19 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
     // 4. Host initiates countdown
     host.start_countdown(3000).expect("countdown launch");
 
-    // Pump packets so client receives LaunchCountdown
-    let _ = host.update(0.01);
-    let _ = client_lobby.client_mut().update(0.01);
+    // Pump packets until the client receives LaunchCountdown. Loopback UDP takes ~0.3 ms to
+    // deliver it, so a single pump right after the send usually read an empty socket (the test
+    // failed on most runs); wait up to 100 ms, like the handshake loop above.
+    for _ in 0..100 {
+        let _ = host.update(0.01);
+        let _ = client_lobby.client_mut().update(0.01);
+        if client_lobby.is_in_race() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
 
-    // Client lobby must immediately signal is_in_race == true for StartingCountdown
+    // Client lobby must signal is_in_race == true as soon as the countdown packet arrives
     assert!(
         client_lobby.is_in_race(),
         "Client lobby must trigger is_in_race as soon as countdown begins"
@@ -429,31 +437,39 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
         let _ = host.broadcast_snapshot(&snap_packet);
     }
 
-    // Advance client session countdown frame
+    // Advance client countdown frames until the snapshot arrives (loopback UDP takes ~0.3 ms, so
+    // the frame right after the broadcast usually saw an empty socket); the frame that receives it
+    // must switch to Racing.
     client_session.state = GameState::Countdown(2.5);
-    match client_session.state {
-        GameState::Countdown(ref mut rem) => {
-            *rem -= 0.016;
-            if client_session.is_lan_multiplayer {
-                if let Some(ref mut client) = client_session.lan_client {
-                    let events = client.update(0.016);
-                    for event in events {
-                        if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
-                            for car_snap in snapshot.cars {
-                                let idx = car_snap.slot_id as usize;
-                                if idx < client_session.cars.len() && idx != (client_session.lan_player_slot as usize) {
-                                    let car = &mut client_session.cars[idx];
-                                    car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
+    for _ in 0..100 {
+        match client_session.state {
+            GameState::Countdown(ref mut rem) => {
+                *rem -= 0.016;
+                if client_session.is_lan_multiplayer {
+                    if let Some(ref mut client) = client_session.lan_client {
+                        let events = client.update(0.016);
+                        for event in events {
+                            if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
+                                for car_snap in snapshot.cars {
+                                    let idx = car_snap.slot_id as usize;
+                                    if idx < client_session.cars.len() && idx != (client_session.lan_player_slot as usize) {
+                                        let car = &mut client_session.cars[idx];
+                                        car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
+                                    }
                                 }
+                                client_session.state = GameState::Racing;
+                                break;
                             }
-                            client_session.state = GameState::Racing;
-                            break;
                         }
                     }
                 }
             }
+            _ => {}
         }
-        _ => {}
+        if client_session.state == GameState::Racing {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(1));
     }
 
     assert_eq!(
