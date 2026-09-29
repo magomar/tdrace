@@ -87,6 +87,7 @@ Technical design documents, audio engine architectures, and performance profiles
 | [Steering Responsiveness & Controls](engineering/high_speed_steering_responsiveness_and_double_attenuation.md) | Architecture Spec | `active` | Root cause analysis and resolution of high-speed steering double-attenuation across input filter and wheelbase physics. |
 | [Surface & Wall Legacy Spec](engineering/surface_and_wall_legacy_spec.md) | Architecture Spec | `active` | Historical specifications for 12 surface types and 4 barrier collision models. |
 | [Vehicle Roster Ideas](engineering/vehicle_roster_expansion_ideas.md) | Feature Spec | `active` | Exploratory design notes on prospective vehicle variants and class archetypes. |
+| [LAN Race Netcode](engineering/lan_netcode.md) | Architecture Spec | `active` | Owner-authoritative LAN cars, host relay and referee, shared race clock, interpolation, reliable control channel, packet formats and tuning constants. |
 | [Contributing Guide](engineering/contributing.md) | Architecture Spec | `active` | Repository setup, cross-platform symlink instructions, and development workflow. |
 
 ---

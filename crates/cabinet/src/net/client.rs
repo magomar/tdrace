@@ -1,16 +1,25 @@
 //! # Cabinet LAN Client Subsystem
 //!
-//! Manages the client-side socket, handshake with authoritative host,
-//! lobby state caching, input datagram streaming, and snapshot reception.
+//! Manages the client-side transport, handshake with the host, lobby state
+//! caching, the reliable control channel, clock synchronization with the
+//! host, and the stream of owner car states.
+//!
+//! See `specs/044_robust_lan_race_synchronization_with_ownerauthoritative_cars.md`.
 
 use std::io;
-use std::net::{SocketAddr, UdpSocket};
+use std::net::SocketAddr;
+use std::sync::Arc;
 
+use super::clock::ClockSync;
 use super::protocol::{
-    sanitize_string, ClientInputPacket, JoinResult, LanCollisionMode,
-    LobbyPacket, LobbySlot, Packet, ProtocolError, WorldSnapshotPacket,
+    sanitize_string, ControlMessage, FinishRecord, JoinResult,
+    LanCollisionMode, LobbyPacket, LobbySlot, Packet, ProtocolError, RaceConfig, RaceResult,
     MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
+use super::reliable::ReliableChannel;
+use super::stats::{CountingTransport, NetCounters, NetStats, RateMeter};
+use super::transport::{Transport, UdpTransport};
+use super::wire::{self, NetCarState, WorldState};
 
 /// Connection lifecycle state of the LAN client.
 #[derive(Debug, Clone, PartialEq)]
@@ -32,13 +41,7 @@ pub enum ClientState {
         collision_mode: LanCollisionMode,
         slots: Vec<LobbySlot>,
     },
-    /// Host initiated 3-2-1 countdown.
-    StartingCountdown {
-        starts_in_millis: u32,
-        remaining_sec: f32,
-        grid_positions: Vec<u8>,
-    },
-    /// Active in-race simulation.
+    /// The host launched the race; see `LanClient::race_config` and `race_clock`.
     InRace {
         assigned_slot_id: u8,
     },
@@ -59,36 +62,55 @@ pub enum ClientEvent {
         laps: u8,
         slots: Vec<LobbySlot>,
     },
-    /// Host started the launch countdown.
-    CountdownStarted {
-        starts_in_millis: u32,
-        grid_positions: Vec<u8>,
-    },
-    /// In-race authoritative world snapshot received from host.
-    WorldSnapshot(WorldSnapshotPacket),
+    /// Host launched the race with this frozen setup.
+    RaceLaunched(RaceConfig),
+    /// Host scheduled the green light at `start_at` on the host clock.
+    RaceStartScheduled { start_at: f64 },
+    /// Newer states of other players' cars (never this client's own car).
+    CarStates(Vec<NetCarState>),
+    /// Finish order so far.
+    Standings(Vec<FinishRecord>),
+    /// A player left the race.
+    PlayerLeft { slot_id: u8, reason: String },
+    /// The race is closed with these results.
+    RaceOver(Vec<RaceResult>),
     /// Client disconnected or was rejected/kicked by host.
     Disconnected(String),
 }
 
 /// Client endpoint for connecting to and participating in LAN games.
 pub struct LanClient {
-    socket: UdpSocket,
+    transport: Box<dyn Transport + Send>,
     host_addr: SocketAddr,
     state: ClientState,
     player_name: String,
     country_code: String,
     car_model_id: String,
     color_scheme_id: String,
+    slot_id: Option<u8>,
+    room_name: String,
     last_seen_sec: f32,
     ping_timer_sec: f32,
     ping_interval_sec: f32,
     ping_ms: u16,
-    input_seq: u32,
     timeout_sec: f32,
     recv_buf: [u8; MAX_DATAGRAM_SIZE],
     last_known_track_id: String,
     last_known_laps: u8,
+    last_known_collision_mode: LanCollisionMode,
     last_known_slots: Vec<LobbySlot>,
+    roster_rev: u32,
+    channel: ReliableChannel,
+    clock: ClockSync,
+    race: Option<RaceConfig>,
+    start_at_host: Option<f64>,
+    latest_time_ms: Vec<Option<u32>>,
+    standings: Vec<FinishRecord>,
+    results: Option<Vec<RaceResult>>,
+    counters: Arc<NetCounters>,
+    rate: RateMeter,
+    decode_errors: u64,
+    stale_dropped: u64,
 }
 
 impl LanClient {
@@ -100,16 +122,27 @@ impl LanClient {
         car_model_id: impl Into<String>,
         color_scheme_id: impl Into<String>,
     ) -> Result<Self, io::Error> {
-        let socket = UdpSocket::bind("0.0.0.0:0")?;
-        socket.set_nonblocking(true)?;
+        let transport = Box::new(UdpTransport::bind("0.0.0.0:0")?);
+        Self::connect_with_transport(transport, host_addr, player_name, country_code, car_model_id, color_scheme_id)
+    }
 
+    /// Creates a client on a given transport and sends the join handshake.
+    pub fn connect_with_transport(
+        transport: Box<dyn Transport + Send>,
+        host_addr: SocketAddr,
+        player_name: impl Into<String>,
+        country_code: impl Into<String>,
+        car_model_id: impl Into<String>,
+        color_scheme_id: impl Into<String>,
+    ) -> Result<Self, io::Error> {
         let player_name = sanitize_string(&player_name.into(), MAX_NAME_LENGTH);
         let country_code = country_code.into();
         let car_model_id = car_model_id.into();
         let color_scheme_id = color_scheme_id.into();
+        let (transport, counters) = CountingTransport::new(transport);
 
         let mut client = Self {
-            socket,
+            transport: Box::new(transport),
             host_addr,
             state: ClientState::Connecting {
                 host_addr,
@@ -120,16 +153,30 @@ impl LanClient {
             country_code,
             car_model_id,
             color_scheme_id,
+            slot_id: None,
+            room_name: String::new(),
             last_seen_sec: 0.0,
             ping_timer_sec: 0.0,
-            ping_interval_sec: 1.0,
+            ping_interval_sec: 0.5,
             ping_ms: 0,
-            input_seq: 0,
             timeout_sec: 4.5,
             recv_buf: [0u8; MAX_DATAGRAM_SIZE],
             last_known_track_id: "monza".to_string(),
             last_known_laps: 5,
+            last_known_collision_mode: LanCollisionMode::default(),
             last_known_slots: Vec::new(),
+            roster_rev: 0,
+            channel: ReliableChannel::new(),
+            clock: ClockSync::new(),
+            race: None,
+            start_at_host: None,
+            latest_time_ms: vec![None; 256],
+            standings: Vec::new(),
+            results: None,
+            counters,
+            rate: RateMeter::default(),
+            decode_errors: 0,
+            stale_dropped: 0,
         };
 
         client.send_join_request()?;
@@ -141,26 +188,17 @@ impl LanClient {
         &self.state
     }
 
-    /// Whether this client is actively connected (InLobby, StartingCountdown, or InRace).
+    /// Whether this client is actively connected (InLobby or InRace).
     pub fn is_connected(&self) -> bool {
-        matches!(
-            self.state,
-            ClientState::InLobby { .. }
-                | ClientState::StartingCountdown { .. }
-                | ClientState::InRace { .. }
-        )
+        matches!(self.state, ClientState::InLobby { .. } | ClientState::InRace { .. })
     }
 
-    /// Assigned slot ID in the room, if connected.
+    /// Slot assigned by the host at join, while connected.
     pub fn assigned_slot_id(&self) -> Option<u8> {
-        match self.state {
-            ClientState::InLobby { assigned_slot_id, .. } => Some(assigned_slot_id),
-            ClientState::StartingCountdown { .. } => {
-                // Preserved from lobby
-                Some(1)
-            }
-            ClientState::InRace { assigned_slot_id } => Some(assigned_slot_id),
-            _ => None,
+        if self.is_connected() {
+            self.slot_id
+        } else {
+            None
         }
     }
 
@@ -199,12 +237,54 @@ impl LanClient {
         &self.color_scheme_id
     }
 
-    /// Remaining countdown duration in seconds if in countdown state.
+    /// Frozen race setup, once the host launched the race.
+    pub fn race_config(&self) -> Option<&RaceConfig> {
+        self.race.as_ref()
+    }
+
+    /// Local monotonic clock in seconds.
+    pub fn now(&self) -> f64 {
+        self.transport.now_sec()
+    }
+
+    /// Estimated host clock minus local clock, once a ping round trip completed.
+    pub fn clock_offset(&self) -> Option<f64> {
+        self.clock.offset()
+    }
+
+    /// Shared race clock in seconds since the green light (negative during the countdown).
+    pub fn race_clock(&self) -> Option<f64> {
+        let start_at = self.start_at_host?;
+        Some(self.clock.to_host(self.now())? - start_at)
+    }
+
+    /// Remaining countdown in seconds, once the start is scheduled.
     pub fn countdown_remaining_sec(&self) -> Option<f32> {
-        match self.state {
-            ClientState::StartingCountdown { remaining_sec, .. } => Some(remaining_sec),
-            _ => None,
-        }
+        self.race_clock().map(|t| (-t).max(0.0) as f32)
+    }
+
+    /// Finish order received from the host.
+    pub fn standings(&self) -> &[FinishRecord] {
+        &self.standings
+    }
+
+    /// Final results, once the host closed the race.
+    pub fn results(&self) -> Option<&[RaceResult]> {
+        self.results.as_deref()
+    }
+
+    /// Network counters, rates, RTT and clock offset for the dev net HUD.
+    pub fn stats(&self) -> NetStats {
+        let mut stats = NetStats {
+            decode_errors: self.decode_errors,
+            stale_dropped: self.stale_dropped,
+            reliable_pending: self.channel.pending_count(),
+            rtt_ms: self.clock.last_rtt().map(|r| (r * 1000.0).min(999.0) as u16),
+            clock_offset_ms: self.clock.offset().map(|o| o * 1000.0),
+            ..NetStats::default()
+        };
+        self.rate.fill(&self.counters, &mut stats);
+        stats
     }
 
     /// Sends a vehicle selection or ready toggle update to the host.
@@ -224,44 +304,33 @@ impl LanClient {
         self.car_model_id = car_model_id.clone();
         self.color_scheme_id = color_scheme_id.clone();
 
-        let packet = LobbyPacket::ClientSlotUpdate {
+        self.send_control(&ControlMessage::ClientSlotUpdate {
             slot_id,
             car_model_id,
             color_scheme_id,
             is_ready,
-        };
-
-        self.send_to_host(&packet)
+        })
     }
 
-    /// Streams an in-race 60 Hz input frame to the authoritative host.
-    pub fn send_input(
-        &mut self,
-        steering: f32,
-        throttle: f32,
-        brake: f32,
-        handbrake: bool,
-        reverse: bool,
-    ) -> Result<(), ProtocolError> {
-        let slot_id = match self.assigned_slot_id() {
-            Some(id) => id,
-            None => return Ok(()),
-        };
+    /// Tells the host that the race session is loaded.
+    pub fn send_loaded(&mut self) -> Result<(), ProtocolError> {
+        self.send_control(&ControlMessage::Loaded)
+    }
 
-        self.input_seq = self.input_seq.wrapping_add(1);
-        let packet = ClientInputPacket {
-            sequence_num: self.input_seq,
-            slot_id,
-            steering,
-            throttle,
-            brake,
-            handbrake,
-            reverse,
+    /// Sends this client's own car state to the host (unreliable, newest wins).
+    pub fn send_car_state(&mut self, state: NetCarState) -> Result<(), ProtocolError> {
+        let Some(slot) = self.assigned_slot_id() else {
+            return Ok(());
         };
-
-        let encoded = packet.encode()?;
-        let _ = self.socket.send_to(&encoded, self.host_addr);
+        let mut state = state;
+        state.slot = slot;
+        let _ = self.transport.send_to(&state.encode(), self.host_addr);
         Ok(())
+    }
+
+    /// Tells the host that this client's car crossed the finish line.
+    pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>) -> Result<(), ProtocolError> {
+        self.send_control(&ControlMessage::Finished { finish_ms, best_lap_ms })
     }
 
     /// Sends a graceful disconnect notice to the host and resets state.
@@ -269,7 +338,10 @@ impl LanClient {
         let notice = LobbyPacket::DisconnectNotice {
             reason: "Player left room".to_string(),
         };
-        let _ = self.send_to_host(&notice);
+        // The client stops listening after this, so send it a few times instead of reliably.
+        for _ in 0..3 {
+            let _ = self.send_to_host(&notice);
+        }
         self.state = ClientState::Disconnected(Some("Disconnected by user".to_string()));
         Ok(())
     }
@@ -277,6 +349,9 @@ impl LanClient {
     /// Updates internal timers, processes incoming datagrams, and checks timeouts.
     pub fn update(&mut self, dt: f32) -> Vec<ClientEvent> {
         let mut events = Vec::new();
+        if matches!(self.state, ClientState::Disconnected(_)) {
+            return events;
+        }
 
         self.last_seen_sec += dt;
 
@@ -301,54 +376,113 @@ impl LanClient {
             }
         }
 
-        // 2. Countdown timer advancement
-        if let ClientState::StartingCountdown {
-            starts_in_millis: _,
-            ref mut remaining_sec,
-            grid_positions: _,
-        } = self.state
-        {
-            *remaining_sec -= dt;
-            if *remaining_sec <= 0.0 {
-                let slot = self.assigned_slot_id().unwrap_or(1);
-                self.state = ClientState::InRace { assigned_slot_id: slot };
-            }
-        }
-
-        // 3. Heartbeat ping transmission
+        // 2. Heartbeat and clock probe
         if self.is_connected() {
             self.ping_timer_sec += dt;
             if self.ping_timer_sec >= self.ping_interval_sec {
                 self.ping_timer_sec = 0.0;
-                let now_ms = current_time_ms();
-                let ping = LobbyPacket::Ping { timestamp_ms: now_ms };
+                let ping = LobbyPacket::Ping { sent_at: self.now() };
                 let _ = self.send_to_host(&ping);
             }
         }
 
-        // 4. Pump incoming packets
+        // 3. Pump incoming datagrams
         loop {
-            match self.socket.recv_from(&mut self.recv_buf) {
+            match self.transport.recv_from(&mut self.recv_buf) {
                 Ok((bytes_read, src_addr)) => {
                     if src_addr == self.host_addr {
                         self.last_seen_sec = 0.0;
-                        if let Ok(packet) = Packet::decode(&self.recv_buf[..bytes_read]) {
-                            self.handle_packet(packet, &mut events);
-                        }
+                        let datagram = self.recv_buf[..bytes_read].to_vec();
+                        self.handle_datagram(&datagram, &mut events);
                     }
                 }
                 Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => break,
                 Err(_) => break,
             }
+            if matches!(self.state, ClientState::Disconnected(_)) {
+                return events;
+            }
         }
 
+        // 4. Resend unacknowledged reliable fragments
+        let now = self.now();
+        for d in self.channel.poll_resend(now) {
+            let _ = self.transport.send_to(&d, self.host_addr);
+        }
+
+        self.rate.tick(now, &self.counters);
+
         // 5. Host silence timeout
-        if self.is_connected() && self.last_seen_sec > self.timeout_sec {
+        if self.is_connected() && (self.last_seen_sec > self.timeout_sec || self.channel.has_failed()) {
             self.state = ClientState::Disconnected(Some("Lost connection to host".to_string()));
             events.push(ClientEvent::Disconnected("Host timed out".to_string()));
         }
 
         events
+    }
+
+    fn handle_datagram(&mut self, datagram: &[u8], events: &mut Vec<ClientEvent>) {
+        let (kind, payload) = match wire::split(datagram) {
+            Ok(split) => split,
+            Err(ProtocolError::VersionMismatch(_)) => {
+                self.state = ClientState::Disconnected(Some("Protocol version mismatch".to_string()));
+                events.push(ClientEvent::Disconnected("Version mismatch with host".to_string()));
+                return;
+            }
+            Err(_) => {
+                self.decode_errors += 1;
+                return;
+            }
+        };
+        match kind {
+            wire::KIND_JSON => {
+                if let Ok(packet) = Packet::decode_json(payload) {
+                    self.handle_packet(packet, events);
+                }
+            }
+            wire::KIND_WORLD_STATE => {
+                let Ok(world) = WorldState::decode_payload(payload) else {
+                    self.decode_errors += 1;
+                    return;
+                };
+                let own = self.slot_id;
+                let mut fresh = Vec::new();
+                for car in world.cars {
+                    if Some(car.slot) == own {
+                        continue;
+                    }
+                    let seen = &mut self.latest_time_ms[car.slot as usize];
+                    if seen.is_some_and(|t| car.time_ms <= t) {
+                        if seen.is_some_and(|t| car.time_ms < t) {
+                            self.stale_dropped += 1;
+                        }
+                        continue;
+                    }
+                    *seen = Some(car.time_ms);
+                    fresh.push(car);
+                }
+                if !fresh.is_empty() {
+                    events.push(ClientEvent::CarStates(fresh));
+                }
+            }
+            wire::KIND_RELIABLE => {
+                let Ok((ack, messages)) = self.channel.on_reliable(payload) else {
+                    return;
+                };
+                if !ack.is_empty() {
+                    let _ = self.transport.send_to(&ack, self.host_addr);
+                }
+                for bytes in messages {
+                    if let Ok(message) = ControlMessage::from_bytes(&bytes) {
+                        self.handle_control(message, events);
+                    }
+                }
+            }
+            wire::KIND_ACK => {
+                let _ = self.channel.on_ack(payload);
+            }
+            _ => {}
+        }
     }
 
     fn handle_packet(&mut self, packet: Packet, events: &mut Vec<ClientEvent>) {
@@ -358,19 +492,24 @@ impl LanClient {
                 room_name,
                 track_id,
                 laps,
-                slots,
             }) => match result {
                 JoinResult::Accepted { slot_id } => {
-                    self.last_known_track_id = track_id.clone();
-                    self.last_known_laps = laps;
-                    self.last_known_slots = slots.clone();
+                    if self.is_connected() {
+                        return; // duplicate answer to a retried request
+                    }
+                    self.slot_id = Some(slot_id);
+                    self.room_name = room_name.clone();
+                    if self.roster_rev == 0 {
+                        self.last_known_track_id = track_id.clone();
+                        self.last_known_laps = laps;
+                    }
                     self.state = ClientState::InLobby {
                         assigned_slot_id: slot_id,
                         room_name: room_name.clone(),
-                        track_id: track_id.clone(),
-                        laps,
-                        collision_mode: LanCollisionMode::default(),
-                        slots,
+                        track_id: self.last_known_track_id.clone(),
+                        laps: self.last_known_laps,
+                        collision_mode: self.last_known_collision_mode,
+                        slots: self.last_known_slots.clone(),
                     };
                     events.push(ClientEvent::Connected {
                         slot_id,
@@ -396,61 +535,15 @@ impl LanClient {
                 }
             },
 
-            Packet::Lobby(LobbyPacket::StateSync {
-                track_id,
-                laps,
-                collision_mode,
-                slots,
-            }) => {
-                self.last_known_track_id = track_id.clone();
-                self.last_known_laps = laps;
-                self.last_known_slots = slots.clone();
-                if let ClientState::InLobby {
-                    assigned_slot_id,
-                    ref room_name,
-                    ..
-                } = self.state
-                {
-                    self.state = ClientState::InLobby {
-                        assigned_slot_id,
-                        room_name: room_name.clone(),
-                        track_id: track_id.clone(),
-                        laps,
-                        collision_mode,
-                        slots: slots.clone(),
-                    };
-                    events.push(ClientEvent::LobbyUpdated {
-                        track_id,
-                        laps,
-                        slots,
-                    });
-                }
-            }
-
-            Packet::Lobby(LobbyPacket::LaunchCountdown {
-                starts_in_millis,
-                grid_positions,
-            }) => {
-                let remaining_sec = starts_in_millis as f32 / 1000.0;
-                self.state = ClientState::StartingCountdown {
-                    starts_in_millis,
-                    remaining_sec,
-                    grid_positions: grid_positions.clone(),
-                };
-                events.push(ClientEvent::CountdownStarted {
-                    starts_in_millis,
-                    grid_positions,
-                });
-            }
-
-            Packet::Lobby(LobbyPacket::Ping { timestamp_ms }) => {
-                let pong = LobbyPacket::Pong { timestamp_ms };
+            Packet::Lobby(LobbyPacket::Ping { sent_at }) => {
+                let pong = LobbyPacket::Pong { sent_at, responder_time: self.now() };
                 let _ = self.send_to_host(&pong);
             }
 
-            Packet::Lobby(LobbyPacket::Pong { timestamp_ms }) => {
-                let now = current_time_ms();
-                self.ping_ms = now.saturating_sub(timestamp_ms).min(999) as u16;
+            Packet::Lobby(LobbyPacket::Pong { sent_at, responder_time }) => {
+                let now = self.now();
+                self.clock.add_sample(sent_at, responder_time, now);
+                self.ping_ms = ((now - sent_at).max(0.0) * 1000.0).min(999.0) as u16;
             }
 
             Packet::Lobby(LobbyPacket::DisconnectNotice { reason }) => {
@@ -458,10 +551,63 @@ impl LanClient {
                 events.push(ClientEvent::Disconnected(reason));
             }
 
-            Packet::Snapshot(snapshot) => {
-                events.push(ClientEvent::WorldSnapshot(snapshot));
-            }
+            _ => {}
+        }
+    }
 
+    fn handle_control(&mut self, message: ControlMessage, events: &mut Vec<ClientEvent>) {
+        match message {
+            ControlMessage::StateSync { roster_rev, track_id, laps, collision_mode, slots } => {
+                if roster_rev <= self.roster_rev {
+                    return;
+                }
+                self.roster_rev = roster_rev;
+                self.last_known_track_id = track_id.clone();
+                self.last_known_laps = laps;
+                self.last_known_collision_mode = collision_mode;
+                self.last_known_slots = slots.clone();
+                if let ClientState::InLobby {
+                    track_id: ref mut state_track,
+                    laps: ref mut state_laps,
+                    collision_mode: ref mut state_collision,
+                    slots: ref mut state_slots,
+                    ..
+                } = self.state
+                {
+                    *state_track = track_id.clone();
+                    *state_laps = laps;
+                    *state_collision = collision_mode;
+                    *state_slots = slots.clone();
+                    events.push(ClientEvent::LobbyUpdated { track_id, laps, slots });
+                }
+            }
+            ControlMessage::RaceLaunch(config) => {
+                if self.race.is_some() {
+                    return;
+                }
+                if let Some(slot) = self.slot_id {
+                    self.state = ClientState::InRace { assigned_slot_id: slot };
+                }
+                self.last_known_track_id = config.track_id.clone();
+                self.last_known_laps = config.laps;
+                self.race = Some(config.clone());
+                events.push(ClientEvent::RaceLaunched(config));
+            }
+            ControlMessage::RaceStart { start_at } => {
+                self.start_at_host = Some(start_at);
+                events.push(ClientEvent::RaceStartScheduled { start_at });
+            }
+            ControlMessage::Standings { finishers } => {
+                self.standings = finishers.clone();
+                events.push(ClientEvent::Standings(finishers));
+            }
+            ControlMessage::PlayerLeft { slot_id, reason } => {
+                events.push(ClientEvent::PlayerLeft { slot_id, reason });
+            }
+            ControlMessage::RaceOver { results } => {
+                self.results = Some(results.clone());
+                events.push(ClientEvent::RaceOver(results));
+            }
             _ => {}
         }
     }
@@ -478,16 +624,18 @@ impl LanClient {
         self.send_to_host(&packet).map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
 
-    fn send_to_host(&self, packet: &LobbyPacket) -> Result<(), ProtocolError> {
-        let encoded = packet.encode()?;
-        let _ = self.socket.send_to(&encoded, self.host_addr);
+    fn send_control(&mut self, message: &ControlMessage) -> Result<(), ProtocolError> {
+        let bytes = message.to_bytes()?;
+        let now = self.now();
+        for d in self.channel.send(&bytes, now)? {
+            let _ = self.transport.send_to(&d, self.host_addr);
+        }
         Ok(())
     }
-}
 
-fn current_time_ms() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0)
+    fn send_to_host(&self, packet: &LobbyPacket) -> Result<(), ProtocolError> {
+        let encoded = packet.encode()?;
+        let _ = self.transport.send_to(&encoded, self.host_addr);
+        Ok(())
+    }
 }
