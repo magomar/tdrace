@@ -5,4 +5,5 @@
 
 pub mod camera;
 pub mod fx;
+pub mod hud;
 pub mod render;

@@ -2,10 +2,10 @@ use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_line, draw_triangle};
 use serde::{Deserialize, Serialize};
-use tdrace_core::physics::car::Car;
-use tdrace_core::track::curve::{CurveApproachStatus, CurveDirection, TrackCurve};
-use tdrace_core::track::spline::TrackSpline;
-use tdrace_core::track::Track;
+use wheelbase::car::Car;
+use arcade_race_core::track::curve::{CurveApproachStatus, CurveDirection, TrackCurve};
+use arcade_race_core::track::spline::TrackSpline;
+use arcade_race_core::track::Track;
 
 /// Visual style of the upcoming-curve indicator. Turning it off is `curve_helper = false`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
