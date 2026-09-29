@@ -284,96 +284,108 @@ impl GameModule for KartGameModule {
 
 const MARCO_ARMANI_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
-    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_rookie_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_maverick_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_anderson_cs250"),
 ];
 
 const LUCAS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
-    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_black_mirror_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_ms_superkart_250"),
 ];
 
 const ALEX_ROSSI_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
-    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
-    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
-    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry29_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 5, "kart_pvt_single_250"),
+    DriverFavoriteCar::new("kart", 6, "kart_viper_250_twin"),
 ];
 
 const SOFIA_LIND_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
-    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_rookie_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_maverick_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_anderson_cs250"),
 ];
 
 const FINN_KORHONEN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
-    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_black_mirror_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_ms_superkart_250"),
 ];
 
 const LEO_DUPONT_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
-    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
-    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
-    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry29_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 5, "kart_pvt_single_250"),
+    DriverFavoriteCar::new("kart", 6, "kart_viper_250_twin"),
 ];
 
 const MATEO_SILVA_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
-    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_rookie_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_maverick_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_anderson_cs250"),
 ];
 
 const DANTE_MORETTI_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
-    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
-    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
-    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry29_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 5, "kart_pvt_single_250"),
+    DriverFavoriteCar::new("kart", 6, "kart_viper_250_twin"),
 ];
 
 const MARTA_SANTOS_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
-    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_black_mirror_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_ms_superkart_250"),
 ];
 
 const KENZO_YAMAMOTO_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
-    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_honda_mean_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_anderson_cs250"),
+    DriverFavoriteCar::new("kart", 2, "kart_tony_kart_rookie_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_tony_kart_racer_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_anderson_maverick_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_anderson_cs250"),
 ];
 
 const LIAM_CALLAGHAN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
-    DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
-    DriverFavoriteCar::new("kart", 4, "kart_viking_t6_tractor"),
-    DriverFavoriteCar::new("kart", 5, "kart_viper_250_twin"),
+    DriverFavoriteCar::new("kart", 2, "kart_birel_ry29_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_crg_kt2_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_birel_art_kz2"),
+    DriverFavoriteCar::new("kart", 5, "kart_pvt_single_250"),
+    DriverFavoriteCar::new("kart", 6, "kart_viper_250_twin"),
 ];
 
 const CHARLIE_WEBB_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
-    DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
-    DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
-    DriverFavoriteCar::new("kart", 4, "kart_john_deere_racing_mower"),
-    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_250"),
+    DriverFavoriteCar::new("kart", 2, "kart_crg_black_mirror_okj"),
+    DriverFavoriteCar::new("kart", 3, "kart_birel_ry30_ok"),
+    DriverFavoriteCar::new("kart", 4, "kart_crg_road_rebel_kz"),
+    DriverFavoriteCar::new("kart", 5, "kart_ms_superkart_mono"),
+    DriverFavoriteCar::new("kart", 6, "kart_ms_superkart_250"),
 ];

@@ -1,14 +1,14 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: National Kart Championship (Tier 2)
+# Karting Career Mode: National Kart Championship (Tier 3)
 # ==============================================================================
 
 [championship]
 id = "kart_national_championship"
 name = "National Kart Championship"
-description = "Pure 100cc direct-drive karts screaming to 16,000 RPM with no gearbox or clutch across 7 fast technical circuits."
+description = "Pure 125cc direct-drive karts screaming to 16,000 RPM with no gearbox across 7 fast technical circuits."
 module_id = "kart"
-tier = 2
+tier = 3
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "standard"
@@ -46,20 +46,20 @@ laps = 5
 
 [[rounds]]
 order = 5
-track_id = "genk"
-name = "Karting Genk Home of Champions"
+track_id = "franciacorta"
+name = "Franciacorta Karting Track"
 laps = 5
 
 [[rounds]]
 order = 6
-track_id = "wackersdorf"
-name = "Prokart Raceland Wackersdorf"
+track_id = "ampfing"
+name = "Schweppermannring Ampfing"
 laps = 5
 
 [[rounds]]
 order = 7
-track_id = "laval_kart"
-name = "Circuit Beausoleil Laval"
+track_id = "pfi"
+name = "PF International Kart Circuit"
 laps = 5
 
 [[drivers]]
@@ -129,7 +129,7 @@ livery_idx = 6
 id = "mateo_silva"
 name = "Mateo Silva"
 team = "Parolin Motorsport"
-car_model_id = "kart_birel_ry30_ok"
+car_model_id = "kart_tony_kart_racer_ok"
 country = "BRA"
 ai_character = "strategic"
 livery_idx = 7
