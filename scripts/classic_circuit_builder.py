@@ -261,6 +261,42 @@ def check_segments(circuit, segments):
                 f"{side} wall line (at least {MIN_INNER_WALL_RADIUS_M} m); use a larger radius or a "
                 f"smaller {side}_wall_distance"
             )
+    check_inner_wall_steps(circuit, segments)
+
+
+def check_inner_wall_steps(circuit, segments, reach_m=10.0, max_step_m=0.6):
+    """Stops on an inner wall that steps in while the road keeps turning the same way.
+
+    A kerbed turn keeps its walls 2.0 m out and cars drive on the kerb. When the next turn in the same
+    direction, less than reach_m later, has its inner wall closer to the road, a car on the kerb line hits
+    the step (bots got stuck there). Both turns need the same inner wall distance, or a straight between.
+    """
+    n = len(segments)
+    for k, seg in enumerate(segments):
+        if not seg.turn_deg:
+            continue
+        side = "left" if seg.turn_deg > 0 else "right"
+        gap = getattr(replace(circuit.road, **seg.road), f"{side}_wall_distance")
+        between = 0.0
+        for j in range(1, n):
+            nxt = segments[(k + j) % n]
+            if not nxt.turn_deg:
+                between += nxt.length
+                if between >= reach_m:
+                    break
+                continue
+            if (nxt.turn_deg > 0) != (seg.turn_deg > 0):
+                break
+            nxt_gap = getattr(
+                replace(circuit.road, **nxt.road), f"{side}_wall_distance"
+            )
+            if gap - nxt_gap > max_step_m:
+                raise ValueError(
+                    f"{circuit.id}: the {side} (inner) wall steps in from {gap} m on segment {k} to {nxt_gap} m "
+                    f"on segment {(k + j) % n}, {between:.1f} m later, while the road keeps turning; use the "
+                    "same wall distance on both turns or a longer straight between"
+                )
+            break
 
 
 def trace(circuit, segments=None):
@@ -756,6 +792,14 @@ def segments_cross(a, b, c, d):
     return side(c, d, a) * side(c, d, b) < 0 and side(a, b, c) * side(a, b, d) < 0
 
 
+def wall_gap(sample, side):
+    """Distance from the road edge to the wall line of a baked sample, as presets.rs places it (pulled in on
+    bridges)."""
+    lift = min(max(sample["elevation"] / 3.0, 0.0), 1.0) if sample["is_bridge"] else 0.0
+    bridge_gap = (1.35 if sample["left_curb"] or sample["right_curb"] else 0.75) + 0.5
+    return sample[f"{side}_wall_distance"] * (1.0 - lift) + bridge_gap * lift
+
+
 def wall_line_folds(track, max_span=40):
     """Where the raw wall lines of a baked track fold over themselves: [(side, lap m), ...].
 
@@ -770,10 +814,7 @@ def wall_line_folds(track, max_span=40):
     for side, sign in (("left", 1.0), ("right", -1.0)):
         pts = []
         for s in samples:
-            lift = min(max(s["elevation"] / 3.0, 0.0), 1.0) if s["is_bridge"] else 0.0
-            bridge_gap = (1.35 if s["left_curb"] or s["right_curb"] else 0.75) + 0.5
-            gap = s[f"{side}_wall_distance"] * (1.0 - lift) + bridge_gap * lift
-            half = s["width"] * 0.5 + gap
+            half = s["width"] * 0.5 + wall_gap(s, side)
             pts.append(
                 (
                     s["point"][0] + sign * s["normal"][0] * half,
@@ -828,6 +869,60 @@ def turns_after_bridges(track):
     return found
 
 
+def heading_of(sample):
+    return math.atan2(sample["tangent"][1], sample["tangent"][0])
+
+
+def heading_change_deg(a, b):
+    return math.degrees(
+        abs((heading_of(b) - heading_of(a) + math.pi) % (2 * math.pi) - math.pi)
+    )
+
+
+def turns_under_bridges(track):
+    """Places where the lower road turns under a bridge: [(lap m, heading change deg), ...].
+
+    A lower sample is under a bridge when a bridge sample 2.5 m or more above it is closer than the two half
+    widths plus 1 m. Along each such run, the lower road heading must not change by more than
+    BRIDGE_EXIT_MAX_TURN_DEG: a car under a deck is hidden, so it must not have to turn there.
+    """
+    samples = track["spline"]["samples"]
+    cell = 6.0
+    grid = {}
+    for s in samples:
+        if s["is_bridge"]:
+            key = (int(s["point"][0] // cell), int(s["point"][1] // cell))
+            grid.setdefault(key, []).append(s)
+
+    def under(s):
+        cx, cy = int(s["point"][0] // cell), int(s["point"][1] // cell)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for b in grid.get((cx + dx, cy + dy), ()):
+                    if (
+                        b["elevation"] - s["elevation"] >= 2.5
+                        and math.dist(b["point"], s["point"])
+                        < (b["width"] + s["width"]) * 0.5 + 1.0
+                    ):
+                        return True
+        return False
+
+    flags = [not s["is_bridge"] and under(s) for s in samples]
+    found, i, n = [], 0, len(samples)
+    while i < n:
+        if not flags[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < n and flags[j + 1]:
+            j += 1
+        worst = max(heading_change_deg(samples[i], samples[k]) for k in range(i, j + 1))
+        if worst > BRIDGE_EXIT_MAX_TURN_DEG:
+            found.append((samples[i]["distance"], worst))
+        i = j + 1
+    return found
+
+
 def build(circuits, tracks_dir):
     """Builds the circuits into <tracks_dir>/classic/. Returns True when every circuit validated."""
     if not circuits:
@@ -853,6 +948,15 @@ def build(circuits, tracks_dir):
                 f"{circuit.id}: wall line folds ({where}); widen those turns",
                 file=sys.stderr,
             )
+            ok = False
+            continue
+        problems = []
+        for lap, deg in turns_under_bridges(track):
+            problems.append(
+                f"the road turns {deg:.0f} deg under a bridge at {lap:.0f} m"
+            )
+        if problems:
+            print(f"{circuit.id}: " + "; ".join(problems), file=sys.stderr)
             ok = False
             continue
         exits = turns_after_bridges(track)
@@ -962,13 +1066,13 @@ HANGAR_SPRINT = Circuit(
         A(9, 60, **KERB_L),
         S(50),  # 4: diagonal under the bridge (solved)
         # West loop, clockwise.
-        A(9, -60, **KERB_R),  # 5
+        A(9, -60),  # 5: no kerb: the right wall would step in on turn 7
         S(2.5),
         A(7.5, -90, **TIP_R),
         S(3.5),
         A(13, -25, **KERB_R),  # chicane
         A(13, 50, **KERB_L),  # 10
-        A(13, -25, **KERB_R),
+        A(13, -25),  # no kerb: the right wall would step in on turn 13
         S(3.5),
         A(9, -90),  # on the ramp: bridge walls sit 1.25 m out here
         S(1),
@@ -1017,36 +1121,36 @@ WAREHOUSE_TWISTER = Circuit(
     heading_deg=-90.0,
     segments=[
         S(31),  # 0: long pocket, down leg, heading south
-        A(5.8, -180, **TIP_R),  # below the raised bottom side
+        A(6.5, -180, **TIP_R),  # below the raised bottom side
         S(50),
-        A(5.8, 90, **TIP_L),
-        A(5.8, 90, **TIP_L),  # 4-8: short pocket
+        A(6.5, 90, **TIP_L),
+        A(6.5, 90, **TIP_L),  # 4-8: short pocket
         S(20),
-        A(5.8, -180, **TIP_R),
+        A(6.5, -180, **TIP_R),
         S(20),
-        A(5.8, 90, **TIP_L),
-        A(5.8, 90, **TIP_L),  # 9-13: short pocket; the ramp starts on its up leg (12)
+        A(6.5, 90, **TIP_L),
+        A(6.5, 90, **TIP_L),  # 9-13: short pocket; the ramp starts on its up leg (12)
         S(20),
-        A(5.8, -180, **TIP_R),
+        A(6.5, -180, **TIP_R),
         S(20),
-        A(5.8, 90, **TIP_L),
-        A(7.5, 90),
+        A(6.5, 90, **TIP_L),
+        A(6.5, 90),
         S(4),  # 15: west side (solved), ramp up
         A(12, 25, **KERB_L),  # chicane
         A(12, -50, **KERB_R),
-        A(12, 25, **KERB_L),
+        A(12, 25),  # no kerb: the left wall would step in on turn 20
         S(4),
         A(7.5, 90),  # 20
         S(62),  # 21: bottom side, raised (solved)
         A(7.5, 90),
         S(4),  # east side, ramp down
-        A(12, -25, **KERB_R),  # chicane
-        A(12, 50, **KERB_L),  # 25
-        A(12, -25, **KERB_R),
+        A(12, 25, **KERB_L),  # chicane, bulging in (keeps the box)
+        A(12, -50, **KERB_R),  # 25
+        A(12, 25),  # no kerb: the left wall would step in on turn 28
         S(4),
-        A(7.5, 90),  # 28
-        S(4),  # top side
-        A(5.8, 90, **TIP_L),  # 30: into the long pocket
+        A(6.5, 90),  # 28
+        S(1),  # top side
+        A(6.5, 90, **TIP_L),  # 30: into the long pocket
         S(19),  # 31: long pocket, down leg
     ],
     close_with=(15, 21),
@@ -1082,25 +1186,25 @@ TOWER_LABYRINTH = Circuit(
     heading_deg=-90.0,
     segments=[
         S(35),  # 0: long pocket, down leg, heading south
-        A(5.5, -180, **TIP_R),  # below the raised bottom side
+        A(6.5, -180, **TIP_R),  # below the raised bottom side
         S(47),  # 2: up leg
         # Double hairpin: two short pockets in a row.
-        A(5.5, 90, **TIP_L),
-        A(5.5, 90, **TIP_L),
-        S(29),  # 5
-        A(5.5, -180, **TIP_R),
-        S(29),
-        A(5.5, 90, **TIP_L),
-        A(5.5, 90, **TIP_L),
-        S(29),  # 10
-        A(5.5, -180, **TIP_R),
-        S(29),
+        A(6.5, 90, **TIP_L),
+        A(6.5, 90, **TIP_L),
+        S(22),  # 5
+        A(6.5, -180, **TIP_R),
+        S(22),
+        A(6.5, 90, **TIP_L),
+        A(6.5, 90, **TIP_L),
+        S(22),  # 10
+        A(6.5, -180, **TIP_R),
+        S(22),
         A(6.5, 90),
         S(0.5),
         A(8, 70, **KERB_L),  # 15
-        S(46),  # 16: crossover, ground
+        S(44.5),  # 16: crossover, ground
         # West loop, clockwise.
-        A(8, -70, **KERB_R),
+        A(8, -70),  # no kerb: the right wall would step in on turn 19
         S(0.5),
         A(7.5, -90),
         S(14),  # 20: ramp starts here
@@ -1111,7 +1215,7 @@ TOWER_LABYRINTH = Circuit(
         A(7.5, -90),  # 25
         S(0.5),
         A(8, -70),  # onto the raised run: no kerb
-        S(46),  # 28: crossover, bridge
+        S(44.5),  # 28: crossover, bridge
         A(8, 70),
         S(40),  # 30: bottom side, raised, over the long pocket (solved)
         A(10, 45),  # tightening corner
@@ -1121,8 +1225,8 @@ TOWER_LABYRINTH = Circuit(
         A(10, -40),
         A(10, 20),
         S(8),
-        A(5.5, 90, **TIP_L),  # U-turn into the long pocket
-        A(5.5, 90, **TIP_L),  # 39
+        A(6.5, 90, **TIP_L),  # U-turn into the long pocket
+        A(6.5, 90, **TIP_L),  # 39
         S(12),  # 40: long pocket, down leg
     ],
     close_with=(24, 30),

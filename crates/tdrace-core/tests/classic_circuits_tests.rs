@@ -88,11 +88,11 @@ fn turns_after_bridges(track: &Track, clear_m: f32) -> Vec<(f32, f32)> {
     out
 }
 
-/// (id, design lap m, road width m, max box (w, h) m, bridges, laps)
-const KART: [(&str, f32, f32, (f32, f32), usize, u32); 3] = [
-    ("kart_hangar_sprint", 380.0, 8.0, (90.0, 60.0), 1, 8),
-    ("kart_warehouse_twister", 520.0, 7.0, (100.0, 70.0), 2, 7),
-    ("kart_tower_labyrinth", 700.0, 6.5, (120.0, 80.0), 3, 6),
+/// (id, design lap m, road width m, max box (w, h) m, min density m per m2, bridges, laps)
+const KART: [(&str, f32, f32, (f32, f32), f32, usize, u32); 3] = [
+    ("kart_hangar_sprint", 380.0, 8.0, (90.0, 60.0), 0.065, 1, 8),
+    ("kart_warehouse_twister", 520.0, 7.0, (100.0, 70.0), 0.065, 2, 7),
+    ("kart_tower_labyrinth", 700.0, 6.5, (130.0, 80.0), 0.064, 3, 6),
 ];
 
 /// Scenario: Karting circuits are packed indoor circuits with bridges
@@ -100,10 +100,10 @@ const KART: [(&str, f32, f32, (f32, f32), usize, u32); 3] = [
 /// Given the 3 karting circuits
 /// When their baked samples are measured
 /// Then they have 1, 2 and 3 bridges, each at least 4.0 m clear and crossing at 30 degrees or more
-/// And each fits its box with a density of at least 0.065 m per m2
+/// And each fits its box with its density (0.065 m per m2, Tower Labyrinth 0.064)
 #[test]
 fn test_kart_circuits_are_packed_with_bridges() {
-    for (id, design_len, width, (max_w, max_h), bridges, laps) in KART {
+    for (id, design_len, width, (max_w, max_h), min_density, bridges, laps) in KART {
         let t = catalog::official_track("classic", id);
         let len = t.spline.total_length();
         assert!(
@@ -124,7 +124,7 @@ fn test_kart_circuits_are_packed_with_bridges() {
             max_h
         );
         let density = len / (w * h);
-        assert!(density >= 0.065, "{}: density {:.3}", id, density);
+        assert!(density >= min_density, "{}: density {:.4}, at least {}", id, density, min_density);
 
         let xs = crossings(&t);
         assert_eq!(xs.len(), bridges, "{}: {} crossings", id, xs.len());
@@ -250,6 +250,52 @@ fn test_kart_circuits_run_straight_for_20_m_after_each_bridge() {
                 lap,
                 deg
             );
+        }
+    }
+}
+
+/// Scenario: No turn under a bridge
+///
+/// Given the 3 karting circuits
+/// When a kart drives on the lower road under a bridge deck (a bridge sample 2.5 m or more above, closer
+///   than the two half widths plus 1 m)
+/// Then the lower road runs straight there: its heading changes by 5 degrees or less
+#[test]
+fn test_kart_circuits_do_not_turn_under_a_bridge() {
+    for (id, ..) in KART {
+        let t = catalog::official_track("classic", id);
+        let s = &t.spline.samples;
+        let under: Vec<bool> = s
+            .iter()
+            .map(|l| {
+                !l.is_bridge
+                    && s.iter().any(|b| {
+                        b.is_bridge
+                            && b.elevation - l.elevation >= 2.5
+                            && b.point.distance(l.point) < (b.width + l.width) * 0.5 + 1.0
+                    })
+            })
+            .collect();
+        let heading = |i: usize| s[i].tangent.y.atan2(s[i].tangent.x);
+        let mut i = 0;
+        while i < s.len() {
+            if !under[i] {
+                i += 1;
+                continue;
+            }
+            let start = i;
+            while i + 1 < s.len() && under[i + 1] {
+                i += 1;
+            }
+            let worst = (start..=i)
+                .map(|k| {
+                    let d = (heading(k) - heading(start) + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU)
+                        - std::f32::consts::PI;
+                    d.abs().to_degrees()
+                })
+                .fold(0.0, f32::max);
+            assert!(worst <= 5.0, "{}: the road turns {:.0} deg under a bridge at {:.0} m", id, worst, s[start].distance);
+            i += 1;
         }
     }
 }

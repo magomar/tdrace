@@ -470,6 +470,14 @@ impl BotProfile {
 }
 
 /// Longest reverse of a no-progress watchdog recovery (s).
+/// The largest heading change between the road at the bot and at its steering target.
+const MAX_TARGET_TURN_RAD: f32 = 75.0 * std::f32::consts::PI / 180.0;
+/// The shortest look-ahead when a tight turn shortens it (m).
+const MIN_TIGHT_LOOKAHEAD_M: f32 = 3.0;
+/// How far the line to the target stays from a close wall: half a car plus a margin (m).
+const WALL_CLEARANCE_M: f32 = 1.2;
+/// How strongly a car closer than WALL_CLEARANCE_M to a close wall aims away from it (m per m).
+const CAR_WALL_PUSH: f32 = 3.0;
 const WATCHDOG_REVERSE_S: f32 = 3.0;
 
 /// Multi-car Bot Racing AI Controller.
@@ -545,7 +553,22 @@ impl BotAiDriver {
         self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
         // 2. Dynamic lookahead based on speed and profile
-        let lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
+        let mut lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
+        // In a very tight turn (a kart hairpin) the line to a target this far ahead crosses the inside of the
+        // bend, so the bot steered into the wall at the tip. Aim at most MAX_TARGET_TURN_RAD around the bend,
+        // where the waypoints put a wall closer than WALL_CLEARANCE_M to the road (elsewhere the line keeps
+        // running over run-off, and Tier 1 stays slower than the keyboard reference, spec 046).
+        let near = spline.sample_at_distance(curr_dist);
+        let close_wall = |on: bool, d: Option<f32>| on && d.is_some_and(|d| d < WALL_CLEARANCE_M);
+        let walled = close_wall(near.left_wall, near.left_wall_distance) || close_wall(near.right_wall, near.right_wall_distance);
+        let max_turn_cos = MAX_TARGET_TURN_RAD.cos();
+        while walled && lookahead_dist > MIN_TIGHT_LOOKAHEAD_M {
+            let ahead = spline.sample_at_distance((curr_dist + lookahead_dist) % spline.total_length());
+            if ahead.tangent.dot(proj.tangent) >= max_turn_cos {
+                break;
+            }
+            lookahead_dist -= 1.0;
+        }
         let target_dist = (curr_dist + lookahead_dist) % spline.total_length();
         self.current_target_dist = target_dist;
 
@@ -567,6 +590,41 @@ impl BotAiDriver {
                     let urgency: f32 = (1.0f32 - (dist / 10.0)).clamp(0.0f32, 1.0f32);
                     target_point += target_sample.normal * (push_dir * urgency * 3.5);
                 }
+            }
+        }
+
+        // Keep the straight line to the target off close walls. Around a bend it passes inside the target
+        // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
+        // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
+        // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
+        // slower than the keyboard reference, spec 046).
+        let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
+        let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
+        let (wall_on, wall_dist) = if chord_lat > 0.0 {
+            (mid.left_wall, mid.left_wall_distance)
+        } else {
+            (mid.right_wall, mid.right_wall_distance)
+        };
+        if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+            let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
+            if excess > 0.0 {
+                // Moving the target moves the middle of the line by half as much.
+                target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
+            }
+        }
+        // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
+        // heading error and slid along the wall.
+        let here = spline.sample_at_distance(curr_dist);
+        let car_lat = (car_pos - here.point).dot(here.normal);
+        let (wall_on, wall_dist) = if car_lat > 0.0 {
+            (here.left_wall, here.left_wall_distance)
+        } else {
+            (here.right_wall, here.right_wall_distance)
+        };
+        if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+            let excess = car_lat.abs() - (here.width * 0.5 + d - WALL_CLEARANCE_M);
+            if excess > 0.0 {
+                target_point -= target_sample.normal * (car_lat.signum() * excess * CAR_WALL_PUSH);
             }
         }
 

@@ -592,7 +592,7 @@
     "max_width_meters": 8.0,
     "is_inspired": false,
     "length_meters": 344.1,
-    "turns_count": 17,
+    "turns_count": 12,
     "surfaces": [
       "Asphalt"
     ],
@@ -615,8 +615,8 @@
     "min_width_meters": 6.5,
     "max_width_meters": 6.5,
     "is_inspired": false,
-    "length_meters": 634.2,
-    "turns_count": 12,
+    "length_meters": 631.5,
+    "turns_count": 9,
     "surfaces": [
       "Asphalt"
     ],
@@ -639,8 +639,8 @@
     "min_width_meters": 7.0,
     "max_width_meters": 7.0,
     "is_inspired": false,
-    "length_meters": 470.1,
-    "turns_count": 13,
+    "length_meters": 480.6,
+    "turns_count": 8,
     "surfaces": [
       "Asphalt"
     ],
