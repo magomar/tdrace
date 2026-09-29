@@ -4,6 +4,7 @@ template: feature
 title: "FIA Autocross Championship and Vehicle Roster"
 description: "Dedicated FIA Autocross (AX) motorsport module featuring 5 career tiers, 15 authentic vehicles (3 per tier), 17 iconic European dirt circuits, unpaved surface dynamics, and pure sprint race format with no joker lap."
 status: completed
+receipt: "docs/receipts/spec-050-receipt.md"
 created: 2026-09-28
 generated: { by: agent/antigravity, at: 2026-09-28T21:12:04Z }
 verified: { by: "human:mario", at: "2026-09-28T22:23:04Z" }
