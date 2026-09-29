@@ -6,9 +6,9 @@ Thank you for your interest in contributing to **TDRace**! This guide covers rep
 
 ## 🪟 Cross-Platform Repository Setup: Symlinks on Windows & macOS
 
-TDRace uses relative symlinks (softlinks) between the documentation/asset catalogs and the static web documentation portals (`portals/option-a-starlight` and `portals/option-b-showroom`):
+TDRace uses relative symlinks (softlinks) between the documentation/asset catalogs and the static web documentation portals (`portals/option-a-starlight` and `portals/showroom`):
 * `portals/option-a-starlight/src/content/docs` $\to$ `docs/`
-* `portals/option-b-showroom/public/textures` $\to$ `assets/textures/`
+* `portals/showroom/public/textures` $\to$ `assets/textures/`
 
 This architecture ensures zero duplicate files and zero build step overhead while maintaining a single source of truth under Google OKF v0.2.
 

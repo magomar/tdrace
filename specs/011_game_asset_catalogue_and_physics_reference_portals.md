@@ -63,7 +63,7 @@ graph TD
 
     subgraph Dual Astro Web Portals [portals/]
         OPT_A["Option A: Starlight Manual (portals/option-a-starlight)"]
-        OPT_B["Option B: Motorsport Showroom (portals/option-b-showroom)"]
+        OPT_B["Motorsport Showroom (portals/showroom)"]
     end
 
     PHYS --> OPT_A
@@ -125,7 +125,7 @@ Refactoring loose documentation into a canonical OKF v0.2 graph follows a progre
 | **OKF Knowledge Base** | `docs/` | Single source of truth for assets, physics, and circuits |
 | **OKF Validator** | `scripts/verify_okf.py` | Python automated verification of frontmatter and links |
 | **Option A (Starlight)** | `portals/option-a-starlight/` | Technical documentation and engineering manual |
-| **Option B (Showroom)** | `portals/option-b-showroom/` | Interactive visual catalog and physics lab |
+| **Showroom** | `portals/showroom/` | Interactive visual catalog and physics lab |
 | **Root Workspace** | `portals/package.json` | Bun workspace orchestrating dev and build commands |
 
 ---
@@ -148,8 +148,8 @@ Refactoring loose documentation into a canonical OKF v0.2 graph follows a progre
   - [x] **And** Pagefind generates the client-side search index
   - [x] **And** KaTeX correctly compiles the Pacejka '96 formula into rendered HTML math.
 
-- **Scenario: Option B (Showroom) Build & Interactive Physics Lab**
-  - [x] **Given** the `portals/option-b-showroom` package
+- **Scenario: Showroom Build & Interactive Physics Lab**
+  - [x] **Given** the `portals/showroom` package
   - [x] **When** running `bun run build`
   - [x] **Then** the build completes with zero errors
   - [x] **And** the vehicle catalog renders cards for all 5 motorsport modules
