@@ -209,6 +209,9 @@ pub fn render_editor_ui(
 
     let mut dispatched_action = EditorAction::None;
 
+    // One Escape does one thing: cancelling a polygon or an inline value edit must not also exit.
+    let escape_consumed = std::mem::take(&mut tools.escape_consumed) || tools.is_editing_text();
+
     // 1. TOP TOOLBAR
     let top_h = scaler.s(46.0);
     scaler.draw_glass_card(0.0, 0.0, sw, top_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
@@ -748,7 +751,7 @@ pub fn render_editor_ui(
             *active_modal = EditorModal::None;
         }
     } else {
-        if is_key_pressed(KeyCode::Escape) && dispatched_action == EditorAction::None {
+        if is_key_pressed(KeyCode::Escape) && !escape_consumed && dispatched_action == EditorAction::None {
             if state.is_dirty {
                 *active_modal = EditorModal::UnsavedChanges;
             } else {
@@ -2550,7 +2553,7 @@ fn render_inspector(
             let categories = [
                 (CarCategory::Gt, "GT"),
                 (CarCategory::Nascar, "NASCAR"),
-                (CarCategory::Rally, "Rally"),
+                (CarCategory::Rally, "Rallycross"),
                 (CarCategory::Kart, "Kart"),
                 (CarCategory::OffRoad, "Off-Road"),
             ];
@@ -3966,7 +3969,7 @@ fn render_open_modal(
         ("ALL", "all"),
         ("CLASSIC", "classic"),
         ("GT", "gt"),
-        ("RALLY", "rally"),
+        ("RALLYCROSS", "rally"),
         ("KARTING", "kart"),
         ("CUSTOM", "custom"),
     ];

@@ -207,7 +207,7 @@ In addition to the single-car turntable inspection stage, the Garage includes an
 * **Tier 2: WRC / RX Turbo Supercar (380 BHP, AWD / Medio)**
   - *Focus:* 0-100 km/h in $<2.5\,\text{s}$, aggressive anti-lag, full-throttle 4-wheel drifts.
   - *Models:* Hyundai i20 RX (1,240 kg, 50:50 AWD), Volkswagen Polo RX (1,240 kg), Audi S1 EKS RX (1,230 kg).
-  - *Tier Circuits (3):* Lånkebanen / Hell RX, Circuit de Lohéac, Silverstone RX.
+  - *Tier Circuits (3):* Lånkebanen / Hell RX, Circuit de Lohéac, Circuit de Lavaré.
 
 * **Tier 3: Group B Beast (550 BHP, AWD / Ligero-Medio)**
   - *Focus:* Violent turbo lag, massive boost onset, pendulum counter-steer, analog danger.
@@ -222,7 +222,7 @@ In addition to the single-car turntable inspection stage, the Garage includes an
 * **Tier 5: Stadium Super Truck / SST (650 BHP, RWD / Pesado)**
   - *Focus:* Dramatic body roll, 3-wheel cornering, metal ramp jumps.
   - *Models:* SST V8 Truck Standard Spec (LS3 V8, 1,350 kg), Robby Gordon Edition SST Spec (1,350 kg).
-  - *Tier Circuits (3):* Barcelona-Catalunya RX Stadium, Circuit de Spa-Francorchamps RX, Yas Marina RX Arena.
+  - *Tier Circuits (3):* Barcelona-Catalunya RX Stadium, Circuit de Spa-Francorchamps RX, Circuit de Lessay.
 
 ---
 

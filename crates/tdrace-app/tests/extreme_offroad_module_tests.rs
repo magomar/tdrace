@@ -38,7 +38,7 @@ fn test_extreme_offroad_module_identity_and_vehicles() {
 fn test_extreme_offroad_tracks_and_geometry_validation() {
     let offroad = ExtremeOffRoadModule::new();
     let tracks = offroad.tracks();
-    assert_eq!(tracks.len(), 17, "Expected 17 Extreme Off-Road tracks & arenas");
+    assert_eq!(tracks.len(), 20, "Expected 20 Extreme Off-Road tracks & arenas");
 
     let expected_ids = [
         "sahara_dune_crossing",
@@ -58,6 +58,9 @@ fn test_extreme_offroad_tracks_and_geometry_validation() {
         "stunt_city_megastructure",
         "glamis_dunes",
         "crandon_short_course",
+        "mint400_short_course",
+        "mint400_qualifying_loop",
+        "mint400_grand_loop",
     ];
 
     let tracks_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -203,9 +206,9 @@ fn test_extreme_offroad_session_switch_and_car_choice() {
 
     session.init_race();
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!(session.cars.len(), 8);
-    assert_eq!(session.cars[0].config.mass, 590.0);
-    assert_eq!(session.cars[0].config.drive_bias, 0.0);
+    assert_eq!(session.world.vehicles.len(), 8);
+    assert_eq!(session.world.vehicles[0].config.mass, 590.0);
+    assert_eq!(session.world.vehicles[0].config.drive_bias, 0.0);
     assert!(matches!(
         session.current_visual_type,
         VehicleVisualType::SandRail { .. }

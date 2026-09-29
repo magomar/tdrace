@@ -34,21 +34,21 @@ fn test_host_pause_keeps_everyone_connected_and_racing() {
     }
 
     sessions[0].pause_race();
-    let client_car_before = sessions[1].cars[1].state.position;
+    let client_car_before = sessions[1].world.vehicles[1].state.position;
     for _ in 0..(60 * 10) {
         drivers.drive(&mut sessions);
         step(&net, &mut sessions);
     }
     assert_eq!(sessions[0].state, GameState::Paused);
-    assert!(sessions[0].cars[0].state.speed < 0.5, "paused host car must stand still, speed {}", sessions[0].cars[0].state.speed);
+    assert!(sessions[0].world.vehicles[0].state.speed < 0.5, "paused host car must stand still, speed {}", sessions[0].world.vehicles[0].state.speed);
     for s in &sessions[1..] {
         assert!(s.lan_client.as_ref().unwrap().is_connected(), "no client may time out");
         assert_eq!(s.state, GameState::Racing);
     }
-    assert!(sessions[1].cars[1].state.position.distance(client_car_before) > 20.0, "the others kept racing");
+    assert!(sessions[1].world.vehicles[1].state.position.distance(client_car_before) > 20.0, "the others kept racing");
     // The host still sees the client cars move.
-    let seen = sessions[0].cars[1].state.position;
-    let owner = sessions[1].cars[1].state.position;
+    let seen = sessions[0].world.vehicles[1].state.position;
+    let owner = sessions[1].world.vehicles[1].state.position;
     assert!(seen.distance(owner) < 6.0, "host view of client car {seen:?} vs owner {owner:?}");
 
     sessions[0].resume_race();
@@ -71,7 +71,7 @@ fn test_client_leaving_mid_race_is_parked_and_dnf_everywhere() {
     // The client in slot 2 quits the game.
     let mut leaver = sessions.pop().unwrap();
     leaver.exit_lan_session();
-    let parked_at = sessions[0].cars[2].state.position;
+    let parked_at = sessions[0].world.vehicles[2].state.position;
     let mut frames = 0;
     while frames < 60 * 5 && !sessions.iter().all(|s| s.lan_car_left(2)) {
         drivers.drive(&mut sessions);
@@ -84,8 +84,8 @@ fn test_client_leaving_mid_race_is_parked_and_dnf_everywhere() {
         step(&net, &mut sessions);
     }
     for s in &sessions {
-        assert!(s.cars[2].state.speed < 0.01, "left car is parked");
-        assert!(s.cars[2].state.position.distance(parked_at) < 3.0, "left car stays where it stopped");
+        assert!(s.world.vehicles[2].state.speed < 0.01, "left car is parked");
+        assert!(s.world.vehicles[2].state.position.distance(parked_at) < 3.0, "left car stays where it stopped");
     }
 
     // The race goes on and ends with the leaver marked Left on both machines.
@@ -179,13 +179,13 @@ fn overlap_and_step(mode: LanCollisionMode) -> (f32, f32) {
     let mut sessions = launch(&net, host, clients);
     run_until_racing(&net, &mut sessions);
     let host = &mut sessions[0];
-    let remote_pos = host.cars[1].state.position;
-    host.cars[0].state.position = remote_pos + glam::Vec2::new(0.5, 0.0);
-    host.cars[0].state.velocity = glam::Vec2::ZERO;
-    let own_before = host.cars[0].state.position;
+    let remote_pos = host.world.vehicles[1].state.position;
+    host.world.vehicles[0].state.position = remote_pos + glam::Vec2::new(0.5, 0.0);
+    host.world.vehicles[0].state.velocity = glam::Vec2::ZERO;
+    let own_before = host.world.vehicles[0].state.position;
     host.physics_step(1.0 / 120.0);
-    let own_moved = host.cars[0].state.position.distance(own_before);
-    let remote_moved = host.cars[1].state.position.distance(remote_pos);
+    let own_moved = host.world.vehicles[0].state.position.distance(own_before);
+    let remote_moved = host.world.vehicles[1].state.position.distance(remote_pos);
     (own_moved, remote_moved)
 }
 
@@ -260,7 +260,7 @@ fn test_four_players_with_slot_gap_stay_in_sync_over_a_lossy_link() {
         );
         for (k, s) in sessions.iter().enumerate() {
             let clock = s.lan_race_clock().unwrap();
-            history[k].push((clock, s.cars[s.player_car_index()].state.position));
+            history[k].push((clock, s.world.vehicles[s.player_car_index()].state.position));
         }
         // Every machine's view of every other car vs where its owner had it at the render time.
         for observer in &sessions {
@@ -271,7 +271,7 @@ fn test_four_players_with_slot_gap_stay_in_sync_over_a_lossy_link() {
                 }
                 let car_idx = owner.player_car_index();
                 if let Some(truth) = owner_pos_at(&history[owner_k], render_time) {
-                    let e = observer.cars[car_idx].state.position.distance(truth);
+                    let e = observer.world.vehicles[car_idx].state.position.distance(truth);
                     errors.push(e);
                     max_error = max_error.max(e);
                 }

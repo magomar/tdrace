@@ -6,18 +6,28 @@ use serde::{Deserialize, Serialize};
 
 static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
 
+thread_local! {
+    static INJECTED_KEY_PRESSES: std::cell::RefCell<Vec<KeyCode>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Test hook: while no window exists, `is_key_pressed` reports exactly these keys as pressed.
+///
+/// Lets headless tests drive keyboard navigation through `RaceSession::update()`.
+/// The keys stay pressed until the next call; pass `&[]` to release them.
+#[doc(hidden)]
+pub fn inject_key_presses_for_tests(keys: &[KeyCode]) {
+    INJECTED_KEY_PRESSES.with(|k| *k.borrow_mut() = keys.to_vec());
+}
+
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
-        return false;
-    }
-    match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
+    if MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
+            Ok(v) => return v,
+            Err(_) => MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed),
         }
     }
+    INJECTED_KEY_PRESSES.with(|keys| keys.borrow().contains(&k))
 }
 
 #[inline]
@@ -159,13 +169,13 @@ fn screen_height_safe() -> f32 {
         }
     }
 }
-use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
-use tdrace_core::collision::wall::resolve_all_wall_collisions;
+use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
+use race_kit::{CollisionParams, RaceEvent, RaceFormat, RaceRules, RaceWorld};
+use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
@@ -179,7 +189,7 @@ use crate::input::{DigitalInputConfig, DigitalInputFilter, InputController, NavG
 pub use crate::module::VehicleVisualType;
 use crate::module::{
     ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
-    NascarGameModule, RallyGameModule,
+    NascarGameModule, RallyGameModule, VaultGameModule,
 };
 use crate::profile::{
     ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
@@ -237,8 +247,8 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    confirm_modal_layout,
-    render_curve_indicator, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    confirm_modal_layout, curve_indicator_lookahead,
+    render_curve_indicator, render_curve_pacenote, ArcadeSettingsModal, CurveIndicatorStyle, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -264,6 +274,8 @@ pub enum GarageOrigin {
     Menu,
     StartingGrid,
     CareerHub,
+    /// Opened from a LAN host or client lobby; returns to that lobby.
+    LanLobby,
 }
 
 /// Source screen that launched the Profile Manager view.
@@ -291,6 +303,8 @@ pub enum MenuOrigin {
     #[default]
     ModalitySelect,
     StartingGrid,
+    /// Opened from the LAN host lobby; returns to it with the chosen circuit.
+    LanHostLobby,
 }
 
 /// High-level game flow state machine.
@@ -364,6 +378,48 @@ pub enum GameState {
     LanClientLobby,
 }
 
+/// Keyboard shortcuts that `RaceSession::update()` checks before the active screen's own input.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GlobalHotkey {
+    /// K: Controls & Driving Assists screen.
+    Controls,
+    /// D: Driver Cards dossier.
+    DriverCards,
+    /// X: Arcade Settings modal.
+    Settings,
+    /// H (gamepad R3 / Select): cycle the driver assist profile.
+    AssistCycle,
+    /// S toggles sound effects; [ and ] change the master volume.
+    SoundKeys,
+    /// F11: Championship Editor.
+    ChampionshipEditor,
+}
+
+impl GameState {
+    /// Whether a global shortcut may act in this state.
+    ///
+    /// Global keys run before the screen's own input, so a state is only listed when it does not
+    /// use the key itself: D steers right in a WASD race and pages the dossier, S moves down in
+    /// most menus, and [ ] edit the starting grid, career calendar and track editor.
+    pub fn allows_global_hotkey(&self, key: GlobalHotkey) -> bool {
+        use GameState::*;
+        match key {
+            GlobalHotkey::Controls => matches!(
+                self,
+                ModuleSelect { .. } | ModalitySelect { .. } | Menu | StartingGrid | Countdown(_) | Racing | Paused
+            ),
+            GlobalHotkey::DriverCards => matches!(self, Paused),
+            GlobalHotkey::Settings => !matches!(
+                self,
+                CircuitViewer(_) | ControlsHelp(_) | LanHostLobby | LanJoinBrowser | LanClientLobby
+            ),
+            GlobalHotkey::AssistCycle => matches!(self, StartingGrid | Countdown(_) | Racing | Paused),
+            GlobalHotkey::SoundKeys => matches!(self, Countdown(_) | Racing | Paused | Finished),
+            GlobalHotkey::ChampionshipEditor => matches!(self, ModuleSelect { .. } | ModalitySelect { .. } | Menu),
+        }
+    }
+}
+
 /// Active view within the post-race Finished state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FinishedScreenView {
@@ -417,6 +473,12 @@ pub struct XpAwardReceipt {
     pub total_xp: u64,
     pub new_balance: u64,
     pub is_first_time: bool,
+    #[serde(default)]
+    pub credits_earned: u64,
+    #[serde(default)]
+    pub clean_bonus_credits: u64,
+    #[serde(default)]
+    pub new_credits_balance: u64,
 }
 
 
@@ -515,15 +577,18 @@ pub struct RaceSession {
     pub championship_editor_state: Option<ChampionshipEditorState>,
     pub random_car_assignment: bool,
     pub roster_seed: u64,
+    /// Seed for the grid roster, bot cars and AI randomness instead of the clock.
+    /// `None` (the default) keeps a new random grid every race. Tests set it to get a
+    /// repeatable race (spec 049 golden session).
+    pub fixed_roster_seed: Option<u64>,
     pub current_visual_type: VehicleVisualType,
     pub car_visual_types: Vec<VehicleVisualType>,
     pub selected_car_model_id: Option<&'static str>,
     pub car_model_ids: Vec<Option<&'static str>>,
     pub car_lights_on: Vec<bool>,
 
-    pub cars: Vec<Car>,
+    pub world: RaceWorld<Car>,
     pub color_schemes: Vec<CarColorScheme>,
-    pub trackers: Vec<TrackProgressTracker>,
     pub ai_drivers: Vec<BotAiDriver>,
     pub opponent_drivers: Vec<DriverCharacter>,
     pub opponent_tiers: Vec<DriverTier>,
@@ -547,6 +612,9 @@ pub struct RaceSession {
     pub garage_gallery_filter: usize,
     pub garage_gallery_sel: usize,
     pub in_garage_state: bool,
+    /// Discipline, tier and car the Garage was opened with. Browsing other disciplines only
+    /// changes the view; leaving the Garage restores this unless the player picked a car there.
+    pub garage_entry: Option<(&'static str, u8, usize)>,
 
     // Active Player Profile & Career History
     pub profile_origin: ProfileOrigin,
@@ -615,6 +683,16 @@ pub struct RaceSession {
     pub starting_grid_roster_idx: usize,
     pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
+    /// Countdown time left when the race was paused before the start, resumed instead of racing.
+    pub paused_countdown: Option<f32>,
+    /// Screen the Controls & Driving Assists view returns to.
+    pub controls_help_return: Option<GameState>,
+    /// Tab and highlighted card of the Race Modality screen, restored when coming back to it.
+    pub modality_cursor: (ModalityCategory, usize),
+    /// The external gamepad-mapper tool, while it is open.
+    pub gamepad_mapper: Option<crate::input::mapper_launch::GamepadMapperProcess>,
+    /// Last gamepad-mapper status line, shown on the Controls screen.
+    pub gamepad_mapper_status: Option<String>,
     pub assist_profile: AssistProfile,
     pub assist_profile_p2: AssistProfile,
     pub show_exit_confirm: bool,
@@ -827,6 +905,7 @@ impl RaceSession {
             championship_editor_state: None,
             random_car_assignment: true,
             roster_seed: 42,
+            fixed_roster_seed: None,
             current_visual_type: VehicleVisualType::TouringGT {
                 widebody: true,
                 gt_wing: true,
@@ -837,9 +916,8 @@ impl RaceSession {
             car_model_ids: Vec::new(),
             car_lights_on: Vec::new(),
 
-            cars: Vec::new(),
+            world: RaceWorld::new(RaceRules::default()),
             color_schemes: Vec::new(),
-            trackers: Vec::new(),
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
@@ -862,6 +940,7 @@ impl RaceSession {
             garage_gallery_filter: 0,
             garage_gallery_sel: 0,
             in_garage_state: false,
+            garage_entry: None,
 
             profile_origin: ProfileOrigin::Menu,
             active_profile: PlayerProfile::default(),
@@ -924,6 +1003,11 @@ impl RaceSession {
             starting_grid_roster_idx: 0,
             pause_nav: NavGrid2D::new(vec![1, 1]),
             pause_selected_btn: 0,
+            paused_countdown: None,
+            controls_help_return: None,
+            modality_cursor: (ModalityCategory::SinglePlayer, 0),
+            gamepad_mapper: None,
+            gamepad_mapper_status: None,
             show_exit_confirm: false,
             exit_confirm_modal: None,
             settings_modal: None,
@@ -1020,7 +1104,7 @@ impl RaceSession {
         if let Some(idx) = self.lan_race.as_ref().and_then(|l| l.config.car_index_of(self.lan_player_slot)) {
             idx
         } else if self.is_lan_multiplayer {
-            (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1))
+            (self.lan_player_slot as usize).min(self.world.vehicles.len().saturating_sub(1))
         } else {
             0
         }
@@ -1030,7 +1114,7 @@ impl RaceSession {
     pub fn trigger_sonar_ping(&mut self) {
         if self.visibility_options.sonar_ping {
             let my_idx = self.player_car_index();
-            if let Some(player_car) = self.cars.get(my_idx) {
+            if let Some(player_car) = self.world.vehicles.get(my_idx) {
                 self.sonar_ping_origin = player_car.state.position;
             }
             self.sonar_ping_timer = 0.75;
@@ -1087,7 +1171,7 @@ impl RaceSession {
                 self.active_profile = active;
                 self.assist_profile = self.active_profile.last_mode;
                 let my_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get_mut(my_idx) {
+                if let Some(player_car) = self.world.vehicles.get_mut(my_idx) {
                     player_car.config.assists = self.assist_profile.to_config();
                 }
             }
@@ -1135,7 +1219,7 @@ impl RaceSession {
             }
         }
         let my_idx = self.player_car_index();
-        if let Some(player_car) = self.cars.get_mut(my_idx) {
+        if let Some(player_car) = self.world.vehicles.get_mut(my_idx) {
             player_car.config.assists = profile.to_config();
         }
     }
@@ -1297,6 +1381,8 @@ impl RaceSession {
             aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
             aura_brightness: self.config.player_helpers.ground_aura_brightness,
             ribbon_enabled: self.config.player_helpers.curve_helper,
+            ribbon_pacenote: CurveIndicatorStyle::from_config_str(&self.config.player_helpers.curve_indicator_style)
+                == CurveIndicatorStyle::Pacenote,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
@@ -1337,11 +1423,11 @@ impl RaceSession {
         self.filter_p2.config = self.input.filter.config;
         let handling = Self::player_handling(&self.input.filter.config);
         let my_idx = self.player_car_index();
-        if let Some(car) = self.cars.get_mut(my_idx) {
+        if let Some(car) = self.world.vehicles.get_mut(my_idx) {
             car.config.player = handling;
         }
         if self.is_split_screen() {
-            if let Some(car) = self.cars.get_mut(1) {
+            if let Some(car) = self.world.vehicles.get_mut(1) {
                 car.config.player = handling;
             }
         }
@@ -1391,6 +1477,10 @@ impl RaceSession {
                 self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
                 self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
+                if h_state.ribbon_enabled {
+                    let style = if h_state.ribbon_pacenote { CurveIndicatorStyle::Pacenote } else { CurveIndicatorStyle::Chevrons };
+                    self.config.player_helpers.curve_indicator_style = style.as_config_str().to_string();
+                }
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
@@ -1601,14 +1691,21 @@ impl RaceSession {
         false
     }
 
-    /// Returns the required motorsport category tier (1..=5) for the current race.
+    /// Returns the required motorsport category tier for the current race.
     pub fn current_race_required_tier(&self) -> u8 {
+        let max_tier = if self.active_module_id == "extreme_offroad" {
+            7
+        } else if self.active_module_id == "rally" || self.active_module_id == "kart" {
+            6
+        } else {
+            5
+        };
         if self.active_module_id == "classic" {
             5
         } else if let Some(champ) = &self.championship_session {
-            (champ.tier as u8).clamp(1, 5)
+            (champ.tier as u8).clamp(1, max_tier)
         } else if self.game_mode == GameMode::Career {
-            (self.active_career_progress.level as u8).clamp(1, 5)
+            (self.active_career_progress.level as u8).clamp(1, max_tier)
         } else if self.free_car_selection {
             self.active_player_car_tier()
         } else {
@@ -1972,9 +2069,35 @@ impl RaceSession {
             "rally" => self.switch_to_rally(),
             "kart" => self.switch_to_kart(),
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
+            "vault" => self.switch_to_vault(),
             _ => self.switch_to_classic(),
         }
         self.sync_career_progress_for_active_module();
+    }
+
+    /// Activates The Vault (Archived Content & Decommissioned Asset Depot).
+    pub fn switch_to_vault(&mut self) {
+        self.apply_module_config("vault");
+        self.active_module_id = "vault";
+        self.sync_career_progress_for_active_module();
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
+        self.current_visual_type = VehicleVisualType::TouringGT {
+            widebody: false,
+            gt_wing: true,
+            diffuser: true,
+        };
+        self.selected_car_model_id = Some("vault_test_mule");
+        let tracks = self.active_module_tracks();
+        self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::ClassicGrandPrix);
+        self.track = self.load_track_for_session(&self.track_choice);
+        self.track.module_id = Some("vault".to_string());
+        self.car_choice = CarChoice::SportsCar;
+        self.total_laps = 3;
+        self.camera.setup_for_track(&self.track);
+        self.camera_p2.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
     }
 
     /// Activates the NASCAR Cup Series & Trans-Am TA1 module.
@@ -2742,7 +2865,7 @@ impl RaceSession {
                 vec![
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
@@ -2757,14 +2880,14 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),
                     "mettet_rx".to_string(),
                 ],
             ),
             4 => (
-                "Dakar Rally Raid Trophy (Tier 4)",
+                "RX1e Electric Championship (Tier 4)",
                 vec![
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -2774,15 +2897,15 @@ impl RaceSession {
                     "riga_rx".to_string(),
                     "hell_rx".to_string(),
                     "loheac_rx".to_string(),
-                    "silverstone_rx".to_string(),
+                    "lavare_rx".to_string(),
                     "holjes_rx".to_string(),
                 ],
             ),
             _ => (
-                "Stadium Super Trucks World Series (Tier 5)",
+                "Nitrocross Group E Series (Tier 5)",
                 vec![
                     "catalunya_rx".to_string(),
-                    "yas_marina_rx".to_string(),
+                    "lessay_rx".to_string(),
                     "essay_rx".to_string(),
                     "nyirad_rx".to_string(),
                     "kouvola_rx".to_string(),
@@ -2891,7 +3014,7 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Launches a Karting Career Championship Cup for the given tier (1..=5).
+    /// Launches a Karting Career Championship Cup for the given tier (1..=6).
     pub fn start_kart_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
@@ -2905,60 +3028,67 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "National Kart Championship (Tier 2)",
+                "FIA Karting Academy Trophy (Tier 2)",
                 vec![
+                    "whilton_mill".to_string(),
+                    "laval_kart".to_string(),
+                    "genk".to_string(),
                     "sarno".to_string(),
                     "kristianstad".to_string(),
                     "seven_laghi".to_string(),
-                    "lonato".to_string(),
-                    "genk".to_string(),
-                    "wackersdorf".to_string(),
-                    "whilton_mill".to_string(),
                 ],
             ),
             3 => (
-                "Continental Rotax Trophy (Tier 3)",
+                "National Kart Championship (Tier 3)",
                 vec![
-                    "pfi".to_string(),
-                    "franciacorta".to_string(),
-                    "ampfing".to_string(),
                     "sarno".to_string(),
                     "kristianstad".to_string(),
                     "seven_laghi".to_string(),
                     "lonato".to_string(),
-                    "genk".to_string(),
-                    "wackersdorf".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
+                    "pfi".to_string(),
                 ],
             ),
             4 => (
-                "FIA Karting European Championship (Tier 4)",
+                "Continental Shifter Cup (Tier 4)",
                 vec![
-                    "zuera".to_string(),
-                    "silverstone_national_kart".to_string(),
-                    "le_mans_kart".to_string(),
                     "pfi".to_string(),
                     "franciacorta".to_string(),
                     "ampfing".to_string(),
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "aunay_kart".to_string(),
                     "sarno".to_string(),
-                    "kristianstad".to_string(),
-                    "seven_laghi".to_string(),
+                    "lonato".to_string(),
+                ],
+            ),
+            5 => (
+                "Superkart Division 2 Challenge (Tier 5)",
+                vec![
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "aunay_kart".to_string(),
+                    "le_mans_kart".to_string(),
+                    "campillos".to_string(),
+                    "muelsen_kart".to_string(),
+                    "pfi".to_string(),
+                    "sarno".to_string(),
                     "lonato".to_string(),
                 ],
             ),
             _ => (
-                "FIA Karting World Championship (Tier 5)",
+                "Superkart Division 1 World Series (Tier 6)",
                 vec![
                     "portimao_kart".to_string(),
                     "valencia_kart".to_string(),
+                    "adria_kart".to_string(),
                     "campillos".to_string(),
+                    "le_mans_kart".to_string(),
+                    "muelsen_kart".to_string(),
                     "zuera".to_string(),
                     "silverstone_national_kart".to_string(),
-                    "le_mans_kart".to_string(),
                     "pfi".to_string(),
-                    "franciacorta".to_string(),
-                    "ampfing".to_string(),
-                    "sarno".to_string(),
-                    "kristianstad".to_string(),
                     "lonato".to_string(),
                 ],
             ),
@@ -3516,22 +3646,25 @@ impl RaceSession {
             (1 + self.num_bots).min(self.max_grid_participants())
         };
 
-        self.cars.clear();
+        self.world.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
         self.car_lights_on.clear();
         self.color_schemes.clear();
-        self.trackers.clear();
         self.ai_drivers.clear();
         self.opponent_drivers.clear();
 
         let num_cps = self.track.checkpoints.len();
         let num_sectors = 3;
 
-        let seed = (std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as u64)
-            .unwrap_or(42))
+        let seed = self
+            .fixed_roster_seed
+            .unwrap_or_else(|| {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_nanos() as u64)
+                    .unwrap_or(42)
+            })
             .wrapping_add((self.num_bots as u64) * 101);
 
         let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
@@ -3548,6 +3681,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
 
@@ -3774,16 +3908,23 @@ impl RaceSession {
         };
         base_config.assists = self.assist_profile.to_config();
 
+        let max_tier = if effective_module == "extreme_offroad" {
+            7
+        } else if effective_module == "rally" || effective_module == "kart" {
+            6
+        } else {
+            5
+        };
         let current_tier: u8 = if effective_module == "classic" {
             1
         } else if let Some(champ) = &self.championship_session {
-            (champ.tier as u8).clamp(1, 5)
+            (champ.tier as u8).clamp(1, max_tier)
         } else if let Some(pm) = player_model {
-            pm.tier.clamp(1, 5)
+            pm.tier.clamp(1, max_tier)
         } else if self.game_mode == GameMode::Career {
-            (self.active_career_progress.level as u8).clamp(1, 5)
+            (self.active_career_progress.level as u8).clamp(1, max_tier)
         } else {
-            self.active_player_car_tier().clamp(1, 5)
+            self.active_player_car_tier().clamp(1, max_tier)
         };
 
         if self.championship_session.is_some() {
@@ -4069,12 +4210,11 @@ impl RaceSession {
             });
         let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         player_car.config.player = Self::player_handling(&self.input.filter.config);
-        self.cars.push(player_car);
+        self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
         self.car_model_ids.push(player_model_id);
         self.car_lights_on.push(true);
-        self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
             let p2_slot = 1;
@@ -4097,12 +4237,11 @@ impl RaceSession {
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             p2_car.config.player = Self::player_handling(&self.filter_p2.config);
-            self.cars.push(p2_car);
+            self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
             self.car_model_ids.push(player_model_id);
             self.car_lights_on.push(true);
-            self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
@@ -4174,12 +4313,11 @@ impl RaceSession {
 
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
-            self.cars.push(bot_car);
+            self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
             self.car_model_ids.push(bot_model_id);
             self.car_lights_on.push(true);
-            self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             let bot_tier = if let Some(champ) = &self.championship_session {
                 champ
                     .standings
@@ -4194,12 +4332,15 @@ impl RaceSession {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
             let bot_profile = character.resolve_profile(bot_tier);
-            self.ai_drivers.push(BotAiDriver::new(bot_profile));
+            // Spec 046: the grid entry seed (session seed + bot index) drives the human layer.
+            let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
+            self.ai_drivers.push(BotAiDriver::with_seed(bot_profile, bot_seed));
         }
     }
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
     pub fn init_race(&mut self) {
+        self.paused_countdown = None;
         self.recent_hof_id = None;
         self.recent_congrats = None;
         self.show_hall_of_fame = false;
@@ -4237,6 +4378,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
             let global_all = DriverCharacter::all_across_modules();
@@ -4391,6 +4533,15 @@ impl RaceSession {
 
     /// Pauses the race session and activates the static full-circuit overview camera.
     pub fn pause_race(&mut self) {
+        if self.state != GameState::Paused {
+            self.paused_countdown = match self.state {
+                GameState::Countdown(remaining) => Some(remaining),
+                _ => None,
+            };
+            // Every pause opens with RESUME focused, so Start / A never quits by accident.
+            self.pause_nav.set_focus(0, 0);
+            self.pause_selected_btn = 0;
+        }
         self.audio.stop_all_loops();
         self.state = GameState::Paused;
         self.camera.set_paused_overview();
@@ -4401,11 +4552,14 @@ impl RaceSession {
 
     /// Resumes the race session from pause, restoring the active follow driving camera.
     pub fn resume_race(&mut self) {
-        self.state = GameState::Racing;
-        let player_car = self.cars.get(self.player_car_index());
+        self.state = match self.paused_countdown.take() {
+            Some(remaining) => GameState::Countdown(remaining),
+            None => GameState::Racing,
+        };
+        let player_car = self.world.vehicles.get(self.player_car_index());
         self.camera.resume_from_pause(player_car);
         if self.is_split_screen() {
-            let p2_car = self.cars.get(1);
+            let p2_car = self.world.vehicles.get(1);
             self.camera_p2.resume_from_pause(p2_car);
         }
     }
@@ -4495,6 +4649,7 @@ impl RaceSession {
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
                         6 => self.switch_to_extreme_offroad(),
+                        7 if self.is_dev_mode() => self.switch_to_vault(),
                         _ => self.switch_to_classic(),
                     }
                 }
@@ -4509,6 +4664,7 @@ impl RaceSession {
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
                         6 => self.switch_to_extreme_offroad(),
+                        7 if self.is_dev_mode() => self.switch_to_vault(),
                         _ => self.switch_to_classic(),
                     }
                 }
@@ -4536,6 +4692,7 @@ impl RaceSession {
 
         // Handle gamepad input updates
         self.input.gamepad.update();
+        self.poll_gamepad_mapper();
 
         // Step active screen transition
         self.update_transition(frame_dt);
@@ -4576,11 +4733,17 @@ impl RaceSession {
             };
 
             let action = modal.update(&mut ctx);
+            let mapper_requested = std::mem::take(&mut modal.gamepad_mapper_requested);
             if matches!(action, ScreenAction::Pop) {
                 let saved = modal.is_saved;
                 self.close_settings_modal(saved);
                 if saved {
                     self.audio.play_sfx(SfxType::UiSelect);
+                }
+            } else if mapper_requested {
+                let status = self.launch_gamepad_mapper();
+                if let Some(modal) = self.settings_modal.as_mut() {
+                    modal.gamepad_mapper_note = Some(status);
                 }
             }
             return;
@@ -4599,6 +4762,7 @@ impl RaceSession {
             self.audio.stop_music();
         } else if !is_in_garage {
             self.in_garage_state = false;
+            self.garage_restore_entry();
         }
 
         // Toggle audio: M switches music, S switches other sounds (SFX / engine)
@@ -4632,16 +4796,17 @@ impl RaceSession {
 
         let is_wasd_racing = matches!(self.state, GameState::Racing | GameState::Countdown(_))
             && self.input.input_map == cabinet::input::InputMap::wasd_racing();
-        if !is_typing_or_tm && !is_wasd_racing && is_key_pressed(KeyCode::S) {
+        let sound_keys = self.state.allows_global_hotkey(GlobalHotkey::SoundKeys);
+        if sound_keys && !is_wasd_racing && is_key_pressed(KeyCode::S) {
             self.audio.toggle_sfx();
         }
 
         // Adjust Master Volume (LeftBracket / RightBracket)
-        if is_key_pressed(KeyCode::LeftBracket) {
+        if sound_keys && is_key_pressed(KeyCode::LeftBracket) {
             let v = (self.audio.settings.master_volume - 0.1).clamp(0.0, 1.0);
             self.audio.set_master_volume(v);
         }
-        if is_key_pressed(KeyCode::RightBracket) {
+        if sound_keys && is_key_pressed(KeyCode::RightBracket) {
             let v = (self.audio.settings.master_volume + 0.1).clamp(0.0, 1.0);
             self.audio.set_master_volume(v);
         }
@@ -4670,8 +4835,14 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
         }
 
+        // A quit prompt owns the keyboard until it is answered.
+        let quit_prompt_open = self.show_exit_confirm;
+
         // Open Championship Editor studio (F11 key)
-        if is_key_pressed(KeyCode::F11) {
+        if !quit_prompt_open
+            && self.state.allows_global_hotkey(GlobalHotkey::ChampionshipEditor)
+            && is_key_pressed(KeyCode::F11)
+        {
             self.enter_championship_editor(None);
             return;
         }
@@ -4692,10 +4863,10 @@ impl RaceSession {
                     let total_lvls = self.camera.levels.iter().filter(|l| !l.is_overview()).count().max(1);
                     let text = format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls);
 
-                    if let Some(pos1) = self.cars.first().map(|c| c.state.position) {
+                    if let Some(pos1) = self.world.vehicles.first().map(|c| c.state.position) {
                         self.fx.drift_popups.spawn_text(pos1, &text, Color::new(0.3, 0.9, 1.0, 1.0));
                     }
-                    if let Some(pos2) = self.cars.get(1).map(|c| c.state.position) {
+                    if let Some(pos2) = self.world.vehicles.get(1).map(|c| c.state.position) {
                         self.fx.drift_popups.spawn_text(pos2, &text, Color::new(0.3, 0.9, 1.0, 1.0));
                     }
                 }
@@ -4720,7 +4891,7 @@ impl RaceSession {
                     let lvl = self.cycle_camera_zoom();
                     self.audio.play_sfx(SfxType::UiMove);
                     let car_pos = self
-                        .cars
+                        .world.vehicles
                         .get(self.player_car_index())
                         .map(|c| c.state.position);
                     if let Some(pos) = car_pos {
@@ -4746,7 +4917,7 @@ impl RaceSession {
                 | GameState::Finished
         );
         if is_gameplay_state {
-            let my_pos = self.cars.get(self.player_car_index()).map(|c| c.state.position);
+            let my_pos = self.world.vehicles.get(self.player_car_index()).map(|c| c.state.position);
 
             // [1] Toggle Overhead Chevron Indicator
             if is_key_pressed(KeyCode::Key1) {
@@ -4819,11 +4990,11 @@ impl RaceSession {
                 });
             }
 
-            // [5] Toggle Approaching Curve & Dynamic Braking Helper
+            // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
             if is_key_pressed(KeyCode::Key5) {
-                self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                self.visibility_options.cycle_curve_indicator();
                 self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
+                let state_str = self.visibility_options.curve_indicator_label();
                 let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                 if let Some(pos) = my_pos {
                     self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
@@ -4901,7 +5072,7 @@ impl RaceSession {
 
             // Auto-trigger sonar ping on spin-out or slow speed in overview mode
             if self.visibility_options.sonar_ping {
-                if let Some(pc) = self.cars.get(self.player_car_index()) {
+                if let Some(pc) = self.world.vehicles.get(self.player_car_index()) {
                     let is_spin = pc.state.angular_velocity.abs() > 4.5 || pc.state.local_velocity.y.abs() > 8.0;
                     let is_slow_overview = self.camera.mode == crate::camera::CameraMode::StaticOverview && pc.state.speed < 2.0;
                     if (is_spin || is_slow_overview) && self.sonar_ping_cooldown <= 0.0 {
@@ -5017,47 +5188,45 @@ impl RaceSession {
             }
         }
 
-        // Open Controls & Driving Assists Screen (K key)
-        if is_key_pressed(KeyCode::K) {
+        // Open Controls & Driving Assists Screen (K key), remembering the screen to return to
+        if !quit_prompt_open && self.state.allows_global_hotkey(GlobalHotkey::Controls) && is_key_pressed(KeyCode::K) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let from_paused = matches!(self.state, GameState::Racing | GameState::Paused | GameState::Countdown(_));
+            if matches!(self.state, GameState::Racing | GameState::Countdown(_)) {
+                self.pause_race();
+            }
+            let from_paused = self.state == GameState::Paused;
+            self.controls_help_return = Some(self.state.clone());
             self.state = GameState::ControlsHelp(from_paused);
             return;
         }
 
-        // Open Driver Cards Dossier Screen (D key)
-        if is_key_pressed(KeyCode::D) && !matches!(self.state, GameState::Garage(_) | GameState::ModalitySelect { .. } | GameState::CareerHub { .. }) {
+        // Open Driver Cards Dossier Screen (D key) from the pause menu
+        if self.state.allows_global_hotkey(GlobalHotkey::DriverCards) && is_key_pressed(KeyCode::D) {
             self.audio.play_sfx(SfxType::UiSelect);
-            let origin = match self.state {
-                GameState::StartingGrid => DriverCardsOrigin::StartingGrid,
-                GameState::Racing | GameState::Paused | GameState::Countdown(_) => DriverCardsOrigin::Paused,
-                _ => DriverCardsOrigin::Menu,
-            };
-            self.state = GameState::DriverCards(origin);
+            self.state = GameState::DriverCards(DriverCardsOrigin::Paused);
             return;
         }
 
         // Open Arcade Settings Modal globally (X key)
-        if is_key_pressed(KeyCode::X) && !matches!(self.state, GameState::CircuitViewer(_)) {
+        if !quit_prompt_open && self.state.allows_global_hotkey(GlobalHotkey::Settings) && is_key_pressed(KeyCode::X) {
             self.audio.play_sfx(SfxType::UiSelect);
             if matches!(self.state, GameState::Racing | GameState::Countdown(_)) {
-                self.state = GameState::Paused;
-                self.audio.stop_all_loops();
+                self.pause_race();
             }
-            if matches!(self.state, GameState::ControlsHelp(_)) {
-                self.open_settings_modal_tab(1);
-            } else {
-                self.open_settings_modal();
-            }
+            self.open_settings_modal();
             return;
         }
 
-        // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen)
-        if is_key_pressed(KeyCode::H) || (!self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed) {
+        // Cycle Driver Assists Profile (H key for P1, Gamepad Right Stick Click for P1 in single-player or P2 in split-screen).
+        // Gamepad Select doubles as "back" outside the race itself, so it only cycles assists while driving.
+        let assist_keys = self.state.allows_global_hotkey(GlobalHotkey::AssistCycle);
+        let pad_assist = self.input.gamepad.snapshot.btn_assist_toggle_pressed
+            && (matches!(self.state, GameState::Racing | GameState::Countdown(_)) || !self.input.gamepad.snapshot.btn_back_pressed);
+        if assist_keys && (is_key_pressed(KeyCode::H) || (!self.is_split_screen() && pad_assist)) {
             let next_mode = self.assist_profile.next();
             self.set_assist_profile(next_mode);
             self.audio.play_sfx(SfxType::UiMove);
-            if let Some(player_car) = self.cars.get(self.player_car_index()) {
+            if let Some(player_car) = self.world.vehicles.get(self.player_car_index()) {
                 self.fx.drift_popups.spawn_text(
                     player_car.state.position,
                     &format!("ASSISTS: {}", self.assist_profile.short_name()),
@@ -5065,10 +5234,10 @@ impl RaceSession {
                 );
             }
         }
-        if self.is_split_screen() && self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+        if assist_keys && self.is_split_screen() && pad_assist {
             self.assist_profile_p2 = self.assist_profile_p2.next();
             self.audio.play_sfx(SfxType::UiMove);
-            if let Some(p2_car) = self.cars.get_mut(1) {
+            if let Some(p2_car) = self.world.vehicles.get_mut(1) {
                 p2_car.config.assists = self.assist_profile_p2.to_config();
                 self.fx.drift_popups.spawn_text(
                     p2_car.state.position,
@@ -5087,6 +5256,8 @@ impl RaceSession {
             self.init_race();
             return;
         }
+
+        self.pump_parked_lan_lobby(frame_dt);
 
         match self.state {
             GameState::Menu => {
@@ -5156,7 +5327,7 @@ impl RaceSession {
                     self.audio.update_engine_telemetry_p2(rpm2, eff_throttle2, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
                 } else {
                     let my_idx = self.player_car_index();
-                    let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                    let my_speed = self.world.vehicles.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                     let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -5179,11 +5350,11 @@ impl RaceSession {
 
                 // Camera follows player during countdown
                 let countdown_cam_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get(countdown_cam_idx) {
+                if let Some(player_car) = self.world.vehicles.get(countdown_cam_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.is_split_screen() {
-                    if let Some(p2_car) = self.cars.get(1) {
+                    if let Some(p2_car) = self.world.vehicles.get(1) {
                         self.camera_p2.update(p2_car, frame_dt);
                     }
                 }
@@ -5198,15 +5369,16 @@ impl RaceSession {
             GameState::Racing => {
                 // If resuming race after paused overview was active, restore driving follow camera
                 if self.camera.paused_from_follow.is_some() {
-                    let player_car = self.cars.get(self.player_car_index());
+                    let player_car = self.world.vehicles.get(self.player_car_index());
                     self.camera.resume_from_pause(player_car);
                 }
                 if self.is_split_screen() && self.camera_p2.paused_from_follow.is_some() {
-                    let p2_car = self.cars.get(1);
+                    let p2_car = self.world.vehicles.get(1);
                     self.camera_p2.resume_from_pause(p2_car);
                 }
 
-                // Pause trigger (Escape / Pause key or Gamepad Start)
+                // Pause trigger (Escape / Pause key or Gamepad Start). Checked before LAN input polling,
+                // which re-reads the gamepad and would clear this frame's Start press.
                 if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::Pause) || self.input.gamepad.snapshot.btn_start_pressed {
                     self.pause_race();
                     return;
@@ -5232,11 +5404,11 @@ impl RaceSession {
 
                 // Update Camera
                 let cam_focus_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get(cam_focus_idx) {
+                if let Some(player_car) = self.world.vehicles.get(cam_focus_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.is_split_screen() {
-                    if let Some(p2_car) = self.cars.get(1) {
+                    if let Some(p2_car) = self.world.vehicles.get(1) {
                         self.camera_p2.update(p2_car, frame_dt);
                     }
                 }
@@ -5313,45 +5485,8 @@ impl RaceSession {
 
                 self.pause_selected_btn = self.pause_nav.focused_col;
 
-                // Action confirmation on highlighted button or click
-                let is_confirmed = is_key_pressed(KeyCode::Enter)
-                    || is_key_pressed(KeyCode::KpEnter)
-                    || is_key_pressed(KeyCode::Space)
-                    || self.pause_nav.is_confirmed(
-                        self.input.gamepad.snapshot.btn_confirm_pressed
-                            || self.input.gamepad.snapshot.btn_a_pressed,
-                    );
-
-                if is_confirmed || resume_clicked || exit_clicked {
-                    self.audio.play_sfx(SfxType::UiSelect);
-                    let action_idx = if resume_clicked {
-                        0
-                    } else if exit_clicked {
-                        1
-                    } else {
-                        self.pause_selected_btn
-                    };
-
-                    if action_idx == 0 {
-                        self.resume_race();
-                        return;
-                    } else {
-                        self.camera.resume_from_pause(None);
-                        if self.is_split_screen() {
-                            self.camera_p2.resume_from_pause(None);
-                        }
-                        if self.return_to_editor_on_exit {
-                            self.return_to_editor_on_exit = false;
-                            self.transition_fade_to(GameState::TrackEditor, 0.35);
-                        } else {
-                            let target = self.race_exit_target();
-                            self.transition_fade_to(target, 0.35);
-                        }
-                        return;
-                    }
-                }
-
-                // Direct shortcut triggers
+                // Direct shortcut triggers. Checked before the focused-button confirm, because
+                // gamepad Start also counts as "confirm" and must always resume, as labelled.
                 if is_key_pressed(KeyCode::Escape)
                     || is_key_pressed(KeyCode::Pause)
                     || self.input.gamepad.snapshot.btn_start_pressed
@@ -5367,16 +5502,25 @@ impl RaceSession {
                     || exit_clicked
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.camera.resume_from_pause(None);
-                    if self.is_split_screen() {
-                        self.camera_p2.resume_from_pause(None);
-                    }
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
+                    self.exit_paused_race();
+                    return;
+                }
+
+                // Action confirmation on highlighted button
+                let is_confirmed = is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || is_key_pressed(KeyCode::Space)
+                    || self.pause_nav.is_confirmed(
+                        self.input.gamepad.snapshot.btn_confirm_pressed
+                            || self.input.gamepad.snapshot.btn_a_pressed,
+                    );
+
+                if is_confirmed {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    if self.pause_selected_btn == 0 {
+                        self.resume_race();
                     } else {
-                        let target = self.race_exit_target();
-                        self.transition_fade_to(target, 0.35);
+                        self.exit_paused_race();
                     }
                     return;
                 }
@@ -5417,9 +5561,17 @@ impl RaceSession {
                     let _ = self.config.save_to_first_existing_or_default();
                 }
 
-                if is_key_pressed(KeyCode::H) || self.input.gamepad.snapshot.btn_assist_toggle_pressed {
+                if is_key_pressed(KeyCode::G) {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.assist_profile = self.assist_profile.next();
+                    self.launch_gamepad_mapper();
+                }
+
+                if is_key_pressed(KeyCode::H)
+                    || (self.input.gamepad.snapshot.btn_assist_toggle_pressed && !self.input.gamepad.snapshot.btn_back_pressed)
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let next_mode = self.assist_profile.next();
+                    self.set_assist_profile(next_mode);
                 }
 
                 if is_key_pressed(KeyCode::Escape)
@@ -5433,11 +5585,8 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.btn_b_pressed
                 {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    if from_paused {
-                        self.state = GameState::Paused;
-                    } else {
-                        self.state = GameState::Menu;
-                    }
+                    let fallback = if from_paused { GameState::Paused } else { GameState::Menu };
+                    self.state = self.controls_help_return.take().unwrap_or(fallback);
                 }
             }
 
@@ -5554,7 +5703,7 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(0) {
                     *vt = next_m.visual_type;
                 }
-                if let Some(car) = self.cars.get_mut(0) {
+                if let Some(car) = self.world.vehicles.get_mut(0) {
                     car.config = next_m.to_car_config();
                 }
             } else {
@@ -5570,7 +5719,7 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(car_idx) {
                     *vt = next_m.visual_type;
                 }
-                if let Some(car) = self.cars.get_mut(car_idx) {
+                if let Some(car) = self.world.vehicles.get_mut(car_idx) {
                     car.config = next_m.to_car_config();
                 }
             }
@@ -6022,31 +6171,121 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_b_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            if self.return_to_editor_on_exit {
-                self.return_to_editor_on_exit = false;
-                self.transition_fade_to(GameState::TrackEditor, 0.35);
-            } else if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                let tier = self.active_career_progress.level.clamp(1, 5);
-                let calendar = if let Some(c) = &self.championship_session {
-                    c.track_ids.clone()
-                } else {
-                    crate::ui::gt_default_calendar(tier)
-                };
-                self.career_hub_focus = CareerHubFocus::Tabs;
-                self.transition_fade_to(
-                    GameState::CareerHub {
-                        selected_tier: tier,
-                        selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                        calendar_tracks: calendar,
-                        showing_standings: false,
-                    },
-                    0.35,
-                );
-            } else {
-                self.transition_fade_to(GameState::Menu, 0.35);
-            }
+            let target = self.race_exit_target();
+            self.transition_fade_to(target, 0.35);
             return;
         }
+    }
+
+    /// Screen a player lands on when leaving a race: the track editor after a test drive,
+    /// the LAN hub after a network race (closing the session), the Career Hub in a GT career,
+    /// and the circuit selector otherwise.
+    pub fn race_exit_target(&mut self) -> GameState {
+        if self.return_to_editor_on_exit {
+            self.return_to_editor_on_exit = false;
+            return GameState::TrackEditor;
+        }
+        if self.is_lan_multiplayer {
+            self.exit_lan_session();
+            return GameState::LanHub { selected_idx: 0 };
+        }
+        if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
+            let tier = self.active_career_progress.level.clamp(1, 5);
+            let calendar = if let Some(c) = &self.championship_session {
+                c.track_ids.clone()
+            } else {
+                crate::ui::gt_default_calendar(tier)
+            };
+            self.career_hub_focus = CareerHubFocus::Tabs;
+            return GameState::CareerHub {
+                selected_tier: tier,
+                selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
+                calendar_tracks: calendar,
+                showing_standings: false,
+            };
+        }
+        if self.game_mode == GameMode::Career {
+            return self.career_select_state_for(self.active_module_id);
+        }
+        self.menu_origin = MenuOrigin::ModalitySelect;
+        GameState::Menu
+    }
+
+    /// Starts the external gamepad-mapper tool and returns the status line to show.
+    ///
+    /// The mapper writes its local profile into the TDRace config directory (its working
+    /// directory), so [`Self::poll_gamepad_mapper`] reloads it when the mapper closes.
+    pub fn launch_gamepad_mapper(&mut self) -> String {
+        use crate::input::mapper_launch::{find_gamepad_mapper, GamepadMapperProcess, ENV_GAMEPAD_MAPPER};
+        let status = if self.gamepad_mapper.is_some() {
+            "Gamepad mapper is already open.".to_string()
+        } else if let Some(exe) = find_gamepad_mapper() {
+            match GamepadMapperProcess::launch(&exe, &crate::storage::resolve_user_config_dir()) {
+                Ok(process) => {
+                    self.gamepad_mapper = Some(process);
+                    "Gamepad mapper open. TDRace ignores the controller until you close it.".to_string()
+                }
+                Err(e) => format!("Could not start gamepad-mapper: {}", e),
+            }
+        } else {
+            format!("gamepad-mapper not found: put it next to TDRace or on PATH, or set {}.", ENV_GAMEPAD_MAPPER)
+        };
+        self.gamepad_mapper_status = Some(status.clone());
+        status
+    }
+
+    /// While the gamepad mapper is open, drops this frame's gamepad presses (the mapper reads the
+    /// same controller). When it closes, reloads the profile it saved.
+    fn poll_gamepad_mapper(&mut self) {
+        let Some(process) = self.gamepad_mapper.as_mut() else {
+            return;
+        };
+        if !process.has_exited() {
+            self.input.gamepad.clear_frame_events();
+            return;
+        }
+        self.gamepad_mapper = None;
+        self.input.gamepad.check_and_reload_profile();
+        let status = match self.input.gamepad.custom_profile.as_ref().map(|p| p.device_name.trim()) {
+            Some(name) if !name.is_empty() => format!("Gamepad mapper closed. Profile for {} loaded.", name),
+            _ => "Gamepad mapper closed. Saved profile loaded.".to_string(),
+        };
+        if let Some(modal) = self.settings_modal.as_mut() {
+            modal.sync_gamepad_config(&self.input.gamepad.config);
+            modal.gamepad_mapper_note = Some(status.clone());
+        }
+        self.gamepad_mapper_status = Some(status);
+    }
+
+    /// The Race Modality screen on the tab and card the player last left it on.
+    pub fn modality_return_state(&self) -> GameState {
+        let (category, selected_idx) = self.modality_cursor;
+        GameState::ModalitySelect { category, selected_idx, modal: None }
+    }
+
+    /// The Career Selection screen with the given discipline's card highlighted.
+    pub fn career_select_state_for(&self, module_id: &str) -> GameState {
+        let module_id = if module_id == "gt_challenge" { "gt" } else { module_id };
+        let (cards, _) = crate::ui::career_select::build_career_select_cards(
+            &self.championship_manager,
+            &self.profile_module_progress,
+            &self.active_career_progress,
+            self.championship_session.as_ref(),
+            &self.profile_history,
+        );
+        let selected_idx = cards.iter().position(|c| c.module_id == module_id).unwrap_or(0);
+        GameState::CareerSelect { selected_idx }
+    }
+
+    /// Leaves a paused race through the pause menu's EXIT RACE action.
+    fn exit_paused_race(&mut self) {
+        self.paused_countdown = None;
+        self.camera.resume_from_pause::<Car>(None);
+        if self.is_split_screen() {
+            self.camera_p2.resume_from_pause::<Car>(None);
+        }
+        let target = self.race_exit_target();
+        self.transition_fade_to(target, 0.35);
     }
 
     /// Updates input and state progression when in the post-race Finished state.
@@ -6098,54 +6337,7 @@ impl RaceSession {
             match current_view {
                 FinishedScreenView::Results => {
                     if self.championship_session.is_some() {
-                        let mut awarded_trophy: Option<ChampionshipAward> = None;
-                        if let Some(round_results) = self.pending_championship_results.take() {
-                            let car_model_id = self.selected_car_model_id
-                                .map(|s| s.to_string())
-                                .unwrap_or_else(|| self.active_player_car_choice().title().to_string());
-                            let profile_id = self.active_profile.id.unwrap_or(1);
-                            let module_id = self.active_module_id.to_string();
-
-                            if let Some(champ) = &mut self.championship_session {
-                                champ.submit_round_results(&self.track.name, round_results);
-                                if champ.is_completed {
-                                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
-                                        let finish_pos = (pos + 1) as u32;
-                                        match pos {
-                                            0 => self.active_career_progress.trophies_gold += 1,
-                                            1 => self.active_career_progress.trophies_silver += 1,
-                                            2 => self.active_career_progress.trophies_bronze += 1,
-                                            _ => {}
-                                        }
-                                        if finish_pos <= 3 {
-                                            awarded_trophy = Some(ChampionshipAward {
-                                                profile_id,
-                                                championship_id: champ.name.to_lowercase().replace(' ', "_"),
-                                                module_id,
-                                                tier: champ.tier,
-                                                position: finish_pos,
-                                                points: champ.standings[pos].points,
-                                                car_model_id,
-                                                achieved_at: chrono::Utc::now().to_rfc3339(),
-                                            });
-                                        }
-                                    }
-                                    self.active_career_progress.active_championship = None;
-                                } else {
-                                    self.active_career_progress.active_championship = Some(champ.clone());
-                                }
-                                if let Some(db) = &self.hof_db {
-                                    let _ = db.save_module_progress(&self.active_career_progress);
-                                }
-                                self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
-                            }
-                        }
-                        if let Some(award) = awarded_trophy {
-                            if let Some(db) = &self.hof_db {
-                                let _ = db.save_championship_award(&award);
-                            }
-                            self.refresh_profile_awards();
-                        }
+                        self.submit_pending_championship_round();
 
                         self.audio.play_sfx(SfxType::UiSelect);
                         if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
@@ -6174,13 +6366,8 @@ impl RaceSession {
                 }
                 FinishedScreenView::HallOfFame => {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
-                    } else {
-                        let target = self.race_exit_target();
-                        self.transition_fade_to(target, 0.35);
-                    }
+                    let target = self.race_exit_target();
+                    self.transition_fade_to(target, 0.35);
                     return;
                 }
                 FinishedScreenView::Statistics => {
@@ -6211,32 +6398,101 @@ impl RaceSession {
                 }
                 FinishedScreenView::Results => {
                     self.audio.play_sfx(SfxType::UiSelect);
-                    self.pending_championship_results = None;
-                    if self.return_to_editor_on_exit {
-                        self.return_to_editor_on_exit = false;
-                        self.transition_fade_to(GameState::TrackEditor, 0.35);
-                    } else if self.championship_session.is_some() && self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                        let tier = self.active_career_progress.level.clamp(1, 5);
-                        let calendar = if let Some(c) = &self.championship_session {
-                            c.track_ids.clone()
-                        } else {
-                            crate::ui::gt_default_calendar(tier)
-                        };
-                        self.career_hub_focus = CareerHubFocus::Tabs;
-                        self.state = GameState::CareerHub {
-                            selected_tier: tier,
-                            selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                            calendar_tracks: calendar,
-                            showing_standings: false,
-                        };
+                    // Leaving keeps the round: it is scored exactly as ENTER scores it. [R] is the
+                    // way to throw a round away (it re-runs it).
+                    self.submit_pending_championship_round();
+                    let target = self.race_exit_target();
+                    if matches!(target, GameState::CareerHub { .. }) {
+                        self.state = target;
                     } else {
-                        let target = self.race_exit_target();
                         self.transition_fade_to(target, 0.35);
                     }
                     return;
                 }
             }
             return;
+        }
+    }
+
+    /// Scores the finished round in the running championship (standings, trophies, saved
+    /// progress). Does nothing when there is no championship or the round was already scored.
+    fn submit_pending_championship_round(&mut self) {
+        if self.championship_session.is_none() {
+            return;
+        }
+        let mut awarded_trophy: Option<ChampionshipAward> = None;
+        let mut podium_bonus_to_award: Option<u64> = None;
+        if let Some(round_results) = self.pending_championship_results.take() {
+            let car_model_id = self.selected_car_model_id
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| self.active_player_car_choice().title().to_string());
+            let profile_id = self.active_profile.id.unwrap_or(1);
+            let module_id = self.active_module_id.to_string();
+
+            if let Some(champ) = &mut self.championship_session {
+                champ.submit_round_results(&self.track.name, round_results);
+                if champ.is_completed {
+                    if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
+                        let finish_pos = (pos + 1) as u32;
+                        let champ_id = champ.name.to_lowercase().replace(' ', "_");
+                        let now_str = chrono::Utc::now().to_rfc3339();
+                        let points = champ.standings[pos].points;
+
+                        self.active_career_progress.record_championship_finish(
+                            &champ_id,
+                            champ.tier,
+                            finish_pos,
+                            points,
+                            &now_str,
+                        );
+
+                        // Award championship overall podium bonus credits (Spec 053)
+                        let podium_bonus = ModuleCareerProgress::championship_podium_bonus(champ.tier, finish_pos as usize);
+                        if podium_bonus > 0 {
+                            podium_bonus_to_award = Some(podium_bonus);
+                        }
+
+                        if finish_pos <= 3 {
+                            awarded_trophy = Some(ChampionshipAward {
+                                profile_id,
+                                championship_id: champ_id,
+                                module_id,
+                                tier: champ.tier,
+                                position: finish_pos,
+                                points,
+                                car_model_id,
+                                achieved_at: now_str,
+                            });
+                        }
+                    }
+                    self.active_career_progress.active_championship = None;
+                } else {
+                    self.active_career_progress.active_championship = Some(champ.clone());
+                }
+                if let Some(db) = &self.hof_db {
+                    let _ = db.save_module_progress(&self.active_career_progress);
+                }
+                self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
+            }
+        }
+        if let Some(podium_bonus) = podium_bonus_to_award {
+            self.active_profile.add_credits(podium_bonus);
+            if let Some(db) = &self.hof_db {
+                let _ = db.update_profile(&self.active_profile);
+            }
+            self.spawn_hud_alert(
+                format!(
+                    "CHAMPIONSHIP PODIUM BONUS: +${} CREDITS! WALLET: ${} CR",
+                    podium_bonus, self.active_profile.credits
+                ),
+                Palette::NEON_GOLD,
+            );
+        }
+        if let Some(award) = awarded_trophy {
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_championship_award(&award);
+            }
+            self.refresh_profile_awards();
         }
     }
 
@@ -6278,23 +6534,7 @@ impl RaceSession {
         }
         if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
-            if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
-                let tier = self.active_career_progress.level.clamp(1, 5);
-                let calendar = if let Some(c) = &self.championship_session {
-                    c.track_ids.clone()
-                } else {
-                    crate::ui::gt_default_calendar(tier)
-                };
-                self.career_hub_focus = CareerHubFocus::Tabs;
-                self.state = GameState::CareerHub {
-                    selected_tier: tier,
-                    selected_slot: self.championship_session.as_ref().map(|c| c.current_round).unwrap_or(0),
-                    calendar_tracks: calendar,
-                    showing_standings: false,
-                };
-            } else {
-                self.state = GameState::Menu;
-            }
+            self.state = self.race_exit_target();
         }
     }
 
@@ -6867,11 +7107,7 @@ impl RaceSession {
             self.refresh_profiles_and_stats();
             match self.profile_origin {
                 ProfileOrigin::ModalitySelect => {
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 0,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 ProfileOrigin::ModuleSelect => {
                     self.state = GameState::ModuleSelect { selected_idx: 0 };
@@ -7260,6 +7496,8 @@ impl RaceSession {
                         is_active: p.is_active,
                         created_at: p.created_at.clone(),
                         last_mode: assist_mode,
+                        credits: p.credits,
+                        lifetime_credits: p.lifetime_credits,
                     })
                 });
 
@@ -7502,7 +7740,8 @@ impl RaceSession {
             return;
         }
 
-        let num_items = 7; // 0: Player Profile, 1..=6: Motorsport Modules
+        let num_modules = if self.is_dev_mode() { 7 } else { 6 };
+        let num_items = num_modules + 1; // 0: Player Profile, 1..=num_modules: Motorsport Modules
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.nav_up
@@ -7535,7 +7774,6 @@ impl RaceSession {
                 selected_idx = 0;
                 mouse_selected_item = Some(0);
             } else {
-                let num_modules = 6;
                 for i in 0..num_modules {
                     let (cx, cy, cw, ch) = crate::ui::menu::module_select_card_rect(sw, sh, i, num_modules);
                     if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
@@ -7604,6 +7842,7 @@ impl RaceSession {
         // New Profile (N key or Gamepad X)
         if is_key_pressed(KeyCode::N) || self.input.gamepad.snapshot.btn_x_pressed {
             self.audio.play_sfx(SfxType::UiSelect);
+            self.profile_origin = ProfileOrigin::ModuleSelect;
             let next_livery = self.profile_list.len() % Palette::CAR_COLORS.len();
             self.state = GameState::ProfileCreate {
                 editing_id: None,
@@ -7678,6 +7917,7 @@ impl RaceSession {
             }
             return;
         }
+        self.modality_cursor = (category, selected_idx);
 
         // Direct Garage Showroom shortcut (G key)
         if is_key_pressed(KeyCode::G) {
@@ -7840,6 +8080,7 @@ impl RaceSession {
             || mouse_confirmed_card
         {
             if let Some(&item) = items.get(selected_idx) {
+                self.modality_cursor = (category, selected_idx);
                 match item {
                     ModalityItem::PlayerProfile => {
                         self.audio.play_sfx(SfxType::UiSelect);
@@ -7956,6 +8197,7 @@ impl RaceSession {
                 "gt" | "gt_challenge" => 4,
                 "nascar" => 5,
                 "extreme_offroad" => 6,
+                "vault" => 7,
                 _ => 1,
             };
             self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
@@ -8016,11 +8258,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiMove);
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::Multiplayer,
-                selected_idx: 1, // LAN Play card
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -8032,18 +8270,34 @@ impl RaceSession {
         self.audio.play_sfx(SfxType::UiSelect);
         let profile_livery = Self::livery_id_from_color_scheme(&self.active_profile.color_scheme);
         if idx == 0 {
-            // Option 0: Host Room
+            // Option 0: Host Room. Clients only have the official circuits, so the lobby starts
+            // on the current circuit when it is an official, unlocked one of this module.
+            let presets: Vec<TrackChoice> = self
+                .track_manager
+                .preset_track_choices(self.active_module_id)
+                .into_iter()
+                .filter(|t| t.is_official_preset())
+                .collect();
+            let start_track = presets
+                .iter()
+                .find(|t| t.track_id() == self.track_choice.track_id() && self.is_track_unlocked(t.track_id()))
+                .or_else(|| presets.iter().find(|t| self.is_track_unlocked(t.track_id())))
+                .or_else(|| presets.first())
+                .cloned()
+                .unwrap_or(TrackChoice::ClassicGrandPrix);
+            let host_car = Self::lan_default_car(self.active_module_id, self.selected_car_model_id);
+
             let mut bound_host = None;
             for port in [cabinet::net::DEFAULT_GAME_PORT, 7778, 7779, 7780, 0] {
                 if let Ok(host) = cabinet::net::LanHost::bind(
                     format!("{}'s Grand Prix", self.active_profile.name),
                     &self.active_profile.name,
                     self.active_profile.country.as_deref().unwrap_or("ESP"),
-                    self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
+                    host_car,
                     profile_livery,
                     port,
                     8,
-                    self.track_choice.track_id(),
+                    start_track.track_id(),
                     self.active_module_id,
                     5,
                 ) {
@@ -8053,11 +8307,8 @@ impl RaceSession {
             }
 
             if let Some(host) = bound_host {
-                let track_names: Vec<String> = TrackChoice::ALL.iter().map(|tc| tc.track_id().to_string()).collect();
-                let mut screen = cabinet::net::CabinetLanHostScreen::new(host);
-                if !track_names.is_empty() {
-                    screen = screen.with_tracks(track_names);
-                }
+                let mut screen = cabinet::net::CabinetLanHostScreen::new(host).with_labels(Self::lan_car_label);
+                screen.set_track(start_track.track_id(), start_track.title());
                 self.lan_host_screen = Some(screen);
                 self.state = GameState::LanHostLobby;
             }
@@ -8074,10 +8325,44 @@ impl RaceSession {
         }
     }
 
+    /// Display name of a car model id in the LAN lobbies.
+    pub fn lan_car_label(car_model_id: &str) -> String {
+        crate::catalog::find_model_by_id(car_model_id)
+            .map(|m| m.name.to_string())
+            .unwrap_or_else(|| car_model_id.to_string())
+    }
+
+    /// Display title of an official circuit id in the LAN lobbies.
+    pub fn lan_track_label(track_id: &str) -> String {
+        tdrace_core::catalog::find(track_id, None)
+            .map(|c| c.name.to_string())
+            .unwrap_or_else(|| track_id.to_string())
+    }
+
+    /// The preferred car when it belongs to `module`, else the first tier-1 car of `module`.
+    pub fn lan_default_car(module: &str, preferred: Option<&'static str>) -> &'static str {
+        let models = crate::catalog::get_models_for_module(module);
+        preferred
+            .filter(|id| models.iter().any(|m| m.id == *id))
+            .or_else(|| models.iter().find(|m| m.tier == 1).or(models.first()).map(|m| m.id))
+            .unwrap_or("gt_ferrari_296_gt3")
+    }
+
+    /// Game module of the LAN lobby: the host's module, or the module of the host circuit on a client.
+    pub fn lan_lobby_module(&self) -> &'static str {
+        if let Some(ref screen) = self.lan_client_lobby_screen {
+            if let Some(c) = tdrace_core::catalog::find(screen.client().track_id(), None) {
+                return c.module;
+            }
+        }
+        self.active_module_id
+    }
+
     /// Updates authoritative host lobby screen, responds to ready changes, countdown, or disband.
     pub fn update_lan_host_lobby(&mut self, frame_dt: f32) {
         let mut launch = false;
         let mut exit = false;
+        let mut request = None;
 
         if let Some(ref mut screen) = self.lan_host_screen {
             let sw = screen_width_safe();
@@ -8092,9 +8377,17 @@ impl RaceSession {
                 exit = true;
             } else if screen.is_in_race() {
                 launch = true;
+            } else {
+                request = screen.take_request();
             }
         } else {
             exit = true;
+        }
+
+        match request {
+            Some(cabinet::net::LanLobbyRequest::PickCircuit) => return self.open_lan_circuit_selector(),
+            Some(cabinet::net::LanLobbyRequest::PickCar) => return self.open_lan_garage(),
+            None => {}
         }
 
         if exit {
@@ -8125,9 +8418,18 @@ impl RaceSession {
             if matches!(action, cabinet::state::stack::ScreenAction::Pop) {
                 exit = true;
             } else if let Some(lobby) = screen.take_connected_lobby_screen() {
-                self.lan_client_lobby_screen = Some(lobby);
+                self.lan_client_lobby_screen = Some(lobby.with_labels(Self::lan_car_label, Self::lan_track_label));
                 self.lan_join_screen = None;
                 self.state = GameState::LanClientLobby;
+                // The car must come from the host discipline.
+                let module = self.lan_lobby_module();
+                if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+                    let car = crate::catalog::find_model_by_id(&lobby.car_model_id).map(|m| m.id);
+                    let fixed = Self::lan_default_car(module, car);
+                    if car != Some(fixed) {
+                        lobby.set_local_car(fixed);
+                    }
+                }
                 return;
             }
         } else {
@@ -8145,6 +8447,7 @@ impl RaceSession {
     pub fn update_lan_client_lobby(&mut self, frame_dt: f32) {
         let mut exit = false;
         let mut launch = false;
+        let mut request = None;
 
         if let Some(ref mut screen) = self.lan_client_lobby_screen {
             let sw = screen_width_safe();
@@ -8159,9 +8462,15 @@ impl RaceSession {
                 exit = true;
             } else if screen.is_in_race() {
                 launch = true;
+            } else {
+                request = screen.take_request();
             }
         } else {
             exit = true;
+        }
+
+        if request == Some(cabinet::net::LanLobbyRequest::PickCar) {
+            return self.open_lan_garage();
         }
 
         if exit {
@@ -8174,6 +8483,138 @@ impl RaceSession {
                 Some(slot_id) => self.launch_lan_race_session(None, Some(client), slot_id),
                 None => self.state = GameState::LanHub { selected_idx: 1 },
             }
+        }
+    }
+
+    /// Opens the full-screen circuit selector for the LAN host, on the official circuits of the host module.
+    pub fn open_lan_circuit_selector(&mut self) {
+        self.menu_origin = MenuOrigin::LanHostLobby;
+        self.menu_track_filter = TrackCatalogFilter::Presets;
+        let current = self.lan_host_screen.as_ref().map(|s| s.host().track_id().to_string());
+        let tracks = self.filtered_menu_tracks();
+        self.menu_track_idx = current
+            .and_then(|id| tracks.iter().position(|t| t.track_id() == id))
+            .unwrap_or(0);
+        self.state = GameState::Menu;
+    }
+
+    /// Opens the Garage for the local LAN player, on the lobby module and the current car.
+    pub fn open_lan_garage(&mut self) {
+        let module = self.lan_lobby_module();
+        let current_car = if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+            // The host must not start while this player is choosing.
+            lobby.set_ready(false);
+            lobby.car_model_id.clone()
+        } else if let Some(ref screen) = self.lan_host_screen {
+            screen.host().slots().first().cloned().flatten().map(|s| s.car_model_id).unwrap_or_default()
+        } else {
+            return;
+        };
+        let current = crate::catalog::find_model_by_id(&current_car).filter(|m| m.module_id == module);
+        self.active_module_id = module;
+        self.garage_tier = current.map(|m| m.tier).unwrap_or(1);
+        let tier_models = crate::catalog::get_models_for_module_and_tier(module, self.garage_tier);
+        self.garage_car_idx = current
+            .and_then(|m| tier_models.iter().position(|t| t.id == m.id))
+            .unwrap_or(0);
+        self.garage_gallery_mode = false;
+        self.garage_origin = GarageOrigin::LanLobby;
+        self.state = GameState::Garage(GarageOrigin::LanLobby);
+    }
+
+    /// Returns from the LAN circuit selector or Garage to the lobby that opened it.
+    fn return_to_lan_lobby(&mut self) {
+        self.menu_origin = MenuOrigin::ModalitySelect;
+        self.state = if self.lan_client_lobby_screen.is_some() {
+            GameState::LanClientLobby
+        } else if self.lan_host_screen.is_some() {
+            GameState::LanHostLobby
+        } else {
+            GameState::LanHub { selected_idx: 0 }
+        };
+    }
+
+    /// Keeps a parked LAN lobby connected while its circuit selector, circuit viewer or Garage is open.
+    pub fn pump_parked_lan_lobby(&mut self, dt: f32) {
+        let parked = match self.state {
+            GameState::Menu | GameState::CircuitViewer(CircuitViewerOrigin::Menu) => {
+                self.menu_origin == MenuOrigin::LanHostLobby
+            }
+            GameState::Garage(GarageOrigin::LanLobby) => true,
+            _ => false,
+        };
+        if !parked {
+            return;
+        }
+        if let Some(ref mut screen) = self.lan_host_screen {
+            screen.pump_network(dt);
+        }
+        let lost = self.lan_client_lobby_screen.as_mut().is_some_and(|lobby| !lobby.pump_network(dt));
+        if lost {
+            self.lan_client_lobby_screen = None;
+            self.circuit_viewer_state = None;
+            self.audio.stop_all_loops();
+            self.audio.play_sfx(SfxType::UiMove);
+            self.state = GameState::LanHub { selected_idx: 1 };
+        }
+    }
+
+    /// Circuit selector input when opened from the LAN host lobby: pick an official circuit of the host module.
+    fn update_menu_lan_host(&mut self) {
+        self.menu_track_filter = TrackCatalogFilter::Presets;
+
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.return_to_lan_lobby();
+            return;
+        }
+
+        let tracks = self.filtered_menu_tracks();
+        let n = tracks.len();
+        if n == 0 {
+            return;
+        }
+        if self.menu_track_idx >= n {
+            self.menu_track_idx = 0;
+        }
+
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_track_idx = (self.menu_track_idx + n - 1) % n;
+        }
+        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_track_idx = (self.menu_track_idx + 1) % n;
+        }
+
+        let choice = &tracks[self.menu_track_idx];
+
+        if is_key_pressed(KeyCode::V) || is_key_pressed(KeyCode::Z) || self.input.gamepad.snapshot.btn_x_pressed {
+            if let Some(loaded_track) = resolve_track_for_menu(choice) {
+                self.open_circuit_viewer(loaded_track, choice.title().to_string(), CircuitViewerOrigin::Menu);
+            }
+            return;
+        }
+
+        if is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            if !self.is_track_unlocked(choice.track_id()) {
+                self.audio.play_sfx(SfxType::UiMove);
+                return;
+            }
+            self.audio.play_sfx(SfxType::UiSelect);
+            if let Some(ref mut screen) = self.lan_host_screen {
+                screen.set_track(choice.track_id(), choice.title());
+            }
+            self.return_to_lan_lobby();
         }
     }
 
@@ -8294,11 +8735,10 @@ impl RaceSession {
         let num_sectors = 3;
         let base_config = self.config.get_car_config(CarChoice::SportsCar);
 
-        self.cars.clear();
+        self.world.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
         self.car_lights_on.clear();
-        self.trackers.clear();
         self.ai_drivers.clear();
         self.grid_participants.clear();
         self.color_schemes.clear();
@@ -8333,9 +8773,6 @@ impl RaceSession {
             self.car_model_ids.push(Some(canonical_id));
             self.car_lights_on.push(true);
 
-            let tracker = TrackProgressTracker::new(num_cps, num_sectors);
-            self.trackers.push(tracker);
-
             self.grid_participants.push(GridParticipant {
                 is_player: is_me,
                 bot_index: None,
@@ -8361,12 +8798,12 @@ impl RaceSession {
                 car.config.player = Self::player_handling(&self.input.filter.config);
             }
 
-            self.cars.push(car);
+            self.world.spawn(car, TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         self.camera.setup_for_track(&self.track);
         let my_idx = self.player_car_index();
-        if let Some(player_car) = self.cars.get(my_idx) {
+        if let Some(player_car) = self.world.vehicles.get(my_idx) {
             self.camera.current_pos = player_car.state.position;
             self.camera.target_pos = player_car.state.position;
         }
@@ -8402,16 +8839,6 @@ impl RaceSession {
         self.lan_join_screen = None;
         self.lan_client_lobby_screen = None;
         self.lan_race = None;
-    }
-
-    /// Where leaving a race goes: the LAN hub (closing the LAN session) or the main menu.
-    fn race_exit_target(&mut self) -> GameState {
-        if self.is_lan_multiplayer {
-            self.exit_lan_session();
-            GameState::LanHub { selected_idx: 0 }
-        } else {
-            GameState::Menu
-        }
     }
 
     /// Updates input and state for the GT Career Hub screen.
@@ -8790,14 +9217,8 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.transition_fade_to(
-                GameState::ModalitySelect {
-                    category: ModalityCategory::SinglePlayer,
-                    selected_idx: 2,
-                    modal: None,
-                },
-                0.3,
-            );
+            let target = self.career_select_state_for(self.active_module_id);
+            self.transition_fade_to(target, 0.3);
             return;
         }
 
@@ -8809,12 +9230,48 @@ impl RaceSession {
         };
     }
 
+    /// Keeps the in-memory career progress of the active discipline in `profile_module_progress`,
+    /// so switching disciplines and back does not reload an older copy (Garage purchases).
+    fn stash_active_career_progress(&mut self) {
+        self.profile_module_progress
+            .insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
+    }
+
+    /// Shows another discipline's cars in the Garage with that discipline's own XP, unlocks and
+    /// purchases, without switching the session (see [`Self::garage_restore_entry`]).
+    fn garage_view_module(&mut self, module: &'static str) {
+        if module == self.active_module_id {
+            return;
+        }
+        self.stash_active_career_progress();
+        self.active_module_id = module;
+        self.sync_career_progress_for_active_module();
+    }
+
+    /// Puts back the discipline, tier and car the Garage was opened with, and forgets them.
+    pub fn garage_restore_entry(&mut self) {
+        if let Some((module, tier, car_idx)) = self.garage_entry.take() {
+            if module != self.active_module_id {
+                self.garage_view_module(module);
+                self.garage_tier = tier;
+                self.garage_car_idx = car_idx;
+            }
+        }
+    }
+
     /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
     pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
+        if self.garage_entry.is_none() {
+            self.garage_entry = Some((self.active_module_id, self.garage_tier, self.garage_car_idx));
+        }
+
         // 1. Turntable rotation & Revving state
         self.garage_turntable_angle += frame_dt * 0.45;
 
-        self.garage_revving = is_key_down(KeyCode::Space) || self.input.gamepad.snapshot.btn_a_pressed;
+        self.garage_revving = is_key_down(KeyCode::Space)
+            || self.input.gamepad.snapshot.btn_a_down
+            || self.input.gamepad.snapshot.btn_a_pressed
+            || self.input.gamepad.snapshot.throttle > 0.1;
         if self.garage_revving {
             self.garage_rev_rpm = (self.garage_rev_rpm + frame_dt * 3.5).min(1.0);
             self.garage_brake_heat = (self.garage_brake_heat + frame_dt * 0.4).min(1.0);
@@ -8846,19 +9303,19 @@ impl RaceSession {
                 return;
             }
             self.audio.stop_all_loops();
+            self.garage_restore_entry();
             match origin {
                 GarageOrigin::ModalitySelect => {
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 1,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 GarageOrigin::Menu => {
                     self.state = GameState::Menu;
                 }
                 GarageOrigin::StartingGrid => {
                     self.state = GameState::StartingGrid;
+                }
+                GarageOrigin::LanLobby => {
+                    self.return_to_lan_lobby();
                 }
                 GarageOrigin::CareerHub => {
                     let tier = self.active_career_progress.level.clamp(1, 5);
@@ -8889,7 +9346,10 @@ impl RaceSession {
         }
 
         // 4. Toggle Fleet Gallery (C / F / Gamepad X)
-        if is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::F) || self.input.gamepad.snapshot.btn_x_pressed {
+        // Not in LAN: the gallery switches module, and a LAN car must come from the host discipline.
+        if origin != GarageOrigin::LanLobby
+            && (is_key_pressed(KeyCode::C) || is_key_pressed(KeyCode::F) || self.input.gamepad.snapshot.btn_x_pressed)
+        {
             self.audio.play_sfx(SfxType::UiMove);
             self.garage_gallery_mode = !self.garage_gallery_mode;
             if self.garage_gallery_mode {
@@ -9021,7 +9481,7 @@ impl RaceSession {
                 }
                 if confirm_selection {
                     if let Some(car) = filtered_models.get(self.garage_gallery_sel) {
-                        self.active_module_id = car.module_id;
+                        self.garage_view_module(car.module_id);
                         self.garage_tier = car.tier;
                         let tier_models = crate::catalog::get_models_for_module_and_tier(car.module_id, car.tier);
                         if let Some(pos) = tier_models.iter().position(|m| m.id == car.id) {
@@ -9035,18 +9495,25 @@ impl RaceSession {
             return;
         }
 
-        // 5. Switching active module (1..=5)
+        // 5. Switching active module (1..=5); locked to the host discipline in LAN
         let prev_mod = self.active_module_id;
-        if is_key_pressed(KeyCode::Key1) {
-            self.active_module_id = "gt";
-        } else if is_key_pressed(KeyCode::Key2) {
-            self.active_module_id = "rally";
-        } else if is_key_pressed(KeyCode::Key3) {
-            self.active_module_id = "kart";
-        } else if is_key_pressed(KeyCode::Key4) {
-            self.active_module_id = "nascar";
-        } else if is_key_pressed(KeyCode::Key5) {
-            self.active_module_id = "extreme_offroad";
+        if origin != GarageOrigin::LanLobby {
+            let key_module = if is_key_pressed(KeyCode::Key1) {
+                Some("gt")
+            } else if is_key_pressed(KeyCode::Key2) {
+                Some("rally")
+            } else if is_key_pressed(KeyCode::Key3) {
+                Some("kart")
+            } else if is_key_pressed(KeyCode::Key4) {
+                Some("nascar")
+            } else if is_key_pressed(KeyCode::Key5) {
+                Some("extreme_offroad")
+            } else {
+                None
+            };
+            if let Some(module) = key_module {
+                self.garage_view_module(module);
+            }
         }
         if self.active_module_id != prev_mod {
             self.garage_car_idx = 0;
@@ -9070,7 +9537,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
-            if self.garage_tier < 5 {
+            if self.garage_tier < crate::catalog::garage_tier_count(self.active_module_id) {
                 self.garage_tier += 1;
                 self.garage_car_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
@@ -9131,6 +9598,31 @@ impl RaceSession {
 
                 if is_unlocked {
                     if confirm_pressed {
+                        // A car from another discipline than the Garage opened in switches the whole
+                        // session to that discipline, but only while no race is set up yet.
+                        let entry_module = self.garage_entry.map(|(m, _, _)| m).unwrap_or(self.active_module_id);
+                        if active_car.module_id != entry_module {
+                            let can_switch = matches!(origin, GarageOrigin::Menu | GarageOrigin::ModalitySelect)
+                                && self.game_mode != GameMode::Career
+                                && self.championship_session.is_none()
+                                && !self.is_lan_multiplayer;
+                            if !can_switch {
+                                let class = crate::ui::garage::GALLERY_MODULES
+                                    .iter()
+                                    .find(|(id, _)| *id == entry_module)
+                                    .map(|(_, label)| *label)
+                                    .unwrap_or("CLASSIC");
+                                self.spawn_hud_alert(format!("THIS RACE NEEDS A {} CAR", class), Palette::RED);
+                                self.audio.play_sfx(SfxType::UiMove);
+                                return;
+                            }
+                            let (tier, car_idx) = (self.garage_tier, self.garage_car_idx);
+                            self.stash_active_career_progress();
+                            self.switch_to_module(active_car.module_id);
+                            self.garage_tier = tier;
+                            self.garage_car_idx = car_idx;
+                            self.garage_entry = Some((self.active_module_id, tier, car_idx));
+                        }
                         self.car_choice = active_car.base_car_choice;
                         self.current_visual_type = active_car.visual_type;
                         self.selected_car_model_id = Some(active_car.id);
@@ -9145,6 +9637,15 @@ impl RaceSession {
                             GarageOrigin::Menu => {
                                 self.audio.stop_all_loops();
                                 self.state = GameState::Menu;
+                            }
+                            GarageOrigin::LanLobby => {
+                                self.audio.stop_all_loops();
+                                if let Some(ref mut lobby) = self.lan_client_lobby_screen {
+                                    lobby.set_local_car(active_car.id);
+                                } else if let Some(ref mut screen) = self.lan_host_screen {
+                                    screen.set_local_car(active_car.id);
+                                }
+                                self.return_to_lan_lobby();
                             }
                             GarageOrigin::CareerHub => {
                                 self.audio.stop_all_loops();
@@ -9167,16 +9668,19 @@ impl RaceSession {
                             }
                         }
                     }
-                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier) {
-                    if let Ok(()) = self.active_career_progress.buy_car(active_car.id, active_car.tier) {
+                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier, self.active_profile.credits) {
+                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    if let Ok(()) = self.active_career_progress.buy_car(&mut self.active_profile, active_car.id, active_car.tier) {
                         if let Some(db) = &self.hof_db {
                             let _ = db.save_module_progress(&self.active_career_progress);
+                            let _ = db.update_profile(&self.active_profile);
                         }
                         self.spawn_hud_alert(
                             format!(
-                                "PURCHASED {} FOR {} XP! BALANCE: {} XP",
+                                "PURCHASED {} FOR ${} CREDITS! WALLET: ${} CR (XP UNCHANGED: {} XP)",
                                 active_car.name,
-                                ModuleCareerProgress::car_cost(active_car.tier),
+                                cost,
+                                self.active_profile.credits,
                                 self.active_career_progress.xp
                             ),
                             Palette::NEON_GOLD,
@@ -9184,7 +9688,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 } else {
-                    let cost = ModuleCareerProgress::car_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
                     if self.active_career_progress.level < active_car.tier as u32 {
                         self.spawn_hud_alert(
                             format!(
@@ -9196,8 +9700,8 @@ impl RaceSession {
                     } else {
                         self.spawn_hud_alert(
                             format!(
-                                "CANNOT AFFORD: REQUIRES {} XP (WALLET: {} XP)",
-                                cost, self.active_career_progress.xp
+                                "CANNOT AFFORD: REQUIRES ${} CREDITS (WALLET: ${} CR)",
+                                cost, self.active_profile.credits
                             ),
                             Palette::RED,
                         );
@@ -9291,6 +9795,11 @@ impl RaceSession {
         // Check for gamepad mapping changes on disk when in/reloading the main menu
         self.input.gamepad.check_and_reload_profile();
 
+        if self.menu_origin == MenuOrigin::LanHostLobby {
+            self.update_menu_lan_host();
+            return;
+        }
+
         // If exit confirmation modal is currently open:
         if self.show_exit_confirm {
             if self.exit_confirm_modal.is_none() {
@@ -9353,15 +9862,16 @@ impl RaceSession {
             return;
         }
 
-        // Return to Modality Selection Screen or Starting Grid (Escape key or Gamepad B / Cancel / Back / Tab)
+        // Return to Modality Selection Screen or Starting Grid (Escape key or Gamepad B / Cancel / Back).
+        // Tab is not "back" here: it cycles the catalog filter below.
         if is_key_pressed(KeyCode::Escape)
-            || is_key_pressed(KeyCode::Tab)
             || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
             if self.menu_origin == MenuOrigin::StartingGrid {
+                self.menu_origin = MenuOrigin::ModalitySelect;
                 self.state = GameState::StartingGrid;
                 return;
             }
@@ -9651,6 +10161,7 @@ impl RaceSession {
                         .unwrap_or_else(|| self.track_choice.track_id());
                     if track_id == active_id {
                         self.audio.play_sfx(SfxType::UiSelect);
+                        self.menu_origin = MenuOrigin::ModalitySelect;
                         self.state = GameState::StartingGrid;
                         return;
                     } else {
@@ -9663,6 +10174,12 @@ impl RaceSession {
                     return;
                 }
                 self.audio.play_sfx(SfxType::UiSelect);
+                self.menu_origin = MenuOrigin::ModalitySelect;
+                if self.game_mode != GameMode::Career {
+                    // Picking a circuit starts a single race: drop a quick championship left open.
+                    self.championship_session = None;
+                    self.pending_championship_results = None;
+                }
                 self.track_choice = track_choice.clone();
                 let loaded = resolve_track_for_menu(&self.track_choice);
                 let effective_module = loaded.as_ref().and_then(|t| t.module_id.as_deref()).unwrap_or(self.active_module_id);
@@ -10733,8 +11250,11 @@ impl RaceSession {
             }
         }
 
-        // 11. Back to Main Menu (Escape / Gamepad Back)
-        if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_back_pressed {
+        // 11. Back to Main Menu (Escape / Gamepad B / Back)
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_back_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+        {
             self.audio.play_sfx(SfxType::UiMove);
             self.state = GameState::Menu;
             return;
@@ -10750,7 +11270,7 @@ impl RaceSession {
 
     /// High-performance deterministic fixed physics simulation step.
     pub fn physics_step(&mut self, dt: f32) {
-        let n_cars = self.cars.len();
+        let n_cars = self.world.vehicles.len();
         if n_cars == 0 {
             return;
         }
@@ -10768,8 +11288,8 @@ impl RaceSession {
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
         if is_split {
-            let p1_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-            let p2_speed = self.cars.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+            let p1_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+            let p2_speed = self.world.vehicles.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let (mut p1_ctrl, mut p2_ctrl) = self.input.poll_split_player_controls(
                 &mut self.filter_p2,
                 dt,
@@ -10792,7 +11312,7 @@ impl RaceSession {
             for i in 2..n_cars {
                 let ai_idx = i - 2;
                 let other_cars_refs: Vec<&Car> = self
-                    .cars
+                    .world.vehicles
                     .iter()
                     .enumerate()
                     .filter(|(idx, _)| *idx != i)
@@ -10801,7 +11321,7 @@ impl RaceSession {
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                     ai.compute_controls(
-                        &self.cars[i],
+                        &self.world.vehicles[i],
                         &self.track,
                         &other_cars_refs,
                         dt,
@@ -10821,7 +11341,7 @@ impl RaceSession {
                     CarControls::default()
                 }
             } else {
-                let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                let player_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                 let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
                 let touch_ctrl = self.touch.poll_controls();
                 let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -10844,7 +11364,7 @@ impl RaceSession {
                 } else {
                     let ai_idx = i - 1;
                     let other_cars_refs: Vec<&Car> = self
-                        .cars
+                        .world.vehicles
                         .iter()
                         .enumerate()
                         .filter(|(idx, _)| *idx != i)
@@ -10853,7 +11373,7 @@ impl RaceSession {
 
                     if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                         ai.compute_controls(
-                            &self.cars[i],
+                            &self.world.vehicles[i],
                             &self.track,
                             &other_cars_refs,
                             dt,
@@ -10866,113 +11386,62 @@ impl RaceSession {
             }
         }
 
-        // 2. Sample surfaces under all wheels of all cars
-        let mut wheel_surfaces = Vec::with_capacity(n_cars);
-        for (i, car) in self.cars.iter().enumerate() {
-            let prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            wheel_surfaces.push(self.track.sample_car_surfaces_with_hint(car, prog));
+        // 2-6. Race step (race-kit, spec 056): surfaces, slipstream draft, vehicle dynamics with road
+        // elevation & banking, tree canopy drag, jump ramps, car-to-car and wall collisions, lap tracking.
+        // Everything below reacts to its events, in the order they happened.
+        self.world.rules.format = self.race_format();
+        if self.lan_ghost_collisions() {
+            self.world.rules.collision.iterations = 0;
+        } else {
+            self.world.rules.collision = CollisionParams::default();
         }
 
-        // 2b. Compute aerodynamic slipstream wake drafting between cars
-        let mut drafts = Vec::with_capacity(n_cars);
-        for i in 0..n_cars {
-            let other_refs: Vec<&Car> = self
-                .cars
-                .iter()
-                .enumerate()
-                .filter(|(idx, _)| *idx != i)
-                .map(|(_, c)| c)
-                .collect();
-            drafts.push(self.cars[i].compute_draft_intensity(&other_refs));
-        }
-        for i in 0..n_cars {
-            self.cars[i].state.draft_intensity = drafts[i];
-        }
-
-        // 3. Step individual vehicle dynamics and update road elevation & cross-slope banking
-        for i in 0..n_cars {
-            if lan_remote[i] {
-                continue;
-            }
-            let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
-            self.cars[i].state.road_elevation = proj.elevation;
-            self.cars[i].state.road_bank_angle = proj.bank_angle;
-            self.cars[i].state.road_grade_slope = proj.grade_slope;
-            self.cars[i].state.road_vertical_curvature = proj.vertical_curvature;
-            self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
-            self.cars[i].state.track_forward = proj.tangent;
-
-            self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
-
-            // Soft tree canopy brush interaction: viscous foliage drag & leaf roost particles
-            if !self.cars[i].state.is_airborne && self.cars[i].state.elevation < 0.6 {
-                for tree in &self.track.geometry.trees {
-                    let car_pos = self.cars[i].state.position;
-                    if tree.contains_canopy(car_pos) && !tree.contains_trunk(car_pos) {
-                        let drag_rate = tree.tree_type.canopy_drag_deceleration();
-                        self.cars[i].state.velocity *= (1.0 - drag_rate * dt).max(0.0);
-                        self.cars[i].state.speed = self.cars[i].state.velocity.length();
-
-                        if self.cars[i].state.speed > 3.0 {
-                            self.fx.particles.emit_foliage_roost(
-                                car_pos,
-                                tree.tree_type,
-                                self.cars[i].state.velocity,
-                            );
-                        }
-                    }
-                }
+        let lan_saved: Vec<(usize, tdrace_core::physics::car::CarState, TrackProgressTracker)> = (0..n_cars)
+            .filter(|&i| lan_remote[i])
+            .map(|i| (i, self.world.vehicles[i].state.clone(), self.world.trackers[i].clone()))
+            .collect();
+        for &(i, _, _) in &lan_saved {
+            if self.lan_car_passive(i) {
+                self.world.vehicles[i].state.position = Vec2::splat(1.0e7 + i as f32 * 1.0e3);
             }
         }
 
+        let race_events: Vec<RaceEvent> = self.world.step(&self.track, &controls_all, dt).to_vec();
+        let wheel_surfaces = self.world.last_surfaces.clone();
+
+        for (i, state, tracker) in lan_saved {
+            self.world.vehicles[i].state = state;
+            self.world.trackers[i] = tracker;
+        }
+
+        // Soft tree canopy brush interaction: leaf roost particles
+        for ev in &race_events {
+            if let RaceEvent::CanopyBrush { tree, position, velocity, .. } = *ev {
+                self.fx.particles.emit_foliage_roost(position, tree, velocity);
+            }
+        }
         // Track human player top speed
         let my_car_idx = self.player_car_index();
-        if let Some(player_car) = self.cars.get(my_car_idx) {
-            self.player_race_stats.top_speed_mps = self.player_race_stats.top_speed_mps.max(player_car.state.speed);
+        if let Some(&top_speed) = self.world.top_speed.get(my_car_idx) {
+            self.player_race_stats.top_speed_mps = self.player_race_stats.top_speed_mps.max(top_speed);
         }
 
-        // Continuous Jump Ramp Traversal, Lip Takeoff & Landing SFX/FX
+        // Jump Landing SFX/FX
         let mut player_jump_air_time = None;
-        for (i, car) in self.cars.iter_mut().enumerate() {
-            if lan_remote[i] {
-                continue;
-            }
-            let was_airborne = car.state.is_airborne;
-            let mut on_any_ramp = false;
-
-            if !was_airborne {
-                for ramp in &self.track.geometry.jump_ramps {
-                    if ramp.contains(car.state.position) {
-                        on_any_ramp = true;
-                        if car.step_ramp_interaction(ramp, dt) {
-                            break;
-                        }
-                    }
-                }
-                if !on_any_ramp {
-                    if car.state.ramp_elevation > 0.10 {
-                        // Rolled off an elevated ramp edge without launching at speed
-                        car.state.elevation = car.state.ramp_elevation;
-                        car.state.is_airborne = true;
-                        car.state.vertical_velocity = 0.0;
-                    }
-                    car.state.ramp_elevation = 0.0;
-                }
-            }
-            if car.state.just_landed {
+        for ev in &race_events {
+            if let RaceEvent::Landed { car: i, air_time, position, speed } = *ev {
                 if i == my_car_idx {
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera.add_trauma(0.25);
-                    if car.state.last_air_time >= 0.20 {
-                        player_jump_air_time = Some(car.state.last_air_time);
+                    if air_time >= 0.20 {
+                        player_jump_air_time = Some(air_time);
                     }
                 } else if i == 1 && is_split {
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera_p2.add_trauma(0.25);
                 }
                 let surf = wheel_surfaces.get(i).map(|s| s[0]).unwrap_or(SurfaceType::Asphalt);
-                self.fx.particles.emit_landing_dust(car.state.position, car.state.speed, surf);
+                self.fx.particles.emit_landing_dust(position, speed, surf);
             }
         }
 
@@ -10985,7 +11454,7 @@ impl RaceSession {
                 self.player_race_stats.stunt_stats.jump_points += pts;
                 self.player_race_stats.stunt_stats.total_stunt_score += pts;
 
-                if let Some(player_car) = self.cars.get(my_car_idx) {
+                if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                     let sw = screen_width_safe();
                     let sh = screen_height_safe();
                     let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
@@ -11034,7 +11503,7 @@ impl RaceSession {
             if let Some(surfaces) = wheel_surfaces.get(p_idx) {
                 let in_water = surfaces.iter().any(|&s| s == SurfaceType::Water);
                 if in_water {
-                    if let Some(car) = self.cars.get(p_idx) {
+                    if let Some(car) = self.world.vehicles.get(p_idx) {
                         if !car.state.is_airborne
                             && car.state.elevation <= 0.0
                             && car.state.speed > 3.0
@@ -11048,97 +11517,69 @@ impl RaceSession {
             }
         }
 
-        // 4. Resolve Car-to-Car collisions with momentum exchange and penetration pushback
-        // LAN: only the own car takes the impulse; each owner resolves its own side of a contact.
-        // A car that left or finished is moved out of reach for the solve, so it collides with nothing.
-        let lan_saved: Vec<(usize, tdrace_core::physics::car::CarState)> = (0..n_cars)
-            .filter(|&i| lan_remote[i])
-            .map(|i| (i, self.cars[i].state.clone()))
+        // Car-to-Car collision events
+        let car_collision_events: Vec<CarCarCollisionEvent> = race_events
+            .iter()
+            .filter_map(|ev| if let RaceEvent::VehicleImpact(cev) = ev { Some(*cev) } else { None })
             .collect();
-        for &(i, _) in &lan_saved {
-            if self.lan_car_passive(i) {
-                self.cars[i].state.position = Vec2::splat(1.0e7 + i as f32 * 1.0e3);
-            }
-        }
-        let car_collision_events = if n_cars > 1 && !self.lan_ghost_collisions() {
-            resolve_multi_car_collisions(&mut self.cars, 0.45, 0.35, 3)
-        } else {
-            Vec::new()
-        };
-        for (i, state) in lan_saved {
-            self.cars[i].state = state;
-        }
 
-        // 5. Resolve Wall and Obstacle boundary collisions for each car (including grandstands & tree trunks)
-        let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
+        // Wall and Obstacle collision events (including grandstands & tree trunks)
         let demolition_mode = self.is_demolition_scoring_enabled();
         let mut wall_collision_events = Vec::new();
-        for (car_idx, car) in self.cars.iter_mut().enumerate() {
-            if lan_remote[car_idx] {
-                continue;
-            }
-            let mut wall_events = resolve_all_wall_collisions(
-                car,
-                &self.track.geometry.inner_walls,
-                &scenery_obstacles,
-            );
-            let outer_events =
-                resolve_all_wall_collisions(car, &self.track.geometry.outer_walls, &[]);
-            wall_events.extend(outer_events);
-
-            for wev in &wall_events {
-                if wev.impact_speed > 2.0 && !demolition_mode {
-                    car.state.drift_score = 0.0;
-                    car.state.is_drifting = false;
-                    if car_idx == my_car_idx {
-                        self.player_collision_stunt_lockout = 1.2;
-                        if self.drift_combo_count > 0 || self.prev_player_drifting {
-                            if self.drift_combo_count >= 2 || self.prev_player_drifting {
-                                let sw = screen_width_safe();
-                                let sh = screen_height_safe();
-                                let screen_pos = self.camera.world_to_screen_with_viewport(car.state.position, sw, sh);
-                                let anchor = Vec2::new(
-                                    screen_pos.x.clamp(100.0, sw - 100.0),
-                                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
-                                );
-                                let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
-                                self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
-                            }
-                            self.drift_combo_count = 0;
-                            self.drift_combo_timer = 0.0;
-                            self.prev_player_drifting = false;
+        for ev in &race_events {
+            let RaceEvent::WallImpact { car: car_idx, event: wev } = *ev else { continue };
+            let car = &mut self.world.vehicles[car_idx];
+            if wev.impact_speed > 2.0 && !demolition_mode {
+                car.state.drift_score = 0.0;
+                car.state.is_drifting = false;
+                if car_idx == my_car_idx {
+                    self.player_collision_stunt_lockout = 1.2;
+                    if self.drift_combo_count > 0 || self.prev_player_drifting {
+                        if self.drift_combo_count >= 2 || self.prev_player_drifting {
+                            let sw = screen_width_safe();
+                            let sh = screen_height_safe();
+                            let screen_pos = self.camera.world_to_screen_with_viewport(car.state.position, sw, sh);
+                            let anchor = Vec2::new(
+                                screen_pos.x.clamp(100.0, sw - 100.0),
+                                (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                            );
+                            let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
+                            self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
                         }
-                    } else if car_idx == 1 && is_split {
-                        self.player2_collision_stunt_lockout = 1.2;
+                        self.drift_combo_count = 0;
+                        self.drift_combo_timer = 0.0;
+                        self.prev_player_drifting = false;
                     }
-                }
-                if wev.impact_speed > 3.0 {
-                    if car_idx == my_car_idx {
-                        self.camera.add_trauma(wev.impact_speed * 0.08);
-                    } else if car_idx == 1 && is_split {
-                        self.camera_p2.add_trauma(wev.impact_speed * 0.08);
-                    }
-                }
-                if wev.impact_speed > 2.2 {
-                    if car_idx == my_car_idx {
-                        self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
-                    }
-                    let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
-                    self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
+                } else if car_idx == 1 && is_split {
+                    self.player2_collision_stunt_lockout = 1.2;
                 }
             }
-            wall_collision_events.extend(wall_events);
+            if wev.impact_speed > 3.0 {
+                if car_idx == my_car_idx {
+                    self.camera.add_trauma(wev.impact_speed * 0.08);
+                } else if car_idx == 1 && is_split {
+                    self.camera_p2.add_trauma(wev.impact_speed * 0.08);
+                }
+            }
+            if wev.impact_speed > 2.2 {
+                if car_idx == my_car_idx {
+                    self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                }
+                let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
+                self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
+            }
+            wall_collision_events.push(wev);
         }
 
         for cev in &car_collision_events {
             if cev.closing_speed > 2.0 && !demolition_mode {
-                if cev.car_a_idx < self.cars.len() {
-                    self.cars[cev.car_a_idx].state.drift_score = 0.0;
-                    self.cars[cev.car_a_idx].state.is_drifting = false;
+                if cev.car_a_idx < self.world.vehicles.len() {
+                    self.world.vehicles[cev.car_a_idx].state.drift_score = 0.0;
+                    self.world.vehicles[cev.car_a_idx].state.is_drifting = false;
                 }
-                if cev.car_b_idx < self.cars.len() {
-                    self.cars[cev.car_b_idx].state.drift_score = 0.0;
-                    self.cars[cev.car_b_idx].state.is_drifting = false;
+                if cev.car_b_idx < self.world.vehicles.len() {
+                    self.world.vehicles[cev.car_b_idx].state.drift_score = 0.0;
+                    self.world.vehicles[cev.car_b_idx].state.is_drifting = false;
                 }
                 if cev.car_a_idx == my_car_idx || cev.car_b_idx == my_car_idx {
                     self.player_collision_stunt_lockout = 1.2;
@@ -11146,7 +11587,7 @@ impl RaceSession {
                         if self.drift_combo_count >= 2 || self.prev_player_drifting {
                             let sw = screen_width_safe();
                             let sh = screen_height_safe();
-                            let pos = self.cars.get(my_car_idx).map(|c| c.state.position).unwrap_or(Vec2::ZERO);
+                            let pos = self.world.vehicles.get(my_car_idx).map(|c| c.state.position).unwrap_or(Vec2::ZERO);
                             let screen_pos = self.camera.world_to_screen_with_viewport(pos, sw, sh);
                             let anchor = Vec2::new(
                                 screen_pos.x.clamp(100.0, sw - 100.0),
@@ -11189,7 +11630,7 @@ impl RaceSession {
         // Dynamic Accelerating Engine Audio (motor sound only) (Spec 038)
         // Engine RPM rev flare must strictly reflect driven wheels' longitudinal slip ratio,
         // isolating engine acoustics from unpowered front steer wheels' lateral slip angles.
-        if let Some(player_car) = self.cars.get(my_car_idx) {
+        if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
             let driven_slip_ratio = player_car.state.wheel_assemblies.iter()
                 .zip(player_car.state.wheels.iter())
                 .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
@@ -11208,8 +11649,8 @@ impl RaceSession {
             self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
         }
 
-        if is_split && self.cars.len() >= 2 {
-            let p2_car = &self.cars[1];
+        if is_split && self.world.vehicles.len() >= 2 {
+            let p2_car = &self.world.vehicles[1];
             let driven_slip_ratio = p2_car.state.wheel_assemblies.iter()
                 .zip(p2_car.state.wheels.iter())
                 .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
@@ -11230,22 +11671,9 @@ impl RaceSession {
             self.audio.stop_player2_engine();
         }
 
-        // 6. Update race progression, lap tracking, sector splits, anti-cheat
-        // (LAN remote trackers are set from the owner's state in `lan_apply_remote_poses`.)
-        for i in 0..n_cars {
-            if lan_remote[i] {
-                continue;
-            }
-            self.trackers[i].update(
-                &self.cars[i],
-                &self.track.spline,
-                &self.track.checkpoints,
-                dt,
-            );
-        }
 
         // Lap and sector split audio feedback
-        if let Some(tracker) = self.trackers.get(my_car_idx) {
+        if let Some(tracker) = self.world.trackers.get(my_car_idx) {
             let lap_changed = tracker.current_lap > self.prev_player_lap;
 
             if tracker.current_sector != self.prev_player_sector {
@@ -11300,7 +11728,7 @@ impl RaceSession {
 
             // 7. Ghost lap telemetry recording (Time Attack)
             if self.is_time_attack {
-                if let Some(player_car) = self.cars.get(my_car_idx) {
+                if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                     self.ghost_recorder.record_frame(tracker.lap_time, player_car, dt);
 
                     if lap_changed {
@@ -11356,7 +11784,7 @@ impl RaceSession {
                             duration: 3.5,
                         });
 
-                        if let Some(player_car) = self.cars.get(my_car_idx) {
+                        if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                             let popup_msg = if let Some(d) = delta {
                                 format!("PERSONAL BEST! {} (-{:.2}s)", format_lap_time(last_lap_time), d)
                             } else {
@@ -11383,8 +11811,8 @@ impl RaceSession {
         }
 
         // Lap and sector split audio feedback for Player 2
-        if is_split && self.trackers.len() >= 2 {
-            let p2_tracker = &self.trackers[1];
+        if is_split && self.world.trackers.len() >= 2 {
+            let p2_tracker = &self.world.trackers[1];
             let p2_lap_changed = p2_tracker.current_lap > self.prev_p2_lap;
             if p2_tracker.current_sector != self.prev_p2_sector {
                 if p2_tracker.current_sector > 0 {
@@ -11402,7 +11830,7 @@ impl RaceSession {
 
         // 8. Replay frame recording
         if let Some(rec) = &mut self.replay_recorder {
-            if let (Some(player_car), Some(tracker)) = (self.cars.get(my_car_idx), self.trackers.get(my_car_idx)) {
+            if let (Some(player_car), Some(tracker)) = (self.world.vehicles.get(my_car_idx), self.world.trackers.get(my_car_idx)) {
                 let my_ctrl = controls_all.get(my_car_idx).copied().unwrap_or_default();
                 rec.record_frame(my_ctrl, player_car, tracker);
             }
@@ -11410,7 +11838,7 @@ impl RaceSession {
 
         // 9. Update visual effects (skidmarks, tire smoke, roost, collision sparks, drift popups)
         self.fx.update(
-            &self.cars,
+            &self.world.vehicles,
             &wheel_surfaces,
             &wall_collision_events,
             &car_collision_events,
@@ -11419,7 +11847,7 @@ impl RaceSession {
 
         // 9b. Drift Combo & HUD Floating Popups
         let stunt_scoring_enabled = self.is_stunt_scoring_enabled();
-        if let Some(player_car) = self.cars.get_mut(my_car_idx) {
+        if let Some(player_car) = self.world.vehicles.get_mut(my_car_idx) {
             let was_drifting = self.prev_player_drifting;
             let is_drifting = player_car.state.is_drifting;
 
@@ -11466,7 +11894,7 @@ impl RaceSession {
         }
 
         // Ensure non-player cars also clear drift_score when not drifting
-        for (i, car) in self.cars.iter_mut().enumerate() {
+        for (i, car) in self.world.vehicles.iter_mut().enumerate() {
             if i != my_car_idx && !car.state.is_drifting && car.state.drift_score > 0.0 {
                 car.state.drift_score = 0.0;
             }
@@ -11491,11 +11919,11 @@ impl RaceSession {
         let player_done = if let Some(ref lan) = self.lan_race {
             lan.results.is_some()
         } else if self.is_split_screen() {
-            let p1_done = self.trackers.first().is_some_and(|t| t.current_lap > self.total_laps);
-            let p2_done = self.trackers.get(1).is_some_and(|t| t.current_lap > self.total_laps);
+            let p1_done = self.world.trackers.first().is_some_and(|t| t.current_lap > self.total_laps);
+            let p2_done = self.world.trackers.get(1).is_some_and(|t| t.current_lap > self.total_laps);
             p1_done || p2_done
         } else {
-            self.trackers
+            self.world.trackers
                 .get(my_car_idx)
                 .is_some_and(|t| t.current_lap > self.total_laps)
         };
@@ -11506,8 +11934,8 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::RaceFinish);
 
             let track_id = self.track_choice_id().to_string();
-            let player_time = self.session_time;
-            let player_best_lap = self.trackers.get(my_car_idx).and_then(|t| t.best_lap_time);
+            let player_time = self.results.iter().find(|r| r.car_idx == my_car_idx).map(|r| r.total_time).unwrap_or(self.session_time);
+            let player_best_lap = self.world.trackers.get(my_car_idx).and_then(|t| t.best_lap_time);
 
             // 1. Check personal best lap against active profile stats before updating
             let prev_best_lap = self.active_profile_stats.best_times.get(&track_id).copied();
@@ -11528,7 +11956,7 @@ impl RaceSession {
                     track_id: track_id.clone(),
                     car_name: player_car_title.clone(),
                     position: player_pos,
-                    total_cars: self.cars.len(),
+                    total_cars: self.world.vehicles.len(),
                     total_time: player_time,
                     best_lap: player_best_lap,
                     laps: self.total_laps,
@@ -11548,8 +11976,9 @@ impl RaceSession {
             // 3. Automatically record all race finishers (player + bots) into the Hall of Fame
             let mut player_hof_id: Option<i64> = None;
             if let Some(db) = &self.hof_db {
-                let standings = self.compute_standings();
-                for (rank, &car_idx) in standings.iter().enumerate() {
+                let race_results = self.world.results(&self.track);
+                for row in &race_results {
+                    let car_idx = row.car;
                     let is_me = car_idx == my_car_idx;
                     let is_p2 = self.is_split_screen() && car_idx == 1;
                     let (driver_name, vehicle_name) = if is_me {
@@ -11579,15 +12008,13 @@ impl RaceSession {
                         }
                     };
 
-                    let tracker = &self.trackers[car_idx];
-                    let total_time = self.session_time + (rank as f32 * 0.65);
                     let entry = HallOfFameEntry {
                         id: None,
                         track_id: track_id.clone(),
                         player_name: driver_name,
                         car_name: vehicle_name,
-                        total_time,
-                        best_lap: tracker.best_lap_time,
+                        total_time: row.time,
+                        best_lap: row.best_lap,
                         laps: self.total_laps,
                         created_at: String::new(),
                     };
@@ -11629,15 +12056,26 @@ impl RaceSession {
                 None
             };
 
-            // 7. Career XP Award (GT World Challenge / Career mode)
+            // 7. Career XP & Prize Purse Award (GT World Challenge / Career mode)
             if self.active_module_id == "gt" || self.game_mode == GameMode::Career {
                 // Metric distance-based XP: track length / 10, rounded to 10
                 let track_len_m = self.track.spline.total_length().max(100.0);
                 let per_lap_xp = ModuleCareerProgress::round_to_10((track_len_m / 10.0) as u64);
                 let completed_laps = self.total_laps;
-                let lap_xp = per_lap_xp * (completed_laps as u64);
-                // Completing a race gives an extra bonus duplicating lap points
-                let completion_bonus = lap_xp;
+                let base_lap_xp = per_lap_xp * (completed_laps as u64);
+
+                // Position multiplier for XP (Spec 053)
+                let mult_xp = ModuleCareerProgress::xp_position_multiplier(player_pos);
+                let lap_xp = ((base_lap_xp as f64) * mult_xp).round() as u64;
+
+                // Clean race bonus XP: +25% of base lap XP (Spec 053)
+                let is_clean = self.player_race_stats.collision_count == 0;
+                let clean_xp_bonus = if is_clean {
+                    ((base_lap_xp as f64) * 0.25).round() as u64
+                } else {
+                    0
+                };
+                let completion_bonus = clean_xp_bonus;
 
                 // First-time circuit bonus: 250 XP x tier (Tier 1: 250, Tier 2: 500, Tier 3: 750, etc.)
                 let is_first_time = !self.active_career_progress.visited_tracks.iter().any(|t| t == &track_id);
@@ -11648,8 +12086,17 @@ impl RaceSession {
                     0
                 };
 
-                let total_xp = lap_xp + completion_bonus + first_time_bonus;
+                let total_xp = lap_xp + clean_xp_bonus + first_time_bonus;
                 self.active_career_progress.add_xp(total_xp);
+
+                // Prize purse calculation (Credits) (Spec 053)
+                let (finish_prize, clean_credit_bonus) = ModuleCareerProgress::calculate_round_purse(
+                    self.active_career_progress.level,
+                    player_pos,
+                    is_clean,
+                );
+                let total_credits = finish_prize + clean_credit_bonus;
+                self.active_profile.add_credits(total_credits);
 
                 let receipt = XpAwardReceipt {
                     per_lap_xp,
@@ -11660,26 +12107,36 @@ impl RaceSession {
                     total_xp,
                     new_balance: self.active_career_progress.xp,
                     is_first_time,
+                    credits_earned: finish_prize,
+                    clean_bonus_credits: clean_credit_bonus,
+                    new_credits_balance: self.active_profile.credits,
                 };
                 self.last_xp_receipt = Some(receipt);
 
                 if let Some(db) = &self.hof_db {
                     let _ = db.save_module_progress(&self.active_career_progress);
+                    let _ = db.update_profile(&self.active_profile);
                 }
+
+                let clean_msg = if clean_credit_bonus > 0 {
+                    format!(" (CLEAN BONUS: +${} Cr)", clean_credit_bonus)
+                } else {
+                    "".to_string()
+                };
 
                 if first_time_bonus > 0 {
                     self.spawn_hud_alert(
                         format!(
-                            "+{} XP (LAPS: {}, FINISH: {}, 1ST VISIT: +{}) | WALLET: {} XP",
-                            total_xp, lap_xp, completion_bonus, first_time_bonus, self.active_career_progress.xp
+                            "+{} XP (1ST VISIT: +{}) | +${} CR{} | WALLET: ${} CR",
+                            total_xp, first_time_bonus, total_credits, clean_msg, self.active_profile.credits
                         ),
                         Palette::NEON_GOLD,
                     );
                 } else {
                     self.spawn_hud_alert(
                         format!(
-                            "+{} XP (LAPS: {}, FINISH: {}) | WALLET: {} XP",
-                            total_xp, lap_xp, completion_bonus, self.active_career_progress.xp
+                            "+{} XP | +${} CR{} | WALLET: ${} CR",
+                            total_xp, total_credits, clean_msg, self.active_profile.credits
                         ),
                         Palette::NEON_CYAN,
                     );
@@ -11767,8 +12224,8 @@ impl RaceSession {
 
             // Populate fallback telemetry if synthetic test or laps empty
             if self.player_race_stats.laps.is_empty() {
-                let best = self.trackers.get(my_car_idx).and_then(|t| t.best_lap_time).unwrap_or(self.session_time / self.total_laps.max(1) as f32);
-                let sectors = self.trackers.get(my_car_idx).map(|t| t.last_lap_sector_times.clone()).unwrap_or_default();
+                let best = self.world.trackers.get(my_car_idx).and_then(|t| t.best_lap_time).unwrap_or(self.session_time / self.total_laps.max(1) as f32);
+                let sectors = self.world.trackers.get(my_car_idx).map(|t| t.last_lap_sector_times.clone()).unwrap_or_default();
                 for lap_idx in 1..=self.total_laps {
                     self.player_race_stats.laps.push(LapTelemetry {
                         lap_number: lap_idx,
@@ -11787,35 +12244,32 @@ impl RaceSession {
         }
     }
 
-    /// Computes real-time race standings.
+    /// Race format of the world for the current settings.
+    fn race_format(&self) -> RaceFormat {
+        if self.is_time_attack {
+            RaceFormat::TimeAttack
+        } else {
+            RaceFormat::Laps(self.total_laps)
+        }
+    }
+
+    /// Computes real-time race standings: finished cars in finish order, then by lap and progress.
     pub fn compute_standings(&self) -> Vec<usize> {
         if let Some(order) = self.lan_result_order() {
             return order;
         }
-        let mut indices: Vec<usize> = (0..self.cars.len()).collect();
-        indices.sort_by(|&a, &b| {
-            let tr_a = &self.trackers[a];
-            let tr_b = &self.trackers[b];
-
-            // Primary: Lap number descending
-            if tr_a.current_lap != tr_b.current_lap {
-                return tr_b.current_lap.cmp(&tr_a.current_lap);
-            }
-            // Secondary: Normalized track progress descending
-            tr_b.normalized_progress
-                .partial_cmp(&tr_a.normalized_progress)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        indices
+        self.world.standings()
     }
 
     /// Builds the final results standings table.
     fn build_results(&mut self) {
         let my_car_idx = self.player_car_index();
-        let standings = self.compute_standings();
+        let race_results = self.world.results(&self.track);
         self.results.clear();
+        let leader_time = race_results.first().map(|r| r.time).unwrap_or(0.0);
 
-        for (rank, &car_idx) in standings.iter().enumerate() {
+        for row in &race_results {
+            let (rank, car_idx) = (row.position - 1, row.car);
             let is_player = car_idx == my_car_idx || (self.is_split_screen() && car_idx == 1);
             let car_name = if car_idx == my_car_idx {
                 if self.is_split_screen() {
@@ -11844,13 +12298,10 @@ impl RaceSession {
                 }
             };
 
-            let tracker = &self.trackers[car_idx];
-            let mut total_time = self.session_time + (rank as f32 * 0.65);
-            let leader_time = self.session_time;
-            let mut best_lap = tracker.best_lap_time;
-            // LAN: finish times and best laps are the host's (shared race clock).
+            let mut total_time = row.time;
+            let mut best_lap = row.best_lap;
             if let Some(result) = self.lan_result_of(car_idx) {
-                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(self.session_time);
+                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(row.time);
                 best_lap = result.best_lap_ms.map(|ms| ms as f32 / 1000.0).or(best_lap);
             }
             let leader_time = self
@@ -11870,6 +12321,7 @@ impl RaceSession {
                 delta_to_leader: delta,
                 car_idx,
                 points_awarded: 0,
+                projected: row.projected,
             });
         }
     }
@@ -11942,6 +12394,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "vault" => ("THE VAULT", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
                 let active_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
@@ -11992,6 +12445,8 @@ impl RaceSession {
                     self.is_dev_mode(),
                     unlocked_tier as u32,
                     Some(&self.active_career_progress),
+                    self.active_profile.credits,
+                    self.state == GameState::Garage(GarageOrigin::LanLobby),
                 );
             }
             GameState::CircuitViewer(_) => {
@@ -11999,21 +12454,30 @@ impl RaceSession {
             }
             GameState::Menu => {
                 let available_tracks = self.filtered_menu_tracks();
-                let filter_counts = self.menu_track_filter_counts();
+                let is_lan_host = self.menu_origin == MenuOrigin::LanHostLobby;
+                let filter_counts = if is_lan_host {
+                    // Clients only have the official circuits.
+                    (self.menu_track_filter_counts().0, 0)
+                } else {
+                    self.menu_track_filter_counts()
+                };
                 let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
                     "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    _ => ("TDRACE ARCADE RACING", "Modern Cross-Platform 2D Motorsport Simulation & Visuals", Palette::NEON_GOLD),
+                    "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
+                    _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                 };
                 let cp_ref = if self.has_track_career_locks() {
                     Some(&self.active_career_progress)
                 } else {
                     None
                 };
-                let active_track_id = if self.game_mode == GameMode::Career {
+                let active_track_id = if is_lan_host {
+                    self.lan_host_screen.as_ref().map(|s| s.host().track_id())
+                } else if self.game_mode == GameMode::Career {
                     self.championship_session.as_ref().and_then(|c| c.current_track_id()).or(Some(self.track_choice.track_id()))
                 } else if self.menu_origin == MenuOrigin::StartingGrid {
                     Some(self.track_choice.track_id())
@@ -12037,6 +12501,8 @@ impl RaceSession {
                     self.is_dev_mode(),
                     active_track_id,
                     is_career,
+                    is_lan_host,
+                    self.menu_origin == MenuOrigin::StartingGrid,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
@@ -12052,7 +12518,7 @@ impl RaceSession {
                 }
             }
             GameState::ModuleSelect { selected_idx } => {
-                let modules_data = [
+                let mut modules_data = vec![
                     ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
                     ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
@@ -12060,6 +12526,9 @@ impl RaceSession {
                     ("nascar", "NASCAR Cup Series & Trans-Am TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
                     ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "Desert dunes, ice lakes, massive stadium jumps & stunt arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
+                if self.is_dev_mode() {
+                    modules_data.push(("vault", "The Vault (Archive Depot)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)));
+                }
                 render_module_select_menu(
                     &self.fonts,
                     selected_idx,
@@ -12135,7 +12604,7 @@ impl RaceSession {
                     &self.grid_participants,
                     self.total_laps,
                     best_lap,
-                    self.cars.len(),
+                    self.world.vehicles.len(),
                     max_grid_size,
                     self.input.gamepad.snapshot.is_connected,
                     self.starting_grid_focus,
@@ -12187,10 +12656,16 @@ impl RaceSession {
                         );
                     }
                     FinishedScreenView::Statistics => {
+                        // Same vehicle name as the results and Hall of Fame (the model, not the base class).
+                        let vehicle_name = self
+                            .selected_car_model_id
+                            .and_then(crate::catalog::find_model_by_id)
+                            .map(|m| m.name)
+                            .unwrap_or_else(|| self.car_choice.title());
                         render_race_stats_screen(
                             &self.fonts,
                             &self.track.name,
-                            self.car_choice.title(),
+                            vehicle_name,
                             &self.player_race_stats,
                             self.session_time,
                             self.finished_prev_view == FinishedScreenView::HallOfFame,
@@ -12211,6 +12686,7 @@ impl RaceSession {
                     &self.input.input_map,
                     self.input.active_preset_name(),
                     &self.input.filter.config,
+                    self.gamepad_mapper_status.as_deref(),
                 );
             }
             GameState::DriverCards(_) => {
@@ -12308,6 +12784,13 @@ impl RaceSession {
             GameState::ChampionshipEditor => {
                 self.render_championship_editor();
             }
+        }
+
+        // Alerts (purchases, locks, resets) are drawn by the race HUD in race states; menus such
+        // as the Garage and Career Select spawn them too, so draw them there as well.
+        if !matches!(self.state, GameState::Countdown(_) | GameState::Racing | GameState::Paused) {
+            let scaler = UiScaler::new(screen_width_safe(), screen_height_safe());
+            self.floating_text.draw(&self.fonts, &scaler);
         }
 
         // Render Arcade Settings Modal globally on top of whatever screen is active
@@ -12422,7 +12905,9 @@ impl RaceSession {
 
             let tracks = self.track_manager.main_track_choices();
             let available_champs = self.championship_manager.all_sorted();
-            let action = handle_championship_editor_input(&mut state, &tracks, &available_champs, self.is_dev_mode());
+            let pad = &self.input.gamepad.snapshot;
+            let gamepad_back = pad.btn_b_pressed || pad.btn_back_pressed || pad.btn_cancel_pressed;
+            let action = handle_championship_editor_input(&mut state, &tracks, &available_champs, self.is_dev_mode(), gamepad_back);
             match action {
                 ChampionshipEditorAction::None => {
                     self.championship_editor_state = Some(state);
@@ -12430,11 +12915,7 @@ impl RaceSession {
                 ChampionshipEditorAction::Exit => {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.championship_editor_state = None;
-                    self.state = GameState::ModalitySelect {
-                        category: ModalityCategory::Options,
-                        selected_idx: 3,
-                        modal: None,
-                    };
+                    self.state = self.modality_return_state();
                 }
                 ChampionshipEditorAction::LoadChampionship(new_def) => {
                     self.audio.play_sfx(SfxType::UiSelect);
@@ -12731,11 +13212,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_cancel_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::SinglePlayer,
-                selected_idx: 0,
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -12830,11 +13307,7 @@ impl RaceSession {
 
         if self.editor_origin == EditorOrigin::ModalitySelect {
             self.editor_origin = EditorOrigin::TrackManager;
-            self.state = GameState::ModalitySelect {
-                category: ModalityCategory::Options,
-                selected_idx: 2,
-                modal: None,
-            };
+            self.state = self.modality_return_state();
             return;
         }
 
@@ -13119,6 +13592,7 @@ impl RaceSession {
         if is_key_pressed(KeyCode::Escape) {
             if !self.editor_tools.active_polygon_vertices.is_empty() {
                 self.editor_tools.active_polygon_vertices.clear();
+                self.editor_tools.escape_consumed = true;
                 self.audio.play_sfx(SfxType::UiMove);
             }
         }
@@ -13627,8 +14101,8 @@ impl RaceSession {
         // Separate cars into ground and elevated groups
         let mut ground_cars = Vec::new();
         let mut elevated_cars = Vec::new();
-        for i in 0..self.cars.len() {
-            let car = &self.cars[i];
+        for i in 0..self.world.vehicles.len() {
+            let car = &self.world.vehicles[i];
             let is_elevated = car.state.elevation > 0.05
                 || car.state.ramp_elevation > 0.05
                 || self.track.spline.project_point(car.state.position).is_bridge;
@@ -13639,20 +14113,23 @@ impl RaceSession {
             }
         }
         ground_cars.sort_by(|&a, &b| {
-            self.cars[a]
+            self.world.vehicles[a]
                 .total_elevation()
-                .partial_cmp(&self.cars[b].total_elevation())
+                .partial_cmp(&self.world.vehicles[b].total_elevation())
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
         elevated_cars.sort_by(|&a, &b| {
-            self.cars[a]
+            self.world.vehicles[a]
                 .total_elevation()
-                .partial_cmp(&self.cars[b].total_elevation())
+                .partial_cmp(&self.world.vehicles[b].total_elevation())
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
+        // 3b. Off-track roost (Dirt, Sand, Gravel, ...) stays under the cars
+        self.fx.render_ground_debris();
+
         // 4. Ground-Level Vehicles
-        let player_alpha = self.cars.get(focus_car_idx).map(|pc| {
+        let player_alpha = self.world.vehicles.get(focus_car_idx).map(|pc| {
             compute_adaptive_alpha(
                 self.visibility_options.adaptive_visibility,
                 camera.current_zoom,
@@ -13662,7 +14139,7 @@ impl RaceSession {
         }).unwrap_or(1.0);
 
         if self.visibility_options.ground_aura && ground_cars.contains(&focus_car_idx) {
-            if let Some(focus_car) = self.cars.get(focus_car_idx) {
+            if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(
                     focus_car.state.position,
@@ -13675,7 +14152,7 @@ impl RaceSession {
             }
         }
         for &i in &ground_cars {
-            let car = &self.cars[i];
+            let car = &self.world.vehicles[i];
             if self.lan_car_left(i) {
                 // The player left the LAN race: the parked car is drawn as a ghost.
                 let frame = crate::render::ghost::GhostFrame {
@@ -13720,9 +14197,9 @@ impl RaceSession {
         // 5. Ghost Vehicle (Semi-transparent during Time Trial)
         if self.game_mode.has_ghost() {
             if let Some(best_ghost) = &self.ghost_recorder.best_ghost_lap {
-                if let Some(player_tracker) = self.trackers.get(focus_car_idx) {
+                if let Some(player_tracker) = self.world.trackers.get(focus_car_idx) {
                     if let Some(ghost_frame) = best_ghost.sample_at_time(player_tracker.lap_time) {
-                        if let Some(player_car) = self.cars.get(focus_car_idx) {
+                        if let Some(player_car) = self.world.vehicles.get(focus_car_idx) {
                             render_ghost_car(&ghost_frame, &player_car.config, 0.60);
                         }
                     }
@@ -13738,7 +14215,7 @@ impl RaceSession {
 
         // 8. Elevated Vehicles (drawn on top of the bridge deck)
         if self.visibility_options.ground_aura && elevated_cars.contains(&focus_car_idx) {
-            if let Some(focus_car) = self.cars.get(focus_car_idx) {
+            if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(
                     focus_car.state.position,
@@ -13751,7 +14228,7 @@ impl RaceSession {
             }
         }
         for &i in &elevated_cars {
-            let car = &self.cars[i];
+            let car = &self.world.vehicles[i];
             if self.lan_car_left(i) {
                 // The player left the LAN race: the parked car is drawn as a ghost.
                 let frame = crate::render::ghost::GhostFrame {
@@ -13797,7 +14274,7 @@ impl RaceSession {
         self.fx.render_airborne_fx();
 
         // 10. Player Car Visibility Aids (Overhead Chevron)
-        if let Some(focus_car) = self.cars.get(focus_car_idx) {
+        if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
             let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
             if self.visibility_options.overhead_chevron {
                 render_player_overhead_chevron(
@@ -13812,22 +14289,34 @@ impl RaceSession {
                 );
             }
             if self.visibility_options.curve_helper {
-                if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
-                    let max_lookahead = (focus_car.state.speed * 3.5).clamp(130.0, 220.0);
+                if let Some(focus_tracker) = self.world.trackers.get(focus_car_idx) {
+                    let max_lookahead = curve_indicator_lookahead(focus_car.state.speed);
                     if let Some(status) = self.track.spline.upcoming_curve(
                         focus_tracker.progress_distance,
                         focus_car.state.speed,
                         max_lookahead,
                     ) {
-                        render_curve_indicator(
-                            focus_car,
-                            &status,
-                            self.visibility_options.curve_color_scheme,
-                            camera.current_zoom,
-                            self.session_time,
-                            self.visibility_options.curve_helper_scale,
-                            self.visibility_options.curve_helper_brightness,
-                        );
+                        match self.visibility_options.curve_indicator_style {
+                            CurveIndicatorStyle::Chevrons => render_curve_indicator(
+                                focus_car,
+                                &status,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                            CurveIndicatorStyle::Pacenote => render_curve_pacenote(
+                                focus_car,
+                                &status,
+                                &self.track.spline,
+                                self.visibility_options.curve_color_scheme,
+                                camera.current_zoom,
+                                self.session_time,
+                                self.visibility_options.curve_helper_scale,
+                                self.visibility_options.curve_helper_brightness,
+                            ),
+                        }
                     }
                 }
             }
@@ -13842,14 +14331,14 @@ impl RaceSession {
         }
 
         // 11. Tree Foliage Canopies (Above Vehicles with proximity alpha fading)
-        render_tree_canopies_culled(&self.track, &self.cars, view_bounds);
+        render_tree_canopies_culled(&self.track, &self.world.vehicles, view_bounds);
 
         // 12. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
-        if let Some(focus_car) = self.cars.get(focus_car_idx) {
-            if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
+        if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
+            if let Some(focus_tracker) = self.world.trackers.get(focus_car_idx) {
                 self.input.render_world_debug(
                     focus_car,
-                    &self.cars,
+                    &self.world.vehicles,
                     &self.track,
                     focus_tracker,
                     &self.ai_drivers,
@@ -13862,7 +14351,7 @@ impl RaceSession {
 
     /// Collects candidate nameplate items for a given focus player car.
     pub fn collect_bot_nameplates<'a>(&'a self, focus_car_idx: usize) -> Vec<VehicleNameplateItem<'a>> {
-        let focus_pos = match self.cars.get(focus_car_idx) {
+        let focus_pos = match self.world.vehicles.get(focus_car_idx) {
             Some(c) => c.state.position,
             None => return Vec::new(),
         };
@@ -13870,7 +14359,7 @@ impl RaceSession {
         let bot_offset = if self.is_split_screen() { 2 } else { 1 };
         let mut items = Vec::new();
 
-        for (i, car) in self.cars.iter().enumerate() {
+        for (i, car) in self.world.vehicles.iter().enumerate() {
             if i == focus_car_idx {
                 continue;
             }
@@ -13941,7 +14430,7 @@ impl RaceSession {
 
     /// Renders world-space entities under active camera with strict elevation occlusion layering.
     fn render_world(&self) {
-        if self.is_split_screen() && self.cars.len() >= 2 {
+        if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let sw = screen_width_safe();
             let sh = screen_height_safe();
             let [vp1, vp2] = self.split_layout.viewports(sw, sh);
@@ -13973,7 +14462,7 @@ impl RaceSession {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
 
-        if self.is_split_screen() && self.cars.len() >= 2 {
+        if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let standings = self.compute_standings();
             let p1_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
             let p2_pos = standings.iter().position(|&idx| idx == 1).unwrap_or(0) + 1;
@@ -13981,15 +14470,15 @@ impl RaceSession {
             render_split_hud(
                 &self.fonts,
                 &self.track,
-                &self.cars,
+                &self.world.vehicles,
                 &self.color_schemes,
-                &self.cars[0],
-                &self.trackers[0],
+                &self.world.vehicles[0],
+                &self.world.trackers[0],
                 p1_pos,
-                &self.cars[1],
-                &self.trackers[1],
+                &self.world.vehicles[1],
+                &self.world.trackers[1],
                 p2_pos,
-                self.cars.len(),
+                self.world.vehicles.len(),
                 self.total_laps,
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
@@ -13997,20 +14486,20 @@ impl RaceSession {
             );
         } else {
             let my_idx = self.player_car_index();
-            if let Some(player_car) = self.cars.get(my_idx) {
-                let player_tracker = &self.trackers[my_idx];
+            if let Some(player_car) = self.world.vehicles.get(my_idx) {
+                let player_tracker = &self.world.trackers[my_idx];
                 let standings = self.compute_standings();
                 let player_pos = standings.iter().position(|&idx| idx == my_idx).unwrap_or(0) + 1;
 
                 render_hud(
                     &self.fonts,
                     &self.track,
-                    &self.cars,
+                    &self.world.vehicles,
                     &self.color_schemes,
                     player_car,
                     player_tracker,
                     player_pos,
-                    self.cars.len(),
+                    self.world.vehicles.len(),
                     self.total_laps,
                     self.is_time_attack,
                     countdown,

@@ -1,3 +1,4 @@
+use race_kit::FinishState;
 use tdrace_app::db::{HallOfFameDb, HallOfFameEntry};
 use tdrace_app::editor::EditorAction;
 use tdrace_app::game::{FinishedScreenView, GameState, RaceSession};
@@ -171,10 +172,12 @@ fn test_race_session_hof_automatic_logging_and_congratulations() {
     assert_eq!(session.track_choice_id(), "classic_grand_prix");
     assert!(session.hof_entries.is_empty(), "Hall of Fame should start empty");
 
-    // Simulate player completing race in 1st place with a personal best
-    session.session_time = 45.0;
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(15.0);
+    // Simulate player completing race in 1st place with a personal best. Result times come
+    // from the race world's clock (spec 056), not from session_time.
+    session.world.time = 45.0;
+    session.world.finish[0] = FinishState::Finished { time: 45.0, position: 1 };
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(15.0);
 
     // Check race finish transition
     session.check_race_finish();
@@ -313,12 +316,12 @@ fn test_race_session_circuit_history_cleared_on_editor_modify() {
 
     // 2. Complete race and record history
     session.session_time = 38.0;
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(12.5);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(12.5);
     session.check_race_finish();
 
     // Verify history and Hall of Fame exist
-    assert_eq!(session.hof_entries.len(), session.cars.len());
+    assert_eq!(session.hof_entries.len(), session.world.vehicles.len());
     assert_eq!(session.active_profile_stats.best_times.get(track_id), Some(&12.5));
     assert!(session.profile_history.iter().any(|r| r.track_id == track_id));
 
@@ -368,8 +371,8 @@ fn test_race_session_save_new_circuit_does_not_clear_other_tracks() {
     };
     session.init_race();
     session.session_time = 40.0;
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(13.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(13.0);
     session.check_race_finish();
 
     assert_eq!(session.active_profile_stats.best_times.get("track_existing"), Some(&13.0));

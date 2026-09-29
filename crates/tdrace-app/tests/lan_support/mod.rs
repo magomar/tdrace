@@ -115,8 +115,8 @@ impl Drivers {
     pub fn drive(&mut self, sessions: &mut [RaceSession]) {
         for (s, ai) in sessions.iter_mut().zip(self.0.iter_mut()) {
             let idx = s.player_car_index();
-            let others: Vec<&Car> = s.cars.iter().enumerate().filter(|(i, _)| *i != idx).map(|(_, c)| c).collect();
-            let ctrl = ai.compute_controls(&s.cars[idx], &s.track, &others, FRAME_DT as f32);
+            let others: Vec<&Car> = s.world.vehicles.iter().enumerate().filter(|(i, _)| *i != idx).map(|(_, c)| c).collect();
+            let ctrl = ai.compute_controls(&s.world.vehicles[idx], &s.track, &others, FRAME_DT as f32);
             if let Some(lan) = s.lan_race.as_mut() {
                 lan.input_override = Some(ctrl);
             }

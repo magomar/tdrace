@@ -22,8 +22,9 @@ fn modules() -> Vec<(&'static str, Box<dyn GameModule>)> {
 fn test_every_module_circuit_unlocks_by_max_level() {
     let mut never_unlock = Vec::new();
     for (module_id, module) in modules() {
+        let max_level = if module_id == "kart" { 6 } else { 5 };
         let mut progress = ModuleCareerProgress::default_for_module(1, module_id);
-        progress.level = 5;
+        progress.level = max_level;
         progress.sync_unlocks_for_level();
         for track in module.tracks() {
             if !progress.is_track_unlocked(track.id, false) {
@@ -40,7 +41,9 @@ fn test_every_module_locks_circuits_above_tier_one() {
         let progress = ModuleCareerProgress::default_for_module(1, module_id);
         let total = module.tracks().len();
         let unlocked = module.tracks().iter().filter(|t| progress.is_track_unlocked(t.id, false)).count();
-        assert_eq!(unlocked, 5, "{module_id}: Tier 1 should open 5 circuits");
+        // Extreme Off-Road also opens the three Mint 400 circuits at Tier 1 (spec 048)
+        let expected = if module_id == "extreme_offroad" { 8 } else { 5 };
+        assert_eq!(unlocked, expected, "{module_id}: Tier 1 should open {expected} circuits");
         assert!(total > unlocked, "{module_id}: some circuits should stay locked at Tier 1");
     }
 }

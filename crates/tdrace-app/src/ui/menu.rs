@@ -1,6 +1,6 @@
 use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
-use macroquad::shapes::{draw_circle, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 use serde::{Deserialize, Serialize};
 
@@ -140,7 +140,7 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 fn module_label(module: &str) -> &'static str {
     match module {
         "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
-        "rally" => "RALLY CROSS",
+        "rally" => "RALLYCROSS",
         "kart" => "KARTING",
         "nascar" => "NASCAR CUP",
         "extreme_offroad" => "EXTREME OFF-ROAD",
@@ -797,6 +797,9 @@ pub struct RaceResultEntry {
     pub car_idx: usize,
     #[serde(default)]
     pub points_awarded: u32,
+    /// The car was still racing when the race ended: `total_time` is an estimate.
+    #[serde(default)]
+    pub projected: bool,
 }
 
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
@@ -848,6 +851,8 @@ pub fn render_track_select_menu(
     dev_mode: bool,
     active_track_id: Option<&str>,
     is_career_mode: bool,
+    is_lan_host: bool,
+    returns_to_grid: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -867,10 +872,13 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
-    let sub_str = if is_career_mode {
-        format!("{} • Career Event Circuit Explorer • [ESC] Return to Starting Grid", module_subtitle)
+    let back_label = if returns_to_grid { "Return to Starting Grid" } else { "Back to Race Modes" };
+    let sub_str = if is_lan_host {
+        format!("{} • LAN Host Circuit Selector • [ESC] Return to Lobby", module_subtitle)
+    } else if is_career_mode {
+        format!("{} • Career Event Circuit Explorer • [ESC] {}", module_subtitle, back_label)
     } else {
-        format!("{} • [ESC] Return to Grand Hub", module_subtitle)
+        format!("{} • [ESC] {}", module_subtitle, back_label)
     };
     fonts.draw_ui_regular_centered(
         &sub_str,
@@ -948,25 +956,28 @@ pub fn render_track_select_menu(
         module_accent,
     );
 
-    let tm_badge_w = scaler.s(165.0);
-    let tm_badge_h = scaler.s(22.0);
-    let tm_badge_x = col1_x + col_w - tm_badge_w;
-    scaler.draw_glass_card(
-        tm_badge_x,
-        curr_y - scaler.s(2.0),
-        tm_badge_w,
-        tm_badge_h,
-        Color::new(0.18, 0.08, 0.30, 0.90),
-        Palette::NEON_MAGENTA,
-        1.2,
-    );
-    fonts.draw_ui_bold_centered(
-        "[T] CIRCUIT MANAGER",
-        tm_badge_x + tm_badge_w * 0.5,
-        curr_y + scaler.s(13.0),
-        scaler.font_s(10.5),
-        Palette::NEON_GOLD,
-    );
+    // The Circuit Manager is not reachable from the LAN host lobby.
+    if !is_lan_host {
+        let tm_badge_w = scaler.s(165.0);
+        let tm_badge_h = scaler.s(22.0);
+        let tm_badge_x = col1_x + col_w - tm_badge_w;
+        scaler.draw_glass_card(
+            tm_badge_x,
+            curr_y - scaler.s(2.0),
+            tm_badge_w,
+            tm_badge_h,
+            Color::new(0.18, 0.08, 0.30, 0.90),
+            Palette::NEON_MAGENTA,
+            1.2,
+        );
+        fonts.draw_ui_bold_centered(
+            "[T] CIRCUIT MANAGER",
+            tm_badge_x + tm_badge_w * 0.5,
+            curr_y + scaler.s(13.0),
+            scaler.font_s(10.5),
+            Palette::NEON_GOLD,
+        );
+    }
 
     curr_y += scaler.s(20.0);
 
@@ -1130,6 +1141,9 @@ pub fn render_track_select_menu(
                     };
                     (lbl, if is_sel { module_accent } else { Palette::UI_TEXT_MUTED })
                 };
+                // Text must stay left of the thumbnail (and of the right-hand tags on the first line).
+                let text_room = col_w - thumb_w - scaler.s(30.0);
+                let tag_label = fonts.fit_ui_bold(&tag_label, scaler.font_s(10.0), col_w - thumb_w - scaler.s(100.0));
                 fonts.draw_ui_bold(
                     &tag_label,
                     col1_x + scaler.s(14.0),
@@ -1173,6 +1187,7 @@ pub fn render_track_select_menu(
                 } else {
                     (track_opt.title().to_string(), if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) })
                 };
+                let title_str = fonts.fit_ui_bold(&title_str, scaler.font_s(15.5), text_room);
                 fonts.draw_ui_bold(
                     &title_str,
                     col1_x + scaler.s(14.0),
@@ -1183,7 +1198,7 @@ pub fn render_track_select_menu(
 
                 // Description
                 fonts.draw_ui_regular(
-                    track_opt.description(),
+                    &fonts.fit_ui_regular(track_opt.description(), scaler.font_s(10.5), text_room),
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
@@ -1371,14 +1386,7 @@ pub fn render_track_select_menu(
         // 1. Circuit Overview & Classification Glass Card
         scaler.draw_glass_card(col2_x, c2_y, col_w, card1_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
-        // Circuit Name & Tag
-        fonts.draw_ui_bold(
-            track_opt.title(),
-            col2_x + scaler.s(14.0),
-            c2_y + scaler.s(16.0),
-            scaler.font_s(15.5),
-            Palette::WHITE,
-        );
+        // Circuit Name & Tag (tag right-aligned; the name gives way to it)
         let right_tag = if track_opt.is_user_custom() {
             "CUSTOM CIRCUIT"
         } else {
@@ -1389,9 +1397,17 @@ pub fn render_track_select_menu(
         } else {
             module_accent
         };
+        let right_tag_w = fonts.measure_ui_bold(right_tag, scaler.font_s(10.0)).width;
+        fonts.draw_ui_bold(
+            &fonts.fit_ui_bold(track_opt.title(), scaler.font_s(15.5), col_w - right_tag_w - scaler.s(42.0)),
+            col2_x + scaler.s(14.0),
+            c2_y + scaler.s(16.0),
+            scaler.font_s(15.5),
+            Palette::WHITE,
+        );
         fonts.draw_ui_bold(
             right_tag,
-            col2_x + col_w - scaler.s(140.0),
+            col2_x + col_w - scaler.s(14.0) - right_tag_w,
             c2_y + scaler.s(16.0),
             scaler.font_s(10.0),
             right_tag_col,
@@ -1399,7 +1415,7 @@ pub fn render_track_select_menu(
 
         // Circuit Description
         fonts.draw_ui_regular(
-            track_opt.description(),
+            &fonts.fit_ui_regular(track_opt.description(), scaler.font_s(10.5), col_w - scaler.s(28.0)),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(32.0),
             scaler.font_s(10.5),
@@ -1688,13 +1704,21 @@ pub fn render_track_select_menu(
         (
             Color::new(0.08, 0.44, 0.22, 0.92),
             Palette::NEON_GREEN,
-            "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
+            if is_lan_host {
+                "▶ CURRENT LAN CIRCUIT • [ENTER / ESC] RETURN TO LOBBY".to_string()
+            } else {
+                "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string()
+            },
         )
     } else if total_tracks > 0 {
         (
             Color::new(0.12, 0.65, 0.32, 0.95),
             Palette::NEON_GREEN,
-            "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string(),
+            if is_lan_host {
+                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO SET AS LAN CIRCUIT".to_string()
+            } else {
+                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string()
+            },
         )
     } else {
         (
@@ -1708,7 +1732,9 @@ pub fn render_track_select_menu(
     let btn_x = (sw - btn_w) * 0.5;
     let btn_y = sh - btn_h - scaler.s(14.0);
 
-    let footer_text = if is_career_mode {
+    let footer_text = if is_lan_host {
+        "[Up / Down] Select Circuit  •  [V] Full Circuit View  •  [ENTER] Set LAN Circuit  •  [ESC] Return to Lobby"
+    } else if is_career_mode {
         "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
     } else if crate::storage::is_dev_mode() {
         "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
@@ -1907,7 +1933,7 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         Palette::WHITE,
     );
     fonts.draw_ui_regular_centered(
-        "Main Menu | Gamepad B",
+        "Leave Race | Gamepad B",
         ex + ew * 0.5,
         ey + scaler.s(37.0),
         scaler.font_s(11.0),
@@ -2046,7 +2072,7 @@ pub fn render_results_screen(
         fonts.draw_ui_bold(&res.car_name, x + scaler.s(85.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
         if is_championship {
-            let total_str = format_lap_time(res.total_time);
+            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
             fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(360.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
@@ -2055,14 +2081,14 @@ pub fn render_results_screen(
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("+{:.2}s", res.delta_to_leader)
+                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
             };
             fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(135.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let pts_str = format!("+{} PTS", res.points_awarded);
             draw_ui_bold_right(fonts, &pts_str, x + box_w - scaler.s(30.0), row_y + scaler.s(4.0), scaler.font_s(14.0), Palette::NEON_GOLD);
         } else {
-            let total_str = format_lap_time(res.total_time);
+            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
             fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(320.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
@@ -2071,7 +2097,7 @@ pub fn render_results_screen(
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("+{:.2}s", res.delta_to_leader)
+                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
             };
             fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(75.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
         }
@@ -2112,7 +2138,7 @@ pub fn render_results_screen(
 
     // Bottom action prompt
     let prompt = if is_championship {
-        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Exit"
+        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Save & Exit"
     } else {
         "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu"
     };
@@ -2134,6 +2160,7 @@ pub fn render_controls_screen(
     input_map: &cabinet::input::InputMap,
     preset_name: &str,
     keyboard: &cabinet::input::DigitalInputConfig,
+    mapper_status: Option<&str>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2259,6 +2286,22 @@ pub fn render_controls_screen(
         gp_row_y += scaler.s(21.0);
     }
 
+    // Gamepad mapper launcher (external calibration & remapping tool)
+    let mapper_h = scaler.s(52.0);
+    let mapper_x = col2_x + scaler.s(12.0);
+    let mapper_w = col_w - scaler.s(24.0);
+    let mapper_y = col_y + col_h - mapper_h - scaler.s(12.0);
+    scaler.draw_glass_card(mapper_x, mapper_y, mapper_w, mapper_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_MAGENTA, 1.2);
+    fonts.draw_ui_bold("[G] OPEN GAMEPAD MAPPER", mapper_x + scaler.s(12.0), mapper_y + scaler.s(21.0), scaler.font_s(13.0), Palette::NEON_MAGENTA);
+    let mapper_line = mapper_status.unwrap_or("Calibrate sticks and triggers or remap buttons; the profile loads when it closes.");
+    fonts.draw_ui_regular(
+        &fonts.fit_ui_regular(mapper_line, scaler.font_s(11.0), mapper_w - scaler.s(24.0)),
+        mapper_x + scaler.s(12.0),
+        mapper_y + scaler.s(40.0),
+        scaler.font_s(11.0),
+        Palette::UI_TEXT_MUTED,
+    );
+
     // Bottom Panel: Active Drive Assists Profile
     let bot_y = col_y + col_h + scaler.s(12.0);
     let bot_h = scaler.s(85.0);
@@ -2272,10 +2315,10 @@ pub fn render_controls_screen(
     };
     fonts.draw_ui_bold(&assist_title, banner_x + scaler.s(18.0), bot_y + scaler.s(24.0), scaler.font_s(16.0), assist_col);
     fonts.draw_ui_regular(assist_profile.description(), banner_x + scaler.s(18.0), bot_y + scaler.s(48.0), scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
-    fonts.draw_ui_regular("Press [H] on keyboard or [R3 / Select] on Gamepad to switch assist difficulty profile anytime!", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
+    fonts.draw_ui_regular("Press [H] on keyboard or [R3] on Gamepad to switch assist difficulty here, on the grid, or during a race.", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
-    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [B] BLEED  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
+    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [G] GAMEPAD MAPPER  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
     fonts.draw_ui_bold_centered(
         back_prompt,
         sw * 0.5,
@@ -2326,6 +2369,24 @@ fn draw_classic_arcade_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Colo
             ..Default::default()
         },
     );
+}
+
+/// Renders an industrial safe / vault dial emblem for The Vault module.
+fn draw_vault_archive_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Color) {
+    let r = 20.0 * s;
+    if is_sel {
+        draw_circle(cx, cy, r * 1.3, accent.with_alpha(0.35));
+    }
+    // Safe body
+    draw_rectangle(cx - r, cy - r, r * 2.0, r * 2.0, Color::new(0.12, 0.14, 0.18, 1.0));
+    draw_rectangle_lines(cx - r, cy - r, r * 2.0, r * 2.0, 2.0 * s, accent);
+    // Safe door wheel / dial
+    draw_circle(cx, cy, r * 0.55, Color::new(0.20, 0.23, 0.30, 1.0));
+    draw_circle_lines(cx, cy, r * 0.55, 1.5 * s, Palette::WHITE);
+    draw_circle(cx, cy, r * 0.22, accent);
+    // Spokes
+    draw_line(cx - r * 0.45, cy, cx + r * 0.45, cy, 1.5 * s, Palette::WHITE);
+    draw_line(cx, cy - r * 0.45, cx, cy + r * 0.45, 1.5 * s, Palette::WHITE);
 }
 
 /// Returns bounding box (x, y, w, h) for the Grand Hub profile badge.
@@ -2508,6 +2569,9 @@ pub fn render_module_select_menu(
                     0.0,
                     false,
                 );
+            }
+            "vault" => {
+                draw_vault_archive_icon(icon_cx, icon_cy, scaler.s(0.95), is_sel, *accent_col);
             }
             _ => {}
         }

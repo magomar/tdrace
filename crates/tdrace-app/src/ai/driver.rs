@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use macroquad::color::Color;
-use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle};
+use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle, LcgRng};
 use crate::catalog::RealCarModel;
 use crate::module::GameModule;
 use crate::render::color::CarColorScheme;
@@ -118,8 +118,8 @@ const SILVIA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
     DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
@@ -147,8 +147,8 @@ const MARCO_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
     DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
@@ -176,8 +176,8 @@ const KENJI_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
     DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
@@ -205,8 +205,8 @@ const ELENA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
     DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
@@ -234,8 +234,8 @@ const JAX_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
     DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
@@ -263,8 +263,8 @@ const LEO_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
     DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
@@ -292,8 +292,8 @@ const VIKTOR_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
     DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
@@ -321,8 +321,8 @@ const MAYA_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
     DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
@@ -350,8 +350,8 @@ const DAMON_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
     DriverFavoriteCar::new("kart", 2, "kart_birel_ry30_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
@@ -379,8 +379,8 @@ const CHLOE_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_audi_rs_q_etron"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_super_truck"),
+    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_tony_kart_neos"),
     DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_tony_kart_racer_kz"),
@@ -408,8 +408,8 @@ const HIROSHI_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_toyota_hilux_t1_plus"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_robby_gordon"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_crg_hero_60"),
     DriverFavoriteCar::new("kart", 2, "kart_crg_kt2_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_crg_road_rebel_kz"),
@@ -437,8 +437,8 @@ const ZANE_FAVORITE_CARS: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
     DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
     DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_prodrive_hunter_t1"),
-    DriverFavoriteCar::new("rally", 5, "rally_sst_traxxas_edition"),
+    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
     DriverFavoriteCar::new("kart", 1, "kart_birel_c28"),
     DriverFavoriteCar::new("kart", 2, "kart_tony_kart_racer_ok"),
     DriverFavoriteCar::new("kart", 3, "kart_birel_art_kz2"),
@@ -883,7 +883,8 @@ impl DriverCharacter {
     /// If discipline is "classic", tier is strictly normalized to Tier 1.
     pub fn favorite_car_for_discipline_and_tier(&self, discipline: &str, tier: u8) -> Option<&'static str> {
         let norm_disc = Self::normalize_discipline(discipline);
-        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, 5) };
+        let max_tier = if norm_disc == "kart" { 6 } else { 5 };
+        let effective_tier = if norm_disc == "classic" { 1 } else { tier.clamp(1, max_tier) };
 
         // 1. Exact match for discipline and tier
         if let Some(fav) = self.favorite_cars.iter().find(|f| f.discipline == norm_disc && f.tier == effective_tier) {
@@ -935,34 +936,3 @@ impl DriverCharacter {
         }
     }
 }
-
-/// Deterministic linear congruential generator for reproducible roster sampling.
-#[derive(Debug, Clone)]
-pub struct LcgRng(pub u64);
-
-impl LcgRng {
-    pub fn new(seed: u64) -> Self {
-        Self(seed.wrapping_add(1442695040888963407))
-    }
-
-    pub fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1);
-        self.0
-    }
-
-    pub fn next_u32(&mut self) -> u32 {
-        (self.next_u64() >> 32) as u32
-    }
-
-    pub fn next_f32(&mut self) -> f32 {
-        (self.next_u32() as f32) / (u32::MAX as f32)
-    }
-
-    pub fn shuffle<T>(&mut self, slice: &mut [T]) {
-        for i in (1..slice.len()).rev() {
-            let j = (self.next_u64() >> 33) as usize % (i + 1);
-            slice.swap(i, j);
-        }
-    }
-}
-

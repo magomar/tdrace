@@ -28,17 +28,20 @@ A comprehensive architectural and data specification establishing authentic **Op
      - **Extreme Off-Road**: 2 real-world circuits (Crandon International Off-Road and Glamis Imperial Sand Dunes).
 3. **Fictional / Inspired Distinction**:
    - Classic fantasy tracks (e.g., `classic_grand_prix`, `drift_park`, `figure_eight`) and inspired off-road tracks (e.g., `alpine_snow_ridge`, `arctic_frozen_lake`) intentionally retain `osm_url: None` and `wikipedia_url: None` with `is_inspired: true` where applicable.
+   - A real circuit's `osm_url` points at its imported lap (2026-09-28): the one OSM way the lap uses, or a relation that
+     holds every lap way, or else the way that carries most of the lap. Never the venue outline (a `leisure=*` area or a
+     multipolygon). Checked by `tests/python/test_osm_importer.py::test_every_osm_url_points_at_the_imported_lap`.
 4. **Resilient Pipeline Persistence**:
    - Store `osm_url`, `wikipedia_url`, `country_code`, and `country_name` directly within the Rust preset definitions in `crates/arcade-race-core/src/track/presets.rs` and `crates/tdrace-app/src/module/*.rs`.
    - Ensure the canonical track export tool (`test_export_canonical_presets_to_git_repo`) serializes these fields to `tracks/**/*.json`.
    - Update `scripts/generate_asset_data.py` to ingest the verified references and write clean records into `portals/shared/data/circuits.json`.
-   - Ensure `portals/option-b-showroom` reliably renders clickable `OSM ↗` and `Wikipedia ↗` badges on every real-world track card.
+   - Ensure `portals/showroom` reliably renders clickable `OSM ↗` and `Wikipedia ↗` badges on every real-world track card.
 
 ---
 
 ## 🗺️ User Flow & Interface Design
 
-When a player or developer navigates the showroom web catalog (`portals/option-b-showroom`):
+When a player or developer navigates the showroom web catalog (`portals/showroom`):
 1. **Catalog Exploration**: The user views the circuit grid filtered by motorsport category (All, GT, NASCAR, Rallycross, Karting, Off-Road, Classic).
 2. **Provenance Badges**: For real-world circuits, the card renders provenance metadata including a country flag code, an authentic `OSM ↗` button, and an optional `Wiki ↗` link.
 3. **Interactive OSM Inspection**: Clicking `OSM ↗` opens OpenStreetMap centered on the exact raceway relation or way in an external tab, confirming geometry fidelity.
@@ -98,10 +101,10 @@ Surveyed via `scripts/osm_importer.py kart` and `assets/osm/`:
 | `kristianstad` | Kristianstad Karting (Åsum Ring) | SE | [`way/87888593`](https://www.openstreetmap.org/way/87888593) | [`Kristianstad`](https://en.wikipedia.org/wiki/Kristianstad) |
 | `seven_laghi` | Circuito 7 Laghi (Castelletto) | IT | [`way/80905675`](https://www.openstreetmap.org/way/80905675) | [`Castelletto_di_Branduzzo`](https://en.wikipedia.org/wiki/Castelletto_di_Branduzzo) |
 | `ampfing` | Schweppermannring Ampfing | DE | [`way/110580562`](https://www.openstreetmap.org/way/110580562) | [`Ampfing`](https://en.wikipedia.org/wiki/Ampfing) |
-| `silverstone_national_kart` | Silverstone National Kart Circuit | GB | [`way/1240237936`](https://www.openstreetmap.org/way/1240237936) | [`Silverstone_Circuit`](https://en.wikipedia.org/wiki/Silverstone_Circuit) |
+| `silverstone_national_kart` | Silverstone National Kart Circuit | GB | [`way/1526452831`](https://www.openstreetmap.org/way/1526452831) | [`Silverstone_Circuit`](https://en.wikipedia.org/wiki/Silverstone_Circuit) |
 | `laval_kart` | Circuit Beausoleil (Laval Kart) | FR | [`way/183330357`](https://www.openstreetmap.org/way/183330357) | [`Laval,_Mayenne`](https://en.wikipedia.org/wiki/Laval,_Mayenne) |
-| `whilton_mill` | Whilton Mill Kart Circuit | GB | [`way/149913876`](https://www.openstreetmap.org/way/149913876) | [`Whilton`](https://en.wikipedia.org/wiki/Whilton) |
-| `campillos` | Kartcenter Campillos | ES | [`way/420385347`](https://www.openstreetmap.org/way/420385347) | [`Campillos`](https://en.wikipedia.org/wiki/Campillos) |
+| `whilton_mill` | Whilton Mill Kart Circuit | GB | [`relation/16338535`](https://www.openstreetmap.org/relation/16338535) | [`Whilton`](https://en.wikipedia.org/wiki/Whilton) |
+| `campillos` | Kartcenter Campillos | ES | [`way/639076279`](https://www.openstreetmap.org/way/639076279) | [`Campillos`](https://en.wikipedia.org/wiki/Campillos) |
 | `valencia_kart`| Kartódromo Lucas Guerrero | ES | [`way/751513226`](https://www.openstreetmap.org/way/751513226) | [`Chiva,_Spain`](https://en.wikipedia.org/wiki/Chiva,_Spain) |
 
 ### 3. Rallycross & All-Terrain (17 Circuits)
@@ -111,21 +114,21 @@ Surveyed via `scripts/osm_importer.py rally` and `assets/osm/`:
 | :--- | :--- | :---: | :--- | :--- |
 | `holjes_rx` | Höljes Motorstadion (World RX Sweden) | SE | [`way/599300791`](https://www.openstreetmap.org/way/599300791) | [`Höljes_Motorstadion`](https://en.wikipedia.org/wiki/H%C3%B6ljes_Motorstadion) |
 | `lydden_hill` | Lydden Hill Circuit (World RX Great Britain) | GB | [`way/234347787`](https://www.openstreetmap.org/way/234347787) | [`Lydden_Hill_Race_Circuit`](https://en.wikipedia.org/wiki/Lydden_Hill_Race_Circuit) |
-| `hell_rx` | Lånkebanen (World RX Norway) | NO | [`way/1069390970`](https://www.openstreetmap.org/way/1069390970) | [`Lånkebanen`](https://en.wikipedia.org/wiki/L%C3%A5nkebanen) |
+| `hell_rx` | Lånkebanen (World RX Norway) | NO | [`way/1069390967`](https://www.openstreetmap.org/way/1069390967) | [`Lånkebanen`](https://en.wikipedia.org/wiki/L%C3%A5nkebanen) |
 | `loheac_rx` | Circuit de Lohéac (World RX France) | FR | [`way/787615501`](https://www.openstreetmap.org/way/787615501) | [`Circuit_de_Lohéac`](https://fr.wikipedia.org/wiki/Circuit_de_Loh%C3%A9ac) |
-| `estering_rx` | Estering Buxtehude (World RX Germany) | DE | [`way/24855696`](https://www.openstreetmap.org/way/24855696) | [`Estering`](https://en.wikipedia.org/wiki/Estering) |
-| `montalegre_rx`| Pista de Montalegre (World RX Portugal) | PT | [`way/305257997`](https://www.openstreetmap.org/way/305257997) | [`Pista_Automóvel_de_Montalegre`](https://en.wikipedia.org/wiki/Pista_Autom%C3%B3vel_de_Montalegre) |
-| `nyirad_rx` | Nyirád Racing Center (Euro RX Hungary) | HU | [`way/172413355`](https://www.openstreetmap.org/way/172413355) | [`Nyirád_Racing_Center`](https://en.wikipedia.org/wiki/Nyir%C3%A1d_Racing_Center) |
+| `estering_rx` | Estering Buxtehude (World RX Germany) | DE | [`way/267094190`](https://www.openstreetmap.org/way/267094190) | [`Estering`](https://en.wikipedia.org/wiki/Estering) |
+| `montalegre_rx`| Pista de Montalegre (World RX Portugal) | PT | [`way/1096210264`](https://www.openstreetmap.org/way/1096210264) | [`Pista_Automóvel_de_Montalegre`](https://en.wikipedia.org/wiki/Pista_Autom%C3%B3vel_de_Montalegre) |
+| `nyirad_rx` | Nyirád Racing Center (Euro RX Hungary) | HU | [`way/172413357`](https://www.openstreetmap.org/way/172413357) | [`Nyirád_Racing_Center`](https://en.wikipedia.org/wiki/Nyir%C3%A1d_Racing_Center) |
 | `kouvola_rx` | Tykkimäen Moottorirata (World RX Finland) | FI | [`way/149713976`](https://www.openstreetmap.org/way/149713976) | [`Kouvola`](https://en.wikipedia.org/wiki/Kouvola) |
-| `catalunya_rx` | Barcelona-Catalunya RX (World RX Spain) | ES | [`way/831804327`](https://www.openstreetmap.org/way/831804327) | [`Circuit_de_Barcelona-Catalunya`](https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya) |
-| `mettet_rx` | Circuit Jules Tacheny Mettet (World RX Belgium)| BE | [`way/178384323`](https://www.openstreetmap.org/way/178384323) | [`Circuit_Jules_Tacheny_Mettet`](https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet) |
-| `silverstone_rx`| Silverstone RX Arena (World RX GB) | GB | [`way/169851260`](https://www.openstreetmap.org/way/169851260) | [`Silverstone_Circuit`](https://en.wikipedia.org/wiki/Silverstone_Circuit) |
-| `riga_rx` | Biķernieku Trase (World RX Latvia) | LV | [`way/256784387`](https://www.openstreetmap.org/way/256784387) | [`Biķernieki_Complex_Sports_Base`](https://en.wikipedia.org/wiki/Bi%C4%B7ernieki_Complex_Sports_Base) |
+| `catalunya_rx` | Barcelona-Catalunya RX (World RX Spain) | ES | [`relation/11362868`](https://www.openstreetmap.org/relation/11362868) | [`Circuit_de_Barcelona-Catalunya`](https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya) |
+| `mettet_rx` | Circuit Jules Tacheny Mettet (World RX Belgium)| BE | [`way/178240082`](https://www.openstreetmap.org/way/178240082) | [`Circuit_Jules_Tacheny_Mettet`](https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet) |
+| `lavare_rx` | Circuit de Lavaré (replaced Silverstone RX, 2026-09-28) | FR | [`relation/11752542`](https://www.openstreetmap.org/relation/11752542) | [`Lavaré`](https://en.wikipedia.org/wiki/Lavar%C3%A9) |
+| `riga_rx` | Biķernieku Trase (World RX Latvia) | LV | [`way/588947722`](https://www.openstreetmap.org/way/588947722) | [`Biķernieki_Complex_Sports_Base`](https://en.wikipedia.org/wiki/Bi%C4%B7ernieki_Complex_Sports_Base) |
 | `killarney_rx` | Killarney International (World RX South Africa) | ZA | [`way/42125321`](https://www.openstreetmap.org/way/42125321) | [`Killarney_Motor_Racing_Complex`](https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex) |
-| `yas_marina_rx`| Yas Marina RX Arena (World RX Abu Dhabi)| AE | [`way/1083519983`](https://www.openstreetmap.org/way/1083519983) | [`Yas_Marina_Circuit`](https://en.wikipedia.org/wiki/Yas_Marina_Circuit) |
+| `lessay_rx` | Circuit de Lessay (replaced Yas Marina RX, 2026-09-28) | FR | [`way/788196389`](https://www.openstreetmap.org/way/788196389) | [`Lessay`](https://en.wikipedia.org/wiki/Lessay) |
 | `croft_rx` | Croft Rallycross Circuit (replaced Blyton Park RX, 2026-09-28) | GB | [`relation/21228308`](https://www.openstreetmap.org/relation/21228308) | [`Croft_Circuit`](https://en.wikipedia.org/wiki/Croft_Circuit) |
-| `dreux_rx` | Circuit Pro'Pulsion (Dreux RX France) | FR | [`way/297738878`](https://www.openstreetmap.org/way/297738878) | [`Dreux`](https://en.wikipedia.org/wiki/Dreux) |
-| `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`way/788873788`](https://www.openstreetmap.org/way/788873788) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
+| `dreux_rx` | Circuit Pro'Pulsion (Dreux RX France) | FR | [`relation/10950539`](https://www.openstreetmap.org/relation/10950539) | [`Dreux`](https://en.wikipedia.org/wiki/Dreux) |
+| `essay_rx` | Circuit des Ducs (Essay RX France) | FR | [`relation/10968337`](https://www.openstreetmap.org/relation/10968337) | [`Essay,_Orne`](https://en.wikipedia.org/wiki/Essay,_Orne) |
 
 ### 4. NASCAR Cup Series & Trans-Am (17 Circuits)
 Surveyed via `scripts/osm_importer.py nascar` and `assets/osm/`:
@@ -133,22 +136,22 @@ Surveyed via `scripts/osm_importer.py nascar` and `assets/osm/`:
 | ID | Circuit Name | Country | Verified OSM URL | Verified Wikipedia URL |
 | :--- | :--- | :---: | :--- | :--- |
 | `bowman_gray` | Bowman Gray Stadium (The Madhouse) | US | [`way/914237156`](https://www.openstreetmap.org/way/914237156) | [`Bowman_Gray_Stadium`](https://en.wikipedia.org/wiki/Bowman_Gray_Stadium) |
-| `bristol` | Bristol Motor Speedway | US | [`way/116589129`](https://www.openstreetmap.org/way/116589129) | [`Bristol_Motor_Speedway`](https://en.wikipedia.org/wiki/Bristol_Motor_Speedway) |
-| `charlotte` | Charlotte Motor Speedway | US | [`relation/21242750`](https://www.openstreetmap.org/relation/21242750) | [`Charlotte_Motor_Speedway`](https://en.wikipedia.org/wiki/Charlotte_Motor_Speedway) |
+| `bristol` | Bristol Motor Speedway | US | [`way/116606212`](https://www.openstreetmap.org/way/116606212) | [`Bristol_Motor_Speedway`](https://en.wikipedia.org/wiki/Bristol_Motor_Speedway) |
+| `charlotte` | Charlotte Motor Speedway | US | [`way/402168711`](https://www.openstreetmap.org/way/402168711) | [`Charlotte_Motor_Speedway`](https://en.wikipedia.org/wiki/Charlotte_Motor_Speedway) |
 | `chicago` | Chicago Street Course | US | [`relation/16546690`](https://www.openstreetmap.org/relation/16546690) | [`Chicago_Street_Course`](https://en.wikipedia.org/wiki/Chicago_Street_Course) |
 | `darlington` | Darlington Raceway | US | [`way/104277971`](https://www.openstreetmap.org/way/104277971) | [`Darlington_Raceway`](https://en.wikipedia.org/wiki/Darlington_Raceway) |
-| `daytona` | Daytona International Speedway | US | [`way/352074880`](https://www.openstreetmap.org/way/352074880) | [`Daytona_International_Speedway`](https://en.wikipedia.org/wiki/Daytona_International_Speedway) |
+| `daytona` | Daytona International Speedway | US | [`relation/5254137`](https://www.openstreetmap.org/relation/5254137) | [`Daytona_International_Speedway`](https://en.wikipedia.org/wiki/Daytona_International_Speedway) |
 | `eldora` | Eldora Speedway | US | [`way/608397609`](https://www.openstreetmap.org/way/608397609) | [`Eldora_Speedway`](https://en.wikipedia.org/wiki/Eldora_Speedway) |
-| `indianapolis` | Indianapolis Motor Speedway | US | [`way/589668075`](https://www.openstreetmap.org/way/589668075) | [`Indianapolis_Motor_Speedway`](https://en.wikipedia.org/wiki/Indianapolis_Motor_Speedway) |
+| `indianapolis` | Indianapolis Motor Speedway | US | [`relation/20573682`](https://www.openstreetmap.org/relation/20573682) | [`Indianapolis_Motor_Speedway`](https://en.wikipedia.org/wiki/Indianapolis_Motor_Speedway) |
 | `iowa` | Iowa Speedway | US | [`way/119238784`](https://www.openstreetmap.org/way/119238784) | [`Iowa_Speedway`](https://en.wikipedia.org/wiki/Iowa_Speedway) |
 | `irp_oval` | Lucas Oil Indianapolis Raceway Park | US | [`way/123830268`](https://www.openstreetmap.org/way/123830268) | [`Lucas_Oil_Indianapolis_Raceway_Park`](https://en.wikipedia.org/wiki/Lucas_Oil_Indianapolis_Raceway_Park) |
-| `martinsville` | Martinsville Speedway | US | [`relation/6497929`](https://www.openstreetmap.org/relation/6497929) | [`Martinsville_Speedway`](https://en.wikipedia.org/wiki/Martinsville_Speedway) |
+| `martinsville` | Martinsville Speedway | US | [`way/448515178`](https://www.openstreetmap.org/way/448515178) | [`Martinsville_Speedway`](https://en.wikipedia.org/wiki/Martinsville_Speedway) |
 | `north_wilkesboro`| North Wilkesboro Speedway | US | [`way/18928710`](https://www.openstreetmap.org/way/18928710) | [`North_Wilkesboro_Speedway`](https://en.wikipedia.org/wiki/North_Wilkesboro_Speedway) |
 | `phoenix` | Phoenix Raceway | US | [`way/29333335`](https://www.openstreetmap.org/way/29333335) | [`Phoenix_Raceway`](https://en.wikipedia.org/wiki/Phoenix_Raceway) |
 | `pocono` | Pocono Raceway | US | [`way/109767460`](https://www.openstreetmap.org/way/109767460) | [`Pocono_Raceway`](https://en.wikipedia.org/wiki/Pocono_Raceway) |
 | `road_america` | Road America | US | [`relation/6432758`](https://www.openstreetmap.org/relation/6432758) | [`Road_America`](https://en.wikipedia.org/wiki/Road_America) |
-| `talladega` | Talladega Superspeedway | US | [`way/405961241`](https://www.openstreetmap.org/way/405961241) | [`Talladega_Superspeedway`](https://en.wikipedia.org/wiki/Talladega_Superspeedway) |
-| `watkins_glen` | Watkins Glen International | US | [`way/702671615`](https://www.openstreetmap.org/way/702671615) | [`Watkins_Glen_International`](https://en.wikipedia.org/wiki/Watkins_Glen_International) |
+| `talladega` | Talladega Superspeedway | US | [`way/532106116`](https://www.openstreetmap.org/way/532106116) | [`Talladega_Superspeedway`](https://en.wikipedia.org/wiki/Talladega_Superspeedway) |
+| `watkins_glen` | Watkins Glen International | US | [`relation/4872326`](https://www.openstreetmap.org/relation/4872326) | [`Watkins_Glen_International`](https://en.wikipedia.org/wiki/Watkins_Glen_International) |
 
 ### 5. Real-World Extreme Off-Road (2 Circuits)
 Surveyed via `assets/osm/`:

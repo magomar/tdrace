@@ -33,5 +33,8 @@ pub use transport::{SimDropFilter, SimLinkConfig, SimNetwork, SimTransport, Tran
 pub use reliable::ReliableChannel;
 pub use stats::NetStats;
 pub use wire::{NetCarState, WorldState};
-pub use ui::{CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction};
+pub use ui::{
+    CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction, LanLobbyRequest,
+    LAN_LIVERIES,
+};
 

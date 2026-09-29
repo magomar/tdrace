@@ -9,7 +9,7 @@ generated: { by: agent/antigravity, at: 2026-09-22T17:45:00Z }
 ---
 # Feature Spec: Vehicle Telemetry Alignment and Physics Differentiation 🏎️📊
 
-A comprehensive unification and physics differentiation initiative that harmonizes the **6-dimensional performance telemetry system** (`Speed`, `Acceleration`, `Lateral Grip`, `Drift Agility`, `Braking Force`, `Aerodynamics`) across both the **in-game HUD / garage (`crates/tdrace-app/src/ui/garage.rs`)** and the **Web Showroom portal (`portals/option-b-showroom`)**. In parallel, it transitions the game engine from relying solely on category archetype defaults to dynamically deriving individual vehicle physical characteristics (`max_brake_force`, `tire.peak_d`, `steer_speed`, `inertia`, and `downforce_coefficient`) directly from each car's homologated real-world specifications.
+A comprehensive unification and physics differentiation initiative that harmonizes the **6-dimensional performance telemetry system** (`Speed`, `Acceleration`, `Lateral Grip`, `Drift Agility`, `Braking Force`, `Aerodynamics`) across both the **in-game HUD / garage (`crates/tdrace-app/src/ui/garage.rs`)** and the **Web Showroom portal (`portals/showroom`)**. In parallel, it transitions the game engine from relying solely on category archetype defaults to dynamically deriving individual vehicle physical characteristics (`max_brake_force`, `tire.peak_d`, `steer_speed`, `inertia`, and `downforce_coefficient`) directly from each car's homologated real-world specifications.
 
 ---
 
@@ -32,7 +32,7 @@ Every vehicle in TdRace is characterized across 6 distinct telemetry vectors, al
 
 ### 2. Web Showroom Single-Row Inline Card Layout
 
-In [`portals/option-b-showroom/src/components/CarCard.astro`](../portals/option-b-showroom/src/components/CarCard.astro), the previous 2-line layout (label stacked above bar) is refactored into a high-density, horizontal single-row telemetry HUD. This incorporates all 6 performance metrics within the identical vertical envelope (~125px):
+In [`portals/showroom/src/components/CarCard.astro`](../portals/showroom/src/components/CarCard.astro), the previous 2-line layout (label stacked above bar) is refactored into a high-density, horizontal single-row telemetry HUD. This incorporates all 6 performance metrics within the identical vertical envelope (~125px):
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -129,7 +129,7 @@ Parsed directly from `self.aero_downforce` (format `"Cl X.XX / Cd Y.YY"`):
    `cargo test -p tdrace-app --lib catalog`
    Validates that `to_car_config()` produces non-zero, properly bounded, and differentiated physics configs across intra-category vehicle models.
 2. **Showroom Web Portal Compilation**:
-   `bun run build` (within `portals/option-b-showroom`)
+   `bun run build` (within `portals/showroom`)
    Verifies zero TypeScript errors, clean CSS generation, and valid HTML output.
 3. **Keel Spec Suite Validation**:
    `keel validate`
@@ -159,7 +159,7 @@ Parsed directly from `self.aero_downforce` (format `"Cl X.XX / Cd Y.YY"`):
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[x]` [`portals/option-b-showroom/src/components/CarCard.astro`](../portals/option-b-showroom/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
+- `[x]` [`portals/showroom/src/components/CarCard.astro`](../portals/showroom/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
 - `[x]` [`portals/shared/schemas/okf.ts`](../portals/shared/schemas/okf.ts) -> Optional `braking` schema attribute.
 - `[x]` [`scripts/generate_asset_data.py`](../scripts/generate_asset_data.py) -> Export `braking` stat to `vehicles.json`.
 - `[x]` [`portals/shared/data/vehicles.json`](../portals/shared/data/vehicles.json) -> Synchronized vehicle stats.

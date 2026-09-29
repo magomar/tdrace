@@ -23,13 +23,14 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
     ("rally_world_cup", include_str!("../../../../series/rally/rally_world_cup.toml")),
     ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
-    ("rally_dakar_raid_trophy", include_str!("../../../../series/rally/rally_dakar_raid_trophy.toml")),
-    ("rally_super_trucks_series", include_str!("../../../../series/rally/rally_super_trucks_series.toml")),
-    // Karting Championships (Tiers 1-5)
+    ("rally_rx1e_electric_championship", include_str!("../../../../series/rally/rally_rx1e_electric_championship.toml")),
+    ("rally_nitrocross_group_e", include_str!("../../../../series/rally/rally_nitrocross_group_e.toml")),
+    // Karting Championships (Tiers 1-6)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
+    ("kart_junior_trophy", include_str!("../../../../series/kart/kart_junior_trophy.toml")),
     ("kart_national_championship", include_str!("../../../../series/kart/kart_national_championship.toml")),
     ("kart_continental_trophy", include_str!("../../../../series/kart/kart_continental_trophy.toml")),
-    ("kart_european_championship", include_str!("../../../../series/kart/kart_european_championship.toml")),
+    ("kart_superkart_div2_challenge", include_str!("../../../../series/kart/kart_superkart_div2_challenge.toml")),
     ("kart_superkart_world_series", include_str!("../../../../series/kart/kart_superkart_world_series.toml")),
     // Extreme Off-Road Championships (Tiers 1-5)
     ("extreme_desert_sand_sprint", include_str!("../../../../series/extreme_offroad/extreme_desert_sand_sprint.toml")),
@@ -140,6 +141,17 @@ impl SeriesManager {
         self.series
             .values()
             .find(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
+    }
+
+    /// Returns all championships matching module_id and tier, sorted by name (Spec 053).
+    pub fn get_all_by_module_and_tier(&self, module_id: &str, tier: u32) -> Vec<&SeriesDefinition> {
+        let mut list: Vec<&SeriesDefinition> = self
+            .series
+            .values()
+            .filter(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
+            .collect();
+        list.sort_by(|a, b| a.series.name.cmp(&b.series.name));
+        list
     }
 
     /// Returns a list of all known series definitions sorted by module, tier, and name.

@@ -244,8 +244,8 @@ impl RealWorldBenchmark {
             ("rally", 4) => Self {
                 modality: "rally",
                 tier: 4,
-                category_archetype: "Dakar Rally-Raid T1+",
-                representative_real_cars: "Toyota Hilux T1+, Prodrive Hunter, Audi RS Q e-tron",
+                category_archetype: "RX1e Electric Supercars",
+                representative_real_cars: "Peugeot 208 RX1e, VW Polo RX1e, Lancia Delta Evo-e RX",
                 real_kinematic_circle_min_m: 6.2,
                 real_kinematic_circle_max_m: 9.5,
                 real_dynamic_circle_min_m: 12.0,
@@ -259,8 +259,8 @@ impl RealWorldBenchmark {
             ("rally", 5) => Self {
                 modality: "rally",
                 tier: 5,
-                category_archetype: "Stadium Super Trucks",
-                representative_real_cars: "SST V8 Robby Gordon, Traxxas Edition",
+                category_archetype: "Nitrocross Group E",
+                representative_real_cars: "Olsbergs MSE FC1-X, Vermont SportsCar FC1-X, Dodge Hornet R/T FC1-X",
                 real_kinematic_circle_min_m: 6.2,
                 real_kinematic_circle_max_m: 9.0,
                 real_dynamic_circle_min_m: 11.0,
@@ -706,7 +706,7 @@ fn generate_markdown_report(
     let modules = [
         ("gt", "GT World Challenge (Tiers 1–5)", "🏁"),
         ("nascar", "NASCAR Cup Series & Stock Cars (Tiers 1–5)", "🏁"),
-        ("rally", "Rallycross & All-Terrain (Tiers 1–5)", "⛰️"),
+        ("rally", "Rallycross (Tiers 1–5)", "⛰️"),
         ("kart", "Karting World Cup (Tiers 1–5)", "🏎️"),
         ("extreme_offroad", "Extreme Off-Road & Arenas (Tiers 1–5)", "🏜️"),
         ("classic", "Classic Arcade Mode (Tier 1 Fantasy Archetypes)", "🕹️"),

@@ -1,14 +1,14 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: Superkart 250cc World Series (Tier 5)
+# Karting Career Mode: Superkart Division 1 World Series (Tier 6)
 # ==============================================================================
 
 [championship]
 id = "kart_superkart_world_series"
-name = "Superkart 250cc World Series"
-description = "The pinnacle of karting: 100 BHP aerodynamic twin-cylinder 250cc Superkarts exceeding 245 km/h across 12 world kart circuits."
+name = "Superkart Division 1 World Series"
+description = "The pinnacle of karting: 100 BHP aerodynamic twin-cylinder 250cc Superkarts exceeding 245 km/h across 10 world kart circuits."
 module_id = "kart"
-tier = 5
+tier = 6
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "legend"
@@ -34,14 +34,14 @@ laps = 5
 
 [[rounds]]
 order = 3
-track_id = "campillos"
-name = "KartCenter Campillos"
+track_id = "adria_kart"
+name = "Adria Karting Raceway"
 laps = 5
 
 [[rounds]]
 order = 4
-track_id = "zuera"
-name = "Circuito Internacional de Zuera"
+track_id = "campillos"
+name = "KartCenter Campillos"
 laps = 5
 
 [[rounds]]
@@ -52,42 +52,30 @@ laps = 5
 
 [[rounds]]
 order = 6
+track_id = "muelsen_kart"
+name = "Motorsport Arena Mülsen"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "zuera"
+name = "Circuito Internacional de Zuera"
+laps = 5
+
+[[rounds]]
+order = 8
 track_id = "silverstone_national_kart"
 name = "Silverstone National Kart Circuit"
 laps = 5
 
 [[rounds]]
-order = 7
+order = 9
 track_id = "pfi"
 name = "PF International Kart Circuit"
 laps = 5
 
 [[rounds]]
-order = 8
-track_id = "sarno"
-name = "Circuito Internazionale Napoli Sarno"
-laps = 5
-
-[[rounds]]
-order = 9
-track_id = "franciacorta"
-name = "Franciacorta Karting Track"
-laps = 5
-
-[[rounds]]
 order = 10
-track_id = "kristianstad"
-name = "Åsum Ring Kristianstad"
-laps = 5
-
-[[rounds]]
-order = 11
-track_id = "seven_laghi"
-name = "Circuito 7 Laghi Castelletto"
-laps = 5
-
-[[rounds]]
-order = 12
 track_id = "lonato"
 name = "South Garda Karting Lonato"
 laps = 5

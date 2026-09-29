@@ -90,8 +90,9 @@ fn test_garage_shows_all_module_models_across_tiers() {
             all_cars.len()
         );
 
-        // Every module should feature 5 progression tiers with at least 3 distinct models each
-        for tier in 1..=5 {
+        // Every module should feature progression tiers with at least 3 distinct models each
+        let tier_limit = if mod_id == "kart" { 6 } else { 5 };
+        for tier in 1..=tier_limit {
             let tier_models = get_models_for_module_and_tier(mod_id, tier);
             assert!(
                 tier_models.len() >= 3,
@@ -106,8 +107,8 @@ fn test_garage_shows_all_module_models_across_tiers() {
     let global_models = get_all_models();
     assert_eq!(
         global_models.len(),
-        80,
-        "Expected exactly 80 real car models in catalog, got {}",
+        89,
+        "Expected exactly 89 real car models in catalog, got {}",
         global_models.len()
     );
 }
@@ -115,7 +116,7 @@ fn test_garage_shows_all_module_models_across_tiers() {
 #[test]
 fn test_all_80_real_cars_attributes_and_data_integrity() {
     let global_models = get_all_models();
-    assert_eq!(global_models.len(), 80);
+    assert_eq!(global_models.len(), 89);
 
     let mut seen_ids = std::collections::HashSet::new();
     let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
@@ -135,7 +136,15 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
             car.module_id,
             car.id
         );
-        assert!((1..=5).contains(&car.tier), "Invalid tier {} on car {}", car.tier, car.id);
+        // Extreme Off-Road parks the Rally Raid T1+ and SST cars at unranked tiers 6 and 7 (spec 048), Kart has 6 tiers
+        let max_tier = if car.module_id == "extreme_offroad" {
+            7
+        } else if car.module_id == "kart" {
+            6
+        } else {
+            5
+        };
+        assert!((1..=max_tier).contains(&car.tier), "Invalid tier {} on car {}", car.tier, car.id);
 
         // Realistic non-zero specifications
         assert!(car.bhp > 0, "Car {} must have positive BHP", car.id);
@@ -272,7 +281,7 @@ fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
     assert_eq!(GALLERY_MODULES.len(), 5);
 
     let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
-    let expected_labels = ["GT", "RALLY", "KART", "NASCAR", "OFF-ROAD"];
+    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD"];
 
     for (i, &(mod_id, label)) in GALLERY_MODULES.iter().enumerate() {
         assert_ne!(label, "ALL", "The 'ALL' tab must be removed from fleet gallery");
@@ -435,6 +444,55 @@ fn test_garage_stops_music_and_plays_engine() {
 }
 
 #[test]
+fn test_garage_engine_sound_config_cached_and_not_reset_per_frame() {
+    let mut session = RaceSession::new();
+    session.state = GameState::Garage(GarageOrigin::Menu);
+    session.active_module_id = "gt";
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+
+    // Frame 1: Initial garage update configures audio for the active car
+    session.update_garage(GarageOrigin::Menu, 0.016);
+    let expected_type = session.resolve_active_sound_type();
+    let expected_config = session.resolve_active_sound_config();
+    assert_eq!(session.audio.active_engine_type, expected_type);
+    assert_eq!(session.audio.active_engine_config, Some(expected_config));
+    assert!(session.audio.is_engine_active);
+
+    // Frame 2..10: Multi-frame idle in garage must preserve active sound without dropping loops
+    for _ in 0..10 {
+        session.update_garage(GarageOrigin::Menu, 0.016);
+        assert!(session.audio.is_engine_active);
+        assert_eq!(session.audio.active_engine_type, expected_type);
+        assert_eq!(session.audio.active_engine_config, Some(expected_config));
+    }
+
+    // Revving via gamepad button A held (btn_a_down)
+    session.input.gamepad.snapshot.btn_a_down = true;
+    session.update_garage(GarageOrigin::Menu, 0.05);
+    assert!(session.garage_revving);
+    assert!(session.garage_rev_rpm > 0.0);
+    assert!(session.audio.is_engine_active);
+
+    // Revving via analog throttle trigger
+    session.input.gamepad.snapshot.btn_a_down = false;
+    session.input.gamepad.snapshot.btn_a_pressed = false;
+    session.input.gamepad.snapshot.throttle = 0.85;
+    session.update_garage(GarageOrigin::Menu, 0.05);
+    assert!(session.garage_revving);
+    assert!(session.audio.is_engine_active);
+
+    // Switching vehicle in garage updates sound config cleanly
+    session.garage_car_idx = 1;
+    session.update_garage(GarageOrigin::Menu, 0.016);
+    let new_expected_type = session.resolve_active_sound_type();
+    let new_expected_config = session.resolve_active_sound_config();
+    assert_eq!(session.audio.active_engine_type, new_expected_type);
+    assert_eq!(session.audio.active_engine_config, Some(new_expected_config));
+    assert!(session.audio.is_engine_active);
+}
+
+#[test]
 fn test_starting_grid_card_0_enter_vs_space_reservation() {
     let mut session = RaceSession::new();
     session.init_race();
@@ -507,7 +565,8 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
 fn test_roster_featured_cars_have_valid_lateral_assets() {
     let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
     for mod_id in modules {
-        for tier in 1..=5 {
+        let max_tier = if mod_id == "kart" { 6 } else { 5 };
+        for tier in 1..=max_tier {
             let models = get_models_for_module_and_tier(mod_id, tier);
             let featured = models.first().expect("Each tier must have at least one featured car");
             assert!(!featured.id.is_empty());
@@ -528,3 +587,99 @@ fn test_roster_featured_cars_have_valid_lateral_assets() {
     }
 }
 
+
+// --- Browsing other disciplines vs. switching (tdrace-garage-module-switch-z4iy) ---
+
+use macroquad::input::KeyCode;
+use tdrace_app::game::inject_key_presses_for_tests;
+use tdrace_app::ui::menu::GameMode;
+
+/// Runs one Garage frame with `keys` pressed.
+fn garage_press(session: &mut RaceSession, origin: GarageOrigin, keys: &[KeyCode]) {
+    inject_key_presses_for_tests(keys);
+    session.update_garage(origin, 0.016);
+    inject_key_presses_for_tests(&[]);
+}
+
+/// Opens the Garage from `origin` in the GT discipline, then views the Rallycross cars (key 2)
+/// with their first tier-1 car unlocked. Returns that car's id.
+fn gt_garage_viewing_rally(session: &mut RaceSession, origin: GarageOrigin) -> &'static str {
+    session.switch_to_gt();
+    session.game_mode = GameMode::StandardRace;
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+    session.state = GameState::Garage(origin);
+    garage_press(session, origin, &[KeyCode::Key2]);
+    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_career_progress.module_id, "rally", "prices and unlocks come from the viewed class");
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+    let car = get_models_for_module_and_tier("rally", 1)[0];
+    session.active_career_progress.ensure_car(car.id);
+    car.id
+}
+
+#[test]
+fn browsing_another_discipline_then_esc_restores_the_session_discipline() {
+    let mut session = RaceSession::new();
+    gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Escape]);
+
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.active_module_id, "gt");
+    assert_eq!(session.active_career_progress.module_id, "gt");
+    assert_eq!((session.garage_tier, session.garage_car_idx), (1, 0));
+}
+
+#[test]
+fn picking_another_disciplines_car_from_the_circuit_menu_switches_fully() {
+    let mut session = RaceSession::new();
+    let car_id = gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Enter]);
+
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.selected_car_model_id, Some(car_id), "the picked car survives the switch");
+    let rally_tracks = session.track_manager.module_catalog_tracks("rally");
+    assert!(
+        rally_tracks.iter().any(|t| t.track_id() == session.track_choice.track_id()),
+        "the circuit menu now offers Rallycross circuits"
+    );
+
+    // Leaving the Garage must not undo the switch.
+    session.update();
+    assert_eq!(session.active_module_id, "rally");
+}
+
+#[test]
+fn a_set_up_race_refuses_a_car_from_another_discipline() {
+    let mut session = RaceSession::new();
+    session.switch_to_gt();
+    session.init_race();
+    let grid_car = session.selected_car_model_id;
+    gt_garage_viewing_rally(&mut session, GarageOrigin::StartingGrid);
+
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Enter]);
+
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid), "stays in the garage");
+    assert_eq!(session.selected_car_model_id, grid_car);
+
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Escape]);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.active_module_id, "gt");
+}
+
+#[test]
+fn leaving_the_garage_by_any_path_restores_the_discipline() {
+    let mut session = RaceSession::new();
+    gt_garage_viewing_rally(&mut session, GarageOrigin::Menu);
+
+    // e.g. a LAN lobby dropping out, or any code that changes the state directly
+    session.state = GameState::Menu;
+    session.update();
+
+    assert_eq!(session.active_module_id, "gt");
+    assert_eq!(session.garage_entry, None);
+}

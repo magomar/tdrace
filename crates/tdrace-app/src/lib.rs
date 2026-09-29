@@ -1,12 +1,12 @@
 pub mod ai;
 pub mod audio;
-pub mod camera;
+pub use race_ui::camera;
 pub mod catalog;
 pub mod config;
 pub mod db;
 pub mod dev_tools;
 pub mod editor;
-pub mod fx;
+pub use race_ui::fx;
 pub mod game;
 pub mod input;
 pub mod module;
@@ -57,8 +57,8 @@ pub use track_manager::{CustomTrackInfo, TrackManager};
 pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
 pub use input::{DebugOverlays, InputController};
 pub use profile::{
-    draw_country_banner, ChampionshipAward, CountryInfo, CountryRegistry, PlayerProfile,
-    ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
+    draw_country_banner, ChampionshipAward, ChampionshipRecord, CountryInfo, CountryRegistry,
+    ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
 };
 pub use render::color::{CarColorScheme, Palette};
 pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};

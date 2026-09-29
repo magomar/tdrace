@@ -56,11 +56,12 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
 
     // Driver Index Badge
     let badge_str = format!("#{} OF {}", (selected_idx % roster.len()) + 1, roster.len());
-    fonts.draw_ui_bold(&badge_str, x + scaler.s(32.0), y + scaler.s(42.0), scaler.font_s(14.0), Palette::NEON_GOLD);
+    // Baselines centered in the 58px banner (they used to sit in its top half).
+    fonts.draw_ui_bold(&badge_str, x + scaler.s(32.0), y + scaler.s(50.0), scaler.font_s(14.0), Palette::NEON_GOLD);
 
     // Driver Alias / Full Name
     let name_str = format!("{} — \"{}\"", driver.name, driver.alias);
-    fonts.draw_ui_bold(&name_str, x + scaler.s(120.0), y + scaler.s(42.0), scaler.font_s(22.0), Palette::WHITE);
+    fonts.draw_ui_bold(&name_str, x + scaler.s(120.0), y + scaler.s(53.0), scaler.font_s(22.0), Palette::WHITE);
 
     // Two-Column Layout inside Card
     let content_y = y + scaler.s(88.0);
@@ -101,32 +102,36 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     fonts.draw_ui_bold(&car_desc, col1_x + scaler.s(16.0), left_y, scaler.font_s(15.0), Palette::WHITE);
     left_y += scaler.s(16.0);
 
-    let signature_summary = if !driver.favorite_cars.is_empty() {
-        let first_models: Vec<String> = driver
+    // Signature rides, one per line so long model names stay inside the card
+    let signature_lines: Vec<String> = if !driver.favorite_cars.is_empty() {
+        driver
             .favorite_cars
             .iter()
             .take(3)
             .filter_map(|fav| {
                 crate::catalog::find_model_by_id(fav.model_id)
-                    .map(|m| format!("T{}: {}", fav.tier, m.name))
+                    .map(|m| format!("Signature T{}: {}", fav.tier, m.name))
             })
-            .collect();
-        if !first_models.is_empty() {
-            format!("Signature: {}", first_models.join(" | "))
-        } else {
-            driver.preferred_car.description().to_string()
-        }
+            .collect()
     } else {
-        driver.preferred_car.description().to_string()
+        Vec::new()
     };
-    fonts.draw_ui_regular(
-        &signature_summary,
-        col1_x + scaler.s(16.0),
-        left_y,
-        scaler.font_s(11.5),
-        if !driver.favorite_cars.is_empty() { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
-    );
-    left_y += scaler.s(45.0);
+    let (signature_lines, signature_col) = if signature_lines.is_empty() {
+        (vec![driver.preferred_car.description().to_string()], Palette::UI_TEXT_MUTED)
+    } else {
+        (signature_lines, Palette::NEON_CYAN)
+    };
+    let signature_line_h = scaler.s(14.0);
+    for (i, line) in signature_lines.iter().enumerate() {
+        fonts.draw_ui_regular(
+            &fonts.fit_ui_regular(line, scaler.font_s(11.5), bio_max_w),
+            col1_x + scaler.s(16.0),
+            left_y + i as f32 * signature_line_h,
+            scaler.font_s(11.5),
+            signature_col,
+        );
+    }
+    left_y += (signature_lines.len() as f32 * signature_line_h + scaler.s(17.0)).max(scaler.s(45.0));
 
     // Custom Car Livery Swatches
     fonts.draw_ui_bold("CUSTOM TEAM LIVERY", col1_x + scaler.s(16.0), left_y, scaler.font_s(14.0), Palette::NEON_MAGENTA);

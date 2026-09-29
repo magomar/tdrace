@@ -62,15 +62,16 @@ pub enum TrackManagerModal {
 /// Available motorsport modules for circuit promotion.
 pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); PROMOTION_MODULE_COUNT] = [
     ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
-    ("rally", "Rally Cross Championship", "Dirt tracks, dunes & rugged mountain stages", Palette::NEON_GOLD),
+    ("rally", "Rallycross Championship", "World RX & Euro RX mixed-surface circuits", Palette::NEON_GOLD),
     ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
     ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
     ("nascar", "NASCAR Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
     ("extreme_offroad", "Extreme Off-Road", "Desert raids, mud bogs, ice & stunt arenas", Palette::NEON_ORANGE),
+    ("vault", "The Vault (Archive)", "Decommissioned circuits & cold storage", macroquad::color::Color::new(1.0, 0.65, 0.0, 1.0)),
 ];
 
-/// Number of modules offered in the promotion dialog (all six motorsport modules, spec 042).
-pub const PROMOTION_MODULE_COUNT: usize = 6;
+/// Number of modules offered in the promotion dialog (all motorsport modules + vault).
+pub const PROMOTION_MODULE_COUNT: usize = 7;
 
 /// Action dispatched from Track Manager interactions.
 #[derive(Debug, Clone, PartialEq)]
@@ -199,7 +200,8 @@ pub fn render_track_manager_screen(
             ModuleFilter::Gt => 3,
             ModuleFilter::Nascar => 4,
             ModuleFilter::ExtremeOffRoad => 5,
-            ModuleFilter::Drafts => 6,
+            ModuleFilter::Vault => 6,
+            ModuleFilter::Drafts => 7,
         };
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
         let is_filter_drafts = *filter == ModuleFilter::Drafts;
@@ -221,6 +223,7 @@ pub fn render_track_manager_screen(
             ModuleFilter::Gt => Palette::RED,
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
             ModuleFilter::ExtremeOffRoad => Color::new(1.0, 0.40, 0.05, 1.0),
+            ModuleFilter::Vault => Color::new(1.0, 0.65, 0.0, 1.0),
             ModuleFilter::Drafts => Palette::NEON_GOLD,
         };
 
@@ -254,13 +257,22 @@ pub fn render_track_manager_screen(
 
         scaler.draw_glass_card(chip_x, tab_y, chip_w, tab_h, chip_bg, border_col, if is_chip_active { 2.0 } else { 1.0 });
 
+        // Narrow tabs switch to the short module name (the shortcut keys are listed in the header).
         let shortcut_num = filter.shortcut_number();
-        let label = format!("{} [{}] [{}]", filter.label(), count, shortcut_num);
+        let label_fs = scaler.font_s(11.5);
+        let label_room = chip_w - scaler.s(12.0);
+        let label = [
+            format!("{} [{}] [{}]", filter.label(), count, shortcut_num),
+            format!("{} [{}] [{}]", filter.short_label(), count, shortcut_num),
+        ]
+        .into_iter()
+        .find(|l| fonts.measure_ui_bold(l, label_fs).width <= label_room)
+        .unwrap_or_else(|| fonts.fit_ui_bold(&format!("{} [{}]", filter.short_label(), count), label_fs, label_room));
         fonts.draw_ui_bold_centered(
             &label,
             chip_x + chip_w * 0.5,
             tab_y + scaler.s(23.0),
-            scaler.font_s(11.5),
+            label_fs,
             text_col,
         );
     }
@@ -446,7 +458,7 @@ pub fn render_track_manager_screen(
         } else {
             format!("CATEGORIES: {}", active_mods.iter().map(|m| match m.as_str() {
                 "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
-                "rally" => "RALLY",
+                "rally" => "RALLYCROSS",
                 "kart" => "KARTING",
                 "nascar" => "NASCAR",
                 _ => "CLASSIC",
@@ -846,10 +858,11 @@ fn render_delete_modal(
         let mod_id = module_filter.id().unwrap_or("classic");
         let mod_name = match mod_id {
             "classic" => "Classic",
-            "rally" => "Rally Cross",
+            "rally" => "Rallycross",
             "kart" => "Karting",
             "gt" | "gt_challenge" | "f1" => "GT World Challenge",
             "nascar" => "NASCAR Cup",
+            "vault" => "The Vault",
             _ => mod_id,
         };
         (
@@ -1023,7 +1036,7 @@ fn resolve_track_module_badge(
                 Palette::RED,
             ),
             "rally" => (
-                if is_dossier { "OFFICIAL PRESET • RALLY CROSS".to_string() } else { "OFFICIAL PRESET • RALLY".to_string() },
+                "OFFICIAL PRESET • RALLYCROSS".to_string(),
                 Palette::NEON_GOLD,
             ),
             "kart" => (
@@ -1047,7 +1060,7 @@ fn resolve_track_module_badge(
                 green,
             ),
             "rally" => (
-                if is_dossier { "CUSTOM CIRCUIT • RALLY CROSS".to_string() } else { "CUSTOM CIRCUIT • RALLY".to_string() },
+                "CUSTOM CIRCUIT • RALLYCROSS".to_string(),
                 green,
             ),
             "kart" => (

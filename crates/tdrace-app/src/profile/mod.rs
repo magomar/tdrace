@@ -17,6 +17,10 @@ pub struct PlayerProfile {
     pub is_active: bool,
     pub created_at: String,
     pub last_mode: AssistProfile,
+    #[serde(default = "PlayerProfile::default_starting_credits")]
+    pub credits: u64,
+    #[serde(default = "PlayerProfile::default_starting_credits")]
+    pub lifetime_credits: u64,
 }
 
 impl Default for PlayerProfile {
@@ -30,11 +34,19 @@ impl Default for PlayerProfile {
             is_active: true,
             created_at: String::new(),
             last_mode: AssistProfile::Arcade,
+            credits: Self::STARTING_CREDITS,
+            lifetime_credits: Self::STARTING_CREDITS,
         }
     }
 }
 
 impl PlayerProfile {
+    pub const STARTING_CREDITS: u64 = 25_000;
+
+    pub fn default_starting_credits() -> u64 {
+        Self::STARTING_CREDITS
+    }
+
     pub fn new(name: &str, alias: &str, country: Option<&str>, color_scheme: CarColorScheme) -> Self {
         Self {
             id: None,
@@ -45,7 +57,32 @@ impl PlayerProfile {
             is_active: false,
             created_at: String::new(),
             last_mode: AssistProfile::Arcade,
+            credits: Self::STARTING_CREDITS,
+            lifetime_credits: Self::STARTING_CREDITS,
         }
+    }
+
+    /// Adds credits to wallet balance and lifetime earnings.
+    pub fn add_credits(&mut self, amount: u64) {
+        self.credits = self.credits.saturating_add(amount);
+        self.lifetime_credits = self.lifetime_credits.saturating_add(amount);
+    }
+
+    /// Spends credits from wallet balance.
+    pub fn spend_credits(&mut self, amount: u64) -> Result<(), String> {
+        if self.credits < amount {
+            return Err(format!(
+                "Insufficient credits: {} available, {} required",
+                self.credits, amount
+            ));
+        }
+        self.credits -= amount;
+        Ok(())
+    }
+
+    /// Checks if wallet can afford given credit cost.
+    pub fn can_afford(&self, amount: u64) -> bool {
+        self.credits >= amount
     }
 
     /// Returns display country name or fallback.
@@ -352,6 +389,22 @@ impl ChampionshipAward {
     }
 }
 
+/// Persistent summary record of a completed championship tournament.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ChampionshipRecord {
+    pub championship_id: String,
+    #[serde(default = "default_tier_one")]
+    pub tier: u32,
+    pub best_finish: u32, // 1 = Gold, 2 = Silver, 3 = Bronze, etc.
+    pub times_completed: u32,
+    pub highest_points: u32,
+    pub last_completed_at: String,
+}
+
+fn default_tier_one() -> u32 {
+    1
+}
+
 /// Persistent career progression record for a specific motorsport module (e.g. "gt", "rally", etc.).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ModuleCareerProgress {
@@ -372,6 +425,8 @@ pub struct ModuleCareerProgress {
     pub career_rivals: Vec<CareerRivalEntry>,
     #[serde(default)]
     pub active_championship: Option<crate::series::ChampionshipSession>,
+    #[serde(default)]
+    pub championships_completed: std::collections::HashMap<String, ChampionshipRecord>,
 }
 
 impl ModuleCareerProgress {
@@ -390,14 +445,15 @@ impl ModuleCareerProgress {
             ("rally", 1) => vec!["rally_peugeot_208_rally4".to_string()],
             ("rally", 2) => vec!["rally_audi_s1_wrx".to_string()],
             ("rally", 3) => vec!["rally_audi_sport_quattro_s1".to_string()],
-            ("rally", 4) => vec!["rally_toyota_hilux_dakar".to_string()],
-            ("rally", 5) => vec!["rally_robby_gordon_sst".to_string()],
+            ("rally", 4) => vec!["rally_peugeot_208_rx1e".to_string()],
+            ("rally", 5) => vec!["rally_omse_fc1x".to_string()],
 
             ("kart", 1) => vec!["kart_crg_hero_60".to_string()],
-            ("kart", 2) => vec!["kart_tony_kart_racer_ok".to_string()],
-            ("kart", 3) => vec!["kart_birel_art_kz2".to_string()],
-            ("kart", 4) => vec!["kart_honda_mean_mower".to_string()],
-            ("kart", 5) => vec!["kart_anderson_cs250".to_string()],
+            ("kart", 2) => vec!["kart_tony_kart_rookie_okj".to_string()],
+            ("kart", 3) => vec!["kart_tony_kart_racer_ok".to_string()],
+            ("kart", 4) => vec!["kart_birel_art_kz2".to_string()],
+            ("kart", 5) => vec!["kart_anderson_maverick_mono".to_string()],
+            ("kart", 6) => vec!["kart_anderson_cs250".to_string()],
 
             ("extreme_offroad" | "offroad", 1) => vec!["offroad_sand_rail_buggy".to_string()],
             ("extreme_offroad" | "offroad", 2) => vec!["offroad_ford_bronco_dr".to_string()],
@@ -438,6 +494,7 @@ impl ModuleCareerProgress {
             updated_at: String::new(),
             career_rivals: Vec::new(),
             active_championship: None,
+            championships_completed: std::collections::HashMap::new(),
         };
         progress.sync_unlocks_for_level();
         progress
@@ -448,9 +505,109 @@ impl ModuleCareerProgress {
         Self::default_for_module(profile_id, "gt")
     }
 
-    /// Purchasing cost for a vehicle of the specified tier (1,000 XP x tier).
+    /// Purchasing cost for a vehicle of the specified tier in Credits (Spec 053).
+    pub fn car_credit_cost(tier: u8) -> u64 {
+        match tier {
+            1 => 25_000,
+            2 => 60_000,
+            3 => 150_000,
+            4 => 380_000,
+            5 => 950_000,
+            _ => (tier as u64) * 200_000,
+        }
+    }
+
+    /// Vehicle credit cost (alias for `car_credit_cost`).
     pub fn car_cost(tier: u8) -> u64 {
-        (tier as u64) * 1000
+        Self::car_credit_cost(tier)
+    }
+
+    /// Cumulative discipline XP threshold required to unlock each tier license (Spec 053).
+    pub fn tier_license_xp(tier: u32) -> u64 {
+        match tier {
+            1 => 0,
+            2 => 3_000,
+            3 => 7_500,
+            4 => 15_000,
+            5 => 30_000,
+            _ => u64::MAX,
+        }
+    }
+
+    /// Cumulative discipline XP threshold required to unlock each tier license for a specific module (Spec 052, 053).
+    pub fn tier_license_xp_for_module(module_id: &str, tier: u32) -> u64 {
+        if module_id == "kart" {
+            match tier {
+                1 => 0,
+                2 => 1_500,
+                3 => 3_500,
+                4 => 6_000,
+                5 => 9_000,
+                6 => 13_000,
+                _ => u64::MAX,
+            }
+        } else {
+            Self::tier_license_xp(tier)
+        }
+    }
+
+    /// Base round prize purse (Credits) per career tier (Spec 053).
+    pub fn round_base_purse(tier: u32) -> u64 {
+        match tier {
+            1 => 5_000,
+            2 => 12_000,
+            3 => 25_000,
+            4 => 55_000,
+            5 => 120_000,
+            _ => (tier as u64) * 25_000,
+        }
+    }
+
+    /// Prize purse finishing position multiplier.
+    pub fn purse_position_multiplier(position: usize) -> f64 {
+        match position {
+            1 => 1.00,
+            2 => 0.70,
+            3 => 0.50,
+            4 => 0.35,
+            5 => 0.25,
+            6..=10 => 0.15,
+            _ => 0.08,
+        }
+    }
+
+    /// Calculates finish purse prize and clean race bonus (Credits).
+    pub fn calculate_round_purse(tier: u32, position: usize, is_clean: bool) -> (u64, u64) {
+        let base = Self::round_base_purse(tier);
+        let mult = Self::purse_position_multiplier(position);
+        let finish_prize = ((base as f64) * mult).round() as u64;
+        let clean_bonus = if is_clean {
+            ((finish_prize as f64) * 0.20).round() as u64
+        } else {
+            0
+        };
+        (finish_prize, clean_bonus)
+    }
+
+    /// Championship overall podium bonus credits.
+    pub fn championship_podium_bonus(tier: u32, position: usize) -> u64 {
+        let base = Self::round_base_purse(tier);
+        match position {
+            1 => ((base as f64) * 4.0).round() as u64,
+            2 => ((base as f64) * 2.5).round() as u64,
+            3 => ((base as f64) * 1.5).round() as u64,
+            _ => 0,
+        }
+    }
+
+    /// Position multiplier for race XP awards.
+    pub fn xp_position_multiplier(position: usize) -> f64 {
+        match position {
+            1 => 1.50,
+            2 => 1.30,
+            3 => 1.15,
+            _ => 1.00,
+        }
     }
 
     /// First-time exploration bonus awarded when playing a circuit for the first time (250 XP x tier, rounded to 10).
@@ -463,21 +620,32 @@ impl ModuleCareerProgress {
         ((val as f64 / 10.0).round() as u64) * 10
     }
 
-    /// Target XP needed for next tier car purchase (1,000 XP x (level + 1)), or None if at max tier 5.
-    pub fn next_tier_target_xp(&self) -> Option<u64> {
-        if self.level >= 5 {
-            None
+    /// Returns the maximum career progression tier supported by this module.
+    pub fn max_tier(&self) -> u32 {
+        if self.module_id == "extreme_offroad" {
+            7
+        } else if self.module_id == "rally" || self.module_id == "kart" {
+            6
         } else {
-            Some(Self::car_cost((self.level + 1) as u8))
+            5
         }
     }
 
-    /// Progress ratio [0.0..1.0] towards acquiring the next tier's entry vehicle.
+    /// Target XP needed for next tier license threshold, or None if at max tier.
+    pub fn next_tier_target_xp(&self) -> Option<u64> {
+        if self.level >= self.max_tier() {
+            None
+        } else {
+            Some(Self::tier_license_xp_for_module(&self.module_id, self.level + 1))
+        }
+    }
+
+    /// Progress ratio [0.0..1.0] towards acquiring the next tier's license.
     pub fn level_progress_ratio(&self) -> f32 {
-        if self.level >= 5 {
+        if self.level >= self.max_tier() {
             return 1.0;
         }
-        let target = self.next_tier_target_xp().unwrap_or(1000);
+        let target = self.next_tier_target_xp().unwrap_or(3_000);
         if target == 0 {
             1.0
         } else {
@@ -485,48 +653,104 @@ impl ModuleCareerProgress {
         }
     }
 
-    /// Awards XP to spendable balance and cumulative lifetime XP.
+    /// Awards cumulative XP to discipline experience and cumulative lifetime XP.
     pub fn add_xp(&mut self, amount: u64) {
         self.xp = self.xp.saturating_add(amount);
         self.lifetime_xp = self.lifetime_xp.saturating_add(amount);
     }
 
     /// Checks if a vehicle can be purchased: must not already be unlocked, player must be at or above the car's tier,
-    /// and player must have sufficient spendable XP balance.
-    pub fn can_buy_car(&self, car_id: &str, tier: u8) -> bool {
+    /// and player must have sufficient credits balance.
+    pub fn can_buy_car(&self, car_id: &str, tier: u8, available_credits: u64) -> bool {
         !self.is_car_unlocked(car_id, false)
             && self.level >= (tier as u32)
-            && self.xp >= Self::car_cost(tier)
+            && available_credits >= Self::car_credit_cost(tier)
     }
 
-    /// Purchases a vehicle, deducting its cost from spendable XP balance and unlocking it.
-    pub fn buy_car(&mut self, car_id: &str, tier: u8) -> Result<(), String> {
-        if !self.can_buy_car(car_id, tier) {
+    /// Purchases a vehicle, deducting its cost from the player's credit wallet and unlocking it.
+    /// Note: Zero discipline XP is deducted.
+    pub fn buy_car(&mut self, profile: &mut PlayerProfile, car_id: &str, tier: u8) -> Result<(), String> {
+        let cost = Self::car_credit_cost(tier);
+        if !self.can_buy_car(car_id, tier, profile.credits) {
             return Err(format!(
-                "Cannot buy car '{}' (tier {}): insufficient XP ({}/{}) or insufficient tier ({})",
+                "Cannot buy car '{}' (tier {}): insufficient credits ({}/{}) or insufficient tier ({})",
                 car_id,
                 tier,
-                self.xp,
-                Self::car_cost(tier),
+                profile.credits,
+                cost,
                 self.level
             ));
         }
-        let cost = Self::car_cost(tier);
-        self.xp = self.xp.saturating_sub(cost);
+        profile.spend_credits(cost)?;
         self.ensure_car(car_id);
         Ok(())
     }
 
+    /// Checks whether the driver has earned at least one podium finish (P1, P2, or P3) in any championship of the given tier.
+    pub fn has_podium_in_tier(&self, tier: u32) -> bool {
+        let has_champ_podium = self
+            .championships_completed
+            .values()
+            .any(|c| c.tier == tier && c.best_finish <= 3);
+        if has_champ_podium {
+            return true;
+        }
+        // Fallback: If legacy trophies exist and requested tier matches current level, allow backwards compatibility
+        if tier == self.level && (self.trophies_gold + self.trophies_silver + self.trophies_bronze) > 0 {
+            return true;
+        }
+        false
+    }
+
+    /// Records a completed championship result, updating best finish, count, and legacy trophy counts.
+    pub fn record_championship_finish(
+        &mut self,
+        championship_id: &str,
+        tier: u32,
+        position: u32,
+        points: u32,
+        timestamp: &str,
+    ) {
+        let entry = self
+            .championships_completed
+            .entry(championship_id.to_string())
+            .or_insert_with(|| ChampionshipRecord {
+                championship_id: championship_id.to_string(),
+                tier,
+                best_finish: position,
+                times_completed: 0,
+                highest_points: points,
+                last_completed_at: timestamp.to_string(),
+            });
+
+        entry.times_completed += 1;
+        if position < entry.best_finish {
+            entry.best_finish = position;
+        }
+        if points > entry.highest_points {
+            entry.highest_points = points;
+        }
+        entry.tier = tier;
+        entry.last_completed_at = timestamp.to_string();
+
+        match position {
+            1 => self.trophies_gold += 1,
+            2 => self.trophies_silver += 1,
+            3 => self.trophies_bronze += 1,
+            _ => {}
+        }
+    }
+
     /// Checks whether the driver satisfies both conditions to advance to the next tier:
-    /// 1. Finished at least one championship on the podium (top 3: Gold, Silver, or Bronze).
-    /// 2. Has enough spendable XP to purchase a car in the new tier (1,000 XP x next_tier).
+    /// 1. Earned at least one championship podium in any championship of the current tier.
+    /// 2. Accumulated cumulative discipline XP at or above the next tier's license threshold.
     pub fn can_advance_tier(&self) -> bool {
-        if self.level >= 5 {
+        if self.level >= self.max_tier() {
             return false;
         }
         let next_tier = self.level + 1;
-        let has_podium = (self.trophies_gold + self.trophies_silver + self.trophies_bronze) > 0;
-        let has_xp = self.xp >= Self::car_cost(next_tier as u8);
+        let has_podium = self.has_podium_in_tier(self.level);
+        let has_xp = self.xp >= Self::tier_license_xp_for_module(&self.module_id, next_tier);
         has_podium && has_xp
     }
 
@@ -568,10 +792,12 @@ impl ModuleCareerProgress {
     /// Advances to the next career tier using an explicit deterministic seed for roster evolution.
     pub fn advance_tier_with_seed(&mut self, seed: u64) -> Result<(u32, RosterEvolutionReport), String> {
         if !self.can_advance_tier() {
+            let next_tier = self.level + 1;
             return Err(format!(
-                "Cannot advance to Tier {}: Requires at least 1 championship podium and {} spendable XP (current: {})",
-                self.level + 1,
-                Self::car_cost((self.level + 1) as u8),
+                "Cannot advance to Tier {}: Requires at least 1 championship podium in Tier {} and {} cumulative XP (current: {})",
+                next_tier,
+                self.level,
+                Self::tier_license_xp_for_module(&self.module_id, next_tier),
                 self.xp
             ));
         }
@@ -589,8 +815,9 @@ impl ModuleCareerProgress {
 
     /// Ensures unlocked tracks and starter cars match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
-        let max_tier = self.level.clamp(1, 5);
-        for t in 1..=max_tier {
+        let max_tier = self.max_tier();
+        let cap = self.level.clamp(1, max_tier);
+        for t in 1..=cap {
             for car in Self::starter_cars_for_module_and_tier(&self.module_id, t) {
                 self.ensure_car(&car);
             }
@@ -681,7 +908,7 @@ impl ModuleCareerProgress {
                 if self.level >= 2 {
                     self.ensure_track("hell_rx");
                     self.ensure_track("loheac_rx");
-                    self.ensure_track("silverstone_rx");
+                    self.ensure_track("lavare_rx");
                 }
 
                 // Tier 3 (3 circuits)
@@ -701,7 +928,7 @@ impl ModuleCareerProgress {
                 // Tier 5 (3 circuits)
                 if self.level >= 5 {
                     self.ensure_track("catalunya_rx");
-                    self.ensure_track("yas_marina_rx");
+                    self.ensure_track("lessay_rx");
                     self.ensure_track("essay_rx");
                 }
             }
@@ -731,23 +958,33 @@ impl ModuleCareerProgress {
                 if self.level >= 4 {
                     self.ensure_track("zuera");
                     self.ensure_track("silverstone_national_kart");
-                    self.ensure_track("le_mans_kart");
+                    self.ensure_track("aunay_kart");
                 }
 
                 // Tier 5 (3 circuits)
                 if self.level >= 5 {
+                    self.ensure_track("le_mans_kart");
+                    self.ensure_track("campillos");
+                    self.ensure_track("muelsen_kart");
+                }
+
+                // Tier 6 (3 circuits)
+                if self.level >= 6 {
                     self.ensure_track("portimao_kart");
                     self.ensure_track("valencia_kart");
-                    self.ensure_track("campillos");
+                    self.ensure_track("adria_kart");
                 }
             }
             "extreme_offroad" => {
-                // Tier 1 (5 circuits)
+                // Tier 1 (8 circuits, with the three Mint 400 desert-race circuits of spec 048)
                 self.ensure_track("sahara_dune_crossing");
                 self.ensure_track("dirt_figure_eight");
                 self.ensure_track("atacama_sand_basin");
                 self.ensure_track("glamis_dunes");
                 self.ensure_track("crandon_short_course");
+                self.ensure_track("mint400_short_course");
+                self.ensure_track("mint400_qualifying_loop");
+                self.ensure_track("mint400_grand_loop");
 
                 // Tier 2 (3 circuits)
                 if self.level >= 2 {

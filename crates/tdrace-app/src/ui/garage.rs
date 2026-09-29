@@ -59,6 +59,8 @@ pub fn render_garage_screen(
     is_dev_mode: bool,
     unlocked_tier: u32,
     career_progress: Option<&ModuleCareerProgress>,
+    available_credits: u64,
+    module_locked: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -70,7 +72,7 @@ pub fn render_garage_screen(
     // Module branding
     let (mod_title, mod_accent) = match active_module_id {
         "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", Palette::NEON_CYAN),
-        "rally" => ("RALLYCROSS & ALL-TERRAIN", Palette::NEON_GOLD),
+        "rally" => ("RALLYCROSS", Palette::NEON_GOLD),
         "kart" => ("KARTING & MICRO-RACERS", Palette::NEON_GREEN),
         "nascar" => ("NASCAR STOCK CAR RACING", Palette::YELLOW),
         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Palette::NEON_ORANGE),
@@ -109,17 +111,20 @@ pub fn render_garage_screen(
     let active_model: Option<&RealCarModel> = tier_models.get(garage_car_idx).copied();
     let category_name = active_model.map(|m| m.category_name).unwrap_or("Competition Spec");
 
+    // In LAN the module is fixed to the host discipline, so its key hint is hidden.
+    let module_keys = if module_locked { "" } else { "  [◄ 1..5 ►]" };
+    let tier_label = if garage_tier > 5 { "UNRANKED".to_string() } else { format!("TIER {}", garage_tier) };
     let module_subtitle = if active_module_id == "classic" {
         "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
     } else if let Some(cp) = career_progress {
         format!(
-            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
-            mod_title, garage_tier, category_name.to_uppercase(), cp.xp
+            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]  •  DISCIPLINE XP: {} XP  •  WALLET: ${} CR",
+            mod_title, module_keys, tier_label, category_name.to_uppercase(), cp.xp, available_credits
         )
     } else {
         format!(
-            "MODULE: {}  [◄ 1..5 ►]  •  TIER {}: {}  [◄ Q/E ►]",
-            mod_title, garage_tier, category_name.to_uppercase()
+            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]",
+            mod_title, module_keys, tier_label, category_name.to_uppercase()
         )
     };
     fonts.draw_ui_regular_centered(
@@ -136,14 +141,16 @@ pub fn render_garage_screen(
     let stage_w = sw * 0.58 - scaler.safe_pad_x;
     let stage_h = sh * 0.58;
 
-    // Ambient spotlight glow behind vehicle
-    let center_x = stage_x + stage_w * 0.50;
-    let center_y = stage_y + stage_h * 0.52;
-    draw_circle(center_x, center_y - scaler.s(20.0), scaler.s(220.0), Color::new(0.08, 0.16, 0.28, 0.22));
-    draw_circle(center_x, center_y - scaler.s(10.0), scaler.s(150.0), Color::new(0.12, 0.22, 0.35, 0.18));
-
     // Hero Showroom Stage Card
     scaler.draw_glass_card(stage_x, stage_y, stage_w, stage_h, Palette::UI_CARD_BG, mod_accent, 1.4);
+
+    // Ambient spotlight glow behind vehicle, kept inside the stage (it used to spill over the header)
+    let center_x = stage_x + stage_w * 0.50;
+    let center_y = stage_y + stage_h * 0.52;
+    cabinet::ui::scaler::begin_clip_rect(stage_x + 1.0, stage_y + 1.0, stage_w - 2.0, stage_h - 2.0);
+    draw_circle(center_x, center_y - scaler.s(20.0), scaler.s(220.0), Color::new(0.08, 0.16, 0.28, 0.22));
+    draw_circle(center_x, center_y - scaler.s(10.0), scaler.s(150.0), Color::new(0.12, 0.22, 0.35, 0.18));
+    cabinet::ui::scaler::end_clip_rect();
 
     let is_tier_unlocked = active_module_id == "classic" || is_dev_mode || garage_tier as u32 <= unlocked_tier;
 
@@ -170,9 +177,10 @@ pub fn render_garage_screen(
     } else {
         Palette::RED
     };
+    let unlock_w = fonts.measure_ui_bold(unlock_badge, scaler.font_s(11.0)).width;
     fonts.draw_ui_bold(
         unlock_badge,
-        stage_x + stage_w - scaler.s(190.0),
+        stage_x + stage_w - scaler.s(16.0) - unlock_w,
         stage_y + scaler.s(20.0),
         scaler.font_s(11.0),
         unlock_col,
@@ -269,7 +277,11 @@ pub fn render_garage_screen(
     let tacho_w = stage_w - scaler.s(40.0);
     let tacho_h = scaler.s(8.0);
 
-    let rev_prompt = "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT  •  [C] FLEET GALLERY";
+    let rev_prompt = if module_locked {
+        "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT"
+    } else {
+        "HOLD [SPACE] TO REV ENGINE & INSPECT EXHAUST HEAT  •  [C] FLEET GALLERY"
+    };
     fonts.draw_ui_bold(
         rev_prompt,
         tacho_x,
@@ -318,15 +330,15 @@ pub fn render_garage_screen(
             if is_unlocked {
                 fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
             } else {
-                let cost = ModuleCareerProgress::car_cost(model.tier);
-                let tag = format!("{} XP", cost);
-                let col = if cp.xp >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
+                let cost = ModuleCareerProgress::car_credit_cost(model.tier);
+                let tag = format!("${} CR", cost);
+                let col = if available_credits >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
                 fonts.draw_ui_bold(&tag, cx + cw - scaler.s(55.0), cy + scaler.s(15.0), scaler.font_s(8.5), col);
             }
         }
 
         fonts.draw_ui_bold(
-            model.name,
+            &fonts.fit_ui_bold(model.name, scaler.font_s(10.0), cw - scaler.s(16.0)),
             cx + scaler.s(8.0),
             cy + scaler.s(30.0),
             scaler.font_s(10.0),
@@ -449,8 +461,8 @@ pub fn render_garage_screen(
             .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
             .unwrap_or(is_tier_unlocked);
 
-    let cost = ModuleCareerProgress::car_cost(active_car_tier);
-    let can_afford = career_progress.map_or(true, |cp| cp.xp >= cost);
+    let cost = ModuleCareerProgress::car_credit_cost(active_car_tier);
+    let can_afford = available_credits >= cost;
     let tier_eligible = is_dev_mode
         || career_progress
             .map_or(is_tier_unlocked, |cp| cp.level >= active_car_tier as u32);
@@ -482,7 +494,11 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.35, 0.10, 0.10, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::RED);
 
-        let lock_title = format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier);
+        let lock_title = if active_car_tier > 5 {
+            "🔒 UNRANKED VEHICLE — DEV MODE ONLY".to_string()
+        } else {
+            format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier)
+        };
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
@@ -490,8 +506,13 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::RED,
         );
+        let lock_hint = if active_car_tier > 5 {
+            "Parked outside the five career tiers; drive it in dev mode"
+        } else {
+            "Advance career tier by earning championship podiums to unlock purchasing"
+        };
         fonts.draw_ui_regular_centered(
-            "Advance career tier by earning championship podiums to unlock purchasing",
+            lock_hint,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(38.0),
             scaler.font_s(10.0),
@@ -506,7 +527,7 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
 
-        let buy_title = format!("🛒 BUY VEHICLE: {} XP  [B / ENTER]", cost);
+        let buy_title = format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]", cost);
         fonts.draw_ui_bold_centered(
             &buy_title,
             btn_x + btn_w * 0.5,
@@ -514,8 +535,12 @@ pub fn render_garage_screen(
             scaler.font_s(12.5),
             Palette::WHITE,
         );
-        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
-        let buy_sub = format!("Spendable Balance: {} XP  →  {} XP remaining", cur_xp, cur_xp.saturating_sub(cost));
+        let buy_sub = format!(
+            "Wallet Balance: ${} Cr  →  ${} Cr remaining  (Discipline XP: {} XP)",
+            available_credits,
+            available_credits.saturating_sub(cost),
+            career_progress.map_or(0, |cp| cp.xp)
+        );
         fonts.draw_ui_regular_centered(
             &buy_sub,
             btn_x + btn_w * 0.5,
@@ -527,8 +552,7 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.28, 0.16, 0.08, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::NEON_GOLD);
 
-        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
-        let lock_title = format!("🛒 VEHICLE PRICE: {} XP (WALLET: {} XP)", cost, cur_xp);
+        let lock_title = format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR)", cost, available_credits);
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
@@ -536,8 +560,8 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::NEON_GOLD,
         );
-        let need_xp = cost.saturating_sub(cur_xp);
-        let lock_sub = format!("Earn {} more XP in races to purchase this vehicle", need_xp);
+        let need_cr = cost.saturating_sub(available_credits);
+        let lock_sub = format!("Earn ${} more Credits in prize purses to purchase this vehicle", need_cr);
         fonts.draw_ui_regular_centered(
             &lock_sub,
             btn_x + btn_w * 0.5,
@@ -549,7 +573,11 @@ pub fn render_garage_screen(
 
     // Bottom Navigation Bar
     let bottom_y = sh - scaler.s(16.0);
-    let nav_prompt = "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN";
+    let nav_prompt = if module_locked {
+        "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN TO LOBBY"
+    } else {
+        "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN"
+    };
     fonts.draw_ui_bold_centered(
         nav_prompt,
         sw * 0.5,
@@ -562,7 +590,7 @@ pub fn render_garage_screen(
 /// The 5 motorsport modules supported in the Fleet Gallery.
 pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("gt", "GT"),
-    ("rally", "RALLY"),
+    ("rally", "RALLYCROSS"),
     ("kart", "KART"),
     ("nascar", "NASCAR"),
     ("extreme_offroad", "OFF-ROAD"),

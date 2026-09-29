@@ -736,7 +736,9 @@ pub fn run_keyboard_chicane_simulation(
     }
 
     let final_heading = normalize_angle(runner.car.state().angle).to_degrees().abs();
-    let outcome = if final_heading > 80.0 || reversal_latency_ms > 1200.0 {
+    // A timed-out reversal is a spin only if the rear slid: a car that keeps its line because the
+    // filtered input is too small to reverse it (Smooth feathering on dirt) is in control.
+    let outcome = if final_heading > 80.0 || (reversal_latency_ms > 1200.0 && peak_rear_slip > 10.0) {
         ChicaneTransitionOutcome::Spinout
     } else if fishtail_count > 1 || peak_rear_slip > 22.0 {
         ChicaneTransitionOutcome::ViolentSnapOversteer

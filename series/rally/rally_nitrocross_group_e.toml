@@ -1,0 +1,165 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Rallycross Career Mode: Nitrocross Group E Series (Tier 5)
+# ==============================================================================
+
+[championship]
+id = "rally_nitrocross_group_e"
+name = "Nitrocross Group E Series"
+description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits."
+module_id = "rally"
+tier = 5
+laps_per_round = 5
+bot_count = 7
+ai_difficulty = "legend"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "catalunya_rx"
+name = "Circuit de Barcelona-Catalunya RX"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "lessay_rx"
+name = "Circuit de Lessay"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "essay_rx"
+name = "Circuit des Ducs Essay"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "estering_rx"
+name = "Estering Buxtehude"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "hell_rx"
+name = "Lånkebanen Hell RX"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "loheac_rx"
+name = "Circuit de Lohéac"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "nyirad_rx"
+name = "Nyirád Racing Center"
+laps = 5
+
+[[rounds]]
+order = 8
+track_id = "kouvola_rx"
+name = "Tykkimäki Circuit Kouvola"
+laps = 5
+
+[[rounds]]
+order = 9
+track_id = "killarney_rx"
+name = "Killarney International Raceway RX"
+laps = 5
+
+[[rounds]]
+order = 10
+track_id = "lavare_rx"
+name = "Circuit de Lavaré"
+laps = 5
+
+[[rounds]]
+order = 11
+track_id = "riga_rx"
+name = "Biķernieki Track Riga"
+laps = 5
+
+[[rounds]]
+order = 12
+track_id = "holjes_rx"
+name = "Höljes Motorstadion"
+laps = 5
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Rally Team"
+is_player = true
+car_model_id = "rally_omse_fc1x"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "johan_kristoffersson"
+name = "Johan Kristoffersson"
+team = "KMS Volkswagen"
+car_model_id = "rally_omse_fc1x"
+country = "SWE"
+ai_character = "fast"
+livery_idx = 1
+
+[[drivers]]
+id = "mattias_ekstrom"
+name = "Mattias Ekström"
+team = "EKS Audi Sport"
+car_model_id = "rally_dodge_hornet_fc1x"
+country = "SWE"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "timmy_hansen"
+name = "Timmy Hansen"
+team = "Hansen Motorsport"
+car_model_id = "rally_vsc_fc1x"
+country = "SWE"
+ai_character = "smooth"
+livery_idx = 3
+
+[[drivers]]
+id = "petter_solberg"
+name = "Petter Solberg"
+team = "PSRX Volkswagen Sweden"
+car_model_id = "rally_dodge_hornet_fc1x"
+country = "NOR"
+ai_character = "tenacious"
+livery_idx = 4
+
+[[drivers]]
+id = "kevin_hansen"
+name = "Kevin Hansen"
+team = "Hansen Motorsport"
+car_model_id = "rally_vsc_fc1x"
+country = "SWE"
+ai_character = "strategic"
+livery_idx = 5
+
+[[drivers]]
+id = "niclas_gronholm"
+name = "Niclas Grönholm"
+team = "GRX Taneco"
+car_model_id = "rally_omse_fc1x"
+country = "FIN"
+ai_character = "calculating"
+livery_idx = 6
+
+[[drivers]]
+id = "andreas_bakkerud"
+name = "Andreas Bakkerud"
+team = "Monster Energy RX"
+car_model_id = "rally_vsc_fc1x"
+country = "NOR"
+ai_character = "aggressive"
+livery_idx = 7

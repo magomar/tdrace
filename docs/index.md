@@ -38,9 +38,9 @@ Comprehensive mathematical modeling of planar and 2.5D motorsport physics implem
 | [Vehicle Catalog Overview](vehicles/index.md) | Asset Catalog | `active` | Master overview of 5 motorsport modules, 25 progression categories, and Balance of Performance calibration. |
 | [Vehicle Specs & Handling Dynamics](vehicles/specs.md) | Reference Guide | `active` | 6-stat telemetry standard, category vs model differentiation, and dynamic engine parameter derivations. |
 | [Gran Turismo & Endurance](vehicles/gt_endurance.md) | Asset Catalog | `active` | GT4, GT3 EVO, GT2, GT1 Legends, and Le Mans LMH/LMDh Hypercars. |
-| [NASCAR Stock Car & Trans-Am](vehicles/stock_car.md) | Asset Catalog | `active` | Street Stock, Late Model, ARCA Menards, Craftsman Super Truck, and Trans-Am TA1 / Cup. |
+| [Stock cars (NASCAR)](vehicles/stock_car.md) | Asset Catalog | `active` | Street Stock, Late Model, ARCA Menards, Craftsman Super Truck, and Trans-Am TA1 / Cup. |
 | [Rallycross & All-Terrain](vehicles/rally_allterrain.md) | Asset Catalog | `active` | Rally Jr FWD, World RX Supercars, Group B Legends, Dakar Raid T1+, and Stadium Super Trucks. |
-| [Extreme Off-Road & Stunts](vehicles/offroad_stunt.md) | Asset Catalog | `active` | Sand Rail Buggies, Trophy Trucks, Arctic Ice Drifters, Mud Boggers, and Freestyle Monster Trucks. |
+| [All terrain (Off-Road)](vehicles/offroad_stunt.md) | Asset Catalog | `active` | Sand Rail Buggies, Trophy Trucks, Arctic Ice Drifters, Mud Boggers, and Freestyle Monster Trucks. |
 | [Karting & Micro-Racers](vehicles/karting.md) | Asset Catalog | `active` | 60cc Cadet karts, 100cc OK Junior, 125cc KZ2 Shifters, Racing Lawnmowers, and 240 km/h 250cc Superkarts. |
 
 ---
@@ -53,10 +53,10 @@ Meticulously mapped vector geometry circuits and procedural arenas catalogued ac
 | :--- | :--- | :---: | :--- |
 | [Circuits Directory Overview](circuits/index.md) | Asset Catalog | `active` | Overview of all 96 circuits, spline representations, surface zones, and barrier definitions. |
 | [Classic Heritage Circuits](circuits/classic.md) | Asset Catalog | `active` | 10 foundational tracks: Classic Grand Prix, Drift Park, Figure Eight crossovers, and jump ramp raceways. |
-| [NASCAR & Stock Car Ovals](circuits/nascar.md) | Asset Catalog | `active` | 17 speedways: Daytona, Talladega, Bristol, Martinsville, Charlotte, Darlington, and Eldora clay dirt oval. |
+| [Stock cars & Ovals](circuits/nascar.md) | Asset Catalog | `active` | 17 speedways: Daytona, Talladega, Bristol, Martinsville, Charlotte, Darlington, and Eldora clay dirt oval. |
 | [Rallycross Stages](circuits/rally.md) | Asset Catalog | `active` | 17 World RX venues: Höljes, Lydden Hill, Hell RX, Lohéac, Essay RX, and Joker Lap branching networks. |
 | [Karting Circuits & Arenas](circuits/kart.md) | Asset Catalog | `active` | 17 international karting venues: South Garda (Lonato), Genk, Sarno, Valencia, Campillos, and PFI bridge crossover. |
-| [Extreme Off-Road Arenas](circuits/offroad.md) | Asset Catalog | `active` | 17 extreme arenas: sand dune raids, deep mud bog pits, arctic ice lakes, and stadium whoops. |
+| [All terrain Arenas](circuits/offroad.md) | Asset Catalog | `active` | 17 extreme arenas: sand dune raids, deep mud bog pits, arctic ice lakes, and stadium whoops. |
 | [GT World Challenge & Endurance Road Courses](circuits/f1_gt.md) | Asset Catalog | `active` | 18 FIA Grade 1 world championship circuits: Spa-Francorchamps, Monza, Silverstone, Le Mans, Bathurst, MadRing, and Suzuka. |
 
 ---

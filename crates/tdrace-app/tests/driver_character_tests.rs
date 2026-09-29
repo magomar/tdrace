@@ -73,7 +73,7 @@ fn test_race_session_driver_spawning_and_names() {
     session.init_race();
 
     assert_eq!(session.opponent_drivers.len(), 3);
-    assert_eq!(session.cars.len(), 4, "1 Player + 3 AI Bots");
+    assert_eq!(session.world.vehicles.len(), 4, "1 Player + 3 AI Bots");
     assert_eq!(session.color_schemes.len(), 4);
     assert_eq!(session.ai_drivers.len(), 3);
 
@@ -91,8 +91,8 @@ fn test_race_session_driver_spawning_and_names() {
 
     // Verify standings & results contain real driver aliases
     session.session_time = 65.0;
-    session.trackers[0].current_lap = session.total_laps + 1; // Player finished all laps
-    for t in &mut session.trackers {
+    session.world.trackers[0].current_lap = session.total_laps + 1; // Player finished all laps
+    for t in &mut session.world.trackers {
         t.best_lap_time = Some(21.5);
     }
 
@@ -132,7 +132,7 @@ fn test_starting_grid_flow_and_roster_presentation() {
     // When starting a race vs AI, game transitions to StartingGrid to showcase participants
     assert_eq!(session.state, GameState::StartingGrid);
     assert_eq!(session.opponent_drivers.len(), 3);
-    assert_eq!(session.cars.len(), 4);
+    assert_eq!(session.world.vehicles.len(), 4);
 
     // Opening driver cards from StartingGrid sets DriverCardsOrigin::StartingGrid
     session.state = GameState::DriverCards(DriverCardsOrigin::StartingGrid);

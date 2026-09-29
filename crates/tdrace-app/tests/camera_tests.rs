@@ -450,3 +450,25 @@ fn test_zoom_level_config_helper_methods() {
     assert_eq!(scaled_for_1440.max_zoom, 33.0);
 }
 
+
+#[test]
+fn test_camera_keeps_fast_car_clear_of_top_hud() {
+    // Full-speed GT car driving straight down the screen (world -Y) on the Close zoom level.
+    let mut camera = RaceCamera::new();
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 90.0;
+    car.state.velocity = Vec2::new(0.0, -90.0);
+    camera.current_pos = car.state.position;
+
+    for _ in 0..240 {
+        car.state.position += car.state.velocity * 0.016;
+        camera.update(&car, 0.016);
+        let screen = camera.world_to_screen_with_viewport(car.state.position, 1280.0, 720.0);
+        let from_center = (screen - Vec2::new(640.0, 360.0)).length();
+        assert!(
+            from_center <= tdrace_app::camera::MAX_CAR_SCREEN_OFFSET_FRAC * 720.0 + 0.5,
+            "car drifted {from_center:.1}px from center (screen y = {:.1})",
+            screen.y
+        );
+    }
+}

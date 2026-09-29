@@ -19,7 +19,7 @@ wiki:
 # Launch Option B: Custom Motorsport Showroom & Physics Lab (port 4322)
 showroom:
     @echo "🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322..."
-    cd portals/option-b-showroom && bun run dev -- --host 0.0.0.0 --port 4322
+    cd portals/showroom && bun run dev -- --host 0.0.0.0 --port 4322
 
 # Verify OKF v0.2 documentation compliance and relative cross-links
 verify-okf:

@@ -173,7 +173,7 @@ When vehicle-specific telemetry is not available, vehicles inherit the reference
 
 * **Non-Breaking Config Schema**: No database schema migrations are introduced. All new vehicle parameters in `CarConfig` retain `#[serde(default)]` annotations.
 * **Persistent Driver Profiles**: Stored user career profiles, tournament rosters, and vehicle unlocks remain 100% binary- and JSON-compatible.
-* **Asset Portals Alignment**: Astro Showroom and Reference Portals ([`portals/option-b-showroom`](../portals/option-b-showroom)) synchronize with the verified Master Reference Matrix metrics through the static JSON export script `tools/scripts/export_vehicle_matrix.py`.
+* **Asset Portals Alignment**: Astro Showroom and Reference Portals ([`portals/showroom`](../portals/showroom)) synchronize with the verified Master Reference Matrix metrics through the static JSON export script `tools/scripts/export_vehicle_matrix.py`.
 
 ---
 

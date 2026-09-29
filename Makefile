@@ -173,7 +173,7 @@ bench: bench-rust bench-python ## Run both Rust physics and Python Gymnasium thr
 
 bench-rust: ## Run Rust physics stepping and collision benchmarks
 	@echo -e "$(CYAN)📊 Running Rust physics & collision benchmarks...$(RESET)"
-	cargo bench -p tdrace-core $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+	cargo bench -p wheelbase -p arcade-race-core $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
 
 bench-python: ## Run Python Gymnasium throughput benchmark vs CarRacing-v3
 	@echo -e "$(CYAN)📊 Running Gymnasium benchmark (TDRace vs CarRacing-v3)...$(RESET)"
@@ -189,7 +189,7 @@ wiki: ## Launch Option A (Astro + Starlight Technical Reference Manual on port 4
 
 showroom: ## Launch Option B (Custom Motorsport Showroom & Physics Lab on port 4322)
 	@echo -e "$(CYAN)🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
-	@cd portals/option-b-showroom && bun run dev -- --host 0.0.0.0 --port 4322
+	@cd portals/showroom && bun run dev -- --host 0.0.0.0 --port 4322
 
 build-portals: ## Rebuild both static web portals (Wiki + Showroom) after re-ingesting assets
 	@echo -e "$(CYAN)🌐 Rebuilding static web portals (Wiki + Showroom)...$(RESET)"

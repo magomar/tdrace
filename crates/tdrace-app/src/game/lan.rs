@@ -140,7 +140,7 @@ impl RaceSession {
         } else if let Some(ctrl) = scripted {
             ctrl
         } else {
-            let speed = self.cars.get(car_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+            let speed = self.world.vehicles.get(car_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let kb_ctrl = self.input.poll_player_controls(dt, speed);
             let touch_ctrl = self.touch.poll_controls();
             let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -247,7 +247,7 @@ impl RaceSession {
         lan.remote.remove(&slot_id);
         let car_idx = lan.config.car_index_of(slot_id);
         let name = car_idx.and_then(|i| lan.config.roster.get(i)).map(|e| e.player_name.clone()).unwrap_or_default();
-        if let Some(car) = car_idx.and_then(|i| self.cars.get_mut(i)) {
+        if let Some(car) = car_idx.and_then(|i| self.world.vehicles.get_mut(i)) {
             car.state.velocity = Vec2::ZERO;
             car.state.angular_velocity = 0.0;
             car.state.speed = 0.0;
@@ -309,13 +309,13 @@ impl RaceSession {
             return;
         };
         for (i, entry) in lan.config.roster.iter().enumerate() {
-            if entry.slot_id == my_slot || i >= self.cars.len() || lan.left.contains(&entry.slot_id) {
+            if entry.slot_id == my_slot || i >= self.world.vehicles.len() || lan.left.contains(&entry.slot_id) {
                 continue;
             }
             let Some(s) = lan.remote.get_mut(&entry.slot_id).and_then(|b| b.sample(render_time)) else {
                 continue;
             };
-            let car = &mut self.cars[i];
+            let car = &mut self.world.vehicles[i];
             let velocity = Vec2::new(s.vel_x, s.vel_y);
             let fwd = Vec2::new(s.angle.cos(), s.angle.sin());
             let right = Vec2::new(-s.angle.sin(), s.angle.cos());
@@ -334,7 +334,7 @@ impl RaceSession {
             if let Some(lights) = self.car_lights_on.get_mut(i) {
                 *lights = s.has_flag(flags::LIGHTS);
             }
-            if let Some(tracker) = self.trackers.get_mut(i) {
+            if let Some(tracker) = self.world.trackers.get_mut(i) {
                 tracker.current_lap = s.lap as u32;
                 tracker.next_checkpoint_idx = s.checkpoint as usize;
                 tracker.normalized_progress = s.progress;
@@ -346,14 +346,14 @@ impl RaceSession {
     fn lan_send_own_state(&mut self, clock: f64) {
         let my_idx = self.player_car_index();
         let lights = self.is_car_lights_on(my_idx);
-        let (Some(lan), Some(car)) = (self.lan_race.as_mut(), self.cars.get(my_idx)) else {
+        let (Some(lan), Some(car)) = (self.lan_race.as_mut(), self.world.vehicles.get(my_idx)) else {
             return;
         };
         if clock - lan.last_send_clock < STATE_SEND_INTERVAL_SEC - 1e-4 {
             return;
         }
         lan.last_send_clock = clock;
-        let tracker = self.trackers.get(my_idx);
+        let tracker = self.world.trackers.get(my_idx);
         let ctrl = lan.last_controls;
         let mut f = 0u8;
         for (on, bit) in [
@@ -397,7 +397,7 @@ impl RaceSession {
     /// Reports the own finish once, when the own tracker completes the last lap.
     pub(super) fn lan_check_own_finish(&mut self) {
         let my_idx = self.player_car_index();
-        let done = self.trackers.get(my_idx).is_some_and(|t| t.current_lap > self.total_laps);
+        let done = self.world.trackers.get(my_idx).is_some_and(|t| t.current_lap > self.total_laps);
         let clock = self.lan_race_clock();
         let Some(ref mut lan) = self.lan_race else {
             return;
@@ -407,7 +407,7 @@ impl RaceSession {
         }
         lan.local_finished = true;
         let finish_ms = (clock.unwrap_or(0.0).max(0.0) * 1000.0) as u32;
-        let best_lap_ms = self.trackers.get(my_idx).and_then(|t| t.best_lap_time).map(|s| (s * 1000.0) as u32);
+        let best_lap_ms = self.world.trackers.get(my_idx).and_then(|t| t.best_lap_time).map(|s| (s * 1000.0) as u32);
         if let Some(ref mut host) = self.lan_host {
             let events = host.report_finish(finish_ms, best_lap_ms);
             self.lan_apply_host_events(events);
@@ -494,7 +494,7 @@ impl RaceSession {
         let lan = self.lan_race.as_ref()?;
         let results = lan.results.as_ref()?;
         let mut order: Vec<usize> = results.iter().filter_map(|r| lan.config.car_index_of(r.slot_id)).collect();
-        for i in 0..self.cars.len() {
+        for i in 0..self.world.vehicles.len() {
             if !order.contains(&i) {
                 order.push(i);
             }
