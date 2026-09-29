@@ -555,9 +555,14 @@ impl BotAiDriver {
         // 2. Dynamic lookahead based on speed and profile
         let mut lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
         // In a very tight turn (a kart hairpin) the line to a target this far ahead crosses the inside of the
-        // bend, so the bot steered into the wall at the tip. Aim at most MAX_TARGET_TURN_RAD around the bend.
+        // bend, so the bot steered into the wall at the tip. Aim at most MAX_TARGET_TURN_RAD around the bend,
+        // where the waypoints put a wall closer than WALL_CLEARANCE_M to the road (elsewhere the line keeps
+        // running over run-off, and Tier 1 stays slower than the keyboard reference, spec 046).
+        let near = spline.sample_at_distance(curr_dist);
+        let close_wall = |on: bool, d: Option<f32>| on && d.is_some_and(|d| d < WALL_CLEARANCE_M);
+        let walled = close_wall(near.left_wall, near.left_wall_distance) || close_wall(near.right_wall, near.right_wall_distance);
         let max_turn_cos = MAX_TARGET_TURN_RAD.cos();
-        while lookahead_dist > MIN_TIGHT_LOOKAHEAD_M {
+        while walled && lookahead_dist > MIN_TIGHT_LOOKAHEAD_M {
             let ahead = spline.sample_at_distance((curr_dist + lookahead_dist) % spline.total_length());
             if ahead.tangent.dot(proj.tangent) >= max_turn_cos {
                 break;
