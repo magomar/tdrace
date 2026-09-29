@@ -468,6 +468,12 @@ impl ModuleCareerProgress {
             ("extreme_offroad" | "offroad", 4) => vec!["offroad_pro4_unlimited_chevy".to_string()],
             ("extreme_offroad" | "offroad", 5) => vec!["offroad_bigfoot_monster_truck".to_string()],
 
+            ("autocross" | "ax", 1) => vec!["autocross_lifelive_tn5_junior".to_string()],
+            ("autocross" | "ax", 2) => vec!["autocross_lifelive_tn11_senior".to_string()],
+            ("autocross" | "ax", 3) => vec!["autocross_peters_buggy1600".to_string()],
+            ("autocross" | "ax", 4) => vec!["autocross_skoda_fabia_tax".to_string()],
+            ("autocross" | "ax", 5) => vec!["autocross_peters_superbuggy".to_string()],
+
             _ => {
                 if tier == 1 {
                     vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()]
@@ -1026,6 +1032,42 @@ impl ModuleCareerProgress {
                     self.ensure_track("monster_colosseum");
                     self.ensure_track("glacier_crest_pass");
                     self.ensure_track("stunt_city_megastructure");
+                }
+            }
+            "autocross" | "ax" => {
+                // Tier 1 (3 circuits)
+                self.ensure_track("seelow_ax");
+                self.ensure_track("bazaigues_ax");
+                self.ensure_track("vilkyciai_ax");
+
+                // Tier 2 (4 circuits -> 7 total)
+                if self.level >= 2 {
+                    self.ensure_track("arteixo_ax");
+                    self.ensure_track("uelzen_ax");
+                    self.ensure_track("musa_ax");
+                    self.ensure_track("castelo_branco_ax");
+                }
+
+                // Tier 3 (4 circuits -> 11 total)
+                if self.level >= 3 {
+                    self.ensure_track("prerov_ax");
+                    self.ensure_track("humpolec_ax");
+                    self.ensure_track("maggiora_ax");
+                    self.ensure_track("st_junien_ax");
+                }
+
+                // Tier 4 (4 circuits -> 15 total)
+                if self.level >= 4 {
+                    self.ensure_track("carballo_ax");
+                    self.ensure_track("faleyras_ax");
+                    self.ensure_track("schluechtern_ax");
+                    self.ensure_track("matschenberg_ax");
+                }
+
+                // Tier 5 (2 circuits -> 17 total)
+                if self.level >= 5 {
+                    self.ensure_track("nova_paka_ax");
+                    self.ensure_track("st_georges_ax");
                 }
             }
             _ => {}

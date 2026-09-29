@@ -931,11 +931,12 @@ pub enum MenuCategoryFilter {
     Gt,
     Nascar,
     ExtremeOffroad,
+    Autocross,
     Custom,
 }
 
 impl MenuCategoryFilter {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::All,
         Self::Classic,
         Self::Rally,
@@ -943,6 +944,7 @@ impl MenuCategoryFilter {
         Self::Gt,
         Self::Nascar,
         Self::ExtremeOffroad,
+        Self::Autocross,
         Self::Custom,
     ];
 
@@ -955,6 +957,7 @@ impl MenuCategoryFilter {
             Self::Gt => "GT",
             Self::Nascar => "NASCAR",
             Self::ExtremeOffroad => "OFF-ROAD",
+            Self::Autocross => "AUTOCROSS",
             Self::Custom => "CUSTOM",
         }
     }
@@ -968,6 +971,7 @@ impl MenuCategoryFilter {
             Self::Gt => Some("gt"),
             Self::Nascar => Some("nascar"),
             Self::ExtremeOffroad => Some("extreme_offroad"),
+            Self::Autocross => Some("autocross"),
         }
     }
 
@@ -993,6 +997,7 @@ impl MenuCategoryFilter {
             "gt" | "gt_challenge" => Self::Gt,
             "nascar" => Self::Nascar,
             "extreme_offroad" => Self::ExtremeOffroad,
+            "autocross" | "ax" => Self::Autocross,
             _ => Self::All,
         }
     }

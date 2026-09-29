@@ -998,7 +998,8 @@ impl HallOfFameDb {
 
         let mut map = std::collections::HashMap::new();
         for r in rows {
-            let p = r?;
+            let mut p = r?;
+            p.sync_unlocks_for_level();
             map.insert(p.module_id.clone(), p);
         }
         Ok(map)
@@ -1558,7 +1559,11 @@ impl HallOfFameDb {
         let map = guard
             .iter()
             .filter(|p| p.profile_id == profile_id)
-            .map(|p| (p.module_id.clone(), p.clone()))
+            .map(|p| {
+                let mut p = p.clone();
+                p.sync_unlocks_for_level();
+                (p.module_id.clone(), p)
+            })
             .collect();
         Ok(map)
     }
