@@ -128,48 +128,48 @@ No data format changes. `CameraConfig` keeps its serde shape, so saved `config.t
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: race-ui stands alone**
-  - [ ] **Given** the `race-ui` crate
-  - [ ] **When** `cargo tree -p race-ui -e normal` runs and the crate builds for `wasm32-unknown-unknown`
-  - [ ] **Then** the tree has no `tdrace-core`, `race-kit`, `rusqlite` or `toml`, and the build succeeds
+  - [x] **Given** the `race-ui` crate
+  - [x] **When** `cargo tree -p race-ui -e normal` runs and the crate builds for `wasm32-unknown-unknown`
+  - [x] **Then** the tree has no `tdrace-core`, `race-kit`, `rusqlite` or `toml`, and the build succeeds
 
 - **Scenario: Existing callers compile unchanged**
-  - [ ] **Given** `tdrace-app`, its tests and its binaries, with no edits to callers of the moved code
-  - [ ] **When** the workspace builds and the drawing tests run
-  - [ ] **Then** everything compiles through the re-exports, and the render, camera, effects and curve-indicator tests pass
+  - [x] **Given** `tdrace-app`, its tests and its binaries, with no edits to callers of the moved code
+  - [x] **When** the workspace builds and the drawing tests run
+  - [x] **Then** everything compiles through the re-exports, and the render, camera, effects and curve-indicator tests pass
 
 - **Scenario: The camera follows a body that is not a car**
-  - [ ] **Given** a `RaceCamera` and a test body that implements `Body2D`
-  - [ ] **When** `update` runs for 2 s while the body moves in a straight line
-  - [ ] **Then** the camera centre ends near the body's position plus its look-ahead, the same result as for a `Car` with the same position and velocity
+  - [x] **Given** a `RaceCamera` and a test body that implements `Body2D`
+  - [x] **When** `update` runs for 2 s while the body moves in a straight line
+  - [x] **Then** the camera centre ends near the body's position plus its look-ahead, the same result as for a `Car` with the same position and velocity
 
 - **Scenario: A game points the textures at its own folder**
-  - [ ] **Given** a temporary folder with a file `asphalt_diffuse.png` in it
-  - [ ] **When** `set_asset_root` names that folder and the surface texture file lookup runs for asphalt
-  - [ ] **Then** it returns that file's bytes, and without `set_asset_root` the lookup still searches the current 5 paths
+  - [x] **Given** a temporary folder with a file `textures/surfaces/asphalt_diffuse.png` in it
+  - [x] **When** `set_asset_root` names that folder and the surface texture file lookup runs for asphalt
+  - [x] **Then** it returns that file's bytes, and without `set_asset_root` the lookup still searches the current 5 paths
 
 - **Scenario: tdrace looks the same**
-  - [ ] **Given** the game built from this branch
-  - [ ] **When** Mario runs `make run-dev` and drives one race on Classic Grand Prix
-  - [ ] **Then** the track, barriers, trees, camera, dust, skid marks, curve indicator, minimap and lap timer look as they do on `main`
+  - [x] **Given** the game built from this branch
+  - [x] **When** Mario runs `make run-dev` and drives one race on Classic Grand Prix
+  - [x] **Then** the track, barriers, trees, camera, dust, skid marks, curve indicator, minimap and lap timer look as they do on `main`
 
 - **Scenario: The simulation is untouched**
-  - [ ] **Given** the golden hashes recorded for debug and release on macOS aarch64
-  - [ ] **When** `golden_sim`, `golden_world` and `golden_session` run
-  - [ ] **Then** all of them keep their recorded hashes
+  - [x] **Given** the golden hashes recorded for debug and release on macOS aarch64
+  - [x] **When** `golden_sim`, `golden_world` and `golden_session` run
+  - [x] **Then** all of them keep their recorded hashes
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/race-ui/Cargo.toml`, `crates/race-ui/src/lib.rs` -> new crate, workspace member.
-- `[ ]` `crates/race-ui/src/render/` -> track, barrier, scenery, surface material and colour code, plus `set_asset_root`.
-- `[ ]` `crates/race-ui/src/camera/` -> `RaceCamera`, `CameraMode`, `SplitLayout`, camera config types; `update` over `Body2D`.
-- `[ ]` `crates/race-ui/src/fx/` -> `EffectsManager`, particles, skid marks, drift popups.
-- `[ ]` `crates/race-ui/src/hud/` -> curve indicator and the four HUD widgets.
-- `[ ]` `crates/race-ui/tests/` -> camera-follows-a-body and asset-root scenarios.
-- `[ ]` `crates/tdrace-app/src/{render,camera,fx,ui}/mod.rs`, `ui/hud.rs`, `config.rs` -> re-exports at the old paths.
-- `[ ]` `docs/engineering/terminology.md` -> `race-ui` added to the platform architecture section.
+- `[x]` `crates/race-ui/Cargo.toml`, `crates/race-ui/src/lib.rs` -> new crate, workspace member.
+- `[x]` `crates/race-ui/src/render/` -> track, barrier, scenery, surface material and colour code, plus `set_asset_root`.
+- `[x]` `crates/race-ui/src/camera/` -> `RaceCamera`, `CameraMode`, `SplitLayout`, camera config types; `update` over `Body2D`.
+- `[x]` `crates/race-ui/src/fx/` -> `EffectsManager`, particles, skid marks, drift popups.
+- `[x]` `crates/race-ui/src/hud/` -> curve indicator and the four HUD widgets.
+- `[x]` `crates/race-ui/tests/` -> camera-follows-a-body and asset-root scenarios.
+- `[x]` `crates/tdrace-app/src/{render,camera,fx,ui}/mod.rs`, `ui/hud.rs`, `config.rs` -> re-exports at the old paths.
+- `[x]` `docs/engineering/terminology.md` -> `race-ui` added to the platform architecture section.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 057: race-ui Rendering, Camera, Effects and HUD Primitives*.
