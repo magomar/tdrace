@@ -1,5 +1,8 @@
 ---
 import '../styles/global.css';
+import circuitsData from '../../../shared/data/circuits.json';
+import vehiclesData from '../../../shared/data/vehicles.json';
+import surfacesData from '../../../shared/data/surfaces.json';
 
 interface Props {
   title: string;
@@ -94,11 +97,11 @@ const navItems = [
         <div class="flex items-center space-x-3">
           <span>Single-source backed by <strong class="text-racing-text">Google OKF v0.2</strong> Markdown</span>
           <span>•</span>
-          <span class="font-mono">89 Circuits</span>
+          <span class="font-mono">{circuitsData.length} Circuits</span>
           <span>•</span>
-          <span class="font-mono">25 Car Classes</span>
+          <span class="font-mono">{vehiclesData.length} Vehicles</span>
           <span>•</span>
-          <span class="font-mono">12 Surfaces</span>
+          <span class="font-mono">{surfacesData.length} Surfaces</span>
         </div>
         <div class="flex items-center space-x-4">
           <a href="https://github.com/magomar/tdrace" target="_blank" class="hover:text-racing-cyan transition-colors">GitHub</a>

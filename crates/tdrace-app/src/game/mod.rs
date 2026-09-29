@@ -197,7 +197,7 @@ use crate::input::touch::TouchController;
 use crate::input::{DigitalInputConfig, DigitalInputFilter, InputController, NavGrid2D};
 pub use crate::module::VehicleVisualType;
 use crate::module::{
-    ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
+    AutocrossGameModule, ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
     NascarGameModule, RallyGameModule, VaultGameModule,
 };
 use crate::profile::{
@@ -1998,6 +1998,7 @@ impl RaceSession {
             "kart" => KartGameModule::new().drivers(),
             "nascar" => NascarGameModule::new().drivers(),
             "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+            "autocross" => AutocrossGameModule::new().drivers(),
             _ => DriverCharacter::all().to_vec(),
         }
     }
@@ -2026,6 +2027,10 @@ impl RaceSession {
             ],
             "extreme_offroad" => vec![
                 (CarChoice::SandRail.title(), CarChoice::SandRail.tag(), CarChoice::SandRail.description(), CarChoice::SandRail.stats()),
+            ],
+            "autocross" => vec![
+                ("80 BHP LifeLive TN5 Junior", "CROSS CAR JUNIOR", "FIA Cross Car Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.", (0.55, 0.88, 0.90, 0.50)),
+                ("680 BHP SuperBuggy V8", "SUPERBUGGY 4WD", "Premier unlimited dirt racing machine with 1:1 power-to-weight ratio and massive downforce.", (0.98, 1.00, 0.95, 0.96)),
             ],
             _ => vec![
                 (CarChoice::SportsCar.title(), CarChoice::SportsCar.tag(), CarChoice::SportsCar.description(), CarChoice::SportsCar.stats()),
@@ -3946,6 +3951,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "autocross" => AutocrossGameModule::new().drivers(),
                 "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
@@ -4643,6 +4649,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "autocross" => AutocrossGameModule::new().drivers(),
                 "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
@@ -10297,7 +10304,7 @@ impl RaceSession {
             self.menu_track_idx = 0;
         }
 
-        // Direct Category Filter Shortcuts (1..=8)
+        // Direct Category Filter Shortcuts (1..=9)
         let num_cat = if is_key_pressed(KeyCode::Key1) {
             Some(MenuCategoryFilter::All)
         } else if is_key_pressed(KeyCode::Key2) {
@@ -10313,6 +10320,8 @@ impl RaceSession {
         } else if is_key_pressed(KeyCode::Key7) {
             Some(MenuCategoryFilter::ExtremeOffroad)
         } else if is_key_pressed(KeyCode::Key8) {
+            Some(MenuCategoryFilter::Autocross)
+        } else if is_key_pressed(KeyCode::Key9) {
             Some(MenuCategoryFilter::Custom)
         } else {
             None
@@ -10586,6 +10595,7 @@ impl RaceSession {
                     "kart" => "kart",
                     "nascar" => "nascar",
                     "extreme_offroad" => "extreme_offroad",
+                    "autocross" => "autocross",
                     _ => "classic",
                 };
                 self.active_module_id = target_mod;

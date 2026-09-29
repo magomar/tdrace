@@ -823,6 +823,7 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
         MenuCategoryFilter::Gt,
         MenuCategoryFilter::Nascar,
         MenuCategoryFilter::ExtremeOffroad,
+        MenuCategoryFilter::Autocross,
         MenuCategoryFilter::Custom,
         MenuCategoryFilter::All,
     ] {
@@ -882,6 +883,19 @@ fn test_menu_category_filter_circuits_isolation() {
         assert_eq!(mod_id, "gt", "Track {:?} not a GT track", t.track_id());
     }
 
+    // Filter by Autocross
+    session.menu_category_filter = MenuCategoryFilter::Autocross;
+    let ax_tracks = session.filtered_menu_tracks();
+    assert_eq!(ax_tracks.len(), 17, "Expected 17 Autocross tracks");
+    for t in &ax_tracks {
+        let loaded = tdrace_app::ui::menu::resolve_track_for_menu(t);
+        let mod_id = loaded
+            .as_ref()
+            .and_then(|tr| tr.module_id.as_deref())
+            .unwrap_or("");
+        assert_eq!(mod_id, "autocross", "Track {:?} not an Autocross track", t.track_id());
+    }
+
     // Filter ALL has more tracks than any single category
     session.menu_category_filter = MenuCategoryFilter::All;
     let all_tracks = session.filtered_menu_tracks();
@@ -892,6 +906,10 @@ fn test_menu_category_filter_circuits_isolation() {
     assert!(
         all_tracks.len() > gt_tracks.len(),
         "ALL tracks should exceed GT track count"
+    );
+    assert!(
+        all_tracks.len() > ax_tracks.len(),
+        "ALL tracks should exceed Autocross track count"
     );
 }
 
@@ -939,6 +957,25 @@ fn test_menu_track_confirmation_updates_active_module_and_car() {
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
 
     assert_eq!(session.active_module_id, "nascar");
+    assert_eq!(session.state, GameState::StartingGrid);
+
+    // Return to Menu and filter by Autocross
+    session.state = GameState::Menu;
+    session.menu_category_filter = MenuCategoryFilter::Autocross;
+    let ax_tracks = session.filtered_menu_tracks();
+    assert!(!ax_tracks.is_empty());
+    let (ax_idx, _) = ax_tracks
+        .iter()
+        .enumerate()
+        .find(|(_, t)| session.is_track_unlocked(t.track_id()))
+        .expect("Unlocked Autocross track");
+    session.menu_track_idx = ax_idx;
+
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+
+    assert_eq!(session.active_module_id, "autocross");
     assert_eq!(session.state, GameState::StartingGrid);
 }
 

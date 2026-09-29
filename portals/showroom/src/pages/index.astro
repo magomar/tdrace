@@ -9,11 +9,11 @@ import circuitsData from '../../../shared/data/circuits.json';
 import surfacesData from '../../../shared/data/surfaces.json';
 
 const featuredCars = vehiclesData.filter((c) =>
-  ['gt_ferrari_296_gt3', 'nascar_corvette_ta1', 'rally_audi_sport_quattro_s1', 'offroad_sand_rail_buggy', 'kart_anderson_cs250'].includes(c.id)
+  ['gt_ferrari_296_gt3', 'nascar_corvette_ta1', 'rally_audi_sport_quattro_s1', 'offroad_sand_rail_buggy', 'kart_anderson_cs250', 'autocross_peters_superbuggy'].includes(c.id)
 );
 
 const featuredCircuits = circuitsData.filter((c) =>
-  ['spa', 'daytona', 'holjes_rx', 'lonato', 'classic_grand_prix', 'sahara_dune_crossing'].includes(c.id)
+  ['spa', 'daytona', 'holjes_rx', 'lonato', 'classic_grand_prix', 'sahara_dune_crossing', 'nova_paka_ax'].includes(c.id)
 );
 ---
 
@@ -29,7 +29,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         Authentic Motorsport Assets & <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">Physical Simulation</span>.
       </h1>
       <p class="mt-4 text-base sm:text-lg text-racing-muted leading-relaxed">
-        Explore 80 authentic motorsport models across 25 progression categories, {circuitsData.length} homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
+        Explore {vehiclesData.length} authentic motorsport models across motorsport progression categories, {circuitsData.length} homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
       </p>
 
       <!-- Quick Metrics Grid -->
@@ -37,12 +37,12 @@ const featuredCircuits = circuitsData.filter((c) =>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{vehiclesData.length}</div>
           <div class="text-xs text-racing-muted uppercase font-mono mt-1">Car Models</div>
-          <div class="text-[11px] text-racing-cyan mt-0.5">25 Classes in 5 Modules</div>
+          <div class="text-[11px] text-racing-cyan mt-0.5">30 Classes in 6 Modules</div>
         </div>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{circuitsData.length}</div>
           <div class="text-xs text-racing-muted uppercase font-mono mt-1">Circuits Mapped</div>
-          <div class="text-[11px] text-racing-amber mt-0.5">Gran Turismo, Stock cars, Rallycross, All terrain & Karting</div>
+          <div class="text-[11px] text-racing-amber mt-0.5">Gran Turismo, Stock cars, Rallycross, Autocross, All terrain & Karting</div>
         </div>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{surfacesData.length}</div>
@@ -78,12 +78,12 @@ const featuredCircuits = circuitsData.filter((c) =>
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight">Featured Motorsport Machinery</h2>
-        <p class="text-xs text-racing-muted font-mono mt-1">Hero benchmarks from Gran Turismo, Stock cars, Rallycross, All terrain, and Karting.</p>
+        <p class="text-xs text-racing-muted font-mono mt-1">Hero benchmarks from Gran Turismo, Stock cars, Rallycross, Autocross, All terrain, and Karting.</p>
       </div>
       <div class="flex items-center gap-3">
         <GlobalViewSwitcher />
         <a href="/vehicles" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
-          View All 25 Categories <span>→</span>
+          View All Categories <span>→</span>
         </a>
       </div>
     </div>

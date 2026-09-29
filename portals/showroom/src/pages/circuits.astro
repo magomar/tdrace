@@ -15,7 +15,7 @@ const modules = [
 ];
 ---
 
-<Layout title="World Circuit & Track Directory" description="Explore 96 homologated circuit layouts across Gran Turismo, Stock cars, Rallycross, Autocross, All terrain, Karting, and Arcade.">
+<Layout title="World Circuit & Track Directory" description={`Explore ${circuitsData.length} homologated circuit layouts across Gran Turismo, Stock cars, Rallycross, Autocross, All terrain, Karting, and Arcade.`}>
   <div class="py-6 border-b border-racing-border">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -61,7 +61,7 @@ const modules = [
         class="circuit-item"
         data-module={c.module || c.category}
         data-category={c.category}
-        data-search={`${c.name} ${c.category} ${c.modality} ${c.surfaces.join(' ')} ${c.module || ''} ${c.category === 'offroad' || c.module === 'extreme_offroad' ? 'all terrain all-terrain offroad' : ''} ${c.category === 'nascar' ? 'stock cars stockcar' : ''} ${c.category === 'classic' || c.module === 'classic' ? 'arcade classic' : ''} ${c.category === 'gt' ? 'gran turismo' : ''}`.toLowerCase()}
+        data-search={`${c.name} ${c.category} ${c.modality} ${c.surfaces.join(' ')} ${c.module || ''} ${c.category === 'offroad' || c.module === 'extreme_offroad' ? 'all terrain all-terrain offroad' : ''} ${c.category === 'nascar' ? 'stock cars stockcar' : ''} ${c.category === 'classic' || c.module === 'classic' ? 'arcade classic' : ''} ${c.category === 'gt' ? 'gran turismo' : ''} ${c.category === 'autocross' || c.module === 'autocross' ? 'autocross ax dirt buggy crosscar' : ''}`.toLowerCase()}
       >
         <CircuitCard circuit={c} />
       </div>
@@ -117,11 +117,7 @@ const modules = [
       if (noCircuitsNotice) {
         if (visibleCount === 0) {
           noCircuitsNotice.classList.remove('hidden');
-          if (currentModule === 'autocross') {
-            if (noCircuitsMsg) noCircuitsMsg.textContent = 'FIA Autocross circuits are currently being built (Spec 050). Check back soon!';
-          } else {
-            if (noCircuitsMsg) noCircuitsMsg.textContent = 'No circuits currently match the selected module or search query.';
-          }
+          if (noCircuitsMsg) noCircuitsMsg.textContent = 'No circuits currently match the selected module or search query.';
         } else {
           noCircuitsNotice.classList.add('hidden');
         }
