@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Rallycross 6-Tier Career Progression and Expanded Circuit Roster"
 description: "Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data."
-status: approved
+status: implemented
+receipt: "docs/receipts/spec-051-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-28T22:45:00Z }
 verified: { by: "human:mario", at: 2026-09-28T22:39:42Z }
@@ -231,59 +232,59 @@ No new remote endpoints or authentication protocols are introduced. The OSM circ
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Fresh profile starts at Tier 1 with 5 unlocked Rallycross circuits**
-  - [ ] **Given** a new player profile created for the `"rally"` module at `level = 1`
-  - [ ] **When** `sync_unlocks_for_level` is called
-  - [ ] **Then** exactly 5 circuits are unlocked: `"holjes_rx"`, `"lydden_hill"`, `"mettet_rx"`, `"dreux_rx"`, and `"croft_rx"`
-  - [ ] **And** all other 15 circuits remain locked
+  - [x] **Given** a new player profile created for the `"rally"` module at `level = 1`
+  - [x] **When** `sync_unlocks_for_level` is called
+  - [x] **Then** exactly 5 circuits are unlocked: `"holjes_rx"`, `"lydden_hill"`, `"mettet_rx"`, `"dreux_rx"`, and `"croft_rx"`
+  - [x] **And** all other 15 circuits remain locked
 
 - **Scenario: Advancing to Tier 2 unlocks exactly 3 new circuits**
-  - [ ] **Given** a player profile advancing to `level = 2` in the `"rally"` module
-  - [ ] **When** `sync_unlocks_for_level` runs
-  - [ ] **Then** `"lessay_rx"`, `"essay_rx"`, and `"lavare_rx"` become unlocked
-  - [ ] **And** the total count of unlocked circuits is exactly 8
+  - [x] **Given** a player profile advancing to `level = 2` in the `"rally"` module
+  - [x] **When** `sync_unlocks_for_level` runs
+  - [x] **Then** `"lessay_rx"`, `"essay_rx"`, and `"lavare_rx"` become unlocked
+  - [x] **And** the total count of unlocked circuits is exactly 8
 
 - **Scenario: Advancing through Tiers 3, 4, and 5 unlocks 3 circuits per tier**
-  - [ ] **Given** a player profile at `level = 3`, `level = 4`, and `level = 5`
-  - [ ] **When** `sync_unlocks_for_level` executes for each level
-  - [ ] **Then** Level 3 unlocks 3 circuits (`kouvola_rx`, `montalegre_rx`, `nyirad_rx`), totaling 11
-  - [ ] **And** Level 4 unlocks 3 circuits (`estering_rx`, `hell_rx`, `loheac_rx`), totaling 14
-  - [ ] **And** Level 5 unlocks 3 circuits (`riga_rx`, `killarney_rx`, `catalunya_rx`), totaling 17
+  - [x] **Given** a player profile at `level = 3`, `level = 4`, and `level = 5`
+  - [x] **When** `sync_unlocks_for_level` executes for each level
+  - [x] **Then** Level 3 unlocks 3 circuits (`kouvola_rx`, `montalegre_rx`, `nyirad_rx`), totaling 11
+  - [x] **And** Level 4 unlocks 3 circuits (`estering_rx`, `hell_rx`, `loheac_rx`), totaling 14
+  - [x] **And** Level 5 unlocks 3 circuits (`riga_rx`, `killarney_rx`, `catalunya_rx`), totaling 17
 
 - **Scenario: Advancing to Tier 6 unlocks the 3 new international showcase circuits**
-  - [ ] **Given** a player profile advancing to `level = 6` in the `"rally"` module
-  - [ ] **When** `sync_unlocks_for_level` runs
-  - [ ] **Then** `"spa_rx"`, `"silverstone_rx"`, and `"erx_motor_park"` become unlocked
-  - [ ] **And** the total count of unlocked circuits reaches exactly 20
+  - [x] **Given** a player profile advancing to `level = 6` in the `"rally"` module
+  - [x] **When** `sync_unlocks_for_level` runs
+  - [x] **Then** `"spa_rx"`, `"silverstone_rx"`, and `"erx_motor_park"` become unlocked
+  - [x] **And** the total count of unlocked circuits reaches exactly 20
 
 - **Scenario: Garage navigates across all 6 tiers and Heritage tab**
-  - [ ] **Given** the player is in the Garage for the `"rally"` module
-  - [ ] **When** stepping down through tiers with `Down` / `E` / Gamepad `RB`
-  - [ ] **Then** the garage smoothly cycles through Tier 1 (Junior FWD), Tier 2 (Supercar Lites), Tier 3 (Euro RX), Tier 4 (World RX 600 BHP), Tier 5 (RX1e), and Tier 6 (Nitrocross Group E)
-  - [ ] **And** stepping to the Heritage tier displays the Audi Sport Quattro S1, Peugeot 205 T16, and Lancia Delta S4 with a `HERITAGE / UNRANKED` badge
+  - [x] **Given** the player is in the Garage for the `"rally"` module
+  - [x] **When** stepping down through tiers with `Down` / `E` / Gamepad `RB`
+  - [x] **Then** the garage smoothly cycles through Tier 1 (Junior FWD), Tier 2 (Supercar Lites), Tier 3 (Euro RX), Tier 4 (World RX 600 BHP), Tier 5 (RX1e), and Tier 6 (Nitrocross Group E)
+  - [x] **And** stepping to the Heritage tier displays the Audi Sport Quattro S1, Peugeot 205 T16, and Lancia Delta S4 with a `HERITAGE / UNRANKED` badge
 
 - **Scenario: AI drivers assign correct favorite cars across 6 tiers**
-  - [ ] **Given** AI drivers in `module/rally.rs` (e.g. Timmy Hansenfield, Johan Vance, Ken Blaster)
-  - [ ] **When** an event runs at Tier 4 (600 BHP World RX)
-  - [ ] **Then** Timmy Hansenfield drives the Peugeot 208 WRX Supercar
-  - [ ] **And** Ken Blaster drives the Ford Focus RS RX Supercar
+  - [x] **Given** AI drivers in `module/rally.rs` (e.g. Timmy Hansenfield, Johan Vance, Ken Blaster)
+  - [x] **When** an event runs at Tier 4 (600 BHP World RX)
+  - [x] **Then** Timmy Hansenfield drives the Peugeot 208 WRX Supercar
+  - [x] **And** Ken Blaster drives the Ford Focus RS RX Supercar
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Files to Create
-- `[ ]` `tracks/rally/spa_rx.json` -> Circuit de Spa-Francorchamps RX definition.
-- `[ ]` `tracks/rally/silverstone_rx.json` -> Silverstone SpeedMachine RX definition.
-- `[ ]` `tracks/rally/erx_motor_park.json` -> ERX Motor Park RX definition.
-- `[ ]` `series/rally/rally_supercar_lites_trophy.toml` -> Tier 2 championship preset.
-- `[ ]` `series/rally/rally_world_rx_supercars.toml` -> Tier 4 600 BHP championship preset.
+- `[x]` `tracks/rally/spa_rx.json` -> Circuit de Spa-Francorchamps RX definition.
+- `[x]` `tracks/rally/silverstone_rx.json` -> Silverstone SpeedMachine RX definition.
+- `[x]` `tracks/rally/erx_motor_park.json` -> ERX Motor Park RX definition.
+- `[x]` `series/rally/rally_supercar_lites_trophy.toml` -> Tier 2 championship preset.
+- `[x]` `series/rally/rally_world_rx_supercars.toml` -> Tier 4 600 BHP championship preset.
 
 ### Files to Modify
-- `[ ]` `portals/shared/data/vehicles.json` -> Add Tier 2 (Supercar Lites / RX2) and Tier 4 (600 BHP ICE) cars; mark Group B as heritage.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Register new vehicles and update `garage_tier_count` for `"rally"`.
-- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Extend `sync_unlocks_for_level` to 6 tiers and 20 circuits.
-- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Update `RallyGameModule::tracks()` and AI driver favorite cars.
-- `[ ]` `series/rally/rally_group_b_masters.toml` -> Set `tier = 0` (Heritage series).
-- `[ ]` `series/rally/rally_rx1e_electric_championship.toml` -> Update to `tier = 5`.
-- `[ ]` `series/rally/rally_nitrocross_group_e.toml` -> Update to `tier = 6`.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Record Spec 051 milestone.
+- `[x]` `portals/shared/data/vehicles.json` -> Add Tier 2 (Supercar Lites / RX2) and Tier 4 (600 BHP ICE) cars; mark Group B as heritage.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Register new vehicles and update `garage_tier_count` for `"rally"`.
+- `[x]` `crates/tdrace-app/src/profile/mod.rs` -> Extend `sync_unlocks_for_level` to 6 tiers and 20 circuits.
+- `[x]` `crates/tdrace-app/src/module/rally.rs` -> Update `RallyGameModule::tracks()` and AI driver favorite cars.
+- `[x]` `series/rally/rally_group_b_masters.toml` -> Set `tier = 0` (Heritage series).
+- `[x]` `series/rally/rally_rx1e_electric_championship.toml` -> Update to `tier = 5`.
+- `[x]` `series/rally/rally_nitrocross_group_e.toml` -> Update to `tier = 6`.
+- `[x]` `specs/constitution/ROADMAP.md` -> Record Spec 051 milestone.

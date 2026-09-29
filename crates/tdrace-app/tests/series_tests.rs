@@ -415,10 +415,11 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             "rally",
             vec![
                 (1, "rally_grassroots_cup", 5, "rally_peugeot_208_rally4"),
-                (2, "rally_world_cup", 7, "rally_polo_rx"),
-                (3, "rally_group_b_masters", 9, "rally_audi_sport_quattro_s1"),
-                (4, "rally_rx1e_electric_championship", 10, "rally_peugeot_208_rx1e"),
-                (5, "rally_nitrocross_group_e", 12, "rally_omse_fc1x"),
+                (2, "rally_supercar_lites_trophy", 6, "rally_omse_supercar_lites"),
+                (3, "rally_euro_rx_challenge", 7, "rally_polo_rx"),
+                (4, "rally_world_rx_supercars", 8, "rally_peugeot_208_wrx"),
+                (5, "rally_rx1e_electric_championship", 10, "rally_peugeot_208_rx1e"),
+                (6, "rally_nitrocross_group_e", 12, "rally_omse_fc1x"),
             ],
         ),
         (
@@ -451,14 +452,25 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             .filter(|c| c.series.module_id == module_id)
             .collect();
 
-        let expected_count = expected_tiers.len();
+        let expected_count = if module_id == "rally" {
+            expected_tiers.len() + 1
+        } else {
+            expected_tiers.len()
+        };
         assert_eq!(
             module_champs.len(),
             expected_count,
-            "Module '{}' must have exactly {} tier championships registered",
+            "Module '{}' must have exactly {} championships registered",
             module_id,
             expected_count
         );
+
+        if module_id == "rally" {
+            let heritage = mgr.get("rally_group_b_masters").expect("Heritage championship must exist");
+            assert_eq!(heritage.series.tier, 0);
+            assert_eq!(heritage.rounds.len(), 9);
+            assert_eq!(heritage.drivers.len(), 8);
+        }
 
         for (tier, id, rounds_len, expected_car) in expected_tiers {
             let def = mgr
@@ -983,7 +995,7 @@ fn test_kart_career_tiers_1_to_6_launch_eligibility() {
 }
 
 #[test]
-fn test_all_26_preset_championships_launch_with_eligible_and_unlocked_cars() {
+fn test_all_28_preset_championships_launch_with_eligible_and_unlocked_cars() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
@@ -992,7 +1004,7 @@ fn test_all_26_preset_championships_launch_with_eligible_and_unlocked_cars() {
 
     let mgr = ChampionshipManager::new();
     let presets = mgr.all_sorted();
-    assert_eq!(presets.len(), 26, "There should be 26 presets (4 modules x 5 tiers + 1 karting x 6 tiers)");
+    assert_eq!(presets.len(), 28, "There should be 28 presets (3 modules x 5 tiers + 1 karting x 6 tiers + 1 rally x 6 tiers + 1 rally heritage cup)");
 
     for def in &presets {
         session.launch_or_resume_championship(def);
@@ -1214,16 +1226,18 @@ fn test_championship_lap_calibration_across_all_modules() {
     }
 
     // 3. Rallycross Championships: 5 laps uniformly
-    for tier in 1..=5 {
+    for tier in 1..=6 {
         session.start_rally_career_tier(tier);
         assert_eq!(session.total_laps, 5, "Rallycross Tier {} must run 5 laps", tier);
     }
     for slug in &[
         "rally_grassroots_cup",
-        "rally_world_cup",
-        "rally_group_b_masters",
+        "rally_supercar_lites_trophy",
+        "rally_euro_rx_challenge",
+        "rally_world_rx_supercars",
         "rally_rx1e_electric_championship",
         "rally_nitrocross_group_e",
+        "rally_group_b_masters",
     ] {
         let def = mgr.get(slug).expect("Rallycross preset must exist");
         assert_eq!(def.series.laps_per_round, 5);

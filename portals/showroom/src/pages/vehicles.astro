@@ -117,7 +117,6 @@ const modules = [
           (currentModule === 'Gran Turismo' && (itemModule === 'Gran Turismo & Endurance' || itemModule === 'Gran Turismo' || itemModule === 'gt')) ||
           (currentModule === 'NASCAR Stock Car Racing' && (itemModule === 'NASCAR Stock Car Racing' || itemModule === 'Stock cars' || itemModule === 'nascar')) ||
           (currentModule === 'Stock cars' && (itemModule === 'NASCAR Stock Car Racing' || itemModule === 'Stock cars' || itemModule === 'nascar'));
-
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
         if (matchesModule && matchesSearch) {

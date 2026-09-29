@@ -321,6 +321,11 @@ impl GameModule for RallyGameModule {
                     "killarney_rx".to_string(),
                     "lessay_rx".to_string(),
                     "essay_rx".to_string(),
+                    "dreux_rx".to_string(),
+                    "croft_rx".to_string(),
+                    "spa_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                    "erx_motor_park".to_string(),
                 ],
             },
             TournamentFormat::Championship {
@@ -342,6 +347,11 @@ impl GameModule for RallyGameModule {
                     "killarney_rx".to_string(),
                     "lessay_rx".to_string(),
                     "essay_rx".to_string(),
+                    "dreux_rx".to_string(),
+                    "croft_rx".to_string(),
+                    "spa_rx".to_string(),
+                    "silverstone_rx".to_string(),
+                    "erx_motor_park".to_string(),
                 ],
                 laps_per_round: 5,
             },
@@ -360,96 +370,108 @@ impl GameModule for RallyGameModule {
 
 const JOHAN_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_subaru_wrx_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_omse_fc1x"),
 ];
 
 const MATTIAS_STORM_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_avitas_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_subaru_wrx_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_dodge_hornet_fc1x"),
 ];
 
 const TIMMY_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_wrx"),
+    DriverFavoriteCar::new("rally", 5, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_vsc_fc1x"),
 ];
 
 const KEVIN_HANSENFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_qev_rx2e"),
+    DriverFavoriteCar::new("rally", 3, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_wrx"),
+    DriverFavoriteCar::new("rally", 5, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_vsc_fc1x"),
 ];
 
 const NICLAS_GRON_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
-    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_avitas_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_wrx"),
+    DriverFavoriteCar::new("rally", 5, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 6, "rally_omse_fc1x"),
 ];
 
 const ANTON_MARK_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_subaru_wrx_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_dodge_hornet_fc1x"),
 ];
 
 const TIMO_SCHEIDER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
-    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_qev_rx2e"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_wrx"),
+    DriverFavoriteCar::new("rally", 5, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 6, "rally_omse_fc1x"),
 ];
 
 const SEBASTIEN_LOEBFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_peugeot_208_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
-    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_wrx"),
+    DriverFavoriteCar::new("rally", 5, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 6, "rally_vsc_fc1x"),
 ];
 
 const PETTER_SOLBERGFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_audi_sport_quattro_s1"),
-    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_avitas_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_subaru_wrx_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_dodge_hornet_fc1x"),
 ];
 
 const KEN_BLASTER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_fiesta_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_polo_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_polo_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_omse_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_polo_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_ford_focus_rs_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_polo_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_omse_fc1x"),
 ];
 
 const ANDREAS_BAKKERUD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_audi_s1_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_lancia_delta_s4"),
-    DriverFavoriteCar::new("rally", 4, "rally_peugeot_208_rx1e"),
-    DriverFavoriteCar::new("rally", 5, "rally_vsc_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_avitas_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_audi_s1_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_ford_focus_rs_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_peugeot_208_rx1e"),
+    DriverFavoriteCar::new("rally", 6, "rally_vsc_fc1x"),
 ];
 
 const REINIS_NITISSFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("rally", 1, "rally_clio_rally4"),
-    DriverFavoriteCar::new("rally", 2, "rally_hyundai_i20_rx"),
-    DriverFavoriteCar::new("rally", 3, "rally_peugeot_205_t16"),
-    DriverFavoriteCar::new("rally", 4, "rally_lancia_delta_evo_e_rx"),
-    DriverFavoriteCar::new("rally", 5, "rally_dodge_hornet_fc1x"),
+    DriverFavoriteCar::new("rally", 2, "rally_omse_supercar_lites"),
+    DriverFavoriteCar::new("rally", 3, "rally_hyundai_i20_rx"),
+    DriverFavoriteCar::new("rally", 4, "rally_ford_focus_rs_rx"),
+    DriverFavoriteCar::new("rally", 5, "rally_lancia_delta_evo_e_rx"),
+    DriverFavoriteCar::new("rally", 6, "rally_dodge_hornet_fc1x"),
 ];
