@@ -271,10 +271,10 @@ fn test_garage_view_modes() {
 #[test]
 fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
     // Spec: remove the "all" tab, and keep only module specific tabs
-    assert_eq!(GALLERY_MODULES.len(), 5);
+    assert_eq!(GALLERY_MODULES.len(), 6);
 
-    let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
-    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD"];
+    let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
+    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD", "AUTOCROSS"];
 
     for (i, &(mod_id, label)) in GALLERY_MODULES.iter().enumerate() {
         assert_ne!(label, "ALL", "The 'ALL' tab must be removed from fleet gallery");
@@ -298,6 +298,7 @@ fn test_fleet_gallery_filter_conversions() {
         (2, "kart"),
         (3, "nascar"),
         (4, "extreme_offroad"),
+        (5, "autocross"),
     ];
 
     for (idx, mod_id) in mapping {
