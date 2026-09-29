@@ -114,7 +114,7 @@ fn test_bots_do_not_drive_the_same_path_every_lap() {
 /// Given the sample
 /// When mistakes per lap are counted
 /// Then the rate falls from T1 to T5, T1 is 0.5–1.5 and T5 <= 0.05; big mistakes (spin or off
-/// > 1 s) are >= 0.1 (T1), >= 0.04 (T2), <= 0.02 (T4) and <= 0.03 (T5) per lap
+/// > 1 s) are >= 0.1 (T1), >= 0.04 (T2) and <= 0.02 (T4, T5) per lap
 #[test]
 fn test_mistakes_follow_the_tier() {
     let rates = TIERS.map(|t| per_lap(t, |s| s.total_mistakes()));
@@ -127,7 +127,7 @@ fn test_mistakes_follow_the_tier() {
     assert!(rates[4] <= 0.05, "T5 mistakes / lap {:.2}", rates[4]);
     assert!(big[0] >= 0.1, "T1 big mistakes / lap {:.3}", big[0]);
     assert!(big[1] >= 0.04, "T2 big mistakes / lap {:.3}", big[1]);
-    assert!(big[3] <= 0.02 && big[4] <= 0.03, "T4/T5 big mistakes / lap {:.3} / {:.3}", big[3], big[4]);
+    assert!(big[3] <= 0.02 && big[4] <= 0.02, "T4/T5 big mistakes / lap {:.3} / {:.3}", big[3], big[4]);
 }
 
 /// Scenario: Tier 1 is relatively easy to beat
