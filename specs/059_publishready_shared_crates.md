@@ -4,6 +4,7 @@ template: architecture
 title: "Publish-Ready Shared Crates"
 description: "Phase 4 of spec 049: a separate game repo can depend on wheelbase, arcade-race-core, race-kit, race-ui and cabinet by one git tag, with a README and a runnable minimal race example, a platform changelog, and gamepad profile paths that follow the game's own name."
 status: in_progress
+receipt: "docs/receipts/spec-059-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T17:30:00Z }
 verified: { by: human:mario, at: 2026-09-29T18:00:00Z }
