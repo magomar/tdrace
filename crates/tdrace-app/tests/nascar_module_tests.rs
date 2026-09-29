@@ -1,4 +1,4 @@
-use tdrace_app::game::{GameState, RaceSession};
+use tdrace_app::game::{GameState, ModalityCategory, RaceSession};
 use tdrace_app::module::nascar::NascarGameModule;
 use tdrace_app::module::{GameModule, VehicleVisualType};
 use tdrace_app::tournament::{ChampionshipSession, PointSystem, RoundDriverResult, TournamentFormat};
@@ -250,7 +250,14 @@ fn test_nascar_race_session_starting_grid_and_roster() {
 #[test]
 fn test_nascar_phase2_hub_navigation_and_return_mapping() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 
     // Switching to NASCAR
     session.switch_to_nascar();

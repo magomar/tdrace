@@ -175,6 +175,11 @@ impl SeriesManager {
         list
     }
 
+    /// Alias for all_sorted providing complete tournament series discovery (Spec 066).
+    pub fn all_series(&self) -> Vec<&SeriesDefinition> {
+        self.all_sorted()
+    }
+
     /// Saves a series definition to the user's custom series folder.
     pub fn save_user_series(&mut self, def: &SeriesDefinition) -> Result<PathBuf, std::io::Error> {
         if let Err(errs) = def.validate() {
