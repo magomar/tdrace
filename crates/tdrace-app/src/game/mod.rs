@@ -2085,6 +2085,7 @@ impl RaceSession {
             "rally" => self.switch_to_rally(),
             "kart" => self.switch_to_kart(),
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
+            "autocross" => self.switch_to_autocross(),
             "vault" => self.switch_to_vault(),
             _ => self.switch_to_classic(),
         }
@@ -2189,6 +2190,46 @@ impl RaceSession {
         self.car_choice = CarChoice::SandRail;
         if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
             self.total_laps = 3;
+        }
+        self.camera.setup_for_track(&self.track);
+        self.camera_p2.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
+    }
+
+    /// Activates the FIA Autocross World Series module.
+    pub fn switch_to_autocross(&mut self) {
+        self.apply_module_config("autocross");
+        self.active_module_id = "autocross";
+        self.sync_career_progress_for_active_module();
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
+        self.current_visual_type = VehicleVisualType::SandRail {
+            lightbar: false,
+            whip_antenna: false,
+            paddle_tires: false,
+        };
+        self.selected_car_model_id = Some("autocross_lifelive_tn5_junior");
+        let tracks = self.active_module_tracks();
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track)
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or_else(|| TrackChoice::Custom {
+                id: "nova_paka_ax".to_string(),
+                title: "Nová Paka".to_string(),
+                description: "Cathedral of Autocross; brutal 25m hillclimb & toboggan downhill drop.".to_string(),
+                path: "autocross/nova_paka_ax".to_string(),
+            });
+        }
+        self.track = self.load_track_for_session(&self.track_choice);
+        self.car_choice = CarChoice::SandRail;
+        if self.config.gameplay.default_laps == self.base_config.gameplay.default_laps {
+            self.total_laps = 4;
         }
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
@@ -3389,6 +3430,196 @@ impl RaceSession {
             let _ = db.save_module_progress(&self.active_career_progress);
         }
         self.profile_module_progress.insert("extreme_offroad".to_string(), self.active_career_progress.clone());
+
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
+            self.track_choice = self.track_manager.track_choice_for_slug(track_id);
+            if let Ok(t) = self.track_manager.load_track_by_slug(track_id) {
+                self.track = t;
+            }
+        }
+        self.init_race();
+    }
+
+    /// Launches an Autocross Career Championship Cup for the given tier (1..=5).
+    pub fn start_autocross_career_tier(&mut self, tier: u32) {
+        let (cup_name, track_ids, default_laps, drivers): (&str, Vec<String>, u32, &[(&str, &str, &str)]) = match tier {
+            1 => (
+                "FIA Cross Car Academy Trophy (Tier 1)",
+                vec![
+                    "seelow_ax".to_string(),
+                    "bazaigues_ax".to_string(),
+                    "vilkyciai_ax".to_string(),
+                ],
+                4,
+                &[
+                    ("player", "Player", "Apex Junior Racing"),
+                    ("miguel_gayoso", "Miguel Gayoso", "LifeLive Academy"),
+                    ("stanislav_brousek", "Stanislav Brousek", "Jnr Buggy Team"),
+                    ("etienne_cheval", "Étienne Cheval", "Cheval Kart Cross"),
+                    ("valentin_comte", "Valentin Comte", "Comte Racing"),
+                    ("emil_karlsson", "Emil Karlsson", "Nordic Junior XC"),
+                    ("diego_martinez", "Diego Martínez", "Speedcar Junior"),
+                    ("matteo_bernini", "Matteo Bernini", "Bernini Corse"),
+                ],
+            ),
+            2 => (
+                "European Cross Car Challenge (Tier 2)",
+                vec![
+                    "arteixo_ax".to_string(),
+                    "uelzen_ax".to_string(),
+                    "musa_ax".to_string(),
+                    "castelo_branco_ax".to_string(),
+                ],
+                5,
+                &[
+                    ("player", "Player", "Apex Senior Racing"),
+                    ("david_mendez", "David Méndez", "Speedcar Factory Team"),
+                    ("ivan_pina", "Iván Piña", "Semog Racing Team"),
+                    ("kobe_pauwels", "Kobe Pauwels", "LifeLive Senior Team"),
+                    ("simone_firenze", "Simone Firenze", "Semog Italia"),
+                    ("arunas_gibieza", "Arūnas Gibieža", "Baltic XC Works"),
+                    ("alexandre_calvet", "Alexandre Calvet", "Calvet Cross Car"),
+                    ("rui_nunes", "Rui Nunes", "Semog Portugal"),
+                ],
+            ),
+            3 => (
+                "FIA Buggy1600 European Championship (Tier 3)",
+                vec![
+                    "prerov_ax".to_string(),
+                    "humpolec_ax".to_string(),
+                    "maggiora_ax".to_string(),
+                    "st_junien_ax".to_string(),
+                ],
+                5,
+                &[
+                    ("player", "Player", "Apex Buggy Racing"),
+                    ("kevin_peters", "Kevin Peters", "Peters Autosport"),
+                    ("jakub_novotny", "Jakub Novotný", "Alfa Racing Team"),
+                    ("styn_jaspers", "Styn Jaspers", "Fast & Speed Racing"),
+                    ("thomas_christol", "Thomas Christol", "Christol Motorsport"),
+                    ("filip_hartman", "Filip Hartman", "Hartman Offroad"),
+                    ("markus_wibbeler", "Markus Wibbeler", "Wibbeler Racing"),
+                    ("kenny_reding", "Kenny Reding", "Reding Autosport"),
+                ],
+            ),
+            4 => (
+                "TouringAutocross SuperSaloon Masters (Tier 4)",
+                vec![
+                    "carballo_ax".to_string(),
+                    "faleyras_ax".to_string(),
+                    "schluechtern_ax".to_string(),
+                    "matschenberg_ax".to_string(),
+                ],
+                5,
+                &[
+                    ("player", "Player", "Apex Touring Racing"),
+                    ("vaclav_fejfar", "Václav Fejfar", "Fejfar Motorsport"),
+                    ("erwin_frieszl", "Erwin Frieszl", "Frieszl Racing"),
+                    ("adriaan_boele", "Adriaan Boele", "Boele Autosport"),
+                    ("marcel_egg", "Marcel Egg", "Egg Racing Team"),
+                    ("pavel_vyborny", "Pavel Výborný", "Výborný Motorsport"),
+                    ("grit_hennersdorf", "Grit Hennersdorf", "Hennersdorf Offroad"),
+                    ("werner_gurschler", "Werner Gurschler", "Gurschler Quattro"),
+                ],
+            ),
+            _ => (
+                "FIA SuperBuggy World Series (Tier 5)",
+                vec![
+                    "nova_paka_ax".to_string(),
+                    "st_georges_ax".to_string(),
+                    "matschenberg_ax".to_string(),
+                    "prerov_ax".to_string(),
+                    "maggiora_ax".to_string(),
+                ],
+                6,
+                &[
+                    ("player", "Player", "Apex SuperBuggy Racing"),
+                    ("bernd_stubbe", "Bernd Stubbe", "Stubbe SuperBuggy"),
+                    ("petr_nikodem", "Petr Nikodém", "Caravan Metropol"),
+                    ("vincent_mercier", "Vincent Mercier", "Mercier Competition"),
+                    ("mike_bartelen", "Mike Bartelen", "Bartelen Motorsport"),
+                    ("radek_jordak", "Radek Jordák", "Jordák Motorsport"),
+                    ("johnny_feuillade", "Johnny Feuillade", "Feuillade Racing"),
+                    ("terry_callaghan", "Terry Callaghan", "Fast & Speed Holland"),
+                ],
+            ),
+        };
+
+        let active_session = self.active_career_progress.active_championship.clone().filter(|s| {
+            !s.is_completed && s.tier == tier
+        });
+
+        let champ = if let Some(mut existing) = active_session {
+            if !self.active_career_progress.career_rivals.is_empty() {
+                existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+            }
+            existing
+        } else {
+            let mut c = ChampionshipSession::new(
+                cup_name,
+                PointSystem::FiaStandard { fastest_lap_bonus: true },
+                track_ids,
+                default_laps,
+                drivers,
+            );
+            if !self.active_career_progress.career_rivals.is_empty() {
+                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+            } else {
+                let rivals = c
+                    .standings
+                    .iter()
+                    .filter(|s| s.driver_id != "player")
+                    .map(|s| {
+                        let char_def = DriverCharacter::find_global(&s.driver_id);
+                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                        CareerRivalEntry {
+                            driver_id: s.driver_id.clone(),
+                            driver_name: s.driver_name.clone(),
+                            style,
+                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                        }
+                    })
+                    .collect();
+                self.active_career_progress.career_rivals = rivals;
+            }
+            c
+        };
+        let prev_selected = self.selected_car_model_id;
+        self.switch_to_autocross();
+        self.game_mode = GameMode::Career;
+
+        let selected_model = prev_selected
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "autocross" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("autocross", tier as u8)
+                    .into_iter()
+                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            })
+            .or_else(|| {
+                crate::catalog::get_models_for_module_and_tier("autocross", tier as u8)
+                    .into_iter()
+                    .next()
+            });
+
+        if let Some(model) = selected_model {
+            self.active_career_progress.ensure_car(model.id);
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
+            self.selected_car_model_id = Some(model.id);
+            self.car_choice = model.base_car_choice;
+            self.current_visual_type = model.visual_type;
+            self.free_car_selection = true;
+        } else {
+            self.car_choice = CarChoice::SandRail;
+        }
+        self.championship_session = Some(champ.with_tier(tier));
+        self.active_career_progress.active_championship = self.championship_session.clone();
+        if let Some(db) = &self.hof_db {
+            let _ = db.save_module_progress(&self.active_career_progress);
+        }
+        self.profile_module_progress.insert("autocross".to_string(), self.active_career_progress.clone());
 
         if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
             self.track_choice = self.track_manager.track_choice_for_slug(track_id);
@@ -9997,6 +10228,13 @@ impl RaceSession {
             return;
         }
 
+        // Quick Championship trigger for FIA Autocross (F key)
+        if self.active_module_id == "autocross" && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.start_autocross_career_tier(1);
+            return;
+        }
+
         // Open Track Manager (T key)
         if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -10185,6 +10423,10 @@ impl RaceSession {
                 }
                 "kart" => {
                     self.init_race();
+                    return;
+                }
+                "autocross" => {
+                    self.start_autocross_career_tier(1);
                     return;
                 }
                 _ => {}
@@ -12610,6 +12852,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "autocross" => ("FIA AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
                     "vault" => ("THE VAULT", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
@@ -12699,6 +12942,7 @@ impl RaceSession {
                         "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                         "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                        "autocross" => ("FIA AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
                         "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
                         _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                     },
@@ -13538,6 +13782,7 @@ impl RaceSession {
                         "rally" => self.start_rally_career_tier(card.tier),
                         "kart" => self.start_kart_career_tier(card.tier),
                         "extreme_offroad" => self.start_extreme_offroad_career_tier(card.tier),
+                        "autocross" => self.start_autocross_career_tier(card.tier),
                         _ => self.start_gt_career_tier_with_calendar(card.tier, Some(crate::ui::gt_default_calendar(card.tier))),
                     }
                 }

@@ -140,6 +140,12 @@ pub fn resolve_vehicle_lighting(
                 "rally" => return VehicleLightingConfig::rally(),
                 "extreme_offroad" => return VehicleLightingConfig::extreme_offroad(),
                 "gt" => return VehicleLightingConfig::gt_touring(),
+                "autocross" => {
+                    return match model.tier {
+                        4 => VehicleLightingConfig::rally(),
+                        _ => VehicleLightingConfig::extreme_offroad(),
+                    };
+                }
                 _ => {}
             }
         }
@@ -153,6 +159,12 @@ pub fn resolve_vehicle_lighting(
         }
         if m_id.starts_with("rally") || m_id.starts_with("classic_rally") {
             return VehicleLightingConfig::rally();
+        }
+        if m_id.starts_with("autocross") {
+            return match visual_type {
+                VehicleVisualType::RallyHatch { .. } => VehicleLightingConfig::rally(),
+                _ => VehicleLightingConfig::extreme_offroad(),
+            };
         }
         if m_id.starts_with("offroad")
             || m_id.starts_with("classic_offroad")

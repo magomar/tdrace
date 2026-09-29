@@ -2556,6 +2556,7 @@ fn render_inspector(
                 (CarCategory::Rally, "Rallycross"),
                 (CarCategory::Kart, "Kart"),
                 (CarCategory::OffRoad, "Off-Road"),
+                (CarCategory::Autocross, "Autocross"),
             ];
 
             for chunk in categories.chunks(2) {

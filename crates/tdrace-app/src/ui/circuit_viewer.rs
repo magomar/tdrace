@@ -264,6 +264,7 @@ fn render_viewer_hud(
         "rally" => "RALLYCROSS WORLD CUP",
         "kart" => "PRO KART SERIES",
         "extreme_offroad" => "EXTREME OFF-ROAD",
+        "autocross" => "FIA AUTOCROSS",
         _ => "MOTORSPORT CIRCUIT",
     };
     let len_km = state.track.total_length_m() / 1000.0;

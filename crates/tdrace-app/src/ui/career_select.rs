@@ -139,6 +139,7 @@ pub fn tier_name(tier: u32) -> String {
 pub fn module_badge_label(module_id: &str) -> String {
     match module_id {
         "extreme_offroad" | "offroad" => "OFF-ROAD".to_string(),
+        "autocross" => "AUTOCROSS".to_string(),
         other => other.to_uppercase(),
     }
 }
@@ -398,6 +399,13 @@ const MODALITY_CATALOG: &[ModalityMeta] = &[
         subtitle: "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
         accent: Color::new(1.0, 0.40, 0.05, 1.0),
         default_series_name: "Extreme Off-Road Cup 2026",
+    },
+    ModalityMeta {
+        id: "autocross",
+        title: "FIA AUTOCROSS",
+        subtitle: "Natural Unpaved Dirt & Buggy Racing",
+        accent: Color::new(1.0, 0.45, 0.05, 1.0),
+        default_series_name: "FIA Autocross World Series 2026",
     },
 ];
 

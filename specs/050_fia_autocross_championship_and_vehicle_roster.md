@@ -3,9 +3,11 @@ type: Feature Spec
 template: feature
 title: "FIA Autocross Championship and Vehicle Roster"
 description: "Dedicated FIA Autocross (AX) motorsport module featuring 5 career tiers, 15 authentic vehicles (3 per tier), 17 iconic European dirt circuits, unpaved surface dynamics, and pure sprint race format with no joker lap."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-050-receipt.md"
 created: 2026-09-28
 generated: { by: agent/antigravity, at: 2026-09-28T21:12:04Z }
+verified: { by: "human:mario", at: "2026-09-28T22:23:04Z" }
 ---
 
 # Feature Spec: FIA Autocross Championship and Vehicle Roster 🏁
@@ -346,42 +348,42 @@ flowchart LR
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Autocross module is distinct from Rallycross in Modality Select**
-  - [ ] **Given** the player is on the Modality Select hub screen
-  - [ ] **When** they inspect the available motorsport disciplines
-  - [ ] **Then** both `RALLYCROSS` and `AUTOCROSS` appear as distinct, selectable modules
-  - [ ] **And** Autocross features its dedicated icon, orange branding, and "Natural unpaved dirt & buggy racing" description
+  - [x] **Given** the player is on the Modality Select hub screen
+  - [x] **When** they inspect the available motorsport disciplines
+  - [x] **Then** both `RALLYCROSS` and `AUTOCROSS` appear as distinct, selectable modules
+  - [x] **And** Autocross features its dedicated icon, orange branding, and "Natural unpaved dirt & buggy racing" description
 
 - **Scenario: Autocross vehicles span 5 distinct tiers with 3 vehicles per tier**
-  - [ ] **Given** the player accesses the Garage filtered to the Autocross module
-  - [ ] **When** they cycle through tiers 1 through 5
-  - [ ] **Then** Tier 1 contains 3 Cross Car Junior buggies
-  - [ ] **And** Tier 2 contains 3 Cross Car Senior buggies
-  - [ ] **And** Tier 3 contains 3 Buggy1600 4WD machines
-  - [ ] **And** Tier 4 contains 3 TouringAutocross modified saloons
-  - [ ] **And** Tier 5 contains 3 SuperBuggy unlimited monsters
-  - [ ] **And** exactly 15 vehicles are registered under `autocross_*`
+  - [x] **Given** the player accesses the Garage filtered to the Autocross module
+  - [x] **When** they cycle through tiers 1 through 5
+  - [x] **Then** Tier 1 contains 3 Cross Car Junior buggies
+  - [x] **And** Tier 2 contains 3 Cross Car Senior buggies
+  - [x] **And** Tier 3 contains 3 Buggy1600 4WD machines
+  - [x] **And** Tier 4 contains 3 TouringAutocross modified saloons
+  - [x] **And** Tier 5 contains 3 SuperBuggy unlimited monsters
+  - [x] **And** exactly 15 vehicles are registered under `autocross_*`
 
 - **Scenario: Autocross circuits enforce 100% natural unpaved surface and NO Joker Lap**
-  - [ ] **Given** a race session launched on any of the 17 Autocross circuits (e.g. `nova_paka_ax`)
-  - [ ] **When** the race starts and vehicles navigate the circuit
-  - [ ] **Then** the dominant surface is Dirt, Clay, or Gravel
-  - [ ] **And** the HUD displays NO `JOKER: REQUIRED` indicator
-  - [ ] **And** no alternate joker lap branch route is required to complete the heat
+  - [x] **Given** a race session launched on any of the 17 Autocross circuits (e.g. `nova_paka_ax`)
+  - [x] **When** the race starts and vehicles navigate the circuit
+  - [x] **Then** the dominant surface is Dirt, Clay, or Gravel
+  - [x] **And** the HUD displays NO `JOKER: REQUIRED` indicator
+  - [x] **And** no alternate joker lap branch route is required to complete the heat
 
 - **Scenario: Authentic European calendar coverage**
-  - [ ] **Given** the Autocross circuit selector
-  - [ ] **When** listing all official Autocross tracks
-  - [ ] **Then** exactly 17 European circuits are available with authentic provenance (Czech Republic, Germany, France, Italy, Latvia, Lithuania, Spain, Portugal, Austria)
+  - [x] **Given** the Autocross circuit selector
+  - [x] **When** listing all official Autocross tracks
+  - [x] **Then** exactly 17 European circuits are available with authentic provenance (Czech Republic, Germany, France, Italy, Latvia, Lithuania, Spain, Portugal, Austria)
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Expected Implementation Scope
-- `[ ]` `crates/arcade-race-core/src/car_category.rs` -> Add `CarCategory::Autocross` (`"autocross"` / AX)
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Register 15 `RealCarModel` definitions (`autocross_*`) across Tiers 1–5
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Autocross career cup launcher and tier progression
-- `[ ]` `crates/tdrace-app/src/ui/` (`garage.rs`, `menu.rs`, `track_manager_ui.rs`, `profile_ui.rs`) -> Autocross visual theming and filters
-- `[ ]` `tracks/autocross/*.json` -> 17 official JSON circuit definitions
-- `[ ]` `series/autocross/*.toml` -> 5 championship series presets
-- `[ ]` `portals/shared/data/{circuits,vehicles}.json` -> Update web catalog and reference showroom
+- `[x]` `crates/arcade-race-core/src/car_category.rs` -> Add `CarCategory::Autocross` (`"autocross"` / AX)
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Register 15 `RealCarModel` definitions (`autocross_*`) across Tiers 1–5
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Autocross career cup launcher and tier progression
+- `[x]` `crates/tdrace-app/src/ui/` (`garage.rs`, `menu.rs`, `track_manager_ui.rs`, `profile_ui.rs`) -> Autocross visual theming and filters
+- `[x]` `tracks/autocross/*.json` -> 17 official JSON circuit definitions
+- `[x]` `series/autocross/*.toml` -> 5 championship series presets
+- `[x]` `portals/shared/data/{circuits,vehicles}.json` -> Update web catalog and reference showroom

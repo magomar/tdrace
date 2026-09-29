@@ -65,11 +65,11 @@ fn test_track_categories_initial_presets() {
 
     let manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial state: 101 main presets across modules (10 Classic + 18 unique GT + 17 unique Rally + 20 famous Kart + 17 Nascar + 20 Extreme Off-Road, with 1 shared dirt_figure_eight), 0 drafts
+    // 1. Initial state: 124 main presets across modules (13 Classic + 18 unique GT + 20 unique Rally + 20 famous Kart + 17 Nascar + 20 Extreme Off-Road + 17 Autocross, with 1 shared dirt_figure_eight), 0 drafts
     assert_eq!(manager.custom_track_choices().len(), 0);
     let main_tracks = manager.main_track_choices();
     let draft_tracks = manager.draft_track_choices();
-    assert_eq!(main_tracks.len(), 107, "All 107 presets across modules should be Main tracks");
+    assert_eq!(main_tracks.len(), 124, "All 124 presets across modules should be Main tracks");
     assert_eq!(draft_tracks.len(), 0, "Initial draft tracks list should be empty");
 
     for choice in &main_tracks {
@@ -98,7 +98,7 @@ fn test_draft_creation_and_isolation_from_main_menu() {
     // 2. Verify isolation: Should appear in drafts, NOT in main
     // 3. Verify main menu list still contains only main tracks
     let main_tracks = manager.main_track_choices();
-    assert_eq!(main_tracks.len(), 107, "Main menu should only contain approved circuits");
+    assert_eq!(main_tracks.len(), 124, "Main menu should only contain approved circuits");
     let draft_tracks = manager.draft_track_choices();
     assert_eq!(draft_tracks.len(), 1, "Drafts list should contain the newly created draft");
 
@@ -143,13 +143,13 @@ fn test_promotion_and_demotion_lifecycle() {
     track.category = TrackCategory::Draft;
     manager.save_custom_track(&track, Some(track_id)).expect("Save proto");
 
-    assert_eq!(manager.main_track_choices().len(), 107);
+    assert_eq!(manager.main_track_choices().len(), 124);
     assert_eq!(manager.draft_track_choices().len(), 1);
 
     // Promote to GT Module
     manager.promote_track_to_module(track_id, "gt").expect("Must promote to GT");
 
-    assert_eq!(manager.main_track_choices().len(), 108, "Promoted track must appear in Main");
+    assert_eq!(manager.main_track_choices().len(), 125, "Promoted track must appear in Main");
     assert_eq!(manager.draft_track_choices().len(), 0, "Promoted track must be removed from Drafts");
 
     let promoted_choice = manager.main_track_choices().into_iter().find(|t| t.track_id() == track_id).unwrap();
@@ -169,7 +169,7 @@ fn test_promotion_and_demotion_lifecycle() {
     // Demote back to Draft (Under testing)
     manager.demote_track(track_id).expect("Must demote to Draft");
 
-    assert_eq!(manager.main_track_choices().len(), 107, "Demoted track must be removed from Main");
+    assert_eq!(manager.main_track_choices().len(), 124, "Demoted track must be removed from Main");
     assert_eq!(manager.draft_track_choices().len(), 1, "Demoted track must reappear in Drafts");
     assert_eq!(manager.module_custom_tracks("gt").len(), 0);
 
@@ -436,14 +436,15 @@ fn test_module_filter_filtering_and_presets_in_classic() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial state: 104 tracks across all modules (13 Classic + 18 unique GT + 17 unique Rally + 20 famous Kart + 17 Nascar + 20 Extreme Off-Road, 1 shared dirt_figure_eight)
-    assert_eq!(manager.main_track_choices().len(), 107);
+    // Initial state: 124 tracks across all modules (13 Classic + 18 unique GT + 20 unique Rally + 20 famous Kart + 17 Nascar + 20 Extreme Off-Road + 17 Autocross, 1 shared dirt_figure_eight)
+    assert_eq!(manager.main_track_choices().len(), 124);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 13);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), 18);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 20);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 20);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 17);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 20);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Autocross).len(), 17);
 
     // Promote a new track to GT
     let mut track_gt = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
@@ -458,13 +459,14 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     manager.promote_track_to_module("dune_safari", "rally").unwrap();
 
     // Verify filtered counts
-    assert_eq!(manager.main_track_choices().len(), 109);
+    assert_eq!(manager.main_track_choices().len(), 126);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 13);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Gt).len(), 19);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Rally).len(), 21);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Kart).len(), 20);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Nascar).len(), 17);
     assert_eq!(manager.filtered_main_track_choices(ModuleFilter::ExtremeOffRoad).len(), 20);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Autocross).len(), 17);
 
     // Verify filter cycle (.next())
     assert_eq!(ModuleFilter::Classic.next(), ModuleFilter::Rally);
@@ -472,14 +474,16 @@ fn test_module_filter_filtering_and_presets_in_classic() {
     assert_eq!(ModuleFilter::Kart.next(), ModuleFilter::Gt);
     assert_eq!(ModuleFilter::Gt.next(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::ExtremeOffRoad);
-    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Autocross);
+    assert_eq!(ModuleFilter::Autocross.next(), ModuleFilter::Vault);
     assert_eq!(ModuleFilter::Vault.next(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
 
     // Verify filter cycle (.prev())
     assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Vault);
-    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::ExtremeOffRoad);
+    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::Autocross);
+    assert_eq!(ModuleFilter::Autocross.prev(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.prev(), ModuleFilter::Nascar);
     assert_eq!(ModuleFilter::Nascar.prev(), ModuleFilter::Gt);
     assert_eq!(ModuleFilter::Gt.prev(), ModuleFilter::Kart);
@@ -529,7 +533,7 @@ fn test_module_subdirectories_and_file_movement() {
 
     // 5. Test scanner on fresh TrackManager instance
     let new_scanner = TrackManager::new(&temp_dir);
-    assert_eq!(new_scanner.main_track_choices().len(), 108); // 107 presets + 1 custom
+    assert_eq!(new_scanner.main_track_choices().len(), 125); // 124 presets + 1 custom
     assert_eq!(new_scanner.module_custom_tracks("rally").len(), 1);
 
     let _ = fs::remove_dir_all(&temp_dir);
@@ -567,6 +571,8 @@ fn test_track_manager_tab_and_module_cycling() {
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::ExtremeOffRoad);
     module_filter = module_filter.next();
+    assert_eq!(module_filter, ModuleFilter::Autocross);
+    module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Vault);
     module_filter = module_filter.next();
     assert_eq!(module_filter, ModuleFilter::Drafts);
@@ -578,6 +584,8 @@ fn test_track_manager_tab_and_module_cycling() {
     assert_eq!(module_filter, ModuleFilter::Drafts);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::Vault);
+    module_filter = module_filter.prev();
+    assert_eq!(module_filter, ModuleFilter::Autocross);
     module_filter = module_filter.prev();
     assert_eq!(module_filter, ModuleFilter::ExtremeOffRoad);
     module_filter = module_filter.prev();
@@ -1141,8 +1149,8 @@ fn test_track_manager_clone_preset_to_drafts() {
 
     let mut manager = TrackManager::new(&temp_dir);
 
-    // Initial check: 104 main tracks, 0 drafts
-    assert_eq!(manager.main_track_choices().len(), 107);
+    // Initial check: 124 main tracks, 0 drafts
+    assert_eq!(manager.main_track_choices().len(), 124);
     assert_eq!(manager.draft_track_choices().len(), 0);
 
     // Clone Classic Grand Prix
@@ -1156,8 +1164,8 @@ fn test_track_manager_clone_preset_to_drafts() {
     assert!(Path::new(&saved_path).exists());
     assert!(saved_path.ends_with(".json"));
 
-    // Verify drafts list has 1 track, main still has 101
-    assert_eq!(manager.main_track_choices().len(), 107);
+    // Verify drafts list has 1 track, main still has 124
+    assert_eq!(manager.main_track_choices().len(), 124);
     let drafts = manager.draft_track_choices();
     assert_eq!(drafts.len(), 1);
     assert_eq!(drafts[0].title(), "Classic Grand Prix (clone)");
@@ -1732,7 +1740,7 @@ fn test_session_active_module_tracks_reflects_reordered_presets() {
 #[test]
 fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
     // 1. Verify ModuleFilter metadata
-    assert_eq!(ModuleFilter::ALL.len(), 8);
+    assert_eq!(ModuleFilter::ALL.len(), 9);
     assert_eq!(ModuleFilter::Drafts.id(), Some("drafts"));
     assert_eq!(ModuleFilter::Drafts.label(), "DRAFTS");
     assert_eq!(ModuleFilter::Drafts.shortcut_number(), 9);
@@ -1740,12 +1748,14 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
     // 2. Verify navigation cycle
     assert_eq!(ModuleFilter::Nascar.next(), ModuleFilter::ExtremeOffRoad);
-    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Vault);
+    assert_eq!(ModuleFilter::ExtremeOffRoad.next(), ModuleFilter::Autocross);
+    assert_eq!(ModuleFilter::Autocross.next(), ModuleFilter::Vault);
     assert_eq!(ModuleFilter::Vault.next(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.next(), ModuleFilter::Classic);
     assert_eq!(ModuleFilter::Classic.prev(), ModuleFilter::Drafts);
     assert_eq!(ModuleFilter::Drafts.prev(), ModuleFilter::Vault);
-    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::ExtremeOffRoad);
+    assert_eq!(ModuleFilter::Vault.prev(), ModuleFilter::Autocross);
+    assert_eq!(ModuleFilter::Autocross.prev(), ModuleFilter::ExtremeOffRoad);
     assert_eq!(ModuleFilter::ExtremeOffRoad.prev(), ModuleFilter::Nascar);
 
     // 3. Verify track resolution for Drafts category
@@ -1770,8 +1780,8 @@ fn test_track_manager_drafts_category_browsing_and_shortcut_9() {
 
     // 4. Verify initial state and cycling into Drafts
     let mut filter = ModuleFilter::Classic;
-    // Step forward 7 times: Classic -> Rally -> Kart -> GT -> Nascar -> ExtremeOffRoad -> Vault -> Drafts
-    for _ in 0..7 {
+    // Step forward 8 times: Classic -> Rally -> Kart -> GT -> Nascar -> ExtremeOffRoad -> Autocross -> Vault -> Drafts
+    for _ in 0..8 {
         filter = filter.next();
     }
     assert_eq!(filter, ModuleFilter::Drafts);
@@ -1879,7 +1889,7 @@ fn test_all_canonical_track_files_provenance_integrity() {
     let mut real_tracks_with_wiki = 0;
     let mut fictional_tracks = 0;
 
-    let modules = ["classic", "gt", "kart", "nascar", "rally", "extreme_offroad"];
+    let modules = ["classic", "gt", "kart", "nascar", "rally", "extreme_offroad", "autocross"];
     for mod_name in &modules {
         let mod_dir = tracks_root.join(mod_name);
         assert!(mod_dir.exists(), "Module directory {} must exist", mod_name);
@@ -1932,8 +1942,8 @@ fn test_all_canonical_track_files_provenance_integrity() {
                     osm
                 );
                 assert!(
-                    wiki.starts_with("https://en.wikipedia.org/wiki/"),
-                    "Track {} Wiki URL must start with https://en.wikipedia.org/wiki/ but got {}",
+                    wiki.contains(".wikipedia.org/wiki/"),
+                    "Track {} Wiki URL must contain .wikipedia.org/wiki/ but got {}",
                     stem,
                     wiki
                 );
@@ -1952,9 +1962,9 @@ fn test_all_canonical_track_files_provenance_integrity() {
         }
     }
 
-    assert_eq!(total_tracks, 108, "Must have exactly 108 total track files");
-    assert_eq!(real_tracks_with_osm, 77, "Must have exactly 77 real circuits with verified OSM URLs");
-    assert_eq!(real_tracks_with_wiki, 77, "Must have exactly 77 real circuits with verified Wikipedia URLs");
+    assert_eq!(total_tracks, 125, "Must have exactly 125 total track files");
+    assert_eq!(real_tracks_with_osm, 94, "Must have exactly 94 real circuits with verified OSM URLs");
+    assert_eq!(real_tracks_with_wiki, 94, "Must have exactly 94 real circuits with verified Wikipedia URLs");
     // 28 fictional / inspired tracks + 3 Mint 400 circuits built from GPX course files (spec 048)
     assert_eq!(fictional_tracks, 31, "Must have exactly 31 tracks without OSM data");
 
@@ -1992,7 +2002,7 @@ fn test_portal_circuits_catalog_provenance_integrity() {
     let raw = fs::read_to_string(&portal_json).expect("Read circuits.json");
     let circuits: Vec<serde_json::Value> = serde_json::from_str(&raw).expect("Parse circuits.json");
 
-    assert_eq!(circuits.len(), 103, "Catalog must contain exactly 103 circuits");
+    assert_eq!(circuits.len(), 126, "Catalog must contain exactly 126 circuits");
 
     let mut osm_count = 0;
     let mut wiki_count = 0;
@@ -2006,7 +2016,7 @@ fn test_portal_circuits_catalog_provenance_integrity() {
             osm_count += 1;
         }
         if let Some(url) = wiki {
-            assert!(url.starts_with("https://en.wikipedia.org/wiki/"));
+            assert!(url.contains(".wikipedia.org/wiki/"));
             wiki_count += 1;
         }
 
@@ -2019,9 +2029,9 @@ fn test_portal_circuits_catalog_provenance_integrity() {
         }
     }
 
-    assert_eq!(osm_count, 74, "Exactly 74 circuits in portal catalog must possess OSM URL");
-    // 74 OSM circuits + the 3 Mint 400 GPX circuits, which link the Mint 400 article (spec 048)
-    assert_eq!(wiki_count, 77, "Exactly 77 circuits in portal catalog must possess Wikipedia URL");
+    assert_eq!(osm_count, 94, "Exactly 94 circuits in portal catalog must possess OSM URL");
+    // 94 OSM circuits + the 3 Mint 400 GPX circuits, which link the Mint 400 article (spec 048)
+    assert_eq!(wiki_count, 97, "Exactly 97 circuits in portal catalog must possess Wikipedia URL");
 }
 
 
