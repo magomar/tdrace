@@ -8,9 +8,57 @@ pub use skidmarks::{SkidSegment, SkidmarkBuffer};
 
 use arcade_race_core::collision::car_collision::CarCarCollisionEvent;
 use arcade_race_core::collision::wall::WallCollisionEvent;
+use arcade_race_core::track::geometry::BarrierType;
+use arcade_race_core::Body2D;
+use glam::Vec2;
 use wheelbase::car::Car;
 use wheelbase::surface::SurfaceType;
-use arcade_race_core::track::geometry::BarrierType;
+use wheelbase::WheelTelemetry;
+
+/// What the effects need from a vehicle besides its [`Body2D`] state. Spec 065.
+pub trait FxVehicle: Body2D {
+    /// Four ground contact points: the wheels of a car; for a chariot, e.g. its two wheels and
+    /// two hoof groups.
+    fn contact_points(&self) -> [Vec2; 4];
+    /// Slip and skid data for each contact point, in the order of [`FxVehicle::contact_points`].
+    fn contact_telemetry(&self) -> &[WheelTelemetry; 4];
+    /// Unit vector to the vehicle's right.
+    fn right_vector(&self) -> Vec2;
+    fn is_airborne(&self) -> bool;
+    fn is_drifting(&self) -> bool {
+        false
+    }
+    fn drift_score(&self) -> f32 {
+        0.0
+    }
+}
+
+impl FxVehicle for Car {
+    #[inline]
+    fn contact_points(&self) -> [Vec2; 4] {
+        self.wheel_positions_world()
+    }
+    #[inline]
+    fn contact_telemetry(&self) -> &[WheelTelemetry; 4] {
+        &self.state.wheels
+    }
+    #[inline]
+    fn right_vector(&self) -> Vec2 {
+        Car::right_vector(self)
+    }
+    #[inline]
+    fn is_airborne(&self) -> bool {
+        self.state.is_airborne
+    }
+    #[inline]
+    fn is_drifting(&self) -> bool {
+        self.state.is_drifting
+    }
+    #[inline]
+    fn drift_score(&self) -> f32 {
+        self.state.drift_score
+    }
+}
 
 /// Unified visual effects coordinator managing skidmarks, smoke, dirt, collision sparks, and drift popups.
 #[derive(Debug, Clone)]
@@ -49,9 +97,9 @@ impl EffectsManager {
     }
 
     /// Updates all visual effects for the current physics simulation step.
-    pub fn update(
+    pub fn update<V: FxVehicle>(
         &mut self,
-        cars: &[Car],
+        cars: &[V],
         surfaces: &[[SurfaceType; 4]],
         wall_collisions: &[WallCollisionEvent],
         car_collisions: &[CarCarCollisionEvent],
@@ -67,52 +115,52 @@ impl EffectsManager {
 
         for (i, car) in cars.iter().enumerate() {
             // Suppress ground wheel particles while car is airborne / jumping
-            if !car.state.is_airborne && car.state.elevation <= 0.0 {
-                let wheel_pos = car.wheel_positions_world();
+            if !car.is_airborne() && car.jump_height() <= 0.0 {
+                let wheel_pos = car.contact_points();
                 let car_surfaces = surfaces.get(i).copied().unwrap_or([SurfaceType::Asphalt; 4]);
 
                 for w in 0..4 {
-                    let telemetry = &car.state.wheels[w];
+                    let telemetry = &car.contact_telemetry()[w];
                     let pos = wheel_pos[w];
                     let surf = car_surfaces[w];
 
                     // Tire smoke on asphalt/curb/concrete
                     if (surf == SurfaceType::Asphalt || surf == SurfaceType::Curb || surf == SurfaceType::Concrete)
                         && telemetry.skid_intensity > 0.25
-                        && car.state.speed > 3.0
+                        && car.speed() > 3.0
                     {
                         self.particles
-                            .emit_tire_smoke(pos, car.state.velocity, telemetry.skid_intensity);
+                            .emit_tire_smoke(pos, car.velocity(), telemetry.skid_intensity);
                     }
 
                     // Debris particle roost on loose / deformable terrain (Gravel, Mud, Snow, Dirt, Sand, Grass)
                     if surf.produces_debris_particles()
                         && (telemetry.skid_intensity > 0.08 || telemetry.slip_ratio.abs() > 0.12 || telemetry.slip_angle.abs() > 0.08)
-                        && car.state.speed > 1.5
+                        && car.speed() > 1.5
                     {
                         let roost_intensity = telemetry
                             .skid_intensity
                             .max(telemetry.slip_ratio.abs())
                             .max(telemetry.slip_angle.abs());
                         self.particles
-                            .emit_dirt_roost(pos, surf, car.state.velocity, roost_intensity);
+                            .emit_dirt_roost(pos, surf, car.velocity(), roost_intensity);
                     }
 
                     // Water splash on puddles / water hazard
-                    if surf == SurfaceType::Water && car.state.speed > 1.5 {
-                        self.particles.emit_water_splash(pos, car.state.velocity, car.state.speed);
+                    if surf == SurfaceType::Water && car.speed() > 1.5 {
+                        self.particles.emit_water_splash(pos, car.velocity(), car.speed());
                     }
                 }
             }
 
             // Drift score popups when ending a drift
             let was_drifting = self.prev_drifting[i];
-            let is_drifting = car.state.is_drifting;
-            if was_drifting && !is_drifting && car.state.drift_score > 50.0 {
+            let is_drifting = car.is_drifting();
+            if was_drifting && !is_drifting && car.drift_score() > 50.0 {
                 self.drift_popups.spawn_drift_score(
-                    car.state.position,
-                    car.state.drift_score,
-                    1.0 + (car.state.drift_score / 500.0).min(2.0),
+                    car.position(),
+                    car.drift_score(),
+                    1.0 + (car.drift_score() / 500.0).min(2.0),
                 );
             }
             self.prev_drifting[i] = is_drifting;

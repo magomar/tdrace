@@ -51,5 +51,5 @@ to start in follow mode, then `update(&vehicle, frame_dt)` each frame.
 Surface textures load from `assets/textures/surfaces/` near the working directory. Call
 `render::set_asset_root("path/to/assets")` to look in your game's folder first.
 
-`EffectsManager` and the skid marks still need a `wheelbase::Car`; vehicle sprites are not part of
-this crate yet.
+The effects work for any vehicle that implements `fx::FxVehicle` (four contact points and their
+slip data). Vehicle sprites are not part of this crate: each game draws its own.

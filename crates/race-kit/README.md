@@ -47,7 +47,8 @@ let results = world.results(&track);
   wall collisions, and lap tracking, always in this order.
 - Play sounds and effects from the returned `RaceEvent`s, in the order they come.
 - Any vehicle model can race: implement `race_kit::Vehicle` (and `arcade_race_core::Body2D`).
-  `on_impact` returning `Some` wrecks it.
+  `on_impact` returning `Some` wrecks it. Implement `race_kit::ai::BotVehicle` too, and the bot
+  driver can drive it.
 - `world.results(&track)` gives real times. A vehicle still racing gets a projected time, marked
   `projected`.
 

@@ -10,6 +10,25 @@ status: active
 The five shared crates share one version and one git tag, `platform-vX.Y.Z`. A game repo pins the
 tag for all of them. The plan is in [spec 049](../../specs/049_reusable_racing_platform_layers.md).
 
+## platform-v0.2.0 (2026-09-29)
+
+Any vehicle model can use the bot driver and the effects, so the chariot game can bring its own
+chariot physics. ([spec 065](../../specs/065_vehiclegeneric_bot_ai_and_effects.md))
+
+### race-kit
+- `ai::BotVehicle` (right vector, top speed, grip, and `planning_grip`, the grip the bot plans
+  corner speeds with; 0.78 by default, as before). `BotAiDriver::compute_controls` and the human
+  layer are generic over it. `wheelbase::Car` implements it; car bots drive exactly as before.
+
+### race-ui
+- Depends on `cabinet` without default features, so a game's web build does not pull `gilrs`
+  and `wasm-bindgen` (they broke macroquad's plain JS loader).
+- `fx::FxVehicle` (four contact points and their slip data, right vector, airborne, drift).
+  `EffectsManager::update` and the skid marks are generic over it. `wheelbase::Car` implements it.
+
+### cabinet
+- Builds without its `gamepad` feature (`GamepadManager::is_button_down` is behind it now).
+
 ## platform-v0.1.0 (2026-09-29)
 
 First tag a separate game repo can use.
@@ -43,4 +62,5 @@ First tag a separate game repo can use.
 
 ### Known limits
 - A git dependency on this repo also fetches the private `tdrace-tracks` submodule.
-- `EffectsManager`, skid marks and the bot AI are still typed to `wheelbase::Car`.
+- `EffectsManager`, skid marks and the bot AI are still typed to `wheelbase::Car` (fixed in
+  platform-v0.2.0).

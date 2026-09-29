@@ -894,13 +894,11 @@ impl GamepadManager {
     }
 
     /// Checks whether a Gilrs button is currently held down on the active gamepad.
+    #[cfg(feature = "gamepad")]
     pub fn is_button_down(&self, btn: Button) -> bool {
-        #[cfg(feature = "gamepad")]
-        {
-            if let (Some(ref gilrs), Some(id)) = (&self.gilrs, self.active_gamepad) {
-                if let Some(gp) = gilrs.connected_gamepad(id) {
-                    return gp.is_pressed(btn);
-                }
+        if let (Some(ref gilrs), Some(id)) = (&self.gilrs, self.active_gamepad) {
+            if let Some(gp) = gilrs.connected_gamepad(id) {
+                return gp.is_pressed(btn);
             }
         }
         false

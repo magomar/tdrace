@@ -1,7 +1,7 @@
 //! Bot driver AI: the line-following controller, driver tiers and styles, and the human layer.
 //!
 //! Moved from `tdrace-app/src/ai/` for spec 056 (`specs/056_racekit_headless_race_world.md`).
-//! It is still typed to `wheelbase::Car`; spec 049 Phase 5 makes it generic over the vehicle.
+//! It drives any vehicle that implements [`BotVehicle`] (spec 065), including `wheelbase::Car`.
 
 pub mod humanize;
 pub mod rng;
@@ -9,10 +9,41 @@ pub mod rng;
 pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
 pub use rng::LcgRng;
 
+use arcade_race_core::Body2D;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use arcade_race_core::track::Track;
 use wheelbase::{normalize_angle, Car, CarControls};
+
+/// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 065.
+pub trait BotVehicle: Body2D {
+    /// Unit vector to the vehicle's right.
+    fn right_vector(&self) -> Vec2;
+    /// Top speed on the flat, in m/s.
+    fn top_speed_mps(&self) -> f32;
+    /// Tyre (or hoof) grip coefficient used for braking and cornering limits.
+    fn grip(&self) -> f32;
+    /// Grip the controller plans its corner speeds with (in g). The default is the value tuned for
+    /// cars; a vehicle with much less grip returns its own, somewhat below [`BotVehicle::grip`].
+    fn planning_grip(&self) -> f32 {
+        0.78
+    }
+}
+
+impl BotVehicle for Car {
+    #[inline]
+    fn right_vector(&self) -> Vec2 {
+        Car::right_vector(self)
+    }
+    #[inline]
+    fn top_speed_mps(&self) -> f32 {
+        self.config.top_speed_mps
+    }
+    #[inline]
+    fn grip(&self) -> f32 {
+        self.config.tire.grip
+    }
+}
 
 /// Tactical philosophy and driving personality (6 styles).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -487,11 +518,11 @@ impl BotAiDriver {
 
     /// Computes deterministic driving controls (throttle, steer, brake, handbrake)
     /// for the given bot car navigating the track amidst other cars.
-    pub fn compute_controls(
+    pub fn compute_controls<V: BotVehicle>(
         &mut self,
-        car: &Car,
+        car: &V,
         track: &Track,
-        other_cars: &[&Car],
+        other_cars: &[&V],
         dt: f32,
     ) -> CarControls {
         let spline = &track.spline;
@@ -499,8 +530,8 @@ impl BotAiDriver {
             return CarControls::default();
         }
 
-        let car_pos = car.state.position;
-        let car_speed = car.state.speed;
+        let car_pos = car.position();
+        let car_speed = car.speed();
         let car_fwd = car.forward_vector();
         let car_right = car.right_vector();
 
@@ -542,7 +573,7 @@ impl BotAiDriver {
         // 3. Check heading error to target
         let to_target = target_point - car_pos;
         let desired_heading = to_target.y.atan2(to_target.x);
-        let heading_error = normalize_angle(desired_heading - car.state.angle);
+        let heading_error = normalize_angle(desired_heading - car.angle());
 
         // Stuck / Wall-pin detection & Reverse recovery state machine
         // A watchdog recovery reverses until the nose points near the target (after 0.5 s at least).
@@ -611,10 +642,10 @@ impl BotAiDriver {
         // 3. Physically Exact Autonomous Racing Braking Envelope: v_allowable = sqrt(v_apex^2 + 2*a_brake*d)
         let max_braking_lookahead = (lookahead_dist + (car_speed * car_speed) / 7.5).clamp(35.0, 220.0);
         let a_brake = 6.0 * self.profile.brake_margin; // safe braking deceleration m/s²
-        let mu = 0.78;
+        let mu = car.planning_grip();
         let g = 9.81;
 
-        let mut target_speed = car.config.top_speed_mps;
+        let mut target_speed = car.top_speed_mps();
         let num_scan_samples = 20;
 
         for s_idx in 1..=num_scan_samples {
@@ -641,11 +672,11 @@ impl BotAiDriver {
                 // Spec 046 mistakes are set against the car's real grip, not the controller's
                 // conservative `mu`.
                 if m.over_limit > 0.0 {
-                    let limit_grip = car.config.tire.grip + bank_rad.tan().clamp(0.0, 0.75);
+                    let limit_grip = car.grip() + bank_rad.tan().clamp(0.0, 0.75);
                     v_apex = v_apex.max((limit_grip * g * local_radius).sqrt() * m.over_limit);
                 }
                 if m.brake_decel_mult > 0.0 {
-                    a_scan = a_scan.max(car.config.tire.grip * g * m.brake_decel_mult);
+                    a_scan = a_scan.max(car.grip() * g * m.brake_decel_mult);
                 }
                 // Maximum entry speed from distance d: v = sqrt(v_apex^2 + 2 * a * d)
                 let v_allowable = (v_apex * v_apex + 2.0 * a_scan * HumanDriver::shifted_distance(dist_ahead, m.brake_shift_m)).sqrt();
@@ -655,7 +686,7 @@ impl BotAiDriver {
             }
         }
 
-        target_speed = target_speed.clamp(7.0, car.config.top_speed_mps);
+        target_speed = target_speed.clamp(7.0, car.top_speed_mps());
 
         // 4. Multi-car Collision Avoidance & Overtaking
         let mut throttle_limit = 1.0f32;
@@ -668,7 +699,7 @@ impl BotAiDriver {
 
         // 4b. Opponent cars avoidance
         for &opp in other_cars {
-            let to_opp = opp.state.position - car_pos;
+            let to_opp = opp.position() - car_pos;
             let dist = to_opp.length();
 
             if dist < self.profile.avoidance_distance && dist > 0.05 {
@@ -677,7 +708,7 @@ impl BotAiDriver {
 
                 // Opponent is in front of us
                 if opp_fwd_proj > 0.5 {
-                    let rel_speed = car_speed - opp.state.speed;
+                    let rel_speed = car_speed - opp.speed();
 
                     // Slipstream Drafting Behavior (Pack Racing):
                     // At high speeds, cars tucked in the slipstream cone follow the wake
@@ -731,7 +762,7 @@ impl BotAiDriver {
         // 5. Steering PID Controller with Error Derivative
         let to_target = target_point - car_pos;
         let desired_heading = to_target.y.atan2(to_target.x);
-        let heading_error = normalize_angle(desired_heading - car.state.angle);
+        let heading_error = normalize_angle(desired_heading - car.angle());
 
         let d_error = if self.has_prev_heading && dt > 1e-4 {
             normalize_angle(heading_error - self.prev_heading_error) / dt
