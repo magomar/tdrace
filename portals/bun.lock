@@ -17,8 +17,8 @@
         "zod": "^3.24.2",
       },
     },
-    "option-b-showroom": {
-      "name": "@tdrace/option-b-showroom",
+    "showroom": {
+      "name": "@tdrace/showroom",
       "version": "1.0.0",
       "dependencies": {
         "@astrojs/tailwind": "^5.1.5",
@@ -279,7 +279,7 @@
 
     "@tdrace/option-a-starlight": ["@tdrace/option-a-starlight@workspace:option-a-starlight"],
 
-    "@tdrace/option-b-showroom": ["@tdrace/option-b-showroom@workspace:option-b-showroom"],
+    "@tdrace/showroom": ["@tdrace/showroom@workspace:showroom"],
 
     "@types/debug": ["@types/debug@4.1.13", "", { "dependencies": { "@types/ms": "*" } }, "sha512-KSVgmQmzMwPlmtljOomayoR89W4FynCAi3E8PPs7vmDVPe84hT+vGPKkJfThkmXs0x0jAaa9U8uW8bbfyS2fWw=="],
 

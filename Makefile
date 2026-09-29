@@ -189,7 +189,7 @@ wiki: ## Launch Option A (Astro + Starlight Technical Reference Manual on port 4
 
 showroom: ## Launch Option B (Custom Motorsport Showroom & Physics Lab on port 4322)
 	@echo -e "$(CYAN)🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
-	@cd portals/option-b-showroom && bun run dev -- --host 0.0.0.0 --port 4322
+	@cd portals/showroom && bun run dev -- --host 0.0.0.0 --port 4322
 
 build-portals: ## Rebuild both static web portals (Wiki + Showroom) after re-ingesting assets
 	@echo -e "$(CYAN)🌐 Rebuilding static web portals (Wiki + Showroom)...$(RESET)"

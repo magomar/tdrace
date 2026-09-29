@@ -470,6 +470,12 @@ pub struct XpAwardReceipt {
     pub total_xp: u64,
     pub new_balance: u64,
     pub is_first_time: bool,
+    #[serde(default)]
+    pub credits_earned: u64,
+    #[serde(default)]
+    pub clean_bonus_credits: u64,
+    #[serde(default)]
+    pub new_credits_balance: u64,
 }
 
 
@@ -6454,6 +6460,7 @@ impl RaceSession {
             return;
         }
         let mut awarded_trophy: Option<ChampionshipAward> = None;
+        let mut podium_bonus_to_award: Option<u64> = None;
         if let Some(round_results) = self.pending_championship_results.take() {
             let car_model_id = self.selected_car_model_id
                 .map(|s| s.to_string())
@@ -6466,22 +6473,34 @@ impl RaceSession {
                 if champ.is_completed {
                     if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
                         let finish_pos = (pos + 1) as u32;
-                        match pos {
-                            0 => self.active_career_progress.trophies_gold += 1,
-                            1 => self.active_career_progress.trophies_silver += 1,
-                            2 => self.active_career_progress.trophies_bronze += 1,
-                            _ => {}
+                        let champ_id = champ.name.to_lowercase().replace(' ', "_");
+                        let now_str = chrono::Utc::now().to_rfc3339();
+                        let points = champ.standings[pos].points;
+
+                        self.active_career_progress.record_championship_finish(
+                            &champ_id,
+                            champ.tier,
+                            finish_pos,
+                            points,
+                            &now_str,
+                        );
+
+                        // Award championship overall podium bonus credits (Spec 053)
+                        let podium_bonus = ModuleCareerProgress::championship_podium_bonus(champ.tier, finish_pos as usize);
+                        if podium_bonus > 0 {
+                            podium_bonus_to_award = Some(podium_bonus);
                         }
+
                         if finish_pos <= 3 {
                             awarded_trophy = Some(ChampionshipAward {
                                 profile_id,
-                                championship_id: champ.name.to_lowercase().replace(' ', "_"),
+                                championship_id: champ_id,
                                 module_id,
                                 tier: champ.tier,
                                 position: finish_pos,
-                                points: champ.standings[pos].points,
+                                points,
                                 car_model_id,
-                                achieved_at: chrono::Utc::now().to_rfc3339(),
+                                achieved_at: now_str,
                             });
                         }
                     }
@@ -6494,6 +6513,19 @@ impl RaceSession {
                 }
                 self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
             }
+        }
+        if let Some(podium_bonus) = podium_bonus_to_award {
+            self.active_profile.add_credits(podium_bonus);
+            if let Some(db) = &self.hof_db {
+                let _ = db.update_profile(&self.active_profile);
+            }
+            self.spawn_hud_alert(
+                format!(
+                    "CHAMPIONSHIP PODIUM BONUS: +${} CREDITS! WALLET: ${} CR",
+                    podium_bonus, self.active_profile.credits
+                ),
+                Palette::NEON_GOLD,
+            );
         }
         if let Some(award) = awarded_trophy {
             if let Some(db) = &self.hof_db {
@@ -7503,6 +7535,8 @@ impl RaceSession {
                         is_active: p.is_active,
                         created_at: p.created_at.clone(),
                         last_mode: assist_mode,
+                        credits: p.credits,
+                        lifetime_credits: p.lifetime_credits,
                     })
                 });
 
@@ -9680,16 +9714,19 @@ impl RaceSession {
                             }
                         }
                     }
-                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier) {
-                    if let Ok(()) = self.active_career_progress.buy_car(active_car.id, active_car.tier) {
+                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier, self.active_profile.credits) {
+                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    if let Ok(()) = self.active_career_progress.buy_car(&mut self.active_profile, active_car.id, active_car.tier) {
                         if let Some(db) = &self.hof_db {
                             let _ = db.save_module_progress(&self.active_career_progress);
+                            let _ = db.update_profile(&self.active_profile);
                         }
                         self.spawn_hud_alert(
                             format!(
-                                "PURCHASED {} FOR {} XP! BALANCE: {} XP",
+                                "PURCHASED {} FOR ${} CREDITS! WALLET: ${} CR (XP UNCHANGED: {} XP)",
                                 active_car.name,
-                                ModuleCareerProgress::car_cost(active_car.tier),
+                                cost,
+                                self.active_profile.credits,
                                 self.active_career_progress.xp
                             ),
                             Palette::NEON_GOLD,
@@ -9697,7 +9734,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 } else {
-                    let cost = ModuleCareerProgress::car_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
                     if self.active_career_progress.level < active_car.tier as u32 {
                         self.spawn_hud_alert(
                             format!(
@@ -9709,8 +9746,8 @@ impl RaceSession {
                     } else {
                         self.spawn_hud_alert(
                             format!(
-                                "CANNOT AFFORD: REQUIRES {} XP (WALLET: {} XP)",
-                                cost, self.active_career_progress.xp
+                                "CANNOT AFFORD: REQUIRES ${} CREDITS (WALLET: ${} CR)",
+                                cost, self.active_profile.credits
                             ),
                             Palette::RED,
                         );
@@ -12155,15 +12192,26 @@ impl RaceSession {
                 None
             };
 
-            // 7. Career XP Award (GT World Challenge / Career mode)
+            // 7. Career XP & Prize Purse Award (GT World Challenge / Career mode)
             if self.active_module_id == "gt" || self.game_mode == GameMode::Career {
                 // Metric distance-based XP: track length / 10, rounded to 10
                 let track_len_m = self.track.spline.total_length().max(100.0);
                 let per_lap_xp = ModuleCareerProgress::round_to_10((track_len_m / 10.0) as u64);
                 let completed_laps = self.total_laps;
-                let lap_xp = per_lap_xp * (completed_laps as u64);
-                // Completing a race gives an extra bonus duplicating lap points
-                let completion_bonus = lap_xp;
+                let base_lap_xp = per_lap_xp * (completed_laps as u64);
+
+                // Position multiplier for XP (Spec 053)
+                let mult_xp = ModuleCareerProgress::xp_position_multiplier(player_pos);
+                let lap_xp = ((base_lap_xp as f64) * mult_xp).round() as u64;
+
+                // Clean race bonus XP: +25% of base lap XP (Spec 053)
+                let is_clean = self.player_race_stats.collision_count == 0;
+                let clean_xp_bonus = if is_clean {
+                    ((base_lap_xp as f64) * 0.25).round() as u64
+                } else {
+                    0
+                };
+                let completion_bonus = clean_xp_bonus;
 
                 // First-time circuit bonus: 250 XP x tier (Tier 1: 250, Tier 2: 500, Tier 3: 750, etc.)
                 let is_first_time = !self.active_career_progress.visited_tracks.iter().any(|t| t == &track_id);
@@ -12174,8 +12222,17 @@ impl RaceSession {
                     0
                 };
 
-                let total_xp = lap_xp + completion_bonus + first_time_bonus;
+                let total_xp = lap_xp + clean_xp_bonus + first_time_bonus;
                 self.active_career_progress.add_xp(total_xp);
+
+                // Prize purse calculation (Credits) (Spec 053)
+                let (finish_prize, clean_credit_bonus) = ModuleCareerProgress::calculate_round_purse(
+                    self.active_career_progress.level,
+                    player_pos,
+                    is_clean,
+                );
+                let total_credits = finish_prize + clean_credit_bonus;
+                self.active_profile.add_credits(total_credits);
 
                 let receipt = XpAwardReceipt {
                     per_lap_xp,
@@ -12186,26 +12243,36 @@ impl RaceSession {
                     total_xp,
                     new_balance: self.active_career_progress.xp,
                     is_first_time,
+                    credits_earned: finish_prize,
+                    clean_bonus_credits: clean_credit_bonus,
+                    new_credits_balance: self.active_profile.credits,
                 };
                 self.last_xp_receipt = Some(receipt);
 
                 if let Some(db) = &self.hof_db {
                     let _ = db.save_module_progress(&self.active_career_progress);
+                    let _ = db.update_profile(&self.active_profile);
                 }
+
+                let clean_msg = if clean_credit_bonus > 0 {
+                    format!(" (CLEAN BONUS: +${} Cr)", clean_credit_bonus)
+                } else {
+                    "".to_string()
+                };
 
                 if first_time_bonus > 0 {
                     self.spawn_hud_alert(
                         format!(
-                            "+{} XP (LAPS: {}, FINISH: {}, 1ST VISIT: +{}) | WALLET: {} XP",
-                            total_xp, lap_xp, completion_bonus, first_time_bonus, self.active_career_progress.xp
+                            "+{} XP (1ST VISIT: +{}) | +${} CR{} | WALLET: ${} CR",
+                            total_xp, first_time_bonus, total_credits, clean_msg, self.active_profile.credits
                         ),
                         Palette::NEON_GOLD,
                     );
                 } else {
                     self.spawn_hud_alert(
                         format!(
-                            "+{} XP (LAPS: {}, FINISH: {}) | WALLET: {} XP",
-                            total_xp, lap_xp, completion_bonus, self.active_career_progress.xp
+                            "+{} XP | +${} CR{} | WALLET: ${} CR",
+                            total_xp, total_credits, clean_msg, self.active_profile.credits
                         ),
                         Palette::NEON_CYAN,
                     );
@@ -12503,6 +12570,7 @@ impl RaceSession {
                     self.is_dev_mode(),
                     unlocked_tier as u32,
                     Some(&self.active_career_progress),
+                    self.active_profile.credits,
                     self.state == GameState::Garage(GarageOrigin::LanLobby),
                 );
             }

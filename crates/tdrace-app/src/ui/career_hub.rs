@@ -403,12 +403,12 @@ pub fn render_career_hub_screen(
             ly += scaler.s(24.0);
         } else {
             let next_tier = career.level + 1;
-            let next_cost = ModuleCareerProgress::car_cost(next_tier as u8);
-            let has_podium = (career.trophies_gold + career.trophies_silver + career.trophies_bronze) > 0;
-            let has_xp = career.xp >= next_cost;
+            let req_xp = ModuleCareerProgress::tier_license_xp(next_tier);
+            let has_podium = career.has_podium_in_tier(career.level);
+            let has_xp = career.xp >= req_xp;
 
-            let podium_check = if has_podium { "✓ Podium Finish Earned" } else { "✗ Requires 1+ Championship Podium" };
-            let xp_check = format!("{}/{} XP (Target: {} XP)", format_number(career.xp), format_number(next_cost), format_number(next_cost));
+            let podium_check = if has_podium { "✓ Tier Podium Earned" } else { "✗ Requires 1+ Tier Championship Podium" };
+            let xp_check = format!("{}/{} XP (License Threshold: {} XP)", format_number(career.xp), format_number(req_xp), format_number(req_xp));
 
             let pod_col = if has_podium { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED };
             let xp_col = if has_xp { Palette::NEON_GREEN } else { Palette::NEON_GOLD };
@@ -418,7 +418,7 @@ pub fn render_career_hub_screen(
             ly += scaler.s(42.0);
 
             // Progress Bar towards tier promotion
-            let progress_ratio = (career.xp as f32 / next_cost as f32).clamp(0.0, 1.0);
+            let progress_ratio = (career.xp as f32 / req_xp as f32).clamp(0.0, 1.0);
             draw_rectangle(left_inner_x, ly, left_inner_w, scaler.s(6.0), Color::new(0.12, 0.15, 0.20, 0.90));
             draw_rectangle(left_inner_x, ly, left_inner_w * progress_ratio, scaler.s(6.0), Palette::NEON_CYAN);
             ly += scaler.s(14.0);
@@ -471,7 +471,7 @@ pub fn render_career_hub_screen(
         if is_unlocked {
             fonts.draw_ui_bold("[ACTIVE CAR]", left_inner_x + scaler.s(10.0), ly + scaler.s(56.0), scaler.font_s(10.0), Palette::NEON_GREEN);
         } else {
-            let cost_str = format!("Available to buy: {} XP", format_number(ModuleCareerProgress::car_cost(selected_tier as u8)));
+            let cost_str = format!("Available to buy: ${} Credits", format_number(ModuleCareerProgress::car_credit_cost(selected_tier as u8)));
             fonts.draw_ui_bold(&cost_str, left_inner_x + scaler.s(10.0), ly + scaler.s(56.0), scaler.font_s(10.0), Palette::NEON_GOLD);
         }
         ly += car_card_h + scaler.s(10.0);

@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Dual-Currency Economy and Branching Career Progression Architecture"
 description: "Architectural blueprint establishing a decoupled dual-currency economy (XP + Credits), multi-championship branching paths per tier, and non-linear career progression."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-053-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T00:48:36Z }
 verified: { by: human:mario, at: 2026-09-29T00:56:13Z }
@@ -330,32 +331,32 @@ If the filesystem `series/` folder is inaccessible (e.g. running in a restricted
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Dual currency wallet separation**
-  - [ ] **Given** a driver profile with $50,000 Credits and 4,000 GT Discipline XP
-  - [ ] **When** the driver purchases a Tier 2 car costing $60,000 Credits
-  - [ ] **Then** the transaction is rejected for insufficient Credits
-  - [ ] **When** the driver has $60,000 Credits and executes the purchase
-  - [ ] **Then** the car is unlocked and Credits are reduced to 0
-  - [ ] **And** the GT Discipline XP remains strictly unchanged at 4,000 XP
+  - [x] **Given** a driver profile with $50,000 Credits and 4,000 GT Discipline XP
+  - [x] **When** the driver purchases a Tier 2 car costing $60,000 Credits
+  - [x] **Then** the transaction is rejected for insufficient Credits
+  - [x] **When** the driver has $60,000 Credits and executes the purchase
+  - [x] **Then** the car is unlocked and Credits are reduced to 0
+  - [x] **And** the GT Discipline XP remains strictly unchanged at 4,000 XP
 
 - **Scenario: Multi-championship discovery per tier**
-  - [ ] **Given** a motorsport module with multiple championship definitions in Tier 1
-  - [ ] **When** `SeriesManager::get_all_by_module_and_tier("rally", 1)` is called
-  - [ ] **Then** all championships for that module and tier are returned
-  - [ ] **And** each championship contains a distinct calendar of circuits and regulations
+  - [x] **Given** a motorsport module with multiple championship definitions in Tier 1
+  - [x] **When** `SeriesManager::get_all_by_module_and_tier("rally", 1)` is called
+  - [x] **Then** all championships for that module and tier are returned
+  - [x] **And** each championship contains a distinct calendar of circuits and regulations
 
 - **Scenario: Non-linear tier advancement across branching championships**
-  - [ ] **Given** a driver in Tier 1 with 3,500 Discipline XP
-  - [ ] **When** the driver completes any one of the Tier 1 championships on the podium (P1, P2, or P3)
-  - [ ] **Then** `can_advance_tier` evaluates to true
-  - [ ] **And** the driver can promote to Tier 2 without completing the other Tier 1 championships
-  - [ ] **And** the uncompleted Tier 1 championships remain open and playable
+  - [x] **Given** a driver in Tier 1 with 3,500 Discipline XP
+  - [x] **When** the driver completes any one of the Tier 1 championships on the podium (P1, P2, or P3)
+  - [x] **Then** `can_advance_tier` evaluates to true
+  - [x] **And** the driver can promote to Tier 2 without completing the other Tier 1 championships
+  - [x] **And** the uncompleted Tier 1 championships remain open and playable
 
 - **Scenario: Prize purse calculation scales by finishing position and clean driving**
-  - [ ] **Given** a Tier 1 round with a base purse of $5,000 Credits
-  - [ ] **When** a driver finishes 1st with zero wall or vehicle collisions
-  - [ ] **Then** the driver receives $5,000 base purse plus $1,000 Clean Race bonus ($6,000 total)
-  - [ ] **When** a driver finishes 3rd with collisions
-  - [ ] **Then** the driver receives exactly $2,500 Credits with zero clean bonus
+  - [x] **Given** a Tier 1 round with a base purse of $5,000 Credits
+  - [x] **When** a driver finishes 1st with zero wall or vehicle collisions
+  - [x] **Then** the driver receives $5,000 base purse plus $1,000 Clean Race bonus ($6,000 total)
+  - [x] **When** a driver finishes 3rd with collisions
+  - [x] **Then** the driver receives exactly $2,500 Credits with zero clean bonus
 
 ---
 
