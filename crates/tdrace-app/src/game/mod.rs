@@ -189,7 +189,7 @@ use crate::input::{DigitalInputConfig, DigitalInputFilter, InputController, NavG
 pub use crate::module::VehicleVisualType;
 use crate::module::{
     ClassicGameModule, ExtremeOffRoadModule, GameModule, GtWorldChallengeModule, KartGameModule,
-    NascarGameModule, RallyGameModule,
+    NascarGameModule, RallyGameModule, VaultGameModule,
 };
 use crate::profile::{
     ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
@@ -1684,14 +1684,21 @@ impl RaceSession {
         false
     }
 
-    /// Returns the required motorsport category tier (1..=5) for the current race.
+    /// Returns the required motorsport category tier for the current race.
     pub fn current_race_required_tier(&self) -> u8 {
+        let max_tier = if self.active_module_id == "extreme_offroad" {
+            7
+        } else if self.active_module_id == "rally" || self.active_module_id == "kart" {
+            6
+        } else {
+            5
+        };
         if self.active_module_id == "classic" {
             5
         } else if let Some(champ) = &self.championship_session {
-            (champ.tier as u8).clamp(1, 5)
+            (champ.tier as u8).clamp(1, max_tier)
         } else if self.game_mode == GameMode::Career {
-            (self.active_career_progress.level as u8).clamp(1, 5)
+            (self.active_career_progress.level as u8).clamp(1, max_tier)
         } else if self.free_car_selection {
             self.active_player_car_tier()
         } else {
@@ -2055,9 +2062,35 @@ impl RaceSession {
             "rally" => self.switch_to_rally(),
             "kart" => self.switch_to_kart(),
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
+            "vault" => self.switch_to_vault(),
             _ => self.switch_to_classic(),
         }
         self.sync_career_progress_for_active_module();
+    }
+
+    /// Activates The Vault (Archived Content & Decommissioned Asset Depot).
+    pub fn switch_to_vault(&mut self) {
+        self.apply_module_config("vault");
+        self.active_module_id = "vault";
+        self.sync_career_progress_for_active_module();
+        self.menu_track_idx = 0;
+        self.menu_car_idx = 0;
+        self.current_visual_type = VehicleVisualType::TouringGT {
+            widebody: false,
+            gt_wing: true,
+            diffuser: true,
+        };
+        self.selected_car_model_id = Some("vault_test_mule");
+        let tracks = self.active_module_tracks();
+        self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::ClassicGrandPrix);
+        self.track = self.load_track_for_session(&self.track_choice);
+        self.track.module_id = Some("vault".to_string());
+        self.car_choice = CarChoice::SportsCar;
+        self.total_laps = 3;
+        self.camera.setup_for_track(&self.track);
+        self.camera_p2.setup_for_track(&self.track);
+        self.rebuild_roster_participants();
+        self.state = GameState::Menu;
     }
 
     /// Activates the NASCAR Cup Series & Trans-Am TA1 module.
@@ -2974,7 +3007,7 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Launches a Karting Career Championship Cup for the given tier (1..=5).
+    /// Launches a Karting Career Championship Cup for the given tier (1..=6).
     pub fn start_kart_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
@@ -2988,60 +3021,67 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "National Kart Championship (Tier 2)",
+                "FIA Karting Academy Trophy (Tier 2)",
                 vec![
+                    "whilton_mill".to_string(),
+                    "laval_kart".to_string(),
+                    "genk".to_string(),
                     "sarno".to_string(),
                     "kristianstad".to_string(),
                     "seven_laghi".to_string(),
-                    "lonato".to_string(),
-                    "genk".to_string(),
-                    "wackersdorf".to_string(),
-                    "whilton_mill".to_string(),
                 ],
             ),
             3 => (
-                "Continental Rotax Trophy (Tier 3)",
+                "National Kart Championship (Tier 3)",
                 vec![
-                    "pfi".to_string(),
-                    "franciacorta".to_string(),
-                    "ampfing".to_string(),
                     "sarno".to_string(),
                     "kristianstad".to_string(),
                     "seven_laghi".to_string(),
                     "lonato".to_string(),
-                    "genk".to_string(),
-                    "wackersdorf".to_string(),
+                    "franciacorta".to_string(),
+                    "ampfing".to_string(),
+                    "pfi".to_string(),
                 ],
             ),
             4 => (
-                "FIA Karting European Championship (Tier 4)",
+                "Continental Shifter Cup (Tier 4)",
                 vec![
-                    "zuera".to_string(),
-                    "silverstone_national_kart".to_string(),
-                    "le_mans_kart".to_string(),
                     "pfi".to_string(),
                     "franciacorta".to_string(),
                     "ampfing".to_string(),
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "aunay_kart".to_string(),
                     "sarno".to_string(),
-                    "kristianstad".to_string(),
-                    "seven_laghi".to_string(),
+                    "lonato".to_string(),
+                ],
+            ),
+            5 => (
+                "Superkart Division 2 Challenge (Tier 5)",
+                vec![
+                    "zuera".to_string(),
+                    "silverstone_national_kart".to_string(),
+                    "aunay_kart".to_string(),
+                    "le_mans_kart".to_string(),
+                    "campillos".to_string(),
+                    "muelsen_kart".to_string(),
+                    "pfi".to_string(),
+                    "sarno".to_string(),
                     "lonato".to_string(),
                 ],
             ),
             _ => (
-                "FIA Karting World Championship (Tier 5)",
+                "Superkart Division 1 World Series (Tier 6)",
                 vec![
                     "portimao_kart".to_string(),
                     "valencia_kart".to_string(),
+                    "adria_kart".to_string(),
                     "campillos".to_string(),
+                    "le_mans_kart".to_string(),
+                    "muelsen_kart".to_string(),
                     "zuera".to_string(),
                     "silverstone_national_kart".to_string(),
-                    "le_mans_kart".to_string(),
                     "pfi".to_string(),
-                    "franciacorta".to_string(),
-                    "ampfing".to_string(),
-                    "sarno".to_string(),
-                    "kristianstad".to_string(),
                     "lonato".to_string(),
                 ],
             ),
@@ -3634,6 +3674,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
 
@@ -3860,16 +3901,23 @@ impl RaceSession {
         };
         base_config.assists = self.assist_profile.to_config();
 
+        let max_tier = if effective_module == "extreme_offroad" {
+            7
+        } else if effective_module == "rally" || effective_module == "kart" {
+            6
+        } else {
+            5
+        };
         let current_tier: u8 = if effective_module == "classic" {
             1
         } else if let Some(champ) = &self.championship_session {
-            (champ.tier as u8).clamp(1, 5)
+            (champ.tier as u8).clamp(1, max_tier)
         } else if let Some(pm) = player_model {
-            pm.tier.clamp(1, 5)
+            pm.tier.clamp(1, max_tier)
         } else if self.game_mode == GameMode::Career {
-            (self.active_career_progress.level as u8).clamp(1, 5)
+            (self.active_career_progress.level as u8).clamp(1, max_tier)
         } else {
-            self.active_player_car_tier().clamp(1, 5)
+            self.active_player_car_tier().clamp(1, max_tier)
         };
 
         if self.championship_session.is_some() {
@@ -4323,6 +4371,7 @@ impl RaceSession {
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
+                "vault" => VaultGameModule::new().drivers(),
                 _ => Vec::new(),
             };
             let global_all = DriverCharacter::all_across_modules();
@@ -4593,6 +4642,7 @@ impl RaceSession {
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
                         6 => self.switch_to_extreme_offroad(),
+                        7 if self.is_dev_mode() => self.switch_to_vault(),
                         _ => self.switch_to_classic(),
                     }
                 }
@@ -4607,6 +4657,7 @@ impl RaceSession {
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
                         6 => self.switch_to_extreme_offroad(),
+                        7 if self.is_dev_mode() => self.switch_to_vault(),
                         _ => self.switch_to_classic(),
                     }
                 }
@@ -7773,7 +7824,8 @@ impl RaceSession {
             return;
         }
 
-        let num_items = 7; // 0: Player Profile, 1..=6: Motorsport Modules
+        let num_modules = if self.is_dev_mode() { 7 } else { 6 };
+        let num_items = num_modules + 1; // 0: Player Profile, 1..=num_modules: Motorsport Modules
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.nav_up
@@ -7806,7 +7858,6 @@ impl RaceSession {
                 selected_idx = 0;
                 mouse_selected_item = Some(0);
             } else {
-                let num_modules = 6;
                 for i in 0..num_modules {
                     let (cx, cy, cw, ch) = crate::ui::menu::module_select_card_rect(sw, sh, i, num_modules);
                     if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
@@ -8230,6 +8281,7 @@ impl RaceSession {
                 "gt" | "gt_challenge" => 4,
                 "nascar" => 5,
                 "extreme_offroad" => 6,
+                "vault" => 7,
                 _ => 1,
             };
             self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
@@ -12418,6 +12470,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "vault" => ("THE VAULT", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
                 let active_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
@@ -12490,6 +12543,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                 };
                 let cp_ref = if self.has_track_career_locks() {
@@ -12540,7 +12594,7 @@ impl RaceSession {
                 }
             }
             GameState::ModuleSelect { selected_idx } => {
-                let modules_data = [
+                let mut modules_data = vec![
                     ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
                     ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
@@ -12548,6 +12602,9 @@ impl RaceSession {
                     ("nascar", "NASCAR Cup Series & Trans-Am TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
                     ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "Desert dunes, ice lakes, massive stadium jumps & stunt arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
+                if self.is_dev_mode() {
+                    modules_data.push(("vault", "The Vault (Archive Depot)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)));
+                }
                 render_module_select_menu(
                     &self.fonts,
                     selected_idx,

@@ -425,10 +425,11 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             "kart",
             vec![
                 (1, "kart_world_cup", 5, "kart_crg_hero_60"),
-                (2, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
-                (3, "kart_continental_trophy", 9, "kart_birel_art_kz2"),
-                (4, "kart_european_championship", 10, "kart_honda_mean_mower"),
-                (5, "kart_superkart_world_series", 12, "kart_anderson_cs250"),
+                (2, "kart_junior_trophy", 6, "kart_tony_kart_rookie_okj"),
+                (3, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
+                (4, "kart_continental_trophy", 8, "kart_birel_art_kz2"),
+                (5, "kart_superkart_div2_challenge", 9, "kart_anderson_maverick_mono"),
+                (6, "kart_superkart_world_series", 10, "kart_anderson_cs250"),
             ],
         ),
         (
@@ -450,11 +451,13 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             .filter(|c| c.series.module_id == module_id)
             .collect();
 
+        let expected_count = expected_tiers.len();
         assert_eq!(
             module_champs.len(),
-            5,
-            "Module '{}' must have exactly 5 tier championships registered",
-            module_id
+            expected_count,
+            "Module '{}' must have exactly {} tier championships registered",
+            module_id,
+            expected_count
         );
 
         for (tier, id, rounds_len, expected_car) in expected_tiers {
@@ -950,14 +953,14 @@ fn test_nascar_career_tiers_1_to_5_launch_eligibility() {
 }
 
 #[test]
-fn test_kart_career_tiers_1_to_5_launch_eligibility() {
+fn test_kart_career_tiers_1_to_6_launch_eligibility() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
     session.hof_db = Some(mem_db);
     session.refresh_profiles_and_stats();
 
-    for tier in 1..=5 {
+    for tier in 1..=6 {
         session.start_kart_career_tier(tier);
         assert_eq!(session.state, GameState::StartingGrid);
         let req_tier = session.current_race_required_tier();
@@ -980,7 +983,7 @@ fn test_kart_career_tiers_1_to_5_launch_eligibility() {
 }
 
 #[test]
-fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
+fn test_all_26_preset_championships_launch_with_eligible_and_unlocked_cars() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
@@ -989,7 +992,7 @@ fn test_all_25_preset_championships_launch_with_eligible_and_unlocked_cars() {
 
     let mgr = ChampionshipManager::new();
     let presets = mgr.all_sorted();
-    assert_eq!(presets.len(), 25, "There should be 25 presets (5 modules x 5 tiers)");
+    assert_eq!(presets.len(), 26, "There should be 26 presets (4 modules x 5 tiers + 1 karting x 6 tiers)");
 
     for def in &presets {
         session.launch_or_resume_championship(def);
@@ -1189,15 +1192,16 @@ fn test_championship_lap_calibration_across_all_modules() {
     }
 
     // 2. Karting Championships: 5 laps uniformly
-    for tier in 1..=5 {
+    for tier in 1..=6 {
         session.start_kart_career_tier(tier);
         assert_eq!(session.total_laps, 5, "Karting Tier {} must run 5 laps", tier);
     }
     for slug in &[
         "kart_world_cup",
+        "kart_junior_trophy",
         "kart_national_championship",
         "kart_continental_trophy",
-        "kart_european_championship",
+        "kart_superkart_div2_challenge",
         "kart_superkart_world_series",
     ] {
         let def = mgr.get(slug).expect("Karting preset must exist");

@@ -62,7 +62,8 @@ fn main() {
         let entries = fs::read_dir(&module_dir).unwrap_or_else(|e| fail(format!("{}: {}", module_dir.display(), e)));
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().is_some_and(|e| e == "json") {
+            let file_name = path.file_name().unwrap().to_string_lossy();
+            if path.extension().is_some_and(|e| e == "json") && !file_name.eq_ignore_ascii_case("manifest.json") {
                 on_disk.insert(path.file_stem().unwrap().to_string_lossy().into_owned());
             }
         }

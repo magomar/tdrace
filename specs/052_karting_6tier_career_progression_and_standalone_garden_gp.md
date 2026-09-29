@@ -1,26 +1,32 @@
 ---
 type: Feature Spec
 template: feature
-title: "Karting 6-Tier Career Progression and Standalone Garden GP"
-description: "Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), relocates novelty racing lawnmowers to a dedicated standalone Garden GP Invitational Cup, and eliminates performance gaps across 18 authentic karts."
-status: draft
+title: "Karting 6-Tier Career Progression and Expanded 20-Circuit Roster"
+description: "Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault module (Spec 057), and expands the circuit roster from 17 to 20 tracks (5 starter + 3 unlocked per tier) using verified OpenStreetMap data."
+status: implemented
+receipt: "docs/receipts/spec-052-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T00:53:00Z }
+verified: { by: "human:mario", at: "2026-09-29T11:40:20Z" }
 ---
 
-# Feature Spec 052: Karting 6-Tier Career Progression and Standalone Garden GP 🏎️🏆
+# Feature Spec 052: Karting 6-Tier Career Progression and Expanded 20-Circuit Roster 🏎️🏆
 
-This specification re-architects the **Karting World Cup Career Mode** into a comprehensive, authentic **6-Tier modern progression ladder**, relocates novelty racing lawnmowers to a dedicated unranked **Garden GP Invitational Cup**, and bridges the historic performance gaps that previously disrupted player skill development.
+This specification re-architects the **Karting World Cup Career Mode** into a comprehensive, authentic **6-Tier modern progression ladder**, decommissions novelty racing lawnmowers from the Karting module by transferring them to **The Vault** ([Spec 057](057_vault_module_for_archived_and_deprecated_content.md)), and expands the official circuit roster from 17 to **20 European circuits** using surveyed OpenStreetMap (OSM) data. This guarantees that **Tier 1 provides 5 starter circuits, and every subsequent tier unlocks exactly 3 new circuits** ($5 + 3 \times 5 = 20$).
 
 ---
 
 ## 🎯 Objectives & Design Philosophy
 
-1. **Eliminate Career Tonal & Physical Whiplash**: Previously, novelty high-CG racing lawnmowers occupied Tier 4—placed directly between violent $155\,\text{km/h}$ 6-speed KZ2 shifter karts pulling $3.5\,\text{G}$ and ballistic $245\,\text{km/h}$ aerodynamic twin Superkarts. Moving lawnmowers to a dedicated standalone event restores CIK-FIA motorsport integrity to the career ladder while keeping lawnmowers 100% playable.
+1. **Purge Novelty Mowers to The Vault**: Racing lawnmowers (`kart_honda_mean_mower`, `kart_john_deere_racing_mower`, `kart_viking_t6_tractor`) are decommissioned from the Karting module entirely and transferred to **The Vault** (`"vault"`, governed by [Spec 057](057_vault_module_for_archived_and_deprecated_content.md)). This purges tonal and physical whiplash from the career mode, removes all mower series from `series/kart/`, and preserves the vehicles in cold storage for Dev Mode and Track Studio testing.
 2. **Smooth, Continuous Power Progression**: Eliminates the previous $3\times$ jump from Cadet ($10\,\text{BHP}$) to Senior OK ($30\,\text{BHP}$) by introducing **OK-Junior 125cc ($22\,\text{BHP}$)**, and bridges sprint karts to aerodynamic road-racing monsters via **Superkart Division 2 Mono ($68\,\text{BHP}$)**. Power deltas between tiers never exceed $18\,\text{BHP}$ until the twin-cylinder finale.
-3. **Dedicated Novelty Showcase (The Garden GP)**: Preserves the hilarious high-CG pitch oscillations, turf drifting, and V-Twin audio of the racing mowers in an unranked 5-round standalone trophy cup.
+3. **Rigorous $5 + 3 \times 5 = 20$ Circuit Unlock Symmetry**: Expands the circuit catalog from 17 to **20 circuits** by introducing 3 new CIK-FIA Grade 1 circuits with verified OSM data:
+   * **Circuit International d'Aunay-les-Bois** (`aunay_kart`, France)
+   * **Motorsport Arena Mülsen / Arena E** (`muelsen_kart`, Germany)
+   * **Adria Karting Raceway** (`adria_kart`, Italy)
+   Every tier from Tier 2 to Tier 6 unlocks exactly **3 new circuits**.
 4. **18 Authentic Karts (3 Per Tier)**: Expands the authentic kart roster with 6 new models so every tier features 3 balanced manufacturer choices (Tony Kart, CRG, Birel ART, Anderson, MS Kart, and PVT).
-5. **Harmonious Circuit Progression**: Maps the 17 existing European kart circuits across 6 tiers ($5\text{ starter} + 3 + 3 + 2 + 2 + 2 = 17\text{ circuits}$) with clear progression from technical momentum tracks to high-speed Grand Prix layouts.
+5. **No Lawnmower Cups in Karting**: The karting career series strictly comprises sanctioned CIK-FIA / Superkart championships. No standalone lawnmower trophy cup or lawnmower series is deployed in `series/kart/`.
 
 ---
 
@@ -28,7 +34,7 @@ This specification re-architects the **Karting World Cup Career Mode** into a co
 
 ### 1. 6-Tier Vehicle Progression Architecture
 
-The career ladder spans 6 distinct engine classifications and performance brackets:
+The career ladder spans 6 distinct engine classifications and performance brackets across 18 authentic karts:
 
 ```mermaid
 flowchart LR
@@ -38,10 +44,10 @@ flowchart LR
     T4 --> T5["Tier 5: Superkart Div 2 Mono\n(68 BHP • 210 km/h • Aero Feeder)"]
     T5 --> T6["Tier 6: Superkart Div 1 Twin GP\n(100 BHP • 246 km/h • Ballistic Aero)"]
 
-    H["The Garden GP: Lawnmower Trophy\n(40 BHP • V-Twin • Standalone Cup)"] -.->|Outside Career Ladder| H
+    MOWERS["Decommissioned Racing Mowers\n(Honda, John Deere, Viking)"] -.->|Transferred via Spec 057| VAULT["The Vault Module ('vault')\n(Cold Storage / Dev Mode)"]
 ```
 
-### Complete Vehicle Roster Breakdown (18 Authentic Karts + 3 Standalone Mowers)
+### Complete Vehicle Roster Breakdown (18 Authentic Karts)
 
 | Tier | Category / Championship | Drivetrain & Performance Specs | Vehicle Roster | Class Badge |
 | :--- | :--- | :--- | :--- | :--- |
@@ -54,35 +60,32 @@ flowchart LR
 
 ---
 
-### Standalone Novelty Cup: The Garden Grand Prix 🚜🌿
+### Decommissioning Lawnmowers to The Vault (Spec 057)
 
-* **Championship Preset**: `series/kart/kart_garden_gp.toml`
-* **Format**: Dedicated 5-round unranked trophy cup outside the career XP ladder (`tier = 0`, `is_unranked = true`).
-* **Vehicles**:
-  * Honda Mean Mower V2 Tuned (`kart_honda_mean_mower`) — 999cc CBR1000RR Fireblade motor, 40 BHP, 170 km/h.
-  * John Deere Spec Racing Mower (`kart_john_deere_racing_mower`) — 850cc Vanguard V-Twin, 38 BHP, 165 km/h.
-  * Viking T6 Racing Tractor (`kart_viking_t6_tractor`) — 1000cc Briggs & Stratton V-Twin, 42 BHP, 172 km/h.
-* **Track Calendar (Curated Grass & Curb Brawlers)**:
-  1. *Round 1*: Laval - Circuit Beausoleil (`laval_kart`) — 5 Laps
-  2. *Round 2*: Prokart Raceland Wackersdorf (`wackersdorf`) — 5 Laps
-  3. *Round 3*: Whilton Mill Kart Circuit (`whilton_mill`) — 5 Laps
-  4. *Round 4*: Kartshop Ampfing (`ampfing`) — 5 Laps
-  5. *Round 5*: Circuito Internacional de Zuera (`zuera`) — 5 Laps
-* **Availability**: Accessible via Modality Selection screen under "Special Events", Quick Race, and Time Attack.
+The 3 racing lawnmower models are removed from `catalog/mod.rs` under `"kart"` and transferred to `VaultGameModule::vehicles()`:
+* `vault_honda_mean_mower` (ex-`kart_honda_mean_mower`): Honda Mean Mower V2 Tuned.
+* `vault_john_deere_racing_mower` (ex-`kart_john_deere_racing_mower`): John Deere Spec Racing Mower.
+* `vault_viking_t6_tractor` (ex-`kart_viking_t6_tractor`): Viking T6 Racing Tractor.
+
+**Integration Rules**:
+* `module_id` is set to `"vault"`.
+* Recorded in `tracks/vault/MANIFEST.json` under `type: "vehicle"`, reason: *"Decommissioned from Karting module per Spec 052"*.
+* Zero lawnmower championship series exist in `series/kart/`.
+* Invisible to public career mode and AI driver favorite mappings.
 
 ---
 
-### 2. Circuit Unlock Matrix Across 6 Tiers (17 Circuits Total)
+### 2. Complete 20-Circuit Progression Matrix ($5 + 3 \times 5 = 20$)
 
-The 17 official European circuits in `tracks/kart/` unlock progressively without track clutter:
+With the 3 new surveyed OSM circuits, every new tier unlocks exactly **3 new tracks**:
 
 ```mermaid
 flowchart LR
     T1["Tier 1\n5 Starter Circuits"] -->|+3 circuits| T2["Tier 2\n8 cumulative"]
     T2 -->|+3 circuits| T3["Tier 3\n11 cumulative"]
-    T3 -->|+2 circuits| T4["Tier 4\n13 cumulative"]
-    T4 -->|+2 circuits| T5["Tier 5\n15 cumulative"]
-    T5 -->|+2 circuits| T6["Tier 6\n17 cumulative"]
+    T3 -->|+3 circuits| T4["Tier 4\n14 cumulative"]
+    T4 -->|+3 circuits| T5["Tier 5\n17 cumulative"]
+    T5 -->|+3 circuits| T6["Tier 6\n20 cumulative"]
 ```
 
 | Tier | New Circuits Unlocked | Cumulative Total | Track ID & Name | Country | Track Length | Key Tactical Focus |
@@ -90,15 +93,47 @@ flowchart LR
 | **Tier 1** | **5 Starter Circuits** | 5 | • `lonato` (South Garda Karting)<br>• `genk` (Karting Genk Home of Champions)<br>• `wackersdorf` (Prokart Raceland Wackersdorf)<br>• `laval_kart` (Circuit Beausoleil Laval)<br>• `whilton_mill` (Whilton Mill Kart Circuit) | Italy<br>Belgium<br>Germany<br>France<br>UK | 1,200 m<br>1,360 m<br>1,190 m<br>1,232 m<br>1,200 m | Apex line discipline, momentum retention, minimal steering scrub. |
 | **Tier 2** | **+3 Circuits** | 8 | • `sarno` (Circuito Internazionale Napoli)<br>• `kristianstad` (Åsum Ring Kristianstad)<br>• `seven_laghi` (Circuito 7 Laghi Castelletto) | Italy<br>Sweden<br>Italy | 1,550 m<br>1,234 m<br>1,256 m | High-rev throttle modulation, intermediate slip angles. |
 | **Tier 3** | **+3 Circuits** | 11 | • `pfi` (PF International Kart Circuit)<br>• `franciacorta` (Franciacorta Karting Track)<br>• `ampfing` (Schweppermannring Ampfing) | UK<br>Italy<br>Germany | 1,382 m<br>1,300 m<br>1,063 m | Elevated flyover bridge, high-G physical neck endurance. |
-| **Tier 4** | **+2 Circuits** | 13 | • `zuera` (Circuito Internacional de Zuera)<br>• `silverstone_national_kart` (Silverstone National) | Spain<br>UK | 1,700 m<br>1,450 m | Long slipstream straights, heavy front-wheel braking passes. |
-| **Tier 5** | **+2 Circuits** | 15 | • `le_mans_kart` (Le Mans Karting International)<br>• `campillos` (KartCenter Campillos) | France<br>Spain | 1,384 m<br>1,580 m | Aerodynamic stability through sweeping high-speed bends. |
-| **Tier 6** | **+2 Circuits** | **17** | • `portimao_kart` (Kartódromo Internacional do Algarve)<br>• `valencia_kart` (Lucas Guerrero International) | Portugal<br>Spain | 1,531 m<br>1,428 m | High-aero rollercoaster gradients, maximum GP cornering speed. |
+| **Tier 4** | **+3 Circuits** | 14 | • `zuera` (Circuito Internacional de Zuera)<br>• `silverstone_national_kart` (Silverstone National)<br>• **`aunay_kart`** (Circuit d'Aunay-les-Bois) *(NEW)* | Spain<br>UK<br>**France** | 1,700 m<br>1,450 m<br>**1,215 m** | Long slipstream straights, heavy front-wheel braking passes. |
+| **Tier 5** | **+3 Circuits** | 17 | • `le_mans_kart` (Le Mans Karting International)<br>• `campillos` (KartCenter Campillos)<br>• **`muelsen_kart`** (Motorsport Arena Mülsen) *(NEW)* | France<br>Spain<br>**Germany** | 1,384 m<br>1,580 m<br>**1,315 m** | Aerodynamic stability through sweeping high-speed bends. |
+| **Tier 6** | **+3 Circuits** | **20** | • `portimao_kart` (Kartódromo Internacional do Algarve)<br>• `valencia_kart` (Lucas Guerrero International)<br>• **`adria_kart`** (Adria Karting Raceway) *(NEW)* | Portugal<br>Spain<br>**Italy** | 1,531 m<br>1,428 m<br>**1,302 m** | High-aero rollercoaster gradients, maximum GP cornering speed. |
+
+---
+
+### 3. The 3 New OSM-Based Kart Circuits (Detailed Survey Data)
+
+Each new circuit is calibrated from OpenStreetMap survey data according to the `osm-circuit-builder` standard (1:1 scale, $8.5\text{--}9.5\text{ m}$ road widths, Catmull-Rom resampling to 30–32 waypoints):
+
+1. **`aunay_kart` — Circuit International d'Aunay-les-Bois (Normandy, France)**
+   - **Historical Context**: CIK-FIA Grade 1 homologated circuit in Normandy that hosted the 2014 CIK-FIA World KZ Championship. Fast descending entry into the Parabolique and heavy curb-hopping chicanes.
+   - **OSM Way URL**: [`way/121084004`](https://www.openstreetmap.org/way/121084004)
+   - **Bounding Box**: `(0.268, 48.548, 0.282, 48.558)`
+   - **Local Cache**: `assets/osm/aunay_kart.osm` (314 KB)
+   - **FIA Homologation Length**: $1,215.0\text{ m}$ (Measured OSM: $1,212.9\text{ m}$, within $0.2\%$ deviation).
+   - **Waypoints**: 30 waypoints, default width $8.5\text{ m}$, main straight $9.2\text{ m}$.
+
+2. **`muelsen_kart` — Motorsport Arena Mülsen / Arena E (Saxony, Germany)**
+   - **Historical Context**: Opened in 2019 as one of Europe's most technologically advanced CIK-FIA Grade 1 karting facilities. Regular host of the German Kart Championship (DKM) and CIK-FIA European Championship. Banked high-speed esses, double-apex hairpins, and wide drafting zones.
+   - **OSM Way URL**: [`way/814876031`](https://www.openstreetmap.org/way/814876031)
+   - **Bounding Box**: `(12.540, 50.776, 12.553, 50.786)`
+   - **Local Cache**: `assets/osm/muelsen_kart.osm` (370 KB)
+   - **FIA Homologation Length**: $1,315.0\text{ m}$ (Measured OSM: $1,285.9\text{ m}$, within $2.2\%$ deviation).
+   - **Waypoints**: 32 waypoints, default width $8.5\text{ m}$, main straight $9.5\text{ m}$.
+
+3. **`adria_kart` — Adria Karting Raceway (Veneto, Italy)**
+   - **Historical Context**: Modern CIK-FIA international circuit constructed adjacent to the Adria International Raceway. Known for its illuminated night-racing system, elevated pedestrian paddock bridge, fast chicane, and heavy trail-braking hairpins.
+   - **OSM Way URL**: [`way/798432703`](https://www.openstreetmap.org/way/798432703)
+   - **Bounding Box**: `(12.145, 45.040, 12.156, 45.050)`
+   - **Local Cache**: `assets/osm/adria_kart.osm` (392 KB)
+   - **FIA Homologation Length**: $1,302.0\text{ m}$ (Measured OSM: $1,269.9\text{ m}$, within $2.5\%$ deviation).
+   - **Waypoints**: 32 waypoints, default width $8.5\text{ m}$, main straight $9.5\text{ m}$.
 
 ---
 
 ## ⚙️ Backend Models & API Endpoints
 
 ### 1. Championship Series Presets (`series/kart/*.toml`)
+
+Exactly 6 sanctioned career series files exist in `series/kart/` (no lawnmower series):
 
 1. **`series/kart/kart_world_cup.toml`** (Tier 1: Rotax Junior Academy):
    - `tier = 1`, `laps_per_round = 5`, `bot_count = 7`.
@@ -114,20 +149,18 @@ flowchart LR
    - Cars: `kart_tony_kart_racer_ok`, `kart_crg_kt2_ok`, `kart_birel_ry30_ok`.
 4. **`series/kart/kart_continental_trophy.toml`** (Tier 4, *Re-tiered from 3 to 4*):
    - `tier = 4`, `laps_per_round = 5`, `bot_count = 7`.
-   - Rounds: 8 (PFI, Franciacorta, Ampfing, Zuera, Silverstone National, Le Mans, Sarno, Lonato).
+   - Rounds: 8 (PFI, Franciacorta, Ampfing, Zuera, Silverstone National, Aunay-les-Bois, Sarno, Lonato).
    - Cars: `kart_birel_art_kz2`, `kart_crg_road_rebel_kz`, `kart_tony_kart_racer_kz`.
 5. **`series/kart/kart_superkart_div2_challenge.toml`** (Tier 5, *New*: Superkart Div 2 Challenge):
    - `tier = 5`, `laps_per_round = 5`, `bot_count = 7`.
-   - Rounds: 9 (Zuera, Silverstone National, Le Mans, Campillos, PFI, Franciacorta, Sarno, Genk, Lonato).
+   - Rounds: 9 (Zuera, Silverstone National, Aunay-les-Bois, Le Mans, Campillos, Motorsport Arena Mülsen, PFI, Sarno, Lonato).
    - Cars: `kart_anderson_maverick_mono`, `kart_ms_superkart_mono`, `kart_pvt_single_250`.
 6. **`series/kart/kart_superkart_world_series.toml`** (Tier 6, *Re-tiered from 5 to 6*):
    - `tier = 6`, `laps_per_round = 5`, `bot_count = 7`.
-   - Rounds: 10 (Portimao, Valencia, Campillos, Zuera, Le Mans, Silverstone National, PFI, Sarno, Genk, Lonato).
+   - Rounds: 10 (Portimao, Valencia, Adria, Campillos, Le Mans, Mülsen, Zuera, Silverstone National, PFI, Lonato).
    - Cars: `kart_anderson_cs250`, `kart_ms_superkart_250`, `kart_viper_250_twin`.
-7. **`series/kart/kart_garden_gp.toml`** (Standalone Unranked Trophy Cup):
-   - `tier = 0`, `id = "kart_garden_gp"`, `name = "The Garden Grand Prix"`.
-   - Rounds: 5 (Laval, Wackersdorf, Whilton Mill, Ampfing, Zuera).
-   - Cars: `kart_honda_mean_mower`, `kart_john_deere_racing_mower`, `kart_viking_t6_tractor`.
+
+*`series/kart/kart_european_championship.toml` (which previously hosted lawnmowers as Tier 4) is removed from `series/kart/`.*
 
 ---
 
@@ -146,7 +179,6 @@ match (self.module_id, self.tier) {
     _ => ...
 }
 ```
-*Lawnmowers (`kart_honda_mean_mower`, etc.) strictly retain `EngineSoundType::RacingMowerV2` as unranked Tier 0 models.*
 
 ---
 
@@ -175,9 +207,9 @@ let max_tier = if car.module_id == "extreme_offroad" {
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-1. **Static Catalog Safety**: All 18 authentic karts and 3 lawnmowers are compiled as static constants in the Rust binary, precluding arbitrary vehicle injection.
-2. **Deterministic Career Progression**: Progression requirements are evaluated strictly against SQLite career XP milestones; corrupted or altered tiers clamp safely to $1..=6$.
-3. **Standalone Series Protection**: The Garden GP series preset is explicitly marked unranked, preventing lawnmower race results from artificially accelerating progression through the CIK-FIA kart ladder.
+1. **Strict Motorsport Isolation**: Lawnmower vehicles cannot be selected, chosen, or favorited by AI opponents in `"kart"` career mode or quick races.
+2. **The Vault Dev-Mode Gate**: Access to lawnmowers is strictly governed by `specs/057_vault_module_for_archived_and_deprecated_content.md`, requiring Developer Mode (`TDRACE_DEV=1`) or Track Studio.
+3. **Deterministic Career Progression**: Progression requirements are evaluated strictly against SQLite career XP milestones; corrupted or altered tiers clamp safely to $1..=6$.
 
 ---
 
@@ -189,37 +221,40 @@ let max_tier = if car.module_id == "extreme_offroad" {
   cargo test -p tdrace-app --test series_tests
   cargo test -p tdrace-app --test garage_tests
   cargo test -p tdrace-app --test render_tests
+  python3 scripts/circuit_parity.py
   keel validate .
   ```
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-- **Scenario: Player progresses smoothly through the 6-tier karting ladder**
-  - [ ] **Given** a new player profile with 0 XP in the karting module
-  - [ ] **When** the player opens the Karting Career Mode
-  - [ ] **Then** only Tier 1 (Cadet 60cc) is unlocked with 5 starter circuits
-  - [ ] **When** the player accumulates 1,500 XP
-  - [ ] **Then** Tier 2 (OK-Junior 125cc) unlocks with 3 new circuits (Sarno, Kristianstad, 7 Laghi)
-  - [ ] **When** the player progresses through Tier 3 (Senior OK) and Tier 4 (KZ2 Shifter)
-  - [ ] **Then** the power steps increase smoothly (+12 BHP, +12 BHP, +16 BHP) without sudden jumps
+- **Scenario: Player progresses smoothly through the 6-tier karting ladder with 3 new circuits per tier**
+  - [x] **Given** a new player profile with 0 XP in the karting module
+  - [x] **When** the player opens the Karting Career Mode
+  - [x] **Then** only Tier 1 (Cadet 60cc) is unlocked with 5 starter circuits
+  - [x] **When** the player accumulates 1,500 XP
+  - [x] **Then** Tier 2 (OK-Junior 125cc) unlocks exactly 3 new circuits (Sarno, Kristianstad, 7 Laghi)
+  - [x] **When** the player accumulates 6,000 XP (reaching Tier 4 KZ2 Shifter)
+  - [x] **Then** the new OSM circuit `aunay_kart` is unlocked along with Zuera and Silverstone National
+  - [x] **When** the player reaches Tier 5 (Superkart Div 2) and Tier 6 (Superkart Div 1)
+  - [x] **Then** `muelsen_kart` and `adria_kart` unlock respectively, bringing total circuits to exactly 20
 
-- **Scenario: Racing lawnmowers do not appear in the tiered career ladder**
-  - [ ] **Given** the player navigates through Tiers 1 through 6 in the Karting Career screen
-  - [ ] **When** inspecting the eligible vehicle roster for each tier
-  - [ ] **Then** no lawnmower models (`kart_honda_mean_mower`, `kart_john_deere_racing_mower`, `kart_viking_t6_tractor`) appear in Tiers 1–6
-  - [ ] **And** all opponents on the career grid pilot authentic CIK-FIA karts or Superkarts
+- **Scenario: No lawnmower vehicles or series exist in the Karting module**
+  - [x] **Given** the player navigates through Tiers 1 through 6 in the Karting Career screen
+  - [x] **When** inspecting the eligible vehicle roster for each tier and the series list in `series/kart/`
+  - [x] **Then** no lawnmower models or lawnmower series appear anywhere in the Karting module
+  - [x] **And** all opponents on the career grid pilot authentic CIK-FIA karts or Superkarts
 
-- **Scenario: Player accesses the standalone Garden GP Trophy Cup**
-  - [ ] **Given** the player selects Special Events or Custom Tournaments
-  - [ ] **When** the player launches "The Garden Grand Prix" (`kart_garden_gp`)
-  - [ ] **Then** the race grid consists exclusively of racing lawnmowers and tractors
-  - [ ] **And** vehicles exhibit authentic high-CG body roll and V-Twin engine audio
+- **Scenario: Lawnmowers are preserved in The Vault module**
+  - [x] **Given** Developer Mode is active (`TDRACE_DEV=1`)
+  - [x] **When** inspecting `VaultGameModule::vehicles()`
+  - [x] **Then** the decommissioned lawnmower models are accessible with their calibrated physics and audio
+  - [x] **And** they are recorded in `tracks/vault/MANIFEST.json`
 
 - **Scenario: Superkart Division 2 bridges sprint karts to Twin Superkarts**
-  - [ ] **Given** the player reaches Tier 5 (Superkart Division 2)
-  - [ ] **When** selecting the Anderson Maverick 250 Mono at Le Mans Karting
-  - [ ] **Then** the vehicle features aerodynamic front and rear wings with a top speed of ~210 km/h
-  - [ ] **And** acts as a manageable aerodynamic stepping stone before the 246 km/h Tier 6 Twin GP
+  - [x] **Given** the player reaches Tier 5 (Superkart Division 2)
+  - [x] **When** selecting the Anderson Maverick 250 Mono at Le Mans Karting or Arena Mülsen
+  - [x] **Then** the vehicle features aerodynamic front and rear wings with a top speed of ~210 km/h
+  - [x] **And** acts as a manageable aerodynamic stepping stone before the 246 km/h Tier 6 Twin GP
 
 ---
 
@@ -227,17 +262,21 @@ let max_tier = if car.module_id == "extreme_offroad" {
 
 ### Created/Modified Files
 
-- `[ ]` `specs/052_karting_6tier_career_progression_and_standalone_garden_gp.md` -> Governs the specification contract.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Registers the milestone under Phase 1.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Defines the 6 new kart models (3 OK-J, 3 Div 2 Mono), re-tiers existing karts, and updates sound archetypes.
-- `[ ]` `crates/tdrace-app/src/module/kart.rs` -> Updates the 12-pilot favorite car mappings across all 6 tiers.
-- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Updates career level cap and XP thresholds to 6 tiers.
-- `[ ]` `series/kart/kart_world_cup.toml` -> Tier 1 series configuration.
-- `[ ]` `series/kart/kart_junior_trophy.toml` -> Tier 2 series configuration (New).
-- `[ ]` `series/kart/kart_national_championship.toml` -> Tier 3 series configuration (Re-tiered).
-- `[ ]` `series/kart/kart_continental_trophy.toml` -> Tier 4 series configuration (Re-tiered).
-- `[ ]` `series/kart/kart_superkart_div2_challenge.toml` -> Tier 5 series configuration (New).
-- `[ ]` `series/kart/kart_superkart_world_series.toml` -> Tier 6 series configuration (Re-tiered).
-- `[ ]` `series/kart/kart_garden_gp.toml` -> Standalone Lawnmower Invitational series configuration.
-- `[ ]` `series/kart/kart_european_championship.toml` -> Replaced or retired in favor of `kart_continental_trophy`.
-- `[ ]` `tests/series_tests.rs` / `tests/garage_tests.rs` -> Updates tier bounds and test assertions.
+- `[x]` `specs/052_karting_6tier_career_progression_and_standalone_garden_gp.md` -> Governs the specification contract.
+- `[x]` `specs/constitution/ROADMAP.md` -> Registers the milestone under Phase 1.
+- `[x]` `tracks/kart/aunay_kart.json` -> 1:1 OSM-surveyed track definition for Circuit d'Aunay-les-Bois (France).
+- `[x]` `tracks/kart/muelsen_kart.json` -> 1:1 OSM-surveyed track definition for Motorsport Arena Mülsen (Germany).
+- `[x]` `tracks/kart/adria_kart.json` -> 1:1 OSM-surveyed track definition for Adria Karting Raceway (Italy).
+- `[x]` `scripts/osm_importer.py` -> Adds `aunay_kart`, `muelsen_kart`, and `adria_kart` to `KART_TRACKS`.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Defines the 6 new kart models (3 OK-J, 3 Div 2 Mono), re-tiers existing karts, and updates sound archetypes.
+- `[x]` `crates/tdrace-app/src/module/kart.rs` -> Updates the 12-pilot favorite car mappings across all 6 tiers.
+- `[x]` `crates/tdrace-app/src/module/vault.rs` -> Incorporates decommissioned lawnmowers into The Vault.
+- `[x]` `crates/tdrace-app/src/profile/mod.rs` -> Updates career level cap and XP thresholds to 6 tiers.
+- `[x]` `series/kart/kart_world_cup.toml` -> Tier 1 series configuration.
+- `[x]` `series/kart/kart_junior_trophy.toml` -> Tier 2 series configuration (New).
+- `[x]` `series/kart/kart_national_championship.toml` -> Tier 3 series configuration (Re-tiered).
+- `[x]` `series/kart/kart_continental_trophy.toml` -> Tier 4 series configuration (Re-tiered).
+- `[x]` `series/kart/kart_superkart_div2_challenge.toml` -> Tier 5 series configuration (New).
+- `[x]` `series/kart/kart_superkart_world_series.toml` -> Tier 6 series configuration (Re-tiered).
+- `[x]` `series/kart/kart_european_championship.toml` -> Removed (former lawnmower series).
+- `[x]` `tests/series_tests.rs` / `tests/garage_tests.rs` -> Updates tier bounds and test assertions.
