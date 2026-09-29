@@ -797,6 +797,9 @@ pub struct RaceResultEntry {
     pub car_idx: usize,
     #[serde(default)]
     pub points_awarded: u32,
+    /// The car was still racing when the race ended: `total_time` is an estimate.
+    #[serde(default)]
+    pub projected: bool,
 }
 
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
@@ -2069,7 +2072,7 @@ pub fn render_results_screen(
         fonts.draw_ui_bold(&res.car_name, x + scaler.s(85.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
         if is_championship {
-            let total_str = format_lap_time(res.total_time);
+            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
             fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(360.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
@@ -2078,14 +2081,14 @@ pub fn render_results_screen(
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("+{:.2}s", res.delta_to_leader)
+                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
             };
             fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(135.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let pts_str = format!("+{} PTS", res.points_awarded);
             draw_ui_bold_right(fonts, &pts_str, x + box_w - scaler.s(30.0), row_y + scaler.s(4.0), scaler.font_s(14.0), Palette::NEON_GOLD);
         } else {
-            let total_str = format_lap_time(res.total_time);
+            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
             fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(320.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
@@ -2094,7 +2097,7 @@ pub fn render_results_screen(
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("+{:.2}s", res.delta_to_leader)
+                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
             };
             fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(75.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
         }

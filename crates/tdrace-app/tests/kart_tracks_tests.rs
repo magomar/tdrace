@@ -171,8 +171,8 @@ fn test_kart_race_session_simulation_on_lonato_and_sarno() {
         session.num_bots = 5;
         session.init_race();
 
-        assert_eq!(session.cars.len(), 6, "1 player + 5 bots = 6 karts for {}", id);
-        assert_eq!(session.trackers.len(), 6);
+        assert_eq!(session.world.vehicles.len(), 6, "1 player + 5 bots = 6 karts for {}", id);
+        assert_eq!(session.world.trackers.len(), 6);
         assert!(!session.track.name.is_empty());
         assert_eq!(session.track_choice_id(), *id);
 
@@ -181,7 +181,7 @@ fn test_kart_race_session_simulation_on_lonato_and_sarno() {
             session.update();
         }
 
-        for (i, car) in session.cars.iter().enumerate() {
+        for (i, car) in session.world.vehicles.iter().enumerate() {
             assert!(
                 car.state.position.is_finite(),
                 "Kart #{} position is non-finite on {}: {:?}",

@@ -1,15 +1,12 @@
 //! Headless bot race harness (spec 046:
 //! `specs/046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md`).
 //!
-//! Runs a grid of cars on an official track with the same physics step order as
-//! `RaceSession` (controls, surfaces, draft, road projection, per-wheel step, car and wall
-//! collisions, lap tracking), without rendering, audio or FX. Tests and
+//! Runs a grid of cars on an official track through `race_kit::RaceWorld`, the same race step
+//! as `RaceSession` (spec 056), without rendering, audio or FX. Tests and
 //! `bot_behaviour_benchmark` use it to measure lines, braking points, lap times and mistakes.
 
 use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
-use glam::Vec2;
-use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
-use tdrace_core::collision::wall::resolve_all_wall_collisions;
+use race_kit::{RaceFormat, RaceRules, RaceWorld};
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{CarConfig, PlayerHandling};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
@@ -89,7 +86,8 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     let n = entries.len();
     let len = track.spline.total_length();
     let mut drivers = Vec::with_capacity(n);
-    let mut cars = Vec::with_capacity(n);
+    // The harness counts laps itself, so the world never finishes a car.
+    let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules { format: RaceFormat::TimeAttack, ..RaceRules::default() });
     let mut filters = Vec::with_capacity(n);
     for (i, e) in entries.into_iter().enumerate() {
         let spawn = track.grid_positions[i];
@@ -97,12 +95,10 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
         if let Some(kb) = e.keyboard {
             car.config.player = PlayerHandling::human(kb.steer_authority, kb.traction_help);
         }
-        cars.push(car);
+        world.spawn(car, TrackProgressTracker::new(track.checkpoints.len(), 3));
         drivers.push(e.driver);
         filters.push(e.keyboard.map(DigitalInputFilter::new));
     }
-    let mut trackers: Vec<TrackProgressTracker> =
-        (0..n).map(|_| TrackProgressTracker::new(track.checkpoints.len(), 3)).collect();
     let mut results = vec![HarnessCarResult { controls_hash: 0xcbf29ce484222325, ..Default::default() }; n];
     let mut lap_lateral: Vec<Vec<f32>> = vec![vec![f32::NAN; LINE_STATIONS]; n];
     let mut lap_onsets: Vec<Vec<f32>> = vec![Vec::new(); n];
@@ -111,7 +107,6 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     let mut travelled = vec![0.0f32; n];
     let mut progress_mark = vec![0.0f32; n];
     let mut no_progress = vec![0.0f32; n];
-    let scenery = track.geometry.all_obstacles_with_scenery();
     let station_len = len / LINE_STATIONS as f32;
 
     let steps = (max_time_s / HARNESS_DT) as usize;
@@ -121,8 +116,8 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
         }
         let mut controls = Vec::with_capacity(n);
         for i in 0..n {
-            let others: Vec<&Car> = cars.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
-            let mut c = drivers[i].compute_controls(&cars[i], track, &others, HARNESS_DT);
+            let others: Vec<&Car> = world.vehicles.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
+            let mut c = drivers[i].compute_controls(&world.vehicles[i], track, &others, HARNESS_DT);
             if let Some(filter) = filters[i].as_mut() {
                 let (steer, throttle, brake) = filter.update(key(c.steer), key(c.throttle), key(c.brake), HARNESS_DT);
                 c = CarControls { steer, throttle, brake, ..c };
@@ -131,37 +126,12 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
             controls.push(c);
         }
 
-        let surfaces: Vec<_> =
-            (0..n).map(|i| track.sample_car_surfaces_with_hint(&cars[i], trackers[i].progress_distance)).collect();
-        let drafts: Vec<f32> = (0..n)
-            .map(|i| {
-                let others: Vec<&Car> = cars.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
-                cars[i].compute_draft_intensity(&others)
-            })
-            .collect();
-        for i in 0..n {
-            cars[i].state.draft_intensity = drafts[i];
-            let proj = track.spline.project_point_continuity(cars[i].state.position, trackers[i].progress_distance, 50.0);
-            cars[i].state.road_elevation = proj.elevation;
-            cars[i].state.road_bank_angle = proj.bank_angle;
-            cars[i].state.road_grade_slope = proj.grade_slope;
-            cars[i].state.road_vertical_curvature = proj.vertical_curvature;
-            cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
-            cars[i].state.track_forward = proj.tangent;
-            cars[i].step_per_wheel(&controls[i], surfaces[i], HARNESS_DT);
-        }
-        if n > 1 {
-            let _ = resolve_multi_car_collisions(&mut cars, 0.45, 0.35, 3);
-        }
-        for car in &mut cars {
-            let _ = resolve_all_wall_collisions(car, &track.geometry.inner_walls, &scenery);
-            let _ = resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]);
-        }
+        let prev: Vec<(f32, u32)> = world.trackers.iter().map(|t| (t.progress_distance, t.current_lap)).collect();
+        world.step(track, &controls, HARNESS_DT);
+        let (cars, trackers) = (&world.vehicles, &world.trackers);
 
         for i in 0..n {
-            let prev_progress = trackers[i].progress_distance;
-            let prev_lap = trackers[i].current_lap;
-            trackers[i].update(&cars[i], &track.spline, &track.checkpoints, HARNESS_DT);
+            let (prev_progress, prev_lap) = prev[i];
             if results[i].finished {
                 continue;
             }

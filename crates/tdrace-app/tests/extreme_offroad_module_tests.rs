@@ -206,9 +206,9 @@ fn test_extreme_offroad_session_switch_and_car_choice() {
 
     session.init_race();
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!(session.cars.len(), 8);
-    assert_eq!(session.cars[0].config.mass, 590.0);
-    assert_eq!(session.cars[0].config.drive_bias, 0.0);
+    assert_eq!(session.world.vehicles.len(), 8);
+    assert_eq!(session.world.vehicles[0].config.mass, 590.0);
+    assert_eq!(session.world.vehicles[0].config.drive_bias, 0.0);
     assert!(matches!(
         session.current_visual_type,
         VehicleVisualType::SandRail { .. }

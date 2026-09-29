@@ -16,8 +16,8 @@ fn test_post_race_initial_screen_is_results() {
 
     // Simulate finishing race
     session.session_time = 42.5;
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(14.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(14.0);
 
     session.check_race_finish();
 
@@ -194,7 +194,7 @@ fn test_racing_simulation_tracks_jumps_and_drifts() {
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 0);
 
     // 1. Simulate jump landing
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
         player_car.state.air_time = 0.85; // Standard jump (< 1.50s)
@@ -208,7 +208,7 @@ fn test_racing_simulation_tracks_jumps_and_drifts() {
 
     // 2. Simulate drift ending
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 150.0;
     }
@@ -226,7 +226,7 @@ fn test_stunt_scoring_disabled_on_non_classic_modules() {
     assert!(!session.is_stunt_scoring_enabled());
 
     // 1. Simulate jump landing on GT circuit
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
         player_car.state.air_time = 1.60;
@@ -240,7 +240,7 @@ fn test_stunt_scoring_disabled_on_non_classic_modules() {
 
     // 2. Simulate drift ending on GT circuit
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 300.0;
     }
@@ -255,7 +255,7 @@ fn test_stunt_scoring_disabled_on_non_classic_modules() {
     assert!(session.is_stunt_scoring_enabled());
 
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 200.0;
     }
@@ -272,7 +272,7 @@ fn test_mega_jump_requires_one_point_five_seconds() {
     assert!(session.is_stunt_scoring_enabled());
 
     // 1. Jump of 1.20s should award AIR TIME alert, NOT MEGA JUMP
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
         player_car.state.air_time = 1.20;
@@ -286,7 +286,7 @@ fn test_mega_jump_requires_one_point_five_seconds() {
     session.floating_text.clear();
 
     // 2. Jump of 1.60s (>= 1.50s) should award MEGA JUMP alert
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
         player_car.state.air_time = 1.60;
@@ -306,7 +306,7 @@ fn test_collision_voids_drift_and_breaks_combo() {
     session.drift_combo_count = 3;
     session.drift_combo_timer = 3.5;
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = true;
         player_car.state.drift_score = 160.0;
         player_car.state.position = Vec2::new(-1.0, 0.0);
@@ -315,7 +315,7 @@ fn test_collision_voids_drift_and_breaks_combo() {
     }
 
     // Place second car approaching head-on
-    if let Some(car_b) = session.cars.get_mut(1) {
+    if let Some(car_b) = session.world.vehicles.get_mut(1) {
         car_b.state.position = Vec2::new(1.0, 0.0);
         car_b.state.velocity = Vec2::new(-10.0, 0.0);
         car_b.state.angle = std::f32::consts::PI;
@@ -329,8 +329,8 @@ fn test_collision_voids_drift_and_breaks_combo() {
     assert!(session.player_collision_stunt_lockout > 0.0, "Collision lockout must activate");
     assert_eq!(session.player_race_stats.stunt_stats.drift_count, 0, "No drift should be awarded");
     assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
-    assert_eq!(session.cars[0].state.drift_score, 0.0, "Drift score must be voided to 0");
-    assert!(!session.cars[0].state.is_drifting);
+    assert_eq!(session.world.vehicles[0].state.drift_score, 0.0, "Drift score must be voided to 0");
+    assert!(!session.world.vehicles[0].state.is_drifting);
 
     // Verify visual feedback for broken combo / voided drift
     assert!(
@@ -350,7 +350,7 @@ fn test_collision_lockout_prevents_spinout_stunt_points() {
 
     // Simulate car spinning / sliding violently after impact
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 250.0;
     }
@@ -362,7 +362,7 @@ fn test_collision_lockout_prevents_spinout_stunt_points() {
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 0);
     assert_eq!(session.player_race_stats.stunt_stats.total_stunt_score, 0);
     assert_eq!(session.drift_combo_count, 0);
-    assert_eq!(session.cars[0].state.drift_score, 0.0);
+    assert_eq!(session.world.vehicles[0].state.drift_score, 0.0);
 }
 
 #[test]
@@ -374,7 +374,7 @@ fn test_clean_drift_resets_drift_score_after_banking() {
 
     // 1. First clean drift
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 120.0;
     }
@@ -383,17 +383,17 @@ fn test_clean_drift_resets_drift_score_after_banking() {
 
     assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 120);
-    assert_eq!(session.cars[0].state.drift_score, 0.0, "Drift score must be reset to 0 after banking");
+    assert_eq!(session.world.vehicles[0].state.drift_score, 0.0, "Drift score must be reset to 0 after banking");
 
     // 2. A subsequent step without drifting must NOT re-bank points
     session.physics_step(0.016);
     assert_eq!(session.player_race_stats.stunt_stats.drift_count, 1);
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 120);
-    assert_eq!(session.cars[0].state.drift_score, 0.0);
+    assert_eq!(session.world.vehicles[0].state.drift_score, 0.0);
 
     // 3. Second clean drift accumulates from fresh 0 baseline
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 90.0;
     }
@@ -402,5 +402,5 @@ fn test_clean_drift_resets_drift_score_after_banking() {
 
     assert_eq!(session.player_race_stats.stunt_stats.drift_count, 2);
     assert_eq!(session.player_race_stats.stunt_stats.total_drift_points, 210);
-    assert_eq!(session.cars[0].state.drift_score, 0.0);
+    assert_eq!(session.world.vehicles[0].state.drift_score, 0.0);
 }

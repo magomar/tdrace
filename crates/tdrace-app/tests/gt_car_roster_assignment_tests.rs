@@ -102,7 +102,7 @@ fn test_gt_race_roster_car_assignment_and_display_titles() {
     }
 
     // Verify all cars in session are tuned with GT physics (top speed > 260 km/h, downforce >= 0.60)
-    for car in &session.cars {
+    for car in &session.world.vehicles {
         assert!(
             car.config.top_speed_mps * 3.6 > 260.0,
             "Car top speed must exceed 260 km/h for GT spec"
@@ -156,7 +156,7 @@ fn test_gt_championship_roster_and_car_assignment() {
 
     assert!(session.championship_session.is_some());
     assert_eq!(session.active_module_id, "gt");
-    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants());
     assert_eq!(session.grid_participants.len(), session.max_grid_participants());
 
     let gt4_models = tdrace_app::catalog::get_models_for_category("gt", "GT4 Clubsport");
@@ -257,7 +257,7 @@ fn test_bots_assigned_same_category_when_player_elects_car() {
     session.rebuild_roster_participants();
 
     assert_eq!(session.grid_participants.len(), 8);
-    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.world.vehicles.len(), 8);
     assert_eq!(session.car_model_ids.len(), 8);
 
     let gt4_models = get_models_for_category("gt", "GT4 Clubsport");

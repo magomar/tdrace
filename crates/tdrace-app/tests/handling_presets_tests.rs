@@ -60,14 +60,14 @@ fn test_settings_apply_to_live_player_car_both_directions() {
         session.input.set_steering_profile(profile);
         session.apply_player_handling();
         let keys = profile.to_config();
-        let handling = session.cars[idx].config.player;
+        let handling = session.world.vehicles[idx].config.player;
         assert!(handling.grip_aware_steering, "human car must use grip-aware steering");
         assert!((handling.steer_overslip - keys.steer_authority).abs() < 1e-6, "{profile:?} authority");
         assert!((handling.traction_help - keys.traction_help).abs() < 1e-6, "{profile:?} traction help");
     }
 
     // Bots keep the default (linear) handling
-    for (i, car) in session.cars.iter().enumerate() {
+    for (i, car) in session.world.vehicles.iter().enumerate() {
         if i != idx {
             assert!(!car.config.player.grip_aware_steering, "bot {i} must not get player aids");
         }

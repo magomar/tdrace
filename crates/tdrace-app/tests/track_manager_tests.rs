@@ -281,13 +281,13 @@ fn test_race_session_with_track_manager_flow() {
     assert_eq!(session.state, GameState::StartingGrid);
     assert_eq!(session.track.name, "Session Draft");
     assert_eq!(session.track.description, "Created in session test");
-    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants());
 
     // Run 10 physics steps
     for _ in 0..10 {
         session.physics_step(1.0 / 60.0);
     }
-    assert!(session.cars[0].state.position.length() > 0.0);
+    assert!(session.world.vehicles[0].state.position.length() > 0.0);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

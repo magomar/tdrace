@@ -624,7 +624,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
 
     // 2. Init race for Round 1
     session.init_race();
-    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants());
     assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     for opp in &session.opponent_drivers {
         assert!(
@@ -639,7 +639,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     // Car 2 (Mattias Storm) finishes 2nd
     // Car 0 (Player) finishes 3rd
     // Cars 3..7 finish 4th..8th
-    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+    for (idx, tracker) in session.world.trackers.iter_mut().enumerate() {
         tracker.current_lap = session.total_laps + 1;
         tracker.normalized_progress = match idx {
             1 => 0.99, // 1st
@@ -654,7 +654,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
         };
         tracker.best_lap_time = Some(40.0 + idx as f32);
     }
-    session.trackers[1].best_lap_time = Some(38.5);
+    session.world.trackers[1].best_lap_time = Some(38.5);
 
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -705,7 +705,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     }
 
     // 6. Simulate Round 2 finish: Player wins (1st with fastest lap), Car 1 finishes 2nd
-    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+    for (idx, tracker) in session.world.trackers.iter_mut().enumerate() {
         tracker.current_lap = session.total_laps + 1;
         tracker.normalized_progress = match idx {
             0 => 0.99, // 1st (Player)
@@ -720,7 +720,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
         };
         tracker.best_lap_time = Some(42.0);
     }
-    session.trackers[0].best_lap_time = Some(39.0);
+    session.world.trackers[0].best_lap_time = Some(39.0);
 
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -788,7 +788,7 @@ fn test_reset_championship_clears_session_and_database_history() {
     assert!(session.championship_session.is_some());
 
     // Complete round 1
-    session.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].current_lap = session.total_laps + 1;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
 
@@ -1087,8 +1087,8 @@ fn test_post_race_rerun_cancels_uncommitted_results_and_restarts_round() {
     assert_eq!(session.championship_session.as_ref().unwrap().current_round, 0);
 
     // Simulate finishing race
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(24.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(24.0);
     session.session_time = 75.0;
     session.check_race_finish();
 
@@ -1124,7 +1124,7 @@ fn test_championship_standings_screen_rerun_rolls_back_and_restarts_round() {
     session.init_race();
 
     // Complete round 1 and confirm
-    session.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].current_lap = session.total_laps + 1;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
 
@@ -1320,8 +1320,8 @@ fn test_kart_championship_first_round_bots_move() {
         session.start_kart_career_tier(1);
         session.state = GameState::Racing;
 
-        let initial_positions: Vec<_> = session.cars.iter().map(|c| c.state.position).collect();
-        let num_cars = session.cars.len();
+        let initial_positions: Vec<_> = session.world.vehicles.iter().map(|c| c.state.position).collect();
+        let num_cars = session.world.vehicles.len();
 
         // Step 300 frames (5.0 seconds of racing)
         for _ in 0..300 {
@@ -1333,9 +1333,9 @@ fn test_kart_championship_first_round_bots_move() {
         // behind another can sit at ~4.8 m while rolling at ~3 m/s (3 of 2200 launches over seeds
         // 0-199 fall just under these limits that way, in traffic). A stalled launch still fails.
         for i in 1..num_cars {
-            let dist = session.cars[i].state.position.distance(initial_positions[i]);
-            let speed = session.cars[i].state.speed;
-            let prog = session.trackers[i].progress_distance;
+            let dist = session.world.vehicles[i].state.position.distance(initial_positions[i]);
+            let speed = session.world.vehicles[i].state.speed;
+            let prog = session.world.trackers[i].progress_distance;
             assert!(
                 dist > 5.0 || (dist > 3.0 && speed > 2.5),
                 "seed {}: Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
@@ -1362,23 +1362,23 @@ fn test_player_throttle_in_kart_championship() {
     session.start_kart_career_tier(1);
     session.state = GameState::Racing;
 
-    let start_pos = session.cars[0].state.position;
+    let start_pos = session.world.vehicles[0].state.position;
     let dt = 1.0 / 60.0;
 
     // Simulate 60 frames of player applying throttle on the starting grid
     for frame in 0..60 {
-        let prog = session.trackers[0].progress_distance;
-        let surfaces = session.track.sample_car_surfaces_with_hint(&session.cars[0], prog);
-        let ctrl = session.input.process_inputs((0.0, 1.0, 0.0, false), dt, session.cars[0].state.speed);
+        let prog = session.world.trackers[0].progress_distance;
+        let surfaces = session.track.sample_car_surfaces_with_hint(&session.world.vehicles[0], prog);
+        let ctrl = session.input.process_inputs((0.0, 1.0, 0.0, false), dt, session.world.vehicles[0].state.speed);
         if frame > 10 {
             assert!(ctrl.throttle > 0.5, "Expected throttle > 0.5, got {}", ctrl.throttle);
         }
         assert!(!ctrl.handbrake, "Handbrake should not be engaged during throttle launch");
         assert_eq!(ctrl.brake, 0.0, "Brake should be 0.0 during throttle launch");
-        session.cars[0].step_per_wheel(&ctrl, surfaces, dt);
+        session.world.vehicles[0].step_per_wheel(&ctrl, surfaces, dt);
     }
 
-    let end_pos = session.cars[0].state.position;
+    let end_pos = session.world.vehicles[0].state.position;
     let distance = (end_pos - start_pos).length();
     assert!(
         distance > 1.0,
@@ -1386,9 +1386,9 @@ fn test_player_throttle_in_kart_championship() {
         distance
     );
     assert!(
-        session.cars[0].state.speed > 2.0,
+        session.world.vehicles[0].state.speed > 2.0,
         "Player kart failed to accelerate! Speed = {} m/s",
-        session.cars[0].state.speed
+        session.world.vehicles[0].state.speed
     );
 }
 
@@ -1417,8 +1417,8 @@ fn test_post_race_esc_keeps_the_championship_round() {
 
     session.start_rally_career_tier(1);
     session.init_race();
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(24.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(24.0);
     session.session_time = 75.0;
     session.check_race_finish();
     assert_eq!(session.finished_view, FinishedScreenView::Results);

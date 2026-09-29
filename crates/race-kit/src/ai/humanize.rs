@@ -6,10 +6,10 @@
 //! kind of mistake it makes. `HumanTraits::none()` turns the layer off, and the controller then
 //! drives exactly as it did before spec 046.
 
-use tdrace_core::physics::car::{normalize_angle, Car};
-use tdrace_core::track::spline::{SplineProjection, TrackSpline};
+use arcade_race_core::track::spline::{SplineProjection, TrackSpline};
+use wheelbase::{normalize_angle, Car};
 
-use super::driver::LcgRng;
+use super::rng::LcgRng;
 use super::{DriverQuality, DrivingStyle};
 
 /// Curvature (1/m) above which the track counts as a corner (radius below 250 m).

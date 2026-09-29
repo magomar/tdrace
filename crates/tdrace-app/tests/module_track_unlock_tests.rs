@@ -22,8 +22,9 @@ fn modules() -> Vec<(&'static str, Box<dyn GameModule>)> {
 fn test_every_module_circuit_unlocks_by_max_level() {
     let mut never_unlock = Vec::new();
     for (module_id, module) in modules() {
+        let max_level = if module_id == "kart" { 6 } else { 5 };
         let mut progress = ModuleCareerProgress::default_for_module(1, module_id);
-        progress.level = 5;
+        progress.level = max_level;
         progress.sync_unlocks_for_level();
         for track in module.tracks() {
             if !progress.is_track_unlocked(track.id, false) {

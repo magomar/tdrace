@@ -66,7 +66,7 @@ fn test_random_car_assignment_variety_in_gt_race() {
     session.num_bots = 7;
     session.init_race();
 
-    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.world.vehicles.len(), 8);
     assert_eq!(session.car_visual_types.len(), 8);
 
     let opponent_cars: Vec<CarChoice> = session
@@ -142,7 +142,7 @@ fn test_car_visual_types_sync_with_grid_participants() {
     session.num_bots = 5;
     session.init_race();
 
-    assert_eq!(session.cars.len(), session.car_visual_types.len());
+    assert_eq!(session.world.vehicles.len(), session.car_visual_types.len());
     for (i, car_visual) in session.car_visual_types.iter().enumerate() {
         match car_visual {
             VehicleVisualType::TouringGT { gt_wing, .. } => {

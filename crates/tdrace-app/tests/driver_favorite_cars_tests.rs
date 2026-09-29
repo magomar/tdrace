@@ -141,16 +141,18 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
     ];
 
     for (mod_name, drivers) in modules {
+        let expected_tiers = if mod_name == "kart" { 6 } else { 5 };
         for driver in drivers {
             assert_eq!(
                 driver.favorite_cars.len(),
-                5,
-                "Driver '{}' in module '{}' must have 5 favorite cars (one per tier)",
+                expected_tiers,
+                "Driver '{}' in module '{}' must have {} favorite cars (one per tier)",
                 driver.name,
-                mod_name
+                mod_name,
+                expected_tiers
             );
 
-            for tier in 1..=5u8 {
+            for tier in 1..=expected_tiers as u8 {
                 let model_id = driver.favorite_car_for_discipline_and_tier(mod_name, tier);
                 assert!(
                     model_id.is_some(),
