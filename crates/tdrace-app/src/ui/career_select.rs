@@ -73,12 +73,20 @@ const MODALITY_CATALOG: &[ModalityMeta] = &[
         accent: Color::new(1.0, 0.40, 0.05, 1.0),
         default_series_name: "Extreme Off-Road Cup 2026",
     },
+    ModalityMeta {
+        id: "autocross",
+        title: "FIA AUTOCROSS",
+        subtitle: "Natural Unpaved Dirt & Buggy Racing",
+        accent: Color::new(1.0, 0.45, 0.05, 1.0),
+        default_series_name: "FIA Autocross World Series 2026",
+    },
 ];
 
 /// Short discipline label that fits the row badge ("extreme_offroad" is too long for it).
 fn module_badge_label(module_id: &str) -> String {
     match module_id {
         "extreme_offroad" => "OFF-ROAD".to_string(),
+        "autocross" => "AUTOCROSS".to_string(),
         other => other.to_uppercase(),
     }
 }
@@ -289,7 +297,7 @@ pub fn render_career_select_screen(
     };
     draw_rectangle(pill_x, pill_y, pill_w, pill_h, pill_bg);
     draw_rectangle_lines(pill_x, pill_y, pill_w, pill_h, 1.2, pill_fg);
-    let pill_text = format!("ACTIVE CAREERS: {}/5", active_count);
+    let pill_text = format!("ACTIVE CAREERS: {}/{}", active_count, MODALITY_CATALOG.len());
     fonts.draw_ui_bold(
         &pill_text,
         pill_x + scaler.s(12.0),

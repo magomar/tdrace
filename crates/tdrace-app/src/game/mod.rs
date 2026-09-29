@@ -10157,6 +10157,13 @@ impl RaceSession {
             return;
         }
 
+        // Quick Championship trigger for FIA Autocross (F key)
+        if self.active_module_id == "autocross" && is_key_pressed(KeyCode::F) {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.start_autocross_career_tier(1);
+            return;
+        }
+
         // Open Track Manager (T key)
         if is_key_pressed(KeyCode::T) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -10270,6 +10277,10 @@ impl RaceSession {
                 }
                 "kart" => {
                     self.init_race();
+                    return;
+                }
+                "autocross" => {
+                    self.start_autocross_career_tier(1);
                     return;
                 }
                 _ => {}
@@ -12673,6 +12684,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "autocross" => ("FIA AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
                 let active_tracks = self.track_manager.module_catalog_tracks(self.active_module_id);
@@ -12744,6 +12756,7 @@ impl RaceSession {
                     "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
                     "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                    "autocross" => ("FIA AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                 };
                 let cp_ref = if self.has_track_career_locks() {

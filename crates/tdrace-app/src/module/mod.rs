@@ -1,3 +1,4 @@
+pub mod autocross;
 pub mod classic;
 pub mod extreme_offroad;
 pub mod gt;
@@ -560,6 +561,7 @@ pub trait GameModule: Send + Sync + 'static {
     }
 }
 
+pub use autocross::AutocrossGameModule;
 pub use classic::ClassicGameModule;
 pub use extreme_offroad::ExtremeOffRoadModule;
 pub use gt::GtWorldChallengeModule;
@@ -807,5 +809,39 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_autocross_game_module() {
+        let ax = AutocrossGameModule::new();
+        assert_eq!(ax.id(), "autocross");
+        assert_eq!(ax.title(), "FIA AUTOCROSS");
+        assert_eq!(ax.default_vehicle_id(), "autocross_lifelive_tn5_junior");
+        assert_eq!(ax.default_track_id(), "nova_paka_ax");
+        assert_eq!(ax.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
+        assert_eq!(ax.tracks().len(), 17);
+        assert_eq!(ax.drivers().len(), 8);
+        assert!(!ax.vehicles().is_empty());
+
+        for track_def in ax.tracks() {
+            assert!(track_def.default_laps >= 3 && track_def.default_laps <= 7);
+            let track = tdrace_core::catalog::official_track("autocross", track_def.id);
+            assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
+            assert!(track.grid_positions.len() >= 12, "Grid slots check for {}", track_def.id);
+
+            let diagnostics = tdrace_core::track::validation::validate_track(&track);
+            let errors: Vec<_> = diagnostics
+                .into_iter()
+                .filter(|d| d.severity == tdrace_core::track::validation::ValidationSeverity::Error)
+                .collect();
+            assert!(
+                errors.is_empty(),
+                "Autocross track '{}' ({}) had validation errors: {:?}",
+                track.name,
+                track_def.id,
+                errors
+            );
+        }
+    }
 }
+
 

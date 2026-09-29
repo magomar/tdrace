@@ -112,6 +112,7 @@ impl TrackChoice {
                         || path.starts_with("kart/")
                         || path.starts_with("nascar/")
                         || path.starts_with("extreme_offroad/")
+                        || path.starts_with("autocross/")
                         || path.starts_with("classic/"))
             }
         }
@@ -130,7 +131,7 @@ fn official_circuit(id: &str) -> Option<&'static tdrace_core::catalog::EmbeddedC
 
 /// Module of a custom choice: from its `<module>/` path, else from the official catalog when the id is official.
 fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
-    ["rally", "gt", "kart", "nascar", "extreme_offroad"]
+    ["rally", "gt", "kart", "nascar", "extreme_offroad", "autocross"]
         .into_iter()
         .find(|m| path.starts_with(&format!("{}/", m)) || path.contains(&format!("/{}/", m)))
         .or_else(|| tdrace_core::catalog::find(id, None).map(|c| c.module).filter(|m| *m != "classic"))
@@ -144,6 +145,7 @@ fn module_label(module: &str) -> &'static str {
         "kart" => "KARTING",
         "nascar" => "NASCAR CUP",
         "extreme_offroad" => "EXTREME OFF-ROAD",
+        "autocross" => "FIA AUTOCROSS",
         _ => "CLASSIC MOTORSPORT",
     }
 }
@@ -209,6 +211,8 @@ fn resolve_track_for_menu_with_dir_uncached(
                 Some("classic")
             } else if path.starts_with("extreme_offroad/") {
                 Some("extreme_offroad")
+            } else if path.starts_with("autocross/") {
+                Some("autocross")
             } else {
                 None
             }

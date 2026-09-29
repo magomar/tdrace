@@ -75,6 +75,7 @@ pub fn render_garage_screen(
         "kart" => ("KARTING & MICRO-RACERS", Palette::NEON_GREEN),
         "nascar" => ("NASCAR STOCK CAR RACING", Palette::YELLOW),
         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Palette::NEON_ORANGE),
+        "autocross" => ("FIA AUTOCROSS", Palette::NEON_ORANGE),
         _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_GOLD),
     };
 
@@ -583,16 +584,17 @@ pub fn render_garage_screen(
     );
 }
 
-/// The 5 motorsport modules supported in the Fleet Gallery.
+/// The 6 motorsport modules supported in the Fleet Gallery.
 pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("gt", "GT"),
     ("rally", "RALLYCROSS"),
     ("kart", "KART"),
     ("nascar", "NASCAR"),
     ("extreme_offroad", "OFF-ROAD"),
+    ("autocross", "AUTOCROSS"),
 ];
 
-/// Maps a gallery filter index (0..5) to its corresponding module identifier.
+/// Maps a gallery filter index (0..6) to its corresponding module identifier.
 pub fn gallery_filter_to_module(idx: usize) -> &'static str {
     match idx {
         0 => "gt",
@@ -600,11 +602,12 @@ pub fn gallery_filter_to_module(idx: usize) -> &'static str {
         2 => "kart",
         3 => "nascar",
         4 => "extreme_offroad",
+        5 => "autocross",
         _ => "gt",
     }
 }
 
-/// Maps a module identifier string to its gallery filter index (0..4).
+/// Maps a module identifier string to its gallery filter index (0..5).
 pub fn module_to_gallery_filter(module_id: &str) -> usize {
     match module_id {
         "gt" | "gt_challenge" => 0,
@@ -612,6 +615,7 @@ pub fn module_to_gallery_filter(module_id: &str) -> usize {
         "kart" => 2,
         "nascar" => 3,
         "extreme_offroad" => 4,
+        "autocross" => 5,
         _ => 0,
     }
 }
