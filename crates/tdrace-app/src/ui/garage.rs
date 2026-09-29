@@ -113,7 +113,15 @@ pub fn render_garage_screen(
 
     // In LAN the module is fixed to the host discipline, so its key hint is hidden.
     let module_keys = if module_locked { "" } else { "  [◄ 1..5 ►]" };
-    let tier_label = if garage_tier > 5 { "UNRANKED".to_string() } else { format!("TIER {}", garage_tier) };
+    let max_ranked_tier: u8 = if active_module_id == "rally" { 6 } else { 5 };
+    let is_heritage_tier = active_module_id == "rally" && garage_tier == 7;
+    let tier_label = if is_heritage_tier {
+        "HERITAGE".to_string()
+    } else if garage_tier > max_ranked_tier {
+        "UNRANKED".to_string()
+    } else {
+        format!("TIER {}", garage_tier)
+    };
     let module_subtitle = if active_module_id == "classic" {
         "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
     } else if let Some(cp) = career_progress {
@@ -152,7 +160,7 @@ pub fn render_garage_screen(
     draw_circle(center_x, center_y - scaler.s(10.0), scaler.s(150.0), Color::new(0.12, 0.22, 0.35, 0.18));
     cabinet::ui::scaler::end_clip_rect();
 
-    let is_tier_unlocked = active_module_id == "classic" || is_dev_mode || garage_tier as u32 <= unlocked_tier;
+    let is_tier_unlocked = active_module_id == "classic" || is_dev_mode || is_heritage_tier || garage_tier as u32 <= unlocked_tier;
 
     // Hero Stage Header Badges
     let view_mode_str = match garage_view_mode {
@@ -323,8 +331,14 @@ pub fn render_garage_screen(
         let num_str = format!("#{}", i + 1);
         fonts.draw_ui_bold(&num_str, cx + scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(9.5), Palette::NEON_CYAN);
 
-        if active_module_id == "classic" {
-            fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
+        if active_module_id == "classic" || (active_module_id == "rally" && model.tier == 7) {
+            fonts.draw_ui_bold(
+                if active_module_id == "rally" && model.tier == 7 { "HERITAGE" } else { "OWNED" },
+                cx + cw - scaler.s(58.0),
+                cy + scaler.s(15.0),
+                scaler.font_s(8.5),
+                Palette::NEON_GOLD,
+            );
         } else if let Some(cp) = career_progress {
             let is_unlocked = is_dev_mode || cp.is_car_unlocked(model.id, is_dev_mode);
             if is_unlocked {
@@ -455,8 +469,10 @@ pub fn render_garage_screen(
 
     let active_car_id = active_model.map(|m| m.id).unwrap_or("");
     let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
+    let is_car_heritage = active_module_id == "rally" && active_car_tier == 7;
     let is_car_unlocked = active_module_id == "classic"
         || is_dev_mode
+        || is_car_heritage
         || career_progress
             .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
             .unwrap_or(is_tier_unlocked);
@@ -464,6 +480,7 @@ pub fn render_garage_screen(
     let cost = ModuleCareerProgress::car_credit_cost(active_car_tier);
     let can_afford = available_credits >= cost;
     let tier_eligible = is_dev_mode
+        || is_car_heritage
         || career_progress
             .map_or(is_tier_unlocked, |cp| cp.level >= active_car_tier as u32);
 
@@ -484,7 +501,11 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
         fonts.draw_ui_regular_centered(
-            "Status: Owned and homologated for active module",
+            if is_car_heritage {
+                "Status: Heritage Class — homologated for Heritage Series & Quick Race"
+            } else {
+                "Status: Owned and homologated for active module"
+            },
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(38.0),
             scaler.font_s(10.0),
@@ -494,7 +515,7 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.35, 0.10, 0.10, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::RED);
 
-        let lock_title = if active_car_tier > 5 {
+        let lock_title = if active_car_tier > max_ranked_tier {
             "🔒 UNRANKED VEHICLE — DEV MODE ONLY".to_string()
         } else {
             format!("🔒 VEHICLE LOCKED — CAREER TIER {} REQUIRED", active_car_tier)
@@ -506,8 +527,8 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::RED,
         );
-        let lock_hint = if active_car_tier > 5 {
-            "Parked outside the five career tiers; drive it in dev mode"
+        let lock_hint = if active_car_tier > max_ranked_tier {
+            "Parked outside the career tiers; drive it in dev mode"
         } else {
             "Advance career tier by earning championship podiums to unlock purchasing"
         };
@@ -698,7 +719,8 @@ fn render_fleet_gallery(
         let (cx, cy, cell_w, cell_h) = garage_gallery_card_rect(sw, sh, i);
 
         let is_sel = i == sel_idx;
-        let is_unlocked = is_dev_mode || (model.tier as u32) <= unlocked_tier;
+        let is_heritage = model.module_id == "rally" && model.tier == 7;
+        let is_unlocked = is_dev_mode || is_heritage || (model.tier as u32) <= unlocked_tier;
         let card_bg = if is_sel {
             Palette::UI_CARD_BG_HOVER
         } else {
@@ -724,7 +746,8 @@ fn render_fleet_gallery(
 
         // Name and stats
         fonts.draw_ui_bold(model.name, cx + scaler.s(8.0), cy + scaler.s(62.0), scaler.font_s(10.0), Palette::WHITE);
-        let sub = format!("T{} • {} BHP • {} kg", model.tier, model.bhp, model.weight_kg);
+        let tier_tag = if is_heritage { "HERITAGE".to_string() } else { format!("T{}", model.tier) };
+        let sub = format!("{} • {} BHP • {} kg", tier_tag, model.bhp, model.weight_kg);
         fonts.draw_ui_regular(&sub, cx + scaler.s(8.0), cy + scaler.s(76.0), scaler.font_s(8.5), Palette::UI_TEXT_MUTED);
 
         if !is_unlocked {

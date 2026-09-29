@@ -1,6 +1,6 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: RX1e Electric Championship (Tier 4)
+# Rallycross Career Mode: RX1e Electric Championship (Tier 5)
 # ==============================================================================
 
 [championship]
@@ -8,7 +8,7 @@ id = "rally_rx1e_electric_championship"
 name = "RX1e Electric Championship"
 description = "680 BHP all-electric RX1e supercars with instant torque, tackling 10 World RX mixed-surface circuits."
 module_id = "rally"
-tier = 4
+tier = 5
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "pro"
@@ -76,8 +76,8 @@ laps = 5
 
 [[rounds]]
 order = 10
-track_id = "lydden_hill"
-name = "Lydden Hill Race Circuit"
+track_id = "silverstone_rx"
+name = "Silverstone Circuit RX"
 laps = 5
 
 [[drivers]]

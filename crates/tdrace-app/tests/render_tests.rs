@@ -290,7 +290,7 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
 fn test_all_80_motorsport_cars_catalog_integrity() {
     use tdrace_app::catalog::ALL_REAL_CARS;
 
-    assert_eq!(ALL_REAL_CARS.len(), 89, "Catalog must contain exactly 89 authentic motorsport vehicles");
+    assert_eq!(ALL_REAL_CARS.len(), 95, "Catalog must contain exactly 95 authentic motorsport vehicles");
 
     let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
     for m in modules {
@@ -299,6 +299,8 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
             assert_eq!(count, 20, "GT module must contain 20 vehicles (4 per tier)");
         } else if m == "extreme_offroad" {
             assert_eq!(count, 21, "Extreme Off-Road must contain 15 tiered + 6 unranked vehicles");
+        } else if m == "rally" {
+            assert_eq!(count, 21, "Rallycross must contain 18 ranked (3 x 6 tiers) + 3 heritage vehicles");
         } else if m == "kart" {
             assert_eq!(count, 18, "Kart module must contain 18 authentic vehicles (3 per tier x 6 tiers)");
         } else {
@@ -312,9 +314,9 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
         assert!(!car.name.is_empty(), "Car name cannot be empty");
-        let max_tier = if car.module_id == "extreme_offroad" {
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
             7
-        } else if car.module_id == "rally" || car.module_id == "kart" {
+        } else if car.module_id == "kart" {
             6
         } else {
             5

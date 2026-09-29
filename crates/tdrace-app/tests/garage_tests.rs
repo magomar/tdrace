@@ -107,8 +107,8 @@ fn test_garage_shows_all_module_models_across_tiers() {
     let global_models = get_all_models();
     assert_eq!(
         global_models.len(),
-        89,
-        "Expected exactly 89 real car models in catalog, got {}",
+        95,
+        "Expected exactly 95 real car models in catalog, got {}",
         global_models.len()
     );
 }
@@ -116,7 +116,7 @@ fn test_garage_shows_all_module_models_across_tiers() {
 #[test]
 fn test_all_80_real_cars_attributes_and_data_integrity() {
     let global_models = get_all_models();
-    assert_eq!(global_models.len(), 89);
+    assert_eq!(global_models.len(), 95);
 
     let mut seen_ids = std::collections::HashSet::new();
     let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
@@ -136,8 +136,8 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
             car.module_id,
             car.id
         );
-        // Extreme Off-Road parks the Rally Raid T1+ and SST cars at unranked tiers 6 and 7 (spec 048), Kart has 6 tiers
-        let max_tier = if car.module_id == "extreme_offroad" {
+        // Extreme Off-Road (spec 048) and Rallycross (spec 051) have vehicles up to tier 7, Kart has 6 tiers
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
             7
         } else if car.module_id == "kart" {
             6
