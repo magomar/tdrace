@@ -104,42 +104,42 @@ No data format changes.
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: A crate outside the repo builds against the tag**
-  - [ ] **Given** a scratch crate outside the repo that depends on `race-kit` and `race-ui` by `git` and `tag = "platform-v0.1.0"` (the local repo URL while the tag is not pushed)
-  - [ ] **When** `cargo build` runs in it with no `tracks/` checkout in its own folder
-  - [ ] **Then** it builds, and a program that creates a `RaceWorld` and a `RaceCamera` runs
+  - [x] **Given** a scratch crate outside the repo that depends on `race-kit` and `race-ui` by `git` and `tag = "platform-v0.1.0"` (the local repo URL while the tag is not pushed)
+  - [x] **When** `cargo build` runs in it with no `tracks/` checkout in its own folder
+  - [x] **Then** it builds, and a program that creates a `RaceWorld` and a `RaceCamera` runs
 
 - **Scenario: The minimal race example runs**
-  - [ ] **Given** the `minimal_race` example
-  - [ ] **When** Mario runs `cargo run -p race-ui --example minimal_race`
-  - [ ] **Then** a window shows the oval, 4 cars racing with a follow camera, dust or skid marks, a lap timer and a minimap, and the race ends after 3 laps
+  - [x] **Given** the `minimal_race` example
+  - [x] **When** Mario runs `cargo run -p race-ui --example minimal_race`
+  - [x] **Then** a window shows the oval, 4 cars racing with a follow camera, dust or skid marks, a lap timer and a minimap, and the race ends after 3 laps
 
 - **Scenario: The example uses only the shared crates**
-  - [ ] **Given** `crates/race-ui/examples/minimal_race.rs`
-  - [ ] **When** you search it for `tdrace`
-  - [ ] **Then** there is no match
+  - [x] **Given** `crates/race-ui/examples/minimal_race.rs`
+  - [x] **When** you search it for `tdrace`
+  - [x] **Then** there is no match
 
 - **Scenario: A game names its own gamepad profile folder**
-  - [ ] **Given** `set_app_id("chariot")`
-  - [ ] **When** `candidate_profile_paths` runs
-  - [ ] **Then** the list has `../chariot/gamepad_profile.json` and `~/.config/chariot/gamepad_profile.json`, and no `tdrace` or `asteroids` entry. Without `set_app_id` the list is the same as before this spec.
+  - [x] **Given** `set_app_id("chariot")`
+  - [x] **When** `candidate_profile_paths` runs
+  - [x] **Then** the list has `../chariot/gamepad_profile.json` and `~/.config/chariot/gamepad_profile.json`, and no `tdrace` or `asteroids` entry. Without `set_app_id` the list is the same as before this spec.
 
 - **Scenario: tdrace is unchanged**
-  - [ ] **Given** the golden hashes recorded for debug and release on macOS aarch64
-  - [ ] **When** `golden_sim`, `golden_world` and `golden_session` run
-  - [ ] **Then** all of them keep their recorded hashes
+  - [x] **Given** the golden hashes recorded for debug and release on macOS aarch64
+  - [x] **When** `golden_sim`, `golden_world` and `golden_session` run
+  - [x] **Then** all of them keep their recorded hashes
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/race-kit/README.md` -> what the crate does, the dependency line, the step loop.
-- `[ ]` `crates/race-ui/README.md` -> the draw order, the camera, the asset root.
-- `[ ]` `crates/race-ui/examples/minimal_race.rs` -> a window with a 4-car oval race.
-- `[ ]` `crates/race-ui/Cargo.toml` -> `race-kit` as a dev-dependency.
-- `[ ]` `crates/cabinet/src/input/gamepad.rs` -> `set_app_id` and the app-specific search list, with tests.
-- `[ ]` `docs/platform/CHANGELOG.md` -> the first platform release entry.
-- `[ ]` git tag `platform-v0.1.0` -> created locally. Mario pushes it.
+- `[x]` `crates/race-kit/README.md` -> what the crate does, the dependency line, the step loop.
+- `[x]` `crates/race-ui/README.md` -> the draw order, the camera, the asset root.
+- `[x]` `crates/race-ui/examples/minimal_race.rs` -> a window with a 4-car oval race.
+- `[x]` `crates/race-ui/Cargo.toml` -> `race-kit` as a dev-dependency.
+- `[x]` `crates/cabinet/src/input/gamepad.rs` -> `set_app_id` and the app-specific search list, with tests.
+- `[x]` `docs/platform/CHANGELOG.md` -> the first platform release entry.
+- `[x]` git tag `platform-v0.1.0` -> created locally. Mario pushes it.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 059: Publish-Ready Shared Crates*.
