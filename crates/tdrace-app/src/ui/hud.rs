@@ -354,6 +354,19 @@ fn render_warning_alerts(
 
 /// Start countdown overlay (3, 2, 1, GO!).
 fn render_countdown(fonts: &Fonts, scaler: &UiScaler, sw: f32, sh: f32, time_remaining: f32) {
+    // LAN: the host has not scheduled the green light yet (see `LAN_WAITING_COUNTDOWN`).
+    if time_remaining >= crate::game::LAN_WAITING_COUNTDOWN {
+        fonts.draw_display_centered_with_shadow(
+            "WAITING FOR RACERS",
+            sw * 0.5,
+            sh * 0.45,
+            scaler.font_s(40.0),
+            Palette::NEON_CYAN,
+            Color::new(0.0, 0.0, 0.0, 0.7),
+            scaler.s(3.0),
+        );
+        return;
+    }
     let (text, color) = if time_remaining > 2.0 {
         ("3", Palette::RED)
     } else if time_remaining > 1.0 {

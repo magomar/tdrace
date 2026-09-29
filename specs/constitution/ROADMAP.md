@@ -55,6 +55,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Championship Trophy Badges & Player Profile Trophy Cabinet](../027_championship_trophy_badges_and_player_profile_cabinet.md)**: Comprehensive vector iconography system for championship podium badges (Gold, Silver, Bronze) with tier stars (1-5), modality-specific motorsport DNA across 5 disciplines, and an interactive Trophy Cabinet UI within the Player Profile.
 - `[x]` **[Career System Wiki Reference and Progression Mechanics](../030_career_system_wiki_reference_and_progression_mechanics.md)**: Comprehensive technical reference and public wiki documentation of the 5-tier career system, championship scoring matrices, XP economy, car acquisition, and circuit calendars.
 - `[x]` **[Dual-Currency Economy and Branching Career Progression Architecture](../053_dual_currency_economy_and_branching_career_progression_architecture.md)**: Architectural blueprint establishing a decoupled dual-currency economy (XP + Credits), multi-championship branching paths per tier, and non-linear career progression.
+- `[ ]` **[Classic Academy and Grassroots Career Onboarding](../060_classic_academy_and_grassroots_career_onboarding.md)**: Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase.
 
 ### Phase 6: Next-Gen Vehicle Dynamics & Pre-Baked Visual Kinematics (Priority: Medium)
 - `[x]` **[Top-Down Pre-Baked Vehicle Wheel Steering Animations](../026_topdown_wheel_steering_animations.md)**: Multi-layer sprite decomposition and Ackermann wheel steering animation architecture for pre-baked high-resolution 2D top-down vehicles with proof-of-concept on classic_kart.
@@ -80,7 +81,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 - `[x]` **[`Body2D` Trait](../054_body2d_trait_for_vehiclegeneric_collision_and_progress.md)**: Collision, LIDAR, progress tracking and pit checks work for any rigid body, not only `wheelbase::Car`.
 - `[x]` **[`race-kit` Headless Race World](../056_racekit_headless_race_world.md)**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
 - `[x]` **[`race-ui` Rendering, Camera, Effects & HUD Primitives](../058_raceui_rendering_camera_effects_and_hud_primitives.md)**: Track renderers, race camera, particles and skid marks, curve indicator and HUD widgets outside `tdrace-app`.
-- `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
+- `[x]` **[Publish-Ready Shared Crates](../059_publishready_shared_crates.md)**: Tagged crates that a separate repo can build without the `tracks/` submodule.
 - `[ ]` **Chariot Vehicle Model & Chariot Game**: Horse-drawn chariot physics with stamina, wrecks and overturns, multi-part vehicle sprites, and the `chariot-app` repo.
 - `[ ]` **Open Point-to-Point Courses**: Start and finish gates, a lap-free tracker, and open-spline bake, grid and validation.
 - `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries, a per-chunk mesh cache, and origin rebasing.
@@ -105,6 +106,7 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 
 ### 1. Multiplayer Networking & Online Lobbies
 - `[x]` **[Local Network LAN Multiplayer & Cabinet Arcade Lobby](../036_local_network_lan_multiplayer_and_cabinet_lobby.md)**: Zero-configuration local network multiplayer architecture, authoritative UDP host-client netcode, automatic LAN beacon discovery, direct IP connect, and reusable Cabinet lobby shell.
+- `[ ]` **[Robust LAN Race Synchronization with Owner-Authoritative Cars](../044_robust_lan_race_synchronization_with_ownerauthoritative_cars.md)**: Owner-authoritative car states in compact binary packets, host relay and race referee, interpolated remote cars, reliable lobby and race-control messages, a roster fixed at launch, and pause/finish/disconnect handling that keeps the session alive.
 - **Authoritative Relay & Netcode**: Client-server architecture with dead-reckoning prediction, delta compression, and rollback collision arbitration.
 - **Matchmaking & Lobbies**: Dedicated room lobbies with synchronized car selection and spectator director slots.
 

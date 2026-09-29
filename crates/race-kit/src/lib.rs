@@ -14,3 +14,8 @@ pub mod world;
 pub use events::{DnfCause, RaceEvent};
 pub use vehicle::{CanopyBrush, DriveControls, Vehicle};
 pub use world::{CollisionParams, FinishState, ParticipantResult, RaceFormat, RaceRules, RaceWorld};
+
+/// Compiles the README code as a doc test.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;

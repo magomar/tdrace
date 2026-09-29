@@ -203,7 +203,7 @@ impl<V: Vehicle> RaceWorld<V> {
         }
 
         // Car-to-car collisions with momentum exchange and penetration pushback
-        if n_cars > 1 {
+        if n_cars > 1 && self.rules.collision.iterations > 0 {
             let c = self.rules.collision;
             for ev in resolve_multi_car_collisions(&mut self.vehicles, c.restitution, c.friction, c.iterations) {
                 self.events.push(RaceEvent::VehicleImpact(ev));
