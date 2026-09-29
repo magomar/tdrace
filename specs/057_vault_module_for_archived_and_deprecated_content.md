@@ -275,7 +275,7 @@ Automated CI gates ensure The Vault remains in working order:
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[x]` `specs/056_vault_module_for_archived_and_deprecated_content.md` -> Governs the specification contract.
+- `[x]` `specs/057_vault_module_for_archived_and_deprecated_content.md` -> Governs the specification contract.
 - `[x]` `specs/constitution/ROADMAP.md` -> Registers the milestone under Technical Debt & Maintenance.
 - `[x]` `crates/tdrace-app/src/module/vault.rs` -> Implements `VaultGameModule` adhering to `GameModule` trait.
 - `[x]` `crates/tdrace-app/src/module/mod.rs` -> Exports `pub mod vault; pub use vault::VaultGameModule;`.
@@ -286,5 +286,5 @@ Automated CI gates ensure The Vault remains in working order:
 - `[x]` `tracks/.track_order.json` -> Registers `"vault"` array for compile-time embedding.
 
 ### Verification Assertions
-- `crates/tdrace-app/src/module/vault.rs` references `specs/056_vault_module_for_archived_and_deprecated_content.md` in its module header docstring.
+- `crates/tdrace-app/src/module/vault.rs` references `specs/057_vault_module_for_archived_and_deprecated_content.md` in its module header docstring.
 - All acceptance criteria pass with zero errors in `keel validate`.

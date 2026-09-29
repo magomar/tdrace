@@ -1,4 +1,4 @@
-//! Verification tests for Spec 056: Vault Module for Archived and Deprecated Content.
+//! Verification tests for Spec 057: Vault Module for Archived and Deprecated Content.
 //!
 //! Covers:
 //! 1. `VaultGameModule` adhering to `GameModule` trait, metadata, vehicles, and rulesets.

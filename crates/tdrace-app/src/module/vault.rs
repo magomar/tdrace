@@ -1,6 +1,6 @@
 //! The Vault Game Module for Archived and Deprecated Material.
 //!
-//! Governed by `specs/056_vault_module_for_archived_and_deprecated_content.md`.
+//! Governed by `specs/057_vault_module_for_archived_and_deprecated_content.md`.
 //! Serves as an isolated cold-storage repository for decommissioned vehicles,
 //! legacy test circuits, and experimental staging rulesets.
 
