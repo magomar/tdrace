@@ -34,6 +34,7 @@ Both parts are still typed to `wheelbase::Car`.
 - `forward_vector()` and `right_vector()`
 - `config.top_speed_mps` (`ai/mod.rs:617,658`)
 - `config.tire.grip` (`ai/mod.rs:644,648`)
+- a fixed planning grip `mu = 0.78` for corner speeds (`ai/mod.rs:640`), tuned for cars. Found while driving the tdchariots chariot (0.55 g on sand): every bot reached the first turn too fast and flipped. `planning_grip()` makes it per vehicle, with 0.78 as the default.
 
 **Effects:** `EffectsManager::update(&[Car], …)` (`crates/race-ui/src/fx/mod.rs:52`) and `SkidmarkBuffer::update_for_cars(&[Car], …)` (`fx/skidmarks.rs:87`). They read:
 - `wheel_positions_world()`, the four `state.wheels` slip records, and `right_vector()`
@@ -50,6 +51,7 @@ pub trait BotVehicle: Body2D {
     fn right_vector(&self) -> Vec2;      // Car: Car::right_vector
     fn top_speed_mps(&self) -> f32;      // Car: config.top_speed_mps
     fn grip(&self) -> f32;               // Car: config.tire.grip
+    fn planning_grip(&self) -> f32 { 0.78 } // corner-speed planning grip; Car keeps the default
 }
 
 // race-ui/src/fx/mod.rs

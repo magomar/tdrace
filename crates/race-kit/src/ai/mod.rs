@@ -23,6 +23,11 @@ pub trait BotVehicle: Body2D {
     fn top_speed_mps(&self) -> f32;
     /// Tyre (or hoof) grip coefficient used for braking and cornering limits.
     fn grip(&self) -> f32;
+    /// Grip the controller plans its corner speeds with (in g). The default is the value tuned for
+    /// cars; a vehicle with much less grip returns its own, somewhat below [`BotVehicle::grip`].
+    fn planning_grip(&self) -> f32 {
+        0.78
+    }
 }
 
 impl BotVehicle for Car {
@@ -637,7 +642,7 @@ impl BotAiDriver {
         // 3. Physically Exact Autonomous Racing Braking Envelope: v_allowable = sqrt(v_apex^2 + 2*a_brake*d)
         let max_braking_lookahead = (lookahead_dist + (car_speed * car_speed) / 7.5).clamp(35.0, 220.0);
         let a_brake = 6.0 * self.profile.brake_margin; // safe braking deceleration m/s²
-        let mu = 0.78;
+        let mu = car.planning_grip();
         let g = 9.81;
 
         let mut target_speed = car.top_speed_mps();
