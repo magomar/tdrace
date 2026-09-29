@@ -305,9 +305,15 @@ impl GamepadManager {
 
     /// Finds and parses the best-matching profile for the specified device, prioritizing matched devices over generic profiles.
     pub fn find_and_load_profile_for_device(target_device: Option<&str>) -> Option<CustomGamepadProfile> {
+        Self::find_and_load_profile_in(&Self::candidate_profile_paths(), target_device)
+    }
+
+    /// Picks the best profile for `target_device` among `paths`: a device-name match first, then the
+    /// newest file.
+    pub fn find_and_load_profile_in(paths: &[std::path::PathBuf], target_device: Option<&str>) -> Option<CustomGamepadProfile> {
         let mut candidates = Vec::new();
 
-        for path in Self::candidate_profile_paths() {
+        for path in paths {
             if path.exists() {
                 if let Ok(metadata) = std::fs::metadata(&path) {
                     if let Ok(modified) = metadata.modified() {
@@ -920,7 +926,20 @@ mod tests {
 
     #[test]
     fn test_custom_gamepad_profile_loading() {
-        let profile = GamepadManager::find_and_load_profile_for_device(Some("shanwan Twin USB Joystick"));
+        // The repo's own profile (not whatever sits in this machine's ~/.config), beside a newer
+        // generic one: the device-name match must win over the newer file.
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../gamepad_profile.json");
+        let dir = std::env::temp_dir().join(format!("cabinet_profile_loading_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let shanwan = dir.join("shanwan.json");
+        let generic = dir.join("generic.json");
+        std::fs::copy(&fixture, &shanwan).expect("repo gamepad_profile.json fixture");
+        let generic_profile = CustomGamepadProfile { device_name: "Standard Gamepad".to_string(), ..Default::default() };
+        std::fs::write(&generic, serde_json::to_string(&generic_profile).unwrap()).unwrap();
+
+        let profile = GamepadManager::find_and_load_profile_in(&[shanwan, generic], Some("shanwan Twin USB Joystick"));
+        let _ = std::fs::remove_dir_all(&dir);
         assert!(profile.is_some(), "Custom profile should be found in candidate paths");
         let prof = profile.unwrap();
         assert_eq!(prof.device_name, "shanwan Twin USB Joystick");
