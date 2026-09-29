@@ -4,6 +4,7 @@ template: architecture
 title: "Body2D Trait for Vehicle-Generic Collision and Progress"
 description: "Phase 1 of spec 049: a Body2D trait in arcade-race-core so wall and car-car collision, LIDAR, the progress tracker and pit checks work for any rigid body (a chariot team, not only wheelbase::Car), with bit-identical results for today's cars."
 status: in_progress
+receipt: "docs/receipts/spec-050-receipt.md"
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T22:30:00Z }
 verified: { by: human:mario, at: 2026-09-29T08:00:00Z }
