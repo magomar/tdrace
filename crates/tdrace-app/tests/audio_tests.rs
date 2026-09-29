@@ -183,7 +183,14 @@ fn test_audio_settings_and_mixer_gain() {
 #[test]
 fn test_race_session_audio_wiring_and_countdown_state() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: tdrace_app::ui::menu::ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
     assert_eq!(session.audio.settings.is_muted, false);
 
     // Initial race countdown setup

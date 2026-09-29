@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::Path;
-use tdrace_app::game::{GameState, RaceSession};
+use tdrace_app::game::{GameState, ModalityCategory, RaceSession};
 use tdrace_app::track_manager::{ModuleFilter, TrackManager};
 use tdrace_app::ui::menu::TrackChoice;
 use tdrace_app::ui::track_manager_ui::{TrackManagerModal, TrackManagerTab};
@@ -251,8 +251,15 @@ fn test_race_session_with_track_manager_flow() {
     let mut session = RaceSession::default();
     session.track_manager = TrackManager::new(&temp_dir);
 
-    // 1. Initial State: ModuleSelect (First Screen)
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    // 1. Initial State: ModalitySelect (First Screen)
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 
     // 2. Transition to Track Manager
     session.state = GameState::TrackManager {

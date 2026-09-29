@@ -1,3 +1,4 @@
+// Spec reference: specs/066_navigation_reorganization_category_circuit_filter_and_tiered_career_championships.md
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::input::KeyCode;
@@ -231,12 +232,13 @@ use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
 use crate::ui::race_stats::render_race_stats_screen;
 use crate::ui::hud::{format_lap_time, render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 use crate::ui::menu::{
-    render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
+    category_pill_rect, render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
     render_modality_select_screen, render_module_select_menu, render_pause_menu,
     render_results_screen, render_track_select_menu, resolve_predefined_car_for_track,
-    resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus, ModalityCategory, ModalityItem,
-    ModalityModal, RaceResultEntry, TrackCatalogFilter, TrackChoice,
+    resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus,
+    RaceResultEntry, TrackCatalogFilter, TrackChoice,
 };
+pub use crate::ui::menu::{MenuCategoryFilter, ModalityCategory, ModalityItem, ModalityModal};
 use crate::ui::profile_ui::{
     render_player_roster_manager_screen, render_profile_create_screen, render_profile_manager_screen,
     ProfileFocusArea,
@@ -675,6 +677,7 @@ pub struct RaceSession {
     // Menu selection cursor & 2D navigation state
     pub menu_origin: MenuOrigin,
     pub menu_focused_panel: MenuPanelFocus,
+    pub menu_category_filter: MenuCategoryFilter,
     pub menu_track_filter: TrackCatalogFilter,
     pub menu_track_idx: usize,
     pub menu_car_idx: usize,
@@ -697,6 +700,8 @@ pub struct RaceSession {
     pub assist_profile_p2: AssistProfile,
     pub show_exit_confirm: bool,
     pub exit_confirm_modal: Option<UniversalConfirmModal>,
+    pub career_replay_modal: Option<UniversalConfirmModal>,
+    pub pending_replay_series: Option<(String, String)>,
     pub settings_modal: Option<ArcadeSettingsModal>,
     pub circuit_viewer_state: Option<CircuitViewerState>,
 
@@ -817,7 +822,11 @@ impl RaceSession {
         visibility_options.bot_nameplates = bot_nameplates_pref;
 
         let mut session = Self {
-            state: GameState::ModuleSelect { selected_idx: 0 },
+            state: GameState::ModalitySelect {
+                category: ModalityCategory::SinglePlayer,
+                selected_idx: 0,
+                modal: None,
+            },
             track,
             track_choice,
             track_manager,
@@ -929,6 +938,7 @@ impl RaceSession {
 
             menu_origin: MenuOrigin::ModalitySelect,
             menu_focused_panel: MenuPanelFocus::LeftTracks,
+            menu_category_filter: MenuCategoryFilter::All,
             menu_track_filter: TrackCatalogFilter::Presets,
             menu_track_idx: 0,
             menu_car_idx: 0,
@@ -944,6 +954,8 @@ impl RaceSession {
             gamepad_mapper_status: None,
             show_exit_confirm: false,
             exit_confirm_modal: None,
+            career_replay_modal: None,
+            pending_replay_series: None,
             settings_modal: None,
             circuit_viewer_state: None,
             editor_state: None,
@@ -992,7 +1004,11 @@ impl RaceSession {
         session.refresh_profiles_and_stats();
         session.refresh_hof_entries();
         session.init_race();
-        session.state = GameState::ModuleSelect { selected_idx: 0 }; // Start in Grand Hub module select screen
+        session.state = GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }; // Spec 066: Start directly in ModalitySelect screen
         session
     }
 
@@ -1599,10 +1615,38 @@ impl RaceSession {
         if self.is_dev_mode() {
             return true;
         }
-        if self.has_track_career_locks() {
-            self.active_career_progress.is_track_unlocked(track_id, self.is_dev_mode())
+        let track_module = if let Some(circuit) = tdrace_core::catalog::find(track_id, None) {
+            Some(circuit.module)
+        } else if let Some(info) = self.track_manager.custom_track_info(track_id) {
+            info.module_id.as_deref().or_else(|| info.modules.first().map(|s| s.as_str()))
         } else {
-            true
+            None
+        };
+
+        let effective_mod = track_module.unwrap_or(self.active_module_id);
+        if effective_mod == "classic" {
+            return true;
+        }
+
+        if self.active_career_progress.module_id == effective_mod {
+            self.active_career_progress.is_track_unlocked(track_id, self.is_dev_mode())
+        } else if let Some(existing) = self.profile_module_progress.get(effective_mod) {
+            existing.is_track_unlocked(track_id, self.is_dev_mode())
+        } else if let Some(db) = &self.hof_db {
+            if let Some(pid) = self.active_profile.id {
+                if let Ok(progress) = db.get_or_create_module_progress(pid, effective_mod) {
+                    return progress.is_track_unlocked(track_id, self.is_dev_mode());
+                }
+            }
+            crate::profile::ModuleCareerProgress::default_for_module(
+                self.active_profile.id.unwrap_or(1),
+                effective_mod,
+            ).is_track_unlocked(track_id, self.is_dev_mode())
+        } else {
+            crate::profile::ModuleCareerProgress::default_for_module(
+                self.active_profile.id.unwrap_or(1),
+                effective_mod,
+            ).is_track_unlocked(track_id, self.is_dev_mode())
         }
     }
 
@@ -1869,13 +1913,13 @@ impl RaceSession {
         self.state = GameState::Menu;
     }
 
-    /// Returns available circuits for the active motorsport game module (including both presets and custom circuits).
-    pub fn active_module_tracks(&self) -> Vec<TrackChoice> {
-        let mut tracks = self.track_manager.preset_track_choices(self.active_module_id);
+    /// Returns available circuits for a specific motorsport module (presets + custom).
+    pub fn tracks_for_module(&self, module_id: &str) -> Vec<TrackChoice> {
+        let mut tracks = self.track_manager.preset_track_choices(module_id);
         let custom_tracks = self.track_manager.custom_track_choices();
         for custom in custom_tracks {
             let matches_mod = if let Some(custom_info) = self.track_manager.custom_track_info(custom.track_id()) {
-                custom_info.belongs_to_module(self.active_module_id)
+                custom_info.belongs_to_module(module_id)
             } else {
                 true
             };
@@ -1886,18 +1930,52 @@ impl RaceSession {
         tracks
     }
 
-    /// Returns available circuits filtered by the active menu catalog filter tab.
+    /// Returns all registered circuits across all motorsport modules and custom tracks.
+    pub fn all_registered_tracks(&self) -> Vec<TrackChoice> {
+        let mut tracks = self.track_manager.preset_track_choices("all");
+        let custom_tracks = self.track_manager.custom_track_choices();
+        for custom in custom_tracks {
+            if !tracks.iter().any(|t| t.track_id() == custom.track_id()) {
+                tracks.push(custom);
+            }
+        }
+        tracks
+    }
+
+    /// Returns available circuits for the active motorsport game module (including both presets and custom circuits).
+    pub fn active_module_tracks(&self) -> Vec<TrackChoice> {
+        self.tracks_for_module(self.active_module_id)
+    }
+
+    /// Returns available circuits filtered by the active category filter and catalog filter tab.
     pub fn filtered_menu_tracks(&self) -> Vec<TrackChoice> {
-        let all = self.active_module_tracks();
-        match self.menu_track_filter {
-            TrackCatalogFilter::Presets => all.into_iter().filter(|t| t.is_official_preset()).collect(),
-            TrackCatalogFilter::Custom => all.into_iter().filter(|t| t.is_user_custom()).collect(),
+        let all_choices = match self.menu_category_filter {
+            MenuCategoryFilter::Custom => self.track_manager.custom_track_choices(),
+            _ => match self.menu_category_filter.module_id() {
+                Some(mod_id) => self.tracks_for_module(mod_id),
+                None => self.all_registered_tracks(),
+            },
+        };
+
+        if self.menu_category_filter == MenuCategoryFilter::Custom {
+            all_choices
+        } else {
+            match self.menu_track_filter {
+                TrackCatalogFilter::Presets => all_choices.into_iter().filter(|t| t.is_official_preset()).collect(),
+                TrackCatalogFilter::Custom => all_choices.into_iter().filter(|t| t.is_user_custom()).collect(),
+            }
         }
     }
 
-    /// Returns counts of (presets, custom) tracks for the active motorsport module.
+    /// Returns counts of (presets, custom) tracks for the active category filter.
     pub fn menu_track_filter_counts(&self) -> (usize, usize) {
-        let all = self.active_module_tracks();
+        let all = match self.menu_category_filter {
+            MenuCategoryFilter::Custom => self.track_manager.custom_track_choices(),
+            _ => match self.menu_category_filter.module_id() {
+                Some(mod_id) => self.tracks_for_module(mod_id),
+                None => self.all_registered_tracks(),
+            },
+        };
         let presets = all.iter().filter(|t| t.is_official_preset()).count();
         let custom = all.iter().filter(|t| t.is_user_custom()).count();
         (presets, custom)
@@ -6211,15 +6289,14 @@ impl RaceSession {
         GameState::ModalitySelect { category, selected_idx, modal: None }
     }
 
-    /// The Career Selection screen with the given discipline's card highlighted.
+    /// The Career Selection screen with the given discipline's card highlighted (Spec 066).
     pub fn career_select_state_for(&self, module_id: &str) -> GameState {
         let module_id = if module_id == "gt_challenge" { "gt" } else { module_id };
-        let (cards, _) = crate::ui::career_select::build_career_select_cards(
+        let cards = crate::ui::career_select::build_tiered_career_championship_cards(
             &self.championship_manager,
             &self.profile_module_progress,
             &self.active_career_progress,
             self.championship_session.as_ref(),
-            &self.profile_history,
         );
         let selected_idx = cards.iter().position(|c| c.module_id == module_id).unwrap_or(0);
         GameState::CareerSelect { selected_idx }
@@ -7835,6 +7912,51 @@ impl RaceSession {
 
     /// Updates input and state for the Race Modality Selection stage.
     pub fn update_modality_select(&mut self) {
+        // If exit confirmation modal is currently open:
+        if self.show_exit_confirm {
+            if self.exit_confirm_modal.is_none() {
+                self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
+            }
+            if let Some(ref mut modal) = self.exit_confirm_modal {
+                let sw = screen_width_safe();
+                let sh = screen_height_safe();
+                let scaler = UiScaler::new(sw, sh);
+                let theme = CabinetTheme::cyberpunk_neon();
+                let mut ctx = CabinetContext::new(
+                    &scaler,
+                    &self.fonts,
+                    &theme,
+                    &self.input.gamepad.snapshot,
+                    1.0 / 60.0,
+                )
+                .with_audio(Some(&self.audio));
+
+                // Direct legacy shortcuts for Y / N
+                if is_key_pressed(KeyCode::Y) {
+                    std::process::exit(0);
+                }
+                if is_key_pressed(KeyCode::N) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.show_exit_confirm = false;
+                    self.exit_confirm_modal = None;
+                    return;
+                }
+
+                let action = modal.update(&mut ctx);
+                match action {
+                    ScreenAction::Quit => {
+                        std::process::exit(0);
+                    }
+                    ScreenAction::Pop => {
+                        self.show_exit_confirm = false;
+                        self.exit_confirm_modal = None;
+                    }
+                    _ => {}
+                }
+            }
+            return;
+        }
+
         let (mut category, mut selected_idx, mut modal) = match self.state {
             GameState::ModalitySelect {
                 category,
@@ -8132,23 +8254,15 @@ impl RaceSession {
             }
         }
 
-        // Return to Grand Hub (Escape / Gamepad B / Back)
+        // Trigger Exit Confirmation Dialog (Escape / Gamepad B / Back)
         if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_cancel_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
             || self.input.gamepad.snapshot.btn_back_pressed
         {
             self.audio.play_sfx(SfxType::UiSelect);
-            let cur_mod_idx = match self.active_module_id {
-                "classic" => 1,
-                "rally" => 2,
-                "kart" => 3,
-                "gt" | "gt_challenge" => 4,
-                "nascar" => 5,
-                "extreme_offroad" => 6,
-                "vault" => 7,
-                _ => 1,
-            };
-            self.transition_fade_to(GameState::ModuleSelect { selected_idx: cur_mod_idx }, 0.3);
+            self.show_exit_confirm = true;
+            self.exit_confirm_modal = Some(UniversalConfirmModal::quit_game());
             return;
         }
 
@@ -9918,6 +10032,81 @@ impl RaceSession {
             return;
         }
 
+        // Category Filter Navigation (Q / E, [ / ], or Gamepad Bumpers)
+        let prev_cat = self.menu_category_filter;
+        if is_key_pressed(KeyCode::Q)
+            || is_key_pressed(KeyCode::LeftBracket)
+            || self.input.gamepad.snapshot.btn_lb_pressed
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_category_filter = self.menu_category_filter.prev();
+            self.menu_track_idx = 0;
+        }
+        if is_key_pressed(KeyCode::E)
+            || is_key_pressed(KeyCode::RightBracket)
+            || self.input.gamepad.snapshot.btn_rb_pressed
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_category_filter = self.menu_category_filter.next();
+            self.menu_track_idx = 0;
+        }
+
+        // Direct Category Filter Shortcuts (1..=8)
+        let num_cat = if is_key_pressed(KeyCode::Key1) {
+            Some(MenuCategoryFilter::All)
+        } else if is_key_pressed(KeyCode::Key2) {
+            Some(MenuCategoryFilter::Classic)
+        } else if is_key_pressed(KeyCode::Key3) {
+            Some(MenuCategoryFilter::Rally)
+        } else if is_key_pressed(KeyCode::Key4) {
+            Some(MenuCategoryFilter::Kart)
+        } else if is_key_pressed(KeyCode::Key5) {
+            Some(MenuCategoryFilter::Gt)
+        } else if is_key_pressed(KeyCode::Key6) {
+            Some(MenuCategoryFilter::Nascar)
+        } else if is_key_pressed(KeyCode::Key7) {
+            Some(MenuCategoryFilter::ExtremeOffroad)
+        } else if is_key_pressed(KeyCode::Key8) {
+            Some(MenuCategoryFilter::Custom)
+        } else {
+            None
+        };
+        if let Some(cat) = num_cat {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.menu_category_filter = cat;
+            self.menu_track_idx = 0;
+        }
+
+        // Category Pill Mouse Clicks
+        let (sw_menu, sh_menu) = (screen_width_safe(), screen_height_safe());
+        let scaler_menu = UiScaler::new(sw_menu, sh_menu);
+        let col_w_menu = (sw_menu * 0.40).clamp(scaler_menu.s(320.0), scaler_menu.s(480.0));
+        let col1_x_menu = (sw_menu * 0.5 - col_w_menu - scaler_menu.s(16.0)).max(scaler_menu.safe_pad_x);
+        let badge_w_menu = col_w_menu * 2.0 + scaler_menu.s(32.0);
+        let badge_x_menu = col1_x_menu;
+        let badge_y_menu = scaler_menu.s(62.0);
+        let badge_h_menu = scaler_menu.s(48.0);
+        let cp_h_menu = if self.has_track_career_locks() { scaler_menu.s(26.0) } else { 0.0 };
+        let (mx_menu, my_menu) = mouse_position_safe();
+        if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+            for (i, filter) in MenuCategoryFilter::ALL.iter().enumerate() {
+                let (px, py, pw, ph) = category_pill_rect(&scaler_menu, badge_x_menu, badge_y_menu, badge_h_menu, cp_h_menu, badge_w_menu, i);
+                if mx_menu >= px && mx_menu <= px + pw && my_menu >= py && my_menu <= py + ph {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_category_filter = *filter;
+                    self.menu_track_idx = 0;
+                    break;
+                }
+            }
+        }
+
+        if self.menu_category_filter != prev_cat {
+            if let Some(mod_id) = self.menu_category_filter.module_id() {
+                self.active_module_id = mod_id;
+                self.sync_career_progress_for_active_module();
+            }
+        }
+
         let available_tracks = self.filtered_menu_tracks();
         let has_tm_entry = self.menu_track_filter == TrackCatalogFilter::Custom;
         let total_items = if has_tm_entry {
@@ -10137,8 +10326,21 @@ impl RaceSession {
                 }
                 self.track_choice = track_choice.clone();
                 let loaded = resolve_track_for_menu(&self.track_choice);
-                let effective_module = loaded.as_ref().and_then(|t| t.module_id.as_deref()).unwrap_or(self.active_module_id);
-                self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), effective_module);
+                let effective_module = loaded.as_ref()
+                    .and_then(|t| t.module_id.as_deref())
+                    .or_else(|| self.menu_category_filter.module_id())
+                    .unwrap_or(self.active_module_id);
+                let target_mod = match effective_module {
+                    "gt" | "gt_challenge" => "gt",
+                    "rally" => "rally",
+                    "kart" => "kart",
+                    "nascar" => "nascar",
+                    "extreme_offroad" => "extreme_offroad",
+                    _ => "classic",
+                };
+                self.active_module_id = target_mod;
+                self.sync_career_progress_for_active_module();
+                self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
                 self.init_race();
             } else if has_tm_entry {
                 let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
@@ -12425,6 +12627,18 @@ impl RaceSession {
                     self.is_dev_mode(),
                     &active_tracks,
                 );
+                if self.show_exit_confirm {
+                    if let Some(ref modal) = self.exit_confirm_modal {
+                        let sw = screen_width_safe();
+                        let sh = screen_height_safe();
+                        let scaler = UiScaler::new(sw, sh);
+                        let theme = CabinetTheme::cyberpunk_neon();
+                        let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0);
+                        modal.draw(&ctx);
+                    } else {
+                        render_exit_confirm_modal(&self.fonts);
+                    }
+                }
             }
             GameState::Garage(_) => {
                 let unlocked_tier = if self.is_dev_mode() {
@@ -12475,14 +12689,19 @@ impl RaceSession {
                 } else {
                     self.menu_track_filter_counts()
                 };
-                let (mod_title, mod_sub, mod_accent) = match self.active_module_id {
-                    "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
-                    "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
-                    "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
-                    "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
-                    "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
-                    _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
+                let display_module = self.menu_category_filter.module_id().unwrap_or(self.active_module_id);
+                let (mod_title, mod_sub, mod_accent) = match self.menu_category_filter {
+                    MenuCategoryFilter::All => ("CIRCUIT SELECTOR", "All Motorsport Disciplines & Tracks", Palette::NEON_CYAN),
+                    MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits", Palette::NEON_MAGENTA),
+                    _ => match display_module {
+                        "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
+                        "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
+                        "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
+                        "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
+                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                        "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
+                        _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
+                    },
                 };
                 let cp_ref = if self.has_track_career_locks() {
                     Some(&self.active_career_progress)
@@ -12505,6 +12724,7 @@ impl RaceSession {
                     mod_title,
                     mod_sub,
                     mod_accent,
+                    self.menu_category_filter,
                     &available_tracks,
                     self.menu_track_idx,
                     &self.active_profile,
@@ -13137,34 +13357,69 @@ impl RaceSession {
         self.spawn_hud_alert(format!("{} RESET TO ROUND 1", series_name), Palette::NEON_CYAN);
     }
 
-    /// Renders the multi-career selection screen.
+    /// Renders the multi-career selection screen (Spec 066).
     pub fn render_career_select(&self, selected_idx: usize) {
-        let (cards, active_count) = crate::ui::career_select::build_career_select_cards(
+        let cards = crate::ui::career_select::build_tiered_career_championship_cards(
             &self.championship_manager,
             &self.profile_module_progress,
             &self.active_career_progress,
             self.championship_session.as_ref(),
-            &self.profile_history,
         );
         let profile = &self.active_profile;
         crate::ui::career_select::render_career_select_screen(
             &self.fonts,
             &cards,
-            active_count,
             selected_idx,
             profile,
             &self.active_profile_stats,
         );
+        if let Some(ref modal) = self.career_replay_modal {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::cyberpunk_neon();
+            let ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0);
+            modal.draw(&ctx);
+        }
     }
 
-    /// Updates input and interactions for the multi-career selection screen.
+    /// Updates input and interactions for the multi-career selection screen (Spec 066).
     pub fn update_career_select(&mut self, mut selected_idx: usize) {
-        let (cards, _active_count) = crate::ui::career_select::build_career_select_cards(
+        // 1. If replay confirmation modal is open, route interactions to it
+        if let Some(mut modal) = self.career_replay_modal.take() {
+            let sw = screen_width_safe();
+            let sh = screen_height_safe();
+            let scaler = UiScaler::new(sw, sh);
+            let theme = CabinetTheme::cyberpunk_neon();
+            let mut ctx = CabinetContext::new(&scaler, &self.fonts, &theme, &self.input.gamepad.snapshot, 0.0);
+            let action = modal.update(&mut ctx);
+            match action {
+                cabinet::state::ScreenAction::Pop => {
+                    if modal.result == Some(true) {
+                        if let Some((series_id, series_name)) = self.pending_replay_series.take() {
+                            self.reset_championship(&series_name, &series_id);
+                            if let Some(def) = self.championship_manager.get(&series_id).cloned() {
+                                self.launch_or_resume_championship(&def);
+                                return;
+                            }
+                        }
+                    } else {
+                        self.pending_replay_series = None;
+                    }
+                }
+                cabinet::state::ScreenAction::None => {
+                    self.career_replay_modal = Some(modal);
+                }
+                _ => {}
+            }
+            return;
+        }
+
+        let cards = crate::ui::career_select::build_tiered_career_championship_cards(
             &self.championship_manager,
             &self.profile_module_progress,
             &self.active_career_progress,
             self.championship_session.as_ref(),
-            &self.profile_history,
         );
 
         if cards.is_empty() {
@@ -13233,7 +13488,7 @@ impl RaceSession {
         // Reset selected season
         if is_key_pressed(KeyCode::R) {
             if let Some(card) = cards.get(selected_idx) {
-                if card.is_active {
+                if card.status == crate::ui::career_select::ChampionshipCardStatus::InProgress {
                     self.reset_championship(&card.series_name, &card.series_id);
                     self.state = GameState::CareerSelect { selected_idx };
                     return;
@@ -13241,7 +13496,7 @@ impl RaceSession {
             }
         }
 
-        // Confirm / Launch / Resume
+        // Confirm / Launch / Resume / Replay
         let confirm_pressed = clicked_card
             || is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -13251,40 +13506,39 @@ impl RaceSession {
         if confirm_pressed {
             if let Some(card) = cards.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
-                let mod_id = card.module_id.clone();
-                let tier = card.tier;
 
+                // Replay prompt for completed championships
+                if card.status == crate::ui::career_select::ChampionshipCardStatus::Completed {
+                    let modal = UniversalConfirmModal::new(
+                        "REPLAY CHAMPIONSHIP",
+                        format!(
+                            "Replay {} from Round 1?\nYour historic trophies and records will be preserved.",
+                            card.series_name
+                        ),
+                    )
+                    .with_labels("REPLAY", "CANCEL")
+                    .with_accent(card.accent_color);
+                    self.career_replay_modal = Some(modal);
+                    self.pending_replay_series = Some((card.series_id.clone(), card.series_name.clone()));
+                    self.state = GameState::CareerSelect { selected_idx };
+                    return;
+                }
+
+                let mod_id = card.module_id.clone();
+                let series_id = card.series_id.clone();
                 self.switch_to_module(&mod_id);
 
-                match mod_id.as_str() {
-                    "gt" | "gt_challenge" => {
-                        let calendar = if let Some(c) = &self.active_career_progress.active_championship {
-                            c.track_ids.clone()
-                        } else {
-                            crate::ui::gt_default_calendar(tier)
-                        };
-                        self.career_hub_focus = CareerHubFocus::Tabs;
-                        self.state = GameState::CareerHub {
-                            selected_tier: tier,
-                            selected_slot: self.active_career_progress.active_championship.as_ref().map(|c| c.current_round).unwrap_or(0),
-                            calendar_tracks: calendar,
-                            showing_standings: false,
-                        };
-                    }
-                    "nascar" => {
-                        self.start_nascar_career_tier(tier);
-                    }
-                    "rally" => {
-                        self.start_rally_career_tier(tier);
-                    }
-                    "kart" => {
-                        self.start_kart_career_tier(tier);
-                    }
-                    "extreme_offroad" => {
-                        self.start_extreme_offroad_career_tier(tier);
-                    }
-                    _ => {
-                        self.start_gt_career_tier_with_calendar(tier, Some(crate::ui::gt_default_calendar(tier)));
+                if let Some(def) = self.championship_manager.get(&series_id).cloned() {
+                    self.launch_or_resume_championship(&def);
+                } else if let Some(def) = self.championship_manager.get_by_module_and_tier(&mod_id, card.tier).cloned() {
+                    self.launch_or_resume_championship(&def);
+                } else {
+                    match mod_id.as_str() {
+                        "nascar" => self.start_nascar_career_tier(card.tier),
+                        "rally" => self.start_rally_career_tier(card.tier),
+                        "kart" => self.start_kart_career_tier(card.tier),
+                        "extreme_offroad" => self.start_extreme_offroad_career_tier(card.tier),
+                        _ => self.start_gt_career_tier_with_calendar(card.tier, Some(crate::ui::gt_default_calendar(card.tier))),
                     }
                 }
                 return;

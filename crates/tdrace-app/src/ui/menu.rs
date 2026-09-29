@@ -1,6 +1,8 @@
 use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{
+    draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines,
+};
 use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +29,12 @@ pub enum TrackChoice {
     RampRaceway,
     OasisRally,
     ClassicRallycross,
-    Custom { id: String, title: String, description: String, path: String },
+    Custom {
+        id: String,
+        title: String,
+        description: String,
+        path: String,
+    },
 }
 
 impl TrackChoice {
@@ -50,7 +57,9 @@ impl TrackChoice {
 
     pub fn tag(&self) -> &str {
         match self {
-            Self::Custom { id, path, .. } => custom_module_of(id, path).map_or("CLASSIC MOTORSPORT", module_label),
+            Self::Custom { id, path, .. } => {
+                custom_module_of(id, path).map_or("CLASSIC MOTORSPORT", module_label)
+            }
             official => official_circuit(official.track_id()).map_or("", |c| c.tag),
         }
     }
@@ -58,7 +67,9 @@ impl TrackChoice {
     pub fn tag_for_module(&self, mod_id: &str) -> &str {
         match self {
             Self::ClassicGrandPrix if mod_id == "gt" || mod_id == "gt_challenge" => "GT GP CIRCUIT",
-            Self::Custom { id, path, .. } => module_label(custom_module_of(id, path).unwrap_or(mod_id)),
+            Self::Custom { id, path, .. } => {
+                module_label(custom_module_of(id, path).unwrap_or(mod_id))
+            }
             official => official_circuit(official.track_id()).map_or("", |c| c.tag),
         }
     }
@@ -104,7 +115,8 @@ impl TrackChoice {
             | Self::OasisRally
             | Self::ClassicRallycross => true,
             Self::Custom { id, path, .. } => {
-                let is_demoted = crate::track_manager::TrackManager::is_preset_slug_demoted_in_path(id, path);
+                let is_demoted =
+                    crate::track_manager::TrackManager::is_preset_slug_demoted_in_path(id, path);
                 !is_demoted
                     && (crate::track_manager::TrackManager::is_preset_slug(id)
                         || path.starts_with("gt/")
@@ -133,7 +145,11 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
     ["rally", "gt", "kart", "nascar", "extreme_offroad"]
         .into_iter()
         .find(|m| path.starts_with(&format!("{}/", m)) || path.contains(&format!("/{}/", m)))
-        .or_else(|| tdrace_core::catalog::find(id, None).map(|c| c.module).filter(|m| *m != "classic"))
+        .or_else(|| {
+            tdrace_core::catalog::find(id, None)
+                .map(|c| c.module)
+                .filter(|m| *m != "classic")
+        })
 }
 
 /// List badge for a module's circuits.
@@ -148,8 +164,9 @@ fn module_label(module: &str) -> &'static str {
     }
 }
 
-static MENU_TRACK_CACHE: std::sync::Mutex<Option<std::collections::HashMap<String, tdrace_core::track::Track>>> =
-    std::sync::Mutex::new(None);
+static MENU_TRACK_CACHE: std::sync::Mutex<
+    Option<std::collections::HashMap<String, tdrace_core::track::Track>>,
+> = std::sync::Mutex::new(None);
 
 /// Clears the cached resolved menu tracks (e.g. after track edit or save).
 pub fn clear_menu_track_cache() {
@@ -246,7 +263,9 @@ fn resolve_track_for_menu_with_dir_uncached(
 
     // 1. In dev mode, official git presets or custom tracks saved into the repository's
     // tracks/ directory take second precedence.
-    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
+    if let Some(git_tracks_dir) =
+        crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode())
+    {
         if let Some(p) = crate::track_manager::TrackManager::resolve_preset_git_file_with_dir(
             &git_tracks_dir,
             choice.track_id(),
@@ -267,7 +286,9 @@ fn resolve_track_for_menu_with_dir_uncached(
             }
         }
         if file_path.with_extension("json").exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(&file_path.with_extension("json")) {
+            if let Ok(t) =
+                tdrace_core::track::Track::load_from_file(&file_path.with_extension("json"))
+            {
                 return Some(t);
             }
         }
@@ -283,7 +304,9 @@ fn resolve_track_for_menu_with_dir_uncached(
                 return Some(t);
             }
         }
-        if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
+        if let Some(git_tracks_dir) =
+            crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode())
+        {
             let rel_in_git = git_tracks_dir.join(path);
             if rel_in_git.exists() {
                 if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git) {
@@ -301,7 +324,9 @@ fn resolve_track_for_menu_with_dir_uncached(
 
     // 2. Check git fallback candidates across module subdirectories
 
-    if let Some(git_tracks_dir) = crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode()) {
+    if let Some(git_tracks_dir) =
+        crate::storage::resolve_git_tracks_dir().filter(|_| crate::storage::is_dev_mode())
+    {
         let git_candidates = [
             git_tracks_dir.join("classic").join(&file_name),
             git_tracks_dir.join("gt").join(&file_name),
@@ -423,17 +448,72 @@ impl CarChoice {
     /// Returns key engineering and dynamic specifications: (Drivetrain, Mass, Top Speed, Aero/Handling)
     pub fn specs(&self) -> (&'static str, &'static str, &'static str, &'static str) {
         match self {
-            Self::SportsCar => ("RWD Drivetrain", "1,180 kg Mass", "208 km/h Top Speed", "Cl 0.65 Downforce"),
-            Self::DriftCar => ("RWD Drift Spec", "980 kg Mass", "45° Wide Drift Lock", "High-Slip Balance"),
-            Self::Kart => ("Direct Rear Axle", "180 kg Mass", "115 km/h Top Speed", "1:1 Direct Rack"),
-            Self::RallyCar => ("AWD 50:50 Split", "1,240 kg Mass", "Long-Travel Setup", "Cl 0.70 Downforce"),
-            Self::GT4Clubsport => ("RWD GT4 Spec", "1,320 kg Mass", "272 km/h Top Speed", "Cl 0.85 Downforce"),
-            Self::GT3Car => ("RWD GT3 Spec", "1,260 kg Mass", "297 km/h Top Speed", "Cl 2.10 Downforce"),
-            Self::GT2Biturbo => ("RWD GT2 Spec", "1,390 kg Mass", "328 km/h Top Speed", "Cl 1.40 Downforce"),
-            Self::GT1Legend => ("RWD GT1 Analog", "1,120 kg Mass", "335 km/h Top Speed", "Cl 2.60 Downforce"),
-            Self::HypercarPrototype => ("Hybrid Ground-Effect", "1,030 kg Mass", "342 km/h Top Speed", "Cl 3.10 Downforce"),
-            Self::StockCar => ("RWD Spaceframe V8", "1,260 kg Mass", "320 km/h Top Speed", "Pack Draft Dynamic"),
-            Self::SandRail => ("RWD Long-Travel", "680 kg Mass", "215 km/h Top Speed", "Paddle Sand Tires"),
+            Self::SportsCar => (
+                "RWD Drivetrain",
+                "1,180 kg Mass",
+                "208 km/h Top Speed",
+                "Cl 0.65 Downforce",
+            ),
+            Self::DriftCar => (
+                "RWD Drift Spec",
+                "980 kg Mass",
+                "45° Wide Drift Lock",
+                "High-Slip Balance",
+            ),
+            Self::Kart => (
+                "Direct Rear Axle",
+                "180 kg Mass",
+                "115 km/h Top Speed",
+                "1:1 Direct Rack",
+            ),
+            Self::RallyCar => (
+                "AWD 50:50 Split",
+                "1,240 kg Mass",
+                "Long-Travel Setup",
+                "Cl 0.70 Downforce",
+            ),
+            Self::GT4Clubsport => (
+                "RWD GT4 Spec",
+                "1,320 kg Mass",
+                "272 km/h Top Speed",
+                "Cl 0.85 Downforce",
+            ),
+            Self::GT3Car => (
+                "RWD GT3 Spec",
+                "1,260 kg Mass",
+                "297 km/h Top Speed",
+                "Cl 2.10 Downforce",
+            ),
+            Self::GT2Biturbo => (
+                "RWD GT2 Spec",
+                "1,390 kg Mass",
+                "328 km/h Top Speed",
+                "Cl 1.40 Downforce",
+            ),
+            Self::GT1Legend => (
+                "RWD GT1 Analog",
+                "1,120 kg Mass",
+                "335 km/h Top Speed",
+                "Cl 2.60 Downforce",
+            ),
+            Self::HypercarPrototype => (
+                "Hybrid Ground-Effect",
+                "1,030 kg Mass",
+                "342 km/h Top Speed",
+                "Cl 3.10 Downforce",
+            ),
+            Self::StockCar => (
+                "RWD Spaceframe V8",
+                "1,260 kg Mass",
+                "320 km/h Top Speed",
+                "Pack Draft Dynamic",
+            ),
+            Self::SandRail => (
+                "RWD Long-Travel",
+                "680 kg Mass",
+                "215 km/h Top Speed",
+                "Paddle Sand Tires",
+            ),
         }
     }
 
@@ -517,29 +597,21 @@ impl CarChoice {
             return true;
         }
         match surface {
-            SurfaceType::PackedSand => {
-                match self.category() {
-                    CarCategory::OffRoad => true,
-                    CarCategory::Rally => self.tier() >= 4,
-                    _ => false,
-                }
-            }
-            SurfaceType::DeepMud => {
-                match self.category() {
-                    CarCategory::OffRoad => self.tier() >= 4,
-                    _ => false,
-                }
-            }
-            SurfaceType::SheetIce => {
-                self.category() == CarCategory::OffRoad && self.tier() == 3
-            }
-            SurfaceType::PackedSnow => {
-                match self.category() {
-                    CarCategory::Rally => self.tier() >= 2,
-                    CarCategory::OffRoad => self.tier() >= 2,
-                    _ => false,
-                }
-            }
+            SurfaceType::PackedSand => match self.category() {
+                CarCategory::OffRoad => true,
+                CarCategory::Rally => self.tier() >= 4,
+                _ => false,
+            },
+            SurfaceType::DeepMud => match self.category() {
+                CarCategory::OffRoad => self.tier() >= 4,
+                _ => false,
+            },
+            SurfaceType::SheetIce => self.category() == CarCategory::OffRoad && self.tier() == 3,
+            SurfaceType::PackedSnow => match self.category() {
+                CarCategory::Rally => self.tier() >= 2,
+                CarCategory::OffRoad => self.tier() >= 2,
+                _ => false,
+            },
             _ => true,
         }
     }
@@ -587,7 +659,9 @@ impl CarChoice {
             Self::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
             Self::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
             Self::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
-            Self::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
+            Self::HypercarPrototype => {
+                crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype()
+            }
             Self::StockCar => CarConfig::stock_car_ta1(),
             Self::SandRail => CarConfig::sand_rail(),
         }
@@ -601,14 +675,13 @@ impl CarChoice {
                 gt_wing: true,
                 diffuser: false,
             },
-            Self::GT3Car
-            | Self::GT2Biturbo
-            | Self::GT1Legend
-            | Self::HypercarPrototype => crate::module::VehicleVisualType::TouringGT {
-                widebody: true,
-                gt_wing: true,
-                diffuser: true,
-            },
+            Self::GT3Car | Self::GT2Biturbo | Self::GT1Legend | Self::HypercarPrototype => {
+                crate::module::VehicleVisualType::TouringGT {
+                    widebody: true,
+                    gt_wing: true,
+                    diffuser: true,
+                }
+            }
             Self::RallyCar => crate::module::VehicleVisualType::RallyHatch {
                 roof_scoop: true,
                 mudflaps: true,
@@ -638,7 +711,10 @@ impl CarChoice {
 }
 
 /// Resolves the authentic predefined car for a specific track and active module context.
-pub fn resolve_predefined_car_for_track(track: Option<&tdrace_core::track::Track>, module_id: &str) -> CarChoice {
+pub fn resolve_predefined_car_for_track(
+    track: Option<&tdrace_core::track::Track>,
+    module_id: &str,
+) -> CarChoice {
     if let Some(tr) = track {
         if module_id == "classic" {
             CarChoice::classic_car_for_category(tr.car_category)
@@ -735,7 +811,11 @@ impl GameMode {
     pub fn allows_roster_customization(&self) -> bool {
         match self {
             Self::ExperimentalRace => true,
-            Self::StandardRace | Self::Career | Self::SplitScreen | Self::TimeTrial | Self::FreeRide => false,
+            Self::StandardRace
+            | Self::Career
+            | Self::SplitScreen
+            | Self::TimeTrial
+            | Self::FreeRide => false,
         }
     }
 
@@ -802,8 +882,8 @@ pub struct RaceResultEntry {
     pub projected: bool,
 }
 
-use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
 use super::profile_ui::render_profile_badge;
+use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
 
 /// Selected focus column/panel in the Track & Setup Selection Menu (kept for backwards compatibility).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -833,6 +913,103 @@ impl TrackCatalogFilter {
     }
 }
 
+/// Category filter for the Circuit Selection Menu.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum MenuCategoryFilter {
+    #[default]
+    All,
+    Classic,
+    Rally,
+    Kart,
+    Gt,
+    Nascar,
+    ExtremeOffroad,
+    Custom,
+}
+
+impl MenuCategoryFilter {
+    pub const ALL: [Self; 8] = [
+        Self::All,
+        Self::Classic,
+        Self::Rally,
+        Self::Kart,
+        Self::Gt,
+        Self::Nascar,
+        Self::ExtremeOffroad,
+        Self::Custom,
+    ];
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::All => "ALL",
+            Self::Classic => "CLASSIC",
+            Self::Rally => "RALLY",
+            Self::Kart => "KART",
+            Self::Gt => "GT",
+            Self::Nascar => "NASCAR",
+            Self::ExtremeOffroad => "OFF-ROAD",
+            Self::Custom => "CUSTOM",
+        }
+    }
+
+    pub fn module_id(&self) -> Option<&'static str> {
+        match self {
+            Self::All | Self::Custom => None,
+            Self::Classic => Some("classic"),
+            Self::Rally => Some("rally"),
+            Self::Kart => Some("kart"),
+            Self::Gt => Some("gt"),
+            Self::Nascar => Some("nascar"),
+            Self::ExtremeOffroad => Some("extreme_offroad"),
+        }
+    }
+
+    pub fn next(self) -> Self {
+        let idx = Self::ALL.iter().position(|c| *c == self).unwrap_or(0);
+        Self::ALL[(idx + 1) % Self::ALL.len()]
+    }
+
+    pub fn prev(self) -> Self {
+        let idx = Self::ALL.iter().position(|c| *c == self).unwrap_or(0);
+        if idx == 0 {
+            Self::ALL[Self::ALL.len() - 1]
+        } else {
+            Self::ALL[idx - 1]
+        }
+    }
+
+    pub fn from_module_id(module_id: &str) -> Self {
+        match module_id {
+            "classic" => Self::Classic,
+            "rally" => Self::Rally,
+            "kart" => Self::Kart,
+            "gt" | "gt_challenge" => Self::Gt,
+            "nascar" => Self::Nascar,
+            "extreme_offroad" => Self::ExtremeOffroad,
+            _ => Self::All,
+        }
+    }
+}
+
+/// Computes the bounding box of a category pill button.
+pub fn category_pill_rect(
+    scaler: &UiScaler,
+    badge_x: f32,
+    badge_y: f32,
+    badge_h: f32,
+    cp_h: f32,
+    badge_w: f32,
+    index: usize,
+) -> (f32, f32, f32, f32) {
+    let cat_y = badge_y + badge_h + cp_h + scaler.s(6.0);
+    let cat_h = scaler.s(26.0);
+    let cat_gap = scaler.s(4.0);
+    let cat_count = MenuCategoryFilter::ALL.len() as f32;
+    let cat_w = (badge_w - cat_gap * (cat_count - 1.0)) / cat_count;
+    let pill_x = badge_x + (cat_w + cat_gap) * (index as f32);
+    (pill_x, cat_y, cat_w, cat_h)
+}
+
 /// Renders the modern Track & Setup Selection Menu with glass cards and vector typography.
 #[allow(clippy::too_many_arguments)]
 pub fn render_track_select_menu(
@@ -841,6 +1018,7 @@ pub fn render_track_select_menu(
     module_title: &str,
     module_subtitle: &str,
     module_accent: Color,
+    category_filter: MenuCategoryFilter,
     available_tracks: &[TrackChoice],
     selected_track_idx: usize,
     active_profile: &PlayerProfile,
@@ -872,11 +1050,21 @@ pub fn render_track_select_menu(
         scaler.s(2.0),
     );
 
-    let back_label = if returns_to_grid { "Return to Starting Grid" } else { "Back to Race Modes" };
+    let back_label = if returns_to_grid {
+        "Return to Starting Grid"
+    } else {
+        "Back to Race Modes"
+    };
     let sub_str = if is_lan_host {
-        format!("{} • LAN Host Circuit Selector • [ESC] Return to Lobby", module_subtitle)
+        format!(
+            "{} • LAN Host Circuit Selector • [ESC] Return to Lobby",
+            module_subtitle
+        )
     } else if is_career_mode {
-        format!("{} • Career Event Circuit Explorer • [ESC] {}", module_subtitle, back_label)
+        format!(
+            "{} • Career Event Circuit Explorer • [ESC] {}",
+            module_subtitle, back_label
+        )
     } else {
         format!("{} • [ESC] {}", module_subtitle, back_label)
     };
@@ -898,17 +1086,45 @@ pub fn render_track_select_menu(
     let badge_x = col1_x;
     let badge_y = scaler.s(62.0);
     let badge_h = scaler.s(48.0);
-    render_profile_badge(fonts, &scaler, badge_x, badge_y, badge_w, badge_h, active_profile, active_stats, false);
+    render_profile_badge(
+        fonts,
+        &scaler,
+        badge_x,
+        badge_y,
+        badge_w,
+        badge_h,
+        active_profile,
+        active_stats,
+        false,
+    );
 
     // Optional Career Progression Bar Banner
-    let cp_h = if career_progress.is_some() { scaler.s(26.0) } else { 0.0 };
+    let cp_h = if career_progress.is_some() {
+        scaler.s(26.0)
+    } else {
+        0.0
+    };
     if let Some(cp) = career_progress {
         let cp_y = badge_y + badge_h + scaler.s(4.0);
-        scaler.draw_glass_card(badge_x, cp_y, badge_w, cp_h, Color::new(0.06, 0.08, 0.12, 0.92), Palette::NEON_CYAN, 1.2);
+        scaler.draw_glass_card(
+            badge_x,
+            cp_y,
+            badge_w,
+            cp_h,
+            Color::new(0.06, 0.08, 0.12, 0.92),
+            Palette::NEON_CYAN,
+            1.2,
+        );
 
         // Driver Level Tag
         let lvl_str = format!("CAREER TIER {}", cp.level);
-        fonts.draw_ui_bold(&lvl_str, badge_x + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(12.0), Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            &lvl_str,
+            badge_x + scaler.s(12.0),
+            cp_y + scaler.s(17.0),
+            scaler.font_s(12.0),
+            Palette::NEON_GOLD,
+        );
 
         // Spendable XP text
         let xp_str = if let Some(target) = cp.next_tier_target_xp() {
@@ -916,20 +1132,47 @@ pub fn render_track_select_menu(
         } else {
             format!("XP: {} (MAX TIER)", cp.xp)
         };
-        fonts.draw_ui_regular(&xp_str, badge_x + scaler.s(130.0), cp_y + scaler.s(17.0), scaler.font_s(11.0), Palette::WHITE);
+        fonts.draw_ui_regular(
+            &xp_str,
+            badge_x + scaler.s(130.0),
+            cp_y + scaler.s(17.0),
+            scaler.font_s(11.0),
+            Palette::WHITE,
+        );
 
         // Progress bar in center
         let bar_x = badge_x + scaler.s(315.0);
         let bar_y = cp_y + scaler.s(7.0);
         let bar_w = (badge_w - scaler.s(580.0)).clamp(scaler.s(60.0), scaler.s(220.0));
         let bar_h = scaler.s(11.0);
-        draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.08, 0.12, 0.18, 0.95));
-        draw_rectangle(bar_x, bar_y, bar_w * cp.level_progress_ratio(), bar_h, Palette::NEON_CYAN);
+        draw_rectangle(
+            bar_x,
+            bar_y,
+            bar_w,
+            bar_h,
+            Color::new(0.08, 0.12, 0.18, 0.95),
+        );
+        draw_rectangle(
+            bar_x,
+            bar_y,
+            bar_w * cp.level_progress_ratio(),
+            bar_h,
+            Palette::NEON_CYAN,
+        );
         draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.0, Palette::NEON_CYAN);
 
         // Championship Podiums / Trophies
-        let trophy_str = format!("PODIUMS  G:{} S:{} B:{}", cp.trophies_gold, cp.trophies_silver, cp.trophies_bronze);
-        fonts.draw_ui_bold(&trophy_str, bar_x + bar_w + scaler.s(12.0), cp_y + scaler.s(17.0), scaler.font_s(10.5), Palette::NEON_GOLD);
+        let trophy_str = format!(
+            "PODIUMS  G:{} S:{} B:{}",
+            cp.trophies_gold, cp.trophies_silver, cp.trophies_bronze
+        );
+        fonts.draw_ui_bold(
+            &trophy_str,
+            bar_x + bar_w + scaler.s(12.0),
+            cp_y + scaler.s(17.0),
+            scaler.font_s(10.5),
+            Palette::NEON_GOLD,
+        );
 
         // Mode indicator on right
         let (mode_tag, tag_col) = if dev_mode {
@@ -939,11 +1182,66 @@ pub fn render_track_select_menu(
         } else {
             ("CAREER PROGRESSION ACTIVE", Palette::NEON_GREEN)
         };
-        fonts.draw_ui_bold(mode_tag, badge_x + badge_w - scaler.s(210.0), cp_y + scaler.s(17.0), scaler.font_s(10.5), tag_col);
+        fonts.draw_ui_bold(
+            mode_tag,
+            badge_x + badge_w - scaler.s(210.0),
+            cp_y + scaler.s(17.0),
+            scaler.font_s(10.5),
+            tag_col,
+        );
     }
 
-    // Spacing between Profile/Career Panel and Catalog columns
-    let menu_content_y = badge_y + badge_h + cp_h + scaler.s(14.0);
+    // Category Filter Bar (Pill buttons spanning badge_w)
+    let cat_y = badge_y + badge_h + cp_h + scaler.s(6.0);
+    let cat_h = scaler.s(26.0);
+    let cat_gap = scaler.s(4.0);
+    let cat_count = MenuCategoryFilter::ALL.len() as f32;
+    let cat_w = (badge_w - cat_gap * (cat_count - 1.0)) / cat_count;
+
+    for (i, filter) in MenuCategoryFilter::ALL.iter().enumerate() {
+        let pill_x = badge_x + (cat_w + cat_gap) * (i as f32);
+        let is_active = *filter == category_filter;
+        let pill_bg = if is_active {
+            Color::new(0.12, 0.28, 0.45, 0.95)
+        } else {
+            Color::new(0.06, 0.08, 0.12, 0.85)
+        };
+        let pill_border = if is_active {
+            module_accent
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+        let text_col = if is_active {
+            Palette::WHITE
+        } else {
+            Palette::UI_TEXT_MUTED
+        };
+        scaler.draw_glass_card(
+            pill_x,
+            cat_y,
+            cat_w,
+            cat_h,
+            pill_bg,
+            pill_border,
+            if is_active { 1.8 } else { 1.0 },
+        );
+
+        let label = if is_active {
+            format!("< {} >", filter.label())
+        } else {
+            filter.label().to_string()
+        };
+        fonts.draw_ui_bold_centered(
+            &label,
+            pill_x + cat_w * 0.5,
+            cat_y + scaler.s(17.0),
+            scaler.font_s(10.5),
+            text_col,
+        );
+    }
+
+    // Spacing between Category Bar and Catalog columns
+    let menu_content_y = cat_y + cat_h + scaler.s(10.0);
 
     // Left Column: Track Selection Cards & Filter Tabs
     let mut curr_y = menu_content_y;
@@ -985,8 +1283,14 @@ pub fn render_track_select_menu(
     let tab_h = scaler.s(25.0);
     let tab_gap = scaler.s(6.0);
     let filter_tabs = [
-        (TrackCatalogFilter::Presets, format!("OFFICIAL [{}]", filter_counts.0)),
-        (TrackCatalogFilter::Custom, format!("CUSTOM [{}]", filter_counts.1)),
+        (
+            TrackCatalogFilter::Presets,
+            format!("OFFICIAL [{}]", filter_counts.0),
+        ),
+        (
+            TrackCatalogFilter::Custom,
+            format!("CUSTOM [{}]", filter_counts.1),
+        ),
     ];
     let tab_count = filter_tabs.len() as f32;
     let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
@@ -1009,7 +1313,15 @@ pub fn render_track_select_menu(
         } else {
             Palette::UI_TEXT_MUTED
         };
-        scaler.draw_glass_card(tab_x, curr_y, tab_w, tab_h, tab_bg, tab_border, if is_tab_active { 1.8 } else { 1.0 });
+        scaler.draw_glass_card(
+            tab_x,
+            curr_y,
+            tab_w,
+            tab_h,
+            tab_bg,
+            tab_border,
+            if is_tab_active { 1.8 } else { 1.0 },
+        );
         fonts.draw_ui_bold_centered(
             tab_label,
             tab_x + tab_w * 0.5,
@@ -1026,7 +1338,15 @@ pub fn render_track_select_menu(
 
     if total_items == 0 {
         let empty_h = scaler.s(150.0);
-        scaler.draw_glass_card(col1_x, curr_y, col_w, empty_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        scaler.draw_glass_card(
+            col1_x,
+            curr_y,
+            col_w,
+            empty_h,
+            Palette::UI_CARD_BG,
+            Palette::UI_CARD_BORDER,
+            1.2,
+        );
         fonts.draw_ui_bold_centered(
             "No Official Circuits Found",
             col1_x + col_w * 0.5,
@@ -1063,7 +1383,8 @@ pub fn render_track_select_menu(
             if i < total_tracks {
                 let track_opt = &available_tracks[i];
                 let loaded_track = resolve_track_for_menu(track_opt);
-                let is_active_track = active_track_id.map_or(false, |aid| aid == track_opt.track_id());
+                let is_active_track =
+                    active_track_id.map_or(false, |aid| aid == track_opt.track_id());
                 let is_locked = if let Some(cp) = career_progress {
                     !cp.is_track_unlocked(track_opt.track_id(), dev_mode)
                 } else {
@@ -1089,7 +1410,15 @@ pub fn render_track_select_menu(
                     Palette::UI_CARD_BORDER
                 };
 
-                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, bg_col, border_col, if is_sel || is_active_track { 2.2 } else { 1.2 });
+                scaler.draw_glass_card(
+                    col1_x,
+                    curr_y,
+                    col_w,
+                    box_h,
+                    bg_col,
+                    border_col,
+                    if is_sel || is_active_track { 2.2 } else { 1.2 },
+                );
 
                 // Small Track Vector Thumbnail on right side of card
                 let thumb_w = scaler.s(58.0);
@@ -1098,36 +1427,59 @@ pub fn render_track_select_menu(
                 let thumb_y = curr_y + scaler.s(7.0);
 
                 if let Some(ref tr) = loaded_track {
-                    super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
+                    super::track_preview::render_track_thumbnail(
+                        &scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel,
+                    );
                 }
 
                 // Tag pill & metrics badge (Length + Surface breakdown)
                 let is_custom = track_opt.is_user_custom();
                 let (tag_label, tag_col) = if is_active_track {
-                    let active_tag = if is_career_mode { "★ ACTIVE CAREER CIRCUIT" } else { "★ ACTIVE CIRCUIT" };
+                    let active_tag = if is_career_mode {
+                        "★ ACTIVE CAREER CIRCUIT"
+                    } else {
+                        "★ ACTIVE CIRCUIT"
+                    };
                     let lbl = if let Some(ref tr) = loaded_track {
-                        format!("{} • {:.0}m • {}", active_tag, tr.total_length_m(), tr.surface_summary_string())
+                        format!(
+                            "{} • {:.0}m • {}",
+                            active_tag,
+                            tr.total_length_m(),
+                            tr.surface_summary_string()
+                        )
                     } else {
                         active_tag.to_string()
                     };
                     (lbl, Palette::NEON_GOLD)
                 } else if is_career_mode {
                     let lbl = if let Some(ref tr) = loaded_track {
-                        format!("🔒 CAREER LOCKED • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                        format!(
+                            "🔒 CAREER LOCKED • {:.0}m • {}",
+                            tr.total_length_m(),
+                            tr.surface_summary_string()
+                        )
                     } else {
                         "🔒 CAREER LOCKED • OTHER CIRCUIT".to_string()
                     };
                     (lbl, Palette::UI_TEXT_MUTED)
                 } else if is_locked {
                     let lbl = if let Some(ref tr) = loaded_track {
-                        format!("LOCKED • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                        format!(
+                            "LOCKED • {:.0}m • {}",
+                            tr.total_length_m(),
+                            tr.surface_summary_string()
+                        )
                     } else {
                         "LOCKED".to_string()
                     };
                     (lbl, Palette::UI_TEXT_MUTED)
                 } else if is_custom {
                     let lbl = if let Some(ref tr) = loaded_track {
-                        format!("CUSTOM CIRCUIT • {:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
+                        format!(
+                            "CUSTOM CIRCUIT • {:.0}m • {}",
+                            tr.total_length_m(),
+                            tr.surface_summary_string()
+                        )
                     } else {
                         "CUSTOM CIRCUIT".to_string()
                     };
@@ -1135,15 +1487,31 @@ pub fn render_track_select_menu(
                 } else {
                     let tag_prefix = track_opt.tag_for_module(active_module_id);
                     let lbl = if let Some(ref tr) = loaded_track {
-                        format!("{} • {:.0}m • {}", tag_prefix, tr.total_length_m(), tr.surface_summary_string())
+                        format!(
+                            "{} • {:.0}m • {}",
+                            tag_prefix,
+                            tr.total_length_m(),
+                            tr.surface_summary_string()
+                        )
                     } else {
                         tag_prefix.to_string()
                     };
-                    (lbl, if is_sel { module_accent } else { Palette::UI_TEXT_MUTED })
+                    (
+                        lbl,
+                        if is_sel {
+                            module_accent
+                        } else {
+                            Palette::UI_TEXT_MUTED
+                        },
+                    )
                 };
                 // Text must stay left of the thumbnail (and of the right-hand tags on the first line).
                 let text_room = col_w - thumb_w - scaler.s(30.0);
-                let tag_label = fonts.fit_ui_bold(&tag_label, scaler.font_s(10.0), col_w - thumb_w - scaler.s(100.0));
+                let tag_label = fonts.fit_ui_bold(
+                    &tag_label,
+                    scaler.font_s(10.0),
+                    col_w - thumb_w - scaler.s(100.0),
+                );
                 fonts.draw_ui_bold(
                     &tag_label,
                     col1_x + scaler.s(14.0),
@@ -1152,7 +1520,11 @@ pub fn render_track_select_menu(
                     tag_col,
                 );
                 if is_active_track {
-                    let badge_text = if is_career_mode { "ACTIVE EVENT" } else { "ACTIVE" };
+                    let badge_text = if is_career_mode {
+                        "ACTIVE EVENT"
+                    } else {
+                        "ACTIVE"
+                    };
                     let bw = fonts.measure_ui_bold(badge_text, scaler.font_s(9.0)).width;
                     fonts.draw_ui_bold(
                         badge_text,
@@ -1176,16 +1548,34 @@ pub fn render_track_select_menu(
                             col1_x + col_w - thumb_w - scaler.s(85.0),
                             curr_y + scaler.s(16.0),
                             scaler.font_s(9.5),
-                            if is_sel { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
+                            if is_sel {
+                                Palette::NEON_CYAN
+                            } else {
+                                Palette::UI_TEXT_MUTED
+                            },
                         );
                     }
                 }
 
                 // Track title
                 let (title_str, title_col) = if is_locked {
-                    (track_opt.title().to_string(), if is_sel { Color::new(0.75, 0.78, 0.82, 1.0) } else { Color::new(0.55, 0.58, 0.62, 1.0) })
+                    (
+                        track_opt.title().to_string(),
+                        if is_sel {
+                            Color::new(0.75, 0.78, 0.82, 1.0)
+                        } else {
+                            Color::new(0.55, 0.58, 0.62, 1.0)
+                        },
+                    )
                 } else {
-                    (track_opt.title().to_string(), if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) })
+                    (
+                        track_opt.title().to_string(),
+                        if is_sel {
+                            Palette::WHITE
+                        } else {
+                            Color::new(0.85, 0.90, 0.95, 1.0)
+                        },
+                    )
                 };
                 let title_str = fonts.fit_ui_bold(&title_str, scaler.font_s(15.5), text_room);
                 fonts.draw_ui_bold(
@@ -1202,7 +1592,11 @@ pub fn render_track_select_menu(
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
-                    if is_locked { Color::new(0.45, 0.48, 0.52, 0.80) } else { Palette::UI_TEXT_MUTED },
+                    if is_locked {
+                        Color::new(0.45, 0.48, 0.52, 0.80)
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
             } else {
                 // Dedicated Track Manager Card with distinct purple / magenta theme
@@ -1217,14 +1611,26 @@ pub fn render_track_select_menu(
                     Palette::NEON_MAGENTA
                 };
 
-                scaler.draw_glass_card(col1_x, curr_y, col_w, box_h, tm_bg, tm_border, if is_sel { 2.4 } else { 1.5 });
+                scaler.draw_glass_card(
+                    col1_x,
+                    curr_y,
+                    col_w,
+                    box_h,
+                    tm_bg,
+                    tm_border,
+                    if is_sel { 2.4 } else { 1.5 },
+                );
 
                 fonts.draw_ui_bold(
                     "CIRCUIT MANAGER [T]",
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(16.0),
                     scaler.font_s(10.5),
-                    if is_sel { Palette::NEON_GOLD } else { Palette::NEON_MAGENTA },
+                    if is_sel {
+                        Palette::NEON_GOLD
+                    } else {
+                        Palette::NEON_MAGENTA
+                    },
                 );
 
                 fonts.draw_ui_bold(
@@ -1240,14 +1646,17 @@ pub fn render_track_select_menu(
                     col1_x + scaler.s(14.0),
                     curr_y + scaler.s(49.0),
                     scaler.font_s(10.5),
-                    if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        Palette::WHITE
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
             }
 
             curr_y += box_h + scaler.s(6.0);
         }
     }
-
 
     // Right Column: Circuit Dossier, Geometry & Timing Telemetry
     let mut c2_y = menu_content_y;
@@ -1274,14 +1683,26 @@ pub fn render_track_select_menu(
             col2_x,
             c2_y + scaler.s(13.0),
             scaler.font_s(15.0),
-            if is_sel_locked { Palette::RED } else { module_accent },
+            if is_sel_locked {
+                Palette::RED
+            } else {
+                module_accent
+            },
         );
         c2_y += scaler.s(22.0);
 
         let is_sel_active = active_track_id.map_or(false, |aid| aid == track_opt.track_id());
         if is_career_mode {
             if is_sel_active {
-                scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.06, 0.22, 0.14, 0.90), Palette::NEON_GREEN, 1.2);
+                scaler.draw_glass_card(
+                    col2_x,
+                    c2_y,
+                    col_w,
+                    scaler.s(22.0),
+                    Color::new(0.06, 0.22, 0.14, 0.90),
+                    Palette::NEON_GREEN,
+                    1.2,
+                );
                 fonts.draw_ui_bold_centered(
                     "★ ACTIVE EVENT CIRCUIT FOR CURRENT ROUND ★",
                     col2_x + col_w * 0.5,
@@ -1290,7 +1711,15 @@ pub fn render_track_select_menu(
                     Palette::NEON_GOLD,
                 );
             } else {
-                scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.24, 0.08, 0.08, 0.90), Palette::RED, 1.2);
+                scaler.draw_glass_card(
+                    col2_x,
+                    c2_y,
+                    col_w,
+                    scaler.s(22.0),
+                    Color::new(0.24, 0.08, 0.08, 0.90),
+                    Palette::RED,
+                    1.2,
+                );
                 fonts.draw_ui_bold_centered(
                     "🔒 CAREER EVENT LOCKED — CANNOT SWITCH TO THIS CIRCUIT",
                     col2_x + col_w * 0.5,
@@ -1301,7 +1730,15 @@ pub fn render_track_select_menu(
             }
             c2_y += scaler.s(26.0);
         } else if is_sel_locked {
-            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+            scaler.draw_glass_card(
+                col2_x,
+                c2_y,
+                col_w,
+                scaler.s(22.0),
+                Palette::UI_CARD_BG,
+                Palette::UI_CARD_BORDER,
+                1.2,
+            );
             fonts.draw_ui_bold_centered(
                 "CIRCUIT LOCKED — ADVANCE CAREER LEVEL TO UNLOCK",
                 col2_x + col_w * 0.5,
@@ -1311,7 +1748,15 @@ pub fn render_track_select_menu(
             );
             c2_y += scaler.s(26.0);
         } else if is_sel_active {
-            scaler.draw_glass_card(col2_x, c2_y, col_w, scaler.s(22.0), Color::new(0.06, 0.22, 0.14, 0.90), Palette::NEON_GREEN, 1.2);
+            scaler.draw_glass_card(
+                col2_x,
+                c2_y,
+                col_w,
+                scaler.s(22.0),
+                Color::new(0.06, 0.22, 0.14, 0.90),
+                Palette::NEON_GREEN,
+                1.2,
+            );
             fonts.draw_ui_bold_centered(
                 "★ ACTIVE CIRCUIT SELECTED FOR RACE ★",
                 col2_x + col_w * 0.5,
@@ -1338,9 +1783,19 @@ pub fn render_track_select_menu(
         let preview_h = (max_card_y - c2_y - fixed_cards_h).clamp(scaler.s(180.0), scaler.s(285.0));
 
         if let Some(tr) = tr_ref {
-            super::track_preview::render_track_detailed_preview(fonts, &scaler, col2_x, c2_y, col_w, preview_h, tr);
+            super::track_preview::render_track_detailed_preview(
+                fonts, &scaler, col2_x, c2_y, col_w, preview_h, tr,
+            );
         } else {
-            scaler.draw_glass_card(col2_x, c2_y, col_w, preview_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+            scaler.draw_glass_card(
+                col2_x,
+                c2_y,
+                col_w,
+                preview_h,
+                Palette::UI_CARD_BG,
+                Palette::UI_CARD_BORDER,
+                1.2,
+            );
             fonts.draw_ui_bold_centered(
                 "Circuit telemetry loading...",
                 col2_x + col_w * 0.5,
@@ -1355,7 +1810,8 @@ pub fn render_track_select_menu(
         let inspect_btn_h = scaler.s(26.0);
         let inspect_btn_x = col2_x + col_w - inspect_btn_w - scaler.s(10.0);
         let inspect_btn_y = c2_y + scaler.s(10.0);
-        let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+        let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position)
+            .unwrap_or((-1000.0, -1000.0));
         let is_inspect_hover = mx >= inspect_btn_x
             && mx <= inspect_btn_x + inspect_btn_w
             && my >= inspect_btn_y
@@ -1370,7 +1826,11 @@ pub fn render_track_select_menu(
             } else {
                 Color::new(0.06, 0.12, 0.20, 0.88)
             },
-            if is_inspect_hover { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+            if is_inspect_hover {
+                Palette::NEON_CYAN
+            } else {
+                Palette::UI_CARD_BORDER
+            },
             if is_inspect_hover { 1.8 } else { 1.0 },
         );
         fonts.draw_ui_bold_centered(
@@ -1378,13 +1838,25 @@ pub fn render_track_select_menu(
             inspect_btn_x + inspect_btn_w * 0.5,
             inspect_btn_y + scaler.s(17.0),
             scaler.font_s(10.5),
-            if is_inspect_hover { Palette::WHITE } else { Palette::NEON_CYAN },
+            if is_inspect_hover {
+                Palette::WHITE
+            } else {
+                Palette::NEON_CYAN
+            },
         );
 
         c2_y += preview_h + scaler.s(8.0);
 
         // 1. Circuit Overview & Classification Glass Card
-        scaler.draw_glass_card(col2_x, c2_y, col_w, card1_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        scaler.draw_glass_card(
+            col2_x,
+            c2_y,
+            col_w,
+            card1_h,
+            Palette::UI_CARD_BG,
+            Palette::UI_CARD_BORDER,
+            1.2,
+        );
 
         // Circuit Name & Tag (tag right-aligned; the name gives way to it)
         let right_tag = if track_opt.is_user_custom() {
@@ -1399,7 +1871,11 @@ pub fn render_track_select_menu(
         };
         let right_tag_w = fonts.measure_ui_bold(right_tag, scaler.font_s(10.0)).width;
         fonts.draw_ui_bold(
-            &fonts.fit_ui_bold(track_opt.title(), scaler.font_s(15.5), col_w - right_tag_w - scaler.s(42.0)),
+            &fonts.fit_ui_bold(
+                track_opt.title(),
+                scaler.font_s(15.5),
+                col_w - right_tag_w - scaler.s(42.0),
+            ),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(16.0),
             scaler.font_s(15.5),
@@ -1415,7 +1891,11 @@ pub fn render_track_select_menu(
 
         // Circuit Description
         fonts.draw_ui_regular(
-            &fonts.fit_ui_regular(track_opt.description(), scaler.font_s(10.5), col_w - scaler.s(28.0)),
+            &fonts.fit_ui_regular(
+                track_opt.description(),
+                scaler.font_s(10.5),
+                col_w - scaler.s(28.0),
+            ),
             col2_x + scaler.s(14.0),
             c2_y + scaler.s(32.0),
             scaler.font_s(10.5),
@@ -1459,7 +1939,15 @@ pub fn render_track_select_menu(
         c2_y += card1_h + scaler.s(8.0);
 
         // 2. Circuit Timing & Best Lap Records Glass Card
-        scaler.draw_glass_card(col2_x, c2_y, col_w, card2_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        scaler.draw_glass_card(
+            col2_x,
+            c2_y,
+            col_w,
+            card2_h,
+            Palette::UI_CARD_BG,
+            Palette::UI_CARD_BORDER,
+            1.2,
+        );
 
         fonts.draw_ui_bold(
             "CIRCUIT TIMING & RECORDS",
@@ -1470,7 +1958,10 @@ pub fn render_track_select_menu(
         );
 
         let best_lap = active_stats.best_times.get(track_opt.track_id()).copied();
-        let best_circuit = active_stats.best_circuit_times.get(track_opt.track_id()).copied();
+        let best_circuit = active_stats
+            .best_circuit_times
+            .get(track_opt.track_id())
+            .copied();
 
         let sub_card_w = (col_w - scaler.s(36.0)) * 0.5;
         let sub_card_y = c2_y + scaler.s(20.0);
@@ -1485,23 +1976,87 @@ pub fn render_track_select_menu(
             ("--:--.--".to_string(), Palette::UI_TEXT_MUTED, "NO RECORD")
         };
 
-        scaler.draw_glass_card(lap_box_x, sub_card_y, sub_card_w, sub_card_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold("PERSONAL BEST LAP", lap_box_x + scaler.s(8.0), sub_card_y + scaler.s(13.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&pb_val_str, lap_box_x + scaler.s(8.0), sub_card_y + scaler.s(29.0), scaler.font_s(13.5), pb_val_col);
-        fonts.draw_ui_bold(pb_status_str, lap_box_x + sub_card_w - scaler.s(72.0), sub_card_y + scaler.s(13.0), scaler.font_s(8.5), if best_lap.is_some() { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED });
+        scaler.draw_glass_card(
+            lap_box_x,
+            sub_card_y,
+            sub_card_w,
+            sub_card_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            "PERSONAL BEST LAP",
+            lap_box_x + scaler.s(8.0),
+            sub_card_y + scaler.s(13.0),
+            scaler.font_s(9.0),
+            Palette::UI_TEXT_MUTED,
+        );
+        fonts.draw_ui_bold(
+            &pb_val_str,
+            lap_box_x + scaler.s(8.0),
+            sub_card_y + scaler.s(29.0),
+            scaler.font_s(13.5),
+            pb_val_col,
+        );
+        fonts.draw_ui_bold(
+            pb_status_str,
+            lap_box_x + sub_card_w - scaler.s(72.0),
+            sub_card_y + scaler.s(13.0),
+            scaler.font_s(8.5),
+            if best_lap.is_some() {
+                Palette::NEON_GREEN
+            } else {
+                Palette::UI_TEXT_MUTED
+            },
+        );
 
         // Right Sub-card: Best Race Time / Circuit Completion
         let (circ_val_str, circ_val_col, circ_status_str) = if let Some(tot) = best_circuit {
             (format_lap_time(tot), Palette::WHITE, "RACE RECORD")
         } else {
             let race_laps = tr_ref.map(|t| t.default_laps).unwrap_or(3);
-            ("--:--.--".to_string(), Palette::UI_TEXT_MUTED, if race_laps == 1 { "1 LAP" } else { "3 LAPS" })
+            (
+                "--:--.--".to_string(),
+                Palette::UI_TEXT_MUTED,
+                if race_laps == 1 { "1 LAP" } else { "3 LAPS" },
+            )
         };
 
-        scaler.draw_glass_card(circ_box_x, sub_card_y, sub_card_w, sub_card_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold("BEST RACE TIME", circ_box_x + scaler.s(8.0), sub_card_y + scaler.s(13.0), scaler.font_s(9.0), Palette::UI_TEXT_MUTED);
-        fonts.draw_ui_bold(&circ_val_str, circ_box_x + scaler.s(8.0), sub_card_y + scaler.s(29.0), scaler.font_s(13.5), circ_val_col);
-        fonts.draw_ui_bold(circ_status_str, circ_box_x + sub_card_w - scaler.s(72.0), sub_card_y + scaler.s(13.0), scaler.font_s(8.5), if best_circuit.is_some() { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED });
+        scaler.draw_glass_card(
+            circ_box_x,
+            sub_card_y,
+            sub_card_w,
+            sub_card_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            "BEST RACE TIME",
+            circ_box_x + scaler.s(8.0),
+            sub_card_y + scaler.s(13.0),
+            scaler.font_s(9.0),
+            Palette::UI_TEXT_MUTED,
+        );
+        fonts.draw_ui_bold(
+            &circ_val_str,
+            circ_box_x + scaler.s(8.0),
+            sub_card_y + scaler.s(29.0),
+            scaler.font_s(13.5),
+            circ_val_col,
+        );
+        fonts.draw_ui_bold(
+            circ_status_str,
+            circ_box_x + sub_card_w - scaler.s(72.0),
+            sub_card_y + scaler.s(13.0),
+            scaler.font_s(8.5),
+            if best_circuit.is_some() {
+                Palette::NEON_GOLD
+            } else {
+                Palette::UI_TEXT_MUTED
+            },
+        );
 
         c2_y += card2_h + scaler.s(8.0);
 
@@ -1523,31 +2078,95 @@ pub fn render_track_select_menu(
             "Width: 12.0m".to_string()
         };
         let laps_text = if let Some(tr) = tr_ref {
-            format!("{} Laps • {} Checkpoints", tr.default_laps, tr.checkpoints.len())
+            format!(
+                "{} Laps • {} Checkpoints",
+                tr.default_laps,
+                tr.checkpoints.len()
+            )
         } else {
             "3 Laps • Checkpoints".to_string()
         };
         let grid_text = if let Some(tr) = tr_ref {
-            format!("{} Grid Slots • Off: {}", tr.grid_positions.len(), tr.default_surface.name())
+            format!(
+                "{} Grid Slots • Off: {}",
+                tr.grid_positions.len(),
+                tr.default_surface.name()
+            )
         } else {
             "10 Slots".to_string()
         };
 
         // Chip 1: Track Length
-        scaler.draw_glass_card(chip_base_x, chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(&len_text, chip_base_x + scaler.s(8.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_CYAN);
+        scaler.draw_glass_card(
+            chip_base_x,
+            chip_y1,
+            spec_chip_w,
+            spec_chip_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            &len_text,
+            chip_base_x + scaler.s(8.0),
+            chip_y1 + scaler.s(15.0),
+            scaler.font_s(10.0),
+            Palette::NEON_CYAN,
+        );
 
         // Chip 2: Width
-        scaler.draw_glass_card(chip_base_x + spec_chip_w + scaler.s(8.0), chip_y1, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(&width_text, chip_base_x + spec_chip_w + scaler.s(16.0), chip_y1 + scaler.s(15.0), scaler.font_s(10.0), Palette::WHITE);
+        scaler.draw_glass_card(
+            chip_base_x + spec_chip_w + scaler.s(8.0),
+            chip_y1,
+            spec_chip_w,
+            spec_chip_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            &width_text,
+            chip_base_x + spec_chip_w + scaler.s(16.0),
+            chip_y1 + scaler.s(15.0),
+            scaler.font_s(10.0),
+            Palette::WHITE,
+        );
 
         // Chip 3: Race Laps & Gates
-        scaler.draw_glass_card(chip_base_x, chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(&laps_text, chip_base_x + scaler.s(8.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GOLD);
+        scaler.draw_glass_card(
+            chip_base_x,
+            chip_y2,
+            spec_chip_w,
+            spec_chip_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            &laps_text,
+            chip_base_x + scaler.s(8.0),
+            chip_y2 + scaler.s(15.0),
+            scaler.font_s(10.0),
+            Palette::NEON_GOLD,
+        );
 
         // Chip 4: Starting Grid & Off-Track Surface
-        scaler.draw_glass_card(chip_base_x + spec_chip_w + scaler.s(8.0), chip_y2, spec_chip_w, spec_chip_h, Color::new(0.06, 0.08, 0.12, 0.8), Palette::UI_CARD_BORDER, 1.0);
-        fonts.draw_ui_bold(&grid_text, chip_base_x + spec_chip_w + scaler.s(16.0), chip_y2 + scaler.s(15.0), scaler.font_s(10.0), Palette::NEON_GREEN);
+        scaler.draw_glass_card(
+            chip_base_x + spec_chip_w + scaler.s(8.0),
+            chip_y2,
+            spec_chip_w,
+            spec_chip_h,
+            Color::new(0.06, 0.08, 0.12, 0.8),
+            Palette::UI_CARD_BORDER,
+            1.0,
+        );
+        fonts.draw_ui_bold(
+            &grid_text,
+            chip_base_x + spec_chip_w + scaler.s(16.0),
+            chip_y2 + scaler.s(15.0),
+            scaler.font_s(10.0),
+            Palette::NEON_GREEN,
+        );
 
         if track_opt.is_user_custom() {
             fonts.draw_ui_bold(
@@ -1570,7 +2189,15 @@ pub fn render_track_select_menu(
         c2_y += scaler.s(22.0);
 
         let studio_h = scaler.s(220.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, studio_h, Palette::UI_CARD_BG, Palette::NEON_MAGENTA, 1.5);
+        scaler.draw_glass_card(
+            col2_x,
+            c2_y,
+            col_w,
+            studio_h,
+            Palette::UI_CARD_BG,
+            Palette::NEON_MAGENTA,
+            1.5,
+        );
 
         fonts.draw_ui_bold(
             "CIRCUIT MANAGER & CAD DESIGNER",
@@ -1596,7 +2223,13 @@ pub fn render_track_select_menu(
         ];
         let mut feat_y = c2_y + scaler.s(86.0);
         for feat in &features {
-            fonts.draw_ui_regular(feat, col2_x + scaler.s(14.0), feat_y, scaler.font_s(11.0), Palette::NEON_CYAN);
+            fonts.draw_ui_regular(
+                feat,
+                col2_x + scaler.s(14.0),
+                feat_y,
+                scaler.font_s(11.0),
+                Palette::NEON_CYAN,
+            );
             feat_y += scaler.s(18.0);
         }
 
@@ -1612,7 +2245,15 @@ pub fn render_track_select_menu(
         c2_y += scaler.s(22.0);
 
         let actions_h = scaler.s(170.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, actions_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 1.3);
+        scaler.draw_glass_card(
+            col2_x,
+            c2_y,
+            col_w,
+            actions_h,
+            Palette::UI_CARD_BG,
+            Palette::NEON_GOLD,
+            1.3,
+        );
 
         fonts.draw_ui_bold(
             "Circuit Manager Overview",
@@ -1630,15 +2271,39 @@ pub fn render_track_select_menu(
         );
 
         let classes = [
-            ("[T] Circuit Manager", "Full screen circuit organizer, drafts & file manager"),
-            ("CAD Studio", "Direct spline vector circuit layout and surface designer"),
-            ("Clone to Drafts", "Safely duplicate any built-in preset or custom circuit"),
-            ("Module Distribution", "Assign custom circuits to Classic, Rally, Kart, GT, Nascar"),
+            (
+                "[T] Circuit Manager",
+                "Full screen circuit organizer, drafts & file manager",
+            ),
+            (
+                "CAD Studio",
+                "Direct spline vector circuit layout and surface designer",
+            ),
+            (
+                "Clone to Drafts",
+                "Safely duplicate any built-in preset or custom circuit",
+            ),
+            (
+                "Module Distribution",
+                "Assign custom circuits to Classic, Rally, Kart, GT, Nascar",
+            ),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);
         for (tag, desc) in &classes {
-            fonts.draw_ui_bold(tag, col2_x + scaler.s(14.0), cl_y, scaler.font_s(10.0), Palette::NEON_CYAN);
-            fonts.draw_ui_regular(desc, col2_x + scaler.s(130.0), cl_y, scaler.font_s(10.0), Palette::WHITE);
+            fonts.draw_ui_bold(
+                tag,
+                col2_x + scaler.s(14.0),
+                cl_y,
+                scaler.font_s(10.0),
+                Palette::NEON_CYAN,
+            );
+            fonts.draw_ui_regular(
+                desc,
+                col2_x + scaler.s(130.0),
+                cl_y,
+                scaler.font_s(10.0),
+                Palette::WHITE,
+            );
             cl_y += scaler.s(18.0);
         }
     } else {
@@ -1653,7 +2318,15 @@ pub fn render_track_select_menu(
         c2_y += scaler.s(22.0);
 
         let empty_dossier_h = scaler.s(220.0);
-        scaler.draw_glass_card(col2_x, c2_y, col_w, empty_dossier_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        scaler.draw_glass_card(
+            col2_x,
+            c2_y,
+            col_w,
+            empty_dossier_h,
+            Palette::UI_CARD_BG,
+            Palette::UI_CARD_BORDER,
+            1.2,
+        );
         fonts.draw_ui_bold_centered(
             "No circuit selected",
             col2_x + col_w * 0.5,
@@ -1673,7 +2346,9 @@ pub fn render_track_select_menu(
     // Footer Launch prompt button
     let is_tm_selected = has_tm_entry && selected_track_idx == total_tracks;
     let is_sel_active = selected_track_idx < total_tracks
-        && active_track_id.map_or(false, |aid| aid == available_tracks[selected_track_idx].track_id());
+        && active_track_id.map_or(false, |aid| {
+            aid == available_tracks[selected_track_idx].track_id()
+        });
     let (btn_bg, btn_border, start_prompt) = if is_tm_selected {
         (
             Color::new(0.32, 0.12, 0.52, 0.95),
@@ -1735,11 +2410,11 @@ pub fn render_track_select_menu(
     let footer_text = if is_lan_host {
         "[Up / Down] Select Circuit  •  [V] Full Circuit View  •  [ENTER] Set LAN Circuit  •  [ESC] Return to Lobby"
     } else if is_career_mode {
-        "[Left / Right] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
+        "[Q / E or 1-8] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
     } else if crate::storage::is_dev_mode() {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [Ctrl+D] Dev Workbench  •  [X] Settings  •  [ESC] Back"
+        "[Q / E or 1-8] Category  •  [Left / Right / TAB] Presets/Custom  •  [Up / Down] Track  •  [V] View  •  [T] Manager  •  [ESC] Back"
     } else {
-        "[Left / Right] Category  •  [Up / Down] Select Track  •  [V] Full Circuit View  •  [T] Circuit Manager  •  [X] Settings  •  [K] Controls  •  [ESC] Back"
+        "[Q / E or 1-8] Category  •  [Left / Right / TAB] Presets/Custom  •  [Up / Down] Track  •  [V] View  •  [T] Manager  •  [ESC] Back"
     };
 
     fonts.draw_ui_regular_centered(
@@ -1776,7 +2451,11 @@ pub fn track_select_preview_rect(
 
     let badge_y = scaler.s(62.0);
     let badge_h = scaler.s(48.0);
-    let cp_h = if has_career_progress { scaler.s(26.0) } else { 0.0 };
+    let cp_h = if has_career_progress {
+        scaler.s(26.0)
+    } else {
+        0.0
+    };
     let menu_content_y = badge_y + badge_h + cp_h + scaler.s(14.0);
 
     let mut c2_y = menu_content_y + scaler.s(22.0);
@@ -1800,7 +2479,6 @@ pub fn track_select_preview_rect(
 
     (col2_x, c2_y, col_w, preview_h)
 }
-
 
 /// Bounding rectangles for interactive Pause Menu action buttons.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1839,7 +2517,12 @@ pub fn pause_menu_layout(sw: f32, sh: f32) -> (f32, f32, f32, f32, PauseMenuButt
 }
 
 /// Renders the modern Pause overlay with Assist Profile selection, Audio status, and Resume/Exit buttons.
-pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_settings: &AudioSettings, selected_btn: usize) {
+pub fn render_pause_menu(
+    fonts: &Fonts,
+    assist_profile: AssistProfile,
+    audio_settings: &AudioSettings,
+    selected_btn: usize,
+) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
@@ -1849,7 +2532,15 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
 
     let (box_x, box_y, box_w, box_h, btn_layout) = pause_menu_layout(sw, sh);
 
-    scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.2);
+    scaler.draw_glass_card(
+        box_x,
+        box_y,
+        box_w,
+        box_h,
+        Palette::UI_CARD_BG,
+        Palette::NEON_CYAN,
+        2.2,
+    );
 
     let title = "RACE PAUSED";
     fonts.draw_display_centered_with_shadow(
@@ -1862,7 +2553,8 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         scaler.s(2.0),
     );
 
-    let (mx, my) = std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
+    let (mx, my) =
+        std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
 
     // Resume button
     let (rx, ry, rw, rh) = btn_layout.resume_rect;
@@ -1884,11 +2576,19 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         ry,
         rw,
         rh,
-        if is_resume_active { 2.6 * scaler.scale } else { 1.4 * scaler.scale },
+        if is_resume_active {
+            2.6 * scaler.scale
+        } else {
+            1.4 * scaler.scale
+        },
         resume_border,
     );
     fonts.draw_ui_bold_centered(
-        if is_resume_active { "[ENTER] RESUME RACE" } else { "RESUME RACE" },
+        if is_resume_active {
+            "[ENTER] RESUME RACE"
+        } else {
+            "RESUME RACE"
+        },
         rx + rw * 0.5,
         ry + scaler.s(21.0),
         scaler.font_s(14.5),
@@ -1922,11 +2622,19 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
         ey,
         ew,
         eh,
-        if is_exit_active { 2.6 * scaler.scale } else { 1.4 * scaler.scale },
+        if is_exit_active {
+            2.6 * scaler.scale
+        } else {
+            1.4 * scaler.scale
+        },
         exit_border,
     );
     fonts.draw_ui_bold_centered(
-        if is_exit_active { "[ENTER] EXIT RACE" } else { "EXIT RACE" },
+        if is_exit_active {
+            "[ENTER] EXIT RACE"
+        } else {
+            "EXIT RACE"
+        },
         ex + ew * 0.5,
         ey + scaler.s(21.0),
         scaler.font_s(14.5),
@@ -1951,10 +2659,21 @@ pub fn render_pause_menu(fonts: &Fonts, assist_profile: AssistProfile, audio_set
     );
 
     let assist_item = format!("H / R3 : Toggle Assists [{}]", assist_profile.short_name());
-    let music_status = if audio_settings.is_muted || audio_settings.is_music_muted { "MUTED" } else { "ON" };
-    let sfx_status = if audio_settings.is_muted || audio_settings.is_sfx_muted { "MUTED" } else { "ON" };
+    let music_status = if audio_settings.is_muted || audio_settings.is_music_muted {
+        "MUTED"
+    } else {
+        "ON"
+    };
+    let sfx_status = if audio_settings.is_muted || audio_settings.is_sfx_muted {
+        "MUTED"
+    } else {
+        "ON"
+    };
     let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
-    let audio_item = format!("M : Music [{}] | S : Sound [{}] | [ / ] : Vol {}%", music_status, sfx_status, vol_pct);
+    let audio_item = format!(
+        "M : Music [{}] | S : Sound [{}] | [ / ] : Vol {}%",
+        music_status, sfx_status, vol_pct
+    );
 
     let items = [
         assist_item,
@@ -2005,7 +2724,15 @@ pub fn render_results_screen(
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
-    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.5);
+    scaler.draw_glass_card(
+        x,
+        y,
+        box_w,
+        box_h,
+        Palette::UI_CARD_BG,
+        Palette::NEON_GOLD,
+        2.5,
+    );
 
     let title = if is_time_attack {
         "TIME ATTACK SESSION COMPLETE"
@@ -2036,18 +2763,79 @@ pub fn render_results_screen(
     // Table Header
     let mut row_y = y + scaler.s(108.0);
     let hdr_h = scaler.s(28.0);
-    draw_rectangle(x + scaler.s(20.0), row_y - scaler.s(20.0), box_w - scaler.s(40.0), hdr_h, Color::new(0.12, 0.16, 0.25, 0.9));
-    fonts.draw_ui_bold("POS", x + scaler.s(32.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-    fonts.draw_ui_bold("DRIVER / VEHICLE", x + scaler.s(85.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+    draw_rectangle(
+        x + scaler.s(20.0),
+        row_y - scaler.s(20.0),
+        box_w - scaler.s(40.0),
+        hdr_h,
+        Color::new(0.12, 0.16, 0.25, 0.9),
+    );
+    fonts.draw_ui_bold(
+        "POS",
+        x + scaler.s(32.0),
+        row_y,
+        scaler.font_s(14.0),
+        Palette::WHITE,
+    );
+    fonts.draw_ui_bold(
+        "DRIVER / VEHICLE",
+        x + scaler.s(85.0),
+        row_y,
+        scaler.font_s(14.0),
+        Palette::WHITE,
+    );
     if is_championship {
-        fonts.draw_ui_bold("TOTAL TIME", x + box_w - scaler.s(360.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_ui_bold("BEST LAP", x + box_w - scaler.s(240.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_ui_bold("GAP", x + box_w - scaler.s(135.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        draw_ui_bold_right(fonts, "POINTS", x + box_w - scaler.s(30.0), row_y, scaler.font_s(14.0), Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            "TOTAL TIME",
+            x + box_w - scaler.s(360.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_bold(
+            "BEST LAP",
+            x + box_w - scaler.s(240.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_bold(
+            "GAP",
+            x + box_w - scaler.s(135.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        draw_ui_bold_right(
+            fonts,
+            "POINTS",
+            x + box_w - scaler.s(30.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::NEON_GOLD,
+        );
     } else {
-        fonts.draw_ui_bold("TOTAL TIME", x + box_w - scaler.s(320.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_ui_bold("BEST LAP", x + box_w - scaler.s(190.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_ui_bold("GAP", x + box_w - scaler.s(75.0), row_y, scaler.font_s(14.0), Palette::WHITE);
+        fonts.draw_ui_bold(
+            "TOTAL TIME",
+            x + box_w - scaler.s(320.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_bold(
+            "BEST LAP",
+            x + box_w - scaler.s(190.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_bold(
+            "GAP",
+            x + box_w - scaler.s(75.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
     }
 
     row_y += scaler.s(24.0);
@@ -2056,10 +2844,19 @@ pub fn render_results_screen(
         let (row_bg, text_col) = if res.is_player {
             (Color::new(0.18, 0.35, 0.22, 0.90), Palette::NEON_GREEN)
         } else {
-            (Color::new(0.09, 0.11, 0.16, 0.70), Color::new(0.85, 0.90, 0.95, 1.0))
+            (
+                Color::new(0.09, 0.11, 0.16, 0.70),
+                Color::new(0.85, 0.90, 0.95, 1.0),
+            )
         };
 
-        draw_rectangle(x + scaler.s(20.0), row_y - scaler.s(16.0), box_w - scaler.s(40.0), scaler.s(28.0), row_bg);
+        draw_rectangle(
+            x + scaler.s(20.0),
+            row_y - scaler.s(16.0),
+            box_w - scaler.s(40.0),
+            scaler.s(28.0),
+            row_bg,
+        );
 
         // Position medal icon or text
         let pos_str = match res.position {
@@ -2068,38 +2865,109 @@ pub fn render_results_screen(
             3 => "P3".to_string(),
             _ => format!("P{}", res.position),
         };
-        fonts.draw_ui_bold(&pos_str, x + scaler.s(28.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
-        fonts.draw_ui_bold(&res.car_name, x + scaler.s(85.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+        fonts.draw_ui_bold(
+            &pos_str,
+            x + scaler.s(28.0),
+            row_y + scaler.s(4.0),
+            scaler.font_s(14.0),
+            text_col,
+        );
+        fonts.draw_ui_bold(
+            &res.car_name,
+            x + scaler.s(85.0),
+            row_y + scaler.s(4.0),
+            scaler.font_s(14.0),
+            text_col,
+        );
 
         if is_championship {
-            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
-            fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(360.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            let total_str = if res.projected {
+                format!("~{}", format_lap_time(res.total_time))
+            } else {
+                format_lap_time(res.total_time)
+            };
+            fonts.draw_ui_bold(
+                &total_str,
+                x + box_w - scaler.s(360.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
-            fonts.draw_ui_bold(&best_str, x + box_w - scaler.s(240.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            fonts.draw_ui_bold(
+                &best_str,
+                x + box_w - scaler.s(240.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
 
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
+                format!(
+                    "{}+{:.2}s",
+                    if res.projected { "~" } else { "" },
+                    res.delta_to_leader
+                )
             };
-            fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(135.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            fonts.draw_ui_bold(
+                &gap_str,
+                x + box_w - scaler.s(135.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
 
             let pts_str = format!("+{} PTS", res.points_awarded);
-            draw_ui_bold_right(fonts, &pts_str, x + box_w - scaler.s(30.0), row_y + scaler.s(4.0), scaler.font_s(14.0), Palette::NEON_GOLD);
+            draw_ui_bold_right(
+                fonts,
+                &pts_str,
+                x + box_w - scaler.s(30.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                Palette::NEON_GOLD,
+            );
         } else {
-            let total_str = if res.projected { format!("~{}", format_lap_time(res.total_time)) } else { format_lap_time(res.total_time) };
-            fonts.draw_ui_bold(&total_str, x + box_w - scaler.s(320.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            let total_str = if res.projected {
+                format!("~{}", format_lap_time(res.total_time))
+            } else {
+                format_lap_time(res.total_time)
+            };
+            fonts.draw_ui_bold(
+                &total_str,
+                x + box_w - scaler.s(320.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
 
             let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
-            fonts.draw_ui_bold(&best_str, x + box_w - scaler.s(190.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            fonts.draw_ui_bold(
+                &best_str,
+                x + box_w - scaler.s(190.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
 
             let gap_str = if res.position == 1 {
                 "-".to_string()
             } else {
-                format!("{}+{:.2}s", if res.projected { "~" } else { "" }, res.delta_to_leader)
+                format!(
+                    "{}+{:.2}s",
+                    if res.projected { "~" } else { "" },
+                    res.delta_to_leader
+                )
             };
-            fonts.draw_ui_bold(&gap_str, x + box_w - scaler.s(75.0), row_y + scaler.s(4.0), scaler.font_s(14.0), text_col);
+            fonts.draw_ui_bold(
+                &gap_str,
+                x + box_w - scaler.s(75.0),
+                row_y + scaler.s(4.0),
+                scaler.font_s(14.0),
+                text_col,
+            );
         }
 
         row_y += scaler.s(32.0);
@@ -2111,7 +2979,15 @@ pub fn render_results_screen(
         let r_y = y + box_h - scaler.s(64.0);
         let r_w = box_w - scaler.s(40.0);
         let r_x = x + scaler.s(20.0);
-        scaler.draw_glass_card(r_x, r_y, r_w, r_h, Color::new(0.06, 0.10, 0.16, 0.95), Palette::NEON_GOLD, 1.4);
+        scaler.draw_glass_card(
+            r_x,
+            r_y,
+            r_w,
+            r_h,
+            Color::new(0.06, 0.10, 0.16, 0.95),
+            Palette::NEON_GOLD,
+            1.4,
+        );
 
         let first_text = if receipt.is_first_time {
             format!("  •  1ST VISIT BONUS: +{} XP", receipt.first_time_bonus)
@@ -2181,7 +3057,8 @@ pub fn render_controls_screen(
         scaler.s(2.0),
     );
 
-    let subtitle = "Configurable Controls & Gamepad Mappings | Electronic Vehicle Dynamics Configuration";
+    let subtitle =
+        "Configurable Controls & Gamepad Mappings | Electronic Vehicle Dynamics Configuration";
     fonts.draw_ui_regular_centered(
         subtitle,
         sw * 0.5,
@@ -2197,15 +3074,53 @@ pub fn render_controls_screen(
     let banner_h = scaler.s(34.0);
 
     if gamepad_connected {
-        draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.08, 0.22, 0.15, 0.90));
-        draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Palette::NEON_GREEN);
+        draw_rectangle(
+            banner_x,
+            banner_y,
+            banner_w,
+            banner_h,
+            Color::new(0.08, 0.22, 0.15, 0.90),
+        );
+        draw_rectangle_lines(
+            banner_x,
+            banner_y,
+            banner_w,
+            banner_h,
+            1.5,
+            Palette::NEON_GREEN,
+        );
         let text = format!("ACTIVE GAMEPAD DETECTED: {}", gamepad_name);
-        fonts.draw_ui_bold(&text, banner_x + scaler.s(16.0), banner_y + scaler.s(22.0), scaler.font_s(14.0), Palette::NEON_GREEN);
+        fonts.draw_ui_bold(
+            &text,
+            banner_x + scaler.s(16.0),
+            banner_y + scaler.s(22.0),
+            scaler.font_s(14.0),
+            Palette::NEON_GREEN,
+        );
     } else {
-        draw_rectangle(banner_x, banner_y, banner_w, banner_h, Color::new(0.10, 0.12, 0.18, 0.90));
-        draw_rectangle_lines(banner_x, banner_y, banner_w, banner_h, 1.5, Palette::UI_CARD_BORDER);
+        draw_rectangle(
+            banner_x,
+            banner_y,
+            banner_w,
+            banner_h,
+            Color::new(0.10, 0.12, 0.18, 0.90),
+        );
+        draw_rectangle_lines(
+            banner_x,
+            banner_y,
+            banner_w,
+            banner_h,
+            1.5,
+            Palette::UI_CARD_BORDER,
+        );
         let text = "NO GAMEPAD DETECTED — KEYBOARD & TOUCH ACTIVE (PLUG & PLAY READY)";
-        fonts.draw_ui_bold(text, banner_x + scaler.s(16.0), banner_y + scaler.s(22.0), scaler.font_s(14.0), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_bold(
+            text,
+            banner_x + scaler.s(16.0),
+            banner_y + scaler.s(22.0),
+            scaler.font_s(14.0),
+            Palette::UI_TEXT_MUTED,
+        );
     }
 
     // Left Column: Keyboard Controls
@@ -2214,8 +3129,22 @@ pub fn render_controls_screen(
     let col_y = scaler.s(130.0);
     let col_h = sh * 0.54;
 
-    scaler.draw_glass_card(col1_x, col_y, col_w, col_h, Palette::UI_CARD_BG, Palette::NEON_CYAN, 1.8);
-    fonts.draw_ui_bold("KEYBOARD CONTROLS", col1_x + scaler.s(16.0), col_y + scaler.s(26.0), scaler.font_s(18.0), Palette::NEON_CYAN);
+    scaler.draw_glass_card(
+        col1_x,
+        col_y,
+        col_w,
+        col_h,
+        Palette::UI_CARD_BG,
+        Palette::NEON_CYAN,
+        1.8,
+    );
+    fonts.draw_ui_bold(
+        "KEYBOARD CONTROLS",
+        col1_x + scaler.s(16.0),
+        col_y + scaler.s(26.0),
+        scaler.font_s(18.0),
+        Palette::NEON_CYAN,
+    );
 
     let throttle_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Up);
     let brake_label = input_map.primary_binding_label(cabinet::input::ArcadeAction::Down);
@@ -2235,7 +3164,10 @@ pub fn render_controls_screen(
     let kb_rows = [
         ("Handling Preset", keyboard.profile.name()),
         ("Cycle Handling Preset", "S / P"),
-        ("Steer Speed / Authority / Traction", handling_label.as_str()),
+        (
+            "Steer Speed / Authority / Traction",
+            handling_label.as_str(),
+        ),
         ("Open Controls Settings", "X / O"),
         ("Accelerate / Gas", throttle_label.as_str()),
         ("Brake / Reverse (at stop)", brake_label.as_str()),
@@ -2254,16 +3186,42 @@ pub fn render_controls_screen(
     let mut row_y = col_y + scaler.s(42.0);
     let row_step = scaler.s(16.5);
     for (action, key) in &kb_rows {
-        fonts.draw_ui_regular(action, col1_x + scaler.s(16.0), row_y, scaler.font_s(11.8), Color::new(0.80, 0.85, 0.92, 1.0));
+        fonts.draw_ui_regular(
+            action,
+            col1_x + scaler.s(16.0),
+            row_y,
+            scaler.font_s(11.8),
+            Color::new(0.80, 0.85, 0.92, 1.0),
+        );
         let km = fonts.measure_ui_bold(key, scaler.font_s(11.8));
-        fonts.draw_ui_bold(key, col1_x + col_w - km.width - scaler.s(16.0), row_y, scaler.font_s(11.8), Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            key,
+            col1_x + col_w - km.width - scaler.s(16.0),
+            row_y,
+            scaler.font_s(11.8),
+            Palette::NEON_GOLD,
+        );
         row_y += row_step;
     }
 
     // Right Column: Gamepad Controls
     let col2_x = (sw * 0.5 + scaler.s(14.0)).min(sw - col_w - scaler.safe_pad_x);
-    scaler.draw_glass_card(col2_x, col_y, col_w, col_h, Palette::UI_CARD_BG, Palette::NEON_MAGENTA, 1.8);
-    fonts.draw_ui_bold("GAMEPAD CONTROLS", col2_x + scaler.s(16.0), col_y + scaler.s(26.0), scaler.font_s(18.0), Palette::NEON_MAGENTA);
+    scaler.draw_glass_card(
+        col2_x,
+        col_y,
+        col_w,
+        col_h,
+        Palette::UI_CARD_BG,
+        Palette::NEON_MAGENTA,
+        1.8,
+    );
+    fonts.draw_ui_bold(
+        "GAMEPAD CONTROLS",
+        col2_x + scaler.s(16.0),
+        col_y + scaler.s(26.0),
+        scaler.font_s(18.0),
+        Palette::NEON_MAGENTA,
+    );
 
     let gp_rows = [
         ("Proportional Steering", "Left Analog Stick / D-Pad"),
@@ -2280,9 +3238,21 @@ pub fn render_controls_screen(
 
     let mut gp_row_y = col_y + scaler.s(52.0);
     for (action, button) in &gp_rows {
-        fonts.draw_ui_regular(action, col2_x + scaler.s(16.0), gp_row_y, scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
+        fonts.draw_ui_regular(
+            action,
+            col2_x + scaler.s(16.0),
+            gp_row_y,
+            scaler.font_s(13.0),
+            Color::new(0.80, 0.85, 0.92, 1.0),
+        );
         let bm = fonts.measure_ui_bold(button, scaler.font_s(13.0));
-        fonts.draw_ui_bold(button, col2_x + col_w - bm.width - scaler.s(16.0), gp_row_y, scaler.font_s(13.0), Palette::NEON_GREEN);
+        fonts.draw_ui_bold(
+            button,
+            col2_x + col_w - bm.width - scaler.s(16.0),
+            gp_row_y,
+            scaler.font_s(13.0),
+            Palette::NEON_GREEN,
+        );
         gp_row_y += scaler.s(21.0);
     }
 
@@ -2291,9 +3261,25 @@ pub fn render_controls_screen(
     let mapper_x = col2_x + scaler.s(12.0);
     let mapper_w = col_w - scaler.s(24.0);
     let mapper_y = col_y + col_h - mapper_h - scaler.s(12.0);
-    scaler.draw_glass_card(mapper_x, mapper_y, mapper_w, mapper_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_MAGENTA, 1.2);
-    fonts.draw_ui_bold("[G] OPEN GAMEPAD MAPPER", mapper_x + scaler.s(12.0), mapper_y + scaler.s(21.0), scaler.font_s(13.0), Palette::NEON_MAGENTA);
-    let mapper_line = mapper_status.unwrap_or("Calibrate sticks and triggers or remap buttons; the profile loads when it closes.");
+    scaler.draw_glass_card(
+        mapper_x,
+        mapper_y,
+        mapper_w,
+        mapper_h,
+        Palette::UI_CARD_BG_HOVER,
+        Palette::NEON_MAGENTA,
+        1.2,
+    );
+    fonts.draw_ui_bold(
+        "[G] OPEN GAMEPAD MAPPER",
+        mapper_x + scaler.s(12.0),
+        mapper_y + scaler.s(21.0),
+        scaler.font_s(13.0),
+        Palette::NEON_MAGENTA,
+    );
+    let mapper_line = mapper_status.unwrap_or(
+        "Calibrate sticks and triggers or remap buttons; the profile loads when it closes.",
+    );
     fonts.draw_ui_regular(
         &fonts.fit_ui_regular(mapper_line, scaler.font_s(11.0), mapper_w - scaler.s(24.0)),
         mapper_x + scaler.s(12.0),
@@ -2305,16 +3291,39 @@ pub fn render_controls_screen(
     // Bottom Panel: Active Drive Assists Profile
     let bot_y = col_y + col_h + scaler.s(12.0);
     let bot_h = scaler.s(85.0);
-    scaler.draw_glass_card(banner_x, bot_y, banner_w, bot_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+    scaler.draw_glass_card(
+        banner_x,
+        bot_y,
+        banner_w,
+        bot_h,
+        Palette::UI_CARD_BG,
+        Palette::UI_CARD_BORDER,
+        1.5,
+    );
 
-    let assist_title = format!("ACTIVE DRIVE ASSIST PROFILE: [H / R3] {}", assist_profile.title());
+    let assist_title = format!(
+        "ACTIVE DRIVE ASSIST PROFILE: [H / R3] {}",
+        assist_profile.title()
+    );
     let assist_col = match assist_profile {
         AssistProfile::Arcade => Palette::NEON_CYAN,
         AssistProfile::Sport => Palette::NEON_GOLD,
         AssistProfile::Pro => Palette::RED,
     };
-    fonts.draw_ui_bold(&assist_title, banner_x + scaler.s(18.0), bot_y + scaler.s(24.0), scaler.font_s(16.0), assist_col);
-    fonts.draw_ui_regular(assist_profile.description(), banner_x + scaler.s(18.0), bot_y + scaler.s(48.0), scaler.font_s(13.0), Color::new(0.80, 0.85, 0.92, 1.0));
+    fonts.draw_ui_bold(
+        &assist_title,
+        banner_x + scaler.s(18.0),
+        bot_y + scaler.s(24.0),
+        scaler.font_s(16.0),
+        assist_col,
+    );
+    fonts.draw_ui_regular(
+        assist_profile.description(),
+        banner_x + scaler.s(18.0),
+        bot_y + scaler.s(48.0),
+        scaler.font_s(13.0),
+        Color::new(0.80, 0.85, 0.92, 1.0),
+    );
     fonts.draw_ui_regular("Press [H] on keyboard or [R3] on Gamepad to switch assist difficulty here, on the grid, or during a race.", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
     // Footer Return Prompt
@@ -2330,12 +3339,16 @@ pub fn render_controls_screen(
 
 use crate::tournament::ChampionshipSession;
 
-static CLASSIC_ARCADE_ICON_PNG: &[u8] = include_bytes!("../../../../assets/icons/classic_arcade-128.png");
-static CLASSIC_ARCADE_ICON_TEXTURE: std::sync::Mutex<Option<Texture2D>> = std::sync::Mutex::new(None);
+static CLASSIC_ARCADE_ICON_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/classic_arcade-128.png");
+static CLASSIC_ARCADE_ICON_TEXTURE: std::sync::Mutex<Option<Texture2D>> =
+    std::sync::Mutex::new(None);
 
 /// Retrieves or lazily decodes the official Classic Arcade Dual-Tone Checkered Gamepad icon texture.
 fn get_classic_arcade_icon_texture() -> Texture2D {
-    let mut guard = CLASSIC_ARCADE_ICON_TEXTURE.lock().unwrap_or_else(|e| e.into_inner());
+    let mut guard = CLASSIC_ARCADE_ICON_TEXTURE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(tex) = guard.as_ref() {
         return tex.clone();
     }
@@ -2378,15 +3391,35 @@ fn draw_vault_archive_icon(cx: f32, cy: f32, s: f32, is_sel: bool, accent: Color
         draw_circle(cx, cy, r * 1.3, accent.with_alpha(0.35));
     }
     // Safe body
-    draw_rectangle(cx - r, cy - r, r * 2.0, r * 2.0, Color::new(0.12, 0.14, 0.18, 1.0));
+    draw_rectangle(
+        cx - r,
+        cy - r,
+        r * 2.0,
+        r * 2.0,
+        Color::new(0.12, 0.14, 0.18, 1.0),
+    );
     draw_rectangle_lines(cx - r, cy - r, r * 2.0, r * 2.0, 2.0 * s, accent);
     // Safe door wheel / dial
     draw_circle(cx, cy, r * 0.55, Color::new(0.20, 0.23, 0.30, 1.0));
     draw_circle_lines(cx, cy, r * 0.55, 1.5 * s, Palette::WHITE);
     draw_circle(cx, cy, r * 0.22, accent);
     // Spokes
-    draw_line(cx - r * 0.45, cy, cx + r * 0.45, cy, 1.5 * s, Palette::WHITE);
-    draw_line(cx, cy - r * 0.45, cx, cy + r * 0.45, 1.5 * s, Palette::WHITE);
+    draw_line(
+        cx - r * 0.45,
+        cy,
+        cx + r * 0.45,
+        cy,
+        1.5 * s,
+        Palette::WHITE,
+    );
+    draw_line(
+        cx,
+        cy - r * 0.45,
+        cx,
+        cy + r * 0.45,
+        1.5 * s,
+        Palette::WHITE,
+    );
 }
 
 /// Returns bounding box (x, y, w, h) for the Grand Hub profile badge.
@@ -2400,7 +3433,12 @@ pub fn module_select_badge_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
 }
 
 /// Returns bounding box (x, y, w, h) for a Grand Hub motorsport module card.
-pub fn module_select_card_rect(sw: f32, sh: f32, idx: usize, total_modules: usize) -> (f32, f32, f32, f32) {
+pub fn module_select_card_rect(
+    sw: f32,
+    sh: f32,
+    idx: usize,
+    total_modules: usize,
+) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
     let card_w = (sw * 0.72).clamp(scaler.s(480.0), scaler.s(720.0));
     let card_x = (sw - card_w) * 0.5;
@@ -2409,7 +3447,8 @@ pub fn module_select_card_rect(sw: f32, sh: f32, idx: usize, total_modules: usiz
     let card_gap = scaler.s(8.0);
     let start_y = badge_y + badge_h + scaler.s(10.0);
     let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(240.0));
-    let card_h = ((available_h - card_gap * (total_modules as f32 - 1.0)) / total_modules as f32).clamp(scaler.s(56.0), scaler.s(76.0));
+    let card_h = ((available_h - card_gap * (total_modules as f32 - 1.0)) / total_modules as f32)
+        .clamp(scaler.s(56.0), scaler.s(76.0));
     let curr_y = start_y + (idx as f32) * (card_h + card_gap);
     (card_x, curr_y, card_w, card_h)
 }
@@ -2454,12 +3493,23 @@ pub fn render_module_select_menu(
     let badge_y = scaler.s(60.0);
     let badge_h = scaler.s(68.0);
     let is_profile_sel = selected_idx == 0;
-    render_profile_badge(fonts, &scaler, card_x, badge_y, card_w, badge_h, active_profile, active_stats, is_profile_sel);
+    render_profile_badge(
+        fonts,
+        &scaler,
+        card_x,
+        badge_y,
+        card_w,
+        badge_h,
+        active_profile,
+        active_stats,
+        is_profile_sel,
+    );
 
     let card_gap = scaler.s(8.0);
     let start_y = badge_y + badge_h + scaler.s(10.0);
     let available_h = (sh - start_y - scaler.s(36.0)).max(scaler.s(240.0));
-    let card_h = ((available_h - card_gap * (modules.len() as f32 - 1.0)) / modules.len() as f32).clamp(scaler.s(56.0), scaler.s(76.0));
+    let card_h = ((available_h - card_gap * (modules.len() as f32 - 1.0)) / modules.len() as f32)
+        .clamp(scaler.s(56.0), scaler.s(76.0));
     let mut curr_y = start_y;
 
     for (i, (id, title, subtitle, accent_col)) in modules.iter().enumerate() {
@@ -2475,7 +3525,15 @@ pub fn render_module_select_menu(
             Palette::UI_CARD_BORDER
         };
 
-        scaler.draw_glass_card(card_x, curr_y, card_w, card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.2 });
+        scaler.draw_glass_card(
+            card_x,
+            curr_y,
+            card_w,
+            card_h,
+            bg_col,
+            border_col,
+            if is_sel { 2.4 } else { 1.2 },
+        );
 
         // Left accent bar
         if is_sel {
@@ -2585,7 +3643,11 @@ pub fn render_module_select_menu(
             text_x,
             curr_y + card_h * 0.42,
             scaler.font_s(17.5),
-            if is_sel { Palette::WHITE } else { Color::new(0.88, 0.92, 0.97, 1.0) },
+            if is_sel {
+                Palette::WHITE
+            } else {
+                Color::new(0.88, 0.92, 0.97, 1.0)
+            },
         );
 
         // Subtitle (Line 2)
@@ -2594,7 +3656,11 @@ pub fn render_module_select_menu(
             text_x,
             curr_y + card_h * 0.74,
             scaler.font_s(12.0),
-            if is_sel { *accent_col } else { Palette::UI_TEXT_MUTED },
+            if is_sel {
+                *accent_col
+            } else {
+                Palette::UI_TEXT_MUTED
+            },
         );
 
         // Prompt on the right if selected
@@ -2625,10 +3691,7 @@ pub fn render_module_select_menu(
 }
 
 /// Renders the Championship Standings table and round victory screen.
-pub fn render_championship_standings_screen(
-    fonts: &Fonts,
-    champ: &ChampionshipSession,
-) {
+pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipSession) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
@@ -2650,14 +3713,22 @@ pub fn render_championship_standings_screen(
     let subtitle = if champ.is_completed {
         "SEASON FINALE — CHAMPIONSHIP DECIDED!".to_string()
     } else {
-        format!("ROUND {} OF {} COMPLETED — DRIVER STANDINGS", champ.current_round, champ.total_rounds())
+        format!(
+            "ROUND {} OF {} COMPLETED — DRIVER STANDINGS",
+            champ.current_round,
+            champ.total_rounds()
+        )
     };
     fonts.draw_ui_bold_centered(
         &subtitle,
         sw * 0.5,
         scaler.s(70.0),
         scaler.font_s(14.0),
-        if champ.is_completed { Palette::NEON_GREEN } else { Palette::NEON_CYAN },
+        if champ.is_completed {
+            Palette::NEON_GREEN
+        } else {
+            Palette::NEON_CYAN
+        },
     );
 
     // Standings Table Card
@@ -2666,17 +3737,61 @@ pub fn render_championship_standings_screen(
     let table_y = scaler.s(90.0);
     let table_h = scaler.s(420.0);
 
-    scaler.draw_glass_card(table_x, table_y, table_w, table_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
+    scaler.draw_glass_card(
+        table_x,
+        table_y,
+        table_w,
+        table_h,
+        Palette::UI_CARD_BG,
+        Palette::UI_CARD_BORDER,
+        1.5,
+    );
 
     // Table Header Row
     let mut row_y = table_y + scaler.s(28.0);
-    fonts.draw_ui_bold("POS", table_x + scaler.s(20.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
-    fonts.draw_ui_bold("DRIVER", table_x + scaler.s(70.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
-    fonts.draw_ui_bold("TEAM / CAR", table_x + scaler.s(280.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
-    fonts.draw_ui_bold("WINS", table_x + table_w - scaler.s(160.0), row_y, scaler.font_s(13.0), Palette::UI_TEXT_MUTED);
-    fonts.draw_ui_bold("POINTS", table_x + table_w - scaler.s(75.0), row_y, scaler.font_s(13.0), Palette::NEON_GOLD);
+    fonts.draw_ui_bold(
+        "POS",
+        table_x + scaler.s(20.0),
+        row_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_bold(
+        "DRIVER",
+        table_x + scaler.s(70.0),
+        row_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_bold(
+        "TEAM / CAR",
+        table_x + scaler.s(280.0),
+        row_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_bold(
+        "WINS",
+        table_x + table_w - scaler.s(160.0),
+        row_y,
+        scaler.font_s(13.0),
+        Palette::UI_TEXT_MUTED,
+    );
+    fonts.draw_ui_bold(
+        "POINTS",
+        table_x + table_w - scaler.s(75.0),
+        row_y,
+        scaler.font_s(13.0),
+        Palette::NEON_GOLD,
+    );
 
-    draw_rectangle(table_x + scaler.s(15.0), row_y + scaler.s(8.0), table_w - scaler.s(30.0), 1.0, Palette::UI_CARD_BORDER);
+    draw_rectangle(
+        table_x + scaler.s(15.0),
+        row_y + scaler.s(8.0),
+        table_w - scaler.s(30.0),
+        1.0,
+        Palette::UI_CARD_BORDER,
+    );
     row_y += scaler.s(24.0);
 
     // Table Rows
@@ -2689,11 +3804,41 @@ pub fn render_championship_standings_screen(
             _ => Palette::UI_TEXT_MUTED,
         };
 
-        fonts.draw_ui_bold(&pos_str, table_x + scaler.s(20.0), row_y, scaler.font_s(14.0), pos_col);
-        fonts.draw_ui_bold(&entry.driver_name, table_x + scaler.s(70.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_ui_regular(&entry.team_name, table_x + scaler.s(280.0), row_y, scaler.font_s(13.0), Color::new(0.75, 0.80, 0.88, 1.0));
-        fonts.draw_ui_bold(&entry.wins.to_string(), table_x + table_w - scaler.s(150.0), row_y, scaler.font_s(14.0), Palette::WHITE);
-        fonts.draw_display(&format!("{} PTS", entry.points), table_x + table_w - scaler.s(85.0), row_y, scaler.font_s(15.0), Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            &pos_str,
+            table_x + scaler.s(20.0),
+            row_y,
+            scaler.font_s(14.0),
+            pos_col,
+        );
+        fonts.draw_ui_bold(
+            &entry.driver_name,
+            table_x + scaler.s(70.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_regular(
+            &entry.team_name,
+            table_x + scaler.s(280.0),
+            row_y,
+            scaler.font_s(13.0),
+            Color::new(0.75, 0.80, 0.88, 1.0),
+        );
+        fonts.draw_ui_bold(
+            &entry.wins.to_string(),
+            table_x + table_w - scaler.s(150.0),
+            row_y,
+            scaler.font_s(14.0),
+            Palette::WHITE,
+        );
+        fonts.draw_display(
+            &format!("{} PTS", entry.points),
+            table_x + table_w - scaler.s(85.0),
+            row_y,
+            scaler.font_s(15.0),
+            Palette::NEON_GOLD,
+        );
 
         row_y += scaler.s(28.0);
     }
@@ -2736,11 +3881,7 @@ pub enum ModalityCategory {
 }
 
 impl ModalityCategory {
-    pub const ALL: [Self; 3] = [
-        Self::SinglePlayer,
-        Self::Multiplayer,
-        Self::Options,
-    ];
+    pub const ALL: [Self; 3] = [Self::SinglePlayer, Self::Multiplayer, Self::Options];
 
     pub fn title(&self) -> &'static str {
         match self {
@@ -2871,18 +4012,30 @@ impl ModalityItem {
     }
 }
 
-static MODALITY_QUICK_RACE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/quick_race-128.png");
-static MODALITY_CUSTOM_RACE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/custom_race-128.png");
-static MODALITY_CAREER_MODE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/career_mode-128.png");
-static MODALITY_TIME_TRIAL_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/time_trial-128.png");
-static MODALITY_FREE_RIDE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/free_ride-128.png");
-static MODALITY_SPLIT_SCREEN_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/split_screen-128.png");
-static MODALITY_LAN_PLAY_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/lan_play-128.png");
-static MODALITY_CLOUD_PLAY_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/cloud_play-128.png");
-static MODALITY_PLAYER_PROFILE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/player_profile-128.png");
-static MODALITY_GARAGE_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/garage-128.png");
-static MODALITY_TRACK_EDITOR_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/track_editor-128.png");
-static MODALITY_SETTINGS_PNG: &[u8] = include_bytes!("../../../../assets/icons/modalities/settings-128.png");
+static MODALITY_QUICK_RACE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/quick_race-128.png");
+static MODALITY_CUSTOM_RACE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/custom_race-128.png");
+static MODALITY_CAREER_MODE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/career_mode-128.png");
+static MODALITY_TIME_TRIAL_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/time_trial-128.png");
+static MODALITY_FREE_RIDE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/free_ride-128.png");
+static MODALITY_SPLIT_SCREEN_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/split_screen-128.png");
+static MODALITY_LAN_PLAY_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/lan_play-128.png");
+static MODALITY_CLOUD_PLAY_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/cloud_play-128.png");
+static MODALITY_PLAYER_PROFILE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/player_profile-128.png");
+static MODALITY_GARAGE_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/garage-128.png");
+static MODALITY_TRACK_EDITOR_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/track_editor-128.png");
+static MODALITY_SETTINGS_PNG: &[u8] =
+    include_bytes!("../../../../assets/icons/modalities/settings-128.png");
 
 static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 13]> = std::sync::Mutex::new([
     None, None, None, None, None, None, None, None, None, None, None, None, None,
@@ -2905,7 +4058,9 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::SeriesEditor => 11,
         ModalityItem::Settings => 12,
     };
-    let mut guard = MODALITY_ICON_TEXTURES.lock().unwrap_or_else(|e| e.into_inner());
+    let mut guard = MODALITY_ICON_TEXTURES
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     if let Some(tex) = guard[idx].as_ref() {
         return tex.clone();
     }
@@ -2933,7 +4088,14 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
 }
 
 /// Renders the official visual emblem for a given modality with an optional glowing halo.
-pub fn draw_modality_icon(item: ModalityItem, cx: f32, cy: f32, dim: f32, is_sel: bool, accent: Color) {
+pub fn draw_modality_icon(
+    item: ModalityItem,
+    cx: f32,
+    cy: f32,
+    dim: f32,
+    is_sel: bool,
+    accent: Color,
+) {
     let tex = get_modality_icon_texture(item);
     if is_sel {
         draw_circle(cx, cy, dim * 0.58, accent.with_alpha(0.35));
@@ -2977,7 +4139,12 @@ impl ModalityModal {
 }
 
 /// Returns bounding box (x, y, w, h) for a modality card in the Modality Selection screen.
-pub fn modality_card_rect(sw: f32, sh: f32, category: ModalityCategory, idx: usize) -> (f32, f32, f32, f32) {
+pub fn modality_card_rect(
+    sw: f32,
+    sh: f32,
+    category: ModalityCategory,
+    idx: usize,
+) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
     let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
     let tab_gap = scaler.s(12.0);
@@ -3002,7 +4169,7 @@ pub fn modality_card_rect(sw: f32, sh: f32, category: ModalityCategory, idx: usi
 /// Layout: 3 Columns (Col 1: Single Player, Col 2: Multiplayer, Col 3: Options).
 pub fn render_modality_select_screen(
     fonts: &Fonts,
-    active_module_title: &str,
+    _active_module_title: &str,
     _active_module_id: &str,
     active_module_accent: Color,
     category: ModalityCategory,
@@ -3021,7 +4188,7 @@ pub fn render_modality_select_screen(
 
     // Header Title & Breadcrumb
     fonts.draw_display_centered_with_shadow(
-        &format!("{} • SELECT RACING MODALITY", active_module_title),
+        "TDRACE MOTORSPORT • SELECT RACING MODALITY",
         sw * 0.5,
         scaler.s(28.0),
         scaler.font_s(24.0),
@@ -3060,10 +4227,24 @@ pub fn render_modality_select_screen(
             Palette::UI_CARD_BORDER
         };
 
-        scaler.draw_glass_card(tx, tab_y, tab_w, tab_h, tab_bg, tab_border, if is_cat_active { 2.0 } else { 1.0 });
+        scaler.draw_glass_card(
+            tx,
+            tab_y,
+            tab_w,
+            tab_h,
+            tab_bg,
+            tab_border,
+            if is_cat_active { 2.0 } else { 1.0 },
+        );
 
         if is_cat_active {
-            draw_rectangle(tx, tab_y + tab_h - scaler.s(2.5), tab_w, scaler.s(2.5), active_module_accent);
+            draw_rectangle(
+                tx,
+                tab_y + tab_h - scaler.s(2.5),
+                tab_w,
+                scaler.s(2.5),
+                active_module_accent,
+            );
         }
 
         let tab_label = match cat {
@@ -3095,7 +4276,8 @@ pub fn render_modality_select_screen(
         ModalityCategory::SinglePlayer => {
             let sp_items = ModalityCategory::SinglePlayer.items();
             let card_gap = scaler.s(8.0);
-            let sp_card_h = ((available_h - card_gap * (sp_items.len() as f32 - 1.0)) / sp_items.len() as f32)
+            let sp_card_h = ((available_h - card_gap * (sp_items.len() as f32 - 1.0))
+                / sp_items.len() as f32)
                 .clamp(scaler.s(54.0), scaler.s(88.0));
 
             let mut curr_y = start_y;
@@ -3114,7 +4296,15 @@ pub fn render_modality_select_screen(
                     Palette::UI_CARD_BORDER
                 };
 
-                scaler.draw_glass_card(col_x, curr_y, col_w, sp_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
+                scaler.draw_glass_card(
+                    col_x,
+                    curr_y,
+                    col_w,
+                    sp_card_h,
+                    bg_col,
+                    border_col,
+                    if is_sel { 2.4 } else { 1.0 },
+                );
 
                 if is_sel {
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), sp_card_h, accent);
@@ -3133,7 +4323,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + sp_card_h * 0.25,
                     scaler.font_s(9.5),
-                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        accent
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 let title_str = if is_sel {
@@ -3146,7 +4340,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + sp_card_h * 0.55,
                     scaler.font_s(16.0),
-                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+                    if is_sel {
+                        Palette::WHITE
+                    } else {
+                        Color::new(0.85, 0.90, 0.95, 1.0)
+                    },
                 );
 
                 fonts.draw_ui_regular(
@@ -3154,7 +4352,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + sp_card_h * 0.84,
                     scaler.font_s(11.0),
-                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        Color::new(0.80, 0.85, 0.92, 1.0)
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if is_sel {
@@ -3173,7 +4375,8 @@ pub fn render_modality_select_screen(
         ModalityCategory::Multiplayer => {
             let mp_items = ModalityCategory::Multiplayer.items();
             let card_gap = scaler.s(12.0);
-            let mp_card_h = ((available_h - card_gap * (mp_items.len() as f32 - 1.0)) / mp_items.len() as f32)
+            let mp_card_h = ((available_h - card_gap * (mp_items.len() as f32 - 1.0))
+                / mp_items.len() as f32)
                 .clamp(scaler.s(68.0), scaler.s(110.0));
 
             let mut curr_y = start_y;
@@ -3193,7 +4396,15 @@ pub fn render_modality_select_screen(
                     Palette::UI_CARD_BORDER
                 };
 
-                scaler.draw_glass_card(col_x, curr_y, col_w, mp_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
+                scaler.draw_glass_card(
+                    col_x,
+                    curr_y,
+                    col_w,
+                    mp_card_h,
+                    bg_col,
+                    border_col,
+                    if is_sel { 2.4 } else { 1.0 },
+                );
 
                 if is_sel {
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), mp_card_h, accent);
@@ -3212,7 +4423,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + mp_card_h * 0.25,
                     scaler.font_s(9.5),
-                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        accent
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if !is_avail {
@@ -3243,7 +4458,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + mp_card_h * 0.55,
                     scaler.font_s(17.0),
-                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+                    if is_sel {
+                        Palette::WHITE
+                    } else {
+                        Color::new(0.85, 0.90, 0.95, 1.0)
+                    },
                 );
 
                 fonts.draw_ui_regular(
@@ -3251,7 +4470,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + mp_card_h * 0.84,
                     scaler.font_s(11.5),
-                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        Color::new(0.80, 0.85, 0.92, 1.0)
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if is_sel {
@@ -3275,7 +4498,8 @@ pub fn render_modality_select_screen(
         ModalityCategory::Options => {
             let opt_items = ModalityCategory::Options.items();
             let card_gap = scaler.s(12.0);
-            let opt_card_h = ((available_h - card_gap * (opt_items.len() as f32 - 1.0)) / opt_items.len() as f32)
+            let opt_card_h = ((available_h - card_gap * (opt_items.len() as f32 - 1.0))
+                / opt_items.len() as f32)
                 .clamp(scaler.s(68.0), scaler.s(110.0));
 
             let mut curr_y = start_y;
@@ -3294,7 +4518,15 @@ pub fn render_modality_select_screen(
                     Palette::UI_CARD_BORDER
                 };
 
-                scaler.draw_glass_card(col_x, curr_y, col_w, opt_card_h, bg_col, border_col, if is_sel { 2.4 } else { 1.0 });
+                scaler.draw_glass_card(
+                    col_x,
+                    curr_y,
+                    col_w,
+                    opt_card_h,
+                    bg_col,
+                    border_col,
+                    if is_sel { 2.4 } else { 1.0 },
+                );
 
                 if is_sel {
                     draw_rectangle(col_x, curr_y, scaler.s(6.0), opt_card_h, accent);
@@ -3313,7 +4545,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + opt_card_h * 0.25,
                     scaler.font_s(9.5),
-                    if is_sel { accent } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        accent
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 // Right-aligned status indicators
@@ -3377,7 +4613,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + opt_card_h * 0.55,
                     scaler.font_s(17.0),
-                    if is_sel { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
+                    if is_sel {
+                        Palette::WHITE
+                    } else {
+                        Color::new(0.85, 0.90, 0.95, 1.0)
+                    },
                 );
 
                 fonts.draw_ui_regular(
@@ -3385,7 +4625,11 @@ pub fn render_modality_select_screen(
                     text_x,
                     curr_y + opt_card_h * 0.84,
                     scaler.font_s(11.5),
-                    if is_sel { Color::new(0.80, 0.85, 0.92, 1.0) } else { Palette::UI_TEXT_MUTED },
+                    if is_sel {
+                        Color::new(0.80, 0.85, 0.92, 1.0)
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if is_sel {
@@ -3413,7 +4657,7 @@ pub fn render_modality_select_screen(
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [E] Track Editor  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Hub",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [E] Track Editor  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Quit Game",
         sw * 0.5,
         sh - scaler.s(14.0),
         scaler.font_s(11.5),
@@ -3470,5 +4714,3 @@ pub fn render_modality_select_screen(
         );
     }
 }
-
-

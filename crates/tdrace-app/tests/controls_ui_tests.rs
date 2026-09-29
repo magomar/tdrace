@@ -1,10 +1,17 @@
-use tdrace_app::game::{GameState, RaceSession};
+use tdrace_app::game::{GameState, ModalityCategory, RaceSession};
 use tdrace_core::physics::config::AssistProfile;
 
 #[test]
 fn test_controls_help_game_state_transitions() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 
     // Enter ControlsHelp from Menu
     session.state = GameState::ControlsHelp(false);
@@ -415,6 +422,7 @@ fn test_module_select_state_settings_modal_integration() {
     let orig_config = std::fs::read_to_string("config.toml").ok();
 
     let mut session = RaceSession::new();
+    session.state = GameState::ModuleSelect { selected_idx: 0 };
     assert!(matches!(session.state, GameState::ModuleSelect { selected_idx: 0 }));
     assert!(!session.is_settings_modal_open());
 
