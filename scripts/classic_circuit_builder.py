@@ -1202,7 +1202,7 @@ TOWER_LABYRINTH = Circuit(
         A(6.5, 90),
         S(0.5),
         A(8, 70, **KERB_L),  # 15
-        S(46),  # 16: crossover, ground
+        S(44.5),  # 16: crossover, ground
         # West loop, clockwise.
         A(8, -70),  # no kerb: the right wall would step in on turn 19
         S(0.5),
@@ -1215,7 +1215,7 @@ TOWER_LABYRINTH = Circuit(
         A(7.5, -90),  # 25
         S(0.5),
         A(8, -70),  # onto the raised run: no kerb
-        S(46),  # 28: crossover, bridge
+        S(44.5),  # 28: crossover, bridge
         A(8, 70),
         S(40),  # 30: bottom side, raised, over the long pocket (solved)
         A(10, 45),  # tightening corner

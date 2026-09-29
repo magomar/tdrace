@@ -118,8 +118,11 @@ walls 2.0 m out and cars drive on the kerb; a wall that steps in there stopped t
   apex of most corners.
 - Widths: Hangar Sprint 8 m, Warehouse Twister 7 m, Tower Labyrinth 6.5 m.
 - The whole lap fits in a small box: Hangar Sprint ≤ 90 × 60 m, Warehouse Twister ≤ 100 × 70 m,
-  Tower Labyrinth ≤ 120 × 80 m. Density (lap length ÷ box area) is at least 0.065 m per m².
-- Parallel runs sit close: 1.0–1.5 m between road edges, with a tyre wall between them.
+  Tower Labyrinth ≤ 130 × 80 m. Density (lap length ÷ box area) is at least 0.065 m per m² (Tower
+  Labyrinth 0.064). Tower Labyrinth was 120 × 80 m; its 6 pocket legs need 10 m more width with 6.5 m
+  hairpins (Mario, 2026-09-30).
+- Parallel runs sit close: 3–7 m between road edges (the 6.5 m hairpins set the gap in the pockets),
+  with a tyre wall on both sides. The first draft said 1.0–1.5 m; bots got stuck in hairpins that tight.
 - Bridges: Hangar Sprint 1, Warehouse Twister 2, Tower Labyrinth 3. Each bridge deck is at least
   4.0 m above the road below it (the validator errors below 3.5 m and warns below 4.0 m). Each
   crossing is at 30° or more, so a kart under a bridge is hidden for less than 15 m.
@@ -437,7 +440,7 @@ runs only on a developer machine and reads and writes files inside the repositor
   - [x] **Given** the 3 karting circuits
   - [x] **When** their baked samples are measured
   - [x] **Then** they have 1, 2 and 3 bridges, each at least 4.0 m clear
-  - [x] **And** each fits its box of section 3 with a density of at least 0.065 m per m²
+  - [x] **And** each fits its box of section 3 with the density of section 3
 
 - **Scenario: No turn under a bridge**
   - [ ] **Given** each new circuit with a bridge
