@@ -2,7 +2,7 @@
 type: validation_receipt
 schema_version: "1.0"
 spec: "specs/057_vault_module_for_archived_and_deprecated_content.md"
-epic: ""
+epic: "tdrace-8xai"
 candidate_commit: "819f05cb3eb645f769da5c417c590710f92cb18f"
 verifier: "local-user"
 evaluated_at: "2026-09-29T10:31:44Z"
