@@ -27,7 +27,7 @@ fn test_quick_race_gt_bots_color_masking_and_diversity() {
 
     assert_eq!(session.game_mode, GameMode::StandardRace);
     assert_eq!(session.grid_participants.len(), 8);
-    assert_eq!(session.cars.len(), 8);
+    assert_eq!(session.world.vehicles.len(), 8);
 
     let player_participant = session
         .grid_participants
@@ -96,7 +96,7 @@ fn test_quick_race_gt_bots_color_masking_and_diversity() {
     }
 
     // 2. Also directly verify all in-race bot cars in session.cars / session.color_schemes
-    for car_idx in 1..session.cars.len() {
+    for car_idx in 1..session.world.vehicles.len() {
         let scheme = session.color_schemes[car_idx];
         let model_id = session.car_model_ids[car_idx].expect("Bot car must have model id");
         let model = find_model_by_id(model_id).expect("Bot model exists in catalog");

@@ -1,6 +1,6 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: Nitrocross Group E Series (Tier 5)
+# Rallycross Career Mode: Nitrocross Group E Series (Tier 6)
 # ==============================================================================
 
 [championship]
@@ -8,7 +8,7 @@ id = "rally_nitrocross_group_e"
 name = "Nitrocross Group E Series"
 description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits."
 module_id = "rally"
-tier = 5
+tier = 6
 laps_per_round = 5
 bot_count = 7
 ai_difficulty = "legend"
@@ -76,14 +76,14 @@ laps = 5
 
 [[rounds]]
 order = 10
-track_id = "lavare_rx"
-name = "Circuit de Lavaré"
+track_id = "riga_rx"
+name = "Biķernieki Track Riga"
 laps = 5
 
 [[rounds]]
 order = 11
-track_id = "riga_rx"
-name = "Biķernieki Track Riga"
+track_id = "erx_motor_park"
+name = "ERX Motor Park RX"
 laps = 5
 
 [[rounds]]

@@ -141,16 +141,18 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
     ];
 
     for (mod_name, drivers) in modules {
+        let expected_tiers: u8 = if mod_name == "rally" || mod_name == "kart" { 6 } else { 5 };
         for driver in drivers {
             assert_eq!(
                 driver.favorite_cars.len(),
-                5,
-                "Driver '{}' in module '{}' must have 5 favorite cars (one per tier)",
+                expected_tiers as usize,
+                "Driver '{}' in module '{}' must have {} favorite cars (one per tier)",
                 driver.name,
-                mod_name
+                mod_name,
+                expected_tiers
             );
 
-            for tier in 1..=5u8 {
+            for tier in 1..=expected_tiers {
                 let model_id = driver.favorite_car_for_discipline_and_tier(mod_name, tier);
                 assert!(
                     model_id.is_some(),
@@ -181,6 +183,24 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
             }
         }
     }
+}
+
+#[test]
+fn test_rally_tier_4_ai_driver_signature_cars() {
+    let rally_module = RallyGameModule::new();
+    let drivers = rally_module.drivers();
+    let timmy = drivers.iter().find(|d| d.name == "Timmy Hansenfield").expect("Timmy Hansenfield");
+    assert_eq!(
+        timmy.favorite_car_for_discipline_and_tier("rally", 4),
+        Some("rally_peugeot_208_wrx"),
+        "Timmy Hansenfield must drive Peugeot 208 WRX in Tier 4"
+    );
+    let ken = drivers.iter().find(|d| d.name == "Ken Blaster").expect("Ken Blaster");
+    assert_eq!(
+        ken.favorite_car_for_discipline_and_tier("rally", 4),
+        Some("rally_ford_focus_rs_rx"),
+        "Ken Blaster must drive Ford Focus RS RX in Tier 4"
+    );
 }
 
 #[test]

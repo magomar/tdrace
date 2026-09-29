@@ -145,12 +145,12 @@ pub fn resolve_multi_car_collisions<B: Body2D>(
     solver_iterations: usize,
 ) -> Vec<CarCarCollisionEvent> {
     let n = cars.len();
-    if n < 2 {
+    if n < 2 || solver_iterations == 0 {
         return Vec::new();
     }
 
     let mut events = Vec::new();
-    let iters = solver_iterations.max(1);
+    let iters = solver_iterations;
 
     for iter in 0..iters {
         for i in 0..n {

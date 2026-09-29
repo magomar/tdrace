@@ -36,6 +36,11 @@ use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
 use crate::audio::backend::{ActiveSoundHandle, AudioBackend, SoundData};
 use crate::audio::engine_mixer::EngineAudioMixer;
 use crate::audio::samples::ArchetypeSampleBank;
+use crate::audio::proximity::{
+    calculate_spatial_audio, DopplerConfig, ProximityVoiceSlot, VehicleAudioSource,
+    DEFAULT_MAX_DISTANCE, DEFAULT_OPPONENT_GAIN_CEILING, MAX_PROXIMITY_VOICES, PROXIMITY_HYSTERESIS,
+};
+use glam::Vec2;
 use cabinet::audio::{CabinetAudioSink, SoundCue};
 
 
@@ -494,6 +499,9 @@ pub struct AudioManager {
     _limiter_timer_p2: f32,
     pub use_sampled_engine: bool,
     pub active_music_handle: Option<ActiveSoundHandle>,
+    pub proximity_voices: Vec<ProximityVoiceSlot>,
+    pub proximity_bank_cache: HashMap<EngineSoundType, ArchetypeSampleBank>,
+    pub doppler_config: DopplerConfig,
 }
 
 impl Default for AudioManager {
@@ -548,6 +556,18 @@ impl AudioManager {
             (None, None, None, None)
         };
 
+        let (proximity_voices, proximity_bank_cache) = if backend.is_available() {
+            let bank = ArchetypeSampleBank::generate(EngineSoundType::Generic, DEFAULT_SAMPLE_RATE);
+            let voices = (0..MAX_PROXIMITY_VOICES)
+                .map(|_| ProximityVoiceSlot::new(bank.clone()))
+                .collect();
+            let mut cache = HashMap::new();
+            cache.insert(EngineSoundType::Generic, bank);
+            (voices, cache)
+        } else {
+            (Vec::new(), HashMap::new())
+        };
+
         Self {
             settings: AudioSettings::default(),
             bank: SoundBank::empty(),
@@ -569,6 +589,9 @@ impl AudioManager {
             auxiliary_layer_p2,
             use_sampled_engine: true,
             active_music_handle: None,
+            proximity_voices,
+            proximity_bank_cache,
+            doppler_config: DopplerConfig::default(),
         }
     }
 
@@ -974,7 +997,158 @@ impl AudioManager {
         // Disabled: Keep pure internal combustion engine audio without synthetic chirp overlays
     }
 
-    /// Stops all continuous loops across all engine bands for both players.
+    /// Dynamically updates proximity engine audio for nearby vehicles with distance attenuation,
+    /// horizontal stereo panning, priority voice budgeting, and Doppler pitch shifting.
+    pub fn update_proximity_engines(
+        &mut self,
+        sources: &[VehicleAudioSource],
+        listener_pos: Vec2,
+        listener_vel: Vec2,
+        dt: f32,
+    ) {
+        if self.settings.is_muted || self.settings.is_sfx_muted || !self.backend.is_available() {
+            for slot in &mut self.proximity_voices {
+                if slot.vehicle_id.is_some() {
+                    slot.mixer.stop();
+                    slot.vehicle_id = None;
+                }
+            }
+            return;
+        }
+
+        // 1. Gather all sources within DEFAULT_MAX_DISTANCE (75m)
+        let mut audible_indices: Vec<(usize, f32)> = sources
+            .iter()
+            .enumerate()
+            .map(|(idx, s)| {
+                let d = (s.position - listener_pos).length();
+                (idx, d)
+            })
+            .filter(|(_, d)| *d < DEFAULT_MAX_DISTANCE)
+            .collect();
+
+        // Sort by ascending distance (closest first)
+        audible_indices.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // 2. Identify currently active vehicle assignments and update their distances
+        let current_assigned_vids: Vec<Option<usize>> = self
+            .proximity_voices
+            .iter()
+            .map(|slot| slot.vehicle_id)
+            .collect();
+
+        // 3. Selection with hysteresis
+        let mut chosen_source_indices = Vec::new();
+
+        // First, retain existing assigned slots if still within hearing range
+        for &assigned_vid_opt in &current_assigned_vids {
+            if let Some(vid) = assigned_vid_opt {
+                if let Some(&(idx, dist)) = audible_indices.iter().find(|&&(i, _)| sources[i].vehicle_id == vid) {
+                    chosen_source_indices.push((vid, idx, dist));
+                }
+            }
+        }
+
+        // Fill remaining capacity or displace with hysteresis
+        for &(idx, dist) in &audible_indices {
+            let vid = sources[idx].vehicle_id;
+            if chosen_source_indices.len() < MAX_PROXIMITY_VOICES {
+                if !chosen_source_indices.iter().any(|(v, _, _)| *v == vid) {
+                    chosen_source_indices.push((vid, idx, dist));
+                }
+            } else {
+                // If pool is full, can we displace an existing member with hysteresis?
+                if let Some((worst_pos, (_, _, worst_dist))) = chosen_source_indices
+                    .iter()
+                    .enumerate()
+                    .max_by(|a, b| a.1 .2.partial_cmp(&b.1 .2).unwrap_or(std::cmp::Ordering::Equal))
+                {
+                    if dist + PROXIMITY_HYSTERESIS < *worst_dist && !chosen_source_indices.iter().any(|(v, _, _)| *v == vid) {
+                        chosen_source_indices[worst_pos] = (vid, idx, dist);
+                    }
+                }
+            }
+        }
+
+        // 4. Free slots whose vehicle is no longer in chosen
+        for slot in &mut self.proximity_voices {
+            if let Some(vid) = slot.vehicle_id {
+                if !chosen_source_indices.iter().any(|(chosen_vid, _, _)| *chosen_vid == vid) {
+                    slot.mixer.stop();
+                    slot.vehicle_id = None;
+                }
+            }
+        }
+
+        // 5. Update active voice slots
+        for (vid, source_idx, _) in chosen_source_indices {
+            let source = &sources[source_idx];
+
+            let slot_idx = if let Some(existing_idx) = self
+                .proximity_voices
+                .iter()
+                .position(|s| s.vehicle_id == Some(vid))
+            {
+                existing_idx
+            } else if let Some(free_idx) = self
+                .proximity_voices
+                .iter()
+                .position(|s| s.vehicle_id.is_none())
+            {
+                self.proximity_voices[free_idx].vehicle_id = Some(vid);
+                free_idx
+            } else {
+                continue;
+            };
+
+            let slot = &mut self.proximity_voices[slot_idx];
+
+            if slot.engine_type != source.engine_type {
+                let bank = if let Some(cached) = self.proximity_bank_cache.get(&source.engine_type) {
+                    cached.clone()
+                } else {
+                    let generated = ArchetypeSampleBank::generate(source.engine_type, DEFAULT_SAMPLE_RATE);
+                    self.proximity_bank_cache.insert(source.engine_type, generated.clone());
+                    generated
+                };
+                slot.mixer.set_bank(bank, &mut self.backend);
+                slot.engine_type = source.engine_type;
+            }
+
+            let (rpm, _) = slot.rpm_model.update(
+                source.forward_speed,
+                source.throttle,
+                source.slip_ratio,
+                dt,
+            );
+
+            let spatial = calculate_spatial_audio(
+                source,
+                listener_pos,
+                listener_vel,
+                &self.doppler_config,
+            );
+
+            let effective_vol = self.settings.effective_sfx_volume()
+                * DEFAULT_OPPONENT_GAIN_CEILING
+                * spatial.gain;
+
+            slot.mixer.update_spatial(
+                rpm,
+                source.throttle,
+                effective_vol,
+                spatial.pan,
+                spatial.doppler_factor,
+                &mut self.backend,
+            );
+
+            slot.current_gain = effective_vol;
+            slot.current_pan = spatial.pan;
+            slot.current_doppler = spatial.doppler_factor;
+        }
+    }
+
+    /// Stops all continuous loops across all engine bands for both players and proximity voices.
     pub fn stop_all_loops(&mut self) {
         if let Some(sampled) = self.sampled_engine.as_mut() {
             sampled.stop();
@@ -987,6 +1161,11 @@ impl AudioManager {
         }
         if let Some(aux_p2) = self.auxiliary_layer_p2.as_mut() {
             aux_p2.stop();
+        }
+
+        for slot in &mut self.proximity_voices {
+            slot.mixer.stop();
+            slot.vehicle_id = None;
         }
 
         for engine_type in [

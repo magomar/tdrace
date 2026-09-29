@@ -443,16 +443,19 @@ impl ModuleCareerProgress {
             ("nascar", 5) => vec!["nascar_corvette_ta1".to_string()],
 
             ("rally", 1) => vec!["rally_peugeot_208_rally4".to_string()],
-            ("rally", 2) => vec!["rally_audi_s1_wrx".to_string()],
-            ("rally", 3) => vec!["rally_audi_sport_quattro_s1".to_string()],
-            ("rally", 4) => vec!["rally_peugeot_208_rx1e".to_string()],
-            ("rally", 5) => vec!["rally_omse_fc1x".to_string()],
+            ("rally", 2) => vec!["rally_omse_supercar_lites".to_string()],
+            ("rally", 3) => vec!["rally_polo_rx".to_string()],
+            ("rally", 4) => vec!["rally_peugeot_208_wrx".to_string()],
+            ("rally", 5) => vec!["rally_peugeot_208_rx1e".to_string()],
+            ("rally", 6) => vec!["rally_omse_fc1x".to_string()],
+            ("rally", 0 | 7) => vec!["rally_audi_sport_quattro_s1".to_string()],
 
             ("kart", 1) => vec!["kart_crg_hero_60".to_string()],
-            ("kart", 2) => vec!["kart_tony_kart_racer_ok".to_string()],
-            ("kart", 3) => vec!["kart_birel_art_kz2".to_string()],
-            ("kart", 4) => vec!["kart_honda_mean_mower".to_string()],
-            ("kart", 5) => vec!["kart_anderson_cs250".to_string()],
+            ("kart", 2) => vec!["kart_tony_kart_rookie_okj".to_string()],
+            ("kart", 3) => vec!["kart_tony_kart_racer_ok".to_string()],
+            ("kart", 4) => vec!["kart_birel_art_kz2".to_string()],
+            ("kart", 5) => vec!["kart_anderson_maverick_mono".to_string()],
+            ("kart", 6) => vec!["kart_anderson_cs250".to_string()],
 
             ("extreme_offroad" | "offroad", 1) => vec!["offroad_sand_rail_buggy".to_string()],
             ("extreme_offroad" | "offroad", 2) => vec!["offroad_ford_bronco_dr".to_string()],
@@ -533,6 +536,23 @@ impl ModuleCareerProgress {
         }
     }
 
+    /// Cumulative discipline XP threshold required to unlock each tier license for a specific module (Spec 052, 053).
+    pub fn tier_license_xp_for_module(module_id: &str, tier: u32) -> u64 {
+        if module_id == "kart" {
+            match tier {
+                1 => 0,
+                2 => 1_500,
+                3 => 3_500,
+                4 => 6_000,
+                5 => 9_000,
+                6 => 13_000,
+                _ => u64::MAX,
+            }
+        } else {
+            Self::tier_license_xp(tier)
+        }
+    }
+
     /// Base round prize purse (Credits) per career tier (Spec 053).
     pub fn round_base_purse(tier: u32) -> u64 {
         match tier {
@@ -602,18 +622,29 @@ impl ModuleCareerProgress {
         ((val as f64 / 10.0).round() as u64) * 10
     }
 
-    /// Target XP needed for next tier license threshold, or None if at max tier 5.
+    /// Returns the maximum career progression tier supported by this module.
+    pub fn max_tier(&self) -> u32 {
+        if self.module_id == "extreme_offroad" {
+            7
+        } else if self.module_id == "rally" || self.module_id == "kart" {
+            6
+        } else {
+            5
+        }
+    }
+
+    /// Target XP needed for next tier license threshold, or None if at max tier.
     pub fn next_tier_target_xp(&self) -> Option<u64> {
-        if self.level >= 5 {
+        if self.level >= self.max_tier() {
             None
         } else {
-            Some(Self::tier_license_xp(self.level + 1))
+            Some(Self::tier_license_xp_for_module(&self.module_id, self.level + 1))
         }
     }
 
     /// Progress ratio [0.0..1.0] towards acquiring the next tier's license.
     pub fn level_progress_ratio(&self) -> f32 {
-        if self.level >= 5 {
+        if self.level >= self.max_tier() {
             return 1.0;
         }
         let target = self.next_tier_target_xp().unwrap_or(3_000);
@@ -716,12 +747,12 @@ impl ModuleCareerProgress {
     /// 1. Earned at least one championship podium in any championship of the current tier.
     /// 2. Accumulated cumulative discipline XP at or above the next tier's license threshold.
     pub fn can_advance_tier(&self) -> bool {
-        if self.level >= 5 {
+        if self.level >= self.max_tier() {
             return false;
         }
         let next_tier = self.level + 1;
         let has_podium = self.has_podium_in_tier(self.level);
-        let has_xp = self.xp >= Self::tier_license_xp(next_tier);
+        let has_xp = self.xp >= Self::tier_license_xp_for_module(&self.module_id, next_tier);
         has_podium && has_xp
     }
 
@@ -768,7 +799,7 @@ impl ModuleCareerProgress {
                 "Cannot advance to Tier {}: Requires at least 1 championship podium in Tier {} and {} cumulative XP (current: {})",
                 next_tier,
                 self.level,
-                Self::tier_license_xp(next_tier),
+                Self::tier_license_xp_for_module(&self.module_id, next_tier),
                 self.xp
             ));
         }
@@ -786,8 +817,9 @@ impl ModuleCareerProgress {
 
     /// Ensures unlocked tracks and starter cars match or exceed current level.
     pub fn sync_unlocks_for_level(&mut self) {
-        let max_tier = self.level.clamp(1, 5);
-        for t in 1..=max_tier {
+        let max_tier = self.max_tier();
+        let cap = self.level.clamp(1, max_tier);
+        for t in 1..=cap {
             for car in Self::starter_cars_for_module_and_tier(&self.module_id, t) {
                 self.ensure_car(&car);
             }
@@ -874,32 +906,39 @@ impl ModuleCareerProgress {
                 self.ensure_track("dreux_rx");
                 self.ensure_track("croft_rx");
 
-                // Tier 2 (3 circuits)
+                // Tier 2 (+3 circuits -> 8 total)
                 if self.level >= 2 {
-                    self.ensure_track("hell_rx");
-                    self.ensure_track("loheac_rx");
+                    self.ensure_track("lessay_rx");
+                    self.ensure_track("essay_rx");
                     self.ensure_track("lavare_rx");
                 }
 
-                // Tier 3 (3 circuits)
+                // Tier 3 (+3 circuits -> 11 total)
                 if self.level >= 3 {
-                    self.ensure_track("estering_rx");
-                    self.ensure_track("montalegre_rx");
-                    self.ensure_track("riga_rx");
-                }
-
-                // Tier 4 (3 circuits)
-                if self.level >= 4 {
-                    self.ensure_track("nyirad_rx");
                     self.ensure_track("kouvola_rx");
-                    self.ensure_track("killarney_rx");
+                    self.ensure_track("montalegre_rx");
+                    self.ensure_track("nyirad_rx");
                 }
 
-                // Tier 5 (3 circuits)
+                // Tier 4 (+3 circuits -> 14 total)
+                if self.level >= 4 {
+                    self.ensure_track("estering_rx");
+                    self.ensure_track("hell_rx");
+                    self.ensure_track("loheac_rx");
+                }
+
+                // Tier 5 (+3 circuits -> 17 total)
                 if self.level >= 5 {
+                    self.ensure_track("riga_rx");
+                    self.ensure_track("killarney_rx");
                     self.ensure_track("catalunya_rx");
-                    self.ensure_track("lessay_rx");
-                    self.ensure_track("essay_rx");
+                }
+
+                // Tier 6 (+3 NEW circuits -> 20 total)
+                if self.level >= 6 {
+                    self.ensure_track("spa_rx");
+                    self.ensure_track("silverstone_rx");
+                    self.ensure_track("erx_motor_park");
                 }
             }
             "kart" => {
@@ -928,14 +967,21 @@ impl ModuleCareerProgress {
                 if self.level >= 4 {
                     self.ensure_track("zuera");
                     self.ensure_track("silverstone_national_kart");
-                    self.ensure_track("le_mans_kart");
+                    self.ensure_track("aunay_kart");
                 }
 
                 // Tier 5 (3 circuits)
                 if self.level >= 5 {
+                    self.ensure_track("le_mans_kart");
+                    self.ensure_track("campillos");
+                    self.ensure_track("muelsen_kart");
+                }
+
+                // Tier 6 (3 circuits)
+                if self.level >= 6 {
                     self.ensure_track("portimao_kart");
                     self.ensure_track("valencia_kart");
-                    self.ensure_track("campillos");
+                    self.ensure_track("adria_kart");
                 }
             }
             "extreme_offroad" => {

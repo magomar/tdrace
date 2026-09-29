@@ -22,8 +22,8 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Rallycross Labels, RX Tier 4-5 Cars, and Mint 400 Desert Circuits](../048_rallycross_labels_rx_tier_45_cars_and_mint_400_desert_circuits.md)**: Rallycross on every screen, RX1e and Nitrocross Group E tiers, Rally Raid T1+ and SST cars parked in Extreme Off-Road, and three circuits from the official Mint 400 GPX files.
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 - `[ ]` **[FIA Autocross Championship and Vehicle Roster](../050_fia_autocross_championship_and_vehicle_roster.md)**: Dedicated FIA Autocross discipline, 5 tiers (Cross Car Junior, Cross Car Senior, Buggy1600, TouringAutocross, SuperBuggy), 15 authentic vehicles (3 per tier), 17 dedicated European dirt circuits, pure off-road sprint racing format with no joker lap.
-- `[ ]` **[Rallycross 6-Tier Career Progression and Expanded Circuit Roster](../051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md)**: Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
-- `[ ]` **[Karting 6-Tier Career Progression and Standalone Garden GP](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), relocates novelty racing lawnmowers to a dedicated standalone Garden GP Invitational Cup, and eliminates performance gaps across 18 authentic karts.
+- `[x]` **[Rallycross 6-Tier Career Progression and Expanded Circuit Roster](../051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md)**: Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
+- `[x]` **[Karting 6-Tier Career Progression and Expanded 20-Circuit Roster](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault (Spec 057), and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
 - `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
@@ -33,6 +33,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Cross-Module AI Character Rosters and Dynamic Tier Assignment](../024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md)**: Decouples experience tiers from character definitions, aligns 72 drivers across 6 styles, introduces uniform style sampling from the global pool, normal-distribution difficulty tiering for casual races, and persistent career rosters with 90% retention and probabilistic tier advancement.
 - `[x]` **[Per-Tier Engine Sound Banks and Physical Synthesis](../022_per_tier_engine_sound_banks_and_synthesis.md)**: Expands motor audio synthesis to 25 authentic physical archetypes across all 5 tiers of the 5 motorsport disciplines with turbo flutter, blower whine, and hybrid motor acoustics.
 - `[x]` **[Floating Bot Names and Dynamic Proximity Nameplates](../029_floating_bot_names_and_dynamic_proximity_nameplates.md)**: In-race dynamic overhead floating bot nameplates with proximity culling, distance-based alpha fading, anti-crowding deconfliction, and Alt key toggle.
+- `[x]` **[Proximity Engine Audio and Doppler Shift Simulation](../061_proximity_engine_audio_and_doppler_shift_simulation.md)**: Dynamic spatial proximity engine audio for nearby opponent vehicles with distance attenuation, stereo panning, and physical Doppler shift pitch modulation across two structured phases.
 
 ### Phase 3: Physics Simulation Harness & Technical Asset Portals (Priority: High)
 - `[x]` **[Systematic Computational Simulation of Surface-Car Dynamics](../010_surface_car_interaction_simulation.md)**: Headless computational simulation harness and benchmarking suite to measure vehicle acceleration, braking, and cornering dynamics across all surface types without graphics.
@@ -55,6 +56,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Championship Trophy Badges & Player Profile Trophy Cabinet](../027_championship_trophy_badges_and_player_profile_cabinet.md)**: Comprehensive vector iconography system for championship podium badges (Gold, Silver, Bronze) with tier stars (1-5), modality-specific motorsport DNA across 5 disciplines, and an interactive Trophy Cabinet UI within the Player Profile.
 - `[x]` **[Career System Wiki Reference and Progression Mechanics](../030_career_system_wiki_reference_and_progression_mechanics.md)**: Comprehensive technical reference and public wiki documentation of the 5-tier career system, championship scoring matrices, XP economy, car acquisition, and circuit calendars.
 - `[x]` **[Dual-Currency Economy and Branching Career Progression Architecture](../053_dual_currency_economy_and_branching_career_progression_architecture.md)**: Architectural blueprint establishing a decoupled dual-currency economy (XP + Credits), multi-championship branching paths per tier, and non-linear career progression.
+- `[ ]` **[Classic Academy and Grassroots Career Onboarding](../060_classic_academy_and_grassroots_career_onboarding.md)**: Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase.
 
 ### Phase 6: Next-Gen Vehicle Dynamics & Pre-Baked Visual Kinematics (Priority: Medium)
 - `[x]` **[Top-Down Pre-Baked Vehicle Wheel Steering Animations](../026_topdown_wheel_steering_animations.md)**: Multi-layer sprite decomposition and Ackermann wheel steering animation architecture for pre-baked high-resolution 2D top-down vehicles with proof-of-concept on classic_kart.
@@ -78,13 +80,13 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
 - `[ ]` **[Reusable Racing Platform Layers & Determinism Safety Net](../049_reusable_racing_platform_layers.md)**: Target layering, phase roadmap, golden state hashes, and tracks-free performance benches.
 - `[x]` **[`Body2D` Trait](../054_body2d_trait_for_vehiclegeneric_collision_and_progress.md)**: Collision, LIDAR, progress tracking and pit checks work for any rigid body, not only `wheelbase::Car`.
-- `[ ]` **`race-kit` Headless Race World**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
-- `[ ]` **`race-ui` Rendering Primitives**: Course renderers with a mesh cache, multi-part vehicle sprites, chase camera, and HUD widgets outside `tdrace-app`.
-- `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
-- `[ ]` **Chariot Vehicle Model & Chariot Game**: Horse-drawn chariot physics with stamina, wrecks and overturns, and the `chariot-app` repo.
+- `[x]` **[`race-kit` Headless Race World](../056_racekit_headless_race_world.md)**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
+- `[x]` **[`race-ui` Rendering, Camera, Effects & HUD Primitives](../058_raceui_rendering_camera_effects_and_hud_primitives.md)**: Track renderers, race camera, particles and skid marks, curve indicator and HUD widgets outside `tdrace-app`.
+- `[x]` **[Publish-Ready Shared Crates](../059_publishready_shared_crates.md)**: Tagged crates that a separate repo can build without the `tracks/` submodule.
+- `[ ]` **Chariot Game**: the `tdchariots` repo with its own horse-drawn chariot physics, sprites and race, measured against Qvadriga. The tdrace side is [Vehicle-Generic Bot AI and Effects](../065_vehiclegeneric_bot_ai_and_effects.md).
 - `[ ]` **Open Point-to-Point Courses**: Start and finish gates, a lap-free tracker, and open-spline bake, grid and validation.
-- `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries and origin rebasing.
-- `[ ]` **Rally-Raid Game**: GPX-driven procedural stage generator and the `rallyraid-app` repo.
+- `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries, a per-chunk mesh cache, and origin rebasing.
+- `[ ]` **Rally-Raid Game**: GPX-driven procedural stage generator, chase camera with rotation, and the `rallyraid-app` repo.
 - `[ ]` **Platform Cleanup**: Settings modal out of `cabinet`, gamepad fork removed, product categories out of `arcade-race-core`.
 
 
@@ -95,6 +97,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 Living list of security audits, performance profiling targets, or general workspace cleanup routines:
 - **Performance**: Simulation throughput benchmarks ($\ge 4.0\text{M steps/sec}$) and collision checks ($\ge 22.0\text{M checks/sec}$).
 - **Hygiene**: Spec-Driven Development alignment via `keel doctor` and `keel validate`.
+- `[x]` **[Vault Module for Archived and Deprecated Content](../057_vault_module_for_archived_and_deprecated_content.md)**: Structured cold-storage repository for retired circuits, novelty vehicles, prototype rulesets, and deprecated mechanics, isolated from production gameplay and accessible via Dev Mode and Track Studio.
 
 ---
 
@@ -104,6 +107,7 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 
 ### 1. Multiplayer Networking & Online Lobbies
 - `[x]` **[Local Network LAN Multiplayer & Cabinet Arcade Lobby](../036_local_network_lan_multiplayer_and_cabinet_lobby.md)**: Zero-configuration local network multiplayer architecture, authoritative UDP host-client netcode, automatic LAN beacon discovery, direct IP connect, and reusable Cabinet lobby shell.
+- `[ ]` **[Robust LAN Race Synchronization with Owner-Authoritative Cars](../044_robust_lan_race_synchronization_with_ownerauthoritative_cars.md)**: Owner-authoritative car states in compact binary packets, host relay and race referee, interpolated remote cars, reliable lobby and race-control messages, a roster fixed at launch, and pause/finish/disconnect handling that keeps the session alive.
 - **Authoritative Relay & Netcode**: Client-server architecture with dead-reckoning prediction, delta compression, and rollback collision arbitration.
 - **Matchmaking & Lobbies**: Dedicated room lobbies with synchronized car selection and spectator director slots.
 
@@ -111,9 +115,10 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 - **Terrain Synthesis**: Seed-based procedural track ribbon generation with elevation contours and surface hazards.
 - **Dynamic Track Grip & Rubbering-In**: Racing line rubbers in over consecutive laps, while off-line sections collect marbles and lose grip.
 
-### 3. Arcade Damage Modelling & Pitstop Repairs
-- **Vehicle Durability & Health Bar**: 0–100% HP damage model from barrier and vehicle SAT collisions with progressive handling penalties (minor scrapes, engine smoke, limp-mode, spinout).
-- **Tactical Pitlane Service**: Branching pit lane spline with rapid 2–3s arcade pitstop countdowns and floating repair popups.
+### 3. Arcade Damage Modelling, Pitstops & Multi-Tier Academy
+- `[ ]` **[Circuit Pit Lanes and Interactive Pit Stop Procedures](../062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md)**: Physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences.
+- `[ ]` **[Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy](../063_damage_modelling_inrace_field_repairs_and_garage_maintenance_economy.md)**: 0–100% vehicle durability model driven by SAT collision impulse energy, progressive visual and handling degradation, in-race emergency patching, persistent car condition, and a balanced post-race garage repair economy with anti-bankruptcy safeguards.
+- `[ ]` **[Classic Module Multi-Tier Academy Missions and Degradation Curriculum](../064_classic_module_multitier_academy_missions_and_degradation_curriculum.md)**: 4-tier progressive Academy curriculum across the 18 revamped circuits, taking players from damage-free grassroots basics to technical tire wear management and pit stop mastery, while serving as a reliable credit-earning engine.
 
 ### 4. Dedicated Stunt & Acrobatic Competition Mode
 - **Acrobatic Rulesets**: Gymkhana precision drift slaloms, donut clipping zones, and freestyle arena trick attack with combo multipliers.

@@ -23,10 +23,10 @@ pub mod ui;
 
 // Top-level convenient re-exports
 pub use net::{
-    sanitize_string, CarStateSnapshot, ClientEvent, ClientInputPacket, ClientState, DiscoveredHost,
-    HostEvent, JoinResult, LanBeacon, LanBeaconBroadcaster, LanBeaconScanner, LanClient,
-    LanCollisionMode, LanHost, LobbyPacket, LobbySlot, LocalIpResolver, Packet, ProtocolError,
-    WorldSnapshotPacket, DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES,
+    sanitize_string, ClientEvent, ClientState, DiscoveredHost, HostEvent, JoinResult, LanBeacon,
+    LanBeaconBroadcaster, LanBeaconScanner, LanClient, LanCollisionMode, LanHost, LobbyPacket,
+    LobbySlot, LocalIpResolver, NetCarState, Packet, ProtocolError, RaceConfig, WorldState,
+    DEFAULT_BEACON_PORT, DEFAULT_GAME_PORT, LAN_MAGIC, MAGIC_BYTES,
     MAX_DATAGRAM_SIZE, MAX_NAME_LENGTH, PROTOCOL_VERSION,
 };
 pub use audio::{

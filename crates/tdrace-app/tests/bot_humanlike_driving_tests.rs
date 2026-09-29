@@ -76,8 +76,8 @@ fn test_same_seed_gives_the_same_race() {
 #[test]
 fn test_human_layer_off_equals_pre_046_controller() {
     const GOLDEN: [(&str, [u64; 6]); 2] = [
-        ("classic_grand_prix", [0x8b81b9ea87b0e85, 0x73907177aa5b6bd5, 0xd39a87ac6d040da5, 0x12299f59f2c33f51, 0x167ffe729e83f2d7, 0xc546e7d1b59a42d4]),
-        ("kart_arena", [0x93bb5cf1cbc55305, 0xadb71717e21045ea, 0xca50ccee5d1eb8be, 0x5f79e619deec6a6a, 0x1caf49d90b3eb29f, 0xfdd254ffd21ba4e5]),
+        ("classic_grand_prix", [0x8d566a26cec1cd36, 0x3089c9db7e84fa0b, 0xa861219f133cf68f, 0xd3aee3960dd26f1a, 0xacc2475920729863, 0x57be2e9b7f72183c]),
+        ("kart_arena", [0x54632dc7ebf88065, 0x36d83755bd269b7, 0x8d7765a843764d52, 0x626c45a7543c379e, 0x83f80f917247ec4, 0x9c81b0d7f9d6412a]),
     ];
     for (slug, hashes) in GOLDEN {
         let track = tdrace_core::catalog::official_track("classic", slug);

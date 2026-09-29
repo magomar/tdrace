@@ -1,0 +1,141 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Rallycross Career Mode: FIA World RX Supercar Trophy (Tier 4)
+# ==============================================================================
+
+[championship]
+id = "rally_world_rx_supercars"
+name = "FIA World RX Supercar Trophy"
+description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World RX arenas."
+module_id = "rally"
+tier = 4
+laps_per_round = 5
+bot_count = 7
+ai_difficulty = "pro"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "catalunya_rx"
+name = "Circuit de Barcelona-Catalunya RX"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "spa_rx"
+name = "Circuit de Spa-Francorchamps RX"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "hell_rx"
+name = "Lånkebanen Hell RX"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "loheac_rx"
+name = "Circuit de Lohéac"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "montalegre_rx"
+name = "Pista Automóvel de Montalegre"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "riga_rx"
+name = "Biķernieki Track Riga"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "holjes_rx"
+name = "Höljes Motorstadion"
+laps = 5
+
+[[rounds]]
+order = 8
+track_id = "silverstone_rx"
+name = "Silverstone Circuit RX"
+laps = 5
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Rally Team"
+is_player = true
+car_model_id = "rally_peugeot_208_wrx"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "timmy_hansenfield"
+name = "Timmy Hansenfield"
+team = "Hansenfield RX"
+car_model_id = "rally_peugeot_208_wrx"
+country = "SWE"
+ai_character = "smooth"
+livery_idx = 1
+
+[[drivers]]
+id = "ken_blaster"
+name = "Ken Blaster"
+team = "Hoonigan Racing Division"
+car_model_id = "rally_ford_focus_rs_rx"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "petter_solbergfield"
+name = "Petter Solbergfield"
+team = "Subaru Motorsports USA"
+car_model_id = "rally_subaru_wrx_rx"
+country = "NOR"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "johan_vance"
+name = "Johan Vance"
+team = "Vance RX Team"
+car_model_id = "rally_peugeot_208_wrx"
+country = "SWE"
+ai_character = "fast"
+livery_idx = 4
+
+[[drivers]]
+id = "andreas_bakkerud"
+name = "Andreas Bakkerud"
+team = "Hoonigan Racing Division"
+car_model_id = "rally_ford_focus_rs_rx"
+country = "NOR"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "kevin_hansenfield"
+name = "Kevin Hansenfield"
+team = "Hansenfield RX"
+car_model_id = "rally_peugeot_208_wrx"
+country = "SWE"
+ai_character = "strategic"
+livery_idx = 6
+
+[[drivers]]
+id = "mattias_storm"
+name = "Mattias Storm"
+team = "Storm EKS"
+car_model_id = "rally_subaru_wrx_rx"
+country = "SWE"
+ai_character = "calculating"
+livery_idx = 7

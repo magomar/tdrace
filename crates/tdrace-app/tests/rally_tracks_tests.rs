@@ -13,7 +13,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 17, "Rally module should have 17 authentic World RX tracks");
+    assert_eq!(tracks.len(), 20, "Rally module should have 20 authentic World RX tracks");
 
     let expected_ids = [
         "holjes_rx",
@@ -33,6 +33,9 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "essay_rx",
         "dreux_rx",
         "croft_rx",
+        "spa_rx",
+        "silverstone_rx",
+        "erx_motor_park",
     ];
 
     for id in &expected_ids {
@@ -500,7 +503,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 17);
+    assert_eq!(rally_catalog.len(), 20);
 
     let rally_ids = [
         "holjes_rx",
@@ -520,6 +523,9 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "essay_rx",
         "dreux_rx",
         "croft_rx",
+        "spa_rx",
+        "silverstone_rx",
+        "erx_motor_park",
     ];
 
     for id in &rally_ids {
@@ -576,8 +582,8 @@ fn test_rally_race_session_simulation_on_new_tracks() {
         session.num_bots = 5;
         session.init_race();
 
-        assert_eq!(session.cars.len(), 6, "1 player + 5 bots = 6 rally cars for {}", id);
-        assert_eq!(session.trackers.len(), 6);
+        assert_eq!(session.world.vehicles.len(), 6, "1 player + 5 bots = 6 rally cars for {}", id);
+        assert_eq!(session.world.trackers.len(), 6);
         assert!(!session.track.name.is_empty());
         assert_eq!(session.track_choice_id(), *id);
 
@@ -586,7 +592,7 @@ fn test_rally_race_session_simulation_on_new_tracks() {
             session.update();
         }
 
-        for (i, car) in session.cars.iter().enumerate() {
+        for (i, car) in session.world.vehicles.iter().enumerate() {
             assert!(
                 car.state.position.is_finite(),
                 "Rally Car #{} position is non-finite on {}: {:?}",
@@ -705,10 +711,10 @@ fn test_blyton_ids_resolve_to_croft() {
 
 #[test]
 fn test_silverstone_and_yas_marina_ids_resolve_to_their_replacements() {
-    // Silverstone RX and Yas Marina RX (loose sections not in OSM) were replaced by Lavaré and Lessay.
-    for (old, new) in [("silverstone_rx", "lavare_rx"), ("yas_marina_rx", "lessay_rx"), ("yas_marina", "lessay_rx")] {
+    // Yas Marina RX aliases Lessay, while Silverstone RX is restored as an authentic circuit (Spec 051).
+    for (old, new) in [("yas_marina_rx", "lessay_rx"), ("yas_marina", "lessay_rx"), ("silverstone_rallycross", "silverstone_rx"), ("spa_rallycross", "spa_rx"), ("erx", "erx_motor_park")] {
         assert_eq!(tdrace_core::catalog::canonical_id(old), Some(new), "{} must alias {}", old, new);
     }
-    assert_eq!(tdrace_core::catalog::official_track("rally", "silverstone_rx").name, "Circuit de Lavaré");
+    assert_eq!(tdrace_core::catalog::official_track("rally", "silverstone_rx").name, "Silverstone Circuit RX");
     assert_eq!(tdrace_core::catalog::official_track("rally", "yas_marina_rx").name, "Circuit de Lessay");
 }

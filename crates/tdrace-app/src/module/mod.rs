@@ -3,6 +3,7 @@ pub mod extreme_offroad;
 pub mod gt;
 pub mod kart;
 pub mod rally;
+pub mod vault;
 
 use macroquad::color::Color;
 use serde::{Deserialize, Serialize};
@@ -566,6 +567,7 @@ pub use gt::GtWorldChallengeModule;
 pub use kart::KartGameModule;
 pub use nascar::NascarGameModule;
 pub use rally::RallyGameModule;
+pub use vault::VaultGameModule;
 
 pub mod nascar;
 
@@ -638,7 +640,7 @@ mod tests {
         assert!(!rally.title().is_empty());
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
-        assert_eq!(rally.tracks().len(), 17);
+        assert_eq!(rally.tracks().len(), 20);
         assert_eq!(rally.drivers().len(), 12);
         assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
@@ -655,7 +657,7 @@ mod tests {
         assert!(!kart.vehicles().is_empty());
         assert!(kart.vehicles().len() >= 1);
         assert!(!kart.tracks().is_empty());
-        assert_eq!(kart.tracks().len(), 17);
+        assert_eq!(kart.tracks().len(), 20);
         assert_eq!(kart.drivers().len(), 12);
         assert_eq!(kart.default_vehicle_id(), "shifter_kart_125");
         assert_eq!(kart.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);

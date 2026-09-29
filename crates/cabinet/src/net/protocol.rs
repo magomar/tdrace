@@ -6,6 +6,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::wire;
+
 /// Magic header bytes identifying TdRace / Cabinet LAN packets: "TDLN" (0x54, 0x44, 0x4C, 0x4E).
 pub const MAGIC_BYTES: [u8; 4] = [0x54, 0x44, 0x4C, 0x4E];
 
@@ -13,7 +15,7 @@ pub const MAGIC_BYTES: [u8; 4] = [0x54, 0x44, 0x4C, 0x4E];
 pub const LAN_MAGIC: [u8; 4] = MAGIC_BYTES;
 
 /// Current supported wire protocol version.
-pub const PROTOCOL_VERSION: u8 = 1;
+pub const PROTOCOL_VERSION: u8 = 2;
 
 /// Default UDP port for local subnet discovery beacons.
 pub const DEFAULT_BEACON_PORT: u16 = 7776;
@@ -219,8 +221,9 @@ impl LobbySlot {
     }
 }
 
-/// Packets exchanged during the lobby staging and synchronization phase.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Unreliable handshake and heartbeat packets. Lobby and race state changes
+/// travel as reliable [`ControlMessage`]s instead.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LobbyPacket {
     /// Sent by connecting client to request admission into the lobby.
     JoinRequest {
@@ -230,39 +233,124 @@ pub enum LobbyPacket {
         car_model_id: String,
         color_scheme_id: String,
     },
-    /// Host response to client join request.
+    /// Host response to client join request. The roster follows as a reliable `StateSync`.
     JoinResponse {
         result: JoinResult,
         room_name: String,
         track_id: String,
         laps: u8,
-        slots: Vec<LobbySlot>,
     },
-    /// Periodic or event-triggered full lobby state broadcast from host.
+    /// Latency and clock probe; `sent_at` is the sender's monotonic clock in seconds.
+    Ping { sent_at: f64 },
+    /// Probe answer; `responder_time` is the responder's monotonic clock in seconds.
+    Pong { sent_at: f64, responder_time: f64 },
+    /// Notification that client has disconnected or been kicked.
+    DisconnectNotice { reason: String },
+}
+
+/// One car of the frozen race roster sent in [`ControlMessage::RaceLaunch`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RosterEntry {
+    pub slot_id: u8,
+    /// Starting grid position, `0` = pole. Also the car index in the race.
+    pub grid_index: u8,
+    pub player_name: String,
+    pub country_code: String,
+    pub car_model_id: String,
+    pub color_scheme_id: String,
+}
+
+/// Complete race setup. Every machine builds its car list only from this.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RaceConfig {
+    pub track_id: String,
+    pub laps: u8,
+    pub collision_mode: LanCollisionMode,
+    /// Sorted by `grid_index`.
+    pub roster: Vec<RosterEntry>,
+}
+
+impl RaceConfig {
+    /// Car index of `slot_id`, if it is in the roster.
+    pub fn car_index_of(&self, slot_id: u8) -> Option<usize> {
+        self.roster.iter().position(|e| e.slot_id == slot_id)
+    }
+}
+
+/// One finisher as recorded by the host referee.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FinishRecord {
+    pub slot_id: u8,
+    /// Shared race clock at the finish line, in milliseconds.
+    pub finish_ms: u32,
+    pub best_lap_ms: Option<u32>,
+}
+
+/// Final status of one car.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RaceStatus {
+    Finished,
+    /// Still racing when the race closed.
+    Dnf,
+    /// Left or lost connection during the race.
+    Left,
+}
+
+/// One row of the host's final results.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RaceResult {
+    pub slot_id: u8,
+    /// `1` = winner.
+    pub position: u8,
+    pub status: RaceStatus,
+    pub finish_ms: Option<u32>,
+    pub best_lap_ms: Option<u32>,
+}
+
+/// Lobby and race-control messages, always sent on the reliable channel.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ControlMessage {
+    /// Host → clients: full lobby state. `roster_rev` grows with every change.
     StateSync {
+        roster_rev: u32,
         track_id: String,
         laps: u8,
         collision_mode: LanCollisionMode,
         slots: Vec<LobbySlot>,
     },
-    /// Client-to-host update when changing vehicle, livery, or ready flag.
+    /// Client → host: vehicle, livery or ready change.
     ClientSlotUpdate {
         slot_id: u8,
         car_model_id: String,
         color_scheme_id: String,
         is_ready: bool,
     },
-    /// Host notification that synchronized grid launch is starting.
-    LaunchCountdown {
-        starts_in_millis: u32,
-        grid_positions: Vec<u8>,
-    },
-    /// Latency measurement probe.
-    Ping { timestamp_ms: u64 },
-    /// Latency measurement response.
-    Pong { timestamp_ms: u64 },
-    /// Notification that client has disconnected or been kicked.
-    DisconnectNotice { reason: String },
+    /// Host → clients: the race is launched with this frozen setup.
+    RaceLaunch(RaceConfig),
+    /// Client → host: track loaded, ready for the start.
+    Loaded,
+    /// Host → clients: the green light is at `start_at` on the host clock (seconds).
+    RaceStart { start_at: f64 },
+    /// Owner → host: the owner's car crossed the finish line.
+    Finished { finish_ms: u32, best_lap_ms: Option<u32> },
+    /// Host → clients: finish order so far.
+    Standings { finishers: Vec<FinishRecord> },
+    /// Host → clients: a player left the race.
+    PlayerLeft { slot_id: u8, reason: String },
+    /// Host → clients: the race is closed; final results.
+    RaceOver { results: Vec<RaceResult> },
+}
+
+impl ControlMessage {
+    /// Serializes the message for the reliable channel.
+    pub fn to_bytes(&self) -> Result<Vec<u8>, ProtocolError> {
+        serde_json::to_vec(self).map_err(|e| ProtocolError::SerializationFailed(e.to_string()))
+    }
+
+    /// Parses a message delivered by the reliable channel.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, ProtocolError> {
+        serde_json::from_slice(bytes).map_err(|e| ProtocolError::DeserializationFailed(e.to_string()))
+    }
 }
 
 impl LobbyPacket {
@@ -282,102 +370,6 @@ impl LobbyPacket {
     }
 }
 
-/// 60 Hz input frame streamed from client to authoritative host during race.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ClientInputPacket {
-    /// Monotonically increasing client input sequence number.
-    pub sequence_num: u32,
-    /// Assigned player slot index.
-    pub slot_id: u8,
-    /// Steering command: -1.0 (full left) to +1.0 (full right).
-    pub steering: f32,
-    /// Throttle pedal: 0.0 (idle) to 1.0 (full throttle).
-    pub throttle: f32,
-    /// Brake pedal: 0.0 (idle) to 1.0 (full brake).
-    pub brake: f32,
-    /// Handbrake flag.
-    pub handbrake: bool,
-    /// Reverse gear flag.
-    #[serde(default)]
-    pub reverse: bool,
-}
-
-impl ClientInputPacket {
-    /// Encodes this input packet into a wire-formatted datagram byte buffer.
-    pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
-        Packet::Input(self.clone()).encode()
-    }
-
-    /// Decodes an input packet from a wire-formatted datagram byte buffer.
-    pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        match Packet::decode(bytes)? {
-            Packet::Input(packet) => Ok(packet),
-            _ => Err(ProtocolError::DeserializationFailed(
-                "Packet is not an input packet".to_string(),
-            )),
-        }
-    }
-}
-
-/// Kinematic snapshot of a single car transmitted by the authoritative host.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CarStateSnapshot {
-    /// Participant slot index.
-    pub slot_id: u8,
-    /// World position X coordinate in meters.
-    pub pos_x: f32,
-    /// World position Y coordinate in meters.
-    pub pos_y: f32,
-    /// Linear velocity X in m/s.
-    pub velocity_x: f32,
-    /// Linear velocity Y in m/s.
-    pub velocity_y: f32,
-    /// Heading orientation angle in radians.
-    pub heading_rad: f32,
-    /// Angular yaw velocity in rad/s.
-    pub angular_velocity: f32,
-    /// Current front steer angle in radians.
-    pub steer_angle_rad: f32,
-    /// Current completed lap count.
-    pub current_lap: u16,
-    /// Most recent track checkpoint index passed.
-    pub checkpoint_idx: u16,
-    /// Best lap time in milliseconds, if recorded.
-    pub best_lap_time_ms: Option<u32>,
-    /// Last completed lap time in milliseconds, if recorded.
-    pub last_lap_time_ms: Option<u32>,
-    /// Whether the car has completed the race distance.
-    pub is_finished: bool,
-}
-
-/// 60 Hz authoritative world snapshot broadcasted from host to all peers.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct WorldSnapshotPacket {
-    /// Monotonically increasing server simulation tick.
-    pub tick: u32,
-    /// Elapsed race session time in seconds.
-    pub session_elapsed_sec: f32,
-    /// Kinematic states for all active cars.
-    pub cars: Vec<CarStateSnapshot>,
-}
-
-impl WorldSnapshotPacket {
-    /// Encodes this world snapshot packet into a wire-formatted datagram byte buffer.
-    pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
-        Packet::Snapshot(self.clone()).encode()
-    }
-
-    /// Decodes a world snapshot packet from a wire-formatted datagram byte buffer.
-    pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        match Packet::decode(bytes)? {
-            Packet::Snapshot(packet) => Ok(packet),
-            _ => Err(ProtocolError::DeserializationFailed(
-                "Packet is not a world snapshot packet".to_string(),
-            )),
-        }
-    }
-}
-
 /// Top-level wire packet envelope for Cabinet LAN datagrams.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Packet {
@@ -385,10 +377,6 @@ pub enum Packet {
     Beacon(LanBeacon),
     /// Staging lobby coordination packet.
     Lobby(LobbyPacket),
-    /// Client-to-host driver input packet.
-    Input(ClientInputPacket),
-    /// Authoritative host-to-client world snapshot packet.
-    Snapshot(WorldSnapshotPacket),
     /// Direct peer disconnection packet.
     Disconnect {
         /// Disconnecting slot index.
@@ -404,38 +392,35 @@ impl Packet {
     /// The wire format consists of:
     /// - 4 bytes: Magic header [`MAGIC_BYTES`] (`b"TDLN"`)
     /// - 1 byte:  Protocol version [`PROTOCOL_VERSION`]
-    /// - N bytes: Serialized payload
+    /// - 1 byte:  Datagram kind [`wire::KIND_JSON`]
+    /// - N bytes: Serialized JSON payload
     pub fn encode(&self) -> Result<Vec<u8>, ProtocolError> {
         let payload = serde_json::to_vec(self)
             .map_err(|e| ProtocolError::SerializationFailed(e.to_string()))?;
-        let total_len = 5 + payload.len();
+        let total_len = wire::HEADER_LEN + payload.len();
         if total_len > MAX_DATAGRAM_SIZE {
             return Err(ProtocolError::PacketTooLarge(total_len));
         }
-        let mut buf = Vec::with_capacity(total_len);
-        buf.extend_from_slice(&MAGIC_BYTES);
-        buf.push(PROTOCOL_VERSION);
+        let mut buf = wire::begin(wire::KIND_JSON, payload.len());
         buf.extend_from_slice(&payload);
         Ok(buf)
     }
 
     /// Decodes and validates a packet from raw received UDP datagram bytes.
     pub fn decode(bytes: &[u8]) -> Result<Self, ProtocolError> {
-        if bytes.len() > MAX_DATAGRAM_SIZE {
-            return Err(ProtocolError::PacketTooLarge(bytes.len()));
+        let (kind, payload) = wire::split(bytes)?;
+        if kind != wire::KIND_JSON {
+            return Err(ProtocolError::DeserializationFailed(format!(
+                "datagram kind {} is not a JSON packet",
+                kind
+            )));
         }
-        if bytes.len() < 5 {
-            return Err(ProtocolError::PacketTooShort(bytes.len()));
-        }
-        if bytes[0..4] != MAGIC_BYTES {
-            return Err(ProtocolError::InvalidMagic([
-                bytes[0], bytes[1], bytes[2], bytes[3],
-            ]));
-        }
-        if bytes[4] != PROTOCOL_VERSION {
-            return Err(ProtocolError::VersionMismatch(bytes[4]));
-        }
-        serde_json::from_slice(&bytes[5..])
+        Self::decode_json(payload)
+    }
+
+    /// Decodes the JSON payload of a [`wire::KIND_JSON`] datagram (after the header).
+    pub fn decode_json(payload: &[u8]) -> Result<Self, ProtocolError> {
+        serde_json::from_slice(payload)
             .map_err(|e| ProtocolError::DeserializationFailed(e.to_string()))
     }
 
@@ -443,22 +428,6 @@ impl Packet {
     pub fn as_lobby(&self) -> Option<&LobbyPacket> {
         match self {
             Self::Lobby(p) => Some(p),
-            _ => None,
-        }
-    }
-
-    /// Returns a reference to the inner [`ClientInputPacket`] if this is an input packet.
-    pub fn as_input(&self) -> Option<&ClientInputPacket> {
-        match self {
-            Self::Input(p) => Some(p),
-            _ => None,
-        }
-    }
-
-    /// Returns a reference to the inner [`WorldSnapshotPacket`] if this is a snapshot packet.
-    pub fn as_snapshot(&self) -> Option<&WorldSnapshotPacket> {
-        match self {
-            Self::Snapshot(p) => Some(p),
             _ => None,
         }
     }
@@ -484,18 +453,6 @@ impl From<LobbyPacket> for Packet {
     }
 }
 
-impl From<ClientInputPacket> for Packet {
-    fn from(p: ClientInputPacket) -> Self {
-        Self::Input(p)
-    }
-}
-
-impl From<WorldSnapshotPacket> for Packet {
-    fn from(p: WorldSnapshotPacket) -> Self {
-        Self::Snapshot(p)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -505,7 +462,7 @@ mod tests {
         assert_eq!(MAGIC_BYTES, [0x54, 0x44, 0x4C, 0x4E]);
         assert_eq!(LAN_MAGIC, MAGIC_BYTES);
         assert_eq!(&MAGIC_BYTES, b"TDLN");
-        assert_eq!(PROTOCOL_VERSION, 1);
+        assert_eq!(PROTOCOL_VERSION, 2);
         assert_eq!(DEFAULT_BEACON_PORT, 7776);
         assert_eq!(DEFAULT_GAME_PORT, 7777);
         assert_eq!(MAX_DATAGRAM_SIZE, 1400);
@@ -539,7 +496,8 @@ mod tests {
 
         let encoded = beacon.encode().expect("Failed to encode beacon");
         assert_eq!(&encoded[0..4], b"TDLN");
-        assert_eq!(encoded[4], 1);
+        assert_eq!(encoded[4], PROTOCOL_VERSION);
+        assert_eq!(encoded[5], wire::KIND_JSON);
 
         let decoded = LanBeacon::decode(&encoded).expect("Failed to decode beacon");
         assert_eq!(beacon, decoded);
@@ -549,7 +507,7 @@ mod tests {
     fn test_lobby_packet_roundtrips() {
         let packets = vec![
             LobbyPacket::JoinRequest {
-                protocol_version: 1,
+                protocol_version: PROTOCOL_VERSION,
                 player_name: "Alex".to_string(),
                 country_code: "FRA".to_string(),
                 car_model_id: "gt3_viper".to_string(),
@@ -560,38 +518,9 @@ mod tests {
                 room_name: "Mario GP".to_string(),
                 track_id: "monza".to_string(),
                 laps: 5,
-                slots: vec![
-                    LobbySlot::new(0, "Mario".to_string(), "ESP".to_string(), true),
-                    LobbySlot::new(1, "Alex".to_string(), "FRA".to_string(), false),
-                ],
             },
-            LobbyPacket::StateSync {
-                track_id: "spa".to_string(),
-                laps: 3,
-                collision_mode: LanCollisionMode::FullSatSolid,
-                slots: vec![LobbySlot::new(
-                    0,
-                    "Mario".to_string(),
-                    "ESP".to_string(),
-                    true,
-                )],
-            },
-            LobbyPacket::ClientSlotUpdate {
-                slot_id: 1,
-                car_model_id: "m4_gt3".to_string(),
-                color_scheme_id: "black".to_string(),
-                is_ready: true,
-            },
-            LobbyPacket::LaunchCountdown {
-                starts_in_millis: 3000,
-                grid_positions: vec![0, 1],
-            },
-            LobbyPacket::Ping {
-                timestamp_ms: 123456789,
-            },
-            LobbyPacket::Pong {
-                timestamp_ms: 123456789,
-            },
+            LobbyPacket::Ping { sent_at: 12.5 },
+            LobbyPacket::Pong { sent_at: 12.5, responder_time: 1003.25 },
             LobbyPacket::DisconnectNotice {
                 reason: "Host disbanded lobby".to_string(),
             },
@@ -605,64 +534,62 @@ mod tests {
     }
 
     #[test]
-    fn test_client_input_packet_roundtrip() {
-        let input = ClientInputPacket {
-            sequence_num: 42,
+    fn test_control_message_roundtrips() {
+        let roster = vec![RosterEntry {
             slot_id: 2,
-            steering: -0.75,
-            throttle: 1.0,
-            brake: 0.0,
-            handbrake: false,
-            reverse: false,
+            grid_index: 0,
+            player_name: "Alex".to_string(),
+            country_code: "FRA".to_string(),
+            car_model_id: "gt3_viper".to_string(),
+            color_scheme_id: "green".to_string(),
+        }];
+        let messages = vec![
+            ControlMessage::StateSync {
+                roster_rev: 4,
+                track_id: "spa".to_string(),
+                laps: 3,
+                collision_mode: LanCollisionMode::GhostPassing,
+                slots: vec![LobbySlot::new(0, "Mario".to_string(), "ESP".to_string(), true)],
+            },
+            ControlMessage::ClientSlotUpdate {
+                slot_id: 1,
+                car_model_id: "m4_gt3".to_string(),
+                color_scheme_id: "black".to_string(),
+                is_ready: true,
+            },
+            ControlMessage::RaceLaunch(RaceConfig {
+                track_id: "monza".to_string(),
+                laps: 5,
+                collision_mode: LanCollisionMode::FullSatSolid,
+                roster,
+            }),
+            ControlMessage::Loaded,
+            ControlMessage::RaceStart { start_at: 42.125 },
+            ControlMessage::Finished { finish_ms: 90_000, best_lap_ms: Some(29_500) },
+            ControlMessage::Standings {
+                finishers: vec![FinishRecord { slot_id: 2, finish_ms: 90_000, best_lap_ms: None }],
+            },
+            ControlMessage::PlayerLeft { slot_id: 3, reason: "Heartbeat timeout".to_string() },
+            ControlMessage::RaceOver {
+                results: vec![RaceResult {
+                    slot_id: 2,
+                    position: 1,
+                    status: RaceStatus::Finished,
+                    finish_ms: Some(90_000),
+                    best_lap_ms: Some(29_500),
+                }],
+            },
+        ];
+        for m in messages {
+            assert_eq!(ControlMessage::from_bytes(&m.to_bytes().unwrap()).unwrap(), m);
+        }
+        let cfg = RaceConfig {
+            track_id: String::new(),
+            laps: 1,
+            collision_mode: LanCollisionMode::default(),
+            roster: vec![],
         };
-
-        let encoded = input.encode().expect("Encode input");
-        let decoded = ClientInputPacket::decode(&encoded).expect("Decode input");
-        assert_eq!(input, decoded);
-    }
-
-    #[test]
-    fn test_world_snapshot_packet_roundtrip() {
-        let snapshot = WorldSnapshotPacket {
-            tick: 1800,
-            session_elapsed_sec: 30.0,
-            cars: vec![
-                CarStateSnapshot {
-                    slot_id: 0,
-                    pos_x: 100.5,
-                    pos_y: 250.2,
-                    velocity_x: 45.0,
-                    velocity_y: 12.0,
-                    heading_rad: 1.57,
-                    angular_velocity: 0.02,
-                    steer_angle_rad: -0.1,
-                    current_lap: 2,
-                    checkpoint_idx: 15,
-                    best_lap_time_ms: Some(82500),
-                    last_lap_time_ms: Some(83100),
-                    is_finished: false,
-                },
-                CarStateSnapshot {
-                    slot_id: 1,
-                    pos_x: 95.0,
-                    pos_y: 248.0,
-                    velocity_x: 44.5,
-                    velocity_y: 11.8,
-                    heading_rad: 1.55,
-                    angular_velocity: -0.01,
-                    steer_angle_rad: 0.05,
-                    current_lap: 2,
-                    checkpoint_idx: 14,
-                    best_lap_time_ms: Some(83200),
-                    last_lap_time_ms: None,
-                    is_finished: false,
-                },
-            ],
-        };
-
-        let encoded = snapshot.encode().expect("Encode snapshot");
-        let decoded = WorldSnapshotPacket::decode(&encoded).expect("Decode snapshot");
-        assert_eq!(snapshot, decoded);
+        assert_eq!(cfg.car_index_of(0), None);
     }
 
     #[test]
@@ -726,7 +653,5 @@ mod tests {
         let pkt: Packet = beacon.clone().into();
         assert_eq!(pkt.as_beacon(), Some(&beacon));
         assert!(pkt.as_lobby().is_none());
-        assert!(pkt.as_input().is_none());
-        assert!(pkt.as_snapshot().is_none());
     }
 }

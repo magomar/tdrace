@@ -90,8 +90,9 @@ fn test_garage_shows_all_module_models_across_tiers() {
             all_cars.len()
         );
 
-        // Every module should feature 5 progression tiers with at least 3 distinct models each
-        for tier in 1..=5 {
+        // Every module should feature progression tiers with at least 3 distinct models each
+        let tier_limit = if mod_id == "kart" { 6 } else { 5 };
+        for tier in 1..=tier_limit {
             let tier_models = get_models_for_module_and_tier(mod_id, tier);
             assert!(
                 tier_models.len() >= 3,
@@ -106,8 +107,8 @@ fn test_garage_shows_all_module_models_across_tiers() {
     let global_models = get_all_models();
     assert_eq!(
         global_models.len(),
-        86,
-        "Expected exactly 86 real car models in catalog, got {}",
+        95,
+        "Expected exactly 95 real car models in catalog, got {}",
         global_models.len()
     );
 }
@@ -115,7 +116,7 @@ fn test_garage_shows_all_module_models_across_tiers() {
 #[test]
 fn test_all_80_real_cars_attributes_and_data_integrity() {
     let global_models = get_all_models();
-    assert_eq!(global_models.len(), 86);
+    assert_eq!(global_models.len(), 95);
 
     let mut seen_ids = std::collections::HashSet::new();
     let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
@@ -135,8 +136,14 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
             car.module_id,
             car.id
         );
-        // Extreme Off-Road parks the Rally Raid T1+ and SST cars at unranked tiers 6 and 7 (spec 048)
-        let max_tier = if car.module_id == "extreme_offroad" { 7 } else { 5 };
+        // Extreme Off-Road (spec 048) and Rallycross (spec 051) have vehicles up to tier 7, Kart has 6 tiers
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
+            7
+        } else if car.module_id == "kart" {
+            6
+        } else {
+            5
+        };
         assert!((1..=max_tier).contains(&car.tier), "Invalid tier {} on car {}", car.tier, car.id);
 
         // Realistic non-zero specifications
@@ -558,7 +565,8 @@ fn test_starting_grid_footer_prompt_space_reserved_for_launch() {
 fn test_roster_featured_cars_have_valid_lateral_assets() {
     let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
     for mod_id in modules {
-        for tier in 1..=5 {
+        let max_tier = if mod_id == "kart" { 6 } else { 5 };
+        for tier in 1..=max_tier {
             let models = get_models_for_module_and_tier(mod_id, tier);
             let featured = models.first().expect("Each tier must have at least one featured car");
             assert!(!featured.id.is_empty());

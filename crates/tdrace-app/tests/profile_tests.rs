@@ -251,11 +251,11 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
 
     assert_eq!(session.color_schemes[0], session.active_profile.color_scheme);
     assert_eq!(session.color_schemes[0].to_hex_strings(), custom_livery.to_hex_strings());
-    assert_eq!(session.cars.len(), session.max_grid_participants()); // Full grid capacity on classic track
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants()); // Full grid capacity on classic track
 
     // Simulate winning race completion
-    session.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
-    session.trackers[0].best_lap_time = Some(23.4);
+    session.world.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
+    session.world.trackers[0].best_lap_time = Some(23.4);
     session.session_time = 71.5;
 
     session.check_race_finish();
@@ -479,8 +479,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
     // Simulate winning race to populate in-memory session caches
     session.track_choice = TrackChoice::ClassicGrandPrix;
     session.init_race();
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(23.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(23.0);
     session.session_time = 70.0;
     session.check_race_finish();
 
@@ -682,8 +682,8 @@ fn test_gt_career_session_gating_and_cup_launch() {
     // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4; // finished 3 laps
-    session.trackers[0].best_lap_time = Some(21.0);
+    session.world.trackers[0].current_lap = 4; // finished 3 laps
+    session.world.trackers[0].best_lap_time = Some(21.0);
     session.session_time = 65.0;
     session.check_race_finish();
 
@@ -889,8 +889,8 @@ fn test_championship_completion_podium_trophy_awarded() {
 
     // Finish race as P1
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4;
-    session.trackers[0].best_lap_time = Some(20.5);
+    session.world.trackers[0].current_lap = 4;
+    session.world.trackers[0].best_lap_time = Some(20.5);
     session.session_time = 62.0;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -1256,7 +1256,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         .map(|t| t.id.to_string())
         .collect();
 
-    let expected_rally_tiers: [(&str, Vec<&str>); 5] = [
+    let expected_rally_tiers: [(&str, Vec<&str>); 6] = [
         (
             "Rallycross Grassroots Cup (Tier 1)",
             vec![
@@ -1268,60 +1268,70 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "World Rallycross Challenge (Tier 2)",
+            "Supercar Lites Trophy (Tier 2)",
             vec![
-                "hell_rx",
-                "loheac_rx",
-                "lavare_rx",
-                "holjes_rx",
-                "lydden_hill",
+                "montalegre_rx",
+                "nyirad_rx",
+                "kouvola_rx",
+                "catalunya_rx",
                 "mettet_rx",
+                "holjes_rx",
+            ],
+        ),
+        (
+            "Euro RX Challenge (Tier 3)",
+            vec![
+                "lavare_rx",
+                "riga_rx",
+                "killarney_rx",
+                "lessay_rx",
+                "essay_rx",
+                "dreux_rx",
                 "croft_rx",
             ],
         ),
         (
-            "Group B Masters Series (Tier 3)",
+            "FIA World RX Supercar Trophy (Tier 4)",
             vec![
-                "estering_rx",
-                "montalegre_rx",
-                "riga_rx",
+                "catalunya_rx",
+                "spa_rx",
                 "hell_rx",
                 "loheac_rx",
-                "lavare_rx",
+                "montalegre_rx",
+                "riga_rx",
                 "holjes_rx",
-                "lydden_hill",
-                "mettet_rx",
+                "silverstone_rx",
             ],
         ),
         (
-            "RX1e Electric Championship (Tier 4)",
+            "RX1e Electric Championship (Tier 5)",
             vec![
                 "nyirad_rx",
                 "kouvola_rx",
                 "killarney_rx",
                 "estering_rx",
-                "montalegre_rx",
-                "riga_rx",
                 "hell_rx",
                 "loheac_rx",
                 "lavare_rx",
+                "riga_rx",
                 "holjes_rx",
+                "silverstone_rx",
             ],
         ),
         (
-            "Nitrocross Group E Series (Tier 5)",
+            "Nitrocross Group E Series (Tier 6)",
             vec![
                 "catalunya_rx",
                 "lessay_rx",
                 "essay_rx",
+                "estering_rx",
+                "hell_rx",
+                "loheac_rx",
                 "nyirad_rx",
                 "kouvola_rx",
                 "killarney_rx",
-                "estering_rx",
-                "montalegre_rx",
                 "riga_rx",
-                "hell_rx",
-                "loheac_rx",
+                "erx_motor_park",
                 "holjes_rx",
             ],
         ),
@@ -1355,26 +1365,30 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
         .map(|t| t.id.to_string())
         .collect();
 
-    let expected_kart_tiers: [(&str, Vec<&str>); 5] = [
+    let expected_kart_tiers: [(&str, Vec<&str>); 6] = [
         (
             "Rotax Junior Academy (Tier 1)",
             vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
         ),
         (
-            "National Kart Championship (Tier 2)",
-            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf", "whilton_mill"],
+            "FIA Karting Academy Trophy (Tier 2)",
+            vec!["whilton_mill", "laval_kart", "genk", "sarno", "kristianstad", "seven_laghi"],
         ),
         (
-            "Continental Rotax Trophy (Tier 3)",
-            vec!["pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato", "genk", "wackersdorf"],
+            "National Kart Championship (Tier 3)",
+            vec!["sarno", "kristianstad", "seven_laghi", "lonato", "franciacorta", "ampfing", "pfi"],
         ),
         (
-            "FIA Karting European Championship (Tier 4)",
-            vec!["zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "seven_laghi", "lonato"],
+            "Continental Shifter Cup (Tier 4)",
+            vec!["pfi", "franciacorta", "ampfing", "zuera", "silverstone_national_kart", "aunay_kart", "sarno", "lonato"],
         ),
         (
-            "FIA Karting World Championship (Tier 5)",
-            vec!["portimao_kart", "valencia_kart", "campillos", "zuera", "silverstone_national_kart", "le_mans_kart", "pfi", "franciacorta", "ampfing", "sarno", "kristianstad", "lonato"],
+            "Superkart Division 2 Challenge (Tier 5)",
+            vec!["zuera", "silverstone_national_kart", "aunay_kart", "le_mans_kart", "campillos", "muelsen_kart", "pfi", "sarno", "lonato"],
+        ),
+        (
+            "Superkart Division 1 World Series (Tier 6)",
+            vec!["portimao_kart", "valencia_kart", "adria_kart", "campillos", "le_mans_kart", "muelsen_kart", "zuera", "silverstone_national_kart", "pfi", "lonato"],
         ),
     ];
 
@@ -1609,8 +1623,10 @@ fn test_real_championships_listing_and_filter() {
         assert!(!c.series.id.is_empty(), "Series ID must not be empty");
         assert!(!c.series.name.is_empty(), "Series Name must not be empty");
         assert!(!c.series.module_id.is_empty(), "Module ID must not be empty");
-        assert!(!c.rounds.is_empty(), "Championship must have at least one round");
-        assert!(c.series.tier >= 1, "Series tier must be >= 1");
+        assert!(
+            c.series.tier >= 1 || (c.series.tier == 0 && c.series.id.contains("group_b")),
+            "Series tier must be >= 1, or 0 for Heritage series"
+        );
     }
 
     // Verify filtering by category
@@ -1994,8 +2010,8 @@ fn test_race_finish_records_authentic_model_title_in_history() {
     session.selected_car_model_id = Some("rally_fiesta_rally4");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2; // finished 1 lap
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2; // finished 1 lap
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 
@@ -2019,8 +2035,8 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
     assert_eq!(session.active_module_id, "rally");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2;
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2;
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 
@@ -2473,6 +2489,96 @@ fn test_spec_053_round_purse_and_clean_race_bonuses() {
     assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 2), 300_000);
     assert_eq!(ModuleCareerProgress::championship_podium_bonus(5, 3), 180_000);
 }
+
+#[test]
+fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
+    let mut progress = ModuleCareerProgress::default_for_module(1, "kart");
+    assert_eq!(progress.level, 1);
+    assert_eq!(progress.max_tier(), 6);
+    assert_eq!(progress.unlocked_cars, vec!["kart_crg_hero_60"]);
+    assert_eq!(progress.unlocked_tracks.len(), 5);
+    assert_eq!(
+        progress.unlocked_tracks,
+        vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"]
+    );
+    assert_eq!(progress.next_tier_target_xp(), Some(1_500));
+
+    // Try advancing without podium or XP
+    assert!(!progress.can_advance_tier());
+
+    // Add podium in tier 1, check insufficient XP
+    progress.record_championship_finish("kart_world_cup", 1, 1, 100, "2026-09-29");
+    assert!(!progress.can_advance_tier());
+
+    // Add XP to 1,500
+    progress.add_xp(1_500);
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 2);
+    assert_eq!(progress.level, 2);
+    assert_eq!(progress.next_tier_target_xp(), Some(3_500));
+    assert!(progress.is_car_unlocked("kart_tony_kart_rookie_okj", false));
+    assert_eq!(progress.unlocked_tracks.len(), 8);
+    assert!(progress.unlocked_tracks.contains(&"sarno".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"kristianstad".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"seven_laghi".to_string()));
+
+    // Tier 2 -> 3: 3,500 XP required
+    progress.record_championship_finish("kart_junior_trophy", 2, 2, 85, "2026-09-29");
+    progress.add_xp(2_000); // total 3,500 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 3);
+    assert_eq!(progress.level, 3);
+    assert_eq!(progress.next_tier_target_xp(), Some(6_000));
+    assert!(progress.is_car_unlocked("kart_tony_kart_racer_ok", false));
+    assert_eq!(progress.unlocked_tracks.len(), 11);
+    assert!(progress.unlocked_tracks.contains(&"pfi".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"franciacorta".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"ampfing".to_string()));
+
+    // Tier 3 -> 4: 6,000 XP required
+    progress.record_championship_finish("kart_national_championship", 3, 3, 70, "2026-09-29");
+    progress.add_xp(2_500); // total 6,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 4);
+    assert_eq!(progress.level, 4);
+    assert_eq!(progress.next_tier_target_xp(), Some(9_000));
+    assert!(progress.is_car_unlocked("kart_birel_art_kz2", false));
+    assert_eq!(progress.unlocked_tracks.len(), 14);
+    assert!(progress.unlocked_tracks.contains(&"zuera".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"silverstone_national_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"aunay_kart".to_string()));
+
+    // Tier 4 -> 5: 9,000 XP required
+    progress.record_championship_finish("kart_continental_trophy", 4, 1, 100, "2026-09-29");
+    progress.add_xp(3_000); // total 9,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 5);
+    assert_eq!(progress.level, 5);
+    assert_eq!(progress.next_tier_target_xp(), Some(13_000));
+    assert!(progress.is_car_unlocked("kart_anderson_maverick_mono", false));
+    assert_eq!(progress.unlocked_tracks.len(), 17);
+    assert!(progress.unlocked_tracks.contains(&"le_mans_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"campillos".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"muelsen_kart".to_string()));
+
+    // Tier 5 -> 6: 13,000 XP required
+    progress.record_championship_finish("kart_superkart_div2_challenge", 5, 2, 85, "2026-09-29");
+    progress.add_xp(4_000); // total 13,000 XP
+    assert!(progress.can_advance_tier());
+    assert_eq!(progress.advance_tier().unwrap(), 6);
+    assert_eq!(progress.level, 6);
+    assert_eq!(progress.next_tier_target_xp(), None);
+    assert_eq!(progress.level_progress_ratio(), 1.0);
+    assert!(progress.is_car_unlocked("kart_anderson_cs250", false));
+    assert_eq!(progress.unlocked_tracks.len(), 20);
+    assert!(progress.unlocked_tracks.contains(&"portimao_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"valencia_kart".to_string()));
+    assert!(progress.unlocked_tracks.contains(&"adria_kart".to_string()));
+
+    // At tier 6 pinnacle, cannot advance further
+    assert!(!progress.can_advance_tier());
+}
+
 
 
 

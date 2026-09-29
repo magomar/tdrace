@@ -80,16 +80,6 @@ fn test_all_25_tiers_resolve_unique_dedicated_archetypes() {
             ],
         ),
         (
-            "kart",
-            [
-                EngineSoundType::KartCadet60,
-                EngineSoundType::RacingMowerV2,
-                EngineSoundType::Kart125cc,
-                EngineSoundType::KartShifterKZ,
-                EngineSoundType::Superkart250Twin,
-            ],
-        ),
-        (
             "extreme_offroad",
             [
                 EngineSoundType::SandRailBoxer,
@@ -131,13 +121,46 @@ fn test_all_25_tiers_resolve_unique_dedicated_archetypes() {
                 module_id
             );
 
-            // Ensure all 25 archetypes across the entire matrix are unique
             assert!(
                 all_seen.insert(expected_archetype),
                 "Duplicate sound archetype {:?} across motorsport matrix",
                 expected_archetype
             );
         }
+    }
+
+    // Spec 052: Karting features 6 authentic tiers
+    let kart_tiers = [
+        (1, EngineSoundType::KartCadet60),
+        (2, EngineSoundType::Kart125cc),
+        (3, EngineSoundType::Kart125cc),
+        (4, EngineSoundType::KartShifterKZ),
+        (5, EngineSoundType::Superkart250Twin),
+        (6, EngineSoundType::Superkart250Twin),
+    ];
+    for (tier, expected_archetype) in kart_tiers {
+        let models = get_models_for_module_and_tier("kart", tier);
+        assert!(!models.is_empty(), "Kart Tier {tier} must have car models");
+        for model in &models {
+            assert_eq!(
+                model.sound_type(),
+                expected_archetype,
+                "Kart model {} in Tier {} should have archetype {:?}",
+                model.id,
+                tier,
+                expected_archetype
+            );
+        }
+        all_seen.insert(expected_archetype);
+    }
+
+    // Lawnmowers decommissioned to The Vault resolve to RacingMowerV2
+    let vault_mowers = ["kart_honda_mean_mower", "kart_john_deere_racing_mower", "kart_viking_t6_tractor"];
+    for mower_id in vault_mowers {
+        let mower = tdrace_app::catalog::find_model_by_id(mower_id)
+            .unwrap_or_else(|| panic!("Mower {mower_id} must be in catalog"));
+        assert_eq!(mower.sound_type(), EngineSoundType::RacingMowerV2);
+        all_seen.insert(mower.sound_type());
     }
 
     assert_eq!(all_seen.len(), 25, "Exactly 25 distinct archetypes must be represented");
