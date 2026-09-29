@@ -1943,7 +1943,7 @@ mod tests {
 
         let mut manager = TrackManager::new(&temp_dir);
         let choices = manager.all_track_choices();
-        assert_eq!(choices.len(), 98); // 10 classic + 18 gt + 17 rally + 17 kart + 17 nascar + 19 unique extreme off-road
+        assert_eq!(choices.len(), 101); // 13 classic + 18 gt + 17 rally + 17 kart + 17 nascar + 19 unique extreme off-road
 
         let mut gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
         gp.name = "My Custom GP".to_string();
@@ -1956,7 +1956,7 @@ mod tests {
         assert!(Path::new(&saved_path).exists());
 
         // Since gp was saved as Draft, main choices is still 98, but draft choices has 1
-        assert_eq!(manager.main_track_choices().len(), 98);
+        assert_eq!(manager.main_track_choices().len(), 101);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         let draft_choice = &manager.draft_track_choices()[0];
@@ -1965,7 +1965,7 @@ mod tests {
 
         // Promote track to Main
         manager.promote_track("test_custom_gp").expect("Must promote");
-        assert_eq!(manager.main_track_choices().len(), 99);
+        assert_eq!(manager.main_track_choices().len(), 102);
         assert_eq!(manager.draft_track_choices().len(), 0);
 
         // Edit metadata
@@ -1976,18 +1976,18 @@ mod tests {
                 "Updated description text".to_string(),
             )
             .expect("Must update metadata");
-        let loaded = manager.load_track(&manager.main_track_choices()[98]).expect("Must load");
+        let loaded = manager.load_track(&manager.main_track_choices()[101]).expect("Must load");
         assert_eq!(loaded.name, "Renamed Grand Prix");
         assert_eq!(loaded.description, "Updated description text");
 
         // Demote back to draft
         manager.demote_track("test_custom_gp").expect("Must demote");
-        assert_eq!(manager.main_track_choices().len(), 98);
+        assert_eq!(manager.main_track_choices().len(), 101);
         assert_eq!(manager.draft_track_choices().len(), 1);
 
         // Clean up
         assert!(manager.delete_custom_track("test_custom_gp").unwrap());
-        assert_eq!(manager.main_track_choices().len(), 98);
+        assert_eq!(manager.main_track_choices().len(), 101);
         assert_eq!(manager.draft_track_choices().len(), 0);
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -2063,7 +2063,7 @@ mod tests {
 
         // Classic tracks
         let classic_tracks = manager.module_catalog_tracks("classic");
-        assert_eq!(classic_tracks.len(), 10);
+        assert_eq!(classic_tracks.len(), 13);
 
         // GT tracks
         let gt_tracks = manager.module_catalog_tracks("gt");
@@ -2106,7 +2106,7 @@ mod tests {
 
         // All tracks
         let all_tracks = manager.module_catalog_tracks("all");
-        assert_eq!(all_tracks.len(), 98);
+        assert_eq!(all_tracks.len(), 101);
 
         // Save a custom circuit assigned to classic and rally
         let mut custom_circuit = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
@@ -2116,12 +2116,12 @@ mod tests {
 
         // Classic category: 10 presets first, then 1 custom track
         let classic_after = manager.module_catalog_tracks("classic");
-        assert_eq!(classic_after.len(), 11);
+        assert_eq!(classic_after.len(), 14);
         for track in &classic_after[..10] {
             assert!(track.is_official_preset(), "Presets must appear first in catalog: {}", track.title());
         }
-        assert!(classic_after[10].is_user_custom(), "Custom circuit must appear after presets");
-        assert_eq!(classic_after[10].title(), "Custom Category Circuit");
+        assert!(classic_after[13].is_user_custom(), "Custom circuit must appear after presets");
+        assert_eq!(classic_after[13].title(), "Custom Category Circuit");
 
         // Rally category: 17 presets first, then 1 custom track
         let rally_after = manager.module_catalog_tracks("rally");
@@ -2169,7 +2169,7 @@ mod tests {
 
         // Cloned track must appear in drafts, and main count stays 98
         assert_eq!(manager.draft_track_choices().len(), 1);
-        assert_eq!(manager.main_track_choices().len(), 98);
+        assert_eq!(manager.main_track_choices().len(), 101);
         assert_eq!(manager.draft_track_choices()[0].title(), "Classic Grand Prix (clone)");
 
         // 2. Clone a module preset by slug

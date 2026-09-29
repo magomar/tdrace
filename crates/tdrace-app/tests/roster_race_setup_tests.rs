@@ -233,7 +233,7 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
 
     // Initial state: 10 classic presets, 0 custom
     let (preset_c, custom_c) = session.menu_track_filter_counts();
-    assert_eq!(preset_c, 10);
+    assert_eq!(preset_c, 13);
     assert_eq!(custom_c, 0);
 
     // 2. Add a custom circuit
@@ -244,13 +244,13 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
 
     // Counts after adding custom circuit
     let (preset_c, custom_c) = session.menu_track_filter_counts();
-    assert_eq!(preset_c, 10);
+    assert_eq!(preset_c, 13);
     assert_eq!(custom_c, 1);
 
     // Filter: Presets -> Only official presets
     session.menu_track_filter = TrackCatalogFilter::Presets;
     let filtered_presets = session.filtered_menu_tracks();
-    assert_eq!(filtered_presets.len(), 10);
+    assert_eq!(filtered_presets.len(), 13);
     assert!(filtered_presets.iter().all(|t| t.is_official_preset()));
     assert!(!filtered_presets.iter().any(|t| t.is_user_custom()));
 

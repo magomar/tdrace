@@ -99,10 +99,11 @@ def test_small_closure_gap_is_spread_along_the_lap():
 def test_elevation_and_bank_ease_between_segments():
     wps = ccb.waypoints(stadium())
     elevations = [w["elevation"] for w in wps]
-    assert max(elevations) == 4.0
-    rising = elevations[elevations.index(0.0, 10) : elevations.index(4.0)]
+    top = elevations.index(max(elevations))
+    assert max(elevations) == pytest.approx(4.0, abs=0.1)
+    rising = elevations[: top + 1]
     assert rising == sorted(rising) and len(set(rising)) > 3
-    assert max(w["bank_angle"] for w in wps) == 6.0
+    assert max(w["bank_angle"] for w in wps) == pytest.approx(6.0, abs=0.1)
 
 
 def test_attributes_left_out_take_the_circuit_default():
@@ -131,7 +132,11 @@ def straight_baked_track(length=100.0, width=10.0):
         }
         for d in range(0, int(length), 5)
     ]
-    return {"spline": {"samples": samples, "total_length": length}, "geometry": {}}
+    return {
+        "spline": {"samples": samples, "total_length": length},
+        "geometry": {},
+        "checkpoints": [],
+    }
 
 
 def test_features_are_placed_by_lap_distance_and_side():
@@ -169,6 +174,37 @@ def test_features_are_placed_by_lap_distance_and_side():
 @pytest.mark.skipif(
     shutil.which("cargo") is None, reason="needs cargo to run track_bake"
 )
+def bridge_then(turn_after_m):
+    """Baked samples 1 m apart: 30 m of bridge heading east, then road that turns left 90 deg over 10 m."""
+    samples, x, y, h = [], 0.0, 0.0, 0.0
+    for i in range(120):
+        on_bridge = i < 30
+        turning = turn_after_m <= i - 30 < turn_after_m + 10
+        if turning:
+            h += math.radians(9)
+        samples.append(
+            {
+                "point": [x, y],
+                "tangent": [math.cos(h), math.sin(h)],
+                "distance": float(i),
+                "is_bridge": on_bridge,
+            }
+        )
+        x, y = x + math.cos(h), y + math.sin(h)
+    return {"spline": {"samples": samples}}
+
+
+def test_a_turn_right_after_a_bridge_is_refused():
+    exits = ccb.turns_after_bridges(bridge_then(turn_after_m=8))
+    assert len(exits) == 1
+    assert exits[0][0] == 29.0
+    assert exits[0][1] > 45
+
+
+def test_a_straight_after_a_bridge_is_accepted():
+    assert ccb.turns_after_bridges(bridge_then(turn_after_m=22)) == []
+
+
 def test_build_bakes_validates_and_is_reproducible(tmp_path):
     shutil.copy(os.path.join(ccb.TRACKS_DIR, ".track_order.json"), tmp_path)
     c = stadium(

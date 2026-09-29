@@ -97,6 +97,11 @@ Lengths are targets. A built lap may differ by ±15 %.
 Every circuit: `kind: circuit`, `module_id: "classic"`, `modules: ["classic"]`,
 `category: "main"`, `is_inspired: false`, at least 10 grid slots, 0 validation errors.
 
+No turn right after a bridge: after the last bridge sample (`is_bridge`; the raised run is flagged
+while it is 1.2 m or more above the ground), the road runs straight for 20 m or more. Its heading
+changes by 5° or less there. A car that comes down from a bridge gets time to settle before it
+turns. The builder stops with an error when a circuit breaks this rule (`turns_after_bridges`).
+
 ### 3. Design rules per group
 
 **Karting — packed indoor circuits** (inspiration: multi-level indoor kart halls)
@@ -418,10 +423,15 @@ runs only on a developer machine and reads and writes files inside the repositor
   - [ ] **Then** there are 0 validation errors and every bot finishes both laps
 
 - **Scenario: Karting circuits are packed indoor circuits with bridges**
-  - [ ] **Given** the 3 karting circuits
-  - [ ] **When** their baked samples are measured
-  - [ ] **Then** they have 1, 2 and 3 bridges, each at least 4.0 m clear
-  - [ ] **And** each fits its box of section 3 with a density of at least 0.065 m per m²
+  - [x] **Given** the 3 karting circuits
+  - [x] **When** their baked samples are measured
+  - [x] **Then** they have 1, 2 and 3 bridges, each at least 4.0 m clear
+  - [x] **And** each fits its box of section 3 with a density of at least 0.065 m per m²
+
+- **Scenario: No turn right after a bridge**
+  - [ ] **Given** each new circuit with a bridge
+  - [ ] **When** a car comes off the end of a bridge
+  - [ ] **Then** the road runs straight for 20 m or more (heading change 5° or less)
 
 - **Scenario: Rallycross circuits have many jumps**
   - [ ] **Given** the 3 rallycross circuits
@@ -528,6 +538,9 @@ Stage 1:
 - `[ ]` `tracks/classic/*.json` -> 18 new circuits; 9 old files deleted.
 - `[ ]` `tracks/extreme_offroad/dirt_figure_eight.json` -> Moved from `tracks/classic/`, Extreme Off-Road only.
 - `[ ]` `tracks/.track_order.json`, `tracks/.aliases.json` -> New Classic order, old ids removed from Kart and Rallycross, aliases.
+- `[x]` `crates/arcade-race-core/src/track/presets.rs` -> Wall trimming keeps untrimmed walls shorter than
+  0.10 m. Before, it dropped the whole inner wall of tight turns on circuits with dense samples (the kart
+  hairpin tips were open); regression test in `crates/arcade-race-core/src/track/mod.rs`.
 - `[ ]` `crates/arcade-race-core/src/car_category.rs` -> `CarCategory::Autocross`.
 - `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> `Track.car_model_id`.
 - `[ ]` `crates/tdrace-app/src/ui/menu.rs`, `crates/tdrace-app/src/catalog/mod.rs`, `crates/tdrace-app/src/game/mod.rs` -> `CarChoice::CrossCar`, the 3 cars in `CLASSIC_ARCADE_CARS`, car choice by `car_model_id`.
