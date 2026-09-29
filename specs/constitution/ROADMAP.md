@@ -23,7 +23,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Karting Career Mode](../004_karting_career_mode.md)**: 5-tier grassroots karting, shifter, racing mower, and superkart career progression.
 - `[ ]` **[FIA Autocross Championship and Vehicle Roster](../050_fia_autocross_championship_and_vehicle_roster.md)**: Dedicated FIA Autocross discipline, 5 tiers (Cross Car Junior, Cross Car Senior, Buggy1600, TouringAutocross, SuperBuggy), 15 authentic vehicles (3 per tier), 17 dedicated European dirt circuits, pure off-road sprint racing format with no joker lap.
 - `[ ]` **[Rallycross 6-Tier Career Progression and Expanded Circuit Roster](../051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md)**: Expands the Rallycross career ladder to 6 modern tiers (Junior FWD, Supercar Lites, Euro RX 400 BHP, World RX 600 BHP ICE, RX1e Electric, and Nitrocross Group E), relocates historic Group B to a standalone Heritage Cup, and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
-- `[x]` **[Karting 6-Tier Career Progression and Expanded 20-Circuit Roster](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault (Spec 054), and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
+- `[x]` **[Karting 6-Tier Career Progression and Expanded 20-Circuit Roster](../052_karting_6tier_career_progression_and_standalone_garden_gp.md)**: Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault (Spec 056), and expands the circuit roster to 20 tracks (5 starter + 3 unlocked per tier) with verified OSM data.
 
 ### Phase 2: Vehicle Roster Expansion, AI Driving Styles & Audio (Priority: High)
 - `[x]` **[Real-World Vehicle Rosters & Interactive Garage](../009_real_world_car_models_and_garage.md)**: Migration to authentic motorsport models, Balance of Performance (BoP) calibration, dual-view 2D rendering, and interactive showroom screen.
@@ -46,6 +46,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 - `[x]` **[Authentic OpenStreetMap References and Circuit Provenance](../021_authentic_openstreetmap_references_and_circuit_provenance.md)**: Restore authentic OpenStreetMap and Wikipedia provenance URLs for 71 real circuits across GT, Kart, Rally, NASCAR, and Extreme Off-Road, ensuring non-null propagation to presets, tracks/*.json, and circuits.json.
 - `[x]` **[JSON-Only Official Circuit Catalog and Embedded Track Data](../042_jsononly_official_circuit_catalog_and_embedded_track_data.md)**: Makes `tracks/<module>/<slug>.json` the single source of truth for official circuits, embeds a compressed copy in the binary, removes Rust-coded circuit presets, and keeps custom circuits in the user folder only.
 - `[ ]` **[Terrain Surface Bifurcation, Vehicle Terrain Interaction, and Category-Tier Gating](../025_terrain_surface_bifurcation_and_category_tier_gating.md)**: Bifurcates sand into packed dune ribbons vs deep arrestor traps, defines vehicle-terrain interaction coefficients (sand flotation, mud paddles, ice studs), and establishes simulation-backed category and tier gating.
+- `[ ]` **[Classic Circuits Revamp](../055_classic_circuits_revamp.md)**: Replaces the 10 flat Classic circuits with 18 fictional ones (3 indoor karting with bridges, 3 rallycross with jumps, 3 autocross, 3 GT, 3 stock car, 3 all-terrain) and adds 3 Autocross fantasy cars, built and play-tested in Stage 1, then decorated with stands, trees, rocks, water and buildings in Stage 2.
 
 ### Phase 5: Tournament Engine, Career Progression & Player Dossier (Priority: High)
 - `[x]` **[Modality Selector Hub Visual Iconography & Emblems](../015_modality_selector_hub_icons_and_visual_emblems.md)**: Custom vector iconography and high-DPI emblems for all 12 race modalities across Single Player, Multiplayer, and Options.
@@ -76,7 +77,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 8: Reusable Racing Platform for New Games (Priority: High)
 Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
 - `[ ]` **[Reusable Racing Platform Layers & Determinism Safety Net](../049_reusable_racing_platform_layers.md)**: Target layering, phase roadmap, golden state hashes, and tracks-free performance benches.
-- `[ ]` **`Body2D` Trait**: Collision, LIDAR, progress and surface sampling work for any rigid body, not only `wheelbase::Car`.
+- `[x]` **[`Body2D` Trait](../054_body2d_trait_for_vehiclegeneric_collision_and_progress.md)**: Collision, LIDAR, progress tracking and pit checks work for any rigid body, not only `wheelbase::Car`.
 - `[ ]` **`race-kit` Headless Race World**: One step order, per-participant finish with real times, wrecks and DNF, and race events instead of side effects.
 - `[ ]` **`race-ui` Rendering Primitives**: Course renderers with a mesh cache, multi-part vehicle sprites, chase camera, and HUD widgets outside `tdrace-app`.
 - `[ ]` **Publish-Ready Shared Crates**: Tagged crates that a separate repo can build without the `tracks/` submodule.
@@ -94,7 +95,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 Living list of security audits, performance profiling targets, or general workspace cleanup routines:
 - **Performance**: Simulation throughput benchmarks ($\ge 4.0\text{M steps/sec}$) and collision checks ($\ge 22.0\text{M checks/sec}$).
 - **Hygiene**: Spec-Driven Development alignment via `keel doctor` and `keel validate`.
-- `[x]` **[Vault Module for Archived and Deprecated Content](../054_vault_module_for_archived_and_deprecated_content.md)**: Structured cold-storage repository for retired circuits, novelty vehicles, prototype rulesets, and deprecated mechanics, isolated from production gameplay and accessible via Dev Mode and Track Studio.
+- `[x]` **[Vault Module for Archived and Deprecated Content](../056_vault_module_for_archived_and_deprecated_content.md)**: Structured cold-storage repository for retired circuits, novelty vehicles, prototype rulesets, and deprecated mechanics, isolated from production gameplay and accessible via Dev Mode and Track Studio.
 
 ---
 

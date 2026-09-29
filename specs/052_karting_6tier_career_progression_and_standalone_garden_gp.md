@@ -2,7 +2,7 @@
 type: Feature Spec
 template: feature
 title: "Karting 6-Tier Career Progression and Expanded 20-Circuit Roster"
-description: "Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault module (Spec 054), and expands the circuit roster from 17 to 20 tracks (5 starter + 3 unlocked per tier) using verified OpenStreetMap data."
+description: "Expands the Karting career ladder to 6 authentic tiers (Cadet 60cc, OK-Junior 125cc, Senior OK 125cc, KZ2 Shifter 125cc, Superkart Div 2 250cc Single, and Superkart Div 1 250cc Twin), transfers novelty racing lawnmowers to The Vault module (Spec 056), and expands the circuit roster from 17 to 20 tracks (5 starter + 3 unlocked per tier) using verified OpenStreetMap data."
 status: implemented
 receipt: "docs/receipts/spec-052-receipt.md"
 created: 2026-09-29
@@ -12,13 +12,13 @@ verified: { by: "human:mario", at: "2026-09-29T11:40:20Z" }
 
 # Feature Spec 052: Karting 6-Tier Career Progression and Expanded 20-Circuit Roster 🏎️🏆
 
-This specification re-architects the **Karting World Cup Career Mode** into a comprehensive, authentic **6-Tier modern progression ladder**, decommissions novelty racing lawnmowers from the Karting module by transferring them to **The Vault** ([Spec 054](054_vault_module_for_archived_and_deprecated_content.md)), and expands the official circuit roster from 17 to **20 European circuits** using surveyed OpenStreetMap (OSM) data. This guarantees that **Tier 1 provides 5 starter circuits, and every subsequent tier unlocks exactly 3 new circuits** ($5 + 3 \times 5 = 20$).
+This specification re-architects the **Karting World Cup Career Mode** into a comprehensive, authentic **6-Tier modern progression ladder**, decommissions novelty racing lawnmowers from the Karting module by transferring them to **The Vault** ([Spec 056](056_vault_module_for_archived_and_deprecated_content.md)), and expands the official circuit roster from 17 to **20 European circuits** using surveyed OpenStreetMap (OSM) data. This guarantees that **Tier 1 provides 5 starter circuits, and every subsequent tier unlocks exactly 3 new circuits** ($5 + 3 \times 5 = 20$).
 
 ---
 
 ## 🎯 Objectives & Design Philosophy
 
-1. **Purge Novelty Mowers to The Vault**: Racing lawnmowers (`kart_honda_mean_mower`, `kart_john_deere_racing_mower`, `kart_viking_t6_tractor`) are decommissioned from the Karting module entirely and transferred to **The Vault** (`"vault"`, governed by [Spec 054](054_vault_module_for_archived_and_deprecated_content.md)). This purges tonal and physical whiplash from the career mode, removes all mower series from `series/kart/`, and preserves the vehicles in cold storage for Dev Mode and Track Studio testing.
+1. **Purge Novelty Mowers to The Vault**: Racing lawnmowers (`kart_honda_mean_mower`, `kart_john_deere_racing_mower`, `kart_viking_t6_tractor`) are decommissioned from the Karting module entirely and transferred to **The Vault** (`"vault"`, governed by [Spec 056](056_vault_module_for_archived_and_deprecated_content.md)). This purges tonal and physical whiplash from the career mode, removes all mower series from `series/kart/`, and preserves the vehicles in cold storage for Dev Mode and Track Studio testing.
 2. **Smooth, Continuous Power Progression**: Eliminates the previous $3\times$ jump from Cadet ($10\,\text{BHP}$) to Senior OK ($30\,\text{BHP}$) by introducing **OK-Junior 125cc ($22\,\text{BHP}$)**, and bridges sprint karts to aerodynamic road-racing monsters via **Superkart Division 2 Mono ($68\,\text{BHP}$)**. Power deltas between tiers never exceed $18\,\text{BHP}$ until the twin-cylinder finale.
 3. **Rigorous $5 + 3 \times 5 = 20$ Circuit Unlock Symmetry**: Expands the circuit catalog from 17 to **20 circuits** by introducing 3 new CIK-FIA Grade 1 circuits with verified OSM data:
    * **Circuit International d'Aunay-les-Bois** (`aunay_kart`, France)
@@ -44,7 +44,7 @@ flowchart LR
     T4 --> T5["Tier 5: Superkart Div 2 Mono\n(68 BHP • 210 km/h • Aero Feeder)"]
     T5 --> T6["Tier 6: Superkart Div 1 Twin GP\n(100 BHP • 246 km/h • Ballistic Aero)"]
 
-    MOWERS["Decommissioned Racing Mowers\n(Honda, John Deere, Viking)"] -.->|Transferred via Spec 054| VAULT["The Vault Module ('vault')\n(Cold Storage / Dev Mode)"]
+    MOWERS["Decommissioned Racing Mowers\n(Honda, John Deere, Viking)"] -.->|Transferred via Spec 056| VAULT["The Vault Module ('vault')\n(Cold Storage / Dev Mode)"]
 ```
 
 ### Complete Vehicle Roster Breakdown (18 Authentic Karts)
@@ -60,7 +60,7 @@ flowchart LR
 
 ---
 
-### Decommissioning Lawnmowers to The Vault (Spec 054)
+### Decommissioning Lawnmowers to The Vault (Spec 056)
 
 The 3 racing lawnmower models are removed from `catalog/mod.rs` under `"kart"` and transferred to `VaultGameModule::vehicles()`:
 * `vault_honda_mean_mower` (ex-`kart_honda_mean_mower`): Honda Mean Mower V2 Tuned.
@@ -208,7 +208,7 @@ let max_tier = if car.module_id == "extreme_offroad" {
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
 1. **Strict Motorsport Isolation**: Lawnmower vehicles cannot be selected, chosen, or favorited by AI opponents in `"kart"` career mode or quick races.
-2. **The Vault Dev-Mode Gate**: Access to lawnmowers is strictly governed by `specs/054_vault_module_for_archived_and_deprecated_content.md`, requiring Developer Mode (`TDRACE_DEV=1`) or Track Studio.
+2. **The Vault Dev-Mode Gate**: Access to lawnmowers is strictly governed by `specs/056_vault_module_for_archived_and_deprecated_content.md`, requiring Developer Mode (`TDRACE_DEV=1`) or Track Studio.
 3. **Deterministic Career Progression**: Progression requirements are evaluated strictly against SQLite career XP milestones; corrupted or altered tiers clamp safely to $1..=6$.
 
 ---
