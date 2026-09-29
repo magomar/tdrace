@@ -59,6 +59,7 @@ pub fn render_garage_screen(
     is_dev_mode: bool,
     unlocked_tier: u32,
     career_progress: Option<&ModuleCareerProgress>,
+    available_credits: u64,
     module_locked: bool,
 ) {
     let sw = screen_width();
@@ -125,8 +126,8 @@ pub fn render_garage_screen(
         "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
     } else if let Some(cp) = career_progress {
         format!(
-            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]  •  SPENDABLE XP: {} XP",
-            mod_title, module_keys, tier_label, category_name.to_uppercase(), cp.xp
+            "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]  •  DISCIPLINE XP: {} XP  •  WALLET: ${} CR",
+            mod_title, module_keys, tier_label, category_name.to_uppercase(), cp.xp, available_credits
         )
     } else {
         format!(
@@ -343,9 +344,9 @@ pub fn render_garage_screen(
             if is_unlocked {
                 fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
             } else {
-                let cost = ModuleCareerProgress::car_cost(model.tier);
-                let tag = format!("{} XP", cost);
-                let col = if cp.xp >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
+                let cost = ModuleCareerProgress::car_credit_cost(model.tier);
+                let tag = format!("${} CR", cost);
+                let col = if available_credits >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
                 fonts.draw_ui_bold(&tag, cx + cw - scaler.s(55.0), cy + scaler.s(15.0), scaler.font_s(8.5), col);
             }
         }
@@ -476,8 +477,8 @@ pub fn render_garage_screen(
             .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
             .unwrap_or(is_tier_unlocked);
 
-    let cost = ModuleCareerProgress::car_cost(active_car_tier);
-    let can_afford = career_progress.map_or(true, |cp| cp.xp >= cost);
+    let cost = ModuleCareerProgress::car_credit_cost(active_car_tier);
+    let can_afford = available_credits >= cost;
     let tier_eligible = is_dev_mode
         || is_car_heritage
         || career_progress
@@ -547,7 +548,7 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
 
-        let buy_title = format!("🛒 BUY VEHICLE: {} XP  [B / ENTER]", cost);
+        let buy_title = format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]", cost);
         fonts.draw_ui_bold_centered(
             &buy_title,
             btn_x + btn_w * 0.5,
@@ -555,8 +556,12 @@ pub fn render_garage_screen(
             scaler.font_s(12.5),
             Palette::WHITE,
         );
-        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
-        let buy_sub = format!("Spendable Balance: {} XP  →  {} XP remaining", cur_xp, cur_xp.saturating_sub(cost));
+        let buy_sub = format!(
+            "Wallet Balance: ${} Cr  →  ${} Cr remaining  (Discipline XP: {} XP)",
+            available_credits,
+            available_credits.saturating_sub(cost),
+            career_progress.map_or(0, |cp| cp.xp)
+        );
         fonts.draw_ui_regular_centered(
             &buy_sub,
             btn_x + btn_w * 0.5,
@@ -568,8 +573,7 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.28, 0.16, 0.08, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::NEON_GOLD);
 
-        let cur_xp = career_progress.map_or(0, |cp| cp.xp);
-        let lock_title = format!("🛒 VEHICLE PRICE: {} XP (WALLET: {} XP)", cost, cur_xp);
+        let lock_title = format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR)", cost, available_credits);
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
@@ -577,8 +581,8 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::NEON_GOLD,
         );
-        let need_xp = cost.saturating_sub(cur_xp);
-        let lock_sub = format!("Earn {} more XP in races to purchase this vehicle", need_xp);
+        let need_cr = cost.saturating_sub(available_credits);
+        let lock_sub = format!("Earn ${} more Credits in prize purses to purchase this vehicle", need_cr);
         fonts.draw_ui_regular_centered(
             &lock_sub,
             btn_x + btn_w * 0.5,

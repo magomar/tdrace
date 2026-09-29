@@ -732,7 +732,7 @@ fn test_career_roster_evolution_end_to_end_multitier_progression() {
     // Simulate advancing through all tiers: 1 -> 2 -> 3 -> 4 -> 5
     for target_tier in 2..=5 {
         progress.trophies_gold += 1;
-        progress.add_xp(5000);
+        progress.xp = ModuleCareerProgress::tier_license_xp(target_tier);
         let (new_lvl, report) = progress.advance_tier_with_seed(1000 + target_tier as u64).expect("advance tier");
         assert_eq!(new_lvl, target_tier);
         assert_eq!(progress.career_rivals.len(), 10);

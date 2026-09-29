@@ -32,8 +32,8 @@ const SEED: u64 = 0x5EED_0490;
 fn recorded() -> Option<u64> {
     let mac_arm = cfg!(all(target_os = "macos", target_arch = "aarch64"));
     match (mac_arm, cfg!(debug_assertions)) {
-        (true, true) => Some(0x6fe658ad18a9b7b4),
-        (true, false) => Some(0xd2e0d32f3e9af1ec),
+        (true, true) => Some(0xc5f493823517ee07),
+        (true, false) => Some(0xd1a2dad203a5500d),
         _ => None,
     }
 }
@@ -70,12 +70,12 @@ fn run() -> (u64, f32) {
     session.car_choice = CarChoice::SportsCar;
     session.num_bots = 5;
     session.init_race();
-    assert_eq!(session.cars.len(), 6);
+    assert_eq!(session.world.vehicles.len(), 6);
 
     let mut hash: u64 = 0xcbf29ce484222325;
     for step in 0..STEPS {
         session.physics_step(RaceSession::FIXED_DT);
-        for (car, tracker) in session.cars.iter().zip(&session.trackers) {
+        for (car, tracker) in session.world.vehicles.iter().zip(&session.world.trackers) {
             let s = &car.state;
             for v in [
                 s.position.x,
@@ -94,7 +94,7 @@ fn run() -> (u64, f32) {
             hash = fnv(hash, tracker.next_checkpoint_idx as u64);
         }
     }
-    let furthest = session.trackers[1..].iter().map(|t| t.progress_distance).fold(0.0f32, f32::max);
+    let furthest = session.world.trackers[1..].iter().map(|t| t.progress_distance).fold(0.0f32, f32::max);
     (hash, furthest)
 }
 

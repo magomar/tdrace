@@ -12,8 +12,8 @@ fn test_all_six_track_choices_selectable_and_initializable() {
         session.num_bots = 3;
         session.init_race();
 
-        assert_eq!(session.cars.len(), 4);
-        assert_eq!(session.trackers.len(), 4);
+        assert_eq!(session.world.vehicles.len(), 4);
+        assert_eq!(session.world.trackers.len(), 4);
         assert!(!session.track.name.is_empty());
         assert!(!session.track.checkpoints.is_empty());
         assert_eq!(session.track_choice_id(), choice.track_id());

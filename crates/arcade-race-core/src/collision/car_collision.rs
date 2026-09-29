@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::sat::{collide_obb_obb, OrientedBox};
-use wheelbase::Car;
+use crate::body::Body2D;
 
 /// Telemetry record of an elastic/inelastic collision between two racing vehicles.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -17,17 +17,17 @@ pub struct CarCarCollisionEvent {
 }
 
 /// Resolves pairwise rigid body collision between two cars.
-pub fn resolve_car_car_collision(
-    car_a: &mut Car,
-    car_b: &mut Car,
+pub fn resolve_car_car_collision<B: Body2D>(
+    car_a: &mut B,
+    car_b: &mut B,
     restitution: f32,
     friction: f32,
 ) -> Option<CarCarCollisionEvent> {
     if (car_a.total_elevation() - car_b.total_elevation()).abs() > 1.2 {
         return None;
     }
-    let obb_a = OrientedBox::from_car(car_a);
-    let obb_b = OrientedBox::from_car(car_b);
+    let obb_a = OrientedBox::from_body(car_a);
+    let obb_b = OrientedBox::from_body(car_b);
 
     let manifold = collide_obb_obb(&obb_a, &obb_b)?;
     if !manifold.colliding || manifold.penetration <= 1e-5 {
@@ -39,11 +39,11 @@ pub fn resolve_car_car_collision(
         let sum: Vec2 = manifold.contact_points.iter().copied().sum();
         sum / (manifold.contact_points.len() as f32)
     } else {
-        (car_a.state.position + car_b.state.position) * 0.5
+        (car_a.position() + car_b.position()) * 0.5
     };
 
-    let mass_a = car_a.config.mass;
-    let mass_b = car_b.config.mass;
+    let mass_a = car_a.mass();
+    let mass_b = car_b.mass();
     let inv_m_a = 1.0 / mass_a;
     let inv_m_b = 1.0 / mass_b;
     let total_inv_m = inv_m_a + inv_m_b;
@@ -53,18 +53,18 @@ pub fn resolve_car_car_collision(
     let weight_b = inv_m_b / total_inv_m;
     let separation = normal * (manifold.penetration + 0.002);
 
-    car_a.state.position -= separation * weight_a;
-    car_b.state.position += separation * weight_b;
+    car_a.translate(-(separation * weight_a));
+    car_b.translate(separation * weight_b);
 
     // 2. Rigid Body Impulse
-    let r_a = contact_pt - car_a.state.position;
-    let r_b = contact_pt - car_b.state.position;
+    let r_a = contact_pt - car_a.position();
+    let r_b = contact_pt - car_b.position();
 
-    let v_rot_a = Vec2::new(-car_a.state.angular_velocity * r_a.y, car_a.state.angular_velocity * r_a.x);
-    let v_rot_b = Vec2::new(-car_b.state.angular_velocity * r_b.y, car_b.state.angular_velocity * r_b.x);
+    let v_rot_a = Vec2::new(-car_a.angular_velocity() * r_a.y, car_a.angular_velocity() * r_a.x);
+    let v_rot_b = Vec2::new(-car_b.angular_velocity() * r_b.y, car_b.angular_velocity() * r_b.x);
 
-    let v_ca = car_a.state.velocity + v_rot_a;
-    let v_cb = car_b.state.velocity + v_rot_b;
+    let v_ca = car_a.velocity() + v_rot_a;
+    let v_cb = car_b.velocity() + v_rot_b;
     let v_rel = v_cb - v_ca;
 
     let v_n = v_rel.dot(normal);
@@ -82,8 +82,8 @@ pub fn resolve_car_car_collision(
         });
     }
 
-    let inertia_a = car_a.config.inertia;
-    let inertia_b = car_b.config.inertia;
+    let inertia_a = car_a.inertia();
+    let inertia_b = car_b.inertia();
 
     let r_a_cross_n = r_a.x * normal.y - r_a.y * normal.x;
     let r_b_cross_n = r_b.x * normal.y - r_b.y * normal.x;
@@ -93,15 +93,15 @@ pub fn resolve_car_car_collision(
 
     // Apply normal impulse
     let impulse_n = normal * j_n;
-    car_a.state.velocity -= impulse_n * inv_m_a;
-    car_a.state.angular_velocity -= (r_a.x * impulse_n.y - r_a.y * impulse_n.x) / inertia_a;
+    car_a.add_velocity(-(impulse_n * inv_m_a));
+    car_a.add_angular_velocity(-((r_a.x * impulse_n.y - r_a.y * impulse_n.x) / inertia_a));
 
-    car_b.state.velocity += impulse_n * inv_m_b;
-    car_b.state.angular_velocity += (r_b.x * impulse_n.y - r_b.y * impulse_n.x) / inertia_b;
+    car_b.add_velocity(impulse_n * inv_m_b);
+    car_b.add_angular_velocity((r_b.x * impulse_n.y - r_b.y * impulse_n.x) / inertia_b);
 
     // 3. Tangential friction impulse
-    let v_ca_after = car_a.state.velocity + Vec2::new(-car_a.state.angular_velocity * r_a.y, car_a.state.angular_velocity * r_a.x);
-    let v_cb_after = car_b.state.velocity + Vec2::new(-car_b.state.angular_velocity * r_b.y, car_b.state.angular_velocity * r_b.x);
+    let v_ca_after = car_a.velocity() + Vec2::new(-car_a.angular_velocity() * r_a.y, car_a.angular_velocity() * r_a.x);
+    let v_cb_after = car_b.velocity() + Vec2::new(-car_b.angular_velocity() * r_b.y, car_b.angular_velocity() * r_b.x);
     let v_rel_after = v_cb_after - v_ca_after;
 
     let v_t_vec = v_rel_after - normal * v_rel_after.dot(normal);
@@ -118,11 +118,11 @@ pub fn resolve_car_car_collision(
         let j_t = j_t_desired.clamp(-max_j_t, max_j_t);
 
         let impulse_t = tangent * j_t;
-        car_a.state.velocity -= impulse_t * inv_m_a;
-        car_a.state.angular_velocity -= (r_a.x * impulse_t.y - r_a.y * impulse_t.x) / inertia_a;
+        car_a.add_velocity(-(impulse_t * inv_m_a));
+        car_a.add_angular_velocity(-((r_a.x * impulse_t.y - r_a.y * impulse_t.x) / inertia_a));
 
-        car_b.state.velocity += impulse_t * inv_m_b;
-        car_b.state.angular_velocity += (r_b.x * impulse_t.y - r_b.y * impulse_t.x) / inertia_b;
+        car_b.add_velocity(impulse_t * inv_m_b);
+        car_b.add_angular_velocity((r_b.x * impulse_t.y - r_b.y * impulse_t.x) / inertia_b);
     }
 
     Some(CarCarCollisionEvent {
@@ -138,19 +138,19 @@ pub fn resolve_car_car_collision(
 
 /// Iteratively resolves all pairwise collisions across a group of racing cars.
 /// Handles multi-car pileups and tight pack racing without tunneling.
-pub fn resolve_multi_car_collisions(
-    cars: &mut [Car],
+pub fn resolve_multi_car_collisions<B: Body2D>(
+    cars: &mut [B],
     restitution: f32,
     friction: f32,
     solver_iterations: usize,
 ) -> Vec<CarCarCollisionEvent> {
     let n = cars.len();
-    if n < 2 {
+    if n < 2 || solver_iterations == 0 {
         return Vec::new();
     }
 
     let mut events = Vec::new();
-    let iters = solver_iterations.max(1);
+    let iters = solver_iterations;
 
     for iter in 0..iters {
         for i in 0..n {
@@ -177,7 +177,7 @@ pub fn resolve_multi_car_collisions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wheelbase::CarConfig;
+    use wheelbase::{Car, CarConfig};
 
     #[test]
     fn test_head_on_car_car_elastic_collision() {

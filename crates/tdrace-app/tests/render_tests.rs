@@ -290,7 +290,7 @@ fn test_porsche_gt3r_lateral_sprite_asset_presence() {
 fn test_all_80_motorsport_cars_catalog_integrity() {
     use tdrace_app::catalog::ALL_REAL_CARS;
 
-    assert_eq!(ALL_REAL_CARS.len(), 92, "Catalog must contain exactly 92 authentic motorsport vehicles");
+    assert_eq!(ALL_REAL_CARS.len(), 95, "Catalog must contain exactly 95 authentic motorsport vehicles");
 
     let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart"];
     for m in modules {
@@ -301,6 +301,8 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
             assert_eq!(count, 21, "Extreme Off-Road must contain 15 tiered + 6 unranked vehicles");
         } else if m == "rally" {
             assert_eq!(count, 21, "Rallycross must contain 18 ranked (3 x 6 tiers) + 3 heritage vehicles");
+        } else if m == "kart" {
+            assert_eq!(count, 18, "Kart module must contain 18 authentic vehicles (3 per tier x 6 tiers)");
         } else {
             assert_eq!(count, 15, "Module {} must contain 15 vehicles (3 per tier)", m);
         }
@@ -312,7 +314,13 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
         assert!(!car.name.is_empty(), "Car name cannot be empty");
-        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" { 7 } else { 5 };
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
+            7
+        } else if car.module_id == "kart" {
+            6
+        } else {
+            5
+        };
         assert!(car.tier >= 1 && car.tier <= max_tier, "Tier must be between 1 and {}", max_tier);
         assert!(car.bhp > 0, "BHP must be positive");
         assert!(car.weight_kg > 0, "Weight must be positive");
@@ -576,14 +584,14 @@ fn test_classic_mode_bot_color_schemes_distinct_from_player_sprite() {
     session.num_bots = 4;
     session.rebuild_roster_participants();
 
-    assert!(session.cars.len() >= 4, "Roster must include player and bots");
+    assert!(session.world.vehicles.len() >= 4, "Roster must include player and bots");
 
     let player_model_id = session.car_model_ids[0].expect("Player must have classic model id");
     let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
 
     // All bots must NOT match factory livery (so they trigger mask-based tinting)
     // and must have primary colors visually distinct from the player model's factory primary color.
-    for i in 1..session.cars.len() {
+    for i in 1..session.world.vehicles.len() {
         let bot_scheme = session.color_schemes[i];
         let dr = (bot_scheme.primary.r - player_model.primary_color.r).abs();
         let dg = (bot_scheme.primary.g - player_model.primary_color.g).abs();
@@ -620,7 +628,7 @@ fn test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory(
         session.start_gt_career_tier(tier);
 
         assert_eq!(session.game_mode, GameMode::Career);
-        assert!(session.cars.len() >= 4, "Roster must include player and bots");
+        assert!(session.world.vehicles.len() >= 4, "Roster must include player and bots");
 
         let player_model_id = session.car_model_ids[0].expect("Player must have model id in GT career");
         let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
@@ -638,7 +646,7 @@ fn test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory(
 
         // All bots must NOT match their vehicle model factory livery (must use masked colors)
         // and must have primary colors visually distinct from the player model's factory primary color.
-        for i in 1..session.cars.len() {
+        for i in 1..session.world.vehicles.len() {
             let bot_scheme = session.color_schemes[i];
             let bot_model_id = session.car_model_ids[i].expect("Bot must have model id in GT career");
             let bot_model = find_model_by_id(bot_model_id).expect("Bot model must exist in catalog");

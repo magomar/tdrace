@@ -17,7 +17,7 @@ This guide outlines setup requirements, development workflows, and cross-platfor
 
 TdRace uses relative filesystem symlinks (softlinks) between the canonical documentation/asset catalogs and the static web documentation portals:
 * `portals/option-a-starlight/src/content/docs` $\to$ `docs/`
-* `portals/option-b-showroom/public/textures` $\to$ `assets/textures/`
+* `portals/showroom/public/textures` $\to$ `assets/textures/`
 
 This maintains **single-source-of-truth** integrity under Google OKF v0.2 with zero duplicate files and zero build overhead.
 

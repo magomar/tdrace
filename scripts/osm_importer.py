@@ -1044,6 +1044,36 @@ KART_TRACKS = {
         "num_waypoints": 80,  # ~18 m spacing keeps the lap within ~3 m of the OSM line
         "elevation_fn": None,
     },
+    "aunay_kart": {
+        "name": "Circuit International d'Aunay-les-Bois",
+        "description": "Prestigious CIK-FIA Grade 1 karting circuit in Normandy featuring downhill Parabolique and fast technical chicanes.",
+        "ways": [121084004],
+        "fia_length": 1215.0,
+        "default_width": 8.5,
+        "straight_width": 9.2,
+        "num_waypoints": 30,
+        "elevation_fn": None,
+    },
+    "muelsen_kart": {
+        "name": "Motorsport Arena Mülsen (Arena E)",
+        "description": "Ultra-modern German CIK-FIA Grade 1 arena with high-speed drafting straights, banked esses, and challenging hairpins.",
+        "ways": [814876031],
+        "fia_length": 1315.0,
+        "default_width": 8.5,
+        "straight_width": 9.5,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
+    "adria_kart": {
+        "name": "Adria Karting Raceway",
+        "description": "State-of-the-art night-illuminated Italian international kart circuit with elevated paddock bridge and sweeping switchbacks.",
+        "ways": [798432703],
+        "fia_length": 1302.0,
+        "default_width": 8.5,
+        "straight_width": 9.5,
+        "num_waypoints": 32,
+        "elevation_fn": None,
+    },
 }
 
 

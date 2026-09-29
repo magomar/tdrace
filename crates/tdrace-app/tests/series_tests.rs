@@ -426,10 +426,11 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             "kart",
             vec![
                 (1, "kart_world_cup", 5, "kart_crg_hero_60"),
-                (2, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
-                (3, "kart_continental_trophy", 9, "kart_birel_art_kz2"),
-                (4, "kart_european_championship", 10, "kart_honda_mean_mower"),
-                (5, "kart_superkart_world_series", 12, "kart_anderson_cs250"),
+                (2, "kart_junior_trophy", 6, "kart_tony_kart_rookie_okj"),
+                (3, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
+                (4, "kart_continental_trophy", 8, "kart_birel_art_kz2"),
+                (5, "kart_superkart_div2_challenge", 9, "kart_anderson_maverick_mono"),
+                (6, "kart_superkart_world_series", 10, "kart_anderson_cs250"),
             ],
         ),
         (
@@ -451,7 +452,11 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             .filter(|c| c.series.module_id == module_id)
             .collect();
 
-        let expected_count = if module_id == "rally" { 7 } else { 5 };
+        let expected_count = if module_id == "rally" {
+            expected_tiers.len() + 1
+        } else {
+            expected_tiers.len()
+        };
         assert_eq!(
             module_champs.len(),
             expected_count,
@@ -631,7 +636,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
 
     // 2. Init race for Round 1
     session.init_race();
-    assert_eq!(session.cars.len(), session.max_grid_participants());
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants());
     assert_eq!(session.opponent_drivers.len(), session.max_grid_participants() - 1);
     for opp in &session.opponent_drivers {
         assert!(
@@ -646,7 +651,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     // Car 2 (Mattias Storm) finishes 2nd
     // Car 0 (Player) finishes 3rd
     // Cars 3..7 finish 4th..8th
-    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+    for (idx, tracker) in session.world.trackers.iter_mut().enumerate() {
         tracker.current_lap = session.total_laps + 1;
         tracker.normalized_progress = match idx {
             1 => 0.99, // 1st
@@ -661,7 +666,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
         };
         tracker.best_lap_time = Some(40.0 + idx as f32);
     }
-    session.trackers[1].best_lap_time = Some(38.5);
+    session.world.trackers[1].best_lap_time = Some(38.5);
 
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -712,7 +717,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     }
 
     // 6. Simulate Round 2 finish: Player wins (1st with fastest lap), Car 1 finishes 2nd
-    for (idx, tracker) in session.trackers.iter_mut().enumerate() {
+    for (idx, tracker) in session.world.trackers.iter_mut().enumerate() {
         tracker.current_lap = session.total_laps + 1;
         tracker.normalized_progress = match idx {
             0 => 0.99, // 1st (Player)
@@ -727,7 +732,7 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
         };
         tracker.best_lap_time = Some(42.0);
     }
-    session.trackers[0].best_lap_time = Some(39.0);
+    session.world.trackers[0].best_lap_time = Some(39.0);
 
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -795,7 +800,7 @@ fn test_reset_championship_clears_session_and_database_history() {
     assert!(session.championship_session.is_some());
 
     // Complete round 1
-    session.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].current_lap = session.total_laps + 1;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
 
@@ -960,14 +965,14 @@ fn test_nascar_career_tiers_1_to_5_launch_eligibility() {
 }
 
 #[test]
-fn test_kart_career_tiers_1_to_5_launch_eligibility() {
+fn test_kart_career_tiers_1_to_6_launch_eligibility() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
     session.hof_db = Some(mem_db);
     session.refresh_profiles_and_stats();
 
-    for tier in 1..=5 {
+    for tier in 1..=6 {
         session.start_kart_career_tier(tier);
         assert_eq!(session.state, GameState::StartingGrid);
         let req_tier = session.current_race_required_tier();
@@ -990,7 +995,7 @@ fn test_kart_career_tiers_1_to_5_launch_eligibility() {
 }
 
 #[test]
-fn test_all_27_preset_championships_launch_with_eligible_and_unlocked_cars() {
+fn test_all_28_preset_championships_launch_with_eligible_and_unlocked_cars() {
     let mut session = RaceSession::new();
     let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
     let _ = mem_db.seed_default_profile_if_empty().unwrap();
@@ -999,7 +1004,7 @@ fn test_all_27_preset_championships_launch_with_eligible_and_unlocked_cars() {
 
     let mgr = ChampionshipManager::new();
     let presets = mgr.all_sorted();
-    assert_eq!(presets.len(), 27, "There should be 27 presets (4 modules x 5 tiers + 1 rally module x 6 tiers + 1 heritage cup)");
+    assert_eq!(presets.len(), 28, "There should be 28 presets (3 modules x 5 tiers + 1 karting x 6 tiers + 1 rally x 6 tiers + 1 rally heritage cup)");
 
     for def in &presets {
         session.launch_or_resume_championship(def);
@@ -1094,8 +1099,8 @@ fn test_post_race_rerun_cancels_uncommitted_results_and_restarts_round() {
     assert_eq!(session.championship_session.as_ref().unwrap().current_round, 0);
 
     // Simulate finishing race
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(24.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(24.0);
     session.session_time = 75.0;
     session.check_race_finish();
 
@@ -1131,7 +1136,7 @@ fn test_championship_standings_screen_rerun_rolls_back_and_restarts_round() {
     session.init_race();
 
     // Complete round 1 and confirm
-    session.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].current_lap = session.total_laps + 1;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
 
@@ -1199,15 +1204,16 @@ fn test_championship_lap_calibration_across_all_modules() {
     }
 
     // 2. Karting Championships: 5 laps uniformly
-    for tier in 1..=5 {
+    for tier in 1..=6 {
         session.start_kart_career_tier(tier);
         assert_eq!(session.total_laps, 5, "Karting Tier {} must run 5 laps", tier);
     }
     for slug in &[
         "kart_world_cup",
+        "kart_junior_trophy",
         "kart_national_championship",
         "kart_continental_trophy",
-        "kart_european_championship",
+        "kart_superkart_div2_challenge",
         "kart_superkart_world_series",
     ] {
         let def = mgr.get(slug).expect("Karting preset must exist");
@@ -1317,42 +1323,49 @@ fn test_championship_lap_calibration_across_all_modules() {
 
 #[test]
 fn test_kart_championship_first_round_bots_move() {
-    let mut session = RaceSession::new();
-    session.switch_to_kart();
-    session.start_kart_career_tier(1);
-    session.state = GameState::Racing;
+    // Fixed grids (fixed_roster_seed), so a failure reproduces. Seeds 40 and 51 put a
+    // PowerStab-prone rookie on a grid slot just past an apex. Before corner-exit mistakes waited
+    // for the launch (humanize LAUNCH_SPEED), its handbrake locked the cadet kart at ~1 m/s for
+    // ~2 s and it covered 1.4-2.2 m in 5 s (14 of 2200 launches over seeds 0-199).
+    for seed in [0u64, 40, 51] {
+        let mut session = RaceSession::new();
+        session.fixed_roster_seed = Some(seed);
+        session.switch_to_kart();
+        session.start_kart_career_tier(1);
+        session.state = GameState::Racing;
 
-    let initial_positions: Vec<_> = session.cars.iter().map(|c| c.state.position).collect();
-    let num_cars = session.cars.len();
+        let initial_positions: Vec<_> = session.world.vehicles.iter().map(|c| c.state.position).collect();
+        let num_cars = session.world.vehicles.len();
 
-    // Step 300 frames (5.0 seconds of racing)
-    for _ in 0..300 {
-        session.physics_step(RaceSession::FIXED_DT);
-    }
+        // Step 300 frames (5.0 seconds of racing)
+        for _ in 0..300 {
+            session.physics_step(RaceSession::FIXED_DT);
+        }
 
-    // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
-    // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
-    // behind another can sit at ~4.8 m while rolling at ~3 m/s (2 of 50 random grids). A stalled
-    // launch (the regression this test guards: 1.7 m at 0.8 m/s) still fails.
-    for i in 1..num_cars {
-        let dist = session.cars[i].state.position.distance(initial_positions[i]);
-        let speed = session.cars[i].state.speed;
-        let prog = session.trackers[i].progress_distance;
-        assert!(
-            dist > 5.0 || (dist > 3.0 && speed > 2.5),
-            "Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
-            i, session.opponent_drivers[i - 1].name, dist, speed, prog
-        );
-        assert!(
-            speed > 1.5,
-            "Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
-            i, session.opponent_drivers[i - 1].name, speed
-        );
-        assert_eq!(
-            session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
-            "Bot {} ({}) entered reverse recovery on the starting grid!",
-            i, session.opponent_drivers[i - 1].name
-        );
+        // Every bot must have launched cleanly from the grid: moved > 5 m, or is rolling with the pack.
+        // Spec 043: spool karts no longer torque-vector at walking pace, so a weak cadet kart queued
+        // behind another can sit at ~4.8 m while rolling at ~3 m/s (3 of 2200 launches over seeds
+        // 0-199 fall just under these limits that way, in traffic). A stalled launch still fails.
+        for i in 1..num_cars {
+            let dist = session.world.vehicles[i].state.position.distance(initial_positions[i]);
+            let speed = session.world.vehicles[i].state.speed;
+            let prog = session.world.trackers[i].progress_distance;
+            assert!(
+                dist > 5.0 || (dist > 3.0 && speed > 2.5),
+                "seed {}: Bot {} ({}) failed to move off the grid! moved={:.2}m, speed={:.2}m/s, prog={:.1}m",
+                seed, i, session.opponent_drivers[i - 1].name, dist, speed, prog
+            );
+            assert!(
+                speed > 1.5,
+                "seed {}: Bot {} ({}) speed too low after 5s: speed={:.2}m/s",
+                seed, i, session.opponent_drivers[i - 1].name, speed
+            );
+            assert_eq!(
+                session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
+                "seed {}: Bot {} ({}) entered reverse recovery on the starting grid!",
+                seed, i, session.opponent_drivers[i - 1].name
+            );
+        }
     }
 }
 
@@ -1363,23 +1376,23 @@ fn test_player_throttle_in_kart_championship() {
     session.start_kart_career_tier(1);
     session.state = GameState::Racing;
 
-    let start_pos = session.cars[0].state.position;
+    let start_pos = session.world.vehicles[0].state.position;
     let dt = 1.0 / 60.0;
 
     // Simulate 60 frames of player applying throttle on the starting grid
     for frame in 0..60 {
-        let prog = session.trackers[0].progress_distance;
-        let surfaces = session.track.sample_car_surfaces_with_hint(&session.cars[0], prog);
-        let ctrl = session.input.process_inputs((0.0, 1.0, 0.0, false), dt, session.cars[0].state.speed);
+        let prog = session.world.trackers[0].progress_distance;
+        let surfaces = session.track.sample_car_surfaces_with_hint(&session.world.vehicles[0], prog);
+        let ctrl = session.input.process_inputs((0.0, 1.0, 0.0, false), dt, session.world.vehicles[0].state.speed);
         if frame > 10 {
             assert!(ctrl.throttle > 0.5, "Expected throttle > 0.5, got {}", ctrl.throttle);
         }
         assert!(!ctrl.handbrake, "Handbrake should not be engaged during throttle launch");
         assert_eq!(ctrl.brake, 0.0, "Brake should be 0.0 during throttle launch");
-        session.cars[0].step_per_wheel(&ctrl, surfaces, dt);
+        session.world.vehicles[0].step_per_wheel(&ctrl, surfaces, dt);
     }
 
-    let end_pos = session.cars[0].state.position;
+    let end_pos = session.world.vehicles[0].state.position;
     let distance = (end_pos - start_pos).length();
     assert!(
         distance > 1.0,
@@ -1387,9 +1400,9 @@ fn test_player_throttle_in_kart_championship() {
         distance
     );
     assert!(
-        session.cars[0].state.speed > 2.0,
+        session.world.vehicles[0].state.speed > 2.0,
         "Player kart failed to accelerate! Speed = {} m/s",
-        session.cars[0].state.speed
+        session.world.vehicles[0].state.speed
     );
 }
 
@@ -1407,3 +1420,59 @@ fn test_primary_confirm_action_does_not_engage_handbrake() {
     );
 }
 
+
+#[test]
+fn test_post_race_esc_keeps_the_championship_round() {
+    let mut session = RaceSession::new();
+    let mem_db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = mem_db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(mem_db);
+    session.refresh_profiles_and_stats();
+
+    session.start_rally_career_tier(1);
+    session.init_race();
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(24.0);
+    session.session_time = 75.0;
+    session.check_race_finish();
+    assert_eq!(session.finished_view, FinishedScreenView::Results);
+    assert!(session.pending_championship_results.is_some());
+
+    // Esc on the results screen used to throw the round away.
+    session.input.gamepad.snapshot.btn_cancel_pressed = true;
+    session.update_finished_screen();
+    session.input.gamepad.snapshot.btn_cancel_pressed = false;
+
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 1, "the round is scored");
+    assert_eq!(champ.history.len(), 1);
+    assert!(session.pending_championship_results.is_none());
+    assert_eq!(
+        session.active_career_progress.active_championship.as_ref().map(|c| c.current_round),
+        Some(1),
+        "the scored round is saved to career progress"
+    );
+    assert!(
+        matches!(session.pending_state, Some(GameState::CareerSelect { .. })),
+        "leaves to Career Select, got {:?}",
+        session.pending_state
+    );
+}
+
+#[test]
+fn test_championship_studio_exits_with_gamepad_b() {
+    let mut session = RaceSession::new();
+    session.modality_cursor = (ModalityCategory::Options, 3); // Series Editor card
+    session.enter_championship_editor(None);
+    assert_eq!(session.state, GameState::ChampionshipEditor);
+
+    session.input.gamepad.snapshot.btn_b_pressed = true;
+    session.update_championship_editor(0.016);
+    session.input.gamepad.snapshot.btn_b_pressed = false;
+
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::Options, selected_idx: 3, modal: None }
+    );
+    assert!(session.championship_editor_state.is_none());
+}

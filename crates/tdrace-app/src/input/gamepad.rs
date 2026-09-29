@@ -692,12 +692,12 @@ impl GamepadController {
             None
         };
 
-        let mut curr_south = false;
-        let mut curr_east = false;
-        let mut curr_west = false;
-        let mut curr_north = false;
-        let mut curr_start = false;
-        let mut curr_select = false;
+        let mut curr_south = self.raw_codes_held.contains(&290) || self.raw_codes_held.contains(&304);
+        let mut curr_east = self.raw_codes_held.contains(&289) || self.raw_codes_held.contains(&305);
+        let mut curr_west = self.raw_codes_held.contains(&291) || self.raw_codes_held.contains(&308);
+        let mut curr_north = self.raw_codes_held.contains(&288) || self.raw_codes_held.contains(&307);
+        let mut curr_start = self.raw_codes_held.contains(&297) || self.raw_codes_held.contains(&315);
+        let mut curr_select = self.raw_codes_held.contains(&296) || self.raw_codes_held.contains(&314);
         let mut curr_dpad_u = false;
         let mut curr_dpad_d = false;
         let mut curr_dpad_l = false;
@@ -711,24 +711,12 @@ impl GamepadController {
             self.snapshot.gamepad_name = gp.name().to_string();
 
             // State polling for continuous state
-            curr_south = gp.is_pressed(Button::South)
-                || self.raw_codes_held.contains(&290)
-                || self.raw_codes_held.contains(&304);
-            curr_east = gp.is_pressed(Button::East)
-                || self.raw_codes_held.contains(&289)
-                || self.raw_codes_held.contains(&305);
-            curr_west = gp.is_pressed(Button::West)
-                || self.raw_codes_held.contains(&291)
-                || self.raw_codes_held.contains(&308);
-            curr_north = gp.is_pressed(Button::North)
-                || self.raw_codes_held.contains(&288)
-                || self.raw_codes_held.contains(&307);
-            curr_start = gp.is_pressed(Button::Start)
-                || self.raw_codes_held.contains(&297)
-                || self.raw_codes_held.contains(&315);
-            curr_select = gp.is_pressed(Button::Select)
-                || self.raw_codes_held.contains(&296)
-                || self.raw_codes_held.contains(&314);
+            curr_south |= gp.is_pressed(Button::South);
+            curr_east |= gp.is_pressed(Button::East);
+            curr_west |= gp.is_pressed(Button::West);
+            curr_north |= gp.is_pressed(Button::North);
+            curr_start |= gp.is_pressed(Button::Start);
+            curr_select |= gp.is_pressed(Button::Select);
             let dpad_y_axis = gp.axis_data(Axis::DPadY).map(|d| d.value()).unwrap_or(0.0);
             let dpad_x_axis = gp.axis_data(Axis::DPadX).map(|d| d.value()).unwrap_or(0.0);
             curr_dpad_u = gp.is_pressed(Button::DPadUp) || dpad_y_axis > 0.5;

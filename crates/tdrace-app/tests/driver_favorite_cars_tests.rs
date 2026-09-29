@@ -141,7 +141,7 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
     ];
 
     for (mod_name, drivers) in modules {
-        let expected_tiers: u8 = if mod_name == "rally" { 6 } else { 5 };
+        let expected_tiers: u8 = if mod_name == "rally" || mod_name == "kart" { 6 } else { 5 };
         for driver in drivers {
             assert_eq!(
                 driver.favorite_cars.len(),

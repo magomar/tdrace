@@ -518,9 +518,9 @@ impl wheelbase::SurfaceSampler for Track {
 
 impl Track {
     /// Tests if a car's center is currently inside the pit box servicing zone.
-    pub fn is_in_pit_box(&self, car: &Car) -> bool {
+    pub fn is_in_pit_box<B: crate::body::Body2D>(&self, car: &B) -> bool {
         if let Some(pit_shape) = &self.pit_box_area {
-            pit_shape.contains(car.state.position)
+            pit_shape.contains(car.position())
         } else {
             false
         }

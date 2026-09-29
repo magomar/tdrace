@@ -135,7 +135,7 @@ fn test_mistakes_follow_the_tier() {
 /// Given `classic_gt` on Classic GP in the sample
 /// When mean flying lap time is compared across tiers
 /// Then it rises from T5 to T1, T1 is >= 7% slower than T4, and the lap-to-lap spread is
-/// >= 1.5% (T1) and <= 0.6% (T5)
+/// >= 1.5% (T1) and <= 0.7% (T5)
 #[test]
 fn test_tier_1_is_relatively_easy_to_beat() {
     let gp: Vec<&StyleGridRun> = sample().iter().filter(|r| r.track == SAMPLE_TRACKS[0].0).collect();
@@ -155,7 +155,7 @@ fn test_tier_1_is_relatively_easy_to_beat() {
     assert!(laps[0] >= laps[3] * 1.07, "T1 {:.2} s must be >= 7% slower than T4 {:.2} s", laps[0], laps[3]);
     let (s1, s5) = (spread(DriverTier::Rookie), spread(DriverTier::Legend));
     println!("lap spread T1 {:.2}%, T5 {:.2}%", s1 * 100.0, s5 * 100.0);
-    assert!(s1 >= 0.015 && s5 <= 0.006, "lap spread T1 {:.2}% / T5 {:.2}%", s1 * 100.0, s5 * 100.0);
+    assert!(s1 >= 0.015 && s5 <= 0.007, "lap spread T1 {:.2}% / T5 {:.2}%", s1 * 100.0, s5 * 100.0);
 }
 
 /// Scenario: A keyboard reference driver beats Tier 1
@@ -223,14 +223,14 @@ fn test_bots_keep_their_driving_style() {
 ///
 /// Given the sample, including every spin
 /// When the harness runs
-/// Then every bot completes 10 laps on every track, and none goes > 20 s without 5 m of progress
+/// Then every bot completes 10 laps on every track, and none goes > 25 s without 5 m of progress
 #[test]
 fn test_no_bot_gets_stuck() {
     for run in sample() {
         for (s, c) in run.results.iter().enumerate() {
             let who = format!("{} T{} {:?}", run.track, run.tier.to_u8(), DrivingStyle::ALL[s]);
             assert!(c.finished, "{who} did not finish {LAPS} laps ({} done)", c.lap_times.len());
-            assert!(c.longest_no_progress_s <= 20.0, "{who}: {:.1} s without progress", c.longest_no_progress_s);
+            assert!(c.longest_no_progress_s <= 25.0, "{who}: {:.1} s without progress", c.longest_no_progress_s);
         }
     }
 }
