@@ -1,6 +1,6 @@
 //! Rigid-body interface for collision, LIDAR, progress tracking and pit checks.
 //!
-//! Spec 050 (`specs/050_body2d_trait_for_vehiclegeneric_collision_and_progress.md`). The
+//! Spec 054 (`specs/054_body2d_trait_for_vehiclegeneric_collision_and_progress.md`). The
 //! engine functions in this crate read only a body's pose, motion, mass, height and hull,
 //! and write only three raw adders. Any vehicle model (a car, a chariot team) can plug in
 //! by implementing [`Body2D`].

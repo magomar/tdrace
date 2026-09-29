@@ -1,4 +1,4 @@
-//! Spec 050 (`specs/050_body2d_trait_for_vehiclegeneric_collision_and_progress.md`):
+//! Spec 054 (`specs/054_body2d_trait_for_vehiclegeneric_collision_and_progress.md`):
 //! collision and progress tracking work for a rigid body that is not a `wheelbase::Car`.
 //!
 //! `TestBody` stands in for a future chariot: a plain rigid body with a long hull.

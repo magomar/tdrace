@@ -59,7 +59,7 @@ pub fn resolve_car_wall_collision<B: Body2D>(
     }
 
     // Fast broad-phase AABB rejection: body bounding radius + margin. Never below the
-    // 3.6 m every car used before spec 050, so car results are unchanged.
+    // 3.6 m every car used before spec 054, so car results are unchanged.
     let car_reach = car.hull().reach().max(3.6f32);
     let min_x = seg.start.x.min(seg.end.x) - car_reach;
     let max_x = seg.start.x.max(seg.end.x) + car_reach;
