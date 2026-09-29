@@ -4,6 +4,7 @@ template: architecture
 title: "Robust LAN Race Synchronization with Owner-Authoritative Cars"
 description: "Replaces the LAN in-race netcode: each machine simulates only its own car and streams compact binary state; the host relays a world packet and referees laps, finish order and results; remote cars are interpolated; lobby and race-control messages become reliable; the race roster is fixed by one launch message; pause, finish and disconnects no longer break the session."
 status: in_progress
+receipt: "docs/receipts/spec-044-receipt.md"
 created: 2026-09-28
 verified: { by: "human:mario", at: "2026-09-28T07:52:09Z" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T07:40:00Z }
