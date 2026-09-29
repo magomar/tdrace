@@ -1,8 +1,20 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::Mutex;
 use macroquad::color::Color;
 use macroquad::texture::{Image, Texture2D};
 use serde::{Deserialize, Serialize};
-use tdrace_core::physics::surface::SurfaceType;
+use wheelbase::surface::SurfaceType;
+
+static ASSET_ROOT: Mutex<Option<PathBuf>> = Mutex::new(None);
+
+/// Sets the game's asset folder (the folder that holds `textures/surfaces/`). Surface textures
+/// are then looked up there first. Spec 057.
+pub fn set_asset_root(root: impl Into<PathBuf>) {
+    if let Ok(mut r) = ASSET_ROOT.lock() {
+        *r = Some(root.into());
+    }
+}
 
 /// Graphics quality tier for surface textures and terrain material shaders.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -243,7 +255,13 @@ impl SurfaceMaterialRegistry {
         self.tire_rubber_texture = rubber_tex;
     }
 
-    fn find_surface_asset_file(filename: &str) -> Option<Vec<u8>> {
+    /// Reads a surface texture file. It looks in `<asset root>/textures/surfaces/` first when
+    /// [`set_asset_root`] was called, then in the `assets/` folders near the working directory.
+    pub fn find_surface_asset_file(filename: &str) -> Option<Vec<u8>> {
+        let root = ASSET_ROOT.lock().ok().and_then(|r| r.clone());
+        if let Some(data) = root.and_then(|r| std::fs::read(r.join("textures/surfaces").join(filename)).ok()) {
+            return Some(data);
+        }
         let candidates = [
             format!("assets/textures/surfaces/{}", filename),
             format!("../assets/textures/surfaces/{}", filename),

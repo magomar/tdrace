@@ -4,10 +4,10 @@ use glam::Vec2;
 use macroquad::color::{Color, WHITE};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
-use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{SurfaceLayer, SurfaceShape};
-use tdrace_core::track::spline::{SplineSample, TrackSpline};
-use tdrace_core::track::Track;
+use wheelbase::surface::SurfaceType;
+use arcade_race_core::track::geometry::{SurfaceLayer, SurfaceShape};
+use arcade_race_core::track::spline::{SplineSample, TrackSpline};
+use arcade_race_core::track::Track;
 
 use super::color::Palette;
 use super::surface_material::{evaluate_macro_modulation, SurfaceMaterialRegistry, SurfaceTextureQuality};
@@ -1754,7 +1754,7 @@ mod tests {
     #[test]
     fn test_textured_rendering_across_quality_levels() {
         
-        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+        let track = arcade_race_core::track::create_prototypical_track("gt", arcade_race_core::track::TrackShape::Oval, arcade_race_core::track::RaceDirection::Right);
         let qualities = [
             SurfaceTextureQuality::Off,
             SurfaceTextureQuality::Standard,

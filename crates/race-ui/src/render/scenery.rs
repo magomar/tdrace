@@ -1,9 +1,9 @@
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
 use glam::Vec2;
-use tdrace_core::physics::car::Car;
-use tdrace_core::track::scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
-use tdrace_core::track::Track;
+use wheelbase::car::Car;
+use arcade_race_core::track::scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
+use arcade_race_core::track::Track;
 
 use super::barrier::SHADOW_OFFSET;
 use super::color::Palette;

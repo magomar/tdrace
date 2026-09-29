@@ -1,8 +1,8 @@
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_triangle};
 use glam::Vec2;
-use tdrace_core::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
-use tdrace_core::track::Track;
+use arcade_race_core::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
+use arcade_race_core::track::Track;
 
 use super::color::Palette;
 use super::track::draw_quad;
@@ -311,7 +311,7 @@ mod tests {
     
     #[test]
     fn test_virtual_barrier_rendering_bypass_logic() {
-        let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+        let mut track = arcade_race_core::track::create_prototypical_track("gt", arcade_race_core::track::TrackShape::Oval, arcade_race_core::track::RaceDirection::Right);
         let physical_count = track.geometry.all_walls().filter(|w| w.is_physical() && !w.is_bridge).count();
         track.geometry.outer_walls.push(WallBarrier::new(
             Vec2::new(10.0, -10.0),

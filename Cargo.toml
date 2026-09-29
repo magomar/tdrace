@@ -4,6 +4,7 @@ members = [
     "crates/wheelbase",
     "crates/arcade-race-core",
     "crates/race-kit",
+    "crates/race-ui",
     "crates/tdrace-core",
     "crates/tdrace-app",
     "crates/tdrace-py",

@@ -1,13 +1,11 @@
-pub mod barrier;
+// Moved to race-ui (spec 057); re-exported so `crate::render::` paths keep working.
+pub use race_ui::render::{barrier, color, scenery, surface_material, track};
+
 pub mod car;
-pub mod color;
 pub mod ghost;
 pub mod lateral;
 pub mod lighting;
 pub mod marker;
-pub mod scenery;
-pub mod surface_material;
-pub mod track;
 pub mod trophy_textures;
 pub mod vehicle_assets;
 
