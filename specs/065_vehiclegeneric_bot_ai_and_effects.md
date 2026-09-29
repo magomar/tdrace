@@ -153,6 +153,7 @@ No new dependencies. No `unsafe`.
 - `[x]` `crates/race-ui/src/fx/mod.rs`, `fx/skidmarks.rs` -> `FxVehicle`, generic effects, `impl FxVehicle for Car`.
 - `[x]` `crates/race-kit/tests/bot_vehicle_tests.rs` -> a bot drives a non-car vehicle.
 - `[x]` `crates/race-ui/tests/fx_vehicle_tests.rs` -> effects follow a non-car vehicle.
+- `[x]` `crates/race-ui/Cargo.toml`, `crates/cabinet/src/input/gamepad.rs` -> `race-ui` takes `cabinet` without default features, and `cabinet` builds without its gamepad feature. Found by the tdchariots web build: `gilrs` pulled `wasm-bindgen` into wasm32, and macroquad's plain loader failed to start the game.
 - `[x]` `docs/platform/CHANGELOG.md` -> the `platform-v0.2.0` entry.
 - `[x]` git tag `platform-v0.2.0` -> created locally. Mario pushes it.
 

@@ -16,12 +16,18 @@ Any vehicle model can use the bot driver and the effects, so the chariot game ca
 chariot physics. ([spec 065](../../specs/065_vehiclegeneric_bot_ai_and_effects.md))
 
 ### race-kit
-- `ai::BotVehicle` (right vector, top speed, grip). `BotAiDriver::compute_controls` and the human
+- `ai::BotVehicle` (right vector, top speed, grip, and `planning_grip`, the grip the bot plans
+  corner speeds with; 0.78 by default, as before). `BotAiDriver::compute_controls` and the human
   layer are generic over it. `wheelbase::Car` implements it; car bots drive exactly as before.
 
 ### race-ui
+- Depends on `cabinet` without default features, so a game's web build does not pull `gilrs`
+  and `wasm-bindgen` (they broke macroquad's plain JS loader).
 - `fx::FxVehicle` (four contact points and their slip data, right vector, airborne, drift).
   `EffectsManager::update` and the skid marks are generic over it. `wheelbase::Car` implements it.
+
+### cabinet
+- Builds without its `gamepad` feature (`GamepadManager::is_button_down` is behind it now).
 
 ## platform-v0.1.0 (2026-09-29)
 
