@@ -694,7 +694,7 @@ mod tests {
         assert_eq!(classic.id(), "classic");
         assert!(!classic.title().is_empty());
         assert_eq!(classic.vehicles().len(), 5);
-        assert_eq!(classic.tracks().len(), 10);
+        assert_eq!(classic.tracks().len(), 13);
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "classic_gt");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);

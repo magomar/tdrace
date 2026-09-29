@@ -244,8 +244,11 @@ pub fn trim_walls_at_crossings(walls: &mut Vec<(WallBarrier, f32)>, spline: &Tra
             segments_to_process = next_processed;
         }
 
+        // Drop the slivers that trimming leaves, but keep an untrimmed wall of any length: on the inside of a
+        // tight turn with dense samples every wall piece is shorter than 0.10 m.
+        let untrimmed = segments_to_process.len() == 1 && segments_to_process[0] == wall.segment;
         for seg in segments_to_process {
-            if seg.length() > 0.10 {
+            if untrimmed || seg.length() > 0.10 {
                 result_walls.push(WallBarrier {
                     segment: seg,
                     restitution: wall.restitution,
@@ -267,6 +270,8 @@ pub fn trim_corner_intersections(
     right_walls: &mut Vec<WallBarrier>,
     spline: &TrackSpline,
 ) {
+    let mut trimmed_left = vec![false; left_walls.len()];
+    let mut trimmed_right = vec![false; right_walls.len()];
     for _ in 0..4 {
         let mut modified = false;
         let n_left = left_walls.len();
@@ -338,14 +343,18 @@ pub fn trim_corner_intersections(
 
                     if i < n_left {
                         left_walls[i].segment = new_seg_a;
+                        trimmed_left[i] = true;
                     } else {
                         right_walls[i - n_left].segment = new_seg_a;
+                        trimmed_right[i - n_left] = true;
                     }
 
                     if j < n_left {
                         left_walls[j].segment = new_seg_b;
+                        trimmed_left[j] = true;
                     } else {
                         right_walls[j - n_left].segment = new_seg_b;
+                        trimmed_right[j - n_left] = true;
                     }
 
                     modified = true;
@@ -358,8 +367,11 @@ pub fn trim_corner_intersections(
         }
     }
 
-    left_walls.retain(|w| w.segment.length() > 0.10);
-    right_walls.retain(|w| w.segment.length() > 0.10);
+    // Drop the slivers that trimming leaves; untrimmed walls stay, however short (see trim_walls_at_crossings).
+    let mut trimmed = trimmed_left.into_iter();
+    left_walls.retain(|w| !trimmed.next().unwrap_or(false) || w.segment.length() > 0.10);
+    let mut trimmed = trimmed_right.into_iter();
+    right_walls.retain(|w| !trimmed.next().unwrap_or(false) || w.segment.length() > 0.10);
 }
 
 /// Builds boundary wall barriers along the track edges given a spline and barrier offset.
