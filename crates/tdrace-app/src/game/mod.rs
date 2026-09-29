@@ -169,13 +169,13 @@ fn screen_height_safe() -> f32 {
         }
     }
 }
-use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
-use tdrace_core::collision::wall::resolve_all_wall_collisions;
+use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::track::geometry::{JumpRampCarExt, SpawnPose};
+use race_kit::{RaceEvent, RaceFormat, RaceRules, RaceWorld};
+use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
@@ -584,9 +584,8 @@ pub struct RaceSession {
     pub car_model_ids: Vec<Option<&'static str>>,
     pub car_lights_on: Vec<bool>,
 
-    pub cars: Vec<Car>,
+    pub world: RaceWorld<Car>,
     pub color_schemes: Vec<CarColorScheme>,
-    pub trackers: Vec<TrackProgressTracker>,
     pub ai_drivers: Vec<BotAiDriver>,
     pub opponent_drivers: Vec<DriverCharacter>,
     pub opponent_tiers: Vec<DriverTier>,
@@ -912,9 +911,8 @@ impl RaceSession {
             car_model_ids: Vec::new(),
             car_lights_on: Vec::new(),
 
-            cars: Vec::new(),
+            world: RaceWorld::new(RaceRules::default()),
             color_schemes: Vec::new(),
-            trackers: Vec::new(),
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
@@ -1099,7 +1097,7 @@ impl RaceSession {
     #[inline]
     pub fn player_car_index(&self) -> usize {
         if self.is_lan_multiplayer {
-            (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1))
+            (self.lan_player_slot as usize).min(self.world.vehicles.len().saturating_sub(1))
         } else {
             0
         }
@@ -1109,7 +1107,7 @@ impl RaceSession {
     pub fn trigger_sonar_ping(&mut self) {
         if self.visibility_options.sonar_ping {
             let my_idx = self.player_car_index();
-            if let Some(player_car) = self.cars.get(my_idx) {
+            if let Some(player_car) = self.world.vehicles.get(my_idx) {
                 self.sonar_ping_origin = player_car.state.position;
             }
             self.sonar_ping_timer = 0.75;
@@ -1166,7 +1164,7 @@ impl RaceSession {
                 self.active_profile = active;
                 self.assist_profile = self.active_profile.last_mode;
                 let my_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get_mut(my_idx) {
+                if let Some(player_car) = self.world.vehicles.get_mut(my_idx) {
                     player_car.config.assists = self.assist_profile.to_config();
                 }
             }
@@ -1214,7 +1212,7 @@ impl RaceSession {
             }
         }
         let my_idx = self.player_car_index();
-        if let Some(player_car) = self.cars.get_mut(my_idx) {
+        if let Some(player_car) = self.world.vehicles.get_mut(my_idx) {
             player_car.config.assists = profile.to_config();
         }
     }
@@ -1418,11 +1416,11 @@ impl RaceSession {
         self.filter_p2.config = self.input.filter.config;
         let handling = Self::player_handling(&self.input.filter.config);
         let my_idx = self.player_car_index();
-        if let Some(car) = self.cars.get_mut(my_idx) {
+        if let Some(car) = self.world.vehicles.get_mut(my_idx) {
             car.config.player = handling;
         }
         if self.is_split_screen() {
-            if let Some(car) = self.cars.get_mut(1) {
+            if let Some(car) = self.world.vehicles.get_mut(1) {
                 car.config.player = handling;
             }
         }
@@ -3601,12 +3599,11 @@ impl RaceSession {
             (1 + self.num_bots).min(self.max_grid_participants())
         };
 
-        self.cars.clear();
+        self.world.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
         self.car_lights_on.clear();
         self.color_schemes.clear();
-        self.trackers.clear();
         self.ai_drivers.clear();
         self.opponent_drivers.clear();
 
@@ -4158,12 +4155,11 @@ impl RaceSession {
             });
         let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
         player_car.config.player = Self::player_handling(&self.input.filter.config);
-        self.cars.push(player_car);
+        self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
         self.car_model_ids.push(player_model_id);
         self.car_lights_on.push(true);
-        self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
 
         if self.is_split_screen() {
             let p2_slot = 1;
@@ -4186,12 +4182,11 @@ impl RaceSession {
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             p2_car.config.player = Self::player_handling(&self.filter_p2.config);
-            self.cars.push(p2_car);
+            self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
             self.car_model_ids.push(player_model_id);
             self.car_lights_on.push(true);
-            self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         for (bot_idx, character) in self.opponent_drivers.iter().enumerate() {
@@ -4263,12 +4258,11 @@ impl RaceSession {
 
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
-            self.cars.push(bot_car);
+            self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
             self.car_model_ids.push(bot_model_id);
             self.car_lights_on.push(true);
-            self.trackers.push(TrackProgressTracker::new(num_cps, num_sectors));
             let bot_tier = if let Some(champ) = &self.championship_session {
                 champ
                     .standings
@@ -4506,10 +4500,10 @@ impl RaceSession {
             Some(remaining) => GameState::Countdown(remaining),
             None => GameState::Racing,
         };
-        let player_car = self.cars.get(self.player_car_index());
+        let player_car = self.world.vehicles.get(self.player_car_index());
         self.camera.resume_from_pause(player_car);
         if self.is_split_screen() {
-            let p2_car = self.cars.get(1);
+            let p2_car = self.world.vehicles.get(1);
             self.camera_p2.resume_from_pause(p2_car);
         }
     }
@@ -4805,10 +4799,10 @@ impl RaceSession {
                     let total_lvls = self.camera.levels.iter().filter(|l| !l.is_overview()).count().max(1);
                     let text = format!("CAMERA: {} ({}/{})", lvl.name.to_uppercase(), lvl_idx, total_lvls);
 
-                    if let Some(pos1) = self.cars.first().map(|c| c.state.position) {
+                    if let Some(pos1) = self.world.vehicles.first().map(|c| c.state.position) {
                         self.fx.drift_popups.spawn_text(pos1, &text, Color::new(0.3, 0.9, 1.0, 1.0));
                     }
-                    if let Some(pos2) = self.cars.get(1).map(|c| c.state.position) {
+                    if let Some(pos2) = self.world.vehicles.get(1).map(|c| c.state.position) {
                         self.fx.drift_popups.spawn_text(pos2, &text, Color::new(0.3, 0.9, 1.0, 1.0));
                     }
                 }
@@ -4833,7 +4827,7 @@ impl RaceSession {
                     let lvl = self.cycle_camera_zoom();
                     self.audio.play_sfx(SfxType::UiMove);
                     let car_pos = self
-                        .cars
+                        .world.vehicles
                         .get(self.player_car_index())
                         .map(|c| c.state.position);
                     if let Some(pos) = car_pos {
@@ -4859,7 +4853,7 @@ impl RaceSession {
                 | GameState::Finished
         );
         if is_gameplay_state {
-            let my_pos = self.cars.get(self.player_car_index()).map(|c| c.state.position);
+            let my_pos = self.world.vehicles.get(self.player_car_index()).map(|c| c.state.position);
 
             // [1] Toggle Overhead Chevron Indicator
             if is_key_pressed(KeyCode::Key1) {
@@ -5014,7 +5008,7 @@ impl RaceSession {
 
             // Auto-trigger sonar ping on spin-out or slow speed in overview mode
             if self.visibility_options.sonar_ping {
-                if let Some(pc) = self.cars.get(self.player_car_index()) {
+                if let Some(pc) = self.world.vehicles.get(self.player_car_index()) {
                     let is_spin = pc.state.angular_velocity.abs() > 4.5 || pc.state.local_velocity.y.abs() > 8.0;
                     let is_slow_overview = self.camera.mode == crate::camera::CameraMode::StaticOverview && pc.state.speed < 2.0;
                     if (is_spin || is_slow_overview) && self.sonar_ping_cooldown <= 0.0 {
@@ -5168,7 +5162,7 @@ impl RaceSession {
             let next_mode = self.assist_profile.next();
             self.set_assist_profile(next_mode);
             self.audio.play_sfx(SfxType::UiMove);
-            if let Some(player_car) = self.cars.get(self.player_car_index()) {
+            if let Some(player_car) = self.world.vehicles.get(self.player_car_index()) {
                 self.fx.drift_popups.spawn_text(
                     player_car.state.position,
                     &format!("ASSISTS: {}", self.assist_profile.short_name()),
@@ -5179,7 +5173,7 @@ impl RaceSession {
         if assist_keys && self.is_split_screen() && pad_assist {
             self.assist_profile_p2 = self.assist_profile_p2.next();
             self.audio.play_sfx(SfxType::UiMove);
-            if let Some(p2_car) = self.cars.get_mut(1) {
+            if let Some(p2_car) = self.world.vehicles.get_mut(1) {
                 p2_car.config.assists = self.assist_profile_p2.to_config();
                 self.fx.drift_popups.spawn_text(
                     p2_car.state.position,
@@ -5261,7 +5255,7 @@ impl RaceSession {
                     self.audio.update_engine_telemetry_p2(rpm2, eff_throttle2, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
                 } else {
                     let my_idx = self.player_car_index();
-                    let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                    let my_speed = self.world.vehicles.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                     let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -5292,8 +5286,8 @@ impl RaceSession {
                             if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
                                 for car_snap in snapshot.cars {
                                     let idx = car_snap.slot_id as usize;
-                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
-                                        let car = &mut self.cars[idx];
+                                    if idx < self.world.vehicles.len() && idx != (self.lan_player_slot as usize) {
+                                        let car = &mut self.world.vehicles[idx];
                                         car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
                                         car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
                                         car.state.angle = car_snap.heading_rad;
@@ -5311,11 +5305,11 @@ impl RaceSession {
 
                 // Camera follows player during countdown
                 let countdown_cam_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get(countdown_cam_idx) {
+                if let Some(player_car) = self.world.vehicles.get(countdown_cam_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.is_split_screen() {
-                    if let Some(p2_car) = self.cars.get(1) {
+                    if let Some(p2_car) = self.world.vehicles.get(1) {
                         self.camera_p2.update(p2_car, frame_dt);
                     }
                 }
@@ -5330,11 +5324,11 @@ impl RaceSession {
             GameState::Racing => {
                 // If resuming race after paused overview was active, restore driving follow camera
                 if self.camera.paused_from_follow.is_some() {
-                    let player_car = self.cars.get(self.player_car_index());
+                    let player_car = self.world.vehicles.get(self.player_car_index());
                     self.camera.resume_from_pause(player_car);
                 }
                 if self.is_split_screen() && self.camera_p2.paused_from_follow.is_some() {
-                    let p2_car = self.cars.get(1);
+                    let p2_car = self.world.vehicles.get(1);
                     self.camera_p2.resume_from_pause(p2_car);
                 }
 
@@ -5357,8 +5351,8 @@ impl RaceSession {
                             }
                         }
                     } else if let Some(ref mut client) = self.lan_client {
-                        let my_idx = (self.lan_player_slot as usize).min(self.cars.len().saturating_sub(1));
-                        let my_speed = self.cars.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                        let my_idx = (self.lan_player_slot as usize).min(self.world.vehicles.len().saturating_sub(1));
+                        let my_speed = self.world.vehicles.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                         let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                         let touch_ctrl = self.touch.poll_controls();
                         let mut local_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -5382,8 +5376,8 @@ impl RaceSession {
                             if let cabinet::net::ClientEvent::WorldSnapshot(snapshot) = event {
                                 for car_snap in snapshot.cars {
                                     let idx = car_snap.slot_id as usize;
-                                    if idx < self.cars.len() && idx != (self.lan_player_slot as usize) {
-                                        let car = &mut self.cars[idx];
+                                    if idx < self.world.vehicles.len() && idx != (self.lan_player_slot as usize) {
+                                        let car = &mut self.world.vehicles[idx];
                                         car.state.position = glam::Vec2::new(car_snap.pos_x, car_snap.pos_y);
                                         car.state.velocity = glam::Vec2::new(car_snap.velocity_x, car_snap.velocity_y);
                                         car.state.angle = car_snap.heading_rad;
@@ -5413,9 +5407,9 @@ impl RaceSession {
                 if self.is_lan_multiplayer && self.is_lan_host {
                     if let Some(ref mut host) = self.lan_host {
                         self.lan_snapshot_tick += 1;
-                        let mut car_snapshots = Vec::with_capacity(self.cars.len());
-                        for (i, car) in self.cars.iter().enumerate() {
-                            let tracker = self.trackers.get(i);
+                        let mut car_snapshots = Vec::with_capacity(self.world.vehicles.len());
+                        for (i, car) in self.world.vehicles.iter().enumerate() {
+                            let tracker = self.world.trackers.get(i);
                             car_snapshots.push(cabinet::net::CarStateSnapshot {
                                 slot_id: i as u8,
                                 pos_x: car.state.position.x,
@@ -5443,11 +5437,11 @@ impl RaceSession {
 
                 // Update Camera
                 let cam_focus_idx = self.player_car_index();
-                if let Some(player_car) = self.cars.get(cam_focus_idx) {
+                if let Some(player_car) = self.world.vehicles.get(cam_focus_idx) {
                     self.camera.update(player_car, frame_dt);
                 }
                 if self.is_split_screen() {
-                    if let Some(p2_car) = self.cars.get(1) {
+                    if let Some(p2_car) = self.world.vehicles.get(1) {
                         self.camera_p2.update(p2_car, frame_dt);
                     }
                 }
@@ -5742,7 +5736,7 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(0) {
                     *vt = next_m.visual_type;
                 }
-                if let Some(car) = self.cars.get_mut(0) {
+                if let Some(car) = self.world.vehicles.get_mut(0) {
                     car.config = next_m.to_car_config();
                 }
             } else {
@@ -5758,7 +5752,7 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(car_idx) {
                     *vt = next_m.visual_type;
                 }
-                if let Some(car) = self.cars.get_mut(car_idx) {
+                if let Some(car) = self.world.vehicles.get_mut(car_idx) {
                     car.config = next_m.to_car_config();
                 }
             }
@@ -8782,11 +8776,10 @@ impl RaceSession {
         let num_sectors = 3;
         let base_config = self.config.get_car_config(CarChoice::SportsCar);
 
-        self.cars.clear();
+        self.world.clear();
         self.car_visual_types.clear();
         self.car_model_ids.clear();
         self.car_lights_on.clear();
-        self.trackers.clear();
         self.ai_drivers.clear();
         self.grid_participants.clear();
         self.color_schemes.clear();
@@ -8821,9 +8814,6 @@ impl RaceSession {
             self.car_model_ids.push(Some(canonical_id));
             self.car_lights_on.push(true);
 
-            let tracker = TrackProgressTracker::new(num_cps, num_sectors);
-            self.trackers.push(tracker);
-
             self.grid_participants.push(GridParticipant {
                 is_player: is_me,
                 bot_index: None,
@@ -8849,12 +8839,12 @@ impl RaceSession {
                 car.config.player = Self::player_handling(&self.input.filter.config);
             }
 
-            self.cars.push(car);
+            self.world.spawn(car, TrackProgressTracker::new(num_cps, num_sectors));
         }
 
         self.camera.setup_for_track(&self.track);
-        let my_idx = (my_slot_id as usize).min(self.cars.len().saturating_sub(1));
-        if let Some(player_car) = self.cars.get(my_idx) {
+        let my_idx = (my_slot_id as usize).min(self.world.vehicles.len().saturating_sub(1));
+        if let Some(player_car) = self.world.vehicles.get(my_idx) {
             self.camera.current_pos = player_car.state.position;
             self.camera.target_pos = player_car.state.position;
         }
@@ -11316,7 +11306,7 @@ impl RaceSession {
 
     /// High-performance deterministic fixed physics simulation step.
     pub fn physics_step(&mut self, dt: f32) {
-        let n_cars = self.cars.len();
+        let n_cars = self.world.vehicles.len();
         if n_cars == 0 {
             return;
         }
@@ -11332,8 +11322,8 @@ impl RaceSession {
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
         if is_split {
-            let p1_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
-            let p2_speed = self.cars.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+            let p1_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+            let p2_speed = self.world.vehicles.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let (mut p1_ctrl, mut p2_ctrl) = self.input.poll_split_player_controls(
                 &mut self.filter_p2,
                 dt,
@@ -11356,7 +11346,7 @@ impl RaceSession {
             for i in 2..n_cars {
                 let ai_idx = i - 2;
                 let other_cars_refs: Vec<&Car> = self
-                    .cars
+                    .world.vehicles
                     .iter()
                     .enumerate()
                     .filter(|(idx, _)| *idx != i)
@@ -11365,7 +11355,7 @@ impl RaceSession {
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                     ai.compute_controls(
-                        &self.cars[i],
+                        &self.world.vehicles[i],
                         &self.track,
                         &other_cars_refs,
                         dt,
@@ -11378,7 +11368,7 @@ impl RaceSession {
         } else {
             let player_ctrl = if self.is_lan_multiplayer {
                 if self.lan_player_slot == 0 {
-                    let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                    let player_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                     let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -11400,7 +11390,7 @@ impl RaceSession {
                     CarControls::default()
                 }
             } else {
-                let player_speed = self.cars.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                let player_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                 let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
                 let touch_ctrl = self.touch.poll_controls();
                 let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -11416,7 +11406,7 @@ impl RaceSession {
             for i in 1..n_cars {
                 let bot_ctrl = if self.is_lan_multiplayer {
                     if i == (self.lan_player_slot as usize) {
-                        let player_speed = self.cars.get(i).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
+                        let player_speed = self.world.vehicles.get(i).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                         let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
                         let touch_ctrl = self.touch.poll_controls();
                         let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
@@ -11440,7 +11430,7 @@ impl RaceSession {
                 } else {
                     let ai_idx = i - 1;
                     let other_cars_refs: Vec<&Car> = self
-                        .cars
+                        .world.vehicles
                         .iter()
                         .enumerate()
                         .filter(|(idx, _)| *idx != i)
@@ -11449,7 +11439,7 @@ impl RaceSession {
 
                     if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                         ai.compute_controls(
-                            &self.cars[i],
+                            &self.world.vehicles[i],
                             &self.track,
                             &other_cars_refs,
                             dt,
@@ -11462,107 +11452,42 @@ impl RaceSession {
             }
         }
 
-        // 2. Sample surfaces under all wheels of all cars
-        let mut wheel_surfaces = Vec::with_capacity(n_cars);
-        for (i, car) in self.cars.iter().enumerate() {
-            let prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            wheel_surfaces.push(self.track.sample_car_surfaces_with_hint(car, prog));
-        }
+        // 2-6. Race step (race-kit, spec 056): surfaces, slipstream draft, vehicle dynamics with road
+        // elevation & banking, tree canopy drag, jump ramps, car-to-car and wall collisions, lap tracking.
+        // Everything below reacts to its events, in the order they happened.
+        self.world.rules.format = self.race_format();
+        let race_events: Vec<RaceEvent> = self.world.step(&self.track, &controls_all, dt).to_vec();
+        let wheel_surfaces = self.world.last_surfaces.clone();
 
-        // 2b. Compute aerodynamic slipstream wake drafting between cars
-        let mut drafts = Vec::with_capacity(n_cars);
-        for i in 0..n_cars {
-            let other_refs: Vec<&Car> = self
-                .cars
-                .iter()
-                .enumerate()
-                .filter(|(idx, _)| *idx != i)
-                .map(|(_, c)| c)
-                .collect();
-            drafts.push(self.cars[i].compute_draft_intensity(&other_refs));
-        }
-        for i in 0..n_cars {
-            self.cars[i].state.draft_intensity = drafts[i];
-        }
-
-        // 3. Step individual vehicle dynamics and update road elevation & cross-slope banking
-        for i in 0..n_cars {
-            let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            let proj = self.track.spline.project_point_continuity(self.cars[i].state.position, prev_prog, 50.0);
-            self.cars[i].state.road_elevation = proj.elevation;
-            self.cars[i].state.road_bank_angle = proj.bank_angle;
-            self.cars[i].state.road_grade_slope = proj.grade_slope;
-            self.cars[i].state.road_vertical_curvature = proj.vertical_curvature;
-            self.cars[i].state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
-            self.cars[i].state.track_forward = proj.tangent;
-
-            self.cars[i].step_per_wheel(&controls_all[i], wheel_surfaces[i], dt);
-
-            // Soft tree canopy brush interaction: viscous foliage drag & leaf roost particles
-            if !self.cars[i].state.is_airborne && self.cars[i].state.elevation < 0.6 {
-                for tree in &self.track.geometry.trees {
-                    let car_pos = self.cars[i].state.position;
-                    if tree.contains_canopy(car_pos) && !tree.contains_trunk(car_pos) {
-                        let drag_rate = tree.tree_type.canopy_drag_deceleration();
-                        self.cars[i].state.velocity *= (1.0 - drag_rate * dt).max(0.0);
-                        self.cars[i].state.speed = self.cars[i].state.velocity.length();
-
-                        if self.cars[i].state.speed > 3.0 {
-                            self.fx.particles.emit_foliage_roost(
-                                car_pos,
-                                tree.tree_type,
-                                self.cars[i].state.velocity,
-                            );
-                        }
-                    }
-                }
+        // Soft tree canopy brush interaction: leaf roost particles
+        for ev in &race_events {
+            if let RaceEvent::CanopyBrush { tree, position, velocity, .. } = *ev {
+                self.fx.particles.emit_foliage_roost(position, tree, velocity);
             }
         }
 
         // Track human player top speed
         let my_car_idx = self.player_car_index();
-        if let Some(player_car) = self.cars.get(my_car_idx) {
-            self.player_race_stats.top_speed_mps = self.player_race_stats.top_speed_mps.max(player_car.state.speed);
+        if let Some(&top_speed) = self.world.top_speed.get(my_car_idx) {
+            self.player_race_stats.top_speed_mps = self.player_race_stats.top_speed_mps.max(top_speed);
         }
 
-        // Continuous Jump Ramp Traversal, Lip Takeoff & Landing SFX/FX
+        // Jump Landing SFX/FX
         let mut player_jump_air_time = None;
-        for (i, car) in self.cars.iter_mut().enumerate() {
-            let was_airborne = car.state.is_airborne;
-            let mut on_any_ramp = false;
-
-            if !was_airborne {
-                for ramp in &self.track.geometry.jump_ramps {
-                    if ramp.contains(car.state.position) {
-                        on_any_ramp = true;
-                        if car.step_ramp_interaction(ramp, dt) {
-                            break;
-                        }
-                    }
-                }
-                if !on_any_ramp {
-                    if car.state.ramp_elevation > 0.10 {
-                        // Rolled off an elevated ramp edge without launching at speed
-                        car.state.elevation = car.state.ramp_elevation;
-                        car.state.is_airborne = true;
-                        car.state.vertical_velocity = 0.0;
-                    }
-                    car.state.ramp_elevation = 0.0;
-                }
-            }
-            if car.state.just_landed {
+        for ev in &race_events {
+            if let RaceEvent::Landed { car: i, air_time, position, speed } = *ev {
                 if i == my_car_idx {
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera.add_trauma(0.25);
-                    if car.state.last_air_time >= 0.20 {
-                        player_jump_air_time = Some(car.state.last_air_time);
+                    if air_time >= 0.20 {
+                        player_jump_air_time = Some(air_time);
                     }
                 } else if i == 1 && is_split {
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera_p2.add_trauma(0.25);
                 }
                 let surf = wheel_surfaces.get(i).map(|s| s[0]).unwrap_or(SurfaceType::Asphalt);
-                self.fx.particles.emit_landing_dust(car.state.position, car.state.speed, surf);
+                self.fx.particles.emit_landing_dust(position, speed, surf);
             }
         }
 
@@ -11575,7 +11500,7 @@ impl RaceSession {
                 self.player_race_stats.stunt_stats.jump_points += pts;
                 self.player_race_stats.stunt_stats.total_stunt_score += pts;
 
-                if let Some(player_car) = self.cars.get(my_car_idx) {
+                if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                     let sw = screen_width_safe();
                     let sh = screen_height_safe();
                     let screen_pos = self.camera.world_to_screen_with_viewport(player_car.state.position, sw, sh);
@@ -11624,7 +11549,7 @@ impl RaceSession {
             if let Some(surfaces) = wheel_surfaces.get(p_idx) {
                 let in_water = surfaces.iter().any(|&s| s == SurfaceType::Water);
                 if in_water {
-                    if let Some(car) = self.cars.get(p_idx) {
+                    if let Some(car) = self.world.vehicles.get(p_idx) {
                         if !car.state.is_airborne
                             && car.state.elevation <= 0.0
                             && car.state.speed > 3.0
@@ -11638,80 +11563,69 @@ impl RaceSession {
             }
         }
 
-        // 4. Resolve Car-to-Car collisions with momentum exchange and penetration pushback
-        let car_collision_events = if n_cars > 1 {
-            resolve_multi_car_collisions(&mut self.cars, 0.45, 0.35, 3)
-        } else {
-            Vec::new()
-        };
+        // Car-to-Car collision events
+        let car_collision_events: Vec<CarCarCollisionEvent> = race_events
+            .iter()
+            .filter_map(|ev| if let RaceEvent::VehicleImpact(cev) = ev { Some(*cev) } else { None })
+            .collect();
 
-        // 5. Resolve Wall and Obstacle boundary collisions for each car (including grandstands & tree trunks)
-        let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
+        // Wall and Obstacle collision events (including grandstands & tree trunks)
         let demolition_mode = self.is_demolition_scoring_enabled();
         let mut wall_collision_events = Vec::new();
-        for (car_idx, car) in self.cars.iter_mut().enumerate() {
-            let mut wall_events = resolve_all_wall_collisions(
-                car,
-                &self.track.geometry.inner_walls,
-                &scenery_obstacles,
-            );
-            let outer_events =
-                resolve_all_wall_collisions(car, &self.track.geometry.outer_walls, &[]);
-            wall_events.extend(outer_events);
-
-            for wev in &wall_events {
-                if wev.impact_speed > 2.0 && !demolition_mode {
-                    car.state.drift_score = 0.0;
-                    car.state.is_drifting = false;
-                    if car_idx == my_car_idx {
-                        self.player_collision_stunt_lockout = 1.2;
-                        if self.drift_combo_count > 0 || self.prev_player_drifting {
-                            if self.drift_combo_count >= 2 || self.prev_player_drifting {
-                                let sw = screen_width_safe();
-                                let sh = screen_height_safe();
-                                let screen_pos = self.camera.world_to_screen_with_viewport(car.state.position, sw, sh);
-                                let anchor = Vec2::new(
-                                    screen_pos.x.clamp(100.0, sw - 100.0),
-                                    (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
-                                );
-                                let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
-                                self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
-                            }
-                            self.drift_combo_count = 0;
-                            self.drift_combo_timer = 0.0;
-                            self.prev_player_drifting = false;
+        for ev in &race_events {
+            let RaceEvent::WallImpact { car: car_idx, event: wev } = *ev else { continue };
+            let car = &mut self.world.vehicles[car_idx];
+            if wev.impact_speed > 2.0 && !demolition_mode {
+                car.state.drift_score = 0.0;
+                car.state.is_drifting = false;
+                if car_idx == my_car_idx {
+                    self.player_collision_stunt_lockout = 1.2;
+                    if self.drift_combo_count > 0 || self.prev_player_drifting {
+                        if self.drift_combo_count >= 2 || self.prev_player_drifting {
+                            let sw = screen_width_safe();
+                            let sh = screen_height_safe();
+                            let screen_pos = self.camera.world_to_screen_with_viewport(car.state.position, sw, sh);
+                            let anchor = Vec2::new(
+                                screen_pos.x.clamp(100.0, sw - 100.0),
+                                (screen_pos.y - 45.0).clamp(70.0, sh - 70.0),
+                            );
+                            let alert_msg = if self.drift_combo_count >= 2 { "COMBO BROKEN!" } else { "DRIFT VOIDED!" };
+                            self.floating_text.spawn_alert(alert_msg, anchor, Palette::RED);
                         }
-                    } else if car_idx == 1 && is_split {
-                        self.player2_collision_stunt_lockout = 1.2;
+                        self.drift_combo_count = 0;
+                        self.drift_combo_timer = 0.0;
+                        self.prev_player_drifting = false;
                     }
-                }
-                if wev.impact_speed > 3.0 {
-                    if car_idx == my_car_idx {
-                        self.camera.add_trauma(wev.impact_speed * 0.08);
-                    } else if car_idx == 1 && is_split {
-                        self.camera_p2.add_trauma(wev.impact_speed * 0.08);
-                    }
-                }
-                if wev.impact_speed > 2.2 {
-                    if car_idx == my_car_idx {
-                        self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
-                    }
-                    let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
-                    self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
+                } else if car_idx == 1 && is_split {
+                    self.player2_collision_stunt_lockout = 1.2;
                 }
             }
-            wall_collision_events.extend(wall_events);
+            if wev.impact_speed > 3.0 {
+                if car_idx == my_car_idx {
+                    self.camera.add_trauma(wev.impact_speed * 0.08);
+                } else if car_idx == 1 && is_split {
+                    self.camera_p2.add_trauma(wev.impact_speed * 0.08);
+                }
+            }
+            if wev.impact_speed > 2.2 {
+                if car_idx == my_car_idx {
+                    self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                }
+                let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
+                self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
+            }
+            wall_collision_events.push(wev);
         }
 
         for cev in &car_collision_events {
             if cev.closing_speed > 2.0 && !demolition_mode {
-                if cev.car_a_idx < self.cars.len() {
-                    self.cars[cev.car_a_idx].state.drift_score = 0.0;
-                    self.cars[cev.car_a_idx].state.is_drifting = false;
+                if cev.car_a_idx < self.world.vehicles.len() {
+                    self.world.vehicles[cev.car_a_idx].state.drift_score = 0.0;
+                    self.world.vehicles[cev.car_a_idx].state.is_drifting = false;
                 }
-                if cev.car_b_idx < self.cars.len() {
-                    self.cars[cev.car_b_idx].state.drift_score = 0.0;
-                    self.cars[cev.car_b_idx].state.is_drifting = false;
+                if cev.car_b_idx < self.world.vehicles.len() {
+                    self.world.vehicles[cev.car_b_idx].state.drift_score = 0.0;
+                    self.world.vehicles[cev.car_b_idx].state.is_drifting = false;
                 }
                 if cev.car_a_idx == my_car_idx || cev.car_b_idx == my_car_idx {
                     self.player_collision_stunt_lockout = 1.2;
@@ -11719,7 +11633,7 @@ impl RaceSession {
                         if self.drift_combo_count >= 2 || self.prev_player_drifting {
                             let sw = screen_width_safe();
                             let sh = screen_height_safe();
-                            let pos = self.cars.get(my_car_idx).map(|c| c.state.position).unwrap_or(Vec2::ZERO);
+                            let pos = self.world.vehicles.get(my_car_idx).map(|c| c.state.position).unwrap_or(Vec2::ZERO);
                             let screen_pos = self.camera.world_to_screen_with_viewport(pos, sw, sh);
                             let anchor = Vec2::new(
                                 screen_pos.x.clamp(100.0, sw - 100.0),
@@ -11762,7 +11676,7 @@ impl RaceSession {
         // Dynamic Accelerating Engine Audio (motor sound only) (Spec 038)
         // Engine RPM rev flare must strictly reflect driven wheels' longitudinal slip ratio,
         // isolating engine acoustics from unpowered front steer wheels' lateral slip angles.
-        if let Some(player_car) = self.cars.get(my_car_idx) {
+        if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
             let driven_slip_ratio = player_car.state.wheel_assemblies.iter()
                 .zip(player_car.state.wheels.iter())
                 .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
@@ -11781,8 +11695,8 @@ impl RaceSession {
             self.audio.update_engine_telemetry(rpm, effective_throttle, is_shift, forward_speed, self.engine_rpm.current_gear, dt);
         }
 
-        if is_split && self.cars.len() >= 2 {
-            let p2_car = &self.cars[1];
+        if is_split && self.world.vehicles.len() >= 2 {
+            let p2_car = &self.world.vehicles[1];
             let driven_slip_ratio = p2_car.state.wheel_assemblies.iter()
                 .zip(p2_car.state.wheels.iter())
                 .filter(|(assembly, _)| assembly.config.drive_torque_factor > 0.0)
@@ -11803,18 +11717,8 @@ impl RaceSession {
             self.audio.stop_player2_engine();
         }
 
-        // 6. Update race progression, lap tracking, sector splits, anti-cheat
-        for i in 0..n_cars {
-            self.trackers[i].update(
-                &self.cars[i],
-                &self.track.spline,
-                &self.track.checkpoints,
-                dt,
-            );
-        }
-
         // Lap and sector split audio feedback
-        if let Some(tracker) = self.trackers.get(my_car_idx) {
+        if let Some(tracker) = self.world.trackers.get(my_car_idx) {
             let lap_changed = tracker.current_lap > self.prev_player_lap;
 
             if tracker.current_sector != self.prev_player_sector {
@@ -11869,7 +11773,7 @@ impl RaceSession {
 
             // 7. Ghost lap telemetry recording (Time Attack)
             if self.is_time_attack {
-                if let Some(player_car) = self.cars.get(my_car_idx) {
+                if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                     self.ghost_recorder.record_frame(tracker.lap_time, player_car, dt);
 
                     if lap_changed {
@@ -11925,7 +11829,7 @@ impl RaceSession {
                             duration: 3.5,
                         });
 
-                        if let Some(player_car) = self.cars.get(my_car_idx) {
+                        if let Some(player_car) = self.world.vehicles.get(my_car_idx) {
                             let popup_msg = if let Some(d) = delta {
                                 format!("PERSONAL BEST! {} (-{:.2}s)", format_lap_time(last_lap_time), d)
                             } else {
@@ -11952,8 +11856,8 @@ impl RaceSession {
         }
 
         // Lap and sector split audio feedback for Player 2
-        if is_split && self.trackers.len() >= 2 {
-            let p2_tracker = &self.trackers[1];
+        if is_split && self.world.trackers.len() >= 2 {
+            let p2_tracker = &self.world.trackers[1];
             let p2_lap_changed = p2_tracker.current_lap > self.prev_p2_lap;
             if p2_tracker.current_sector != self.prev_p2_sector {
                 if p2_tracker.current_sector > 0 {
@@ -11971,7 +11875,7 @@ impl RaceSession {
 
         // 8. Replay frame recording
         if let Some(rec) = &mut self.replay_recorder {
-            if let (Some(player_car), Some(tracker)) = (self.cars.get(my_car_idx), self.trackers.get(my_car_idx)) {
+            if let (Some(player_car), Some(tracker)) = (self.world.vehicles.get(my_car_idx), self.world.trackers.get(my_car_idx)) {
                 let my_ctrl = controls_all.get(my_car_idx).copied().unwrap_or_default();
                 rec.record_frame(my_ctrl, player_car, tracker);
             }
@@ -11979,7 +11883,7 @@ impl RaceSession {
 
         // 9. Update visual effects (skidmarks, tire smoke, roost, collision sparks, drift popups)
         self.fx.update(
-            &self.cars,
+            &self.world.vehicles,
             &wheel_surfaces,
             &wall_collision_events,
             &car_collision_events,
@@ -11988,7 +11892,7 @@ impl RaceSession {
 
         // 9b. Drift Combo & HUD Floating Popups
         let stunt_scoring_enabled = self.is_stunt_scoring_enabled();
-        if let Some(player_car) = self.cars.get_mut(my_car_idx) {
+        if let Some(player_car) = self.world.vehicles.get_mut(my_car_idx) {
             let was_drifting = self.prev_player_drifting;
             let is_drifting = player_car.state.is_drifting;
 
@@ -12035,7 +11939,7 @@ impl RaceSession {
         }
 
         // Ensure non-player cars also clear drift_score when not drifting
-        for (i, car) in self.cars.iter_mut().enumerate() {
+        for (i, car) in self.world.vehicles.iter_mut().enumerate() {
             if i != my_car_idx && !car.state.is_drifting && car.state.drift_score > 0.0 {
                 car.state.drift_score = 0.0;
             }
@@ -12054,11 +11958,11 @@ impl RaceSession {
     pub fn check_race_finish(&mut self) {
         let my_car_idx = self.player_car_index();
         let player_done = if self.is_split_screen() {
-            let p1_done = self.trackers.first().is_some_and(|t| t.current_lap > self.total_laps);
-            let p2_done = self.trackers.get(1).is_some_and(|t| t.current_lap > self.total_laps);
+            let p1_done = self.world.trackers.first().is_some_and(|t| t.current_lap > self.total_laps);
+            let p2_done = self.world.trackers.get(1).is_some_and(|t| t.current_lap > self.total_laps);
             p1_done || p2_done
         } else {
-            self.trackers
+            self.world.trackers
                 .get(my_car_idx)
                 .is_some_and(|t| t.current_lap > self.total_laps)
         };
@@ -12069,8 +11973,8 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::RaceFinish);
 
             let track_id = self.track_choice_id().to_string();
-            let player_time = self.session_time;
-            let player_best_lap = self.trackers.get(my_car_idx).and_then(|t| t.best_lap_time);
+            let player_time = self.results.iter().find(|r| r.car_idx == my_car_idx).map(|r| r.total_time).unwrap_or(self.session_time);
+            let player_best_lap = self.world.trackers.get(my_car_idx).and_then(|t| t.best_lap_time);
 
             // 1. Check personal best lap against active profile stats before updating
             let prev_best_lap = self.active_profile_stats.best_times.get(&track_id).copied();
@@ -12091,7 +11995,7 @@ impl RaceSession {
                     track_id: track_id.clone(),
                     car_name: player_car_title.clone(),
                     position: player_pos,
-                    total_cars: self.cars.len(),
+                    total_cars: self.world.vehicles.len(),
                     total_time: player_time,
                     best_lap: player_best_lap,
                     laps: self.total_laps,
@@ -12111,8 +12015,9 @@ impl RaceSession {
             // 3. Automatically record all race finishers (player + bots) into the Hall of Fame
             let mut player_hof_id: Option<i64> = None;
             if let Some(db) = &self.hof_db {
-                let standings = self.compute_standings();
-                for (rank, &car_idx) in standings.iter().enumerate() {
+                let race_results = self.world.results(&self.track);
+                for row in &race_results {
+                    let car_idx = row.car;
                     let is_me = car_idx == my_car_idx;
                     let is_p2 = self.is_split_screen() && car_idx == 1;
                     let (driver_name, vehicle_name) = if is_me {
@@ -12142,15 +12047,13 @@ impl RaceSession {
                         }
                     };
 
-                    let tracker = &self.trackers[car_idx];
-                    let total_time = self.session_time + (rank as f32 * 0.65);
                     let entry = HallOfFameEntry {
                         id: None,
                         track_id: track_id.clone(),
                         player_name: driver_name,
                         car_name: vehicle_name,
-                        total_time,
-                        best_lap: tracker.best_lap_time,
+                        total_time: row.time,
+                        best_lap: row.best_lap,
                         laps: self.total_laps,
                         created_at: String::new(),
                     };
@@ -12360,8 +12263,8 @@ impl RaceSession {
 
             // Populate fallback telemetry if synthetic test or laps empty
             if self.player_race_stats.laps.is_empty() {
-                let best = self.trackers.get(my_car_idx).and_then(|t| t.best_lap_time).unwrap_or(self.session_time / self.total_laps.max(1) as f32);
-                let sectors = self.trackers.get(my_car_idx).map(|t| t.last_lap_sector_times.clone()).unwrap_or_default();
+                let best = self.world.trackers.get(my_car_idx).and_then(|t| t.best_lap_time).unwrap_or(self.session_time / self.total_laps.max(1) as f32);
+                let sectors = self.world.trackers.get(my_car_idx).map(|t| t.last_lap_sector_times.clone()).unwrap_or_default();
                 for lap_idx in 1..=self.total_laps {
                     self.player_race_stats.laps.push(LapTelemetry {
                         lap_number: lap_idx,
@@ -12380,32 +12283,29 @@ impl RaceSession {
         }
     }
 
-    /// Computes real-time race standings.
-    pub fn compute_standings(&self) -> Vec<usize> {
-        let mut indices: Vec<usize> = (0..self.cars.len()).collect();
-        indices.sort_by(|&a, &b| {
-            let tr_a = &self.trackers[a];
-            let tr_b = &self.trackers[b];
+    /// Race format of the world for the current settings.
+    fn race_format(&self) -> RaceFormat {
+        if self.is_time_attack {
+            RaceFormat::TimeAttack
+        } else {
+            RaceFormat::Laps(self.total_laps)
+        }
+    }
 
-            // Primary: Lap number descending
-            if tr_a.current_lap != tr_b.current_lap {
-                return tr_b.current_lap.cmp(&tr_a.current_lap);
-            }
-            // Secondary: Normalized track progress descending
-            tr_b.normalized_progress
-                .partial_cmp(&tr_a.normalized_progress)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        indices
+    /// Computes real-time race standings: finished cars in finish order, then by lap and progress.
+    pub fn compute_standings(&self) -> Vec<usize> {
+        self.world.standings()
     }
 
     /// Builds the final results standings table.
     fn build_results(&mut self) {
         let my_car_idx = self.player_car_index();
-        let standings = self.compute_standings();
+        let race_results = self.world.results(&self.track);
         self.results.clear();
+        let leader_time = race_results.first().map(|r| r.time).unwrap_or(0.0);
 
-        for (rank, &car_idx) in standings.iter().enumerate() {
+        for row in &race_results {
+            let (rank, car_idx) = (row.position - 1, row.car);
             let is_player = car_idx == my_car_idx || (self.is_split_screen() && car_idx == 1);
             let car_name = if car_idx == my_car_idx {
                 if self.is_split_screen() {
@@ -12434,20 +12334,18 @@ impl RaceSession {
                 }
             };
 
-            let tracker = &self.trackers[car_idx];
-            let total_time = self.session_time + (rank as f32 * 0.65);
-            let leader_time = self.session_time;
-            let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
+            let delta = if rank == 0 { 0.0 } else { row.time - leader_time };
 
             self.results.push(RaceResultEntry {
                 position: rank + 1,
                 car_name,
                 is_player,
-                total_time,
-                best_lap: tracker.best_lap_time,
+                total_time: row.time,
+                best_lap: row.best_lap,
                 delta_to_leader: delta,
                 car_idx,
                 points_awarded: 0,
+                projected: row.projected,
             });
         }
     }
@@ -12725,7 +12623,7 @@ impl RaceSession {
                     &self.grid_participants,
                     self.total_laps,
                     best_lap,
-                    self.cars.len(),
+                    self.world.vehicles.len(),
                     max_grid_size,
                     self.input.gamepad.snapshot.is_connected,
                     self.starting_grid_focus,
@@ -14222,8 +14120,8 @@ impl RaceSession {
         // Separate cars into ground and elevated groups
         let mut ground_cars = Vec::new();
         let mut elevated_cars = Vec::new();
-        for i in 0..self.cars.len() {
-            let car = &self.cars[i];
+        for i in 0..self.world.vehicles.len() {
+            let car = &self.world.vehicles[i];
             let is_elevated = car.state.elevation > 0.05
                 || car.state.ramp_elevation > 0.05
                 || self.track.spline.project_point(car.state.position).is_bridge;
@@ -14234,15 +14132,15 @@ impl RaceSession {
             }
         }
         ground_cars.sort_by(|&a, &b| {
-            self.cars[a]
+            self.world.vehicles[a]
                 .total_elevation()
-                .partial_cmp(&self.cars[b].total_elevation())
+                .partial_cmp(&self.world.vehicles[b].total_elevation())
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
         elevated_cars.sort_by(|&a, &b| {
-            self.cars[a]
+            self.world.vehicles[a]
                 .total_elevation()
-                .partial_cmp(&self.cars[b].total_elevation())
+                .partial_cmp(&self.world.vehicles[b].total_elevation())
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
@@ -14250,7 +14148,7 @@ impl RaceSession {
         self.fx.render_ground_debris();
 
         // 4. Ground-Level Vehicles
-        let player_alpha = self.cars.get(focus_car_idx).map(|pc| {
+        let player_alpha = self.world.vehicles.get(focus_car_idx).map(|pc| {
             compute_adaptive_alpha(
                 self.visibility_options.adaptive_visibility,
                 camera.current_zoom,
@@ -14260,7 +14158,7 @@ impl RaceSession {
         }).unwrap_or(1.0);
 
         if self.visibility_options.ground_aura && ground_cars.contains(&focus_car_idx) {
-            if let Some(focus_car) = self.cars.get(focus_car_idx) {
+            if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(
                     focus_car.state.position,
@@ -14273,7 +14171,7 @@ impl RaceSession {
             }
         }
         for &i in &ground_cars {
-            let car = &self.cars[i];
+            let car = &self.world.vehicles[i];
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
             let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
@@ -14306,9 +14204,9 @@ impl RaceSession {
         // 5. Ghost Vehicle (Semi-transparent during Time Trial)
         if self.game_mode.has_ghost() {
             if let Some(best_ghost) = &self.ghost_recorder.best_ghost_lap {
-                if let Some(player_tracker) = self.trackers.get(focus_car_idx) {
+                if let Some(player_tracker) = self.world.trackers.get(focus_car_idx) {
                     if let Some(ghost_frame) = best_ghost.sample_at_time(player_tracker.lap_time) {
-                        if let Some(player_car) = self.cars.get(focus_car_idx) {
+                        if let Some(player_car) = self.world.vehicles.get(focus_car_idx) {
                             render_ghost_car(&ghost_frame, &player_car.config, 0.60);
                         }
                     }
@@ -14324,7 +14222,7 @@ impl RaceSession {
 
         // 8. Elevated Vehicles (drawn on top of the bridge deck)
         if self.visibility_options.ground_aura && elevated_cars.contains(&focus_car_idx) {
-            if let Some(focus_car) = self.cars.get(focus_car_idx) {
+            if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
                 render_player_ground_aura(
                     focus_car.state.position,
@@ -14337,7 +14235,7 @@ impl RaceSession {
             }
         }
         for &i in &elevated_cars {
-            let car = &self.cars[i];
+            let car = &self.world.vehicles[i];
             let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
             let model_id = self.car_model_ids.get(i).copied().flatten();
             let effective_scheme = if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
@@ -14371,7 +14269,7 @@ impl RaceSession {
         self.fx.render_airborne_fx();
 
         // 10. Player Car Visibility Aids (Overhead Chevron)
-        if let Some(focus_car) = self.cars.get(focus_car_idx) {
+        if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
             let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
             if self.visibility_options.overhead_chevron {
                 render_player_overhead_chevron(
@@ -14386,7 +14284,7 @@ impl RaceSession {
                 );
             }
             if self.visibility_options.curve_helper {
-                if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
+                if let Some(focus_tracker) = self.world.trackers.get(focus_car_idx) {
                     let max_lookahead = curve_indicator_lookahead(focus_car.state.speed);
                     if let Some(status) = self.track.spline.upcoming_curve(
                         focus_tracker.progress_distance,
@@ -14428,14 +14326,14 @@ impl RaceSession {
         }
 
         // 11. Tree Foliage Canopies (Above Vehicles with proximity alpha fading)
-        render_tree_canopies_culled(&self.track, &self.cars, view_bounds);
+        render_tree_canopies_culled(&self.track, &self.world.vehicles, view_bounds);
 
         // 12. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
-        if let Some(focus_car) = self.cars.get(focus_car_idx) {
-            if let Some(focus_tracker) = self.trackers.get(focus_car_idx) {
+        if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
+            if let Some(focus_tracker) = self.world.trackers.get(focus_car_idx) {
                 self.input.render_world_debug(
                     focus_car,
-                    &self.cars,
+                    &self.world.vehicles,
                     &self.track,
                     focus_tracker,
                     &self.ai_drivers,
@@ -14448,7 +14346,7 @@ impl RaceSession {
 
     /// Collects candidate nameplate items for a given focus player car.
     pub fn collect_bot_nameplates<'a>(&'a self, focus_car_idx: usize) -> Vec<VehicleNameplateItem<'a>> {
-        let focus_pos = match self.cars.get(focus_car_idx) {
+        let focus_pos = match self.world.vehicles.get(focus_car_idx) {
             Some(c) => c.state.position,
             None => return Vec::new(),
         };
@@ -14456,7 +14354,7 @@ impl RaceSession {
         let bot_offset = if self.is_split_screen() { 2 } else { 1 };
         let mut items = Vec::new();
 
-        for (i, car) in self.cars.iter().enumerate() {
+        for (i, car) in self.world.vehicles.iter().enumerate() {
             if i == focus_car_idx {
                 continue;
             }
@@ -14527,7 +14425,7 @@ impl RaceSession {
 
     /// Renders world-space entities under active camera with strict elevation occlusion layering.
     fn render_world(&self) {
-        if self.is_split_screen() && self.cars.len() >= 2 {
+        if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let sw = screen_width_safe();
             let sh = screen_height_safe();
             let [vp1, vp2] = self.split_layout.viewports(sw, sh);
@@ -14559,7 +14457,7 @@ impl RaceSession {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
 
-        if self.is_split_screen() && self.cars.len() >= 2 {
+        if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let standings = self.compute_standings();
             let p1_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
             let p2_pos = standings.iter().position(|&idx| idx == 1).unwrap_or(0) + 1;
@@ -14567,15 +14465,15 @@ impl RaceSession {
             render_split_hud(
                 &self.fonts,
                 &self.track,
-                &self.cars,
+                &self.world.vehicles,
                 &self.color_schemes,
-                &self.cars[0],
-                &self.trackers[0],
+                &self.world.vehicles[0],
+                &self.world.trackers[0],
                 p1_pos,
-                &self.cars[1],
-                &self.trackers[1],
+                &self.world.vehicles[1],
+                &self.world.trackers[1],
                 p2_pos,
-                self.cars.len(),
+                self.world.vehicles.len(),
                 self.total_laps,
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
@@ -14583,20 +14481,20 @@ impl RaceSession {
             );
         } else {
             let my_idx = self.player_car_index();
-            if let Some(player_car) = self.cars.get(my_idx) {
-                let player_tracker = &self.trackers[my_idx];
+            if let Some(player_car) = self.world.vehicles.get(my_idx) {
+                let player_tracker = &self.world.trackers[my_idx];
                 let standings = self.compute_standings();
                 let player_pos = standings.iter().position(|&idx| idx == my_idx).unwrap_or(0) + 1;
 
                 render_hud(
                     &self.fonts,
                     &self.track,
-                    &self.cars,
+                    &self.world.vehicles,
                     &self.color_schemes,
                     player_car,
                     player_tracker,
                     player_pos,
-                    self.cars.len(),
+                    self.world.vehicles.len(),
                     self.total_laps,
                     self.is_time_attack,
                     countdown,

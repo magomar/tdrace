@@ -251,11 +251,11 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
 
     assert_eq!(session.color_schemes[0], session.active_profile.color_scheme);
     assert_eq!(session.color_schemes[0].to_hex_strings(), custom_livery.to_hex_strings());
-    assert_eq!(session.cars.len(), session.max_grid_participants()); // Full grid capacity on classic track
+    assert_eq!(session.world.vehicles.len(), session.max_grid_participants()); // Full grid capacity on classic track
 
     // Simulate winning race completion
-    session.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
-    session.trackers[0].best_lap_time = Some(23.4);
+    session.world.trackers[0].current_lap = session.total_laps + 1; // Completed all laps
+    session.world.trackers[0].best_lap_time = Some(23.4);
     session.session_time = 71.5;
 
     session.check_race_finish();
@@ -479,8 +479,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
     // Simulate winning race to populate in-memory session caches
     session.track_choice = TrackChoice::ClassicGrandPrix;
     session.init_race();
-    session.trackers[0].current_lap = session.total_laps + 1;
-    session.trackers[0].best_lap_time = Some(23.0);
+    session.world.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].best_lap_time = Some(23.0);
     session.session_time = 70.0;
     session.check_race_finish();
 
@@ -682,8 +682,8 @@ fn test_gt_career_session_gating_and_cup_launch() {
     // Test race completion in GT awards metric distance XP, finish duplication, and first-time bonus
     session.start_gt_career_tier(1);
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4; // finished 3 laps
-    session.trackers[0].best_lap_time = Some(21.0);
+    session.world.trackers[0].current_lap = 4; // finished 3 laps
+    session.world.trackers[0].best_lap_time = Some(21.0);
     session.session_time = 65.0;
     session.check_race_finish();
 
@@ -889,8 +889,8 @@ fn test_championship_completion_podium_trophy_awarded() {
 
     // Finish race as P1
     session.total_laps = 3;
-    session.trackers[0].current_lap = 4;
-    session.trackers[0].best_lap_time = Some(20.5);
+    session.world.trackers[0].current_lap = 4;
+    session.world.trackers[0].best_lap_time = Some(20.5);
     session.session_time = 62.0;
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -1994,8 +1994,8 @@ fn test_race_finish_records_authentic_model_title_in_history() {
     session.selected_car_model_id = Some("rally_fiesta_rally4");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2; // finished 1 lap
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2; // finished 1 lap
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 
@@ -2019,8 +2019,8 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
     assert_eq!(session.active_module_id, "rally");
 
     session.total_laps = 1;
-    session.trackers[0].current_lap = 2;
-    session.trackers[0].best_lap_time = Some(35.0);
+    session.world.trackers[0].current_lap = 2;
+    session.world.trackers[0].best_lap_time = Some(35.0);
     session.session_time = 40.0;
     session.check_race_finish();
 

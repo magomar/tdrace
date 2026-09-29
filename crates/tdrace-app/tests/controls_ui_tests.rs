@@ -543,17 +543,17 @@ fn test_player_starts_in_arcade_and_preserves_last_used_mode_across_new_races() 
     // Initial race car assists match Arcade profile
     session.init_race();
     assert_eq!(session.assist_profile, AssistProfile::Arcade);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Arcade.to_config());
 
     // 2. Player changes assist mode to Sport
     session.set_assist_profile(AssistProfile::Sport);
     assert_eq!(session.assist_profile, AssistProfile::Sport);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Sport.to_config());
 
     // 3. New race launched via init_race() preserves last used mode (Sport)
     session.init_race();
     assert_eq!(session.assist_profile, AssistProfile::Sport);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Sport.to_config());
 
     // 4. Switching modules preserves last used mode
     session.switch_to_gt();
@@ -570,7 +570,7 @@ fn test_player_starts_in_arcade_and_preserves_last_used_mode_across_new_races() 
     assert_eq!(session.assist_profile, AssistProfile::Pro);
     session.init_race();
     assert_eq!(session.assist_profile, AssistProfile::Pro);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Pro.to_config());
 }
 
 #[test]
@@ -586,26 +586,26 @@ fn test_split_screen_players_independent_mode_preservation() {
     assert_eq!(session.assist_profile_p2, AssistProfile::Arcade);
 
     session.init_race();
-    assert!(session.cars.len() >= 2);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Arcade.to_config());
-    assert_eq!(session.cars[1].config.assists, AssistProfile::Arcade.to_config());
+    assert!(session.world.vehicles.len() >= 2);
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Arcade.to_config());
+    assert_eq!(session.world.vehicles[1].config.assists, AssistProfile::Arcade.to_config());
 
     // P1 changes to Sport, P2 changes to Pro
     session.set_assist_profile(AssistProfile::Sport);
     session.assist_profile_p2 = AssistProfile::Pro;
-    if let Some(p2_car) = session.cars.get_mut(1) {
+    if let Some(p2_car) = session.world.vehicles.get_mut(1) {
         p2_car.config.assists = session.assist_profile_p2.to_config();
     }
 
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
-    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.world.vehicles[1].config.assists, AssistProfile::Pro.to_config());
 
     // New race launched preserves both players' last used modes independently
     session.init_race();
     assert_eq!(session.assist_profile, AssistProfile::Sport);
     assert_eq!(session.assist_profile_p2, AssistProfile::Pro);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Sport.to_config());
-    assert_eq!(session.cars[1].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Sport.to_config());
+    assert_eq!(session.world.vehicles[1].config.assists, AssistProfile::Pro.to_config());
 }
 
 #[test]
@@ -631,7 +631,7 @@ fn test_profile_switch_restores_last_used_mode() {
     session.assist_profile = session.active_profile.last_mode;
     session.init_race();
     assert_eq!(session.assist_profile, AssistProfile::Pro);
-    assert_eq!(session.cars[0].config.assists, AssistProfile::Pro.to_config());
+    assert_eq!(session.world.vehicles[0].config.assists, AssistProfile::Pro.to_config());
 }
 
 

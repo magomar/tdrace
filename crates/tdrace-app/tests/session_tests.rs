@@ -8,8 +8,8 @@ fn test_session_initialization() {
 
     session.init_race();
     let expected_cars = 1 + session.num_bots;
-    assert_eq!(session.cars.len(), expected_cars);
-    assert_eq!(session.trackers.len(), expected_cars);
+    assert_eq!(session.world.vehicles.len(), expected_cars);
+    assert_eq!(session.world.trackers.len(), expected_cars);
     assert_eq!(session.ai_drivers.len(), session.num_bots);
     assert_eq!(session.color_schemes.len(), expected_cars);
 
@@ -28,8 +28,8 @@ fn test_session_track_and_car_selection() {
     session.init_race();
 
     assert_eq!(session.track.name, "Kart Arena");
-    assert_eq!(session.cars.len(), 6);
-    assert_eq!(session.cars[0].config.mass, 180.0); // Kart mass
+    assert_eq!(session.world.vehicles.len(), 6);
+    assert_eq!(session.world.vehicles[0].config.mass, 180.0); // Kart mass
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn test_session_time_attack_mode() {
     session.is_time_attack = true;
     session.init_race();
 
-    assert_eq!(session.cars.len(), 1); // Solo player
+    assert_eq!(session.world.vehicles.len(), 1); // Solo player
     assert_eq!(session.ai_drivers.len(), 0);
 }
 
@@ -49,20 +49,20 @@ fn test_session_standings_computation() {
     session.init_race();
 
     // Advance car 2 to lap 2
-    session.trackers[2].current_lap = 2;
-    session.trackers[2].normalized_progress = 0.35;
+    session.world.trackers[2].current_lap = 2;
+    session.world.trackers[2].normalized_progress = 0.35;
 
     // Advance car 0 to lap 1 with 0.80 progress
-    session.trackers[0].current_lap = 1;
-    session.trackers[0].normalized_progress = 0.80;
+    session.world.trackers[0].current_lap = 1;
+    session.world.trackers[0].normalized_progress = 0.80;
 
     // Car 1 on lap 1 with 0.40 progress
-    session.trackers[1].current_lap = 1;
-    session.trackers[1].normalized_progress = 0.40;
+    session.world.trackers[1].current_lap = 1;
+    session.world.trackers[1].normalized_progress = 0.40;
 
     // Car 3 on lap 1 with 0.10 progress
-    session.trackers[3].current_lap = 1;
-    session.trackers[3].normalized_progress = 0.10;
+    session.world.trackers[3].current_lap = 1;
+    session.world.trackers[3].normalized_progress = 0.10;
 
     let standings = session.compute_standings();
     assert_eq!(standings[0], 2); // Car 2 is P1
@@ -77,10 +77,10 @@ fn test_player_lap_tracking_advancement_and_finish() {
     session.init_race();
 
     assert_eq!(session.prev_player_lap, 1);
-    assert_eq!(session.trackers[0].current_lap, 1);
+    assert_eq!(session.world.trackers[0].current_lap, 1);
 
     // Simulate crossing start/finish line for lap 2
-    session.trackers[0].current_lap = 2;
+    session.world.trackers[0].current_lap = 2;
 
     // Run physics step
     session.physics_step(1.0 / 60.0);
@@ -91,10 +91,10 @@ fn test_player_lap_tracking_advancement_and_finish() {
     // Subsequent steps must remain synchronized
     session.physics_step(1.0 / 60.0);
     assert_eq!(session.prev_player_lap, 2);
-    assert_eq!(session.trackers[0].current_lap, 2);
+    assert_eq!(session.world.trackers[0].current_lap, 2);
 
     // Complete all laps (e.g., total_laps + 1)
-    session.trackers[0].current_lap = session.total_laps + 1;
+    session.world.trackers[0].current_lap = session.total_laps + 1;
     session.physics_step(1.0 / 60.0);
     assert_eq!(session.prev_player_lap, session.total_laps + 1);
 
@@ -172,7 +172,7 @@ fn test_all_races_and_modules_default_to_grid_capacity() {
     let mut session = RaceSession::new();
     let max_grid = session.max_grid_participants();
     session.init_race();
-    assert_eq!(session.cars.len(), max_grid, "Default session should fill grid slots");
+    assert_eq!(session.world.vehicles.len(), max_grid, "Default session should fill grid slots");
     assert_eq!(session.ai_drivers.len(), max_grid - 1);
     assert_eq!(session.opponent_drivers.len(), max_grid - 1);
 
@@ -180,28 +180,28 @@ fn test_all_races_and_modules_default_to_grid_capacity() {
     session.switch_to_gt();
     assert_eq!(session.num_bots, 7);
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "GT module should have 8 riders");
+    assert_eq!(session.world.vehicles.len(), 8, "GT module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
     // 3. Switch to Rally (applies config.rally.toml default_num_bots = 7)
     session.switch_to_rally();
     assert_eq!(session.num_bots, 7);
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "Rally module should have 8 riders");
+    assert_eq!(session.world.vehicles.len(), 8, "Rally module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
     // 4. Switch to Kart (applies config.kart.toml default_num_bots = 7)
     session.switch_to_kart();
     assert_eq!(session.num_bots, 7);
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "Kart module should have 8 riders");
+    assert_eq!(session.world.vehicles.len(), 8, "Kart module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
     // 5. Switch to Classic (applies config.toml default_num_bots = 7)
     session.switch_to_classic();
     assert_eq!(session.num_bots, 7);
     session.init_race();
-    assert_eq!(session.cars.len(), 8, "Classic module should have 8 riders");
+    assert_eq!(session.world.vehicles.len(), 8, "Classic module should have 8 riders");
     assert_eq!(session.ai_drivers.len(), 7);
 
     // 6. Test all preset tracks in classic mode (preserves preference of 8 riders)
@@ -216,7 +216,7 @@ fn test_all_races_and_modules_default_to_grid_capacity() {
         session.track_choice = track_choice;
         session.init_race();
         assert_eq!(
-            session.cars.len(),
+            session.world.vehicles.len(),
             8,
             "Track {:?} should have 8 riders by default",
             session.track_choice
@@ -241,7 +241,7 @@ fn test_grid_positioning_fast_lap_earns_pole() {
     assert_eq!(player_slot, 0, "Player with fastest lap time should start on Pole (slot 0)");
 
     // Verify car 0 is spawned at grid_positions[0]
-    let player_car = &session.cars[0];
+    let player_car = &session.world.vehicles[0];
     let grid_pose_0 = &session.track.grid_positions[0];
     assert!((player_car.state.position.x - grid_pose_0.position.x).abs() < 1e-3);
     assert!((player_car.state.position.y - grid_pose_0.position.y).abs() < 1e-3);
@@ -328,10 +328,10 @@ fn test_grid_positioning_all_slots_unique_and_valid() {
     let mut positions = Vec::new();
     for (i, p) in session.grid_participants.iter().enumerate() {
         let car_pose = if p.is_player {
-            session.cars[0].state.position
+            session.world.vehicles[0].state.position
         } else {
             let bot_idx = p.bot_index.unwrap();
-            session.cars[bot_idx + 1].state.position
+            session.world.vehicles[bot_idx + 1].state.position
         };
         let expected_slot_pose = session.track.grid_positions[i].position;
         assert!((car_pose.x - expected_slot_pose.x).abs() < 1e-3);
@@ -418,8 +418,8 @@ fn test_personal_best_notification_lifecycle() {
     session.pb_notification = None;
 
     // 1. Lap 1: Initial record establishes first personal best
-    session.trackers[0].last_lap_time = Some(24.5);
-    session.trackers[0].current_lap = 2;
+    session.world.trackers[0].last_lap_time = Some(24.5);
+    session.world.trackers[0].current_lap = 2;
     session.physics_step(1.0 / 60.0);
 
     let pb1 = session.pb_notification.as_ref().expect("Expected PB notification on initial lap");
@@ -432,8 +432,8 @@ fn test_personal_best_notification_lifecycle() {
 
     // 2. Lap 2: Slower lap does NOT trigger a new PB notification
     let timer_before = session.pb_notification.as_ref().unwrap().timer;
-    session.trackers[0].last_lap_time = Some(25.2);
-    session.trackers[0].current_lap = 3;
+    session.world.trackers[0].last_lap_time = Some(25.2);
+    session.world.trackers[0].current_lap = 3;
     session.physics_step(1.0 / 60.0);
 
     let pb_after_slower = session.pb_notification.as_ref().expect("PB notification should persist until expired");
@@ -443,8 +443,8 @@ fn test_personal_best_notification_lifecycle() {
     assert_eq!(session.active_profile_stats.best_times.get(&track_id), Some(&24.5));
 
     // 3. Lap 3: Faster lap (23.8s) triggers new PB notification with delta (-0.70s)
-    session.trackers[0].last_lap_time = Some(23.8);
-    session.trackers[0].current_lap = 4;
+    session.world.trackers[0].last_lap_time = Some(23.8);
+    session.world.trackers[0].current_lap = 4;
     session.physics_step(1.0 / 60.0);
 
     let pb3 = session.pb_notification.as_ref().expect("Expected PB notification on faster lap");
@@ -741,7 +741,7 @@ fn test_checkpoint_crossings_trigger_sector_split_popups_with_color_coding() {
     // 1. First sector benchmark (no previous best)
     session.prev_best_sectors = vec![None; 3];
     session.prev_player_sector = 0;
-    if let Some(tracker) = session.trackers.first_mut() {
+    if let Some(tracker) = session.world.trackers.first_mut() {
         tracker.current_sector = 1; // Crossed into sector 1
         tracker.sector_times[0] = 18.50; // Sector 0 took 18.50s
     }
@@ -758,7 +758,7 @@ fn test_checkpoint_crossings_trigger_sector_split_popups_with_color_coding() {
 
     // 2. Faster sector on subsequent lap (-0.42s)
     session.prev_player_sector = 0;
-    if let Some(tracker) = session.trackers.first_mut() {
+    if let Some(tracker) = session.world.trackers.first_mut() {
         tracker.current_sector = 1;
         tracker.sector_times[0] = 18.08; // 18.08s (-0.42s compared to 18.50)
     }
@@ -774,7 +774,7 @@ fn test_checkpoint_crossings_trigger_sector_split_popups_with_color_coding() {
 
     // 3. Slower sector (+0.35s)
     session.prev_player_sector = 0;
-    if let Some(tracker) = session.trackers.first_mut() {
+    if let Some(tracker) = session.world.trackers.first_mut() {
         tracker.current_sector = 1;
         tracker.sector_times[0] = 18.43; // 18.43s (+0.35s compared to 18.08)
     }
@@ -795,7 +795,7 @@ fn test_drift_combo_and_jump_landing_dynamic_popups() {
 
     // 1. Drift completion triggers score popup and combo increment
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 350.0;
     }
@@ -807,7 +807,7 @@ fn test_drift_combo_and_jump_landing_dynamic_popups() {
 
     // 2. Second drift completion within combo window triggers COMBO x2!
     session.prev_player_drifting = true;
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = false;
         player_car.state.drift_score = 520.0;
     }
@@ -819,7 +819,7 @@ fn test_drift_combo_and_jump_landing_dynamic_popups() {
 
     // 3. Jump landing triggers dynamic air time alert and combo chaining
     session.floating_text.clear();
-    if let Some(player_car) = session.cars.first_mut() {
+    if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.elevation = 0.01;
         player_car.state.vertical_velocity = -5.0;
         player_car.state.air_time = 1.60; // 1.60s mega jump (>= 1.50s)
@@ -853,8 +853,8 @@ fn test_split_screen_session_initialization() {
 
     assert!(session.is_split_screen());
     // 2 human players (P1 Keys, P2 Gamepad) + 2 AI bots = 4 cars
-    assert_eq!(session.cars.len(), 4);
-    assert_eq!(session.trackers.len(), 4);
+    assert_eq!(session.world.vehicles.len(), 4);
+    assert_eq!(session.world.trackers.len(), 4);
     assert_eq!(session.ai_drivers.len(), 2);
     assert_eq!(session.color_schemes.len(), 4);
     assert_eq!(session.grid_participants.len(), 4);
@@ -890,7 +890,7 @@ fn test_split_screen_physics_stepping_and_standings() {
     session.num_bots = 0; // 1v1 Head-to-Head Duel
     session.init_race();
 
-    assert_eq!(session.cars.len(), 2);
+    assert_eq!(session.world.vehicles.len(), 2);
 
     // Run multiple physics steps
     for _ in 0..10 {
@@ -898,10 +898,10 @@ fn test_split_screen_physics_stepping_and_standings() {
     }
 
     // Advance P2 ahead of P1
-    session.trackers[1].current_lap = 2;
-    session.trackers[1].normalized_progress = 0.40;
-    session.trackers[0].current_lap = 1;
-    session.trackers[0].normalized_progress = 0.90;
+    session.world.trackers[1].current_lap = 2;
+    session.world.trackers[1].normalized_progress = 0.40;
+    session.world.trackers[0].current_lap = 1;
+    session.world.trackers[0].normalized_progress = 0.90;
 
     let standings = session.compute_standings();
     assert_eq!(standings[0], 1, "P2 (Car 1) should be in 1st position");
@@ -916,10 +916,10 @@ fn test_split_screen_race_finish_and_results() {
     session.init_race();
 
     // Player 2 completes all laps
-    session.trackers[1].current_lap = session.total_laps + 1;
-    session.trackers[1].normalized_progress = 0.1;
-    session.trackers[0].current_lap = session.total_laps;
-    session.trackers[0].normalized_progress = 0.95;
+    session.world.trackers[1].current_lap = session.total_laps + 1;
+    session.world.trackers[1].normalized_progress = 0.1;
+    session.world.trackers[0].current_lap = session.total_laps;
+    session.world.trackers[0].normalized_progress = 0.95;
 
     session.check_race_finish();
     assert_eq!(session.state, GameState::Finished);
@@ -1055,7 +1055,7 @@ fn test_split_screen_player2_audio_computation_and_telemetry() {
     // 3. Racing phase: step physics drives both engines
     session.state = GameState::Racing;
     // Accelerate P2 car to verify engine RPM updates
-    session.cars[1].state.local_velocity.x = 25.0;
+    session.world.vehicles[1].state.local_velocity.x = 25.0;
     session.physics_step(1.0 / 60.0);
 
     assert!(session.audio.is_engine_active);
@@ -1063,11 +1063,11 @@ fn test_split_screen_player2_audio_computation_and_telemetry() {
     assert!(session.engine_rpm_p2.current_rpm > 1000.0);
 
     // 4. Sector & Lap tracking audio feedback for Player 2
-    session.trackers[1].current_sector = 1;
+    session.world.trackers[1].current_sector = 1;
     session.physics_step(1.0 / 60.0);
     assert_eq!(session.prev_p2_sector, 1);
 
-    session.trackers[1].current_lap = 2;
+    session.world.trackers[1].current_lap = 2;
     session.physics_step(1.0 / 60.0);
     assert_eq!(session.prev_p2_lap, 2);
 

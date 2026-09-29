@@ -574,14 +574,14 @@ fn test_classic_mode_bot_color_schemes_distinct_from_player_sprite() {
     session.num_bots = 4;
     session.rebuild_roster_participants();
 
-    assert!(session.cars.len() >= 4, "Roster must include player and bots");
+    assert!(session.world.vehicles.len() >= 4, "Roster must include player and bots");
 
     let player_model_id = session.car_model_ids[0].expect("Player must have classic model id");
     let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
 
     // All bots must NOT match factory livery (so they trigger mask-based tinting)
     // and must have primary colors visually distinct from the player model's factory primary color.
-    for i in 1..session.cars.len() {
+    for i in 1..session.world.vehicles.len() {
         let bot_scheme = session.color_schemes[i];
         let dr = (bot_scheme.primary.r - player_model.primary_color.r).abs();
         let dg = (bot_scheme.primary.g - player_model.primary_color.g).abs();
@@ -618,7 +618,7 @@ fn test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory(
         session.start_gt_career_tier(tier);
 
         assert_eq!(session.game_mode, GameMode::Career);
-        assert!(session.cars.len() >= 4, "Roster must include player and bots");
+        assert!(session.world.vehicles.len() >= 4, "Roster must include player and bots");
 
         let player_model_id = session.car_model_ids[0].expect("Player must have model id in GT career");
         let player_model = find_model_by_id(player_model_id).expect("Model must exist in catalog");
@@ -636,7 +636,7 @@ fn test_career_mode_bot_color_schemes_use_masked_colors_and_player_uses_factory(
 
         // All bots must NOT match their vehicle model factory livery (must use masked colors)
         // and must have primary colors visually distinct from the player model's factory primary color.
-        for i in 1..session.cars.len() {
+        for i in 1..session.world.vehicles.len() {
             let bot_scheme = session.color_schemes[i];
             let bot_model_id = session.car_model_ids[i].expect("Bot must have model id in GT career");
             let bot_model = find_model_by_id(bot_model_id).expect("Bot model must exist in catalog");
