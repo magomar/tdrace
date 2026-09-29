@@ -1279,9 +1279,10 @@ fn test_track_editor_car_category_mutation_and_cycling() {
     assert!(state.redo());
     assert_eq!(state.track.car_category, CarCategory::Rally);
 
-    // 4. Test cycling car category: Rally -> Kart -> OffRoad -> Gt -> Nascar -> Rally
+    // 4. Test cycling car category: Rally -> Kart -> OffRoad -> Autocross -> Gt -> Nascar -> Rally
     assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Kart);
     assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::OffRoad);
+    assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Autocross);
     assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Gt);
     assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Nascar);
     assert_eq!(tools.cycle_track_car_category(&mut state), CarCategory::Rally);

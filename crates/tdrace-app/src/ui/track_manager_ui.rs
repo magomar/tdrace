@@ -200,8 +200,9 @@ pub fn render_track_manager_screen(
             ModuleFilter::Gt => 3,
             ModuleFilter::Nascar => 4,
             ModuleFilter::ExtremeOffRoad => 5,
-            ModuleFilter::Vault => 6,
-            ModuleFilter::Drafts => 7,
+            ModuleFilter::Autocross => 6,
+            ModuleFilter::Vault => 7,
+            ModuleFilter::Drafts => 8,
         };
         let chip_x = box_x + scaler.s(12.0) + idx as f32 * (chip_w + spacing);
         let is_filter_drafts = *filter == ModuleFilter::Drafts;
@@ -223,6 +224,7 @@ pub fn render_track_manager_screen(
             ModuleFilter::Gt => Palette::RED,
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
             ModuleFilter::ExtremeOffRoad => Color::new(1.0, 0.40, 0.05, 1.0),
+            ModuleFilter::Autocross => Color::new(1.0, 0.45, 0.05, 1.0),
             ModuleFilter::Vault => Color::new(1.0, 0.65, 0.0, 1.0),
             ModuleFilter::Drafts => Palette::NEON_GOLD,
         };
@@ -461,6 +463,8 @@ pub fn render_track_manager_screen(
                 "rally" => "RALLYCROSS",
                 "kart" => "KARTING",
                 "nascar" => "NASCAR",
+                "extreme_offroad" => "EXTREME OFF-ROAD",
+                "autocross" => "FIA AUTOCROSS",
                 _ => "CLASSIC",
             }).collect::<Vec<_>>().join(" • "))
         };
@@ -1047,6 +1051,14 @@ fn resolve_track_module_badge(
                 if is_dossier { "OFFICIAL PRESET • NASCAR CUP".to_string() } else { "OFFICIAL PRESET • NASCAR".to_string() },
                 Palette::NEON_GOLD,
             ),
+            "extreme_offroad" => (
+                if is_dossier { "OFFICIAL PRESET • EXTREME OFF-ROAD".to_string() } else { "OFFICIAL PRESET • OFF-ROAD".to_string() },
+                Color::new(1.0, 0.40, 0.05, 1.0),
+            ),
+            "autocross" => (
+                if is_dossier { "OFFICIAL PRESET • FIA AUTOCROSS".to_string() } else { "OFFICIAL PRESET • AUTOCROSS".to_string() },
+                Color::new(1.0, 0.45, 0.05, 1.0),
+            ),
             _ => (
                 if is_dossier { "OFFICIAL PRESET • CLASSIC ARCADE".to_string() } else { "OFFICIAL PRESET • CLASSIC".to_string() },
                 Palette::NEON_CYAN,
@@ -1069,6 +1081,14 @@ fn resolve_track_module_badge(
             ),
             "nascar" => (
                 if is_dossier { "CUSTOM CIRCUIT • NASCAR CUP".to_string() } else { "CUSTOM CIRCUIT • NASCAR".to_string() },
+                green,
+            ),
+            "extreme_offroad" => (
+                if is_dossier { "CUSTOM CIRCUIT • EXTREME OFF-ROAD".to_string() } else { "CUSTOM CIRCUIT • OFF-ROAD".to_string() },
+                green,
+            ),
+            "autocross" => (
+                if is_dossier { "CUSTOM CIRCUIT • FIA AUTOCROSS".to_string() } else { "CUSTOM CIRCUIT • AUTOCROSS".to_string() },
                 green,
             ),
             _ => (

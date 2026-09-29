@@ -79,7 +79,7 @@ fn test_menu_direct_garage_shortcut() {
 
 #[test]
 fn test_garage_shows_all_module_models_across_tiers() {
-    let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+    let modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
 
     for mod_id in modules {
         let all_cars = get_models_for_module(mod_id);
@@ -107,8 +107,8 @@ fn test_garage_shows_all_module_models_across_tiers() {
     let global_models = get_all_models();
     assert_eq!(
         global_models.len(),
-        95,
-        "Expected exactly 95 real car models in catalog, got {}",
+        110,
+        "Expected exactly 110 real car models in catalog, got {}",
         global_models.len()
     );
 }
@@ -116,10 +116,10 @@ fn test_garage_shows_all_module_models_across_tiers() {
 #[test]
 fn test_all_80_real_cars_attributes_and_data_integrity() {
     let global_models = get_all_models();
-    assert_eq!(global_models.len(), 95);
+    assert_eq!(global_models.len(), 110);
 
     let mut seen_ids = std::collections::HashSet::new();
-    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
+    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
 
     for car in global_models {
         // Unique non-empty IDs and names
@@ -278,10 +278,10 @@ fn test_garage_view_modes() {
 #[test]
 fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
     // Spec: remove the "all" tab, and keep only module specific tabs
-    assert_eq!(GALLERY_MODULES.len(), 5);
+    assert_eq!(GALLERY_MODULES.len(), 6);
 
-    let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad"];
-    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD"];
+    let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
+    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD", "AUTOCROSS"];
 
     for (i, &(mod_id, label)) in GALLERY_MODULES.iter().enumerate() {
         assert_ne!(label, "ALL", "The 'ALL' tab must be removed from fleet gallery");
@@ -305,6 +305,7 @@ fn test_fleet_gallery_filter_conversions() {
         (2, "kart"),
         (3, "nascar"),
         (4, "extreme_offroad"),
+        (5, "autocross"),
     ];
 
     for (idx, mod_id) in mapping {

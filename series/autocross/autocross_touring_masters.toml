@@ -1,0 +1,117 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Autocross Career Mode: TouringAutocross SuperSaloon Masters (Tier 4)
+# ==============================================================================
+
+[championship]
+id = "autocross_touring_masters"
+name = "TouringAutocross SuperSaloon Masters"
+description = "550+ BHP production silhouette touring monsters with anti-lag turbo boost and crushing torque conquering heavy dirt ruts across Spain, France, and Germany."
+module_id = "autocross"
+tier = 4
+laps_per_round = 5
+bot_count = 7
+ai_difficulty = "expert"
+icon = "dirt"
+
+[scoring]
+system = "fia"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "carballo_ax"
+name = "Circuito Motor Bértoa Carballo"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "faleyras_ax"
+name = "Circuit de Faleyras"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "schluechtern_ax"
+name = "Ewald-Pauli-Ring Schlüchtern"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "matschenberg_ax"
+name = "Offroad Arena Matschenberg Cunewalde"
+laps = 5
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Touring Racing"
+is_player = true
+car_model_id = "autocross_skoda_fabia_tax"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "vaclav_fejfar"
+name = "Václav Fejfar"
+team = "Fejfar Motorsport"
+car_model_id = "autocross_skoda_fabia_tax"
+country = "CZE"
+ai_character = "fast"
+livery_idx = 1
+
+[[drivers]]
+id = "erwin_frieszl"
+name = "Erwin Frieszl"
+team = "Frieszl Racing"
+car_model_id = "autocross_mitsubishi_evo_tax"
+country = "AUT"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "adriaan_boele"
+name = "Adriaan Boele"
+team = "Boele Autosport"
+car_model_id = "autocross_skoda_fabia_tax"
+country = "NLD"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "marcel_egg"
+name = "Marcel Egg"
+team = "Egg Racing Team"
+car_model_id = "autocross_audi_a4_tax"
+country = "CHE"
+ai_character = "balanced"
+livery_idx = 4
+
+[[drivers]]
+id = "pavel_vyborny"
+name = "Pavel Výborný"
+team = "Výborný Motorsport"
+car_model_id = "autocross_mitsubishi_evo_tax"
+country = "CZE"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "grit_hennersdorf"
+name = "Grit Hennersdorf"
+team = "Hennersdorf Offroad"
+car_model_id = "autocross_skoda_fabia_tax"
+country = "DEU"
+ai_character = "balanced"
+livery_idx = 6
+
+[[drivers]]
+id = "werner_gurschler"
+name = "Werner Gurschler"
+team = "Gurschler Quattro"
+car_model_id = "autocross_audi_a4_tax"
+country = "ITA"
+ai_character = "cautious"
+livery_idx = 7

@@ -104,6 +104,11 @@ impl PlayerProfile {
             None => "🏁",
         }
     }
+
+    /// Returns default career progress for a given module associated with this profile.
+    pub fn module_progress(&self, module_id: &str) -> ModuleCareerProgress {
+        ModuleCareerProgress::default_for_module(self.id.unwrap_or(1), module_id)
+    }
 }
 
 /// Category-specific aggregated career statistics.

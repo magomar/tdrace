@@ -17,23 +17,56 @@ This document provides a comprehensive reference for all user interface screens,
 
 ```mermaid
 stateDiagram-v2
-    [*] --> ModuleSelect: App Launch
-
-    state "Grand Hub (ModuleSelect)" as ModuleSelect {
-        [*] --> SelectModule
-        SelectModule --> ExitConfirmModal: [ESC / B]
-        ExitConfirmModal --> SelectModule: [ESC / N / Cancel]
-        ExitConfirmModal --> [*]: [ENTER / Y / Confirm]
-    }
+    [*] --> ModalitySelect: App Launch
 
     state "Race Modality Selection (ModalitySelect)" as ModalitySelect {
-        [*] --> ColumnNavigation
+        [*] --> SinglePlayerCol
+        state "1P (Single Player)" as SinglePlayerCol {
+            [*] --> QuickRace
+            QuickRace --> CustomRace: DOWN
+            CustomRace --> CareerMode: DOWN
+            CareerMode --> TimeTrial: DOWN
+            TimeTrial --> FreeRide: DOWN
+        }
+        state "MP (Multiplayer)" as MultiplayerCol {
+            [*] --> SplitScreen
+            SplitScreen --> LanPlay: DOWN
+            LanPlay --> CloudPlay: DOWN
+        }
+        state "Options" as OptionsCol {
+            [*] --> PlayerProfile
+            PlayerProfile --> GarageShowroom: DOWN
+            GarageShowroom --> TrackStudio: DOWN
+            TrackStudio --> SeriesEditor: DOWN
+            SeriesEditor --> SettingsModal: DOWN
+        }
+        SinglePlayerCol --> MultiplayerCol: RIGHT / TAB / 2
+        MultiplayerCol --> OptionsCol: RIGHT / TAB / 3
+        OptionsCol --> SinglePlayerCol: RIGHT / TAB / 1
+        MultiplayerCol --> SinglePlayerCol: LEFT
+        OptionsCol --> MultiplayerCol: LEFT
     }
 
-    state "Track Selection Menu (Menu)" as Menu {
-        [*] --> LeftPanelTracks
-        LeftPanelTracks --> RightPanelVehicle: [RIGHT / D]
-        RightPanelVehicle --> LeftPanelTracks: [LEFT / A]
+    state "Exit Game Modal (ExitConfirmModal)" as ExitConfirmModal {
+        [*] --> ConfirmPrompt
+    }
+
+    state "Circuit Selector & Setup (Menu)" as Menu {
+        [*] --> CategoryFilterBar
+        CategoryFilterBar --> TrackCatalogList: [UP / DOWN]
+        TrackCatalogList --> TrackGeometryPreview: [RIGHT / D]
+        TrackGeometryPreview --> TrackCatalogList: [LEFT / A]
+    }
+
+    state "Career Championship Selection (CareerSelect)" as CareerSelect {
+        [*] --> TieredChampionshipCards
+        state "Tier 1 (Rookie / Always Visible)" as Tier1Cards
+        state "Tier 2-5 (Unlocked Progression)" as UnlockedTierCards
+        state "Completed (Retained with Trophies)" as CompletedCards
+    }
+
+    state "Career Replay Modal (CareerReplayModal)" as CareerReplayModal {
+        [*] --> ReplayConfirmPrompt
     }
 
     state "Starting Grid & Roster Setup (StartingGrid)" as StartingGrid {
@@ -63,46 +96,40 @@ stateDiagram-v2
     }
 
     state "Championship Standings (ChampionshipStandings)" as ChampionshipStandings
-    state "GT Career Hub & Calendar (CareerHub)" as CareerHub
     state "Arcade Settings Modal (ArcadeSettingsModal)" as ArcadeSettingsModal
     state "Garage Showroom (Garage)" as Garage
     state "Circuit Hub & Workshop (TrackManager)" as TrackManager
     state "CAD Spline Studio (TrackEditor)" as TrackEditor
 
-    %% Grand Hub transitions
-    ModuleSelect --> ModalitySelect: [ENTER / SPACE / A] (Configure Discipline)
-    ModuleSelect --> ProfileManager: [P / Y]
-    ModuleSelect --> ProfileCreate: [N / X]
-    ModuleSelect --> ControlsHelp: [K]
-    ModuleSelect --> ArcadeSettingsModal: [X]
-    ArcadeSettingsModal --> ModuleSelect: [ESC / B / Save] (if opened from Hub)
-
-    %% Modality Selection transitions
-    ModalitySelect --> ModuleSelect: [ESC / B] (Back to Grand Hub)
+    %% Modality Selection root transitions
+    ModalitySelect --> ExitConfirmModal: [ESC / B]
+    ExitConfirmModal --> ModalitySelect: [ESC / N / Cancel]
+    ExitConfirmModal --> [*]: [ENTER / Y / Confirm Quit]
     ModalitySelect --> Menu: [ENTER / SPACE / A] (Quick Race, Custom Race, Time Trial, Free Ride, Split Screen)
-    ModalitySelect --> CareerHub: [ENTER / SPACE / A] (GT Career Mode)
-    ModalitySelect --> ChampionshipStandings: [ENTER / SPACE / A] (NASCAR/Rallycross Career Mode)
+    ModalitySelect --> CareerSelect: [ENTER / SPACE / A] (Career Mode)
     ModalitySelect --> Garage: [ENTER on Col 3 / G] (Open Garage Showroom)
-    ModalitySelect --> TrackManager: [ENTER on Col 4 / T] (Open Circuit Hub)
+    ModalitySelect --> TrackManager: [ENTER on Col 3 / T] (Open Circuit Hub)
+    ModalitySelect --> ProfileManager: [P / Y]
+    ModalitySelect --> ProfileCreate: [N / X]
+    ModalitySelect --> ControlsHelp: [K]
+    ModalitySelect --> ArcadeSettingsModal: [X / O]
+    ArcadeSettingsModal --> ModalitySelect: [ESC / B / Save] (if opened from ModalitySelect)
 
-    %% Career Hub transitions
-    CareerHub --> ModalitySelect: [ESC / B] (Back to Modality Selection)
-    CareerHub --> StartingGrid: [SPACE / ENTER / A] (Launch Championship Cup)
-    CareerHub --> Garage: [G] (Inspect Assigned Vehicle)
-    CareerHub --> CareerHub: [Left / Right / Q / E / LB / RB / 1-5] (Switch Tier Tabs)
-    CareerHub --> CareerHub: [Up / Down / W / S] (Navigate Focus Between Tabs and Calendar Slots)
-    CareerHub --> CareerHub: [< / > / [ / ] / Left / Right on swappable slot] (Customize Optional Calendar Slots)
-    CareerHub --> CareerHub: [P] (Advance / Promote Tier)
-    CareerHub --> CareerHub: [TAB / S / Y] (Toggle Live Season Standings)
+    %% Career Select transitions
+    CareerSelect --> ModalitySelect: [ESC / B] (Return to Modality Selection)
+    CareerSelect --> ChampionshipStandings: [ENTER / SPACE / A] (Start / Resume Active Championship)
+    CareerSelect --> CareerReplayModal: [ENTER / SPACE / A] (Replay Completed Championship)
+    CareerReplayModal --> ChampionshipStandings: [ENTER / Y / Confirm] (Reset Session & Start Round 1)
+    CareerReplayModal --> CareerSelect: [ESC / N / Cancel]
 
-    %% Menu transitions
+    %% Menu transitions (Category-Filtered Circuit Selector)
     Menu --> ModalitySelect: [ESC / TAB / B] (Return to Modality Selection)
-    Menu --> StartingGrid: [SPACE / ENTER / A]
+    Menu --> Menu: [Q / E / 1..=8] (Filter by Category: Classic, Rally, Kart, GT, NASCAR, Off-Road, Custom)
+    Menu --> StartingGrid: [SPACE / ENTER / A] (Syncs module context & loads track)
     Menu --> Garage: [G] (Open Garage Showroom)
     Garage --> Menu: [ESC / B / Select] (if origin is Menu)
     Menu --> TrackManager: [T] or select Track Manager card
     Menu --> TrackEditor: [E] (Launch Editor with Selected Track)
-    Menu --> ChampionshipStandings: [F] (GT World Challenge / NASCAR Cup Championship Mode)
     Menu --> ProfileManager: [P / Y]
     Menu --> ControlsHelp: [K]
     Menu --> ArcadeSettingsModal: [X / O]
@@ -114,9 +141,8 @@ stateDiagram-v2
     DriverCards --> StartingGrid: [ESC / ENTER / B]
     StartingGrid --> Garage: [G] (Inspect Car Details)
     Garage --> StartingGrid: [ESC / B] (if origin is StartingGrid)
-    Garage --> CareerHub: [ESC / B] (if origin is CareerHub)
     StartingGrid --> Menu: [ESC / B] (if origin is Menu)
-    StartingGrid --> CareerHub: [ESC / B] (if GT Career Mode)
+    StartingGrid --> CareerSelect: [ESC / B] (if Career Mode)
 
     %% Garage transitions
     Garage --> ModalitySelect: [ESC / B] (if origin is ModalitySelect)
@@ -140,13 +166,13 @@ stateDiagram-v2
 
     %% Championship transitions
     ChampionshipStandings --> StartingGrid: [SPACE / ENTER / A] (Next Round)
-    ChampionshipStandings --> Menu: [ESC / B] (Abandon)
-    ChampionshipStandings --> CareerHub: [ESC / B / Finish] (if GT Career Mode)
+    ChampionshipStandings --> CareerSelect: [ESC / B / Complete] (Return to Career Selector)
+    ChampionshipStandings --> Menu: [ESC / B] (if Casual Championship)
 
     %% Profile flow
     ProfileManager --> ProfileCreate: [N / E]
     ProfileCreate --> ProfileManager: [ENTER / Save] or [ESC / Cancel]
-    ProfileManager --> ModuleSelect: [ESC / B] (if opened from Hub)
+    ProfileManager --> ModalitySelect: [ESC / B] (if opened from ModalitySelect)
     ProfileManager --> Menu: [ESC / B] (if opened from Menu)
 
     %% Track Manager & Studio flow
@@ -158,7 +184,7 @@ stateDiagram-v2
 
     %% Controls Help fallback
     ControlsHelp --> Menu: [ESC / ENTER / K / B] (if opened from Menu)
-    ControlsHelp --> ModuleSelect: [ESC / ENTER / K / B] (if opened from Hub)
+    ControlsHelp --> ModalitySelect: [ESC / ENTER / K / B] (if opened from ModalitySelect)
 ```
 
 ---
@@ -207,8 +233,8 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 
 ## 3. Screen Specifications & Navigation Catalog
 
-### 3.1. Grand Hub (`GameState::ModuleSelect`)
-* **Purpose**: Primary platform entry point. Allows choosing motorsport disciplines (Classic Arcade, Rallycross World Cup, Karting World Cup, GT World Challenge, NASCAR Cup Series).
+### 3.1. Grand Hub (`GameState::ModuleSelect` - Retired / Legacy)
+* **Purpose**: Historical platform entry point. Retired from the primary app boot lifecycle and navigation flow in Spec 066. The application now boots directly into `GameState::ModalitySelect`. Kept in the codebase for backward compatibility.
 * **State Struct**: `GameState::ModuleSelect { selected_idx: usize }`
 * **Components**:
   - Header with branding & Profile badge banner.
@@ -231,46 +257,50 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 ---
 
 ### 3.2. Race Modality Selection (`GameState::ModalitySelect`)
-* **Purpose**: Modality selection stage separating Single Player (Quick Race, Custom Race, Career Mode, Time Trial, Free Ride), Multiplayer (2P Split Screen, LAN, Cloud), Vehicle Roster & Garage, and Circuit Catalogue before circuit selection.
+* **Purpose**: Primary platform entry point and modality selection stage separating Single Player (Quick Race, Custom Race, Career Mode, Time Trial, Free Ride), Multiplayer (2P Split Screen, LAN, Cloud), and Options (Player Profile, Garage Showroom, Track Studio, Series Editor, Settings) before circuit selection.
 * **State Struct**: `GameState::ModalitySelect { category: ModalityCategory, selected_idx: usize, modal: Option<ModalityModal> }`
 * **Components**:
-  - Top Breadcrumbs: Active motorsport module name and discipline badge.
-  - Centered Category Tabs: `[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, `[ 3. VEHICLE ROSTER ]`, and `[ 4. CIRCUITS ]`.
+  - Top Breadcrumbs: Active motorsport branding and profile summary badge.
+  - Centered Category Tabs: `[ 1. SINGLE PLAYER ]`, `[ 2. MULTIPLAYER ]`, and `[ 3. OPTIONS ]`.
   - Translucent Glass Modality Cards: Displaying title, badge tag, description, and selection highlight.
+  - Exit Application Confirmation Modal: Invoked on `[ESC]` / Gamepad `[B]` at root level (`UniversalConfirmModal::quit_game()`).
   - In-Development Notification Modal: Informational dialog for LAN and Cloud online play.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
-| `Left` / `Right` / `Tab` / `1` / `2` / `3` / `4` / Gamepad `LB`/`RB` | Switch Category | Cycles across Single Player, Multiplayer, Vehicle Roster, and Circuit Catalogue |
+| `Left` / `Right` / `Tab` / `1` / `2` / `3` / Gamepad `LB`/`RB` | Switch Category | Cycles across Single Player (1P), Multiplayer (MP), and Options |
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Cards | Selects card within active category |
-| `Enter` / `Space` / Gamepad `A` | Confirm Selection | Transitions to `GameState::Menu`, `ChampionshipStandings`, `GameState::Garage`, or `GameState::TrackManager` |
+| `Enter` / `Space` / Gamepad `A` | Confirm Selection | Casual Single Player & Split Screen -> `GameState::Menu`<br>Career Mode -> `GameState::CareerSelect`<br>Options -> `ProfileManager`, `Garage`, `TrackManager`, `SettingsModal` |
 | `G` | Garage Showroom | Opens full-screen Garage showroom -> `GameState::Garage` |
 | `T` | Circuit Catalogue | Opens Circuit Catalogue & Manager -> `GameState::TrackManager` |
-| `Escape` / Gamepad `B` | Back / Dismiss | Dismisses modal if open, otherwise returns to Grand Hub -> `GameState::ModuleSelect` |
+| `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
+| `X` / `O` | Settings Modal | Opens `ArcadeSettingsModal` overlay |
+| `Escape` / Gamepad `B` | Exit Game / Dismiss | Dismisses modal if open, otherwise opens Universal Exit Confirmation Modal |
 
 ---
 
 ### 3.3. Track & Setup Menu (`GameState::Menu`)
-* **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, expanded vector map preview, telemetry analysis, and personal best lap timing records.
+* **Purpose**: Circuit selection from a unified catalog containing official presets and user-created custom circuits, expanded vector map preview, telemetry analysis, and personal best lap timing records. In casual modes, features dynamic motorsport category filtering.
 * **State Struct**: `GameState::Menu`
 * **Components**:
   - **Left Column (Circuit Catalog)**:
+    - **Category Filter Bar**: Neon category filter pills (`[ ALL ]`, `[ CLASSIC ]`, `[ RALLY ]`, `[ KART ]`, `[ GT ]`, `[ NASCAR ]`, `[ OFF-ROAD ]`, `[ CUSTOM ]`) navigable via `Q` / `E` or `<` / `>` or direct keys `1..=8`. Filters the displayed circuit list dynamically. Selecting and launching any circuit automatically synchronizes the engine's active motorsport module context to match that circuit's discipline.
     - **Filter Pill Bar**: Two neon filter tabs (`[ PRESETS [P] ]`, `[ CUSTOM [C] ]`) with live track counters.
-    - **Circuit List**: Catalog list displaying either official motorsport presets or user-created custom circuits according to the active tab. In the `[ CUSTOM ]` view, a dedicated **Track Manager [T]** entry is included to open the track management and organization hub. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
+    - **Circuit List**: Catalog list displaying either official motorsport presets or user-created custom circuits according to active filters. In the `[ CUSTOM ]` view, a dedicated **Track Manager [T]** entry is included to open the track management and organization hub. Custom circuits are distinguished by a golden `CUSTOM CIRCUIT` badge.
   - **Right Column Top (Circuit Dossier & Geometry Preview)**: Expanded full vector track layout preview (curbs, surface materials, checkpoints, start/finish direction arrow) + Circuit overview & classification tags (scale, country, closed circuit / sprint stage). When the **Track Manager [T]** entry is highlighted, this panel renders the Circuit Studio & Workshop overview with quick actions.
-  - **Right Column Bottom (Circuit Timing & Telemetry Grid)**: Personal best lap record (`format_lap_time`), best race time / circuit completion, and 4-chip telemetry specifications grid (track length, track width, race laps & timing gates, grid capacity & off-track surface). (Interactive vehicle selection is performed on the subsequent Starting Grid screen).
+  - **Right Column Bottom (Circuit Timing & Telemetry Grid)**: Personal best lap record (`format_lap_time`), best race time / circuit completion, and 4-chip telemetry specifications grid (track length, track width, race laps & timing gates, grid capacity & off-track surface).
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
+| `Q` / `E` / `<` / `>` / `1..=8` | Filter by Category | Filters catalog by registered motorsport discipline (`ALL`, `CLASSIC`, `RALLY`, `KART`, `GT`, `NASCAR`, `OFF-ROAD`, `CUSTOM`) |
 | `Left` / `Right` / `A` / `D` / `Tab` / Gamepad `D-pad X` | Toggle Filter Tab | Switches catalog filter between `[ PRESETS ]` and `[ CUSTOM ]` |
 | `Up` / `Down` / `W` / `S` / Gamepad `D-pad Y` | Navigate Catalog | Scrolls circuit list within the active filter category |
-| `Space` / `Enter` / Gamepad `A` | Confirm Selection | If circuit selected: loads circuit -> `GameState::StartingGrid`<br>If Track Manager selected: opens `GameState::TrackManager` |
+| `Space` / `Enter` / Gamepad `A` | Confirm Selection | If circuit selected: synchronizes module context & loads circuit -> `GameState::StartingGrid`<br>If Track Manager selected: opens `GameState::TrackManager` |
 | `T` | Open Track Manager | Directly opens Track Manager hub -> `GameState::TrackManager` |
 | `C` | Clone Circuit | Duplicates highlighted preset or custom circuit into custom storage |
 | `E` | Launch CAD Studio | Loads highlighted circuit into Track CAD Editor -> `GameState::TrackEditor` |
-| `F` | Start Championship | Launches Championship mode (e.g. F1 World Championship) |
 | `P` / Gamepad `Y` | Profile Manager | Opens `GameState::ProfileManager` |
 | `X` / `O` | Open Settings Modal | Opens `ArcadeSettingsModal` overlay |
 | `K` | Controls Help | Opens `GameState::ControlsHelp(false)` |
@@ -400,7 +430,7 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `Enter` / Gamepad `A` | Advance to Next Round | Loads next round track -> Transitions to `GameState::StartingGrid` |
-| `Escape` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::CareerHub` (if GT Career) or `GameState::Menu` |
+| `Escape` / Gamepad `B` | Abandon Championship | Resets championship session -> Transitions to `GameState::CareerSelect` (if Career Mode) or `GameState::Menu` |
 
 ---
 
@@ -429,6 +459,27 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
 | `G` | Inspect in Garage | Opens Garage Showroom for the assigned car -> `GameState::Garage` |
 | `X` / Gamepad `X` | Reset Cup Progress | Resets active unfinished championship season to customize calendar anew |
 | `Escape` / Gamepad `B` | Back to Modalities | Returns to discipline modality selector -> `GameState::ModalitySelect` |
+
+---
+
+### 3.8.2. Career Championship Selection (`GameState::CareerSelect`)
+* **Purpose**: Unified multi-discipline championship career selector across all registered motorsport categories (GT World Challenge, NASCAR Cup, Rallycross, Karting, Extreme Off-Road, Classic Heritage).
+* **State Struct**: `GameState::CareerSelect { selected_idx: usize }`
+* **Tier-Gated Championship Presentation**:
+  - **Tier 1 (Rookie / Grassroots)**: Always visible and unlocked across all registered categories on any profile.
+  - **Tier 2–5 (Progressive Advancement)**: Dynamically revealed as the player unlocks higher tiers in individual categories or overall profile progression.
+  - **Tier 0 (Heritage Endgame Series)**: (e.g. Rally Group B Masters) Gated until Tier 5 is reached or previously completed.
+  - **Completed Championships**: Retained permanently in the catalog with a `[COMPLETED]` badge, earned podium trophies (`🏆 GOLD`, `🥈 SILVER`, `🥉 BRONZE`), and finish points.
+  - **Active Championship**: Pulsing indicator showing active season progress (e.g. `ROUND 2 OF 5`), driver standing, and next round circuit.
+* **Responsive Scrolling Viewport**: Auto-scrolling viewport clamping ensures the selected championship card remains visible and centered during browsing.
+* **Replay Safety & Trophy Preservation**: Pressing Enter on a completed championship opens a confirmation modal (`UniversalConfirmModal`) before resetting active session progress for round 1. Lifetime trophies and Hall of Fame records are strictly preserved.
+* **Navigation & Shortcuts**:
+
+| Key / Input | Action | Target / Result |
+| :--- | :--- | :--- |
+| `Up` / `Down` / `W` / `S` / Mouse Scroll | Navigate Championships | Moves selection cursor across visible championship cards with auto-scrolling viewport |
+| `Enter` / `Space` / Gamepad `A` | Start / Resume / Replay | If `[NEW]`: Starts season -> `GameState::ChampionshipStandings`<br>If `[IN PROGRESS]`: Resumes season -> `GameState::ChampionshipStandings`<br>If `[COMPLETED]`: Opens Career Replay Confirmation Modal |
+| `Escape` / Gamepad `B` | Return to Modality | Returns to Modality Selection -> `GameState::ModalitySelect` |
 
 ---
 
@@ -693,8 +744,9 @@ The system supports six distinct operational game modes selectable from the pre-
 
 | Modal Name | Host Screen | Trigger Input | Dismiss Input | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **Exit Confirm Dialog** | `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
-| **Arcade Settings Modal** | `ModuleSelect`, `Menu`, `Paused` | `X` (Hub), `O` (Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, audio output mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, vehicle shadows, color themes, and driving assists |
+| **Exit Confirm Dialog** | `ModalitySelect`, `ModuleSelect` | `Escape` / Gamepad `B` | `Escape` / `N` / Gamepad `B` | Prevents accidental application close |
+| **Career Replay Confirmation** | `CareerSelect` | `Enter` / Gamepad `A` (on completed card) | `Escape` / `N` / Gamepad `B` | Guards against accidental reset of completed championship session; confirms replay starting at round 1 while preserving earned trophies |
+| **Arcade Settings Modal** | `ModalitySelect`, `Menu`, `Paused` | `X` / `O` (Modality/Menu), `O` / Gamepad `Y` (Paused) | `Escape` / Gamepad `B` / Click Save/Cancel | Full cabinet arcade settings modal: Master/Music/SFX volume, audio output mute, screen resolution presets (720p to 4K, 21:9 Ultrawide, Steam Deck 16:10), display mode (Windowed / Fullscreen), UI scaling, CRT scanline presets, vehicle shadows, color themes, and driving assists |
 | **Unsaved Settings Confirmation** | `ArcadeSettingsModal` | `Escape` / Gamepad `B` (when settings modified) | `S` (Save & Exit), `Q` / `D` (Quit & Discard), `Escape` (Cancel) | Guards against accidental loss of modified audio, display, or control preferences |
 | **Coming Soon Modal** | `ModalitySelect` | `Enter` / Gamepad `A` on LAN / Cloud cards | `Escape` / `Enter` / Gamepad `A` / `B` | Informs user that LAN and Cloud online multiplayer formats are in active development |
 | **Edit Track Metadata** | `TrackManager` | `I` (on custom track) | `Enter` (save) / `Escape` (cancel) | Edits circuit title and description |

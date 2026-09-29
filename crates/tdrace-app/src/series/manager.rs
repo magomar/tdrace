@@ -40,6 +40,12 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("extreme_offroad_cup", include_str!("../../../../series/extreme_offroad/extreme_offroad_cup.toml")),
     ("extreme_mud_masters", include_str!("../../../../series/extreme_offroad/extreme_mud_masters.toml")),
     ("extreme_ultimate_championship", include_str!("../../../../series/extreme_offroad/extreme_ultimate_championship.toml")),
+    // Autocross Championships (Tiers 1-5)
+    ("autocross_crosscar_junior_trophy", include_str!("../../../../series/autocross/autocross_crosscar_junior_trophy.toml")),
+    ("autocross_crosscar_senior_challenge", include_str!("../../../../series/autocross/autocross_crosscar_senior_challenge.toml")),
+    ("autocross_buggy1600_championship", include_str!("../../../../series/autocross/autocross_buggy1600_championship.toml")),
+    ("autocross_touring_masters", include_str!("../../../../series/autocross/autocross_touring_masters.toml")),
+    ("autocross_superbuggy_world_series", include_str!("../../../../series/autocross/autocross_superbuggy_world_series.toml")),
 ];
 
 /// Manages discovery, loading, saving, and cataloging of declarative racing series and championships.
@@ -173,6 +179,11 @@ impl SeriesManager {
                 .then_with(|| a.series.name.cmp(&b.series.name))
         });
         list
+    }
+
+    /// Alias for all_sorted providing complete tournament series discovery (Spec 066).
+    pub fn all_series(&self) -> Vec<&SeriesDefinition> {
+        self.all_sorted()
     }
 
     /// Saves a series definition to the user's custom series folder.

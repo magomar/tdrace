@@ -1,10 +1,17 @@
 use tdrace_app::game::{GameState, RaceSession};
-use tdrace_app::ui::menu::{CarChoice, TrackChoice};
+use tdrace_app::ui::menu::{CarChoice, ModalityCategory, TrackChoice};
 
 #[test]
 fn test_session_initialization() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 
     session.init_race();
     let expected_cars = 1 + session.num_bots;
@@ -110,7 +117,14 @@ fn test_player_lap_tracking_advancement_and_finish() {
 #[test]
 fn test_session_update_state_preservation_and_race_start() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
 
     // 1. Initializing race puts state into StartingGrid
     session.init_race();
@@ -152,18 +166,23 @@ fn test_session_update_state_preservation_and_race_start() {
 #[test]
 fn test_main_menu_exit_confirmation_state() {
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    let initial_state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 0,
+        modal: None,
+    };
+    assert_eq!(session.state, initial_state);
     assert!(!session.show_exit_confirm);
 
     // Triggering exit confirmation modal
     session.show_exit_confirm = true;
     assert!(session.show_exit_confirm, "show_exit_confirm should be true when exit modal is open");
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 }, "State should remain GameState::ModuleSelect");
+    assert_eq!(session.state, initial_state, "State should remain ModalitySelect");
 
     // Dismissing exit confirmation modal
     session.show_exit_confirm = false;
     assert!(!session.show_exit_confirm, "show_exit_confirm should be false after dismissal");
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 }, "State should remain GameState::ModuleSelect");
+    assert_eq!(session.state, initial_state, "State should remain ModalitySelect");
 }
 
 #[test]
@@ -525,14 +544,19 @@ fn test_race_session_screen_transition_phase_stepping_and_state_swap() {
     use cabinet::fx::transition::{TransitionPhase, TransitionType};
 
     let mut session = RaceSession::new();
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    let initial_state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 0,
+        modal: None,
+    };
+    assert_eq!(session.state, initial_state);
     assert!(!session.is_transitioning());
     assert!(session.transition.is_none());
 
     // Start iris transition towards Countdown
     session.transition_iris_to(GameState::Countdown(3.5), 0.40);
     assert!(session.is_transitioning());
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(session.state, initial_state);
     assert_eq!(session.pending_state, Some(GameState::Countdown(3.5)));
 
     let trans = session.transition.as_ref().unwrap();
@@ -542,7 +566,7 @@ fn test_race_session_screen_transition_phase_stepping_and_state_swap() {
     // Step halfway through covering (0.40 * 0.48 = 0.192s cover duration)
     let swapped = session.update_transition(0.08);
     assert!(!swapped, "State should not swap during covering phase");
-    assert_eq!(session.state, GameState::ModuleSelect { selected_idx: 0 });
+    assert_eq!(session.state, initial_state);
     assert_eq!(
         session.transition.as_ref().unwrap().phase,
         TransitionPhase::Covering

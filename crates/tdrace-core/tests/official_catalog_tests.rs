@@ -5,7 +5,7 @@ use std::path::Path;
 use tdrace_core::catalog;
 use tdrace_core::track::{validate_track, Track, ValidationSeverity};
 
-const MODULES: [&str; 6] = ["classic", "extreme_offroad", "gt", "kart", "nascar", "rally"];
+const MODULES: [&str; 7] = ["classic", "extreme_offroad", "gt", "kart", "nascar", "rally", "autocross"];
 
 #[test]
 fn test_every_embedded_circuit_equals_its_json_file() {
@@ -26,8 +26,8 @@ fn test_every_embedded_circuit_equals_its_json_file() {
 #[test]
 fn test_catalog_counts_per_module() {
     let counts: Vec<usize> = MODULES.iter().map(|m| catalog::module_circuits(m).count()).collect();
-    assert_eq!(counts, vec![13, 20, 18, 20, 17, 20], "circuits per module {:?}", MODULES);
-    assert_eq!(catalog::circuits().len(), 108);
+    assert_eq!(counts, vec![13, 20, 18, 20, 17, 20, 17], "circuits per module {:?}", MODULES);
+    assert_eq!(catalog::circuits().len(), 125);
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn test_rebuild_reproduces_every_osm_circuit() {
     use tdrace_core::track::bake::{bake, BakeOptions};
     let opts = BakeOptions { rebuild: true, ..Default::default() };
     let mut failures = Vec::new();
-    for c in catalog::circuits().iter().filter(|c| ["gt", "kart", "nascar", "rally"].contains(&c.module)) {
+    for c in catalog::circuits().iter().filter(|c| ["gt", "kart", "nascar", "rally", "autocross"].contains(&c.module)) {
         let original = c.load().unwrap();
         let mut rebuilt = original.clone();
         bake(&mut rebuilt, &opts).unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
