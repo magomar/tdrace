@@ -144,44 +144,44 @@ No data format changes. Track JSON, `.tdr` replays and SQLite are untouched.
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Current cars give bit-identical results**
-  - [ ] **Given** the golden hashes recorded in spec 049 for debug and release on macOS aarch64
-  - [ ] **When** `golden_sim` and `golden_session` run in debug and in release on the Body2D branch
-  - [ ] **Then** all four hashes match the recorded values
+  - [x] **Given** the golden hashes recorded in spec 049 for debug and release on macOS aarch64
+  - [x] **When** `golden_sim` and `golden_session` run in debug and in release on the Body2D branch
+  - [x] **Then** all four hashes match the recorded values
 
 - **Scenario: A long body hits a wall that the old broad phase skipped**
-  - [ ] **Given** a test body with a 9 m hull whose front corner overlaps a wall while its centre is 4.5 m away
-  - [ ] **When** `resolve_all_wall_collisions` runs on it
-  - [ ] **Then** a collision event is returned and the body is pushed out of the wall
+  - [x] **Given** a test body with a 9 m hull whose front corner overlaps a wall while its centre is 4.5 m away
+  - [x] **When** `resolve_all_wall_collisions` runs on it
+  - [x] **Then** a collision event is returned and the body is pushed out of the wall
 
 - **Scenario: Two non-car bodies collide and keep momentum**
-  - [ ] **Given** two test bodies moving toward each other and overlapping
-  - [ ] **When** `resolve_multi_car_collisions` runs on a `Vec` of them
-  - [ ] **Then** one contact event is returned and total linear momentum is unchanged to within 1e-3
+  - [x] **Given** two test bodies moving toward each other and overlapping
+  - [x] **When** `resolve_multi_car_collisions` runs on a `Vec` of them
+  - [x] **Then** one contact event is returned and total linear momentum is unchanged to within 1e-3
 
 - **Scenario: The progress tracker follows a non-car body**
-  - [ ] **Given** a test body driven along the generated oval
-  - [ ] **When** `TrackProgressTracker::update` runs each step
-  - [ ] **Then** its progress distance goes up and it passes checkpoints in order
+  - [x] **Given** a test body driven along the generated oval
+  - [x] **When** `TrackProgressTracker::update` runs each step
+  - [x] **Then** its progress distance goes up and it passes checkpoints in order
 
 - **Scenario: Existing callers compile unchanged**
-  - [ ] **Given** the app, the Python bindings, the bot harness and the benches, with no source edits
-  - [ ] **When** the workspace builds, including `tdrace-py` and the wasm target
-  - [ ] **Then** everything compiles, and the Rust suite shows only the 3 known failures
+  - [x] **Given** the app, the Python bindings, the bot harness and the benches, with no source edits
+  - [x] **When** the workspace builds, including `tdrace-py` and the wasm target
+  - [x] **Then** everything compiles, and the Rust suite shows only the 3 known failures
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/body.rs` -> `Body2D`, `BodyHull`, `impl Body2D for Car`.
-- `[ ]` `crates/arcade-race-core/src/lib.rs` -> exports `body`.
-- `[ ]` `crates/arcade-race-core/src/collision/sat.rs` -> `OrientedBox::from_body`.
-- `[ ]` `crates/arcade-race-core/src/collision/wall.rs` -> generic wall and obstacle resolution, hull-based reach.
-- `[ ]` `crates/arcade-race-core/src/collision/car_collision.rs` -> generic pair and multi-body resolution.
-- `[ ]` `crates/arcade-race-core/src/lidar/mod.rs` -> generic scan.
-- `[ ]` `crates/arcade-race-core/src/track/checkpoint.rs` -> generic tracker update.
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> generic pit-box check.
-- `[ ]` `crates/arcade-race-core/tests/body2d_tests.rs` -> the new scenarios.
+- `[x]` `crates/arcade-race-core/src/body.rs` -> `Body2D`, `BodyHull`, `impl Body2D for Car`.
+- `[x]` `crates/arcade-race-core/src/lib.rs` -> exports `body`.
+- `[x]` `crates/arcade-race-core/src/collision/sat.rs` -> `OrientedBox::from_body`.
+- `[x]` `crates/arcade-race-core/src/collision/wall.rs` -> generic wall and obstacle resolution, hull-based reach.
+- `[x]` `crates/arcade-race-core/src/collision/car_collision.rs` -> generic pair and multi-body resolution.
+- `[x]` `crates/arcade-race-core/src/lidar/mod.rs` -> generic scan.
+- `[x]` `crates/arcade-race-core/src/track/checkpoint.rs` -> generic tracker update.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` -> generic pit-box check.
+- `[x]` `crates/arcade-race-core/tests/body2d_tests.rs` -> the new scenarios.
 
 ### Beads Epic Mapping
 - Governed by epic *Fulfill Spec 050: Body2D Trait for Vehicle-Generic Collision and Progress*.
