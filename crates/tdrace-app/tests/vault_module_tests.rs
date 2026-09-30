@@ -128,7 +128,7 @@ fn test_vault_track_manager_filter_and_manifest_integrity() {
     // 1. ModuleFilter mapping
     assert_eq!(ModuleFilter::Vault.label(), "THE VAULT");
     assert_eq!(ModuleFilter::Vault.short_label(), "VAULT");
-    assert_eq!(ModuleFilter::Vault.shortcut_number(), 7);
+    assert_eq!(ModuleFilter::Vault.shortcut_number(), 8);
     assert_eq!(ModuleFilter::for_module("vault"), ModuleFilter::Vault);
 
     // 2. Storage manifest parsing
