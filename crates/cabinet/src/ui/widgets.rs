@@ -1309,6 +1309,163 @@ impl<T> OptionCycler<T> {
     }
 }
 
+/// Action resulting from interacting with a Counter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CounterAction {
+    None,
+    Changed(i64),
+    Confirmed(i64),
+}
+
+/// Integer counter supporting bounded or wrapping increments and decrements.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Counter {
+    pub value: i64,
+    pub min: i64,
+    pub max: i64,
+    pub step: i64,
+    pub wrap: bool,
+}
+
+impl Counter {
+    pub fn new(min: i64, max: i64, step: i64, initial: i64) -> Self {
+        Self {
+            value: initial.clamp(min, max),
+            min,
+            max,
+            step: step.max(1),
+            wrap: false,
+        }
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn increment(&mut self) -> bool {
+        if self.value + self.step <= self.max {
+            self.value += self.step;
+            true
+        } else if self.wrap {
+            self.value = self.min;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn decrement(&mut self) -> bool {
+        if self.value - self.step >= self.min {
+            self.value -= self.step;
+            true
+        } else if self.wrap {
+            self.value = self.max;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn set_value(&mut self, val: i64) -> bool {
+        let clamped = val.clamp(self.min, self.max);
+        let changed = clamped != self.value;
+        self.value = clamped;
+        changed
+    }
+
+    pub fn handle_input(
+        &mut self,
+        is_focused: bool,
+        left: bool,
+        right: bool,
+        confirm: bool,
+    ) -> CounterAction {
+        if !is_focused {
+            return CounterAction::None;
+        }
+        if right && self.increment() {
+            return CounterAction::Changed(self.value);
+        }
+        if left && self.decrement() {
+            return CounterAction::Changed(self.value);
+        }
+        if confirm {
+            return CounterAction::Confirmed(self.value);
+        }
+        CounterAction::None
+    }
+}
+
+/// Generic bounded value stepper for numeric parameters (laps, bot count, difficulty tiers).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ValueStepper<T> {
+    pub label: String,
+    pub value: T,
+    pub min: T,
+    pub max: T,
+    pub step: T,
+    pub is_focused: bool,
+}
+
+impl<T: Copy + PartialOrd + std::ops::Add<Output = T> + std::ops::Sub<Output = T>> ValueStepper<T> {
+    pub fn new(label: impl Into<String>, min: T, max: T, step: T, initial: T) -> Self {
+        let val = if initial < min {
+            min
+        } else if initial > max {
+            max
+        } else {
+            initial
+        };
+        Self {
+            label: label.into(),
+            value: val,
+            min,
+            max,
+            step,
+            is_focused: false,
+        }
+    }
+
+    pub fn with_focused(mut self, focused: bool) -> Self {
+        self.is_focused = focused;
+        self
+    }
+
+    pub fn step_up(&mut self) -> bool {
+        let next = self.value + self.step;
+        if next <= self.max {
+            self.value = next;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn step_down(&mut self) -> bool {
+        let prev = self.value - self.step;
+        if prev >= self.min {
+            self.value = prev;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn handle_input(&mut self, left: bool, right: bool) -> Option<T> {
+        if !self.is_focused {
+            return None;
+        }
+        if right && self.step_up() {
+            return Some(self.value);
+        }
+        if left && self.step_down() {
+            return Some(self.value);
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1503,6 +1660,51 @@ mod tests {
 
         // Left cycles backward to 2
         assert_eq!(cycler.handle_input(true, true, false, false), CyclerAction::Changed(2));
+    }
+
+    #[test]
+    fn test_counter_bounds_and_actions() {
+        let mut counter = Counter::new(1, 99, 1, 1);
+        assert_eq!(counter.value, 1);
+
+        // Right increments value by 1 and emits Changed
+        assert_eq!(counter.handle_input(true, false, true, false), CounterAction::Changed(2));
+        assert_eq!(counter.value, 2);
+
+        // Left decrements value by 1 and emits Changed
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::Changed(1));
+        assert_eq!(counter.value, 1);
+
+        // Left at min without wrap does nothing
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::None);
+        assert_eq!(counter.value, 1);
+
+        // Confirm emits Confirmed
+        assert_eq!(counter.handle_input(true, false, false, true), CounterAction::Confirmed(1));
+
+        // Wrap test
+        counter.wrap = true;
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::Changed(99));
+        assert_eq!(counter.value, 99);
+        assert_eq!(counter.handle_input(true, false, true, false), CounterAction::Changed(1));
+        assert_eq!(counter.value, 1);
+    }
+
+    #[test]
+    fn test_value_stepper_step_up_down() {
+        let mut stepper = ValueStepper::new("Laps", 1, 10, 1, 3);
+        assert_eq!(stepper.value, 3);
+
+        // Unfocused ignores input
+        assert_eq!(stepper.handle_input(false, true), None);
+        assert_eq!(stepper.value, 3);
+
+        // Focused steps up and down
+        stepper.is_focused = true;
+        assert_eq!(stepper.handle_input(false, true), Some(4));
+        assert_eq!(stepper.value, 4);
+        assert_eq!(stepper.handle_input(true, false), Some(3));
+        assert_eq!(stepper.value, 3);
     }
 }
 

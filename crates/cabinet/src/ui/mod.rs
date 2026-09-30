@@ -35,6 +35,7 @@ pub use theme::{CabinetTheme, Palette};
 pub use toast::{ToastItem, ToastOverlay, ToastSeverity};
 pub use widgets::{
     draw_action_button, draw_chip, draw_dropdown, draw_dropdown_popup, draw_slider,
-    draw_stat_bar, draw_stepper, draw_tab_bar, CyclerAction, DropdownWidget, OptionCycler,
-    RadioAction, RadioGroup, SliderWidget, TabBar, Toggle, ToggleAction,
+    draw_stat_bar, draw_stepper, draw_tab_bar, Counter, CounterAction, CyclerAction,
+    DropdownWidget, OptionCycler, RadioAction, RadioGroup, SliderWidget, TabBar, Toggle,
+    ToggleAction, ValueStepper,
 };
