@@ -7,11 +7,15 @@ pub mod client_lobby_screen;
 pub mod host_screen;
 pub mod ip_keypad;
 pub mod join_screen;
+pub mod virtual_keypad;
 
 pub use client_lobby_screen::CabinetLanClientLobbyScreen;
 pub use host_screen::CabinetLanHostScreen;
 pub use ip_keypad::{IpKeypad, IpKeypadAction, KEYPAD_GRID};
 pub use join_screen::CabinetLanJoinScreen;
+pub use virtual_keypad::{
+    VirtualKeypad, VirtualKeypadAction, VirtualKeypadButton, VirtualKeypadMode,
+};
 
 use macroquad::color::Color;
 

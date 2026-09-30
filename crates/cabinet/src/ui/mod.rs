@@ -49,3 +49,7 @@ pub use widgets::{
     DropdownWidget, OptionCycler, RadioAction, RadioGroup, SliderWidget, TabBar, Toggle,
     ToggleAction, ValueStepper,
 };
+pub use crate::net::ui::{
+    VirtualKeypad, VirtualKeypadAction, VirtualKeypadButton, VirtualKeypadMode,
+};
+

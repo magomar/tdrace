@@ -34,7 +34,8 @@ pub use reliable::ReliableChannel;
 pub use stats::NetStats;
 pub use wire::{NetCarState, WorldState};
 pub use ui::{
-    CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad, IpKeypadAction, LanLobbyRequest,
-    LAN_LIVERIES,
+    CabinetLanClientLobbyScreen, CabinetLanHostScreen, CabinetLanJoinScreen, IpKeypad,
+    IpKeypadAction, LanLobbyRequest, VirtualKeypad, VirtualKeypadAction, VirtualKeypadButton,
+    VirtualKeypadMode, LAN_LIVERIES,
 };
 
