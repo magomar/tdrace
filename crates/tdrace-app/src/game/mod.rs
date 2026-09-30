@@ -8792,6 +8792,8 @@ impl RaceSession {
     pub fn open_lan_circuit_selector(&mut self) {
         self.menu_origin = MenuOrigin::LanHostLobby;
         self.menu_track_filter = TrackCatalogFilter::Presets;
+        let module = self.lan_lobby_module();
+        self.menu_category_filter = MenuCategoryFilter::from_module_id(&module);
         let current = self.lan_host_screen.as_ref().map(|s| s.host().track_id().to_string());
         let tracks = self.filtered_menu_tracks();
         self.menu_track_idx = current
