@@ -70,7 +70,7 @@ impl CharFilters {
 }
 
 /// Reusable gamepad and keyboard-friendly text input widget.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TextInputWidget {
     pub text: String,
     pub cursor_pos: usize,
@@ -85,6 +85,22 @@ pub struct TextInputWidget {
     pub height: f32,
     #[serde(skip)]
     pub char_filter: Option<fn(char) -> bool>,
+}
+
+impl PartialEq for TextInputWidget {
+    fn eq(&self, other: &Self) -> bool {
+        self.text == other.text
+            && self.cursor_pos == other.cursor_pos
+            && self.max_chars == other.max_chars
+            && self.placeholder == other.placeholder
+            && self.is_focused == other.is_focused
+            && self.is_active == other.is_active
+            && (self.blink_timer - other.blink_timer).abs() < 1e-4
+            && (self.base_x - other.base_x).abs() < 1e-4
+            && (self.base_y - other.base_y).abs() < 1e-4
+            && (self.width - other.width).abs() < 1e-4
+            && (self.height - other.height).abs() < 1e-4
+    }
 }
 
 impl TextInputWidget {
