@@ -235,7 +235,7 @@ mod tests {
         let mut overlay = ToastOverlay::new(1500.0, 50.0, 380.0, 60.0);
         overlay.max_visible = 3;
 
-        let id1 = overlay.push_info("Info 1", "Msg 1");
+        let _id1 = overlay.push_info("Info 1", "Msg 1");
         let id2 = overlay.push_success("Success 2", "Msg 2");
         let id3 = overlay.push_warning("Warning 3", "Msg 3");
         assert_eq!(overlay.toasts.len(), 3);
