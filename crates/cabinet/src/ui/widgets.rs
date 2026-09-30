@@ -3,6 +3,7 @@ use macroquad::input::{is_key_down, is_key_pressed, is_mouse_button_down, is_mou
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use serde::{Deserialize, Serialize};
 use crate::ui::font::Fonts;
+use crate::ui::layout::NavBoundaryExit;
 use crate::ui::scaler::UiScaler;
 use crate::ui::theme::Palette;
 
@@ -1031,6 +1032,440 @@ pub fn draw_tab_bar(
     }
 }
 
+/// Action resulting from interacting with a Toggle switch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ToggleAction {
+    None,
+    Toggled(bool),
+    ExitUp,
+    ExitDown,
+}
+
+/// Boolean On/Off switch with locked state support.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Toggle {
+    pub label: String,
+    pub is_on: bool,
+    pub locked: bool,
+}
+
+impl Toggle {
+    pub fn new(label: impl Into<String>, is_on: bool) -> Self {
+        Self {
+            label: label.into(),
+            is_on,
+            locked: false,
+        }
+    }
+
+    pub fn with_locked(mut self, locked: bool) -> Self {
+        self.locked = locked;
+        self
+    }
+
+    pub fn toggle(&mut self) -> bool {
+        if !self.locked {
+            self.is_on = !self.is_on;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn handle_input(
+        &mut self,
+        is_focused: bool,
+        confirm: bool,
+        up: bool,
+        down: bool,
+    ) -> ToggleAction {
+        if !is_focused {
+            return ToggleAction::None;
+        }
+        if up {
+            return ToggleAction::ExitUp;
+        }
+        if down {
+            return ToggleAction::ExitDown;
+        }
+        if confirm {
+            if self.toggle() {
+                return ToggleAction::Toggled(self.is_on);
+            }
+        }
+        ToggleAction::None
+    }
+}
+
+/// Action resulting from interacting with a RadioGroup.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RadioAction {
+    None,
+    Changed(usize),
+    Confirmed(usize),
+    ExitTop,
+    ExitBottom,
+}
+
+/// Mutually exclusive single-selection radio group.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RadioGroup<T> {
+    pub options: Vec<T>,
+    pub selected_idx: usize,
+    pub wrap: bool,
+}
+
+impl<T> RadioGroup<T> {
+    pub fn new(options: Vec<T>) -> Self {
+        Self {
+            options,
+            selected_idx: 0,
+            wrap: false,
+        }
+    }
+
+    pub fn with_selected(mut self, idx: usize) -> Self {
+        if idx < self.options.len() {
+            self.selected_idx = idx;
+        }
+        self
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn selected(&self) -> Option<&T> {
+        self.options.get(self.selected_idx)
+    }
+
+    pub fn select(&mut self, idx: usize) -> bool {
+        if idx < self.options.len() {
+            self.selected_idx = idx;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn nav_up(&mut self) -> Option<NavBoundaryExit> {
+        if self.options.is_empty() {
+            return Some(NavBoundaryExit::ExitTop);
+        }
+        if self.selected_idx == 0 {
+            if self.wrap {
+                self.selected_idx = self.options.len() - 1;
+                None
+            } else {
+                Some(NavBoundaryExit::ExitTop)
+            }
+        } else {
+            self.selected_idx -= 1;
+            None
+        }
+    }
+
+    pub fn nav_down(&mut self) -> Option<NavBoundaryExit> {
+        if self.options.is_empty() {
+            return Some(NavBoundaryExit::ExitBottom);
+        }
+        if self.selected_idx + 1 >= self.options.len() {
+            if self.wrap {
+                self.selected_idx = 0;
+                None
+            } else {
+                Some(NavBoundaryExit::ExitBottom)
+            }
+        } else {
+            self.selected_idx += 1;
+            None
+        }
+    }
+
+    pub fn handle_nav(&mut self, up: bool, down: bool, confirm: bool) -> RadioAction {
+        if up {
+            let prev = self.selected_idx;
+            if let Some(exit) = self.nav_up() {
+                if exit == NavBoundaryExit::ExitTop {
+                    return RadioAction::ExitTop;
+                }
+            } else if self.selected_idx != prev {
+                return RadioAction::Changed(self.selected_idx);
+            }
+        }
+        if down {
+            let prev = self.selected_idx;
+            if let Some(exit) = self.nav_down() {
+                if exit == NavBoundaryExit::ExitBottom {
+                    return RadioAction::ExitBottom;
+                }
+            } else if self.selected_idx != prev {
+                return RadioAction::Changed(self.selected_idx);
+            }
+        }
+        if confirm {
+            return RadioAction::Confirmed(self.selected_idx);
+        }
+        RadioAction::None
+    }
+}
+
+/// Action resulting from interacting with an OptionCycler.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CyclerAction {
+    None,
+    Changed(usize),
+    Confirmed(usize),
+}
+
+/// Inline option cycler supporting bidirectional cycling.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OptionCycler<T> {
+    pub options: Vec<T>,
+    pub selected_idx: usize,
+    pub wrap: bool,
+}
+
+impl<T> OptionCycler<T> {
+    pub fn new(options: Vec<T>) -> Self {
+        Self {
+            options,
+            selected_idx: 0,
+            wrap: true,
+        }
+    }
+
+    pub fn with_selected(mut self, idx: usize) -> Self {
+        if idx < self.options.len() {
+            self.selected_idx = idx;
+        }
+        self
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn selected(&self) -> Option<&T> {
+        self.options.get(self.selected_idx)
+    }
+
+    pub fn cycle_forward(&mut self) -> bool {
+        if self.options.is_empty() {
+            return false;
+        }
+        if self.selected_idx + 1 < self.options.len() {
+            self.selected_idx += 1;
+            true
+        } else if self.wrap {
+            self.selected_idx = 0;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn cycle_backward(&mut self) -> bool {
+        if self.options.is_empty() {
+            return false;
+        }
+        if self.selected_idx > 0 {
+            self.selected_idx -= 1;
+            true
+        } else if self.wrap {
+            self.selected_idx = self.options.len() - 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn handle_input(
+        &mut self,
+        is_focused: bool,
+        left: bool,
+        right: bool,
+        confirm: bool,
+    ) -> CyclerAction {
+        if !is_focused {
+            return CyclerAction::None;
+        }
+        if right {
+            if self.cycle_forward() {
+                return CyclerAction::Changed(self.selected_idx);
+            }
+        }
+        if left {
+            if self.cycle_backward() {
+                return CyclerAction::Changed(self.selected_idx);
+            }
+        }
+        if confirm {
+            return CyclerAction::Confirmed(self.selected_idx);
+        }
+        CyclerAction::None
+    }
+}
+
+/// Action resulting from interacting with a Counter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CounterAction {
+    None,
+    Changed(i64),
+    Confirmed(i64),
+}
+
+/// Integer counter supporting bounded or wrapping increments and decrements.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Counter {
+    pub value: i64,
+    pub min: i64,
+    pub max: i64,
+    pub step: i64,
+    pub wrap: bool,
+}
+
+impl Counter {
+    pub fn new(min: i64, max: i64, step: i64, initial: i64) -> Self {
+        Self {
+            value: initial.clamp(min, max),
+            min,
+            max,
+            step: step.max(1),
+            wrap: false,
+        }
+    }
+
+    pub fn with_wrap(mut self, wrap: bool) -> Self {
+        self.wrap = wrap;
+        self
+    }
+
+    pub fn increment(&mut self) -> bool {
+        if self.value + self.step <= self.max {
+            self.value += self.step;
+            true
+        } else if self.wrap {
+            self.value = self.min;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn decrement(&mut self) -> bool {
+        if self.value - self.step >= self.min {
+            self.value -= self.step;
+            true
+        } else if self.wrap {
+            self.value = self.max;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn set_value(&mut self, val: i64) -> bool {
+        let clamped = val.clamp(self.min, self.max);
+        let changed = clamped != self.value;
+        self.value = clamped;
+        changed
+    }
+
+    pub fn handle_input(
+        &mut self,
+        is_focused: bool,
+        left: bool,
+        right: bool,
+        confirm: bool,
+    ) -> CounterAction {
+        if !is_focused {
+            return CounterAction::None;
+        }
+        if right && self.increment() {
+            return CounterAction::Changed(self.value);
+        }
+        if left && self.decrement() {
+            return CounterAction::Changed(self.value);
+        }
+        if confirm {
+            return CounterAction::Confirmed(self.value);
+        }
+        CounterAction::None
+    }
+}
+
+/// Generic bounded value stepper for numeric parameters (laps, bot count, difficulty tiers).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ValueStepper<T> {
+    pub label: String,
+    pub value: T,
+    pub min: T,
+    pub max: T,
+    pub step: T,
+    pub is_focused: bool,
+}
+
+impl<T: Copy + PartialOrd + std::ops::Add<Output = T> + std::ops::Sub<Output = T>> ValueStepper<T> {
+    pub fn new(label: impl Into<String>, min: T, max: T, step: T, initial: T) -> Self {
+        let val = if initial < min {
+            min
+        } else if initial > max {
+            max
+        } else {
+            initial
+        };
+        Self {
+            label: label.into(),
+            value: val,
+            min,
+            max,
+            step,
+            is_focused: false,
+        }
+    }
+
+    pub fn with_focused(mut self, focused: bool) -> Self {
+        self.is_focused = focused;
+        self
+    }
+
+    pub fn step_up(&mut self) -> bool {
+        let next = self.value + self.step;
+        if next <= self.max {
+            self.value = next;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn step_down(&mut self) -> bool {
+        let prev = self.value - self.step;
+        if prev >= self.min {
+            self.value = prev;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn handle_input(&mut self, left: bool, right: bool) -> Option<T> {
+        if !self.is_focused {
+            return None;
+        }
+        if right && self.step_up() {
+            return Some(self.value);
+        }
+        if left && self.step_down() {
+            return Some(self.value);
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1142,4 +1577,134 @@ mod tests {
         assert!(tab_bar.prev_tab());
         assert_eq!(tab_bar.active_index(), 3);
     }
+
+    #[test]
+    fn test_toggle_flip_and_locked_state() {
+        let mut toggle = Toggle::new("ABS", false);
+        assert!(!toggle.is_on);
+        assert!(!toggle.locked);
+
+        // Flips on confirm
+        let action = toggle.handle_input(true, true, false, false);
+        assert_eq!(action, ToggleAction::Toggled(true));
+        assert!(toggle.is_on);
+
+        // Flips again
+        let action = toggle.handle_input(true, true, false, false);
+        assert_eq!(action, ToggleAction::Toggled(false));
+        assert!(!toggle.is_on);
+
+        // Locked toggle ignores activation input
+        toggle.locked = true;
+        let action = toggle.handle_input(true, true, false, false);
+        assert_eq!(action, ToggleAction::None);
+        assert!(!toggle.is_on);
+
+        // Directional exits
+        assert_eq!(toggle.handle_input(true, false, true, false), ToggleAction::ExitUp);
+        assert_eq!(toggle.handle_input(true, false, false, true), ToggleAction::ExitDown);
+    }
+
+    #[test]
+    fn test_radio_group_single_select_and_exits() {
+        let modes = vec![
+            "CHASE".to_string(),
+            "BONNET".to_string(),
+            "BUMPER".to_string(),
+            "COCKPIT".to_string(),
+        ];
+        let mut radio = RadioGroup::new(modes);
+        assert_eq!(radio.selected_idx, 0);
+        assert_eq!(radio.selected(), Some(&"CHASE".to_string()));
+
+        // Nav up at 0 with no wrap emits ExitTop
+        assert_eq!(radio.handle_nav(true, false, false), RadioAction::ExitTop);
+
+        // Nav down moves to 1 and emits Changed
+        assert_eq!(radio.handle_nav(false, true, false), RadioAction::Changed(1));
+        assert_eq!(radio.selected_idx, 1);
+        assert_eq!(radio.selected(), Some(&"BONNET".to_string()));
+
+        // Confirm emits Confirmed with current index
+        assert_eq!(radio.handle_nav(false, false, true), RadioAction::Confirmed(1));
+
+        // Moving to bottom
+        radio.selected_idx = 3;
+        assert_eq!(radio.handle_nav(false, true, false), RadioAction::ExitBottom);
+
+        // With wrap enabled, down from 3 wraps to 0
+        radio.wrap = true;
+        assert_eq!(radio.handle_nav(false, true, false), RadioAction::Changed(0));
+        assert_eq!(radio.selected_idx, 0);
+    }
+
+    #[test]
+    fn test_option_cycler_forward_backward_and_wrap() {
+        let speeds = vec!["1x", "2x", "4x"];
+        let mut cycler = OptionCycler::new(speeds);
+        assert_eq!(cycler.selected_idx, 0);
+        assert_eq!(cycler.selected(), Some(&"1x"));
+
+        // Right cycles forward
+        assert_eq!(cycler.handle_input(true, false, true, false), CyclerAction::Changed(1));
+        assert_eq!(cycler.selected(), Some(&"2x"));
+
+        // Confirm emits Confirmed
+        assert_eq!(cycler.handle_input(true, false, false, true), CyclerAction::Confirmed(1));
+
+        // Right again to 2
+        assert_eq!(cycler.handle_input(true, false, true, false), CyclerAction::Changed(2));
+
+        // Right again wraps to 0
+        assert_eq!(cycler.handle_input(true, false, true, false), CyclerAction::Changed(0));
+
+        // Left cycles backward to 2
+        assert_eq!(cycler.handle_input(true, true, false, false), CyclerAction::Changed(2));
+    }
+
+    #[test]
+    fn test_counter_bounds_and_actions() {
+        let mut counter = Counter::new(1, 99, 1, 1);
+        assert_eq!(counter.value, 1);
+
+        // Right increments value by 1 and emits Changed
+        assert_eq!(counter.handle_input(true, false, true, false), CounterAction::Changed(2));
+        assert_eq!(counter.value, 2);
+
+        // Left decrements value by 1 and emits Changed
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::Changed(1));
+        assert_eq!(counter.value, 1);
+
+        // Left at min without wrap does nothing
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::None);
+        assert_eq!(counter.value, 1);
+
+        // Confirm emits Confirmed
+        assert_eq!(counter.handle_input(true, false, false, true), CounterAction::Confirmed(1));
+
+        // Wrap test
+        counter.wrap = true;
+        assert_eq!(counter.handle_input(true, true, false, false), CounterAction::Changed(99));
+        assert_eq!(counter.value, 99);
+        assert_eq!(counter.handle_input(true, false, true, false), CounterAction::Changed(1));
+        assert_eq!(counter.value, 1);
+    }
+
+    #[test]
+    fn test_value_stepper_step_up_down() {
+        let mut stepper = ValueStepper::new("Laps", 1, 10, 1, 3);
+        assert_eq!(stepper.value, 3);
+
+        // Unfocused ignores input
+        assert_eq!(stepper.handle_input(false, true), None);
+        assert_eq!(stepper.value, 3);
+
+        // Focused steps up and down
+        stepper.is_focused = true;
+        assert_eq!(stepper.handle_input(false, true), Some(4));
+        assert_eq!(stepper.value, 4);
+        assert_eq!(stepper.handle_input(true, false), Some(3));
+        assert_eq!(stepper.value, 3);
+    }
 }
+
