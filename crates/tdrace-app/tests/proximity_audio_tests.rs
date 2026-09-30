@@ -2,9 +2,9 @@
 
 use glam::Vec2;
 use tdrace_app::audio::proximity::{
-    calculate_distance_attenuation, calculate_doppler_factor, calculate_spatial_audio,
-    calculate_stereo_pan, select_top_k_audible_sources, DopplerConfig, VehicleAudioSource,
-    DEFAULT_MAX_DISTANCE, DEFAULT_PAN_RADIUS, MAX_PROXIMITY_VOICES,
+    calculate_countdown_warmup_throttle, calculate_distance_attenuation, calculate_doppler_factor,
+    calculate_spatial_audio, calculate_stereo_pan, select_top_k_audible_sources, DopplerConfig,
+    VehicleAudioSource, DEFAULT_MAX_DISTANCE, DEFAULT_PAN_RADIUS, MAX_PROXIMITY_VOICES,
 };
 use tdrace_app::audio::EngineSoundType;
 
@@ -294,4 +294,77 @@ fn test_audio_manager_proximity_voice_allocation_and_hysteresis() {
     // Stop all loops clears all proximity voice allocations
     audio.stop_all_loops();
     assert!(audio.proximity_voices.iter().all(|s| s.vehicle_id.is_none()));
+}
+
+#[test]
+fn test_countdown_warmup_throttle_range_and_determinism() {
+    for vid in 0..8 {
+        for step in 0..100 {
+            let rem = step as f32 * 0.04; // 0.0 to 4.0s
+            let t1 = calculate_countdown_warmup_throttle(vid, rem);
+            let t2 = calculate_countdown_warmup_throttle(vid, rem);
+            assert!(
+                t1 >= 0.0 && t1 <= 1.0,
+                "Throttle {t1} for vehicle {vid} at {rem}s must be within [0.0, 1.0]"
+            );
+            assert_eq!(t1, t2, "Warmup throttle must be purely deterministic");
+        }
+    }
+}
+
+#[test]
+fn test_countdown_warmup_throttle_non_uniformity_across_vehicles() {
+    // Check multiple snapshot points during countdown
+    for &rem in &[3.5, 3.0, 2.5, 2.0, 1.5, 1.0] {
+        let throttles: Vec<f32> = (0..6)
+            .map(|vid| calculate_countdown_warmup_throttle(vid, rem))
+            .collect();
+
+        // Ensure not all vehicles produce the exact same uniform value
+        let first = throttles[0];
+        let has_variance = throttles.iter().any(|&v| (v - first).abs() > 0.05);
+        assert!(
+            has_variance,
+            "At remaining={rem}s, throttles across vehicles should vary, got {:?}",
+            throttles
+        );
+    }
+}
+
+#[test]
+fn test_countdown_warmup_throttle_accelerations_and_revolutionized_baseline() {
+    for vid in 0..4 {
+        let mut min_throttle = 1.0f32;
+        let mut max_throttle = 0.0f32;
+
+        for step in 0..90 {
+            let rem = 3.5 - (step as f32 * 0.035); // 3.5s down to ~0.35s
+            let thr = calculate_countdown_warmup_throttle(vid, rem);
+            min_throttle = min_throttle.min(thr);
+            max_throttle = max_throttle.max(thr);
+        }
+
+        // Must experience acceleration rev surges to warm the motor
+        assert!(
+            max_throttle >= 0.75,
+            "Vehicle {vid} peak blip {max_throttle} must reach high revs (>= 0.75)"
+        );
+
+        // Must maintain warm baseline floor to keep it revolutionized
+        assert!(
+            min_throttle >= 0.20,
+            "Vehicle {vid} minimum throttle {min_throttle} must maintain warm baseline (>= 0.20)"
+        );
+    }
+}
+
+#[test]
+fn test_countdown_warmup_throttle_launch_crescendo() {
+    for vid in 0..4 {
+        let launch_thr_final = calculate_countdown_warmup_throttle(vid, 0.0);
+        assert!(
+            launch_thr_final >= 0.85,
+            "Vehicle {vid} final launch throttle at t=0 must build up to >= 0.85, got {launch_thr_final}"
+        );
+    }
 }

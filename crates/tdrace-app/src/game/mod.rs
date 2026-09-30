@@ -188,7 +188,7 @@ use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::{Track, TrackCategory};
 
 use crate::ai::{BotAiDriver, CareerRivalEntry, DriverCharacter, DriverPersonalityOffsets, DriverTier, DrivingStyle};
-use crate::audio::{AudioManager, EngineSoundType, MusicTrack, SfxType};
+use crate::audio::{calculate_countdown_warmup_throttle, AudioManager, EngineSoundType, MusicTrack, SfxType};
 use crate::camera::{RaceCamera, SplitLayout, ZoomLevelConfig};
 use crate::config::{GameConfig, InputConfig};
 use crate::db::{HallOfFameDb, HallOfFameEntry};
@@ -5582,25 +5582,79 @@ impl RaceSession {
                     remaining_val - frame_dt
                 };
 
-                // Player launch throttle / revs on grid
-                if self.is_split_screen() {
+                let my_idx = self.player_car_index();
+                let is_split = self.is_split_screen();
+
+                // Player launch throttle / revs on grid (warmup accelerations to keep engine revolutionized)
+                if is_split {
                     let (p1_ctrl, p2_ctrl) = self.input.poll_split_player_controls(&mut self.filter_p2, frame_dt, 0.0, 0.0);
-                    let eff_throttle1 = if p1_ctrl.reverse { -p1_ctrl.throttle } else { (p1_ctrl.throttle - p1_ctrl.brake).max(0.0) };
+                    let warmup_thr1 = calculate_countdown_warmup_throttle(0, remaining);
+                    let eff_throttle1 = if p1_ctrl.reverse {
+                        -p1_ctrl.throttle
+                    } else {
+                        (p1_ctrl.throttle - p1_ctrl.brake).max(0.0).max(warmup_thr1)
+                    };
                     let (rpm1, is_shift1) = self.engine_rpm.update(0.0, eff_throttle1, 0.0, frame_dt);
                     self.audio.update_engine_telemetry(rpm1, eff_throttle1, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
-                    let eff_throttle2 = if p2_ctrl.reverse { -p2_ctrl.throttle } else { (p2_ctrl.throttle - p2_ctrl.brake).max(0.0) };
+
+                    let warmup_thr2 = calculate_countdown_warmup_throttle(1, remaining);
+                    let eff_throttle2 = if p2_ctrl.reverse {
+                        -p2_ctrl.throttle
+                    } else {
+                        (p2_ctrl.throttle - p2_ctrl.brake).max(0.0).max(warmup_thr2)
+                    };
                     let (rpm2, is_shift2) = self.engine_rpm_p2.update(0.0, eff_throttle2, 0.0, frame_dt);
                     self.audio.update_engine_telemetry_p2(rpm2, eff_throttle2, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
                 } else {
-                    let my_idx = self.player_car_index();
                     let my_speed = self.world.vehicles.get(my_idx).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
                     let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                    let eff_throttle = if player_ctrl.reverse { -player_ctrl.throttle } else { (player_ctrl.throttle - player_ctrl.brake).max(0.0) };
+                    let warmup_thr = calculate_countdown_warmup_throttle(my_idx, remaining);
+                    let eff_throttle = if player_ctrl.reverse {
+                        -player_ctrl.throttle
+                    } else {
+                        (player_ctrl.throttle - player_ctrl.brake).max(0.0).max(warmup_thr)
+                    };
                     let (rpm, is_shift) = self.engine_rpm.update(0.0, eff_throttle, 0.0, frame_dt);
                     self.audio.update_engine_telemetry(rpm, eff_throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
                 }
+
+                // Grid opponent engine roar and revving during countdown
+                let (listener_pos, listener_vel) = if let Some(p_car) = self.world.vehicles.get(my_idx) {
+                    (p_car.state.position, Vec2::ZERO)
+                } else {
+                    (self.camera.current_pos, Vec2::ZERO)
+                };
+
+                let mut proximity_sources = Vec::with_capacity(self.world.vehicles.len());
+                for (i, car) in self.world.vehicles.iter().enumerate() {
+                    if i == my_idx || (is_split && i == 1) {
+                        continue;
+                    }
+                    if self.lan_car_left(i) {
+                        continue;
+                    }
+                    let warmup_thr = calculate_countdown_warmup_throttle(i, remaining);
+                    let engine_type = if let Some(Some(mid)) = self.car_model_ids.get(i) {
+                        crate::catalog::find_model_by_id(mid)
+                            .map(|m| m.sound_type())
+                            .unwrap_or_else(|| self.resolve_active_sound_type())
+                    } else {
+                        self.resolve_active_sound_type()
+                    };
+
+                    proximity_sources.push(crate::audio::VehicleAudioSource {
+                        vehicle_id: i,
+                        engine_type,
+                        position: car.state.position,
+                        velocity: Vec2::ZERO,
+                        forward_speed: 0.0,
+                        throttle: warmup_thr,
+                        slip_ratio: 0.0,
+                    });
+                }
+                self.audio.update_proximity_engines(&proximity_sources, listener_pos, listener_vel, frame_dt);
 
                 // Countdown audio beeps (3, 2, 1)
                 if remaining <= 3.0 && self.prev_countdown_sec > 3 {

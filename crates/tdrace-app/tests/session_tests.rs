@@ -1110,5 +1110,43 @@ fn test_split_screen_player2_audio_computation_and_telemetry() {
     assert!(!session.audio.is_engine_active_p2);
 }
 
+#[test]
+fn test_countdown_all_engines_warmup_and_roar() {
+    let mut session = RaceSession::new();
+    session.game_mode = tdrace_app::ui::menu::GameMode::StandardRace;
+    session.num_bots = 3;
+    session.init_race();
+
+    assert_eq!(session.world.vehicles.len(), 4);
+
+    // Initial countdown state
+    session.state = GameState::Countdown(2.5);
+    session.update();
+
+    // Player 1 engine audio active
+    assert!(session.audio.is_engine_active, "Player engine audio should be active during countdown");
+
+    // Player engine RPM is kept revolutionized and warm (well above 1100 idle)
+    assert!(
+        session.engine_rpm.current_rpm > 1200.0,
+        "Player engine RPM should be revolutionized during countdown, got {}",
+        session.engine_rpm.current_rpm
+    );
+
+    // Proximity engines: if backend is available, nearby grid opponents are active
+    if session.audio.backend.is_available() {
+        let active_voices = session
+            .audio
+            .proximity_voices
+            .iter()
+            .filter(|v| v.vehicle_id.is_some())
+            .count();
+        assert!(
+            active_voices > 0,
+            "Opponents on starting grid should roar through proximity voices during countdown"
+        );
+    }
+}
+
 
 

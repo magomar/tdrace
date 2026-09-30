@@ -263,3 +263,41 @@ pub fn select_top_k_audible_sources(
     candidates.truncate(max_k);
     candidates.into_iter().map(|(idx, _)| idx).collect()
 }
+
+/// Evaluates dynamic engine warmup throttle for a vehicle during the race countdown.
+///
+/// Produces non-uniform, rhythmic accelerations (throttle blips) tailored per vehicle ID
+/// to warm up engines and keep RPM revolutionized on the starting grid, building
+/// into an electrifying pre-launch crescendo as the green light approaches.
+pub fn calculate_countdown_warmup_throttle(vehicle_id: usize, remaining_sec: f32) -> f32 {
+    let t = (10.0 - remaining_sec).max(0.0);
+
+    // Deterministic per-vehicle rhythm and cadence parameters
+    let freq = 1.10 + ((vehicle_id * 7 + 3) % 8) as f32 * 0.09;
+    let phase = ((vehicle_id * 13 + 5) % 11) as f32 / 11.0;
+    let peak_throttle = 0.78 + ((vehicle_id * 17 + 2) % 7) as f32 * 0.03;
+    let base_floor = 0.22 + ((vehicle_id * 11 + 1) % 5) as f32 * 0.02;
+
+    let cycle = (t * freq + phase).rem_euclid(1.0);
+
+    // Asymmetric throttle blip pulse: rapid attack surge, natural decay, and warm idle dwell
+    let mut pulse = if cycle < 0.28 {
+        let k = cycle / 0.28;
+        base_floor + (peak_throttle - base_floor) * k.powf(1.4)
+    } else if cycle < 0.65 {
+        let k = (cycle - 0.28) / (0.65 - 0.28);
+        base_floor + (peak_throttle - base_floor) * (1.0 - k).powi(2)
+    } else {
+        base_floor
+    };
+
+    // Pre-launch staging crescendo: in the final 0.7s before green light, rev engines up to launch RPM
+    if remaining_sec <= 0.70 {
+        let progress = ((0.70 - remaining_sec) / 0.70).clamp(0.0, 1.0);
+        let flutter = (t * 40.0 + vehicle_id as f32).sin() * 0.04;
+        let launch_thr = 0.72 + 0.25 * progress + flutter;
+        pulse = pulse.max(launch_thr);
+    }
+
+    pulse.clamp(0.0, 1.0)
+}
