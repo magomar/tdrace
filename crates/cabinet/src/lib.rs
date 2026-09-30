@@ -53,7 +53,7 @@ pub use ui::{
     safe_request_screen_size, safe_set_fullscreen, Accordion, AccordionItem, AccordionNavAction,
     CabinetTheme, CardGrid, CardGridAction, CardGridItem, CharFilters, ColumnAlign, DataColumn,
     DataRow, DataTable, DisplayResolution, DropdownWidget, FilterBar, FilterBarAction,
-    FilterBarStyle, FilterItem, Fonts, HStack, LayoutRect, NavBoundaryExit, Palette, SliderWidget,
-    TabBar, TableAction, TextInputAction, TextInputWidget, ToastItem, ToastOverlay, ToastSeverity,
-    UiScaler, VStack, WindowMode,
+    FilterBarStyle, FilterItem, Fonts, FooterPrompt, HeroActionButton, HStack, LayoutRect,
+    NavBoundaryExit, Palette, ScreenFooter, SliderWidget, TabBar, TableAction, TextInputAction,
+    TextInputWidget, ToastItem, ToastOverlay, ToastSeverity, UiScaler, VStack, WindowMode,
 };
