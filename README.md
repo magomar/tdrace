@@ -182,7 +182,7 @@ import gymnasium as gym
 import tdrace
 
 # 1. Vector Observation Environment (32-beam LIDAR + vehicle telemetry)
-env = gym.make("TDRace-v0", track_name="classic_grand_prix")
+env = gym.make("TDRace-v0", track_name="gt_coastal_grand_prix")
 obs, info = env.reset(seed=42)
 
 for _ in range(1000):

@@ -147,10 +147,10 @@ fn test_camera_extreme_edge_cases_and_teleportation() {
 #[test]
 fn test_bot_ai_multi_track_lap_progression() {
     let tracks = [
-        ("Classic GP", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
-        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
-        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
-        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
+        ("Classic GP", tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix")),
+        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway")),
+        ("Drift Park", tdrace_core::catalog::official_track("classic", "gt_ridge_ring")),
+        ("RX Quarry Sprint", tdrace_core::catalog::official_track("classic", "rx_quarry_sprint")),
     ];
 
     for (name, track) in &tracks {

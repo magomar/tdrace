@@ -197,10 +197,10 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
 
 /// Tracks and cars of the spec 046 sample: (track slug in the classic module, car id).
 pub const SAMPLE_TRACKS: [(&str, &str); 4] = [
-    ("classic_grand_prix", "classic_gt"),
-    ("oval_speedway", "classic_nascar"),
-    ("drift_park", "classic_rally"),
-    ("kart_arena", "classic_kart"),
+    ("gt_coastal_grand_prix", "classic_gt"),
+    ("stock_tri_oval_speedway", "classic_nascar"),
+    ("gt_ridge_ring", "classic_rally"),
+    ("kart_pine_grove", "classic_kart"),
 ];
 
 /// One race of a six-car grid, one car per `DrivingStyle::ALL` entry, all at one tier.
@@ -250,8 +250,8 @@ pub fn run_style_grids(tiers: &[DriverTier], laps: u32) -> Vec<StyleGridRun> {
     })
 }
 
-/// `SAMPLE_TRACKS` indices of the keyboard reference races (Classic GP, Kart Arena).
-pub const KEYBOARD_REFERENCE_TRACKS: [usize; 2] = [0, 3];
+/// `SAMPLE_TRACKS` indices of the keyboard reference races (Coastal GP, Ridge Ring).
+pub const KEYBOARD_REFERENCE_TRACKS: [usize; 2] = [0, 2];
 
 /// Races the keyboard reference driver (a T3 Balanced bot with `HumanTraits::none()`, on the
 /// Balanced keyboard filter) from the back of a Tier 1 style grid. Returns the reference result and

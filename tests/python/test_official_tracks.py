@@ -11,11 +11,11 @@ from tdrace.env import TDRaceEnv
     ("track_name", "expected_name"),
     [
         ("monza", "Monza Autodromo Nazionale"),
-        ("drift_park", "Drift Park"),
+        ("drift_park", "Ridge Ring"),
         ("daytona", "Daytona International Speedway"),
         ("holjes_rx", "Höljes Motorstadion"),
-        ("oval", "Oval Speedway"),
-        ("no_such_circuit", "Classic Grand Prix"),
+        ("oval", "Tri-Oval Speedway"),
+        ("no_such_circuit", "Coastal Grand Prix"),
     ],
 )
 def test_env_runs_on_official_circuit(track_name, expected_name):

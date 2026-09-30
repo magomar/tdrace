@@ -78,9 +78,11 @@ impl CarCategory {
             "kart" | "classic_kart" | "shifter_kart_125" => Some(Self::Kart),
             "off_road" | "offroad" | "off-road" | "extreme_offroad" | "classic_offroad"
             | "sand_rail_buggy" | "sand_rail" => Some(Self::OffRoad),
-            "autocross" | "ax" | "cross_car" | "crosscar" | "superbuggy" | "buggy1600" => {
+            "autocross" | "ax" | "cross_car" | "crosscar" | "superbuggy" | "buggy1600"
+            | "classic_ax_mudlark" | "classic_ax_brawler" | "classic_ax_talon" => {
                 Some(Self::Autocross)
             }
+            s if s.starts_with("classic_ax_") => Some(Self::Autocross),
             _ => None,
         }
     }

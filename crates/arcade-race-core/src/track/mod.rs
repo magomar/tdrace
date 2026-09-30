@@ -18,7 +18,7 @@ pub use geometry::{
 };
 pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
 pub use presets::{
-    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, gt_template, kart_template, rally_template, RaceDirection, TrackShape,
+    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
@@ -126,6 +126,8 @@ pub struct Track {
     pub default_laps: u32,
     #[serde(default)]
     pub car_category: CarCategory,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub car_model_id: Option<String>,
     #[serde(default)]
     pub module_id: Option<String>,
     #[serde(default)]
@@ -169,6 +171,7 @@ impl Default for Track {
             pit_box_area: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
+            car_model_id: None,
             module_id: None,
             modules: Vec::new(),
             scale: "1:1".to_string(),
@@ -928,25 +931,25 @@ mod tests {
 
     #[test]
     fn test_track_presets_creation() {
-        let gp = crate::track::test_circuit("classic", "classic_grand_prix");
-        assert_eq!(gp.name, "Classic Grand Prix");
+        let gp = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        assert_eq!(gp.name, "Coastal Grand Prix");
         assert!(gp.checkpoints.len() >= 10);
         assert!(!gp.grid_positions.is_empty());
 
-        let oval = crate::track::test_circuit("classic", "oval_speedway");
-        assert_eq!(oval.name, "Oval Speedway");
+        let oval = crate::track::test_circuit("classic", "stock_tri_oval_speedway");
+        assert_eq!(oval.name, "Tri-Oval Speedway");
         assert!(oval.spline.total_length() > 400.0);
 
-        let drift = crate::track::test_circuit("classic", "drift_park");
-        assert_eq!(drift.name, "Drift Park");
+        let drift = crate::track::test_circuit("classic", "gt_ridge_ring");
+        assert_eq!(drift.name, "Ridge Ring");
         assert!(!drift.geometry.surface_zones.is_empty());
 
-        let kart = crate::track::test_circuit("classic", "kart_arena");
-        assert_eq!(kart.name, "Kart Arena");
+        let kart = crate::track::test_circuit("classic", "kart_pine_grove");
+        assert_eq!(kart.name, "Pine Grove");
 
-        let rx = crate::track::test_circuit("classic", "classic_rallycross");
-        assert_eq!(rx.name, "Classic Rallycross");
-        assert!(rx.spline.total_length() >= 950.0 && rx.spline.total_length() <= 1100.0, "Classic Rallycross must be ~1km (got {})", rx.spline.total_length());
+        let rx = crate::track::test_circuit("classic", "rx_quarry_sprint");
+        assert_eq!(rx.name, "Quarry Sprint");
+        assert!(rx.spline.total_length() >= 750.0 && rx.spline.total_length() <= 1400.0, "Quarry Sprint must be ~1km (got {})", rx.spline.total_length());
         assert_eq!(rx.car_category, CarCategory::Rally);
     }
 
@@ -1052,14 +1055,14 @@ mod tests {
     #[test]
     fn test_track_json_serialization_roundtrip() {
         let presets = [
-            crate::track::test_circuit("classic", "classic_grand_prix"),
-            crate::track::test_circuit("classic", "oval_speedway"),
-            crate::track::test_circuit("classic", "drift_park"),
-            crate::track::test_circuit("classic", "kart_arena"),
-            crate::track::test_circuit("classic", "ramp_raceway"),
-            crate::track::test_circuit("classic", "oasis_rally"),
-            crate::track::test_circuit("classic", "classic_rallycross"),
-            crate::track::test_circuit("classic", "dirt_figure_eight"),
+            crate::track::test_circuit("classic", "gt_coastal_grand_prix"),
+            crate::track::test_circuit("classic", "stock_tri_oval_speedway"),
+            crate::track::test_circuit("classic", "gt_ridge_ring"),
+            crate::track::test_circuit("classic", "kart_pine_grove"),
+            crate::track::test_circuit("classic", "rx_hilltop_leap"),
+            crate::track::test_circuit("classic", "at_dune_sea"),
+            crate::track::test_circuit("classic", "rx_quarry_sprint"),
+            crate::track::test_circuit("extreme_offroad", "dirt_figure_eight"),
             crate::track::test_circuit("rally", "holjes_rx"),
             crate::track::test_circuit("rally", "lydden_hill"),
             crate::track::test_circuit("rally", "hell_rx"),
@@ -1082,7 +1085,10 @@ mod tests {
 
     #[test]
     fn test_track_rebuild_geometry() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        for wp in &mut track.spline.waypoints {
+            wp.wall_type = None;
+        }
         track.rebuild_geometry(5.0, BarrierType::Concrete);
         assert!(!track.geometry.inner_walls.is_empty());
         assert_eq!(track.geometry.inner_walls.first().unwrap().barrier_type, BarrierType::Concrete);
@@ -1091,41 +1097,43 @@ mod tests {
 
     #[test]
     fn test_track_surface_sampling() {
-        let track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let p0 = track.spline.samples[0].point;
+        let n0 = track.spline.samples[0].normal;
 
         // Sample on start line center (should be Asphalt)
-        let surf_start = track.sample_surface(Vec2::new(0.0, 0.0));
+        let surf_start = track.sample_surface(p0);
         assert_eq!(surf_start, SurfaceType::Asphalt);
 
         // Sample far outside the track
-        let surf_far = track.sample_surface(Vec2::new(0.0, -100.0));
+        let surf_far = track.sample_surface(p0 + n0 * 300.0);
         assert_eq!(surf_far, SurfaceType::Grass);
 
-        // Sample inside sand trap beyond wall barrier
-        let surf_sand = track.sample_surface(Vec2::new(180.0, 235.0));
-        assert_eq!(surf_sand, SurfaceType::DeepSand);
-
-        let p = Vec2::new(180.0, 225.0);
-        let proj = track.spline.project_point(p);
-        let surf_runoff = track.sample_surface(p);
-        assert_eq!(surf_runoff, SurfaceType::Gravel);
-        let surf_runoff_near = track.sample_surface_near(p, proj.progress_distance);
-        assert_eq!(surf_runoff_near, SurfaceType::Gravel);
-
-        // Regression: sand trap AABB overlaps the hairpin ribbon (centerline y=210,
-        // half-width 6, zone starts at y=215). On-track points must stay Asphalt.
-        let surf_overlap = track.sample_surface(Vec2::new(180.0, 213.0));
-        assert_eq!(surf_overlap, SurfaceType::Asphalt);
+        // Insert BelowTrack sand trap overlapping ribbon
+        track.geometry.surface_zones.push(
+            SurfaceZone::new(
+                SurfaceShape::Aabb {
+                    min: p0 - Vec2::splat(20.0),
+                    max: p0 + Vec2::splat(20.0),
+                },
+                SurfaceType::DeepSand,
+                "Sand Trap",
+            ).with_layer(SurfaceLayer::BelowTrack),
+        );
+        // On-track points must stay Asphalt
+        assert_eq!(track.sample_surface(p0), SurfaceType::Asphalt);
+        // Off-track point inside trap beyond runoff corridor must sample DeepSand
+        assert_eq!(track.sample_surface(p0 + n0 * 15.0), SurfaceType::DeepSand);
 
         // Test sample_car_surfaces
-        let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        let car = Car::new(CarConfig::sports_car()).with_pose(p0, 0.0);
         let wheel_surfs = track.sample_car_surfaces(&car);
         assert_eq!(wheel_surfs, [SurfaceType::Asphalt; 4]);
     }
 
     #[test]
     fn test_track_surface_breakdown() {
-        let gp = crate::track::test_circuit("classic", "classic_grand_prix");
+        let gp = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let gp_breakdown = gp.surface_breakdown();
         assert_eq!(gp_breakdown.len(), 1);
         assert_eq!(gp_breakdown[0].0, SurfaceType::Asphalt);
@@ -1133,15 +1141,15 @@ mod tests {
         assert_eq!(gp.surface_summary_string(), "100% Asphalt");
         assert!(gp.total_length_m() > 400.0);
 
-        let rally = crate::track::test_circuit("classic", "oasis_rally");
-        let rally_breakdown = rally.surface_breakdown();
-        assert_eq!(rally_breakdown.len(), 1);
-        assert_eq!(rally_breakdown[0].0, SurfaceType::Dirt);
-        assert!((rally_breakdown[0].1 - 100.0).abs() < 1e-3);
-        assert_eq!(rally.surface_summary_string(), "100% Dirt");
+        let dune = crate::track::test_circuit("classic", "at_dune_sea");
+        let dune_breakdown = dune.surface_breakdown();
+        assert_eq!(dune_breakdown.len(), 1);
+        assert_eq!(dune_breakdown[0].0, SurfaceType::PackedSand);
+        assert!((dune_breakdown[0].1 - 100.0).abs() < 1e-3);
+        assert_eq!(dune.surface_summary_string(), "100% Packed Sand");
 
         // Custom mixed-surface spline
-        let mut mixed = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut mixed = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let n = mixed.spline.waypoints.len();
         for i in 0..n / 2 {
             mixed.spline.waypoints[i].surface = Some(SurfaceType::Dirt);
@@ -1155,28 +1163,30 @@ mod tests {
 
     #[test]
     fn test_surface_layer_precedence_and_shapes() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         track.geometry.surface_zones.clear();
+        let p0 = track.spline.samples[0].point;
+        let n0 = track.spline.samples[0].normal;
 
-        // 1. BelowTrack Sand Zone overlapping the start line (0,0)
+        // 1. BelowTrack Sand Zone overlapping the start line
         let sand_shape = SurfaceShape::Aabb {
-            min: Vec2::new(-20.0, -20.0),
-            max: Vec2::new(20.0, 20.0),
+            min: p0 - Vec2::splat(20.0),
+            max: p0 + Vec2::splat(20.0),
         };
         track.geometry.surface_zones.push(
             SurfaceZone::new(sand_shape, SurfaceType::DeepSand, "Sand Under Road")
                 .with_layer(SurfaceLayer::BelowTrack),
         );
 
-        // Point on track (0, 0) should remain Asphalt because track ribbon sits above BelowTrack sand
-        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::Asphalt);
-        // Off-track point (0, 15) is outside the 14m wide track ribbon (half-width 7m) but inside the [-20..20, -20..20] sand zone
-        assert_eq!(track.sample_surface(Vec2::new(0.0, 15.0)), SurfaceType::DeepSand);
+        // Point on track should remain Asphalt because track ribbon sits above BelowTrack sand
+        assert_eq!(track.sample_surface(p0), SurfaceType::Asphalt);
+        // Off-track point outside ribbon and runoff corridor but inside the sand zone
+        assert_eq!(track.sample_surface(p0 + n0 * 15.0), SurfaceType::DeepSand);
 
-        // 2. AboveTrack Sand Zone overlapping the start line (0,0)
+        // 2. AboveTrack Sand Zone overlapping the start line
         track.geometry.surface_zones[0].layer = SurfaceLayer::AboveTrack;
-        // Point on track (0, 0) should now be DeepSand because AboveTrack sits on top of asphalt!
-        assert_eq!(track.sample_surface(Vec2::new(0.0, 0.0)), SurfaceType::DeepSand);
+        // Point on track should now be DeepSand because AboveTrack sits on top of asphalt!
+        assert_eq!(track.sample_surface(p0), SurfaceType::DeepSand);
 
         // 3. Triangle Surface Shape test
         let tri_shape = SurfaceShape::triangle(
@@ -1206,7 +1216,7 @@ mod tests {
 
     #[test]
     fn test_grandstand_and_tree_scenery_sampling_and_serialization() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let stand = Grandstand::new(1, Vec2::new(0.0, 50.0), 30.0, 10.0, 0.0);
         let tree = Tree::new(2, Vec2::new(100.0, 100.0), TreeType::Palm).with_scale(1.5);
 

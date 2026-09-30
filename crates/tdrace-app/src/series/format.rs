@@ -542,7 +542,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
             rounds: vec![
                 RoundConfig {
                     order: 1,
-                    track_id: "oval_speedway".to_string(),
+                    track_id: "stock_tri_oval_speedway".to_string(),
                     name: None,
                     laps: None,
                     weather: None,
@@ -578,7 +578,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
 
         let session = def.to_session();
         assert_eq!(session.name, "NASCAR Grassroots Cup");
-        assert_eq!(session.track_ids, vec!["oval_speedway"]);
+        assert_eq!(session.track_ids, vec!["stock_tri_oval_speedway"]);
         assert_eq!(session.laps_per_round, 10);
         assert_eq!(session.standings.len(), 2);
         assert_eq!(session.standings[0].driver_id, "player");
@@ -592,6 +592,6 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
         assert_eq!(recovered.series.name, "NASCAR Grassroots Cup");
         assert_eq!(recovered.scoring.system, "nascar");
         assert_eq!(recovered.rounds.len(), 1);
-        assert_eq!(recovered.rounds[0].track_id, "oval_speedway");
+        assert_eq!(recovered.rounds[0].track_id, "stock_tri_oval_speedway");
     }
 }

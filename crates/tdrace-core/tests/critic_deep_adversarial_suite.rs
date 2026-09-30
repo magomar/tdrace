@@ -12,8 +12,8 @@ use tdrace_core::track::geometry::{BarrierType, WallBarrier};
 
 #[test]
 fn test_adversarial_track_anti_cheat_scenarios() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
-    let num_cps = track.checkpoints.len(); // 14 checkpoints (12 track + 2 pit)
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
+    let num_cps = track.checkpoints.len();
     let mut tracker = TrackProgressTracker::new(num_cps, 3);
     let mut car = Car::new(CarConfig::sports_car());
 
@@ -33,7 +33,7 @@ fn test_adversarial_track_anti_cheat_scenarios() {
     assert!(!tracker.lap_completed, "Lap must not be completed on backward crossing");
 
     // Scenario B: Skipping 50% of checkpoints (cutting track infield)
-    // Pass CP0, CP1, then skip directly to CP8, CP9, CP10, CP11, then CP0 (Finish)
+    // Pass CP0, CP1, then skip directly to finish
     tracker.reset();
 
     // Cross CP0
@@ -52,7 +52,7 @@ fn test_adversarial_track_anti_cheat_scenarios() {
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
     assert_eq!(tracker.last_checkpoint_idx, 1);
 
-    // CUT TRACK: Skip CPs 2..7 and try to cross CP0
+    // CUT TRACK: Skip remaining CPs and try to cross CP0
     car.state.position = mid0 - cp0.direction * 2.0;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
     car.state.position = mid0 + cp0.direction * 2.0;
@@ -67,7 +67,7 @@ fn test_adversarial_track_anti_cheat_scenarios() {
 
     // Scenario C: Full legitimate lap sequence
     tracker.reset();
-    let track_cps_count = 12; // 12 track checkpoints (excluding pit lane)
+    let track_cps_count = track.checkpoints.iter().filter(|cp| !cp.is_pit_entry && !cp.is_pit_exit).count();
     for i in 0..track_cps_count {
         let cp = &track.checkpoints[i];
         let mid = (cp.gate.start + cp.gate.end) * 0.5;
@@ -245,10 +245,10 @@ fn test_split_mu_wheel_surface_dynamics_deep() {
 #[test]
 fn test_lidar_precision_all_presets_and_target_types() {
     let presets = [
-        tdrace_core::catalog::official_track("classic", "classic_grand_prix"),
-        tdrace_core::catalog::official_track("classic", "oval_speedway"),
-        tdrace_core::catalog::official_track("classic", "drift_park"),
-        tdrace_core::catalog::official_track("classic", "kart_arena"),
+        tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix"),
+        tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway"),
+        tdrace_core::catalog::official_track("classic", "gt_ridge_ring"),
+        tdrace_core::catalog::official_track("classic", "kart_pine_grove"),
     ];
 
     let scanner = LidarScanner::new(LidarConfig::surround_32());
@@ -259,9 +259,8 @@ fn test_lidar_precision_all_presets_and_target_types() {
         let heading = sample.tangent.y.atan2(sample.tangent.x);
         let host = Car::new(CarConfig::sports_car()).with_pose(sample.point, heading);
 
-        // Spawn opponent car 15m ahead along track
-        let sample_ahead = track.spline.sample_at_distance(35.0);
-        let opp = Car::new(CarConfig::sports_car()).with_pose(sample_ahead.point, heading);
+        // Spawn opponent car 6m ahead along track
+        let opp = Car::new(CarConfig::sports_car()).with_pose(sample.point + sample.tangent * 6.0, heading);
 
         let hits = scanner.scan(&host, track, &[opp]);
         assert_eq!(hits.len(), 32);

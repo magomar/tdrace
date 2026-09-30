@@ -908,6 +908,7 @@ impl DriverCharacter {
                 CarChoice::RallyCar => Some("classic_rally"),
                 CarChoice::Kart => Some("classic_kart"),
                 CarChoice::SandRail => Some("classic_offroad"),
+                CarChoice::CrossCar => Some("classic_ax_mudlark"),
             };
         }
         None
@@ -931,6 +932,7 @@ impl DriverCharacter {
                 "rally" => CarChoice::RallyCar,
                 "kart" => CarChoice::Kart,
                 "extreme_offroad" => CarChoice::SandRail,
+                "autocross" => CarChoice::CrossCar,
                 _ => self.preferred_car,
             }
         }

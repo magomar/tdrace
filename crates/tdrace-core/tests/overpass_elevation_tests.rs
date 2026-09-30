@@ -146,6 +146,7 @@ fn test_lidar_elevation_filtering() {
         pit_box_area: None,
         default_laps: 3,
         car_category: arcade_race_core::CarCategory::Gt,
+        car_model_id: None,
         module_id: None,
         modules: Vec::new(),
         scale: "1:1".to_string(),

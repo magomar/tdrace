@@ -773,23 +773,23 @@ fn test_track_editor_spline_surface_inheritance_and_switching() {
 
     let initial_count = state.track.spline.waypoints.len();
 
-    // 1. Select a dirt waypoint (all waypoints in Oasis Rally are Dirt)
+    // 1. Select a sand waypoint (all waypoints in Dune Sea are PackedSand)
     state.select(Selection::Waypoint(3));
-    assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::Dirt));
+    assert_eq!(state.track.spline.waypoints[3].surface, Some(SurfaceType::PackedSand));
 
     // 2. Add a new spline point after waypoint 3
     let new_pos = Vec2::new(170.0, 30.0);
     tools.handle_mouse_down(&mut state, new_pos);
     tools.handle_mouse_up(&mut state, new_pos);
 
-    // It should be inserted at index 4 and inherit SurfaceType::Dirt (not tarmac/asphalt!)
+    // It should be inserted at index 4 and inherit SurfaceType::PackedSand
     assert_eq!(state.track.spline.waypoints.len(), initial_count + 1);
     assert_eq!(state.selection, Selection::Waypoint(4));
-    assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::Dirt));
+    assert_eq!(state.track.spline.waypoints[4].surface, Some(SurfaceType::PackedSand));
 
-    // 3. User switches surface of waypoint 4 to PackedSand
-    state.track.spline.waypoints[4].surface = Some(SurfaceType::PackedSand);
-    tools.active_surface = SurfaceType::PackedSand;
+    // 3. User switches surface of waypoint 4 to Dirt
+    state.track.spline.waypoints[4].surface = Some(SurfaceType::Dirt);
+    tools.active_surface = SurfaceType::Dirt;
     state.rebuild_geometry();
 
     // 4. Add another point after waypoint 4
@@ -797,10 +797,10 @@ fn test_track_editor_spline_surface_inheritance_and_switching() {
     tools.handle_mouse_down(&mut state, new_pos2);
     tools.handle_mouse_up(&mut state, new_pos2);
 
-    // It should be inserted at index 5 and inherit SurfaceType::PackedSand
+    // It should be inserted at index 5 and inherit SurfaceType::Dirt
     assert_eq!(state.track.spline.waypoints.len(), initial_count + 2);
     assert_eq!(state.selection, Selection::Waypoint(5));
-    assert_eq!(state.track.spline.waypoints[5].surface, Some(SurfaceType::PackedSand));
+    assert_eq!(state.track.spline.waypoints[5].surface, Some(SurfaceType::Dirt));
 }
 
 #[test]
@@ -904,7 +904,7 @@ fn test_track_editor_overwrite_vs_save_as_new_copy_flow() {
     let loaded_preset_choice = manager
         .load_track(&TrackChoice::ClassicGrandPrix)
         .expect("Load preset must load canonical version in normal user mode");
-    assert_eq!(loaded_preset_choice.name, "Classic Grand Prix");
+    assert_eq!(loaded_preset_choice.name, "Coastal Grand Prix");
 
     // 8. In dev mode, developer can save to git-tracked preset
     let mock_git = temp_dir.join("mock_git");
@@ -1688,10 +1688,10 @@ fn test_track_editor_wall_distance_editing_and_batch_operations() {
     // 2. Batch adjust wall distance
     state.select(Selection::MultipleWaypoints(vec![0, 1, 2]));
     assert!(tools.batch_adjust_wall_distances(&mut state, -2.0));
-    // Default 4.0 - 2.0 = 2.0
-    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, Some(2.0));
-    assert_eq!(state.track.spline.waypoints[1].left_wall_distance, Some(2.0));
-    assert_eq!(state.track.spline.waypoints[2].left_wall_distance, Some(2.0));
+    // Default 7.0 - 2.0 = 5.0
+    assert_eq!(state.track.spline.waypoints[0].left_wall_distance, Some(5.0));
+    assert_eq!(state.track.spline.waypoints[1].left_wall_distance, Some(5.0));
+    assert_eq!(state.track.spline.waypoints[2].left_wall_distance, Some(5.0));
 
     // 3. Batch set wall distance to 0.0m (Flush / Banked)
     assert!(tools.batch_set_wall_distances(&mut state, Some(0.0), Some(0.0)));
@@ -2085,9 +2085,9 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
     let _ = fs::create_dir_all(&user_tracks_dir);
 
     // Seed mock git tracks
-    let mut gp_initial = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
-    gp_initial.name = "Classic Grand Prix Original".to_string();
-    gp_initial.save_to_file(mock_git_tracks.join("classic").join("classic_grand_prix.json")).unwrap();
+    let mut gp_initial = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
+    gp_initial.name = "Coastal Grand Prix Original".to_string();
+    gp_initial.save_to_file(mock_git_tracks.join("classic").join("gt_coastal_grand_prix.json")).unwrap();
 
     let mut daytona_initial = tdrace_core::catalog::official_track("classic", "oval_speedway");
     daytona_initial.name = "Daytona Original".to_string();
@@ -2119,7 +2119,7 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
 
         let choice = TrackChoice::ClassicGrandPrix;
         let loaded = session.track_manager.load_track(&choice).expect("Load preset");
-        assert_eq!(loaded.name, "Classic Grand Prix Original");
+        assert_eq!(loaded.name, "Coastal Grand Prix Original");
 
         let canonical_file = session.track_manager.resolve_preset_git_file(choice.track_id(), None);
         assert!(canonical_file.is_some());
@@ -2128,11 +2128,11 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
         session.enter_track_editor_with_path(loaded, Some(canonical_file_str.clone()));
         assert_eq!(session.state, GameState::TrackEditor);
 
-        let modified_name = "Classic Grand Prix Custom Tuned";
+        let modified_name = "Coastal Grand Prix Custom Tuned";
         let modified_desc = "Tuned apex corners and custom curbs.";
         session.handle_editor_action(EditorAction::SaveTrack {
             name: modified_name.to_string(),
-            filename: "classic_grand_prix".to_string(),
+            filename: "gt_coastal_grand_prix".to_string(),
             description: modified_desc.to_string(),
             overwrite: true,
             exit_after: false,
@@ -2147,7 +2147,7 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
         assert_eq!(git_on_disk.description, modified_desc);
 
         // Spec 042: the official circuit has one copy, in tracks/; no user storage copy is written
-        let user_file = user_tracks_dir.join("classic_grand_prix.json");
+        let user_file = user_tracks_dir.join("gt_coastal_grand_prix.json");
         assert!(!user_file.exists(), "Dev save of an official circuit must not write a user storage copy");
 
         // Verify TrackManager reloads the modified track
@@ -2219,17 +2219,17 @@ fn test_preset_circuits_overwrite_and_persistence_in_editor() {
 
         session.handle_editor_action(EditorAction::SaveTrack {
             name: "Hacked Preset Name".to_string(),
-            filename: "classic_grand_prix".to_string(),
+            filename: "gt_coastal_grand_prix".to_string(),
             description: "Saved as a copy in standard mode".to_string(),
             overwrite: true,
             exit_after: false,
         });
 
         assert!(session.editor_save_toast_msg.contains("Saved a copy"), "{}", session.editor_save_toast_msg);
-        let copy = Track::load_from_file(user_tracks_dir.join("classic_grand_prix_copy.json")).expect("Copy in user storage");
+        let copy = Track::load_from_file(user_tracks_dir.join("gt_coastal_grand_prix_copy.json")).expect("Copy in user storage");
         assert_eq!(copy.name, "Hacked Preset Name (copy)");
         assert_eq!(copy.category, tdrace_core::track::TrackCategory::Draft);
-        let git_file = Track::load_from_file(mock_git_tracks.join("classic").join("classic_grand_prix.json")).unwrap();
+        let git_file = Track::load_from_file(mock_git_tracks.join("classic").join("gt_coastal_grand_prix.json")).unwrap();
         assert_ne!(git_file.name, "Hacked Preset Name", "Standard mode must not touch tracks/");
         let reloaded = session.track_manager.load_track(&choice).unwrap();
         assert_eq!(reloaded, tdrace_core::catalog::official_track("classic", "classic_grand_prix"));

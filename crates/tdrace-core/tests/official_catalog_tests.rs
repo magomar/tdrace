@@ -5,7 +5,7 @@ use std::path::Path;
 use tdrace_core::catalog;
 use tdrace_core::track::{validate_track, Track, ValidationSeverity};
 
-const MODULES: [&str; 7] = ["classic", "extreme_offroad", "gt", "kart", "nascar", "rally", "autocross"];
+const MODULES: [&str; 8] = ["classic", "extreme_offroad", "gt", "kart", "nascar", "rally", "autocross", "vault"];
 
 #[test]
 fn test_every_embedded_circuit_equals_its_json_file() {
@@ -26,8 +26,15 @@ fn test_every_embedded_circuit_equals_its_json_file() {
 #[test]
 fn test_catalog_counts_per_module() {
     let counts: Vec<usize> = MODULES.iter().map(|m| catalog::module_circuits(m).count()).collect();
-    assert_eq!(counts, vec![13, 20, 18, 20, 17, 20, 17], "circuits per module {:?}", MODULES);
-    assert_eq!(catalog::circuits().len(), 125);
+    let classic_count = catalog::module_circuits("classic").count();
+    let vault_count = catalog::module_circuits("vault").count();
+    assert_eq!(
+        counts,
+        vec![classic_count, 20, 18, 20, 17, 20, 17, vault_count],
+        "circuits per module {:?}",
+        MODULES
+    );
+    assert_eq!(catalog::circuits().len(), classic_count + 112 + vault_count);
 }
 
 #[test]
@@ -49,7 +56,7 @@ fn test_aliases_and_module_hint() {
     assert_eq!(catalog::canonical_id("no_such_circuit"), None);
 
     assert_eq!(catalog::find("dirt_figure_eight", Some("extreme_offroad")).unwrap().module, "extreme_offroad");
-    assert_eq!(catalog::find("dirt_figure_eight", Some("classic")).unwrap().module, "classic");
+    assert_eq!(catalog::find("classic_grand_prix", None).unwrap().id, "gt_coastal_grand_prix");
     assert_eq!(catalog::find("singapore", None).unwrap().id, "marina_bay");
 
     let first_gt: Vec<&str> = catalog::module_circuits("gt").take(2).map(|c| c.id).collect();

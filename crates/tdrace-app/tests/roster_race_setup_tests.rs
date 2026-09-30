@@ -7,19 +7,19 @@ use tdrace_core::CarCategory;
 #[test]
 fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
-    assert_eq!(gp.default_laps, 5);
+    assert_eq!(gp.default_laps, 3);
     assert_eq!(gp.car_category, CarCategory::Gt);
 
     let oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
-    assert_eq!(oval.default_laps, 5);
+    assert_eq!(oval.default_laps, 6);
     assert_eq!(oval.car_category, CarCategory::Nascar);
 
     let drift = tdrace_core::catalog::official_track("classic", "drift_park");
-    assert_eq!(drift.default_laps, 5);
+    assert_eq!(drift.default_laps, 4);
     assert_eq!(drift.car_category, CarCategory::Gt);
 
     let kart = tdrace_core::catalog::official_track("classic", "kart_arena");
-    assert_eq!(kart.default_laps, 5);
+    assert_eq!(kart.default_laps, 8);
     assert_eq!(kart.car_category, CarCategory::Kart);
 
     let ramp = tdrace_core::catalog::official_track("classic", "ramp_raceway");
@@ -27,11 +27,11 @@ fn test_preset_tracks_predefined_cars_and_balanced_laps() {
     assert_eq!(ramp.car_category, CarCategory::Rally);
 
     let oasis = tdrace_core::catalog::official_track("classic", "oasis_rally");
-    assert_eq!(oasis.default_laps, 5);
+    assert_eq!(oasis.default_laps, 4);
     assert_eq!(oasis.car_category, CarCategory::OffRoad);
 
     let rx = tdrace_core::catalog::official_track("classic", "classic_rallycross");
-    assert_eq!(rx.default_laps, 5);
+    assert_eq!(rx.default_laps, 6);
     assert_eq!(rx.car_category, CarCategory::Rally);
 }
 
@@ -39,13 +39,13 @@ fn test_preset_tracks_predefined_cars_and_balanced_laps() {
 fn test_enforced_predefined_car_in_race_session() {
     let mut session = RaceSession::new();
 
-    // 1. Select Kart Arena (enforced car = Kart, laps = 5)
+    // 1. Select Kart Arena (enforced car = Kart, laps = 8)
     session.track_choice = TrackChoice::KartArena;
     session.free_car_selection = false;
     session.num_bots = 4;
     session.init_race();
 
-    assert_eq!(session.total_laps, 5);
+    assert_eq!(session.total_laps, 8);
     assert_eq!(session.resolve_predefined_car(), CarChoice::Kart);
     assert_eq!(session.active_player_car_choice(), CarChoice::Kart);
     assert_eq!(session.world.vehicles.len(), 5); // 1 player + 4 bots
@@ -59,13 +59,13 @@ fn test_enforced_predefined_car_in_race_session() {
         assert!((bot_car.config.top_speed_mps - 32.0).abs() < 1.0);
     }
 
-    // 2. Select Drift Park (enforced car = SportsCar / classic_gt, laps = 5)
+    // 2. Select Drift Park (enforced car = SportsCar / classic_gt, laps = 4)
     session.track_choice = TrackChoice::DriftPark;
     session.free_car_selection = false;
     session.random_car_assignment = false;
     session.init_race();
 
-    assert_eq!(session.total_laps, 5);
+    assert_eq!(session.total_laps, 4);
     assert_eq!(session.resolve_predefined_car(), CarChoice::SportsCar);
     assert_eq!(session.active_player_car_choice(), CarChoice::SportsCar);
 
@@ -140,7 +140,7 @@ fn test_track_serde_default_laps_and_car_category_roundtrip() {
     let json = track.to_json_pretty().expect("Must serialize to JSON");
 
     let deserialized = Track::from_json(&json).expect("Must deserialize from JSON");
-    assert_eq!(deserialized.default_laps, 5);
+    assert_eq!(deserialized.default_laps, 3);
     assert_eq!(deserialized.car_category, CarCategory::Gt);
 
     // Test backwards-compatibility when fields are missing from JSON
@@ -231,9 +231,9 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
     assert_eq!(session.menu_track_filter.prev(), TrackCatalogFilter::Custom);
     assert_eq!(session.menu_track_filter.prev().prev(), TrackCatalogFilter::Presets);
 
-    // Initial state: 10 classic presets, 0 custom
+    // Initial state: 18 classic presets, 0 custom
     let (preset_c, custom_c) = session.menu_track_filter_counts();
-    assert_eq!(preset_c, 13);
+    assert_eq!(preset_c, 18);
     assert_eq!(custom_c, 0);
 
     // 2. Add a custom circuit
@@ -244,13 +244,13 @@ fn test_circuit_catalog_filtering_presets_and_custom() {
 
     // Counts after adding custom circuit
     let (preset_c, custom_c) = session.menu_track_filter_counts();
-    assert_eq!(preset_c, 13);
+    assert_eq!(preset_c, 18);
     assert_eq!(custom_c, 1);
 
     // Filter: Presets -> Only official presets
     session.menu_track_filter = TrackCatalogFilter::Presets;
     let filtered_presets = session.filtered_menu_tracks();
-    assert_eq!(filtered_presets.len(), 13);
+    assert_eq!(filtered_presets.len(), 18);
     assert!(filtered_presets.iter().all(|t| t.is_official_preset()));
     assert!(!filtered_presets.iter().any(|t| t.is_user_custom()));
 
@@ -506,7 +506,8 @@ fn test_starting_grid_circuit_card_and_selector_flow() {
     assert!(cy >= py + ph);
 
     let mut session = RaceSession::new();
-    session.track_choice = TrackChoice::ClassicGrandPrix;
+    let initial_preset = session.filtered_menu_tracks()[0].clone();
+    session.track_choice = initial_preset;
     session.init_race();
 
     // 1. Select Circuit Card (4) and confirm -> opens Menu with MenuOrigin::StartingGrid

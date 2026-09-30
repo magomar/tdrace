@@ -374,8 +374,25 @@ pub fn trim_corner_intersections(
     right_walls.retain(|w| !trimmed.next().unwrap_or(false) || w.segment.length() > 0.10);
 }
 
-/// Builds boundary wall barriers along the track edges given a spline and barrier offset.
+/// Builds boundary wall barriers along the track edges given a spline and barrier offset,
+/// merging collinear segments by default to reduce physics and rendering complexity.
 pub fn generate_walls_from_spline(
+    spline: &TrackSpline,
+    barrier_offset: f32,
+    barrier_type: BarrierType,
+) -> (Vec<WallBarrier>, Vec<WallBarrier>, Vec<Vec2>, Vec<Vec2>) {
+    let (left_walls, right_walls, left_pts, right_pts) =
+        generate_walls_from_spline_raw(spline, barrier_offset, barrier_type);
+    (
+        merge_collinear_walls(left_walls),
+        merge_collinear_walls(right_walls),
+        left_pts,
+        right_pts,
+    )
+}
+
+/// Builds unmerged raw boundary wall barriers along the track edges given a spline and barrier offset.
+pub fn generate_walls_from_spline_raw(
     spline: &TrackSpline,
     barrier_offset: f32,
     barrier_type: BarrierType,
@@ -1003,6 +1020,7 @@ pub fn create_prototypical_track(
         pit_box_area: None,
         default_laps,
         car_category,
+        car_model_id: None,
         module_id: Some(mod_str.to_string()),
         modules: vec![mod_str.to_string()],
         scale: "1:1".to_string(),

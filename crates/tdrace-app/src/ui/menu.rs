@@ -367,10 +367,11 @@ pub enum CarChoice {
     HypercarPrototype,
     StockCar,
     SandRail,
+    CrossCar,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::SportsCar,
         Self::DriftCar,
         Self::Kart,
@@ -382,6 +383,7 @@ impl CarChoice {
         Self::HypercarPrototype,
         Self::StockCar,
         Self::SandRail,
+        Self::CrossCar,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -397,6 +399,7 @@ impl CarChoice {
             Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
             Self::StockCar => "850 BHP NASCAR Cup V8",
             Self::SandRail => "300 BHP Sand Rail Buggy",
+            Self::CrossCar => "150 BHP Cross Car",
         }
     }
 
@@ -413,6 +416,7 @@ impl CarChoice {
             Self::HypercarPrototype => "LE MANS HYPERCAR",
             Self::StockCar => "850 BHP SPACEFRAME V8",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
+            Self::CrossCar => "150 BHP RWD MOTORCYCLE",
         }
     }
 
@@ -429,6 +433,7 @@ impl CarChoice {
             Self::HypercarPrototype => "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
             Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
             Self::SandRail => "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
+            Self::CrossCar => "Single-seat cross car with a high-revving motorcycle engine and rapid direction changes.",
         }
     }
 
@@ -446,6 +451,7 @@ impl CarChoice {
             Self::HypercarPrototype => (0.99, 0.99, 0.98, 0.35),
             Self::StockCar => (0.97, 0.90, 0.86, 0.88),
             Self::SandRail => (0.88, 0.96, 0.82, 0.94),
+            Self::CrossCar => (0.76, 0.95, 0.92, 0.85),
         }
     }
 
@@ -518,6 +524,12 @@ impl CarChoice {
                 "215 km/h Top Speed",
                 "Paddle Sand Tires",
             ),
+            Self::CrossCar => (
+                "RWD Motorcycle",
+                "420 kg Mass",
+                "160 km/h Top Speed",
+                "Quick-Ratio Rack",
+            ),
         }
     }
 
@@ -536,7 +548,7 @@ impl CarChoice {
     /// Returns the motorsport category tier for this vehicle choice (Tier 1..=5).
     pub fn tier(&self) -> u8 {
         match self {
-            Self::GT4Clubsport | Self::SportsCar | Self::SandRail => 1,
+            Self::GT4Clubsport | Self::SportsCar | Self::SandRail | Self::CrossCar => 1,
             Self::GT3Car | Self::RallyCar | Self::DriftCar => 2,
             Self::GT2Biturbo | Self::Kart => 3,
             Self::GT1Legend => 4,
@@ -544,7 +556,7 @@ impl CarChoice {
         }
     }
 
-    /// Returns the high-level motorsport car category (GT, NASCAR, Rally, Kart, Off-Road).
+    /// Returns the high-level motorsport car category (GT, NASCAR, Rally, Kart, Off-Road, Autocross).
     pub fn category(&self) -> CarCategory {
         match self {
             Self::SportsCar
@@ -558,6 +570,7 @@ impl CarChoice {
             Self::RallyCar => CarCategory::Rally,
             Self::Kart => CarCategory::Kart,
             Self::SandRail => CarCategory::OffRoad,
+            Self::CrossCar => CarCategory::Autocross,
         }
     }
 
@@ -569,7 +582,7 @@ impl CarChoice {
             CarCategory::Rally => Self::RallyCar,
             CarCategory::Kart => Self::Kart,
             CarCategory::OffRoad => Self::SandRail,
-            CarCategory::Autocross => Self::SandRail,
+            CarCategory::Autocross => Self::CrossCar,
         }
     }
 
@@ -579,7 +592,7 @@ impl CarChoice {
             Self::StockCar => EngineSoundType::LateModelV8,
             Self::SandRail => EngineSoundType::SandRailBoxer,
             Self::Kart => EngineSoundType::KartCadet60,
-            Self::RallyCar => EngineSoundType::CrossCarMotorcycle,
+            Self::RallyCar | Self::CrossCar => EngineSoundType::CrossCarMotorcycle,
             Self::SportsCar | Self::DriftCar | Self::GT4Clubsport => EngineSoundType::Gt4Clubsport,
             Self::GT3Car => EngineSoundType::Gt3HighRev,
             Self::GT2Biturbo => EngineSoundType::Gt2Biturbo,
@@ -603,12 +616,12 @@ impl CarChoice {
         }
         match surface {
             SurfaceType::PackedSand => match self.category() {
-                CarCategory::OffRoad => true,
+                CarCategory::OffRoad | CarCategory::Autocross => true,
                 CarCategory::Rally => self.tier() >= 4,
                 _ => false,
             },
             SurfaceType::DeepMud => match self.category() {
-                CarCategory::OffRoad => self.tier() >= 4,
+                CarCategory::OffRoad | CarCategory::Autocross => true,
                 _ => false,
             },
             SurfaceType::SheetIce => self.category() == CarCategory::OffRoad && self.tier() == 3,
@@ -636,7 +649,7 @@ impl CarChoice {
                 }
             }
             SurfaceType::DeepMud => {
-                if self.category() != CarCategory::OffRoad || self.tier() < 4 {
+                if (self.category() != CarCategory::OffRoad && self.category() != CarCategory::Autocross) || self.tier() < 4 {
                     Some("SURFACE WARNING: Deep mud terrain requires heavy off-road flotation.")
                 } else {
                     None
@@ -668,7 +681,7 @@ impl CarChoice {
                 crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype()
             }
             Self::StockCar => CarConfig::stock_car_ta1(),
-            Self::SandRail => CarConfig::sand_rail(),
+            Self::SandRail | Self::CrossCar => CarConfig::sand_rail(),
         }
     }
 
@@ -706,6 +719,11 @@ impl CarChoice {
                 whip_antenna: true,
                 paddle_tires: true,
             },
+            Self::CrossCar => crate::module::VehicleVisualType::SandRail {
+                lightbar: false,
+                whip_antenna: false,
+                paddle_tires: false,
+            },
             Self::SportsCar | Self::DriftCar => crate::module::VehicleVisualType::TouringGT {
                 widebody: false,
                 gt_wing: false,
@@ -722,7 +740,16 @@ pub fn resolve_predefined_car_for_track(
 ) -> CarChoice {
     if let Some(tr) = track {
         if module_id == "classic" {
-            CarChoice::classic_car_for_category(tr.car_category)
+            if let Some(ref model_id) = tr.car_model_id {
+                match model_id.as_str() {
+                    "classic_ax_mudlark" => CarChoice::CrossCar,
+                    "classic_ax_brawler" => CarChoice::RallyCar,
+                    "classic_ax_talon" => CarChoice::SandRail,
+                    _ => CarChoice::classic_car_for_category(tr.car_category),
+                }
+            } else {
+                CarChoice::classic_car_for_category(tr.car_category)
+            }
         } else {
             match tr.car_category {
                 tdrace_core::CarCategory::Gt => CarChoice::GT4Clubsport,
@@ -730,7 +757,7 @@ pub fn resolve_predefined_car_for_track(
                 tdrace_core::CarCategory::Rally => CarChoice::RallyCar,
                 tdrace_core::CarCategory::Kart => CarChoice::Kart,
                 tdrace_core::CarCategory::OffRoad => CarChoice::SandRail,
-                tdrace_core::CarCategory::Autocross => CarChoice::SandRail,
+                tdrace_core::CarCategory::Autocross => CarChoice::CrossCar,
             }
         }
     } else {
@@ -740,7 +767,7 @@ pub fn resolve_predefined_car_for_track(
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,
             "extreme_offroad" => CarChoice::SandRail,
-            "autocross" => CarChoice::SandRail,
+            "autocross" => CarChoice::CrossCar,
             _ => CarChoice::SportsCar,
         }
     }

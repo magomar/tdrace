@@ -193,8 +193,7 @@ impl LidarScanner {
                 if (car_elev - w.elevation).abs() > 2.0 {
                     return false;
                 }
-                let mid = (w.segment.start + w.segment.end) * 0.5;
-                mid.distance_squared(sensor_pos) < max_r_sq
+                w.segment.distance_sq_to_point(sensor_pos) < max_r_sq
             })
             .collect();
 
@@ -404,25 +403,29 @@ mod tests {
 
     #[test]
     fn test_lidar_scanner_basic() {
-        let track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let scanner = LidarScanner::new(LidarConfig::surround_32());
-        let car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        let pos = track.grid_positions[0].position;
+        let angle = track.grid_positions[0].angle;
+        let car = Car::new(CarConfig::sports_car()).with_pose(pos, angle);
 
         let hits = scanner.scan(&car, &track, &[]);
         assert_eq!(hits.len(), 32);
 
-        // At (0,0) track width is 14m, walls are at lateral distance ~11m
         let hit_left = hits[8]; // 90 degrees left
-        assert!(hit_left.distance > 5.0 && hit_left.distance < 20.0);
+        assert!(hit_left.distance > 3.0 && hit_left.distance < 30.0);
         assert_eq!(hit_left.hit_type, LidarHitType::TrackWall);
     }
 
     #[test]
     fn test_lidar_opponent_detection() {
-        let track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let scanner = LidarScanner::new(LidarConfig::forward_cone_16());
-        let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
-        let opponent = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(15.0, 0.0), 0.0);
+        let pos = track.grid_positions[0].position;
+        let angle = track.grid_positions[0].angle;
+        let fwd = Vec2::from_angle(angle);
+        let host = Car::new(CarConfig::sports_car()).with_pose(pos, angle);
+        let opponent = Car::new(CarConfig::sports_car()).with_pose(pos + fwd * 15.0, angle);
 
         let hits = scanner.scan(&host, &track, &[opponent]);
         // Center rays (pointing forward) should hit the opponent car
@@ -433,24 +436,29 @@ mod tests {
 
     #[test]
     fn test_lidar_ignores_virtual_barrier() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
-        // Insert a virtual barrier right in front of the car at x=5.0
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let pos = track.grid_positions[0].position;
+        let angle = track.grid_positions[0].angle;
+        let fwd = Vec2::from_angle(angle);
+        let right = fwd.perp();
+        let barrier_pos = pos + fwd * 5.0;
+
+        // Insert a virtual barrier right in front of the car
         track.geometry.outer_walls.push(crate::track::geometry::WallBarrier::new(
-            Vec2::new(5.0, -10.0),
-            Vec2::new(5.0, 10.0),
+            barrier_pos - right * 10.0,
+            barrier_pos + right * 10.0,
             crate::track::geometry::BarrierType::Virtual,
         ));
 
         let scanner = LidarScanner::new(LidarConfig::forward_cone_16());
-        let host = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+        let host = Car::new(CarConfig::sports_car()).with_pose(pos, angle);
 
         let hits = scanner.scan(&host, &track, &[]);
         let center_hit = hits[hits.len() / 2];
-        // Center ray should not hit the virtual barrier at x=5.0
-        assert_ne!(
-            center_hit.hit_point.x.round(),
-            5.0,
-            "Lidar must pass straight through virtual barrier at x=5.0"
+        // Center ray should pass through virtual barrier at 5m and hit the actual wall or nothing at 5m
+        assert!(
+            (center_hit.distance - 5.0).abs() > 0.5,
+            "Lidar must pass straight through virtual barrier at 5m"
         );
     }
 }

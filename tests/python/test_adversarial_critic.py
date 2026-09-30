@@ -249,7 +249,7 @@ def test_anti_exploit_stationary_donut_spinning():
 
 def test_anti_exploit_wall_grinding_penalty():
     """Ensures that driving into and scraping along walls applies substantial penalties."""
-    env = gym.make("TDRace-v0")
+    env = gym.make("TDRace-v0", track_name="kart_warehouse_twister")
     env.reset(seed=42)
 
     # Ram into outer barrier / wall
@@ -273,7 +273,7 @@ def test_anti_exploit_wall_grinding_penalty():
 
 def test_multi_agent_extreme_car_density():
     """Tests 16 cars all spawned simultaneously in dense proximity."""
-    env = gym.make("TDRace-MultiAgent-v0", num_agents=16, track_name="classic_grand_prix")
+    env = gym.make("TDRace-MultiAgent-v0", num_agents=16, track_name="gt_coastal_grand_prix")
     obs, info = env.reset(seed=42)
 
     assert obs.shape == (16, env.unwrapped.engine.obs_dim)

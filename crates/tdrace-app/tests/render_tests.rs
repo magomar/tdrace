@@ -309,7 +309,7 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     }
 
     use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
-    assert_eq!(CLASSIC_ARCADE_CARS.len(), 5, "Classic arcade catalog must contain 5 fantasy vehicles");
+    assert_eq!(CLASSIC_ARCADE_CARS.len(), 8, "Classic arcade catalog must contain 8 fantasy vehicles");
 
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
@@ -349,7 +349,16 @@ fn test_classic_arcade_fantasy_sprites_presence() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let assets_dir = manifest_dir.join("../../assets/textures/vehicles");
 
-    let cars = ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"];
+    let cars = [
+        "classic_gt",
+        "classic_nascar",
+        "classic_offroad",
+        "classic_kart",
+        "classic_rally",
+        "classic_ax_mudlark",
+        "classic_ax_brawler",
+        "classic_ax_talon",
+    ];
     for id in cars {
         let lat_path = assets_dir.join(format!("laterals/classic/{}.png", id));
         let thumb_path = assets_dir.join(format!("laterals/classic/{}_thumb.png", id));
@@ -506,6 +515,9 @@ fn test_classic_mask_tinting_transforms_bodywork_pixels() {
         "classic_offroad",
         "classic_kart",
         "classic_rally",
+        "classic_ax_mudlark",
+        "classic_ax_brawler",
+        "classic_ax_talon",
     ];
 
     let target_primary = Color::new(0.85, 0.10, 0.90, 1.0); // Vivid Magenta/Purple
@@ -1225,6 +1237,24 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
     assert!((rally.front_axle_offset - 0.73).abs() < 1e-4);
     assert!((rally.half_track_width - 0.41).abs() < 1e-4);
     assert_eq!(rally.layering, WheelLayerMode::UnderChassis);
+
+    let mudlark = get_steered_wheel_config("classic_ax_mudlark").expect("classic_ax_mudlark must have SteeredWheelConfig");
+    assert_eq!(mudlark.wheel_texture_id, "offroad_wheel_front");
+    assert!((mudlark.front_axle_offset - 0.85).abs() < 1e-4);
+    assert!((mudlark.half_track_width - 0.55).abs() < 1e-4);
+    assert_eq!(mudlark.layering, WheelLayerMode::OverChassis);
+
+    let brawler = get_steered_wheel_config("classic_ax_brawler").expect("classic_ax_brawler must have SteeredWheelConfig");
+    assert_eq!(brawler.wheel_texture_id, "rally_wheel_front");
+    assert!((brawler.front_axle_offset - 0.75).abs() < 1e-4);
+    assert!((brawler.half_track_width - 0.44).abs() < 1e-4);
+    assert_eq!(brawler.layering, WheelLayerMode::UnderChassis);
+
+    let talon = get_steered_wheel_config("classic_ax_talon").expect("classic_ax_talon must have SteeredWheelConfig");
+    assert_eq!(talon.wheel_texture_id, "offroad_wheel_front");
+    assert!((talon.front_axle_offset - 1.05).abs() < 1e-4);
+    assert!((talon.half_track_width - 0.65).abs() < 1e-4);
+    assert_eq!(talon.layering, WheelLayerMode::OverChassis);
 
     // 2. Legacy fallback guarantee: all non-classic models return None
     let legacy_models = [

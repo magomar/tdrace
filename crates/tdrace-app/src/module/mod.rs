@@ -695,16 +695,28 @@ mod tests {
         let classic = ClassicGameModule::new();
         assert_eq!(classic.id(), "classic");
         assert!(!classic.title().is_empty());
-        assert_eq!(classic.vehicles().len(), 5);
-        assert_eq!(classic.tracks().len(), 13);
+        assert_eq!(classic.vehicles().len(), 8);
+        assert_eq!(classic.tracks().len(), 18);
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "classic_gt");
         assert_eq!(classic.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Grass);
 
         let vehicle_ids: Vec<_> = classic.vehicles().into_iter().map(|v| v.id).collect();
-        assert_eq!(vehicle_ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"]);
+        assert_eq!(
+            vehicle_ids,
+            vec![
+                "classic_gt",
+                "classic_nascar",
+                "classic_offroad",
+                "classic_kart",
+                "classic_rally",
+                "classic_ax_mudlark",
+                "classic_ax_brawler",
+                "classic_ax_talon",
+            ]
+        );
 
-        // Verify arcade assist configs are active across all 5 fantasy vehicles
+        // Verify arcade assist configs are active across all 8 fantasy vehicles
         let gt = ClassicGameModule::car_classic_gt();
         assert!(gt.assists.tcs_enabled);
         assert!(gt.assists.esc_enabled);
@@ -726,6 +738,21 @@ mod tests {
         let rally = ClassicGameModule::car_classic_rally();
         assert_eq!(rally.drive_bias, 0.5);
         assert!(rally.assists.counter_steer_assist_enabled);
+
+        let mudlark = ClassicGameModule::car_classic_ax_mudlark();
+        assert_eq!(mudlark.mass, 420.0);
+        assert_eq!(mudlark.drive_bias, 0.0);
+        assert!(mudlark.assists.counter_steer_assist_enabled);
+
+        let brawler = ClassicGameModule::car_classic_ax_brawler();
+        assert_eq!(brawler.mass, 1150.0);
+        assert_eq!(brawler.drive_bias, 0.5);
+        assert!(brawler.assists.counter_steer_assist_enabled);
+
+        let talon = ClassicGameModule::car_classic_ax_talon();
+        assert_eq!(talon.mass, 800.0);
+        assert_eq!(talon.drive_bias, 0.5);
+        assert!(talon.assists.counter_steer_assist_enabled);
     }
 
     #[test]

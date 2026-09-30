@@ -52,8 +52,8 @@ fn test_tier_5_cuts_apex_curbs() {
     let mut t5_curb_hits = 0;
     let mut t5_max_curb_depth = 0.0f32;
 
-    // Run for 1 lap (~42 seconds = ~5000 steps)
-    for _ in 0..5000 {
+    // Run for 1 lap (~90-100 seconds = ~12000 steps on gt_coastal_grand_prix)
+    for _ in 0..12000 {
         let controls = bot_t5.compute_controls(&car_t5, &track, &[], dt);
         car_t5.step(&controls, SurfaceType::Asphalt, dt);
         let proj = track.spline.project_point(car_t5.state.position);
@@ -71,7 +71,7 @@ fn test_tier_5_cuts_apex_curbs() {
     let mut car_t1 = Car::new(cfg).with_pose(spawn.position, spawn.angle);
 
     let mut t1_curb_hits = 0;
-    for _ in 0..5000 {
+    for _ in 0..12000 {
         let controls = bot_t1.compute_controls(&car_t1, &track, &[], dt);
         car_t1.step(&controls, SurfaceType::Asphalt, dt);
         let proj = track.spline.project_point(car_t1.state.position);

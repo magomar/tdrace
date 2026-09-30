@@ -30,7 +30,7 @@ class TDRaceMultiAgentEnv(gym.Env):
     def __init__(
         self,
         num_agents: int = 4,
-        track_name: str = "classic_grand_prix",
+        track_name: str = "gt_coastal_grand_prix",
         car_type: str = "sports_car",
         num_lidar_rays: int = 19,
         max_episode_steps: int = 1000,

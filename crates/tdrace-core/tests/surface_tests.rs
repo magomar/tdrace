@@ -178,7 +178,7 @@ fn test_off_track_surface_types_and_track_sampling() {
     assert!(!SurfaceType::Oil.is_valid_off_track());
 
     // 2. Verify Track::sample_surface returns the configured default_surface when far off-track
-    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let far_off_track_point = Vec2::new(1000.0, 1000.0);
 
     for &surf in &SurfaceType::OFF_TRACK_TYPES {

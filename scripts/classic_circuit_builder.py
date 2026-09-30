@@ -197,6 +197,7 @@ class Circuit:
     # still drawn from `start`; only the waypoint list is rotated, so `profile` and `close_with` keep
     # their meaning. Feature distances (Ramp.at, Zone.start, ...) count from the finish line.
     finish_at: tuple = None
+    car_model_id: str = None
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -450,7 +451,7 @@ def waypoint(x, y, road):
 
 def source_track(circuit):
     """The circuit as a source file: metadata and waypoints; track_bake fills the rest."""
-    return {
+    track = {
         "name": circuit.name,
         "description": circuit.description,
         "category": "main",
@@ -486,6 +487,9 @@ def source_track(circuit):
         "tag": circuit.tag,
         "category_label": circuit.category_label,
     }
+    if circuit.car_model_id:
+        track["car_model_id"] = circuit.car_model_id
+    return track
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -1017,235 +1021,904 @@ def check(circuits):
 
 S, A = Straight, Arc
 
-# Karting: packed indoor halls with bridges (spec 055, User Flow section 3). Concrete hall floor, tyre walls
-# 0.6 m from the road, kart grid (10 slots, 5.5 m apart, 1.8 m stagger). Bridge decks sit at 4.4 m.
+# ---------------------------------------------------------------------------------------------------------------
+# Karting (spec 055, User Flow section 3)
+# ---------------------------------------------------------------------------------------------------------------
+# Standard outdoor karting circuits with asphalt ribbons, wide grass runoffs, tyre walls 3.0-3.5 m out,
+# and FIA-style apex curbs. Flat or rolling terrain with 10-slot kart starting grid (5.5 m spacing, 1.8 m stagger).
 
 
-def indoor_kart_road(width):
+def outdoor_kart_road(width=8.0, wall_distance=3.5):
     return Road(
         width=width,
         wall_type="TireWall",
-        left_wall_distance=0.6,
-        right_wall_distance=0.6,
-        left_runoff="Concrete",
-        right_runoff="Concrete",
+        left_wall_distance=wall_distance,
+        right_wall_distance=wall_distance,
+        left_runoff="Grass",
+        right_runoff="Grass",
     )
 
 
 KART_GRID = (10, 5.5, 1.8)
-KART_STEP = 3.3  # even waypoint spacing keeps the tight turns true to the design
-# A kerb widens the road the validator checks by 1.35 m on both sides, so kerbed pieces keep their walls
-# 2.0 m out (still 1.3 m where the blend meets a 0.6 m piece). Kerbed turns need a radius of about
-# 1.5 x (half width + 2.0 m) so their inner wall line does not fold.
-KERB_L = {"left_curb": True, "wall_distance": 2.0}
-KERB_R = {"right_curb": True, "wall_distance": 2.0}
-# Turn radii. track_bake's uniform Catmull-Rom spline, with waypoints at least 3 m apart, bakes a tight turn
-# about 30 % tighter than its design radius, and the inner wall line must not fold (wall_line_folds;
-# bug tdrace-classic-circuits-revamp-dh6k.21). So: hairpins and U-turns 6.5 m with the inner wall 0.3 m
-# out, plain turns 7.5 m, kerbed turns 9 m on an 8 m road and 8 m on a 7 m road, chicanes 12 m.
-TIP_L = {"left_wall_distance": 0.3}
-TIP_R = {"right_wall_distance": 0.3}
+KART_STEP = 3.3
+KERB_L = {"left_curb": True}
+KERB_R = {"right_curb": True}
 
-HANGAR_SPRINT = Circuit(
-    id="kart_hangar_sprint",
-    name="Hangar Sprint",
-    description="Indoor figure-eight with one bridge, a tight hairpin pocket and a chicane.",
-    tag="INDOOR SPRINT",
-    category_label="Indoor Kart",
+PINE_GROVE = Circuit(
+    id="kart_pine_grove",
+    name="Pine Grove",
+    description="High-speed outdoor kart sprint through pine woods with flowing sweepers, a sweeping hairpin, and a quick chicane.",
+    tag="OUTDOOR SPRINT",
+    category_label="Karting",
     car_category="kart",
     default_laps=8,
-    default_surface="Concrete",
-    road=indoor_kart_road(8.0),
+    default_surface="Grass",
+    road=outdoor_kart_road(8.0, 3.5),
     grid=KART_GRID,
     step=KART_STEP,
-    heading_deg=90.0,
+    heading_deg=0.0,
     segments=[
-        S(21.5),  # 0: pocket, up leg, heading north; finish at its start
-        A(7.5, 90),
-        S(1),
-        A(9, 60, **KERB_L),
-        S(50),  # 4: diagonal under the bridge (solved)
-        # West loop, clockwise.
-        A(9, -60),  # 5: no kerb: the right wall would step in on turn 7
-        S(2.5),
-        A(7.5, -90, **TIP_R),
-        S(3.5),
-        A(13, -25, **KERB_R),  # chicane
-        A(13, 50, **KERB_L),  # 10
-        A(13, -25),  # no kerb: the right wall would step in on turn 13
-        S(3.5),
-        A(9, -90),  # on the ramp: bridge walls sit 1.25 m out here
-        S(1),
-        A(9, -60),  # 15: onto the bridge, no kerb on the deck
-        S(33),  # 16: the bridge (solved)
-        # Down into the east loop.
-        A(9, 60),  # off the bridge
-        S(5),
-        A(10, 20),  # kink
-        A(10, -40),  # 20
-        A(10, 20),
-        S(5),
-        A(9, 90, **KERB_L),
-        S(29),  # start straight, heading north
-        A(6.5, 90, **TIP_L),  # 25: U-turn into the pocket
-        A(6.5, 90, **TIP_L),
-        S(19.5),  # pocket, down leg
-        A(6.5, -180, **TIP_R),  # 28: pocket hairpin
+        S(60.0),                   # 0: start/finish straight heading East (solved)
+        A(16.0, -90, **KERB_R),    # 1: Turn 1 Curva del Bosco
+        S(40.0),                   # 2: east straight heading South (solved)
+        A(14.0, -75, **KERB_R),    # 3: Turn 2 fast sweeper
+        S(35.0),                   # 4: short blast
+        A(18.0, 45, **KERB_L),     # 5: Turn 3 chicane entry left
+        A(18.0, -45, **KERB_R),    # 6: Turn 4 chicane exit right
+        S(48.0),                   # 7: back straight heading South-West
+        A(11.0, -180, **KERB_R),   # 8: Turn 5 Pine Hairpin (180 deg right)
+        S(40.0),                   # 9: exit run heading North-East
+        A(16.0, 75, **KERB_L),     # 10: Turn 6 uphill sweeper left
+        S(45.0),                   # 11: west straight heading North
+        A(14.0, -90, **KERB_R),    # 12: Turn 7 final right turn onto main straight
     ],
-    close_with=(4, 16),
-    # Deck at 4.4 m over the middle of straight 16; up over about 60 m. Down to 1.5 m through the east
-    # loop, then to the ground on the first 20 m of the start straight, so the bridge ends 20 m or more
-    # before the U-turn (grade < 12 %). The grid sits on the flat pocket and start straight.
-    profile=[
-        (0, 0),
-        ((16, 0.5, -75), 0),
-        ((16, 0.5, -12), 4.4),
-        ((16, 0.5, 12), 4.4),
-        ((24, 0), 1.5),
-        ((24, 0, 20), 0),
-    ],
+    close_with=(0, 2),
 )
 
-WAREHOUSE_TWISTER = Circuit(
-    id="kart_warehouse_twister",
-    name="Warehouse Twister",
-    description="Three hairpin pockets; the long one dives twice under the raised back straight.",
-    tag="TWIN BRIDGE",
-    category_label="Indoor Kart",
+RIVERBEND_CIRCUIT = Circuit(
+    id="kart_riverbend_circuit",
+    name="Riverbend Circuit",
+    description="Technical outdoor club circuit featuring double-apex sweepers, flowing esses, and wide hairpin complexes.",
+    tag="TECHNICAL CLUB",
+    category_label="Karting",
     car_category="kart",
     default_laps=7,
-    default_surface="Concrete",
-    road=indoor_kart_road(7.0),
+    default_surface="Grass",
+    road=outdoor_kart_road(8.0, 3.0),
     grid=KART_GRID,
     step=KART_STEP,
-    heading_deg=-90.0,
+    heading_deg=0.0,
     segments=[
-        S(31),  # 0: long pocket, down leg, heading south
-        A(6.5, -180, **TIP_R),  # below the raised bottom side
-        S(50),
-        A(6.5, 90, **TIP_L),
-        A(6.5, 90, **TIP_L),  # 4-8: short pocket
-        S(20),
-        A(6.5, -180, **TIP_R),
-        S(20),
-        A(6.5, 90, **TIP_L),
-        A(6.5, 90, **TIP_L),  # 9-13: short pocket; the ramp starts on its up leg (12)
-        S(20),
-        A(6.5, -180, **TIP_R),
-        S(20),
-        A(6.5, 90, **TIP_L),
-        A(6.5, 90),
-        S(4),  # 15: west side (solved), ramp up
-        A(12, 25, **KERB_L),  # chicane
-        A(12, -50, **KERB_R),
-        A(12, 25),  # no kerb: the left wall would step in on turn 20
-        S(4),
-        A(7.5, 90),  # 20
-        S(62),  # 21: bottom side, raised (solved)
-        A(7.5, 90),
-        S(4),  # east side, ramp down
-        A(12, 25, **KERB_L),  # chicane, bulging in (keeps the box)
-        A(12, -50, **KERB_R),  # 25
-        A(12, 25),  # no kerb: the left wall would step in on turn 28
-        S(4),
-        A(6.5, 90),  # 28
-        S(1),  # top side
-        A(6.5, 90, **TIP_L),  # 30: into the long pocket
-        S(19),  # 31: long pocket, down leg
+        S(65.0),                   # 0: heading 0 (solved)
+        A(18.0, 60, **KERB_L),     # 1: Turn 1 Riverbend entry
+        S(20.0),                   # 2:
+        A(16.0, 60, **KERB_L),     # 3: Turn 2 Riverbend apex
+        S(35.0),                   # 4: (solved)
+        A(18.0, -45, **KERB_R),    # 5: Turn 3 right flick
+        S(6.0),                    # short transition
+        A(16.0, 75, **KERB_L),     # 6: Turn 4 left hook
+        S(38.0),                   # 7:
+        A(13.0, 150, **KERB_L),    # 8: Turn 5 The Loop (hairpin left)
+        S(25.0),                   # 9:
+        A(18.0, -50, **KERB_R),    # 10: Turn 6 esses right
+        S(6.0),                    # transition
+        A(18.0, 60, **KERB_L),     # 11: Turn 7 esses left
+        S(6.0),                    # transition
+        A(18.0, -60, **KERB_R),    # 12: Turn 8 esses right
+        S(40.0),                   # 13:
+        A(18.0, 45, **KERB_L),     # 14: Turn 9 chicane left
+        S(6.0),                    # transition
+        A(18.0, -45, **KERB_R),    # 15: Turn 10 chicane right
+        S(25.0),                   # 16:
+        A(16.0, 110, **KERB_L),    # 17: Turn 11 final carousel left
     ],
-    close_with=(15, 21),
-    finish_at=(
-        10,
-        0,
-    ),  # start of the last short pocket: the grid sits on the flat first one
-    # Bottom side at 4.4 m. Up from the middle of the last short pocket's up leg (about 60 m). Down to 2.0 m
-    # along the east side and the top side, then to the ground on the first 12 m of the long pocket's down
-    # leg, before it dives under the bottom side. So the bridge ends on the down leg, 20 m or more before
-    # its hairpin (grade < 12 %).
-    profile=[
-        ((0, 0.4), 0),
-        ((12, 0.5), 0),
-        ((21, 0), 4.4),
-        ((21, 1), 4.4),
-        ((31, 0), 2.0),
-    ],
+    close_with=(0, 4),
 )
 
-TOWER_LABYRINTH = Circuit(
-    id="kart_tower_labyrinth",
-    name="Tower Labyrinth",
-    description="A raised run bridges a crossover and both legs of a deep pocket; double hairpin, tightening turn.",
-    tag="TRIPLE DECK",
-    category_label="Indoor Kart",
+SUMMIT_INTERNATIONAL = Circuit(
+    id="kart_summit_international",
+    name="Summit International",
+    description="Championship-grade international outdoor kart circuit featuring long drafting straights, multi-apex carousels, and high-commitment esses.",
+    tag="GRAND PRIX",
+    category_label="Karting",
     car_category="kart",
     default_laps=6,
-    default_surface="Concrete",
-    road=indoor_kart_road(6.5),
+    default_surface="Grass",
+    road=outdoor_kart_road(8.0, 3.0),
     grid=KART_GRID,
     step=KART_STEP,
-    heading_deg=-90.0,
+    heading_deg=0.0,
     segments=[
-        S(35),  # 0: long pocket, down leg, heading south
-        A(6.5, -180, **TIP_R),  # below the raised bottom side
-        S(47),  # 2: up leg
-        # Double hairpin: two short pockets in a row.
-        A(6.5, 90, **TIP_L),
-        A(6.5, 90, **TIP_L),
-        S(22),  # 5
-        A(6.5, -180, **TIP_R),
-        S(22),
-        A(6.5, 90, **TIP_L),
-        A(6.5, 90, **TIP_L),
-        S(22),  # 10
-        A(6.5, -180, **TIP_R),
-        S(22),
-        A(6.5, 90),
-        S(0.5),
-        A(8, 70, **KERB_L),  # 15
-        S(44.5),  # 16: crossover, ground
-        # West loop, clockwise.
-        A(8, -70),  # no kerb: the right wall would step in on turn 19
-        S(0.5),
-        A(7.5, -90),
-        S(14),  # 20: ramp starts here
-        A(12, -25, **KERB_R),  # chicane
-        A(12, 50, **KERB_L),
-        A(12, -25, **KERB_R),
-        S(14),  # 24 (solved)
-        A(7.5, -90),  # 25
-        S(0.5),
-        A(8, -70),  # onto the raised run: no kerb
-        S(44.5),  # 28: crossover, bridge
-        A(8, 70),
-        S(40),  # 30: bottom side, raised, over the long pocket (solved)
-        A(10, 45),  # tightening corner
-        A(6.5, 45),
-        S(8),  # east side, ramp down
-        A(10, 20),  # kink
-        A(10, -40),
-        A(10, 20),
-        S(8),
-        A(6.5, 90, **TIP_L),  # U-turn into the long pocket
-        A(6.5, 90, **TIP_L),  # 39
-        S(12),  # 40: long pocket, down leg
+        S(60.0),                   # 0: start/finish straight heading East (solved)
+        A(20.0, 45, **KERB_L),     # 1: Turn 1 Omega entry
+        A(18.0, 45, **KERB_L),     # 2: Turn 2 Omega apex
+        S(20.0),                   # 3: short straight heading North (solved)
+        A(18.0, 45, **KERB_L),     # 4: Turn 3 left
+        S(40.0),                   # 5: straight heading North-West
+        A(14.0, -150, **KERB_R),   # 6: Turn 4 hairpin right
+        S(20.0),                   # 7:
+        A(18.0, 60, **KERB_L),     # 8: Turn 5 esses left
+        S(6.0),                    # transition
+        A(18.0, -60, **KERB_R),    # 9: Turn 6 esses right
+        S(6.0),                    # transition
+        A(18.0, 75, **KERB_L),     # 10: Turn 7 sweeper left
+        S(45.0),                   # 11: back straight
+        A(14.0, 135, **KERB_L),    # 12: Turn 8 summit hairpin left
+        S(150.0),                  # 13: straight heading South-West
+        A(18.0, -45, **KERB_R),    # 14: Turn 9 chicane right
+        S(6.0),                    # transition
+        A(18.0, 45, **KERB_L),     # 15: Turn 10 chicane left
+        S(40.0),                   # 16:
+        A(16.0, 105, **KERB_L),    # 17: Turn 11 carousel left
+        S(120.0),                  # 18: return straight heading South-East
+        A(16.0, 60, **KERB_L),     # 19: Turn 12 final turn left onto main straight
     ],
-    close_with=(24, 30),
-    finish_at=(
-        10,
-        0,
-    ),  # start of the last short pocket: the grid sits on the flat first one
-    # One raised run at 4.4 m from the crossover to the tightening corner. Up over about 60 m. Down over
-    # about 90 m, through the U-turn and 20 m into the long pocket, so the bridge ends on the pocket's down
-    # leg, 20 m or more before its hairpin (grade < 12 %).
-    profile=[
-        ((0, 0, 20), 0),
-        ((20, 0), 0),
-        ((28, 0.5, -12), 4.4),
-        ((31, 0.5), 4.4),
+    close_with=(0, 3),
+)
+
+# ---------------------------------------------------------------------------------------------------------------
+# Rallycross (spec 055, User Flow section 3)
+# ---------------------------------------------------------------------------------------------------------------
+# 30–60 % Asphalt, rest Gravel or Dirt; width 11–14 m; walls TireWall and Steel.
+# At least 3, 4 and 6 jumps per lap (JumpRamp tabletops or elevation crests).
+
+QUARRY_SPRINT = Circuit(
+    id="rx_quarry_sprint",
+    name="Quarry Sprint",
+    description="Fast mixed-surface quarry circuit with sweeping dirt bends, asphalt straights and three tabletop jumps.",
+    tag="QUARRY RX",
+    category_label="Rallycross",
+    car_category="rally",
+    default_laps=6,
+    default_surface="Grass",
+    road=Road(width=12.0, left_wall_distance=3.5, right_wall_distance=3.5),
+    segments=[
+        S(120, surface="Asphalt", wall_type="Steel"),               # 0: Main straight (East, 0 deg)
+        A(25, -90, surface="Asphalt", wall_type="TireWall"),        # 1: Turn 1 (to South, -90 deg)
+        S(70, surface="Gravel", wall_type="TireWall"),              # 2: South (-90 deg)
+        A(30, -60, surface="Gravel", wall_type="TireWall"),         # 3: Sweeper (to -150 deg)
+        S(60, surface="Dirt", wall_type="Steel"),                   # 4: -150 deg
+        A(25, 45, surface="Dirt", wall_type="TireWall"),            # 5: Kink (to -105 deg)
+        S(50, surface="Dirt", wall_type="Steel"),                   # 6: -105 deg
+        A(20, -75, surface="Dirt", wall_type="TireWall"),           # 7: Hairpin turn (to -180 deg, West)
+        S(80, surface="Gravel", wall_type="Steel"),                 # 8: West (-180 deg)
+        A(25, -90, surface="Gravel", wall_type="TireWall"),         # 9: Turn 4 (to North, +90 deg / -270 deg)
+        S(60, surface="Asphalt", wall_type="Steel"),                # 10: North (+90 deg)
+        A(25, -45, surface="Asphalt", wall_type="TireWall"),        # 11: (to +45 deg)
+        S(40, surface="Asphalt", wall_type="Steel"),                # 12: +45 deg
+        A(25, -45, surface="Asphalt", wall_type="TireWall"),        # 13: (to 0 deg, East)
+    ],
+    close_with=(0, 10),
+    finish_at=(0, 0.85),
+    features=[
+        Ramp(at=90.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 1"),
+        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 2"),
+        Ramp(at=500.0, length=14.0, height=2.2, launch_speed=4.2, surface="Asphalt", name="Quarry Asphalt Jump"),
     ],
 )
 
-CIRCUITS = [HANGAR_SPRINT, WAREHOUSE_TWISTER, TOWER_LABYRINTH]
+HILLTOP_LEAP = Circuit(
+    id="rx_hilltop_leap",
+    name="Hilltop Leap",
+    description="Rolling rallycross track with a start straight crest, hilltop jumps and a gravel hairpin.",
+    tag="HILLTOP RX",
+    category_label="Rallycross",
+    car_category="rally",
+    default_laps=5,
+    default_surface="Grass",
+    road=Road(width=12.0, left_wall_distance=3.5, right_wall_distance=3.5),
+    segments=[
+        S(160, surface="Asphalt", wall_type="Steel"),               # 0: Start straight (East, 0 deg)
+        A(28, -90, surface="Asphalt", wall_type="TireWall"),        # 1: Turn 1 (to -90 deg / South)
+        S(75, surface="Gravel", wall_type="Steel"),                 # 2: Downhill straight (-90 deg)
+        A(25, -45, surface="Gravel", wall_type="TireWall"),         # 3: (to -135 deg)
+        S(80, surface="Dirt", wall_type="Steel"),                   # 4: Dirt straight (-135 deg)
+        A(25, 45, surface="Dirt", wall_type="TireWall"),            # 5: (to -90 deg)
+        S(50, surface="Dirt", wall_type="TireWall"),                # 6: (-90 deg)
+        A(20, -180, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 7: Gravel Hairpin! (to +90 deg)
+        S(95, surface="Gravel", wall_type="Steel"),                 # 8: (+90 deg)
+        A(25, 45, surface="Gravel", wall_type="TireWall"),          # 9: (to +135 deg / NW)
+        S(135, surface="Dirt", wall_type="Steel"),                  # 10: Dirt straight (+135 deg)
+        A(25, -45, surface="Asphalt", wall_type="TireWall"),        # 11: (to +90 deg)
+        S(70, surface="Asphalt", wall_type="Steel"),                # 12: North (+90 deg)
+        A(28, -90, surface="Asphalt", wall_type="TireWall"),        # 13: (to 0 deg / East)
+        S(20, surface="Asphalt", wall_type="Steel"),                # 14: (East)
+        A(22, -90, surface="Asphalt", wall_type="TireWall"),        # 15: (to -90 deg)
+        S(25, surface="Asphalt", wall_type="Steel"),                # 16: (to South)
+        A(22, 90, surface="Asphalt", wall_type="TireWall"),         # 17: (to East 0 deg)
+    ],
+    close_with=(0, 12),
+    finish_at=(0, 0.85),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.4), 2.5),    # Crest on start straight!
+        ((0, 0.85), 0.0),   # Finish line
+        ((2, 0.5), 0.0),
+        ((8, 0.5), 0.0),
+        ((10, 0.5), 3.0),   # Hilltop rise
+        ((12, 0.5), 1.0),
+        ((15, 0.0), 0.0),
+    ],
+    features=[
+        Ramp(at=60.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Hilltop Downhill Leap"),
+        Ramp(at=190.0, length=14.0, height=2.0, launch_speed=4.0, surface="Dirt", name="Hilltop Infield Jump"),
+        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Hilltop Hairpin Exit Jump"),
+        Ramp(at=510.0, length=14.0, height=2.2, launch_speed=4.2, surface="Dirt", name="Hilltop Crest Jump"),
+    ],
+)
+
+CANYON_FLYER = Circuit(
+    id="rx_canyon_flyer",
+    name="Canyon Flyer",
+    description="Challenging canyon rallycross with a water gap jump, a whoops rhythm section and technical dirt esses.",
+    tag="CANYON RX",
+    category_label="Rallycross",
+    car_category="rally",
+    default_laps=4,
+    default_surface="Grass",
+    road=Road(width=12.0, left_wall_distance=3.5, right_wall_distance=3.5),
+    segments=[
+        S(160, surface="Asphalt", wall_type="Steel"),               # 0: Start straight (East, 0 deg)
+        A(30, -90, surface="Asphalt", wall_type="TireWall"),        # 1: Turn 1 (to -90 deg / South)
+        S(70, surface="Dirt", wall_type="Steel"),                   # 2: South (-90 deg)
+        A(25, -45, surface="Dirt", wall_type="TireWall"),           # 3: (to -135 deg / SW)
+        S(90, surface="Dirt", wall_type="Steel"),                   # 4: SW (-135 deg)
+        A(25, -45, surface="Dirt", wall_type="TireWall"),           # 5: (to -180 deg / West)
+        S(110, surface="Dirt", wall_type="Steel"),                  # 6: Gap Jump straight (-180 deg / West)
+        A(25, 45, surface="Gravel", wall_type="TireWall"),          # 7: (to -135 deg)
+        S(45, surface="Gravel", wall_type="TireWall"),              # 8: (-135 deg)
+        A(25, -45, surface="Gravel", wall_type="TireWall"),         # 9: (to -180 deg)
+        S(95, surface="Gravel", wall_type="Steel"),                 # 10: Whoops straight (-180 deg)
+        A(20, -90, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 11: Turn North (-270 deg / +90 deg)
+        S(80, surface="Gravel", wall_type="Steel"),                 # 12: (+90 deg / North)
+        A(25, -45, surface="Dirt", wall_type="TireWall"),           # 13: (to +45 deg)
+        S(60, surface="Dirt", wall_type="Steel"),                   # 14: (+45 deg)
+        A(25, 45, surface="Asphalt", wall_type="TireWall"),         # 15: (to +90 deg / North)
+        S(80, surface="Asphalt", wall_type="Steel"),                # 16: North (+90 deg)
+        A(28, -90, surface="Asphalt", wall_type="TireWall"),        # 17: (to 0 deg / East)
+        S(30, surface="Asphalt", wall_type="Steel"),                # 18: (East)
+        A(22, -90, surface="Asphalt", wall_type="TireWall"),        # 19: Chicane (to -90 deg)
+        S(20, surface="Asphalt", wall_type="Steel"),                # 20: (South)
+        A(22, 90, surface="Asphalt", wall_type="TireWall"),         # 21: (to East 0 deg)
+    ],
+    close_with=(0, 16),
+    finish_at=(0, 0.85),
+    features=[
+        Ramp(at=190.0, length=14.0, height=2.0, launch_speed=4.0, surface="Dirt", name="Canyon Infield Jump"),
+        Ramp(at=310.0, length=16.0, height=2.4, launch_speed=4.5, surface="Dirt", name="Canyon Gap Jump"),
+        Zone(start=326.0, end=344.0, surface="Water", lateral=(-6.0, 6.0), layer="above_track", name="Canyon Water Gap"),
+        Whoops(at=490.0, count=6, spacing=5.0, height=0.6, name="Canyon Whoops"),
+        Ramp(at=800.0, length=14.0, height=2.0, launch_speed=4.0, surface="Asphalt", name="Canyon Asphalt Jump"),
+    ],
+)
+
+# ---------------------------------------------------------------------------------------------------------------
+# Autocross (spec 055, User Flow section 3)
+# ---------------------------------------------------------------------------------------------------------------
+# 100 % unpaved (Dirt, Gravel, PackedSand; optional Concrete launch pad <= 60 m); width 12–16 m.
+# No JumpRamps (uses crests and banked berms 6–12°). Each circuit names its own car in car_model_id.
+
+MEADOW_SPRINT = Circuit(
+    id="ax_meadow_sprint",
+    name="Meadow Sprint",
+    description="Flowing countryside autocross track with sweeping clay turns, elevation crests and a banked berm.",
+    tag="MEADOW AX",
+    category_label="Autocross",
+    car_category="autocross",
+    car_model_id="classic_ax_mudlark",
+    default_laps=6,
+    default_surface="Grass",
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    segments=[
+        S(130, surface="Dirt", wall_type="TireWall"),               # 0: Start straight (East, 0 deg)
+        A(35, 90, surface="Dirt", bank=8.0, wall_type="TireWall"),  # 1: Banked berm turn! (to +90 deg / North)
+        S(60, surface="Dirt", wall_type="Steel"),                   # 2: (+90 deg)
+        A(30, 45, surface="PackedSand", wall_type="TireWall"),      # 3: (to +135 deg / NW)
+        S(180, surface="PackedSand", wall_type="Steel"),            # 4: (+135 deg)
+        A(25, -45, surface="PackedSand", wall_type="TireWall"),     # 5: (to +90 deg)
+        S(40, surface="Gravel", wall_type="Steel"),                 # 6: (+90 deg)
+        A(20, 180, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 7: Hairpin! (to -90 deg / South)
+        S(70, surface="Gravel", wall_type="Steel"),                 # 8: (-90 deg)
+        A(30, 45, surface="Dirt", wall_type="TireWall"),            # 9: (to -45 deg / SE)
+        S(40, surface="Dirt", wall_type="Steel"),                   # 10: (-45 deg)
+        A(30, 45, surface="Dirt", wall_type="TireWall"),            # 11: (to 0 deg / East)
+    ],
+    close_with=(0, 8),
+    finish_at=(0, 0.85),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.85), 0.0),   # Finish line
+        ((2, 0.5), 3.0),    # Crest 1
+        ((4, 0.5), 0.5),
+        ((6, 0.5), 3.2),    # Crest 2
+        ((8, 0.5), 0.0),
+        ((10, 0.5), 0.5),
+    ],
+    features=[],
+)
+
+CLAY_BOWL = Circuit(
+    id="ax_clay_bowl",
+    name="Clay Bowl",
+    description="Technical autocross amphitheatre with 3 banked berms, a downhill hairpin and a concrete launch pad.",
+    tag="CLAY BOWL",
+    category_label="Autocross",
+    car_category="autocross",
+    car_model_id="classic_ax_brawler",
+    default_laps=5,
+    default_surface="Grass",
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    segments=[
+        S(45, surface="Concrete", wall_type="Steel"),               # 0: Launch pad (East, 0 deg)
+        S(90, surface="Dirt", wall_type="TireWall"),                # 1: Start straight (East, 0 deg)
+        A(35, -90, surface="Dirt", bank=-9.0, wall_type="TireWall"),# 2: Berm 1! (to -90 deg / South)
+        S(80, surface="Dirt", wall_type="Steel"),                   # 3: South (-90 deg)
+        A(30, -45, surface="PackedSand", wall_type="TireWall"),     # 4: (to -135 deg / SW)
+        S(120, surface="PackedSand", wall_type="Steel"),            # 5: SW (-135 deg)
+        A(35, -45, surface="PackedSand", bank=-8.5, wall_type="TireWall"), # 6: Berm 2! (to -180 deg / West)
+        S(110, surface="Dirt", wall_type="Steel"),                  # 7: West (-180 deg)
+        A(30, 45, surface="Dirt", wall_type="TireWall"),            # 8: (to -135 deg)
+        S(90, surface="Dirt", wall_type="Steel"),                   # 9: Ridge straight at 6.0 m (Crest!)
+        A(22, -180, surface="Dirt", bank=-9.0, wall_type="TireWall", wall_distance=3.0), # 10: Berm 3 & Downhill Hairpin! (to +45 deg / NE)
+        S(80, surface="Gravel", wall_type="Steel"),                 # 11: Downhill gravel straight (+45 deg)
+        A(30, -45, surface="Gravel", wall_type="TireWall"),         # 12: (to 0 deg / East)
+        S(40, surface="Gravel", wall_type="Steel"),                 # 13: East (0 deg)
+        A(30, 90, surface="Dirt", wall_type="TireWall"),            # 14: (to +90 deg / North)
+        S(105, surface="Dirt", wall_type="Steel"),                  # 15: North (+90 deg)
+        A(30, -90, surface="Dirt", wall_type="TireWall"),           # 16: (to 0 deg / East)
+    ],
+    close_with=(1, 3),
+    finish_at=(1, 0.8),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((1, 0.8), 0.0),    # Finish line on start straight
+        ((3, 0.5), 2.0),    # Climbing out of bowl
+        ((5, 0.5), 4.0),
+        ((7, 0.5), 5.2),
+        ((9, 0.5), 6.0),    # Ridge crest!
+        ((10, 0.5), 3.0),   # Downhill hairpin
+        ((11, 0.5), 0.5),   # Back into bowl floor
+        ((13, 0.5), 0.0),
+        ((15, 0.5), 0.0),
+    ],
+    features=[],
+)
+
+HILLSIDE_HAMMER = Circuit(
+    id="ax_hillside_hammer",
+    name="Hillside Hammer",
+    description="Brutal hillside autocross climb with off-camber turns, a summit hairpin and high-speed crests.",
+    tag="HILLSIDE AX",
+    category_label="Autocross",
+    car_category="autocross",
+    car_model_id="classic_ax_talon",
+    default_laps=4,
+    default_surface="Grass",
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    segments=[
+        S(160, surface="Dirt", wall_type="TireWall"),               # 0: Start straight (East, 0 deg)
+        A(35, -90, surface="Gravel", wall_type="TireWall"),         # 1: Turn 1 (to -90 deg / South)
+        S(90, surface="Gravel", wall_type="Steel"),                 # 2: South (-90 deg), climbing
+        A(30, -45, surface="Gravel", bank=6.0, wall_type="TireWall"), # 3: Off-camber 1! (Right turn with bank > 0, to -135 deg)
+        S(160, surface="PackedSand", wall_type="Steel"),            # 4: Climbing straight on PackedSand (-135 deg)
+        A(30, 45, surface="PackedSand", wall_type="TireWall"),      # 5: (to -90 deg)
+        S(140, surface="Dirt", wall_type="Steel"),                  # 6: Summit climb straight (to 8.5 m)
+        A(20, -180, surface="Dirt", wall_type="TireWall", wall_distance=3.0), # 7: Summit Hairpin at 8.5 m! (to +90 deg / North)
+        S(140, surface="Dirt", wall_type="Steel"),                  # 8: Downhill ridge straight (+90 deg)
+        A(30, 60, surface="Gravel", bank=-6.0, wall_type="TireWall"), # 9: Off-camber 2! (Left turn with bank < 0, to +150 deg)
+        S(140, surface="Gravel", wall_type="Steel"),                # 10: Downhill gravel straight (+150 deg)
+        A(30, -60, surface="Gravel", wall_type="TireWall"),         # 11: (to +90 deg / North)
+        S(120, surface="Dirt", wall_type="Steel"),                  # 12: Dirt straight (+90 deg)
+        A(35, -90, surface="Dirt", wall_type="TireWall"),           # 13: (to 0 deg / East)
+        S(60, surface="Dirt", wall_type="Steel"),                   # 14: East (0 deg)
+        A(25, -45, surface="Dirt", wall_type="TireWall"),           # 15: Chicane entry (to -45 deg)
+        S(40, surface="Dirt", wall_type="Steel"),                   # 16: (-45 deg)
+        A(25, 45, surface="Dirt", wall_type="TireWall"),            # 17: (to 0 deg / East)
+    ],
+    close_with=(0, 2),
+    finish_at=(0, 0.85),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.85), 0.0),   # Finish line
+        ((2, 0.5), 2.5),
+        ((4, 0.5), 5.0),    # Ridge crest 1
+        ((5, 0.5), 4.0),
+        ((6, 0.9), 8.5),    # Summit climb
+        ((7, 0.5), 8.5),    # Summit hairpin at 8.5 m!
+        ((8, 0.5), 5.5),
+        ((10, 0.5), 2.5),
+        ((12, 0.5), 0.5),
+        ((14, 0.5), 0.0),
+    ],
+    features=[],
+)
+
+# GT: high speed, braking and runoff (spec 055, User Flow section 3).
+# Surface Asphalt, kerbs on apexes and chicanes, walls Steel with TireWall at the end of fast straights.
+# Variable runoff 3-30 m per side; uses at least 3 of Gravel, DeepSand, PackedSand, Grass, Asphalt.
+
+GT_ROAD = Road(
+    width=13.0,
+    surface="Asphalt",
+    wall_type="Steel",
+    left_wall_distance=6.0,
+    right_wall_distance=6.0,
+    left_runoff="Grass",
+    right_runoff="Grass",
+)
+
+VELOCITY_PARK = Circuit(
+    id="gt_velocity_park",
+    name="Velocity Park",
+    description="High-speed GT circuit featuring two long straights ending in heavy braking chicanes with vast asphalt runoffs.",
+    tag="POWER CIRCUIT",
+    category_label="GT Circuit",
+    car_category="gt",
+    default_laps=4,
+    road=GT_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        # Main Straight (>= 300 m)
+        S(240, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                       # 0
+        S(80, wall_type="TireWall", wall_distance=22.0, runoff="Asphalt"),                                  # 1: Braking zone
+        # Chicane 1 (Right-Left) - wide 22m asphalt runoff throughout
+        A(50, -35, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),          # 2
+        S(25, left_curb=True, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),# 3
+        A(50, 35, left_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),            # 4
+        S(30, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),                                  # 5
+        # Turn 1: Sweeper to South (-90 deg)
+        A(70, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=15.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 6
+        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 7
+        # Turn 2: To West (-180 deg)
+        A(60, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=10.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 8
+        # Back Straight (>= 300 m)
+        S(260, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                       # 9
+        S(80, wall_type="TireWall", wall_distance=22.0, runoff="Asphalt"),                                  # 10: Braking zone
+        # Chicane 2 (Left-Right)
+        A(50, 35, left_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),             # 11
+        S(25, left_curb=True, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),# 12
+        A(50, -35, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),          # 13
+        S(30, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),                                  # 14
+        # Turn 3: To North (+90 deg)
+        A(60, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=10.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 15
+        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 16
+        # Turn 4: Final corner to East (0 deg)
+        A(70, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=15.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 17
+    ],
+    close_with=(0, 16),
+    finish_at=(0, 0.5),
+    features=[],
+)
+
+RIDGE_RING = Circuit(
+    id="gt_ridge_ring",
+    name="Ridge Ring",
+    description="Undulating GT circuit climbing to an 8-meter ridge crest before plunging down through flowing esses and a technical hairpin.",
+    tag="HILL CIRCUIT",
+    category_label="GT Circuit",
+    car_category="gt",
+    default_laps=4,
+    road=GT_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        # 0: Main Straight (>= 300 m) East (0 deg)
+        S(305, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
+        # Turn 1: Right turn to South (-90 deg)
+        A(40, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 1
+        # Ridge climb straight (climbing towards crest)
+        S(65, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 2
+        # Esses on the ridge (climbing to 8 m)
+        A(45, 45, left_curb=True, wall_distance=8.0, runoff="Grass", wall_type="TireWall"),                 # 3
+        S(35, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 4
+        A(45, -45, right_curb=True, left_wall_distance=10.0, right_wall_distance=8.0, runoff="Grass", wall_type="TireWall"), # 5: Crest
+        # Downhill corner immediately after crest
+        A(45, -45, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),# 6: Downhill
+        S(40, wall_type="TireWall", left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="Grass"), # 7
+        # Chicane
+        A(40, 45, left_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),             # 8
+        S(20, left_curb=True, right_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),# 9
+        A(40, -45, right_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),          # 10
+        S(20, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 11
+        # Turn to West (-180 deg)
+        A(45, -45, right_curb=True, left_wall_distance=10.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),# 12
+        # Westward run along the southern edge
+        S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 13
+        # Hairpin at South-West corner (180 deg right turn to North) - radius 40m
+        A(40, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="Grass", wall_type="TireWall"), # 14: Hairpin
+        S(60, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 15
+        # Final turn to East (0 deg)
+        A(40, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 16
+    ],
+    close_with=(13, 15),
+    finish_at=(0, 0.4),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.4), 0.0),   # Finish line at 0.0 m
+        ((1, 0.0), 0.0),   # Climb starts
+        ((1, 1.0), 1.0),
+        ((2, 0.5), 2.2),
+        ((2, 1.0), 3.6),
+        ((3, 1.0), 5.2),   # Esse 1
+        ((4, 1.0), 6.8),
+        ((5, 0.7), 8.0),   # Esse 2 Crest at 8.0 m!
+        ((6, 0.5), 6.8),   # Downhill corner descending
+        ((7, 0.5), 5.4),   # Downhill run
+        ((8, 0.5), 4.2),   # Chicane entry
+        ((9, 0.5), 3.2),
+        ((10, 0.5), 2.2),  # Chicane exit
+        ((11, 0.5), 1.3),
+        ((12, 0.5), 0.6),
+        ((12, 1.0), 0.0),  # Back to ground level
+        ((13, 0.5), 0.0),
+    ],
+    features=[
+        Zone(start=420.0, end=495.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Downhill Sand Trap"),
+        Zone(start=925.0, end=985.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Sand Trap"),
+    ],
+)
+
+COASTAL_GRAND_PRIX = Circuit(
+    id="gt_coastal_grand_prix",
+    name="Coastal Grand Prix",
+    description="Premier coastal Grand Prix circuit featuring a 410 m blast, an elevated 5-meter plateau, a sweeping 165-degree seaside carousel, and the notorious bus-stop chicane.",
+    tag="GRAND PRIX",
+    category_label="GT Circuit",
+    car_category="gt",
+    default_laps=3,
+    road=GT_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        # Main Straight (>= 400 m) East (0 deg)
+        S(330, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
+        S(80, wall_type="TireWall", wall_distance=20.0, runoff="Asphalt"),                                  # 1: Braking zone (total straight = 410 m)
+        # Turn 1: Right kink to South-East (-30 deg)
+        A(60, -30, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="Asphalt", wall_type="TireWall"), # 2
+        # Climb to plateau
+        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 3
+        # Curve on plateau to East (0 deg)
+        A(60, 30, left_curb=True, wall_distance=8.0, left_runoff="Grass", right_runoff="Grass", wall_type="TireWall"),              # 4
+        # Plateau straight (~5 m)
+        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 5
+        # The Carousel: long 165-degree sweeping turn (to -165 deg / West-South-West)
+        A(50, -165, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="PackedSand", wall_type="TireWall"), # 6: Carousel (165 deg >= 150 deg!)
+        # Fast sweeper bend along the coast (left kink then right kink)
+        S(40, wall_type="TireWall", left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="PackedSand"),                    # 7
+        A(70, 45, left_curb=True, right_wall_distance=18.0, left_wall_distance=8.0, right_runoff="PackedSand", wall_type="TireWall"), # 8: Fast sweeper (to -120 deg)
+        S(80, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 9
+        A(70, -45, right_curb=True, left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),   # 10: (to -165 deg)
+        # Coastal straight into Bus-Stop Chicane
+        S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 11
+        S(40, wall_type="TireWall", wall_distance=20.0, runoff="Asphalt"),                                  # 12: Braking zone
+        # Bus-Stop Chicane
+        A(40, -45, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),          # 13
+        S(15, left_curb=True, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),# 14
+        A(40, 90, left_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),            # 15
+        S(15, left_curb=True, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),# 16
+        A(40, -45, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),          # 17
+        S(30, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 18
+        # Final turns back to Main Straight
+        A(50, -45, right_curb=True, left_wall_distance=16.0, right_wall_distance=8.0, left_runoff="Gravel", wall_type="TireWall"), # 19 (to -210 / +150 deg)
+        S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 20 (West-North)
+        A(50, -90, right_curb=True, left_wall_distance=16.0, right_wall_distance=8.0, left_runoff="Gravel", wall_type="TireWall"), # 21 (to +60 deg)
+        S(60, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 22 (solved)
+        A(50, -60, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 23 (to 0 deg / East)
+    ],
+    close_with=(20, 22),
+    finish_at=(0, 0.4),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.4), 0.0),   # Finish line at 0.0 m
+        ((2, 0.0), 0.0),   # Climb starts
+        ((2, 1.0), 1.5),
+        ((3, 1.0), 3.5),
+        ((4, 1.0), 5.0),   # Plateau reached at 5.0 m
+        ((5, 1.0), 5.0),   # Plateau straight flat at 5.0 m!
+        ((6, 0.5), 4.5),   # Carousel gentle descent
+        ((6, 1.0), 3.5),
+        ((7, 1.0), 2.2),
+        ((8, 1.0), 1.0),   # Fast sweeper
+        ((9, 1.0), 0.0),   # Back to ground level
+        ((11, 0.5), 0.0),
+    ],
+    features=[],
+)
+
+# Stock Cars: banked ovals (spec 055, User Flow section 3).
+# Races run anticlockwise (left turns), outer wall is right, bank positive in turns.
+# Infield default_surface Grass.
+
+STOCK_ROAD = Road(
+    width=16.0,
+    surface="Concrete",
+    wall_type="Concrete",
+    left_wall_distance=6.0,
+    right_wall_distance=1.2,
+    left_runoff="Concrete",
+    right_runoff="Grass",
+    bank=5.0,
+)
+
+THUNDER_BOWL = Circuit(
+    id="stock_thunder_bowl",
+    name="Thunder Bowl",
+    description="High-banked short-track colosseum featuring 25-degree banked concrete turns and thunderous pack racing.",
+    tag="SHORT TRACK",
+    category_label="Stock Oval",
+    car_category="nascar",
+    default_laps=10,
+    default_surface="Grass",
+    road=STOCK_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        S(140.0, bank=5.0),
+        A(35.0, 180.0, bank=25.0, left_wall_distance=6.0, right_wall_distance=1.2, left_runoff="Concrete"),
+        S(140.0, bank=5.0),
+        A(35.0, 180.0, bank=25.0, left_wall_distance=6.0, right_wall_distance=1.2, left_runoff="Concrete"),
+    ],
+    finish_at=(0, 0.5),
+)
+
+TRI_OVAL_ROAD = Road(
+    width=16.0,
+    surface="Asphalt",
+    wall_type="Concrete",
+    left_wall_distance=6.0,
+    right_wall_distance=1.2,
+    left_runoff="Asphalt",
+    right_runoff="Grass",
+    bank=5.0,
+)
+
+TRI_OVAL = Circuit(
+    id="stock_tri_oval_speedway",
+    name="Tri-Oval Speedway",
+    description="Superspeedway tri-oval with 20-degree banked turns, an 8-degree front-stretch dogleg and high-speed drafting.",
+    tag="TRI-OVAL",
+    category_label="Stock Oval",
+    car_category="nascar",
+    default_laps=6,
+    default_surface="Grass",
+    road=TRI_OVAL_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=180.0,
+    segments=[
+        S(322.72, bank=5.0),        # 0: Back straight (180 deg)
+        A(65.0, 150.0, bank=20.0),  # 1: Turn 3 & 4 (to -30 deg)
+        S(166.11, bank=8.0),        # 2: Front stretch 1 (-30 deg)
+        A(100.0, 60.0, bank=8.0),   # 3: Dogleg (to +30 deg)
+        S(166.11, bank=8.0),        # 4: Front stretch 2 (+30 deg)
+        A(65.0, 150.0, bank=20.0),  # 5: Turn 1 & 2 (to 180 deg)
+    ],
+    finish_at=(3, 0.5),  # finish at apex of dogleg
+)
+
+STOCK_ROVAL_ROAD = Road(
+    width=14.0,
+    surface="Asphalt",
+    wall_type="Concrete",
+    left_wall_distance=5.0,
+    right_wall_distance=1.2,
+    bank=5.0,
+)
+
+ROVAL = Circuit(
+    id="stock_roval",
+    name="Roval",
+    description="Hybrid oval and road course combining high-banked 18-degree oval turns with a technical infield hairpin and chicane.",
+    tag="ROVAL",
+    category_label="Stock Roval",
+    car_category="nascar",
+    default_laps=5,
+    default_surface="Grass",
+    road=STOCK_ROVAL_ROAD,
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        S(260.0, bank=5.0),                                                                            # 0: Front straight
+        A(45.0, 60.0, left_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0), # 1: Turn into infield
+        S(50.0, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0),       # 2
+        A(40.0, -45.0, right_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0), # 3: Chicane entry
+        S(25.0, left_curb=True, right_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0), # 4: Chicane mid
+        A(40.0, 45.0, left_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0),  # 5: Chicane exit
+        S(80.0, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0),       # 6
+        A(32.0, 165.0, left_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0), # 7: Hairpin
+        S(70.0, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0),       # 8: Hairpin exit (solved)
+        A(45.0, -45.0, right_curb=True, bank=0.0, wall_type="TireWall", left_wall_distance=5.0, right_wall_distance=5.0),# 9: Rejoin oval
+        S(250.0, bank=5.0, wall_type="Concrete", left_wall_distance=5.0, right_wall_distance=1.2),     # 10: Back straight (solved)
+        A(60.0, 180.0, bank=18.0, wall_type="Concrete", left_wall_distance=5.0, right_wall_distance=1.2),# 11: Turn 3 & 4
+        S(80.0, bank=5.0, wall_type="Concrete", left_wall_distance=5.0, right_wall_distance=1.2),      # 12: Lead back to start
+    ],
+    close_with=(8, 10),
+    finish_at=(0, 0.4),
+)
+
+CREST_HEIGHTS = [
+    3.8, 4.2, 4.0, 4.5, 5.0, 5.6, 4.8, 4.2, 4.6, 4.0,
+    4.5, 3.8, 4.2, 3.8, 4.0, 3.5, 4.2, 3.8, 4.0, 3.8,
+]
+TROUGH_HEIGHTS = [
+    0.5, 1.2, 1.0, 1.5, 1.8, 2.0, 1.5, 1.2, 1.6, 1.0,
+    1.4, 0.8, 1.2, 0.2, 0.8, 0.5, 1.0, 0.8, 1.2, 0.5,
+]
+
+DUNE_PROFILE = []
+for i in range(20):
+    trough_d = i * 60.0
+    crest_d = trough_d + 30.0
+    DUNE_PROFILE.append((round(trough_d, 1), TROUGH_HEIGHTS[i]))
+    DUNE_PROFILE.append((round(crest_d, 1), CREST_HEIGHTS[i]))
+
+DUNE_SEA = Circuit(
+    id="at_dune_sea",
+    name="Dune Sea",
+    description="Rolling desert all-terrain circuit with sweeping sand dunes, dune crest leaps, tabletop ramps, and a desert oasis.",
+    tag="SAND DUNES",
+    category_label="All-Terrain",
+    car_category="offroad",
+    default_laps=4,
+    default_surface="DeepSand",
+    road=Road(width=15.0, surface="PackedSand", left_runoff="DeepSand", right_runoff="DeepSand", wall_type="TireWall", left_wall_distance=3.5, right_wall_distance=3.5),
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        S(140.0),                  # 0: Start straight (0 deg, East)
+        A(50.0, -90.0),            # 1: Turn 1 (to South, -90 deg)
+        S(80.0),                   # 2:
+        A(50.0, -45.0),            # 3: (-135 deg)
+        S(90.0),                   # 4:
+        A(50.0, 45.0),             # 5: Kink left (-90 deg)
+        S(70.0),                   # 6:
+        A(45.0, -90.0),            # 7: (-180 deg, West)
+        S(120.0),                  # 8:
+        A(50.0, -90.0),            # 9: (+90 deg, North)
+        S(90.0),                   # 10:
+        A(50.0, -45.0),            # 11: (+45 deg)
+        S(60.0),                   # 12:
+        A(50.0, -45.0),            # 13: (0 deg, East)
+    ],
+    close_with=(0, 10),
+    profile=DUNE_PROFILE,
+    features=[
+        Ramp(at=390.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSand", name="Dune Tabletop 1"),
+        Ramp(at=930.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSand", name="Dune Tabletop 2"),
+        Zone(start=660.0, end=720.0, surface="Water", lateral=(7.5, 18.0), from_edge="left", layer="below_track", name="Oasis Shore"),
+    ],
+)
+
+MUDBATH_VALLEY = Circuit(
+    id="at_mudbath_valley",
+    name="Mudbath Valley",
+    description="Treacherous off-road mud arena through sunken river valleys, deep mud bogs, standing water puddles, a whoops section and an 8-meter hill.",
+    tag="MUD BATH",
+    category_label="All-Terrain",
+    car_category="offroad",
+    default_laps=4,
+    default_surface="DeepMud",
+    road=Road(width=15.0, surface="MudTrack", left_runoff="DeepMud", right_runoff="DeepMud", wall_type="TireWall", left_wall_distance=3.5, right_wall_distance=3.5),
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        S(70.0),                   # 0: Start straight (East, 0 deg)
+        A(40.0, -90.0),            # 1: Turn 1 (South, -90 deg)
+        S(50.0),                   # 2: Mud straight
+        A(35.0, -45.0),            # 3: (-135 deg)
+        S(70.0),                   # 4: Hill climb
+        A(35.0, 45.0),             # 5: Crest kink (-90 deg)
+        S(50.0),                   # 6: Hill descent
+        A(40.0, -90.0),            # 7: (-180 deg, West)
+        S(80.0),                   # 8: Valley floor / whoops
+        A(35.0, -45.0),            # 9: (+135 deg)
+        S(50.0),                   # 10:
+        A(40.0, -45.0),            # 11: (+90 deg, North)
+        S(50.0),                   # 12: Return straight
+        A(40.0, -90.0),            # 13: (0 deg, East)
+    ],
+    close_with=(0, 12),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.4), 0.0),
+        ((3, 1.0), 0.5),
+        ((4, 0.5), 4.5),
+        ((4, 1.0), 7.5),
+        ((5, 0.5), 8.0),
+        ((5, 1.0), 7.8),
+        ((6, 0.5), 4.0),
+        ((6, 1.0), 0.5),
+        ((7, 0.5), 0.0),
+        ((12, 1.0), 0.0),
+    ],
+    finish_at=(0, 0.4),
+    features=[
+        Ramp(at=60.0, length=14.0, height=2.0, launch_speed=4.0, surface="MudTrack", name="Valley Tabletop 1"),
+        Ramp(at=780.0, length=14.0, height=2.0, launch_speed=4.0, surface="MudTrack", name="Valley Tabletop 2"),
+        Whoops(at=480.0, count=6, spacing=5.0, height=0.6, name="Valley Whoops", surface="MudTrack"),
+        Zone(start=180.0, end=210.0, surface="DeepMud", lateral=(-5.0, 5.0), layer="above_track", name="Deep Mud Bog 1"),
+        Zone(start=570.0, end=595.0, surface="DeepMud", lateral=(-4.5, 4.5), layer="above_track", name="Deep Mud Bog 2"),
+        Zone(start=510.0, end=530.0, surface="Water", lateral=(-4.5, 4.5), layer="above_track", name="Mud Puddle 1"),
+        Zone(start=680.0, end=700.0, surface="Water", lateral=(-4.5, 4.5), layer="above_track", name="Mud Puddle 2"),
+    ],
+)
+
+FROSTBITE_PASS = Circuit(
+    id="at_frostbite_pass",
+    name="Frostbite Pass",
+    description="Sub-zero mountain circuit climbing over a treacherous 10-meter alpine snow pass before sweeping across a frozen sheet-ice glacial lake.",
+    tag="SNOW PASS",
+    category_label="All-Terrain",
+    car_category="offroad",
+    default_laps=4,
+    default_surface="DeepSnow",
+    road=Road(width=15.0, surface="PackedSnow", left_runoff="PackedSnow", right_runoff="PackedSnow", wall_type="TireWall", left_wall_distance=3.5, right_wall_distance=3.5),
+    start=(0.0, 0.0),
+    heading_deg=0.0,
+    segments=[
+        S(90.0),                                                           # 0: Start straight (East, 0 deg)
+        A(60.0, -90.0),                                                    # 1: Turn 1 (South, -90 deg)
+        S(60.0),                                                           # 2: Mountain pass approach
+        A(50.0, -45.0),                                                    # 3: (-135 deg)
+        S(70.0, left_runoff="DeepSnow", right_runoff="DeepSnow"),          # 4: Pass climb 1
+        A(45.0, 45.0),                                                     # 5: Kink (-90 deg)
+        S(70.0, left_runoff="DeepSnow", right_runoff="DeepSnow"),          # 6: Pass climb 2 (crest)
+        A(55.0, -90.0),                                                    # 7: Crest turn (-180 deg, West)
+        S(80.0, left_runoff="DeepSnow", right_runoff="DeepSnow"),          # 8: Glacial descent
+        A(50.0, -45.0),                                                    # 9: (-225 / +135 deg)
+        S(60.0, left_runoff="DeepSnow", right_runoff="DeepSnow"),          # 10: Lake approach
+        A(45.0, -45.0),                                                    # 11: (+90 deg, North)
+        S(120.0, surface="SheetIce", left_runoff="DeepSnow", right_runoff="DeepSnow"), # 12: Frozen lake sheet ice straight!
+        S(60.0),                                                           # 13: Snow braking straight!
+        A(55.0, -90.0),                                                    # 14: (0 deg, East)
+    ],
+    close_with=(0, 13),
+    profile=[
+        ((0, 0.0), 0.0),
+        ((0, 0.4), 0.0),
+        ((2, 0.5), 0.5),
+        ((3, 1.0), 2.5),
+        ((4, 0.5), 5.5),
+        ((4, 1.0), 8.0),
+        ((5, 1.0), 9.2),
+        ((6, 0.5), 10.0),
+        ((6, 1.0), 9.8),
+        ((7, 1.0), 7.5),
+        ((8, 0.5), 3.5),
+        ((8, 1.0), 0.5),
+        ((9, 1.0), 0.0),
+        ((13, 1.0), 0.0),
+    ],
+    finish_at=(0, 0.4),
+    features=[
+        Ramp(at=55.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSnow", name="Pass Tabletop Jump"),
+    ],
+)
+
+
+CIRCUITS = [
+    PINE_GROVE,
+    RIVERBEND_CIRCUIT,
+    SUMMIT_INTERNATIONAL,
+    QUARRY_SPRINT,
+    HILLTOP_LEAP,
+    CANYON_FLYER,
+    MEADOW_SPRINT,
+    CLAY_BOWL,
+    HILLSIDE_HAMMER,
+    VELOCITY_PARK,
+    RIDGE_RING,
+    COASTAL_GRAND_PRIX,
+    THUNDER_BOWL,
+    TRI_OVAL,
+    ROVAL,
+    DUNE_SEA,
+    MUDBATH_VALLEY,
+    FROSTBITE_PASS,
+]
+
+
+
 
 
 def main(argv=None):

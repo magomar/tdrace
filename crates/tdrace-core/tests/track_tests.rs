@@ -6,8 +6,8 @@ use tdrace_core::track::checkpoint::TrackProgressTracker;
 
 #[test]
 fn test_track_lap_counting_and_best_lap_time() {
-    let track = tdrace_core::catalog::official_track("classic", "oval_speedway");
-    let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 2);
+    let track = tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway");
+    let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
 
     let dt = 0.1;
@@ -43,23 +43,25 @@ fn test_track_lap_counting_and_best_lap_time() {
 
 #[test]
 fn test_checkpoint_sequence_enforcement_anti_cheat() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
+    let cp0 = &track.checkpoints[0];
+    let mid0 = (cp0.gate.start + cp0.gate.end) * 0.5;
 
     // Start before finish line
-    car.state.position = Vec2::new(-5.0, 0.0);
+    car.state.position = mid0 - cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
 
     // Cross finish line CP0
-    car.state.position = Vec2::new(5.0, 0.0);
+    car.state.position = mid0 + cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
     assert_eq!(tracker.last_checkpoint_idx, 0);
 
     // Drive back and cross CP0 again (skipping all intermediate CPs)
-    car.state.position = Vec2::new(-5.0, 0.0);
+    car.state.position = mid0 - cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
-    car.state.position = Vec2::new(5.0, 0.0);
+    car.state.position = mid0 + cp0.direction * 5.0;
     tracker.update(&car, &track.spline, &track.checkpoints, 0.016);
 
     // Lap should not count!
@@ -69,10 +71,12 @@ fn test_checkpoint_sequence_enforcement_anti_cheat() {
 
 #[test]
 fn test_wrong_way_detection() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
-    // Heading PI (opposite to track direction +X at start line)
-    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), PI);
+    let s0 = &track.spline.samples[0];
+    let fwd_angle = s0.tangent.y.atan2(s0.tangent.x);
+    // Heading PI (opposite to track direction at start line)
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(s0.point, fwd_angle + PI);
 
     let dt = 0.016;
     for _ in 0..10 {
@@ -82,8 +86,8 @@ fn test_wrong_way_detection() {
     assert!(tracker.is_wrong_way, "Car facing backwards must trigger wrong-way warning");
     assert!(tracker.wrong_way_timer > 0.1);
 
-    // Turn car forward (heading 0.0)
-    car.state.angle = 0.0;
+    // Turn car forward
+    car.state.angle = fwd_angle;
     tracker.update(&car, &track.spline, &track.checkpoints, dt);
     assert!(!tracker.is_wrong_way, "Car facing forwards must clear wrong-way warning");
     assert_eq!(tracker.wrong_way_timer, 0.0);
@@ -91,19 +95,21 @@ fn test_wrong_way_detection() {
 
 #[test]
 fn test_off_track_detection_and_surfaces() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+    let s0 = &track.spline.samples[0];
+    let fwd_angle = s0.tangent.y.atan2(s0.tangent.x);
 
     // On track centerline
-    let car_on_track = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, 0.0), 0.0);
+    let car_on_track = Car::new(CarConfig::sports_car()).with_pose(s0.point, fwd_angle);
     tracker.update(&car_on_track, &track.spline, &track.checkpoints, 0.016);
     assert!(!tracker.is_off_track);
 
     let surfaces_on_track = track.sample_car_surfaces(&car_on_track);
     assert_eq!(surfaces_on_track, [SurfaceType::Asphalt; 4]);
 
-    // Off track in grass (lateral offset y = -25.0)
-    let car_off_track = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(50.0, -25.0), 0.0);
+    // Off track in grass (lateral offset normal * 50.0)
+    let car_off_track = Car::new(CarConfig::sports_car()).with_pose(s0.point + s0.normal * 50.0, fwd_angle);
     let dt = 0.016;
     for _ in 0..5 {
         tracker.update(&car_off_track, &track.spline, &track.checkpoints, dt);
@@ -117,7 +123,39 @@ fn test_off_track_detection_and_surfaces() {
 
 #[test]
 fn test_pit_lane_and_pit_stop_trigger() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
+    track.pit_box_area = Some(arcade_race_core::track::geometry::SurfaceShape::Aabb {
+        min: Vec2::new(40.0, -15.0),
+        max: Vec2::new(60.0, -9.0),
+    });
+    track.checkpoints.push(arcade_race_core::track::checkpoint::Checkpoint {
+        id: 100,
+        gate: arcade_race_core::track::geometry::LineSegment {
+            start: Vec2::new(-25.0, -20.0),
+            end: Vec2::new(-25.0, -5.0),
+        },
+        direction: Vec2::new(1.0, 0.0),
+        sector: 0,
+        is_finish_line: false,
+        is_pit_entry: true,
+        is_pit_exit: false,
+        target_distance: 0.0,
+        elevation: 0.0,
+    });
+    track.checkpoints.push(arcade_race_core::track::checkpoint::Checkpoint {
+        id: 101,
+        gate: arcade_race_core::track::geometry::LineSegment {
+            start: Vec2::new(135.0, -20.0),
+            end: Vec2::new(135.0, -5.0),
+        },
+        direction: Vec2::new(1.0, 0.0),
+        sector: 0,
+        is_finish_line: false,
+        is_pit_entry: false,
+        is_pit_exit: true,
+        target_distance: 0.0,
+        elevation: 0.0,
+    });
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
 
@@ -145,7 +183,7 @@ fn test_pit_lane_and_pit_stop_trigger() {
 
 #[test]
 fn test_per_wheel_split_mu_sampling() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let sample = track.spline.sample_at_distance(50.0);
     let half_track_w = sample.width * 0.5;
     let heading = sample.tangent.y.atan2(sample.tangent.x);
@@ -180,16 +218,20 @@ fn test_all_track_presets_grid_positions_valid() {
     use tdrace_core::collision::wall::resolve_all_wall_collisions;
 
     let tracks = [
-        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
-        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
-        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
-        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
+        ("Coastal Grand Prix", tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix")),
+        ("Tri-Oval Speedway", tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway")),
+        ("Ridge Ring", tdrace_core::catalog::official_track("classic", "gt_ridge_ring")),
+        ("Pine Grove", tdrace_core::catalog::official_track("classic", "kart_pine_grove")),
     ];
 
     for (name, track) in &tracks {
         println!("Checking track: {} (length: {:.1}m)", name, track.spline.total_length());
         for (i, gp) in track.grid_positions.iter().enumerate() {
-            let mut car = Car::new(CarConfig::sports_car()).with_pose(gp.position, gp.angle);
+            let config = match track.car_category {
+                arcade_race_core::CarCategory::Kart => CarConfig::kart(),
+                _ => CarConfig::sports_car(),
+            };
+            let mut car = Car::new(config).with_pose(gp.position, gp.angle);
             let surfaces = track.sample_car_surfaces(&car);
             assert!(
                 surfaces.iter().all(|s| *s == SurfaceType::Asphalt || *s == SurfaceType::Curb),
@@ -230,10 +272,10 @@ fn test_track_walls_do_not_block_drivable_track_and_do_not_self_intersect() {
     use tdrace_core::collision::wall::resolve_all_wall_collisions;
 
     let tracks = [
-        ("Classic Grand Prix", tdrace_core::catalog::official_track("classic", "classic_grand_prix")),
-        ("Oval Speedway", tdrace_core::catalog::official_track("classic", "oval_speedway")),
-        ("Drift Park", tdrace_core::catalog::official_track("classic", "drift_park")),
-        ("Kart Arena", tdrace_core::catalog::official_track("classic", "kart_arena")),
+        ("Coastal Grand Prix", tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix")),
+        ("Tri-Oval Speedway", tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway")),
+        ("Ridge Ring", tdrace_core::catalog::official_track("classic", "gt_ridge_ring")),
+        ("Pine Grove", tdrace_core::catalog::official_track("classic", "kart_pine_grove")),
     ];
 
     for (name, track) in &tracks {
@@ -246,7 +288,12 @@ fn test_track_walls_do_not_block_drivable_track_and_do_not_self_intersect() {
             let dist = i as f32 * 0.5;
             let sample = track.spline.sample_at_distance(dist);
             let heading = sample.tangent.y.atan2(sample.tangent.x);
-            let mut car = Car::new(CarConfig::sports_car()).with_pose(sample.point, heading);
+            let config = match track.car_category {
+                arcade_race_core::CarCategory::Kart => CarConfig::kart(),
+                _ => CarConfig::sports_car(),
+            };
+            let mut car = Car::new(config).with_pose(sample.point, heading);
+            car.state.elevation = sample.elevation;
 
             let initial_pos = car.state.position;
             let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
@@ -497,35 +544,35 @@ fn test_banked_curves_spline_interpolation_and_cross_slope() {
 }
 
 #[test]
-fn test_oval_speedway_and_dirty_oval_presets_have_banking() {
+fn test_oval_speedway_and_thunder_bowl_presets_have_banking() {
     
     use tdrace_core::track::validation::validate_track;
 
-    let asphalt_oval = tdrace_core::catalog::official_track("classic", "oval_speedway");
+    let asphalt_oval = tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway");
     let max_asphalt_bank = asphalt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
     assert!(
         max_asphalt_bank >= 20.0,
-        "Asphalt Oval Speedway should have ~22 deg banking on curves, got {}",
+        "Asphalt Tri-Oval Speedway should have ~20 deg banking on curves, got {}",
         max_asphalt_bank
     );
     let asphalt_errors = validate_track(&asphalt_oval);
     assert!(
         !asphalt_errors.iter().any(|e| e.severity == tdrace_core::track::ValidationSeverity::Error),
-        "Oval speedway must pass validation with 0 errors: {:?}",
+        "Tri-Oval speedway must pass validation with 0 errors: {:?}",
         asphalt_errors
     );
 
-    let dirt_oval = tdrace_core::catalog::official_track("classic", "dirty_oval_speedway");
+    let dirt_oval = tdrace_core::catalog::official_track("classic", "stock_thunder_bowl");
     let max_dirt_bank = dirt_oval.spline.samples.iter().map(|s| s.bank_angle).fold(0.0f32, f32::max);
     assert!(
-        max_dirt_bank >= 16.0,
-        "Dirt Oval Speedway should have ~18 deg banking on curves, got {}",
+        max_dirt_bank >= 20.0,
+        "Thunder Bowl should have >= 20 deg banking on curves, got {}",
         max_dirt_bank
     );
     let dirt_errors = validate_track(&dirt_oval);
     assert!(
         !dirt_errors.iter().any(|e| e.severity == tdrace_core::track::ValidationSeverity::Error),
-        "Dirty oval speedway must pass validation with 0 errors: {:?}",
+        "Thunder Bowl must pass validation with 0 errors: {:?}",
         dirt_errors
     );
 }
@@ -577,12 +624,12 @@ fn test_banking_incline_physics_and_centripetal_downhill_force() {
 }
 
 #[test]
-fn test_sync_dirty_oval_json() {
-        use tdrace_core::track::Track;
-    let track = tdrace_core::catalog::official_track("classic", "dirty_oval_speedway");
-    let temp_file = std::env::temp_dir().join(format!("test_dirty_oval_{}.json", std::process::id()));
-    track.save_to_file(&temp_file).expect("Failed to save dirty_oval_speedway.json");
-    let loaded = Track::load_from_file(&temp_file).expect("Failed to load dirty_oval_speedway.json");
+fn test_sync_thunder_bowl_json() {
+    use tdrace_core::track::Track;
+    let track = tdrace_core::catalog::official_track("classic", "stock_thunder_bowl");
+    let temp_file = std::env::temp_dir().join(format!("test_thunder_bowl_{}.json", std::process::id()));
+    track.save_to_file(&temp_file).expect("Failed to save stock_thunder_bowl.json");
+    let loaded = Track::load_from_file(&temp_file).expect("Failed to load stock_thunder_bowl.json");
     assert_eq!(loaded.name, track.name);
     let _ = std::fs::remove_file(temp_file);
 }
@@ -705,7 +752,7 @@ fn test_waypoint_wall_distance_json_backwards_compatibility() {
 
 #[test]
 fn test_auto_generate_grid_requires_finish_line() {
-    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     // Remove all checkpoints
     track.checkpoints.clear();
     track.grid_positions.clear();
@@ -732,7 +779,7 @@ fn test_auto_generate_grid_requires_finish_line() {
 
 #[test]
 fn test_auto_generate_grid_positioned_relative_to_finish_line() {
-    let mut track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     track.auto_generate_checkpoints(8, 3);
     assert!(track.has_finish_line());
 

@@ -182,5 +182,5 @@ fn test_all_96_tracks_grid_positions_count_and_validation() {
         }
     }
 
-    assert_eq!(total_verified, 108, "Must verify all 108 canonical tracks in the game");
+    assert_eq!(total_verified, 113, "Must verify all 113 canonical tracks in the game");
 }

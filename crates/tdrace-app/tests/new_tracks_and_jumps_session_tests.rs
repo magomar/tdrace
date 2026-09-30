@@ -26,7 +26,7 @@ fn test_ramp_raceway_session_features() {
     session.track_choice = TrackChoice::RampRaceway;
     session.init_race();
 
-    assert_eq!(session.track.name, "Ramp Raceway");
+    assert_eq!(session.track.name, "Hilltop Leap");
     assert!(!session.track.geometry.jump_ramps.is_empty());
 }
 
@@ -37,18 +37,18 @@ fn test_oasis_rally_session_features() {
     session.car_choice = CarChoice::RallyCar;
     session.init_race();
 
-    assert_eq!(session.track.name, "Oasis Rally");
+    assert_eq!(session.track.name, "Dune Sea");
     assert_eq!(session.track.default_surface, SurfaceType::DeepSand);
     assert!(session.track.geometry.obstacles.is_empty());
 
-    // Check that spline sample 0 has Dirt surface
-    assert_eq!(session.track.spline.samples[0].surface, SurfaceType::Dirt);
+    // Check that spline sample 0 has PackedSand surface
+    assert_eq!(session.track.spline.samples[0].surface, SurfaceType::PackedSand);
 
-    // Verify pure dirt circuit: NO red-white curbs anywhere on the track
+    // Verify pure dirt/sand circuit: NO red-white curbs anywhere on the track
     let has_any_curbs = session.track.spline.samples.iter().any(|s| s.left_curb || s.right_curb);
-    assert!(!has_any_curbs, "Oasis Rally must not have red-white curbs");
+    assert!(!has_any_curbs, "Dune Sea must not have red-white curbs");
 
     // Verify Oasis water hazard is present
     let has_water = session.track.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Water);
-    assert!(has_water, "Oasis Rally must feature Oasis water hazard zones");
+    assert!(has_water, "Dune Sea must feature Oasis water hazard zones");
 }

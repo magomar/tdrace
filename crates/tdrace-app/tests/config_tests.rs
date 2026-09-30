@@ -100,14 +100,14 @@ fn test_custom_camera_zoom_levels_configuration() {
 #[test]
 fn test_session_initialization_with_custom_config() {
     let mut config = GameConfig::default();
-    config.gameplay.default_track = "kart_arena".to_string();
-    config.gameplay.default_laps = 5;
+    config.gameplay.default_track = "kart_pine_grove".to_string();
+    config.gameplay.default_laps = 8;
     config.gameplay.default_num_bots = 7;
     config.audio.master_volume = 0.42;
     config.input.steer_time_ms = 180.0;
 
     let session = RaceSession::new_with_config(config);
-    assert_eq!(session.total_laps, 5);
+    assert_eq!(session.total_laps, 8);
     assert_eq!(session.config.gameplay.default_num_bots, 7);
     assert_eq!(session.num_bots, session.max_bots());
     assert!((session.audio.settings.master_volume - 0.42).abs() < 1e-4);
@@ -121,12 +121,12 @@ fn test_config_save_and_load_from_path() {
     let config_path = temp_dir.join("test_config.toml");
 
     let mut config = GameConfig::default();
-    config.gameplay.default_track = "kart_arena".to_string();
+    config.gameplay.default_track = "kart_pine_grove".to_string();
     config.save_to_path(&config_path).expect("Save to temp file should succeed");
 
     assert!(config_path.exists());
     let loaded = GameConfig::load_from_path(&config_path).expect("Load from temp file should succeed");
-    assert_eq!(loaded.gameplay.default_track, "kart_arena");
+    assert_eq!(loaded.gameplay.default_track, "kart_pine_grove");
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
@@ -165,7 +165,7 @@ fn test_default_gameplay_pilot_count_and_toml_override() {
     // 2. Custom TOML configuring bot count
     let custom_toml = r#"
 [gameplay]
-default_track = "oval_speedway"
+default_track = "stock_tri_oval_speedway"
 default_car = "drift_car"
 default_laps = 4
 default_num_bots = 3
@@ -190,7 +190,7 @@ sfx_volume = 0.90
 music_volume = 0.70
 
 [gameplay]
-default_track = "classic_grand_prix"
+default_track = "gt_coastal_grand_prix"
 default_laps = 3
 default_num_bots = 7
 
@@ -211,7 +211,7 @@ velocity_lookahead_time = 0.65
 
 # Rally Module overrides
 [modules.rally.gameplay]
-default_track = "oasis_rally"
+default_track = "rx_quarry_sprint"
 default_assist_profile = "sport"
 
 [modules.rally.camera]
@@ -223,7 +223,7 @@ trauma_decay = 1.2
     // 1. Classic module (inherits general settings directly)
     let classic_cfg = base_cfg.for_module_table_only("classic");
     assert!((classic_cfg.audio.master_volume - 0.85).abs() < 1e-4);
-    assert_eq!(classic_cfg.gameplay.default_track, "classic_grand_prix");
+    assert_eq!(classic_cfg.gameplay.default_track, "gt_coastal_grand_prix");
     assert_eq!(classic_cfg.gameplay.default_laps, 3);
     assert_eq!(classic_cfg.gameplay.default_assist_profile, "arcade");
     assert!((classic_cfg.camera.trauma_decay - 2.2).abs() < 1e-4);
@@ -242,7 +242,7 @@ trauma_decay = 1.2
     // 3. Rally module
     let rally_cfg = base_cfg.for_module_table_only("rally");
     assert!((rally_cfg.audio.master_volume - 0.85).abs() < 1e-4, "Rally inherits general master volume");
-    assert_eq!(rally_cfg.gameplay.default_track, "oasis_rally");
+    assert_eq!(rally_cfg.gameplay.default_track, "rx_quarry_sprint");
     assert_eq!(rally_cfg.gameplay.default_assist_profile, "sport");
     assert!((rally_cfg.camera.trauma_decay - 1.2).abs() < 1e-4, "Rally specific trauma decay");
 }
@@ -296,7 +296,7 @@ fn test_session_module_switching_applies_effective_config() {
 master_volume = 0.80
 
 [gameplay]
-default_track = "classic_grand_prix"
+default_track = "gt_coastal_grand_prix"
 default_laps = 3
 default_num_bots = 7
 "#;
@@ -351,14 +351,14 @@ fn test_external_module_files_and_hierarchy_precedence() {
 
     // 2. Rally Module loads config.rally.toml overrides
     let rally_cfg = base_cfg.for_module("rally");
-    assert_eq!(rally_cfg.gameplay.default_track, "oasis_rally");
+    assert_eq!(rally_cfg.gameplay.default_track, "holjes_rx");
     assert_eq!(rally_cfg.gameplay.default_assist_profile, "sport");
     assert!((rally_cfg.camera.trauma_decay - 1.8).abs() < 1e-4);
     assert!((rally_cfg.camera.max_shake_offset - 2.0).abs() < 1e-4);
 
     // 3. Kart Module loads config.kart.toml overrides
     let kart_cfg = base_cfg.for_module("kart");
-    assert_eq!(kart_cfg.gameplay.default_track, "kart_arena");
+    assert_eq!(kart_cfg.gameplay.default_track, "lonato");
     assert_eq!(kart_cfg.gameplay.default_laps, 5);
     assert!((kart_cfg.input.steer_time_ms - 120.0).abs() < 1e-4);
 
@@ -410,7 +410,7 @@ fn test_display_resolution_and_window_config_roundtrip() {
     // Backwards compatibility test: TOML without display table uses defaults
     let legacy_toml = r#"
 [gameplay]
-default_track = "oval_speedway"
+default_track = "stock_tri_oval_speedway"
 "#;
     let legacy_config: GameConfig = toml::from_str(legacy_toml).expect("Legacy toml should parse");
     assert_eq!(legacy_config.display.window_width, 1920);

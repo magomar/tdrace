@@ -410,11 +410,9 @@ impl Drop for ScopedTempConfigDir {
 mod tests {
     use super::*;
 
-    static STORAGE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
     #[test]
     fn test_resolve_user_tracks_dir_env_override() {
-        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let _guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         let temp = std::env::temp_dir().join(format!(
             "tdrace_test_storage_{}",
             std::time::SystemTime::now()
@@ -435,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_resolve_user_config_dir_env_override() {
-        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let _guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         let temp = std::env::temp_dir().join(format!(
             "tdrace_test_config_{}",
             std::time::SystemTime::now()
@@ -459,7 +457,7 @@ mod tests {
 
     #[test]
     fn test_is_dev_mode_detection() {
-        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let _guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         std::env::remove_var(ENV_DEV_MODE);
         // Defaults to false when env var is not set and no --dev arg
         assert!(!is_dev_mode());
@@ -475,7 +473,7 @@ mod tests {
 
     #[test]
     fn test_is_test_environment_detection() {
-        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let _guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         // Since this test runs as a cargo test binary, is_test_environment() must detect it automatically
         assert!(is_test_environment());
 
@@ -492,7 +490,7 @@ mod tests {
 
     #[test]
     fn test_test_environment_automatically_sandboxes_directories() {
-        let _guard = STORAGE_TEST_MUTEX.lock().unwrap();
+        let _guard = ENV_CONFIG_MUTEX.lock().unwrap_or_else(|p| p.into_inner());
         std::env::remove_var(ENV_USER_CONFIG_DIR);
         std::env::remove_var(ENV_USER_DATA_DIR);
 

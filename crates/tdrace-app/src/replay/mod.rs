@@ -325,7 +325,7 @@ impl ReplayPlayer {
             CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
             CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
             CarChoice::StockCar => CarConfig::stock_car_ta1(),
-            CarChoice::SandRail => CarConfig::sand_rail(),
+            CarChoice::SandRail | CarChoice::CrossCar => CarConfig::sand_rail(),
         };
 
         let initial_pose = track

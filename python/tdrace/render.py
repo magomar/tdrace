@@ -21,19 +21,25 @@ class HumanViewer:
 
     def _lazy_init(self):
         if not self._is_open:
-            import pygame
+            try:
+                import pygame
 
-            pygame.init()
-            pygame.display.init()
-            self._pygame = pygame
-            self._screen = pygame.display.set_mode((self.width, self.height))
-            pygame.display.set_caption(self.caption)
-            self._clock = pygame.time.Clock()
-            self._is_open = True
+                pygame.init()
+                pygame.display.init()
+                self._pygame = pygame
+                self._screen = pygame.display.set_mode((self.width, self.height))
+                pygame.display.set_caption(self.caption)
+                self._clock = pygame.time.Clock()
+                self._is_open = True
+            except Exception:
+                self._is_open = True
+                self._pygame = None
 
     def render(self, rgb_array: np.ndarray, fps: int = 60) -> bool:
         """Renders an RGB ndarray (H, W, 3) to the window."""
         self._lazy_init()
+        if self._pygame is None or self._screen is None:
+            return False
         pygame = self._pygame
 
         # Handle window events

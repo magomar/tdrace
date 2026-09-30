@@ -1049,6 +1049,372 @@ def generate_classic_rally():
     print("✓ Generated classic_rally assets (preserving high-res showroom & chassis textures)")
 
 
+def generate_classic_ax_mudlark():
+    ss = 2
+    W, H = 1024 * ss, 512 * ss
+    im_lat = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im_lat)
+    ground_y = int(450 * ss)
+    r_wheel = int(60 * ss)
+    wf_x = int(745 * ss)
+    wr_x = int(270 * ss)
+    cy_wheel = ground_y - r_wheel - int(6 * ss)
+
+    # Shadow
+    draw.ellipse([int(150 * ss), ground_y - int(12 * ss), int(860 * ss), ground_y + int(22 * ss)], fill=(0, 0, 0, 140))
+
+    frame_col = (45, 175, 235)  # Cyan
+    tube_w = int(6 * ss)
+
+    # Lower & upper frame rails
+    draw.line([int(210 * ss), ground_y - int(40 * ss), int(730 * ss), ground_y - int(40 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(200 * ss), ground_y - int(80 * ss), int(710 * ss), ground_y - int(75 * ss)], fill=frame_col, width=tube_w)
+    # Roll cage uprights & roof
+    draw.line([int(350 * ss), ground_y - int(80 * ss), int(420 * ss), ground_y - int(215 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(420 * ss), ground_y - int(215 * ss), int(550 * ss), ground_y - int(215 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(550 * ss), ground_y - int(215 * ss), int(640 * ss), ground_y - int(80 * ss)], fill=frame_col, width=tube_w)
+    # Cross braces
+    draw.line([int(350 * ss), ground_y - int(80 * ss), int(550 * ss), ground_y - int(215 * ss)], fill=frame_col, width=int(4 * ss))
+    draw.line([int(420 * ss), ground_y - int(215 * ss), int(640 * ss), ground_y - int(80 * ss)], fill=frame_col, width=int(4 * ss))
+
+    # Single-seater cockpit seat & helmet
+    draw.polygon([
+        (int(440 * ss), ground_y - int(80 * ss)),
+        (int(465 * ss), ground_y - int(160 * ss)),
+        (int(495 * ss), ground_y - int(160 * ss)),
+        (int(480 * ss), ground_y - int(80 * ss)),
+    ], fill=(28, 30, 36))
+    draw_circle(draw, int(480 * ss), ground_y - int(175 * ss), int(20 * ss), fill=(245, 245, 250), outline=(20, 22, 28), width=int(2 * ss))
+    draw.rectangle([int(488 * ss), ground_y - int(180 * ss), int(500 * ss), ground_y - int(170 * ss)], fill=(30, 32, 38))
+
+    # Nosecone fairing
+    draw.polygon([
+        (int(630 * ss), ground_y - int(85 * ss)),
+        (int(740 * ss), ground_y - int(65 * ss)),
+        (int(765 * ss), ground_y - int(45 * ss)),
+        (int(710 * ss), ground_y - int(40 * ss)),
+    ], fill=frame_col, outline=(25, 30, 36), width=int(2 * ss))
+
+    # High-mount motorcycle exhaust & muffler
+    draw.rectangle([int(180 * ss), ground_y - int(140 * ss), int(250 * ss), ground_y - int(115 * ss)], fill=(180, 185, 195), outline=(50, 52, 60), width=int(2 * ss))
+    draw.line([int(250 * ss), ground_y - int(125 * ss), int(330 * ss), ground_y - int(80 * ss)], fill=(120, 125, 135), width=int(5 * ss))
+
+    # Wheels
+    draw_wheel_lateral(draw, wr_x, cy_wheel, int(r_wheel * 1.05), style="paddle", ss=ss)
+    draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="paddle", ss=ss)
+
+    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+    lat_img.save(LATERAL_DIR / "classic_ax_mudlark.png")
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+    lat_thumb.save(LATERAL_DIR / "classic_ax_mudlark_thumb.png")
+
+    # Topdown
+    W_TD, H_TD = 512 * ss, 512 * ss
+    im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
+    draw_td = ImageDraw.Draw(im_td)
+    cx, cy = 256 * ss, 256 * ss
+    w_half = int(95 * ss)
+
+    # Rear wheels
+    draw_td.rounded_rectangle([cx - w_half - int(15 * ss), cy + int(75 * ss), cx - w_half + int(15 * ss), cy + int(145 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    draw_td.rounded_rectangle([cx + w_half - int(15 * ss), cy + int(75 * ss), cx + w_half + int(15 * ss), cy + int(145 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    # Front wheels
+    draw_td.rounded_rectangle([cx - w_half - int(8 * ss), cy - int(140 * ss), cx - w_half + int(16 * ss), cy - int(75 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    draw_td.rounded_rectangle([cx + w_half - int(16 * ss), cy - int(140 * ss), cx + w_half + int(8 * ss), cy - int(75 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+
+    # Wishbones
+    draw_td.line([cx - int(35 * ss), cy - int(110 * ss), cx - w_half, cy - int(110 * ss)], fill=(160, 165, 175), width=int(5 * ss))
+    draw_td.line([cx + int(35 * ss), cy - int(110 * ss), cx + w_half, cy - int(110 * ss)], fill=(160, 165, 175), width=int(5 * ss))
+    draw_td.line([cx - int(45 * ss), cy + int(110 * ss), cx - w_half, cy + int(110 * ss)], fill=(160, 165, 175), width=int(6 * ss))
+    draw_td.line([cx + int(45 * ss), cy + int(110 * ss), cx + w_half, cy + int(110 * ss)], fill=(160, 165, 175), width=int(6 * ss))
+
+    # Frame cage
+    draw_td.rectangle([cx - int(45 * ss), cy - int(70 * ss), cx + int(45 * ss), cy + int(60 * ss)], outline=frame_col, width=tube_w)
+    # Nosecone
+    draw_td.polygon([
+        (cx - int(32 * ss), cy - int(70 * ss)),
+        (cx + int(32 * ss), cy - int(70 * ss)),
+        (cx + int(18 * ss), cy - int(155 * ss)),
+        (cx - int(18 * ss), cy - int(155 * ss)),
+    ], fill=frame_col, outline=(25, 28, 34), width=int(2 * ss))
+
+    # Single driver in center
+    draw_td.rectangle([cx - int(24 * ss), cy - int(15 * ss), cx + int(24 * ss), cy + int(35 * ss)], fill=(30, 32, 38))
+    draw_circle(draw_td, cx, cy + int(5 * ss), int(16 * ss), fill=(245, 245, 250), outline=(20, 22, 28), width=int(2 * ss))
+
+    # Rear motorcycle engine & exhaust
+    draw_td.rectangle([cx - int(35 * ss), cy + int(70 * ss), cx + int(35 * ss), cy + int(130 * ss)], fill=(90, 95, 105), outline=(40, 42, 48), width=int(2 * ss))
+    draw_td.rectangle([cx + int(25 * ss), cy + int(80 * ss), cx + int(38 * ss), cy + int(145 * ss)], fill=(180, 185, 195), outline=(50, 52, 60), width=int(2 * ss))
+
+    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+    td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+    td_img.save(TOPDOWN_DIR / "classic_ax_mudlark.png")
+    print("✓ Generated classic_ax_mudlark assets")
+
+
+def generate_classic_ax_brawler():
+    ss = 2
+    W, H = 1024 * ss, 512 * ss
+    im_lat = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im_lat)
+    ground_y = int(450 * ss)
+    r_wheel = int(62 * ss)
+    wf_x = int(740 * ss)
+    wr_x = int(275 * ss)
+    cy_wheel = ground_y - r_wheel - int(6 * ss)
+
+    # Shadow
+    draw.ellipse([int(140 * ss), ground_y - int(12 * ss), int(880 * ss), ground_y + int(24 * ss)], fill=(0, 0, 0, 140))
+
+    # Mudflaps
+    draw.polygon([
+        (wr_x - int(70 * ss), ground_y - int(10 * ss)),
+        (wr_x - int(56 * ss), ground_y - int(10 * ss)),
+        (wr_x - int(58 * ss), ground_y - int(65 * ss)),
+        (wr_x - int(68 * ss), ground_y - int(65 * ss)),
+    ], fill=(30, 32, 38))
+
+    body_col = (215, 60, 50)
+    body_poly = [
+        (int(165 * ss), ground_y - int(45 * ss)),
+        (int(150 * ss), ground_y - int(100 * ss)),
+        (int(160 * ss), ground_y - int(155 * ss)),
+        (int(240 * ss), ground_y - int(215 * ss)),
+        (int(460 * ss), ground_y - int(218 * ss)),
+        (int(630 * ss), ground_y - int(215 * ss)),
+        (int(730 * ss), ground_y - int(140 * ss)),
+        (int(855 * ss), ground_y - int(115 * ss)),
+        (int(880 * ss), ground_y - int(70 * ss)),
+        (int(870 * ss), ground_y - int(38 * ss)),
+        (int(790 * ss), ground_y - int(38 * ss)),
+        (int(680 * ss), ground_y - int(38 * ss)),
+        (int(340 * ss), ground_y - int(38 * ss)),
+        (int(220 * ss), ground_y - int(38 * ss)),
+    ]
+    draw.polygon(body_poly, fill=body_col)
+
+    # Large box wheel flares
+    draw.arc([wr_x - int(76 * ss), cy_wheel - int(76 * ss), wr_x + int(76 * ss), cy_wheel + int(76 * ss)], start=180, end=360, fill=(35, 38, 44), width=int(10 * ss))
+    draw.arc([wf_x - int(76 * ss), cy_wheel - int(76 * ss), wf_x + int(76 * ss), cy_wheel + int(76 * ss)], start=180, end=360, fill=(35, 38, 44), width=int(10 * ss))
+
+    # Dark greenhouse & windows
+    window_poly = [
+        (int(255 * ss), ground_y - int(202 * ss)),
+        (int(620 * ss), ground_y - int(205 * ss)),
+        (int(705 * ss), ground_y - int(145 * ss)),
+        (int(470 * ss), ground_y - int(145 * ss)),
+        (int(285 * ss), ground_y - int(145 * ss)),
+    ]
+    draw.polygon(window_poly, fill=(28, 30, 36))
+    draw.polygon([
+        (int(485 * ss), ground_y - int(198 * ss)),
+        (int(605 * ss), ground_y - int(198 * ss)),
+        (int(685 * ss), ground_y - int(148 * ss)),
+        (int(485 * ss), ground_y - int(148 * ss)),
+    ], fill=(90, 160, 220, 220))
+
+    # Roof scoop
+    draw.polygon([
+        (int(520 * ss), ground_y - int(216 * ss)),
+        (int(590 * ss), ground_y - int(216 * ss)),
+        (int(580 * ss), ground_y - int(240 * ss)),
+        (int(535 * ss), ground_y - int(240 * ss)),
+    ], fill=(28, 30, 36))
+
+    # Massive rear touring wing
+    wing_poly = [
+        (int(130 * ss), ground_y - int(255 * ss)),
+        (int(220 * ss), ground_y - int(255 * ss)),
+        (int(240 * ss), ground_y - int(215 * ss)),
+        (int(190 * ss), ground_y - int(215 * ss)),
+        (int(145 * ss), ground_y - int(235 * ss)),
+    ]
+    draw.polygon(wing_poly, fill=(28, 30, 36), outline=(215, 60, 50), width=int(2 * ss))
+
+    # Wheels
+    draw_wheel_lateral(draw, wr_x, cy_wheel, r_wheel, style="alloy", rim_color=(235, 235, 240), ss=ss)
+    draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="alloy", rim_color=(235, 235, 240), ss=ss)
+
+    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+    lat_img.save(LATERAL_DIR / "classic_ax_brawler.png")
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+    lat_thumb.save(LATERAL_DIR / "classic_ax_brawler_thumb.png")
+
+    # Topdown
+    W_TD, H_TD = 512 * ss, 512 * ss
+    im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
+    draw_td = ImageDraw.Draw(im_td)
+    cx, cy = 256 * ss, 256 * ss
+    w_half, h_half = int(98 * ss), int(205 * ss)
+
+    # Wheels
+    for wx, wy in [
+        (cx - w_half + int(14 * ss), cy - int(110 * ss)),
+        (cx + w_half - int(14 * ss), cy - int(110 * ss)),
+        (cx - w_half + int(14 * ss), cy + int(115 * ss)),
+        (cx + w_half - int(14 * ss), cy + int(115 * ss)),
+    ]:
+        draw_td.rounded_rectangle([wx - int(15 * ss), wy - int(34 * ss), wx + int(15 * ss), wy + int(34 * ss)], radius=int(6 * ss), fill=(22, 24, 28))
+
+    top_poly = [
+        (cx - int(52 * ss), cy - h_half),
+        (cx + int(52 * ss), cy - h_half),
+        (cx + int(86 * ss), cy - h_half + int(25 * ss)),
+        (cx + int(100 * ss), cy - int(95 * ss)),
+        (cx + int(90 * ss), cy - int(30 * ss)),
+        (cx + int(102 * ss), cy + int(95 * ss)),
+        (cx + int(92 * ss), cy + h_half - int(15 * ss)),
+        (cx + int(68 * ss), cy + h_half),
+        (cx - int(68 * ss), cy + h_half),
+        (cx - int(92 * ss), cy + h_half - int(15 * ss)),
+        (cx - int(102 * ss), cy + int(95 * ss)),
+        (cx - int(90 * ss), cy - int(30 * ss)),
+        (cx - int(100 * ss), cy - int(95 * ss)),
+        (cx - int(86 * ss), cy - h_half + int(25 * ss)),
+    ]
+    draw_td.polygon(top_poly, fill=body_col, outline=(160, 30, 25), width=int(2 * ss))
+
+    # Greenhouse
+    draw_td.polygon([
+        (cx - int(50 * ss), cy - int(65 * ss)),
+        (cx + int(50 * ss), cy - int(65 * ss)),
+        (cx + int(58 * ss), cy + int(85 * ss)),
+        (cx - int(58 * ss), cy + int(85 * ss)),
+    ], fill=(26, 28, 34))
+
+    # Windshield
+    draw_td.polygon([
+        (cx - int(45 * ss), cy - int(60 * ss)),
+        (cx + int(45 * ss), cy - int(60 * ss)),
+        (cx + int(50 * ss), cy - int(20 * ss)),
+        (cx - int(50 * ss), cy - int(20 * ss)),
+    ], fill=(90, 160, 220, 230))
+
+    # Wing
+    draw_td.rounded_rectangle([cx - int(88 * ss), cy + h_half - int(8 * ss), cx + int(88 * ss), cy + h_half + int(20 * ss)], radius=int(4 * ss), fill=(28, 30, 36), outline=body_col, width=int(2 * ss))
+
+    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+    td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+    td_img.save(TOPDOWN_DIR / "classic_ax_brawler.png")
+    print("✓ Generated classic_ax_brawler assets")
+
+
+def generate_classic_ax_talon():
+    ss = 2
+    W, H = 1024 * ss, 512 * ss
+    im_lat = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(im_lat)
+    ground_y = int(450 * ss)
+    r_wheel = int(66 * ss)
+    wf_x = int(765 * ss)
+    wr_x = int(255 * ss)
+    cy_wheel = ground_y - r_wheel - int(8 * ss)
+
+    # Shadow
+    draw.ellipse([int(150 * ss), ground_y - int(12 * ss), int(880 * ss), ground_y + int(24 * ss)], fill=(0, 0, 0, 140))
+
+    frame_col = (245, 175, 25)  # Amber/Gold
+    tube_w = int(7 * ss)
+
+    # Chassis rails
+    draw.line([int(190 * ss), ground_y - int(45 * ss), int(750 * ss), ground_y - int(45 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(180 * ss), ground_y - int(85 * ss), int(740 * ss), ground_y - int(80 * ss)], fill=frame_col, width=tube_w)
+    # Roll cage & roof
+    draw.line([int(340 * ss), ground_y - int(85 * ss), int(430 * ss), ground_y - int(225 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(430 * ss), ground_y - int(225 * ss), int(580 * ss), ground_y - int(225 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(580 * ss), ground_y - int(225 * ss), int(670 * ss), ground_y - int(85 * ss)], fill=frame_col, width=tube_w)
+    draw.line([int(340 * ss), ground_y - int(85 * ss), int(580 * ss), ground_y - int(225 * ss)], fill=frame_col, width=int(4 * ss))
+    draw.line([int(430 * ss), ground_y - int(225 * ss), int(670 * ss), ground_y - int(85 * ss)], fill=frame_col, width=int(4 * ss))
+
+    # Driver seat & helmet
+    draw.polygon([
+        (int(450 * ss), ground_y - int(85 * ss)),
+        (int(475 * ss), ground_y - int(165 * ss)),
+        (int(505 * ss), ground_y - int(165 * ss)),
+        (int(490 * ss), ground_y - int(85 * ss)),
+    ], fill=(28, 30, 36))
+    draw_circle(draw, int(490 * ss), ground_y - int(180 * ss), int(22 * ss), fill=(245, 245, 250), outline=(20, 22, 28), width=int(2 * ss))
+    draw.rectangle([int(498 * ss), ground_y - int(186 * ss), int(512 * ss), ground_y - int(174 * ss)], fill=(30, 32, 38))
+
+    # Long travel suspension
+    draw.line([wr_x, cy_wheel, int(340 * ss), ground_y - int(135 * ss)], fill=(215, 220, 230), width=int(6 * ss))
+    draw.line([wf_x, cy_wheel, int(690 * ss), ground_y - int(135 * ss)], fill=(215, 220, 230), width=int(6 * ss))
+
+    # Nosecone
+    draw.polygon([
+        (int(650 * ss), ground_y - int(90 * ss)),
+        (int(760 * ss), ground_y - int(70 * ss)),
+        (int(780 * ss), ground_y - int(50 * ss)),
+        (int(730 * ss), ground_y - int(45 * ss)),
+    ], fill=frame_col, outline=(30, 32, 38), width=int(2 * ss))
+
+    # Tall SuperBuggy rear wing
+    wing_poly = [
+        (int(140 * ss), ground_y - int(275 * ss)),
+        (int(230 * ss), ground_y - int(275 * ss)),
+        (int(250 * ss), ground_y - int(240 * ss)),
+        (int(170 * ss), ground_y - int(240 * ss)),
+    ]
+    draw.polygon(wing_poly, fill=(28, 30, 36), outline=frame_col, width=int(2 * ss))
+    draw.line([int(200 * ss), ground_y - int(240 * ss), int(220 * ss), ground_y - int(100 * ss)], fill=(180, 185, 195), width=int(5 * ss))
+    draw.line([int(160 * ss), ground_y - int(240 * ss), int(190 * ss), ground_y - int(100 * ss)], fill=(180, 185, 195), width=int(5 * ss))
+
+    # Wheels
+    draw_wheel_lateral(draw, wr_x, cy_wheel, int(r_wheel * 1.08), style="paddle", ss=ss)
+    draw_wheel_lateral(draw, wf_x, cy_wheel, r_wheel, style="paddle", ss=ss)
+
+    lat_img = im_lat.resize((1024, 512), Image.Resampling.LANCZOS)
+    lat_img.save(LATERAL_DIR / "classic_ax_talon.png")
+    lat_thumb = lat_img.resize((256, 128), Image.Resampling.LANCZOS)
+    lat_thumb.save(LATERAL_DIR / "classic_ax_talon_thumb.png")
+
+    # Topdown
+    W_TD, H_TD = 512 * ss, 512 * ss
+    im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
+    draw_td = ImageDraw.Draw(im_td)
+    cx, cy = 256 * ss, 256 * ss
+    w_half, h_half = int(104 * ss), int(210 * ss)
+
+    # Exposed wide paddle tires
+    # Rear
+    draw_td.rounded_rectangle([cx - w_half - int(20 * ss), cy + int(80 * ss), cx - w_half + int(16 * ss), cy + int(160 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    draw_td.rounded_rectangle([cx + w_half - int(16 * ss), cy + int(80 * ss), cx + w_half + int(20 * ss), cy + int(160 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    # Front
+    draw_td.rounded_rectangle([cx - w_half - int(10 * ss), cy - int(155 * ss), cx - w_half + int(16 * ss), cy - int(85 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+    draw_td.rounded_rectangle([cx + w_half - int(16 * ss), cy - int(155 * ss), cx + w_half + int(10 * ss), cy - int(85 * ss)], radius=int(6 * ss), fill=(24, 26, 30))
+
+    # Long suspension wishbones
+    draw_td.line([cx - int(45 * ss), cy - int(120 * ss), cx - w_half, cy - int(120 * ss)], fill=(180, 185, 195), width=int(5 * ss))
+    draw_td.line([cx + int(45 * ss), cy - int(120 * ss), cx + w_half, cy - int(120 * ss)], fill=(180, 185, 195), width=int(5 * ss))
+    draw_td.line([cx - int(50 * ss), cy + int(120 * ss), cx - w_half, cy + int(120 * ss)], fill=(180, 185, 195), width=int(6 * ss))
+    draw_td.line([cx + int(50 * ss), cy + int(120 * ss), cx + w_half, cy + int(120 * ss)], fill=(180, 185, 195), width=int(6 * ss))
+
+    # Frame cage
+    draw_td.rectangle([cx - int(52 * ss), cy - int(80 * ss), cx + int(52 * ss), cy + int(65 * ss)], outline=frame_col, width=tube_w)
+    # Nosecone
+    draw_td.polygon([
+        (cx - int(35 * ss), cy - int(80 * ss)),
+        (cx + int(35 * ss), cy - int(80 * ss)),
+        (cx + int(18 * ss), cy - int(175 * ss)),
+        (cx - int(18 * ss), cy - int(175 * ss)),
+    ], fill=frame_col, outline=(30, 32, 38), width=int(2 * ss))
+
+    # Center single driver
+    draw_td.rectangle([cx - int(25 * ss), cy - int(20 * ss), cx + int(25 * ss), cy + int(35 * ss)], fill=(30, 32, 38))
+    draw_circle(draw_td, cx, cy + int(5 * ss), int(18 * ss), fill=(245, 245, 250), outline=(20, 22, 28), width=int(2 * ss))
+
+    # Rear engine block
+    draw_td.rectangle([cx - int(42 * ss), cy + int(75 * ss), cx + int(42 * ss), cy + int(145 * ss)], fill=(90, 95, 105), outline=(50, 52, 58), width=int(2 * ss))
+
+    # Massive rear wing
+    draw_td.rounded_rectangle([cx - int(95 * ss), cy + h_half - int(8 * ss), cx + int(95 * ss), cy + h_half + int(20 * ss)], radius=int(4 * ss), fill=(28, 30, 36), outline=frame_col, width=int(2 * ss))
+
+    td_img = im_td.resize((512, 512), Image.Resampling.LANCZOS)
+    td_img = td_img.transpose(Image.Transpose.ROTATE_270)
+    td_img.save(TOPDOWN_DIR / "classic_ax_talon.png")
+    print("✓ Generated classic_ax_talon assets")
+
+
 def generate_kart_slick_wheel():
     ss = 2
     W, H = 128 * ss, 256 * ss
@@ -1262,6 +1628,9 @@ def generate_classic_chassis_sprites():
         ("classic_nascar", 315, 390, 155, 215, 297, 357, False),
         ("classic_offroad", 370, 485, 100, 161, 344, 405, True),
         ("classic_rally", 340, 415, 145, 215, 295, 365, False),
+        ("classic_ax_mudlark", 330, 420, 135, 215, 295, 375, True),
+        ("classic_ax_brawler", 340, 420, 145, 215, 295, 365, False),
+        ("classic_ax_talon", 340, 450, 120, 200, 310, 390, True),
     ]
 
     for name, x_min, x_max, y_fl_min, y_fl_max, y_fr_min, y_fr_max, is_open in chassis_configs:
@@ -1289,10 +1658,13 @@ if __name__ == "__main__":
     generate_classic_offroad()
     generate_classic_kart()
     generate_classic_rally()
+    generate_classic_ax_mudlark()
+    generate_classic_ax_brawler()
+    generate_classic_ax_talon()
     generate_kart_slick_wheel()
     generate_gt_slick_wheel()
     generate_nascar_wheel()
     generate_offroad_wheel()
     generate_rally_wheel()
     generate_classic_chassis_sprites()
-    print("✨ All 5 classic fantasy vehicle asset sets generated successfully!")
+    print("✨ All 8 classic fantasy vehicle asset sets generated successfully!")

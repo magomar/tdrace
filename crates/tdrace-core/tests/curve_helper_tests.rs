@@ -155,11 +155,11 @@ fn test_braking_urgency_calculation_and_relief() {
 }
 
 #[test]
-fn test_classic_grand_prix_has_detected_curves() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+fn test_gt_coastal_grand_prix_has_detected_curves() {
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     assert!(
         !track.spline.curves.is_empty(),
-        "Classic Grand Prix must have pre-detected curves"
+        "Coastal Grand Prix must have pre-detected curves"
     );
 
     // Verify all curves have valid degrees (1 to 5)

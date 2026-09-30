@@ -87,9 +87,9 @@ fn test_natural_elevation_tracks_have_zero_bridges() {
         "Bathurst barriers must be natural ground barriers without viaduct drop shadows"
     );
 
-    // Kart arena has no bridges
-    let arena = tdrace_core::catalog::official_track("classic", "kart_arena");
-    assert!(!arena.spline.samples.iter().any(|s| s.is_bridge));
+    // Thunder Bowl has no bridges
+    let bowl = tdrace_core::catalog::official_track("classic", "stock_thunder_bowl");
+    assert!(!bowl.spline.samples.iter().any(|s| s.is_bridge));
 }
 
 #[test]

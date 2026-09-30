@@ -314,7 +314,7 @@ mod tests {
             scoring: ScoringConfig::default(),
             rounds: vec![RoundConfig {
                 order: 1,
-                track_id: "classic_grand_prix".to_string(),
+                track_id: "gt_coastal_grand_prix".to_string(),
                 name: None,
                 laps: None,
                 weather: None,

@@ -256,6 +256,7 @@ pub fn render_car_lateral(
         CarChoice::RallyCar => "rally_hyundai_i20_rx",
         CarChoice::StockCar => "nascar_arca_chevy_ss",
         CarChoice::SandRail => "offroad_sand_rail_buggy",
+        CarChoice::CrossCar => "classic_ax_mudlark",
         CarChoice::SportsCar | CarChoice::DriftCar => "gt_bmw_m4_gt4",
     };
     render_real_car_lateral_by_id(
@@ -283,6 +284,9 @@ fn get_wheel_geometry(
         "classic_offroad" => (cx + hl * 0.55, cx - hl * 0.48, 16.0 * s, WheelStyle::MudTractorChevron),
         "classic_kart" => (cx + hl * 0.46, cx - hl * 0.44, 9.0 * s, WheelStyle::KartSmall),
         "classic_rally" => (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel),
+        "classic_ax_mudlark" => (cx + hl * 0.52, cx - hl * 0.46, 11.5 * s, WheelStyle::RallyGravel),
+        "classic_ax_brawler" => (cx + hl * 0.50, cx - hl * 0.48, 13.0 * s, WheelStyle::RallyGravel),
+        "classic_ax_talon" => (cx + hl * 0.54, cx - hl * 0.48, 14.5 * s, WheelStyle::MudTractorChevron),
 
         // GT4
         "gt_porsche_718_gt4" => (cx + hl * 0.50, cx - hl * 0.50, 12.0 * s, WheelStyle::AlloyGT),
@@ -503,6 +507,9 @@ fn render_specific_body(
         "classic_offroad" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
         "classic_kart" => render_kart_birel_kz2(cx, cy, gy, hl, s, primary, secondary, helmet),
         "classic_rally" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_ax_mudlark" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_ax_brawler" => render_rally_audi_quattro_s1(cx, cy, gy, hl, s, primary, secondary, helmet),
+        "classic_ax_talon" => render_offroad_sand_rail(cx, cy, gy, hl, s, primary, secondary, helmet),
 
         // --- GT4 Models ---
         "gt_porsche_718_gt4" => render_porsche_718_gt4(cx, cy, gy, hl, s, primary, secondary, helmet),

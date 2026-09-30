@@ -70,7 +70,7 @@ pub struct PyEngine {
 impl PyEngine {
     #[new]
     #[pyo3(signature = (
-        track_name="classic_grand_prix",
+        track_name="gt_coastal_grand_prix",
         num_agents=1,
         car_type="sports_car",
         num_lidar_rays=19,
@@ -97,16 +97,16 @@ impl PyEngine {
         // Any official circuit id or alias (spec 042), plus the historic short names; unknown names use the default.
         let name = track_name.to_lowercase();
         let slug = match name.as_str() {
-            "drift" => "drift_park",
-            "oval" => "oval_speedway",
-            "kart" => "kart_arena",
-            "ramp" => "ramp_raceway",
-            "oasis" | "dune" | "sand" => "oasis_rally",
+            "drift" => "gt_ridge_ring",
+            "oval" => "stock_tri_oval_speedway",
+            "kart" => "kart_pine_grove",
+            "ramp" => "rx_hilltop_leap",
+            "oasis" | "dune" | "sand" => "at_dune_sea",
             other => other,
         };
         let track = match catalog::find(slug, None) {
             Some(circuit) => circuit.load().unwrap_or_else(|e| panic!("official circuit '{}': {}", slug, e)),
-            None => catalog::official_track("classic", "classic_grand_prix"),
+            None => catalog::official_track("classic", "gt_coastal_grand_prix"),
         };
 
         let walls: Vec<WallBarrier> = track
@@ -295,23 +295,12 @@ impl PyEngine {
         let surfaces = self.track.sample_car_surfaces(&self.cars[0]);
         self.cars[0].step_per_wheel(&ctrl, surfaces, self.dt);
 
-        // 3. Collision resolution against walls & obstacles (broadphase filtered)
+        // 3. Collision resolution against walls & obstacles
         let mut wall_impulse = 0.0;
         let mut wall_hit = false;
-        let car_pos = self.cars[0].state.position;
-        let candidate_walls: Vec<WallBarrier> = self
-            .walls
-            .iter()
-            .filter(|w| {
-                let mid = (w.segment.start + w.segment.end) * 0.5;
-                mid.distance_squared(car_pos) < 64.0 // 8m radius
-            })
-            .cloned()
-            .collect();
-
         let wall_events = resolve_all_wall_collisions(
             &mut self.cars[0],
-            &candidate_walls,
+            &self.walls,
             &self.track.geometry.obstacles,
         );
         for ev in wall_events {
@@ -468,24 +457,13 @@ impl PyEngine {
             }
         }
 
-        // 4. Resolve wall & obstacle collisions for all cars (broadphase filtered)
+        // 4. Resolve wall & obstacle collisions for all cars
         let mut wall_impulses = vec![0.0f32; n];
         let mut wall_hits = vec![false; n];
         for i in 0..n {
-            let car_pos = self.cars[i].state.position;
-            let candidate_walls: Vec<WallBarrier> = self
-                .walls
-                .iter()
-                .filter(|w| {
-                    let mid = (w.segment.start + w.segment.end) * 0.5;
-                    mid.distance_squared(car_pos) < 64.0
-                })
-                .cloned()
-                .collect();
-
             let wall_events = resolve_all_wall_collisions(
                 &mut self.cars[i],
-                &candidate_walls,
+                &self.walls,
                 &self.track.geometry.obstacles,
             );
             for ev in wall_events {

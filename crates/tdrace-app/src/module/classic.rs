@@ -93,6 +93,60 @@ impl ClassicGameModule {
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
         cfg.finalized()
     }
+
+    /// 150 BHP Mudlark Cross Car: single-seat motorcycle-engine cross car, RWD, light and agile on turn-in.
+    pub fn car_classic_ax_mudlark() -> CarConfig {
+        let mut cfg = CarConfig::sand_rail();
+        cfg.mass = 420.0;
+        cfg.max_engine_force = 4800.0;
+        cfg.top_speed_mps = 44.4; // ~160 km/h
+        cfg.max_brake_force = 9000.0;
+        cfg.max_steer_angle = 0.68;
+        cfg.steer_speed = 9.5;
+        cfg.steer_return_speed = 12.0;
+        cfg.downforce_coefficient = 0.40;
+        cfg.drive_bias = 0.0; // RWD
+        cfg.tire.slide_grip = 0.95;
+        cfg.tire.peak_slip_angle_deg = 8.5;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg.finalized()
+    }
+
+    /// 420 BHP Brawler Touring AX: touring silhouette autocross car, AWD, heavy, stable, slides wide through dirt berms.
+    pub fn car_classic_ax_brawler() -> CarConfig {
+        let mut cfg = CarConfig::rally_car();
+        cfg.mass = 1150.0;
+        cfg.max_engine_force = 8800.0;
+        cfg.top_speed_mps = 51.4; // ~185 km/h
+        cfg.max_brake_force = 14000.0;
+        cfg.max_steer_angle = 0.60;
+        cfg.steer_speed = 8.0;
+        cfg.steer_return_speed = 11.0;
+        cfg.downforce_coefficient = 0.95;
+        cfg.drive_bias = 0.5; // AWD
+        cfg.tire.slide_grip = 0.93;
+        cfg.tire.peak_slip_angle_deg = 9.8;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg.finalized()
+    }
+
+    /// 560 BHP Talon Super Buggy: open-wheel super buggy, AWD, raw acceleration, requires throttle control.
+    pub fn car_classic_ax_talon() -> CarConfig {
+        let mut cfg = CarConfig::sand_rail();
+        cfg.mass = 800.0;
+        cfg.max_engine_force = 11000.0;
+        cfg.top_speed_mps = 55.6; // ~200 km/h
+        cfg.max_brake_force = 15500.0;
+        cfg.max_steer_angle = 0.70;
+        cfg.steer_speed = 9.0;
+        cfg.steer_return_speed = 12.0;
+        cfg.downforce_coefficient = 0.80;
+        cfg.drive_bias = 0.5; // AWD
+        cfg.tire.slide_grip = 0.94;
+        cfg.tire.peak_slip_angle_deg = 10.5;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg.finalized()
+    }
 }
 
 impl Default for ClassicGameModule {
@@ -219,6 +273,63 @@ impl GameModule for ClassicGameModule {
                 ],
                 audio_profile: Some(EngineAudioProfile::cross_car_motorcycle()),
             },
+            VehicleModelDefinition {
+                id: "classic_ax_mudlark",
+                name: "Mudlark Cross Car",
+                tag: "ARCADE CROSS CAR",
+                description: "Agile single-seat cross car powered by an 850cc motorcycle engine, engineered for razor-sharp turn-in and high-revving dirt sprints.",
+                config: Self::car_classic_ax_mudlark(),
+                visual_type: VehicleVisualType::SandRail {
+                    lightbar: false,
+                    whip_antenna: false,
+                    paddle_tires: false,
+                },
+                stats: (0.76, 0.95, 0.92, 0.85),
+                default_schemes: vec![
+                    CarColorScheme::from_index(1),
+                    CarColorScheme::from_index(3),
+                    CarColorScheme::from_index(0),
+                ],
+                audio_profile: Some(EngineAudioProfile::cross_car_motorcycle()),
+            },
+            VehicleModelDefinition {
+                id: "classic_ax_brawler",
+                name: "Brawler Touring AX",
+                tag: "ARCADE TOURING AX",
+                description: "Robust touring silhouette autocross machine built by Stonecairn Works. Heavy and stable, slides wide through dirt berms while maintaining fierce four-wheel traction.",
+                config: Self::car_classic_ax_brawler(),
+                visual_type: VehicleVisualType::RallyHatch {
+                    roof_scoop: true,
+                    mudflaps: true,
+                    large_wing: true,
+                },
+                stats: (0.82, 0.92, 0.88, 0.90),
+                default_schemes: vec![
+                    CarColorScheme::from_index(0),
+                    CarColorScheme::from_index(2),
+                    CarColorScheme::from_index(4),
+                ],
+                audio_profile: Some(EngineAudioProfile::rally2_turbo()),
+            },
+            VehicleModelDefinition {
+                id: "classic_ax_talon",
+                name: "Talon Super Buggy",
+                tag: "ARCADE SUPER BUGGY",
+                description: "Fierce open-wheel super buggy developed by Harrowfield Offroad with 560 horsepower pushing 800 kg through all four wheels.",
+                config: Self::car_classic_ax_talon(),
+                visual_type: VehicleVisualType::SandRail {
+                    lightbar: false,
+                    whip_antenna: false,
+                    paddle_tires: false,
+                },
+                stats: (0.88, 0.98, 0.89, 0.95),
+                default_schemes: vec![
+                    CarColorScheme::from_index(2),
+                    CarColorScheme::from_index(5),
+                    CarColorScheme::from_index(1),
+                ],
+                audio_profile: Some(EngineAudioProfile::sand_rail_boxer()),
+            },
         ]
     }
 
@@ -231,7 +342,7 @@ impl GameModule for ClassicGameModule {
     }
 
     fn default_track_id(&self) -> &'static str {
-        "classic_grand_prix"
+        "gt_coastal_grand_prix"
     }
 
     fn drivers(&self) -> Vec<DriverCharacter> {
@@ -249,11 +360,12 @@ impl GameModule for ClassicGameModule {
                 name: "TDRace Grand Championship".to_string(),
                 point_system: PointSystem::ClassicArcade,
                 track_ids: vec![
-                    "classic_grand_prix".to_string(),
-                    "drift_park".to_string(),
-                    "ramp_raceway".to_string(),
-                    "oasis_rally".to_string(),
-                    "classic_rallycross".to_string(),
+                    "kart_pine_grove".to_string(),
+                    "rx_quarry_sprint".to_string(),
+                    "ax_meadow_sprint".to_string(),
+                    "gt_velocity_park".to_string(),
+                    "stock_thunder_bowl".to_string(),
+                    "at_dune_sea".to_string(),
                 ],
                 laps_per_round: 5,
             },

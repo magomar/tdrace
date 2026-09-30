@@ -65,7 +65,7 @@ fn test_standard_mode_blocks_preset_modification() {
     assert!(meta_err.contains("official preset circuit and its metadata cannot be modified in standard mode"));
 
     // 4. Deleting an official preset must fail in standard mode
-    let del_err = manager.delete_custom_track("classic_grand_prix").unwrap_err();
+    let del_err = manager.delete_custom_track("gt_coastal_grand_prix").unwrap_err();
     assert!(del_err.contains("official preset circuit and cannot be deleted in standard mode"));
 
     let del_mod_err = manager.delete_track_from_module("monza", Some("gt")).unwrap_err();
@@ -73,8 +73,8 @@ fn test_standard_mode_blocks_preset_modification() {
 
     // 5. Official presets must remain in catalog unmodified
     let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
-    assert_eq!(classic_tracks.len(), 13);
-    assert!(classic_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
+    assert_eq!(classic_tracks.len(), 18);
+    assert!(classic_tracks.iter().any(|t| t.track_id() == "gt_coastal_grand_prix"));
 
     let gt_tracks = manager.filtered_main_track_choices(ModuleFilter::Gt);
     assert!(gt_tracks.iter().any(|t| t.track_id() == "monza"));
@@ -96,7 +96,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create a custom track
-    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut custom = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     custom.name = "My Custom Speedway".to_string();
     custom.category = TrackCategory::Draft;
     manager.save_custom_track(&custom, Some("my_custom_speedway")).unwrap();
@@ -109,7 +109,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     assert!(!manager.is_track_in_module("my_custom_speedway", "kart"));
 
     let custom_choices = manager.filtered_main_track_choices(ModuleFilter::Classic);
-    assert_eq!(custom_choices.len(), 14);
+    assert_eq!(custom_choices.len(), 19);
 
     // 3. Metadata update is permitted for custom tracks
     manager
@@ -127,7 +127,7 @@ fn test_standard_mode_allows_custom_circuit_management() {
     // 3. Demoting custom track to Drafts is permitted
     manager.demote_track("my_custom_speedway").unwrap();
     assert_eq!(manager.draft_track_choices().len(), 1);
-    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 13);
+    assert_eq!(manager.filtered_main_track_choices(ModuleFilter::Classic).len(), 18);
 
     // 4. Deleting custom track is permitted
     manager.delete_custom_track("my_custom_speedway").unwrap();
@@ -246,7 +246,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     let git_backup: Vec<_> = tdrace_app::storage::resolve_git_tracks_dir()
         .map(|git_dir| {
             let paths = [
-                git_dir.join("classic").join("drift_park.json"),
+                git_dir.join("classic").join("gt_ridge_ring.json"),
                 git_dir.join("rally").join("holjes_rx.json"),
             ];
             paths.into_iter().filter_map(|p| {
@@ -255,8 +255,8 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
         })
         .unwrap_or_default();
 
-    // Demote drift_park and holjes_rx
-    let drift_path = manager.demote_preset_to_custom_track("drift_park").expect("Demote drift_park");
+    // Demote gt_ridge_ring and holjes_rx
+    let drift_path = manager.demote_preset_to_custom_track("gt_ridge_ring").expect("Demote gt_ridge_ring");
     let rally_path = manager.demote_preset_to_custom_track("holjes_rx").expect("Demote holjes_rx");
     assert!(drift_path.exists());
     assert!(rally_path.exists());
@@ -269,8 +269,8 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     assert_eq!(rally_tracks.len(), init_rally, "Rally track count must not decrease when demoting to custom");
 
     // They must now appear as custom circuits, NOT immutable official presets
-    let drift_choice = classic_tracks.iter().find(|t| t.track_id() == "drift_park").expect("drift_park in Classic");
-    assert!(!drift_choice.is_official_preset(), "Demoted drift_park must be a custom track");
+    let drift_choice = classic_tracks.iter().find(|t| t.track_id() == "gt_ridge_ring").expect("gt_ridge_ring in Classic");
+    assert!(!drift_choice.is_official_preset(), "Demoted gt_ridge_ring must be a custom track");
     assert!(matches!(drift_choice, tdrace_app::ui::menu::TrackChoice::Custom { .. }));
 
     let rally_choice = rally_tracks.iter().find(|t| t.track_id() == "holjes_rx").expect("holjes_rx in Rally");
@@ -279,7 +279,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
 
     // Both must appear in custom_track_choices (for Main Menu CUSTOM tab)
     let custom_choices = manager.custom_track_choices();
-    assert!(custom_choices.iter().any(|t| t.track_id() == "drift_park"));
+    assert!(custom_choices.iter().any(|t| t.track_id() == "gt_ridge_ring"));
     assert!(custom_choices.iter().any(|t| t.track_id() == "holjes_rx"));
 
     // Verify persistence when reloading manager from disk
@@ -287,7 +287,7 @@ fn test_demote_official_presets_visible_as_custom_tracks_in_track_manager() {
     let reloaded_classic = reloaded_manager.filtered_main_track_choices(ModuleFilter::Classic);
     let reloaded_rally = reloaded_manager.filtered_main_track_choices(ModuleFilter::Rally);
 
-    assert!(reloaded_classic.iter().any(|t| t.track_id() == "drift_park" && !t.is_official_preset()));
+    assert!(reloaded_classic.iter().any(|t| t.track_id() == "gt_ridge_ring" && !t.is_official_preset()));
     assert!(reloaded_rally.iter().any(|t| t.track_id() == "holjes_rx" && !t.is_official_preset()));
 
     // Restore git preset files removed by demote during this test

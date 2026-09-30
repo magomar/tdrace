@@ -2,7 +2,7 @@
 # Specific overrides here prevail over the general config.toml
 
 [gameplay]
-default_track = "kart_arena"
+default_track = "lonato"
 default_laps = 5
 default_num_bots = 7
 default_assist_profile = "arcade"

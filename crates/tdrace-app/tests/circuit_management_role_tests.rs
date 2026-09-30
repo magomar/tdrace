@@ -58,7 +58,7 @@ fn test_player_role_isolation_and_immutable_presets() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. In standard Player mode, official presets cannot be mutated
-    let preset_id = "classic_grand_prix";
+    let preset_id = "gt_coastal_grand_prix";
     let del_res = manager.delete_custom_track(preset_id);
     assert!(del_res.is_err(), "Player mode must reject preset deletion");
     let err_msg = del_res.unwrap_err();
@@ -90,7 +90,7 @@ fn test_player_role_isolation_and_immutable_presets() {
     );
 
     // 5. Creating a custom track in Player mode
-    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut custom = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     custom.name = "Player Special".to_string();
     custom.category = TrackCategory::Main;
     custom.modules = vec!["classic".to_string()];
@@ -115,7 +115,7 @@ fn test_data_loss_immunity_and_dual_persistence() {
 
     // 1. Player creates a custom circuit (e.g. Ramp Raceway redesign)
     let slug = "ramp_raceway_v2";
-    let mut custom_track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut custom_track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     custom_track.name = "Ramp Raceway V2".to_string();
     custom_track.description = "Revamped with massive tabletop jumps.".to_string();
     custom_track.category = TrackCategory::Draft;
@@ -182,11 +182,11 @@ fn test_safe_deletion_with_auto_backup_archive() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // 1. Create two distinct custom tracks
-    let mut t1 = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut t1 = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     t1.name = "Track Alpha".to_string();
     manager.save_custom_track(&t1, Some("track_alpha")).unwrap();
 
-    let mut t2 = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut t2 = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     t2.name = "Track Beta".to_string();
     manager.save_custom_track(&t2, Some("track_beta")).unwrap();
 
@@ -261,7 +261,7 @@ fn test_ui_copy_and_error_messages_are_strictly_in_english() {
     let mut manager = TrackManager::new(&temp_dir);
 
     // Test error message on unauthorized preset mutation
-    let err = manager.delete_custom_track("classic_grand_prix").unwrap_err();
+    let err = manager.delete_custom_track("gt_coastal_grand_prix").unwrap_err();
     assert!(
         !err.contains("circuito") && !err.contains("eliminar"),
         "Error message must not contain Spanish words: {}",
@@ -302,11 +302,11 @@ fn test_circuit_manager_preset_visibility_and_cloning_to_drafts() {
     // 1. In Circuit Manager, filtered_main_track_choices returns presets for the module
     let classic_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
     assert!(!classic_tracks.is_empty(), "Classic module must have presets visible in Circuit Manager");
-    assert!(classic_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
+    assert!(classic_tracks.iter().any(|t| t.track_id() == "gt_coastal_grand_prix"));
     assert!(classic_tracks.iter().any(|t| t.is_official_preset()));
 
     // Add a custom circuit for Classic
-    let mut custom = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut custom = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     custom.name = "Custom Speed Ring".to_string();
     custom.category = TrackCategory::Main;
     custom.modules = vec!["classic".to_string()];
@@ -314,11 +314,11 @@ fn test_circuit_manager_preset_visibility_and_cloning_to_drafts() {
 
     // Both preset and custom are visible in Circuit Manager
     let updated_tracks = manager.filtered_main_track_choices(ModuleFilter::Classic);
-    assert!(updated_tracks.iter().any(|t| t.track_id() == "classic_grand_prix"));
+    assert!(updated_tracks.iter().any(|t| t.track_id() == "gt_coastal_grand_prix"));
     assert!(updated_tracks.iter().any(|t| t.track_id() == "custom_speed_ring"));
 
     // 2. Cloning an official preset creates a Draft in Drafts category
-    let preset_choice = classic_tracks.iter().find(|t| t.track_id() == "classic_grand_prix").unwrap();
+    let preset_choice = classic_tracks.iter().find(|t| t.track_id() == "gt_coastal_grand_prix").unwrap();
     let (cloned_preset, preset_path) = manager.clone_track(preset_choice).expect("Clone preset must succeed");
     assert_eq!(cloned_preset.category, TrackCategory::Draft, "Cloned preset must have category Draft");
     assert!(cloned_preset.modules.is_empty(), "Cloned preset modules must be cleared for Drafts");
@@ -333,7 +333,7 @@ fn test_circuit_manager_preset_visibility_and_cloning_to_drafts() {
     // 4. Drafts list contains both clones, and neither leaks into module_custom_tracks
     let drafts = manager.draft_track_choices();
     assert_eq!(drafts.len(), 2, "Both cloned circuits must be in Drafts category");
-    assert!(drafts.iter().any(|t| t.title() == "Classic Grand Prix (clone)"));
+    assert!(drafts.iter().any(|t| t.title() == "Coastal Grand Prix (clone)"));
     assert!(drafts.iter().any(|t| t.title() == "Custom Speed Ring (clone)"));
 
     let module_approved = manager.module_custom_tracks("classic");

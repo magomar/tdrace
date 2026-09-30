@@ -63,8 +63,8 @@ brand name (spec 047).
   names in `car_model_id` (see Backend Models). The player and all bots race that car.
 - The Classic Garage shows 8 cars: the 5 current ones and the 3 Autocross cars.
 - The Classic championship ("TDRace Grand Championship", `module/classic.rs`) runs 6 rounds, the
-  medium circuit of each group: `kart_warehouse_twister`, `rx_hilltop_leap`, `ax_clay_bowl`,
-  `gt_ridge_ring`, `stock_tri_oval_speedway`, `at_mudbath_valley`.
+  first circuit of each group: `kart_pine_grove`, `rx_quarry_sprint`, `ax_meadow_sprint`,
+  `gt_velocity_park`, `stock_thunder_bowl`, `at_dune_sea`.
 - The Classic default circuit becomes `gt_coastal_grand_prix`.
 - The Kart module no longer lists `kart_arena` and `drift_park`. The Rallycross module no longer
   lists `oasis_rally` and `classic_rallycross`. Their own circuits do not change.
@@ -75,9 +75,9 @@ Lengths are targets. A built lap may differ by ±15 %.
 
 | Group | id | Name | Tag | Category label | Lap | Laps | Difficulty |
 |---|---|---|---|---|---|---|---|
-| Karting | `kart_hangar_sprint` | Hangar Sprint | `INDOOR SPRINT` | Indoor Kart | ~380 m | 8 | easy |
-| | `kart_warehouse_twister` | Warehouse Twister | `TWIN BRIDGE` | Indoor Kart | ~520 m | 7 | medium |
-| | `kart_tower_labyrinth` | Tower Labyrinth | `TRIPLE DECK` | Indoor Kart | ~700 m | 6 | hard |
+| Karting | `kart_pine_grove` | Pine Grove | `OUTDOOR SPRINT` | Karting | ~390 m | 8 | easy |
+| | `kart_riverbend_circuit` | Riverbend Circuit | `TECHNICAL CLUB` | Karting | ~600 m | 7 | medium |
+| | `kart_summit_international` | Summit International | `GRAND PRIX` | Karting | ~760 m | 6 | hard |
 | Rallycross | `rx_quarry_sprint` | Quarry Sprint | `QUARRY RX` | Rallycross | ~750 m | 6 | easy |
 | | `rx_hilltop_leap` | Hilltop Leap | `HILLTOP RX` | Rallycross | ~950 m | 5 | medium |
 | | `rx_canyon_flyer` | Canyon Flyer | `CANYON RX` | Rallycross | ~1,150 m | 4 | hard |

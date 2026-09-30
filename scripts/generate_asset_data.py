@@ -68,6 +68,7 @@ def generate_circuit_svg(data: dict, cat: str, output_path: Path):
         "offroad": {"stroke": "#f59e0b", "glow": "#d97706"},
         "extreme_offroad": {"stroke": "#f59e0b", "glow": "#d97706"},
         "classic": {"stroke": "#06b6d4", "glow": "#0891b2"},
+        "autocross": {"stroke": "#eab308", "glow": "#ca8a04"},
     }
     colors = category_colors.get(cat, {"stroke": "#38bdf8", "glow": "#0284c7"})
 
@@ -116,20 +117,31 @@ def generate_assets():
     circuits = []
     
     CLASSIC_TRACK_CATEGORIES = {
-        "classic_grand_prix": "gt",
-        "drift_park": "gt",
-        "figure_eight": "gt",
-        "oval_speedway": "nascar",
-        "dirty_oval_speedway": "nascar",
-        "oasis_rally": "rally",
-        "classic_rallycross": "rally",
-        "dirt_figure_eight": "offroad",
-        "ramp_raceway": "offroad",
-        "kart_arena": "kart",
+        "gt_coastal_grand_prix": "gt",
+        "gt_ridge_ring": "gt",
+        "gt_velocity_park": "gt",
+        "stock_tri_oval_speedway": "nascar",
+        "stock_thunder_bowl": "nascar",
+        "stock_roval": "nascar",
+        "kart_pine_grove": "kart",
+        "kart_riverbend_circuit": "kart",
+        "kart_summit_international": "kart",
+        "kart_hangar_sprint": "kart",
+        "kart_warehouse_twister": "kart",
+        "kart_tower_labyrinth": "kart",
+        "rx_quarry_sprint": "rally",
+        "rx_hilltop_leap": "rally",
+        "rx_canyon_flyer": "rally",
+        "ax_meadow_sprint": "autocross",
+        "ax_clay_bowl": "autocross",
+        "ax_hillside_hammer": "autocross",
+        "at_dune_sea": "offroad",
+        "at_mudbath_valley": "offroad",
+        "at_frostbite_pass": "offroad",
     }
 
     for json_file in sorted(tracks_dir.rglob("*.json")):
-        if json_file.name.startswith("."):
+        if json_file.name.startswith(".") or json_file.parent.name == "vault" or json_file.name == "MANIFEST.json":
             continue
         try:
             data = json.loads(json_file.read_text(encoding="utf-8"))

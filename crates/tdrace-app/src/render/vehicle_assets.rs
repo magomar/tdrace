@@ -326,6 +326,27 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.24, 0.46),
             layering: WheelLayerMode::UnderChassis,
         }),
+        "classic_ax_mudlark" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 0.85,
+            half_track_width: 0.55,
+            wheel_size: glam::Vec2::new(0.24, 0.48),
+            layering: WheelLayerMode::OverChassis,
+        }),
+        "classic_ax_brawler" => Some(SteeredWheelConfig {
+            wheel_texture_id: "rally_wheel_front",
+            front_axle_offset: 0.75,
+            half_track_width: 0.44,
+            wheel_size: glam::Vec2::new(0.25, 0.48),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+        "classic_ax_talon" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 1.05,
+            half_track_width: 0.65,
+            wheel_size: glam::Vec2::new(0.28, 0.58),
+            layering: WheelLayerMode::OverChassis,
+        }),
         _ => None, // Non-classic vehicles continue using monolithic sprite rendering
     }
 }

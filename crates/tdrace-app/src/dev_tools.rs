@@ -45,8 +45,8 @@ mod tests {
     
     #[test]
     fn test_dev_tools_export_to_json() {
-        let gp = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+        let gp = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
         let json = export_track_to_json(&gp).expect("Must serialize track to JSON");
-        assert!(json.contains("Classic Grand Prix"));
+        assert!(json.contains("Coastal Grand Prix"));
     }
 }

@@ -790,11 +790,11 @@ impl RaceSession {
 
     pub fn new_with_config(config: GameConfig) -> Self {
         let track_choice = match config.gameplay.default_track.as_str() {
-            "oval_speedway" => TrackChoice::OvalSpeedway,
-            "drift_park" => TrackChoice::DriftPark,
-            "kart_arena" => TrackChoice::KartArena,
-            "ramp_raceway" => TrackChoice::RampRaceway,
-            "oasis_rally" | "oasis" | "dune_raid" | "sahara_dunes" => TrackChoice::OasisRally,
+            "oval_speedway" | "stock_tri_oval_speedway" => TrackChoice::OvalSpeedway,
+            "drift_park" | "gt_ridge_ring" => TrackChoice::DriftPark,
+            "kart_arena" | "kart_hangar_sprint" | "kart_pine_grove" => TrackChoice::KartArena,
+            "ramp_raceway" | "rx_hilltop_leap" => TrackChoice::RampRaceway,
+            "oasis_rally" | "oasis" | "dune_raid" | "sahara_dunes" | "at_dune_sea" => TrackChoice::OasisRally,
             _ => TrackChoice::ClassicGrandPrix,
         };
         let car_choice = match config.gameplay.default_car.as_str() {
@@ -1834,7 +1834,17 @@ impl RaceSession {
     pub fn eligible_opponent_cars(&self) -> Vec<CarChoice> {
         let cat = self.track.car_category;
         if self.active_module_id == "classic" {
-            vec![CarChoice::classic_car_for_category(cat)]
+            if let Some(ref model_id) = self.track.car_model_id {
+                let choice = match model_id.as_str() {
+                    "classic_ax_mudlark" => CarChoice::CrossCar,
+                    "classic_ax_brawler" => CarChoice::RallyCar,
+                    "classic_ax_talon" => CarChoice::SandRail,
+                    _ => CarChoice::classic_car_for_category(cat),
+                };
+                vec![choice]
+            } else {
+                vec![CarChoice::classic_car_for_category(cat)]
+            }
         } else {
             let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
             match effective_module {
@@ -1847,6 +1857,7 @@ impl RaceSession {
                 ],
                 "nascar" => vec![CarChoice::StockCar],
                 "extreme_offroad" => vec![CarChoice::SandRail],
+                "autocross" => vec![CarChoice::CrossCar],
                 "rally" => vec![CarChoice::RallyCar],
                 "kart" => vec![CarChoice::Kart],
                 _ => vec![CarChoice::classic_car_for_category(cat)],
@@ -1876,9 +1887,10 @@ impl RaceSession {
         self.garage_origin = GarageOrigin::StartingGrid;
         self.garage_tier = self.current_race_required_tier();
         if self.active_module_id == "classic" {
-            let target_model = crate::catalog::get_classic_model_for_category(self.track.car_category);
+            let target_model_id = self.track.car_model_id.as_deref()
+                .or_else(|| crate::catalog::get_classic_model_for_category(self.track.car_category).id.into());
             let models = crate::catalog::get_models_for_module("classic");
-            self.garage_car_idx = models.iter().position(|m| m.id == target_model.id).unwrap_or(0);
+            self.garage_car_idx = models.iter().position(|m| Some(m.id) == target_model_id).unwrap_or(0);
         } else {
             let tier_models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
             if let Some(selected_id) = self.selected_car_model_id {
@@ -2113,7 +2125,16 @@ impl RaceSession {
         };
         self.selected_car_model_id = Some("vault_test_mule");
         let tracks = self.active_module_tracks();
-        self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::ClassicGrandPrix);
+        if let Some((idx, choice)) = tracks
+            .iter()
+            .enumerate()
+            .find(|(_, t)| t.track_id() == self.config.gameplay.default_track || t.track_id() == "gt_coastal_grand_prix")
+        {
+            self.menu_track_idx = idx;
+            self.track_choice = choice.clone();
+        } else {
+            self.track_choice = tracks.first().cloned().unwrap_or(TrackChoice::ClassicGrandPrix);
+        }
         self.track = self.load_track_for_session(&self.track_choice);
         self.track.module_id = Some("vault".to_string());
         self.car_choice = CarChoice::SportsCar;
@@ -2598,7 +2619,7 @@ impl RaceSession {
         let champ = ChampionshipSession::new(
             "GT World Challenge Championship 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: true },
-            vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "classic_grand_prix".to_string()],
+            vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "gt_coastal_grand_prix".to_string()],
             3,
             &[
                 ("player", "Player", "Apex GT Racing"),
@@ -4141,6 +4162,18 @@ impl RaceSession {
                     ExtremeOffRoadModule::car_sand_rail()
                 }
             }
+            CarChoice::CrossCar => {
+                self.current_visual_type = VehicleVisualType::SandRail {
+                    lightbar: false,
+                    whip_antenna: false,
+                    paddle_tires: false,
+                };
+                if self.active_module_id == "classic" {
+                    ClassicGameModule::car_classic_ax_mudlark()
+                } else {
+                    tdrace_core::physics::config::CarConfig::sand_rail()
+                }
+            }
             CarChoice::DriftCar => {
                 self.current_visual_type = VehicleVisualType::TouringGT {
                     widebody: true,
@@ -4540,6 +4573,7 @@ impl RaceSession {
                         CarChoice::SportsCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_gt(),
                         CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
                         CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
+                        CarChoice::CrossCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_ax_mudlark(),
                         CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
                         CarChoice::RallyCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_rally(),
                         CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(p.car_choice),
@@ -4560,6 +4594,7 @@ impl RaceSession {
                     CarChoice::SportsCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_gt(),
                     CarChoice::StockCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_nascar(),
                     CarChoice::SandRail if self.active_module_id == "classic" => ClassicGameModule::car_classic_offroad(),
+                    CarChoice::CrossCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_ax_mudlark(),
                     CarChoice::Kart if self.active_module_id == "classic" => ClassicGameModule::car_classic_kart(),
                     CarChoice::RallyCar if self.active_module_id == "classic" => ClassicGameModule::car_classic_rally(),
                     CarChoice::SportsCar | CarChoice::DriftCar => self.config.get_car_config(player_car_choice),
@@ -14567,9 +14602,9 @@ impl RaceSession {
             }
             EditorAction::NewFromTemplate(preset) => {
                 let track = match preset.as_str() {
-                    "Oval Speedway" => tdrace_core::catalog::official_track("classic", "oval_speedway"),
-                    "Oasis Rally" => tdrace_core::catalog::official_track("classic", "oasis_rally"),
-                    "Classic Grand Prix" => tdrace_core::catalog::official_track("classic", "classic_grand_prix"),
+                    "Oval Speedway" | "Tri-Oval Speedway" => tdrace_core::catalog::official_track("classic", "stock_tri_oval_speedway"),
+                    "Oasis Rally" | "Dune Sea" => tdrace_core::catalog::official_track("classic", "at_dune_sea"),
+                    "Classic Grand Prix" | "Coastal Grand Prix" => tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix"),
                     _ => tdrace_core::track::presets::create_prototypical_track(
                         self.active_module_id,
                         tdrace_core::track::presets::TrackShape::Oval,

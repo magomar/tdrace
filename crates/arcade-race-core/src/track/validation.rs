@@ -789,6 +789,7 @@ mod tests {
             pit_box_area: None,
             default_laps: 3,
             car_category: CarCategory::OffRoad,
+            car_model_id: None,
             module_id: Some("extreme_offroad".to_string()),
             modules: vec!["extreme_offroad".to_string()],
             scale: "1:1".to_string(),
@@ -815,7 +816,7 @@ mod tests {
 
     #[test]
     fn test_preset_track_validation_passes_cleanly() {
-        let track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let diags = validate_track(&track);
         let errors: Vec<_> = diags.iter().filter(|d| d.severity == ValidationSeverity::Error).collect();
         assert!(errors.is_empty(), "Preset track should have 0 validation errors: {:?}", errors);
@@ -823,7 +824,7 @@ mod tests {
 
     #[test]
     fn test_insufficient_waypoints_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         track.spline.waypoints = vec![
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
             TrackWaypoint::new(Vec2::new(50.0, 0.0), 12.0),
@@ -834,7 +835,7 @@ mod tests {
 
     #[test]
     fn test_missing_finish_line_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         for cp in &mut track.checkpoints {
             cp.is_finish_line = false;
         }
@@ -844,7 +845,7 @@ mod tests {
 
     #[test]
     fn test_overlapping_grid_slots_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         if track.grid_positions.len() >= 2 {
             track.grid_positions[1].position = track.grid_positions[0].position;
             let diags = validate_track(&track);
@@ -854,11 +855,13 @@ mod tests {
 
     #[test]
     fn test_wall_crossing_track_centerline_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let p0 = track.spline.waypoints[0].point;
+        let n0 = track.spline.samples[0].normal;
         // Insert a wall across the main straight at same elevation
         let blocking_wall = WallBarrier::with_elevation(
-            Vec2::new(50.0, -10.0),
-            Vec2::new(50.0, 10.0),
+            p0 - n0 * 20.0,
+            p0 + n0 * 20.0,
             BarrierType::Concrete,
             0.0,
         );
@@ -874,11 +877,13 @@ mod tests {
 
     #[test]
     fn test_wall_elevated_overpass_bridge_allowed() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let p0 = track.spline.waypoints[0].point;
+        let n0 = track.spline.samples[0].normal;
         // Insert an elevated wall crossing over the ground straight with 5.0m elevation
         let bridge_wall = WallBarrier::with_elevation(
-            Vec2::new(50.0, -10.0),
-            Vec2::new(50.0, 10.0),
+            p0 - n0 * 20.0,
+            p0 + n0 * 20.0,
             BarrierType::Concrete,
             5.0,
         );
@@ -894,7 +899,7 @@ mod tests {
 
     #[test]
     fn test_wall_self_intersection_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         let wall1 = WallBarrier::with_elevation(
             Vec2::new(100.0, 50.0),
             Vec2::new(120.0, 50.0),
@@ -920,8 +925,9 @@ mod tests {
 
     #[test]
     fn test_obstacle_on_track_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
-        let obs = Obstacle::circle(99, Vec2::new(0.0, 0.0), 2.0, "Dangerous Barrel");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let p0 = track.spline.waypoints[0].point;
+        let obs = Obstacle::circle(99, p0, 2.0, "Dangerous Barrel");
         track.geometry.obstacles.push(obs);
 
         let diags = validate_track(&track);
@@ -934,7 +940,7 @@ mod tests {
 
     #[test]
     fn test_invalid_wall_distance_detected() {
-        let mut track = crate::track::test_circuit("classic", "classic_grand_prix");
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
         track.spline.waypoints[0].left_wall_distance = Some(-5.0);
 
         let diags = validate_track(&track);

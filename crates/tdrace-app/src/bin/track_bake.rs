@@ -20,7 +20,7 @@ use tdrace_core::track::{validate_track, Track, ValidationSeverity};
 
 fn usage() -> ExitCode {
     eprintln!(
-        "usage: track_bake <file.json>... [--rebuild] [--merge-walls] [--barrier-offset M] \
+        "usage: track_bake <file.json>... [--rebuild] [--merge-walls|--no-merge-walls] [--barrier-offset M] \
          [--barrier-type Concrete|Steel|TireWall|CurbWall|Virtual] [--checkpoints N] [--sectors N]"
     );
     ExitCode::from(2)
@@ -39,6 +39,10 @@ fn main() -> ExitCode {
             }
             "--merge-walls" => {
                 opts.merge_walls = true;
+                Ok(())
+            }
+            "--no-merge-walls" => {
+                opts.merge_walls = false;
                 Ok(())
             }
             "--barrier-offset" => value(&arg).and_then(|v| {

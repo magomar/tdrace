@@ -735,7 +735,7 @@ mod tests {
 
     #[test]
     fn test_history_undo_redo_stack() {
-        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+        let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
         let mut editor = EditorState::new(track.clone());
 
         // Perform edit 1
@@ -748,7 +748,7 @@ mod tests {
 
         // Undo edit 1
         assert!(editor.undo());
-        assert_eq!(editor.track.name, "Classic Grand Prix");
+        assert_eq!(editor.track.name, "Coastal Grand Prix");
         assert!(editor.history.can_redo());
 
         // Redo edit 1
@@ -758,7 +758,7 @@ mod tests {
 
     #[test]
     fn test_waypoint_selection_and_last_selected_tracking() {
-        let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+        let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
         let mut editor = EditorState::new(track);
 
         assert_eq!(editor.selection, Selection::None);

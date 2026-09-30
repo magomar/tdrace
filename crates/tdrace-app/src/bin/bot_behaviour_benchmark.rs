@@ -93,11 +93,11 @@ fn main() {
         );
     }
 
-    // Solo line and braking spread on Classic GP.
-    let _ = writeln!(md, "\n## Lines (solo Balanced bot, Classic GP, {LAPS} laps)\n");
+    // Solo line and braking spread on Coastal Grand Prix.
+    let _ = writeln!(md, "\n## Lines (solo Balanced bot, Coastal Grand Prix, {LAPS} laps)\n");
     let _ = writeln!(md, "| Tier | Line spread (m) | Brake-onset spread (m) | Lap times (s) |");
     let _ = writeln!(md, "|---|---|---|---|");
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
     let corners = find_corners(&track.spline);
     let gt = CLASSIC_ARCADE_CARS.iter().find(|c| c.id == "classic_gt").unwrap().to_car_config();
     for tier in TIERS {

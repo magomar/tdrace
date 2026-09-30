@@ -34,7 +34,7 @@ fn test_session_track_and_car_selection() {
     session.num_bots = 5;
     session.init_race();
 
-    assert_eq!(session.track.name, "Kart Arena");
+    assert_eq!(session.track.name, "Pine Grove");
     assert_eq!(session.world.vehicles.len(), 6);
     assert_eq!(session.world.vehicles[0].config.mass, 180.0); // Kart mass
 }

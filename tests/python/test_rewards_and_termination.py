@@ -29,13 +29,13 @@ def test_drift_score_reward():
     env.reset(seed=42)
 
     # Accelerate up to speed
-    for _ in range(60):
-        env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+    for _ in range(180):
+        env.step(np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float32))
 
     # Initiate drift with handbrake + hard steer
     drift_score_accum = 0.0
-    for _ in range(30):
-        obs, reward, term, trunc, info = env.step(np.array([1.0, 0.7, 0.0, 1.0], dtype=np.float32))
+    for _ in range(40):
+        obs, reward, term, trunc, info = env.step(np.array([1.0, 0.8, 0.0, 1.0], dtype=np.float32))
         drift_score_accum += info["step_drift_score"]
 
     assert info["drift_score"] > 0.0 or drift_score_accum > 0.0, "Drift score should accumulate"

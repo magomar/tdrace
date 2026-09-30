@@ -123,6 +123,7 @@ impl RealCarModel {
                 "classic_rally" => tdrace_core::CarCategory::Rally,
                 "classic_kart" => tdrace_core::CarCategory::Kart,
                 "classic_offroad" => tdrace_core::CarCategory::OffRoad,
+                "classic_ax_mudlark" | "classic_ax_brawler" | "classic_ax_talon" => tdrace_core::CarCategory::Autocross,
                 _ => self.base_car_choice.category(),
             },
             _ => self.base_car_choice.category(),
@@ -263,6 +264,11 @@ impl RealCarModel {
                     mud_flotation: 1.00,
                     ice_grip_multiplier: 0.80,
                 },
+                "classic_ax_mudlark" | "classic_ax_brawler" | "classic_ax_talon" => TerrainInteractionConfig {
+                    sand_flotation: 0.40,
+                    mud_flotation: 0.50,
+                    ice_grip_multiplier: 2.00,
+                },
                 _ => TerrainInteractionConfig::default(),
             },
             _ => TerrainInteractionConfig::default(),
@@ -281,6 +287,9 @@ impl RealCarModel {
                 "classic_offroad" => EngineSoundType::SandRailBoxer,
                 "classic_kart" => EngineSoundType::KartCadet60,
                 "classic_rally" => EngineSoundType::CrossCarMotorcycle,
+                "classic_ax_mudlark" => EngineSoundType::CrossCarMotorcycle,
+                "classic_ax_brawler" => EngineSoundType::Rally2Turbo,
+                "classic_ax_talon" => EngineSoundType::SandRailBoxer,
                 _ => self.base_car_choice.sound_type(),
             }
         } else if self.module_id == "vault" {
@@ -3398,6 +3407,78 @@ pub static CLASSIC_ARCADE_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.95, 0.82, 0.10, 1.0),
         secondary_color: Color::new(0.12, 0.12, 0.16, 1.0),
     },
+    RealCarModel {
+        id: "classic_ax_mudlark",
+        name: "Mudlark Cross Car",
+        manufacturer: "Apex Dynamics",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Cross Car",
+        tier: 1,
+        bhp: 150,
+        torque_nm: 140,
+        weight_kg: 420,
+        top_speed_kmh: 160,
+        accel_0_100: 3.5,
+        drivetrain: "RWD",
+        engine_desc: "850cc High-Rev Motorcycle Twin",
+        aero_downforce: "Cl 0.40 / Cd 0.60",
+        brakes_desc: "Lightweight Cross Caliper Discs",
+        history_bio: "Ultra-agile single-seat fantasy cross car powered by a screaming motorcycle engine. Features razor-sharp turn-in and exceptional dirt jump composure.",
+        stats: (0.75, 0.92, 0.94, 0.65, 0.88, 0.55),
+        visual_type: VehicleVisualType::SandRail { lightbar: false, whip_antenna: false, paddle_tires: false },
+        base_car_choice: CarChoice::CrossCar,
+        primary_color: Color::new(0.20, 0.70, 0.90, 1.0),
+        secondary_color: Color::new(0.10, 0.12, 0.15, 1.0),
+    },
+    RealCarModel {
+        id: "classic_ax_brawler",
+        name: "Brawler Touring AX",
+        manufacturer: "Brawler Autoworks",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Touring AX",
+        tier: 1,
+        bhp: 420,
+        torque_nm: 580,
+        weight_kg: 1150,
+        top_speed_kmh: 185,
+        accel_0_100: 3.0,
+        drivetrain: "AWD",
+        engine_desc: "2.5L Turbocharged Boxer-4",
+        aero_downforce: "Cl 0.95 / Cd 0.48",
+        brakes_desc: "Heavy-Duty Dual-Bias Gravel Discs",
+        history_bio: "Muscular fantasy touring silhouette autocross car built for violent paint-trading and controlled wide dirt berm slides with bulletproof AWD traction.",
+        stats: (0.84, 0.90, 0.88, 0.82, 0.90, 0.75),
+        visual_type: VehicleVisualType::RallyHatch { roof_scoop: true, mudflaps: true, large_wing: true },
+        base_car_choice: CarChoice::CrossCar,
+        primary_color: Color::new(0.85, 0.25, 0.20, 1.0),
+        secondary_color: Color::new(0.12, 0.12, 0.15, 1.0),
+    },
+    RealCarModel {
+        id: "classic_ax_talon",
+        name: "Talon Super Buggy",
+        manufacturer: "Apex Dynamics",
+        year: 2026,
+        module_id: "classic",
+        category_name: "Arcade Super Buggy",
+        tier: 1,
+        bhp: 560,
+        torque_nm: 650,
+        weight_kg: 800,
+        top_speed_kmh: 200,
+        accel_0_100: 2.4,
+        drivetrain: "AWD",
+        engine_desc: "3.5L Naturally Aspirated Racing V6",
+        aero_downforce: "Cl 0.80 / Cd 0.55",
+        brakes_desc: "Carbon-Metallic Buggy Quad Calipers",
+        history_bio: "Screaming open-wheel fantasy super buggy with ferocious acceleration and claws-out all-wheel drive, requiring disciplined throttle management on loose surfaces.",
+        stats: (0.90, 0.96, 0.95, 0.75, 0.94, 0.80),
+        visual_type: VehicleVisualType::SandRail { lightbar: false, whip_antenna: false, paddle_tires: false },
+        base_car_choice: CarChoice::CrossCar,
+        primary_color: Color::new(0.95, 0.65, 0.10, 1.0),
+        secondary_color: Color::new(0.08, 0.08, 0.12, 1.0),
+    },
 ];
 
 /// Archived and deprecated prototype vehicle models (The Vault).
@@ -3595,7 +3676,7 @@ pub fn get_classic_model_for_category(category: tdrace_core::CarCategory) -> &'s
         tdrace_core::CarCategory::OffRoad => &CLASSIC_ARCADE_CARS[2], // classic_offroad (Vortex Dune Crusher)
         tdrace_core::CarCategory::Kart => &CLASSIC_ARCADE_CARS[3],   // classic_kart (Turbo Dart 200cc)
         tdrace_core::CarCategory::Rally => &CLASSIC_ARCADE_CARS[4],  // classic_rally (Trailfire Turbo 4WD)
-        tdrace_core::CarCategory::Autocross => &CLASSIC_ARCADE_CARS[2], // classic_offroad (Vortex Dune Crusher)
+        tdrace_core::CarCategory::Autocross => &CLASSIC_ARCADE_CARS[5], // classic_ax_mudlark (Mudlark Cross Car)
     }
 }
 
@@ -3732,11 +3813,32 @@ mod tests {
     #[test]
     fn test_classic_arcade_fantasy_models() {
         let classic_models = get_models_for_module("classic");
-        assert_eq!(classic_models.len(), 5);
+        assert_eq!(classic_models.len(), 8);
         let ids: Vec<_> = classic_models.iter().map(|m| m.id).collect();
-        assert_eq!(ids, vec!["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"]);
+        assert_eq!(
+            ids,
+            vec![
+                "classic_gt",
+                "classic_nascar",
+                "classic_offroad",
+                "classic_kart",
+                "classic_rally",
+                "classic_ax_mudlark",
+                "classic_ax_brawler",
+                "classic_ax_talon"
+            ]
+        );
 
-        for id in ["classic_gt", "classic_nascar", "classic_offroad", "classic_kart", "classic_rally"] {
+        for id in [
+            "classic_gt",
+            "classic_nascar",
+            "classic_offroad",
+            "classic_kart",
+            "classic_rally",
+            "classic_ax_mudlark",
+            "classic_ax_brawler",
+            "classic_ax_talon",
+        ] {
             let model = find_model_by_id(id).expect("classic model must exist");
             assert_eq!(model.module_id, "classic");
             assert!(model.bhp > 0);

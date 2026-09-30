@@ -118,7 +118,7 @@ impl Default for AudioConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GameplayConfig {
-    /// Default track choice: "classic_grand_prix", "oval_speedway", "drift_park", "kart_arena".
+    /// Default track choice: "gt_coastal_grand_prix", "stock_tri_oval_speedway", "gt_ridge_ring", "kart_pine_grove".
     pub default_track: String,
     /// Default vehicle choice: "sports_car", "drift_car", "kart", "rally_car".
     pub default_car: String,
@@ -135,7 +135,7 @@ pub struct GameplayConfig {
 impl Default for GameplayConfig {
     fn default() -> Self {
         Self {
-            default_track: "classic_grand_prix".to_string(),
+            default_track: "gt_coastal_grand_prix".to_string(),
             default_car: "sports_car".to_string(),
             default_laps: 3,
             default_num_bots: 7,
@@ -631,6 +631,7 @@ impl GameConfig {
             CarChoice::HypercarPrototype => "hypercar_prototype",
             CarChoice::StockCar => "stock_car",
             CarChoice::SandRail => "sand_rail_buggy",
+            CarChoice::CrossCar => "cross_car",
         };
 
         if let Some(cfg) = self.cars.get(key) {
@@ -647,7 +648,7 @@ impl GameConfig {
                 CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
                 CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
                 CarChoice::StockCar => CarConfig::stock_car_ta1(),
-                CarChoice::SandRail => CarConfig::sand_rail(),
+                CarChoice::SandRail | CarChoice::CrossCar => CarConfig::sand_rail(),
             }
         }
     }

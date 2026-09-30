@@ -102,7 +102,7 @@ fn test_no_driver_uses_player_default_colors() {
 fn test_classic_module_normalizes_all_tiers_to_tier_one() {
     // All classic vehicles in catalog must be Tier 1
     let classic_cars = get_models_for_module("classic");
-    assert_eq!(classic_cars.len(), 5, "Classic module has 5 vehicles");
+    assert_eq!(classic_cars.len(), 8, "Classic module has 8 vehicles");
     for car in classic_cars {
         assert_eq!(
             car.tier, 1,

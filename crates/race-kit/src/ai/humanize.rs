@@ -453,7 +453,8 @@ impl HumanDriver {
             self.stats.corners_under_pressure += 1;
         }
         let p = t.mistake_rate * (1.0 + t.pressure_gain * pressure_cars as f32);
-        if self.rng.next_f32() < p {
+        let roll = self.rng.next_f32();
+        if roll < p {
             let kind = self.pick_mistake();
             match kind {
                 MistakeKind::LateBrake => {
@@ -497,7 +498,7 @@ impl HumanDriver {
         } else if self.spin_latched && heading_off > 0.866 {
             self.spin_latched = false;
         }
-        if proj.lateral_offset.abs() <= proj.track_width * 0.5 + OFF_MARGIN {
+        if proj.is_on_curb || proj.lateral_offset.abs() <= proj.track_width * 0.5 + OFF_MARGIN {
             self.off_timer = 0.0;
         } else {
             if self.off_timer <= 1.0 && self.off_timer + dt > 1.0 {
@@ -579,7 +580,7 @@ impl HumanDriver {
 
     /// Lateral offset (m, along the spline normal) of the bot's line at track distance `s`.
     pub fn line_offset(&mut self, spline: &TrackSpline, s: f32, width: f32, dt: f32) -> f32 {
-        if !self.active {
+        if !self.active || self.off_timer > 0.5 {
             return 0.0;
         }
         let len = spline.total_length();
@@ -596,23 +597,35 @@ impl HumanDriver {
             let outside = -c.turn * p.entry_share * free;
             let inside = if c.has_inside_curb && self.traits.curb_cut_m > 0.0 {
                 let apex_mult = (p.apex_share / 0.7).min(1.0);
-                c.turn * (p.apex_share * free + cut * apex_mult)
+                c.turn * (free * apex_mult + cut * apex_mult)
             } else {
                 c.turn * p.apex_share * free
+            };
+            let (apex_start, apex_end) = if c.has_inside_curb && self.traits.curb_cut_m > 0.0 {
+                let dwell = (c.len * 0.15).min(12.0);
+                ((c.apex - dwell).max(0.0), (c.apex + dwell).min(c.len))
+            } else {
+                (c.apex, c.apex)
             };
             shape += if x < -c.ramp_in || x > c.len + c.ramp_out {
                 0.0
             } else if x < 0.0 {
                 outside * (x + c.ramp_in) / c.ramp_in.max(1.0)
-            } else if x < c.apex {
-                outside + (inside - outside) * x / c.apex.max(1.0)
+            } else if x < apex_start {
+                outside + (inside - outside) * x / apex_start.max(1.0)
+            } else if x <= apex_end {
+                inside
             } else if x < c.len {
-                inside + (outside - inside) * (x - c.apex) / (c.len - c.apex).max(1.0)
+                inside + (outside - inside) * (x - apex_end) / (c.len - apex_end).max(1.0)
             } else {
                 outside * (1.0 - (x - c.len) / c.ramp_out.max(1.0))
             };
             if c.has_inside_curb && self.traits.curb_cut_m > 0.0 && x >= 0.0 && x <= c.len {
-                let apex_proximity = 1.0 - ((x - c.apex).abs() / c.apex.max(c.len - c.apex).max(1.0)).min(1.0);
+                let apex_proximity = if x >= apex_start && x <= apex_end {
+                    1.0
+                } else {
+                    1.0 - ((x - c.apex).abs() / c.apex.max(c.len - c.apex).max(1.0)).min(1.0)
+                };
                 curb_extension = curb_extension.max(cut * apex_proximity);
             }
         }

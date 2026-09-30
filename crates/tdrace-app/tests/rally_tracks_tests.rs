@@ -89,8 +89,8 @@ fn test_rally_module_tracks_integrity_and_validation() {
 
 #[test]
 fn test_dirt_figure_eight_horizontal_flat_dirt_arena() {
-    let fig8 = tdrace_core::catalog::official_track("classic", "dirt_figure_eight");
-    assert_eq!(fig8.name, "Dirt Figure-8 Arena");
+    let fig8 = tdrace_core::catalog::official_track("extreme_offroad", "dirt_figure_eight");
+    assert_eq!(fig8.name, "Dirt Figure Eight");
 
     // 1. Verify horizontal orientation (width along X is substantially larger than height along Y)
     let min_x = fig8.spline.samples.iter().map(|s| s.point.x).fold(f32::INFINITY, f32::min);

@@ -30,7 +30,7 @@ class TDRaceEnv(gym.Env):
 
     def __init__(
         self,
-        track_name: str = "classic_grand_prix",
+        track_name: str = "gt_coastal_grand_prix",
         car_type: str = "sports_car",
         obs_type: str = "vector",  # 'vector' or 'pixels'
         action_type: str = "continuous",  # 'continuous' or 'discrete'
@@ -262,10 +262,10 @@ class TDRaceDiscreteEnv(TDRaceEnv):
 
 
 class TDRaceDriftEnv(TDRaceEnv):
-    """TDRace tuned for drift scoring on Drift Park circuit with drift machine."""
+    """TDRace tuned for drift scoring on Ridge Ring circuit with drift machine."""
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("track_name", "drift_park")
+        kwargs.setdefault("track_name", "gt_ridge_ring")
         kwargs.setdefault("car_type", "drift_car")
         kwargs.setdefault("reward_config", RewardConfig.drift_challenge())
         kwargs.setdefault("action_type", "continuous")

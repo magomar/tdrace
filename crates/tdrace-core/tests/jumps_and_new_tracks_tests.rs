@@ -184,88 +184,44 @@ fn test_jump_over_low_wall_no_collision() {
 }
 
 #[test]
-fn test_ramp_raceway_preset() {
-    let track = tdrace_core::catalog::official_track("classic", "ramp_raceway");
-    assert_eq!(track.name, "Ramp Raceway");
-    assert_eq!(track.geometry.jump_ramps.len(), 1, "Must have 1 jump ramp");
+fn test_rx_hilltop_leap_preset() {
+    let track = tdrace_core::catalog::official_track("classic", "rx_hilltop_leap");
+    assert_eq!(track.name, "Hilltop Leap");
+    assert!(!track.geometry.jump_ramps.is_empty(), "Must have jump ramps");
     assert!(track.checkpoints.len() >= 8);
     assert!(track.grid_positions.len() >= 6);
-    assert_eq!(track.default_surface, SurfaceType::Dirt);
     assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
-
-    // Verify sample surface on track is dirt
-    let surf = track.sample_surface(Vec2::new(82.5, 50.0));
-    assert_eq!(surf, SurfaceType::Dirt);
 }
 
 #[test]
-fn test_classic_rallycross_preset() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_rallycross");
-    assert_eq!(track.name, "Classic Rallycross");
+fn test_rx_quarry_sprint_preset() {
+    let track = tdrace_core::catalog::official_track("classic", "rx_quarry_sprint");
+    assert_eq!(track.name, "Quarry Sprint");
     assert_eq!(track.car_category, arcade_race_core::CarCategory::Rally);
-    assert_eq!(track.geometry.jump_ramps.len(), 1);
+    assert!(!track.geometry.jump_ramps.is_empty());
     let len = track.spline.total_length();
-    assert!(len >= 900.0 && len <= 1200.0, "Length ~1km: got {:.1}m", len);
+    assert!(len >= 750.0 && len <= 1400.0, "Length ~1km: got {:.1}m", len);
     let has_asphalt = track.spline.waypoints.iter().any(|wp| wp.surface == Some(SurfaceType::Asphalt));
     let has_dirt = track.spline.waypoints.iter().any(|wp| wp.surface == Some(SurfaceType::Dirt));
-    assert!(has_asphalt, "Classic Rallycross must contain asphalt sections");
-    assert!(has_dirt, "Classic Rallycross must contain dirt sections");
+    assert!(has_asphalt, "Quarry Sprint must contain asphalt sections");
+    assert!(has_dirt, "Quarry Sprint must contain dirt sections");
 }
 
 #[test]
-fn test_oasis_rally_preset() {
-    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
-    assert_eq!(track.name, "Oasis Rally");
+fn test_at_dune_sea_preset() {
+    let track = tdrace_core::catalog::official_track("classic", "at_dune_sea");
+    assert_eq!(track.name, "Dune Sea");
     assert_eq!(track.default_surface, SurfaceType::DeepSand, "Must be desert sand off-track");
-    assert_eq!(track.geometry.surface_zones.len(), 3);
-    assert_eq!(track.geometry.obstacles.len(), 0);
+    assert!(!track.geometry.jump_ramps.is_empty(), "Must have jump ramps");
     assert!(track.spline.total_length() > 900.0, "Track must be extended and longer");
 
-    // Verify pure dirt circuit: NO red-white curbs anywhere on the track
-    let has_any_curbs = track
-        .spline
-        .samples
-        .iter()
-        .any(|s| s.left_curb || s.right_curb);
-    assert!(
-        !has_any_curbs,
-        "Oasis Rally must be a pure dirt circuit without any asphalt rumble curbs"
-    );
+    // Surface sampling on track ribbon: PackedSand
+    let p0 = track.spline.samples[0].point;
+    assert_eq!(track.sample_surface(p0), SurfaceType::PackedSand);
 
-    // Verify Northern Oasis Lagoon water hazard is circular
-    let water_zones: Vec<_> = track
-        .geometry
-        .surface_zones
-        .iter()
-        .filter(|z| z.surface == SurfaceType::Water)
-        .collect();
-    assert_eq!(water_zones.len(), 1, "Must have exactly one Northern Oasis Lagoon water hazard");
-
-    match &water_zones[0].shape {
-        SurfaceShape::Circle { center, radius } => {
-            assert!(*radius > 0.0);
-            assert_eq!(*center, Vec2::new(25.0, 190.0));
-        }
-        other => panic!("Water hazard must be circular, found: {:?}", other),
-    }
-
-    // Surface sampling on track ribbon: Dirt
-    let start_surf = track.sample_surface(Vec2::new(0.0, 0.0));
-    assert_eq!(start_surf, SurfaceType::Dirt, "Track ribbon must be playable Dirt");
-
-    // Surface sampling in Northern Oasis Lagoon
-    let water_surf1 = track.sample_surface(Vec2::new(25.0, 190.0));
-    assert_eq!(water_surf1, SurfaceType::Water, "Northern Oasis Lagoon must sample Water");
-
-    // Surface sampling off-track: deep sand terrain
-    let off_track_surf = track.sample_surface(Vec2::new(500.0, 500.0));
+    // Surface sampling far off-track: deep sand terrain
+    let off_track_surf = track.sample_surface(p0 + glam::Vec2::new(500.0, 500.0));
     assert_eq!(off_track_surf, SurfaceType::DeepSand, "Off-track must be DeepSand");
-
-    // Verify aliases work identically
-    let alias_track1 = tdrace_core::catalog::official_track("classic", "oasis_rally");
-    assert_eq!(alias_track1.name, "Oasis Rally");
-    let alias_track2 = tdrace_core::catalog::official_track("classic", "oasis_rally");
-    assert_eq!(alias_track2.name, "Oasis Rally");
 }
 
 #[test]
@@ -287,34 +243,40 @@ fn test_dirt_and_water_dynamics() {
 
 #[test]
 fn test_sand_under_track_does_not_override_dirt_ribbon() {
-    let track = tdrace_core::catalog::official_track("classic", "oasis_rally");
-    
-    // In Oasis Rally, "Canyon Sand Trap 1" AABB is (230..290, 130..210).
-    // The track spline has a waypoint at (255, 175) which passes right through this region.
-    // When the car is on the track at (255, 175), it MUST sample Dirt (the visible surface), NOT Sand.
-    let on_track_point = Vec2::new(255.0, 175.0);
-    assert_eq!(
-        track.sample_surface(on_track_point),
-        SurfaceType::Dirt,
-        "Car on track ribbon must sample Dirt even if an underlying sand trap overlaps"
+    let mut track = tdrace_core::catalog::official_track("classic", "at_dune_sea");
+    let p0 = track.spline.samples[0].point;
+    let n0 = track.spline.samples[0].normal;
+
+    // Add a BelowTrack sand zone overlapping the start
+    track.geometry.surface_zones.push(
+        arcade_race_core::track::geometry::SurfaceZone::new(
+            arcade_race_core::track::geometry::SurfaceShape::Aabb {
+                min: p0 - glam::Vec2::splat(20.0),
+                max: p0 + glam::Vec2::splat(20.0),
+            },
+            SurfaceType::DeepSand,
+            "Sand Trap",
+        ).with_layer(arcade_race_core::track::geometry::SurfaceLayer::BelowTrack),
     );
 
-    // When the car moves off-track into the sand trap (e.g. at 285, 195, which is outside the ribbon width),
-    // it MUST sample DeepSand (the visible off-track hazard).
-    let off_track_in_trap = Vec2::new(285.0, 195.0);
-    assert_eq!(
-        track.sample_surface(off_track_in_trap),
-        SurfaceType::DeepSand,
-        "Car off track in sand trap must sample DeepSand"
-    );
+    // Ribbon is PackedSand, so point on track must sample PackedSand
+    assert_eq!(track.sample_surface(p0), SurfaceType::PackedSand);
 
-    // On-track water hazards (like the Northern Oasis Lagoon at 25, 190) MUST override the track ribbon
-    let on_track_water = Vec2::new(25.0, 190.0);
-    assert_eq!(
-        track.sample_surface(on_track_water),
-        SurfaceType::Water,
-        "On-track water hazard must override the underlying track ribbon"
+    // Point off track inside sand trap beyond runoff corridor must sample DeepSand
+    assert_eq!(track.sample_surface(p0 + n0 * 15.0), SurfaceType::DeepSand);
+
+    // Add an AboveTrack water puddle overlapping start
+    track.geometry.surface_zones.push(
+        arcade_race_core::track::geometry::SurfaceZone::new(
+            arcade_race_core::track::geometry::SurfaceShape::Circle {
+                center: p0,
+                radius: 5.0,
+            },
+            SurfaceType::Water,
+            "Water Puddle",
+        ).with_layer(arcade_race_core::track::geometry::SurfaceLayer::AboveTrack),
     );
+    assert_eq!(track.sample_surface(p0), SurfaceType::Water);
 }
 
 

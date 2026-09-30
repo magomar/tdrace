@@ -29,5 +29,5 @@ pub fn load(slug: &str, module_hint: Option<&str>) -> Option<Result<Track, Strin
 
 /// The circuit used when a requested circuit cannot be loaded.
 pub fn fallback_track() -> Track {
-    catalog::official_track("classic", "classic_grand_prix")
+    catalog::official_track("classic", "gt_coastal_grand_prix")
 }
