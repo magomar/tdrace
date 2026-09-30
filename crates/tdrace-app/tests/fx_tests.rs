@@ -500,3 +500,29 @@ fn test_dirt_roost_is_ground_layer_and_smoke_is_not() {
     assert!(ps.count() > ps.ground_count());
 }
 
+#[test]
+fn test_tire_smoke_particle_count_and_scaling() {
+    let mut ps = ParticleSystem::new(2000);
+
+    // Zero intensity emits 0
+    for _ in 0..100 {
+        ps.emit_tire_smoke(Vec2::ZERO, Vec2::new(10.0, 0.0), 0.0);
+    }
+    assert_eq!(ps.count(), 0, "Zero intensity must not emit tire smoke");
+
+    // Full intensity emits exactly 1 particle per call (reduced from 2)
+    let mut ps = ParticleSystem::new(2000);
+    for _ in 0..500 {
+        ps.emit_tire_smoke(Vec2::ZERO, Vec2::new(10.0, 0.0), 1.0);
+    }
+    assert_eq!(ps.count(), 500, "Full intensity must emit at most 1 particle per call");
+
+    // Moderate/light slip: emits a fraction of calls
+    let mut ps = ParticleSystem::new(2000);
+    for _ in 0..1000 {
+        ps.emit_tire_smoke(Vec2::ZERO, Vec2::new(10.0, 0.0), 0.25);
+    }
+    let n = ps.count();
+    assert!((180..=320).contains(&n), "Intensity 0.25 emitted {} of 1000", n);
+}
+

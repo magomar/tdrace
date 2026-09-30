@@ -67,22 +67,26 @@ impl ParticleSystem {
             return;
         }
 
-        let count = ((intensity * 1.8).ceil() as usize).clamp(1, 2);
+        let count = if intensity >= 0.5 {
+            1
+        } else {
+            (intensity.clamp(0.0, 1.0) + self.rand_f32()) as usize
+        };
         for _ in 0..count {
             if self.particles.len() >= self.max_particles {
                 break;
             }
 
-            let spread = Vec2::new(self.rand_signed(), self.rand_signed()) * 0.25;
+            let spread = Vec2::new(self.rand_signed(), self.rand_signed()) * 0.12;
             let p_pos = pos + spread;
-            let rand_vel = Vec2::new(self.rand_signed(), self.rand_signed()) * (0.8 * intensity);
-            let p_vel = base_vel * 0.10 + rand_vel;
+            let rand_vel = Vec2::new(self.rand_signed(), self.rand_signed()) * (0.35 * intensity);
+            let p_vel = base_vel * 0.08 + rand_vel;
 
-            let life = 0.25 + self.rand_f32() * 0.20;
-            let start_size = 0.10 + self.rand_f32() * 0.08;
-            let end_size = 0.38 + self.rand_f32() * 0.25;
+            let life = 0.18 + self.rand_f32() * 0.10;
+            let start_size = 0.06 + self.rand_f32() * 0.04;
+            let end_size = 0.16 + self.rand_f32() * 0.08;
 
-            let alpha_start = (0.18 * intensity).clamp(0.05, 0.30);
+            let alpha_start = (0.10 * intensity).clamp(0.03, 0.14);
             let col_start = Color::new(0.92, 0.92, 0.95, alpha_start);
             let col_end = Color::new(0.92, 0.92, 0.95, 0.0);
 
