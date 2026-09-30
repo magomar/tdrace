@@ -54,5 +54,6 @@ pub use ui::{
     CabinetTheme, CardGrid, CardGridAction, CardGridItem, CharFilters, ColumnAlign, DataColumn,
     DataRow, DataTable, DisplayResolution, DropdownWidget, FilterBar, FilterBarAction,
     FilterBarStyle, FilterItem, Fonts, HStack, LayoutRect, NavBoundaryExit, Palette, SliderWidget,
-    TabBar, TableAction, TextInputAction, TextInputWidget, UiScaler, VStack, WindowMode,
+    TabBar, TableAction, TextInputAction, TextInputWidget, ToastItem, ToastOverlay, ToastSeverity,
+    UiScaler, VStack, WindowMode,
 };
