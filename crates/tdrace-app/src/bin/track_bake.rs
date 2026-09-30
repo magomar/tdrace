@@ -20,7 +20,7 @@ use tdrace_core::track::{validate_track, Track, ValidationSeverity};
 
 fn usage() -> ExitCode {
     eprintln!(
-        "usage: track_bake <file.json>... [--rebuild] [--barrier-offset M] \
+        "usage: track_bake <file.json>... [--rebuild] [--merge-walls] [--barrier-offset M] \
          [--barrier-type Concrete|Steel|TireWall|CurbWall|Virtual] [--checkpoints N] [--sectors N]"
     );
     ExitCode::from(2)
@@ -35,6 +35,10 @@ fn main() -> ExitCode {
         let parsed: Result<(), String> = match arg.as_str() {
             "--rebuild" => {
                 opts.rebuild = true;
+                Ok(())
+            }
+            "--merge-walls" => {
+                opts.merge_walls = true;
                 Ok(())
             }
             "--barrier-offset" => value(&arg).and_then(|v| {

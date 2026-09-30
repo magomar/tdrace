@@ -5,7 +5,7 @@
 //! empty parts are filled, so hand edits in an already baked file are kept; `rebuild` regenerates them all.
 
 use super::geometry::BarrierType;
-use super::presets::{generate_checkpoints, generate_walls_from_spline};
+use super::presets::{generate_checkpoints, generate_walls_from_spline, merge_collinear_walls};
 use super::spline::TrackSpline;
 use super::Track;
 
@@ -14,6 +14,8 @@ use super::Track;
 pub struct BakeOptions {
     /// Regenerate every derived part, not only the empty ones.
     pub rebuild: bool,
+    /// Merge collinear wall segments to reduce barrier count.
+    pub merge_walls: bool,
     /// Wall distance from the road edge (m) where a waypoint does not set its own.
     /// `None`: keep the distance of the track's current walls, or 4.0 m when it has none (the editor default).
     pub barrier_offset: Option<f32>,
@@ -29,6 +31,7 @@ impl Default for BakeOptions {
     fn default() -> Self {
         Self {
             rebuild: false,
+            merge_walls: false,
             barrier_offset: None,
             barrier_type: None,
             checkpoint_count: None,
@@ -87,8 +90,14 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         && geometry.left_boundary_polyline.is_empty()
         && geometry.right_boundary_polyline.is_empty();
     if opts.rebuild || no_walls {
-        let (left_walls, right_walls, left_poly, right_poly) =
+        let (mut left_walls, mut right_walls, left_poly, right_poly) =
             generate_walls_from_spline(&track.spline, barrier_offset, barrier_type);
+        let is_classic = track.module_id.as_deref() == Some("classic")
+            || track.modules.iter().any(|m| m == "classic");
+        if opts.merge_walls || is_classic {
+            left_walls = merge_collinear_walls(left_walls);
+            right_walls = merge_collinear_walls(right_walls);
+        }
         geometry.inner_walls = left_walls;
         geometry.outer_walls = right_walls;
         geometry.left_boundary_polyline = left_poly;
