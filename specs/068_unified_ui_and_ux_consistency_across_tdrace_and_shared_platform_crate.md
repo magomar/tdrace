@@ -599,13 +599,13 @@ pub struct ScreenFooter {
 - `[x]` [`crates/cabinet/src/ui/layout.rs`](../crates/cabinet/src/ui/layout.rs) — Implements `LayoutRect`, `HStack`, `VStack`, and `NavBoundaryExit`.
 - `[x]` [`crates/cabinet/src/ui/filter_bar.rs`](../crates/cabinet/src/ui/filter_bar.rs) — Implements `FilterBar`, `FilterItem`, `FilterBarStyle`, and `FilterBarAction`.
 - `[x]` [`crates/cabinet/src/ui/accordion.rs`](../crates/cabinet/src/ui/accordion.rs) — Implements `Accordion`, `AccordionItem`, and `AccordionNavAction`.
-- `[ ]` `crates/cabinet/src/ui/card_grid.rs` — Implements `CardGrid`, `CardGridItem`, and 2D matrix navigation.
-- `[ ]` `crates/cabinet/src/ui/data_table.rs` — Implements `DataTable`, `DataColumn`, rank badges, and row selection.
-- `[ ]` `crates/cabinet/src/ui/text_input.rs` — Implements `TextInputWidget`, cursor blinking, and input sanitization.
-- `[ ]` `crates/cabinet/src/ui/toast.rs` — Implements `ToastOverlay`, severity styling, and decay queue.
-- `[ ]` `crates/cabinet/src/ui/checklist_modal.rs` — Implements `ChecklistModal` multi-select dialog.
-- `[ ]` `crates/cabinet/src/ui/swatch_picker.rs` — Implements `SwatchPicker` palette ribbon.
-- `[ ]` `crates/cabinet/src/ui/screen_footer.rs` — Implements `HeroActionButton` and `ScreenFooter`.
+- `[x]` [`crates/cabinet/src/ui/card_grid.rs`](../crates/cabinet/src/ui/card_grid.rs) — Implements `CardGrid`, `CardGridItem`, and 2D matrix navigation.
+- `[x]` [`crates/cabinet/src/ui/data_table.rs`](../crates/cabinet/src/ui/data_table.rs) — Implements `DataTable`, `DataColumn`, rank badges, and row selection.
+- `[x]` [`crates/cabinet/src/ui/text_input.rs`](../crates/cabinet/src/ui/text_input.rs) — Implements `TextInputWidget`, cursor blinking, and input sanitization.
+- `[x]` [`crates/cabinet/src/ui/toast.rs`](../crates/cabinet/src/ui/toast.rs) — Implements `ToastOverlay`, severity styling, and decay queue.
+- `[x]` [`crates/cabinet/src/ui/checklist_modal.rs`](../crates/cabinet/src/ui/checklist_modal.rs) — Implements `ChecklistModal` multi-select dialog.
+- `[x]` [`crates/cabinet/src/ui/swatch_picker.rs`](../crates/cabinet/src/ui/swatch_picker.rs) — Implements `SwatchPicker` palette ribbon.
+- `[x]` [`crates/cabinet/src/ui/screen_footer.rs`](../crates/cabinet/src/ui/screen_footer.rs) — Implements `HeroActionButton` and `ScreenFooter`.
 - `[x]` [`crates/cabinet/src/ui/mod.rs`](../crates/cabinet/src/ui/mod.rs) — Public re-exports for the platform UI module.
 - `[x]` [`crates/cabinet/src/lib.rs`](../crates/cabinet/src/lib.rs) — Top-level crate re-exports.
 
