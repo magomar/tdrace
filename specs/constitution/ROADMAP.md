@@ -89,7 +89,7 @@ Target layering and order are set in [spec 049](../049_reusable_racing_platform_
 - `[ ]` **Streaming Courses & Floating Origin**: Chunked endless courses with per-chunk spatial queries, a per-chunk mesh cache, and origin rebasing.
 - `[ ]` **Rally-Raid Game**: GPX-driven procedural stage generator, chase camera with rotation, and the `rallyraid-app` repo.
 - `[ ]` **Platform Cleanup**: Settings modal out of `cabinet`, gamepad fork removed, product categories out of `arcade-race-core`.
-- `[ ]` **[Unified UI and UX Consistency Across TDrace and Shared Platform Crate](../068_unified_ui_and_ux_consistency_across_tdrace_and_shared_platform_crate.md)**: Establishes a unified platform UI/UX architecture and reusable component suite in cabinet (stacks, filter bars, accordions, card lists, steppers, gamepad navigation) and refactors tdrace screens (circuit selector, track manager, garage, series editor, career select) into cohesive component instances with ergonomic gamepad/keyboard parity.
+- `[x]` **[Unified UI and UX Consistency Across TDrace and Shared Platform Crate](../068_unified_ui_and_ux_consistency_across_tdrace_and_shared_platform_crate.md)**: Establishes a unified platform UI/UX architecture and reusable component suite in cabinet (stacks, filter bars, accordions, card lists, steppers, gamepad navigation) and refactors tdrace screens (circuit selector, track manager, garage, series editor, career select) into cohesive component instances with ergonomic gamepad/keyboard parity.
 
 
 ---

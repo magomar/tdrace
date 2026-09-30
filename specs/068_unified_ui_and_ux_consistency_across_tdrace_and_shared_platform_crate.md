@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Unified UI and UX Consistency Across TDrace and Shared Platform Crate"
 description: "Establishes a unified platform UI/UX architecture and reusable component suite in cabinet (stacks, filter bars, accordions, card grids, text input, tables, toasts, modals, footer prompts, gamepad navigation) and defines the migration blueprints for tdrace screens to achieve seamless gamepad/keyboard parity and visual consistency across all projects."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-068-receipt.md"
 created: 2026-09-30
 verified: { by: "human:mario", at: "2026-09-30T08:31:00Z" }
@@ -525,72 +525,72 @@ pub struct ScreenFooter {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: 2D Orthogonal Traversal in Circuit Selector**
-  - [ ] **Given** the player is in the Circuit Selection menu (`GameState::Menu`) with focus on the first track (`menu_track_idx == 0`)
-  - [ ] **When** the player presses `Up` on the keyboard or Gamepad D-pad
-  - [ ] **Then** focus moves to the `CatalogFilter` tabs (`OFFICIAL` / `CUSTOM`) with a gold accent border and audio blip
-  - [ ] **When** the player presses `Up` again
-  - [ ] **Then** focus moves to the `CategoryFilter` pill bar with `► CATEGORY ◄` markers and gold accent border
-  - [ ] **When** the player presses `Down` twice
-  - [ ] **Then** focus gracefully returns through `CatalogFilter` back to `LeftTracks`
+  - [x] **Given** the player is in the Circuit Selection menu (`GameState::Menu`) with focus on the first track (`menu_track_idx == 0`)
+  - [x] **When** the player presses `Up` on the keyboard or Gamepad D-pad
+  - [x] **Then** focus moves to the `CatalogFilter` tabs (`OFFICIAL` / `CUSTOM`) with a gold accent border and audio blip
+  - [x] **When** the player presses `Up` again
+  - [x] **Then** focus moves to the `CategoryFilter` pill bar with `► CATEGORY ◄` markers and gold accent border
+  - [x] **When** the player presses `Down` twice
+  - [x] **Then** focus gracefully returns through `CatalogFilter` back to `LeftTracks`
 
 - **Scenario: Strict Category Isolation and Zero All Fallback**
-  - [ ] **Given** the Circuit Selector category filter is active
-  - [ ] **When** inspecting all selectable categories
-  - [ ] **Then** exactly 8 categories are available (`Classic`, `Rally`, `Kart`, `Gt`, `Nascar`, `ExtremeOffroad`, `Autocross`, `Custom`)
-  - [ ] **And** no `All` filter option exists
-  - [ ] **And** selecting any category strictly presents only tracks registered to that motorsport discipline
+  - [x] **Given** the Circuit Selector category filter is active
+  - [x] **When** inspecting all selectable categories
+  - [x] **Then** exactly 8 categories are available (`Classic`, `Rally`, `Kart`, `Gt`, `Nascar`, `ExtremeOffroad`, `Autocross`, `Custom`)
+  - [x] **And** no `All` filter option exists
+  - [x] **And** selecting any category strictly presents only tracks registered to that motorsport discipline
 
 - **Scenario: Directional Tab Selection in FilterBar**
-  - [ ] **Given** focus is on the Catalog Filter bar
-  - [ ] **When** the player presses `Right`
-  - [ ] **Then** `Custom` circuits tab is selected
-  - [ ] **When** the player presses `Left`
-  - [ ] **Then** `Official` presets tab is selected
+  - [x] **Given** focus is on the Catalog Filter bar
+  - [x] **When** the player presses `Right`
+  - [x] **Then** `Custom` circuits tab is selected
+  - [x] **When** the player presses `Left`
+  - [x] **Then** `Official` presets tab is selected
 
 - **Scenario: Global Bumper and Direct Key Shortcuts**
-  - [ ] **Given** focus is anywhere in the Circuit Selector (including inside the track cards)
-  - [ ] **When** the player presses Gamepad `RB`, `E`, or `]`
-  - [ ] **Then** the category cycles forward to the next motorsport discipline with wrap-around
-  - [ ] **When** the player presses number key `4`
-  - [ ] **Then** the category jumps immediately to `GT World Challenge`
+  - [x] **Given** focus is anywhere in the Circuit Selector (including inside the track cards)
+  - [x] **When** the player presses Gamepad `RB`, `E`, or `]`
+  - [x] **Then** the category cycles forward to the next motorsport discipline with wrap-around
+  - [x] **When** the player presses number key `4`
+  - [x] **Then** the category jumps immediately to `GT World Challenge`
 
 - **Scenario: Accordion Drawer Expansion and Centering**
-  - [ ] **Given** an `Accordion` component populated with championship tier cards in Career Mode
-  - [ ] **When** the player navigates to an inactive card and presses `Enter`, `Space`, or Gamepad `A`
-  - [ ] **Then** that card expands to its full details height while the previously expanded card collapses
-  - [ ] **And** the viewport scrolling smoothly centers the expanded card
+  - [x] **Given** an `Accordion` component populated with championship tier cards in Career Mode
+  - [x] **When** the player navigates to an inactive card and presses `Enter`, `Space`, or Gamepad `A`
+  - [x] **Then** that card expands to its full details height while the previously expanded card collapses
+  - [x] **And** the viewport scrolling smoothly centers the expanded card
 
 - **Scenario: 2D Matrix Navigation in CardGrid**
-  - [ ] **Given** a `CardGrid` with 4 columns and 10 items
-  - [ ] **When** focus is at item index `0` and the player presses `Right`
-  - [ ] **Then** focus shifts to item index `1`
-  - [ ] **When** the player presses `Down`
-  - [ ] **Then** focus shifts to item index `5` (row 1, column 1)
-  - [ ] **When** the player presses `Up` from index `1`
-  - [ ] **Then** the grid emits `NavBoundaryExit::ExitTop` without index out of bounds
+  - [x] **Given** a `CardGrid` with 4 columns and 10 items
+  - [x] **When** focus is at item index `0` and the player presses `Right`
+  - [x] **Then** focus shifts to item index `1`
+  - [x] **When** the player presses `Down`
+  - [x] **Then** focus shifts to item index `5` (row 1, column 1)
+  - [x] **When** the player presses `Up` from index `1`
+  - [x] **Then** the grid emits `NavBoundaryExit::ExitTop` without index out of bounds
 
 - **Scenario: DataTable Sorting and Player Highlighting**
-  - [ ] **Given** a `DataTable` rendered for race results containing 12 participants
-  - [ ] **When** the table is displayed
-  - [ ] **Then** rows with rank `1`, `2`, and `3` display Gold, Silver, and Bronze badges respectively
-  - [ ] **And** the human player row is highlighted with `Palette::NEON_GOLD` accent glow
-  - [ ] **When** the player triggers sort on the lap time column
-  - [ ] **Then** the table reorders rows deterministically while keeping the player selection visible
+  - [x] **Given** a `DataTable` rendered for race results containing 12 participants
+  - [x] **When** the table is displayed
+  - [x] **Then** rows with rank `1`, `2`, and `3` display Gold, Silver, and Bronze badges respectively
+  - [x] **And** the human player row is highlighted with `Palette::NEON_GOLD` accent glow
+  - [x] **When** the player triggers sort on the lap time column
+  - [x] **Then** the table reorders rows deterministically while keeping the player selection visible
 
 - **Scenario: TextInputWidget Editing and Boundary Signals**
-  - [ ] **Given** an active `TextInputWidget` containing text `"Thunder"`
-  - [ ] **When** the user types characters `"bolt"`
-  - [ ] **Then** the text updates to `"Thunderbolt"` and cursor advances to position 11
-  - [ ] **When** the user presses `Backspace` 4 times
-  - [ ] **Then** the text reverts to `"Thunder"`
-  - [ ] **When** the user presses Gamepad D-pad `Up`
-  - [ ] **Then** `TextInputAction::ExitUp` is emitted to hand off focus to the upper form field
+  - [x] **Given** an active `TextInputWidget` containing text `"Thunder"`
+  - [x] **When** the user types characters `"bolt"`
+  - [x] **Then** the text updates to `"Thunderbolt"` and cursor advances to position 11
+  - [x] **When** the user presses `Backspace` 4 times
+  - [x] **Then** the text reverts to `"Thunder"`
+  - [x] **When** the user presses Gamepad D-pad `Up`
+  - [x] **Then** `TextInputAction::ExitUp` is emitted to hand off focus to the upper form field
 
 - **Scenario: High-Contrast Focus Visuals and Audio Feedback**
-  - [ ] **Given** any component rendered via `cabinet::ui`
-  - [ ] **When** the component receives focus
-  - [ ] **Then** it renders a distinct `Palette::NEON_GOLD` border with thickness $\ge 2.4\text{px}$
-  - [ ] **And** a tactile audio blip (`UiMove`) is triggered through `CabinetAudioSink`
+  - [x] **Given** any component rendered via `cabinet::ui`
+  - [x] **When** the component receives focus
+  - [x] **Then** it renders a distinct `Palette::NEON_GOLD` border with thickness $\ge 2.4\text{px}$
+  - [x] **And** a tactile audio blip (`UiMove`) is triggered through `CabinetAudioSink`
 
 ---
 
