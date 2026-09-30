@@ -1105,21 +1105,40 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
         let avg_bank = (s0.bank_angle + s1.bank_angle) * 0.5;
         let is_banked = avg_bank.abs() > 0.8;
 
-        // On banked curves, render subtle 2.5D outer rim embankment shadow under outer edge
-        if is_banked {
-            let rim_offset = if avg_bank > 0.0 {
-                -s0.normal * (avg_bank.abs().min(25.0) * 0.03 + 0.30)
-            } else {
-                s0.normal * (avg_bank.abs().min(25.0) * 0.03 + 0.30)
-            };
-            if avg_bank > 0.0 {
-                let r0_shad = right0 + rim_offset;
-                let r1_shad = right1 + rim_offset;
-                draw_quad(right0, right1, r1_shad, r0_shad, Palette::SHADOW);
-            } else {
-                let l0_shad = left0 + rim_offset;
-                let l1_shad = left1 + rim_offset;
-                draw_quad(left0, left1, l1_shad, l0_shad, Palette::SHADOW);
+        // Ground shading: banked curve rim shadows and raised-ground embankment shade (Spec 055 §5).
+        if !elevated && !s0.is_bridge && !s1.is_bridge {
+            let max_embankment_width = 3.0;
+            let mut l_shade_w0 = if s0.elevation > 0.8 { ((s0.elevation - 0.8) * 0.40).min(max_embankment_width) } else { 0.0 };
+            let mut l_shade_w1 = if s1.elevation > 0.8 { ((s1.elevation - 0.8) * 0.40).min(max_embankment_width) } else { 0.0 };
+            let mut r_shade_w0 = if s0.elevation > 0.8 { ((s0.elevation - 0.8) * 0.40).min(max_embankment_width) } else { 0.0 };
+            let mut r_shade_w1 = if s1.elevation > 0.8 { ((s1.elevation - 0.8) * 0.40).min(max_embankment_width) } else { 0.0 };
+
+            if is_banked {
+                let rim_w = avg_bank.abs().min(25.0) * 0.03 + 0.30;
+                if avg_bank > 0.0 {
+                    r_shade_w0 = r_shade_w0.max(rim_w);
+                    r_shade_w1 = r_shade_w1.max(rim_w);
+                } else {
+                    l_shade_w0 = l_shade_w0.max(rim_w);
+                    l_shade_w1 = l_shade_w1.max(rim_w);
+                }
+            }
+
+            let curb_extra_width = 1.35;
+            let l0_base = left0 + s0.normal * (if s0.left_curb { curb_extra_width } else { 0.0 });
+            let l1_base = left1 + s1.normal * (if s1.left_curb { curb_extra_width } else { 0.0 });
+            let r0_base = right0 - s0.normal * (if s0.right_curb { curb_extra_width } else { 0.0 });
+            let r1_base = right1 - s1.normal * (if s1.right_curb { curb_extra_width } else { 0.0 });
+
+            if l_shade_w0 > 0.001 || l_shade_w1 > 0.001 {
+                let l0_outer = l0_base + s0.normal * l_shade_w0;
+                let l1_outer = l1_base + s1.normal * l_shade_w1;
+                draw_quad(l0_base, l1_base, l1_outer, l0_outer, Palette::SHADOW);
+            }
+            if r_shade_w0 > 0.001 || r_shade_w1 > 0.001 {
+                let r0_outer = r0_base - s0.normal * r_shade_w0;
+                let r1_outer = r1_base - s1.normal * r_shade_w1;
+                draw_quad(r0_base, r1_base, r1_outer, r0_outer, Palette::SHADOW);
             }
         }
 
@@ -1817,5 +1836,43 @@ mod tests {
             render_surface_shape_textured(&obox, surf, fill, border);
             render_surface_shape_textured(&poly, surf, fill, border);
         }
+    }
+
+    #[test]
+    fn test_raised_ground_embankment_shade_pass() {
+        let mut spline = TrackSpline::empty();
+        spline.closed = true;
+
+        // Create samples: flat, raised without curbs, raised with curbs, banked raised, and bridge
+        let elevations = [0.0, 0.5, 1.2, 3.5, 6.0, 9.5, 0.0];
+        let banks = [0.0, 0.0, 0.0, 15.0, -10.0, 0.0, 0.0];
+        for (i, (&elev, &bank)) in elevations.iter().zip(banks.iter()).enumerate() {
+            spline.samples.push(SplineSample {
+                point: Vec2::new(i as f32 * 20.0, 0.0),
+                tangent: Vec2::X,
+                normal: Vec2::Y,
+                distance: i as f32 * 20.0,
+                width: 10.0,
+                left_curb: i % 2 == 1,
+                right_curb: i % 2 == 0,
+                surface: SurfaceType::Asphalt,
+                elevation: elev,
+                bank_angle: bank,
+                is_bridge: false,
+                grade_slope: 0.0,
+                vertical_curvature: 0.0,
+                left_wall: false,
+                right_wall: false,
+                left_wall_distance: None,
+                right_wall_distance: None,
+                wall_type: None,
+                left_runoff_surface: None,
+                right_runoff_surface: None,
+            });
+        }
+
+        // Must execute cleanly without panics for both ground and elevated passes
+        render_surface_pass(&spline, false, None);
+        render_surface_pass(&spline, true, None);
     }
 }
