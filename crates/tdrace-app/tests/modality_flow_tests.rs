@@ -802,22 +802,27 @@ fn test_grand_hub_player_profile_selection_and_navigation() {
 #[test]
 fn test_menu_category_filter_cycling_and_direct_keys() {
     use tdrace_app::game::MenuCategoryFilter;
+    use tdrace_app::ui::menu::MenuPanelFocus;
 
     let mut session = RaceSession::new();
     session.state = GameState::Menu;
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::All);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::LeftTracks);
 
     // Cycling via prev / next
     session.menu_category_filter = session.menu_category_filter.next();
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
 
     session.menu_category_filter = session.menu_category_filter.prev();
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::All);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
 
-    // Next wrap-around
-    let mut cur = MenuCategoryFilter::All;
+    // Prev from first wraps to Custom (last of 8 categories)
+    session.menu_category_filter = session.menu_category_filter.prev();
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Custom);
+
+    // Next wrap-around through all 8 categories
+    let mut cur = MenuCategoryFilter::Classic;
     for expected in [
-        MenuCategoryFilter::Classic,
         MenuCategoryFilter::Rally,
         MenuCategoryFilter::Kart,
         MenuCategoryFilter::Gt,
@@ -825,22 +830,55 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
         MenuCategoryFilter::ExtremeOffroad,
         MenuCategoryFilter::Autocross,
         MenuCategoryFilter::Custom,
-        MenuCategoryFilter::All,
+        MenuCategoryFilter::Classic,
     ] {
         cur = cur.next();
         assert_eq!(cur, expected);
     }
 
-    // Direct selection via gamepad bumpers
+    // Direct selection via gamepad bumpers (global shortcuts)
+    session.menu_category_filter = MenuCategoryFilter::Classic;
     session.input.gamepad.snapshot.btn_rb_pressed = true;
     session.update_menu();
     session.input.gamepad.snapshot.btn_rb_pressed = false;
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
 
     session.input.gamepad.snapshot.btn_lb_pressed = true;
     session.update_menu();
     session.input.gamepad.snapshot.btn_lb_pressed = false;
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::All);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
+
+    // 2D Gamepad / Keyboard Focus Navigation
+    // 1. From LeftTracks at track 0, Up moves focus to CatalogFilter
+    session.menu_track_idx = 0;
+    session.input.gamepad.snapshot.dpad_up_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.dpad_up_pressed = false;
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::CatalogFilter);
+
+    // 2. From CatalogFilter, Up moves focus to CategoryFilter
+    session.input.gamepad.snapshot.dpad_up_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.dpad_up_pressed = false;
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::CategoryFilter);
+
+    // 3. Inside CategoryFilter, Left/Right navigation cycles categories
+    session.input.gamepad.snapshot.dpad_right_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.dpad_right_pressed = false;
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
+
+    // 4. Down from CategoryFilter returns focus to CatalogFilter
+    session.input.gamepad.snapshot.dpad_down_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.dpad_down_pressed = false;
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::CatalogFilter);
+
+    // 5. Down from CatalogFilter returns focus to LeftTracks
+    session.input.gamepad.snapshot.dpad_down_pressed = true;
+    session.update_menu();
+    session.input.gamepad.snapshot.dpad_down_pressed = false;
+    assert_eq!(session.menu_focused_panel, MenuPanelFocus::LeftTracks);
 }
 
 #[test]
@@ -896,21 +934,25 @@ fn test_menu_category_filter_circuits_isolation() {
         assert_eq!(mod_id, "autocross", "Track {:?} not an Autocross track", t.track_id());
     }
 
-    // Filter ALL has more tracks than any single category
-    session.menu_category_filter = MenuCategoryFilter::All;
-    let all_tracks = session.filtered_menu_tracks();
-    assert!(
-        all_tracks.len() > kart_tracks.len(),
-        "ALL tracks should exceed Kart track count"
-    );
-    assert!(
-        all_tracks.len() > gt_tracks.len(),
-        "ALL tracks should exceed GT track count"
-    );
-    assert!(
-        all_tracks.len() > ax_tracks.len(),
-        "ALL tracks should exceed Autocross track count"
-    );
+    // Strict Category Enforcement: exactly 8 categories, and each category only contains its domain
+    assert_eq!(MenuCategoryFilter::ALL.len(), 8);
+    for cat in MenuCategoryFilter::ALL {
+        session.menu_category_filter = cat;
+        let tracks = session.filtered_menu_tracks();
+        let expected_mod = cat.module_id();
+        for t in &tracks {
+            if let Some(target) = expected_mod {
+                let cat_entry = tdrace_core::catalog::find(t.track_id(), Some(target));
+                assert!(
+                    cat_entry.is_some(),
+                    "Track {} must be registered in catalog for category {:?} (module {:?})",
+                    t.track_id(),
+                    cat,
+                    target
+                );
+            }
+        }
+    }
 }
 
 #[test]

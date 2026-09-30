@@ -946,7 +946,7 @@ impl RaceSession {
 
             menu_origin: MenuOrigin::ModalitySelect,
             menu_focused_panel: MenuPanelFocus::LeftTracks,
-            menu_category_filter: MenuCategoryFilter::All,
+            menu_category_filter: MenuCategoryFilter::Classic,
             menu_track_filter: TrackCatalogFilter::Presets,
             menu_track_idx: 0,
             menu_car_idx: 0,
@@ -1959,10 +1959,7 @@ impl RaceSession {
     pub fn filtered_menu_tracks(&self) -> Vec<TrackChoice> {
         let all_choices = match self.menu_category_filter {
             MenuCategoryFilter::Custom => self.track_manager.custom_track_choices(),
-            _ => match self.menu_category_filter.module_id() {
-                Some(mod_id) => self.tracks_for_module(mod_id),
-                None => self.all_registered_tracks(),
-            },
+            _ => self.tracks_for_module(self.menu_category_filter.module_id().unwrap_or("classic")),
         };
 
         if self.menu_category_filter == MenuCategoryFilter::Custom {
@@ -1979,10 +1976,7 @@ impl RaceSession {
     pub fn menu_track_filter_counts(&self) -> (usize, usize) {
         let all = match self.menu_category_filter {
             MenuCategoryFilter::Custom => self.track_manager.custom_track_choices(),
-            _ => match self.menu_category_filter.module_id() {
-                Some(mod_id) => self.tracks_for_module(mod_id),
-                None => self.all_registered_tracks(),
-            },
+            _ => self.tracks_for_module(self.menu_category_filter.module_id().unwrap_or("classic")),
         };
         let presets = all.iter().filter(|t| t.is_official_preset()).count();
         let custom = all.iter().filter(|t| t.is_user_custom()).count();
@@ -10304,24 +10298,22 @@ impl RaceSession {
             self.menu_track_idx = 0;
         }
 
-        // Direct Category Filter Shortcuts (1..=9)
+        // Direct Category Filter Shortcuts (1..=8)
         let num_cat = if is_key_pressed(KeyCode::Key1) {
-            Some(MenuCategoryFilter::All)
-        } else if is_key_pressed(KeyCode::Key2) {
             Some(MenuCategoryFilter::Classic)
-        } else if is_key_pressed(KeyCode::Key3) {
+        } else if is_key_pressed(KeyCode::Key2) {
             Some(MenuCategoryFilter::Rally)
-        } else if is_key_pressed(KeyCode::Key4) {
+        } else if is_key_pressed(KeyCode::Key3) {
             Some(MenuCategoryFilter::Kart)
-        } else if is_key_pressed(KeyCode::Key5) {
+        } else if is_key_pressed(KeyCode::Key4) {
             Some(MenuCategoryFilter::Gt)
-        } else if is_key_pressed(KeyCode::Key6) {
+        } else if is_key_pressed(KeyCode::Key5) {
             Some(MenuCategoryFilter::Nascar)
-        } else if is_key_pressed(KeyCode::Key7) {
+        } else if is_key_pressed(KeyCode::Key6) {
             Some(MenuCategoryFilter::ExtremeOffroad)
-        } else if is_key_pressed(KeyCode::Key8) {
+        } else if is_key_pressed(KeyCode::Key7) {
             Some(MenuCategoryFilter::Autocross)
-        } else if is_key_pressed(KeyCode::Key9) {
+        } else if is_key_pressed(KeyCode::Key8) {
             Some(MenuCategoryFilter::Custom)
         } else {
             None
@@ -10332,7 +10324,7 @@ impl RaceSession {
             self.menu_track_idx = 0;
         }
 
-        // Category Pill Mouse Clicks
+        // Category Pill & Catalog Tab Mouse Clicks
         let (sw_menu, sh_menu) = (screen_width_safe(), screen_height_safe());
         let scaler_menu = UiScaler::new(sw_menu, sh_menu);
         let col_w_menu = (sw_menu * 0.40).clamp(scaler_menu.s(320.0), scaler_menu.s(480.0));
@@ -10343,14 +10335,41 @@ impl RaceSession {
         let badge_h_menu = scaler_menu.s(48.0);
         let cp_h_menu = if self.has_track_career_locks() { scaler_menu.s(26.0) } else { 0.0 };
         let (mx_menu, my_menu) = mouse_position_safe();
-        if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+
+        if mouse_clicked {
+            // Category Pills click
             for (i, filter) in MenuCategoryFilter::ALL.iter().enumerate() {
                 let (px, py, pw, ph) = category_pill_rect(&scaler_menu, badge_x_menu, badge_y_menu, badge_h_menu, cp_h_menu, badge_w_menu, i);
                 if mx_menu >= px && mx_menu <= px + pw && my_menu >= py && my_menu <= py + ph {
                     self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::CategoryFilter;
                     self.menu_category_filter = *filter;
                     self.menu_track_idx = 0;
                     break;
+                }
+            }
+
+            // Catalog Filter Tabs click
+            let cat_y_menu = badge_y_menu + badge_h_menu + cp_h_menu + scaler_menu.s(6.0);
+            let cat_h_menu = scaler_menu.s(26.0);
+            let menu_content_y_menu = cat_y_menu + cat_h_menu + scaler_menu.s(10.0);
+            let tabs_y_menu = menu_content_y_menu + scaler_menu.s(20.0);
+            let tabs_h_menu = scaler_menu.s(25.0);
+            let tab_gap_menu = scaler_menu.s(6.0);
+            let tab_w_menu = (col_w_menu - tab_gap_menu) * 0.5;
+
+            if my_menu >= tabs_y_menu && my_menu <= tabs_y_menu + tabs_h_menu {
+                if mx_menu >= col1_x_menu && mx_menu <= col1_x_menu + tab_w_menu {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::CatalogFilter;
+                    self.menu_track_filter = TrackCatalogFilter::Presets;
+                    self.menu_track_idx = 0;
+                } else if mx_menu >= col1_x_menu + tab_w_menu + tab_gap_menu && mx_menu <= col1_x_menu + col_w_menu {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::CatalogFilter;
+                    self.menu_track_filter = TrackCatalogFilter::Custom;
+                    self.menu_track_idx = 0;
                 }
             }
         }
@@ -10375,46 +10394,153 @@ impl RaceSession {
             self.menu_track_idx = 0;
         }
 
-        // 1. Catalog Filter Tab Cycling (Left/Right: Arrows / A/D / Gamepad D-pad / Left Stick X)
-        if is_key_pressed(KeyCode::Left)
-            || is_key_pressed(KeyCode::A)
-            || self.input.gamepad.snapshot.dpad_left_pressed
-            || self.input.gamepad.snapshot.nav_left
-        {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.menu_track_filter = self.menu_track_filter.prev();
-            self.menu_track_idx = 0;
-        }
-        if is_key_pressed(KeyCode::Right)
-            || is_key_pressed(KeyCode::D)
-            || self.input.gamepad.snapshot.dpad_right_pressed
-            || self.input.gamepad.snapshot.nav_right
-        {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.menu_track_filter = self.menu_track_filter.next();
-            self.menu_track_idx = 0;
-        }
+        // Mouse click on Track Cards
+        if mouse_clicked && total_items > 0 {
+            let cat_y_menu = badge_y_menu + badge_h_menu + cp_h_menu + scaler_menu.s(6.0);
+            let cat_h_menu = scaler_menu.s(26.0);
+            let menu_content_y_menu = cat_y_menu + cat_h_menu + scaler_menu.s(10.0);
+            let tabs_y_menu = menu_content_y_menu + scaler_menu.s(20.0);
+            let tabs_h_menu = scaler_menu.s(25.0);
+            let list_y_menu = tabs_y_menu + tabs_h_menu + scaler_menu.s(8.0);
+            let card_h_menu = scaler_menu.s(58.0);
+            let card_gap_menu = scaler_menu.s(8.0);
+            let visible_items = 6;
+            let start_idx = if total_items <= visible_items {
+                0
+            } else {
+                self.menu_track_idx.saturating_sub(visible_items / 2).min(total_items - visible_items)
+            };
+            let end_idx = (start_idx + visible_items).min(total_items);
 
-        // Tab key also cycles filter tabs
-        if is_key_pressed(KeyCode::Tab) {
-            self.audio.play_sfx(SfxType::UiMove);
-            self.menu_track_filter = self.menu_track_filter.next();
-            self.menu_track_idx = 0;
-        }
-
-        // 2. Active Column Track Navigation (Up/Down: Arrows / W/S / Gamepad D-pad / Left Stick Y)
-        if total_items > 0 {
-            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
-                self.audio.play_sfx(SfxType::UiMove);
-                if self.menu_track_idx == 0 {
-                    self.menu_track_idx = total_items - 1;
-                } else {
-                    self.menu_track_idx -= 1;
+            for i in start_idx..end_idx {
+                let card_y = list_y_menu + ((i - start_idx) as f32) * (card_h_menu + card_gap_menu);
+                if mx_menu >= col1_x_menu && mx_menu <= col1_x_menu + col_w_menu && my_menu >= card_y && my_menu <= card_y + card_h_menu {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::LeftTracks;
+                    self.menu_track_idx = i;
+                    break;
                 }
             }
-            if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.menu_track_idx = (self.menu_track_idx + 1) % total_items;
+        }
+
+        // Orthogonal 2D Navigation across Focus Areas (Gamepad & Keyboard)
+        let nav_left = is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.nav_left;
+        let nav_right = is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.nav_right;
+        let nav_up = is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.nav_up;
+        let nav_down = is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.nav_down;
+
+        match self.menu_focused_panel {
+            MenuPanelFocus::CategoryFilter => {
+                if nav_left {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_category_filter = self.menu_category_filter.prev();
+                    self.menu_track_idx = 0;
+                }
+                if nav_right {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_category_filter = self.menu_category_filter.next();
+                    self.menu_track_idx = 0;
+                }
+                if nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::CatalogFilter;
+                }
+                if is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.menu_focused_panel = MenuPanelFocus::CatalogFilter;
+                    return;
+                }
+            }
+            MenuPanelFocus::CatalogFilter => {
+                if nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::CategoryFilter;
+                }
+                if is_key_pressed(KeyCode::Tab) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_track_filter = self.menu_track_filter.next();
+                    self.menu_track_idx = 0;
+                } else if nav_left {
+                    if self.menu_track_filter != TrackCatalogFilter::Presets {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_track_filter = TrackCatalogFilter::Presets;
+                        self.menu_track_idx = 0;
+                    }
+                } else if nav_right {
+                    if self.menu_track_filter != TrackCatalogFilter::Custom {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_track_filter = TrackCatalogFilter::Custom;
+                        self.menu_track_idx = 0;
+                    }
+                }
+                if nav_down {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_focused_panel = MenuPanelFocus::LeftTracks;
+                }
+                if is_key_pressed(KeyCode::Space)
+                    || is_key_pressed(KeyCode::Enter)
+                    || is_key_pressed(KeyCode::KpEnter)
+                    || self.input.gamepad.snapshot.btn_confirm_pressed
+                    || self.input.gamepad.snapshot.btn_a_pressed
+                {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.menu_focused_panel = MenuPanelFocus::LeftTracks;
+                    return;
+                }
+            }
+            MenuPanelFocus::LeftTracks | MenuPanelFocus::RightVehicle => {
+                // Tab cycles catalog filter
+                if is_key_pressed(KeyCode::Tab) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.menu_track_filter = self.menu_track_filter.next();
+                    self.menu_track_idx = 0;
+                }
+                if nav_up {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if self.menu_track_idx == 0 {
+                        self.menu_focused_panel = MenuPanelFocus::CatalogFilter;
+                    } else {
+                        self.menu_track_idx -= 1;
+                    }
+                }
+                if nav_down {
+                    if total_items > 0 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        if self.menu_track_idx + 1 < total_items {
+                            self.menu_track_idx += 1;
+                        }
+                    }
+                }
+                if nav_left {
+                    if self.menu_track_filter != TrackCatalogFilter::Presets {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_track_filter = TrackCatalogFilter::Presets;
+                        self.menu_track_idx = 0;
+                    }
+                } else if nav_right {
+                    if self.menu_track_filter != TrackCatalogFilter::Custom {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.menu_track_filter = TrackCatalogFilter::Custom;
+                        self.menu_track_idx = 0;
+                    }
+                }
             }
         }
 
@@ -12952,7 +13078,6 @@ impl RaceSession {
                 };
                 let display_module = self.menu_category_filter.module_id().unwrap_or(self.active_module_id);
                 let (mod_title, mod_sub, mod_accent) = match self.menu_category_filter {
-                    MenuCategoryFilter::All => ("CIRCUIT SELECTOR", "All Motorsport Disciplines & Tracks", Palette::NEON_CYAN),
                     MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits", Palette::NEON_MAGENTA),
                     _ => match display_module {
                         "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
@@ -12999,6 +13124,7 @@ impl RaceSession {
                     is_career,
                     is_lan_host,
                     self.menu_origin == MenuOrigin::StartingGrid,
+                    self.menu_focused_panel,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {

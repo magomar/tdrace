@@ -892,9 +892,12 @@ pub struct RaceResultEntry {
 use super::profile_ui::render_profile_badge;
 use crate::profile::{ModuleCareerProgress, PlayerProfile, ProfileCareerStats};
 
-/// Selected focus column/panel in the Track & Setup Selection Menu (kept for backwards compatibility).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Selected focus column/panel in the Track & Setup Selection Menu.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MenuPanelFocus {
+    CategoryFilter,
+    CatalogFilter,
+    #[default]
     LeftTracks,
     RightVehicle,
 }
@@ -920,11 +923,10 @@ impl TrackCatalogFilter {
     }
 }
 
-/// Category filter for the Circuit Selection Menu.
+/// Category filter for the Circuit Selection Menu (Strictly enforces motorsport category filtering).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum MenuCategoryFilter {
     #[default]
-    All,
     Classic,
     Rally,
     Kart,
@@ -936,8 +938,7 @@ pub enum MenuCategoryFilter {
 }
 
 impl MenuCategoryFilter {
-    pub const ALL: [Self; 9] = [
-        Self::All,
+    pub const ALL: [Self; 8] = [
         Self::Classic,
         Self::Rally,
         Self::Kart,
@@ -950,7 +951,6 @@ impl MenuCategoryFilter {
 
     pub fn label(&self) -> &'static str {
         match self {
-            Self::All => "ALL",
             Self::Classic => "CLASSIC",
             Self::Rally => "RALLY",
             Self::Kart => "KART",
@@ -964,7 +964,7 @@ impl MenuCategoryFilter {
 
     pub fn module_id(&self) -> Option<&'static str> {
         match self {
-            Self::All | Self::Custom => None,
+            Self::Custom => None,
             Self::Classic => Some("classic"),
             Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
@@ -998,7 +998,7 @@ impl MenuCategoryFilter {
             "nascar" => Self::Nascar,
             "extreme_offroad" => Self::ExtremeOffroad,
             "autocross" | "ax" => Self::Autocross,
-            _ => Self::All,
+            _ => Self::Classic,
         }
     }
 }
@@ -1043,6 +1043,7 @@ pub fn render_track_select_menu(
     is_career_mode: bool,
     is_lan_host: bool,
     returns_to_grid: bool,
+    focused_panel: MenuPanelFocus,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -1209,22 +1210,35 @@ pub fn render_track_select_menu(
     let cat_gap = scaler.s(4.0);
     let cat_count = MenuCategoryFilter::ALL.len() as f32;
     let cat_w = (badge_w - cat_gap * (cat_count - 1.0)) / cat_count;
+    let is_cat_focused = focused_panel == MenuPanelFocus::CategoryFilter;
 
     for (i, filter) in MenuCategoryFilter::ALL.iter().enumerate() {
         let pill_x = badge_x + (cat_w + cat_gap) * (i as f32);
         let is_active = *filter == category_filter;
         let pill_bg = if is_active {
-            Color::new(0.12, 0.28, 0.45, 0.95)
+            if is_cat_focused {
+                Color::new(0.16, 0.36, 0.58, 0.98)
+            } else {
+                Color::new(0.12, 0.28, 0.45, 0.95)
+            }
         } else {
             Color::new(0.06, 0.08, 0.12, 0.85)
         };
         let pill_border = if is_active {
-            module_accent
+            if is_cat_focused {
+                Palette::NEON_GOLD
+            } else {
+                module_accent
+            }
         } else {
             Palette::UI_CARD_BORDER
         };
         let text_col = if is_active {
-            Palette::WHITE
+            if is_cat_focused {
+                Palette::NEON_GOLD
+            } else {
+                Palette::WHITE
+            }
         } else {
             Palette::UI_TEXT_MUTED
         };
@@ -1235,10 +1249,18 @@ pub fn render_track_select_menu(
             cat_h,
             pill_bg,
             pill_border,
-            if is_active { 1.8 } else { 1.0 },
+            if is_active && is_cat_focused {
+                2.4
+            } else if is_active {
+                1.8
+            } else {
+                1.0
+            },
         );
 
-        let label = if is_active {
+        let label = if is_active && is_cat_focused {
+            format!("► {} ◄", filter.label())
+        } else if is_active {
             format!("< {} >", filter.label())
         } else {
             filter.label().to_string()
@@ -1307,21 +1329,34 @@ pub fn render_track_select_menu(
     let tab_count = filter_tabs.len() as f32;
     let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
 
+    let is_tab_focused = focused_panel == MenuPanelFocus::CatalogFilter;
     for (i, (tab_variant, tab_label)) in filter_tabs.iter().enumerate() {
         let tab_x = col1_x + (tab_w + tab_gap) * (i as f32);
         let is_tab_active = *tab_variant == active_filter;
         let tab_bg = if is_tab_active {
-            Color::new(0.08, 0.28, 0.40, 0.95)
+            if is_tab_focused {
+                Color::new(0.12, 0.36, 0.52, 0.98)
+            } else {
+                Color::new(0.08, 0.28, 0.40, 0.95)
+            }
         } else {
             Palette::UI_CARD_BG
         };
         let tab_border = if is_tab_active {
-            Palette::NEON_CYAN
+            if is_tab_focused {
+                Palette::NEON_GOLD
+            } else {
+                Palette::NEON_CYAN
+            }
         } else {
             Palette::UI_CARD_BORDER
         };
         let text_col = if is_tab_active {
-            Palette::WHITE
+            if is_tab_focused {
+                Palette::NEON_GOLD
+            } else {
+                Palette::WHITE
+            }
         } else {
             Palette::UI_TEXT_MUTED
         };
@@ -1332,10 +1367,21 @@ pub fn render_track_select_menu(
             tab_h,
             tab_bg,
             tab_border,
-            if is_tab_active { 1.8 } else { 1.0 },
+            if is_tab_active && is_tab_focused {
+                2.4
+            } else if is_tab_active {
+                1.8
+            } else {
+                1.0
+            },
         );
+        let label = if is_tab_active && is_tab_focused {
+            format!("► {} ◄", tab_label)
+        } else {
+            tab_label.to_string()
+        };
         fonts.draw_ui_bold_centered(
-            tab_label,
+            &label,
             tab_x + tab_w * 0.5,
             curr_y + scaler.s(16.0),
             scaler.font_s(10.5),
@@ -1388,6 +1434,7 @@ pub fn render_track_select_menu(
         };
         let end_idx = (start_idx + max_visible).min(total_items);
 
+        let is_tracks_focused = focused_panel == MenuPanelFocus::LeftTracks;
         for i in start_idx..end_idx {
             let is_sel = i == selected_track_idx;
             let box_h = scaler.s(58.0);
@@ -1417,7 +1464,11 @@ pub fn render_track_select_menu(
                 let border_col = if is_active_track {
                     Palette::NEON_GOLD
                 } else if is_sel {
-                    module_accent
+                    if is_tracks_focused {
+                        module_accent
+                    } else {
+                        Color::new(0.35, 0.45, 0.55, 0.90)
+                    }
                 } else {
                     Palette::UI_CARD_BORDER
                 };
@@ -1429,7 +1480,13 @@ pub fn render_track_select_menu(
                     box_h,
                     bg_col,
                     border_col,
-                    if is_sel || is_active_track { 2.2 } else { 1.2 },
+                    if is_sel && is_tracks_focused {
+                        2.4
+                    } else if is_sel || is_active_track {
+                        1.8
+                    } else {
+                        1.2
+                    },
                 );
 
                 // Small Track Vector Thumbnail on right side of card
@@ -1618,7 +1675,11 @@ pub fn render_track_select_menu(
                     Color::new(0.18, 0.08, 0.30, 0.88)
                 };
                 let tm_border = if is_sel {
-                    Palette::NEON_GOLD
+                    if is_tracks_focused {
+                        Palette::NEON_GOLD
+                    } else {
+                        Palette::NEON_MAGENTA
+                    }
                 } else {
                     Palette::NEON_MAGENTA
                 };
@@ -1630,7 +1691,13 @@ pub fn render_track_select_menu(
                     box_h,
                     tm_bg,
                     tm_border,
-                    if is_sel { 2.4 } else { 1.5 },
+                    if is_sel && is_tracks_focused {
+                        2.4
+                    } else if is_sel {
+                        1.8
+                    } else {
+                        1.5
+                    },
                 );
 
                 fonts.draw_ui_bold(
@@ -2361,72 +2428,92 @@ pub fn render_track_select_menu(
         && active_track_id.map_or(false, |aid| {
             aid == available_tracks[selected_track_idx].track_id()
         });
-    let (btn_bg, btn_border, start_prompt) = if is_tm_selected {
-        (
-            Color::new(0.32, 0.12, 0.52, 0.95),
-            Palette::NEON_MAGENTA,
-            "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
-        )
-    } else if is_career_mode {
-        if is_sel_active {
+    let (btn_bg, btn_border, start_prompt) = match focused_panel {
+        MenuPanelFocus::CategoryFilter => (
+            Color::new(0.12, 0.28, 0.45, 0.95),
+            Palette::NEON_GOLD,
+            "CATEGORY FILTER ACTIVE • [LEFT / RIGHT] CHANGE • [DOWN] TO CIRCUITS".to_string(),
+        ),
+        MenuPanelFocus::CatalogFilter => (
+            Color::new(0.08, 0.28, 0.40, 0.95),
+            Palette::NEON_GOLD,
+            "CATALOG TABS ACTIVE • [LEFT / RIGHT] TOGGLE • [DOWN] TO CIRCUITS".to_string(),
+        ),
+        _ => if is_tm_selected {
+            (
+                Color::new(0.32, 0.12, 0.52, 0.95),
+                Palette::NEON_MAGENTA,
+                "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
+            )
+        } else if is_career_mode {
+            if is_sel_active {
+                (
+                    Color::new(0.08, 0.44, 0.22, 0.92),
+                    Palette::NEON_GREEN,
+                    "▶ ACTIVE CAREER CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
+                )
+            } else {
+                (
+                    Color::new(0.20, 0.08, 0.08, 0.90),
+                    Palette::RED,
+                    "🔒 CAREER EVENT LOCKED • CANNOT SWITCH CIRCUIT [ESC: RETURN]".to_string(),
+                )
+            }
+        } else if is_sel_locked {
+            (
+                Palette::UI_CARD_BG,
+                Palette::UI_CARD_BORDER,
+                "CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
+            )
+        } else if is_sel_active {
             (
                 Color::new(0.08, 0.44, 0.22, 0.92),
                 Palette::NEON_GREEN,
-                "▶ ACTIVE CAREER CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string(),
+                if is_lan_host {
+                    "▶ CURRENT LAN CIRCUIT • [ENTER / ESC] RETURN TO LOBBY".to_string()
+                } else {
+                    "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string()
+                },
+            )
+        } else if total_tracks > 0 {
+            (
+                Color::new(0.12, 0.65, 0.32, 0.95),
+                Palette::NEON_GREEN,
+                if is_lan_host {
+                    "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO SET AS LAN CIRCUIT".to_string()
+                } else {
+                    "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string()
+                },
             )
         } else {
             (
-                Color::new(0.20, 0.08, 0.08, 0.90),
-                Palette::RED,
-                "🔒 CAREER EVENT LOCKED • CANNOT SWITCH CIRCUIT [ESC: RETURN]".to_string(),
+                Color::new(0.08, 0.28, 0.40, 0.95),
+                Palette::NEON_CYAN,
+                "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
             )
-        }
-    } else if is_sel_locked {
-        (
-            Palette::UI_CARD_BG,
-            Palette::UI_CARD_BORDER,
-            "CIRCUIT LOCKED • REACH REQUIRED CAREER LEVEL TO UNLOCK".to_string(),
-        )
-    } else if is_sel_active {
-        (
-            Color::new(0.08, 0.44, 0.22, 0.92),
-            Palette::NEON_GREEN,
-            if is_lan_host {
-                "▶ CURRENT LAN CIRCUIT • [ENTER / ESC] RETURN TO LOBBY".to_string()
-            } else {
-                "▶ CURRENT CIRCUIT • [ENTER / ESC] RETURN TO GRID".to_string()
-            },
-        )
-    } else if total_tracks > 0 {
-        (
-            Color::new(0.12, 0.65, 0.32, 0.95),
-            Palette::NEON_GREEN,
-            if is_lan_host {
-                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO SET AS LAN CIRCUIT".to_string()
-            } else {
-                "PRESS [SPACE / ENTER] OR GAMEPAD [A / START] TO RACE".to_string()
-            },
-        )
-    } else {
-        (
-            Color::new(0.08, 0.28, 0.40, 0.95),
-            Palette::NEON_CYAN,
-            "PRESS [SPACE / ENTER] OR [T] TO OPEN CIRCUIT MANAGER".to_string(),
-        )
+        },
     };
     let btn_w = scaler.s(460.0);
     let btn_h = scaler.s(40.0);
     let btn_x = (sw - btn_w) * 0.5;
     let btn_y = sh - btn_h - scaler.s(14.0);
 
-    let footer_text = if is_lan_host {
-        "[Up / Down] Select Circuit  •  [V] Full Circuit View  •  [ENTER] Set LAN Circuit  •  [ESC] Return to Lobby"
-    } else if is_career_mode {
-        "[Q / E or 1-8] Category  •  [Up / Down] Browse Circuits  •  [V] Full Circuit View  •  [ESC] Return to Grid"
-    } else if crate::storage::is_dev_mode() {
-        "[Q / E or 1-8] Category  •  [Left / Right / TAB] Presets/Custom  •  [Up / Down] Track  •  [V] View  •  [T] Manager  •  [ESC] Back"
-    } else {
-        "[Q / E or 1-8] Category  •  [Left / Right / TAB] Presets/Custom  •  [Up / Down] Track  •  [V] View  •  [T] Manager  •  [ESC] Back"
+    let footer_text = match focused_panel {
+        MenuPanelFocus::CategoryFilter => {
+            "[Left / Right / D-Pad] Change Category  •  [Down] Catalog Filter  •  [LB / RB or 1-8] Jump  •  [ESC] Back"
+        }
+        MenuPanelFocus::CatalogFilter => {
+            "[Left / Right / D-Pad] Official / Custom  •  [Up] Category Filter  •  [Down] Circuit List  •  [ESC] Back"
+        }
+        _ => {
+            if is_lan_host {
+                "[Up / Down] Select Circuit  •  [Up at Top] Catalog Tabs  •  [V] Full View  •  [ENTER] Set LAN  •  [ESC] Lobby"
+            } else if is_career_mode {
+                "[Up / Down] Browse Circuits  •  [Up at Top] Catalog Tabs  •  [LB / RB] Category  •  [V] View  •  [ESC] Grid"
+            } else {
+                "[Up / Down] Select Circuit  •  [Up at Top] Catalog Tabs  •  [LB / RB] Category  •  [V] View  •  [T] Manager  •  [ESC] Back"
+            }
+        }
     };
 
     fonts.draw_ui_regular_centered(
