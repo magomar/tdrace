@@ -1,5 +1,6 @@
 pub mod accordion;
 pub mod card_grid;
+pub mod data_table;
 pub mod display;
 pub mod filter_bar;
 pub mod font;
@@ -11,6 +12,7 @@ pub mod widgets;
 
 pub use accordion::{Accordion, AccordionItem, AccordionNavAction};
 pub use card_grid::{CardGrid, CardGridAction, CardGridItem};
+pub use data_table::{ColumnAlign, DataColumn, DataRow, DataTable, TableAction};
 pub use display::{
     safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode,
 };
