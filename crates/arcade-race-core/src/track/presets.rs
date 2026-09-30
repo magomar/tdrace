@@ -455,6 +455,104 @@ pub fn generate_walls_from_spline(
     (left_walls, right_walls, left_pts, right_pts)
 }
 
+/// Merges contiguous collinear wall segments that share endpoints, have the same barrier type,
+/// identical bridge flags, and matching elevation within a tight tolerance.
+pub fn merge_collinear_walls(walls: Vec<WallBarrier>) -> Vec<WallBarrier> {
+    if walls.len() <= 1 {
+        return walls;
+    }
+
+    let mut merged: Vec<WallBarrier> = Vec::with_capacity(walls.len());
+    let mut current = walls[0];
+
+    for next in walls.into_iter().skip(1) {
+        let p0 = current.segment.start;
+        let p1 = current.segment.end;
+        let p2 = next.segment.start;
+        let p3 = next.segment.end;
+
+        let is_connected = (p1 - p2).length_squared() < 0.0025; // within 5 cm
+        let same_type = current.barrier_type == next.barrier_type;
+        let same_bridge = current.is_bridge == next.is_bridge;
+        let same_elev = (current.elevation - next.elevation).abs() < 0.05;
+
+        let v1 = p1 - p0;
+        let v2 = p3 - p2;
+        let len1 = v1.length();
+        let len2 = v2.length();
+
+        let mut can_merge = false;
+        if is_connected && same_type && same_bridge && same_elev && len1 > 1e-4 && len2 > 1e-4 {
+            let dot = (v1.dot(v2) / (len1 * len2)).clamp(-1.0, 1.0);
+            // Collinear if angle < 1.0 degree: cos(1.0 deg) ≈ 0.9998477
+            if dot > 0.9998 {
+                let v_tot = p3 - p0;
+                let len_tot = v_tot.length();
+                if len_tot > 1e-4 {
+                    let perp_dist = (v_tot.perp_dot(p1 - p0)).abs() / len_tot;
+                    if perp_dist < 0.03 {
+                        can_merge = true;
+                    }
+                }
+            }
+        }
+
+        if can_merge {
+            current.segment.end = p3;
+            let w1 = len1 / (len1 + len2);
+            current.elevation = current.elevation * w1 + next.elevation * (1.0 - w1);
+        } else {
+            merged.push(current);
+            current = next;
+        }
+    }
+    merged.push(current);
+
+    if merged.len() > 1 {
+        let last = *merged.last().unwrap();
+        let first = merged[0];
+        let p0 = last.segment.start;
+        let p1 = last.segment.end;
+        let p2 = first.segment.start;
+        let p3 = first.segment.end;
+
+        let is_connected = (p1 - p2).length_squared() < 0.0025;
+        let same_type = last.barrier_type == first.barrier_type;
+        let same_bridge = last.is_bridge == first.is_bridge;
+        let same_elev = (last.elevation - first.elevation).abs() < 0.05;
+
+        let v1 = p1 - p0;
+        let v2 = p3 - p2;
+        let len1 = v1.length();
+        let len2 = v2.length();
+
+        let mut can_merge = false;
+        if is_connected && same_type && same_bridge && same_elev && len1 > 1e-4 && len2 > 1e-4 {
+            let dot = (v1.dot(v2) / (len1 * len2)).clamp(-1.0, 1.0);
+            if dot > 0.9998 {
+                let v_tot = p3 - p0;
+                let len_tot = v_tot.length();
+                if len_tot > 1e-4 {
+                    let perp_dist = (v_tot.perp_dot(p1 - p0)).abs() / len_tot;
+                    if perp_dist < 0.03 {
+                        can_merge = true;
+                    }
+                }
+            }
+        }
+
+        if can_merge {
+            let last_wall = merged.pop().unwrap();
+            let first_wall = &mut merged[0];
+            first_wall.segment.start = last_wall.segment.start;
+            let w_last = len1 / (len1 + len2);
+            first_wall.elevation = last_wall.elevation * w_last + first_wall.elevation * (1.0 - w_last);
+        }
+    }
+
+    merged
+}
+
 /// Generates a sequence of checkpoints distributed along the track spline.
 pub fn generate_checkpoints(
     spline: &TrackSpline,
@@ -944,4 +1042,38 @@ pub fn rally_template(shape: TrackShape, direction: RaceDirection) -> Track {
 pub fn nascar_template(shape: TrackShape, direction: RaceDirection) -> Track {
     create_prototypical_track("nascar", shape, direction)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::Vec2;
+
+    #[test]
+    fn test_merge_collinear_walls() {
+        let w1 = WallBarrier::new(Vec2::new(0.0, 0.0), Vec2::new(10.0, 0.0), BarrierType::Steel);
+        let w2 = WallBarrier::new(Vec2::new(10.0, 0.0), Vec2::new(20.0, 0.0), BarrierType::Steel);
+        let w3 = WallBarrier::new(Vec2::new(20.0, 0.0), Vec2::new(30.0, 0.0), BarrierType::Steel);
+        // Turns 90 degrees:
+        let w4 = WallBarrier::new(Vec2::new(30.0, 0.0), Vec2::new(30.0, 10.0), BarrierType::Steel);
+        // Different barrier type:
+        let w5 = WallBarrier::new(Vec2::new(30.0, 10.0), Vec2::new(30.0, 20.0), BarrierType::Concrete);
+
+        let walls = vec![w1, w2, w3, w4, w5];
+        let merged = merge_collinear_walls(walls);
+
+        assert_eq!(merged.len(), 3);
+        // First merged piece: 0.0 to 30.0
+        assert_eq!(merged[0].segment.start, Vec2::new(0.0, 0.0));
+        assert_eq!(merged[0].segment.end, Vec2::new(30.0, 0.0));
+        assert_eq!(merged[0].barrier_type, BarrierType::Steel);
+        // Second piece: 30.0,0.0 to 30.0,10.0
+        assert_eq!(merged[1].segment.start, Vec2::new(30.0, 0.0));
+        assert_eq!(merged[1].segment.end, Vec2::new(30.0, 10.0));
+        // Third piece: Concrete
+        assert_eq!(merged[2].segment.start, Vec2::new(30.0, 10.0));
+        assert_eq!(merged[2].segment.end, Vec2::new(30.0, 20.0));
+        assert_eq!(merged[2].barrier_type, BarrierType::Concrete);
+    }
+}
+
 

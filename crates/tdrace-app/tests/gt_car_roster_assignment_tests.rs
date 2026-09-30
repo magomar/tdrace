@@ -310,14 +310,14 @@ fn test_category_parity_across_multiple_disciplines() {
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
     assert_eq!(player.car_title, "Hyundai i20 RX Supercar");
 
-    let wrc_models = get_models_for_category("rally", "WRC / RX Supercar");
-    let wrc_ids: Vec<&str> = wrc_models.iter().map(|m| m.id).collect();
+    let rx_models = get_models_for_category("rally", "Euro RX Supercar");
+    let rx_ids: Vec<&str> = rx_models.iter().map(|m| m.id).collect();
 
     for p in session.grid_participants.iter().filter(|p| !p.is_player) {
         let mid = p.model_id.unwrap();
         assert!(
-            wrc_ids.contains(&mid),
-            "Rally bot model '{}' must belong to WRC category",
+            rx_ids.contains(&mid),
+            "Rally bot model '{}' must belong to Euro RX Supercar category",
             mid
         );
     }
