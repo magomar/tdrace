@@ -239,7 +239,6 @@ pub fn compute_curve_arrow_position(
 ) -> Vec2 {
     let zoom = current_zoom.max(0.5);
     let car_pos = player_car.state.position;
-    let elevation = player_car.total_elevation();
 
     // Total width of the chevron cluster
     let deg = degree.clamp(1, 5) as usize;
@@ -252,7 +251,7 @@ pub fn compute_curve_arrow_position(
 
     // Center of the chevron block is offset so the innermost chevron maintains `inner_clearance`
     let lateral_dist = inner_clearance + total_w * 0.5;
-    car_pos + curve_side_vector(player_car, direction) * lateral_dist + Vec2::new(0.0, elevation)
+    car_pos + curve_side_vector(player_car, direction) * lateral_dist
 }
 
 /// Backwards-compatible alias for `compute_curve_arrow_position` without dynamic repositioning overhead.
@@ -310,7 +309,7 @@ pub fn render_curve_indicator(
     let side = curve_side_vector(player_car, status.curve.direction);
     let fwd = player_car.forward_vector();
     let inner_clearance = curve_indicator_inner_clearance(player_car, zoom);
-    let origin = player_car.state.position + Vec2::new(0.0, player_car.total_elevation());
+    let origin = player_car.state.position;
 
     // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size, modulated by scale)
     let chevron_w = (14.0 * pulse_scale * scale) / zoom;
@@ -426,7 +425,7 @@ pub fn render_curve_pacenote(
 
     // Disc sits on the car's own left or right side, like the chevrons
     let side = curve_side_vector(player_car, status.curve.direction);
-    let origin = player_car.state.position + Vec2::new(0.0, player_car.total_elevation());
+    let origin = player_car.state.position;
     let center = origin + side * (curve_indicator_inner_clearance(player_car, zoom) + plate_radius);
 
     let points = compute_pacenote_polyline(spline, &status.curve, center, size);

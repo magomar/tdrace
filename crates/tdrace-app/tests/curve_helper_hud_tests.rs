@@ -77,17 +77,18 @@ fn test_classic_grand_prix_curve_evaluation_at_speed() {
     let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert!(!track.spline.curves.is_empty(), "Track must contain detected curves");
 
-    // Player approaching first corner on main straight (say progress_dist = 50m) at 55 m/s (198 km/h)
-    let lookahead = 200.0;
-    let status_fast = track.spline.upcoming_curve(50.0, 55.0, lookahead);
+    // Player approaching first corner on main straight at 55 m/s (198 km/h)
+    let lookahead_fast = curve_indicator_lookahead(55.0);
+    let status_fast = track.spline.upcoming_curve(50.0, 55.0, lookahead_fast);
     assert!(status_fast.is_some(), "Should detect upcoming curve from main straight");
 
     let s = status_fast.unwrap();
     assert!(s.curve.degree >= 1 && s.curve.degree <= 5);
     assert!(s.required_braking_distance > 0.0, "High speed approach requires braking");
 
-    // Player driving very slowly (5 m/s = 18 km/h)
-    let status_slow = track.spline.upcoming_curve(50.0, 5.0, lookahead);
+    // Player driving very slowly (5 m/s = 18 km/h) approaching corner (e.g. at 230m, 50m before entry at 280m)
+    let lookahead_slow = curve_indicator_lookahead(5.0);
+    let status_slow = track.spline.upcoming_curve(230.0, 5.0, lookahead_slow);
     assert!(status_slow.is_some());
     let s_slow = status_slow.unwrap();
     assert_eq!(s_slow.urgency, 0.0, "Slow approach requires zero braking urgency");
@@ -163,8 +164,9 @@ fn test_curve_arrow_positioning_follows_car_heading_with_clearance() {
     let zoom = 12.0;
 
     for angle in [0.0f32, std::f32::consts::FRAC_PI_2, std::f32::consts::PI, -2.3] {
-        let player_car = Car::new(CarConfig::sports_car()).with_pose(sample.point, angle);
-        let origin = player_car.state.position + glam::Vec2::new(0.0, player_car.total_elevation());
+        let mut player_car = Car::new(CarConfig::sports_car()).with_pose(sample.point, angle);
+        player_car.state.road_elevation = 4.75; // Even on elevated road / bridges, indicator stays beside the car!
+        let origin = player_car.state.position;
         let right = player_car.right_vector();
         let fwd = player_car.forward_vector();
 
@@ -203,10 +205,12 @@ fn test_curve_arrow_positioning_follows_car_heading_with_clearance() {
         assert_eq!(pos_compat, pos_5);
     }
 
-    // 6. A car driving down the screen (facing -Y) shows its right-turn arrow on the screen's left
-    let car_down = Car::new(CarConfig::sports_car()).with_pose(sample.point, -std::f32::consts::FRAC_PI_2);
+    // 6. A car driving down the screen (facing -Y) shows its right-turn arrow on the screen's left, exactly level
+    let mut car_down = Car::new(CarConfig::sports_car()).with_pose(sample.point, -std::f32::consts::FRAC_PI_2);
+    car_down.state.road_elevation = 5.0; // road elevation must NOT cause the indicator to fall behind
     let pos = compute_curve_arrow_position(&car_down, CurveDirection::Right, 3, zoom);
     assert!(pos.x < car_down.state.position.x, "Right arrow of a car facing down must be screen-left");
+    assert!((pos.y - car_down.state.position.y).abs() < 1e-3, "Arrow must remain exactly level with car on Y axis");
 }
 
 #[test]
