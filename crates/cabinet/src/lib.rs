@@ -51,8 +51,8 @@ pub use state::{
 pub use ui::{
     draw_dropdown, draw_dropdown_popup, draw_slider, draw_stepper, draw_tab_bar,
     safe_request_screen_size, safe_set_fullscreen, Accordion, AccordionItem, AccordionNavAction,
-    CabinetTheme, CardGrid, CardGridAction, CardGridItem, ColumnAlign, DataColumn, DataRow,
-    DataTable, DisplayResolution, DropdownWidget, FilterBar, FilterBarAction, FilterBarStyle,
-    FilterItem, Fonts, HStack, LayoutRect, NavBoundaryExit, Palette, SliderWidget, TabBar,
-    TableAction, UiScaler, VStack, WindowMode,
+    CabinetTheme, CardGrid, CardGridAction, CardGridItem, CharFilters, ColumnAlign, DataColumn,
+    DataRow, DataTable, DisplayResolution, DropdownWidget, FilterBar, FilterBarAction,
+    FilterBarStyle, FilterItem, Fonts, HStack, LayoutRect, NavBoundaryExit, Palette, SliderWidget,
+    TabBar, TableAction, TextInputAction, TextInputWidget, UiScaler, VStack, WindowMode,
 };

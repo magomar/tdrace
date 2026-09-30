@@ -7,6 +7,7 @@ pub mod font;
 pub mod layout;
 pub mod scaler;
 pub mod symbols;
+pub mod text_input;
 pub mod theme;
 pub mod widgets;
 
@@ -20,6 +21,7 @@ pub use filter_bar::{FilterBar, FilterBarAction, FilterBarStyle, FilterItem};
 pub use font::Fonts;
 pub use layout::{HStack, LayoutRect, NavBoundaryExit, VStack};
 pub use scaler::UiScaler;
+pub use text_input::{CharFilters, TextInputAction, TextInputWidget};
 pub use theme::{CabinetTheme, Palette};
 pub use widgets::{
     draw_action_button, draw_chip, draw_dropdown, draw_dropdown_popup, draw_slider,
