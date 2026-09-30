@@ -6,6 +6,7 @@ pub mod display;
 pub mod filter_bar;
 pub mod font;
 pub mod layout;
+pub mod metric;
 pub mod scaler;
 pub mod screen_footer;
 pub mod swatch_picker;
@@ -27,6 +28,7 @@ pub use font::Fonts;
 pub use layout::{
     FlowLayout, GridLayout, HStack, LayoutRect, NavBoundaryExit, ScrollIndicator, SplitPane, VStack,
 };
+pub use metric::{KpiTile, MetricBar, MetricBarStyle, ProgressBar};
 pub use scaler::UiScaler;
 pub use screen_footer::{FooterPrompt, HeroActionButton, ScreenFooter};
 pub use swatch_picker::{SwatchAction, SwatchPicker};
