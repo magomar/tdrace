@@ -24,7 +24,9 @@ pub use display::{
 };
 pub use filter_bar::{FilterBar, FilterBarAction, FilterBarStyle, FilterItem};
 pub use font::Fonts;
-pub use layout::{HStack, LayoutRect, NavBoundaryExit, VStack};
+pub use layout::{
+    FlowLayout, GridLayout, HStack, LayoutRect, NavBoundaryExit, ScrollIndicator, SplitPane, VStack,
+};
 pub use scaler::UiScaler;
 pub use screen_footer::{FooterPrompt, HeroActionButton, ScreenFooter};
 pub use swatch_picker::{SwatchAction, SwatchPicker};
