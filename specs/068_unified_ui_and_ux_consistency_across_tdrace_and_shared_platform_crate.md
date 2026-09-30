@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Unified UI and UX Consistency Across TDrace and Shared Platform Crate"
 description: "Establishes a unified platform UI/UX architecture and reusable component suite in cabinet (stacks, filter bars, accordions, card grids, text input, tables, toasts, modals, footer prompts, gamepad navigation) and defines the migration blueprints for tdrace screens to achieve seamless gamepad/keyboard parity and visual consistency across all projects."
-status: implemented
+status: in_progress
 receipt: "docs/receipts/spec-068-receipt.md"
 created: 2026-09-30
 verified: { by: "human:mario", at: "2026-09-30T08:31:00Z" }
@@ -616,9 +616,9 @@ pub struct ScreenFooter {
 - `[x]` [`crates/tdrace-app/tests/modality_flow_tests.rs`](../crates/tdrace-app/tests/modality_flow_tests.rs) — Automated verification of 2D focus navigation, bumper cycling, and strict category circuit isolation.
 
 ### Target Migration Files
-- `[ ]` [`crates/tdrace-app/src/ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) — Migrate category chips to `FilterBar`, circuit cards to `CardGrid`, and search to `TextInputWidget`.
-- `[ ]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) — Migrate vehicle category tabs to `FilterBar`, vehicle roster to `CardGrid`, liveries to `SwatchPicker`.
-- `[ ]` [`crates/tdrace-app/src/ui/career_select.rs`](../crates/tdrace-app/src/ui/career_select.rs) — Migrate championship tier cards to `Accordion`.
-- `[ ]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) — Migrate setup drawers to `Accordion` and race launch to `HeroActionButton`.
-- `[ ]` [`crates/tdrace-app/src/ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) — Migrate rule tabs to `FilterBar` and points/laps to `NumberStepper`.
-- `[ ]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) — Migrate callsign input to `TextInputWidget` and trophy shelf to `CardGrid`.
+- `[x]` [`crates/tdrace-app/src/ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) — Migrate category chips to `FilterBar`, circuit cards to `CardGrid`, and search to `TextInputWidget`.
+- `[x]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) — Migrate vehicle category tabs to `FilterBar`, vehicle roster to `CardGrid`, liveries to `SwatchPicker`.
+- `[x]` [`crates/tdrace-app/src/ui/career_select.rs`](../crates/tdrace-app/src/ui/career_select.rs) — Migrate championship tier cards to `Accordion`.
+- `[x]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) — Migrate setup drawers to `Accordion` and race launch to `HeroActionButton`.
+- `[x]` [`crates/tdrace-app/src/ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) — Migrate rule tabs to `FilterBar` and points/laps to `NumberStepper`.
+- `[x]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) — Migrate callsign input to `TextInputWidget` and trophy shelf to `CardGrid`.
