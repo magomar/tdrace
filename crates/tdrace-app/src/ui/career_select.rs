@@ -4,6 +4,7 @@ use crate::render::color::Palette;
 use crate::series::{ChampionshipManager, ChampionshipSession, SeriesDefinition};
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
+use cabinet::ui::{Accordion, AccordionItem, ScreenFooter};
 use macroquad::prelude::*;
 use std::collections::HashMap;
 
@@ -86,6 +87,29 @@ impl CareerSelectChampionshipCard {
 
     pub fn is_completed(&self) -> bool {
         self.status == ChampionshipCardStatus::Completed
+    }
+}
+
+impl Default for CareerSelectChampionshipCard {
+    fn default() -> Self {
+        Self {
+            series_id: String::new(),
+            series_name: String::new(),
+            module_id: String::new(),
+            module_title: String::new(),
+            tier: 0,
+            tier_name: String::new(),
+            current_round: 0,
+            total_rounds: 0,
+            status: ChampionshipCardStatus::New,
+            trophy: None,
+            player_points: 0,
+            player_rank: 0,
+            total_drivers: 0,
+            next_track_id: String::new(),
+            next_track_name: String::new(),
+            accent_color: Color::new(1.0, 1.0, 1.0, 1.0),
+        }
     }
 }
 
@@ -699,14 +723,44 @@ pub fn render_career_select_screen(
     let bottom_clip = sh - scaler.s(45.0);
 
     // =========================================================================
-    // ACCORDION ROWS LIST: Collapsed rows by default, Expanded selected row
+    // ACCORDION ROWS LIST: Collapsed rows by default, Expanded selected row.
+    // Uses the platform Accordion in single-expand mode; it replaces the manual
+    // collapsed(52px)/expanded(148px) height interpolation and scroll viewport offset.
     // =========================================================================
-    for (idx, card) in cards.iter().enumerate() {
-        let rect = career_select_card_rect(idx, selected_idx, sw, sh);
+    let top_y = scaler.s(80.0);
+    let bottom_limit = sh - scaler.s(55.0);
+    let card_width = (sw * 0.90).clamp(scaler.s(640.0), scaler.s(1180.0));
+    let card_x = (sw - card_width) * 0.5;
+
+    let accordion_items: Vec<AccordionItem<CareerSelectChampionshipCard>> = cards
+        .iter()
+        .map(|card| {
+            let mut item = AccordionItem::new(
+                card.series_id.clone(),
+                card.series_name.clone(),
+                card.accent_color,
+            );
+            item.subtitle = Some(card.module_title.clone());
+            item.tag = Some(module_badge_label(&card.module_id));
+            item.data = card.clone();
+            item
+        })
+        .collect();
+    let accordion = Accordion::new(
+        accordion_items,
+        scaler.s(52.0),
+        scaler.s(148.0),
+        scaler.s(8.0),
+    )
+    .with_selected(selected_idx);
+    let (row_rects, _scroll_y) = accordion.compute_rects(card_x, card_width, top_y, bottom_limit);
+
+    for (idx, rect, _is_expanded) in row_rects {
         if rect.y + rect.h < top_clip || rect.y > bottom_clip {
             continue;
         }
 
+        let card = &cards[idx];
         let is_selected = idx == selected_idx;
 
         if is_selected {
@@ -1052,31 +1106,31 @@ pub fn render_career_select_screen(
         }
     }
 
-    // Bottom Navigation Bar
-    let nav_y = sh - scaler.s(26.0);
+    // Bottom Navigation Bar (platform ScreenFooter)
     let nav_fs = scaler.font_s(11.5);
-    draw_rectangle(
-        0.0,
-        sh - scaler.s(42.0),
-        sw,
-        scaler.s(42.0),
-        Color::new(0.03, 0.04, 0.06, 0.95),
-    );
-    draw_line(
-        0.0,
-        sh - scaler.s(42.0),
-        sw,
-        sh - scaler.s(42.0),
-        1.0,
-        Color::new(0.15, 0.18, 0.25, 0.70),
-    );
-
-    let nav_str = "[W/S / UP/DOWN] SELECT / EXPAND CHAMPIONSHIP     [ENTER / SPACE] LAUNCH / RESUME / REPLAY     [R] RESET SEASON     [ESC] BACK";
-    fonts.draw_ui_regular(
-        nav_str,
-        scaler.s(48.0),
-        nav_y,
-        nav_fs,
-        Color::new(0.85, 0.88, 0.92, 1.0),
-    );
+    let footer = {
+        let mut footer = ScreenFooter::new(0.0, sh - scaler.s(42.0), sw, scaler.s(42.0));
+        footer.add_prompt("W/S", "Select / Expand");
+        footer.add_prompt("ENTER", "Launch / Resume / Replay");
+        footer.add_prompt("R", "Reset Season");
+        footer.add_prompt("ESC", "Back");
+        footer
+    };
+    footer.render_frame();
+    let footer_bounds = footer.bounds();
+    let prompt_w = footer_bounds.w / footer.prompts.len().max(1) as f32;
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let text = fonts.fit_ui_bold(
+            &format!("[{}] {}", prompt.badge, prompt.label),
+            nav_fs,
+            prompt_w - scaler.s(8.0),
+        );
+        fonts.draw_ui_bold_centered(
+            &text,
+            footer_bounds.x + (i as f32 + 0.5) * prompt_w,
+            footer_bounds.y + footer_bounds.h * 0.65,
+            nav_fs,
+            Palette::WHITE,
+        );
+    }
 }
