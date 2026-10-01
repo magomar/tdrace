@@ -181,8 +181,8 @@ mod tests {
 
     #[test]
     fn test_head_on_car_car_elastic_collision() {
-        let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.0, 0.0), 0.0);
-        let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.0, 0.0), std::f32::consts::PI);
+        let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.8, 0.0), 0.0);
+        let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.8, 0.0), std::f32::consts::PI);
 
         car_a.state.velocity = Vec2::new(10.0, 0.0);
         car_b.state.velocity = Vec2::new(-10.0, 0.0);

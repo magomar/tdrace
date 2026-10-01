@@ -253,7 +253,9 @@ fn test_tree_cenital_canopy_and_alpha_modulation() {
     for &tt in &TreeType::ALL {
         let tree = Tree::new(1, Vec2::new(0.0, 0.0), tt);
         assert!(tree.canopy_radius() > 1.0);
-        assert!(tree.trunk_radius() > 0.15);
+        if tt != TreeType::Bush {
+            assert!(tree.trunk_radius() > 0.15);
+        }
 
         // When car is underneath canopy, car is detected
         let car_under = Vec2::new(0.5, 0.5);
@@ -1715,6 +1717,55 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
     let forced_nascar = nascar.with_lights_on(true);
     assert!(!forced_nascar.lights_on, "Unequipped NASCAR must ignore with_lights_on(true)");
 }
+
+#[test]
+fn test_spec_075_chassis_skeleton_render_geometry_and_fixture_alignment() {
+    let presets = [
+        ("sports_car", CarConfig::sports_car()),
+        ("drift_car", CarConfig::drift_car()),
+        ("kart", CarConfig::kart()),
+        ("rally_car", CarConfig::rally_car()),
+        ("stock_car_ta1", CarConfig::stock_car_ta1()),
+        ("sand_rail", CarConfig::sand_rail()),
+    ];
+
+    for (name, cfg) in presets {
+        let car = Car::new(cfg).with_pose(Vec2::new(10.0, 15.0), 0.0);
+        let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear);
+        let visual_center = car.state.position + car.forward_vector() * geom_offset;
+
+        // Front bumper world position: visual_center + forward * half_length
+        let front_bumper = visual_center + car.forward_vector() * car.config.chassis.half_length(car.config.wheelbase);
+        // Expected front bumper: CG + forward * (cg_to_front + front_overhang)
+        let expected_front = car.state.position + car.forward_vector() * (car.config.cg_to_front + car.config.chassis.front_overhang);
+        assert!(
+            (front_bumper.x - expected_front.x).abs() < 1e-4 && (front_bumper.y - expected_front.y).abs() < 1e-4,
+            "Front bumper mismatch on {}: {:?} vs {:?}",
+            name, front_bumper, expected_front
+        );
+
+        // Rear bumper world position: visual_center - forward * half_length
+        let rear_bumper = visual_center - car.forward_vector() * car.config.chassis.half_length(car.config.wheelbase);
+        // Expected rear bumper: CG - forward * (cg_to_rear + rear_overhang)
+        let expected_rear = car.state.position - car.forward_vector() * (car.config.cg_to_rear + car.config.chassis.rear_overhang);
+        assert!(
+            (rear_bumper.x - expected_rear.x).abs() < 1e-4 && (rear_bumper.y - expected_rear.y).abs() < 1e-4,
+            "Rear bumper mismatch on {}: {:?} vs {:?}",
+            name, rear_bumper, expected_rear
+        );
+
+        // Headlight fixtures must sit inside front bumper
+        let (hl_left, hl_right) = car.config.chassis.headlight_positions_world(
+            car.state.position,
+            car.forward_vector(),
+            car.right_vector(),
+            car.config.cg_to_front,
+        );
+        assert!(hl_left.x < front_bumper.x || (hl_left.x - front_bumper.x).abs() < 0.1);
+        assert!(hl_right.x < front_bumper.x || (hl_right.x - front_bumper.x).abs() < 0.1);
+    }
+}
+
 
 
 

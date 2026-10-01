@@ -1,6 +1,6 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::{
-    CarConfig, DifferentialType, DriverAssistsConfig, TerrainInteractionConfig, TireConfig,
+    CarConfig, ChassisSkeleton, DifferentialType, DriverAssistsConfig, TerrainInteractionConfig, TireConfig,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -102,7 +102,9 @@ impl GtWorldChallengeModule {
                 0.65,
                 0.0,
             ),
+            chassis: ChassisSkeleton::new(0.88, 1.18, 2.04, -0.40, 0.30, 0.65, 0.70, 0.05),
         }
+        .finalized()
     }
 
     /// SRO GT2 Biturbo Sprint Spec (raw straight-line missile)

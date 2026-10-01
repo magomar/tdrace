@@ -99,10 +99,14 @@ impl Body2D for Car {
     }
     #[inline]
     fn hull(&self) -> BodyHull {
+        let (front, rear, half_width) = self
+            .config
+            .chassis
+            .to_body_hull(self.config.cg_to_front, self.config.cg_to_rear);
         BodyHull {
-            front: self.config.cg_to_front,
-            rear: self.config.cg_to_rear,
-            half_width: self.config.track_width * 0.5,
+            front,
+            rear,
+            half_width,
         }
     }
     #[inline]

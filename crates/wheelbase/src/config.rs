@@ -1,3 +1,4 @@
+use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 /// Configuration for an individual wheel corner or axle assembly.
@@ -536,6 +537,131 @@ pub fn default_rear_differential() -> DifferentialType {
     }
 }
 
+/// Physical exterior chassis dimensions and anchor points.
+///
+/// Decouples visual geometry and collision bounds from dynamic mass distribution.
+/// All longitudinal measurements are relative to front and rear axle centers.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct ChassisSkeleton {
+    /// Distance from front axle center to outermost front bumper / splitter tip (meters).
+    pub front_overhang: f32,
+    /// Distance from rear axle center to outermost rear bumper / diffuser edge (meters).
+    pub rear_overhang: f32,
+    /// Overall bodywork/fender width (meters).
+    pub body_width: f32,
+    /// Longitudinal distance from front axle to front edge of cockpit/cabin (meters, negative = rearward).
+    pub cabin_start_offset: f32,
+    /// Longitudinal distance from rear axle to rear edge of cockpit/cabin (meters, positive = forward).
+    pub cabin_end_offset: f32,
+    /// Lateral headlight socket spread expressed as a fraction of `body_width` [0.0..1.0].
+    pub headlight_spread: f32,
+    /// Lateral taillight socket spread expressed as a fraction of `body_width` [0.0..1.0].
+    pub taillight_spread: f32,
+    /// Longitudinal inset from bumper edges for light fixtures (meters).
+    pub light_inset: f32,
+}
+
+impl Default for ChassisSkeleton {
+    fn default() -> Self {
+        Self {
+            front_overhang: 0.80,
+            rear_overhang: 0.90,
+            body_width: 1.80,
+            cabin_start_offset: -0.40,
+            cabin_end_offset: 0.30,
+            headlight_spread: 0.65,
+            taillight_spread: 0.70,
+            light_inset: 0.05,
+        }
+    }
+}
+
+impl ChassisSkeleton {
+    pub const fn new(
+        front_overhang: f32,
+        rear_overhang: f32,
+        body_width: f32,
+        cabin_start_offset: f32,
+        cabin_end_offset: f32,
+        headlight_spread: f32,
+        taillight_spread: f32,
+        light_inset: f32,
+    ) -> Self {
+        Self {
+            front_overhang,
+            rear_overhang,
+            body_width,
+            cabin_start_offset,
+            cabin_end_offset,
+            headlight_spread,
+            taillight_spread,
+            light_inset,
+        }
+    }
+
+    /// Synthesizes a proportional default chassis skeleton from wheelbase and track width.
+    pub fn synthesize_proportional(wheelbase: f32, track_width: f32) -> Self {
+        Self {
+            front_overhang: (wheelbase * 0.32).clamp(0.12, 1.30),
+            rear_overhang: (wheelbase * 0.38).clamp(0.10, 1.40),
+            body_width: track_width + 0.30,
+            cabin_start_offset: -wheelbase * 0.16,
+            cabin_end_offset: wheelbase * 0.12,
+            headlight_spread: 0.65,
+            taillight_spread: 0.70,
+            light_inset: 0.05,
+        }
+    }
+
+    /// Computes total bumper-to-bumper vehicle length given a wheelbase.
+    #[inline]
+    pub const fn total_length(&self, wheelbase: f32) -> f32 {
+        wheelbase + self.front_overhang + self.rear_overhang
+    }
+
+    /// Computes half of the total vehicle length.
+    #[inline]
+    pub const fn half_length(&self, wheelbase: f32) -> f32 {
+        self.total_length(wheelbase) * 0.5
+    }
+
+    /// Computes the half-width of the vehicle bodywork.
+    #[inline]
+    pub const fn half_width(&self) -> f32 {
+        self.body_width * 0.5
+    }
+
+    /// Computes the signed longitudinal offset from Center of Gravity (CG) to the geometric center.
+    ///
+    /// Positive offset indicates geometric center is forward of CG; negative indicates rearward of CG.
+    #[inline]
+    pub fn geometric_center_offset_from_cg(&self, lf: f32, lr: f32) -> f32 {
+        let front_extent = lf + self.front_overhang;
+        let rear_extent = lr + self.rear_overhang;
+        (front_extent - rear_extent) * 0.5
+    }
+
+    /// Computes world positions of left and right headlight fixtures.
+    pub fn headlight_positions_world(&self, pos: Vec2, fwd: Vec2, right: Vec2, lf: f32) -> (Vec2, Vec2) {
+        let front_tip = pos + fwd * (lf + self.front_overhang - self.light_inset);
+        let half_spread = self.half_width() * self.headlight_spread;
+        (front_tip - right * half_spread, front_tip + right * half_spread)
+    }
+
+    /// Computes world positions of left and right taillight/brakelight fixtures.
+    pub fn taillight_positions_world(&self, pos: Vec2, fwd: Vec2, right: Vec2, lr: f32) -> (Vec2, Vec2) {
+        let rear_tip = pos - fwd * (lr + self.rear_overhang - self.light_inset);
+        let half_spread = self.half_width() * self.taillight_spread;
+        (rear_tip - right * half_spread, rear_tip + right * half_spread)
+    }
+
+    /// Computes `(front_extent, rear_extent, half_width)` for SAT collision `BodyHull`.
+    #[inline]
+    pub fn to_body_hull(&self, lf: f32, lr: f32) -> (f32, f32, f32) {
+        (lf + self.front_overhang, lr + self.rear_overhang, self.half_width())
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(from = "CarConfigRaw")]
@@ -626,6 +752,9 @@ pub struct CarConfig {
     /// Decoupled wheel assembly configurations for all 4 corners [FL, FR, RL, RR].
     #[serde(default = "default_wheel_assemblies")]
     pub wheels: [WheelAssemblyConfig; 4],
+    /// Physical exterior chassis skeleton defining overhangs, body width, and fixture anchors.
+    #[serde(default)]
+    pub chassis: ChassisSkeleton,
 }
 
 #[derive(Deserialize)]
@@ -684,6 +813,8 @@ struct CarConfigRaw {
     pub player: PlayerHandling,
     #[serde(default)]
     pub wheels: Option<[WheelAssemblyConfig; 4]>,
+    #[serde(default)]
+    pub chassis: Option<ChassisSkeleton>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -699,6 +830,10 @@ impl From<CarConfigRaw> for CarConfig {
             } else {
                 default_rear_differential()
             }
+        });
+
+        let chassis = raw.chassis.unwrap_or_else(|| {
+            ChassisSkeleton::synthesize_proportional(raw.wheelbase, raw.track_width)
         });
 
         let mut cfg = Self {
@@ -742,6 +877,7 @@ impl From<CarConfigRaw> for CarConfig {
             terrain: raw.terrain,
             player: raw.player,
             wheels,
+            chassis,
         };
         cfg.finalize();
         cfg
@@ -816,6 +952,9 @@ impl CarConfig {
             w.brake_bias_factor = if front { bb * 0.5 } else { (1.0 - bb) * 0.5 };
             w.drive_torque_factor = if front { db * 0.5 } else { (1.0 - db) * 0.5 };
         }
+        if self.chassis.body_width <= 0.0 {
+            self.chassis = ChassisSkeleton::synthesize_proportional(self.wheelbase, self.track_width);
+        }
     }
 
     /// Builder form of [`CarConfig::finalize`].
@@ -877,6 +1016,7 @@ impl CarConfig {
             terrain: TerrainInteractionConfig::default(),
             player: PlayerHandling::default(),
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
+            chassis: ChassisSkeleton::new(0.80, 0.90, 1.70, -0.40, 0.30, 0.65, 0.70, 0.05),
         }
         .finalized()
     }
@@ -1019,6 +1159,7 @@ impl CarConfig {
             },
             player: PlayerHandling::default(),
             wheels,
+            chassis: ChassisSkeleton::new(0.16, 0.12, 1.10, -0.15, 0.10, 0.65, 0.70, 0.05),
         }
         .finalized()
     }
@@ -1031,6 +1172,7 @@ impl CarConfig {
     /// Rally spec: AWD traction, softened tire curve for loose surfaces, high ride height.
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
+        cfg.chassis = ChassisSkeleton::new(0.76, 0.68, 1.82, -0.35, 0.25, 0.65, 0.70, 0.05);
         cfg.drive_bias = 0.5; // AWD
         cfg.angular_damping = 126.0;
         cfg.engine_brake_front_share = 0.50;
@@ -1159,6 +1301,7 @@ impl CarConfig {
             terrain: TerrainInteractionConfig::default(),
             player: PlayerHandling::default(),
             wheels,
+            chassis: ChassisSkeleton::new(0.98, 1.25, 1.98, -0.45, 0.35, 0.70, 0.75, 0.06),
         }
         .finalized()
     }
@@ -1262,6 +1405,7 @@ impl CarConfig {
             },
             player: PlayerHandling::default(),
             wheels,
+            chassis: ChassisSkeleton::new(0.15, 0.42, 1.95, -0.40, 0.25, 0.60, 0.65, 0.05),
         }
         .finalized()
     }

@@ -375,14 +375,16 @@ impl FastRasterizer {
         let fwd = car.forward_vector();
         let right = car.right_vector();
 
-        let half_l = car.config.wheelbase * 0.75;
-        let half_w = car.config.track_width * 0.55;
+        let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear);
+        let center = pos + fwd * geom_offset;
+        let half_l = car.config.chassis.half_length(car.config.wheelbase);
+        let half_w = car.config.chassis.half_width();
 
         // 4 Car chassis corners
-        let c_fl = w2s(pos + fwd * half_l - right * half_w);
-        let c_fr = w2s(pos + fwd * half_l + right * half_w);
-        let c_rr = w2s(pos - fwd * half_l + right * half_w);
-        let c_rl = w2s(pos - fwd * half_l - right * half_w);
+        let c_fl = w2s(center + fwd * half_l - right * half_w);
+        let c_fr = w2s(center + fwd * half_l + right * half_w);
+        let c_rr = w2s(center - fwd * half_l + right * half_w);
+        let c_rl = w2s(center - fwd * half_l - right * half_w);
 
         // Draw car body quad
         Self::draw_screen_triangle(c_fl, c_fr, c_rr, body_color, width, height, buffer);
@@ -391,10 +393,10 @@ impl FastRasterizer {
         // Draw roof / windshield quad
         let roof_l = half_l * 0.45;
         let roof_w = half_w * 0.70;
-        let r_fl = w2s(pos + fwd * roof_l - right * roof_w);
-        let r_fr = w2s(pos + fwd * roof_l + right * roof_w);
-        let r_rr = w2s(pos - fwd * roof_l + right * roof_w);
-        let r_rl = w2s(pos - fwd * roof_l - right * roof_w);
+        let r_fl = w2s(center + fwd * roof_l - right * roof_w);
+        let r_fr = w2s(center + fwd * roof_l + right * roof_w);
+        let r_rr = w2s(center - fwd * roof_l + right * roof_w);
+        let r_rl = w2s(center - fwd * roof_l - right * roof_w);
         let roof_color = [35, 40, 50];
         Self::draw_screen_triangle(r_fl, r_fr, r_rr, roof_color, width, height, buffer);
         Self::draw_screen_triangle(r_fl, r_rr, r_rl, roof_color, width, height, buffer);

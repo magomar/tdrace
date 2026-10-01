@@ -123,7 +123,7 @@ pub fn render_car_lights(
 /// Renders a vehicle topdown textured sprite with modality-governed lighting.
 pub fn render_vehicle_topdown_sprite(
     texture: &Texture2D,
-    chassis_center: Vec2,
+    visual_center: Vec2,
     angle: f32,
     fwd: Vec2,
     right: Vec2,
@@ -144,18 +144,18 @@ pub fn render_vehicle_topdown_sprite(
 
     draw_texture_ex(
         texture,
-        chassis_center.x - dest_w * 0.5,
-        chassis_center.y - dest_h * 0.5,
+        visual_center.x - dest_w * 0.5,
+        visual_center.y - dest_h * 0.5,
         Color::new(1.0, 1.0, 1.0, 1.0),
         DrawTextureParams {
             dest_size: Some(macroquad::math::Vec2::new(dest_w, dest_h)),
             rotation: draw_angle,
-            pivot: Some(macroquad::math::Vec2::new(chassis_center.x, chassis_center.y)),
+            pivot: Some(macroquad::math::Vec2::new(visual_center.x, visual_center.y)),
             ..Default::default()
         },
     );
 
-    render_car_lights(chassis_center, fwd, right, body_half_len, body_half_w, is_braking, lighting_cfg);
+    render_car_lights(visual_center, fwd, right, body_half_len, body_half_w, is_braking, lighting_cfg);
 }
 
 /// Context passed to top-down sprite rendering when steered wheel animation is enabled.
@@ -327,22 +327,22 @@ pub fn render_car_with_visual_type_model_and_shadows(
     let elevation_lift = Vec2::new(0.0, -z_lift * 1.6);
     let air_scale = 1.0 + (z_lift * 0.07).min(0.35);
 
+    let hub_center = pos + elevation_lift;
     let chassis_center = pos + right * roll_offset_lat + fwd * pitch_offset_long + elevation_lift;
 
-    // Dimensions from car config
+    // Dimensions from car config & ChassisSkeleton
     let half_w = (car.config.track_width * 0.5) * air_scale;
     let lf = car.config.cg_to_front * air_scale;
     let lr = car.config.cg_to_rear * air_scale;
-    let total_len = lf + lr + 0.50 * air_scale; // include overhangs
-    let body_half_len = total_len * 0.5;
-    let body_half_w = half_w + 0.12 * air_scale;
+    let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear) * air_scale;
+    let visual_center = chassis_center + fwd * geom_offset;
+    let body_half_len = car.config.chassis.half_length(car.config.wheelbase) * air_scale;
+    let body_half_w = car.config.chassis.half_width() * air_scale;
 
     // 1. --- 2.5D Drop Shadow ---
     if shadows_enabled {
-        // Ground shadow offset: subtle directional bias (light coming from top-left)
-        // Scaled realistically: ~0.06m - 0.08m grounded, expanding gracefully with airborne jump elevation
         let shadow_offset = Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40);
-        let shadow_pos = pos + shadow_offset;
+        let shadow_pos = pos + shadow_offset + fwd * geom_offset;
         let shadow_scale = 1.0 + (z_lift * 0.08).min(0.40);
         let shadow_alpha = (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0);
 
@@ -362,7 +362,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
     // Forward track illumination cone projected onto track surface ahead of vehicle
     if lighting_cfg.project_track_beams {
         crate::render::lighting::render_headlight_track_beams(
-            chassis_center,
+            visual_center,
             fwd,
             right,
             body_half_len,
@@ -381,8 +381,8 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
                 let lf = cfg.front_axle_offset * air_scale;
                 let half_w = cfg.half_track_width * air_scale;
-                let p_fl = chassis_center + fwd * lf - right * half_w;
-                let p_fr = chassis_center + fwd * lf + right * half_w;
+                let p_fl = hub_center + fwd * lf - right * half_w;
+                let p_fr = hub_center + fwd * lf + right * half_w;
                 let ang_fl = angle + steer_fl;
                 let ang_fr = angle + steer_fr;
                 let wheel_size = cfg.wheel_size * air_scale;
@@ -405,7 +405,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 // 3. Chassis bodywork
                 render_vehicle_topdown_sprite(
                     &texture,
-                    chassis_center,
+                    visual_center,
                     angle,
                     fwd,
                     right,
@@ -426,7 +426,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
             render_vehicle_topdown_sprite(
                 &texture,
-                chassis_center,
+                visual_center,
                 angle,
                 fwd,
                 right,
@@ -443,10 +443,10 @@ pub fn render_car_with_visual_type_model_and_shadows(
     let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
     let wheel_steers = [steer_fl, steer_fr, 0.0, 0.0];
     let wheel_positions = [
-        chassis_center + fwd * lf - right * half_w,
-        chassis_center + fwd * lf + right * half_w,
-        chassis_center - fwd * lr - right * half_w,
-        chassis_center - fwd * lr + right * half_w,
+        hub_center + fwd * lf - right * half_w,
+        hub_center + fwd * lf + right * half_w,
+        hub_center - fwd * lr - right * half_w,
+        hub_center - fwd * lr + right * half_w,
     ];
 
 
@@ -460,30 +460,30 @@ pub fn render_car_with_visual_type_model_and_shadows(
             }
 
             // Monocoque, nosecone, sidepods
-            render_open_wheel_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme, front_wing_span, rear_wing_height, halo, is_braking);
+            render_open_wheel_body(visual_center, fwd, right, body_half_len, body_half_w, color_scheme, front_wing_span, rear_wing_height, halo, is_braking);
         }
         VehicleVisualType::GoKart { exposed_driver, side_bumpers } => {
             for i in 0..4 {
                 render_wheel(wheel_positions[i], angle + wheel_steers[i], false);
             }
-            render_kart_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme, exposed_driver, side_bumpers, is_braking);
+            render_kart_body(visual_center, fwd, right, body_half_len, body_half_w, color_scheme, exposed_driver, side_bumpers, is_braking);
         }
         VehicleVisualType::RallyHatch { roof_scoop, mudflaps, large_wing } => {
             for i in 0..4 {
                 render_wheel(wheel_positions[i], angle + wheel_steers[i], false);
             }
             if mudflaps {
-                render_mudflaps(chassis_center, &wheel_positions, fwd, right);
+                render_mudflaps(visual_center, &wheel_positions, fwd, right);
             }
-            render_rally_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme, roof_scoop, large_wing, is_braking, &lighting_cfg);
+            render_rally_body(visual_center, fwd, right, body_half_len, body_half_w, color_scheme, roof_scoop, large_wing, is_braking, &lighting_cfg);
         }
         VehicleVisualType::TouringGT { .. } => {
             for i in 0..4 {
                 render_wheel(wheel_positions[i], angle + wheel_steers[i], false);
             }
-            render_chassis_body(chassis_center, fwd, right, body_half_len, body_half_w, color_scheme);
-            render_cockpit(chassis_center, fwd, right, color_scheme);
-            render_car_details(chassis_center, fwd, right, body_half_len, body_half_w, is_braking, &lighting_cfg);
+            render_chassis_body(visual_center, fwd, right, body_half_len, body_half_w, color_scheme);
+            render_cockpit(visual_center, fwd, right, color_scheme);
+            render_car_details(visual_center, fwd, right, body_half_len, body_half_w, is_braking, &lighting_cfg);
         }
         VehicleVisualType::StockCar { tall_wing, roof_fins, window_net } => {
             for i in 0..4 {
@@ -491,7 +491,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
             }
             render_stock_car_body(
                 car,
-                chassis_center,
+                visual_center,
                 fwd,
                 right,
                 body_half_len,
@@ -510,10 +510,10 @@ pub fn render_car_with_visual_type_model_and_shadows(
         } => {
             let rear_half_w = half_w * 1.08;
             let sand_rail_wheels = [
-                chassis_center + fwd * lf - right * half_w,
-                chassis_center + fwd * lf + right * half_w,
-                chassis_center - fwd * lr - right * rear_half_w,
-                chassis_center - fwd * lr + right * rear_half_w,
+                hub_center + fwd * lf - right * half_w,
+                hub_center + fwd * lf + right * half_w,
+                hub_center - fwd * lr - right * rear_half_w,
+                hub_center - fwd * lr + right * rear_half_w,
             ];
 
             render_sand_rail_suspension(chassis_center, &sand_rail_wheels, fwd, right);
@@ -527,7 +527,7 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
             render_sand_rail_body(
                 car,
-                chassis_center,
+                visual_center,
                 fwd,
                 right,
                 body_half_len,
@@ -682,16 +682,19 @@ fn render_wheel(pos: Vec2, angle: f32, is_wide_slick: bool) {
 }
 
 /// Renders exposed double-wishbone suspension arms for open-wheel vehicles.
-fn render_open_wheel_suspension(chassis: Vec2, wheels: &[Vec2; 4], _fwd: Vec2, _right: Vec2) {
+fn render_open_wheel_suspension(_chassis: Vec2, wheels: &[Vec2; 4], _fwd: Vec2, _right: Vec2) {
     let arm_col = Color::new(0.18, 0.18, 0.22, 0.95);
     let th = 0.06;
 
+    let front_hub = (wheels[0] + wheels[1]) * 0.5;
+    let rear_hub = (wheels[2] + wheels[3]) * 0.5;
+
     // Front left & right wishbones
-    draw_line(chassis.x, chassis.y, wheels[0].x, wheels[0].y, th, arm_col);
-    draw_line(chassis.x, chassis.y, wheels[1].x, wheels[1].y, th, arm_col);
+    draw_line(front_hub.x, front_hub.y, wheels[0].x, wheels[0].y, th, arm_col);
+    draw_line(front_hub.x, front_hub.y, wheels[1].x, wheels[1].y, th, arm_col);
     // Rear left & right wishbones
-    draw_line(chassis.x, chassis.y, wheels[2].x, wheels[2].y, th, arm_col);
-    draw_line(chassis.x, chassis.y, wheels[3].x, wheels[3].y, th, arm_col);
+    draw_line(rear_hub.x, rear_hub.y, wheels[2].x, wheels[2].y, th, arm_col);
+    draw_line(rear_hub.x, rear_hub.y, wheels[3].x, wheels[3].y, th, arm_col);
 }
 
 /// Renders open-wheel aerodynamic body, wings, sidepods, and halo.
@@ -1486,7 +1489,7 @@ fn render_sand_rail_suspension(chassis: Vec2, wheels: &[Vec2; 4], fwd: Vec2, rig
     let shock_res = Color::new(0.95, 0.80, 0.10, 1.0); // Anodized gold piggyback reservoir
 
     // Front long-travel A-arms (dual wishbones)
-    let front_bulkhead = chassis + fwd * 0.75;
+    let front_bulkhead = (wheels[0] + wheels[1]) * 0.5;
     for (side, idx) in [(-1.0f32, 0), (1.0f32, 1)] {
         let wh = wheels[idx];
         let inner_upper = front_bulkhead + right * (side * 0.20) + fwd * 0.10;

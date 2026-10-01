@@ -351,6 +351,24 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
     }
 }
 
+/// Derives default steered wheel dimensions from a vehicle's physical chassis and wheels if modular animation is enabled.
+pub fn derive_steered_wheel_config(
+    model_id: &str,
+    car_config: &tdrace_core::physics::CarConfig,
+) -> Option<SteeredWheelConfig> {
+    if let Some(mut cfg) = get_steered_wheel_config(model_id) {
+        if cfg.front_axle_offset <= 0.0 {
+            cfg.front_axle_offset = car_config.cg_to_front;
+        }
+        if cfg.half_track_width <= 0.0 {
+            cfg.half_track_width = car_config.track_width * 0.5;
+        }
+        Some(cfg)
+    } else {
+        None
+    }
+}
+
 /// Retrieves or loads a standalone high-resolution top-down wheel texture.
 pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
     let mut guard = WHEEL_TEXTURE_CACHE.lock().unwrap_or_else(|e| e.into_inner());

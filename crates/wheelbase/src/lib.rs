@@ -14,7 +14,7 @@ pub mod tire;
 pub use bike::{Motorbike, MotorbikeConfig, MotorbikeControls, MotorbikeState};
 pub use car::{normalize_angle, Car, CarControls, CarState, JumpRampProperties};
 pub use config::{
-    default_wheel_assemblies, pacejka_peak_slip_angle_deg, CarConfig, DifferentialType,
+    default_wheel_assemblies, pacejka_peak_slip_angle_deg, CarConfig, ChassisSkeleton, DifferentialType,
     DriverAssistsConfig, PacejkaTireConfig, PlayerHandling, RearAxleTire, TireConfig, WheelAssemblyConfig,
 };
 pub use surface::{SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
