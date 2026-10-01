@@ -49,7 +49,8 @@ pub fn generate_turbo_spool_loop(sample_rate: u32) -> Vec<u8> {
 
     for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
         let t = i as f32 / sample_rate as f32;
-        let whistle = Oscillator::sine(t * base_hz) * 0.70 + Oscillator::sine(t * (base_hz * 2.0)) * 0.15;
+        let whistle =
+            Oscillator::sine(t * base_hz) * 0.70 + Oscillator::sine(t * (base_hz * 2.0)) * 0.15;
         let air_rush = bp_filter.process(noise_gen.next_sample()) * 0.15;
 
         *sample = soft_saturate(whistle + air_rush, 1.1) * 0.75;
@@ -225,8 +226,13 @@ impl AuxiliaryAudioLayer {
                 0.0
             };
 
-            let spool_speed = if target_spool > self.turbo_spool_level { 3.5 } else { 2.0 };
-            self.turbo_spool_level += (target_spool - self.turbo_spool_level) * (dt * spool_speed).min(1.0);
+            let spool_speed = if target_spool > self.turbo_spool_level {
+                3.5
+            } else {
+                2.0
+            };
+            self.turbo_spool_level +=
+                (target_spool - self.turbo_spool_level) * (dt * spool_speed).min(1.0);
 
             // Turbo spool pitch and volume
             let spool_rate = (0.7 + self.turbo_spool_level * 1.6).clamp(0.5, 2.5);
@@ -269,22 +275,41 @@ impl AuxiliaryAudioLayer {
                 | EngineSoundType::MonsterTruckBlower
                 | EngineSoundType::SportGT
                 | EngineSoundType::RallyTurbo
+                | EngineSoundType::Generic
         );
-        if allows_crackle && throttle < 0.08 && rpm > 5600.0 {
+        let throttle_drop = self.prev_throttle - throttle;
+        let is_overrun =
+            allows_crackle && rpm > 4200.0 && (throttle < 0.38 || throttle_drop > 0.16);
+        if is_overrun {
             self.overrun_timer += dt;
-            if self.overrun_timer > 0.09 {
+            let crackle_interval = if throttle_drop > 0.22 { 0.055 } else { 0.085 };
+            if self.overrun_timer > crackle_interval {
                 self.overrun_timer = 0.0;
-                let pop_gain = master_vol * 0.55;
-                backend.play(&self.crackle_sound, pop_gain, 0.95 + (rpm * 0.0001).fract() * 0.1);
+                let pop_gain = (master_vol * 0.75).min(1.0);
+                backend.play(
+                    &self.crackle_sound,
+                    pop_gain,
+                    0.92 + (rpm * 0.0001).fract() * 0.16,
+                );
             }
         } else {
             self.overrun_timer = 0.0;
         }
 
-        // 4. Rev Limiter Ignition Cut (15 Hz oscillation at redline)
-        let max_rpm = 9300.0;
-        if rpm >= max_rpm - 300.0 && throttle > 0.5 {
-            self.limiter_phase = (self.limiter_phase + dt * 15.0).fract();
+        // 4. Rev Limiter Ignition Cut (18 Hz oscillation at redline)
+        let redline_rpm = 7900.0;
+        if rpm >= redline_rpm && throttle > 0.65 {
+            let prev_phase = self.limiter_phase;
+            self.limiter_phase = (self.limiter_phase + dt * 18.0).fract();
+            // Trigger a sharp limiter backfire pop on ignition cut transition
+            if prev_phase < 0.5 && self.limiter_phase >= 0.5 {
+                let pop_gain = (master_vol * 0.80).min(1.0);
+                backend.play(
+                    &self.crackle_sound,
+                    pop_gain,
+                    1.05 + (rpm * 0.0001).fract() * 0.1,
+                );
+            }
             if self.limiter_phase < 0.5 {
                 1.0
             } else {

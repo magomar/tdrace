@@ -4,7 +4,8 @@ use glam::Vec2;
 use tdrace_app::audio::proximity::{
     calculate_countdown_warmup_throttle, calculate_distance_attenuation, calculate_doppler_factor,
     calculate_spatial_audio, calculate_stereo_pan, select_top_k_audible_sources, DopplerConfig,
-    VehicleAudioSource, DEFAULT_MAX_DISTANCE, DEFAULT_PAN_RADIUS, MAX_PROXIMITY_VOICES,
+    EngineRpmModel, VehicleAudioSource, DEFAULT_MAX_DISTANCE, DEFAULT_PAN_RADIUS,
+    MAX_PROXIMITY_VOICES,
 };
 use tdrace_app::audio::EngineSoundType;
 
@@ -84,7 +85,12 @@ fn test_select_top_k_audible_sources_budgeting() {
         });
     }
 
-    let top_k = select_top_k_audible_sources(&sources, listener, DEFAULT_MAX_DISTANCE, MAX_PROXIMITY_VOICES);
+    let top_k = select_top_k_audible_sources(
+        &sources,
+        listener,
+        DEFAULT_MAX_DISTANCE,
+        MAX_PROXIMITY_VOICES,
+    );
 
     // Must return at most 3 items
     assert_eq!(top_k.len(), 3);
@@ -124,7 +130,11 @@ fn test_doppler_head_on_approach_pitch_rise() {
 
     // Expected: c / (c - v_approach) = 160 / (160 - 40) = 160 / 120 = 1.3333
     let expected = 160.0 / 120.0;
-    assert!((factor - expected).abs() < 1e-3, "Expected ~1.333, got {}", factor);
+    assert!(
+        (factor - expected).abs() < 1e-3,
+        "Expected ~1.333, got {}",
+        factor
+    );
 }
 
 #[test]
@@ -140,7 +150,11 @@ fn test_doppler_receding_pitch_drop() {
 
     // Expected: c / (c - (-30)) = 160 / (160 + 30) = 160 / 190 = 0.8421
     let expected = 160.0 / 190.0;
-    assert!((factor - expected).abs() < 1e-3, "Expected ~0.842, got {}", factor);
+    assert!(
+        (factor - expected).abs() < 1e-3,
+        "Expected ~0.842, got {}",
+        factor
+    );
 }
 
 #[test]
@@ -155,7 +169,11 @@ fn test_doppler_perpendicular_closest_approach_unity() {
 
     let factor = calculate_doppler_factor(p_s, v_s, p_l, v_l, &config);
     // Radial component along line of sight (0, 1) is 0.0, so Doppler is exactly 1.0
-    assert!((factor - 1.0).abs() < 1e-4, "Expected 1.0 at closest approach, got {}", factor);
+    assert!(
+        (factor - 1.0).abs() < 1e-4,
+        "Expected 1.0 at closest approach, got {}",
+        factor
+    );
 }
 
 #[test]
@@ -293,7 +311,10 @@ fn test_audio_manager_proximity_voice_allocation_and_hysteresis() {
 
     // Stop all loops clears all proximity voice allocations
     audio.stop_all_loops();
-    assert!(audio.proximity_voices.iter().all(|s| s.vehicle_id.is_none()));
+    assert!(audio
+        .proximity_voices
+        .iter()
+        .all(|s| s.vehicle_id.is_none()));
 }
 
 #[test]
@@ -346,14 +367,14 @@ fn test_countdown_warmup_throttle_accelerations_and_revolutionized_baseline() {
 
         // Must experience acceleration rev surges to warm the motor
         assert!(
-            max_throttle >= 0.75,
-            "Vehicle {vid} peak blip {max_throttle} must reach high revs (>= 0.75)"
+            max_throttle >= 0.90,
+            "Vehicle {vid} peak blip {max_throttle} must reach screaming revs (>= 0.90)"
         );
 
         // Must maintain warm baseline floor to keep it revolutionized
         assert!(
-            min_throttle >= 0.20,
-            "Vehicle {vid} minimum throttle {min_throttle} must maintain warm baseline (>= 0.20)"
+            min_throttle >= 0.30,
+            "Vehicle {vid} minimum throttle {min_throttle} must maintain aggressive warm baseline (>= 0.30)"
         );
     }
 }
@@ -367,4 +388,27 @@ fn test_countdown_warmup_throttle_launch_crescendo() {
             "Vehicle {vid} final launch throttle at t=0 must build up to >= 0.85, got {launch_thr_final}"
         );
     }
+}
+
+#[test]
+fn test_engine_rpm_model_stationary_launch_revs_and_responsiveness() {
+    let mut model = EngineRpmModel::default();
+    assert_eq!(model.current_rpm, 1100.0);
+
+    // Full throttle stationary revs (speed = 0.0, throttle = 1.0)
+    let (rpm_after_blip, _) = model.update(0.0, 1.0, 0.0, 0.1);
+    assert!(
+        rpm_after_blip > 5000.0,
+        "Neutral rev blip should rapidly climb RPM, got {rpm_after_blip}"
+    );
+
+    // Sustained full throttle should reach screaming 8400 RPM redline
+    for _ in 0..50 {
+        model.update(0.0, 1.0, 0.0, 0.02);
+    }
+    assert!(
+        (model.current_rpm - 8400.0).abs() < 10.0,
+        "Stationary full throttle must reach 8400 RPM, got {}",
+        model.current_rpm
+    );
 }

@@ -5745,17 +5745,17 @@ impl RaceSession {
                         slip_ratio: 0.0,
                     });
                 }
-                self.audio.update_proximity_engines(&proximity_sources, listener_pos, listener_vel, frame_dt);
+                self.audio.update_proximity_engines_with_gain(&proximity_sources, listener_pos, listener_vel, 0.95, frame_dt);
 
                 // Countdown audio beeps (3, 2, 1)
                 if remaining <= 3.0 && self.prev_countdown_sec > 3 {
-                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.audio.play_sfx_with_gain(SfxType::CountdownLow, 1.0);
                     self.prev_countdown_sec = 3;
                 } else if remaining <= 2.0 && self.prev_countdown_sec > 2 {
-                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.audio.play_sfx_with_gain(SfxType::CountdownLow, 1.0);
                     self.prev_countdown_sec = 2;
                 } else if remaining <= 1.0 && self.prev_countdown_sec > 1 {
-                    self.audio.play_sfx(SfxType::CountdownLow);
+                    self.audio.play_sfx_with_gain(SfxType::CountdownLow, 1.0);
                     self.prev_countdown_sec = 1;
                 }
 
@@ -5771,7 +5771,7 @@ impl RaceSession {
                 }
 
                 if remaining <= 0.0 {
-                    self.audio.play_sfx(SfxType::CountdownHigh);
+                    self.audio.play_sfx_with_gain(SfxType::CountdownHigh, 1.0);
                     self.state = GameState::Racing;
                 } else {
                     self.state = GameState::Countdown(remaining);
