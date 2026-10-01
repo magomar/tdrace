@@ -266,94 +266,94 @@ pub struct KpiTile {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario 1: Circuit Selector uses Platform Components
-- [ ] **Given** the player enters the Circuit Selector menu (`GameState::Menu`)
-- [ ] **When** inspecting the category pills and catalog tabs
-- [ ] **Then** they are rendered using `FilterBar` instances with `FilterBarStyle::Pills` and `FilterBarStyle::Shelf`
-- [ ] **And** pressing `Left`/`Right` or Gamepad Bumpers cycles through categories seamlessly
-- [ ] **And** pressing `Down` from the catalog tabs transfers focus to the track `VStack`
+- [x] **Given** the player enters the Circuit Selector menu (`GameState::Menu`)
+- [x] **When** inspecting the category pills and catalog tabs
+- [x] **Then** they are rendered using `FilterBar` instances with `FilterBarStyle::Pills` and `FilterBarStyle::Shelf`
+- [x] **And** pressing `Left`/`Right` or Gamepad Bumpers cycles through categories seamlessly
+- [x] **And** pressing `Down` from the catalog tabs transfers focus to the track `VStack`
 
 #### Scenario 2: Starting Grid SplitPane and ValueStepper Integration
-- [ ] **Given** the player is on the Starting Grid setup screen (`GameState::StartingGrid`)
-- [ ] **When** inspecting the layout
-- [ ] **Then** the screen is structured using a `SplitPane` container
-- [ ] **And** the bot count and lap count adjustments are handled by `ValueStepper` widgets responsive to `Left`/`Right` keys
-- [ ] **And** the participants list is rendered via `DataTable<GridParticipant>` with distinct podium rank badges
+- [x] **Given** the player is on the Starting Grid setup screen (`GameState::StartingGrid`)
+- [x] **When** inspecting the layout
+- [x] **Then** the screen is structured using a `SplitPane` container
+- [x] **And** the bot count and lap count adjustments are handled by `ValueStepper` widgets responsive to `Left`/`Right` keys
+- [x] **And** the participants list is rendered via `DataTable<GridParticipant>` with distinct podium rank badges
 
 #### Scenario 3: Fleet Gallery CardGrid Traversal in Garage
-- [ ] **Given** the player opens the Fleet Gallery in the Garage (`GameState::Garage`)
-- [ ] **When** navigating with Gamepad D-pad or Arrow keys
-- [ ] **Then** focus moves across the vehicle roster in a 2D matrix using `CardGrid<RealCarModel>`
-- [ ] **And** reaching column boundaries wraps or emits exit signals without index overflow
-- [ ] **And** vehicle performance stats are rendered using standardized `MetricBar` components
+- [x] **Given** the player opens the Fleet Gallery in the Garage (`GameState::Garage`)
+- [x] **When** navigating with Gamepad D-pad or Arrow keys
+- [x] **Then** focus moves across the vehicle roster in a 2D matrix using `CardGrid<RealCarModel>`
+- [x] **And** reaching column boundaries wraps or emits exit signals without index overflow
+- [x] **And** vehicle performance stats are rendered using standardized `MetricBar` components
 
 #### Scenario 4: Career Championship Accordion Drawer Mechanics
-- [ ] **Given** the player is in Career Championship Select (`GameState::CareerSelect`)
-- [ ] **When** navigating between championship tiers and pressing `Enter` or Gamepad `A`
-- [ ] **Then** the selected tier expands via `Accordion<CareerSelectChampionshipCard>` while collapsing other tiers
-- [ ] **And** the viewport automatically adjusts to keep the expanded tier centered
+- [x] **Given** the player is in Career Championship Select (`GameState::CareerSelect`)
+- [x] **When** navigating between championship tiers and pressing `Enter` or Gamepad `A`
+- [x] **Then** the selected tier expands via `Accordion<CareerSelectChampionshipCard>` while collapsing other tiers
+- [x] **And** the viewport automatically adjusts to keep the expanded tier centered
 
 #### Scenario 5: Hall of Fame DataTable and Record Name Entry Modal
-- [ ] **Given** a player qualifies for the Top 10 Hall of Fame upon race completion
-- [ ] **When** the record submission dialog opens
-- [ ] **Then** it renders inside a standard modal using `TextInputWidget` for callsign entry
-- [ ] **When** inspecting the all-time Hall of Fame records screen
-- [ ] **Then** records are rendered in a `DataTable<HallOfFameEntry>` with highlighted human player row
+- [x] **Given** a player qualifies for the Top 10 Hall of Fame upon race completion
+- [x] **When** the record submission dialog opens
+- [x] **Then** it renders inside a standard modal using `TextInputWidget` for callsign entry
+- [x] **When** inspecting the all-time Hall of Fame records screen
+- [x] **Then** records are rendered in a `DataTable<HallOfFameEntry>` with highlighted human player row
 
 #### Scenario 6: Player Profile Overview KPI Tiles and SwatchPicker
-- [ ] **Given** the player opens the Player Profile screen (`GameState::ProfileManager`)
-- [ ] **When** viewing the Overview tab
-- [ ] **Then** the 6 key career statistics are rendered via an `HStack` of `KpiTile` widgets
-- [ ] **When** opening the Driver Customization modal
-- [ ] **Then** livery color selection is operated using a `SwatchPicker`
+- [x] **Given** the player opens the Player Profile screen (`GameState::ProfileManager`)
+- [x] **When** viewing the Overview tab
+- [x] **Then** the 6 key career statistics are rendered via an `HStack` of `KpiTile` widgets
+- [x] **When** opening the Driver Customization modal
+- [x] **Then** livery color selection is operated using a `SwatchPicker`
 
 #### Scenario 7: Track Manager Dialogs and ChecklistModal
-- [ ] **Given** the player opens the Track Manager (`GameState::TrackManager`)
-- [ ] **When** editing track metadata or promoting categories
-- [ ] **Then** metadata fields use `TextInputWidget` and category selection uses `ChecklistModal`
-- [ ] **And** confirmation dialogs use `UniversalConfirmModal`
+- [x] **Given** the player opens the Track Manager (`GameState::TrackManager`)
+- [x] **When** editing track metadata or promoting categories
+- [x] **Then** metadata fields use `TextInputWidget` and category selection uses `ChecklistModal`
+- [x] **And** confirmation dialogs use `UniversalConfirmModal`
 
 #### Scenario 8: Career Hub SplitPane, DataTable and Promotion MetricBar
-- [ ] **Given** the player opens the Career Hub (`GameState::CareerHub`)
-- [ ] **When** viewing a tier
-- [ ] **Then** the screen is structured with a `SplitPane` (calendar vs standings)
-- [ ] **And** standings are rendered via `DataTable` with `POS/DRIVER/TEAM/WINS/POINTS` columns
-- [ ] **And** the license promotion progress is rendered via a `MetricBar`
+- [x] **Given** the player opens the Career Hub (`GameState::CareerHub`)
+- [x] **When** viewing a tier
+- [x] **Then** the screen is structured with a `SplitPane` (calendar vs standings)
+- [x] **And** standings are rendered via `DataTable` with `POS/DRIVER/TEAM/WINS/POINTS` columns
+- [x] **And** the license promotion progress is rendered via a `MetricBar`
 
 #### Scenario 9: Circuit Viewer Counter and Surface MetricBar
-- [ ] **Given** the player is in the Circuit Viewer
-- [ ] **When** zooming with the `−`/`+` controls (or `Left`/`Right`)
-- [ ] **Then** zoom level adjusts via a `Counter` with hold-to-repeat
-- [ ] **And** the surface-composition breakdown renders as a segmented `MetricBar`
+- [x] **Given** the player is in the Circuit Viewer
+- [x] **When** zooming with the `−`/`+` controls (or `Left`/`Right`)
+- [x] **Then** zoom level adjusts via a `Counter` with hold-to-repeat
+- [x] **And** the surface-composition breakdown renders as a segmented `MetricBar`
 
 #### Scenario 10: HUD CountDown and ToastOverlay
-- [ ] **Given** a race is about to start
-- [ ] **When** the countdown begins
-- [ ] **Then** the 3-2-1-GO sequence renders via `CountDown` with scale/fade animation
-- [ ] **And** personal-best and visibility-aid notifications render via `ToastOverlay` instead of bespoke fade timers
+- [x] **Given** a race is about to start
+- [x] **When** the countdown begins
+- [x] **Then** the 3-2-1-GO sequence renders via `CountDown` with scale/fade animation
+- [x] **And** personal-best and visibility-aid notifications render via `ToastOverlay` instead of bespoke fade timers
 
 #### Scenario 11: Track Editor Toggle and Counter Migration
-- [ ] **Given** the player is in the Track Editor
-- [ ] **When** toggling curbs/walls or overwrite options
-- [ ] **Then** `[X]/[ ]` flags are replaced by `Toggle` widgets (gamepad `A` toggles)
-- [ ] **And** ± meter/degree adjustments are handled by `Counter` widgets with hold-to-repeat
-- [ ] **And** the open-track modal paginates via `PageDots`
+- [x] **Given** the player is in the Track Editor
+- [x] **When** toggling curbs/walls or overwrite options
+- [x] **Then** `[X]/[ ]` flags are replaced by `Toggle` widgets (gamepad `A` toggles)
+- [x] **And** ± meter/degree adjustments are handled by `Counter` widgets with hold-to-repeat
+- [x] **And** the open-track modal paginates via `PageDots`
 
 #### Scenario 12: Pause Menu ModalContainer
-- [ ] **Given** the player pauses mid-race
-- [ ] **When** the pause overlay opens
-- [ ] **Then** it renders inside a `ModalContainer` with `ScreenFooter` prompts
-- [ ] **And** audio/assist settings are adjusted via `Toggle` / `ValueStepper` widgets
+- [x] **Given** the player pauses mid-race
+- [x] **When** the pause overlay opens
+- [x] **Then** it renders inside a `ModalContainer` with `ScreenFooter` prompts
+- [x] **And** audio/assist settings are adjusted via `Toggle` / `ValueStepper` widgets
 
 #### Scenario 13: LAN Lobby Toggle and ValueStepper
-- [ ] **Given** the player is in a LAN host or client lobby
-- [ ] **When** setting laps, collisions, livery, or ready state
-- [ ] **Then** laps/collision use `ValueStepper`, livery uses `SwatchPicker`, and ready uses `Toggle`
-- [ ] **And** lobby status changes surface via `ToastOverlay`
+- [x] **Given** the player is in a LAN host or client lobby
+- [x] **When** setting laps, collisions, livery, or ready state
+- [x] **Then** laps/collision use `ValueStepper`, livery uses `SwatchPicker`, and ready uses `Toggle`
+- [x] **And** lobby status changes surface via `ToastOverlay`
 
 #### Scenario 14: Replay PlaybackSpeed OptionCycler
-- [ ] **Given** a future replay viewer HUD
-- [ ] **When** changing playback speed
-- [ ] **Then** speed cycles via `OptionCycler` with `Left`/`Right` and hold-repeat
+- [x] **Given** a future replay viewer HUD
+- [x] **When** changing playback speed
+- [x] **Then** speed cycles via `OptionCycler` with `Left`/`Right` and hold-repeat
 
 ---
 
