@@ -345,10 +345,21 @@ pub fn render_garage_screen(
             if is_unlocked {
                 fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
             } else {
-                let cost = ModuleCareerProgress::car_credit_cost(model.tier);
-                let tag = format!("${} CR", cost);
-                let col = if available_credits >= cost && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
-                fonts.draw_ui_bold(&tag, cx + cw - scaler.s(55.0), cy + scaler.s(15.0), scaler.font_s(8.5), col);
+                let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
+                let is_affordable = available_credits >= cost;
+                let is_recommended = active_module_id == "kart" && model.tier == 1;
+                let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && model.tier == 1;
+                let tag = if is_recommended && is_affordable {
+                    format!("${} CR (RECOMMENDED)", cost)
+                } else if is_grassroots_starter && is_affordable {
+                    format!("${} CR (AFFORDABLE)", cost)
+                } else if is_grassroots_starter {
+                    format!("${} CR (UNAFFORDABLE)", cost)
+                } else {
+                    format!("${} CR", cost)
+                };
+                let col = if is_affordable && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
+                fonts.draw_ui_bold(&tag, cx + cw - scaler.s(75.0), cy + scaler.s(15.0), scaler.font_s(7.5), col);
             }
         }
 
@@ -478,7 +489,7 @@ pub fn render_garage_screen(
             .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
             .unwrap_or(is_tier_unlocked);
 
-    let cost = ModuleCareerProgress::car_credit_cost(active_car_tier);
+    let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car_id, active_module_id, active_car_tier);
     let can_afford = available_credits >= cost;
     let tier_eligible = is_dev_mode
         || is_car_heritage
@@ -528,7 +539,9 @@ pub fn render_garage_screen(
             scaler.font_s(12.0),
             Palette::RED,
         );
-        let lock_hint = if active_car_tier > max_ranked_tier {
+        let lock_hint = if (active_module_id == "gt" || active_module_id == "nascar") && active_car_tier == 1 {
+            "Requires Tier 1 License & 25,000 - 70,000 Cr. Earn credentials in grassroots first."
+        } else if active_car_tier > max_ranked_tier {
             "Parked outside the career tiers; drive it in dev mode"
         } else {
             "Advance career tier by earning championship podiums to unlock purchasing"
@@ -549,12 +562,20 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
 
-        let buy_title = format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]", cost);
+        let is_recommended = active_module_id == "kart" && active_car_tier == 1;
+        let is_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
+        let buy_title = if is_recommended {
+            format!("🛒 BUY STARTER CAR: ${} CR  [B / ENTER]  ★ AFFORDABLE (RECOMMENDED ENTRY)", cost)
+        } else if is_starter {
+            format!("🛒 BUY STARTER CAR: ${} CR  [B / ENTER]  ★ AFFORDABLE", cost)
+        } else {
+            format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]", cost)
+        };
         fonts.draw_ui_bold_centered(
             &buy_title,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(22.0),
-            scaler.font_s(12.5),
+            scaler.font_s(11.5),
             Palette::WHITE,
         );
         let buy_sub = format!(
@@ -574,16 +595,25 @@ pub fn render_garage_screen(
         draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.28, 0.16, 0.08, 0.95));
         draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::NEON_GOLD);
 
-        let lock_title = format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR)", cost, available_credits);
+        let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
+        let lock_title = if is_grassroots_starter {
+            format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR) — CURRENTLY UNAFFORDABLE", cost, available_credits)
+        } else {
+            format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR)", cost, available_credits)
+        };
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(22.0),
-            scaler.font_s(12.0),
+            scaler.font_s(11.0),
             Palette::NEON_GOLD,
         );
         let need_cr = cost.saturating_sub(available_credits);
-        let lock_sub = format!("Earn ${} more Credits in prize purses to purchase this vehicle", need_cr);
+        let lock_sub = if (active_module_id == "gt" || active_module_id == "nascar") && active_car_tier == 1 {
+            "Requires Tier 1 License & 25,000 - 70,000 Cr. Earn credentials in grassroots first.".to_string()
+        } else {
+            format!("Earn ${} more Credits in prize purses to purchase this vehicle", need_cr)
+        };
         fonts.draw_ui_regular_centered(
             &lock_sub,
             btn_x + btn_w * 0.5,
@@ -619,7 +649,7 @@ pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("autocross", "AUTOCROSS"),
 ];
 
-/// Maps a gallery filter index (0..6) to its corresponding module identifier.
+/// Maps a gallery filter index (0..5) to its corresponding module identifier.
 pub fn gallery_filter_to_module(idx: usize) -> &'static str {
     match idx {
         0 => "gt",

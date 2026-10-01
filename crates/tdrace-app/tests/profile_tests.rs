@@ -36,6 +36,8 @@ fn test_profile_schema_and_crud() {
         lifetime_credits: 25_000,
         created_at: "2026-08-27 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
+        academy_progress: Default::default(),
+        owned_cars: Vec::new(),
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -234,6 +236,8 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         lifetime_credits: 25_000,
         created_at: "2026-08-27 11:00".to_string(),
         last_mode: AssistProfile::Arcade,
+        academy_progress: Default::default(),
+        owned_cars: Vec::new(),
     };
 
     if let Some(db) = &session.hof_db {
@@ -361,6 +365,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
         lifetime_credits: 25_000,
         created_at: "2026-09-01 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
+        academy_progress: Default::default(),
+        owned_cars: Vec::new(),
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -555,6 +561,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(!progress.is_car_unlocked("gt3_evo", false));
     assert_eq!(ModuleCareerProgress::car_credit_cost(2), 60_000);
     let mut active_prof = db.get_active_profile().expect("Get active");
+    active_prof.add_credits(25_000);
     assert_eq!(active_prof.credits, 25_000);
     assert!(!progress.can_buy_car("gt3_evo", 2, active_prof.credits), "Cannot afford 60k Cr car with 25k Cr");
     active_prof.add_credits(50_000);
@@ -1060,6 +1067,8 @@ fn test_player_card_focus_and_roster_manager_navigation() {
         lifetime_credits: 25_000,
         created_at: "2026-09-20 12:00".to_string(),
         last_mode: AssistProfile::Sport,
+        academy_progress: Default::default(),
+        owned_cars: Vec::new(),
     };
     let p2_id = db.create_profile(&p2).expect("Insert driver 2");
 

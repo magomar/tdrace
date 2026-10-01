@@ -339,6 +339,8 @@ fn test_in_development_lan_cloud_modals() {
 #[test]
 fn test_career_mode_opens_career_select() {
     let mut session = RaceSession::new();
+    session.active_profile.academy_progress.license_granted = true;
+    session.active_profile.owned_cars.push("gt_toyota_supra_gt4".to_string());
 
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::SinglePlayer,

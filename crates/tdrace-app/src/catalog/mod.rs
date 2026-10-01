@@ -3637,6 +3637,12 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
     if module_id == "vault" {
         return VAULT_ARCHIVE_CARS.iter().collect();
     }
+    if module_id == "starter" || module_id == "grassroots" {
+        return ALL_REAL_CARS
+            .iter()
+            .filter(|c| (c.module_id == "kart" || c.module_id == "autocross" || c.module_id == "rally") && c.tier == 1)
+            .collect();
+    }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
         other => other,

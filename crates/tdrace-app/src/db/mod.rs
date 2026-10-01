@@ -7,8 +7,8 @@ pub type Result<T> = std::result::Result<T, String>;
 use serde::{Deserialize, Serialize};
 
 use crate::profile::{
-    ChampionshipAward, ChampionshipRecord, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
-    RaceHistoryEntry,
+    ChampionshipAward, ChampionshipRecord, ClassicAcademyProgress, ModuleCareerProgress,
+    PlayerProfile, ProfileCareerStats, RaceHistoryEntry,
 };
 use crate::render::color::CarColorScheme;
 use tdrace_core::physics::config::AssistProfile;
@@ -102,8 +102,10 @@ impl HallOfFameDb {
                 is_active INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
                 last_mode TEXT NOT NULL DEFAULT 'arcade',
-                credits INTEGER NOT NULL DEFAULT 25000,
-                lifetime_credits INTEGER NOT NULL DEFAULT 25000
+                credits INTEGER NOT NULL DEFAULT 0,
+                lifetime_credits INTEGER NOT NULL DEFAULT 0,
+                academy_progress TEXT NOT NULL DEFAULT '{}',
+                owned_cars TEXT NOT NULL DEFAULT '[]'
             );
 
             CREATE TABLE IF NOT EXISTS race_history (
@@ -169,11 +171,19 @@ impl HallOfFameDb {
             [],
         );
         let _ = self.conn.execute(
-            "ALTER TABLE player_profiles ADD COLUMN credits INTEGER NOT NULL DEFAULT 25000",
+            "ALTER TABLE player_profiles ADD COLUMN credits INTEGER NOT NULL DEFAULT 0",
             [],
         );
         let _ = self.conn.execute(
-            "ALTER TABLE player_profiles ADD COLUMN lifetime_credits INTEGER NOT NULL DEFAULT 25000",
+            "ALTER TABLE player_profiles ADD COLUMN lifetime_credits INTEGER NOT NULL DEFAULT 0",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE player_profiles ADD COLUMN academy_progress TEXT NOT NULL DEFAULT '{}'",
+            [],
+        );
+        let _ = self.conn.execute(
+            "ALTER TABLE player_profiles ADD COLUMN owned_cars TEXT NOT NULL DEFAULT '[]'",
             [],
         );
         let _ = self.conn.execute(
@@ -224,7 +234,7 @@ impl HallOfFameDb {
     pub fn get_all_profiles(&self) -> Result<Vec<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
-                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
+                    COALESCE(credits, 0), COALESCE(lifetime_credits, 0), COALESCE(academy_progress, '{}'), COALESCE(owned_cars, '[]')
              FROM player_profiles
              ORDER BY is_active DESC, id ASC",
         )?;
@@ -237,6 +247,8 @@ impl HallOfFameDb {
             let mode_str: String = row.get(9)?;
             let credits: i64 = row.get(10)?;
             let lifetime_credits: i64 = row.get(11)?;
+            let academy_json: String = row.get(12).unwrap_or_else(|_| "{}".to_string());
+            let cars_json: String = row.get(13).unwrap_or_else(|_| "[]".to_string());
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -249,6 +261,8 @@ impl HallOfFameDb {
                 last_mode: mode_from_str(&mode_str),
                 credits: credits as u64,
                 lifetime_credits: lifetime_credits as u64,
+                academy_progress: serde_json::from_str(&academy_json).unwrap_or_default(),
+                owned_cars: serde_json::from_str(&cars_json).unwrap_or_default(),
             })
         })?;
 
@@ -263,7 +277,7 @@ impl HallOfFameDb {
     pub fn get_active_profile(&self) -> Result<PlayerProfile> {
         let mut stmt = self.conn.prepare(
             "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
-                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
+                    COALESCE(credits, 0), COALESCE(lifetime_credits, 0), COALESCE(academy_progress, '{}'), COALESCE(owned_cars, '[]')
              FROM player_profiles
              WHERE is_active = 1
              LIMIT 1",
@@ -276,6 +290,8 @@ impl HallOfFameDb {
             let mode_str: String = row.get(9)?;
             let credits: i64 = row.get(10)?;
             let lifetime_credits: i64 = row.get(11)?;
+            let academy_json: String = row.get(12).unwrap_or_else(|_| "{}".to_string());
+            let cars_json: String = row.get(13).unwrap_or_else(|_| "[]".to_string());
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -288,6 +304,8 @@ impl HallOfFameDb {
                 last_mode: mode_from_str(&mode_str),
                 credits: credits as u64,
                 lifetime_credits: lifetime_credits as u64,
+                academy_progress: serde_json::from_str(&academy_json).unwrap_or_default(),
+                owned_cars: serde_json::from_str(&cars_json).unwrap_or_default(),
             })
         })?;
 
@@ -303,7 +321,7 @@ impl HallOfFameDb {
     pub fn get_profile_by_id(&self, id: i64) -> Result<Option<PlayerProfile>> {
         let mut stmt = self.conn.prepare(
             "SELECT id, name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, COALESCE(last_mode, 'arcade'),
-                    COALESCE(credits, 25000), COALESCE(lifetime_credits, 25000)
+                    COALESCE(credits, 0), COALESCE(lifetime_credits, 0), COALESCE(academy_progress, '{}'), COALESCE(owned_cars, '[]')
              FROM player_profiles
              WHERE id = ?1",
         )?;
@@ -316,6 +334,8 @@ impl HallOfFameDb {
             let mode_str: String = row.get(9)?;
             let credits: i64 = row.get(10)?;
             let lifetime_credits: i64 = row.get(11)?;
+            let academy_json: String = row.get(12).unwrap_or_else(|_| "{}".to_string());
+            let cars_json: String = row.get(13).unwrap_or_else(|_| "[]".to_string());
 
             Ok(PlayerProfile {
                 id: Some(row.get(0)?),
@@ -328,6 +348,8 @@ impl HallOfFameDb {
                 last_mode: mode_from_str(&mode_str),
                 credits: credits as u64,
                 lifetime_credits: lifetime_credits as u64,
+                academy_progress: serde_json::from_str(&academy_json).unwrap_or_default(),
+                owned_cars: serde_json::from_str(&cars_json).unwrap_or_default(),
             })
         })?;
 
@@ -352,9 +374,12 @@ impl HallOfFameDb {
             self.conn.execute("UPDATE player_profiles SET is_active = 0", [])?;
         }
 
+        let academy_json = serde_json::to_string(&profile.academy_progress).unwrap_or_else(|_| "{}".to_string());
+        let cars_json = serde_json::to_string(&profile.owned_cars).unwrap_or_else(|_| "[]".to_string());
+
         self.conn.execute(
-            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, last_mode, credits, lifetime_credits)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            "INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, last_mode, credits, lifetime_credits, academy_progress, owned_cars)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 profile.name.trim(),
                 profile.alias.trim(),
@@ -367,6 +392,8 @@ impl HallOfFameDb {
                 mode_to_str(profile.last_mode),
                 profile.credits as i64,
                 profile.lifetime_credits as i64,
+                academy_json,
+                cars_json,
             ],
         )?;
 
@@ -380,11 +407,13 @@ impl HallOfFameDb {
             if profile.is_active {
                 self.conn.execute("UPDATE player_profiles SET is_active = 0 WHERE id != ?1", params![id])?;
             }
+            let academy_json = serde_json::to_string(&profile.academy_progress).unwrap_or_else(|_| "{}".to_string());
+            let cars_json = serde_json::to_string(&profile.owned_cars).unwrap_or_else(|_| "[]".to_string());
             self.conn.execute(
                 "UPDATE player_profiles
                  SET name = ?1, alias = ?2, country = ?3, primary_color = ?4, secondary_color = ?5, helmet_color = ?6, is_active = ?7, last_mode = ?8,
-                     credits = ?9, lifetime_credits = ?10
-                 WHERE id = ?11",
+                     credits = ?9, lifetime_credits = ?10, academy_progress = ?11, owned_cars = ?12
+                 WHERE id = ?13",
                 params![
                     profile.name.trim(),
                     profile.alias.trim(),
@@ -396,6 +425,8 @@ impl HallOfFameDb {
                     mode_to_str(profile.last_mode),
                     profile.credits as i64,
                     profile.lifetime_credits as i64,
+                    academy_json,
+                    cars_json,
                     id,
                 ],
             )?;
@@ -487,6 +518,8 @@ impl HallOfFameDb {
                 last_mode: AssistProfile::Arcade,
                 credits: PlayerProfile::STARTING_CREDITS,
                 lifetime_credits: PlayerProfile::STARTING_CREDITS,
+                academy_progress: ClassicAcademyProgress::default(),
+                owned_cars: Vec::new(),
             };
             let new_id = self.create_profile(&default_profile)?;
             let mut seeded = default_profile;
@@ -1387,6 +1420,8 @@ impl HallOfFameDb {
                 last_mode: AssistProfile::Arcade,
                 credits: PlayerProfile::STARTING_CREDITS,
                 lifetime_credits: PlayerProfile::STARTING_CREDITS,
+                academy_progress: ClassicAcademyProgress::default(),
+                owned_cars: Vec::new(),
             };
             guard.push(default_profile.clone());
             Ok(default_profile)

@@ -5,6 +5,9 @@ use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolu
 use crate::render::color::CarColorScheme;
 pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
+pub use tdrace_core::profile::{
+    AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal, ClassicAcademyProgress,
+};
 
 /// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -21,6 +24,10 @@ pub struct PlayerProfile {
     pub credits: u64,
     #[serde(default = "PlayerProfile::default_starting_credits")]
     pub lifetime_credits: u64,
+    #[serde(default)]
+    pub academy_progress: ClassicAcademyProgress,
+    #[serde(default)]
+    pub owned_cars: Vec<String>,
 }
 
 impl Default for PlayerProfile {
@@ -36,15 +43,43 @@ impl Default for PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
         }
     }
 }
 
 impl PlayerProfile {
-    pub const STARTING_CREDITS: u64 = 25_000;
+    pub const STARTING_CREDITS: u64 = 0;
 
     pub fn default_starting_credits() -> u64 {
         Self::STARTING_CREDITS
+    }
+
+    pub fn new_rookie(name: impl Into<String>) -> Self {
+        let name_str = name.into();
+        Self {
+            id: None,
+            name: name_str.clone(),
+            alias: format!("Rookie {}", name_str),
+            country: Some("ESP".to_string()),
+            color_scheme: CarColorScheme::from_index(0),
+            is_active: true,
+            created_at: String::new(),
+            last_mode: AssistProfile::Arcade,
+            credits: 0,
+            lifetime_credits: 0,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
+        }
+    }
+
+    pub fn can_access_career(&self) -> bool {
+        self.academy_progress.is_graduated() && !self.owned_cars.is_empty()
+    }
+
+    pub fn has_racing_license(&self) -> bool {
+        self.academy_progress.is_graduated()
     }
 
     pub fn new(name: &str, alias: &str, country: Option<&str>, color_scheme: CarColorScheme) -> Self {
@@ -59,6 +94,8 @@ impl PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
         }
     }
 
@@ -530,6 +567,71 @@ impl ModuleCareerProgress {
         }
     }
 
+    /// Purchasing cost for a vehicle of the specified module and tier in Credits (Spec 060 Section 2.1 & 2.2).
+    pub fn car_credit_cost_for_module(module_id: &str, tier: u8) -> u64 {
+        match module_id {
+            "kart" => match tier {
+                1 => 5_000,
+                2 => 8_500,
+                3 => 12_000,
+                4 => 18_000,
+                5 => 26_000,
+                6 => 38_000,
+                _ => (tier as u64) * 10_000,
+            },
+            "autocross" | "ax" => match tier {
+                1 => 12_000,
+                2 => 24_000,
+                3 => 45_000,
+                4 => 70_000,
+                5 => 95_000,
+                _ => (tier as u64) * 20_000,
+            },
+            "rally" | "rx" => match tier {
+                1 => 16_000,
+                2 => 48_000,
+                3 => 85_000,
+                4 => 150_000,
+                5 => 190_000,
+                6 => 240_000,
+                _ => (tier as u64) * 40_000,
+            },
+            "nascar" | "stock" => match tier {
+                1 => 25_000,
+                2 => 48_000,
+                3 => 85_000,
+                4 => 130_000,
+                5 => 180_000,
+                _ => (tier as u64) * 40_000,
+            },
+            "gt" | "gt_challenge" | "f1" => match tier {
+                1 => 70_000,
+                2 => 160_000,
+                3 => 200_000,
+                4 => 280_000,
+                5 => 450_000,
+                _ => (tier as u64) * 100_000,
+            },
+            "extreme_offroad" | "offroad" => match tier {
+                1 => 28_000,
+                2 => 120_000,
+                _ => (tier as u64) * 60_000,
+            },
+            _ => Self::car_credit_cost(tier),
+        }
+    }
+
+    /// Resolves the authentic vehicle credit cost for a car model ID, falling back to module/tier.
+    pub fn car_credit_cost_for_car(car_id: &str, module_id: &str, tier: u8) -> u64 {
+        if let Some(m) = crate::catalog::find_model_by_id(car_id) {
+            Self::car_credit_cost_for_module(m.module_id, m.tier)
+        } else if module_id == "kart" || module_id == "autocross" || module_id == "ax" || module_id == "rally" || module_id == "rx" {
+            Self::car_credit_cost_for_module(module_id, tier)
+        } else {
+            Self::car_credit_cost(tier)
+        }
+    }
+
     /// Vehicle credit cost (alias for `car_credit_cost`).
     pub fn car_cost(tier: u8) -> u64 {
         Self::car_credit_cost(tier)
@@ -675,15 +777,38 @@ impl ModuleCareerProgress {
     /// Checks if a vehicle can be purchased: must not already be unlocked, player must be at or above the car's tier,
     /// and player must have sufficient credits balance.
     pub fn can_buy_car(&self, car_id: &str, tier: u8, available_credits: u64) -> bool {
-        !self.is_car_unlocked(car_id, false)
+        let cost = Self::car_credit_cost_for_car(car_id, &self.module_id, tier);
+        let is_grassroots_starter = tier == 1
+            && (self.module_id == "kart"
+                || self.module_id == "autocross"
+                || self.module_id == "ax"
+                || self.module_id == "rally"
+                || self.module_id == "rx");
+        let already_unlocked = if is_grassroots_starter {
+            false
+        } else {
+            self.is_car_unlocked(car_id, false)
+        };
+
+        !already_unlocked
             && self.level >= (tier as u32)
-            && available_credits >= Self::car_credit_cost(tier)
+            && available_credits >= cost
     }
 
-    /// Purchases a vehicle, deducting its cost from the player's credit wallet and unlocking it.
+    /// Checks if a vehicle can be purchased for a specific driver profile.
+    pub fn can_buy_car_for_profile(&self, profile: &PlayerProfile, car_id: &str, tier: u8) -> bool {
+        !profile.owned_cars.iter().any(|c| c == car_id)
+            && self.can_buy_car(car_id, tier, profile.credits)
+    }
+
+    /// Purchases a vehicle, deducting its cost from the player's credit wallet, unlocking it in the module,
+    /// and permanently recording it in the driver profile's owned fleet (Spec 060 Section 2.2).
     /// Note: Zero discipline XP is deducted.
     pub fn buy_car(&mut self, profile: &mut PlayerProfile, car_id: &str, tier: u8) -> Result<(), String> {
-        let cost = Self::car_credit_cost(tier);
+        let cost = Self::car_credit_cost_for_car(car_id, &self.module_id, tier);
+        if profile.owned_cars.iter().any(|c| c == car_id) {
+            return Err(format!("Cannot buy car '{}': already owned in fleet", car_id));
+        }
         if !self.can_buy_car(car_id, tier, profile.credits) {
             return Err(format!(
                 "Cannot buy car '{}' (tier {}): insufficient credits ({}/{}) or insufficient tier ({})",
@@ -696,6 +821,9 @@ impl ModuleCareerProgress {
         }
         profile.spend_credits(cost)?;
         self.ensure_car(car_id);
+        if !profile.owned_cars.iter().any(|c| c == car_id) {
+            profile.owned_cars.push(car_id.to_string());
+        }
         Ok(())
     }
 

@@ -269,6 +269,8 @@ pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, Transition
 mod lan;
 pub use lan::{LanRaceState, LAN_WAITING_COUNTDOWN};
 
+pub mod academy;
+
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DriverCardsOrigin {
@@ -386,6 +388,10 @@ pub enum GameState {
     LanHostLobby,
     LanJoinBrowser,
     LanClientLobby,
+    ClassicAcademy {
+        selected_idx: usize,
+        showing_graduation: bool,
+    },
 }
 
 /// Keyboard shortcuts that `RaceSession::update()` checks before the active screen's own input.
@@ -470,6 +476,14 @@ pub struct PlayerRaceTelemetry {
     pub top_speed_mps: f32,
     pub stunt_stats: AcrobaticStats,
     pub collision_count: u32,
+}
+
+impl PlayerRaceTelemetry {
+    pub fn best_lap_time(&self) -> Option<f32> {
+        self.best_lap_idx
+            .and_then(|idx| self.laps.get(idx))
+            .map(|l| l.lap_time)
+    }
 }
 
 /// Detailed breakdown of XP awarded after completing a race.
@@ -644,6 +658,11 @@ pub struct RaceSession {
     pub profile_awards: Vec<ChampionshipAward>,
     pub profile_cabinet_disc_idx: usize,
     pub profile_cabinet_tier_idx: usize,
+
+    // Classic Academy Challenge State
+    pub active_academy_lesson: Option<academy::AcademyLessonId>,
+    pub academy_challenge: Option<academy::AcademyChallengeState>,
+    pub academy_last_evaluation: Option<academy::AcademyAttemptEvaluation>,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -910,6 +929,10 @@ impl RaceSession {
             profile_awards: Vec::new(),
             profile_cabinet_disc_idx: 0,
             profile_cabinet_tier_idx: 0,
+
+            active_academy_lesson: None,
+            academy_challenge: None,
+            academy_last_evaluation: None,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -5605,6 +5628,10 @@ impl RaceSession {
             GameState::ChampionshipStandings => {
                 self.update_championship_standings();
             }
+            GameState::ClassicAcademy { selected_idx, showing_graduation } => {
+                self.audio.play_music(MusicTrack::NeonMenu);
+                self.update_classic_academy(selected_idx, showing_graduation);
+            }
             GameState::StartingGrid => {
                 self.update_starting_grid();
             }
@@ -6536,6 +6563,13 @@ impl RaceSession {
     /// the LAN hub after a network race (closing the session), the Career Hub in a GT career,
     /// and the circuit selector otherwise.
     pub fn race_exit_target(&mut self) -> GameState {
+        if let Some(lesson_id) = self.active_academy_lesson.take() {
+            let newly_graduated = self.academy_last_evaluation.as_ref().map(|e| e.newly_graduated).unwrap_or(false);
+            return GameState::ClassicAcademy {
+                selected_idx: lesson_id.index(),
+                showing_graduation: newly_graduated,
+            };
+        }
         if self.return_to_editor_on_exit {
             self.return_to_editor_on_exit = false;
             return GameState::TrackEditor;
@@ -7852,6 +7886,8 @@ impl RaceSession {
                         last_mode: assist_mode,
                         credits: p.credits,
                         lifetime_credits: p.lifetime_credits,
+                        academy_progress: p.academy_progress.clone(),
+                        owned_cars: p.owned_cars.clone(),
                     })
                 });
 
@@ -8295,18 +8331,41 @@ impl RaceSession {
             _ => return,
         };
 
-        // If informational coming-soon modal is open, any confirm/back dismisses it
-        if modal.is_some() {
-            if is_key_pressed(KeyCode::Escape)
-                || is_key_pressed(KeyCode::Enter)
+        if let Some(ref m) = modal {
+            let is_confirm = is_key_pressed(KeyCode::Enter)
                 || is_key_pressed(KeyCode::Space)
                 || is_key_pressed(KeyCode::KpEnter)
                 || self.input.gamepad.snapshot.btn_confirm_pressed
-                || self.input.gamepad.snapshot.btn_a_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed;
+            let is_dismiss = is_key_pressed(KeyCode::Escape)
                 || self.input.gamepad.snapshot.btn_b_pressed
-                || self.input.gamepad.snapshot.btn_back_pressed
-            {
+                || self.input.gamepad.snapshot.btn_back_pressed;
+
+            if is_confirm {
                 self.audio.play_sfx(SfxType::UiSelect);
+                if *m == ModalityModal::LicenseRequired {
+                    self.state = GameState::ClassicAcademy {
+                        selected_idx: 0,
+                        showing_graduation: false,
+                    };
+                    return;
+                }
+                if *m == ModalityModal::VehicleRequired {
+                    self.garage_origin = GarageOrigin::ModalitySelect;
+                    self.garage_view_module("kart");
+                    self.garage_tier = 1;
+                    self.garage_car_idx = 0;
+                    self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                    return;
+                }
+                modal = None;
+                self.state = GameState::ModalitySelect {
+                    category,
+                    selected_idx,
+                    modal,
+                };
+            } else if is_dismiss {
+                self.audio.play_sfx(SfxType::UiMove);
                 modal = None;
                 self.state = GameState::ModalitySelect {
                     category,
@@ -8530,8 +8589,34 @@ impl RaceSession {
                         self.transition_scanline_to(GameState::Menu, 0.35);
                         return;
                     }
+                    ModalityItem::ClassicAcademy => {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                        self.state = GameState::ClassicAcademy {
+                            selected_idx: 0,
+                            showing_graduation: false,
+                        };
+                        return;
+                    }
                     ModalityItem::CareerMode => {
                         self.audio.play_sfx(SfxType::UiSelect);
+                        if !self.active_profile.has_racing_license() {
+                            modal = Some(ModalityModal::LicenseRequired);
+                            self.state = GameState::ModalitySelect {
+                                category,
+                                selected_idx,
+                                modal,
+                            };
+                            return;
+                        }
+                        if self.active_profile.owned_cars.is_empty() {
+                            modal = Some(ModalityModal::VehicleRequired);
+                            self.state = GameState::ModalitySelect {
+                                category,
+                                selected_idx,
+                                modal,
+                            };
+                            return;
+                        }
                         self.state = GameState::CareerSelect { selected_idx: 0 };
                         return;
                     }
@@ -8602,6 +8687,128 @@ impl RaceSession {
                 modal,
             };
         }
+    }
+
+    /// Handles navigation, lesson launching, and graduation interaction in the Classic Academy.
+    pub fn update_classic_academy(&mut self, mut selected_idx: usize, showing_graduation: bool) {
+        let sw = screen_width_safe();
+        let sh = screen_height_safe();
+        let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
+        let (mx, my) = mouse_position_safe();
+
+        if showing_graduation {
+            let (btn_x, btn_y, btn_w, btn_h) = crate::ui::graduation_showroom_button_rect(sw, sh);
+            let clicked_showroom = mouse_clicked && mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h;
+
+            if is_key_pressed(KeyCode::Enter)
+                || is_key_pressed(KeyCode::Space)
+                || is_key_pressed(KeyCode::KpEnter)
+                || self.input.gamepad.snapshot.btn_confirm_pressed
+                || self.input.gamepad.snapshot.btn_a_pressed
+                || clicked_showroom
+            {
+                self.audio.play_sfx(SfxType::UiSelect);
+                self.garage_origin = GarageOrigin::ModalitySelect;
+                self.garage_view_module("kart");
+                self.garage_tier = 1;
+                self.garage_car_idx = 0;
+                self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                return;
+            }
+
+            if is_key_pressed(KeyCode::Escape)
+                || self.input.gamepad.snapshot.btn_b_pressed
+                || self.input.gamepad.snapshot.btn_back_pressed
+            {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.state = GameState::ClassicAcademy {
+                    selected_idx: 3,
+                    showing_graduation: false,
+                };
+                return;
+            }
+            return;
+        }
+
+        let total_lessons = 4;
+        if is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
+            || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.nav_up
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            if selected_idx == 0 {
+                selected_idx = total_lessons - 1;
+            } else {
+                selected_idx -= 1;
+            }
+        }
+        if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
+            || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.nav_down
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            selected_idx = (selected_idx + 1) % total_lessons;
+        }
+
+        // Mouse click on lesson cards
+        let mut mouse_confirmed = false;
+        if mouse_clicked {
+            for i in 0..total_lessons {
+                let (cx, cy, cw, ch) = crate::ui::academy_card_rect(sw, sh, i);
+                if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
+                    selected_idx = i;
+                    mouse_confirmed = true;
+                    break;
+                }
+            }
+        }
+
+        // Escape: Back to Modality Select
+        if is_key_pressed(KeyCode::Escape)
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_back_pressed
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.state = GameState::ModalitySelect {
+                category: ModalityCategory::SinglePlayer,
+                selected_idx: 2, // Classic Academy slot
+                modal: None,
+            };
+            return;
+        }
+
+        // Start Lesson Challenge
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+            || mouse_confirmed
+        {
+            let lesson_id = match academy::AcademyLessonId::from_index(selected_idx) {
+                Some(id) => id,
+                None => return,
+            };
+
+            if self.active_profile.academy_progress.is_lesson_unlocked(lesson_id) {
+                self.audio.play_sfx(SfxType::UiSelect);
+                if let Err(err) = academy::setup_academy_session(self, lesson_id) {
+                    println!("Failed to setup academy session: {}", err);
+                    return;
+                }
+                self.transition_iris_to(GameState::Countdown(3.5), 0.45);
+                return;
+            } else {
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+
+        self.state = GameState::ClassicAcademy {
+            selected_idx,
+            showing_graduation: false,
+        };
     }
 
     /// Handles navigation and selection in the LAN Hub screen.
@@ -9789,6 +9996,12 @@ impl RaceSession {
             } else if is_key_pressed(KeyCode::Key5) {
                 self.garage_gallery_filter = 4;
                 mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key6) {
+                self.garage_gallery_filter = 5;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key7) {
+                self.garage_gallery_filter = 6;
+                mod_changed = true;
             }
 
             // Tab / Shift-Tab cycle module tabs
@@ -9908,6 +10121,8 @@ impl RaceSession {
                 Some("nascar")
             } else if is_key_pressed(KeyCode::Key5) {
                 Some("extreme_offroad")
+            } else if is_key_pressed(KeyCode::Key6) {
+                Some("autocross")
             } else {
                 None
             };
@@ -10069,26 +10284,32 @@ impl RaceSession {
                         }
                     }
                 } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier, self.active_profile.credits) {
-                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car.id, self.active_module_id, active_car.tier);
                     if let Ok(()) = self.active_career_progress.buy_car(&mut self.active_profile, active_car.id, active_car.tier) {
                         if let Some(db) = &self.hof_db {
                             let _ = db.save_module_progress(&self.active_career_progress);
                             let _ = db.update_profile(&self.active_profile);
                         }
-                        self.spawn_hud_alert(
+                        let alert_msg = if self.active_profile.can_access_career() && self.active_profile.owned_cars.len() == 1 {
+                            format!(
+                                "DELIVERED: {} TO YOUR GARAGE! (WALLET: ${} CR) — CAREER MODE UNLOCKED!",
+                                active_car.name,
+                                self.active_profile.credits
+                            )
+                        } else {
                             format!(
                                 "PURCHASED {} FOR ${} CREDITS! WALLET: ${} CR (XP UNCHANGED: {} XP)",
                                 active_car.name,
                                 cost,
                                 self.active_profile.credits,
                                 self.active_career_progress.xp
-                            ),
-                            Palette::NEON_GOLD,
-                        );
+                            )
+                        };
+                        self.spawn_hud_alert(alert_msg, Palette::NEON_GREEN);
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 } else {
-                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car.id, self.active_module_id, active_car.tier);
                     if self.active_career_progress.level < active_car.tier as u32 {
                         self.spawn_hud_alert(
                             format!(
@@ -12202,6 +12423,9 @@ impl RaceSession {
             if wev.impact_speed > 2.2 {
                 if car_idx == my_car_idx {
                     self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.register_collision(wev.impact_speed * 100.0);
+                    }
                 }
                 let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
                 self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
@@ -12249,6 +12473,9 @@ impl RaceSession {
                 }
                 if cev.closing_speed > 2.0 {
                     self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.register_collision(cev.closing_speed * 100.0);
+                    }
                     let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
                     self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
                 }
@@ -12261,6 +12488,13 @@ impl RaceSession {
                     let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
                     self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
                 }
+            }
+        }
+
+        if let Some(challenge) = &mut self.academy_challenge {
+            challenge.elapsed_time_sec = self.session_time;
+            if let Some(tracker) = self.world.trackers.get(my_car_idx) {
+                challenge.set_off_track_seconds(tracker.off_track_timer);
             }
         }
 
@@ -12930,6 +13164,25 @@ impl RaceSession {
                 self.player_race_stats.best_lap_idx = Some(0);
             }
 
+            // Academy Challenge Evaluation
+            if let Some(lesson_id) = self.active_academy_lesson {
+                let finish_time = self.player_race_stats.best_lap_time().unwrap_or(self.session_time);
+                let attempt_time = if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
+                    self.session_time
+                } else {
+                    finish_time
+                };
+                let mut challenge = self.academy_challenge.take().unwrap_or_else(|| academy::AcademyChallengeState::new(lesson_id));
+                if self.player_race_stats.collision_count > 0 && challenge.heavy_collisions == 0 {
+                    challenge.heavy_collisions = self.player_race_stats.collision_count;
+                }
+                let eval = academy::evaluate_academy_attempt(&mut self.active_profile, lesson_id, attempt_time, &challenge);
+                if let Some(db) = &self.hof_db {
+                    let _ = db.update_profile(&self.active_profile);
+                }
+                self.academy_last_evaluation = Some(eval);
+            }
+
             self.show_hall_of_fame = false;
             self.finished_view = FinishedScreenView::Results;
             self.finished_prev_view = FinishedScreenView::Results;
@@ -13038,6 +13291,13 @@ impl RaceSession {
     /// Renders current UI state, HUD, or pause screen.
     pub fn render(&mut self) {
         match self.state {
+            GameState::ClassicAcademy { selected_idx, showing_graduation } => {
+                crate::ui::render_academy_curriculum_screen(&self.fonts, &self.active_profile, selected_idx);
+                if showing_graduation {
+                    let purse = self.academy_last_evaluation.as_ref().map(|e| e.credits_awarded).unwrap_or(7_000);
+                    crate::ui::render_graduation_ceremony_modal(&self.fonts, &self.active_profile, purse);
+                }
+            }
             GameState::LanHub { selected_idx } => {
                 if let Some(clicked) = crate::ui::render_lan_hub_screen(&self.fonts, selected_idx) {
                     self.select_lan_hub_option(clicked);
@@ -15267,6 +15527,11 @@ impl RaceSession {
                     &self.visibility_options,
                     self.session_time,
                 );
+
+                if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {
+                    let progress_fraction = player_tracker.normalized_progress.clamp(0.0, 1.0);
+                    crate::ui::render_academy_hud(&self.fonts, lesson_id, challenge, self.session_time, progress_fraction);
+                }
 
                 // F5: Telemetry Panel
                 self.input.render_screen_debug(player_car);
