@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Classic Academy and Grassroots Career Onboarding"
 description: "Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase."
-status: approved
+status: implemented
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T14:42:47Z }
 verified: { by: "human:mario", at: "2026-09-29T20:24:27Z" }
@@ -390,44 +390,44 @@ impl PlayerProfile {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Fresh rookie profile initialization**
-  - [ ] **Given** a brand-new player profile created in the driver dossier
-  - [ ] **When** the profile's initial state is inspected
-  - [ ] **Then** the driver has 0 Credits (Cr), 0 XP across all modules, an empty owned car collection, and an ungranted racing license.
+  - [x] **Given** a brand-new player profile created in the driver dossier
+  - [x] **When** the profile's initial state is inspected
+  - [x] **Then** the driver has 0 Credits (Cr), 0 XP across all modules, an empty owned car collection, and an ungranted racing license.
 
 - **Scenario: Classic arcade access with locked career**
-  - [ ] **Given** a fresh rookie profile with 0 Cr and no racing license
-  - [ ] **When** the player views the Main Menu
-  - [ ] **Then** the Classic Arcade module is fully accessible with arcade fantasy cars, but Career Mode displays a lock badge requiring the National Grassroots License.
+  - [x] **Given** a fresh rookie profile with 0 Cr and no racing license
+  - [x] **When** the player views the Main Menu
+  - [x] **Then** the Classic Arcade module is fully accessible with arcade fantasy cars, but Career Mode displays a lock badge requiring the National Grassroots License.
 
 - **Scenario: Progressive academy lesson execution and credit bounties**
-  - [ ] **Given** a rookie driver undertaking Lesson 1 (`gt_velocity_park` with `classic_apex_phantom_gt`) of the Classic Academy
-  - [ ] **When** the player finishes Sector 1 with a lap time qualifying for a Silver medal
-  - [ ] **Then** the system awards both the Bronze (1,000 Cr) and Silver (500 Cr) bounties for a total of 1,500 Cr, credits the profile wallet, and unlocks Lesson 2.
+  - [x] **Given** a rookie driver undertaking Lesson 1 (`gt_velocity_park` with `classic_apex_phantom_gt`) of the Classic Academy
+  - [x] **When** the player finishes Sector 1 with a lap time qualifying for a Silver medal
+  - [x] **Then** the system awards both the Bronze (1,000 Cr) and Silver (500 Cr) bounties for a total of 1,500 Cr, credits the profile wallet, and unlocks Lesson 2.
 
 - **Scenario: Bounty claim idempotency on replay**
-  - [ ] **Given** a player who has already claimed the Gold bounty on Lesson 1
-  - [ ] **When** the player replays Lesson 1 and achieves a Gold time again
-  - [ ] **Then** zero milestone bounties are awarded, the player's bank credits remain unchanged, and the previous best time is preserved.
+  - [x] **Given** a player who has already claimed the Gold bounty on Lesson 1
+  - [x] **When** the player replays Lesson 1 and achieves a Gold time again
+  - [x] **Then** zero milestone bounties are awarded, the player's bank credits remain unchanged, and the previous best time is preserved.
 
 - **Scenario: Academy graduation and license grant**
-  - [ ] **Given** a player who has passed Lessons 1, 2, and 3
-  - [ ] **When** the player completes Lesson 4 (`ax_meadow_sprint` with `classic_ax_mudlark`) with a time beating the Bronze target without heavy car contact
-  - [ ] **Then** the National Grassroots Racing License is permanently granted, the driver dossier records the award timestamp, and a graduation prompt directs the player to the Showroom.
+  - [x] **Given** a player who has passed Lessons 1, 2, and 3
+  - [x] **When** the player completes Lesson 4 (`ax_meadow_sprint` with `classic_ax_mudlark`) with a time beating the Bronze target without heavy car contact
+  - [x] **Then** the National Grassroots Racing License is permanently granted, the driver dossier records the award timestamp, and a graduation prompt directs the player to the Showroom.
 
 - **Scenario: Grassroots car purchase with earned academy purse**
-  - [ ] **Given** an Academy graduate with 7,000 Cr earned from all-Bronze lesson completions
-  - [ ] **When** the player navigates to the Showroom
-  - [ ] **Then** the Cadet Kart 60cc (5,000 Cr) is marked affordable and can be purchased, leaving 2,000 Cr in the player's wallet and adding the Cadet Kart to `owned_cars`.
+  - [x] **Given** an Academy graduate with 7,000 Cr earned from all-Bronze lesson completions
+  - [x] **When** the player navigates to the Showroom
+  - [x] **Then** the Cadet Kart 60cc (5,000 Cr) is marked affordable and can be purchased, leaving 2,000 Cr in the player's wallet and adding the Cadet Kart to `owned_cars`.
 
 - **Scenario: Unlocking career mode upon first vehicle purchase**
-  - [ ] **Given** a licensed Academy graduate who just purchased their first Cadet Kart
-  - [ ] **When** the player returns to the Main Menu
-  - [ ] **Then** the Career Mode button is fully unlocked and active, allowing the player to enter the Karting Tier 1 Championship.
+  - [x] **Given** a licensed Academy graduate who just purchased their first Cadet Kart
+  - [x] **When** the player returns to the Main Menu
+  - [x] **Then** the Career Mode button is fully unlocked and active, allowing the player to enter the Karting Tier 1 Championship.
 
 - **Scenario: Prevention of premature high-tier entry**
-  - [ ] **Given** a fresh Academy graduate holding 14,500 Cr from all-Gold completions
-  - [ ] **When** the player attempts to purchase a GT4 Clubsport car (70,000 Cr) or enter a GT championship
-  - [ ] **Then** the purchase is blocked due to insufficient funds, and GT championship entry is blocked because no eligible GT car is owned.
+  - [x] **Given** a fresh Academy graduate holding 14,500 Cr from all-Gold completions
+  - [x] **When** the player attempts to purchase a GT4 Clubsport car (70,000 Cr) or enter a GT championship
+  - [x] **Then** the purchase is blocked due to insufficient funds, and GT championship entry is blocked because no eligible GT car is owned.
 
 ---
 
@@ -437,12 +437,12 @@ impl PlayerProfile {
 - **Blocked By**: [Spec 055: Classic Circuits Revamp](055_classic_circuits_revamp.md) (Beads Epic: `tdrace-classic-circuits-revamp-dh6k`). Circuits (`gt_velocity_park`, `gt_ridge_ring`, `rx_quarry_sprint`, `ax_meadow_sprint`) and fantasy vehicles (`classic_apex_phantom_gt`, `classic_trailfire_turbo`, `classic_ax_mudlark`) must be integrated in the track and car catalogs before lesson runtime execution can be wired.
 
 ### Created / Modified Files
-- `[ ]` `crates/arcade-race-core/src/profile.rs` -> Adds `ClassicAcademyProgress`, `AcademyLessonProgress`, `AcademyMedal`, `AcademyLessonId`, and updates `PlayerProfile` initialization and license gating.
-- `[ ]` `crates/tdrace-app/src/game/academy.rs` -> Defines `AcademyLessonDef` catalog, target thresholds, and lesson evaluation logic referencing Spec 055 tracks and cars.
-- `[ ]` `crates/tdrace-app/src/ui/academy_ui.rs` -> Renders the Classic Academy curriculum screen, medal overlays, and graduation ceremony.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Updates Career Mode button lock badges, click handling, and Academy prompt modal.
-- `[ ]` `crates/tdrace-app/src/ui/garage.rs` -> Implements grassroots starter filtering, pricing badges, and purchase callbacks.
-- `[ ]` `crates/tdrace-app/tests/career_onboarding_tests.rs` -> Comprehensive unit and integration test suite asserting the end-to-end rookie onboarding lifecycle.
+- `[x]` `crates/arcade-race-core/src/profile.rs` -> Adds `ClassicAcademyProgress`, `AcademyLessonProgress`, `AcademyMedal`, `AcademyLessonId`, and updates `PlayerProfile` initialization and license gating.
+- `[x]` `crates/tdrace-app/src/game/academy.rs` -> Defines `AcademyLessonDef` catalog, target thresholds, and lesson evaluation logic referencing Spec 055 tracks and cars.
+- `[x]` `crates/tdrace-app/src/ui/academy_ui.rs` -> Renders the Classic Academy curriculum screen, medal overlays, and graduation ceremony.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> Updates Career Mode button lock badges, click handling, and Academy prompt modal.
+- `[x]` `crates/tdrace-app/src/ui/garage.rs` -> Implements grassroots starter filtering, pricing badges, and purchase callbacks.
+- `[x]` `crates/tdrace-app/tests/career_onboarding_tests.rs` -> Comprehensive unit and integration test suite asserting the end-to-end rookie onboarding lifecycle.
 
 ### Verification Assertions
 - `specs/060_classic_academy_and_grassroots_career_onboarding.md` is cross-referenced in the module documentation and test files.
