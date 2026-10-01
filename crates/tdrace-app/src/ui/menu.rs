@@ -15,6 +15,7 @@ use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
+use cabinet::ui::{FilterBar, FilterBarStyle, FilterItem};
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::CarCategory;
@@ -1231,75 +1232,21 @@ pub fn render_track_select_menu(
         );
     }
 
-    // Category Filter Bar (Pill buttons spanning badge_w)
+    // Category Filter Bar (platform FilterBar, Pills style)
     let cat_y = badge_y + badge_h + cp_h + scaler.s(6.0);
     let cat_h = scaler.s(26.0);
-    let cat_gap = scaler.s(4.0);
-    let cat_count = MenuCategoryFilter::ALL.len() as f32;
-    let cat_w = (badge_w - cat_gap * (cat_count - 1.0)) / cat_count;
     let is_cat_focused = focused_panel == MenuPanelFocus::CategoryFilter;
 
-    for (i, filter) in MenuCategoryFilter::ALL.iter().enumerate() {
-        let pill_x = badge_x + (cat_w + cat_gap) * (i as f32);
-        let is_active = *filter == category_filter;
-        let pill_bg = if is_active {
-            if is_cat_focused {
-                Color::new(0.16, 0.36, 0.58, 0.98)
-            } else {
-                Color::new(0.12, 0.28, 0.45, 0.95)
-            }
-        } else {
-            Color::new(0.06, 0.08, 0.12, 0.85)
-        };
-        let pill_border = if is_active {
-            if is_cat_focused {
-                Palette::NEON_GOLD
-            } else {
-                module_accent
-            }
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-        let text_col = if is_active {
-            if is_cat_focused {
-                Palette::NEON_GOLD
-            } else {
-                Palette::WHITE
-            }
-        } else {
-            Palette::UI_TEXT_MUTED
-        };
-        scaler.draw_glass_card(
-            pill_x,
-            cat_y,
-            cat_w,
-            cat_h,
-            pill_bg,
-            pill_border,
-            if is_active && is_cat_focused {
-                2.4
-            } else if is_active {
-                1.8
-            } else {
-                1.0
-            },
-        );
-
-        let label = if is_active && is_cat_focused {
-            format!("► {} ◄", filter.label())
-        } else if is_active {
-            format!("< {} >", filter.label())
-        } else {
-            filter.label().to_string()
-        };
-        fonts.draw_ui_bold_centered(
-            &label,
-            pill_x + cat_w * 0.5,
-            cat_y + scaler.s(17.0),
-            scaler.font_s(10.5),
-            text_col,
-        );
-    }
+    let category_labels: Vec<&str> = MenuCategoryFilter::ALL.iter().map(|c| c.label()).collect();
+    let cat_active_idx = MenuCategoryFilter::ALL
+        .iter()
+        .position(|c| *c == category_filter)
+        .unwrap_or(0);
+    let category_bar = FilterBar::from_labels(&category_labels)
+        .with_style(FilterBarStyle::Pills)
+        .with_active(cat_active_idx)
+        .with_focus(is_cat_focused);
+    category_bar.draw(&scaler, fonts, badge_x, cat_y, badge_w, cat_h, module_accent);
 
     // Spacing between Category Bar and Catalog columns
     let menu_content_y = cat_y + cat_h + scaler.s(10.0);
@@ -1340,81 +1287,22 @@ pub fn render_track_select_menu(
 
     curr_y += scaler.s(20.0);
 
-    // Filter Tabs: [ OFFICIAL (P) ]  [ CUSTOM (C) ]
+    // Filter Tabs: [ OFFICIAL ]  [ CUSTOM ] (platform FilterBar, Shelf style)
     let tab_h = scaler.s(25.0);
-    let tab_gap = scaler.s(6.0);
-    let filter_tabs = [
-        (
-            TrackCatalogFilter::Presets,
-            format!("OFFICIAL [{}]", filter_counts.0),
-        ),
-        (
-            TrackCatalogFilter::Custom,
-            format!("CUSTOM [{}]", filter_counts.1),
-        ),
-    ];
-    let tab_count = filter_tabs.len() as f32;
-    let tab_w = (col_w - tab_gap * (tab_count - 1.0)) / tab_count;
-
     let is_tab_focused = focused_panel == MenuPanelFocus::CatalogFilter;
-    for (i, (tab_variant, tab_label)) in filter_tabs.iter().enumerate() {
-        let tab_x = col1_x + (tab_w + tab_gap) * (i as f32);
-        let is_tab_active = *tab_variant == active_filter;
-        let tab_bg = if is_tab_active {
-            if is_tab_focused {
-                Color::new(0.12, 0.36, 0.52, 0.98)
-            } else {
-                Color::new(0.08, 0.28, 0.40, 0.95)
-            }
-        } else {
-            Palette::UI_CARD_BG
-        };
-        let tab_border = if is_tab_active {
-            if is_tab_focused {
-                Palette::NEON_GOLD
-            } else {
-                Palette::NEON_CYAN
-            }
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-        let text_col = if is_tab_active {
-            if is_tab_focused {
-                Palette::NEON_GOLD
-            } else {
-                Palette::WHITE
-            }
-        } else {
-            Palette::UI_TEXT_MUTED
-        };
-        scaler.draw_glass_card(
-            tab_x,
-            curr_y,
-            tab_w,
-            tab_h,
-            tab_bg,
-            tab_border,
-            if is_tab_active && is_tab_focused {
-                2.4
-            } else if is_tab_active {
-                1.8
-            } else {
-                1.0
-            },
-        );
-        let label = if is_tab_active && is_tab_focused {
-            format!("► {} ◄", tab_label)
-        } else {
-            tab_label.to_string()
-        };
-        fonts.draw_ui_bold_centered(
-            &label,
-            tab_x + tab_w * 0.5,
-            curr_y + scaler.s(16.0),
-            scaler.font_s(10.5),
-            text_col,
-        );
-    }
+    let tab_active_idx = match active_filter {
+        TrackCatalogFilter::Presets => 0,
+        TrackCatalogFilter::Custom => 1,
+    };
+    let tab_bar = FilterBar::new(vec![
+        FilterItem::with_badge("OFFICIAL", filter_counts.0.to_string()),
+        FilterItem::with_badge("CUSTOM", filter_counts.1.to_string()),
+    ])
+    .with_style(FilterBarStyle::Shelf)
+    .with_gap(6.0)
+    .with_active(tab_active_idx)
+    .with_focus(is_tab_focused);
+    tab_bar.draw(&scaler, fonts, col1_x, curr_y, col_w, tab_h, module_accent);
     curr_y += tab_h + scaler.s(8.0);
 
     let total_tracks = available_tracks.len();
