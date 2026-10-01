@@ -10,6 +10,25 @@ status: active
 The five shared crates share one version and one git tag, `platform-vX.Y.Z`. A game repo pins the
 tag for all of them. The plan is in [spec 049](../../specs/049_reusable_racing_platform_layers.md).
 
+## platform-v0.3.0 (2026-10-02)
+
+The reusable `cabinet::ui` component catalog and unified nav-intent/key-repeat input layer ship,
+TdRace migrates all its legacy screens onto them, and track splines gain centripetal Catmull-Rom
+and variable-density sampling. ([spec 068](../../specs/068_unified_ui_and_ux_consistency_across_tdrace_and_shared_platform_crate.md), [spec 069](../../specs/069_legacy_ui_migration_and_reusable_platform_component_adoption.md), [spec 071](../../specs/071_centripetal_catmullrom_and_variable_density_track_splines.md))
+
+### cabinet
+- `ui` component catalog (spec 068): layout containers (`HStack`, `VStack`, `CardGrid<T>`, `GridLayout`, `FlowLayout`, `SplitPane`, `ScrollIndicator`, `Accordion<T>`), selectors (`FilterBar`, `TabBar`, `DropdownWidget`, `OptionCycler<T>`, `RadioGroup<T>`, `Toggle`, `SwatchPicker`), counters (`ValueStepper<T>`, `Counter`, `SliderWidget`), and data & feedback surfaces (`DataTable<T>`, `MetricBar`, `KpiTile`, `ProgressBar`, `ToastOverlay`, `TextInputWidget`, `ChecklistModal<T>`, `ModalContainer`, `CountDown`, `Tooltip`, `HelpChip`, `PageDots`, `HeroActionButton`, `ScreenFooter`), all with gamepad/keyboard/mouse parity.
+- `input` unified nav layer (spec 068): `NavIntent`/`NavAction` and `KeyRepeat` hold-to-repeat.
+- `net::ui::VirtualKeypad` (spec 068, completed in 069): on-screen IP and alphanumeric keypad with `draw` and gamepad/mouse `handle_input`; the LAN host/join/client lobby screens migrated to `SplitPane`, `VStack`, `SwatchPicker`, `Toggle`, and `ValueStepper` (spec 069).
+
+### arcade-race-core
+- Centripetal Catmull-Rom and variable-density track spline sampling (spec 071).
+- Classic circuit revamp: collinear wall merging and barrier optimization (spec 055).
+- `LicenseGrade` hierarchy with per-category entry requirements on the profile model (spec 053/060).
+
+### race-ui
+- Scenery and track ribbon renderers (spec 055/071), plus reworked skidmark and tire-smoke effects.
+
 ## platform-v0.2.0 (2026-09-29)
 
 Any vehicle model can use the bot driver and the effects, so the chariot game can bring its own
