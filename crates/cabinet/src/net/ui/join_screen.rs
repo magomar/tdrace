@@ -17,6 +17,7 @@ use crate::net::ui::client_lobby_screen::CabinetLanClientLobbyScreen;
 use crate::net::ui::ip_keypad::{IpKeypad, IpKeypadAction};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
+use crate::ui::{LayoutRect, SplitPane, VStack};
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
@@ -180,11 +181,13 @@ impl CabinetScreen for CabinetLanJoinScreen {
         let content_y = pad_x + header_h + ctx.scaler.s(16.0);
         let bottom_bar_h = ctx.scaler.s(42.0);
         let content_h = sh - content_y - bottom_bar_h - ctx.scaler.s(16.0);
-        let col_gap = ctx.scaler.s(16.0);
-        let left_w = (sw - pad_x * 2.0 - col_gap) * 0.54;
-        let right_w = (sw - pad_x * 2.0 - col_gap) * 0.46;
-        let right_x = pad_x + left_w + col_gap;
-        let keypad_rect = (right_x + ctx.scaler.s(16.0), content_y + ctx.scaler.s(60.0), right_w - ctx.scaler.s(32.0), content_h - ctx.scaler.s(80.0));
+        let split_pane = SplitPane::new(
+            LayoutRect::new(pad_x, content_y, sw - pad_x * 2.0, content_h),
+            0.54,
+            ctx.scaler.s(16.0),
+        );
+        let right_rect = split_pane.right_rect();
+        let keypad_rect = (right_rect.x + ctx.scaler.s(16.0), content_y + ctx.scaler.s(60.0), right_rect.w - ctx.scaler.s(32.0), content_h - ctx.scaler.s(80.0));
 
         let keypad_action = self.keypad.handle_input(
             ctx.dt,
@@ -289,9 +292,14 @@ impl CabinetScreen for CabinetLanJoinScreen {
         let content_h = sh - content_y - bottom_bar_h - scaler.s(16.0);
 
         let col_gap = scaler.s(16.0);
-        let left_w = (sw - pad_x * 2.0 - col_gap) * 0.54;
-        let right_w = (sw - pad_x * 2.0 - col_gap) * 0.46;
-        let right_x = pad_x + left_w + col_gap;
+        let split_pane = SplitPane::new(
+            LayoutRect::new(pad_x, content_y, sw - pad_x * 2.0, content_h),
+            0.54,
+            col_gap,
+        );
+        let left_w = split_pane.left_rect().w;
+        let right_w = split_pane.right_rect().w;
+        let right_x = split_pane.right_rect().x;
 
         // --- Left Panel: Server Browser ---
         scaler.draw_glass_card(
@@ -316,7 +324,13 @@ impl CabinetScreen for CabinetLanJoinScreen {
 
         let table_start_y = content_y + scaler.s(42.0);
         let item_h = scaler.s(52.0);
-        let item_pad = scaler.s(8.0);
+        let server_stack = VStack::new_uniform(
+            pad_x + scaler.s(12.0),
+            table_start_y,
+            left_w - scaler.s(24.0),
+            item_h,
+            scaler.s(8.0),
+        );
 
         let (focus_col, focus_row) = self.nav.active_cell();
 
@@ -356,7 +370,7 @@ impl CabinetScreen for CabinetLanJoinScreen {
         } else {
             // Render list of discovered hosts
             for (idx, host) in discovered.iter().enumerate() {
-                let iy = table_start_y + idx as f32 * (item_h + item_pad);
+                let iy = server_stack.item_rect(idx).y;
                 let is_focused = focus_col == 0 && focus_row == idx;
                 let (mx, my) = safe_mouse_pos();
                 let is_hovered = mx >= pad_x + scaler.s(12.0)

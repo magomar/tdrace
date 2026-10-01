@@ -8,6 +8,7 @@ use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 
 use cabinet::ui::font::Fonts;
+use cabinet::ui::layout::HStack;
 use cabinet::ui::scaler::UiScaler;
 use cabinet::ui::theme::Palette;
 
@@ -55,6 +56,9 @@ pub fn render_lan_hub_screen(
     let start_x = (sw - total_w) * 0.5;
     let card_y = top_y + scaler.s(60.0);
 
+    // Platform HStack distributes the two interactive cards evenly.
+    let card_stack = HStack::new_equal(start_x, card_y, total_w, card_h, 2, card_gap);
+
     let cards = [
         (
             0,
@@ -79,8 +83,9 @@ pub fn render_lan_hub_screen(
     ];
 
     for (idx, title, badge, accent, subtitle, desc, features, btn_label) in cards {
-        let x = start_x + (card_w + card_gap) * (idx as f32);
-        let y = card_y;
+        let card_rect = card_stack.item_rect(idx);
+        let x = card_rect.x;
+        let y = card_rect.y;
 
         let is_focused = selected_idx == idx;
         let is_hovered = mx >= x && mx <= x + card_w && my >= y && my <= y + card_h;

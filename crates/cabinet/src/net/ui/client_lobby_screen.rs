@@ -14,6 +14,7 @@ use crate::net::protocol::LobbySlot;
 use crate::net::ui::{id_label, lan_livery_index, lan_livery_name, LanLobbyRequest, LAN_LIVERIES};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
+use crate::ui::{LayoutRect, SplitPane, SwatchPicker, Toggle, VStack};
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
@@ -38,6 +39,10 @@ pub struct CabinetLanClientLobbyScreen {
     pub selected_livery_idx: usize,
     /// Local driver ready status.
     pub is_ready: bool,
+    /// Platform livery swatch picker (mirrors `selected_livery_idx`).
+    livery_picker: SwatchPicker,
+    /// Platform ready toggle (mirrors `is_ready`).
+    ready_toggle: Toggle,
     /// 2D navigation grid (Col 0: Slots table, Col 1: Player controls).
     pub nav: NavGrid2D,
     /// Status message banner.
@@ -58,10 +63,21 @@ impl CabinetLanClientLobbyScreen {
         let car_model_id = client.car_model_id().to_string();
         let selected_livery_idx = lan_livery_index(client.color_scheme_id());
 
+        let mut livery_picker = SwatchPicker::new(
+            0.0,
+            0.0,
+            24.0,
+            6.0,
+            LAN_LIVERIES.iter().map(|(_, _, c)| *c).collect(),
+        );
+        livery_picker.selected_idx = selected_livery_idx;
+
         Self {
             client,
             car_model_id,
             selected_livery_idx,
+            livery_picker,
+            ready_toggle: Toggle::new("READY CHECK", false),
             is_ready: false,
             nav: NavGrid2D::new(vec![8, 4]),
             status_message: "Connected to host lobby. Choose car and mark READY!".to_string(),
@@ -108,6 +124,7 @@ impl CabinetLanClientLobbyScreen {
     /// Cycles local livery color.
     pub fn cycle_livery(&mut self) {
         self.selected_livery_idx = (self.selected_livery_idx + 1) % LAN_LIVERIES.len();
+        self.livery_picker.selected_idx = self.selected_livery_idx;
         self.sync_slot_update();
     }
 
@@ -119,6 +136,7 @@ impl CabinetLanClientLobbyScreen {
     /// Sets local driver ready check.
     pub fn set_ready(&mut self, is_ready: bool) {
         self.is_ready = is_ready;
+        self.ready_toggle.is_on = is_ready;
         self.sync_slot_update();
     }
 
@@ -229,7 +247,8 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
                 2 => {
                     // Ready toggle
                     ctx.play_ui_select();
-                    self.toggle_ready();
+                    self.ready_toggle.toggle();
+                    self.set_ready(self.ready_toggle.is_on);
                 }
                 3 => {
                     // Leave room
@@ -319,10 +338,14 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
         let bottom_bar_h = scaler.s(42.0);
         let content_h = sh - content_y - bottom_bar_h - scaler.s(16.0);
 
-        let col_gap = scaler.s(16.0);
-        let left_w = (sw - pad_x * 2.0 - col_gap) * 0.58;
-        let right_w = (sw - pad_x * 2.0 - col_gap) * 0.42;
-        let right_x = pad_x + left_w + col_gap;
+        let split_pane = SplitPane::new(
+            LayoutRect::new(pad_x, content_y, sw - pad_x * 2.0, content_h),
+            0.58,
+            scaler.s(16.0),
+        );
+        let left_w = split_pane.left_rect().w;
+        let right_w = split_pane.right_rect().w;
+        let right_x = split_pane.right_rect().x;
 
         // --- Left Panel: Connected Drivers Roster ---
         scaler.draw_glass_card(
@@ -349,14 +372,19 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
             Palette::NEON_CYAN,
         );
 
-        let slot_pad = scaler.s(6.0);
-        let slot_start_y = content_y + scaler.s(36.0);
-        let slot_h = (content_h - scaler.s(44.0) - slot_pad * 7.0) / 8.0;
+        let slot_h = (content_h - scaler.s(44.0) - scaler.s(6.0) * 7.0) / 8.0;
+        let roster_stack = VStack::new_uniform(
+            pad_x + scaler.s(12.0),
+            content_y + scaler.s(36.0),
+            left_w - scaler.s(24.0),
+            slot_h,
+            scaler.s(6.0),
+        );
 
         let my_slot_id = self.client.assigned_slot_id().unwrap_or(255);
 
         for i in 0..8 {
-            let sy = slot_start_y + i as f32 * (slot_h + slot_pad);
+            let sy = roster_stack.item_rect(i).y;
             let slot_opt = slots_in_lobby.iter().find(|s| s.slot_id == i as u8);
             let is_my_slot = i as u8 == my_slot_id;
 
@@ -454,9 +482,10 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
         let ctrl_item_h = scaler.s(48.0);
 
         let car_name = (self.car_label)(&self.car_model_id);
-        let (_, livery_name, livery_color) = &LAN_LIVERIES[self.selected_livery_idx];
+        let livery_name = LAN_LIVERIES[self.selected_livery_idx].1;
+        let livery_color = self.livery_picker.selected_color().unwrap_or(Palette::WHITE);
 
-        let ready_button_title = if self.is_ready {
+        let ready_button_title = if self.ready_toggle.is_on {
             "STATUS: READY ⭐ [PRESS ENTER]"
         } else {
             "STATUS: SELECTING CAR... [PRESS ENTER]"
@@ -464,7 +493,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
 
         let items_meta = [
             ("MY CAR", car_name.as_str(), "[GARAGE]"),
-            ("MY LIVERY", *livery_name, "[CYCLE]"),
+            ("MY LIVERY", livery_name, "[CYCLE]"),
             ("READY CHECK", ready_button_title, ""),
             ("LEAVE LOBBY", "Disconnect & Return", "[ESC]"),
         ];
@@ -542,7 +571,7 @@ impl CabinetScreen for CabinetLanClientLobbyScreen {
                     by + ctrl_item_h * 0.35,
                     scaler.s(14.0),
                     scaler.s(14.0),
-                    *livery_color,
+                    livery_color,
                 );
             }
         }

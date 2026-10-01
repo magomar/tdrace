@@ -14,6 +14,7 @@ use crate::net::protocol::LanCollisionMode;
 use crate::net::ui::{id_label, lan_livery_index, lan_livery_name, LanLobbyRequest, LAN_LIVERIES};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
+use crate::ui::{LayoutRect, SplitPane, SwatchPicker, ToastOverlay, Toggle, ValueStepper, VStack};
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
@@ -42,6 +43,16 @@ pub struct CabinetLanHostScreen {
     pub selected_collision_idx: usize,
     /// Host livery index into `LAN_LIVERIES`.
     pub selected_livery_idx: usize,
+    /// Platform value stepper for the lap count.
+    laps_stepper: ValueStepper<u8>,
+    /// Platform value stepper for the collision mode index.
+    collision_stepper: ValueStepper<u8>,
+    /// Platform swatch picker for the host livery (mirrors `selected_livery_idx`).
+    livery_picker: SwatchPicker,
+    /// Platform toggle for the host ready state.
+    ready_toggle: Toggle,
+    /// Platform transient status notification overlay.
+    toasts: ToastOverlay,
     /// 2D navigation grid (Col 0: Slots 1..8, Col 1: Host Controls 0..7).
     pub nav: NavGrid2D,
     /// User status message notification banner.
@@ -73,7 +84,22 @@ impl CabinetLanHostScreen {
             .and_then(|s| s.as_ref())
             .map(|s| lan_livery_index(&s.color_scheme_id))
             .unwrap_or(0);
+        let host_ready = host
+            .slots()
+            .first()
+            .and_then(|s| s.as_ref())
+            .map(|s| s.is_ready)
+            .unwrap_or(false);
         let track_title = host.track_id().to_string();
+
+        let mut livery_picker = SwatchPicker::new(
+            0.0,
+            0.0,
+            24.0,
+            6.0,
+            LAN_LIVERIES.iter().map(|(_, _, c)| *c).collect(),
+        );
+        livery_picker.selected_idx = selected_livery_idx;
 
         let mut screen = Self {
             host,
@@ -83,6 +109,11 @@ impl CabinetLanHostScreen {
             collision_options,
             selected_collision_idx: 0, // FullSatSolid
             selected_livery_idx,
+            laps_stepper: ValueStepper::new("LAPS", 1, 20, 1, 5),
+            collision_stepper: ValueStepper::new("COLLISION", 0, 2, 1, 0),
+            livery_picker,
+            ready_toggle: Toggle::new("HOST STATUS", host_ready),
+            toasts: ToastOverlay::new(0.0, 0.0, 400.0, 56.0),
             nav: NavGrid2D::new(vec![8, 8]),
             status_message: "Room open. Broadcasting to local subnet on port 7776...".to_string(),
             copied_timer: 0.0,
@@ -150,6 +181,9 @@ impl CabinetLanHostScreen {
     pub fn cycle_laps(&mut self) {
         if !self.lap_options.is_empty() {
             self.selected_laps_idx = (self.selected_laps_idx + 1) % self.lap_options.len();
+            if let Some(&laps) = self.lap_options.get(self.selected_laps_idx) {
+                self.laps_stepper.value = laps;
+            }
             self.sync_host_rules();
         }
     }
@@ -158,6 +192,7 @@ impl CabinetLanHostScreen {
     pub fn cycle_collision(&mut self) {
         if !self.collision_options.is_empty() {
             self.selected_collision_idx = (self.selected_collision_idx + 1) % self.collision_options.len();
+            self.collision_stepper.value = self.selected_collision_idx as u8;
             self.sync_host_rules();
         }
     }
@@ -165,6 +200,7 @@ impl CabinetLanHostScreen {
     /// Cycles the host livery color.
     pub fn cycle_livery(&mut self) {
         self.selected_livery_idx = (self.selected_livery_idx + 1) % LAN_LIVERIES.len();
+        self.livery_picker.selected_idx = self.selected_livery_idx;
         let car = self.host_car_model_id();
         self.set_local_car(&car);
     }
@@ -183,12 +219,14 @@ impl CabinetLanHostScreen {
     pub fn copy_address_to_clipboard(&mut self) {
         self.copied_timer = 2.0;
         self.status_message = format!("Copied {} to clipboard!", self.host.formatted_address());
+        self.toasts.push_success("ADDRESS COPIED", format!("{} to clipboard", self.host.formatted_address()));
     }
 
     /// Launches the race when every racer is ready.
     pub fn launch_race(&mut self) {
         if self.host.is_all_ready() && self.host.launch_race().is_ok() {
             self.status_message = "All racers ready! Launching the race...".to_string();
+            self.toasts.push_success("RACE LAUNCHING", "All racers ready!");
         }
     }
 
@@ -202,6 +240,7 @@ impl CabinetLanHostScreen {
     /// Processes host network events and timers; returns the events for sound feedback.
     fn pump(&mut self, dt: f32) -> Vec<HostEvent> {
         self.pulse_timer += dt;
+        self.toasts.tick(dt);
         if self.copied_timer > 0.0 {
             self.copied_timer = (self.copied_timer - dt).max(0.0);
         }
@@ -211,13 +250,16 @@ impl CabinetLanHostScreen {
             match event {
                 HostEvent::PlayerJoined { slot_id, player_name, .. } => {
                     self.status_message = format!("Racer '{}' connected into Slot {}!", player_name, slot_id + 1);
+                    self.toasts.push_success("RACER JOINED", format!("'{}' connected into Slot {}", player_name, slot_id + 1));
                 }
                 HostEvent::PlayerLeft { slot_id, reason } => {
                     self.status_message = format!("Slot {} disconnected ({}).", slot_id + 1, reason);
+                    self.toasts.push_warning("RACER LEFT", format!("Slot {} disconnected ({})", slot_id + 1, reason));
                 }
                 HostEvent::PlayerSlotUpdated { slot_id, is_ready, .. } => {
                     let ready_str = if *is_ready { "READY ⭐" } else { "selecting" };
                     self.status_message = format!("Slot {} updated ({})", slot_id + 1, ready_str);
+                    self.toasts.push_info("SLOT UPDATED", format!("Slot {} is {}", slot_id + 1, ready_str));
                 }
                 _ => {}
             }
@@ -243,6 +285,13 @@ impl CabinetScreen for CabinetLanHostScreen {
                 _ => {}
             }
         }
+
+        // Anchor transient toasts to the top-right corner of the reference resolution.
+        self.toasts.base_x = ctx.scaler.screen_w - ctx.scaler.s(440.0);
+        self.toasts.base_y = ctx.scaler.s(90.0);
+        self.toasts.toast_width = ctx.scaler.s(400.0);
+        self.toasts.toast_height = ctx.scaler.s(56.0);
+        self.toasts.gap = ctx.scaler.s(8.0);
 
         // Copy IP shortcut (C key)
         if safe_key_pressed(KeyCode::C) {
@@ -302,6 +351,7 @@ impl CabinetScreen for CabinetLanHostScreen {
                     // Ready toggle for Host (Slot 0)
                     ctx.play_ui_select();
                     let host_ready = self.host.slots().first().and_then(|s| s.as_ref()).map(|s| s.is_ready).unwrap_or(false);
+                    self.ready_toggle.is_on = !host_ready;
                     self.host.set_host_ready(!host_ready);
                 }
                 6 => {
@@ -312,6 +362,7 @@ impl CabinetScreen for CabinetLanHostScreen {
                     } else {
                         ctx.play_ui_cancel();
                         self.status_message = "Cannot launch race: all connected racers must be READY!".to_string();
+                        self.toasts.push_warning("NOT READY", "All connected racers must be READY!");
                     }
                 }
                 7 => {
@@ -415,10 +466,14 @@ impl CabinetScreen for CabinetLanHostScreen {
         let bottom_bar_h = scaler.s(42.0);
         let content_h = sh - content_y - bottom_bar_h - scaler.s(16.0);
 
-        let col_gap = scaler.s(16.0);
-        let left_w = (sw - pad_x * 2.0 - col_gap) * 0.58;
-        let right_w = (sw - pad_x * 2.0 - col_gap) * 0.42;
-        let right_x = pad_x + left_w + col_gap;
+        let split_pane = SplitPane::new(
+            LayoutRect::new(pad_x, content_y, sw - pad_x * 2.0, content_h),
+            0.58,
+            scaler.s(16.0),
+        );
+        let left_w = split_pane.left_rect().w;
+        let right_w = split_pane.right_rect().w;
+        let right_x = split_pane.right_rect().x;
 
         // --- Left Panel: Connected Drivers (1..8 Slots) ---
         scaler.draw_glass_card(
@@ -443,14 +498,19 @@ impl CabinetScreen for CabinetLanHostScreen {
             Palette::NEON_CYAN,
         );
 
-        let slot_pad = scaler.s(6.0);
-        let slot_start_y = content_y + scaler.s(36.0);
-        let slot_h = (content_h - scaler.s(44.0) - slot_pad * 7.0) / 8.0;
+        let slot_h = (content_h - scaler.s(44.0) - scaler.s(6.0) * 7.0) / 8.0;
+        let slot_stack = VStack::new_uniform(
+            pad_x + scaler.s(12.0),
+            content_y + scaler.s(36.0),
+            left_w - scaler.s(24.0),
+            slot_h,
+            scaler.s(6.0),
+        );
 
         let (focus_col, focus_row) = self.nav.active_cell();
 
         for i in 0..8 {
-            let sy = slot_start_y + i as f32 * (slot_h + slot_pad);
+            let sy = slot_stack.item_rect(i).y;
             let is_focused = focus_col == 0 && focus_row == i;
             let slot_opt = self.host.slots().get(i).cloned().flatten();
 
@@ -562,18 +622,19 @@ impl CabinetScreen for CabinetLanHostScreen {
         let ctrl_start_y = content_y + scaler.s(38.0);
         let ctrl_item_h = scaler.s(42.0).min((content_h - scaler.s(46.0) - ctrl_pad * 7.0) / 8.0);
 
-        let laps_num = self.lap_options.get(self.selected_laps_idx).copied().unwrap_or(5);
-        let collision_mode = self.collision_options.get(self.selected_collision_idx).copied().unwrap_or(LanCollisionMode::FullSatSolid);
+        let laps_num = self.laps_stepper.value;
+        let collision_mode = self.collision_options.get(self.collision_stepper.value as usize).copied().unwrap_or(LanCollisionMode::FullSatSolid);
         let collision_str = match collision_mode {
             LanCollisionMode::FullSatSolid => "Solid Body (SAT)",
             LanCollisionMode::GhostPassing => "Ghost (Non-Contact)",
             LanCollisionMode::VergeOnly => "Verge Only",
         };
 
-        let host_ready = self.host.slots().first().and_then(|s| s.as_ref()).map(|s| s.is_ready).unwrap_or(false);
+        let host_ready = self.ready_toggle.is_on;
         let ready_button_text = if host_ready { "HOST STATUS: READY ⭐ [TOGGLE]" } else { "HOST STATUS: SELECTING [TOGGLE]" };
         let car_name = (self.car_label)(&self.host_car_model_id());
-        let (_, livery_name, livery_color) = LAN_LIVERIES[self.selected_livery_idx];
+        let livery_name = LAN_LIVERIES[self.selected_livery_idx].1;
+        let livery_color = self.livery_picker.selected_color().unwrap_or(Palette::WHITE);
         let laps_str = format!("{} Laps", laps_num);
 
         let buttons_meta = [
@@ -693,5 +754,25 @@ impl CabinetScreen for CabinetLanHostScreen {
             scaler.font_s(11.0),
             Palette::UI_TEXT_MUTED,
         );
+
+        // Transient status toasts (top-right corner).
+        for (idx, toast) in self.toasts.toasts.iter().enumerate() {
+            self.toasts.render_frame(idx, toast);
+            let r = self.toasts.toast_rect(idx);
+            fonts.draw_ui_bold(
+                &toast.title,
+                r.x + scaler.s(12.0),
+                r.y + r.h * 0.40,
+                scaler.font_s(12.0),
+                toast.severity.accent_color(),
+            );
+            fonts.draw_ui_regular(
+                &toast.message,
+                r.x + scaler.s(12.0),
+                r.y + r.h * 0.78,
+                scaler.font_s(10.5),
+                Palette::WHITE,
+            );
+        }
     }
 }
