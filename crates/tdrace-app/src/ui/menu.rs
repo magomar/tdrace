@@ -16,7 +16,8 @@ use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
 use cabinet::ui::{
-    FilterBar, FilterBarStyle, FilterItem, LayoutRect, ModalContainer, SplitPane, VStack,
+    ColumnAlign, DataColumn, DataRow, DataTable, FilterBar, FilterBarStyle, FilterItem,
+    LayoutRect, ModalContainer, ScreenFooter, SplitPane, VStack,
 };
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
@@ -2517,7 +2518,7 @@ pub struct PauseMenuButtonLayout {
 pub fn pause_menu_layout(sw: f32, sh: f32) -> (f32, f32, f32, f32, PauseMenuButtonLayout) {
     let scaler = UiScaler::new(sw, sh);
     let box_w = scaler.s(500.0);
-    let box_h = scaler.s(345.0);
+    let box_h = scaler.s(410.0);
     let box_x = (sw - box_w) * 0.5;
     let box_y = (sh - box_h) * 0.5;
 
@@ -2677,38 +2678,68 @@ pub fn render_pause_menu(
         "ON"
     };
     let vol_pct = (audio_settings.master_volume * 100.0).round() as i32;
-    let audio_item = format!(
-        "M : Music [{}] | S : Sound [{}] | [ / ] : Vol {}%",
-        music_status, sfx_status, vol_pct
-    );
-
     let items = [
         assist_item,
-        audio_item,
+        format!("Music [{}]", music_status),
+        format!("Sound [{}]", sfx_status),
+        format!("Master Volume [< {}% >]", vol_pct),
         "X / Y : Arcade Settings & Preferences".to_string(),
         "D : Driver Cards & Opponents Dossier".to_string(),
         "K : Controls Guide | R : Restart Race".to_string(),
-        "TAB / Left Stick Click : Camera View".to_string(),
-        "Q/A/O/P / Arrows / Stick & Triggers : Drive".to_string(),
-        "SPACE / B : Handbrake | Hold Brake at Stop : Reverse".to_string(),
     ];
 
     let item_stack = VStack::new_uniform(box_x, div_y + scaler.s(22.0), box_w, scaler.s(22.5), 0.0);
     for (i, item) in items.iter().enumerate() {
         let item_y = item_stack.item_rect(i).y;
+        let focused = i < 4 && selected_btn == i + 2;
+        if focused {
+            draw_rectangle_lines(box_x + scaler.s(18.0), item_y - scaler.s(16.0), box_w - scaler.s(36.0), scaler.s(22.5), scaler.s(2.4), Palette::NEON_GOLD);
+        }
+        let label = if focused { format!("► {} ◄", item) } else { item.clone() };
         fonts.draw_ui_bold(
-            item,
+            &label,
             box_x + scaler.s(24.0),
             item_y,
             scaler.font_s(13.5),
-            Color::new(0.85, 0.90, 0.98, 1.0),
+            if focused { Palette::NEON_GOLD } else { Color::new(0.85, 0.90, 0.98, 1.0) },
         );
+    }
+    draw_menu_footer(fonts, &scaler, LayoutRect::new(box_x, box_y + box_h - scaler.s(40.0), box_w, scaler.s(40.0)), &[
+        ("↑↓", "Focus"), ("←→ / A", "Adjust"), ("Start", "Resume"), ("B", "Exit"),
+    ]);
+}
+
+fn draw_menu_footer(fonts: &Fonts, scaler: &UiScaler, bounds: LayoutRect, prompts: &[(&str, &str)]) {
+    let mut footer = ScreenFooter::new(bounds.x, bounds.y, bounds.w, bounds.h);
+    for &(badge, label) in prompts { footer.add_prompt(badge, label); }
+    footer.render_frame();
+    let width = bounds.w / prompts.len().max(1) as f32;
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let size = scaler.font_s(10.0);
+        let text = fonts.fit_ui_bold(&format!("[{}] {}", prompt.badge, prompt.label), size, width - scaler.s(8.0));
+        fonts.draw_ui_bold_centered(&text, bounds.x + (i as f32 + 0.5) * width, bounds.y + bounds.h * 0.65, size, Palette::WHITE);
     }
 }
 
-fn draw_ui_bold_right(fonts: &Fonts, text: &str, right_x: f32, y: f32, size: f32, color: Color) {
-    let dim = fonts.measure_ui_bold(text, size);
-    fonts.draw_ui_bold(text, right_x - dim.width, y, size, color);
+/// Builds a display-only results table without changing the authoritative finish order.
+pub fn race_results_table(results: &[RaceResultEntry], championship: bool) -> DataTable<RaceResultEntry> {
+    let mut table = DataTable::new(0.0, 0.0, 1.0, 32.0, 28.0);
+    table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &RaceResultEntry| format!("P{}", r.position)));
+    table.add_column(DataColumn::new("driver", "DRIVER / VEHICLE", 35.0, ColumnAlign::Left, |r| r.car_name.clone()));
+    table.add_column(DataColumn::new("total", "TOTAL TIME", 18.0, ColumnAlign::Right, |r| {
+        format!("{}{}", if r.projected { "~" } else { "" }, format_lap_time(r.total_time))
+    }));
+    table.add_column(DataColumn::new("lap", "BEST LAP", 17.0, ColumnAlign::Right, |r| format_lap_time(r.best_lap.unwrap_or(0.0))));
+    table.add_column(DataColumn::new("gap", "GAP", 13.0, ColumnAlign::Right, |r| {
+        if r.position == 1 { "-".to_string() } else {
+            format!("{}+{:.2}s", if r.projected { "~" } else { "" }, r.delta_to_leader)
+        }
+    }));
+    if championship {
+        table.add_column(DataColumn::new("points", "POINTS", 13.0, ColumnAlign::Right, |r| format!("+{} PTS", r.points_awarded)));
+    }
+    table.set_rows(results.iter().map(|r| DataRow::new(r.car_idx.to_string(), r.clone()).with_rank(r.position).with_player(r.is_player)).collect());
+    table
 }
 
 /// Renders the Race Results / Podium Standings screen with modern leaderboard cards.
@@ -2767,218 +2798,13 @@ pub fn render_results_screen(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Table Header
-    let mut row_y = y + scaler.s(108.0);
-    let hdr_h = scaler.s(28.0);
-    draw_rectangle(
-        x + scaler.s(20.0),
-        row_y - scaler.s(20.0),
-        box_w - scaler.s(40.0),
-        hdr_h,
-        Color::new(0.12, 0.16, 0.25, 0.9),
-    );
-    fonts.draw_ui_bold(
-        "POS",
-        x + scaler.s(32.0),
-        row_y,
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "DRIVER / VEHICLE",
-        x + scaler.s(85.0),
-        row_y,
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
-    if is_championship {
-        fonts.draw_ui_bold(
-            "TOTAL TIME",
-            x + box_w - scaler.s(360.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_bold(
-            "BEST LAP",
-            x + box_w - scaler.s(240.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_bold(
-            "GAP",
-            x + box_w - scaler.s(135.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        draw_ui_bold_right(
-            fonts,
-            "POINTS",
-            x + box_w - scaler.s(30.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::NEON_GOLD,
-        );
-    } else {
-        fonts.draw_ui_bold(
-            "TOTAL TIME",
-            x + box_w - scaler.s(320.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_bold(
-            "BEST LAP",
-            x + box_w - scaler.s(190.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_bold(
-            "GAP",
-            x + box_w - scaler.s(75.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-    }
-
-    row_y += scaler.s(24.0);
-
-    for res in results {
-        let (row_bg, text_col) = if res.is_player {
-            (Color::new(0.18, 0.35, 0.22, 0.90), Palette::NEON_GREEN)
-        } else {
-            (
-                Color::new(0.09, 0.11, 0.16, 0.70),
-                Color::new(0.85, 0.90, 0.95, 1.0),
-            )
-        };
-
-        draw_rectangle(
-            x + scaler.s(20.0),
-            row_y - scaler.s(16.0),
-            box_w - scaler.s(40.0),
-            scaler.s(28.0),
-            row_bg,
-        );
-
-        // Position medal icon or text
-        let pos_str = match res.position {
-            1 => "P1".to_string(),
-            2 => "P2".to_string(),
-            3 => "P3".to_string(),
-            _ => format!("P{}", res.position),
-        };
-        fonts.draw_ui_bold(
-            &pos_str,
-            x + scaler.s(28.0),
-            row_y + scaler.s(4.0),
-            scaler.font_s(14.0),
-            text_col,
-        );
-        fonts.draw_ui_bold(
-            &res.car_name,
-            x + scaler.s(85.0),
-            row_y + scaler.s(4.0),
-            scaler.font_s(14.0),
-            text_col,
-        );
-
-        if is_championship {
-            let total_str = if res.projected {
-                format!("~{}", format_lap_time(res.total_time))
-            } else {
-                format_lap_time(res.total_time)
-            };
-            fonts.draw_ui_bold(
-                &total_str,
-                x + box_w - scaler.s(360.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-
-            let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
-            fonts.draw_ui_bold(
-                &best_str,
-                x + box_w - scaler.s(240.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-
-            let gap_str = if res.position == 1 {
-                "-".to_string()
-            } else {
-                format!(
-                    "{}+{:.2}s",
-                    if res.projected { "~" } else { "" },
-                    res.delta_to_leader
-                )
-            };
-            fonts.draw_ui_bold(
-                &gap_str,
-                x + box_w - scaler.s(135.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-
-            let pts_str = format!("+{} PTS", res.points_awarded);
-            draw_ui_bold_right(
-                fonts,
-                &pts_str,
-                x + box_w - scaler.s(30.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                Palette::NEON_GOLD,
-            );
-        } else {
-            let total_str = if res.projected {
-                format!("~{}", format_lap_time(res.total_time))
-            } else {
-                format_lap_time(res.total_time)
-            };
-            fonts.draw_ui_bold(
-                &total_str,
-                x + box_w - scaler.s(320.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-
-            let best_str = format_lap_time(res.best_lap.unwrap_or(0.0));
-            fonts.draw_ui_bold(
-                &best_str,
-                x + box_w - scaler.s(190.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-
-            let gap_str = if res.position == 1 {
-                "-".to_string()
-            } else {
-                format!(
-                    "{}+{:.2}s",
-                    if res.projected { "~" } else { "" },
-                    res.delta_to_leader
-                )
-            };
-            fonts.draw_ui_bold(
-                &gap_str,
-                x + box_w - scaler.s(75.0),
-                row_y + scaler.s(4.0),
-                scaler.font_s(14.0),
-                text_col,
-            );
-        }
-
-        row_y += scaler.s(32.0);
-    }
+    let mut table = race_results_table(results, is_championship);
+    table.row_height = scaler.s(32.0);
+    table.header_height = scaler.s(28.0);
+    table.draw(&scaler, fonts, LayoutRect::new(
+        x + scaler.s(20.0), y + scaler.s(88.0),
+        box_w - scaler.s(40.0), box_h - scaler.s(160.0),
+    ));
 
     // Optional Career XP Receipt Banner
     if let Some(receipt) = xp_receipt {
@@ -3019,22 +2845,21 @@ pub fn render_results_screen(
         );
     }
 
-    // Bottom action prompt
-    let prompt = if is_championship {
-        "Press [SPACE / ENTER] Championship Standings | [TAB] Detailed Stats | [R] Re-run Round | [ESC] Save & Exit"
-    } else {
-        "Press [SPACE / ENTER] Hall of Fame | [TAB] Detailed Stats | [R] Restart Race | [ESC] Main Menu"
-    };
-    fonts.draw_ui_bold_centered(
-        prompt,
-        sw * 0.5,
-        y + box_h - scaler.s(20.0),
-        scaler.font_s(15.0),
-        Palette::WHITE,
-    );
+    draw_menu_footer(fonts, &scaler, LayoutRect::new(x, y + box_h - scaler.s(40.0), box_w, scaler.s(40.0)), &[
+        ("Enter / A", if is_championship { "Standings" } else { "Hall of Fame" }),
+        ("Tab", "Stats"), ("R", "Restart"), ("Esc / B", "Exit"),
+    ]);
 }
 
 /// Renders the full-screen Controls, Gamepad Mappings, and Assist Settings screen.
+fn draw_controls_table(fonts: &Fonts, scaler: &UiScaler, bounds: LayoutRect, rows: &[(&str, &str)]) {
+    let mut table = DataTable::new(bounds.x, bounds.y, bounds.w, scaler.s(21.0), scaler.s(20.0));
+    table.add_column(DataColumn::new("action", "ACTION", 55.0, ColumnAlign::Left, |r: &(String, String)| r.0.clone()));
+    table.add_column(DataColumn::new("binding", "BINDING", 45.0, ColumnAlign::Right, |r| r.1.clone()));
+    table.set_rows(rows.iter().enumerate().map(|(i, &(action, binding))| DataRow::new(i.to_string(), (action.to_string(), binding.to_string()))).collect());
+    table.draw(scaler, fonts, bounds);
+}
+
 pub fn render_controls_screen(
     fonts: &Fonts,
     assist_profile: AssistProfile,
@@ -3201,25 +3026,7 @@ pub fn render_controls_screen(
         ("Audio Mute / Volume", "M / [ and ]"),
     ];
 
-    let kb_stack = VStack::new_uniform(col1_x, col_y + scaler.s(42.0), col_w, scaler.s(16.5), 0.0);
-    for (i, &(action, key)) in kb_rows.iter().enumerate() {
-        let row_y = kb_stack.item_rect(i).y;
-        fonts.draw_ui_regular(
-            action,
-            col1_x + scaler.s(16.0),
-            row_y,
-            scaler.font_s(11.8),
-            Color::new(0.80, 0.85, 0.92, 1.0),
-        );
-        let km = fonts.measure_ui_bold(key, scaler.font_s(11.8));
-        fonts.draw_ui_bold(
-            key,
-            col1_x + col_w - km.width - scaler.s(16.0),
-            row_y,
-            scaler.font_s(11.8),
-            Palette::NEON_GOLD,
-        );
-    }
+    draw_controls_table(fonts, &scaler, LayoutRect::new(col1_x + scaler.s(12.0), col_y + scaler.s(36.0), col_w - scaler.s(24.0), col_h - scaler.s(48.0)), &kb_rows);
 
     // Right Column: Gamepad Controls
     scaler.draw_glass_card(
@@ -3252,25 +3059,7 @@ pub fn render_controls_screen(
         ("Back / Cancel", "B / Circle Button (Escape)"),
     ];
 
-    let gp_stack = VStack::new_uniform(col2_x, col_y + scaler.s(52.0), col_w, scaler.s(21.0), 0.0);
-    for (i, &(action, button)) in gp_rows.iter().enumerate() {
-        let gp_row_y = gp_stack.item_rect(i).y;
-        fonts.draw_ui_regular(
-            action,
-            col2_x + scaler.s(16.0),
-            gp_row_y,
-            scaler.font_s(13.0),
-            Color::new(0.80, 0.85, 0.92, 1.0),
-        );
-        let bm = fonts.measure_ui_bold(button, scaler.font_s(13.0));
-        fonts.draw_ui_bold(
-            button,
-            col2_x + col_w - bm.width - scaler.s(16.0),
-            gp_row_y,
-            scaler.font_s(13.0),
-            Palette::NEON_GREEN,
-        );
-    }
+    draw_controls_table(fonts, &scaler, LayoutRect::new(col2_x + scaler.s(12.0), col_y + scaler.s(36.0), col_w - scaler.s(24.0), col_h - scaler.s(48.0)), &gp_rows);
 
     // Gamepad mapper launcher (external calibration & remapping tool)
     let mapper_h = scaler.s(52.0);
@@ -3342,15 +3131,10 @@ pub fn render_controls_screen(
     );
     fonts.draw_ui_regular("Press [H] on keyboard or [R3] on Gamepad to switch assist difficulty here, on the grid, or during a race.", banner_x + scaler.s(18.0), bot_y + scaler.s(68.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
 
-    // Footer Return Prompt
-    let back_prompt = "PRESS [TAB / C] PRESET  •  [S / P] PROFILE  •  [G] GAMEPAD MAPPER  •  [X] SETTINGS  •  [H / R3] ASSISTS  •  [ESC] RETURN";
-    fonts.draw_ui_bold_centered(
-        back_prompt,
-        sw * 0.5,
-        sh - scaler.s(18.0),
-        scaler.font_s(16.0),
-        Palette::WHITE,
-    );
+    draw_menu_footer(fonts, &scaler, LayoutRect::new(0.0, sh - scaler.s(40.0), sw, scaler.s(40.0)), &[
+        ("Tab / X", "Layout"), ("S / Y", "Handling"), ("G", "Mapper"),
+        ("X", "Settings"), ("H / R3", "Assists"), ("Esc / B", "Return"),
+    ]);
 }
 
 use crate::tournament::ChampionshipSession;
@@ -3763,117 +3547,22 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
         1.5,
     );
 
-    // Table Header Row
-    let mut row_y = table_y + scaler.s(28.0);
-    fonts.draw_ui_bold(
-        "POS",
-        table_x + scaler.s(20.0),
-        row_y,
-        scaler.font_s(13.0),
-        Palette::UI_TEXT_MUTED,
-    );
-    fonts.draw_ui_bold(
-        "DRIVER",
-        table_x + scaler.s(70.0),
-        row_y,
-        scaler.font_s(13.0),
-        Palette::UI_TEXT_MUTED,
-    );
-    fonts.draw_ui_bold(
-        "TEAM / CAR",
-        table_x + scaler.s(280.0),
-        row_y,
-        scaler.font_s(13.0),
-        Palette::UI_TEXT_MUTED,
-    );
-    fonts.draw_ui_bold(
-        "WINS",
-        table_x + table_w - scaler.s(160.0),
-        row_y,
-        scaler.font_s(13.0),
-        Palette::UI_TEXT_MUTED,
-    );
-    fonts.draw_ui_bold(
-        "POINTS",
-        table_x + table_w - scaler.s(75.0),
-        row_y,
-        scaler.font_s(13.0),
-        Palette::NEON_GOLD,
-    );
+    let mut table = DataTable::new(table_x, table_y, table_w, scaler.s(28.0), scaler.s(28.0));
+    type Standing = (usize, crate::series::SeriesStandingEntry);
+    table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &Standing| format!("#{}", r.0)));
+    table.add_column(DataColumn::new("driver", "DRIVER", 30.0, ColumnAlign::Left, |r| r.1.driver_name.clone()));
+    table.add_column(DataColumn::new("team", "TEAM / CAR", 35.0, ColumnAlign::Left, |r| r.1.team_name.clone()));
+    table.add_column(DataColumn::new("wins", "WINS", 10.0, ColumnAlign::Right, |r| r.1.wins.to_string()));
+    table.add_column(DataColumn::new("points", "POINTS", 18.0, ColumnAlign::Right, |r| format!("{} PTS", r.1.points)));
+    table.set_rows(champ.standings.iter().enumerate().map(|(i, entry)| {
+        DataRow::new(entry.driver_id.clone(), (i + 1, entry.clone())).with_rank(i + 1)
+    }).collect());
+    table.draw(&scaler, fonts, LayoutRect::new(table_x + scaler.s(15.0), table_y + scaler.s(12.0), table_w - scaler.s(30.0), table_h - scaler.s(24.0)));
 
-    draw_rectangle(
-        table_x + scaler.s(15.0),
-        row_y + scaler.s(8.0),
-        table_w - scaler.s(30.0),
-        1.0,
-        Palette::UI_CARD_BORDER,
-    );
-    row_y += scaler.s(24.0);
-
-    // Table Rows
-    for (i, entry) in champ.standings.iter().enumerate().take(10) {
-        let pos_str = format!("#{}", i + 1);
-        let pos_col = match i {
-            0 => Palette::NEON_GOLD,
-            1 => Palette::WHITE,
-            2 => Palette::NEON_MAGENTA,
-            _ => Palette::UI_TEXT_MUTED,
-        };
-
-        fonts.draw_ui_bold(
-            &pos_str,
-            table_x + scaler.s(20.0),
-            row_y,
-            scaler.font_s(14.0),
-            pos_col,
-        );
-        fonts.draw_ui_bold(
-            &entry.driver_name,
-            table_x + scaler.s(70.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_ui_regular(
-            &entry.team_name,
-            table_x + scaler.s(280.0),
-            row_y,
-            scaler.font_s(13.0),
-            Color::new(0.75, 0.80, 0.88, 1.0),
-        );
-        fonts.draw_ui_bold(
-            &entry.wins.to_string(),
-            table_x + table_w - scaler.s(150.0),
-            row_y,
-            scaler.font_s(14.0),
-            Palette::WHITE,
-        );
-        fonts.draw_display(
-            &format!("{} PTS", entry.points),
-            table_x + table_w - scaler.s(85.0),
-            row_y,
-            scaler.font_s(15.0),
-            Palette::NEON_GOLD,
-        );
-
-        row_y += scaler.s(28.0);
-    }
-
-    let next_prompt = if champ.is_completed {
-        "SEASON COMPLETE! PRESS [ENTER/SPACE] OR GAMEPAD [A] TO RETURN TO MENU | [R] RE-RUN FINAL ROUND"
-    } else if champ.current_round > 0 {
-        "PRESS [ENTER/SPACE] TO ADVANCE ROUND | [R] RE-RUN LATEST ROUND | [ESC] EXIT"
-    } else {
-        "PRESS [ENTER/SPACE] TO START ROUND 1 | [ESC] EXIT"
-    };
-
-    fonts.draw_ui_bold_centered(
-        next_prompt,
-        sw * 0.5,
-        sh - scaler.s(26.0),
-        scaler.font_s(15.0),
-        Palette::NEON_GREEN,
-    );
+    draw_menu_footer(fonts, &scaler, LayoutRect::new(0.0, sh - scaler.s(40.0), sw, scaler.s(40.0)), &[
+        ("Enter / A", if champ.is_completed { "Menu" } else { "Next Round" }),
+        ("R", "Re-run Round"), ("Esc / B", "Exit"),
+    ]);
 }
 
 /// Renders the exit confirmation modal overlay when pressing Escape or Gamepad B on the Main Menu.

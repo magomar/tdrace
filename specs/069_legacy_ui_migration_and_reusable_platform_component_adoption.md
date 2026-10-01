@@ -88,6 +88,18 @@ flowchart LR
 
 ## ⚙️ Backend Models & API Endpoints
 
+### Display-only Table Rendering Contract
+
+`cabinet::ui::DataTable<T>::draw(&self, scaler: &UiScaler, fonts: &Fonts, bounds: LayoutRect)` renders headers and rows using column widths, `ColumnAlign`, and extractors. Column widths are proportional to the supplied bounds; text is fitted within each cell. Row heights shrink to fit the available viewport, reserving the header. There is no minimum font-size guarantee for arbitrarily large collections; scrolling/pagination remains caller-owned.
+
+Read-only race results and championship standings preserve authoritative row order. They do not enable sorting or focus; an unfocused table must not highlight its first row as selected. Rank colors and player highlights remain visible. Racing-specific projected time prefixes, leader gaps, lap times, and points are formatted in `tdrace-app`, not in `cabinet`. Results bounds reserve space for the XP banner and footer.
+
+Pause navigation uses a two-column action row (Resume/Exit) followed by four shared setting rows (assist profile, music, sound, master volume). Up/Down moves between rows, Left/Right adjusts settings, and Confirm activates the focused action or setting. Existing Start/Escape resume and B/Exit shortcuts remain unchanged. Settings use `OptionCycler`, `Toggle`, and `ValueStepper`; `ScreenFooter` displays contextual prompts.
+
+Native visual verification is available through `TDRACE_UI_PREVIEW_DIR=<existing-directory> cargo run -p tdrace-app --example ui_migration_preview`. This writes results, small-window results, pause, and controls screenshots without starting a race.
+
+Run `python3 scripts/verify_ui_migration.py` for Cabinet unit tests and the controls, modality-flow, and table-migration regression suites. App test binaries execute serially in a temporary working directory because the legacy database opens relative to the working directory; this avoids inheriting a persisted local assist profile.
+
 > **Canonical component definitions live in Spec 068** (`§ Backend Models & API Endpoints`), including `SplitPane`, `GridLayout`, `FlowLayout`, `ScrollIndicator`, `ValueStepper<T>`, `Counter`, `Toggle`, `RadioGroup<T>`, `OptionCycler<T>`, `MetricBar`, `KpiTile`, `ProgressBar`, `ModalContainer`, `CountDown`, `Tooltip`, `HelpChip`, `PageDots`, `VirtualKeypad`, and the `NavIntent`/`KeyRepeat` input layer. All are shipped. The sketches below are retained for reference; this spec only defines migration-specific payload types (`T`).
 
 ### 1. Layout Containers (`cabinet::ui`) — canonical in Spec 068

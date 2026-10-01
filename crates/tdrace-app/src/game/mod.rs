@@ -976,7 +976,7 @@ impl RaceSession {
             starting_grid_focus: StartingGridFocus::LeftSetup,
             starting_grid_card_idx: 0,
             starting_grid_roster_idx: 0,
-            pause_nav: NavGrid2D::new(vec![1, 1]),
+            pause_nav: NavGrid2D::new(vec![5, 5]),
             pause_selected_btn: 0,
             paused_countdown: None,
             controls_help_return: None,
@@ -4874,6 +4874,33 @@ impl RaceSession {
         }
     }
 
+    /// Applies an adjustment to a focused pause setting without resuming the race.
+    pub fn adjust_pause_setting(&mut self, row: usize, decrease: bool) {
+        match row {
+            1 => {
+                let options = [AssistProfile::Arcade, AssistProfile::Sport, AssistProfile::Pro];
+                let index = options.iter().position(|p| *p == self.assist_profile).unwrap_or(0);
+                let mut cycler = cabinet::ui::OptionCycler::new(options.to_vec()).with_selected(index);
+                if decrease { cycler.cycle_backward(); } else { cycler.cycle_forward(); }
+                self.set_assist_profile(options[cycler.selected_idx]);
+            }
+            2 => {
+                let mut toggle = cabinet::ui::Toggle::new("Music", !self.audio.settings.is_music_muted);
+                if toggle.toggle() { self.audio.toggle_music(); }
+            }
+            3 => {
+                let mut toggle = cabinet::ui::Toggle::new("Sound", !self.audio.settings.is_sfx_muted);
+                if toggle.toggle() { self.audio.toggle_sfx(); }
+            }
+            4 => {
+                let mut volume = cabinet::ui::ValueStepper::new("Volume", 0.0_f32, 1.0, 0.05, self.audio.settings.master_volume);
+                if decrease { volume.step_down(); } else { volume.step_up(); }
+                self.audio.set_master_volume(volume.value);
+            }
+            _ => {}
+        }
+    }
+
     /// Resumes the race session from pause, restoring the active follow driving camera.
     pub fn resume_race(&mut self) {
         self.state = match self.paused_countdown.take() {
@@ -5839,7 +5866,7 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.dpad_left_pressed
                     || self.input.gamepad.snapshot.nav_left
                 {
-                    if self.pause_nav.focused_col != 0 {
+                    if self.pause_nav.active_row() == 0 && self.pause_nav.focused_col != 0 {
                         self.audio.play_sfx(SfxType::UiMove);
                         self.pause_nav.set_focus(0, 0);
                     }
@@ -5849,23 +5876,21 @@ impl RaceSession {
                     || self.input.gamepad.snapshot.dpad_right_pressed
                     || self.input.gamepad.snapshot.nav_right
                 {
-                    if self.pause_nav.focused_col != 1 {
+                    if self.pause_nav.active_row() == 0 && self.pause_nav.focused_col != 1 {
                         self.audio.play_sfx(SfxType::UiMove);
                         self.pause_nav.set_focus(1, 0);
                     }
                 }
-                if is_key_pressed(KeyCode::Up)
-                    || is_key_pressed(KeyCode::Down)
-                    || is_key_pressed(KeyCode::W)
-                    || self.input.gamepad.snapshot.nav_up
-                    || self.input.gamepad.snapshot.nav_down
-                {
+                if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up || self.input.gamepad.snapshot.dpad_up_pressed {
                     self.audio.play_sfx(SfxType::UiMove);
-                    let next_col = 1 - self.pause_nav.focused_col;
-                    self.pause_nav.set_focus(next_col, 0);
+                    self.pause_nav.move_up();
+                } else if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down || self.input.gamepad.snapshot.dpad_down_pressed {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.pause_nav.move_down();
                 }
 
-                self.pause_selected_btn = self.pause_nav.focused_col;
+                let pause_row = self.pause_nav.active_row();
+                self.pause_selected_btn = if pause_row == 0 { self.pause_nav.focused_col } else { pause_row + 1 };
 
                 // Direct shortcut triggers. Checked before the focused-button confirm, because
                 // gamepad Start also counts as "confirm" and must always resume, as labelled.
@@ -5897,6 +5922,13 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.btn_a_pressed,
                     );
 
+                let left = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left || self.input.gamepad.snapshot.dpad_left_pressed;
+                let right = is_key_pressed(KeyCode::Right) || self.input.gamepad.snapshot.nav_right || self.input.gamepad.snapshot.dpad_right_pressed;
+                if pause_row > 0 && (is_confirmed || left || right) {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    self.adjust_pause_setting(pause_row, left);
+                    return;
+                }
                 if is_confirmed {
                     self.audio.play_sfx(SfxType::UiSelect);
                     if self.pause_selected_btn == 0 {

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::audio::CabinetAudioSink;
 use crate::ui::layout::LayoutRect;
+use crate::ui::{Fonts, UiScaler};
 use crate::ui::theme::Palette;
 
 #[inline]
@@ -317,6 +318,64 @@ impl<T> DataTable<T> {
         draw_rectangle(rect.x, rect.y, rect.w, rect.h, bg);
         draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, thickness, border);
     }
+
+    /// Renders a read-only table within a bounded viewport. Does not reorder rows or
+    /// highlight selected_row unless is_focused is explicitly enabled by the caller.
+    /// Row heights shrink to fit the supplied viewport; callers own scroll state.
+    pub fn draw(&self, scaler: &UiScaler, fonts: &Fonts, bounds: LayoutRect) {
+        if self.columns.is_empty() || bounds.w <= 0.0 || bounds.h <= 0.0 {
+            return;
+        }
+        let (header_h, row_h) = self.display_heights(bounds.h);
+        let header = LayoutRect::new(bounds.x, bounds.y, bounds.w, header_h);
+        draw_rectangle(header.x, header.y, header.w, header.h, Palette::UI_CARD_BG_HOVER);
+        let size = scaler.font_s(14.0).min(row_h * 0.55).min(header_h * 0.55);
+        if size <= 0.0 {
+            return;
+        }
+        self.draw_cells(fonts, header, size, None);
+        for (idx, row) in self.rows.iter().enumerate() {
+            let rect = LayoutRect::new(bounds.x, bounds.y + header_h + idx as f32 * row_h, bounds.w, row_h);
+            self.render_row_frame(&rect, self.is_focused && idx == self.selected_row, row.is_player);
+            self.draw_cells(fonts, rect, size, Some(row));
+        }
+    }
+
+    fn display_heights(&self, height: f32) -> (f32, f32) {
+        let header_h = self.header_height.max(0.0).min(height.max(0.0));
+        let row_h = self.row_height.max(0.0).min((height - header_h).max(0.0) / self.rows.len().max(1) as f32);
+        (header_h, row_h)
+    }
+
+    fn draw_cells(&self, fonts: &Fonts, rect: LayoutRect, size: f32, row: Option<&DataRow<T>>) {
+        let total: f32 = self.columns.iter().map(|col| col.width.max(0.0)).sum();
+        if total <= 0.0 {
+            return;
+        }
+        let mut x = rect.x;
+        for col in &self.columns {
+            let width = rect.w * col.width.max(0.0) / total;
+            let pad = (size * 0.5).min(width * 0.25);
+            let text = match row {
+                Some(row) => (col.extractor)(&row.data),
+                None => col.header.clone(),
+            };
+            let text = fonts.fit_ui_bold(&text, size, (width - 2.0 * pad).max(0.0));
+            let text_w = fonts.measure_ui_bold(&text, size).width;
+            let text_x = match col.align {
+                ColumnAlign::Left => x + pad,
+                ColumnAlign::Center => x + (width - text_w) * 0.5,
+                ColumnAlign::Right => x + width - pad - text_w,
+            };
+            let color = match row {
+                Some(row) if col.id == "pos" => row.rank.map(Self::rank_badge_color).unwrap_or(Palette::WHITE),
+                Some(row) if row.is_player => Palette::NEON_GOLD,
+                _ => Palette::WHITE,
+            };
+            fonts.draw_ui_bold(&text, text_x, rect.y + rect.h * 0.5 + size * 0.35, size, color);
+            x += width;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -326,6 +385,23 @@ mod tests {
     struct Participant {
         name: String,
         lap_time: String,
+    }
+
+    #[test]
+    fn display_rows_fit_bounded_viewport_without_reordering() {
+        let mut table = DataTable::new(0.0, 0.0, 600.0, 32.0, 28.0);
+        table.set_rows((0..32).map(|i| DataRow::new(i.to_string(), i)).collect());
+        for height in [160.0, 240.0, 480.0] {
+            let (header, row) = table.display_heights(height);
+            assert!(header + row * table.len() as f32 <= height + 0.001);
+            assert!(row > 0.0 && row <= 32.0);
+        }
+        assert_eq!(table.rows[0].data, 0);
+        assert_eq!(table.rows[31].data, 31);
+        assert!(!table.is_focused);
+        assert_eq!(table.display_heights(0.0), (0.0, 0.0));
+        table.set_rows(Vec::new());
+        assert_eq!(table.display_heights(100.0), (28.0, 32.0));
     }
 
     #[test]
