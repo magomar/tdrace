@@ -1,10 +1,10 @@
 //! Spatial proximity audio calculations, distance attenuation, stereo panning,
 //! and Doppler shift frequency modulation for nearby on-track vehicles.
 
-use glam::Vec2;
-use crate::audio::manager::EngineSoundType;
 use crate::audio::engine_mixer::EngineAudioMixer;
+use crate::audio::manager::EngineSoundType;
 use crate::audio::samples::ArchetypeSampleBank;
+use glam::Vec2;
 
 pub const DEFAULT_MIN_DISTANCE: f32 = 2.5;
 pub const DEFAULT_MAX_DISTANCE: f32 = 75.0;
@@ -35,7 +35,13 @@ impl Default for EngineRpmModel {
 }
 
 impl EngineRpmModel {
-    pub fn update(&mut self, forward_speed: f32, throttle: f32, max_slip: f32, dt: f32) -> (f32, bool) {
+    pub fn update(
+        &mut self,
+        forward_speed: f32,
+        throttle: f32,
+        max_slip: f32,
+        dt: f32,
+    ) -> (f32, bool) {
         self.shift_cooldown = (self.shift_cooldown - dt).max(0.0);
         let speed_abs = forward_speed.abs();
         let is_reverse = forward_speed < -0.5 && throttle < 0.0;
@@ -44,9 +50,9 @@ impl EngineRpmModel {
             let rpm = (1100.0 + (speed_abs / 12.0) * 5500.0).clamp(1100.0, 7200.0);
             (0, rpm)
         } else if speed_abs < 1.0 {
-            // Stationary launch revs / idle
+            // Stationary launch revs / idle: allow high-RPM screams in neutral
             let throttle_revs = if throttle > 0.05 {
-                1100.0 + throttle * 5500.0
+                (1100.0 + throttle * 7300.0).clamp(1100.0, 8400.0)
             } else {
                 1100.0
             };
@@ -66,18 +72,34 @@ impl EngineRpmModel {
             };
 
             // Wheelspin rev-flare (power drift / burnout)
-            let slip_flare = if max_slip > 0.3 { (max_slip - 0.3) * 2500.0 } else { 0.0 };
+            let slip_flare = if max_slip > 0.3 {
+                (max_slip - 0.3) * 2500.0
+            } else {
+                0.0
+            };
             (gear, (base_rpm + slip_flare).clamp(1100.0, 7800.0))
         };
 
-        let is_upshift = new_gear > self.current_gear && self.current_gear > 0 && self.shift_cooldown <= 0.0;
+        let is_upshift =
+            new_gear > self.current_gear && self.current_gear > 0 && self.shift_cooldown <= 0.0;
         if is_upshift {
             self.shift_cooldown = 0.22;
         }
         self.current_gear = new_gear;
 
         // Smooth RPM interpolation with realistic engine inertia
-        let responsiveness = if target_rpm > self.current_rpm { 16.0 } else { 10.0 };
+        let responsiveness = if speed_abs < 1.0 {
+            // Neutral / grid free-rev: aggressive throttle attack and snappy mechanical drop
+            if target_rpm > self.current_rpm {
+                24.0
+            } else {
+                16.0
+            }
+        } else if target_rpm > self.current_rpm {
+            16.0
+        } else {
+            10.0
+        };
         self.current_rpm += (target_rpm - self.current_rpm) * (dt * responsiveness).min(1.0);
 
         (self.current_rpm, is_upshift)
@@ -273,29 +295,45 @@ pub fn calculate_countdown_warmup_throttle(vehicle_id: usize, remaining_sec: f32
     let t = (10.0 - remaining_sec).max(0.0);
 
     // Deterministic per-vehicle rhythm and cadence parameters
-    let freq = 1.10 + ((vehicle_id * 7 + 3) % 8) as f32 * 0.09;
+    let freq = 1.25 + ((vehicle_id * 7 + 3) % 7) as f32 * 0.12;
     let phase = ((vehicle_id * 13 + 5) % 11) as f32 / 11.0;
-    let peak_throttle = 0.78 + ((vehicle_id * 17 + 2) % 7) as f32 * 0.03;
-    let base_floor = 0.22 + ((vehicle_id * 11 + 1) % 5) as f32 * 0.02;
+    let peak_throttle = 0.92 + ((vehicle_id * 17 + 2) % 7) as f32 * 0.012; // 0.92 .. 1.00
+    let base_floor = 0.34 + ((vehicle_id * 11 + 1) % 5) as f32 * 0.025; // 0.34 .. 0.44
 
     let cycle = (t * freq + phase).rem_euclid(1.0);
 
-    // Asymmetric throttle blip pulse: rapid attack surge, natural decay, and warm idle dwell
-    let mut pulse = if cycle < 0.28 {
-        let k = cycle / 0.28;
-        base_floor + (peak_throttle - base_floor) * k.powf(1.4)
-    } else if cycle < 0.65 {
-        let k = (cycle - 0.28) / (0.65 - 0.28);
+    // Aggressive double-blip throttle pulse:
+    // Staccato attack 1 -> brief dip -> explosive primary spike -> snappy decay -> nervous holding dwell
+    let mut pulse = if cycle < 0.16 {
+        // Fast attack 1
+        let k = cycle / 0.16;
+        base_floor + (peak_throttle * 0.82 - base_floor) * k.powf(1.2)
+    } else if cycle < 0.26 {
+        // Quick dip between blips
+        let k = (cycle - 0.16) / 0.10;
+        let dip_floor = base_floor + (peak_throttle * 0.82 - base_floor) * 0.35;
+        peak_throttle * 0.82 - (peak_throttle * 0.82 - dip_floor) * k
+    } else if cycle < 0.48 {
+        // Violent secondary attack up to full peak throttle
+        let k = (cycle - 0.26) / 0.22;
+        let dip_floor = base_floor + (peak_throttle * 0.82 - base_floor) * 0.35;
+        dip_floor + (peak_throttle - dip_floor) * k.powf(1.3)
+    } else if cycle < 0.72 {
+        // Snap back / rapid decay to floor
+        let k = (cycle - 0.48) / 0.24;
         base_floor + (peak_throttle - base_floor) * (1.0 - k).powi(2)
     } else {
-        base_floor
+        // Cammy, restless holding idle with subtle mechanical pulse
+        let k = (cycle - 0.72) / 0.28;
+        let micro_jitter = (k * std::f32::consts::TAU * 3.0).sin() * 0.025;
+        base_floor + micro_jitter
     };
 
-    // Pre-launch staging crescendo: in the final 0.7s before green light, rev engines up to launch RPM
-    if remaining_sec <= 0.70 {
-        let progress = ((0.70 - remaining_sec) / 0.70).clamp(0.0, 1.0);
-        let flutter = (t * 40.0 + vehicle_id as f32).sin() * 0.04;
-        let launch_thr = 0.72 + 0.25 * progress + flutter;
+    // Pre-launch staging crescendo: in the final 0.85s before green light, pin engines to launch RPM
+    if remaining_sec <= 0.85 {
+        let progress = ((0.85 - remaining_sec) / 0.85).clamp(0.0, 1.0);
+        let flutter = (t * 55.0 + vehicle_id as f32 * 4.0).sin() * 0.05;
+        let launch_thr = 0.88 + 0.11 * progress + flutter;
         pulse = pulse.max(launch_thr);
     }
 

@@ -1,10 +1,10 @@
 //! Central Audio Manager and Mixer coordinating SoundBank, Music, and Dynamic SFX.
 
-use std::collections::HashMap;
-use std::time::Duration;
-use macroquad::audio::{PlaySoundParams, Sound};
 #[cfg(target_arch = "wasm32")]
 use macroquad::audio::{load_sound_from_bytes, play_sound, set_sound_volume, stop_sound};
+use macroquad::audio::{PlaySoundParams, Sound};
+use std::collections::HashMap;
+use std::time::Duration;
 
 /// Safe wrapper around macroquad load_sound_from_bytes that avoids uninitialized macroquad window contexts on native desktop.
 async fn safe_load_sound_from_bytes(data: &[u8]) -> Option<Sound> {
@@ -20,29 +20,29 @@ async fn safe_load_sound_from_bytes(data: &[u8]) -> Option<Sound> {
 }
 use serde::{Deserialize, Serialize};
 
+use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
+use crate::audio::backend::{ActiveSoundHandle, AudioBackend, SoundData};
+use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
+use crate::audio::engine_mixer::EngineAudioMixer;
+use crate::audio::proximity::{
+    calculate_spatial_audio, DopplerConfig, ProximityVoiceSlot, VehicleAudioSource,
+    DEFAULT_MAX_DISTANCE, DEFAULT_OPPONENT_GAIN_CEILING, MAX_PROXIMITY_VOICES,
+    PROXIMITY_HYSTERESIS,
+};
+use crate::audio::samples::ArchetypeSampleBank;
 use crate::audio::sfx::{
     generate_car_hit_sound, generate_countdown_high, generate_countdown_low,
-    generate_curb_rumble_sound, generate_engine_sound,
-    generate_gear_shift_pop, generate_generic_engine_rpm_band,
-    generate_jump_launch_sound, generate_kart_125cc_rpm_band, generate_landing_sound,
-    generate_lap_chime, generate_nascar_v8_rpm_band, generate_offroad_sound, generate_race_finish,
-    generate_rally_turbo_rpm_band, generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
+    generate_curb_rumble_sound, generate_engine_sound, generate_gear_shift_pop,
+    generate_generic_engine_rpm_band, generate_jump_launch_sound, generate_kart_125cc_rpm_band,
+    generate_landing_sound, generate_lap_chime, generate_nascar_v8_rpm_band,
+    generate_offroad_sound, generate_race_finish, generate_rally_turbo_rpm_band,
+    generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
     generate_sport_gt_rpm_band, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
     generate_water_splash_sound, EngineSoundConfig,
 };
 use crate::audio::synthwave::{generate_menu_theme, generate_nightcall_race_theme};
-use crate::audio::dsp::DEFAULT_SAMPLE_RATE;
-use crate::audio::auxiliary_fx::AuxiliaryAudioLayer;
-use crate::audio::backend::{ActiveSoundHandle, AudioBackend, SoundData};
-use crate::audio::engine_mixer::EngineAudioMixer;
-use crate::audio::samples::ArchetypeSampleBank;
-use crate::audio::proximity::{
-    calculate_spatial_audio, DopplerConfig, ProximityVoiceSlot, VehicleAudioSource,
-    DEFAULT_MAX_DISTANCE, DEFAULT_OPPONENT_GAIN_CEILING, MAX_PROXIMITY_VOICES, PROXIMITY_HYSTERESIS,
-};
-use glam::Vec2;
 use cabinet::audio::{CabinetAudioSink, SoundCue};
-
+use glam::Vec2;
 
 /// Vehicle engine audio synthesis archetype across all 25 motorsport tiers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -164,19 +164,17 @@ pub const NUM_RPM_BANDS: usize = 28;
 
 /// Engine RPM band center values from 850 RPM (idle) to 9,300 RPM (redline).
 pub const RPM_BAND_RPMS: [f32; NUM_RPM_BANDS] = [
-    850.0, 1000.0, 1150.0, 1350.0, 1550.0, 1800.0, 2050.0, 2350.0,
-    2650.0, 3000.0, 3350.0, 3700.0, 4100.0, 4500.0, 4900.0, 5300.0,
-    5700.0, 6100.0, 6500.0, 6850.0, 7200.0, 7500.0, 7800.0, 8100.0,
+    850.0, 1000.0, 1150.0, 1350.0, 1550.0, 1800.0, 2050.0, 2350.0, 2650.0, 3000.0, 3350.0, 3700.0,
+    4100.0, 4500.0, 4900.0, 5300.0, 5700.0, 6100.0, 6500.0, 6850.0, 7200.0, 7500.0, 7800.0, 8100.0,
     8400.0, 8700.0, 9000.0, 9300.0,
 ];
 
 /// Engine cylinder firing fundamental frequencies (Hz) corresponding to RPM bands.
 /// For a 6-cylinder 4-stroke engine: Freq (Hz) = RPM * 3 / 60 = RPM / 20.
 pub const RPM_BAND_FREQS: [f32; NUM_RPM_BANDS] = [
-    42.5, 50.0, 57.5, 67.5, 77.5, 90.0, 102.5, 117.5,
-    132.5, 150.0, 167.5, 185.0, 205.0, 225.0, 245.0, 265.0,
-    285.0, 305.0, 325.0, 342.5, 360.0, 375.0, 390.0, 405.0,
-    420.0, 435.0, 450.0, 465.0,
+    42.5, 50.0, 57.5, 67.5, 77.5, 90.0, 102.5, 117.5, 132.5, 150.0, 167.5, 185.0, 205.0, 225.0,
+    245.0, 265.0, 285.0, 305.0, 325.0, 342.5, 360.0, 375.0, 390.0, 405.0, 420.0, 435.0, 450.0,
+    465.0,
 ];
 
 /// Audio Volume & Mute Settings (re-exported from cabinet::audio).
@@ -301,7 +299,6 @@ impl SoundBank {
 
             let kart_wav = generate_kart_125cc_rpm_band(sample_rate, freq);
             kart_bands[idx] = safe_load_sound_from_bytes(&kart_wav).await;
-
 
             let rally_wav = generate_rally_turbo_rpm_band(sample_rate, freq);
             rally_bands[idx] = safe_load_sound_from_bytes(&rally_wav).await;
@@ -543,7 +540,9 @@ fn safe_stop_sound(sound: &Sound) {
 impl AudioManager {
     pub fn new() -> Self {
         let mut backend = AudioBackend::new();
-        let (sampled_engine, auxiliary_layer, sampled_engine_p2, auxiliary_layer_p2) = if backend.is_available() {
+        let (sampled_engine, auxiliary_layer, sampled_engine_p2, auxiliary_layer_p2) = if backend
+            .is_available()
+        {
             let bank = ArchetypeSampleBank::generate(EngineSoundType::Generic, DEFAULT_SAMPLE_RATE);
             let bank_p2 = bank.clone();
             (
@@ -602,15 +601,22 @@ impl AudioManager {
     }
 
     /// Sets the active vehicle engine sound archetype with custom physical parameters, synthesizing bespoke sample loops.
-    pub fn set_engine_type_with_config(&mut self, engine_type: EngineSoundType, config: &EngineSoundConfig) {
-        if self.active_engine_type == engine_type && self.active_engine_config.as_ref() == Some(config) {
+    pub fn set_engine_type_with_config(
+        &mut self,
+        engine_type: EngineSoundType,
+        config: &EngineSoundConfig,
+    ) {
+        if self.active_engine_type == engine_type
+            && self.active_engine_config.as_ref() == Some(config)
+        {
             return;
         }
         self.stop_all_loops();
         self.active_engine_type = engine_type;
         self.active_engine_config = Some(*config);
         if let Some(sampled) = self.sampled_engine.as_mut() {
-            let new_bank = ArchetypeSampleBank::generate_from_config(engine_type, config, DEFAULT_SAMPLE_RATE);
+            let new_bank =
+                ArchetypeSampleBank::generate_from_config(engine_type, config, DEFAULT_SAMPLE_RATE);
             sampled.set_bank(new_bank.clone(), &mut self.backend);
             if let Some(sampled_p2) = self.sampled_engine_p2.as_mut() {
                 sampled_p2.set_bank(new_bank, &mut self.backend);
@@ -880,7 +886,11 @@ impl AudioManager {
         // Rev limiter bounce stutter at redline with high throttle (16 Hz ignition cut oscillation)
         let limiter_mod = if clamped_rpm >= max_rpm - 350.0 && effective_throttle > 0.4 {
             self.limiter_timer = (self.limiter_timer + 0.16).fract();
-            if self.limiter_timer < 0.5 { 1.0 } else { 0.45 }
+            if self.limiter_timer < 0.5 {
+                1.0
+            } else {
+                0.45
+            }
         } else {
             1.0
         };
@@ -893,7 +903,9 @@ impl AudioManager {
             1.0
         };
 
-        let total_vol = self.settings.effective_sfx_volume_scaled(base_gain * limiter_mod * overrun_mod);
+        let total_vol = self
+            .settings
+            .effective_sfx_volume_scaled(base_gain * limiter_mod * overrun_mod);
 
         for idx in 0..NUM_RPM_BANDS {
             let band_vol = total_vol * weights[idx];
@@ -955,7 +967,10 @@ impl AudioManager {
             throttle
         };
 
-        if self.use_sampled_engine && self.backend.is_available() && self.sampled_engine_p2.is_some() {
+        if self.use_sampled_engine
+            && self.backend.is_available()
+            && self.sampled_engine_p2.is_some()
+        {
             let limiter_mod = if let Some(aux) = self.auxiliary_layer_p2.as_mut() {
                 aux.update(
                     speed.abs(),
@@ -1006,6 +1021,25 @@ impl AudioManager {
         listener_vel: Vec2,
         dt: f32,
     ) {
+        self.update_proximity_engines_with_gain(
+            sources,
+            listener_pos,
+            listener_vel,
+            DEFAULT_OPPONENT_GAIN_CEILING,
+            dt,
+        );
+    }
+
+    /// Dynamically updates proximity engine audio for nearby vehicles with an explicit gain ceiling
+    /// (e.g. elevated gain on the starting grid for an intense countdown engine roar).
+    pub fn update_proximity_engines_with_gain(
+        &mut self,
+        sources: &[VehicleAudioSource],
+        listener_pos: Vec2,
+        listener_vel: Vec2,
+        gain_ceiling: f32,
+        dt: f32,
+    ) {
         if self.settings.is_muted || self.settings.is_sfx_muted || !self.backend.is_available() {
             for slot in &mut self.proximity_voices {
                 if slot.vehicle_id.is_some() {
@@ -1043,7 +1077,10 @@ impl AudioManager {
         // First, retain existing assigned slots if still within hearing range
         for &assigned_vid_opt in &current_assigned_vids {
             if let Some(vid) = assigned_vid_opt {
-                if let Some(&(idx, dist)) = audible_indices.iter().find(|&&(i, _)| sources[i].vehicle_id == vid) {
+                if let Some(&(idx, dist)) = audible_indices
+                    .iter()
+                    .find(|&&(i, _)| sources[i].vehicle_id == vid)
+                {
                     chosen_source_indices.push((vid, idx, dist));
                 }
             }
@@ -1058,12 +1095,16 @@ impl AudioManager {
                 }
             } else {
                 // If pool is full, can we displace an existing member with hysteresis?
-                if let Some((worst_pos, (_, _, worst_dist))) = chosen_source_indices
-                    .iter()
-                    .enumerate()
-                    .max_by(|a, b| a.1 .2.partial_cmp(&b.1 .2).unwrap_or(std::cmp::Ordering::Equal))
+                if let Some((worst_pos, (_, _, worst_dist))) =
+                    chosen_source_indices.iter().enumerate().max_by(|a, b| {
+                        a.1 .2
+                            .partial_cmp(&b.1 .2)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    })
                 {
-                    if dist + PROXIMITY_HYSTERESIS < *worst_dist && !chosen_source_indices.iter().any(|(v, _, _)| *v == vid) {
+                    if dist + PROXIMITY_HYSTERESIS < *worst_dist
+                        && !chosen_source_indices.iter().any(|(v, _, _)| *v == vid)
+                {
                         chosen_source_indices[worst_pos] = (vid, idx, dist);
                     }
                 }
@@ -1073,7 +1114,10 @@ impl AudioManager {
         // 4. Free slots whose vehicle is no longer in chosen
         for slot in &mut self.proximity_voices {
             if let Some(vid) = slot.vehicle_id {
-                if !chosen_source_indices.iter().any(|(chosen_vid, _, _)| *chosen_vid == vid) {
+                if !chosen_source_indices
+                    .iter()
+                    .any(|(chosen_vid, _, _)| *chosen_vid == vid)
+                {
                     slot.mixer.stop();
                     slot.vehicle_id = None;
                 }
@@ -1104,34 +1148,28 @@ impl AudioManager {
             let slot = &mut self.proximity_voices[slot_idx];
 
             if slot.engine_type != source.engine_type {
-                let bank = if let Some(cached) = self.proximity_bank_cache.get(&source.engine_type) {
+                let bank = if let Some(cached) = self.proximity_bank_cache.get(&source.engine_type)
+                {
                     cached.clone()
                 } else {
-                    let generated = ArchetypeSampleBank::generate(source.engine_type, DEFAULT_SAMPLE_RATE);
-                    self.proximity_bank_cache.insert(source.engine_type, generated.clone());
+                    let generated =
+                        ArchetypeSampleBank::generate(source.engine_type, DEFAULT_SAMPLE_RATE);
+                    self.proximity_bank_cache
+                        .insert(source.engine_type, generated.clone());
                     generated
                 };
                 slot.mixer.set_bank(bank, &mut self.backend);
                 slot.engine_type = source.engine_type;
             }
 
-            let (rpm, _) = slot.rpm_model.update(
-                source.forward_speed,
-                source.throttle,
-                source.slip_ratio,
-                dt,
-            );
+            let (rpm, _) =
+                slot.rpm_model
+                    .update(source.forward_speed, source.throttle, source.slip_ratio, dt);
 
-            let spatial = calculate_spatial_audio(
-                source,
-                listener_pos,
-                listener_vel,
-                &self.doppler_config,
-            );
+            let spatial =
+                calculate_spatial_audio(source, listener_pos, listener_vel, &self.doppler_config);
 
-            let effective_vol = self.settings.effective_sfx_volume()
-                * DEFAULT_OPPONENT_GAIN_CEILING
-                * spatial.gain;
+            let effective_vol = self.settings.effective_sfx_volume() * gain_ceiling * spatial.gain;
 
             slot.mixer.update_spatial(
                 rpm,
