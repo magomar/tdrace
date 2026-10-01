@@ -15,7 +15,9 @@ use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
-use cabinet::ui::{FilterBar, FilterBarStyle, FilterItem, LayoutRect, SplitPane, VStack};
+use cabinet::ui::{
+    FilterBar, FilterBarStyle, FilterItem, LayoutRect, ModalContainer, SplitPane, VStack,
+};
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::CarCategory;
@@ -2551,31 +2553,12 @@ pub fn render_pause_menu(
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
 
-    // Dark semi-transparent dim
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.70));
-
     let (box_x, box_y, box_w, box_h, btn_layout) = pause_menu_layout(sw, sh);
 
-    scaler.draw_glass_card(
-        box_x,
-        box_y,
-        box_w,
-        box_h,
-        Palette::UI_CARD_BG,
-        Palette::NEON_CYAN,
-        2.2,
-    );
-
-    let title = "RACE PAUSED";
-    fonts.draw_display_centered_with_shadow(
-        title,
-        sw * 0.5,
-        box_y + scaler.s(38.0),
-        scaler.font_s(30.0),
-        Palette::WHITE,
-        Color::new(0.0, 0.0, 0.0, 0.6),
-        scaler.s(2.0),
-    );
+    // Uniform modal chrome (platform ModalContainer: dim, frame, title, divider)
+    let modal = ModalContainer::new("RACE PAUSED", LayoutRect::new(box_x, box_y, box_w, box_h))
+        .with_dim_alpha(0.70);
+    modal.draw(&scaler, fonts, sw, sh);
 
     let (mx, my) =
         std::panic::catch_unwind(macroquad::input::mouse_position).unwrap_or((-1000.0, -1000.0));
@@ -2710,8 +2693,9 @@ pub fn render_pause_menu(
         "SPACE / B : Handbrake | Hold Brake at Stop : Reverse".to_string(),
     ];
 
-    let mut item_y = div_y + scaler.s(22.0);
-    for item in &items {
+    let item_stack = VStack::new_uniform(box_x, div_y + scaler.s(22.0), box_w, scaler.s(22.5), 0.0);
+    for (i, item) in items.iter().enumerate() {
+        let item_y = item_stack.item_rect(i).y;
         fonts.draw_ui_bold(
             item,
             box_x + scaler.s(24.0),
@@ -2719,7 +2703,6 @@ pub fn render_pause_menu(
             scaler.font_s(13.5),
             Color::new(0.85, 0.90, 0.98, 1.0),
         );
-        item_y += scaler.s(22.5);
     }
 }
 
@@ -3147,9 +3130,20 @@ pub fn render_controls_screen(
         );
     }
 
-    // Left Column: Keyboard Controls
+    // Columns geometry (platform SplitPane: keyboard vs gamepad)
     let col_w = (sw * 0.40).clamp(scaler.s(320.0), scaler.s(480.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(14.0)).max(scaler.safe_pad_x);
+    let split_pane = SplitPane::new(
+        LayoutRect::new(
+            (sw * 0.5 - col_w - scaler.s(14.0)).max(scaler.safe_pad_x),
+            0.0,
+            col_w * 2.0 + scaler.s(28.0),
+            1.0,
+        ),
+        0.5,
+        scaler.s(28.0),
+    );
+    let col1_x = split_pane.left_rect().x;
+    let col2_x = split_pane.right_rect().x.min(sw - col_w - scaler.safe_pad_x);
     let col_y = scaler.s(130.0);
     let col_h = sh * 0.54;
 
@@ -3207,9 +3201,9 @@ pub fn render_controls_screen(
         ("Audio Mute / Volume", "M / [ and ]"),
     ];
 
-    let mut row_y = col_y + scaler.s(42.0);
-    let row_step = scaler.s(16.5);
-    for (action, key) in &kb_rows {
+    let kb_stack = VStack::new_uniform(col1_x, col_y + scaler.s(42.0), col_w, scaler.s(16.5), 0.0);
+    for (i, &(action, key)) in kb_rows.iter().enumerate() {
+        let row_y = kb_stack.item_rect(i).y;
         fonts.draw_ui_regular(
             action,
             col1_x + scaler.s(16.0),
@@ -3225,11 +3219,9 @@ pub fn render_controls_screen(
             scaler.font_s(11.8),
             Palette::NEON_GOLD,
         );
-        row_y += row_step;
     }
 
     // Right Column: Gamepad Controls
-    let col2_x = (sw * 0.5 + scaler.s(14.0)).min(sw - col_w - scaler.safe_pad_x);
     scaler.draw_glass_card(
         col2_x,
         col_y,
@@ -3260,8 +3252,9 @@ pub fn render_controls_screen(
         ("Back / Cancel", "B / Circle Button (Escape)"),
     ];
 
-    let mut gp_row_y = col_y + scaler.s(52.0);
-    for (action, button) in &gp_rows {
+    let gp_stack = VStack::new_uniform(col2_x, col_y + scaler.s(52.0), col_w, scaler.s(21.0), 0.0);
+    for (i, &(action, button)) in gp_rows.iter().enumerate() {
+        let gp_row_y = gp_stack.item_rect(i).y;
         fonts.draw_ui_regular(
             action,
             col2_x + scaler.s(16.0),
@@ -3277,7 +3270,6 @@ pub fn render_controls_screen(
             scaler.font_s(13.0),
             Palette::NEON_GREEN,
         );
-        gp_row_y += scaler.s(21.0);
     }
 
     // Gamepad mapper launcher (external calibration & remapping tool)
