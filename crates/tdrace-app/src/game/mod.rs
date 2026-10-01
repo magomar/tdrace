@@ -269,6 +269,8 @@ pub use cabinet::fx::transition::{ScreenTransition, TransitionConfig, Transition
 mod lan;
 pub use lan::{LanRaceState, LAN_WAITING_COUNTDOWN};
 
+pub mod academy;
+
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DriverCardsOrigin {
@@ -472,6 +474,14 @@ pub struct PlayerRaceTelemetry {
     pub collision_count: u32,
 }
 
+impl PlayerRaceTelemetry {
+    pub fn best_lap_time(&self) -> Option<f32> {
+        self.best_lap_idx
+            .and_then(|idx| self.laps.get(idx))
+            .map(|l| l.lap_time)
+    }
+}
+
 /// Detailed breakdown of XP awarded after completing a race.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct XpAwardReceipt {
@@ -644,6 +654,11 @@ pub struct RaceSession {
     pub profile_awards: Vec<ChampionshipAward>,
     pub profile_cabinet_disc_idx: usize,
     pub profile_cabinet_tier_idx: usize,
+
+    // Classic Academy Challenge State
+    pub active_academy_lesson: Option<academy::AcademyLessonId>,
+    pub academy_challenge: Option<academy::AcademyChallengeState>,
+    pub academy_last_evaluation: Option<academy::AcademyAttemptEvaluation>,
 
     pub fx: EffectsManager,
     pub camera: RaceCamera,
@@ -910,6 +925,10 @@ impl RaceSession {
             profile_awards: Vec::new(),
             profile_cabinet_disc_idx: 0,
             profile_cabinet_tier_idx: 0,
+
+            active_academy_lesson: None,
+            academy_challenge: None,
+            academy_last_evaluation: None,
 
             fx: EffectsManager::new_persistent(1500),
             camera,
@@ -12204,6 +12223,9 @@ impl RaceSession {
             if wev.impact_speed > 2.2 {
                 if car_idx == my_car_idx {
                     self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.register_collision(wev.impact_speed * 100.0);
+                    }
                 }
                 let gain = (wev.impact_speed / 16.0).clamp(0.3, 0.9);
                 self.audio.play_sfx_with_gain(SfxType::WallCrash, gain);
@@ -12251,6 +12273,9 @@ impl RaceSession {
                 }
                 if cev.closing_speed > 2.0 {
                     self.player_race_stats.collision_count = self.player_race_stats.collision_count.saturating_add(1);
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.register_collision(cev.closing_speed * 100.0);
+                    }
                     let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
                     self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
                 }
@@ -12263,6 +12288,13 @@ impl RaceSession {
                     let gain = (cev.closing_speed / 14.0).clamp(0.25, 0.85);
                     self.audio.play_sfx_with_gain(SfxType::CarHit, gain);
                 }
+            }
+        }
+
+        if let Some(challenge) = &mut self.academy_challenge {
+            challenge.elapsed_time_sec = self.session_time;
+            if let Some(tracker) = self.world.trackers.get(my_car_idx) {
+                challenge.set_off_track_seconds(tracker.off_track_timer);
             }
         }
 
@@ -12930,6 +12962,25 @@ impl RaceSession {
                     });
                 }
                 self.player_race_stats.best_lap_idx = Some(0);
+            }
+
+            // Academy Challenge Evaluation
+            if let Some(lesson_id) = self.active_academy_lesson {
+                let finish_time = self.player_race_stats.best_lap_time().unwrap_or(self.session_time);
+                let attempt_time = if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
+                    self.session_time
+                } else {
+                    finish_time
+                };
+                let mut challenge = self.academy_challenge.take().unwrap_or_else(|| academy::AcademyChallengeState::new(lesson_id));
+                if self.player_race_stats.collision_count > 0 && challenge.heavy_collisions == 0 {
+                    challenge.heavy_collisions = self.player_race_stats.collision_count;
+                }
+                let eval = academy::evaluate_academy_attempt(&mut self.active_profile, lesson_id, attempt_time, &challenge);
+                if let Some(db) = &self.hof_db {
+                    let _ = db.update_profile(&self.active_profile);
+                }
+                self.academy_last_evaluation = Some(eval);
             }
 
             self.show_hall_of_fame = false;
