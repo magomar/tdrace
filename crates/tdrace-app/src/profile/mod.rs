@@ -5,6 +5,9 @@ use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolu
 use crate::render::color::CarColorScheme;
 pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
+pub use tdrace_core::profile::{
+    AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal, ClassicAcademyProgress,
+};
 
 /// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -21,6 +24,10 @@ pub struct PlayerProfile {
     pub credits: u64,
     #[serde(default = "PlayerProfile::default_starting_credits")]
     pub lifetime_credits: u64,
+    #[serde(default)]
+    pub academy_progress: ClassicAcademyProgress,
+    #[serde(default)]
+    pub owned_cars: Vec<String>,
 }
 
 impl Default for PlayerProfile {
@@ -36,15 +43,43 @@ impl Default for PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
         }
     }
 }
 
 impl PlayerProfile {
-    pub const STARTING_CREDITS: u64 = 25_000;
+    pub const STARTING_CREDITS: u64 = 0;
 
     pub fn default_starting_credits() -> u64 {
         Self::STARTING_CREDITS
+    }
+
+    pub fn new_rookie(name: impl Into<String>) -> Self {
+        let name_str = name.into();
+        Self {
+            id: None,
+            name: name_str.clone(),
+            alias: format!("Rookie {}", name_str),
+            country: Some("ESP".to_string()),
+            color_scheme: CarColorScheme::from_index(0),
+            is_active: true,
+            created_at: String::new(),
+            last_mode: AssistProfile::Arcade,
+            credits: 0,
+            lifetime_credits: 0,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
+        }
+    }
+
+    pub fn can_access_career(&self) -> bool {
+        self.academy_progress.is_graduated() && !self.owned_cars.is_empty()
+    }
+
+    pub fn has_racing_license(&self) -> bool {
+        self.academy_progress.is_graduated()
     }
 
     pub fn new(name: &str, alias: &str, country: Option<&str>, color_scheme: CarColorScheme) -> Self {
@@ -59,6 +94,8 @@ impl PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            academy_progress: ClassicAcademyProgress::default(),
+            owned_cars: Vec::new(),
         }
     }
 

@@ -7852,6 +7852,8 @@ impl RaceSession {
                         last_mode: assist_mode,
                         credits: p.credits,
                         lifetime_credits: p.lifetime_credits,
+                        academy_progress: p.academy_progress.clone(),
+                        owned_cars: p.owned_cars.clone(),
                     })
                 });
 
