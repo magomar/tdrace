@@ -1,5 +1,4 @@
 use macroquad::color::Color;
-use macroquad::input::mouse_position;
 use macroquad::prelude::{screen_height, screen_width};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
 
@@ -9,6 +8,10 @@ use crate::catalog::{get_models_for_module, get_models_for_module_and_tier, Real
 use crate::profile::ModuleCareerProgress;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::lateral::render_real_car_lateral_by_id;
+use cabinet::ui::{
+    CardGrid, CardGridItem, FilterBar, FilterBarStyle, HeroActionButton, LayoutRect, MetricBar,
+    ScreenFooter, SwatchPicker,
+};
 
 /// Viewing projection in the Garage showroom.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -456,28 +459,56 @@ pub fn render_garage_screen(
         );
         cur_ry += (lines as f32) * scaler.s(12.5) + scaler.s(12.0);
 
-        // 6 Performance Stat Bars
+        // Livery / paint selection palette (platform SwatchPicker)
+        let livery_colors = vec![
+            model.primary_color,
+            model.secondary_color,
+            Palette::NEON_GOLD,
+        ];
+        let livery_picker = SwatchPicker::new(
+            right_x + scaler.s(14.0),
+            cur_ry,
+            scaler.s(14.0),
+            scaler.s(6.0),
+            livery_colors,
+        );
+        livery_picker.render_frame();
+        fonts.draw_ui_regular(
+            "LIVERY PAINT",
+            right_x + scaler.s(14.0) + livery_picker.total_width() + scaler.s(12.0),
+            cur_ry + scaler.s(11.0),
+            scaler.font_s(9.5),
+            Palette::UI_TEXT_MUTED,
+        );
+        cur_ry += scaler.s(22.0);
+
+        // 6 Performance Stat Bars (platform MetricBar)
         let (spd, acc, grip, drift, brk, aero) = model.stats;
         let bar_w = right_w - scaler.s(28.0);
         let bar_base_x = right_x + scaler.s(14.0);
+        let bar_h = scaler.s(16.0);
 
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "SPEED", spd, Palette::NEON_CYAN);
-        cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "ACCEL", acc, Palette::NEON_GOLD);
-        cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "GRIP", grip, Palette::NEON_GREEN);
-        cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AGILITY", drift, Palette::NEON_MAGENTA);
-        cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "BRAKING", brk, Palette::NEON_ORANGE);
-        cur_ry += scaler.s(16.0);
-        render_garage_stat_bar(&scaler, fonts, bar_base_x, cur_ry, bar_w, "AERO", aero, Palette::WHITE);
+        MetricBar::stat("SPEED", spd, format!("{:.0}%", spd * 100.0), Palette::NEON_CYAN)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+        cur_ry += bar_h;
+        MetricBar::stat("ACCEL", acc, format!("{:.0}%", acc * 100.0), Palette::NEON_GOLD)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+        cur_ry += bar_h;
+        MetricBar::stat("GRIP", grip, format!("{:.0}%", grip * 100.0), Palette::NEON_GREEN)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+        cur_ry += bar_h;
+        MetricBar::stat("AGILITY", drift, format!("{:.0}%", drift * 100.0), Palette::NEON_MAGENTA)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+        cur_ry += bar_h;
+        MetricBar::stat("BRAKING", brk, format!("{:.0}%", brk * 100.0), Palette::NEON_ORANGE)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+        cur_ry += bar_h;
+        MetricBar::stat("AERO", aero, format!("{:.0}%", aero * 100.0), Palette::WHITE)
+            .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
     }
 
     // Action Button: Select Vehicle for Race / Purchase with XP / Locked Notice
     let (btn_x, btn_y, btn_w, btn_h) = garage_select_button_rect(sw, sh);
-    let (mx, my) = mouse_position();
-    let is_btn_hovered = mx >= btn_x && mx <= btn_x + btn_w && my >= btn_y && my <= btn_y + btn_h;
 
     let active_car_id = active_model.map(|m| m.id).unwrap_or("");
     let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
@@ -496,15 +527,24 @@ pub fn render_garage_screen(
         || career_progress
             .map_or(is_tier_unlocked, |cp| cp.level >= active_car_tier as u32);
 
-    if is_car_unlocked {
-        let (btn_bg, btn_border) = if is_btn_hovered {
-            (Color::new(0.12, 0.68, 0.32, 0.98), Palette::NEON_GREEN)
-        } else {
-            (Color::new(0.08, 0.44, 0.22, 0.92), Color::new(0.20, 0.78, 0.40, 0.85))
-        };
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
+    // Hero CTA frame (platform HeroActionButton, via ScreenFooter)
+    let (hero_label, hero_focused, hero_disabled) = if is_car_unlocked {
+        ("SELECT VEHICLE FOR RACE".to_string(), true, false)
+    } else if !tier_eligible {
+        (format!("VEHICLE LOCKED — TIER {} REQUIRED", active_car_tier), false, true)
+    } else if can_afford {
+        (format!("BUY VEHICLE: ${} CR", cost), true, false)
+    } else {
+        (format!("VEHICLE PRICE: ${} CR", cost), false, true)
+    };
+    let mut cta_footer = ScreenFooter::new(btn_x, btn_y, btn_w, btn_h);
+    let mut hero_btn = HeroActionButton::new(hero_label, btn_w - 32.0, btn_h);
+    hero_btn.is_focused = hero_focused;
+    hero_btn.is_disabled = hero_disabled;
+    cta_footer.set_hero_button(hero_btn);
+    cta_footer.render_frame();
 
+    if is_car_unlocked {
         fonts.draw_ui_bold_centered(
             "▶ SELECT VEHICLE FOR RACE  [ENTER / SPACE]",
             btn_x + btn_w * 0.5,
@@ -524,9 +564,6 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
     } else if !tier_eligible {
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.35, 0.10, 0.10, 0.95));
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::RED);
-
         let lock_title = if active_car_tier > max_ranked_tier {
             "🔒 UNRANKED VEHICLE — DEV MODE ONLY".to_string()
         } else {
@@ -554,14 +591,6 @@ pub fn render_garage_screen(
             Palette::UI_TEXT_MUTED,
         );
     } else if can_afford {
-        let (btn_bg, btn_border) = if is_btn_hovered {
-            (Color::new(0.70, 0.52, 0.10, 0.98), Palette::NEON_GOLD)
-        } else {
-            (Color::new(0.42, 0.32, 0.08, 0.92), Color::new(0.85, 0.68, 0.18, 0.85))
-        };
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, btn_border);
-
         let is_recommended = active_module_id == "kart" && active_car_tier == 1;
         let is_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
         let buy_title = if is_recommended {
@@ -592,9 +621,6 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
     } else {
-        draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(0.28, 0.16, 0.08, 0.95));
-        draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 2.0, Palette::NEON_GOLD);
-
         let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
         let lock_title = if is_grassroots_starter {
             format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR) — CURRENTLY UNAFFORDABLE", cost, available_credits)
@@ -725,50 +751,55 @@ fn render_fleet_gallery(
     let target_mod = gallery_filter_to_module(filter_idx);
     let filtered = get_models_for_module(target_mod);
 
-    for (i, &(_mod_id, name)) in GALLERY_MODULES.iter().enumerate() {
-        let (tx, ty, tw, th) = garage_gallery_tab_rect(sw, sh, i);
-        let is_active = i == filter_idx;
-        let bg = if is_active {
-            Palette::NEON_CYAN
-        } else {
-            Color::new(0.08, 0.10, 0.15, 0.85)
-        };
-        let fg = if is_active {
-            Palette::BLACK
-        } else {
-            Palette::UI_TEXT_MUTED
-        };
-        draw_rectangle(tx, ty, tw, th, bg);
-        fonts.draw_ui_bold_centered(
-            name,
-            tx + tw * 0.5,
-            ty + scaler.s(15.0),
-            scaler.font_s(10.0),
-            fg,
-        );
+    // Vehicle class selector (platform FilterBar, Pills; LB/RB cycling handled by game input)
+    let module_labels: Vec<&str> = GALLERY_MODULES.iter().map(|(_, name)| *name).collect();
+    let tab_w = scaler.s(105.0);
+    let tab_bar = FilterBar::from_labels(&module_labels)
+        .with_style(FilterBarStyle::Pills)
+        .with_active(filter_idx)
+        .with_focus(true);
+    tab_bar.draw(
+        &scaler,
+        fonts,
+        (sw - tab_w * GALLERY_MODULES.len() as f32) * 0.5,
+        scaler.s(46.0),
+        tab_w * GALLERY_MODULES.len() as f32,
+        scaler.s(22.0),
+        Palette::NEON_CYAN,
+    );
+
+    // Grid of cards (platform CardGrid, 4-column 2D matrix navigation)
+    let cols = 4;
+    let grid_x = scaler.safe_pad_x;
+    let grid_y = scaler.s(76.0);
+    let cell_w = (sw - scaler.safe_pad_x * 2.0 - scaler.s(12.0) * (cols - 1) as f32) / cols as f32;
+    let cell_h = scaler.s(92.0);
+    let mut grid: CardGrid<RealCarModel> = CardGrid::new(
+        grid_x,
+        grid_y,
+        cols,
+        cell_w,
+        cell_h,
+        scaler.s(12.0),
+        scaler.s(10.0),
+    );
+    for model in filtered.iter().take(16) {
+        grid.add_item(CardGridItem::new(model.id, (**model).clone()));
     }
+    grid.selected_idx = sel_idx.min(grid.len().saturating_sub(1));
+    grid.is_focused = true;
 
-    // Grid of cards
-    for (i, model) in filtered.iter().enumerate().take(16) {
-        let (cx, cy, cell_w, cell_h) = garage_gallery_card_rect(sw, sh, i);
-
+    for i in 0..grid.len() {
+        let rect = grid.item_rect(i);
+        let model = &grid.items[i].data;
         let is_sel = i == sel_idx;
         let is_heritage = model.module_id == "rally" && model.tier == 7;
         let is_unlocked = is_dev_mode || is_heritage || (model.tier as u32) <= unlocked_tier;
-        let card_bg = if is_sel {
-            Palette::UI_CARD_BG_HOVER
-        } else {
-            Palette::UI_CARD_BG
-        };
-        let border_col = if is_sel {
-            Palette::NEON_GOLD
-        } else if !is_unlocked {
-            Palette::RED
-        } else {
-            Palette::UI_CARD_BORDER
-        };
 
-        scaler.draw_glass_card(cx, cy, cell_w, cell_h, card_bg, border_col, if is_sel { 2.4 } else { 1.0 });
+        grid.render_card_frame(&rect, is_sel, false);
+        if !is_unlocked {
+            draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.0, Palette::RED);
+        }
 
         // Mini lateral silhouette
         let scheme = CarColorScheme {
@@ -776,16 +807,16 @@ fn render_fleet_gallery(
             secondary: model.secondary_color,
             helmet: Palette::NEON_GOLD,
         };
-        render_real_car_lateral_by_id(model.id, &scheme, cx + cell_w * 0.5, cy + scaler.s(28.0), scaler.s(0.65), 0.0, false);
+        render_real_car_lateral_by_id(model.id, &scheme, rect.x + rect.w * 0.5, rect.y + scaler.s(28.0), scaler.s(0.65), 0.0, false);
 
         // Name and stats
-        fonts.draw_ui_bold(model.name, cx + scaler.s(8.0), cy + scaler.s(62.0), scaler.font_s(10.0), Palette::WHITE);
+        fonts.draw_ui_bold(model.name, rect.x + scaler.s(8.0), rect.y + scaler.s(62.0), scaler.font_s(10.0), Palette::WHITE);
         let tier_tag = if is_heritage { "HERITAGE".to_string() } else { format!("T{}", model.tier) };
         let sub = format!("{} • {} BHP • {} kg", tier_tag, model.bhp, model.weight_kg);
-        fonts.draw_ui_regular(&sub, cx + scaler.s(8.0), cy + scaler.s(76.0), scaler.font_s(8.5), Palette::UI_TEXT_MUTED);
+        fonts.draw_ui_regular(&sub, rect.x + scaler.s(8.0), rect.y + scaler.s(76.0), scaler.font_s(8.5), Palette::UI_TEXT_MUTED);
 
         if !is_unlocked {
-            fonts.draw_ui_bold("🔒 LOCKED", cx + cell_w - scaler.s(65.0), cy + scaler.s(16.0), scaler.font_s(8.5), Palette::RED);
+            fonts.draw_ui_bold("🔒 LOCKED", rect.x + rect.w - scaler.s(65.0), rect.y + scaler.s(16.0), scaler.font_s(8.5), Palette::RED);
         }
     }
 
@@ -795,45 +826,5 @@ fn render_fleet_gallery(
         sh - scaler.s(18.0),
         scaler.font_s(11.0),
         Palette::UI_TEXT_MUTED,
-    );
-}
-
-/// Renders a single horizontal performance stat bar with label, value, and colored fill.
-fn render_garage_stat_bar(
-    scaler: &UiScaler,
-    fonts: &Fonts,
-    x: f32,
-    y: f32,
-    w: f32,
-    label: &str,
-    val: f32,
-    color: Color,
-) {
-    let lbl_w = scaler.s(65.0);
-    let bar_h = scaler.s(7.0);
-    let bar_w = w - lbl_w - scaler.s(45.0);
-
-    fonts.draw_ui_bold(
-        label,
-        x,
-        y + scaler.s(7.0),
-        scaler.font_s(9.5),
-        Palette::UI_TEXT_MUTED,
-    );
-
-    let bar_x = x + lbl_w;
-    draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.08, 0.10, 0.14, 0.90));
-    draw_rectangle_lines(bar_x, y, bar_w, bar_h, 1.0, Color::new(0.20, 0.25, 0.35, 0.80));
-
-    let fill_w = bar_w * val.clamp(0.0, 1.0);
-    draw_rectangle(bar_x, y, fill_w, bar_h, color);
-
-    let pct_str = format!("{:.0}%", val * 100.0);
-    fonts.draw_ui_bold(
-        &pct_str,
-        bar_x + bar_w + scaler.s(8.0),
-        y + scaler.s(7.0),
-        scaler.font_s(9.5),
-        Palette::WHITE,
     );
 }
