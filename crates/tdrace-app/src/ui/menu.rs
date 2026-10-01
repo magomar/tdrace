@@ -4022,7 +4022,6 @@ impl ModalityCategory {
             Self::SinglePlayer => &[
                 ModalityItem::QuickRace,
                 ModalityItem::CustomRace,
-                ModalityItem::ClassicAcademy,
                 ModalityItem::CareerMode,
                 ModalityItem::TimeTrial,
                 ModalityItem::FreeRide,
@@ -4253,6 +4252,7 @@ pub enum ModalityModal {
     CloudComingSoon,
     CareerComingSoon,
     LicenseRequired,
+    VehicleRequired,
 }
 
 impl ModalityModal {
@@ -4262,6 +4262,7 @@ impl ModalityModal {
             Self::CloudComingSoon => "CLOUD MULTIPLAYER • IN DEVELOPMENT",
             Self::CareerComingSoon => "CAREER MODE • IN DEVELOPMENT",
             Self::LicenseRequired => "RACING LICENSE REQUIRED",
+            Self::VehicleRequired => "STARTER VEHICLE REQUIRED",
         }
     }
 
@@ -4271,12 +4272,14 @@ impl ModalityModal {
             Self::CloudComingSoon => "Worldwide online matchmaking and cloud lobbies are currently under active development.\nGlobal leaderboards, ranked matchmaking, and cloud ghost synchronization will debut in Phase 2.",
             Self::CareerComingSoon => "Career campaign progression for this motorsport category is currently under development.\nTier ladders, championship calendars, vehicle unlocking, and trophy progression are coming soon.",
             Self::LicenseRequired => "Welcome, Rookie Driver!\nTo compete in sanctioned motorsport championships, you must first obtain your National Grassroots Racing License at the Classic Academy.\n\nComplete the 4 Academy lessons to earn your license and seed cash for your first competition machine.",
+            Self::VehicleRequired => "Congratulations on earning your National Grassroots License!\n\nTo enter sanctioned career championships, you must purchase your first competition car from the Showroom.\n\nVisit the Showroom now to choose from the Cadet Kart 60cc, Cross Car Junior, or Rally4!",
         }
     }
 
     pub fn confirm_button_text(&self) -> &'static str {
         match self {
             Self::LicenseRequired => "[ ENROLL IN CLASSIC ACADEMY ]",
+            Self::VehicleRequired => "[ VISIT SHOWROOM ]",
             _ => "[ OK / CONTINUE ]",
         }
     }
@@ -4475,13 +4478,21 @@ pub fn render_modality_select_screen(
                 );
 
                 let title_str = if is_sel {
-                    if *item == ModalityItem::CareerMode && !active_profile.has_racing_license() {
-                        format!("▶ {}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                    if *item == ModalityItem::CareerMode && !active_profile.can_access_career() {
+                        if !active_profile.has_racing_license() {
+                            format!("▶ {}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                        } else {
+                            format!("▶ {}  [ 🔒 VEHICLE REQUIRED ]", item.title())
+                        }
                     } else {
                         format!("▶ {}", item.title())
                     }
-                } else if *item == ModalityItem::CareerMode && !active_profile.has_racing_license() {
-                    format!("{}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                } else if *item == ModalityItem::CareerMode && !active_profile.can_access_career() {
+                    if !active_profile.has_racing_license() {
+                        format!("{}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                    } else {
+                        format!("{}  [ 🔒 VEHICLE REQUIRED ]", item.title())
+                    }
                 } else {
                     item.title().to_string()
                 };

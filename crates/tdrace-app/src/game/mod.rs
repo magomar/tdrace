@@ -8350,6 +8350,14 @@ impl RaceSession {
                     };
                     return;
                 }
+                if *m == ModalityModal::VehicleRequired {
+                    self.garage_origin = GarageOrigin::ModalitySelect;
+                    self.garage_view_module("kart");
+                    self.garage_tier = 1;
+                    self.garage_car_idx = 0;
+                    self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                    return;
+                }
                 modal = None;
                 self.state = GameState::ModalitySelect {
                     category,
@@ -8600,6 +8608,15 @@ impl RaceSession {
                             };
                             return;
                         }
+                        if self.active_profile.owned_cars.is_empty() {
+                            modal = Some(ModalityModal::VehicleRequired);
+                            self.state = GameState::ModalitySelect {
+                                category,
+                                selected_idx,
+                                modal,
+                            };
+                            return;
+                        }
                         self.state = GameState::CareerSelect { selected_idx: 0 };
                         return;
                     }
@@ -8692,6 +8709,9 @@ impl RaceSession {
             {
                 self.audio.play_sfx(SfxType::UiSelect);
                 self.garage_origin = GarageOrigin::ModalitySelect;
+                self.garage_view_module("kart");
+                self.garage_tier = 1;
+                self.garage_car_idx = 0;
                 self.state = GameState::Garage(GarageOrigin::ModalitySelect);
                 return;
             }
@@ -9976,6 +9996,12 @@ impl RaceSession {
             } else if is_key_pressed(KeyCode::Key5) {
                 self.garage_gallery_filter = 4;
                 mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key6) {
+                self.garage_gallery_filter = 5;
+                mod_changed = true;
+            } else if is_key_pressed(KeyCode::Key7) {
+                self.garage_gallery_filter = 6;
+                mod_changed = true;
             }
 
             // Tab / Shift-Tab cycle module tabs
@@ -10095,6 +10121,8 @@ impl RaceSession {
                 Some("nascar")
             } else if is_key_pressed(KeyCode::Key5) {
                 Some("extreme_offroad")
+            } else if is_key_pressed(KeyCode::Key6) {
+                Some("autocross")
             } else {
                 None
             };
@@ -10256,26 +10284,32 @@ impl RaceSession {
                         }
                     }
                 } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier, self.active_profile.credits) {
-                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car.id, self.active_module_id, active_car.tier);
                     if let Ok(()) = self.active_career_progress.buy_car(&mut self.active_profile, active_car.id, active_car.tier) {
                         if let Some(db) = &self.hof_db {
                             let _ = db.save_module_progress(&self.active_career_progress);
                             let _ = db.update_profile(&self.active_profile);
                         }
-                        self.spawn_hud_alert(
+                        let alert_msg = if self.active_profile.can_access_career() && self.active_profile.owned_cars.len() == 1 {
+                            format!(
+                                "DELIVERED: {} TO YOUR GARAGE! (WALLET: ${} CR) — CAREER MODE UNLOCKED!",
+                                active_car.name,
+                                self.active_profile.credits
+                            )
+                        } else {
                             format!(
                                 "PURCHASED {} FOR ${} CREDITS! WALLET: ${} CR (XP UNCHANGED: {} XP)",
                                 active_car.name,
                                 cost,
                                 self.active_profile.credits,
                                 self.active_career_progress.xp
-                            ),
-                            Palette::NEON_GOLD,
-                        );
+                            )
+                        };
+                        self.spawn_hud_alert(alert_msg, Palette::NEON_GREEN);
                         self.audio.play_sfx(SfxType::UiSelect);
                     }
                 } else {
-                    let cost = ModuleCareerProgress::car_credit_cost(active_car.tier);
+                    let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car.id, self.active_module_id, active_car.tier);
                     if self.active_career_progress.level < active_car.tier as u32 {
                         self.spawn_hud_alert(
                             format!(
