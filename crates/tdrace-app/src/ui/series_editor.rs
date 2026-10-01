@@ -13,6 +13,7 @@ use crate::series::format::{
     ChampionshipDefinition, DriverConfig, RoundConfig, SeriesDefinition,
 };
 use crate::ui::menu::TrackChoice;
+use cabinet::ui::{Counter, FilterBar, FilterBarStyle, ScreenFooter, TextInputWidget, ToastOverlay};
 
 const COLOR_LIGHT_GRAY: Color = Color::new(0.80, 0.82, 0.85, 1.0);
 const COLOR_DARK_GRAY: Color = Color::new(0.45, 0.48, 0.52, 1.0);
@@ -342,7 +343,7 @@ pub fn render_championship_editor(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Tab Bar (Centered)
+    // Workflow Tab Bar (platform FilterBar, Pills style)
     let tab_w = scaler.s(150.0);
     let tab_gap = scaler.s(8.0);
     let total_tabs_w = tab_w * 4.0 + tab_gap * 3.0;
@@ -350,31 +351,17 @@ pub fn render_championship_editor(
     let tabs_y = scaler.s(10.0);
     let tab_h = scaler.s(32.0);
 
-    for (idx, tab) in ChampionshipEditorTab::ALL.iter().enumerate() {
-        let x = tabs_x + (idx as f32) * (tab_w + tab_gap);
-        let is_sel = state.active_tab == *tab;
-
-        let bg = if is_sel {
-            Color::new(0.14, 0.20, 0.35, 0.90)
-        } else {
-            Color::new(0.06, 0.08, 0.12, 0.60)
-        };
-        let border = if is_sel {
-            Palette::NEON_CYAN
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-        let text_col = if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED };
-
-        scaler.draw_glass_card(x, tabs_y, tab_w, tab_h, bg, border, if is_sel { 1.6 } else { 1.0 });
-        fonts.draw_ui_bold(
-            &fonts.fit_ui_bold(tab.title(), scaler.font_s(11.0), tab_w - scaler.s(16.0)),
-            x + scaler.s(10.0),
-            tabs_y + scaler.s(20.0),
-            scaler.font_s(11.0),
-            text_col,
-        );
-    }
+    let tab_labels: Vec<&str> = ChampionshipEditorTab::ALL.iter().map(|t| t.title()).collect();
+    let tab_active = ChampionshipEditorTab::ALL
+        .iter()
+        .position(|t| *t == state.active_tab)
+        .unwrap_or(0);
+    let tab_bar = FilterBar::from_labels(&tab_labels)
+        .with_style(FilterBarStyle::Pills)
+        .with_gap(8.0)
+        .with_active(tab_active)
+        .with_focus(true);
+    tab_bar.draw(&scaler, fonts, tabs_x, tabs_y, total_tabs_w, tab_h, Palette::NEON_CYAN);
 
     // Open & New Cup Action Buttons on Right Header
     let btn_h = scaler.s(32.0);
@@ -390,21 +377,20 @@ pub fn render_championship_editor(
     scaler.draw_glass_card(new_btn_x, btn_y, new_btn_w, btn_h, Color::new(0.18, 0.14, 0.06, 0.90), Palette::NEON_GOLD, 1.3);
     fonts.draw_ui_bold_centered("[N] NEW CUP", new_btn_x + new_btn_w * 0.5, btn_y + scaler.s(20.0), scaler.font_s(11.0), Palette::NEON_GOLD);
 
-    // Status Message Toast
+    // Status Message Toast (platform ToastOverlay)
     if let Some((ref msg, _)) = state.status_msg {
         let toast_w = scaler.s(340.0);
         let toast_h = scaler.s(28.0);
         let toast_x = (sw - toast_w) * 0.5;
         let toast_y = header_h + scaler.s(4.0);
-        scaler.draw_glass_card(
-            toast_x,
-            toast_y,
-            toast_w,
-            toast_h,
-            Color::new(0.10, 0.28, 0.18, 0.95),
-            Palette::NEON_GREEN,
-            1.5,
-        );
+
+        let mut overlay = ToastOverlay::new(toast_x, toast_y, toast_w, toast_h);
+        overlay.push_success("", msg.clone());
+        // Advance past the fade-in so the transient notification renders fully visible.
+        overlay.tick(0.3);
+        for (idx, toast) in overlay.toasts.iter().enumerate() {
+            overlay.render_frame(idx, toast);
+        }
         fonts.draw_ui_bold(msg, toast_x + scaler.s(12.0), toast_y + scaler.s(18.0), scaler.font_s(10.5), Palette::WHITE);
     }
 
@@ -778,8 +764,8 @@ fn render_footer(
     let footer_h = scaler.s(36.0);
     let y = sh - footer_h;
 
-    draw_rectangle(0.0, y, sw, footer_h, Color::new(0.05, 0.06, 0.10, 0.95));
-    scaler.draw_glass_card(0.0, y, sw, 1.0, COLOR_TRANSPARENT, Palette::UI_CARD_BORDER, 1.0);
+    let footer = ScreenFooter::new(0.0, y, sw, footer_h);
+    footer.render_frame();
 
     let hints = match state.active_tab {
         ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc / B] Exit",
@@ -925,14 +911,22 @@ fn render_modal(
             };
             fonts.draw_ui_bold(title, mx + scaler.s(20.0), my + scaler.s(30.0), scaler.font_s(12.5), Palette::NEON_CYAN);
 
-            // Input box
-            let input_box_y = my + scaler.s(50.0);
+            // Input box (platform TextInputWidget)
+            let input_box_x = mx + scaler.s(20.0);
+            let input_box_w = modal_w - scaler.s(40.0);
             let input_box_h = scaler.s(36.0);
-            scaler.draw_glass_card(mx + scaler.s(20.0), input_box_y, modal_w - scaler.s(40.0), input_box_h, Color::new(0.03, 0.04, 0.06, 0.95), Palette::WHITE, 1.5);
+            let input_box_y = my + scaler.s(50.0);
+
+            let max_chars = value.chars().count().max(1);
+            let mut input_widget = TextInputWidget::new(input_box_x, input_box_y, input_box_w, input_box_h, max_chars, "");
+            input_widget.set_text(value);
+            input_widget.is_focused = true;
+            input_widget.is_active = true;
+            input_widget.render_frame();
 
             let cursor = if (cursor_timer * 2.5) as i32 % 2 == 0 { "_" } else { " " };
             let display_text = format!("{}{}", value, cursor);
-            fonts.draw_ui_bold(&display_text, mx + scaler.s(30.0), input_box_y + scaler.s(24.0), scaler.font_s(13.0), Palette::WHITE);
+            fonts.draw_ui_bold(&display_text, input_box_x + scaler.s(10.0), input_box_y + scaler.s(24.0), scaler.font_s(13.0), Palette::WHITE);
 
             fonts.draw_ui_regular("[Enter] Save • [Esc] Cancel", mx + scaler.s(20.0), my + modal_h - scaler.s(16.0), scaler.font_s(10.0), COLOR_DARK_GRAY);
         }
@@ -1150,19 +1144,23 @@ pub fn handle_championship_editor_input(
                         autofill_grid_for_module(&mut state.def);
                     }
                     4 => { // Tier cycle (1..=5)
+                        let mut counter = Counter::new(1, 5, 1, state.def.series.tier as i64).with_wrap(true);
                         if is_key_pressed(KeyCode::Right) {
-                            state.def.series.tier = (state.def.series.tier % 5) + 1;
+                            counter.increment();
                         } else {
-                            state.def.series.tier = if state.def.series.tier <= 1 { 5 } else { state.def.series.tier - 1 };
+                            counter.decrement();
                         }
+                        state.def.series.tier = counter.value as u32;
                         autofill_grid_for_module(&mut state.def);
                     }
                     5 => { // Default laps
+                        let mut counter = Counter::new(1, 50, 1, state.def.series.laps_per_round as i64);
                         if is_key_pressed(KeyCode::Right) {
-                            state.def.series.laps_per_round = (state.def.series.laps_per_round + 1).min(50);
+                            counter.increment();
                         } else {
-                            state.def.series.laps_per_round = state.def.series.laps_per_round.saturating_sub(1).max(1);
+                            counter.decrement();
                         }
+                        state.def.series.laps_per_round = counter.value as u32;
                     }
                     6 => { // Point system
                         let systems = ["fia", "nascar", "arcade", "motogp"];
@@ -1231,7 +1229,9 @@ pub fn handle_championship_editor_input(
             if is_key_pressed(KeyCode::L) {
                 if let Some(r) = state.def.rounds.get_mut(state.selected_round_idx) {
                     let cur = r.laps.unwrap_or(state.def.series.laps_per_round);
-                    r.laps = Some((cur % 10) + 1);
+                    let mut counter = Counter::new(1, 10, 1, cur as i64).with_wrap(true);
+                    counter.increment();
+                    r.laps = Some(counter.value as u32);
                 }
             }
         }
