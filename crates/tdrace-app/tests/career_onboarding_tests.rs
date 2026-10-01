@@ -2,26 +2,31 @@
 
 use tdrace_app::db::HallOfFameDb;
 use tdrace_app::profile::{
-    AcademyLessonId, AcademyMedal, PlayerProfile,
+    AcademyLessonId, AcademyMedal, LicenseGrade, PlayerProfile,
 };
 
 #[test]
 fn test_fresh_rookie_profile_zero_start_invariants() {
     let rookie = PlayerProfile::new_rookie("Ayrton");
 
-    // Invariant 1: 0 Credits and 0 Lifetime Credits
-    assert_eq!(rookie.credits, 0);
-    assert_eq!(rookie.lifetime_credits, 0);
+    // Invariant 1: 10,000 Credits starting wallet (Spec 053, 060)
+    assert_eq!(rookie.credits, 10_000);
+    assert_eq!(rookie.lifetime_credits, 10_000);
 
-    // Invariant 2: Empty owned cars collection (no free starter vehicles)
+    // Invariant 2: 0 Global Driver XP
+    assert_eq!(rookie.driver_xp, 0);
+    assert_eq!(rookie.lifetime_driver_xp, 0);
+
+    // Invariant 3: Empty owned cars collection (no free starter vehicles)
     assert!(rookie.owned_cars.is_empty());
 
-    // Invariant 3: Ungranted racing license
+    // Invariant 4: Ungranted racing license
+    assert_eq!(rookie.license_grade, LicenseGrade::None);
     assert!(!rookie.has_racing_license());
     assert!(!rookie.academy_progress.is_graduated());
     assert_eq!(rookie.academy_progress.total_stars(), 0);
 
-    // Invariant 4: Career Mode access is strictly locked
+    // Invariant 5: Career Mode access is strictly locked
     assert!(!rookie.can_access_career());
 }
 
@@ -30,8 +35,11 @@ fn test_rookie_profile_database_persistence() {
     let db = HallOfFameDb::open_in_memory().expect("In-memory database should initialize");
 
     let mut rookie = PlayerProfile::new_rookie("Max");
-    rookie.credits = 1_000;
-    rookie.lifetime_credits = 1_000;
+    rookie.credits = 12_000;
+    rookie.lifetime_credits = 12_000;
+    rookie.driver_xp = 350;
+    rookie.lifetime_driver_xp = 350;
+    rookie.license_grade = LicenseGrade::ClassD;
     rookie.owned_cars.push("kart_crg_hero_60".to_string());
 
     // Record lesson 1 completion
@@ -43,7 +51,9 @@ fn test_rookie_profile_database_persistence() {
     let loaded = db.get_profile_by_id(id).expect("Fetch profile").expect("Profile exists");
 
     assert_eq!(loaded.name, "Max");
-    assert_eq!(loaded.credits, 1_000);
+    assert_eq!(loaded.credits, 12_000);
+    assert_eq!(loaded.driver_xp, 350);
+    assert_eq!(loaded.license_grade, LicenseGrade::ClassD);
     assert_eq!(loaded.owned_cars, vec!["kart_crg_hero_60".to_string()]);
     assert_eq!(loaded.academy_progress.total_stars(), 3);
     assert_eq!(
@@ -65,6 +75,7 @@ fn test_career_mode_access_requires_both_license_and_owned_vehicle() {
     // 2. Remove car and grant license -> still cannot access career (no car to race with)
     rookie.owned_cars.clear();
     rookie.academy_progress.license_granted = true;
+    rookie.license_grade = LicenseGrade::ClassD;
     assert!(rookie.has_racing_license());
     assert!(!rookie.can_access_career());
 
@@ -91,9 +102,8 @@ fn test_academy_curriculum_graduation_grants_license() {
     assert_eq!(cr, 2_500);
 
     // Graduation ceremony grants the National Grassroots Racing License
-    assert!(rookie.has_racing_license());
     assert!(rookie.academy_progress.is_graduated());
-    assert!(rookie.academy_progress.license_granted);
+    assert_eq!(rookie.academy_progress.license_grade, LicenseGrade::ClassD);
 }
 
 #[test]
@@ -101,7 +111,8 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     use tdrace_app::game::academy::{self, AcademyChallengeState};
 
     let mut rookie = PlayerProfile::new_rookie("Alain");
-    assert_eq!(rookie.credits, 0);
+    assert_eq!(rookie.credits, 10_000);
+    assert_eq!(rookie.driver_xp, 0);
 
     // Lesson 1: Bronze (target <= 22.5s)
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson1ApexLine));
@@ -110,7 +121,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 21.0, &state1);
     assert_eq!(eval1.medal, AcademyMedal::Bronze);
     assert_eq!(eval1.credits_awarded, 1_000);
-    assert_eq!(rookie.credits, 1_000);
+    assert_eq!(rookie.credits, 11_000);
+    assert_eq!(eval1.xp_awarded, 200); // 100 base + 100 distance
+    assert_eq!(rookie.driver_xp, 200);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson2BrakingChicane));
 
     // Lesson 2: Bronze (target <= 29.0s)
@@ -118,7 +131,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson2BrakingChicane, 27.5, &state2);
     assert_eq!(eval2.medal, AcademyMedal::Bronze);
     assert_eq!(eval2.credits_awarded, 1_500);
-    assert_eq!(rookie.credits, 2_500);
+    assert_eq!(rookie.credits, 12_500);
+    assert_eq!(eval2.xp_awarded, 250); // 150 base + 100 distance
+    assert_eq!(rookie.driver_xp, 450);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson3SurfaceTransition));
 
     // Lesson 3: Bronze (target <= 39.0s)
@@ -126,7 +141,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 37.0, &state3);
     assert_eq!(eval3.medal, AcademyMedal::Bronze);
     assert_eq!(eval3.credits_awarded, 2_000);
-    assert_eq!(rookie.credits, 4_500);
+    assert_eq!(rookie.credits, 14_500);
+    assert_eq!(eval3.xp_awarded, 300); // 200 base + 100 distance
+    assert_eq!(rookie.driver_xp, 750);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson4GraduationSprint));
 
     // Lesson 4: Bronze (target <= 80.0s)
@@ -134,9 +151,12 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let eval4 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson4GraduationSprint, 78.0, &state4);
     assert_eq!(eval4.medal, AcademyMedal::Bronze);
     assert_eq!(eval4.credits_awarded, 2_500);
-    assert_eq!(rookie.credits, 7_000); // 7,000 Cr exact purse!
+    assert_eq!(rookie.credits, 17_000); // 10,000 seed + 7,000 purse!
+    assert_eq!(eval4.xp_awarded, 450); // 350 base + 100 distance
+    assert_eq!(rookie.driver_xp, 1_200);
     assert!(eval4.newly_graduated);
     assert!(rookie.has_racing_license());
+    assert_eq!(rookie.license_grade, LicenseGrade::ClassD);
 }
 
 #[test]
@@ -156,9 +176,13 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
         let eval = academy::evaluate_academy_attempt(&mut rookie_silver, id, time, &state);
         assert_eq!(eval.medal, AcademyMedal::Silver);
     }
-    assert_eq!(rookie_silver.credits, academy::total_curriculum_purse(AcademyMedal::Silver));
-    assert_eq!(rookie_silver.credits, 10_750); // 10,750 Cr exact purse!
+    assert_eq!(
+        rookie_silver.credits,
+        10_000 + academy::total_curriculum_purse(AcademyMedal::Silver)
+    );
+    assert_eq!(rookie_silver.credits, 20_750); // 10,000 seed + 10,750 purse!
     assert!(rookie_silver.has_racing_license());
+    assert_eq!(rookie_silver.license_grade, LicenseGrade::ClassD);
 
     // Gold Curriculum Run
     let mut rookie_gold = PlayerProfile::new_rookie("Jackie");
@@ -173,9 +197,13 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
         let eval = academy::evaluate_academy_attempt(&mut rookie_gold, id, time, &state);
         assert_eq!(eval.medal, AcademyMedal::Gold);
     }
-    assert_eq!(rookie_gold.credits, academy::total_curriculum_purse(AcademyMedal::Gold));
-    assert_eq!(rookie_gold.credits, 14_500); // 14,500 Cr exact purse!
+    assert_eq!(
+        rookie_gold.credits,
+        10_000 + academy::total_curriculum_purse(AcademyMedal::Gold)
+    );
+    assert_eq!(rookie_gold.credits, 24_500); // 10,000 seed + 14,500 purse!
     assert!(rookie_gold.has_racing_license());
+    assert_eq!(rookie_gold.license_grade, LicenseGrade::ClassD);
 }
 
 #[test]
@@ -184,19 +212,20 @@ fn test_academy_attempt_idempotency_on_replay() {
 
     let mut rookie = PlayerProfile::new_rookie("Mika");
 
-    // First attempt: Gold (2,000 Cr bounty)
+    // First attempt: Gold (2,000 Cr bounty + 100 distance XP)
     let state = AcademyChallengeState::new(AcademyLessonId::Lesson1ApexLine);
     let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 18.0, &state);
     assert_eq!(eval1.medal, AcademyMedal::Gold);
     assert_eq!(eval1.credits_awarded, 2_000);
-    assert_eq!(rookie.credits, 2_000);
+    assert_eq!(rookie.credits, 12_000); // 10,000 seed + 2,000 bounty
     assert!(eval1.is_new_best);
 
     // Replay attempt: achieves Gold again with a faster time (17.5s)
+    // Awards practice stipend (+1,500 Cr) and distance XP (+100 XP), but NO duplicate 2,000 Cr bounty
     let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 17.5, &state);
     assert_eq!(eval2.medal, AcademyMedal::Gold);
-    assert_eq!(eval2.credits_awarded, 0); // Idempotent! Zero duplicate bounties
-    assert_eq!(rookie.credits, 2_000); // Wallet unchanged
+    assert_eq!(eval2.credits_awarded, 1_500); // Practice stipend
+    assert_eq!(rookie.credits, 13_500); // 12,000 + 1,500 practice stipend
     assert!(eval2.is_new_best); // Best time updated
     assert_eq!(
         rookie.academy_progress.lessons.get(&AcademyLessonId::Lesson1ApexLine).unwrap().best_time_sec,
@@ -222,7 +251,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     );
     assert_eq!(eval_collision.medal, AcademyMedal::None);
     assert_eq!(eval_collision.credits_awarded, 0);
-    assert_eq!(rookie.credits, 0);
+    assert_eq!(rookie.credits, 10_000);
     assert!(!eval_collision.clean_attempt);
     assert!(eval_collision.failure_reason.is_some());
 
@@ -238,7 +267,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     );
     assert_eq!(eval_offtrack.medal, AcademyMedal::None);
     assert_eq!(eval_offtrack.credits_awarded, 0);
-    assert_eq!(rookie.credits, 0);
+    assert_eq!(rookie.credits, 10_000);
     assert!(!eval_offtrack.clean_attempt);
 }
 
@@ -449,10 +478,10 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
     let mut session = RaceSession::new();
     let mut rookie = PlayerProfile::new_rookie("Sebastian");
 
-    // 1. Graduate Academy (grants license and 7,000 Cr)
+    // 1. Graduate Academy (grants license and holds 10,000 Cr starting wallet)
     rookie.academy_progress.license_granted = true;
-    rookie.credits = 7_000;
-    rookie.lifetime_credits = 7_000;
+    rookie.license_grade = LicenseGrade::ClassD;
+    assert_eq!(rookie.credits, 10_000);
     assert!(rookie.has_racing_license());
     assert!(rookie.owned_cars.is_empty());
     assert!(!rookie.can_access_career(), "Licensed rookie without a car cannot access career");
@@ -477,15 +506,15 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
         other => panic!("Expected ModalitySelect with VehicleRequired modal, got {:?}", other),
     }
 
-    // 3. Purchase Cadet Kart in Kart module
+    // 3. Purchase Cadet Kart in Kart module (5,000 Cr)
     let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     assert!(kart_progress.can_buy_car("kart_crg_hero_60", 1, session.active_profile.credits));
     kart_progress
         .buy_car(&mut session.active_profile, "kart_crg_hero_60", 1)
         .expect("Purchase Cadet Kart");
 
-    // Verify credits deducted: 7,000 - 5,000 = 2,000
-    assert_eq!(session.active_profile.credits, 2_000);
+    // Verify credits deducted: 10,000 - 5,000 = 5,000 Cr reserve preserved!
+    assert_eq!(session.active_profile.credits, 5_000);
     // Verify car added to owned_cars
     assert_eq!(session.active_profile.owned_cars, vec!["kart_crg_hero_60".to_string()]);
     // Career mode is now fully unlocked!
@@ -528,6 +557,49 @@ fn test_grassroots_starter_models_in_catalog() {
     assert!(starters.iter().any(|m| m.module_id == "kart"));
     assert!(starters.iter().any(|m| m.module_id == "autocross"));
     assert!(starters.iter().any(|m| m.module_id == "rally"));
+}
+
+#[test]
+fn test_feeder_ladder_and_discipline_license_gating() {
+    let mut profile = PlayerProfile::new_rookie("Ayrton");
+    assert_eq!(profile.license_grade, LicenseGrade::None);
+
+    // Unlicensed driver cannot enter any discipline
+    assert!(!profile.can_enter_category("kart"));
+    assert!(!profile.can_enter_category("autocross"));
+    assert!(!profile.can_enter_category("rally"));
+    assert!(!profile.can_enter_category("nascar"));
+    assert!(!profile.can_enter_category("gt"));
+
+    // Promoting to Class D (Academy Graduation) unlocks Karting
+    profile.license_grade = LicenseGrade::ClassD;
+    assert!(profile.can_enter_category("kart"));
+    assert!(!profile.can_enter_category("autocross"));
+    assert!(!profile.can_enter_category("rally"));
+    assert!(!profile.can_enter_category("nascar"));
+    assert!(!profile.can_enter_category("gt"));
+
+    // Promoting to Class C (Karting season podium) unlocks Autocross & Rallycross
+    profile.license_grade = LicenseGrade::ClassC;
+    assert!(profile.can_enter_category("kart"));
+    assert!(profile.can_enter_category("autocross"));
+    assert!(profile.can_enter_category("rally"));
+    assert!(!profile.can_enter_category("nascar"));
+    assert!(!profile.can_enter_category("gt"));
+
+    // Promoting to Class B (Dirt season podium) unlocks Stock Car & Extreme Off-Road
+    profile.license_grade = LicenseGrade::ClassB;
+    assert!(profile.can_enter_category("kart"));
+    assert!(profile.can_enter_category("autocross"));
+    assert!(profile.can_enter_category("rally"));
+    assert!(profile.can_enter_category("nascar"));
+    assert!(profile.can_enter_category("extreme_offroad"));
+    assert!(!profile.can_enter_category("gt"));
+
+    // Promoting to Class A (Stock/Dirt season podium) unlocks GT Racing
+    profile.license_grade = LicenseGrade::ClassA;
+    assert!(profile.can_enter_category("gt"));
+    assert!(profile.can_enter_category("gt_challenge"));
 }
 
 

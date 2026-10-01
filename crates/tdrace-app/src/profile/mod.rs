@@ -7,6 +7,7 @@ pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
 pub use tdrace_core::profile::{
     AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal, ClassicAcademyProgress,
+    LicenseGrade,
 };
 
 /// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
@@ -24,6 +25,12 @@ pub struct PlayerProfile {
     pub credits: u64,
     #[serde(default = "PlayerProfile::default_starting_credits")]
     pub lifetime_credits: u64,
+    #[serde(default)]
+    pub driver_xp: u64,
+    #[serde(default)]
+    pub lifetime_driver_xp: u64,
+    #[serde(default)]
+    pub license_grade: LicenseGrade,
     #[serde(default)]
     pub academy_progress: ClassicAcademyProgress,
     #[serde(default)]
@@ -43,6 +50,9 @@ impl Default for PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            driver_xp: 0,
+            lifetime_driver_xp: 0,
+            license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
         }
@@ -50,7 +60,7 @@ impl Default for PlayerProfile {
 }
 
 impl PlayerProfile {
-    pub const STARTING_CREDITS: u64 = 0;
+    pub const STARTING_CREDITS: u64 = 10_000;
 
     pub fn default_starting_credits() -> u64 {
         Self::STARTING_CREDITS
@@ -67,19 +77,35 @@ impl PlayerProfile {
             is_active: true,
             created_at: String::new(),
             last_mode: AssistProfile::Arcade,
-            credits: 0,
-            lifetime_credits: 0,
+            credits: Self::STARTING_CREDITS,
+            lifetime_credits: Self::STARTING_CREDITS,
+            driver_xp: 0,
+            lifetime_driver_xp: 0,
+            license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
         }
     }
 
     pub fn can_access_career(&self) -> bool {
-        self.academy_progress.is_graduated() && !self.owned_cars.is_empty()
+        self.has_racing_license() && !self.owned_cars.is_empty()
     }
 
     pub fn has_racing_license(&self) -> bool {
-        self.academy_progress.is_graduated()
+        self.license_grade >= LicenseGrade::ClassD || self.academy_progress.is_graduated()
+    }
+
+    pub fn add_driver_xp(&mut self, amount: u64) {
+        self.driver_xp = self.driver_xp.saturating_add(amount);
+        self.lifetime_driver_xp = self.lifetime_driver_xp.saturating_add(amount);
+    }
+
+    pub fn can_enter_category(&self, category: &str) -> bool {
+        self.license_grade >= Self::required_license_for_category(category)
+    }
+
+    pub fn required_license_for_category(category: &str) -> LicenseGrade {
+        LicenseGrade::required_for_category(category)
     }
 
     pub fn new(name: &str, alias: &str, country: Option<&str>, color_scheme: CarColorScheme) -> Self {
@@ -94,6 +120,9 @@ impl PlayerProfile {
             last_mode: AssistProfile::Arcade,
             credits: Self::STARTING_CREDITS,
             lifetime_credits: Self::STARTING_CREDITS,
+            driver_xp: 0,
+            lifetime_driver_xp: 0,
+            license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
         }

@@ -201,8 +201,8 @@ use crate::module::{
     NascarGameModule, RallyGameModule, VaultGameModule,
 };
 use crate::profile::{
-    ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
-    RaceHistoryEntry,
+    ChampionshipAward, CountryRegistry, LicenseGrade, ModuleCareerProgress, PlayerProfile,
+    ProfileCareerStats, RaceHistoryEntry,
 };
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
@@ -216,10 +216,12 @@ use crate::render::{
     compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
     render_elevated_track_culled, render_floating_bot_nameplates,
+    render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
     render_player_overhead_chevron, render_player_sonar_ping,
+    render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
     PlayerVisibilityOptions, VehicleNameplateItem,
@@ -6913,6 +6915,27 @@ impl RaceSession {
                 let _ = db.save_championship_award(&award);
             }
             self.refresh_profile_awards();
+
+            // Feeder Ladder Promotion Invariant (Spec 053, 060)
+            let promo_grade = match award.module_id.as_str() {
+                "kart" => Some(LicenseGrade::ClassC),
+                "autocross" | "ax" | "rally" | "rx" => Some(LicenseGrade::ClassB),
+                "nascar" | "stock" | "extreme_offroad" | "offroad" => Some(LicenseGrade::ClassA),
+                _ => None,
+            };
+            if let Some(target_grade) = promo_grade {
+                if target_grade > self.active_profile.license_grade {
+                    self.active_profile.license_grade = target_grade;
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.update_license_grade(award.profile_id, target_grade);
+                        let _ = db.update_profile(&self.active_profile);
+                    }
+                    self.spawn_hud_alert(
+                        format!("LICENSE PROMOTION! {} ACCREDITED!", target_grade.badge()),
+                        Palette::NEON_CYAN,
+                    );
+                }
+            }
         }
     }
 
@@ -7918,6 +7941,9 @@ impl RaceSession {
                         last_mode: assist_mode,
                         credits: p.credits,
                         lifetime_credits: p.lifetime_credits,
+                        driver_xp: p.driver_xp,
+                        lifetime_driver_xp: p.lifetime_driver_xp,
+                        license_grade: p.license_grade,
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
                     })
@@ -13047,6 +13073,7 @@ impl RaceSession {
 
                 let total_xp = lap_xp + clean_xp_bonus + first_time_bonus;
                 self.active_career_progress.add_xp(total_xp);
+                self.active_profile.add_driver_xp(total_xp);
 
                 // Prize purse calculation (Credits) (Spec 053)
                 let (finish_prize, clean_credit_bonus) = ModuleCareerProgress::calculate_round_purse(
@@ -14278,7 +14305,8 @@ impl RaceSession {
             if let Some(card) = cards.get(selected_idx) {
                 self.audio.play_sfx(SfxType::UiSelect);
 
-                // Replay prompt for completed championships
+                // Replay prompt for completed championships (bypasses the license
+                // gate below: a completed championship is always replayable).
                 if card.status == crate::ui::career_select::ChampionshipCardStatus::Completed {
                     let modal = UniversalConfirmModal::new(
                         "REPLAY CHAMPIONSHIP",
@@ -14291,6 +14319,22 @@ impl RaceSession {
                     .with_accent(card.accent_color);
                     self.career_replay_modal = Some(modal);
                     self.pending_replay_series = Some((card.series_id.clone(), card.series_name.clone()));
+                    self.state = GameState::CareerSelect { selected_idx };
+                    return;
+                }
+
+                // Check if driver has sufficient license grade for this discipline
+                if !self.active_profile.can_enter_category(&card.module_id) {
+                    let req_license = PlayerProfile::required_license_for_category(&card.module_id);
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.spawn_hud_alert(
+                        format!(
+                            "ENTRY RESTRICTED: {} REQUIRED FOR {}!",
+                            req_license.badge(),
+                            card.module_title.to_uppercase()
+                        ),
+                        Palette::RED,
+                    );
                     self.state = GameState::CareerSelect { selected_idx };
                     return;
                 }
@@ -15048,8 +15092,12 @@ impl RaceSession {
             // Render ground track & barriers
             render_ground_track(&state.track);
             render_grandstand_shadows_culled(&state.track, None);
+            render_building_shadows_culled(&state.track, None);
+            render_rock_shadows_culled(&state.track, None);
             render_tree_shadows_culled(&state.track, None);
             render_grandstands_culled(&state.track, None);
+            render_buildings_culled(&state.track, None);
+            render_rocks_culled(&state.track, None);
             render_ground_barriers_and_obstacles(&state.track);
             render_tree_trunks_culled(&state.track, None);
 
@@ -15133,8 +15181,12 @@ impl RaceSession {
 
         // 3. Ground Scenery Shadows, Barriers & Obstacles (elevation < 0.6m)
         render_grandstand_shadows_culled(&self.track, view_bounds);
+        render_building_shadows_culled(&self.track, view_bounds);
+        render_rock_shadows_culled(&self.track, view_bounds);
         render_tree_shadows_culled(&self.track, view_bounds);
         render_grandstands_culled(&self.track, view_bounds);
+        render_buildings_culled(&self.track, view_bounds);
+        render_rocks_culled(&self.track, view_bounds);
         render_ground_barriers_and_obstacles_culled(&self.track, view_bounds);
         render_tree_trunks_culled(&self.track, view_bounds);
 

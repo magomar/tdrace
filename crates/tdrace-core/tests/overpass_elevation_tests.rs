@@ -139,6 +139,7 @@ fn test_lidar_elevation_filtering() {
             right_boundary_polyline: Vec::new(),
             grandstands: Vec::new(),
             trees: Vec::new(),
+            ..Default::default()
         },
         checkpoints: Vec::new(),
         grid_positions: Vec::new(),

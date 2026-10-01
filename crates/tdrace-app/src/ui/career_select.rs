@@ -977,23 +977,37 @@ pub fn render_career_select_screen(
             let btn_x = rect.x + rect.w - scaler.s(16.0) - btn_w;
             let btn_y = rect.y + rect.h - btn_h - scaler.s(12.0);
 
-            let (btn_bg, btn_fg, btn_text) = match card.status {
-                ChampionshipCardStatus::InProgress => {
-                    (card.accent_color, Palette::BLACK, "▶  RESUME CAREER")
-                }
-                ChampionshipCardStatus::Completed => {
-                    (Palette::NEON_GOLD, Palette::BLACK, "↻  REPLAY CHAMPIONSHIP")
-                }
-                ChampionshipCardStatus::New => {
-                    (Palette::NEON_CYAN, Palette::BLACK, "▶  START CAREER")
+            let can_enter = active_profile.can_enter_category(&card.module_id);
+            let req_license = PlayerProfile::required_license_for_category(&card.module_id);
+
+            let (btn_bg, btn_fg, btn_text) = if !can_enter {
+                (
+                    Color::new(0.20, 0.22, 0.28, 0.90),
+                    Palette::UI_TEXT_MUTED,
+                    format!("🔒  REQUIRES {}", req_license.badge()),
+                )
+            } else {
+                match card.status {
+                    ChampionshipCardStatus::InProgress => {
+                        (card.accent_color, Palette::BLACK, "▶  RESUME CAREER".to_string())
+                    }
+                    ChampionshipCardStatus::Completed => {
+                        (Palette::NEON_GOLD, Palette::BLACK, "↻  REPLAY CHAMPIONSHIP".to_string())
+                    }
+                    ChampionshipCardStatus::New => {
+                        (Palette::NEON_CYAN, Palette::BLACK, "▶  START CAREER".to_string())
+                    }
                 }
             };
             draw_rectangle(btn_x, btn_y, btn_w, btn_h, btn_bg);
+            if !can_enter {
+                draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, 1.2, Palette::RED);
+            }
             fonts.draw_ui_bold_centered(
-                btn_text,
+                &btn_text,
                 btn_x + btn_w * 0.5,
                 btn_y + scaler.s(21.0),
-                scaler.font_s(13.0),
+                scaler.font_s(12.0),
                 btn_fg,
             );
 
@@ -1070,28 +1084,38 @@ pub fn render_career_select_screen(
 
             // Right side status pill & expand indicator
             let right_x = rect.x + rect.w - scaler.s(16.0);
-            let (status_text, status_col) = match card.status {
-                ChampionshipCardStatus::InProgress => (
-                    format!(
-                        "ROUND {}/{}  •  P{} ({} PTS)",
-                        card.current_round + 1,
-                        card.total_rounds,
-                        card.player_rank,
-                        card.player_points
-                    ),
-                    Palette::NEON_GOLD,
-                ),
-                ChampionshipCardStatus::Completed => {
-                    let t_icon = card.trophy.map(|t| t.icon()).unwrap_or("🏆 COMPLETED");
-                    (
-                        format!("{}  •  {} PTS", t_icon, card.player_points),
-                        Palette::NEON_GREEN,
-                    )
-                }
-                ChampionshipCardStatus::New => (
-                    format!("{}  •  {} ROUNDS", card.tier_name, card.total_rounds),
+            let can_enter = active_profile.can_enter_category(&card.module_id);
+            let req_license = PlayerProfile::required_license_for_category(&card.module_id);
+
+            let (status_text, status_col) = if !can_enter {
+                (
+                    format!("🔒  REQUIRES {}", req_license.badge()),
                     Palette::UI_TEXT_MUTED,
-                ),
+                )
+            } else {
+                match card.status {
+                    ChampionshipCardStatus::InProgress => (
+                        format!(
+                            "ROUND {}/{}  •  P{} ({} PTS)",
+                            card.current_round + 1,
+                            card.total_rounds,
+                            card.player_rank,
+                            card.player_points
+                        ),
+                        Palette::NEON_GOLD,
+                    ),
+                    ChampionshipCardStatus::Completed => {
+                        let t_icon = card.trophy.map(|t| t.icon()).unwrap_or("🏆 COMPLETED");
+                        (
+                            format!("{}  •  {} PTS", t_icon, card.player_points),
+                            Palette::NEON_GREEN,
+                        )
+                    }
+                    ChampionshipCardStatus::New => (
+                        format!("{}  •  {} ROUNDS", card.tier_name, card.total_rounds),
+                        Palette::UI_TEXT_MUTED,
+                    ),
+                }
             };
 
             let chip_w = scaler.s(220.0);

@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
-use super::scenery::{Grandstand, Tree};
+use super::scenery::{Building, Grandstand, Rock, Tree};
 
 /// 2D Line Segment defined by two endpoints.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -1007,6 +1007,10 @@ pub struct TrackGeometry {
     pub grandstands: Vec<Grandstand>,
     #[serde(default)]
     pub trees: Vec<Tree>,
+    #[serde(default)]
+    pub rocks: Vec<Rock>,
+    #[serde(default)]
+    pub buildings: Vec<Building>,
 }
 
 impl TrackGeometry {
@@ -1019,14 +1023,22 @@ impl TrackGeometry {
         self.inner_walls.iter().chain(self.outer_walls.iter())
     }
 
-    /// Returns all static obstacles plus solid tree trunk colliders and grandstand collision boxes.
+    /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.
     pub fn all_obstacles_with_scenery(&self) -> Vec<Obstacle> {
         let mut obs = self.obstacles.clone();
         for tree in &self.trees {
-            obs.push(tree.trunk_obstacle());
+            if tree.has_trunk() {
+                obs.push(tree.trunk_obstacle());
+            }
         }
         for grandstand in &self.grandstands {
             obs.push(grandstand.to_obstacle());
+        }
+        for rock in &self.rocks {
+            obs.push(rock.to_obstacle());
+        }
+        for building in &self.buildings {
+            obs.push(building.to_obstacle());
         }
         obs
     }

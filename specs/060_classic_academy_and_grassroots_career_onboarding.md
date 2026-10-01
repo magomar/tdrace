@@ -2,7 +2,7 @@
 type: Feature Spec
 template: feature
 title: "Classic Academy and Grassroots Career Onboarding"
-description: "Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase."
+description: "Establishes a 10,000 Cr seed fund and Global XP driver onboarding loop, requiring players to earn their Class D license via the Classic Academy or grassroots feeder progression to access career championships."
 status: implemented
 receipt: "docs/receipts/spec-060-receipt.md"
 created: 2026-09-29
@@ -12,7 +12,7 @@ verified: { by: "human:mario", at: "2026-09-29T20:24:27Z" }
 
 # Feature Spec: Classic Academy and Grassroots Career Onboarding 🎓🏁💰
 
-A comprehensive specification defining the **Grassroots Career Onboarding Loop** for **TdRace**. Under this model, new player profiles initialize with **0 XP and 0 Cr (Bank Credits)** with **zero free career vehicles**. To enter competitive motorsport, rookies must complete the **Classic Academy** within the Classic Arcade module. By mastering vehicle handling fundamentals across four structured driving challenges, players earn their **National Grassroots Racing License** and a seed credit purse of **7,000 – 14,500 Cr**, granting them the purchasing power to acquire their first competition machine in entry-level grassroots categories (**Karting**, **Autocross**, or **Rallycross**).
+A comprehensive specification defining the **Grassroots Career Onboarding Loop** for **TdRace**. Under this model, new player profiles initialize with **10,000 Cr (Bank Credits)**, **0 Global Driver XP**, and **License Grade: None (Rookie)** with **zero free career vehicles**. To enter competitive motorsport championships, rookies must earn their **Class D Racing License** at the **Classic Academy** within the Classic Arcade module. By mastering vehicle handling fundamentals across four structured driving challenges, players earn their Class D accreditation and delta Global XP bounties. Starting with 10,000 Cr grants them the purchasing power to acquire their first competition machine (**Cadet Kart 60cc** at 5,000 Cr), while preserving a 5,000 Cr reserve for early garage maintenance and repairs. Furthermore, completing championship seasons in entry-level motorsport acts as a natural **feeder ladder**, promoting drivers to higher license grades (Karting $\to$ Class C; Autocross/Rallycross $\to$ Class B; Stock Car $\to$ Class A).
 
 ---
 
@@ -26,11 +26,14 @@ In legacy career structures ([Spec 013](013_player_profile_enhancement_and_caree
 
 ### 1.2 Core Design Principles
 This specification enacts a foundational shift in how players begin their motorsport journey:
-- **Zero-Start Initial State**: Every new driver dossier starts with **0 XP**, **0 Cr**, and an **empty career garage**.
+- **Seed-Funded Initial State**: Every new driver dossier starts with **10,000 Cr**, **0 Global Driver XP**, **License Grade: None**, and an **empty career garage**.
 - **No Free Career Vehicles**: Absolutely every vehicle in dedicated motorsport disciplines (Karting, Autocross, Rallycross, GT, NASCAR, Extreme Off-Road) must be purchased from the Showroom using earned Credits.
 - **Classic Arcade Always Playable**: Casual arcade modes (Quick Race, Single Race, Time Trial) in the **Classic Module** remain unlocked immediately from day one, utilizing the built-in arcade fantasy cars (Apex Phantom GT, Trailfire Turbo, Mudlark Cross Car, Turbo Dart, etc.).
-- **The Classic Academy as the Gate to Career**: Positioned within the Classic Module, the Academy serves as an interactive racing school. Completing its curriculum awards the **National Grassroots License** and a tiered credit purse.
-- **Natural Grassroots Pricing Calibration**: Vehicles are priced according to authentic real-world financial barriers, positioning **Karting** as the most affordable gateway, followed closely by **Cross Car Autocross** and **Junior Rallycross**, while GT and Stock Car machinery remain mid-term aspirational targets.
+- **Dual-Track Progression (Academy School vs. Career Feeder Ladder)**:
+  - *Track A (Academy Express)*: Positioned within the Classic Module, the Academy serves as an interactive racing school. Completing Tier 1 awards the **Class D License** and milestone Global XP.
+  - *Track B (Motorsport Feeder Ladder)*: Finishing on the season podium in a full Karting championship automatically grants the **Class C License** (unlocking Autocross and Rallycross); doing so in AX or RX grants the **Class B License** (unlocking Stock Car and Extreme Off-Road); doing so in Stock Car / AX / RX grants the **Class A License** (unlocking GT Racing).
+- **Global Driver XP & Mission Replayability**: All driving (Academy, casual, career) deposits into a single unified `PlayerProfile.driver_xp`. Academy missions are fully replayable to chase faster lap times, earn delta milestone XP on higher medals, and earn distance lap XP on every attempt.
+- **Natural Grassroots Pricing Calibration**: Vehicles are priced according to authentic real-world financial barriers, positioning **Karting** as the most affordable gateway (Cadet Kart at 5,000 Cr, leaving 5,000 Cr buffer from the 10,000 Cr starting wallet), followed by **Cross Car Autocross** (12,000 Cr) and **Junior Rallycross** (16,000 Cr), while GT and Stock Car machinery remain mid-term aspirational targets.
 
 ### 1.3 Architectural Dependency: Classic Circuits Revamp (Spec 055)
 This specification directly depends on **[Spec 055: Classic Circuits Revamp](055_classic_circuits_revamp.md)** (tracked via Beads issue blocker `tdrace-classic-circuits-revamp-dh6k`). Rather than relying on legacy flat arcade circuits, the Classic Academy curriculum is calibrated specifically to the 18 fictional circuits and the fantasy vehicle roster introduced in Spec 055:
@@ -325,22 +328,43 @@ impl ClassicAcademyProgress {
 ```rust
 // In crates/arcade-race-core/src/profile.rs
 
+/// Official motorsport license grade accredited to a driver.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum LicenseGrade {
+    None = 0,
+    ClassD = 1, // National Grassroots (Karting)
+    ClassC = 2, // Junior Competition (Autocross / Rallycross)
+    ClassB = 3, // National Pro-Am (Stock Car / Off-Road)
+    ClassA = 4, // International GT (GT Racing)
+    ClassS = 5, // FIA Superlicense (Apex Prototypes)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerProfile {
     pub name: String,
     pub created_at: String,
     pub credits: u64,
+    pub lifetime_credits: u64,
+    pub driver_xp: u64,
+    pub lifetime_driver_xp: u64,
+    pub license_grade: LicenseGrade,
     pub academy_progress: ClassicAcademyProgress,
     pub owned_cars: Vec<String>,
     pub disciplines: HashMap<String, ModuleCareerProgress>,
 }
 
 impl PlayerProfile {
+    pub const STARTING_CREDITS: u64 = 10_000;
+
     pub fn new_rookie(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
             created_at: chrono::Utc::now().to_rfc3339(),
-            credits: 0,
+            credits: Self::STARTING_CREDITS,
+            lifetime_credits: Self::STARTING_CREDITS,
+            driver_xp: 0,
+            lifetime_driver_xp: 0,
+            license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
             disciplines: HashMap::new(),
@@ -348,11 +372,21 @@ impl PlayerProfile {
     }
 
     pub fn can_access_career(&self) -> bool {
-        self.academy_progress.is_graduated() && !self.owned_cars.is_empty()
+        self.license_grade >= LicenseGrade::ClassD && !self.owned_cars.is_empty()
     }
 
     pub fn has_racing_license(&self) -> bool {
-        self.academy_progress.is_graduated()
+        self.license_grade >= LicenseGrade::ClassD
+    }
+
+    pub fn required_license_for_category(category: &str) -> LicenseGrade {
+        match category {
+            "kart" => LicenseGrade::ClassD,
+            "autocross" | "ax" | "rally" | "rx" => LicenseGrade::ClassC,
+            "nascar" | "stock" | "extreme_offroad" | "offroad" => LicenseGrade::ClassB,
+            "gt" | "gt_challenge" => LicenseGrade::ClassA,
+            _ => LicenseGrade::ClassD,
+        }
     }
 }
 ```
@@ -362,11 +396,15 @@ impl PlayerProfile {
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
 ### 1. Invariant & Gating Rules
-1. **Rookie Zero Balance Invariant**: Every newly instantiated driver profile initializes strictly with `credits = 0`, `owned_cars.is_empty()`, and `license_granted = false`. No legacy starter vehicles are pre-injected into the profile.
-2. **Career Mode Gate Invariant**: The Career Mode launcher UI rejects launch requests and renders the Academy Prompt Modal unless `profile.can_access_career()` evaluates to `true`.
-3. **Discipline Vehicle Ownership Invariant**: Entering a championship within a specific discipline (e.g. Karting Tier 1) requires the player to own at least one vehicle belonging to that discipline's eligible car roster for that tier.
-4. **Classic Arcade Segregation Invariant**: Classic Arcade fantasy vehicles (`classic_apex_phantom_gt`, `classic_trailfire_turbo`, `classic_ax_mudlark`, `classic_turbo_dart`, `classic_thunderbolt_v8`, `classic_vortex_dune_crusher`) are hard-coded as non-championship assets. They are permanently available for Quick Race and Academy challenges but cannot be registered in professional career tournaments.
-5. **Idempotent Bounty Invariant**: First-time completion credit bounties for Bronze, Silver, and Gold are strictly one-time payouts tracked via boolean flags (`bronze_claimed`, `silver_claimed`, `gold_claimed`). Replaying an already mastered lesson yields nominal repetition rewards (e.g. standard lap completion credits) without re-awarding milestone bounties.
+1. **Rookie Seed Balance Invariant**: Every newly instantiated driver profile initializes strictly with `credits = 10_000`, `driver_xp = 0`, `license_grade = LicenseGrade::None`, and `owned_cars.is_empty()`. No legacy starter vehicles are pre-injected into the profile.
+2. **Career Mode Gate Invariant**: The Career Mode launcher UI rejects launch requests and renders the Academy Prompt Modal unless `profile.can_access_career()` evaluates to `true` (requiring at least `ClassD` license and $\ge 1$ owned vehicle).
+3. **Discipline License Gating Invariant**: Entering a championship within a specific category enforces `profile.license_grade >= PlayerProfile::required_license_for_category(category)`. Drivers cannot enter dirt (Class C), stock car (Class B), or GT (Class A) championships prematurely.
+4. **Feeder Ladder Promotion Invariant**: Completing a full championship season with a podium finish (P1, P2, or P3) automatically grants the next license tier:
+   - Karting season podium $\to$ Grants `LicenseGrade::ClassC` (unlocking Autocross and Rallycross).
+   - Autocross or Rallycross season podium $\to$ Grants `LicenseGrade::ClassB` (unlocking Stock Car and Extreme Off-Road).
+   - Stock Car, AX, or RX season podium $\to$ Grants `LicenseGrade::ClassA` (unlocking GT Racing).
+5. **Classic Arcade Segregation Invariant**: Classic Arcade fantasy vehicles (`classic_apex_phantom_gt`, `classic_trailfire_turbo`, `classic_ax_mudlark`, `classic_turbo_dart`, `classic_thunderbolt_v8`, `classic_vortex_dune_crusher`) are permanently available for Quick Race and Academy challenges but cannot be registered in professional career tournaments.
+6. **Replay & Delta XP Invariant**: First-time completion credit bounties and milestone Global XP for Bronze, Silver, and Gold are delta payouts. Replaying an already mastered lesson yields standard distance lap XP ($L_{\text{track}} / 10$) and nominal practice stipends without infinite bounty farming.
 
 ---
 
@@ -393,42 +431,47 @@ impl PlayerProfile {
 - **Scenario: Fresh rookie profile initialization**
   - [x] **Given** a brand-new player profile created in the driver dossier
   - [x] **When** the profile's initial state is inspected
-  - [x] **Then** the driver has 0 Credits (Cr), 0 XP across all modules, an empty owned car collection, and an ungranted racing license.
+  - [x] **Then** the driver has 10,000 Credits (Cr), 0 Global Driver XP, an empty owned car collection, and an ungranted racing license (`license_grade == LicenseGrade::None`).
 
 - **Scenario: Classic arcade access with locked career**
-  - [x] **Given** a fresh rookie profile with 0 Cr and no racing license
+  - [x] **Given** a fresh rookie profile with 10,000 Cr and `LicenseGrade::None`
   - [x] **When** the player views the Main Menu
-  - [x] **Then** the Classic Arcade module is fully accessible with arcade fantasy cars, but Career Mode displays a lock badge requiring the National Grassroots License.
+  - [x] **Then** the Classic Arcade module is fully accessible with arcade fantasy cars, but Career Mode displays a lock badge requiring the Class D License.
 
-- **Scenario: Progressive academy lesson execution and credit bounties**
+- **Scenario: Progressive academy lesson execution and delta XP bounties**
   - [x] **Given** a rookie driver undertaking Lesson 1 (`gt_velocity_park` with `classic_apex_phantom_gt`) of the Classic Academy
   - [x] **When** the player finishes Sector 1 with a lap time qualifying for a Silver medal
-  - [x] **Then** the system awards both the Bronze (1,000 Cr) and Silver (500 Cr) bounties for a total of 1,500 Cr, credits the profile wallet, and unlocks Lesson 2.
+  - [x] **Then** the system awards the Bronze and Silver delta Global XP (+250 XP total) and credit bounties, updates `PlayerProfile.driver_xp`, and unlocks Lesson 2.
 
-- **Scenario: Bounty claim idempotency on replay**
-  - [x] **Given** a player who has already claimed the Gold bounty on Lesson 1
-  - [x] **When** the player replays Lesson 1 and achieves a Gold time again
-  - [x] **Then** zero milestone bounties are awarded, the player's bank credits remain unchanged, and the previous best time is preserved.
+- **Scenario: Lesson replay delta XP and continuous mileage**
+  - [x] **Given** a player who already holds a Bronze medal on Lesson 1
+  - [x] **When** the player replays Lesson 1 and improves their time to achieve Gold
+  - [x] **Then** the delta Silver and Gold XP (+250 XP) are awarded to `PlayerProfile.driver_xp` alongside base lap distance XP, and their best time is updated.
 
-- **Scenario: Academy graduation and license grant**
+- **Scenario: Academy graduation and Class D license grant**
   - [x] **Given** a player who has passed Lessons 1, 2, and 3
   - [x] **When** the player completes Lesson 4 (`ax_meadow_sprint` with `classic_ax_mudlark`) with a time beating the Bronze target without heavy car contact
-  - [x] **Then** the National Grassroots Racing License is permanently granted, the driver dossier records the award timestamp, and a graduation prompt directs the player to the Showroom.
+  - [x] **Then** the driver is promoted to `LicenseGrade::ClassD`, the driver dossier records the award timestamp, and a graduation prompt directs the player to the Showroom.
 
-- **Scenario: Grassroots car purchase with earned academy purse**
-  - [x] **Given** an Academy graduate with 7,000 Cr earned from all-Bronze lesson completions
+- **Scenario: Grassroots car purchase preserving safety reserve**
+  - [x] **Given** an Academy graduate with 10,000 Cr starting wallet
   - [x] **When** the player navigates to the Showroom
-  - [x] **Then** the Cadet Kart 60cc (5,000 Cr) is marked affordable and can be purchased, leaving 2,000 Cr in the player's wallet and adding the Cadet Kart to `owned_cars`.
+  - [x] **Then** the Cadet Kart 60cc (5,000 Cr) is marked affordable and can be purchased, leaving a 5,000 Cr reserve in the player's wallet and adding the Cadet Kart to `owned_cars`.
 
 - **Scenario: Unlocking career mode upon first vehicle purchase**
-  - [x] **Given** a licensed Academy graduate who just purchased their first Cadet Kart
+  - [x] **Given** a licensed Class D graduate who just purchased their first Cadet Kart
   - [x] **When** the player returns to the Main Menu
   - [x] **Then** the Career Mode button is fully unlocked and active, allowing the player to enter the Karting Tier 1 Championship.
 
-- **Scenario: Prevention of premature high-tier entry**
-  - [x] **Given** a fresh Academy graduate holding 14,500 Cr from all-Gold completions
-  - [x] **When** the player attempts to purchase a GT4 Clubsport car (70,000 Cr) or enter a GT championship
-  - [x] **Then** the purchase is blocked due to insufficient funds, and GT championship entry is blocked because no eligible GT car is owned.
+- **Scenario: Feeder ladder promotion from Karting to Class C**
+  - [x] **Given** a driver holding `LicenseGrade::ClassD` competing in a full Karting championship season
+  - [x] **When** the player completes the final round and finishes on the season podium (P1, P2, or P3)
+  - [x] **Then** the driver is automatically promoted to `LicenseGrade::ClassC`, unlocking the Autocross and Rallycross career championships.
+
+- **Scenario: Prevention of premature high-tier entry via license gating**
+  - [x] **Given** a driver holding `LicenseGrade::ClassD` who accumulates 70,000 Cr through arcade exhibitions
+  - [x] **When** the player attempts to enter a GT4 Clubman championship
+  - [x] **Then** championship launch is blocked because GT Racing requires `LicenseGrade::ClassA`, requiring the driver to either clear Academy Tier 4 or graduate through the dirt and stock car feeder ranks.
 
 ---
 

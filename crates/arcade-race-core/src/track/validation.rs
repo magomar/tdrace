@@ -649,6 +649,295 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 7b. Scenery Clearance Checks (Trees, Rocks, Buildings)
+    for (i, tree) in track.geometry.trees.iter().enumerate() {
+        if !tree.has_trunk() {
+            continue;
+        }
+        let r = tree.trunk_radius();
+        let proj = track.spline.project_point(tree.position);
+        let elev_diff = (tree.elevation - proj.elevation).abs();
+        if !matches!(track.kind, TrackKind::Arena { .. }) && elev_diff < 2.5 {
+            let half_w = proj.track_width * 0.5;
+            let lat_abs = proj.lateral_offset.abs();
+            let clearance = lat_abs - r;
+
+            if clearance < half_w - 0.1 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_SCENERY_ON_TRACK",
+                        format!(
+                            "Tree trunk #{} ({}) at ({:.1}, {:.1}) intrudes into the drivable track surface.",
+                            tree.id,
+                            tree.tree_type.name(),
+                            tree.position.x,
+                            tree.position.y
+                        ),
+                    )
+                    .with_index(i),
+                );
+            } else if proj.lateral_offset < 0.0 {
+                if proj.left_curb && clearance < half_w + 1.4 - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_KERB",
+                            format!(
+                                "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                tree.id,
+                                tree.tree_type.name(),
+                                tree.position.x,
+                                tree.position.y
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                } else if let Some(d) = proj.left_wall_distance {
+                    if clearance < half_w + d - 0.05 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_INSIDE_WALL",
+                                format!(
+                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    tree.id,
+                                    tree.tree_type.name(),
+                                    tree.position.x,
+                                    tree.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    }
+                }
+            } else {
+                if proj.right_curb && clearance < half_w + 1.4 - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_KERB",
+                            format!(
+                                "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                tree.id,
+                                tree.tree_type.name(),
+                                tree.position.x,
+                                tree.position.y
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                } else if let Some(d) = proj.right_wall_distance {
+                    if clearance < half_w + d - 0.05 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_INSIDE_WALL",
+                                format!(
+                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    tree.id,
+                                    tree.tree_type.name(),
+                                    tree.position.x,
+                                    tree.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    for (i, rock) in track.geometry.rocks.iter().enumerate() {
+        let r = rock.radius();
+        let proj = track.spline.project_point(rock.position);
+        let elev_diff = (rock.elevation - proj.elevation).abs();
+        if !matches!(track.kind, TrackKind::Arena { .. }) && elev_diff < 2.5 {
+            let half_w = proj.track_width * 0.5;
+            let lat_abs = proj.lateral_offset.abs();
+            let clearance = lat_abs - r;
+
+            if clearance < half_w - 0.1 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_SCENERY_ON_TRACK",
+                        format!(
+                            "Rock #{} ({}) at ({:.1}, {:.1}) intrudes into the drivable track surface.",
+                            rock.id,
+                            rock.rock_type.name(),
+                            rock.position.x,
+                            rock.position.y
+                        ),
+                    )
+                    .with_index(i),
+                );
+            } else if proj.lateral_offset < 0.0 {
+                if proj.left_curb && clearance < half_w + 1.4 - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_KERB",
+                            format!(
+                                "Rock #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                rock.id,
+                                rock.rock_type.name(),
+                                rock.position.x,
+                                rock.position.y
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                } else if let Some(d) = proj.left_wall_distance {
+                    if clearance < half_w + d - 0.05 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_INSIDE_WALL",
+                                format!(
+                                    "Rock #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    rock.id,
+                                    rock.rock_type.name(),
+                                    rock.position.x,
+                                    rock.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    }
+                }
+            } else {
+                if proj.right_curb && clearance < half_w + 1.4 - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_KERB",
+                            format!(
+                                "Rock #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                rock.id,
+                                rock.rock_type.name(),
+                                rock.position.x,
+                                rock.position.y
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                } else if let Some(d) = proj.right_wall_distance {
+                    if clearance < half_w + d - 0.05 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_INSIDE_WALL",
+                                format!(
+                                    "Rock #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    rock.id,
+                                    rock.rock_type.name(),
+                                    rock.position.x,
+                                    rock.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    for (i, building) in track.geometry.buildings.iter().enumerate() {
+        if matches!(track.kind, TrackKind::Arena { .. }) {
+            continue;
+        }
+        let proj_center = track.spline.project_point(building.center);
+        let elev_diff = (building.elevation - proj_center.elevation).abs();
+        if elev_diff < 2.5 {
+            let mut test_points = vec![building.center];
+            test_points.extend_from_slice(&building.corners());
+
+            for pt in test_points {
+                let proj = track.spline.project_point(pt);
+                let half_w = proj.track_width * 0.5;
+                let lat_abs = proj.lateral_offset.abs();
+
+                if lat_abs < half_w - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_TRACK",
+                            format!(
+                                "Building #{} ({}) at ({:.1}, {:.1}) intrudes into the drivable track surface.",
+                                building.id,
+                                building.style.name(),
+                                building.center.x,
+                                building.center.y
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                    break;
+                } else if proj.lateral_offset < 0.0 {
+                    if proj.left_curb && lat_abs < half_w + 1.4 - 0.1 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_ON_KERB",
+                                format!(
+                                    "Building #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                    building.id,
+                                    building.style.name(),
+                                    building.center.x,
+                                    building.center.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                        break;
+                    } else if let Some(d) = proj.left_wall_distance {
+                        if lat_abs < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Building #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        building.id,
+                                        building.style.name(),
+                                        building.center.x,
+                                        building.center.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                            break;
+                        }
+                    }
+                } else {
+                    if proj.right_curb && lat_abs < half_w + 1.4 - 0.1 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_ON_KERB",
+                                format!(
+                                    "Building #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                    building.id,
+                                    building.style.name(),
+                                    building.center.x,
+                                    building.center.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                        break;
+                    } else if let Some(d) = proj.right_wall_distance {
+                        if lat_abs < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Building #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        building.id,
+                                        building.style.name(),
+                                        building.center.x,
+                                        building.center.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // 8. Surface Zone & Hazard Checks
     for (i, zone) in track.geometry.surface_zones.iter().enumerate() {
         match &zone.shape {
@@ -950,5 +1239,58 @@ mod tests {
             diags
         );
     }
+
+    #[test]
+    fn test_scenery_clearance_validation() {
+        let track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let wp0 = &track.spline.waypoints[0];
+        let p0 = wp0.point;
+
+        // 1. Rock on track
+        let mut t1 = track.clone();
+        t1.geometry.rocks.push(crate::track::scenery::Rock::new(
+            1,
+            p0,
+            crate::track::scenery::RockType::Granite,
+        ));
+        let d1 = validate_track(&t1);
+        assert!(
+            d1.iter().any(|d| d.code == "ERR_SCENERY_ON_TRACK"),
+            "Must detect rock on track: {:?}",
+            d1
+        );
+
+        // 2. Tree on track
+        let mut t2 = track.clone();
+        t2.geometry.trees.push(crate::track::scenery::Tree::new(
+            1,
+            p0,
+            crate::track::scenery::TreeType::Pine,
+        ));
+        let d2 = validate_track(&t2);
+        assert!(
+            d2.iter().any(|d| d.code == "ERR_SCENERY_ON_TRACK"),
+            "Must detect tree trunk on track: {:?}",
+            d2
+        );
+
+        // 3. Rock inside wall strip
+        let mut t3 = track.clone();
+        let sample = t3.spline.sample_at_distance(0.0);
+        let normal = sample.normal;
+        let pos_inside_wall = sample.point + normal * (sample.width * 0.5 + 2.0);
+        t3.geometry.rocks.push(crate::track::scenery::Rock::new(
+            2,
+            pos_inside_wall,
+            crate::track::scenery::RockType::Sandstone,
+        ));
+        let d3 = validate_track(&t3);
+        assert!(
+            d3.iter().any(|d| d.code == "ERR_SCENERY_INSIDE_WALL" || d.code == "ERR_SCENERY_ON_KERB"),
+            "Must detect rock inside wall strip or on kerb: {:?}",
+            d3
+        );
+    }
 }
+
 

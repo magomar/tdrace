@@ -16,7 +16,9 @@ pub use geometry::{
     point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
     SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
-pub use scenery::{Grandstand, GrandstandStyle, Tree, TreeType};
+pub use scenery::{
+    Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
+};
 pub use presets::{
     classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, RaceDirection, TrackShape,
 };
@@ -1220,6 +1222,8 @@ mod tests {
         let stand = Grandstand::new(1, Vec2::new(0.0, 50.0), 30.0, 10.0, 0.0);
         let tree = Tree::new(2, Vec2::new(100.0, 100.0), TreeType::Palm).with_scale(1.5);
 
+        track.geometry.grandstands.clear();
+        track.geometry.trees.clear();
         track.geometry.grandstands.push(stand.clone());
         track.geometry.trees.push(tree.clone());
 

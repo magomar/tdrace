@@ -34,6 +34,9 @@ fn test_profile_schema_and_crud() {
         is_active: true,
         credits: 25_000,
         lifetime_credits: 25_000,
+        driver_xp: 0,
+        lifetime_driver_xp: 0,
+        license_grade: Default::default(),
         created_at: "2026-08-27 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
@@ -234,6 +237,9 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         is_active: true,
         credits: 25_000,
         lifetime_credits: 25_000,
+        driver_xp: 0,
+        lifetime_driver_xp: 0,
+        license_grade: Default::default(),
         created_at: "2026-08-27 11:00".to_string(),
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
@@ -363,6 +369,9 @@ fn test_clear_profile_history_and_hall_of_fame() {
         is_active: false,
         credits: 25_000,
         lifetime_credits: 25_000,
+        driver_xp: 0,
+        lifetime_driver_xp: 0,
+        license_grade: Default::default(),
         created_at: "2026-09-01 10:00".to_string(),
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
@@ -561,19 +570,20 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(!progress.is_car_unlocked("gt3_evo", false));
     assert_eq!(ModuleCareerProgress::car_credit_cost(2), 60_000);
     let mut active_prof = db.get_active_profile().expect("Get active");
+    assert_eq!(active_prof.credits, PlayerProfile::STARTING_CREDITS);
     active_prof.add_credits(25_000);
-    assert_eq!(active_prof.credits, 25_000);
-    assert!(!progress.can_buy_car("gt3_evo", 2, active_prof.credits), "Cannot afford 60k Cr car with 25k Cr");
+    assert_eq!(active_prof.credits, 35_000);
+    assert!(!progress.can_buy_car("gt3_evo", 2, active_prof.credits), "Cannot afford 60k Cr car with 35k Cr");
     active_prof.add_credits(50_000);
-    assert_eq!(active_prof.credits, 75_000);
+    assert_eq!(active_prof.credits, 85_000);
     assert!(progress.can_buy_car("gt3_evo", 2, active_prof.credits));
     progress.buy_car(&mut active_prof, "gt3_evo", 2).expect("Buy Tier 2 GT3 car");
     assert!(progress.is_car_unlocked("gt3_evo", false));
     // XP is non-spendable reputation: 0 XP lost on purchase (Spec 053)
     assert_eq!(progress.xp, 3000);
     assert_eq!(progress.lifetime_xp, 3000);
-    // Credits deducted from global wallet: 75,000 - 60,000 = 15,000
-    assert_eq!(active_prof.credits, 15_000);
+    // Credits deducted from global wallet: 85,000 - 60,000 = 25,000
+    assert_eq!(active_prof.credits, 25_000);
 
     // Save and verify persistence in SQLite
     db.save_module_progress(&progress).expect("Save progress");
@@ -587,7 +597,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert!(fetched.is_track_unlocked("monza", false));
 
     let fetched_prof = db.get_profile_by_id(pid).expect("Fetch profile").expect("Must exist");
-    assert_eq!(fetched_prof.credits, 15_000);
+    assert_eq!(fetched_prof.credits, 25_000);
 
     // 3. Verify module independence: progress in rally is completely separate
     let rally_progress = db.get_or_create_module_progress(pid, "rally").expect("Rally progress");
@@ -1065,6 +1075,9 @@ fn test_player_card_focus_and_roster_manager_navigation() {
         is_active: false,
         credits: 25_000,
         lifetime_credits: 25_000,
+        driver_xp: 0,
+        lifetime_driver_xp: 0,
+        license_grade: Default::default(),
         created_at: "2026-09-20 12:00".to_string(),
         last_mode: AssistProfile::Sport,
         academy_progress: Default::default(),

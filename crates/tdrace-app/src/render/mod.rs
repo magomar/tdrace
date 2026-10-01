@@ -36,7 +36,10 @@ pub use marker::{
     NAMEPLATE_OUTER_RADIUS, NAMEPLATE_STACK_NUDGE,
 };
 pub use scenery::{
+    is_building_in_view, is_grandstand_in_view, is_rock_in_view, is_tree_in_view,
+    render_building, render_building_shadows_culled, render_buildings_culled,
     render_grandstand, render_grandstand_shadows_culled, render_grandstands_culled,
+    render_rock, render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled, render_tree_shadows_culled, render_tree_trunks_culled,
 };
 pub use surface_material::{
