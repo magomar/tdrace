@@ -4022,6 +4022,7 @@ impl ModalityCategory {
             Self::SinglePlayer => &[
                 ModalityItem::QuickRace,
                 ModalityItem::CustomRace,
+                ModalityItem::ClassicAcademy,
                 ModalityItem::CareerMode,
                 ModalityItem::TimeTrial,
                 ModalityItem::FreeRide,
@@ -4047,6 +4048,7 @@ impl ModalityCategory {
 pub enum ModalityItem {
     QuickRace,
     CustomRace,
+    ClassicAcademy,
     CareerMode,
     TimeTrial,
     FreeRide,
@@ -4065,6 +4067,7 @@ impl ModalityItem {
         match self {
             Self::QuickRace => "Quick Race",
             Self::CustomRace => "Custom Race",
+            Self::ClassicAcademy => "Classic Academy",
             Self::CareerMode => "Career Mode",
             Self::TimeTrial => "Time Trial",
             Self::FreeRide => "Free Ride",
@@ -4083,6 +4086,7 @@ impl ModalityItem {
         match self {
             Self::QuickRace => "PRESET CONFIG • INSTANT ACTION",
             Self::CustomRace => "CUSTOM VEHICLE & GRID OPTIONS",
+            Self::ClassicAcademy => "RACING LICENSE & SEED CASH",
             Self::CareerMode => "CHAMPIONSHIP CAMPAIGN",
             Self::TimeTrial => "SOLO BENCHMARK VS PB SHADOW",
             Self::FreeRide => "OPEN PRACTICE • NO PRESSURE",
@@ -4101,6 +4105,7 @@ impl ModalityItem {
         match self {
             Self::QuickRace => "Jump straight onto the track with official predefined cars and full opponent grid.",
             Self::CustomRace => "Customize your machine, grid size, AI difficulty, and racing rules freely.",
+            Self::ClassicAcademy => "Master 4 driving challenges, earn your National Racing License, and win seed funds for your first car.",
             Self::CareerMode => "Progress through structured multi-tier championships and unlock elite vehicles.",
             Self::TimeTrial => "Push limits against the clock and chase down your personal best ghost car.",
             Self::FreeRide => "Open practice session without opponents, rules, or lap timers to hone your lines.",
@@ -4123,6 +4128,7 @@ impl ModalityItem {
         match self {
             Self::QuickRace => Palette::NEON_CYAN,
             Self::CustomRace => Palette::NEON_GOLD,
+            Self::ClassicAcademy => Palette::NEON_GOLD,
             Self::CareerMode => Palette::NEON_GREEN,
             Self::TimeTrial => Palette::NEON_MAGENTA,
             Self::FreeRide => Color::new(0.35, 0.75, 1.0, 1.0),
@@ -4163,8 +4169,8 @@ static MODALITY_TRACK_EDITOR_PNG: &[u8] =
 static MODALITY_SETTINGS_PNG: &[u8] =
     include_bytes!("../../../../assets/icons/modalities/settings-128.png");
 
-static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 13]> = std::sync::Mutex::new([
-    None, None, None, None, None, None, None, None, None, None, None, None, None,
+static MODALITY_ICON_TEXTURES: std::sync::Mutex<[Option<Texture2D>; 14]> = std::sync::Mutex::new([
+    None, None, None, None, None, None, None, None, None, None, None, None, None, None,
 ]);
 
 /// Lazily decodes or retrieves the cached 128x128 texture for a given ModalityItem.
@@ -4183,6 +4189,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::TrackEditor => 10,
         ModalityItem::SeriesEditor => 11,
         ModalityItem::Settings => 12,
+        ModalityItem::ClassicAcademy => 13,
     };
     let mut guard = MODALITY_ICON_TEXTURES
         .lock()
@@ -4204,6 +4211,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::TrackEditor => MODALITY_TRACK_EDITOR_PNG,
         ModalityItem::SeriesEditor => MODALITY_CAREER_MODE_PNG,
         ModalityItem::Settings => MODALITY_SETTINGS_PNG,
+        ModalityItem::ClassicAcademy => MODALITY_CAREER_MODE_PNG,
     };
     let img = Image::from_file_with_format(png_bytes, None)
         .expect("failed to decode embedded modality icon PNG");
@@ -4244,6 +4252,7 @@ pub enum ModalityModal {
     LanComingSoon,
     CloudComingSoon,
     CareerComingSoon,
+    LicenseRequired,
 }
 
 impl ModalityModal {
@@ -4252,6 +4261,7 @@ impl ModalityModal {
             Self::LanComingSoon => "LAN MULTIPLAYER • IN DEVELOPMENT",
             Self::CloudComingSoon => "CLOUD MULTIPLAYER • IN DEVELOPMENT",
             Self::CareerComingSoon => "CAREER MODE • IN DEVELOPMENT",
+            Self::LicenseRequired => "RACING LICENSE REQUIRED",
         }
     }
 
@@ -4260,6 +4270,14 @@ impl ModalityModal {
             Self::LanComingSoon => "Local Area Network multiplayer is currently under active development.\nDirect IP connection, auto-discovery broadcast, and dedicated headless server support are coming in an upcoming release.",
             Self::CloudComingSoon => "Worldwide online matchmaking and cloud lobbies are currently under active development.\nGlobal leaderboards, ranked matchmaking, and cloud ghost synchronization will debut in Phase 2.",
             Self::CareerComingSoon => "Career campaign progression for this motorsport category is currently under development.\nTier ladders, championship calendars, vehicle unlocking, and trophy progression are coming soon.",
+            Self::LicenseRequired => "Welcome, Rookie Driver!\nTo compete in sanctioned motorsport championships, you must first obtain your National Grassroots Racing License at the Classic Academy.\n\nComplete the 4 Academy lessons to earn your license and seed cash for your first competition machine.",
+        }
+    }
+
+    pub fn confirm_button_text(&self) -> &'static str {
+        match self {
+            Self::LicenseRequired => "[ ENROLL IN CLASSIC ACADEMY ]",
+            _ => "[ OK / CONTINUE ]",
         }
     }
 }
@@ -4457,7 +4475,13 @@ pub fn render_modality_select_screen(
                 );
 
                 let title_str = if is_sel {
-                    format!("▶ {}", item.title())
+                    if *item == ModalityItem::CareerMode && !active_profile.has_racing_license() {
+                        format!("▶ {}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                    } else {
+                        format!("▶ {}", item.title())
+                    }
+                } else if *item == ModalityItem::CareerMode && !active_profile.has_racing_license() {
+                    format!("{}  [ 🔒 LICENSE REQUIRED ]", item.title())
                 } else {
                     item.title().to_string()
                 };
@@ -4831,12 +4855,19 @@ pub fn render_modality_select_screen(
             line_y += scaler.s(24.0);
         }
 
+        let dismiss_text = match m {
+            ModalityModal::LicenseRequired => "PRESS [ENTER / SPACE] TO ENROLL IN ACADEMY  •  [ESC] BACK",
+            _ => "PRESS [ENTER / SPACE / ESC] OR GAMEPAD [A / B] TO DISMISS",
+        };
         fonts.draw_ui_bold_centered(
-            "PRESS [ENTER / SPACE / ESC] OR GAMEPAD [A / B] TO DISMISS",
+            dismiss_text,
             sw * 0.5,
             my + mh - scaler.s(24.0),
             scaler.font_s(12.0),
-            Palette::NEON_CYAN,
+            match m {
+                ModalityModal::LicenseRequired => Palette::NEON_GOLD,
+                _ => Palette::NEON_CYAN,
+            },
         );
     }
 }

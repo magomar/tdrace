@@ -302,3 +302,88 @@ fn test_academy_pace_status_real_time_splits() {
     }
 }
 
+#[test]
+fn test_classic_academy_selectable_in_modality_menu() {
+    use tdrace_app::ui::menu::{ModalityCategory, ModalityItem};
+
+    let items = ModalityCategory::SinglePlayer.items();
+    assert!(items.contains(&ModalityItem::ClassicAcademy));
+    assert_eq!(ModalityItem::ClassicAcademy.title(), "Classic Academy");
+    assert_eq!(ModalityItem::ClassicAcademy.tag(), "RACING LICENSE & SEED CASH");
+}
+
+#[test]
+fn test_career_mode_locked_modal_when_unlicensed() {
+    use tdrace_app::game::{GameState, RaceSession};
+    use tdrace_app::ui::menu::{ModalityCategory, ModalityModal};
+
+    let mut session = RaceSession::new();
+    // Fresh profile: no license
+    assert!(!session.active_profile.has_racing_license());
+
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 3, // CareerMode index
+        modal: None,
+    };
+
+    // Confirm selection -> should trigger LicenseRequired modal
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Enter]);
+    session.update();
+    tdrace_app::game::inject_key_presses_for_tests(&[]);
+
+    match &session.state {
+        GameState::ModalitySelect { modal, .. } => {
+            assert_eq!(*modal, Some(ModalityModal::LicenseRequired));
+            assert_eq!(modal.as_ref().unwrap().title(), "RACING LICENSE REQUIRED");
+        }
+        other => panic!("Expected ModalitySelect with LicenseRequired modal, got {:?}", other),
+    }
+
+    // Confirming LicenseRequired modal enrolls player in Classic Academy
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Enter]);
+    session.update();
+    tdrace_app::game::inject_key_presses_for_tests(&[]);
+
+    match session.state {
+        GameState::ClassicAcademy { selected_idx, showing_graduation } => {
+            assert_eq!(selected_idx, 0);
+            assert!(!showing_graduation);
+        }
+        other => panic!("Expected ClassicAcademy state, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_graduation_ceremony_ui_and_showroom_navigation() {
+    use tdrace_app::game::{GarageOrigin, GameState, RaceSession};
+    use tdrace_app::ui::{academy_card_rect, graduation_showroom_button_rect};
+
+    let (btn_x, btn_y, btn_w, btn_h) = graduation_showroom_button_rect(1920.0, 1080.0);
+    assert!(btn_w > 0.0);
+    assert!(btn_h > 0.0);
+    assert!(btn_x > 0.0);
+    assert!(btn_y > 0.0);
+
+    // Verify academy cards layout
+    let (c0_x, c0_y, c0_w, c0_h) = academy_card_rect(1920.0, 1080.0, 0);
+    let (_c1_x, c1_y, _c1_w, _c1_h) = academy_card_rect(1920.0, 1080.0, 1);
+    assert!(c0_w > 0.0 && c0_h > 0.0);
+    assert!(c1_y > c0_y, "Card 1 must be positioned below Card 0");
+    assert!(c0_x > 0.0);
+
+    let mut session = RaceSession::new();
+    session.state = GameState::ClassicAcademy {
+        selected_idx: 3,
+        showing_graduation: true,
+    };
+
+    // Press Enter on graduation modal -> transitions directly to Showroom (Garage)
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Enter]);
+    session.update();
+    tdrace_app::game::inject_key_presses_for_tests(&[]);
+
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::ModalitySelect));
+}
+
+
