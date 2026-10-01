@@ -2,6 +2,11 @@ use macroquad::color::Color;
 use macroquad::prelude::{screen_height, screen_width};
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 
+use cabinet::ui::{
+    ColumnAlign, DataColumn, DataRow, DataTable, LayoutRect, ModalContainer, ScreenFooter,
+    TextInputWidget,
+};
+
 use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
@@ -23,6 +28,115 @@ impl PlayerCongrats {
     }
 }
 
+/// Display payload pairing a Hall of Fame record with its ordinal rank so the
+/// platform `DataTable` can render rank badges and the "P1..P10" position column.
+#[derive(Clone)]
+struct HofRow {
+    rank: usize,
+    name: String,
+    car: String,
+    total: String,
+    lap: String,
+    date: String,
+}
+
+/// Trims a SQLite `YYYY-MM-DD HH:MM:SS` timestamp to its date component.
+fn hof_short_date(created_at: &str) -> String {
+    created_at.split(' ').next().unwrap_or(created_at).to_string()
+}
+
+/// Builds the Hall of Fame leaderboard as a `DataTable` with rank badges and
+/// player-row highlighting (up to 10 slots, vacant slots rendered as placeholders).
+fn hall_of_fame_table(entries: &[HallOfFameEntry], highlight_id: Option<i64>) -> DataTable<HofRow> {
+    let mut table = DataTable::new(0.0, 0.0, 1.0, 32.0, 28.0);
+    table.add_column(DataColumn::new(
+        "pos",
+        "POS",
+        7.0,
+        ColumnAlign::Left,
+        |r: &HofRow| format!("P{}", r.rank),
+    ));
+    table.add_column(DataColumn::new(
+        "driver",
+        "DRIVER",
+        26.0,
+        ColumnAlign::Left,
+        |r| r.name.clone(),
+    ));
+    table.add_column(DataColumn::new(
+        "vehicle",
+        "VEHICLE",
+        24.0,
+        ColumnAlign::Left,
+        |r| r.car.clone(),
+    ));
+    table.add_column(DataColumn::new(
+        "total",
+        "TOTAL TIME",
+        20.0,
+        ColumnAlign::Right,
+        |r| r.total.clone(),
+    ));
+    table.add_column(DataColumn::new(
+        "lap",
+        "BEST LAP",
+        18.0,
+        ColumnAlign::Right,
+        |r| r.lap.clone(),
+    ));
+    table.add_column(DataColumn::new(
+        "date",
+        "DATE",
+        12.0,
+        ColumnAlign::Right,
+        |r| r.date.clone(),
+    ));
+
+    let rows: Vec<DataRow<HofRow>> = (0..10)
+        .map(|i| {
+            let rank = i + 1;
+            match entries.get(i) {
+                Some(e) => {
+                    let is_player = e.id.is_some() && e.id == highlight_id;
+                    DataRow::new(
+                        e.id.map(|id| id.to_string())
+                            .unwrap_or_else(|| format!("vacant-{}", rank)),
+                        HofRow {
+                            rank,
+                            name: if is_player {
+                                format!("{} (You)", e.player_name)
+                            } else {
+                                e.player_name.clone()
+                            },
+                            car: e.car_name.clone(),
+                            total: format_lap_time(e.total_time),
+                            lap: format_lap_time(e.best_lap.unwrap_or(0.0)),
+                            date: hof_short_date(&e.created_at),
+                        },
+                    )
+                    .with_rank(rank)
+                    .with_player(is_player)
+                }
+                None => DataRow::new(
+                    format!("vacant-{}", rank),
+                    HofRow {
+                        rank,
+                        name: "--- VACANT ---".to_string(),
+                        car: "--".to_string(),
+                        total: "--:--.---".to_string(),
+                        lap: "--:--.---".to_string(),
+                        date: "--".to_string(),
+                    },
+                )
+                .with_rank(rank),
+            }
+        })
+        .collect();
+
+    table.set_rows(rows);
+    table
+}
+
 /// Renders the arcade modal dialog prompting the player to enter their name for the Hall of Fame (kept for compatibility).
 pub fn render_name_input_modal(
     fonts: &Fonts,
@@ -36,28 +150,17 @@ pub fn render_name_input_modal(
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
 
-    // Dark semi-transparent overlay
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.02, 0.03, 0.05, 0.85));
-
     let box_w = (sw * 0.70).clamp(scaler.s(440.0), scaler.s(640.0));
     let box_h = scaler.s(360.0);
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
-    // Glowing victory card
-    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.5);
-
-    // Modal Header
-    let trophy_title = "NEW RECORD! TOP 10 QUALIFIED!";
-    fonts.draw_display_centered_with_shadow(
-        trophy_title,
-        sw * 0.5,
-        y + scaler.s(42.0),
-        scaler.font_s(26.0),
-        Palette::NEON_GOLD,
-        Color::new(0.0, 0.0, 0.0, 0.7),
-        scaler.s(2.0),
+    // Uniform modal chrome (platform ModalContainer: dim, frame, title, divider)
+    let modal = ModalContainer::new(
+        "NEW RECORD! TOP 10 QUALIFIED!",
+        LayoutRect::new(x, y, box_w, box_h),
     );
+    modal.draw(&scaler, fonts, sw, sh);
 
     let track_subtitle = format!("Circuit: {}", track_name);
     fonts.draw_ui_regular_centered(
@@ -111,23 +214,23 @@ pub fn render_name_input_modal(
     }
 
     // Name Input Label
-    let prompt_lbl = "ENTER DRIVER NAME:";
     fonts.draw_ui_bold_centered(
-        prompt_lbl,
+        "ENTER DRIVER NAME:",
         sw * 0.5,
         y + scaler.s(174.0),
         scaler.font_s(16.0),
         Palette::WHITE,
     );
 
-    // Text Input Box
+    // Text Input Box (platform TextInputWidget frame + text + cursor)
     let input_w = (box_w - scaler.s(100.0)).clamp(scaler.s(280.0), scaler.s(420.0));
     let input_h = scaler.s(48.0);
     let input_x = (sw - input_w) * 0.5;
     let input_y = y + scaler.s(190.0);
 
-    draw_rectangle(input_x, input_y, input_w, input_h, Color::new(0.06, 0.08, 0.12, 0.98));
-    draw_rectangle_lines(input_x, input_y, input_w, input_h, 2.0, Palette::NEON_CYAN);
+    let mut input = TextInputWidget::new(input_x, input_y, input_w, input_h, 12, "DRIVER NAME");
+    input.set_text(input_name);
+    input.render_frame();
 
     let font_size = scaler.font_s(22.0);
     let text_y = input_y + scaler.s(32.0);
@@ -293,226 +396,48 @@ pub fn render_hall_of_fame_screen(
         }
     }
 
-    // Table Header
-    let hdr_h = scaler.s(24.0);
+    // Hall of Fame leaderboard (platform DataTable with rank badges + player highlight)
     let table_w = box_w - scaler.s(40.0);
     let table_x = x + scaler.s(20.0);
+    let table_top = table_start_y - scaler.s(16.0);
 
-    draw_rectangle(
-        table_x,
-        table_start_y - scaler.s(16.0),
-        table_w,
-        hdr_h,
-        Color::new(0.12, 0.16, 0.25, 0.95),
-    );
-    draw_rectangle_lines(
-        table_x,
-        table_start_y - scaler.s(16.0),
-        table_w,
-        hdr_h,
-        1.0,
-        Palette::UI_CARD_BORDER,
-    );
-
-    fonts.draw_ui_bold(
-        "POS",
-        table_x + scaler.s(16.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "DRIVER",
-        table_x + scaler.s(70.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "VEHICLE",
-        table_x + scaler.s(240.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "TOTAL TIME",
-        table_x + table_w - scaler.s(320.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "BEST LAP",
-        table_x + table_w - scaler.s(190.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
-    );
-    fonts.draw_ui_bold(
-        "DATE",
-        table_x + table_w - scaler.s(90.0),
-        table_start_y,
-        scaler.font_s(12.5),
-        Palette::WHITE,
+    let mut table = hall_of_fame_table(entries, highlight_id);
+    table.row_height = scaler.s(25.0);
+    table.header_height = scaler.s(24.0);
+    table.draw(
+        &scaler,
+        fonts,
+        LayoutRect::new(
+            table_x,
+            table_top,
+            table_w,
+            (y + box_h - scaler.s(44.0)) - table_top,
+        ),
     );
 
-    let mut row_y = table_start_y + scaler.s(20.0);
-    let row_h = scaler.s(25.0);
+    // Bottom action footer (platform ScreenFooter)
+    let footer_h = scaler.s(36.0);
+    let mut footer = ScreenFooter::new(x, y + box_h - footer_h, box_w, footer_h);
+    footer.add_prompt("SPACE/ENTER", "Main Menu");
+    footer.add_prompt("TAB", "Stats");
+    footer.add_prompt("R", "Restart");
+    footer.add_prompt("ESC", "Results");
+    footer.render_frame();
 
-    for rank in 1..=10 {
-        let entry = entries.get(rank - 1);
-        let is_highlighted =
-            entry.and_then(|e| e.id).is_some() && entry.and_then(|e| e.id) == highlight_id;
-
-        let (row_bg, text_col) = if is_highlighted {
-            (
-                Color::new(0.14, 0.36, 0.20, 0.95),
-                Palette::NEON_GREEN,
-            )
-        } else if rank % 2 == 1 {
-            (
-                Color::new(0.08, 0.10, 0.15, 0.65),
-                Color::new(0.85, 0.90, 0.96, 1.0),
-            )
-        } else {
-            (
-                Color::new(0.06, 0.08, 0.12, 0.65),
-                Color::new(0.85, 0.90, 0.96, 1.0),
-            )
-        };
-
-        draw_rectangle(table_x, row_y - scaler.s(14.0), table_w, row_h, row_bg);
-        if is_highlighted {
-            draw_rectangle_lines(
-                table_x,
-                row_y - scaler.s(14.0),
-                table_w,
-                row_h,
-                1.5,
-                Palette::NEON_GREEN,
-            );
-        }
-
-        let pos_str = match rank {
-            1 => "P1".to_string(),
-            2 => "P2".to_string(),
-            3 => "P3".to_string(),
-            _ => format!("P{}", rank),
-        };
-
-        let pos_col = match rank {
-            1 => Palette::NEON_GOLD,
-            2 => Color::new(0.80, 0.85, 0.92, 1.0),
-            3 => Color::new(0.85, 0.55, 0.35, 1.0),
-            _ => Palette::UI_TEXT_MUTED,
-        };
-
-        fonts.draw_ui_bold(
-            &pos_str,
-            table_x + scaler.s(16.0),
-            row_y + scaler.s(3.0),
-            scaler.font_s(12.5),
-            pos_col,
+    let width = box_w / footer.prompts.len().max(1) as f32;
+    let size = scaler.font_s(10.0);
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let text = fonts.fit_ui_bold(
+            &format!("[{}] {}", prompt.badge, prompt.label),
+            size,
+            width - scaler.s(8.0),
         );
-
-        if let Some(e) = entry {
-            let driver_display = if is_highlighted {
-                format!("{} (You)", e.player_name)
-            } else {
-                e.player_name.clone()
-            };
-            fonts.draw_ui_bold(
-                &driver_display,
-                table_x + scaler.s(70.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(13.0),
-                text_col,
-            );
-            fonts.draw_ui_regular(
-                &e.car_name,
-                table_x + scaler.s(240.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                text_col,
-            );
-
-            let total_str = format_lap_time(e.total_time);
-            fonts.draw_ui_bold(
-                &total_str,
-                table_x + table_w - scaler.s(320.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(13.0),
-                text_col,
-            );
-
-            let lap_str = format_lap_time(e.best_lap.unwrap_or(0.0));
-            fonts.draw_ui_bold(
-                &lap_str,
-                table_x + table_w - scaler.s(190.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                text_col,
-            );
-
-            // Short date (YYYY-MM-DD)
-            let date_str = e.created_at.split(' ').next().unwrap_or(&e.created_at);
-            fonts.draw_ui_regular(
-                date_str,
-                table_x + table_w - scaler.s(90.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(11.5),
-                Palette::UI_TEXT_MUTED,
-            );
-        } else {
-            fonts.draw_ui_regular(
-                "--- VACANT ---",
-                table_x + scaler.s(70.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                Palette::UI_TEXT_MUTED,
-            );
-            fonts.draw_ui_regular(
-                "--",
-                table_x + scaler.s(240.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                Palette::UI_TEXT_MUTED,
-            );
-            fonts.draw_ui_regular(
-                "--:--.---",
-                table_x + table_w - scaler.s(320.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                Palette::UI_TEXT_MUTED,
-            );
-            fonts.draw_ui_regular(
-                "--:--.---",
-                table_x + table_w - scaler.s(190.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(12.5),
-                Palette::UI_TEXT_MUTED,
-            );
-            fonts.draw_ui_regular(
-                "--",
-                table_x + table_w - scaler.s(90.0),
-                row_y + scaler.s(3.0),
-                scaler.font_s(11.5),
-                Palette::UI_TEXT_MUTED,
-            );
-        }
-
-        row_y += row_h + scaler.s(3.0);
+        fonts.draw_ui_bold_centered(
+            &text,
+            x + (i as f32 + 0.5) * width,
+            y + box_h - footer_h + footer_h * 0.65,
+            size,
+            Palette::WHITE,
+        );
     }
-
-    // Bottom Action Prompt
-    let prompt = "Press [SPACE / ENTER] Main Menu | [TAB] Detailed Stats | [R] Restart Race | [ESC] Race Results";
-    fonts.draw_ui_bold_centered(
-        prompt,
-        sw * 0.5,
-        y + box_h - scaler.s(18.0),
-        scaler.font_s(14.5),
-        Palette::WHITE,
-    );
 }
-
