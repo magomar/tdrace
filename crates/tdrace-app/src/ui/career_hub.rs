@@ -5,6 +5,10 @@ use crate::tournament::ChampionshipSession;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
 use crate::render::color::Palette;
+use cabinet::ui::{
+    ColumnAlign, DataColumn, DataRow, DataTable, FilterBar, FilterBarStyle, LayoutRect, MetricBar,
+    ScreenFooter, SplitPane, VStack, ValueStepper,
+};
 
 /// Human-readable title for a GT tier championship.
 pub fn gt_tier_title(tier: u32) -> &'static str {
@@ -147,10 +151,15 @@ pub fn cycle_calendar_slot(tier: u32, calendar: &mut [String], slot_idx: usize, 
     }
 
     let cur_pos = available.iter().position(|&t| t == cur_track).unwrap_or(0);
-    let next_pos = if forward {
-        (cur_pos + 1) % available.len()
+    let mut stepper = ValueStepper::new("Slot", 0usize, available.len() - 1, 1usize, cur_pos);
+    let advanced = if forward { stepper.step_up() } else { stepper.step_down() };
+    // ValueStepper clamps at the bounds; emulate wrap-around to the opposite end.
+    let next_pos = if advanced {
+        stepper.value
+    } else if forward {
+        0
     } else {
-        (cur_pos + available.len() - 1) % available.len()
+        available.len() - 1
     };
 
     calendar[slot_idx] = available[next_pos].to_string();
@@ -289,74 +298,36 @@ pub fn render_career_hub_screen(
     cur_y += header_h + scaler.s(10.0);
 
     // =========================================================================
-    // 2. TIER SELECTOR TAB BAR [TIER 1 .. 6] WITH REPLAY SELECTOR [◄ Q / E ►]
+    // 2. TIER SELECTOR TAB BAR [TIER 1 .. 6] (platform FilterBar, Shelf style)
     // =========================================================================
     let tab_bar_h = scaler.s(40.0);
     let tier_count = career.max_tier();
-    let tab_gap = scaler.s(8.0);
-    let tab_w = (full_w - tab_gap * (tier_count as f32 - 1.0)) / tier_count as f32;
 
     let is_tabs_focused = focus_area == CareerHubFocus::Tabs;
 
-    for t in 1..=tier_count {
-        let tx = x + (t - 1) as f32 * (tab_w + tab_gap);
-        let is_selected = t == selected_tier;
-        let is_unlocked = t <= career.level;
-
-        let (bg, border, text_col, border_thickness) = if is_selected {
-            if is_tabs_focused {
-                (Color::new(0.14, 0.22, 0.35, 0.98), Palette::NEON_CYAN, Palette::NEON_CYAN, 2.5)
+    let tier_labels: Vec<String> = (1..=tier_count)
+        .map(|t| {
+            let base = match t {
+                1 => "1. GT4 CLUBMAN",
+                2 => "2. FIA GT3",
+                3 => "3. SRO GT2",
+                4 => "4. LE MANS 90s",
+                _ => "5. WEC HYPERCAR",
+            };
+            if t <= career.level {
+                base.to_string()
             } else {
-                (Color::new(0.09, 0.13, 0.20, 0.90), Color::new(0.25, 0.45, 0.55, 0.80), Palette::NEON_CYAN, 1.2)
+                format!("🔒 {}", base)
             }
-        } else if is_unlocked {
-            (Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, Palette::WHITE, 1.0)
-        } else {
-            (Color::new(0.03, 0.04, 0.06, 0.80), Color::new(0.15, 0.18, 0.24, 0.50), Palette::UI_TEXT_MUTED, 1.0)
-        };
-
-        draw_rectangle(tx, cur_y, tab_w, tab_bar_h, bg);
-        draw_rectangle_lines(tx, cur_y, tab_w, tab_bar_h, border_thickness, border);
-
-        let tier_label = match t {
-            1 => "1. GT4 CLUBMAN",
-            2 => "2. FIA GT3",
-            3 => "3. SRO GT2",
-            4 => "4. LE MANS 90s",
-            _ => "5. WEC HYPERCAR",
-        };
-
-        let raw_label = if is_unlocked {
-            tier_label.to_string()
-        } else {
-            format!("🔒 {}", tier_label)
-        };
-
-        let display_label = if is_selected && is_tabs_focused {
-            if t == 1 {
-                format!("{} ►", raw_label)
-            } else if t == tier_count {
-                format!("◄ {}", raw_label)
-            } else {
-                format!("◄ {} ►", raw_label)
-            }
-        } else {
-            raw_label
-        };
-
-        fonts.draw_ui_bold_centered(
-            &display_label,
-            tx + tab_w * 0.5,
-            cur_y + scaler.s(24.0),
-            scaler.font_s(11.0),
-            text_col,
-        );
-
-        if is_selected {
-            let bar_h = if is_tabs_focused { scaler.s(4.0) } else { scaler.s(2.5) };
-            draw_rectangle(tx, cur_y + tab_bar_h - bar_h, tab_w, bar_h, Palette::NEON_CYAN);
-        }
-    }
+        })
+        .collect();
+    let tier_label_refs: Vec<&str> = tier_labels.iter().map(|s| s.as_str()).collect();
+    let tier_bar = FilterBar::from_labels(&tier_label_refs)
+        .with_style(FilterBarStyle::Shelf)
+        .with_gap(8.0)
+        .with_active(selected_tier.saturating_sub(1) as usize)
+        .with_focus(is_tabs_focused);
+    tier_bar.draw(&scaler, fonts, x, cur_y, full_w, tab_bar_h, Palette::NEON_CYAN);
 
     cur_y += tab_bar_h + scaler.s(12.0);
 
@@ -365,10 +336,13 @@ pub fn render_career_hub_screen(
     // =========================================================================
     let body_h = (sh - cur_y - scaler.s(60.0)).max(scaler.s(410.0));
     let col_gap = scaler.s(14.0);
-    let left_w = full_w * 0.38;
-    let right_w = full_w - left_w - col_gap;
-    let left_x = x;
-    let right_x = x + left_w + col_gap;
+    let split_pane = SplitPane::new(LayoutRect::new(x, cur_y, full_w, body_h), 0.38, col_gap);
+    let left_rect = split_pane.left_rect();
+    let right_rect = split_pane.right_rect();
+    let left_w = left_rect.w;
+    let right_w = right_rect.w;
+    let left_x = left_rect.x;
+    let right_x = right_rect.x;
 
     // -------------------------------------------------------------------------
     // LEFT COLUMN: TIER OVERVIEW, PROMOTION STATUS, & ACTIVE CAR
@@ -417,11 +391,16 @@ pub fn render_career_hub_screen(
             fonts.draw_ui_regular(&xp_check, left_inner_x, ly + scaler.s(32.0), scaler.font_s(11.0), xp_col);
             ly += scaler.s(42.0);
 
-            // Progress Bar towards tier promotion
+            // Progress Bar towards tier promotion (platform MetricBar)
             let progress_ratio = (career.xp as f32 / req_xp as f32).clamp(0.0, 1.0);
-            draw_rectangle(left_inner_x, ly, left_inner_w, scaler.s(6.0), Color::new(0.12, 0.15, 0.20, 0.90));
-            draw_rectangle(left_inner_x, ly, left_inner_w * progress_ratio, scaler.s(6.0), Palette::NEON_CYAN);
-            ly += scaler.s(14.0);
+            let license_bar = MetricBar::progress(
+                "LICENSE XP",
+                progress_ratio,
+                format!("{:.0}%", progress_ratio * 100.0),
+                Palette::NEON_CYAN,
+            );
+            license_bar.draw(&scaler, fonts, LayoutRect::new(left_inner_x, ly, left_inner_w, scaler.s(18.0)));
+            ly += scaler.s(22.0);
 
             if career.can_advance_tier() {
                 scaler.draw_glass_card(left_inner_x, ly, left_inner_w, scaler.s(34.0), Color::new(0.08, 0.22, 0.14, 0.95), Palette::NEON_GREEN, 1.5);
@@ -514,26 +493,28 @@ pub fn render_career_hub_screen(
             fonts.draw_ui_bold("CURRENT DRIVER STANDINGS", right_inner_x, ry + scaler.s(16.0), scaler.font_s(13.0), Palette::NEON_GOLD);
             ry += scaler.s(26.0);
 
-            // Table Header
-            fonts.draw_ui_bold("POS", right_inner_x + scaler.s(8.0), ry, scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-            fonts.draw_ui_bold("DRIVER", right_inner_x + scaler.s(50.0), ry, scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-            fonts.draw_ui_bold("TEAM", right_inner_x + scaler.s(220.0), ry, scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-            fonts.draw_ui_bold("WINS", right_inner_x + right_inner_w - scaler.s(120.0), ry, scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-            draw_ui_bold_right(fonts, "POINTS", right_inner_x + right_inner_w, ry, scaler.font_s(11.0), Palette::NEON_GOLD);
-            ry += scaler.s(14.0);
-            draw_rectangle(right_inner_x, ry, right_inner_w, 1.0, Palette::UI_CARD_BORDER);
-            ry += scaler.s(8.0);
-
-            for (i, entry) in c.standings.iter().enumerate().take(8) {
-                let row_col = if entry.driver_id == "player" { Palette::NEON_CYAN } else { Palette::WHITE };
-                let pos_str = format!("#{}", i + 1);
-                fonts.draw_ui_bold(&pos_str, right_inner_x + scaler.s(8.0), ry + scaler.s(12.0), scaler.font_s(11.0), row_col);
-                fonts.draw_ui_bold(&entry.driver_name, right_inner_x + scaler.s(50.0), ry + scaler.s(12.0), scaler.font_s(11.0), row_col);
-                fonts.draw_ui_regular(&entry.team_name, right_inner_x + scaler.s(220.0), ry + scaler.s(12.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
-                fonts.draw_ui_bold(&entry.wins.to_string(), right_inner_x + right_inner_w - scaler.s(110.0), ry + scaler.s(12.0), scaler.font_s(11.0), Palette::WHITE);
-                draw_ui_bold_right(fonts, &format!("{} PTS", entry.points), right_inner_x + right_inner_w, ry + scaler.s(12.0), scaler.font_s(11.5), Palette::NEON_GOLD);
-                ry += scaler.s(22.0);
-            }
+            // Standings Table (platform DataTable: POS / DRIVER / TEAM / WINS / POINTS)
+            let table_h = (cur_y + body_h - ry - scaler.s(24.0)).max(scaler.s(120.0));
+            let mut table = DataTable::new(right_inner_x, ry, right_inner_w, scaler.s(22.0), scaler.s(20.0));
+            type Standing = (usize, crate::series::SeriesStandingEntry);
+            table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &Standing| format!("#{}", r.0)));
+            table.add_column(DataColumn::new("driver", "DRIVER", 30.0, ColumnAlign::Left, |r| r.1.driver_name.clone()));
+            table.add_column(DataColumn::new("team", "TEAM", 35.0, ColumnAlign::Left, |r| r.1.team_name.clone()));
+            table.add_column(DataColumn::new("wins", "WINS", 10.0, ColumnAlign::Right, |r| r.1.wins.to_string()));
+            table.add_column(DataColumn::new("points", "POINTS", 18.0, ColumnAlign::Right, |r| format!("{} PTS", r.1.points)));
+            table.set_rows(
+                c.standings
+                    .iter()
+                    .take(8)
+                    .enumerate()
+                    .map(|(i, entry)| {
+                        DataRow::new(entry.driver_id.clone(), (i + 1, entry.clone()))
+                            .with_rank(i + 1)
+                            .with_player(entry.driver_id == "player")
+                    })
+                    .collect(),
+            );
+            table.draw(&scaler, fonts, LayoutRect::new(right_inner_x, ry, right_inner_w, table_h));
         } else {
             fonts.draw_ui_regular("No active season standings yet. Launch Round 1 to start competing!", right_inner_x, ry + scaler.s(24.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
         }
@@ -547,8 +528,10 @@ pub fn render_career_hub_screen(
         let slot_gap = scaler.s(4.0);
 
         let is_calendar_focused = focus_area == CareerHubFocus::Calendar;
+        let calendar_stack = VStack::new_uniform(right_inner_x, ry, right_inner_w, slot_h, slot_gap);
 
         for (idx, track_id) in calendar.iter().enumerate() {
+            let slot_y = calendar_stack.item_rect(idx).y;
             let is_cur_slot = idx == selected_slot;
             let is_mandatory = is_slot_mandatory(selected_tier, track_id);
             let is_played = season_active && idx < active_round;
@@ -568,42 +551,41 @@ pub fn render_career_hub_screen(
                 (Color::new(0.06, 0.08, 0.12, 0.80), Palette::UI_CARD_BORDER, 1.0)
             };
 
-            scaler.draw_glass_card(right_inner_x, ry, right_inner_w, slot_h, bg, border, thickness);
+            scaler.draw_glass_card(right_inner_x, slot_y, right_inner_w, slot_h, bg, border, thickness);
 
             // Round Number Tag
             let rnd_tag = format!("RND {:02}", idx + 1);
-            fonts.draw_ui_bold(&rnd_tag, right_inner_x + scaler.s(10.0), ry + slot_h * 0.65, scaler.font_s(10.5), Palette::NEON_GOLD);
+            fonts.draw_ui_bold(&rnd_tag, right_inner_x + scaler.s(10.0), slot_y + slot_h * 0.65, scaler.font_s(10.5), Palette::NEON_GOLD);
 
             // Country Flag
             let country = track_country(track_id);
-            draw_country_banner(Some(country), right_inner_x + scaler.s(60.0), ry + (slot_h - scaler.s(16.0)) * 0.5, scaler.s(26.0), scaler.s(16.0), Some(fonts), &scaler);
+            draw_country_banner(Some(country), right_inner_x + scaler.s(60.0), slot_y + (slot_h - scaler.s(16.0)) * 0.5, scaler.s(26.0), scaler.s(16.0), Some(fonts), &scaler);
 
             // Circuit Name & Length
             let title = track_title(track_id);
             let length_km = track_length_meters(track_id) as f32 / 1000.0;
             let name_str = format!("{} ({:.2} km)", title, length_km);
-            fonts.draw_ui_bold(&name_str, right_inner_x + scaler.s(96.0), ry + slot_h * 0.65, scaler.font_s(11.0), Palette::WHITE);
+            fonts.draw_ui_bold(&name_str, right_inner_x + scaler.s(96.0), slot_y + slot_h * 0.65, scaler.font_s(11.0), Palette::WHITE);
 
             // Right status badge
             let right_badge_x = right_inner_x + right_inner_w - scaler.s(10.0);
             if is_played {
-                draw_ui_bold_right(fonts, "[✓ FINISHED]", right_badge_x, ry + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_GREEN);
+                draw_ui_bold_right(fonts, "[✓ FINISHED]", right_badge_x, slot_y + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_GREEN);
             } else if is_up_next {
-                draw_ui_bold_right(fonts, "[► UP NEXT]", right_badge_x, ry + slot_h * 0.65, scaler.font_s(10.5), Palette::NEON_CYAN);
+                draw_ui_bold_right(fonts, "[► UP NEXT]", right_badge_x, slot_y + slot_h * 0.65, scaler.font_s(10.5), Palette::NEON_CYAN);
             } else if is_mandatory {
-                draw_ui_bold_right(fonts, "[MANDATORY NEW]", right_badge_x, ry + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_GOLD);
+                draw_ui_bold_right(fonts, "[MANDATORY NEW]", right_badge_x, slot_y + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_GOLD);
             } else if is_cur_slot && !season_active {
-                draw_ui_bold_right(fonts, "[◄ SWAP: < / > ►]", right_badge_x, ry + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_CYAN);
+                draw_ui_bold_right(fonts, "[◄ SWAP: < / > ►]", right_badge_x, slot_y + slot_h * 0.65, scaler.font_s(10.0), Palette::NEON_CYAN);
             } else {
-                fonts.draw_ui_regular("[SELECTABLE]", right_badge_x - scaler.s(70.0), ry + slot_h * 0.65, scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+                fonts.draw_ui_regular("[SELECTABLE]", right_badge_x - scaler.s(70.0), slot_y + slot_h * 0.65, scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
             }
-
-            ry += slot_h + slot_gap;
         }
 
         if !season_active && selected_tier > 1 {
+            let hint_y = calendar_stack.item_rect(visible_slots).y;
             let swap_hint = "Navigate optional slots with [UP/DOWN] and press [< / >] to swap circuits.";
-            fonts.draw_ui_regular(swap_hint, right_inner_x, ry + scaler.s(16.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
+            fonts.draw_ui_regular(swap_hint, right_inner_x, hint_y + scaler.s(16.0), scaler.font_s(10.5), Palette::UI_TEXT_MUTED);
         }
     }
 
@@ -617,17 +599,17 @@ pub fn render_career_hub_screen(
     let can_rerun = champ.as_ref().map(|c| c.current_round > 0).unwrap_or(false);
 
     if !is_unlocked {
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, "TIER LOCKED — COMPLETE LOWER TIERS TO UNLOCK", Palette::UI_TEXT_MUTED, Palette::UI_CARD_BORDER, is_gamepad, false);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, "TIER LOCKED — COMPLETE LOWER TIERS TO UNLOCK", Palette::UI_TEXT_MUTED, is_gamepad, false);
     } else if season_in_progress {
         let cur_rnd = champ.unwrap().current_round + 1;
         let tot_rnd = champ.unwrap().total_rounds();
         let track_name = champ.unwrap().current_track_id().map(track_title).unwrap_or("Next Round");
         let txt = format!("CONTINUE CHAMPIONSHIP — ROUND {}/{} ({})", cur_rnd, tot_rnd, track_name);
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_GREEN, Palette::NEON_GREEN, is_gamepad, can_rerun);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_GREEN, is_gamepad, can_rerun);
     } else {
         let first_track = calendar.first().map(|s| track_title(s)).unwrap_or("Round 1");
         let txt = format!("ENTER CHAMPIONSHIP CUP — ROUND 1 ({})", first_track);
-        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_CYAN, Palette::NEON_CYAN, is_gamepad, can_rerun);
+        draw_bottom_bar(x, full_w, footer_y, &scaler, fonts, &txt, Palette::NEON_CYAN, is_gamepad, can_rerun);
     }
 }
 
@@ -639,12 +621,12 @@ fn draw_bottom_bar(
     fonts: &Fonts,
     action_text: &str,
     text_col: Color,
-    border_col: Color,
     is_gamepad: bool,
     can_rerun: bool,
 ) {
     let bar_h = scaler.s(36.0);
-    scaler.draw_glass_card(x, y, w, bar_h, Color::new(0.06, 0.08, 0.13, 0.95), border_col, 1.2);
+    let footer = ScreenFooter::new(x, y, w, bar_h);
+    footer.render_frame();
 
     let confirm_btn = if is_gamepad { "[A]" } else { "[ENTER / SPACE]" };
     let full_action = format!("{} {}", confirm_btn, action_text);
