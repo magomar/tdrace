@@ -10,6 +10,9 @@ use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::marker::PlayerVisibilityOptions;
+use cabinet::ui::{
+    CountDown, HelpChip, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
+};
 use race_ui::hud::widgets::{render_lap_timer, render_minimap, render_position_and_lap};
 
 pub use race_ui::hud::widgets::format_lap_time;
@@ -276,51 +279,27 @@ fn render_speedometer(
         );
     }
 
-    // Drift Score Meter Bar
+    // Drift Score Meter Bar (platform MetricBar)
     if car.state.is_drifting || car.state.drift_score > 0.0 {
-        let bar_w = scaler.s(130.0);
-        let bar_h = scaler.s(12.0);
+        let bar_w = scaler.s(180.0);
+        let bar_h = scaler.s(20.0);
         let bar_x = cx - bar_w * 0.5;
         let bar_y = cy + radius + scaler.s(12.0);
 
-        draw_rectangle(bar_x, bar_y, bar_w, bar_h, Color::new(0.1, 0.1, 0.15, 0.85));
-        draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.2, Palette::NEON_MAGENTA);
-
-        let fill_ratio = (car.state.drift_score / 1000.0).clamp(0.0, 1.0);
-        draw_rectangle(
-            bar_x + 1.0,
-            bar_y + 1.0,
-            (bar_w - 2.0) * fill_ratio,
-            bar_h - 2.0,
+        let drift_bar = MetricBar::stat(
+            "DRIFT",
+            (car.state.drift_score / 1000.0).clamp(0.0, 1.0),
+            format!("{:.0}", car.state.drift_score),
             Palette::NEON_MAGENTA,
         );
-
-        let drift_label = format!("DRIFT: {:.0}", car.state.drift_score);
-        fonts.draw_ui_bold(
-            &drift_label,
-            bar_x,
-            bar_y - scaler.s(3.0),
-            scaler.font_s(12.5),
-            Palette::NEON_MAGENTA,
-        );
+        drift_bar.draw(scaler, fonts, LayoutRect::new(bar_x, bar_y, bar_w, bar_h));
     }
 }
 
 /// Small keyboard and gamepad controls tooltip in lower left corner.
 fn render_controls_guide(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32) {
     let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | 1-4: Car Aids | Tab: Cam | Esc: Pause";
-    let size = scaler.font_s(13.0);
-    // Dark pill behind the text so it stays readable over kerbs, asphalt and grass.
-    let text_w = fonts.measure_ui_regular(guide, size).width;
-    let pad = scaler.s(6.0);
-    draw_rectangle(x - pad, y - size * 0.95, text_w + pad * 2.0, size * 1.35, Color::new(0.0, 0.0, 0.0, 0.45));
-    fonts.draw_ui_regular(
-        guide,
-        x,
-        y,
-        size,
-        Color::new(0.85, 0.88, 0.95, 0.85),
-    );
+    HelpChip::new("KEYS", guide).draw(scaler, fonts, x, y);
 }
 
 /// High-visibility caution banner for Wrong Way alert.
@@ -332,23 +311,13 @@ fn render_warning_alerts(
     progress: &TrackProgressTracker,
 ) {
     if progress.is_wrong_way {
-        let banner_w = scaler.s(360.0);
-        let banner_h = scaler.s(55.0);
-        let x = (sw - banner_w) * 0.5;
-        let y = sh * 0.28;
-
-        draw_rectangle(x, y, banner_w, banner_h, Color::new(0.90, 0.12, 0.15, 0.95));
-        draw_rectangle_lines(x, y, banner_w, banner_h, 2.5, Palette::WHITE);
-
-        fonts.draw_display_centered_with_shadow(
-            "WRONG WAY!",
-            sw * 0.5,
-            y + scaler.s(40.0),
-            scaler.font_s(36.0),
-            Palette::WHITE,
-            Color::new(0.0, 0.0, 0.0, 0.6),
-            scaler.s(2.0),
+        let anchor = LayoutRect::new(
+            sw * 0.5 - scaler.s(120.0),
+            sh * 0.30,
+            scaler.s(240.0),
+            scaler.s(40.0),
         );
+        Tooltip::new("WRONG WAY!", anchor).draw(scaler, fonts);
     }
 }
 
@@ -367,28 +336,13 @@ fn render_countdown(fonts: &Fonts, scaler: &UiScaler, sw: f32, sh: f32, time_rem
         );
         return;
     }
-    let (text, color) = if time_remaining > 2.0 {
-        ("3", Palette::RED)
-    } else if time_remaining > 1.0 {
-        ("2", Palette::NEON_GOLD)
-    } else if time_remaining > 0.0 {
-        ("1", Palette::NEON_CYAN)
-    } else {
-        ("GO!", Palette::NEON_GREEN)
-    };
 
-    let font_size = scaler.font_s(85.0);
-    let center_y = sh * 0.45;
-
-    fonts.draw_display_centered_with_shadow(
-        text,
-        sw * 0.5,
-        center_y,
-        font_size,
-        color,
-        Color::new(0.0, 0.0, 0.0, 0.7),
-        scaler.s(4.0),
-    );
+    // Platform CountDown drives the 3-2-1-GO sequence text, color, and scaling.
+    let mut countdown = CountDown::new(3);
+    countdown.remaining = time_remaining.ceil().clamp(0.0, 3.0) as u8;
+    countdown.scale = 1.0;
+    countdown.alpha = 1.0;
+    countdown.draw(scaler, fonts, sw * 0.5, sh * 0.45);
 }
 
 /// Draws the celebratory Personal Best lap achievement notification banner.
@@ -403,29 +357,29 @@ fn render_personal_best_toast(
         return;
     }
 
-    // Smooth entry slide & fade in/out
-    let elapsed = notif.duration - notif.timer;
-    let fade_in = (elapsed / 0.25).clamp(0.0, 1.0);
-    let fade_out = (notif.timer / 0.40).clamp(0.0, 1.0);
-    let alpha = fade_in.min(fade_out);
-
-    let enter_offset = (1.0 - fade_in) * scaler.s(-16.0);
     let card_w = scaler.s(360.0);
     let card_h = scaler.s(58.0);
-    let x = center_x - card_w * 0.5;
-    let toast_y = y + enter_offset;
+    let overlay = ToastOverlay::new(center_x - card_w * 0.5, y, card_w, card_h);
 
-    // Outer glow & card background
-    let bg_color = Color::new(0.05, 0.07, 0.12, 0.94 * alpha);
-    let border_color = Color::new(1.0, 0.82, 0.15, 0.95 * alpha);
-    scaler.draw_glass_card(x, toast_y, card_w, card_h, bg_color, border_color, 2.0);
+    // Reuse the platform toast item's fade envelope in place of bespoke fade timers.
+    let mut item = ToastItem::new(
+        1,
+        "★ NEW PERSONAL BEST ★",
+        "",
+        ToastSeverity::Record,
+        notif.duration,
+    );
+    item.elapsed_sec = notif.duration - notif.timer;
+    let alpha = item.alpha();
+
+    overlay.render_frame(0, &item);
 
     // Header badge: "★ NEW PERSONAL BEST ★"
     let title_color = Color::new(1.0, 0.84, 0.20, alpha);
     fonts.draw_display_centered_with_shadow(
         "★ NEW PERSONAL BEST ★",
         center_x,
-        toast_y + scaler.s(22.0),
+        y + scaler.s(22.0),
         scaler.font_s(16.0),
         title_color,
         Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
@@ -447,7 +401,7 @@ fn render_personal_best_toast(
         fonts.draw_display_with_shadow(
             &lap_str,
             start_x,
-            toast_y + scaler.s(48.0),
+            y + scaler.s(48.0),
             scaler.font_s(20.0),
             Color::new(1.0, 1.0, 1.0, alpha),
             Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
@@ -457,7 +411,7 @@ fn render_personal_best_toast(
         fonts.draw_display_with_shadow(
             &delta_str,
             start_x + lap_dim.width,
-            toast_y + scaler.s(48.0),
+            y + scaler.s(48.0),
             scaler.font_s(20.0),
             Color::new(0.20, 1.0, 0.50, alpha), // Neon Green
             Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
@@ -473,7 +427,7 @@ fn render_personal_best_toast(
         fonts.draw_display_with_shadow(
             &lap_str,
             start_x,
-            toast_y + scaler.s(48.0),
+            y + scaler.s(48.0),
             scaler.font_s(20.0),
             Color::new(1.0, 1.0, 1.0, alpha),
             Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
@@ -483,7 +437,7 @@ fn render_personal_best_toast(
         fonts.draw_display_with_shadow(
             rec_str,
             start_x + lap_dim.width,
-            toast_y + scaler.s(48.0),
+            y + scaler.s(48.0),
             scaler.font_s(20.0),
             Color::new(0.30, 0.90, 1.0, alpha), // Neon Cyan
             Color::new(0.0, 0.0, 0.0, 0.6 * alpha),
@@ -504,25 +458,31 @@ fn render_visibility_toast(
         return;
     }
 
-    let elapsed = toast.duration - toast.timer;
-    let fade_in = (elapsed / 0.15).clamp(0.0, 1.0);
-    let fade_out = (toast.timer / 0.25).clamp(0.0, 1.0);
-    let alpha = fade_in.min(fade_out);
-    if alpha <= 0.01 {
-        return;
-    }
-
     let card_w = scaler.s(320.0);
     let card_h = scaler.s(38.0);
     let x = center_x - card_w * 0.5;
 
-    let bg_color = Color::new(0.05, 0.07, 0.12, 0.92 * alpha);
+    // Reuse the platform toast item's fade envelope in place of bespoke fade timers.
+    let severity = if toast.is_on {
+        ToastSeverity::Success
+    } else {
+        ToastSeverity::Info
+    };
+    let mut item = ToastItem::new(1, toast.text.as_str(), "", severity, toast.duration);
+    item.elapsed_sec = toast.duration - toast.timer;
+    let alpha = item.alpha();
+    if alpha <= 0.01 {
+        return;
+    }
+
+    let overlay = ToastOverlay::new(x, y, card_w, card_h);
+    overlay.render_frame(0, &item);
+
     let border_color = if toast.is_on {
         Color::new(Palette::NEON_CYAN.r, Palette::NEON_CYAN.g, Palette::NEON_CYAN.b, 0.90 * alpha)
     } else {
         Color::new(0.40, 0.45, 0.50, 0.65 * alpha)
     };
-    scaler.draw_glass_card(x, y, card_w, card_h, bg_color, border_color, 1.5);
 
     let text_col = if toast.is_on {
         Color::new(1.0, 1.0, 1.0, alpha)
