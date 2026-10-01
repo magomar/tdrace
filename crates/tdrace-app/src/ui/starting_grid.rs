@@ -11,6 +11,10 @@ use crate::game::GridParticipant;
 use crate::profile::{draw_country_banner, PlayerProfile};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::ui::menu::{CarChoice, GameMode};
+use cabinet::ui::{
+    ColumnAlign, Counter, DataColumn, DataRow, DataTable, HeroActionButton, LayoutRect,
+    ScreenFooter, SplitPane, ValueStepper, draw_stepper,
+};
 
 use crate::render::lateral::render_car_lateral;
 
@@ -21,46 +25,64 @@ pub enum StartingGridFocus {
     RightRoster,
 }
 
-/// Returns the rectangle (x, y, w, h) of the Player Profile card on the Starting Grid.
-pub fn starting_grid_player_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+/// Shared two-column geometry for the Starting Grid, driven by a `SplitPane`
+/// (left setup panel ≈44% vs right roster panel ≈56%).
+/// Returns `(col1_x, col1_w, col2_x, col2_w)`.
+fn starting_grid_columns(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
     let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
     let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let gap = scaler.s(24.0);
+    let content_w = col_w / 0.44 + gap;
+    let split = SplitPane::new(LayoutRect::new(col1_x, 0.0, content_w, sh), 0.44, gap);
+    let col2_x = split.right_rect().x.min(sw - split.right_rect().w - scaler.safe_pad_x);
+    (col1_x, col_w, col2_x, split.right_rect().w)
+}
+
+/// A grid roster row, pre-formatted for the `DataTable` roster.
+struct GridRosterRow {
+    position: usize,
+    driver: String,
+    car: String,
+    status: String,
+}
+
+/// Returns the rectangle (x, y, w, h) of the Player Profile card on the Starting Grid.
+pub fn starting_grid_player_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let (col1_x, col1_w, _, _) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
     let p1_h = scaler.s(52.0);
-    (col1_x, panel_y, col_w, p1_h)
+    (col1_x, panel_y, col1_w, p1_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the Circuit Explorer / Selector card on the Starting Grid.
 pub fn starting_grid_circuit_card_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let (col1_x, col1_w, _, _) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
     let p1_h = scaler.s(52.0);
     let c_y = panel_y + p1_h + scaler.s(6.0);
     let c_h = scaler.s(50.0);
-    (col1_x, c_y, col_w, c_h)
+    (col1_x, c_y, col1_w, c_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the Garage access card on the Starting Grid.
 pub fn starting_grid_garage_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let (col1_x, col1_w, _, _) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
     let p1_h = scaler.s(52.0);
     let c_h = scaler.s(50.0);
     let garage_card_h = scaler.s(408.0);
     let curr_y = panel_y + p1_h + scaler.s(6.0) + c_h + scaler.s(8.0);
-    (col1_x, curr_y, col_w, garage_card_h)
+    (col1_x, curr_y, col1_w, garage_card_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the high-visibility Launch Race button on the Starting Grid.
 pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
+    let (col1_x, col1_w, _, _) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
 
     let p1_h = scaler.s(52.0);
@@ -69,17 +91,16 @@ pub fn starting_grid_launch_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32
     let launch_h = scaler.s(48.0);
 
     let curr_y = panel_y + p1_h + scaler.s(6.0) + c_h + scaler.s(8.0) + garage_card_h + scaler.s(10.0);
-    (col1_x, curr_y, col_w, launch_h)
+    (col1_x, curr_y, col1_w, launch_h)
 }
 
 /// Returns the rectangle (x, y, w, h) of the Grid Configuration card at the top of the right column.
 pub fn starting_grid_grid_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col2_x = (sw * 0.5 + scaler.s(12.0)).min(sw - col_w - scaler.safe_pad_x);
+    let (_, _, col2_x, col2_w) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
-    let grid_h = scaler.s(52.0);
-    (col2_x, panel_y, col_w, grid_h)
+    let grid_h = scaler.s(96.0);
+    (col2_x, panel_y, col2_w, grid_h)
 }
 
 /// Renders the 2-panel starting grid and participants showcase screen before race launch.
@@ -152,12 +173,11 @@ pub fn render_starting_grid_screen(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Two Columns Geometry
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
-    let col2_x = (sw * 0.5 + scaler.s(12.0)).min(sw - col_w - scaler.safe_pad_x);
+    // Two Columns Geometry (platform SplitPane: left setup ~44% / right roster ~56%)
+    let (col1_x, col_w, col2_x, col2_w) = starting_grid_columns(sw, sh);
     let panel_y = scaler.s(60.0);
-    let bottom_prompt_y = sh - scaler.s(24.0);
+    let footer_h = scaler.s(56.0);
+    let bottom_prompt_y = sh - footer_h - scaler.s(8.0);
 
     let is_left_focused = focused_panel == StartingGridFocus::LeftSetup;
     let is_right_focused = focused_panel == StartingGridFocus::RightRoster;
@@ -578,9 +598,9 @@ pub fn render_starting_grid_screen(
     // RIGHT PANEL: Grid Config (Top) & Starting Grid Roster (Below)
     // =========================================================================
     let grid_y = panel_y;
-    let grid_h = scaler.s(52.0);
+    let grid_h = scaler.s(96.0);
     let is_roster_locked = !game_mode.allows_grid_customization();
-    let is_grid_hovered = mx >= col2_x && mx <= col2_x + col_w && my >= grid_y && my <= grid_y + grid_h;
+    let is_grid_hovered = mx >= col2_x && mx <= col2_x + col2_w && my >= grid_y && my <= grid_y + grid_h;
     let is_grid_active = (is_right_focused && active_card_idx == 1) || (is_left_focused && active_card_idx == 1) || is_grid_hovered;
 
     let grid_border = if is_grid_active {
@@ -593,7 +613,7 @@ pub fn render_starting_grid_screen(
     } else {
         Palette::UI_CARD_BG
     };
-    scaler.draw_glass_card(col2_x, grid_y, col_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
+    scaler.draw_glass_card(col2_x, grid_y, col2_w, grid_h, grid_bg, grid_border, if is_grid_active { 2.4 } else { 1.2 });
 
     if game_mode.has_bots() {
         let grid_hdr = if is_roster_locked {
@@ -614,24 +634,32 @@ pub fn render_starting_grid_screen(
             scaler.font_s(11.0),
             if is_grid_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED },
         );
-        let racer_desc = if is_roster_locked && game_mode == GameMode::Career {
-            format!("{} Racers (Championship Grid) • Official Season Roster Locked", num_drivers)
+
+        // Session setup steppers (platform Counter / ValueStepper)
+        let bot_count = num_drivers.saturating_sub(if game_mode == GameMode::SplitScreen { 2 } else { 1 });
+        let laps_stepper = ValueStepper::new("LAPS", 1u32, 99u32, 1u32, total_laps);
+        let bots_counter = Counter::new(1, (max_grid_size.saturating_sub(1) as i64).max(1), 1, bot_count.max(1) as i64);
+        let stepper_y = grid_y + scaler.s(40.0);
+        let stepper_h = scaler.s(40.0);
+        let stepper_gap = scaler.s(8.0);
+        let stepper_w = (col2_w - scaler.s(24.0) - stepper_gap) * 0.5;
+        let stepper_x = col2_x + scaler.s(12.0);
+        draw_stepper(&scaler, fonts, stepper_x, stepper_y, stepper_w, stepper_h, "LAPS", &laps_stepper.value.to_string(), is_grid_active, is_grid_hovered, Palette::NEON_CYAN);
+        draw_stepper(&scaler, fonts, stepper_x + stepper_w + stepper_gap, stepper_y, stepper_w, stepper_h, "BOTS", &bots_counter.value.to_string(), is_grid_active, is_grid_hovered, Palette::NEON_GOLD);
+
+        let difficulty_note = if is_roster_locked && game_mode == GameMode::Career {
+            format!("{} Racers (Championship Grid) • Difficulty: {} • Max {} Slots", num_drivers, casual_ai_difficulty.short_name(), max_grid_size)
         } else if game_mode == GameMode::SplitScreen {
-            let bot_count = num_drivers.saturating_sub(2);
-            if bot_count == 0 {
-                format!("2 Players (1v1 Duel) • Difficulty: {} • Max {} Slots", casual_ai_difficulty.short_name(), max_grid_size)
-            } else {
-                format!("{} Racers (2 Players + {} Bots) • Difficulty: {} • Max {}", num_drivers, bot_count, casual_ai_difficulty.short_name(), max_grid_size)
-            }
+            format!("{} Racers (2 Players + {} Bots) • Difficulty: {} • Max {}", num_drivers, bot_count, casual_ai_difficulty.short_name(), max_grid_size)
         } else {
-            format!("{} Racers ({} Bots) • Difficulty: {} • Max {}", num_drivers, num_drivers.saturating_sub(1), casual_ai_difficulty.short_name(), max_grid_size)
+            format!("{} Racers ({} Bots) • Difficulty: {} • Max {} Slots", num_drivers, bot_count, casual_ai_difficulty.short_name(), max_grid_size)
         };
-        fonts.draw_ui_bold(
-            &racer_desc,
+        fonts.draw_ui_regular(
+            &difficulty_note,
             col2_x + scaler.s(12.0),
-            grid_y + scaler.s(36.0),
-            scaler.font_s(13.0),
-            Palette::WHITE,
+            grid_y + scaler.s(90.0),
+            scaler.font_s(10.0),
+            Palette::UI_TEXT_MUTED,
         );
     } else {
         let solo_hdr = if is_grid_active {
@@ -693,9 +721,9 @@ pub fn render_starting_grid_screen(
     let roster_card_y = roster_header_y + scaler.s(10.0);
     let roster_card_h = (bottom_prompt_y - roster_card_y - scaler.s(8.0)).max(scaler.s(220.0));
     let roster_border = if roster_header_is_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
-    scaler.draw_glass_card(col2_x, roster_card_y, col_w, roster_card_h, Palette::UI_CARD_BG, roster_border, if roster_header_is_focused { 2.2 } else { 1.4 });
+    scaler.draw_glass_card(col2_x, roster_card_y, col2_w, roster_card_h, Palette::UI_CARD_BG, roster_border, if roster_header_is_focused { 2.2 } else { 1.4 });
 
-    let row_w = col_w - scaler.s(16.0);
+    let row_w = col2_w - scaler.s(16.0);
     let row_x = col2_x + scaler.s(8.0);
     let mut row_y = roster_card_y + scaler.s(8.0);
     let row_h = scaler.s(46.0);
@@ -798,103 +826,119 @@ pub fn render_starting_grid_screen(
             }
         }
         GameMode::StandardRace | GameMode::ExperimentalRace | GameMode::SplitScreen | GameMode::Career => {
-            let max_visible = (((roster_card_h - scaler.s(16.0)) / (row_h + row_gap)).floor() as usize).max(1);
-            let scroll_offset = if grid_participants.len() <= max_visible {
-                0
-            } else if active_roster_idx >= max_visible {
-                (active_roster_idx + 1 - max_visible).min(grid_participants.len().saturating_sub(max_visible))
-            } else {
-                0
-            };
-
-            for (i, participant) in grid_participants.iter().enumerate().skip(scroll_offset).take(max_visible) {
-                let slot = i + 1;
-                let is_row_sel = is_right_focused && active_card_idx != 1 && i == active_roster_idx;
-                let desc = if game_mode == GameMode::SplitScreen && i == 0 {
-                    "Player 1: Keyboard (WASD / Arrows) • Grid Slot 1".to_string()
-                } else if game_mode == GameMode::SplitScreen && i == 1 {
-                    if gamepad_connected {
-                        "Player 2: Gamepad [CONNECTED: Analog Precision]".to_string()
-                    } else {
-                        "Player 2: Gamepad [NOT DETECTED - Connect Controller / Fallback Arrows]".to_string()
-                    }
-                } else {
-                    let perf = match (participant.best_lap, participant.best_circuit_time) {
-                        (Some(lap), Some(circ)) => {
-                            format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
+            // Participant roster (platform DataTable with podium rank badges)
+            let rows: Vec<(GridRosterRow, bool)> = grid_participants
+                .iter()
+                .enumerate()
+                .map(|(i, participant)| {
+                    let slot = i + 1;
+                    let status = if game_mode == GameMode::SplitScreen && i == 0 {
+                        "Player 1: Keyboard (WASD / Arrows) • Grid Slot 1".to_string()
+                    } else if game_mode == GameMode::SplitScreen && i == 1 {
+                        if gamepad_connected {
+                            "Player 2: Gamepad [CONNECTED: Analog Precision]".to_string()
+                        } else {
+                            "Player 2: Gamepad [NOT DETECTED - Connect Controller / Fallback Arrows]".to_string()
                         }
-                        (Some(lap), None) => format!("Best Lap: {}", format_lap_time(lap)),
-                        (None, Some(circ)) => format!("Circuit: {}", format_lap_time(circ)),
-                        (None, None) => {
-                            if participant.is_player {
-                                "No Prior Record  •  Grid Draw".to_string()
-                            } else {
-                                "No Prior Record".to_string()
+                    } else {
+                        let perf = match (participant.best_lap, participant.best_circuit_time) {
+                            (Some(lap), Some(circ)) => {
+                                format!("Best Lap: {}  •  Circuit: {}", format_lap_time(lap), format_lap_time(circ))
                             }
+                            (Some(lap), None) => format!("Best Lap: {}", format_lap_time(lap)),
+                            (None, Some(circ)) => format!("Circuit: {}", format_lap_time(circ)),
+                            (None, None) => {
+                                if participant.is_player {
+                                    "No Prior Record  •  Grid Draw".to_string()
+                                } else {
+                                    "No Prior Record".to_string()
+                                }
+                            }
+                        };
+                        if let Some(tier) = participant.driver_tier {
+                            format!("{}  •  {}", tier.short_name(), perf)
+                        } else {
+                            perf
                         }
                     };
-                    if let Some(tier) = participant.driver_tier {
-                        format!("{}  •  {}", tier.short_name(), perf)
+
+                    let display_name = if game_mode == GameMode::SplitScreen && i == 0 {
+                        format!("{} (P1 Keys)", participant.name)
+                    } else if game_mode == GameMode::SplitScreen && i == 1 {
+                        format!("{} (P2 Gamepad)", participant.name)
+                    } else if participant.is_player {
+                        format!("{} (You)", participant.name)
                     } else {
-                        perf
-                    }
-                };
+                        participant.name.clone()
+                    };
 
-                let display_name = if game_mode == GameMode::SplitScreen && i == 0 {
-                    format!("{} (P1 Keys)", participant.name)
-                } else if game_mode == GameMode::SplitScreen && i == 1 {
-                    format!("{} (P2 Gamepad)", participant.name)
-                } else if participant.is_player {
-                    format!("{} (You)", participant.name)
-                } else {
-                    participant.name.clone()
-                };
+                    (
+                        GridRosterRow {
+                            position: slot,
+                            driver: format!("{}  \"{}\"", display_name, participant.alias),
+                            car: participant.car_title.clone(),
+                            status,
+                        },
+                        participant.is_player,
+                    )
+                })
+                .collect();
 
-                render_participant_row(
-                    fonts,
-                    &scaler,
-                    row_x,
-                    row_y,
-                    row_w,
-                    row_h,
-                    slot,
-                    &display_name,
-                    &participant.alias,
-                    participant.country.as_deref(),
-                    &participant.car_title,
-                    participant.color_scheme,
-                    &desc,
-                    participant.is_player,
-                    is_row_sel,
-                );
-                row_y += row_h + row_gap;
-            }
-
-            if grid_participants.len() > max_visible {
-                let bar_w = scaler.s(3.0);
-                let bar_x = col2_x + col_w - scaler.s(6.0);
-                let track_y = roster_card_y + scaler.s(8.0);
-                let track_h = roster_card_h - scaler.s(16.0);
-                let thumb_h = (track_h * (max_visible as f32 / grid_participants.len() as f32)).max(scaler.s(20.0));
-                let max_scroll = (grid_participants.len() - max_visible) as f32;
-                let thumb_y = track_y + (track_h - thumb_h) * (scroll_offset as f32 / max_scroll);
-                draw_rectangle(bar_x, thumb_y, bar_w, thumb_h, Palette::NEON_CYAN);
-            }
+            let table_bounds = LayoutRect::new(
+                col2_x + scaler.s(8.0),
+                roster_card_y + scaler.s(8.0),
+                col2_w - scaler.s(16.0),
+                roster_card_h - scaler.s(16.0),
+            );
+            let mut table = DataTable::<GridRosterRow>::new(0.0, 0.0, table_bounds.w, scaler.s(46.0), scaler.s(28.0));
+            table.is_focused = roster_header_is_focused;
+            table.add_column(DataColumn::new("pos", "POS", 8.0, ColumnAlign::Left, |r| format!("P{}", r.position)));
+            table.add_column(DataColumn::new("driver", "DRIVER", 34.0, ColumnAlign::Left, |r| r.driver.clone()));
+            table.add_column(DataColumn::new("car", "VEHICLE", 24.0, ColumnAlign::Left, |r| r.car.clone()));
+            table.add_column(DataColumn::new("status", "FORM / SEED", 34.0, ColumnAlign::Left, |r| r.status.clone()));
+            table.set_rows(rows.into_iter().map(|(row, is_player)| {
+                let pos = row.position;
+                DataRow::new(pos.to_string(), row)
+                    .with_rank(pos)
+                    .with_player(is_player)
+            }).collect());
+            table.selected_row = active_roster_idx.min(table.len().saturating_sub(1));
+            table.draw(&scaler, fonts, table_bounds);
         }
     }
 
     // =========================================================================
-    // FOOTER PROMPTS
+    // FOOTER (platform ScreenFooter + HeroActionButton)
     // =========================================================================
-    let prompt = starting_grid_footer_prompt_with_mode(gamepad_connected, focused_panel, active_card_idx, game_mode.allows_grid_customization());
+    let mut footer = ScreenFooter::new(0.0, sh - footer_h, sw, footer_h);
+    footer.add_prompt("LEFT / RIGHT", "Switch Panel");
+    footer.add_prompt("UP / DOWN", "Select");
+    footer.add_prompt("ESC", "Menu");
+    let mut hero = HeroActionButton::new("START RACE", scaler.s(220.0), scaler.s(44.0));
+    hero.is_focused = is_launch_card;
+    hero.is_disabled = !is_car_unlocked || !is_car_eligible;
+    footer.set_hero_button(hero);
+    footer.render_frame();
 
-    fonts.draw_ui_bold_centered(
-        prompt,
-        sw * 0.5,
-        bottom_prompt_y + scaler.s(6.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
+    let prompts_zone_w = (sw - scaler.s(260.0)).max(sw * 0.4);
+    let prompt_w = prompts_zone_w / footer.prompts.len().max(1) as f32;
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let size = scaler.font_s(12.0);
+        let text = fonts.fit_ui_bold(&format!("[{}] {}", prompt.badge, prompt.label), size, prompt_w - scaler.s(8.0));
+        fonts.draw_ui_bold_centered(&text, footer.base_x + scaler.s(12.0) + (i as f32 + 0.5) * prompt_w, footer.base_y + footer.height * 0.65, size, Palette::WHITE);
+    }
+
+    if let (Some(btn), Some(rect)) = (footer.hero_button.as_ref(), footer.hero_button_rect()) {
+        let hero_label = if !is_car_unlocked {
+            "🔒 LOCKED"
+        } else if !is_car_eligible {
+            "🚫 INELIGIBLE"
+        } else {
+            "▶ START RACE"
+        };
+        let hero_col = if btn.is_disabled { Palette::RED } else { Palette::WHITE };
+        fonts.draw_ui_bold_centered(hero_label, rect.center().0, rect.y + rect.h * 0.65, scaler.font_s(14.0), hero_col);
+    }
 }
 
 /// Returns the footer navigation and action prompt string for the starting grid screen.
