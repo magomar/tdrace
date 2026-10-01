@@ -167,6 +167,123 @@ class Spot:
     name: str = ""
 
 
+TREE_TRUNK_RADII = {
+    "pine": 0.35,
+    "palm": 0.28,
+    "oak": 0.48,
+    "cypress": 0.24,
+    "sakura": 0.35,
+    "autumn_maple": 0.40,
+    "bush": 0.0,
+    "cactus": 0.22,
+    "snow_pine": 0.35,
+}
+
+ROCK_RADII = {
+    "granite": 1.2,
+    "sandstone": 1.4,
+    "slate": 1.1,
+    "snow_capped": 1.3,
+}
+
+
+@dataclass(frozen=True)
+class GrandstandProp:
+    at: float
+    side: str = "right"
+    offset: float = None
+    length: float = 30.0
+    depth: float = 8.0
+    style: str = "open_bleachers"
+    tiers: int = 6
+    seat_color: list = None
+    elevation: float = None
+
+
+@dataclass(frozen=True)
+class BuildingProp:
+    at: float
+    side: str = "right"
+    offset: float = None
+    width: float = 24.0
+    depth: float = 10.0
+    style: str = "pit_garage"
+    roof_color: list = None
+    elevation: float = None
+    angle: float = None
+
+
+@dataclass(frozen=True)
+class RockProp:
+    at: float
+    side: str = "right"
+    offset: float = None
+    rock_type: str = "granite"
+    scale: float = 1.0
+    rotation: float = 0.0
+    elevation: float = None
+
+
+@dataclass(frozen=True)
+class TreeProp:
+    at: float
+    side: str = "right"
+    offset: float = None
+    tree_type: str = "pine"
+    scale: float = 1.0
+    rotation: float = 0.0
+    elevation: float = None
+
+
+def tree_row(start, end, count, side="right", offset=None, tree_type="pine", scale=1.0):
+    if count <= 0:
+        return []
+    if count == 1:
+        return [TreeProp(at=(start + end) * 0.5, side=side, offset=offset, tree_type=tree_type, scale=scale)]
+    step = (end - start) / (count - 1)
+    return [
+        TreeProp(
+            at=round(start + i * step, 2),
+            side=side,
+            offset=None if offset is None else round(offset + (0.4 if i % 2 == 1 else -0.3), 2),
+            tree_type=tree_type,
+            scale=round(scale * (0.9 + 0.2 * (i % 3 == 0)), 2),
+            rotation=round(i * 0.73, 3),
+        )
+        for i in range(count)
+    ]
+
+
+def rock_cluster(at, count, side="right", offset=None, rock_type="granite", scale=1.0, span=14.0):
+    if count <= 0:
+        return []
+    if count == 1:
+        return [RockProp(at=at, side=side, offset=offset, rock_type=rock_type, scale=scale)]
+    step = span / (count - 1)
+    start = at - span * 0.5
+    return [
+        RockProp(
+            at=round(start + i * step, 2),
+            side=side,
+            offset=None if offset is None else round(offset + (0.6 if i % 2 == 1 else -0.5), 2),
+            rock_type=rock_type,
+            scale=round(scale * (0.85 + 0.25 * (i % 2 == 0)), 2),
+            rotation=round(i * 1.15, 3),
+        )
+        for i in range(count)
+    ]
+
+
+def flatten_features(features):
+    flat = []
+    for f in features:
+        if isinstance(f, (list, tuple)):
+            flat.extend(flatten_features(f))
+        else:
+            flat.append(f)
+    return flat
+
+
 @dataclass
 class Circuit:
     id: str
@@ -473,6 +590,8 @@ def source_track(circuit):
             "right_boundary_polyline": [],
             "grandstands": [],
             "trees": [],
+            "rocks": [],
+            "buildings": [],
         },
         "checkpoints": [],
         "grid_positions": [],
@@ -591,11 +710,152 @@ def ramp_json(
     }
 
 
+def grandstand_json(stand_id, spline, prop):
+    sample = spline.nearest(prop.at)
+    wall_d = sample.get(f"{prop.side}_wall_distance")
+    if wall_d is None:
+        wall_d = 4.0
+    has_curb = sample.get(f"{prop.side}_curb", False)
+    min_front = wall_d + 1.2
+    if has_curb:
+        min_front = max(min_front, 1.4 + 1.2)
+    front_offset = max(prop.offset, min_front) if prop.offset is not None else min_front
+
+    point, tangent, normal, width, _s = spline.at(prop.at)
+    theta = math.atan2(tangent[1], tangent[0])
+    lateral_dist = width * 0.5 + front_offset + prop.depth * 0.5
+    if prop.side == "left":
+        center = [point[0] + normal[0] * lateral_dist, point[1] + normal[1] * lateral_dist]
+        angle = theta
+    elif prop.side == "right":
+        center = [point[0] - normal[0] * lateral_dist, point[1] - normal[1] * lateral_dist]
+        angle = theta + math.pi
+    else:
+        raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
+
+    elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
+    data = {
+        "id": stand_id,
+        "center": r3(center),
+        "length": round(prop.length, 2),
+        "depth": round(prop.depth, 2),
+        "angle": round(angle, 5),
+        "tiers": prop.tiers,
+        "style": prop.style,
+        "elevation": round(elevation, 2),
+    }
+    if prop.seat_color is not None:
+        data["seat_color"] = prop.seat_color
+    return data
+
+
+def building_json(bldg_id, spline, prop):
+    sample = spline.nearest(prop.at)
+    wall_d = sample.get(f"{prop.side}_wall_distance")
+    if wall_d is None:
+        wall_d = 4.0
+    has_curb = sample.get(f"{prop.side}_curb", False)
+    min_front = wall_d + 1.5
+    if has_curb:
+        min_front = max(min_front, 1.4 + 1.5)
+    front_offset = max(prop.offset, min_front) if prop.offset is not None else min_front
+
+    point, tangent, normal, width, _s = spline.at(prop.at)
+    theta = math.atan2(tangent[1], tangent[0])
+    lateral_dist = width * 0.5 + front_offset + prop.depth * 0.5
+    if prop.side == "left":
+        center = [point[0] + normal[0] * lateral_dist, point[1] + normal[1] * lateral_dist]
+        angle = theta if prop.angle is None else prop.angle
+    elif prop.side == "right":
+        center = [point[0] - normal[0] * lateral_dist, point[1] - normal[1] * lateral_dist]
+        angle = (theta + math.pi) if prop.angle is None else prop.angle
+    else:
+        raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
+
+    elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
+    data = {
+        "id": bldg_id,
+        "center": r3(center),
+        "size": [round(prop.width, 2), round(prop.depth, 2)],
+        "angle": round(angle, 5),
+        "style": prop.style,
+        "elevation": round(elevation, 2),
+    }
+    if prop.roof_color is not None:
+        data["roof_color"] = prop.roof_color
+    return data
+
+
+def rock_json(rock_id, spline, prop):
+    sample = spline.nearest(prop.at)
+    wall_d = sample.get(f"{prop.side}_wall_distance")
+    if wall_d is None:
+        wall_d = 4.0
+    has_curb = sample.get(f"{prop.side}_curb", False)
+    r = ROCK_RADII.get(prop.rock_type, 1.2) * prop.scale
+    min_offset = wall_d + r + 0.8
+    if has_curb:
+        min_offset = max(min_offset, 1.4 + r + 0.8)
+    actual_offset = max(prop.offset, min_offset) if prop.offset is not None else min_offset
+
+    point, _t, normal, width, _s = spline.at(prop.at)
+    lateral_dist = width * 0.5 + actual_offset
+    if prop.side == "left":
+        pos = [point[0] + normal[0] * lateral_dist, point[1] + normal[1] * lateral_dist]
+    elif prop.side == "right":
+        pos = [point[0] - normal[0] * lateral_dist, point[1] - normal[1] * lateral_dist]
+    else:
+        raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
+
+    elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
+    return {
+        "id": rock_id,
+        "position": r3(pos),
+        "rock_type": prop.rock_type,
+        "scale": round(prop.scale, 2),
+        "rotation": round(prop.rotation, 5),
+        "elevation": round(elevation, 2),
+    }
+
+
+def tree_json(tree_id, spline, prop):
+    sample = spline.nearest(prop.at)
+    wall_d = sample.get(f"{prop.side}_wall_distance")
+    if wall_d is None:
+        wall_d = 4.0
+    has_curb = sample.get(f"{prop.side}_curb", False)
+    r = TREE_TRUNK_RADII.get(prop.tree_type, 0.35) * prop.scale
+    min_offset = wall_d + r + 0.8
+    if has_curb:
+        min_offset = max(min_offset, 1.4 + r + 0.8)
+    actual_offset = max(prop.offset, min_offset) if prop.offset is not None else min_offset
+
+    point, _t, normal, width, _s = spline.at(prop.at)
+    lateral_dist = width * 0.5 + actual_offset
+    if prop.side == "left":
+        pos = [point[0] + normal[0] * lateral_dist, point[1] + normal[1] * lateral_dist]
+    elif prop.side == "right":
+        pos = [point[0] - normal[0] * lateral_dist, point[1] - normal[1] * lateral_dist]
+    else:
+        raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
+
+    elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
+    return {
+        "id": tree_id,
+        "position": r3(pos),
+        "tree_type": prop.tree_type,
+        "scale": round(prop.scale, 2),
+        "rotation": round(prop.rotation, 5),
+        "elevation": round(elevation, 2),
+    }
+
+
 def place_features(track, circuit):
-    """Adds the circuit's ramps, zones and starting grid to a baked track (in place)."""
+    """Adds the circuit's ramps, zones, scenery and starting grid to a baked track (in place)."""
     spline = BakedSpline(track)
     ramps, zones = [], []
-    for f in circuit.features:
+    grandstands, trees, rocks, buildings = [], [], [], []
+    for f in flatten_features(circuit.features):
         if isinstance(f, Ramp):
             name = f.name or f"Jump {len(ramps) + 1}"
             ramps.append(
@@ -659,10 +919,22 @@ def place_features(track, circuit):
                     "layer": f.layer,
                 }
             )
+        elif isinstance(f, GrandstandProp):
+            grandstands.append(grandstand_json(len(grandstands) + 1, spline, f))
+        elif isinstance(f, BuildingProp):
+            buildings.append(building_json(len(buildings) + 1, spline, f))
+        elif isinstance(f, RockProp):
+            rocks.append(rock_json(len(rocks) + 1, spline, f))
+        elif isinstance(f, TreeProp):
+            trees.append(tree_json(len(trees) + 1, spline, f))
         else:
             raise TypeError(f"{circuit.id}: unknown feature {f!r}")
     track["geometry"]["jump_ramps"] = ramps
     track["geometry"]["surface_zones"] = zones
+    track["geometry"]["grandstands"] = grandstands
+    track["geometry"]["trees"] = trees
+    track["geometry"]["rocks"] = rocks
+    track["geometry"]["buildings"] = buildings
     if circuit.grid:
         track["grid_positions"] = grid_json(spline, *circuit.grid)
     track["checkpoints"] = fit_checkpoints(circuit, spline, track["checkpoints"])

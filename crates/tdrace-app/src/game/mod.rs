@@ -216,10 +216,12 @@ use crate::render::{
     compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
     render_elevated_track_culled, render_floating_bot_nameplates,
+    render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
     render_player_overhead_chevron, render_player_sonar_ping,
+    render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
     PlayerVisibilityOptions, VehicleNameplateItem,
@@ -15057,8 +15059,12 @@ impl RaceSession {
             // Render ground track & barriers
             render_ground_track(&state.track);
             render_grandstand_shadows_culled(&state.track, None);
+            render_building_shadows_culled(&state.track, None);
+            render_rock_shadows_culled(&state.track, None);
             render_tree_shadows_culled(&state.track, None);
             render_grandstands_culled(&state.track, None);
+            render_buildings_culled(&state.track, None);
+            render_rocks_culled(&state.track, None);
             render_ground_barriers_and_obstacles(&state.track);
             render_tree_trunks_culled(&state.track, None);
 
@@ -15142,8 +15148,12 @@ impl RaceSession {
 
         // 3. Ground Scenery Shadows, Barriers & Obstacles (elevation < 0.6m)
         render_grandstand_shadows_culled(&self.track, view_bounds);
+        render_building_shadows_culled(&self.track, view_bounds);
+        render_rock_shadows_culled(&self.track, view_bounds);
         render_tree_shadows_culled(&self.track, view_bounds);
         render_grandstands_culled(&self.track, view_bounds);
+        render_buildings_culled(&self.track, view_bounds);
+        render_rocks_culled(&self.track, view_bounds);
         render_ground_barriers_and_obstacles_culled(&self.track, view_bounds);
         render_tree_trunks_culled(&self.track, view_bounds);
 

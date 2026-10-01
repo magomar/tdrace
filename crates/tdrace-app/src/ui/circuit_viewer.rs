@@ -155,10 +155,14 @@ pub fn render_circuit_viewer_screen(fonts: &Fonts, state: &CircuitViewerState) {
     // Ground track & surfaces (textures, curbs, runoff, hazard zones, timing lines)
     crate::render::render_ground_track_culled(&state.track, None);
 
-    // Scenery: Grandstand shadows, tree shadows, grandstands, barriers, tree trunks
+    // Scenery: Grandstand shadows, building shadows, rock shadows, tree shadows, grandstands, buildings, rocks, barriers, tree trunks
     crate::render::render_grandstand_shadows_culled(&state.track, None);
+    crate::render::render_building_shadows_culled(&state.track, None);
+    crate::render::render_rock_shadows_culled(&state.track, None);
     crate::render::render_tree_shadows_culled(&state.track, None);
     crate::render::render_grandstands_culled(&state.track, None);
+    crate::render::render_buildings_culled(&state.track, None);
+    crate::render::render_rocks_culled(&state.track, None);
     crate::render::render_ground_barriers_and_obstacles_culled(&state.track, None);
     crate::render::render_tree_trunks_culled(&state.track, None);
 

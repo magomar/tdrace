@@ -1013,6 +1013,7 @@ pub fn create_prototypical_track(
             right_boundary_polyline: right_poly,
             grandstands: Vec::new(),
             trees: Vec::new(),
+            ..Default::default()
         },
         checkpoints,
         grid_positions,

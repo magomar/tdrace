@@ -210,6 +210,21 @@ impl ParticleSystem {
                 Color::new(0.82, 0.16, 0.08, 0.90),
                 false,
             ),
+            TreeType::Bush => (
+                Color::new(0.24, 0.44, 0.20, 0.90),
+                Color::new(0.18, 0.36, 0.14, 0.90),
+                false,
+            ),
+            TreeType::Cactus => (
+                Color::new(0.35, 0.65, 0.28, 0.90),
+                Color::new(0.85, 0.88, 0.70, 0.90),
+                false,
+            ),
+            TreeType::SnowPine => (
+                Color::new(0.10, 0.28, 0.20, 0.90),
+                Color::new(0.92, 0.95, 0.98, 0.95),
+                false,
+            ),
         };
 
         let count = if is_petal { 4 } else { 3 };

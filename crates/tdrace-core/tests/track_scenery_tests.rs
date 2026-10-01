@@ -15,10 +15,14 @@ fn test_all_tree_types_physical_properties_and_dual_zone_geometry() {
         let canopy_r = tree_type.default_canopy_radius();
         let drag = tree_type.canopy_drag_deceleration();
 
-        // 1. Canopy must be strictly larger than solid trunk
-        assert!(canopy_r > trunk_r * 2.0, "Canopy must encompass trunk for {:?}", tree_type);
-        assert!(trunk_r >= 0.20 && trunk_r <= 0.60, "Trunk radius within physical limits");
-        assert!(drag >= 1.5 && drag <= 4.0, "Canopy drag deceleration rate must be in reasonable range");
+        // 1. Physical limits
+        if tree_type == TreeType::Bush {
+            assert_eq!(trunk_r, 0.0, "Bush has no solid trunk");
+        } else {
+            assert!(canopy_r > trunk_r * 2.0, "Canopy must encompass trunk for {:?}", tree_type);
+            assert!(trunk_r >= 0.20 && trunk_r <= 0.60, "Trunk radius within physical limits");
+        }
+        assert!(drag >= 1.4 && drag <= 4.0, "Canopy drag deceleration rate must be in reasonable range");
 
         // 2. Tree instance scaling
         let tree = Tree::new(42, Vec2::new(10.0, 20.0), tree_type).with_scale(1.5);
@@ -26,32 +30,38 @@ fn test_all_tree_types_physical_properties_and_dual_zone_geometry() {
         assert_eq!(tree.canopy_radius(), canopy_r * 1.5);
 
         // 3. Dual-zone containment tests:
-        // Point right at the center is inside BOTH trunk and canopy
-        assert!(tree.contains_trunk(Vec2::new(10.0, 20.0)));
-        assert!(tree.contains_canopy(Vec2::new(10.0, 20.0)));
+        if tree.has_trunk() {
+            // Point right at the center is inside BOTH trunk and canopy
+            assert!(tree.contains_trunk(Vec2::new(10.0, 20.0)));
+            assert!(tree.contains_canopy(Vec2::new(10.0, 20.0)));
 
-        // Point at edge of canopy is inside canopy but outside trunk
-        let edge_offset = tree.canopy_radius() * 0.75;
-        let edge_point = Vec2::new(10.0 + edge_offset, 20.0);
-        assert!(tree.contains_canopy(edge_point));
-        assert!(!tree.contains_trunk(edge_point));
+            // Point at edge of canopy is inside canopy but outside trunk
+            let edge_offset = tree.canopy_radius() * 0.75;
+            let edge_point = Vec2::new(10.0 + edge_offset, 20.0);
+            assert!(tree.contains_canopy(edge_point));
+            assert!(!tree.contains_trunk(edge_point));
 
-        // Point outside canopy is outside both
-        let far_point = Vec2::new(10.0 + tree.canopy_radius() + 2.0, 20.0);
-        assert!(!tree.contains_canopy(far_point));
-        assert!(!tree.contains_trunk(far_point));
+            // Point outside canopy is outside both
+            let far_point = Vec2::new(10.0 + tree.canopy_radius() + 2.0, 20.0);
+            assert!(!tree.contains_canopy(far_point));
+            assert!(!tree.contains_trunk(far_point));
 
-        // 4. Solid trunk obstacle generation
-        let obs = tree.trunk_obstacle();
-        match obs.shape {
-            tdrace_core::track::geometry::ObstacleShape::Circle { radius, .. } => {
-                assert_eq!(radius, tree.trunk_radius());
+            // 4. Solid trunk obstacle generation
+            let obs = tree.trunk_obstacle();
+            match obs.shape {
+                tdrace_core::track::geometry::ObstacleShape::Circle { radius, .. } => {
+                    assert_eq!(radius, tree.trunk_radius());
+                }
+                _ => panic!("Trunk must be a circular obstacle"),
             }
-            _ => panic!("Trunk must be a circular obstacle"),
+            assert_eq!(obs.restitution, 0.25); // Wood dampening
+            assert_eq!(obs.friction, 0.55); // Bark friction
+            assert!(obs.name.contains(tree_type.name()));
+        } else {
+            // Bush has canopy but no trunk
+            assert!(tree.contains_canopy(Vec2::new(10.0, 20.0)));
+            assert!(!tree.contains_trunk(Vec2::new(10.0, 20.0)));
         }
-        assert_eq!(obs.restitution, 0.25); // Wood dampening
-        assert_eq!(obs.friction, 0.55); // Bark friction
-        assert!(obs.name.contains(tree_type.name()));
     }
 }
 
