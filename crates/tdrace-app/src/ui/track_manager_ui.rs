@@ -8,6 +8,7 @@ use crate::render::color::Palette;
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
+use cabinet::ui::{ChecklistItem, ChecklistModal, LayoutRect, ModalContainer, TextInputWidget};
 pub use crate::track_manager::{ModuleFilter, TrackManager};
 use crate::ui::menu::TrackChoice;
 
@@ -767,23 +768,17 @@ fn render_edit_modal(
     active_field: usize,
     cursor_timer: f32,
 ) {
-    // Backdrop dimming
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.75));
-
     let mw = scaler.s(520.0);
     let mh = scaler.s(280.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.2);
-
-    fonts.draw_ui_bold(
+    // Uniform modal chrome (platform ModalContainer: dim, frame, title, divider)
+    let modal = ModalContainer::new(
         "EDIT TRACK NAME & DESCRIPTION",
-        mx + scaler.s(20.0),
-        my + scaler.s(32.0),
-        scaler.font_s(18.0),
-        Palette::NEON_GOLD,
+        LayoutRect::new(mx, my, mw, mh),
     );
+    modal.draw(scaler, fonts, sw, sh);
 
     fonts.draw_ui_regular(
         "Press [Tab] or [Up/Down] to switch fields • [Enter] Save • [Esc] Cancel",
@@ -802,15 +797,13 @@ fn render_edit_modal(
 
     let is_f1_active = active_field == 0;
     fonts.draw_ui_bold("TRACK NAME:", mx + scaler.s(20.0), f1_y + scaler.s(12.0), scaler.font_s(12.0), if is_f1_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED });
-    scaler.draw_glass_card(
-        mx + scaler.s(20.0),
-        f1_y + scaler.s(16.0),
-        f_w,
-        f_h,
-        Color::new(0.08, 0.10, 0.16, 0.90),
-        if is_f1_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-        if is_f1_active { 2.0 } else { 1.0 },
-    );
+
+    // Track Name field (platform TextInputWidget frame)
+    let mut name_field = TextInputWidget::new(mx + scaler.s(20.0), f1_y + scaler.s(16.0), f_w, f_h, 40, "TRACK NAME");
+    name_field.set_text(name_input);
+    name_field.is_focused = is_f1_active;
+    name_field.is_active = is_f1_active;
+    name_field.render_frame();
 
     let name_display = if is_f1_active && is_cursor_visible {
         format!("{}|", name_input)
@@ -823,15 +816,13 @@ fn render_edit_modal(
     let f2_y = f1_y + f_h + scaler.s(24.0);
     let is_f2_active = active_field == 1;
     fonts.draw_ui_bold("TRACK DESCRIPTION:", mx + scaler.s(20.0), f2_y + scaler.s(12.0), scaler.font_s(12.0), if is_f2_active { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED });
-    scaler.draw_glass_card(
-        mx + scaler.s(20.0),
-        f2_y + scaler.s(16.0),
-        f_w,
-        f_h,
-        Color::new(0.08, 0.10, 0.16, 0.90),
-        if is_f2_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-        if is_f2_active { 2.0 } else { 1.0 },
-    );
+
+    // Track Description field (platform TextInputWidget frame)
+    let mut desc_field = TextInputWidget::new(mx + scaler.s(20.0), f2_y + scaler.s(16.0), f_w, f_h, 160, "TRACK DESCRIPTION");
+    desc_field.set_text(desc_input);
+    desc_field.is_focused = is_f2_active;
+    desc_field.is_active = is_f2_active;
+    desc_field.render_frame();
 
     let desc_display = if is_f2_active && is_cursor_visible {
         format!("{}|", desc_input)
@@ -899,16 +890,27 @@ fn render_promotion_modal(
     cursor_idx: usize,
     selected_mask: [bool; PROMOTION_MODULE_COUNT],
 ) {
-    // Backdrop dimming
-    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
-
     let mw = scaler.s(540.0);
     let mh = scaler.s(116.0 + PROMOTION_MODULE_COUNT as f32 * 51.0);
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.2);
+    // Multi-select category checklist (platform ChecklistModal: backdrop, rows, focus state)
+    let items: Vec<ChecklistItem<usize>> = PROMOTION_MODULES
+        .iter()
+        .enumerate()
+        .map(|(idx, (mod_id, _title, _desc, _accent))| {
+            ChecklistItem::new(mod_id.to_string(), String::new(), selected_mask[idx], idx)
+        })
+        .collect();
 
+    let mut modal = ChecklistModal::new("ASSIGN MOTORSPORT CATEGORIES", mx, my, mw, mh, items);
+    modal.focused_idx = cursor_idx;
+    modal.item_height = scaler.s(45.0);
+    modal.gap = scaler.s(6.0);
+    modal.render_frame();
+
+    // Title & prompt (ChecklistModal::render_frame draws chrome only, not text)
     fonts.draw_ui_bold(
         "ASSIGN MOTORSPORT CATEGORIES",
         mx + scaler.s(20.0),
@@ -926,38 +928,17 @@ fn render_promotion_modal(
         Palette::WHITE,
     );
 
-    let list_y = my + scaler.s(68.0);
-    let item_h = scaler.s(45.0);
-    let item_w = mw - scaler.s(40.0);
-
+    // Item labels, checkboxes, and status aligned to the checklist row frames
     for (idx, (_mod_id, title, desc, accent)) in PROMOTION_MODULES.iter().enumerate() {
+        let r = modal.item_rect(idx);
         let is_hover = idx == cursor_idx;
         let is_checked = selected_mask[idx];
-        let iy = list_y + idx as f32 * (item_h + scaler.s(6.0));
 
-        let bg_col = if is_checked {
-            Color::new(accent.r * 0.28, accent.g * 0.28, accent.b * 0.28, 0.95)
-        } else if is_hover {
-            Color::new(0.12, 0.15, 0.22, 0.85)
-        } else {
-            Color::new(0.07, 0.09, 0.14, 0.70)
-        };
-        let border_col = if is_hover {
-            *accent
-        } else if is_checked {
-            Color::new(accent.r, accent.g, accent.b, 0.7)
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-
-        scaler.draw_glass_card(mx + scaler.s(20.0), iy, item_w, item_h, bg_col, border_col, if is_hover { 2.0 } else { 1.0 });
-
-        // Checkbox & Key shortcut pill: [✓] [1] or [ ] [1]
         let check_str = if is_checked { "[X]" } else { "[ ]" };
         fonts.draw_ui_bold(
             check_str,
-            mx + scaler.s(30.0),
-            iy + scaler.s(27.0),
+            r.x + scaler.s(6.0),
+            r.y + scaler.s(27.0),
             scaler.font_s(14.0),
             if is_checked { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED },
         );
@@ -965,26 +946,24 @@ fn render_promotion_modal(
         let num_str = format!("[{}]", idx + 1);
         fonts.draw_ui_bold(
             &num_str,
-            mx + scaler.s(60.0),
-            iy + scaler.s(27.0),
+            r.x + scaler.s(36.0),
+            r.y + scaler.s(27.0),
             scaler.font_s(13.0),
             if is_hover || is_checked { *accent } else { Palette::UI_TEXT_MUTED },
         );
 
-        // Title
         fonts.draw_ui_bold(
             title,
-            mx + scaler.s(92.0),
-            iy + scaler.s(20.0),
+            r.x + scaler.s(68.0),
+            r.y + scaler.s(20.0),
             scaler.font_s(14.0),
             if is_checked || is_hover { Palette::WHITE } else { Color::new(0.85, 0.90, 0.95, 1.0) },
         );
 
-        // Subtitle
         fonts.draw_ui_regular(
             desc,
-            mx + scaler.s(92.0),
-            iy + scaler.s(36.0),
+            r.x + scaler.s(68.0),
+            r.y + scaler.s(36.0),
             scaler.font_s(10.5),
             Palette::UI_TEXT_MUTED,
         );
@@ -992,16 +971,16 @@ fn render_promotion_modal(
         if is_checked {
             fonts.draw_ui_bold(
                 "SELECTED",
-                mx + item_w - scaler.s(45.0),
-                iy + scaler.s(27.0),
+                r.x + r.w - scaler.s(45.0),
+                r.y + scaler.s(27.0),
                 scaler.font_s(11.5),
                 Palette::NEON_GREEN,
             );
         } else if is_hover {
             fonts.draw_ui_bold(
                 "+ TOGGLE",
-                mx + item_w - scaler.s(45.0),
-                iy + scaler.s(27.0),
+                r.x + r.w - scaler.s(45.0),
+                r.y + scaler.s(27.0),
                 scaler.font_s(11.5),
                 Palette::UI_TEXT_MUTED,
             );
