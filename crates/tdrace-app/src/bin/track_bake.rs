@@ -21,7 +21,7 @@ use tdrace_core::track::{validate_track, Track, ValidationSeverity};
 fn usage() -> ExitCode {
     eprintln!(
         "usage: track_bake <file.json>... [--rebuild] [--merge-walls|--no-merge-walls] [--barrier-offset M] \
-         [--barrier-type Concrete|Steel|TireWall|CurbWall|Virtual] [--checkpoints N] [--sectors N]"
+         [--barrier-type Concrete|Steel|TireWall|CurbWall|Virtual] [--checkpoints N] [--sectors N] [--adaptive-checkpoints]"
     );
     ExitCode::from(2)
 }
@@ -64,6 +64,10 @@ fn main() -> ExitCode {
                 opts.sector_count = Some(v.parse().map_err(|e| format!("--sectors {}: {}", v, e))?);
                 Ok(())
             }),
+            "--adaptive-checkpoints" => {
+                opts.adaptive_checkpoints = true;
+                Ok(())
+            }
             "-h" | "--help" => return usage(),
             flag if flag.starts_with("--") => Err(format!("unknown option {}", flag)),
             file => {

@@ -526,3 +526,57 @@ fn test_tire_smoke_particle_count_and_scaling() {
     assert!((180..=320).contains(&n), "Intensity 0.25 emitted {} of 1000", n);
 }
 
+#[test]
+fn test_skidmarks_reduced_opacity_and_dual_ribbon_irregularity() {
+    let mut buffer = SkidmarkBuffer::new(50);
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.8;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    car.state.position = Vec2::new(0.5, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    assert_eq!(buffer.count(), 2);
+    let outer = &buffer.segments()[0];
+    let inner = &buffer.segments()[1];
+
+    // Peak opacity is reduced compared to former heavy solid black (<= 0.85)
+    assert!(outer.color.a < 0.85, "Outer ribbon alpha {:.3} should be slightly reduced below 0.85", outer.color.a);
+    assert!(inner.color.a < 0.85, "Inner ribbon alpha {:.3} should be slightly reduced below 0.85", inner.color.a);
+
+    // Geometry is decoupled and irregular between outer and inner shoulders
+    let outer_w = (outer.p1 - outer.p0).length();
+    let inner_w = (inner.p1 - inner.p0).length();
+    assert!(
+        (outer_w - inner_w).abs() > 1e-4 || (outer.color.a - inner.color.a).abs() > 1e-4,
+        "Outer and inner tread ribbons should be decoupled and irregular"
+    );
+}
+
+#[test]
+fn test_grass_and_dirt_pavement_transfer_irregularity_and_reduction() {
+    let mut buffer = SkidmarkBuffer::new(50);
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 12.0;
+    car.state.velocity = Vec2::new(12.0, 0.0);
+    for w in 0..4 {
+        car.state.wheels[w].skid_intensity = 0.0;
+        car.state.wheels[w].dirt_contamination = 0.60;
+        car.state.wheels[w].dirt_surface = SurfaceType::Grass;
+    }
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    car.state.position = Vec2::new(0.5, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    assert_eq!(buffer.count(), 8); // 4 wheels * 2 ribbons
+    let seg = &buffer.segments()[0];
+
+    // Transferred grass color is organic greenish/loam
+    assert!(seg.color.g > seg.color.r, "Grass deposit should retain green dominant tint");
+    // Transferred trace alpha is moderately reduced
+    assert!(seg.color.a <= 0.60, "Grass deposit alpha {:.3} should be slightly reduced", seg.color.a);
+}
+

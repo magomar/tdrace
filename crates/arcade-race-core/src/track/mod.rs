@@ -993,8 +993,8 @@ mod tests {
                 let x = if cx > 0.0 { -20.0 + k as f32 * 40.0 / 7.0 } else { 20.0 - k as f32 * 40.0 / 7.0 };
                 points.push(Vec2::new(x, if cx > 0.0 { -6.0 } else { 6.0 }));
             }
-            for k in 0..6 {
-                let a = start + k as f32 * std::f32::consts::PI / 6.0;
+            for k in 0..24 {
+                let a = start + k as f32 * std::f32::consts::PI / 24.0;
                 points.push(Vec2::new(cx, 0.0) + Vec2::new(a.cos(), a.sin()) * 6.0);
             }
         }
@@ -1019,15 +1019,17 @@ mod tests {
         let track = octagon_track(waypoints);
 
         // Corridor width ramps 4 m -> 10 m -> 4 m across the two segments next to waypoint 2.
-        let max_step = (10.0 - 4.0) / TrackSpline::STEPS_PER_SEGMENT as f32 + 1e-3;
+        let max_step = (10.0 - 4.0) / TrackSpline::MIN_STEPS_PER_SEGMENT as f32 + 1e-3;
         let samples = &track.spline.samples;
-        for pair in samples.windows(2) {
+        for (i, pair) in samples.windows(2).enumerate() {
             let (a, b) = (pair[0].left_wall_distance.unwrap(), pair[1].left_wall_distance.unwrap());
-            assert!((a - b).abs() <= max_step, "left corridor jumps from {a} to {b}");
+            assert!((a - b).abs() <= max_step, "left corridor jumps from {a} to {b} at index {i}");
         }
-        let peak = samples[2 * TrackSpline::STEPS_PER_SEGMENT].left_wall_distance.unwrap();
+        let wp2_idx = track.spline.waypoint_sample_index(2).unwrap();
+        let peak = samples[wp2_idx].left_wall_distance.unwrap();
         assert!((peak - 10.0).abs() < 1e-3, "override must hold at its waypoint (got {peak})");
-        let mid = samples[2 * TrackSpline::STEPS_PER_SEGMENT + TrackSpline::STEPS_PER_SEGMENT / 2]
+        let wp3_idx = track.spline.waypoint_sample_index(3).unwrap();
+        let mid = samples[(wp2_idx + wp3_idx) / 2]
             .left_wall_distance
             .unwrap();
         assert!((mid - 7.0).abs() < 0.05, "corridor must be halfway at the segment midpoint (got {mid})");

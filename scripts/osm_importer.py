@@ -748,7 +748,12 @@ def process_gt_circuit(cid, cache_dir):
     x0, y0 = scaled_pts[0]
     aligned_pts = [(x - x0, y - y0) for x, y in scaled_pts]
 
-    resampled, _, final_len = resample_polyline(aligned_pts, cfg["num_waypoints"])
+    # Enforce minimum centerline radius R_min >= w/2 + 1.0m (Spec 071)
+    road_w = cfg.get("default_width", cfg.get("width", 12.0))
+    min_radius = road_w * 0.5 + 1.0
+    filleted_pts, _ = fillet_corners(aligned_pts, [None] * len(aligned_pts), min_radius, min_turn_deg=15.0)
+
+    resampled, _, final_len = resample_polyline(filleted_pts, cfg["num_waypoints"])
 
     # Start line alignment along +X
     dx = resampled[1][0] - resampled[0][0]
