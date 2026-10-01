@@ -2,7 +2,7 @@
 type: Feature Spec
 template: feature
 title: "Legacy UI Migration and Reusable Platform Component Adoption"
-description: "Migrates all legacy, ad-hoc UI rendering loops and navigation state across TdRace to the reusable platform component suite in cabinet, expanding the component catalog with newly identified containers (SplitPane, ModalContainer) and widgets (ValueStepper, MetricBar, KpiTile)."
+description: "Migrates all legacy, ad-hoc UI rendering loops and navigation state across TdRace onto the shipped cabinet::ui component suite (Spec 068) — containers (SplitPane, GridLayout, FlowLayout, ScrollIndicator), selectors (Toggle, RadioGroup, OptionCycler), counters (Counter, ValueStepper), and feedback surfaces (MetricBar, KpiTile, ModalContainer, CountDown, Tooltip, PageDots) — enforcing gamepad-first 2D navigation parity across every screen."
 status: draft
 created: 2026-09-30
 generated: { by: agent/antigravity, at: 2026-09-30T11:15:00Z }
@@ -21,7 +21,7 @@ An exhaustive codebase inspection of all interactive screens in [`crates/tdrace-
 4. **Standard Performance & Ability Bars (`MetricBar`)**: Duplicated implementations of progress/stat bars with custom labels and threshold coloring.
 5. **High-Impact Metric Summaries (`KpiTile`)**: Prominent stat cards with big value readouts and subtext.
 
-This specification orchestrates the **complete surgical migration of TdRace's legacy screens** onto the unified `cabinet::ui` architecture, expands `cabinet::ui` with the newly identified primitives, and enforces gamepad-first 2D navigation parity across the entire game.
+The component catalog — including the newly identified containers, selectors, counters, and feedback surfaces, plus the `NavIntent`/`KeyRepeat` input layer — is canonicalized and shipped under **Spec 068**. This specification orchestrates the **complete surgical migration of TdRace's legacy screens** onto that `cabinet::ui` architecture and enforces gamepad-first 2D navigation parity across the entire game.
 
 ---
 
@@ -46,6 +46,17 @@ A comprehensive analysis of all visual modules in `tdrace-app` and `cabinet` est
 | **Track Manager** | [`ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) | Custom category chips, manual list scrolling, bespoke edit/promote/delete dialogs | `FilterBar` + `VStack` (Tracks) + `TextInputWidget` (Metadata) + `ChecklistModal` | `SplitPane`, `ModalContainer`, `UniversalConfirmModal` |
 | **Series Editor** | [`ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) | Bespoke tab cards, manual status toast popup, ad-hoc text modal, manual stepper keys | `FilterBar` (Tabs) + `TextInputWidget` + `ToastOverlay` | `ValueStepper` (Points/Laps), `ScreenFooter` |
 | **LAN Hub & Join** | [`ui/lan_ui.rs`](../crates/tdrace-app/src/ui/lan_ui.rs), [`net/ui`](../crates/cabinet/src/net/ui/mod.rs) | Hardcoded 2-card side-by-side math, isolated network numeric keypad | `HStack` (Host/Join Cards) | `VirtualKeypad` (Alphanumeric/IP) |
+| **Career Hub** | [`ui/career_hub.rs`](../crates/tdrace-app/src/ui/career_hub.rs) | Manual tier tab loop w/ lock chevrons, manual 0.38/0.62 split, manual POS/DRIVER/TEAM/WINS/POINTS table, manual promotion bar | `TabBar`/`FilterBar` (Tiers) + `SplitPane` + `DataTable` + `VStack` (Calendar) | `MetricBar`, `ScreenFooter`, `ValueStepper` (Slot Swap) |
+| **Circuit Viewer** | [`ui/circuit_viewer.rs`](../crates/tdrace-app/src/ui/circuit_viewer.rs) | Manual `mouse_vec` hit-tests for back/zoom/FIT, segmented surface rectangle loop | `draw_action_button` + `Counter` (Zoom) + button row (FIT) | segmented `MetricBar`, `ScreenFooter` |
+| **In-Race HUD** | [`ui/hud.rs`](../crates/tdrace-app/src/ui/hud.rs) | Manual fade timers for PB/visibility toasts, manual 3-2-1-GO, wrong-way banner, drift bar | `ToastOverlay` (Record/Warning) + `CountDown` + `Tooltip` | `MetricBar` (Drift), `HelpChip` (Assist Badges) |
+| **Track Preview** | [`ui/track_preview.rs`](../crates/tdrace-app/src/ui/track_preview.rs) | Segmented surface fill loop | segmented `MetricBar` | — |
+| **Track Editor** | [`editor/ui.rs`](../crates/tdrace-app/src/editor/ui.rs) | Mouse-only `draw_ui_btn`, drag slider + inline text, `[X]/[ ]` toggles, ± button groups, manual modals, PREV/NEXT pagination | `draw_action_button` + `SliderWidget` + `Toggle` + `Counter` + `ModalContainer` | `PageDots`, `TextInputWidget`, `SwatchPicker`/`ChecklistModal` (Palettes) |
+| **Replay** | [`replay/mod.rs`](../crates/tdrace-app/src/replay/mod.rs) | `PlaybackSpeed::cycle` data-only option cycler (no viewer screen yet) | `OptionCycler` (Playback Speed) | future replay HUD |
+| **LAN Host / Join / Client Lobby** | [`net/ui`](../crates/cabinet/src/net/ui/mod.rs) | Manual 0.58/0.42 splits, manual slot/roster lists, livery cycling, ready text toggle | `SplitPane` + `VStack` + `SwatchPicker` | `ValueStepper` (Laps/Collision), `Toggle` (Ready), `ToastOverlay` (Status) |
+| **Pause Menu** | [`ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) | Manual dim + modal card + Resume/Exit pair + settings text list | `ModalContainer` + `ScreenFooter` | `Toggle`/`ValueStepper` (Audio/Assist) |
+| **Race Results & Standings** | [`ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) | Manual header + row loop, `P1/P2/P3` text, manual POS/DRIVER/WINS/POINTS | `DataTable<RaceResultEntry>` | — |
+| **Controls Screen** | [`ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) | Static 2-col key/value tables; preset/profile cycling only | `SplitPane` + `DataTable` + `ValueStepper` | key-remap capture (future) |
+| **Name Badges / Tier Tags** | [`render/marker.rs`](../crates/tdrace-app/src/render/marker.rs), [`render/trophy_textures.rs`](../crates/tdrace-app/src/render/trophy_textures.rs) | Bespoke badge/tag rect rendering | `draw_chip` | — |
 
 ---
 
@@ -77,7 +88,9 @@ flowchart LR
 
 ## ⚙️ Backend Models & API Endpoints
 
-### 1. New Layout Containers in `cabinet::ui`
+> **Canonical component definitions live in Spec 068** (`§ Backend Models & API Endpoints`), including `SplitPane`, `GridLayout`, `FlowLayout`, `ScrollIndicator`, `ValueStepper<T>`, `Counter`, `Toggle`, `RadioGroup<T>`, `OptionCycler<T>`, `MetricBar`, `KpiTile`, `ProgressBar`, `ModalContainer`, `CountDown`, `Tooltip`, `HelpChip`, `PageDots`, `VirtualKeypad`, and the `NavIntent`/`KeyRepeat` input layer. All are shipped. The sketches below are retained for reference; this spec only defines migration-specific payload types (`T`).
+
+### 1. Layout Containers (`cabinet::ui`) — canonical in Spec 068
 
 ```rust
 // In crates/cabinet/src/ui/layout.rs
@@ -98,7 +111,7 @@ impl SplitPane {
 }
 ```
 
-### 2. New Interactive Widgets in `cabinet::ui`
+### 2. Interactive Widgets (`cabinet::ui`) — canonical in Spec 068
 
 ```rust
 // In crates/cabinet/src/ui/widgets.rs
@@ -285,18 +298,69 @@ pub struct KpiTile {
 - [ ] **Then** metadata fields use `TextInputWidget` and category selection uses `ChecklistModal`
 - [ ] **And** confirmation dialogs use `UniversalConfirmModal`
 
+#### Scenario 8: Career Hub SplitPane, DataTable and Promotion MetricBar
+- [ ] **Given** the player opens the Career Hub (`GameState::CareerHub`)
+- [ ] **When** viewing a tier
+- [ ] **Then** the screen is structured with a `SplitPane` (calendar vs standings)
+- [ ] **And** standings are rendered via `DataTable` with `POS/DRIVER/TEAM/WINS/POINTS` columns
+- [ ] **And** the license promotion progress is rendered via a `MetricBar`
+
+#### Scenario 9: Circuit Viewer Counter and Surface MetricBar
+- [ ] **Given** the player is in the Circuit Viewer
+- [ ] **When** zooming with the `−`/`+` controls (or `Left`/`Right`)
+- [ ] **Then** zoom level adjusts via a `Counter` with hold-to-repeat
+- [ ] **And** the surface-composition breakdown renders as a segmented `MetricBar`
+
+#### Scenario 10: HUD CountDown and ToastOverlay
+- [ ] **Given** a race is about to start
+- [ ] **When** the countdown begins
+- [ ] **Then** the 3-2-1-GO sequence renders via `CountDown` with scale/fade animation
+- [ ] **And** personal-best and visibility-aid notifications render via `ToastOverlay` instead of bespoke fade timers
+
+#### Scenario 11: Track Editor Toggle and Counter Migration
+- [ ] **Given** the player is in the Track Editor
+- [ ] **When** toggling curbs/walls or overwrite options
+- [ ] **Then** `[X]/[ ]` flags are replaced by `Toggle` widgets (gamepad `A` toggles)
+- [ ] **And** ± meter/degree adjustments are handled by `Counter` widgets with hold-to-repeat
+- [ ] **And** the open-track modal paginates via `PageDots`
+
+#### Scenario 12: Pause Menu ModalContainer
+- [ ] **Given** the player pauses mid-race
+- [ ] **When** the pause overlay opens
+- [ ] **Then** it renders inside a `ModalContainer` with `ScreenFooter` prompts
+- [ ] **And** audio/assist settings are adjusted via `Toggle` / `ValueStepper` widgets
+
+#### Scenario 13: LAN Lobby Toggle and ValueStepper
+- [ ] **Given** the player is in a LAN host or client lobby
+- [ ] **When** setting laps, collisions, livery, or ready state
+- [ ] **Then** laps/collision use `ValueStepper`, livery uses `SwatchPicker`, and ready uses `Toggle`
+- [ ] **And** lobby status changes surface via `ToastOverlay`
+
+#### Scenario 14: Replay PlaybackSpeed OptionCycler
+- [ ] **Given** a future replay viewer HUD
+- [ ] **When** changing playback speed
+- [ ] **Then** speed cycles via `OptionCycler` with `Left`/`Right` and hold-repeat
+
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
-### Platform Components to Add / Standardize
-- `[ ]` [`crates/cabinet/src/ui/layout.rs`](../crates/cabinet/src/ui/layout.rs) — Add `SplitPane` layout container.
-- `[ ]` [`crates/cabinet/src/ui/widgets.rs`](../crates/cabinet/src/ui/widgets.rs) — Add `ValueStepper<T>`, `MetricBar`, and `KpiTile`.
-- `[ ]` [`crates/cabinet/src/net/ui/ip_keypad.rs`](../crates/cabinet/src/net/ui/ip_keypad.rs) — Generalize `ip_keypad` into a platform-wide `VirtualKeypad`.
-- `[ ]` [`crates/cabinet/src/ui/mod.rs`](../crates/cabinet/src/ui/mod.rs) — Re-export new containers and widgets.
+### Platform Components (Shipped — see Spec 068 Traceability)
+> The full component inventory — `SplitPane`, `GridLayout`, `FlowLayout`, `ScrollIndicator`, `Toggle`, `RadioGroup<T>`, `OptionCycler<T>`, `Counter`, `ValueStepper<T>`, `MetricBar`, `KpiTile`, `ProgressBar`, `ModalContainer`, `CountDown`, `Tooltip`, `HelpChip`, `PageDots`, `VirtualKeypad`, `NavIntent`, `KeyRepeat` — is implemented and re-exported from `cabinet`. This spec only migrates screens onto those components.
+
+- `[x]` [`crates/cabinet/src/ui/layout.rs`](../crates/cabinet/src/ui/layout.rs) — `SplitPane`, `GridLayout`, `FlowLayout`, `ScrollIndicator` shipped.
+- `[x]` [`crates/cabinet/src/ui/widgets.rs`](../crates/cabinet/src/ui/widgets.rs) — `ValueStepper<T>`, `Counter`, `Toggle`, `RadioGroup<T>`, `OptionCycler<T>`, `SliderWidget`, `DropdownWidget`, `TabBar` shipped.
+- `[x]` [`crates/cabinet/src/ui/metric.rs`](../crates/cabinet/src/ui/metric.rs) — `MetricBar`, `KpiTile`, `ProgressBar` shipped.
+- `[x]` [`crates/cabinet/src/ui/modal.rs`](../crates/cabinet/src/ui/modal.rs) — `ModalContainer` shipped.
+- `[x]` [`crates/cabinet/src/ui/countdown.rs`](../crates/cabinet/src/ui/countdown.rs) — `CountDown` shipped.
+- `[x]` [`crates/cabinet/src/ui/tooltip.rs`](../crates/cabinet/src/ui/tooltip.rs) — `Tooltip`, `HelpChip` shipped.
+- `[x]` [`crates/cabinet/src/ui/page_dots.rs`](../crates/cabinet/src/ui/page_dots.rs) — `PageDots` shipped.
+- `[x]` [`crates/cabinet/src/input/nav_intent.rs`](../crates/cabinet/src/input/nav_intent.rs) — `NavIntent`, `NavAction` shipped.
+- `[x]` [`crates/cabinet/src/input/key_repeat.rs`](../crates/cabinet/src/input/key_repeat.rs) — `KeyRepeat` shipped.
+- `[x]` [`crates/cabinet/src/net/ui/virtual_keypad.rs`](../crates/cabinet/src/net/ui/virtual_keypad.rs) — `VirtualKeypad` shipped (generalized `IpKeypad`).
 
 ### Application Screens to Migrate
-- `[ ]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) — Migrate Circuit Selector & Modality Select to `FilterBar`, `VStack`, and `SplitPane`.
+- `[ ]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) — Migrate Circuit Selector & Modality Select to `FilterBar`, `VStack`, and `SplitPane`; migrate Pause Menu to `ModalContainer`, Race Results & Standings to `DataTable`, and the Controls Screen to `SplitPane` + `ValueStepper`.
 - `[ ]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) — Migrate setup and roster to `SplitPane`, `ValueStepper`, and `HeroActionButton`.
 - `[ ]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) — Migrate Fleet Gallery and Showroom to `FilterBar`, `CardGrid`, `SwatchPicker`, and `MetricBar`.
 - `[ ]` [`crates/tdrace-app/src/ui/career_select.rs`](../crates/tdrace-app/src/ui/career_select.rs) — Migrate championship cards to `Accordion`.
@@ -307,3 +371,14 @@ pub struct KpiTile {
 - `[ ]` [`crates/tdrace-app/src/ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) — Migrate track lists, metadata fields, and dialogs to platform suite.
 - `[ ]` [`crates/tdrace-app/src/ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) — Migrate championship editor tabs, inputs, and steppers.
 - `[ ]` [`crates/tdrace-app/src/ui/lan_ui.rs`](../crates/tdrace-app/src/ui/lan_ui.rs) — Migrate LAN hub cards and IP entry.
+- `[ ]` [`crates/tdrace-app/src/ui/career_hub.rs`](../crates/tdrace-app/src/ui/career_hub.rs) — Migrate tier tabs, split layout, standings table, calendar, and promotion bar to `TabBar`/`FilterBar`, `SplitPane`, `DataTable`, `VStack`, and `MetricBar`.
+- `[ ]` [`crates/tdrace-app/src/ui/circuit_viewer.rs`](../crates/tdrace-app/src/ui/circuit_viewer.rs) — Migrate back/zoom/FIT controls and surface breakdown to `draw_action_button`, `Counter`, and segmented `MetricBar`.
+- `[ ]` [`crates/tdrace-app/src/ui/hud.rs`](../crates/tdrace-app/src/ui/hud.rs) — Migrate toasts, countdown, wrong-way banner, guides, and drift meter to `ToastOverlay`, `CountDown`, `Tooltip`, and `MetricBar`.
+- `[ ]` [`crates/tdrace-app/src/ui/track_preview.rs`](../crates/tdrace-app/src/ui/track_preview.rs) — Migrate surface legend to segmented `MetricBar`.
+- `[ ]` [`crates/tdrace-app/src/editor/ui.rs`](../crates/tdrace-app/src/editor/ui.rs) — Migrate buttons, sliders, toggles, steppers, modals, and pagination to `draw_action_button`, `SliderWidget`, `Toggle`, `Counter`, `ModalContainer`, and `PageDots`.
+- `[ ]` [`crates/tdrace-app/src/replay/mod.rs`](../crates/tdrace-app/src/replay/mod.rs) — Migrate `PlaybackSpeed::cycle` to `OptionCycler` for a future replay HUD.
+- `[ ]` [`crates/cabinet/src/net/ui/host_screen.rs`](../crates/cabinet/src/net/ui/host_screen.rs) — Migrate split layout, slot list, and livery cycling to `SplitPane`, `VStack`, `ValueStepper`, and `SwatchPicker`.
+- `[ ]` [`crates/cabinet/src/net/ui/join_screen.rs`](../crates/cabinet/src/net/ui/join_screen.rs) — Migrate server-browser list to `SplitPane` + `VStack`.
+- `[ ]` [`crates/cabinet/src/net/ui/client_lobby_screen.rs`](../crates/cabinet/src/net/ui/client_lobby_screen.rs) — Migrate roster, loadout rows, and ready toggle to `SplitPane`, `VStack`, `SwatchPicker`, and `Toggle`.
+- `[ ]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) — Reuse `draw_chip` for name badges and tier tags.
+- `[ ]` [`crates/tdrace-app/src/render/trophy_textures.rs`](../crates/tdrace-app/src/render/trophy_textures.rs) — Reuse `draw_chip` for trophy and lock overlays.
