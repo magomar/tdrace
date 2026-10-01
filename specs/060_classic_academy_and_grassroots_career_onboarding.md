@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Classic Academy and Grassroots Career Onboarding"
 description: "Establishes a zero-start onboarding loop with 0 XP and 0 Credits, requiring players to complete Classic Arcade Academy challenges to earn driving licenses and seed prize money for their first grassroots car purchase."
-status: implemented
+status: in_progress
+receipt: "docs/receipts/spec-060-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T14:42:47Z }
 verified: { by: "human:mario", at: "2026-09-29T20:24:27Z" }
