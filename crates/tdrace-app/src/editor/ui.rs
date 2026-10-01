@@ -18,6 +18,10 @@ use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
 use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
 use cabinet::input::GamepadSnapshot;
+use cabinet::ui::{
+    draw_action_button, draw_stepper, Counter, LayoutRect, ModalContainer, PageDots,
+    SliderWidget, TextInputWidget, Toggle,
+};
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
 
@@ -600,7 +604,6 @@ pub fn render_editor_ui(
 
     // 5. MODAL OVERLAYS (rendered on top of all toolbars, panels, and track)
     if is_modal_open {
-        draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.78));
         match active_modal {
             EditorModal::Templates {
                 ref mut selected_shape,
@@ -934,18 +937,20 @@ fn render_inspector(
                 let lc = state.track.spline.waypoints[idx].left_curb;
                 let rc = state.track.spline.waypoints[idx].right_curb;
                 let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                let lc_lbl = if lc { "[X] L Curb" } else { "[ ] L Curb" };
-                let rc_lbl = if rc { "[X] R Curb" } else { "[ ] R Curb" };
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), lc_lbl, if lc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if lc { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                let mut lc_toggle = Toggle::new("L Curb", lc);
+                let mut rc_toggle = Toggle::new("R Curb", rc);
+                if draw_toggle(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), &lc_toggle, mouse_pos, clicked) {
+                    lc_toggle.toggle();
                     state.record_undo();
-                    state.track.spline.waypoints[idx].left_curb = !lc;
-                    tools.new_waypoint_left_curb = !lc;
+                    state.track.spline.waypoints[idx].left_curb = lc_toggle.is_on;
+                    tools.new_waypoint_left_curb = lc_toggle.is_on;
                     state.rebuild_geometry();
                 }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), rc_lbl, if rc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if rc { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                if draw_toggle(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), &rc_toggle, mouse_pos, clicked) {
+                    rc_toggle.toggle();
                     state.record_undo();
-                    state.track.spline.waypoints[idx].right_curb = !rc;
-                    tools.new_waypoint_right_curb = !rc;
+                    state.track.spline.waypoints[idx].right_curb = rc_toggle.is_on;
+                    tools.new_waypoint_right_curb = rc_toggle.is_on;
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(26.0);
@@ -953,18 +958,20 @@ fn render_inspector(
                 // Walls toggles
                 let lw = state.track.spline.waypoints[idx].left_wall;
                 let rw = state.track.spline.waypoints[idx].right_wall;
-                let lw_lbl = if lw { "[X] L Wall" } else { "[ ] L Wall" };
-                let rw_lbl = if rw { "[X] R Wall" } else { "[ ] R Wall" };
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), lw_lbl, if lw { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if lw { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                let mut lw_toggle = Toggle::new("L Wall", lw);
+                let mut rw_toggle = Toggle::new("R Wall", rw);
+                if draw_toggle(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), &lw_toggle, mouse_pos, clicked) {
+                    lw_toggle.toggle();
                     state.record_undo();
-                    state.track.spline.waypoints[idx].left_wall = !lw;
-                    tools.new_waypoint_left_wall = !lw;
+                    state.track.spline.waypoints[idx].left_wall = lw_toggle.is_on;
+                    tools.new_waypoint_left_wall = lw_toggle.is_on;
                     state.rebuild_geometry();
                 }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), rw_lbl, if rw { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if rw { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
+                if draw_toggle(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), &rw_toggle, mouse_pos, clicked) {
+                    rw_toggle.toggle();
                     state.record_undo();
-                    state.track.spline.waypoints[idx].right_wall = !rw;
-                    tools.new_waypoint_right_wall = !rw;
+                    state.track.spline.waypoints[idx].right_wall = rw_toggle.is_on;
+                    tools.new_waypoint_right_wall = rw_toggle.is_on;
                     state.rebuild_geometry();
                 }
                 curr_y += scaler.s(28.0);
@@ -1791,10 +1798,11 @@ fn render_inspector(
             let cp_pos = state.track.checkpoints.iter().position(|c| c.id == id);
             if let Some(pos) = cp_pos {
                 let is_finish = state.track.checkpoints[pos].is_finish_line;
-                let finish_lbl = checkpoint_finish_line_label(is_finish);
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), finish_lbl, Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
+                let mut finish_toggle = Toggle::new("Finish Line", is_finish);
+                if draw_toggle(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), &finish_toggle, mouse_pos, clicked) {
+                    finish_toggle.toggle();
                     state.record_undo();
-                    state.track.checkpoints[pos].is_finish_line = !is_finish;
+                    state.track.checkpoints[pos].is_finish_line = finish_toggle.is_on;
                     state.auto_generate_grid();
                     state.revalidate();
                 }
@@ -2647,18 +2655,19 @@ fn render_inspector(
             }
             curr_y += scaler.s(24.0);
 
-            let btn_step_w = scaler.s(30.0);
-            let presets = [8, 10, 12, 14, 16, 18];
-            let avail_w = w - scaler.s(24.0) - btn_step_w * 2.0 - scaler.s(8.0) * 2.0;
-            let chip_w = (avail_w - scaler.s(4.0) * (presets.len() as f32 - 1.0)) / (presets.len() as f32);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_step_w, scaler.s(22.0), "-1", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                if grid_cnt > 1 {
-                    state.set_grid_count(grid_cnt - 1);
+            // Grid count stepper (platform Counter) with hold-to-repeat, then quick presets.
+            let mut grid_counter = Counter::new(1, 24, 1, grid_cnt as i64);
+            if draw_counter(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(36.0), "Grid Slots", &mut grid_counter, mouse_pos) {
+                if grid_counter.value as usize != grid_cnt {
+                    state.set_grid_count(grid_counter.value as usize);
                 }
             }
+            curr_y += scaler.s(42.0);
 
-            let mut px = x + scaler.s(12.0) + btn_step_w + scaler.s(8.0);
+            let presets = [8, 10, 12, 14, 16, 18];
+            let avail_w = w - scaler.s(24.0);
+            let chip_w = (avail_w - scaler.s(4.0) * (presets.len() as f32 - 1.0)) / (presets.len() as f32);
+            let mut px = x + scaler.s(12.0);
             for &cnt in &presets {
                 let is_active = grid_cnt == cnt;
                 if draw_ui_btn(
@@ -2677,12 +2686,6 @@ fn render_inspector(
                     state.set_grid_count(cnt);
                 }
                 px += chip_w + scaler.s(4.0);
-            }
-
-            if draw_ui_btn(fonts, scaler, x + w - scaler.s(12.0) - btn_step_w, curr_y, btn_step_w, scaler.s(22.0), "+1", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                if grid_cnt < 24 {
-                    state.set_grid_count(grid_cnt + 1);
-                }
             }
             curr_y += scaler.s(30.0);
 
@@ -2711,10 +2714,9 @@ fn render_template_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
+    ModalContainer::new("START NEW CIRCUIT", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
-    // Title & Subtitle
-    fonts.draw_display_centered("START NEW CIRCUIT", sw * 0.5, my + scaler.s(28.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    // Subtitle
     fonts.draw_ui_regular_centered("Choose circuit layout, race direction, and motorsport module defaults", sw * 0.5, my + scaler.s(48.0), scaler.font_s(12.5), Palette::UI_TEXT_MUTED);
 
     // Close button (X) top right
@@ -3038,11 +3040,7 @@ pub fn draw_bar_control(
 
     // 4. Render Slider Bar (Left)
     let current_val = result_val.unwrap_or(val);
-    let bar_pct = if (max_val - min_val).abs() > 1e-5 {
-        ((current_val - min_val) / (max_val - min_val)).clamp(0.0, 1.0)
-    } else {
-        0.0
-    };
+    let bar_pct = SliderWidget::new("", min_val, max_val, step, current_val).normalized();
 
     let slider_bg = if mouse_over_slider { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
     let slider_border = if is_selected {
@@ -3235,8 +3233,6 @@ fn render_set_ramp_property_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
-
     let (title, subtitle, unit, min_val, max_val) = match property {
         RampPropertyModal::Angle => ("SET JUMP RAMP ANGLE", "Specify direction angle (0° – 360°) • [Enter] to apply", "°", 0.0, 360.0),
         RampPropertyModal::Length => ("SET JUMP RAMP LENGTH", "Specify total ramp length (2.0m – 50.0m) • [Enter] to apply", "m", 2.0, 50.0),
@@ -3246,7 +3242,7 @@ fn render_set_ramp_property_modal(
         RampPropertyModal::LaunchSpeed => ("SET LAUNCH SPEED BOOST", "Specify vertical launch speed (1.0m/s – 20.0m/s) • [Enter] to apply", "m/s", 1.0, 20.0),
     };
 
-    fonts.draw_display_centered(title, sw * 0.5, my + scaler.s(26.0), scaler.font_s(20.0), Palette::NEON_GOLD);
+    ModalContainer::new(title, LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
     fonts.draw_ui_regular_centered(subtitle, sw * 0.5, my + scaler.s(48.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
 
     // Text Input Display Box
@@ -3255,7 +3251,15 @@ fn render_set_ramp_property_modal(
     let box_w = mw - scaler.s(60.0);
     let box_h = scaler.s(38.0);
 
-    scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, 1.5);
+    // Platform text input widget for numeric value entry.
+    let mut input_widget = TextInputWidget::new(box_x, box_y, box_w, box_h, 8, "")
+        .with_filter(|c| c.is_ascii_digit() || c == '.');
+    input_widget.set_text(input_val);
+    input_widget.is_focused = true;
+    input_widget.is_active = true;
+    let _ = input_widget.handle_input(macroquad::time::get_frame_time(), None);
+    *input_val = input_widget.text.clone();
+    input_widget.render_frame();
 
     let display_str = if input_val.is_empty() {
         format!("0.0{}", unit)
@@ -3263,18 +3267,6 @@ fn render_set_ramp_property_modal(
         format!("{}{}", input_val, unit)
     };
     fonts.draw_ui_bold(&display_str, box_x + scaler.s(16.0), box_y + scaler.s(24.0), scaler.font_s(17.0), Palette::WHITE);
-
-    // Typing handling
-    while let Some(c) = get_char_pressed() {
-        if (c.is_ascii_digit() || c == '.') && input_val.len() < 8 {
-            if c != '.' || !input_val.contains('.') {
-                input_val.push(c);
-            }
-        }
-    }
-    if is_key_pressed(KeyCode::Backspace) {
-        input_val.pop();
-    }
 
     // Interactive slider in modal
     let slider_y = my + scaler.s(126.0);
@@ -3373,14 +3365,12 @@ fn render_save_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_GREEN, 2.0);
-
     let title_text = if exit_on_save {
         "SAVE & EXIT CIRCUIT"
     } else {
         "SAVE CIRCUIT"
     };
-    fonts.draw_display_centered(title_text, sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    ModalContainer::new(title_text, LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     // Current loaded file context
     if let Some(loaded_path) = current_file_path {
@@ -3730,36 +3720,10 @@ fn render_save_modal(
 
     // Overwrite checkbox / toggle button (always labeled "Overwrite")
     let toggle_y = info_y + scaler.s(10.0);
-    let toggle_lbl = if *overwrite {
-        "[X] Overwrite"
-    } else {
-        "[ ] Overwrite"
-    };
-    let toggle_bg = if *overwrite {
-        Color::new(0.35, 0.25, 0.05, 0.9)
-    } else {
-        Palette::UI_CARD_BG
-    };
-    let toggle_border = if *overwrite {
-        Palette::YELLOW
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-
-    if draw_ui_btn(
-        fonts,
-        scaler,
-        inp_x,
-        toggle_y,
-        inp_w,
-        scaler.s(26.0),
-        toggle_lbl,
-        toggle_bg,
-        toggle_border,
-        mouse_pos,
-        clicked,
-    ) {
-        *overwrite = !*overwrite;
+    let mut overwrite_toggle = Toggle::new("Overwrite", *overwrite);
+    if draw_toggle(fonts, scaler, inp_x, toggle_y, inp_w, scaler.s(26.0), &overwrite_toggle, mouse_pos, clicked) {
+        overwrite_toggle.toggle();
+        *overwrite = overwrite_toggle.is_on;
         if *overwrite {
             if let Some(loaded_path) = current_file_path {
                 if let Some(stem) = std::path::Path::new(loaded_path).file_stem().and_then(|s| s.to_str()) {
@@ -3955,9 +3919,7 @@ fn render_open_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
-
-    fonts.draw_display_centered("OPEN CIRCUIT", sw * 0.5, my + scaler.s(26.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    ModalContainer::new("OPEN CIRCUIT", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
     fonts.draw_ui_regular_centered(
         "Browse circuits across all registered motorsport modules and custom circuits",
         sw * 0.5,
@@ -4312,40 +4274,8 @@ fn render_open_modal(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Pagination buttons (center)
-    if total_pages > 1 {
-        let prev_x = sw * 0.5 - scaler.s(85.0);
-        let next_x = sw * 0.5 + scaler.s(10.0);
-        let nav_w = scaler.s(75.0);
-        let nav_h = scaler.s(28.0);
-
-        if *page > 0 {
-            if draw_ui_btn(fonts, scaler, prev_x, foot_y + scaler.s(4.0), nav_w, nav_h, "< PREV", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                update_open_circuit_nav(
-                    selected_tab,
-                    page,
-                    selected_idx,
-                    tabs.len(),
-                    tracks.len(),
-                    items_per_page,
-                    OpenCircuitNavInput::PagePrev,
-                );
-            }
-        }
-        if *page + 1 < total_pages {
-            if draw_ui_btn(fonts, scaler, next_x, foot_y + scaler.s(4.0), nav_w, nav_h, "NEXT >", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                update_open_circuit_nav(
-                    selected_tab,
-                    page,
-                    selected_idx,
-                    tabs.len(),
-                    tracks.len(),
-                    items_per_page,
-                    OpenCircuitNavInput::PageNext,
-                );
-            }
-        }
-    }
+    // Pagination indicator (platform PageDots)
+    PageDots::new(*page, total_pages).draw(scaler, sw * 0.5, foot_y + scaler.s(18.0), 5.0, 10.0);
 
     // Controls helper hint (right)
     let hint_text = if gamepad.is_connected {
@@ -4381,12 +4311,10 @@ fn render_diagnostics_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::YELLOW, 2.0);
+    ModalContainer::new("CIRCUIT DIAGNOSTICS", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     let val = validate_track(&state.track);
     let is_valid = val.iter().all(|e| e.severity != ValidationSeverity::Error);
-
-    fonts.draw_display_centered("CIRCUIT DIAGNOSTICS", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
 
     let status_str = if is_valid {
         "[OK] All checks passed! Circuit is 100% race ready."
@@ -4428,15 +4356,7 @@ fn render_warning_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::YELLOW, 2.0);
-
-    fonts.draw_display_centered(
-        title,
-        sw * 0.5,
-        my + scaler.s(32.0),
-        scaler.font_s(20.0),
-        Palette::NEON_GOLD,
-    );
+    ModalContainer::new(title, LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     let mut ly = my + scaler.s(68.0);
     for line in message.lines() {
@@ -4487,15 +4407,7 @@ fn render_unsaved_changes_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::YELLOW, 2.0);
-
-    fonts.draw_display_centered(
-        "UNSAVED CHANGES",
-        sw * 0.5,
-        my + scaler.s(30.0),
-        scaler.font_s(20.0),
-        Palette::NEON_GOLD,
-    );
+    ModalContainer::new("UNSAVED CHANGES", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     fonts.draw_ui_regular_centered(
         "You have unsaved changes in this circuit.",
@@ -4624,9 +4536,7 @@ fn render_help_modal(
     let mx = (sw - mw) * 0.5;
     let my = (sh - mh) * 0.5;
 
-    scaler.draw_glass_card(mx, my, mw, mh, Palette::UI_CARD_BG, Palette::NEON_CYAN, 2.0);
-
-    fonts.draw_display_centered("EDITOR CONTROLS & SHORTCUTS", sw * 0.5, my + scaler.s(32.0), scaler.font_s(22.0), Palette::NEON_GOLD);
+    ModalContainer::new("EDITOR CONTROLS & SHORTCUTS", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     let shortcuts = [
         ("Tools 1-8", "Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit"),
@@ -4661,6 +4571,9 @@ fn render_help_modal(
 }
 
 /// Helper function to draw a clickable UI button with hover feedback.
+/// Rendering is delegated to the platform [`draw_action_button`] primitive; the button's
+/// `border` colour doubles as its accent, and a non-default border marks an active/selected
+/// control so the platform card keeps its accent glow even when not hovered.
 fn draw_ui_btn(
     fonts: &Fonts,
     scaler: &UiScaler,
@@ -4669,31 +4582,77 @@ fn draw_ui_btn(
     w: f32,
     h: f32,
     label: &str,
-    bg: Color,
+    _bg: Color,
     border: Color,
     mouse_pos: Vec2,
     clicked: bool,
 ) -> bool {
     let is_hover = mouse_pos.x >= x && mouse_pos.x <= x + w && mouse_pos.y >= y && mouse_pos.y <= y + h;
+    let is_focused = border != Palette::UI_CARD_BORDER;
 
-    let final_bg = if is_hover {
-        Color::new((bg.r * 1.3).min(1.0), (bg.g * 1.3).min(1.0), (bg.b * 1.3).min(1.0), bg.a)
-    } else {
-        bg
-    };
-
-    draw_rectangle(x, y, w, h, final_bg);
-    draw_rectangle_lines(x, y, w, h, if is_hover { 2.0 } else { 1.0 }, border);
-
-    fonts.draw_ui_bold_centered(
-        label,
-        x + w * 0.5,
-        y + h * 0.5 + scaler.s(5.0),
-        scaler.font_s(12.0),
-        if is_hover { Palette::WHITE } else { Color::new(0.88, 0.92, 0.98, 1.0) },
-    );
+    draw_action_button(scaler, fonts, x, y, w, h, label, None, is_focused, is_hover, border);
 
     is_hover && clicked
+}
+
+/// Renders a boolean flag as a platform [`Toggle`] action button, returning true when clicked.
+fn draw_toggle(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    toggle: &Toggle,
+    mouse_pos: Vec2,
+    clicked: bool,
+) -> bool {
+    let is_hover = mouse_pos.x >= x && mouse_pos.x <= x + w && mouse_pos.y >= y && mouse_pos.y <= y + h;
+    let accent = if toggle.is_on { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
+    let state = if toggle.is_on { "ON" } else { "OFF" };
+
+    draw_action_button(scaler, fonts, x, y, w, h, toggle.label.as_str(), Some(state), toggle.is_on, is_hover, accent);
+
+    is_hover && clicked
+}
+
+/// Renders an integer [`Counter`] as an inline `[<] value [>]` stepper with hold-to-repeat
+/// mouse chevron control. Returns true when the value changed.
+fn draw_counter(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    label: &str,
+    counter: &mut Counter,
+    mouse_pos: Vec2,
+) -> bool {
+    let is_hover = mouse_pos.x >= x && mouse_pos.x <= x + w && mouse_pos.y >= y && mouse_pos.y <= y + h;
+
+    // Mouse hold-to-repeat on the stepper chevrons.
+    let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
+    let opt_x = x + w - opt_w - scaler.s(16.0);
+    let opt_h = scaler.s(32.0);
+    let opt_y = y + (h - opt_h) * 0.5;
+    let arrow_w = scaler.s(28.0);
+
+    let mut changed = false;
+    if is_mouse_button_down(MouseButton::Left) {
+        let in_rect = |rx: f32, rw: f32| {
+            mouse_pos.x >= rx && mouse_pos.x <= rx + rw && mouse_pos.y >= opt_y && mouse_pos.y <= opt_y + opt_h
+        };
+        if in_rect(opt_x, arrow_w) {
+            changed |= counter.decrement();
+        } else if in_rect(opt_x + opt_w - arrow_w, arrow_w) {
+            changed |= counter.increment();
+        }
+    }
+
+    draw_stepper(scaler, fonts, x, y, w, h, label, &counter.value.to_string(), false, is_hover, Palette::NEON_CYAN);
+
+    changed
 }
 
 /// Returns the toggle button label for a checkpoint gate's finish line flag.
