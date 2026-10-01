@@ -4,6 +4,7 @@ template: feature
 title: "Legacy UI Migration and Reusable Platform Component Adoption"
 description: "Migrates all legacy, ad-hoc UI rendering loops and navigation state across TdRace onto the shipped cabinet::ui component suite (Spec 068) — containers (SplitPane, GridLayout, FlowLayout, ScrollIndicator), selectors (Toggle, RadioGroup, OptionCycler), counters (Counter, ValueStepper), and feedback surfaces (MetricBar, KpiTile, ModalContainer, CountDown, Tooltip, PageDots) — enforcing gamepad-first 2D navigation parity across every screen."
 status: draft
+receipt: "docs/receipts/spec-069-receipt.md"
 created: 2026-09-30
 generated: { by: agent/antigravity, at: 2026-09-30T11:15:00Z }
 ---
