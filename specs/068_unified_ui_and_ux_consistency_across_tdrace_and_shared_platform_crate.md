@@ -2,7 +2,7 @@
 type: Feature Spec
 template: feature
 title: "Unified UI and UX Consistency Across TDrace and Shared Platform Crate"
-description: "Establishes a unified platform UI/UX architecture and reusable component suite in cabinet (stacks, filter bars, accordions, card grids, text input, tables, toasts, modals, footer prompts, gamepad navigation) and defines the migration blueprints for tdrace screens to achieve seamless gamepad/keyboard parity and visual consistency across all projects."
+description: "Establishes a unified platform UI/UX architecture and reusable component suite in cabinet — layout containers (stacks, card grids, grid layout, flow layout, split panes, scroll indicators), selectors (filter bars, tab bars, dropdowns, option cyclers, radio groups, toggles, swatch pickers), counters (value steppers, integer counters, sliders), feedback surfaces (tables, toasts, modals, countdowns, metric bars, KPI tiles, tooltips, page dots, footer prompts), and a unified nav-intent/key-repeat input layer — and defines the migration blueprints for tdrace screens to achieve seamless gamepad/keyboard parity and visual consistency across all projects."
 status: implemented
 receipt: "docs/receipts/spec-068-receipt.md"
 created: 2026-09-30
@@ -21,7 +21,7 @@ As **TdRace** evolved from an arcade prototype into a multi-discipline motorspor
 4. **Ad-Hoc Text & Table Input Handlers**: Text editing (callsigns, track names, LAN IP addresses) and tabular data displays (race results, championship standings, Hall of Fame leaderboards) relied on bespoke, non-standardized implementations with fragile cursor logic and lack of gamepad accessibility.
 5. **Platform Fragmentation**: Sibling games and tools built on the shared platform crate [`cabinet`](../crates/cabinet) lacked a standard set of gamepad-first, accessible, ergonomic UI components, resulting in duplicate implementations across projects.
 
-This specification elevates [`cabinet::ui`](../crates/cabinet/src/ui/mod.rs) into the canonical design system and reusable component suite for both **TdRace** and any future arcade titles built on the shared engine. It formalizes gamepad/keyboard parity as a non-negotiable core contract, defines the reusable component library across 10 functional archetypes, and provides surgical migration blueprints for existing screens.
+This specification elevates [`cabinet::ui`](../crates/cabinet/src/ui/mod.rs) into the canonical design system and reusable component suite for both **TdRace** and any future arcade titles built on the shared engine. It formalizes gamepad/keyboard parity as a non-negotiable core contract, defines the reusable component library across layout containers, selectors, counters, feedback surfaces, and a unified nav-intent/key-repeat input layer, and provides surgical migration blueprints for existing screens.
 
 ---
 
@@ -47,11 +47,12 @@ flowchart TD
     end
 
     subgraph ComponentSuite ["3. Reusable Platform Components"]
-        Layout[HStack / VStack / CardGrid]
-        Nav[FilterBar / Accordion]
-        Data[DataTable / LeaderboardTable]
-        Input[TextInputWidget / SwatchPicker]
-        Feedback[ToastOverlay / HeroActionButton / ChecklistModal]
+        Containers[HStack / VStack / CardGrid / GridLayout / FlowLayout / SplitPane / ScrollIndicator / Accordion]
+        Selectors[FilterBar / TabBar / Dropdown / OptionCycler / RadioGroup / Toggle / SwatchPicker]
+        Counters[ValueStepper / Counter / Slider]
+        Data[DataTable / LeaderboardTable / MetricBar / KpiTile / ProgressBar]
+        Input[TextInputWidget / VirtualKeypad]
+        Feedback[ToastOverlay / HeroActionButton / ChecklistModal / ModalContainer / CountDown / Tooltip / PageDots]
     end
 
     subgraph Presentation ["4. Unified Presentation & Feedback"]
@@ -80,25 +81,73 @@ flowchart TD
    - Focus transitions trigger `CabinetAudioSink::play_ui_blip()`.
    - Confirmations trigger `play_ui_confirm()`.
    - Cancellations or backwards escapes trigger `play_ui_cancel()`.
+6. **Unified Nav Intent & Key Repeat**:
+   - Components consume a normalized `NavIntent` ([`NavAction`](../crates/cabinet/src/input/nav_intent.rs) `{None, Up, Down, Left, Right, Confirm, Cancel, BumperLeft, BumperRight, Number(usize)}` plus a `repeated` flag) instead of reading raw `is_key_pressed(...) || gamepad.snapshot.nav_*` disjunctions. This guarantees identical behavior across keyboard, gamepad, and mouse.
+   - [`KeyRepeat`](../crates/cabinet/src/input/key_repeat.rs) supplies edge-triggered press → hold-acceleration (initial delay + repeat rate) for steppers, counters, sliders, and cyclers, so `±` / `< >` controls auto-repeat when held.
+   - Mouse hit-testing routes exclusively through `LayoutRect::contains`, `NavGrid2D::check_mouse_click`, or `HStack`/`VStack::hit_test`.
 
 ---
 
 ### 2. Standardized Component Architecture Catalog
 
-The platform suite provides 10 reusable component building blocks:
+The platform suite provides a comprehensive, gamepad-first component library spanning layout containers, selectors, counters, and feedback surfaces. Every component below is shipped and re-exported from [`cabinet::ui`](../crates/cabinet/src/ui/mod.rs) (or [`cabinet::input`](../crates/cabinet/src/input/mod.rs) for the input layer). The **Module** column links the source file.
 
-| Component | Responsibility | Primary TdRace Usage |
-| :--- | :--- | :--- |
-| **`HStack` / `VStack`** | 1D linear spatial layout with auto-spacing & boundary detection | Circuit list, vertical settings drawers, toolbars |
-| **`FilterBar`** | Segmented horizontal tab/pill filter with keyboard & bumper cycling | Circuit categories, catalog switch, vehicle classes |
-| **`Accordion<T>`** | Collapsible vertical drawer hierarchy with animated expand/collapse | Career tier championships, race setup accordions |
-| **`CardGrid<T>`** | 2D matrix layout container with column wrapping and 2D navigation | Vehicle showroom, trophy cabinet, track cards |
-| **`DataTable<T>`** | Multi-column sortable table with rank badges and player highlight | Race results, season standings, Hall of Fame |
-| **`TextInputWidget`** | Virtual/physical keyboard input with cursor blink and validation | Callsign editor, track renaming, LAN IP entry |
-| **`ToastOverlay`** | Non-blocking transient notification stack with time decay | Lap records, driving assist toggles, unlock alerts |
-| **`ChecklistModal<T>`**| Multi-select modal dialog with toggle checkboxes & batch actions | Track category promotion, series rule toggles |
-| **`SwatchPicker`** | Horizontal color palette ribbon with directional selection | Livery primary/secondary colors, driver suits |
-| **`HeroActionButton` / `ScreenFooter`** | Standardized bottom CTA button with contextual controller prompts | Menu footer, start race CTA, editor export action |
+#### 2.1 Layout Containers
+
+| Component | Responsibility | Primary TdRace Usage | Module |
+| :--- | :--- | :--- | :--- |
+| **`HStack` / `VStack`** | 1D linear spatial layout with auto-spacing & boundary detection | Circuit list, vertical settings drawers, toolbars | [`layout.rs`](../crates/cabinet/src/ui/layout.rs) |
+| **`CardGrid<T>`** | 2D matrix card container with column wrapping and 2D navigation | Vehicle showroom, trophy cabinet, track cards | [`card_grid.rs`](../crates/cabinet/src/ui/card_grid.rs) |
+| **`GridLayout`** | Uniform 2D grid (rows × cols, gaps, wrap) with 2D orthogonal traversal and boundary exits | Editor tool palettes, keypad grids, trophy shelves | [`layout.rs`](../crates/cabinet/src/ui/layout.rs) |
+| **`FlowLayout`** | Wrapping row of variable-width chips/tags/badges; row-end auto-wrap; nearest-column `Up`/`Down` | Category tag chips, module badges, assist pills | [`layout.rs`](../crates/cabinet/src/ui/layout.rs) |
+| **`SplitPane`** | Two-column container with focus handoff (`Left`/`Right` swaps active pane) | Track list vs dossier, setup vs roster, LAN host/join | [`layout.rs`](../crates/cabinet/src/ui/layout.rs) |
+| **`ScrollIndicator`** | Scrollbar thumb from viewport/content ratios | Windowed track lists, editor open-track pagination | [`layout.rs`](../crates/cabinet/src/ui/layout.rs) |
+| **`Accordion<T>`** | Collapsible vertical drawer hierarchy with animated expand/collapse | Career tier championships, race setup accordions | [`accordion.rs`](../crates/cabinet/src/ui/accordion.rs) |
+
+#### 2.2 Selectors
+
+| Component | Responsibility | Primary TdRace Usage | Module |
+| :--- | :--- | :--- | :--- |
+| **`FilterBar`** | Segmented horizontal tab/pill filter with keyboard & bumper cycling | Circuit categories, catalog switch, vehicle classes | [`filter_bar.rs`](../crates/cabinet/src/ui/filter_bar.rs) |
+| **`TabBar`** | Bumper / `Q` / `E` / `[` / `]` rapid tab cycling (popup-free) | Career hub tiers, editor workflow tabs | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`DropdownWidget`** | Popup list selector with `NavGrid2D` traversal | AI difficulty, race length, transmission | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`OptionCycler<T>`** | Inline `< value >` discrete cycler (no popup) with hold-repeat | Playback speed, steering profile, calendar slot swap | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`RadioGroup<T>`** | Single-select from N mutually-exclusive options with check marker | Camera mode, weather, track surface | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`Toggle` / `Switch`** | Boolean on/off with locked (disabled) state | Assists, sound, visibility aids, `[X]/[ ]` editor flags | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`SwatchPicker`** | Horizontal color palette ribbon with directional selection | Livery primary/secondary colors, driver suits | [`swatch_picker.rs`](../crates/cabinet/src/ui/swatch_picker.rs) |
+
+#### 2.3 Counters & Values
+
+| Component | Responsibility | Primary TdRace Usage | Module |
+| :--- | :--- | :--- | :--- |
+| **`SliderWidget`** | Continuous `0..1` value with deadzone + hold-acceleration | Volume, sensitivity, camera FOV | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`ValueStepper<T>`** | Generic numeric/discrete stepper with clamp & wrap | Laps, bot count, AI tier, points systems | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+| **`Counter`** | Integer counter with `−` / `+` buttons; `Left`/`Right` decrement/increment; hold-to-repeat; `min`/`max` clamp | Laps, bots, zoom level, grid presets | [`widgets.rs`](../crates/cabinet/src/ui/widgets.rs) |
+
+#### 2.4 Data, Feedback & Auxiliary
+
+| Component | Responsibility | Primary TdRace Usage | Module |
+| :--- | :--- | :--- | :--- |
+| **`DataTable<T>`** | Multi-column sortable table with rank badges and player highlight | Race results, season standings, Hall of Fame | [`data_table.rs`](../crates/cabinet/src/ui/data_table.rs) |
+| **`MetricBar`** | Stat/progress bar with threshold coloring | Vehicle specs, radar stats, promotion progress | [`metric.rs`](../crates/cabinet/src/ui/metric.rs) |
+| **`KpiTile`** | High-impact KPI metric card (big value + subtext) | Profile overview stats, stunt scores | [`metric.rs`](../crates/cabinet/src/ui/metric.rs) |
+| **`ProgressBar`** | Determinate loading/save progress bar | Asset loading, track save/export | [`metric.rs`](../crates/cabinet/src/ui/metric.rs) |
+| **`ToastOverlay`** | Non-blocking transient notification stack with time decay | Lap records, driving assist toggles, unlock alerts | [`toast.rs`](../crates/cabinet/src/ui/toast.rs) |
+| **`TextInputWidget`** | Virtual/physical keyboard input with cursor blink and validation | Callsign editor, track renaming, LAN IP entry | [`text_input.rs`](../crates/cabinet/src/ui/text_input.rs) |
+| **`VirtualKeypad`** | Arcade/gamepad alphanumeric keypad (generalizes `IpKeypad`) | LAN IP entry, callsign entry | [`virtual_keypad.rs`](../crates/cabinet/src/net/ui/virtual_keypad.rs) |
+| **`ChecklistModal<T>`** | Multi-select modal dialog with toggle checkboxes & batch actions | Track category promotion, series rule toggles | [`checklist_modal.rs`](../crates/cabinet/src/ui/checklist_modal.rs) |
+| **`ModalContainer`** | Uniform modal chrome (dim, frame, title) shared by all dialogs | Track manager, pause menu, Hall of Fame name entry | [`modal.rs`](../crates/cabinet/src/ui/modal.rs) |
+| **`CountDown`** | Animated 3-2-1-GO countdown with scale/fade + audio cues | Race start sequence | [`countdown.rs`](../crates/cabinet/src/ui/countdown.rs) |
+| **`Tooltip` / `HelpChip`** | Contextual focus help / inline shortcut chip | In-race control guides, field help | [`tooltip.rs`](../crates/cabinet/src/ui/tooltip.rs) |
+| **`PageDots`** | Pagination dot indicator for carousel/multi-page menus | Editor open-track pagination | [`page_dots.rs`](../crates/cabinet/src/ui/page_dots.rs) |
+| **`HeroActionButton` / `ScreenFooter`** | Standardized bottom CTA button with contextual controller prompts | Menu footer, start race CTA, editor export action | [`screen_footer.rs`](../crates/cabinet/src/ui/screen_footer.rs) |
+
+#### 2.5 Unified Input Layer
+
+| Component | Responsibility | Primary TdRace Usage | Module |
+| :--- | :--- | :--- | :--- |
+| **`NavIntent` / `NavAction`** | Normalized navigation action (`Up`/`Down`/`Left`/`Right`/`Confirm`/`Cancel`/`Bumper`/`Number`) with `repeated` flag | Every focusable component's input entry point | [`nav_intent.rs`](../crates/cabinet/src/input/nav_intent.rs) |
+| **`KeyRepeat`** | Hold-acceleration (initial delay + repeat rate) for held navigation | Stepper/counter/slider/cycler auto-repeat | [`key_repeat.rs`](../crates/cabinet/src/input/key_repeat.rs) |
 
 ---
 
@@ -484,6 +533,206 @@ pub struct ScreenFooter {
 }
 ```
 
+### 11. Uniform Grid, Flow, Split & Scroll Containers (`cabinet::ui::layout`)
+
+```rust
+pub struct GridLayout {
+    pub bounds: LayoutRect,
+    pub rows: usize,
+    pub columns: usize,
+    pub cell_w: f32,
+    pub cell_h: f32,
+    pub gap_x: f32,
+    pub gap_y: f32,
+    pub wrap: bool,
+    pub selected_idx: usize,
+}
+
+pub struct FlowLayout {
+    pub bounds: LayoutRect,
+    pub item_widths: Vec<f32>,
+    pub item_height: f32,
+    pub row_gap: f32,
+    pub col_gap: f32,
+    pub wrap_width: f32,
+    pub selected_idx: usize,
+}
+
+pub struct SplitPane {
+    pub bounds: LayoutRect,
+    pub left_ratio: f32,   // e.g. 0.42 (42% left, remainder right minus gap)
+    pub col_gap: f32,
+    pub active_pane: usize, // 0 = Left, 1 = Right
+}
+
+pub struct ScrollIndicator {
+    pub visible_ratio: f32, // viewport / content
+    pub offset_ratio: f32,  // scroll position / content
+}
+```
+
+### 12. Selector & Counter Widgets (`cabinet::ui::widgets`)
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ToggleAction { None, Toggled(bool), ExitUp, ExitDown }
+
+pub struct Toggle {
+    pub label: String,
+    pub is_on: bool,
+    pub locked: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RadioAction { None, Changed(usize), Confirmed(usize), ExitTop, ExitBottom }
+
+pub struct RadioGroup<T> {
+    pub options: Vec<T>,
+    pub selected_idx: usize,
+    pub wrap: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CyclerAction { None, Changed(usize), Confirmed(usize) }
+
+pub struct OptionCycler<T> {
+    pub options: Vec<T>,
+    pub selected_idx: usize,
+    pub wrap: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CounterAction { None, Changed(i64), Confirmed(i64) }
+
+pub struct Counter {
+    pub value: i64,
+    pub min: i64,
+    pub max: i64,
+    pub step: i64,
+    pub wrap: bool,
+}
+
+pub struct ValueStepper<T> {
+    pub label: String,
+    pub value: T,
+    pub min: T,
+    pub max: T,
+    pub step: T,
+    pub is_focused: bool,
+}
+```
+
+### 13. Metric & Feedback Surfaces (`cabinet::ui::metric`)
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MetricBarStyle { Stat, Progress }
+
+pub struct MetricBar {
+    pub label: String,
+    pub ratio: f32, // 0.0..=1.0
+    pub display_val: String,
+    pub style: MetricBarStyle,
+    pub bar_color: Color,
+}
+
+pub struct ProgressBar {
+    pub ratio: f32,
+    pub bar_color: Color,
+    pub bg_color: Color,
+}
+
+pub struct KpiTile {
+    pub label: String,
+    pub primary_metric: String,
+    pub subtext: Option<String>,
+    pub accent_color: Color,
+}
+```
+
+### 14. Modal, Countdown, Tooltip & Pagination (`cabinet::ui`)
+
+```rust
+pub struct ModalContainer {
+    pub title: String,
+    pub bounds: LayoutRect,
+    pub is_open: bool,
+    pub dim_alpha: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CountDownEvent { Tick(u8), Go, Finished }
+
+pub struct CountDown {
+    pub remaining: u8,
+    pub total: u8,
+    pub scale: f32,
+    pub alpha: f32,
+    pub elapsed_in_step: f32,
+    pub step_duration: f32,
+    pub is_finished: bool,
+}
+
+pub struct Tooltip {
+    pub text: String,
+    pub anchor: LayoutRect,
+    pub is_visible: bool,
+}
+
+pub struct HelpChip {
+    pub shortcut: String,
+    pub label: String,
+}
+
+pub struct PageDots {
+    pub page: usize,
+    pub total_pages: usize,
+}
+```
+
+### 15. Unified Nav Intent & Key Repeat (`cabinet::input`)
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NavAction {
+    None, Up, Down, Left, Right, Confirm, Cancel, BumperLeft, BumperRight, Number(usize),
+}
+
+pub struct NavIntent {
+    pub action: NavAction,
+    pub repeated: bool,
+}
+
+pub struct KeyRepeat {
+    pub delay_sec: f32,           // initial delay before auto-repeat begins
+    pub rate_per_sec: f32,        // repeat frequency (ticks per second)
+    pub elapsed_sec: f32,
+    pub repeat_accumulator: f32,
+    pub holding: bool,
+}
+```
+
+### 16. Platform Virtual Keypad (`cabinet::net::ui`)
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VirtualKeypadMode { IpAddress, Alphanumeric }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VirtualKeypadAction { None, Changed(String), Submit(String), Clear, Cancel }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VirtualKeypadButton { Char(char), Backspace, Clear, Space, PresetSubnet, Submit }
+
+pub struct VirtualKeypad {
+    pub mode: VirtualKeypadMode,
+    pub buffer: String,
+    pub max_len: usize,
+    pub nav: NavGrid2D,
+    pub is_focused: bool,
+}
+```
+
 ---
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
@@ -592,12 +841,91 @@ pub struct ScreenFooter {
   - [x] **Then** it renders a distinct `Palette::NEON_GOLD` border with thickness $\ge 2.4\text{px}$
   - [x] **And** a tactile audio blip (`UiMove`) is triggered through `CabinetAudioSink`
 
+- **Scenario: GridLayout Boundary Exits and Wrapping**
+  - [x] **Given** a `GridLayout` of N rows × M columns
+  - [x] **When** focus is at row 0 and the player presses `Up`
+  - [x] **Then** the grid emits `NavBoundaryExit::ExitTop` without index overflow
+  - [x] **And** `Right` from the last column wraps to column 0 when `wrap` is enabled
+
+- **Scenario: FlowLayout Wrap Traversal**
+  - [x] **Given** a `FlowLayout` of variable-width chips spanning multiple rows
+  - [x] **When** focus is at the end of a row and the player presses `Right`
+  - [x] **Then** focus wraps to the first chip of the next row (or emits `NavBoundaryExit::ExitBottom` at the final chip)
+  - [x] **And** `Up`/`Down` move to the nearest chip in the adjacent row
+
+- **Scenario: SplitPane Focus Handoff**
+  - [x] **Given** a `SplitPane` with left and right panes
+  - [x] **When** the player presses `Left`/`Right`
+  - [x] **Then** the active pane swaps and `left_rect`/`right_rect` stay non-overlapping
+
+- **Scenario: ScrollIndicator Ratios and Thumb**
+  - [x] **Given** content larger than the viewport
+  - [x] **When** `ScrollIndicator::from_counts` computes ratios
+  - [x] **Then** `visible_ratio < 1.0`, `is_scrollable` is true, and the thumb rect stays within the track
+
+- **Scenario: Counter Bounds and Hold-to-Repeat**
+  - [x] **Given** a `Counter` (`min`/`max`/`step` bound)
+  - [x] **When** the player increments with `Right` or `+`
+  - [x] **Then** the value steps and clamps at `max`, emitting `CounterAction::Changed`
+  - [x] **And** `KeyRepeat` drives continuous increments while held
+
+- **Scenario: Toggle Flip and Locked State**
+  - [x] **Given** a `Toggle` bound to an assist setting
+  - [x] **When** the player confirms
+  - [x] **Then** `is_on` flips and `ToggleAction::Toggled` is emitted
+  - [x] **And** when `locked`, activation input is ignored
+
+- **Scenario: RadioGroup Single-Select**
+  - [x] **Given** a `RadioGroup` of mutually-exclusive options
+  - [x] **When** the player moves selection
+  - [x] **Then** exactly one option carries the check marker and `RadioAction::Changed`/`Confirmed` fire
+
+- **Scenario: OptionCycler Bidirectional Cycling**
+  - [x] **Given** an `OptionCycler` over discrete values
+  - [x] **When** the player cycles `Left`/`Right`
+  - [x] **Then** selection moves forward/backward with wrap, emitting `CyclerAction`
+
+- **Scenario: MetricBar, KpiTile, and ProgressBar Rendering**
+  - [x] **Given** `MetricBar` (`Stat`/`Progress` styles), `KpiTile`, and `ProgressBar`
+  - [x] **When** each renders within its bounds
+  - [x] **Then** ratios clamp to `0.0..=1.0` and values are displayed without overflow
+
+- **Scenario: ModalContainer Open/Close and Content Rect**
+  - [x] **Given** a `ModalContainer`
+  - [x] **When** opened, closed, or toggled
+  - [x] **Then** `is_open` reflects state and `content_rect()` stays within the modal bounds beneath the title bar
+
+- **Scenario: CountDown Sequence and Audio**
+  - [x] **Given** a `CountDown` starting at 3
+  - [x] **When** updated through its steps
+  - [x] **Then** it emits `Tick`/`Go`/`Finished` events with animated scale/fade and audio cues
+
+- **Scenario: Tooltip and HelpChip Rendering**
+  - [x] **Given** a `Tooltip` anchored to an element and a `HelpChip`
+  - [x] **When** rendered
+  - [x] **Then** the tooltip bubble is positioned relative to its anchor and the chip shows shortcut + label
+
+- **Scenario: PageDots Navigation and Bounds**
+  - [x] **Given** a `PageDots` with `total_pages`
+  - [x] **When** moving next/prev
+  - [x] **Then** `page` clamps to `[0, total_pages - 1]` and active dot is highlighted
+
+- **Scenario: NavIntent Normalized Input**
+  - [x] **Given** any focusable `cabinet::ui` component
+  - [x] **When** the player provides keyboard, gamepad, or mouse input
+  - [x] **Then** the component receives a normalized `NavIntent` (with `repeated` flag) instead of raw input flags
+
+- **Scenario: VirtualKeypad Modes**
+  - [x] **Given** a `VirtualKeypad` in `IpAddress` or `Alphanumeric` mode
+  - [x] **When** the player navigates and enters characters
+  - [x] **Then** the buffer updates and emits `VirtualKeypadAction::{Changed, Submit, Clear, Cancel}`
+
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created / Modified Platform Files
-- `[x]` [`crates/cabinet/src/ui/layout.rs`](../crates/cabinet/src/ui/layout.rs) — Implements `LayoutRect`, `HStack`, `VStack`, and `NavBoundaryExit`.
+- `[x]` [`crates/cabinet/src/ui/layout.rs`](../crates/cabinet/src/ui/layout.rs) — Implements `LayoutRect`, `HStack`, `VStack`, `GridLayout`, `FlowLayout`, `SplitPane`, `ScrollIndicator`, and `NavBoundaryExit`.
 - `[x]` [`crates/cabinet/src/ui/filter_bar.rs`](../crates/cabinet/src/ui/filter_bar.rs) — Implements `FilterBar`, `FilterItem`, `FilterBarStyle`, and `FilterBarAction`.
 - `[x]` [`crates/cabinet/src/ui/accordion.rs`](../crates/cabinet/src/ui/accordion.rs) — Implements `Accordion`, `AccordionItem`, and `AccordionNavAction`.
 - `[x]` [`crates/cabinet/src/ui/card_grid.rs`](../crates/cabinet/src/ui/card_grid.rs) — Implements `CardGrid`, `CardGridItem`, and 2D matrix navigation.
@@ -609,6 +937,15 @@ pub struct ScreenFooter {
 - `[x]` [`crates/cabinet/src/ui/screen_footer.rs`](../crates/cabinet/src/ui/screen_footer.rs) — Implements `HeroActionButton` and `ScreenFooter`.
 - `[x]` [`crates/cabinet/src/ui/mod.rs`](../crates/cabinet/src/ui/mod.rs) — Public re-exports for the platform UI module.
 - `[x]` [`crates/cabinet/src/lib.rs`](../crates/cabinet/src/lib.rs) — Top-level crate re-exports.
+- `[x]` [`crates/cabinet/src/ui/widgets.rs`](../crates/cabinet/src/ui/widgets.rs) — Implements `Toggle`, `RadioGroup<T>`, `OptionCycler<T>`, `Counter`, `ValueStepper<T>`, `SliderWidget`, `DropdownWidget`, `TabBar`, and the `draw_*` primitives.
+- `[x]` [`crates/cabinet/src/ui/metric.rs`](../crates/cabinet/src/ui/metric.rs) — Implements `MetricBar`, `MetricBarStyle`, `ProgressBar`, and `KpiTile`.
+- `[x]` [`crates/cabinet/src/ui/modal.rs`](../crates/cabinet/src/ui/modal.rs) — Implements `ModalContainer` (uniform modal chrome).
+- `[x]` [`crates/cabinet/src/ui/countdown.rs`](../crates/cabinet/src/ui/countdown.rs) — Implements `CountDown` and `CountDownEvent`.
+- `[x]` [`crates/cabinet/src/ui/tooltip.rs`](../crates/cabinet/src/ui/tooltip.rs) — Implements `Tooltip` and `HelpChip`.
+- `[x]` [`crates/cabinet/src/ui/page_dots.rs`](../crates/cabinet/src/ui/page_dots.rs) — Implements `PageDots`.
+- `[x]` [`crates/cabinet/src/input/nav_intent.rs`](../crates/cabinet/src/input/nav_intent.rs) — Implements `NavAction` and `NavIntent`.
+- `[x]` [`crates/cabinet/src/input/key_repeat.rs`](../crates/cabinet/src/input/key_repeat.rs) — Implements `KeyRepeat` hold-acceleration.
+- `[x]` [`crates/cabinet/src/net/ui/virtual_keypad.rs`](../crates/cabinet/src/net/ui/virtual_keypad.rs) — Implements `VirtualKeypad` (generalized from `IpKeypad`).
 
 ### Application Integration Files
 - `[x]` [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs) — `update_menu` 2D focus traversal, category cycling, directional tabs, and strict filtering.
