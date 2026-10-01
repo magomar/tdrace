@@ -14,7 +14,7 @@ use crate::net::client::{ClientEvent, LanClient};
 use crate::net::ip::LocalIpResolver;
 use crate::net::protocol::DEFAULT_GAME_PORT;
 use crate::net::ui::client_lobby_screen::CabinetLanClientLobbyScreen;
-use crate::net::ui::ip_keypad::{IpKeypad, IpKeypadAction};
+use crate::net::ui::virtual_keypad::{VirtualKeypad, VirtualKeypadAction};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
 use crate::ui::theme::Palette;
 use crate::ui::{LayoutRect, SplitPane, VStack};
@@ -34,7 +34,7 @@ pub struct CabinetLanJoinScreen {
     /// Passive beacon discovery scanner.
     pub scanner: LanBeaconScanner,
     /// Virtual keypad widget for direct IP typing.
-    pub keypad: IpKeypad,
+    pub keypad: VirtualKeypad,
     /// Pending connection attempt client.
     pub pending_client: Option<LanClient>,
     /// Player identity for joining rooms.
@@ -68,7 +68,7 @@ impl CabinetLanJoinScreen {
 
         Self {
             scanner,
-            keypad: IpKeypad::new("192.168.1."),
+            keypad: VirtualKeypad::new_ip("192.168.1."),
             pending_client: None,
             player_name: player_name.into(),
             country_code: country_code.into(),
@@ -201,17 +201,20 @@ impl CabinetScreen for CabinetLanJoinScreen {
         );
 
         match keypad_action {
-            IpKeypadAction::Submit(_) => {
+            VirtualKeypadAction::Submit(_) => {
                 ctx.play_ui_select();
                 self.connect_via_keypad();
             }
-            IpKeypadAction::Changed(_) => {
+            VirtualKeypadAction::Changed(_) => {
                 ctx.play_ui_move();
             }
-            IpKeypadAction::Clear => {
+            VirtualKeypadAction::Clear => {
                 ctx.play_ui_cancel();
             }
-            IpKeypadAction::None => {}
+            VirtualKeypadAction::Cancel => {
+                ctx.play_ui_cancel();
+            }
+            VirtualKeypadAction::None => {}
         }
 
         // 6. Directional navigation between Browser and Direct Keypad

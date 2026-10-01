@@ -4,14 +4,27 @@
 //! and alphanumeric callsign/driver name entry with full gamepad, keyboard, and mouse support.
 
 use macroquad::color::Color;
-use macroquad::input::{is_key_pressed, KeyCode};
+use macroquad::input::{is_key_pressed, mouse_position, KeyCode, MouseButton};
+use macroquad::shapes::draw_rectangle;
 
 use crate::input::NavGrid2D;
+use crate::ui::font::Fonts;
+use crate::ui::scaler::UiScaler;
 use crate::ui::theme::Palette;
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
     std::panic::catch_unwind(|| is_key_pressed(key)).unwrap_or(false)
+}
+
+#[inline]
+fn safe_mouse_pos() -> (f32, f32) {
+    std::panic::catch_unwind(mouse_position).unwrap_or((-1000.0, -1000.0))
+}
+
+#[inline]
+fn safe_mouse_pressed(btn: MouseButton) -> bool {
+    std::panic::catch_unwind(|| macroquad::input::is_mouse_button_pressed(btn)).unwrap_or(false)
 }
 
 /// Operational mode of the virtual keypad.
@@ -359,6 +372,254 @@ impl VirtualKeypad {
         }
 
         VirtualKeypadAction::None
+    }
+
+    /// Returns the current input buffer.
+    pub fn text(&self) -> &str {
+        &self.buffer
+    }
+
+    /// Sets the buffer contents directly, truncating to `max_len`.
+    pub fn set_text(&mut self, text: impl Into<String>) {
+        let mut text = text.into();
+        text.truncate(self.max_len);
+        self.buffer = text;
+    }
+
+    /// Processes keyboard, gamepad, and mouse events for navigation and typing.
+    #[allow(clippy::too_many_arguments)]
+    pub fn handle_input(
+        &mut self,
+        dt: f32,
+        gamepad_left: bool,
+        gamepad_right: bool,
+        gamepad_up: bool,
+        gamepad_down: bool,
+        gamepad_confirm: bool,
+        bounds_rect: (f32, f32, f32, f32),
+        scaler: &UiScaler,
+    ) -> VirtualKeypadAction {
+        self.blink_timer += dt;
+
+        if !self.is_focused {
+            return VirtualKeypadAction::None;
+        }
+
+        // Direct hardware keyboard typing (character stream)
+        let mut text_changed = false;
+        while let Some(c) = std::panic::catch_unwind(macroquad::input::get_char_pressed)
+            .ok()
+            .flatten()
+        {
+            let allowed = match self.mode {
+                VirtualKeypadMode::IpAddress => c.is_ascii_digit() || c == '.' || c == ':',
+                VirtualKeypadMode::Alphanumeric => !c.is_control(),
+            };
+            if allowed && self.buffer.len() < self.max_len {
+                self.buffer.push(c);
+                text_changed = true;
+            }
+        }
+
+        // Digit / period / colon key fallback (IP mode)
+        if self.mode == VirtualKeypadMode::IpAddress && !text_changed {
+            for num in 0..=9 {
+                let key = match num {
+                    0 => KeyCode::Key0,
+                    1 => KeyCode::Key1,
+                    2 => KeyCode::Key2,
+                    3 => KeyCode::Key3,
+                    4 => KeyCode::Key4,
+                    5 => KeyCode::Key5,
+                    6 => KeyCode::Key6,
+                    7 => KeyCode::Key7,
+                    8 => KeyCode::Key8,
+                    _ => KeyCode::Key9,
+                };
+                let kp_key = match num {
+                    0 => KeyCode::Kp0,
+                    1 => KeyCode::Kp1,
+                    2 => KeyCode::Kp2,
+                    3 => KeyCode::Kp3,
+                    4 => KeyCode::Kp4,
+                    5 => KeyCode::Kp5,
+                    6 => KeyCode::Kp6,
+                    7 => KeyCode::Kp7,
+                    8 => KeyCode::Kp8,
+                    _ => KeyCode::Kp9,
+                };
+                if (safe_key_pressed(key) || safe_key_pressed(kp_key)) && self.buffer.len() < self.max_len {
+                    self.buffer.push(char::from_digit(num, 10).unwrap_or('0'));
+                    text_changed = true;
+                }
+            }
+            if (safe_key_pressed(KeyCode::Period) || safe_key_pressed(KeyCode::KpDecimal))
+                && self.buffer.len() < self.max_len
+            {
+                self.buffer.push('.');
+                text_changed = true;
+            }
+            if safe_key_pressed(KeyCode::Semicolon) && self.buffer.len() < self.max_len {
+                self.buffer.push(':');
+                text_changed = true;
+            }
+        }
+
+        if safe_key_pressed(KeyCode::Backspace) {
+            text_changed |= self.buffer.pop().is_some();
+        }
+        if safe_key_pressed(KeyCode::Delete) {
+            self.buffer.clear();
+            return VirtualKeypadAction::Clear;
+        }
+        if (safe_key_pressed(KeyCode::Enter) || safe_key_pressed(KeyCode::KpEnter))
+            && !self.buffer.trim().is_empty()
+        {
+            return VirtualKeypadAction::Submit(self.buffer.clone());
+        }
+
+        if text_changed {
+            return VirtualKeypadAction::Changed(self.buffer.clone());
+        }
+
+        // 2D orthogonal directional navigation
+        if safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || gamepad_left {
+            self.nav.move_left();
+        }
+        if safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || gamepad_right {
+            self.nav.move_right();
+        }
+        if safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) || gamepad_up {
+            self.nav.move_up();
+        }
+        if safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S) || gamepad_down {
+            self.nav.move_down();
+        }
+
+        // Mouse hit testing
+        let (bx, by, bw, bh) = bounds_rect;
+        let pad = scaler.s(8.0);
+        let header_h = scaler.s(42.0);
+        let grid_y = by + header_h + pad;
+        let grid_h = (bh - header_h - pad).max(scaler.s(100.0));
+        let col_w = (bw - pad * (self.cols as f32 - 1.0)) / self.cols as f32;
+        let row_h = (grid_h - pad * (self.rows as f32 - 1.0)) / self.rows as f32;
+
+        let (mx, my) = safe_mouse_pos();
+        let mouse_clicked = safe_mouse_pressed(MouseButton::Left);
+
+        for col in 0..self.cols {
+            for row in 0..self.rows {
+                let kx = bx + col as f32 * (col_w + pad);
+                let ky = grid_y + row as f32 * (row_h + pad);
+                let hovered = mx >= kx && mx <= kx + col_w && my >= ky && my <= ky + row_h;
+                if hovered {
+                    self.nav.set_focus(col, row);
+                    if mouse_clicked {
+                        return self.activate_button(col, row);
+                    }
+                }
+            }
+        }
+
+        // Confirm on focused button (gamepad A / Space)
+        if self.nav.is_confirmed(gamepad_confirm || safe_key_pressed(KeyCode::Space)) {
+            let (col, row) = self.nav.active_cell();
+            return self.activate_button(col, row);
+        }
+
+        VirtualKeypadAction::None
+    }
+
+    /// Renders the keypad widget with display box and glowing button matrix.
+    pub fn draw(&self, scaler: &UiScaler, fonts: &Fonts, x: f32, y: f32, w: f32, h: f32) {
+        let pad = scaler.s(8.0);
+        let header_h = scaler.s(42.0);
+
+        // Header / text input display box
+        scaler.draw_glass_card(
+            x,
+            y,
+            w,
+            header_h,
+            Color::new(0.04, 0.06, 0.10, 0.95),
+            if self.is_focused { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
+            1.5,
+        );
+
+        let label_y = y + header_h * 0.65;
+        let font_sz = scaler.font_s(15.0);
+
+        if self.buffer.is_empty() {
+            let placeholder = match self.mode {
+                VirtualKeypadMode::IpAddress => "e.g. 192.168.1.105:7777",
+                VirtualKeypadMode::Alphanumeric => "ENTER DRIVER NAME",
+            };
+            fonts.draw_ui_bold(placeholder, x + pad * 2.0, label_y, font_sz, Palette::UI_TEXT_MUTED);
+        } else {
+            fonts.draw_ui_bold(&self.buffer, x + pad * 2.0, label_y, font_sz, Palette::WHITE);
+
+            let is_blink_on = (self.blink_timer % 0.8) < 0.4;
+            if self.is_focused && is_blink_on {
+                let dim = fonts.measure_ui_bold(&self.buffer, font_sz);
+                let cursor_x = x + pad * 2.0 + dim.width + scaler.s(2.0);
+                draw_rectangle(
+                    cursor_x,
+                    y + header_h * 0.25,
+                    scaler.s(2.5),
+                    header_h * 0.50,
+                    Palette::NEON_CYAN,
+                );
+            }
+        }
+
+        // Button grid
+        let grid_y = y + header_h + pad;
+        let grid_h = (h - header_h - pad).max(scaler.s(100.0));
+        let col_w = (w - pad * (self.cols as f32 - 1.0)) / self.cols as f32;
+        let row_h = (grid_h - pad * (self.rows as f32 - 1.0)) / self.rows as f32;
+
+        let (focus_col, focus_row) = self.nav.active_cell();
+        let (mx, my) = safe_mouse_pos();
+
+        for col in 0..self.cols {
+            for row in 0..self.rows {
+                let btn = match self.button_at(col, row) {
+                    Some(b) => b,
+                    None => continue,
+                };
+                let kx = x + col as f32 * (col_w + pad);
+                let ky = grid_y + row as f32 * (row_h + pad);
+
+                let is_focused = self.is_focused && focus_col == col && focus_row == row;
+                let is_hovered = mx >= kx && mx <= kx + col_w && my >= ky && my <= ky + row_h;
+                let accent = btn.accent_color();
+
+                scaler.draw_button_card(kx, ky, col_w, row_h, is_focused, is_hovered, accent);
+
+                let text_color = if is_focused || is_hovered {
+                    Palette::WHITE
+                } else if btn == VirtualKeypadButton::Submit {
+                    Palette::NEON_GREEN
+                } else {
+                    accent
+                };
+
+                let btn_font_size = if btn.label().len() > 3 {
+                    scaler.font_s(11.0)
+                } else {
+                    scaler.font_s(15.0)
+                };
+
+                fonts.draw_ui_bold_centered(
+                    btn.label(),
+                    kx + col_w * 0.5,
+                    ky + row_h * 0.65,
+                    btn_font_size,
+                    text_color,
+                );
+            }
+        }
     }
 }
 
