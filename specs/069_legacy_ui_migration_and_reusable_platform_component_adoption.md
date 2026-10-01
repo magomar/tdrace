@@ -3,10 +3,11 @@ type: Feature Spec
 template: feature
 title: "Legacy UI Migration and Reusable Platform Component Adoption"
 description: "Migrates all legacy, ad-hoc UI rendering loops and navigation state across TdRace onto the shipped cabinet::ui component suite (Spec 068) — containers (SplitPane, GridLayout, FlowLayout, ScrollIndicator), selectors (Toggle, RadioGroup, OptionCycler), counters (Counter, ValueStepper), and feedback surfaces (MetricBar, KpiTile, ModalContainer, CountDown, Tooltip, PageDots) — enforcing gamepad-first 2D navigation parity across every screen."
-status: draft
+status: implemented
 receipt: "docs/receipts/spec-069-receipt.md"
 created: 2026-09-30
 generated: { by: agent/antigravity, at: 2026-09-30T11:15:00Z }
+verified: { by: "human:mario", at: "2026-10-01T19:26:53Z" }
 ---
 
 # Feature Spec: Legacy UI Migration and Reusable Platform Component Adoption 🕹️
@@ -373,25 +374,25 @@ pub struct KpiTile {
 - `[x]` [`crates/cabinet/src/net/ui/virtual_keypad.rs`](../crates/cabinet/src/net/ui/virtual_keypad.rs) — `VirtualKeypad` shipped (generalized `IpKeypad`).
 
 ### Application Screens to Migrate
-- `[ ]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) — Migrate Circuit Selector & Modality Select to `FilterBar`, `VStack`, and `SplitPane`; migrate Pause Menu to `ModalContainer`, Race Results & Standings to `DataTable`, and the Controls Screen to `SplitPane` + `ValueStepper`.
-- `[ ]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) — Migrate setup and roster to `SplitPane`, `ValueStepper`, and `HeroActionButton`.
-- `[ ]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) — Migrate Fleet Gallery and Showroom to `FilterBar`, `CardGrid`, `SwatchPicker`, and `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/ui/career_select.rs`](../crates/tdrace-app/src/ui/career_select.rs) — Migrate championship cards to `Accordion`.
-- `[ ]` [`crates/tdrace-app/src/ui/driver_card.rs`](../crates/tdrace-app/src/ui/driver_card.rs) — Migrate dossier layout to `SplitPane` and `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/ui/hall_of_fame.rs`](../crates/tdrace-app/src/ui/hall_of_fame.rs) — Migrate standings table to `DataTable` and name modal to `TextInputWidget`.
-- `[ ]` [`crates/tdrace-app/src/ui/race_stats.rs`](../crates/tdrace-app/src/ui/race_stats.rs) — Migrate race stats dashboard to `SplitPane`, `DataTable`, and `KpiTile`.
-- `[ ]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) — Migrate overview tab, cabinet grid, and roster manager to platform components.
-- `[ ]` [`crates/tdrace-app/src/ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) — Migrate track lists, metadata fields, and dialogs to platform suite.
-- `[ ]` [`crates/tdrace-app/src/ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) — Migrate championship editor tabs, inputs, and steppers.
-- `[ ]` [`crates/tdrace-app/src/ui/lan_ui.rs`](../crates/tdrace-app/src/ui/lan_ui.rs) — Migrate LAN hub cards and IP entry.
-- `[ ]` [`crates/tdrace-app/src/ui/career_hub.rs`](../crates/tdrace-app/src/ui/career_hub.rs) — Migrate tier tabs, split layout, standings table, calendar, and promotion bar to `TabBar`/`FilterBar`, `SplitPane`, `DataTable`, `VStack`, and `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/ui/circuit_viewer.rs`](../crates/tdrace-app/src/ui/circuit_viewer.rs) — Migrate back/zoom/FIT controls and surface breakdown to `draw_action_button`, `Counter`, and segmented `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/ui/hud.rs`](../crates/tdrace-app/src/ui/hud.rs) — Migrate toasts, countdown, wrong-way banner, guides, and drift meter to `ToastOverlay`, `CountDown`, `Tooltip`, and `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/ui/track_preview.rs`](../crates/tdrace-app/src/ui/track_preview.rs) — Migrate surface legend to segmented `MetricBar`.
-- `[ ]` [`crates/tdrace-app/src/editor/ui.rs`](../crates/tdrace-app/src/editor/ui.rs) — Migrate buttons, sliders, toggles, steppers, modals, and pagination to `draw_action_button`, `SliderWidget`, `Toggle`, `Counter`, `ModalContainer`, and `PageDots`.
-- `[ ]` [`crates/tdrace-app/src/replay/mod.rs`](../crates/tdrace-app/src/replay/mod.rs) — Migrate `PlaybackSpeed::cycle` to `OptionCycler` for a future replay HUD.
-- `[ ]` [`crates/cabinet/src/net/ui/host_screen.rs`](../crates/cabinet/src/net/ui/host_screen.rs) — Migrate split layout, slot list, and livery cycling to `SplitPane`, `VStack`, `ValueStepper`, and `SwatchPicker`.
-- `[ ]` [`crates/cabinet/src/net/ui/join_screen.rs`](../crates/cabinet/src/net/ui/join_screen.rs) — Migrate server-browser list to `SplitPane` + `VStack`.
-- `[ ]` [`crates/cabinet/src/net/ui/client_lobby_screen.rs`](../crates/cabinet/src/net/ui/client_lobby_screen.rs) — Migrate roster, loadout rows, and ready toggle to `SplitPane`, `VStack`, `SwatchPicker`, and `Toggle`.
-- `[ ]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) — Reuse `draw_chip` for name badges and tier tags.
-- `[ ]` [`crates/tdrace-app/src/render/trophy_textures.rs`](../crates/tdrace-app/src/render/trophy_textures.rs) — Reuse `draw_chip` for trophy and lock overlays.
+- `[x]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) — Migrate Circuit Selector & Modality Select to `FilterBar`, `VStack`, and `SplitPane`; migrate Pause Menu to `ModalContainer`, Race Results & Standings to `DataTable`, and the Controls Screen to `SplitPane` + `ValueStepper`.
+- `[x]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) — Migrate setup and roster to `SplitPane`, `ValueStepper`, and `HeroActionButton`.
+- `[x]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) — Migrate Fleet Gallery and Showroom to `FilterBar`, `CardGrid`, `SwatchPicker`, and `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/ui/career_select.rs`](../crates/tdrace-app/src/ui/career_select.rs) — Migrate championship cards to `Accordion`.
+- `[x]` [`crates/tdrace-app/src/ui/driver_card.rs`](../crates/tdrace-app/src/ui/driver_card.rs) — Migrate dossier layout to `SplitPane` and `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/ui/hall_of_fame.rs`](../crates/tdrace-app/src/ui/hall_of_fame.rs) — Migrate standings table to `DataTable` and name modal to `TextInputWidget`.
+- `[x]` [`crates/tdrace-app/src/ui/race_stats.rs`](../crates/tdrace-app/src/ui/race_stats.rs) — Migrate race stats dashboard to `SplitPane`, `DataTable`, and `KpiTile`.
+- `[x]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) — Migrate overview tab, cabinet grid, and roster manager to platform components.
+- `[x]` [`crates/tdrace-app/src/ui/track_manager_ui.rs`](../crates/tdrace-app/src/ui/track_manager_ui.rs) — Migrate track lists, metadata fields, and dialogs to platform suite.
+- `[x]` [`crates/tdrace-app/src/ui/series_editor.rs`](../crates/tdrace-app/src/ui/series_editor.rs) — Migrate championship editor tabs, inputs, and steppers.
+- `[x]` [`crates/tdrace-app/src/ui/lan_ui.rs`](../crates/tdrace-app/src/ui/lan_ui.rs) — Migrate LAN hub cards and IP entry.
+- `[x]` [`crates/tdrace-app/src/ui/career_hub.rs`](../crates/tdrace-app/src/ui/career_hub.rs) — Migrate tier tabs, split layout, standings table, calendar, and promotion bar to `TabBar`/`FilterBar`, `SplitPane`, `DataTable`, `VStack`, and `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/ui/circuit_viewer.rs`](../crates/tdrace-app/src/ui/circuit_viewer.rs) — Migrate back/zoom/FIT controls and surface breakdown to `draw_action_button`, `Counter`, and segmented `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/ui/hud.rs`](../crates/tdrace-app/src/ui/hud.rs) — Migrate toasts, countdown, wrong-way banner, guides, and drift meter to `ToastOverlay`, `CountDown`, `Tooltip`, and `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/ui/track_preview.rs`](../crates/tdrace-app/src/ui/track_preview.rs) — Migrate surface legend to segmented `MetricBar`.
+- `[x]` [`crates/tdrace-app/src/editor/ui.rs`](../crates/tdrace-app/src/editor/ui.rs) — Migrate buttons, sliders, toggles, steppers, modals, and pagination to `draw_action_button`, `SliderWidget`, `Toggle`, `Counter`, `ModalContainer`, and `PageDots`.
+- `[x]` [`crates/tdrace-app/src/replay/mod.rs`](../crates/tdrace-app/src/replay/mod.rs) — Migrate `PlaybackSpeed::cycle` to `OptionCycler` for a future replay HUD.
+- `[x]` [`crates/cabinet/src/net/ui/host_screen.rs`](../crates/cabinet/src/net/ui/host_screen.rs) — Migrate split layout, slot list, and livery cycling to `SplitPane`, `VStack`, `ValueStepper`, and `SwatchPicker`.
+- `[x]` [`crates/cabinet/src/net/ui/join_screen.rs`](../crates/cabinet/src/net/ui/join_screen.rs) — Migrate server-browser list to `SplitPane` + `VStack`.
+- `[x]` [`crates/cabinet/src/net/ui/client_lobby_screen.rs`](../crates/cabinet/src/net/ui/client_lobby_screen.rs) — Migrate roster, loadout rows, and ready toggle to `SplitPane`, `VStack`, `SwatchPicker`, and `Toggle`.
+- `[x]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) — Reuse `draw_chip` for name badges and tier tags.
+- `[x]` [`crates/tdrace-app/src/render/trophy_textures.rs`](../crates/tdrace-app/src/render/trophy_textures.rs) — Reuse `draw_chip` for trophy and lock overlays.
