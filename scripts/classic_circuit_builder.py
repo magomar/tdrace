@@ -1345,6 +1345,20 @@ PINE_GROVE = Circuit(
         A(14.0, -90, **KERB_R),    # 12: Turn 7 final right turn onto main straight
     ],
     close_with=(0, 2),
+    features=[
+        # Grandstands: main straight and back straight
+        GrandstandProp(at=25.0, side="left", offset=6.0, length=24.0, depth=6.0, style="open_bleachers", tiers=5),
+        GrandstandProp(at=200.0, side="right", offset=6.0, length=20.0, depth=6.0, style="hillside_bleachers", tiers=4),
+        # Buildings: control tower and pit garages on main straight, paddock marquee on west straight
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=7.0, style="control_tower"),
+        BuildingProp(at=32.0, side="right", offset=7.5, width=16.0, depth=7.0, style="pit_garage"),
+        BuildingProp(at=295.0, side="left", offset=7.0, width=14.0, depth=7.0, style="paddock_tent"),
+        # Trees: pine woods around the sprint (38 trees)
+        tree_row(10.0, 80.0, 8, side="left", offset=7.0, tree_type="pine"),
+        tree_row(90.0, 160.0, 10, side="right", offset=7.0, tree_type="pine"),
+        tree_row(180.0, 240.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(280.0, 360.0, 10, side="right", offset=7.0, tree_type="bush"),
+    ],
 )
 
 RIVERBEND_CIRCUIT = Circuit(
@@ -1385,6 +1399,22 @@ RIVERBEND_CIRCUIT = Circuit(
         A(16.0, 110, **KERB_L),    # 17: Turn 11 final carousel left
     ],
     close_with=(0, 4),
+    features=[
+        # Grandstands: main straight and loop
+        GrandstandProp(at=25.0, side="left", offset=5.0, length=25.0, depth=6.0, style="open_bleachers", tiers=5),
+        GrandstandProp(at=190.0, side="right", offset=5.0, length=22.0, depth=6.0, style="open_bleachers", tiers=5),
+        # Buildings: timing tower, pit garage, team tent
+        BuildingProp(at=10.0, side="right", offset=5.5, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=32.0, side="right", offset=5.5, width=20.0, depth=8.0, style="pit_garage"),
+        BuildingProp(at=56.0, side="right", offset=6.0, width=15.0, depth=8.0, style="paddock_tent"),
+        # Riverbend water zone
+        Zone(start=90.0, end=150.0, surface="Water", lateral=(12.0, 32.0), name="Riverbend Water"),
+        # Trees: oaks, cypress, bushes (38 trees)
+        tree_row(10.0, 80.0, 8, side="left", offset=6.5, tree_type="oak"),
+        tree_row(90.0, 170.0, 10, side="left", offset=6.5, tree_type="cypress"),
+        tree_row(200.0, 280.0, 10, side="right", offset=6.5, tree_type="oak"),
+        tree_row(300.0, 380.0, 10, side="left", offset=6.5, tree_type="bush"),
+    ],
 )
 
 SUMMIT_INTERNATIONAL = Circuit(
@@ -1426,6 +1456,22 @@ SUMMIT_INTERNATIONAL = Circuit(
         A(16.0, 60, **KERB_L),     # 19: Turn 12 final turn left onto main straight
     ],
     close_with=(0, 3),
+    features=[
+        # Grandstands: covered main stadium, back straight stadium, return straight stand
+        GrandstandProp(at=30.0, side="left", offset=6.0, length=30.0, depth=7.0, style="covered_stadium", tiers=6),
+        GrandstandProp(at=430.0, side="right", offset=6.0, length=24.0, depth=6.0, style="open_bleachers", tiers=5),
+        GrandstandProp(at=670.0, side="left", offset=6.0, length=24.0, depth=6.0, style="open_bleachers", tiers=5),
+        # Buildings: control tower, pit garages, scrutineering marquee, back straight marshal post
+        BuildingProp(at=12.0, side="right", offset=6.5, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=35.0, side="right", offset=6.5, width=22.0, depth=7.5, style="pit_garage"),
+        BuildingProp(at=680.0, side="right", offset=7.0, width=16.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=460.0, side="left", offset=7.0, width=14.0, depth=7.0, style="paddock_tent"),
+        # Trees: pines, cypress, bushes (46 trees)
+        tree_row(10.0, 110.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(130.0, 240.0, 12, side="right", offset=7.0, tree_type="cypress"),
+        tree_row(260.0, 390.0, 12, side="left", offset=7.0, tree_type="pine"),
+        tree_row(410.0, 560.0, 12, side="right", offset=7.0, tree_type="bush"),
+    ],
 )
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -1466,6 +1512,21 @@ QUARRY_SPRINT = Circuit(
         Ramp(at=90.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 1"),
         Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 2"),
         Ramp(at=500.0, length=14.0, height=2.2, launch_speed=4.2, surface="Asphalt", name="Quarry Asphalt Jump"),
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=30.0, side="left", offset=6.0, length=28.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=320.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=40.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=65.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: quarry granite and slate boulders (12 rocks)
+        rock_cluster(at=160.0, count=6, side="left", offset=7.5, rock_type="granite", span=16.0),
+        rock_cluster(at=260.0, count=6, side="right", offset=7.5, rock_type="slate", span=16.0),
+        # Trees: quarry perimeter pines, oaks, bushes (36 trees)
+        tree_row(10.0, 100.0, 8, side="left", offset=7.0, tree_type="pine"),
+        tree_row(120.0, 220.0, 10, side="right", offset=7.0, tree_type="oak"),
+        tree_row(240.0, 360.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(380.0, 480.0, 8, side="right", offset=7.0, tree_type="bush"),
     ],
 )
 
@@ -1516,6 +1577,21 @@ HILLTOP_LEAP = Circuit(
         Ramp(at=190.0, length=14.0, height=2.0, launch_speed=4.0, surface="Dirt", name="Hilltop Infield Jump"),
         Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Hilltop Hairpin Exit Jump"),
         Ramp(at=510.0, length=14.0, height=2.2, launch_speed=4.2, surface="Dirt", name="Hilltop Crest Jump"),
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=40.0, side="left", offset=6.0, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=380.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=70.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=95.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: hilltop granite boulders (12 rocks)
+        rock_cluster(at=140.0, count=6, side="left", offset=7.5, rock_type="granite", span=16.0),
+        rock_cluster(at=450.0, count=6, side="right", offset=7.5, rock_type="granite", span=16.0),
+        # Trees: hillside pines, oaks, bushes (40 trees)
+        tree_row(10.0, 130.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(160.0, 280.0, 10, side="right", offset=7.0, tree_type="oak"),
+        tree_row(300.0, 430.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(460.0, 580.0, 10, side="right", offset=7.0, tree_type="bush"),
     ],
 )
 
@@ -1559,8 +1635,24 @@ CANYON_FLYER = Circuit(
         Ramp(at=190.0, length=14.0, height=2.0, launch_speed=4.0, surface="Dirt", name="Canyon Infield Jump"),
         Ramp(at=310.0, length=16.0, height=2.4, launch_speed=4.5, surface="Dirt", name="Canyon Gap Jump"),
         Zone(start=326.0, end=344.0, surface="Water", lateral=(-6.0, 6.0), layer="above_track", name="Canyon Water Gap"),
+        Spot(at=335.0, lateral=18.0, radius=12.0, surface="Water", name="Canyon Gap Pond"),
         Whoops(at=490.0, count=6, spacing=5.0, height=0.6, name="Canyon Whoops"),
         Ramp(at=800.0, length=14.0, height=2.0, launch_speed=4.0, surface="Asphalt", name="Canyon Asphalt Jump"),
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=40.0, side="left", offset=6.0, length=32.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=400.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=70.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=95.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: canyon granite and slate cliffs (14 rocks)
+        rock_cluster(at=230.0, count=7, side="left", offset=7.5, rock_type="granite", span=18.0),
+        rock_cluster(at=350.0, count=7, side="right", offset=8.0, rock_type="slate", span=18.0),
+        # Trees: pines, oaks, bushes (40 trees)
+        tree_row(10.0, 140.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(160.0, 290.0, 10, side="right", offset=7.0, tree_type="oak"),
+        tree_row(420.0, 560.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(600.0, 750.0, 10, side="right", offset=7.0, tree_type="bush"),
     ],
 )
 
@@ -1606,7 +1698,23 @@ MEADOW_SPRINT = Circuit(
         ((8, 0.5), 0.0),
         ((10, 0.5), 0.5),
     ],
-    features=[],
+    features=[
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=35.0, side="left", offset=6.0, length=28.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=350.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=55.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=80.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: sandstone and granite boulders (12 rocks)
+        rock_cluster(at=160.0, count=6, side="left", offset=7.5, rock_type="sandstone", span=16.0),
+        rock_cluster(at=450.0, count=6, side="right", offset=7.5, rock_type="granite", span=16.0),
+        # Trees: oaks, pines, bushes (40 trees)
+        tree_row(10.0, 110.0, 10, side="left", offset=7.0, tree_type="oak"),
+        tree_row(140.0, 260.0, 10, side="right", offset=7.0, tree_type="pine"),
+        tree_row(280.0, 420.0, 10, side="left", offset=7.0, tree_type="oak"),
+        tree_row(440.0, 580.0, 10, side="right", offset=7.0, tree_type="bush"),
+    ],
 )
 
 CLAY_BOWL = Circuit(
@@ -1653,7 +1761,23 @@ CLAY_BOWL = Circuit(
         ((13, 0.5), 0.0),
         ((15, 0.5), 0.0),
     ],
-    features=[],
+    features=[
+        # Grandstands: hillside amphitheatre seating
+        GrandstandProp(at=50.0, side="left", offset=6.0, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=480.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=70.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=95.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: amphitheatre sandstone and slate (12 rocks)
+        rock_cluster(at=200.0, count=6, side="left", offset=7.5, rock_type="sandstone", span=16.0),
+        rock_cluster(at=380.0, count=6, side="right", offset=7.5, rock_type="slate", span=16.0),
+        # Trees: oaks, pines, bushes (42 trees)
+        tree_row(10.0, 120.0, 10, side="left", offset=7.0, tree_type="oak"),
+        tree_row(150.0, 300.0, 10, side="right", offset=7.0, tree_type="pine"),
+        tree_row(320.0, 460.0, 10, side="left", offset=7.0, tree_type="oak"),
+        tree_row(500.0, 680.0, 12, side="right", offset=7.0, tree_type="bush"),
+    ],
 )
 
 HILLSIDE_HAMMER = Circuit(
@@ -1702,7 +1826,23 @@ HILLSIDE_HAMMER = Circuit(
         ((12, 0.5), 0.5),
         ((14, 0.5), 0.0),
     ],
-    features=[],
+    features=[
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=50.0, side="left", offset=6.0, length=32.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=600.0, side="right", offset=6.0, length=24.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.0, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=75.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=100.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        # Rocks: summit granite boulders (14 rocks)
+        rock_cluster(at=240.0, count=7, side="left", offset=7.5, rock_type="granite", span=18.0),
+        rock_cluster(at=480.0, count=7, side="right", offset=7.5, rock_type="granite", span=18.0),
+        # Trees: pines, oaks, bushes (46 trees)
+        tree_row(10.0, 140.0, 10, side="left", offset=7.0, tree_type="pine"),
+        tree_row(160.0, 320.0, 12, side="right", offset=7.0, tree_type="oak"),
+        tree_row(340.0, 520.0, 12, side="left", offset=7.0, tree_type="pine"),
+        tree_row(540.0, 780.0, 12, side="right", offset=7.0, tree_type="bush"),
+    ],
 )
 
 # GT: high speed, braking and runoff (spec 055, User Flow section 3).
@@ -1760,7 +1900,22 @@ VELOCITY_PARK = Circuit(
     ],
     close_with=(0, 16),
     finish_at=(0, 0.5),
-    features=[],
+    features=[
+        # Grandstands: main straight covered stadium stands
+        GrandstandProp(at=40.0, side="left", offset=10.0, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=90.0, side="left", offset=10.0, length=40.0, depth=8.0, style="covered_stadium", tiers=8),
+        # Buildings: race control tower and pit garages
+        BuildingProp(at=20.0, side="right", offset=11.0, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=55.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=100.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
+        # Lake: infield lake
+        Spot(at=350.0, lateral=40.0, radius=22.0, surface="Water", name="Velocity Park Infield Lake"),
+        # Trees: cypress, oaks, bushes (48 trees)
+        tree_row(20.0, 200.0, 12, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(240.0, 440.0, 12, side="right", offset=14.0, tree_type="oak"),
+        tree_row(500.0, 700.0, 12, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(740.0, 920.0, 12, side="right", offset=14.0, tree_type="oak"),
+    ],
 )
 
 RIDGE_RING = Circuit(
@@ -1828,6 +1983,20 @@ RIDGE_RING = Circuit(
     features=[
         Zone(start=420.0, end=495.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Downhill Sand Trap"),
         Zone(start=925.0, end=985.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Sand Trap"),
+        # Grandstands: main straight covered stadium stands
+        GrandstandProp(at=40.0, side="left", offset=9.0, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=95.0, side="left", offset=9.0, length=40.0, depth=8.0, style="open_bleachers", tiers=7),
+        # Buildings: control tower and pit garages
+        BuildingProp(at=20.0, side="right", offset=10.0, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=60.0, side="right", offset=10.0, width=32.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=110.0, side="right", offset=10.0, width=30.0, depth=9.0, style="pit_garage"),
+        # Lake: infield lake
+        Spot(at=250.0, lateral=35.0, radius=20.0, surface="Water", name="Ridge Ring Lake"),
+        # Trees: cypress and oaks (48 trees)
+        tree_row(20.0, 180.0, 12, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(220.0, 420.0, 12, side="right", offset=14.0, tree_type="oak"),
+        tree_row(500.0, 700.0, 12, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(750.0, 950.0, 12, side="right", offset=14.0, tree_type="oak"),
     ],
 )
 
@@ -1895,7 +2064,22 @@ COASTAL_GRAND_PRIX = Circuit(
         ((9, 1.0), 0.0),   # Back to ground level
         ((11, 0.5), 0.0),
     ],
-    features=[],
+    features=[
+        # Grandstands: main straight stadium stands
+        GrandstandProp(at=50.0, side="left", offset=9.0, length=50.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=110.0, side="left", offset=9.0, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
+        # Buildings: control tower and pit garages
+        BuildingProp(at=25.0, side="right", offset=10.0, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=70.0, side="right", offset=10.0, width=35.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=125.0, side="right", offset=10.0, width=35.0, depth=9.0, style="pit_garage"),
+        # Lake: Coastal GP lagoon
+        Spot(at=350.0, lateral=45.0, radius=25.0, surface="Water", name="Coastal GP Lagoon"),
+        # Trees: cypress and oaks (54 trees)
+        tree_row(20.0, 220.0, 12, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(260.0, 500.0, 14, side="right", offset=14.0, tree_type="oak"),
+        tree_row(550.0, 800.0, 14, side="left", offset=14.0, tree_type="cypress"),
+        tree_row(850.0, 1100.0, 14, side="right", offset=14.0, tree_type="oak"),
+    ],
 )
 
 # Stock Cars: banked ovals (spec 055, User Flow section 3).
@@ -1932,6 +2116,24 @@ THUNDER_BOWL = Circuit(
         A(35.0, 180.0, bank=25.0, left_wall_distance=6.0, right_wall_distance=1.2, left_runoff="Concrete"),
     ],
     finish_at=(0, 0.5),
+    features=[
+        # Grandstands: main straight and back straight stadium stands
+        GrandstandProp(at=470.0, side="right", offset=3.5, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=35.0, side="right", offset=3.5, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=250.0, side="right", offset=3.5, length=55.0, depth=8.0, style="open_bleachers", tiers=8),
+        # Buildings: infield control tower and pit garages
+        BuildingProp(at=15.0, side="left", offset=8.5, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=45.0, side="left", offset=8.5, width=28.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=250.0, side="left", offset=8.5, width=32.0, depth=9.0, style="pit_garage"),
+        # Lake: infield lake centered at (70, 35)
+        Spot(at=0.0, lateral=35.0, radius=16.0, surface="Water", name="Thunder Bowl Infield Lake"),
+        # Trees: oaks, cypress (40 trees)
+        tree_row(190.0, 310.0, 12, side="right", offset=6.0, tree_type="oak"),
+        tree_row(440.0, 500.0, 6, side="right", offset=16.0, tree_type="cypress"),
+        tree_row(0.0, 60.0, 6, side="right", offset=16.0, tree_type="cypress"),
+        tree_row(80.0, 160.0, 8, side="right", offset=6.0, tree_type="oak"),
+        tree_row(340.0, 420.0, 8, side="right", offset=6.0, tree_type="oak"),
+    ],
 )
 
 TRI_OVAL_ROAD = Road(
@@ -1966,6 +2168,24 @@ TRI_OVAL = Circuit(
         A(65.0, 150.0, bank=20.0),  # 5: Turn 1 & 2 (to 180 deg)
     ],
     finish_at=(3, 0.5),  # finish at apex of dogleg
+    features=[
+        # Grandstands: front stretch covered stadium and bleachers
+        GrandstandProp(at=530.0, side="right", offset=3.5, length=60.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=600.0, side="right", offset=3.5, length=55.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=800.0, side="right", offset=3.5, length=60.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=870.0, side="right", offset=3.5, length=55.0, depth=8.0, style="open_bleachers", tiers=8),
+        # Buildings: infield control tower and pit garages
+        BuildingProp(at=520.0, side="left", offset=9.0, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=560.0, side="left", offset=9.0, width=35.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=610.0, side="left", offset=9.0, width=35.0, depth=9.0, style="pit_garage"),
+        # Lake: infield lake
+        Spot(at=160.0, lateral=60.0, radius=30.0, surface="Water", name="Tri-Oval Infield Lake"),
+        # Trees: oaks, cypress, pines (48 trees)
+        tree_row(30.0, 290.0, 16, side="right", offset=6.0, tree_type="oak"),
+        tree_row(520.0, 640.0, 10, side="right", offset=16.0, tree_type="cypress"),
+        tree_row(790.0, 910.0, 10, side="right", offset=16.0, tree_type="cypress"),
+        tree_row(30.0, 290.0, 12, side="left", offset=25.0, tree_type="pine"),
+    ],
 )
 
 STOCK_ROVAL_ROAD = Road(
@@ -2006,6 +2226,23 @@ ROVAL = Circuit(
     ],
     close_with=(8, 10),
     finish_at=(0, 0.4),
+    features=[
+        # Grandstands: front straight covered stadium stands and bleachers
+        GrandstandProp(at=40.0, side="right", offset=3.5, length=50.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=100.0, side="right", offset=3.5, length=50.0, depth=8.0, style="covered_stadium", tiers=8),
+        GrandstandProp(at=160.0, side="right", offset=3.5, length=45.0, depth=8.0, style="open_bleachers", tiers=8),
+        # Buildings: infield control tower and pit garages
+        BuildingProp(at=20.0, side="left", offset=8.0, width=10.0, depth=10.0, style="control_tower"),
+        BuildingProp(at=55.0, side="left", offset=8.0, width=32.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=95.0, side="left", offset=8.0, width=32.0, depth=9.0, style="pit_garage"),
+        # Lake: infield lake
+        Spot(at=50.0, lateral=55.0, radius=22.0, surface="Water", name="Roval Infield Lake"),
+        # Trees: oaks, pines, cypress (46 trees)
+        tree_row(760.0, 980.0, 14, side="right", offset=6.0, tree_type="oak"),
+        tree_row(320.0, 480.0, 10, side="right", offset=8.0, tree_type="pine"),
+        tree_row(520.0, 680.0, 10, side="left", offset=8.0, tree_type="oak"),
+        tree_row(30.0, 200.0, 12, side="right", offset=15.0, tree_type="cypress"),
+    ],
 )
 
 CREST_HEIGHTS = [
@@ -2058,6 +2295,23 @@ DUNE_SEA = Circuit(
         Ramp(at=390.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSand", name="Dune Tabletop 1"),
         Ramp(at=930.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSand", name="Dune Tabletop 2"),
         Zone(start=660.0, end=720.0, surface="Water", lateral=(7.5, 18.0), from_edge="left", layer="below_track", name="Oasis Shore"),
+        Spot(at=690.0, lateral=26.0, radius=12.0, surface="Water", name="Dune Oasis Pool"),
+        # Grandstands: open bleachers along start straight
+        GrandstandProp(at=40.0, side="left", offset=6.5, length=32.0, depth=6.0, style="open_bleachers", tiers=6),
+        GrandstandProp(at=90.0, side="left", offset=6.5, length=32.0, depth=6.0, style="open_bleachers", tiers=6),
+        # Buildings: control tower and desert paddock tents
+        BuildingProp(at=15.0, side="right", offset=7.5, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=50.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=75.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=100.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        # Rocks: desert sandstone rocks (12 rocks)
+        rock_cluster(at=200.0, count=6, side="left", offset=7.5, rock_type="sandstone", span=16.0),
+        rock_cluster(at=550.0, count=6, side="right", offset=7.5, rock_type="sandstone", span=16.0),
+        # Trees/plants: oasis palms and desert cacti (40 plants)
+        tree_row(640.0, 740.0, 10, side="left", offset=8.0, tree_type="palm"),
+        tree_row(160.0, 320.0, 10, side="right", offset=7.5, tree_type="cactus"),
+        tree_row(360.0, 520.0, 10, side="left", offset=7.5, tree_type="cactus"),
+        tree_row(780.0, 960.0, 10, side="right", offset=7.5, tree_type="palm"),
     ],
 )
 
@@ -2112,6 +2366,22 @@ MUDBATH_VALLEY = Circuit(
         Zone(start=570.0, end=595.0, surface="DeepMud", lateral=(-4.5, 4.5), layer="above_track", name="Deep Mud Bog 2"),
         Zone(start=510.0, end=530.0, surface="Water", lateral=(-4.5, 4.5), layer="above_track", name="Mud Puddle 1"),
         Zone(start=680.0, end=700.0, surface="Water", lateral=(-4.5, 4.5), layer="above_track", name="Mud Puddle 2"),
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=920.0, side="left", offset=6.5, length=28.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=20.0, side="left", offset=6.5, length=28.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=730.0, side="right", offset=6.5, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: control tower and paddock tents
+        BuildingProp(at=910.0, side="right", offset=7.5, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=935.0, side="right", offset=7.5, width=16.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=15.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        # Rocks: slate rock clusters (12 rocks)
+        rock_cluster(at=220.0, count=6, side="left", offset=7.5, rock_type="slate", span=16.0),
+        rock_cluster(at=600.0, count=6, side="right", offset=7.5, rock_type="slate", span=16.0),
+        # Trees/plants: oaks and mud bushes (40 plants)
+        tree_row(140.0, 260.0, 10, side="right", offset=7.5, tree_type="oak"),
+        tree_row(320.0, 440.0, 10, side="left", offset=7.5, tree_type="bush"),
+        tree_row(500.0, 640.0, 10, side="left", offset=7.5, tree_type="oak"),
+        tree_row(680.0, 820.0, 10, side="right", offset=7.5, tree_type="bush"),
     ],
 )
 
@@ -2164,6 +2434,21 @@ FROSTBITE_PASS = Circuit(
     finish_at=(0, 0.4),
     features=[
         Ramp(at=55.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedSnow", name="Pass Tabletop Jump"),
+        # Grandstands: hillside bleachers
+        GrandstandProp(at=1120.0, side="left", offset=6.5, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        GrandstandProp(at=25.0, side="left", offset=6.5, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
+        # Buildings: alpine control tower and tents
+        BuildingProp(at=1115.0, side="right", offset=7.5, width=8.0, depth=8.0, style="control_tower"),
+        BuildingProp(at=1140.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        BuildingProp(at=20.0, side="right", offset=7.5, width=18.0, depth=8.0, style="paddock_tent"),
+        # Rocks: snow-capped rock clusters (12 rocks)
+        rock_cluster(at=320.0, count=6, side="left", offset=7.5, rock_type="snow_capped", span=16.0),
+        rock_cluster(at=600.0, count=6, side="right", offset=7.5, rock_type="snow_capped", span=16.0),
+        # Trees/plants: snow pines and mountain bushes (42 plants)
+        tree_row(140.0, 280.0, 10, side="right", offset=7.5, tree_type="snow_pine"),
+        tree_row(360.0, 520.0, 10, side="left", offset=7.5, tree_type="snow_pine"),
+        tree_row(640.0, 780.0, 10, side="right", offset=7.5, tree_type="bush"),
+        tree_row(820.0, 1020.0, 12, side="left", offset=8.0, tree_type="snow_pine"),
     ],
 )
 
