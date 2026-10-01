@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use macroquad::color::{Color, WHITE};
 use macroquad::math::Vec2;
-use macroquad::shapes::{draw_circle, draw_rectangle, draw_rectangle_lines};
 use macroquad::texture::{draw_texture_ex, DrawTextureParams, Image, Texture2D};
 
 use crate::profile::TrophyMetal;
@@ -126,41 +125,39 @@ fn draw_procedural_trophy_fallback(
     tier: u32,
     metal: Option<TrophyMetal>,
 ) {
-    let (bg_col, border_col) = match metal {
-        Some(TrophyMetal::Gold) => (Color::new(0.20, 0.16, 0.05, 0.90), Palette::NEON_GOLD),
-        Some(TrophyMetal::Silver) => (Color::new(0.12, 0.15, 0.20, 0.90), Color::new(0.85, 0.90, 0.95, 1.0)),
-        Some(TrophyMetal::Bronze) => (Color::new(0.18, 0.10, 0.06, 0.90), Color::new(0.85, 0.55, 0.35, 1.0)),
-        None => (Color::new(0.06, 0.08, 0.12, 0.60), Color::new(0.25, 0.30, 0.38, 0.80)),
-    };
+    // Reuse the platform chip for a consistent arcade badge silhouette on the fallback path.
+    let scaler = cabinet::ui::UiScaler::new(1280.0, 720.0);
+    let fonts = cabinet::ui::Fonts::default();
 
-    draw_rectangle(x, y, w, h, bg_col);
-    draw_rectangle_lines(x, y, w, h, 1.5, border_col);
-
-    let cx = x + w * 0.5;
-    let cy = y + h * 0.5;
-
-    if metal.is_some() {
-        // Draw trophy cup icon silhouette
-        let cup_w = w * 0.45;
-        let cup_h = h * 0.35;
-        draw_rectangle(cx - cup_w * 0.5, cy - cup_h * 0.4, cup_w, cup_h, border_col);
-        // Pedestal
-        draw_rectangle(cx - cup_w * 0.3, cy + cup_h * 0.6, cup_w * 0.6, cup_h * 0.3, border_col);
-
-        // Draw star dots
-        let num_stars = tier.clamp(1, 5);
-        let star_r = (w * 0.04).clamp(1.5, 4.0);
-        let star_spacing = star_r * 2.8;
-        let start_x = cx - (num_stars as f32 - 1.0) * star_spacing * 0.5;
-        for i in 0..num_stars {
-            draw_circle(start_x + i as f32 * star_spacing, y + h * 0.18, star_r, border_col);
+    match metal {
+        Some(m) => {
+            let (label, text_color): (String, Color) = match m {
+                TrophyMetal::Gold => (
+                    format!("GOLD T{}", tier.clamp(1, 5)),
+                    Palette::NEON_GOLD,
+                ),
+                TrophyMetal::Silver => (
+                    format!("SILVER T{}", tier.clamp(1, 5)),
+                    Color::new(0.85, 0.90, 0.95, 1.0),
+                ),
+                TrophyMetal::Bronze => (
+                    format!("BRONZE T{}", tier.clamp(1, 5)),
+                    Color::new(0.85, 0.55, 0.35, 1.0),
+                ),
+            };
+            cabinet::ui::draw_chip(&scaler, &fonts, x, y, w, h, &label, text_color);
         }
-    } else {
-        // Locked padlock silhouette
-        let lock_w = w * 0.30;
-        let lock_h = h * 0.30;
-        draw_rectangle(cx - lock_w * 0.5, cy - lock_h * 0.2, lock_w, lock_h, border_col);
-        draw_circle(cx, cy - lock_h * 0.4, lock_w * 0.4, border_col);
-        draw_circle(cx, cy - lock_h * 0.4, lock_w * 0.25, bg_col);
+        None => {
+            cabinet::ui::draw_chip(
+                &scaler,
+                &fonts,
+                x,
+                y,
+                w,
+                h,
+                "LOCKED",
+                Color::new(0.25, 0.30, 0.38, 0.80),
+            );
+        }
     }
 }

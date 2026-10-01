@@ -1,7 +1,7 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::shapes::{
-    draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines, draw_triangle,
+    draw_circle, draw_circle_lines, draw_line, draw_triangle,
 };
 
 use super::color::{CarColorScheme, Palette};
@@ -580,6 +580,10 @@ pub fn render_floating_bot_nameplates(
         return;
     }
 
+    // Nameplates are projected in screen space with fixed pixel metrics; drive the platform
+    // chip with a reference-resolution scaler (scale == 1.0) so it renders 1:1.
+    let scaler = crate::ui::scaler::UiScaler::new(1280.0, 720.0);
+
     let deconflicted = deconflict_nameplates(nameplates, camera, viewport_rect, fonts, master_alpha);
     for badge in deconflicted {
         let alpha = badge.alpha.clamp(0.0, 1.0);
@@ -592,51 +596,41 @@ pub fn render_floating_bot_nameplates(
         let rx = badge.screen_center.x - half_w;
         let ry = badge.screen_center.y - half_h;
 
-        // Background pill
-        let bg_col = Color::new(0.06, 0.08, 0.12, 0.85 * alpha);
-        let border_col = Color::new(
-            badge.item.accent_color.r,
-            badge.item.accent_color.g,
-            badge.item.accent_color.b,
-            0.90 * alpha,
-        );
-
-        // Drop shadow
-        draw_rectangle(rx + 1.0, ry + 1.5, badge.width, badge.height, Color::new(0.0, 0.0, 0.0, 0.50 * alpha));
-        // Fill
-        draw_rectangle(rx, ry, badge.width, badge.height, bg_col);
-        // Border
-        draw_rectangle_lines(rx, ry, badge.width, badge.height, 1.0, border_col);
-
         let mut text_start_x = rx + 6.0;
 
-        // Tier tag if present
+        // Tier tag chip
         if let Some(tier) = badge.item.tier_label {
             let tier_dim = fonts.measure_ui_bold(tier, 10.0);
             let tier_tag_w = tier_dim.width + 6.0;
             let tier_tag_h = 13.0;
             let tier_tag_y = ry + (badge.height - tier_tag_h) * 0.5;
 
-            // Tier box
-            let tier_bg = Color::new(border_col.r * 0.25, border_col.g * 0.25, border_col.b * 0.25, 0.95 * alpha);
-            draw_rectangle(text_start_x, tier_tag_y, tier_tag_w, tier_tag_h, tier_bg);
-            draw_rectangle_lines(text_start_x, tier_tag_y, tier_tag_w, tier_tag_h, 0.8, border_col);
-
-            let text_y = tier_tag_y + tier_tag_h - 2.5;
-            fonts.draw_ui_bold(tier, text_start_x + 3.0, text_y, 10.0, Color::new(1.0, 1.0, 1.0, alpha));
+            cabinet::ui::draw_chip(
+                &scaler,
+                fonts,
+                text_start_x,
+                tier_tag_y,
+                tier_tag_w,
+                tier_tag_h,
+                tier,
+                Color::new(1.0, 1.0, 1.0, alpha),
+            );
 
             text_start_x += tier_tag_w + 5.0;
         }
 
-        // Driver Name
-        let font_size = 12.0;
-        let text_dim = fonts.measure_ui_bold(badge.item.name, font_size);
-        let name_y = ry + (badge.height + text_dim.height) * 0.5 - 2.0;
-
-        // Text drop shadow
-        fonts.draw_ui_bold(badge.item.name, text_start_x + 1.0, name_y + 1.0, font_size, Color::new(0.0, 0.0, 0.0, 0.70 * alpha));
-        // Text foreground
-        fonts.draw_ui_bold(badge.item.name, text_start_x, name_y, font_size, Color::new(0.95, 0.96, 0.98, alpha));
+        // Driver Name badge chip
+        let name_w = (rx + badge.width - text_start_x).max(1.0);
+        cabinet::ui::draw_chip(
+            &scaler,
+            fonts,
+            text_start_x,
+            ry,
+            name_w,
+            badge.height,
+            badge.item.name,
+            Color::new(0.95, 0.96, 0.98, alpha),
+        );
     }
 }
 
