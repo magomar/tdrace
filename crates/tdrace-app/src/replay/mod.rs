@@ -195,6 +195,19 @@ pub enum PlaybackSpeed {
 }
 
 impl PlaybackSpeed {
+    /// Ordered forward-cycling speed options (Paused is a separate toggle state).
+    pub const SPEED_ORDER: [PlaybackSpeed; 4] = [
+        PlaybackSpeed::Speed1x,
+        PlaybackSpeed::Speed2x,
+        PlaybackSpeed::Speed4x,
+        PlaybackSpeed::Speed8x,
+    ];
+
+    /// Builds the platform `OptionCycler` backing the replay HUD speed selector.
+    pub fn speed_cycler() -> cabinet::ui::OptionCycler<PlaybackSpeed> {
+        cabinet::ui::OptionCycler::new(Self::SPEED_ORDER.to_vec()).with_wrap(true)
+    }
+
     pub fn multiplier(self) -> f32 {
         match self {
             PlaybackSpeed::Paused => 0.0,
@@ -205,14 +218,15 @@ impl PlaybackSpeed {
         }
     }
 
+    /// Advances to the next playback speed (1x → 2x → 4x → 8x → 1x; Paused → 1x).
     pub fn cycle(self) -> Self {
-        match self {
-            PlaybackSpeed::Paused => PlaybackSpeed::Speed1x,
-            PlaybackSpeed::Speed1x => PlaybackSpeed::Speed2x,
-            PlaybackSpeed::Speed2x => PlaybackSpeed::Speed4x,
-            PlaybackSpeed::Speed4x => PlaybackSpeed::Speed8x,
-            PlaybackSpeed::Speed8x => PlaybackSpeed::Speed1x,
+        if self == PlaybackSpeed::Paused {
+            return PlaybackSpeed::Speed1x;
         }
+        let mut cycler = Self::speed_cycler()
+            .with_selected(Self::SPEED_ORDER.iter().position(|s| *s == self).unwrap_or(0));
+        cycler.cycle_forward();
+        cycler.selected().copied().unwrap_or(PlaybackSpeed::Speed1x)
     }
 }
 
