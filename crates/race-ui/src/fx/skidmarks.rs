@@ -117,7 +117,7 @@ impl SkidmarkBuffer {
                     || telemetry.slip_angle.abs() > 0.07;
 
                 let is_rolling_loose = surface.leaves_rolling_rut() && car.speed() > 1.2;
-                let is_transferring_dirt = surface.is_rigid_pavement() && telemetry.dirt_contamination > 0.03 && car.speed() > 1.2;
+                let is_transferring_dirt = surface.is_rigid_pavement() && telemetry.dirt_contamination > 0.035 && car.speed() > 1.2;
 
                 let leaves_mark = has_slip || is_rolling_loose || is_transferring_dirt;
 
@@ -128,30 +128,64 @@ impl SkidmarkBuffer {
 
                         // Only add segment if vehicle moved sufficiently (prevents static stacking)
                         if (0.20..=3.0).contains(&dist) {
-                            let (base_col, alpha, width_mult, jitter_mult) = if is_transferring_dirt && !has_slip {
+                            let (base_col, alpha, width_mult, jitter_mult) = if is_transferring_dirt {
                                 let dirt_col = match telemetry.dirt_surface {
                                     SurfaceType::Gravel => Color::new(0.38, 0.36, 0.34, 1.0),
                                     SurfaceType::PackedSand | SurfaceType::DeepSand => Color::new(0.68, 0.58, 0.36, 1.0),
-                                    SurfaceType::Dirt => Color::new(0.35, 0.22, 0.12, 1.0),
+                                    SurfaceType::Dirt => {
+                                        let mix = skid_noise(curr_pos, 808);
+                                        Color::new(
+                                            0.35 + (mix - 0.5) * 0.03,
+                                            0.22 + (mix - 0.5) * 0.02,
+                                            0.12 + (mix - 0.5) * 0.02,
+                                            1.0,
+                                        )
+                                    }
                                     SurfaceType::MudTrack | SurfaceType::DeepMud => Color::new(0.24, 0.16, 0.08, 1.0),
-                                    SurfaceType::Grass => Color::new(0.22, 0.30, 0.16, 1.0),
+                                    SurfaceType::Grass => {
+                                        let mix = skid_noise(curr_pos, 808);
+                                        Color::new(
+                                            0.19 + mix * 0.06,
+                                            0.28 + (1.0 - mix) * 0.05,
+                                            0.14 + mix * 0.04,
+                                            1.0,
+                                        )
+                                    }
                                     _ => Color::new(0.45, 0.45, 0.45, 1.0),
                                 };
-                                let a = (telemetry.dirt_contamination * 0.55).clamp(0.18, 0.65);
-                                (dirt_col, a, 0.92, 0.20)
+
+                                if has_slip && telemetry.dirt_contamination < 0.35 {
+                                    // High slip on light dirt: transition toward tire rubber compound
+                                    let blend = (telemetry.dirt_contamination / 0.35).clamp(0.0, 1.0);
+                                    let col = Color::new(
+                                        dirt_col.r * blend + 0.03 * (1.0 - blend),
+                                        dirt_col.g * blend + 0.03 * (1.0 - blend),
+                                        dirt_col.b * blend + 0.04 * (1.0 - blend),
+                                        1.0,
+                                    );
+                                    let a = ((telemetry.dirt_contamination * 0.38) + telemetry.skid_intensity * 0.28).clamp(0.18, 0.70);
+                                    (col, a, 0.86, 0.42)
+                                } else {
+                                    let a = if has_slip {
+                                        ((telemetry.dirt_contamination * 0.42) + telemetry.skid_intensity * 0.20).clamp(0.16, 0.65)
+                                    } else {
+                                        (telemetry.dirt_contamination * 0.44).clamp(0.14, 0.50)
+                                    };
+                                    (dirt_col, a, 0.84, 0.48)
+                                }
                             } else {
                                 match surface {
                                     SurfaceType::Asphalt => {
-                                        let a = (0.50 + telemetry.skid_intensity * 0.45).clamp(0.45, 0.95);
-                                        (Color::new(0.03, 0.03, 0.04, 1.0), a, 1.0, 0.20)
+                                        let a = (0.38 + telemetry.skid_intensity * 0.38).clamp(0.34, 0.78);
+                                        (Color::new(0.03, 0.03, 0.04, 1.0), a, 0.90, 0.35)
                                     }
                                     SurfaceType::Concrete => {
-                                        let a = (0.45 + telemetry.skid_intensity * 0.45).clamp(0.40, 0.90);
-                                        (Color::new(0.04, 0.04, 0.05, 1.0), a, 1.0, 0.20)
+                                        let a = (0.34 + telemetry.skid_intensity * 0.36).clamp(0.30, 0.74);
+                                        (Color::new(0.04, 0.04, 0.05, 1.0), a, 0.90, 0.32)
                                     }
                                     SurfaceType::Curb => {
-                                        let a = (0.40 + telemetry.skid_intensity * 0.40).clamp(0.35, 0.80);
-                                        (Color::new(0.05, 0.05, 0.06, 1.0), a, 0.95, 0.18)
+                                        let a = (0.30 + telemetry.skid_intensity * 0.34).clamp(0.26, 0.68);
+                                        (Color::new(0.05, 0.05, 0.06, 1.0), a, 0.88, 0.30)
                                     }
                                     SurfaceType::Gravel => {
                                         // Dark slate stone furrow bed with jagged edge jitter
@@ -244,16 +278,36 @@ impl SkidmarkBuffer {
                                 car_right
                             };
 
-                            // Contact chatter modulation (pulsing alpha along stroke)
-                            let chatter = 0.88 + skid_noise(curr_pos, 101) * 0.24;
-                            let alpha_mod = (alpha * chatter).clamp(0.15, 0.96);
-                            let col_outer = Color::new(base_col.r, base_col.g, base_col.b, alpha_mod);
-                            let col_inner = Color::new(base_col.r, base_col.g, base_col.b, (alpha_mod * 0.94).clamp(0.14, 0.92));
+                            // Contact chatter and clumping modulation (pulsing alpha along stroke)
+                            let chatter_a = 0.72 + skid_noise(curr_pos, 101) * 0.52;
+                            let chatter_b = 0.70 + skid_noise(curr_pos, 102) * 0.52;
 
-                            // Multi-ribbon tread contact striations with ragged edge jitter
-                            let jitter = (skid_noise(curr_pos, 202) - 0.5) * (effective_half_w * jitter_mult);
-                            let sub_w = effective_half_w * 0.48;
-                            let offset = effective_half_w * 0.50 + jitter;
+                            let (mod_a, mod_b) = if is_transferring_dirt {
+                                // Irregular clumping and particulate deposition for dirt and grass
+                                let clump_a = 0.45 + skid_noise(curr_pos, 606) * 0.85;
+                                let clump_b = 0.45 + skid_noise(curr_pos, 707) * 0.85;
+                                (chatter_a * clump_a, chatter_b * clump_b)
+                            } else {
+                                (chatter_a, chatter_b)
+                            };
+
+                            let alpha_a = (alpha * mod_a).clamp(0.08, 0.90);
+                            let alpha_b = (alpha * mod_b * 0.93).clamp(0.07, 0.88);
+                            let col_outer = Color::new(base_col.r, base_col.g, base_col.b, alpha_a);
+                            let col_inner = Color::new(base_col.r, base_col.g, base_col.b, alpha_b);
+
+                            // Multi-ribbon tread contact striations with decoupled ragged edge jitter
+                            let jitter_a = (skid_noise(curr_pos, 202) - 0.5) * (effective_half_w * jitter_mult);
+                            let jitter_b = (skid_noise(curr_pos, 303) - 0.5) * (effective_half_w * jitter_mult);
+
+                            // Dynamic ribbon width variation across contact patch
+                            let width_noise_a = skid_noise(curr_pos, 404);
+                            let width_noise_b = skid_noise(curr_pos, 505);
+                            let sub_w_a = effective_half_w * (0.36 + width_noise_a * 0.22);
+                            let sub_w_b = effective_half_w * (0.36 + width_noise_b * 0.22);
+
+                            let offset_a = effective_half_w * 0.50 + jitter_a;
+                            let offset_b = effective_half_w * 0.50 + jitter_b;
 
                             // Texture UV longitudinal coordinate mapping (tread pattern repeats every 0.75m)
                             let v0 = self.wheel_accum_v[car_idx][wheel_id];
@@ -261,10 +315,10 @@ impl SkidmarkBuffer {
                             self.wheel_accum_v[car_idx][wheel_id] = v1 % 1000.0;
 
                             // Ribbon A: Outer shoulder tread contact track (UV u: 0.00 .. 0.48)
-                            let p0_a = (prev_pos - seg_right * offset) - seg_right * sub_w;
-                            let p1_a = (prev_pos - seg_right * offset) + seg_right * sub_w;
-                            let p2_a = (curr_pos - seg_right * offset) + seg_right * sub_w;
-                            let p3_a = (curr_pos - seg_right * offset) - seg_right * sub_w;
+                            let p0_a = (prev_pos - seg_right * offset_a) - seg_right * sub_w_a;
+                            let p1_a = (prev_pos - seg_right * offset_a) + seg_right * sub_w_a;
+                            let p2_a = (curr_pos - seg_right * offset_a) + seg_right * sub_w_a;
+                            let p3_a = (curr_pos - seg_right * offset_a) - seg_right * sub_w_a;
 
                             let uv0_a = macroquad::prelude::Vec2::new(0.0, v0);
                             let uv1_a = macroquad::prelude::Vec2::new(0.48, v0);
@@ -272,10 +326,10 @@ impl SkidmarkBuffer {
                             let uv3_a = macroquad::prelude::Vec2::new(0.0, v1);
 
                             // Ribbon B: Inner shoulder tread contact track (UV u: 0.52 .. 1.00)
-                            let p0_b = (prev_pos + seg_right * offset) - seg_right * sub_w;
-                            let p1_b = (prev_pos + seg_right * offset) + seg_right * sub_w;
-                            let p2_b = (curr_pos + seg_right * offset) + seg_right * sub_w;
-                            let p3_b = (curr_pos + seg_right * offset) - seg_right * sub_w;
+                            let p0_b = (prev_pos + seg_right * offset_b) - seg_right * sub_w_b;
+                            let p1_b = (prev_pos + seg_right * offset_b) + seg_right * sub_w_b;
+                            let p2_b = (curr_pos + seg_right * offset_b) + seg_right * sub_w_b;
+                            let p3_b = (curr_pos + seg_right * offset_b) - seg_right * sub_w_b;
 
                             let uv0_b = macroquad::prelude::Vec2::new(0.52, v0);
                             let uv1_b = macroquad::prelude::Vec2::new(1.00, v0);

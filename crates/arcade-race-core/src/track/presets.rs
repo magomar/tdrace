@@ -570,18 +570,161 @@ pub fn merge_collinear_walls(walls: Vec<WallBarrier>) -> Vec<WallBarrier> {
     merged
 }
 
+/// Computes an adaptive checkpoint count clamped between 8 and 24 based on total track length:
+///
+/// N = clamp(floor(L / 50.0), 8, 24)
+pub fn adaptive_checkpoint_count(spline: &TrackSpline) -> usize {
+    let total_len = spline.total_length();
+    ((total_len / 50.0).floor() as usize).clamp(8, 24)
+}
+
 /// Generates a sequence of checkpoints distributed along the track spline.
+///
+/// Checkpoints are distributed with speed- and curvature-aware weighting (Spec 071 §D):
+/// gates are allocated proportionally to estimated traversal time dt = ds / v(s),
+/// giving higher gate density in tight technical corners and braking zones, and wider
+/// spacing along high-speed straights.
 pub fn generate_checkpoints(
     spline: &TrackSpline,
     count: usize,
     num_sectors: usize,
 ) -> Vec<Checkpoint> {
-    let mut checkpoints = Vec::with_capacity(count);
+    if count == 0 {
+        return Vec::new();
+    }
     let total_len = spline.total_length();
+    if total_len < 1.0 {
+        return Vec::new();
+    }
     let sectors = num_sectors.max(1);
 
-    for i in 0..count {
-        let dist = (i as f32 / count as f32) * total_len;
+    if count == 1 {
+        let sample = spline.sample_at_distance(0.0);
+        let half_w = sample.width * 0.5 + 4.0;
+        let gate_left = sample.point + sample.normal * half_w;
+        let gate_right = sample.point - sample.normal * half_w;
+        let mut cp = Checkpoint::new(
+            0,
+            LineSegment::new(gate_left, gate_right),
+            sample.tangent,
+            0,
+            true,
+        );
+        cp.target_distance = 0.0;
+        cp.elevation = sample.elevation;
+        return vec![cp];
+    }
+
+    let samples = &spline.samples;
+    let n = samples.len();
+
+    let mut distances = Vec::with_capacity(count);
+    distances.push(0.0);
+
+    if n >= 4 {
+        // Build cumulative traversal time along spline samples
+        let mut cum_time = Vec::with_capacity(n + 1);
+        let mut sample_dists = Vec::with_capacity(n + 1);
+        cum_time.push(0.0);
+        sample_dists.push(0.0);
+
+        let mut current_t = 0.0;
+        for i in 0..n {
+            let next_i = (i + 1) % n;
+            let p0 = samples[i].point;
+            let p1 = samples[next_i].point;
+            let ds = (p1 - p0).length();
+            if ds < 1e-4 {
+                continue;
+            }
+
+            let t0 = samples[i].tangent;
+            let t1 = samples[next_i].tangent;
+            let cross = t0.x * t1.y - t0.y * t1.x;
+            let dot = t0.dot(t1);
+            let turn_angle = cross.atan2(dot).abs();
+            let curvature = turn_angle / ds;
+            let radius = if curvature > 1e-4 { 1.0 / curvature } else { 10_000.0 };
+
+            let mu = 1.0;
+            let g = 9.81;
+            let v_corner = (mu * g * radius).sqrt();
+            let v_top = 50.0; // 180 km/h nominal top speed
+            let v_min = 10.0; // 36 km/h hairpin minimum speed
+            let speed = v_corner.clamp(v_min, v_top);
+
+            let dt = ds / speed;
+            current_t += dt;
+
+            let d = if i + 1 == n && spline.closed {
+                total_len
+            } else {
+                samples[next_i].distance
+            };
+            cum_time.push(current_t);
+            sample_dists.push(d);
+        }
+
+        let total_time = current_t;
+        if total_time > 1e-4 && cum_time.len() >= 2 {
+            let min_gap = 15.0_f32.min(total_len / (count as f32 * 2.0));
+            let mut last_d = 0.0;
+
+            for i in 1..count {
+                let target_t = (i as f32 / count as f32) * total_time;
+                let idx = match cum_time.binary_search_by(|t| t.partial_cmp(&target_t).unwrap_or(std::cmp::Ordering::Equal)) {
+                    Ok(k) => k,
+                    Err(k) => k.saturating_sub(1),
+                };
+                let idx = idx.min(cum_time.len().saturating_sub(2));
+                let t0 = cum_time[idx];
+                let t1 = cum_time[idx + 1];
+                let frac = if (t1 - t0).abs() > 1e-6 {
+                    ((target_t - t0) / (t1 - t0)).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                let raw_d = sample_dists[idx] + frac * (sample_dists[idx + 1] - sample_dists[idx]);
+
+                // Evaluate local curvature at raw_d to determine if on a high-speed straight
+                let s_probe = spline.sample_at_distance(raw_d);
+                let s_ahead = spline.sample_at_distance(raw_d + 1.0);
+                let dot = s_probe.tangent.dot(s_ahead.tangent).clamp(-1.0, 1.0);
+                let turn_angle = (s_probe.tangent.x * s_ahead.tangent.y - s_probe.tangent.y * s_ahead.tangent.x)
+                    .atan2(dot)
+                    .abs();
+                let local_radius = if turn_angle > 1e-4 { 1.0 / turn_angle } else { 10_000.0 };
+                let is_straight = local_radius > 400.0;
+
+                let min_spacing = if is_straight && total_len >= 600.0 {
+                    120.0_f32
+                } else {
+                    min_gap
+                };
+
+                let remaining_gates = (count - 1 - i) as f32;
+                let max_allowed = total_len - remaining_gates * min_gap - min_gap * 0.5;
+                let min_allowed = last_d + min_spacing;
+                let d = if min_allowed <= max_allowed {
+                    raw_d.clamp(min_allowed, max_allowed)
+                } else {
+                    raw_d.clamp(last_d + min_gap, max_allowed)
+                };
+                distances.push(d);
+                last_d = d;
+            }
+        }
+    }
+
+    if distances.len() < count {
+        distances.clear();
+        for i in 0..count {
+            distances.push((i as f32 / count as f32) * total_len);
+        }
+    }
+
+    let mut checkpoints = Vec::with_capacity(count);
+    for (i, &dist) in distances.iter().enumerate() {
         let sample = spline.sample_at_distance(dist);
         let half_w = sample.width * 0.5 + 4.0; // gate extends slightly beyond track edge
 
@@ -1092,6 +1235,89 @@ mod tests {
         assert_eq!(merged[2].segment.start, Vec2::new(30.0, 10.0));
         assert_eq!(merged[2].segment.end, Vec2::new(30.0, 20.0));
         assert_eq!(merged[2].barrier_type, BarrierType::Concrete);
+    }
+
+    #[test]
+    fn test_adaptive_checkpoint_count_scaling() {
+        // Short kart track (< 400m) clamps to 8 checkpoints
+        let waypoints_short = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 95.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 95.0), 10.0),
+        ];
+        let spline_short = TrackSpline::new(waypoints_short, true);
+        assert!(spline_short.total_length() < 420.0);
+        let count_short = adaptive_checkpoint_count(&spline_short);
+        assert_eq!(count_short, 8, "Short track (~390m) must produce 8 checkpoints");
+
+        // Medium circuit (~1000m) produces ~20 checkpoints
+        let waypoints_med = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(300.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(300.0, 200.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, 200.0), 12.0),
+        ];
+        let spline_med = TrackSpline::new(waypoints_med, true);
+        let count_med = adaptive_checkpoint_count(&spline_med);
+        assert_eq!(count_med, 20, "1000m circuit must produce 20 checkpoints");
+
+        // Long circuit (> 2000m) clamps to 24 checkpoints
+        let waypoints_long = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(800.0, 0.0), 14.0),
+            TrackWaypoint::new(Vec2::new(800.0, 500.0), 14.0),
+            TrackWaypoint::new(Vec2::new(0.0, 500.0), 14.0),
+        ];
+        let spline_long = TrackSpline::new(waypoints_long, true);
+        assert!(spline_long.total_length() > 2000.0);
+        let count_long = adaptive_checkpoint_count(&spline_long);
+        assert_eq!(count_long, 24, "Long circuit (>2000m) must clamp to max 24 checkpoints");
+    }
+
+    #[test]
+    fn test_speed_weighted_checkpoint_distribution_on_straight_vs_corner() {
+        // Build a circuit with a long ~400m high-speed straight and tight corner complexes
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),     // Start of straight
+            TrackWaypoint::new(Vec2::new(400.0, 0.0), 12.0),   // End of straight
+            TrackWaypoint::new(Vec2::new(450.0, 30.0), 12.0),  // Corner entry
+            TrackWaypoint::new(Vec2::new(450.0, 90.0), 12.0),  // Apex
+            TrackWaypoint::new(Vec2::new(400.0, 120.0), 12.0), // Exit
+            TrackWaypoint::new(Vec2::new(200.0, 120.0), 12.0), // Return straight
+            TrackWaypoint::new(Vec2::new(0.0, 60.0), 12.0),    // Final turn
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+        let total_len = spline.total_length();
+
+        let checkpoints = generate_checkpoints(&spline, 14, 3);
+        assert_eq!(checkpoints.len(), 14);
+        assert!(checkpoints[0].is_finish_line);
+        assert_eq!(checkpoints[0].target_distance, 0.0);
+
+        // Verify strictly monotonic ordering
+        for i in 1..checkpoints.len() {
+            assert!(
+                checkpoints[i].target_distance > checkpoints[i - 1].target_distance,
+                "Checkpoints must be strictly monotonic: cp[{}]={} <= cp[{}]={}",
+                i, checkpoints[i].target_distance, i - 1, checkpoints[i - 1].target_distance
+            );
+            assert!(checkpoints[i].target_distance < total_len);
+        }
+
+        // On the 400m straight (dist ~0 to ~380m), verify gate spacing is wide (>= 120m)
+        let straight_cps: Vec<&Checkpoint> = checkpoints
+            .iter()
+            .filter(|cp| cp.target_distance >= 20.0 && cp.target_distance <= 360.0)
+            .collect();
+        for window in straight_cps.windows(2) {
+            let spacing = window[1].target_distance - window[0].target_distance;
+            assert!(
+                spacing >= 120.0,
+                "Checkpoints along high-speed straight must be widely spaced (>= 120m), got {:.2}m",
+                spacing
+            );
+        }
     }
 }
 

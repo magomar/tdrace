@@ -6,7 +6,8 @@
 
 use super::geometry::BarrierType;
 use super::presets::{
-    generate_checkpoints, generate_walls_from_spline, generate_walls_from_spline_raw,
+    adaptive_checkpoint_count, generate_checkpoints, generate_walls_from_spline,
+    generate_walls_from_spline_raw,
 };
 use super::spline::TrackSpline;
 use super::Track;
@@ -27,6 +28,8 @@ pub struct BakeOptions {
     pub checkpoint_count: Option<usize>,
     /// `None`: keep the track's current sector count, or 3 when it has no checkpoints.
     pub sector_count: Option<usize>,
+    /// Regenerate checkpoints with adaptive length/speed count instead of preserving current count.
+    pub adaptive_checkpoints: bool,
 }
 
 impl Default for BakeOptions {
@@ -38,6 +41,7 @@ impl Default for BakeOptions {
             barrier_type: None,
             checkpoint_count: None,
             sector_count: None,
+            adaptive_checkpoints: false,
         }
     }
 }
@@ -74,7 +78,13 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .unwrap_or(BarrierType::Steel);
     let checkpoint_count = opts
         .checkpoint_count
-        .unwrap_or(if track.checkpoints.is_empty() { 20 } else { track.checkpoints.len() });
+        .unwrap_or_else(|| {
+            if opts.adaptive_checkpoints || track.checkpoints.is_empty() {
+                adaptive_checkpoint_count(&track.spline)
+            } else {
+                track.checkpoints.len()
+            }
+        });
     let sector_count = opts
         .sector_count
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
@@ -240,6 +250,30 @@ mod tests {
         let mut track = source_monza();
         track.spline.waypoints.truncate(2);
         assert!(bake(&mut track, &BakeOptions::default()).is_err());
+    }
+
+    #[test]
+    fn test_adaptive_checkpoint_bake_on_short_circuit() {
+        let mut track = crate::track::test_circuit("classic", "kart_pine_grove");
+        let opts = BakeOptions {
+            rebuild: true,
+            adaptive_checkpoints: true,
+            ..Default::default()
+        };
+        bake(&mut track, &opts).unwrap();
+        assert!(
+            track.checkpoints.len() >= 8 && track.checkpoints.len() <= 10,
+            "Pine grove checkpoints count must be in [8, 10], got {}",
+            track.checkpoints.len()
+        );
+        for window in track.checkpoints.windows(2) {
+            let spacing = window[1].target_distance - window[0].target_distance;
+            assert!(
+                spacing >= 20.0 && spacing <= 70.0,
+                "Pine grove checkpoint spacing should be ~25-65m, got {:.2}m",
+                spacing
+            );
+        }
     }
 }
 

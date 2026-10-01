@@ -233,6 +233,10 @@ pub struct TrackSpline {
     pub total_length: f32,
     #[serde(default)]
     pub curves: Vec<TrackCurve>,
+    #[serde(default, skip_serializing)]
+    pub sample_segments: Vec<(usize, f32)>,
+    #[serde(default, skip_serializing)]
+    pub waypoint_sample_indices: Vec<usize>,
 }
 
 impl Default for TrackSpline {
@@ -248,8 +252,14 @@ impl TrackSpline {
     /// Default wall distance from track edge in meters when unspecified.
     pub const DEFAULT_WALL_DISTANCE: f32 = 8.0;
 
-    /// Number of samples generated per Catmull-Rom segment.
+    /// Legacy fixed number of samples generated per Catmull-Rom segment.
     pub const STEPS_PER_SEGMENT: usize = 24;
+
+    /// Target arc-length distance between sampled points along the spline in meters.
+    pub const DEFAULT_TARGET_STEP_DISTANCE: f32 = 1.0;
+
+    /// Minimum number of sample steps generated for any spline segment.
+    pub const MIN_STEPS_PER_SEGMENT: usize = 4;
 
     /// An empty track spline with no waypoints or samples.
     pub fn empty() -> Self {
@@ -259,6 +269,8 @@ impl TrackSpline {
             samples: Vec::new(),
             total_length: 0.0,
             curves: Vec::new(),
+            sample_segments: Vec::new(),
+            waypoint_sample_indices: Vec::new(),
         }
     }
 
@@ -271,6 +283,8 @@ impl TrackSpline {
                 samples: Vec::new(),
                 total_length: 0.0,
                 curves: Vec::new(),
+                sample_segments: Vec::new(),
+                waypoint_sample_indices: Vec::new(),
             };
         }
 
@@ -278,8 +292,6 @@ impl TrackSpline {
         let num_wp = waypoints.len();
         let segments = if closed { num_wp } else { num_wp - 1 };
 
-        // 1. Resample each Catmull-Rom segment into fine sub-steps (~16-32 steps per segment)
-        let steps_per_segment = Self::STEPS_PER_SEGMENT;
         let mut raw_points = Vec::new();
         let mut raw_widths = Vec::new();
         let mut raw_left_curbs = Vec::new();
@@ -294,6 +306,8 @@ impl TrackSpline {
         let mut raw_wall_types = Vec::new();
         let mut raw_left_runoff = Vec::new();
         let mut raw_right_runoff = Vec::new();
+        let mut sample_segments = Vec::new();
+        let mut waypoint_sample_indices = Vec::with_capacity(num_wp);
 
         for i in 0..segments {
             let p0 = if closed {
@@ -350,11 +364,21 @@ impl TrackSpline {
             let wp1 = &waypoints[i % num_wp];
             let wp2 = &waypoints[(i + 1) % num_wp];
 
+            waypoint_sample_indices.push(raw_points.len());
+            let chord_len = (p2 - p1).length();
+            let steps_per_segment = ((chord_len / Self::DEFAULT_TARGET_STEP_DISTANCE).ceil() as usize)
+                .max(Self::MIN_STEPS_PER_SEGMENT);
+
+            let d01 = (p1 - p0).length().sqrt().max(1e-4);
+            let d12 = (p2 - p1).length().sqrt().max(1e-4);
+            let d23 = (p3 - p2).length().sqrt().max(1e-4);
+
             for s in 0..steps_per_segment {
                 let t = s as f32 / steps_per_segment as f32;
-                let pt = catmull_rom_2d(p0, p1, p2, p3, t);
-                let elev = catmull_rom_1d(e0, e1, e2, e3, t).max(0.0);
-                let bank = catmull_rom_1d(b0, b1, b2, b3, t);
+                sample_segments.push((i, t));
+                let pt = catmull_rom_centripetal_2d(p0, p1, p2, p3, t);
+                let elev = catmull_rom_centripetal_1d_with_chords(e0, e1, e2, e3, d01, d12, d23, t).max(0.0);
+                let bank = catmull_rom_centripetal_1d_with_chords(b0, b1, b2, b3, d01, d12, d23, t);
                 let w = wp1.width + (wp2.width - wp1.width) * t;
                 let lc = if t < 0.5 { wp1.left_curb } else { wp2.left_curb };
                 let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
@@ -396,6 +420,7 @@ impl TrackSpline {
 
         // Add final point for closed/open
         if closed {
+            sample_segments.push((0, 0.0));
             raw_points.push(raw_points[0]);
             raw_widths.push(raw_widths[0]);
             raw_left_curbs.push(raw_left_curbs[0]);
@@ -412,6 +437,8 @@ impl TrackSpline {
             raw_right_runoff.push(raw_right_runoff[0]);
         } else {
             let last = waypoints.last().unwrap();
+            waypoint_sample_indices.push(raw_points.len());
+            sample_segments.push((segments.saturating_sub(1), 1.0));
             raw_points.push(last.point);
             raw_widths.push(last.width);
             raw_left_curbs.push(last.left_curb);
@@ -601,7 +628,56 @@ impl TrackSpline {
             samples,
             total_length,
             curves,
+            sample_segments,
+            waypoint_sample_indices,
         }
+    }
+
+    /// Returns the sample index corresponding to the given waypoint index, if within bounds.
+    pub fn waypoint_sample_index(&self, waypoint_index: usize) -> Option<usize> {
+        self.waypoint_sample_indices.get(waypoint_index).copied()
+    }
+
+    /// Computes untangled left and right road edge vertices, exactly matching `samples.len()`.
+    ///
+    /// When curve radius R is smaller than road half-width w/2, offsetting the centerline
+    /// causes the inner boundary to self-intersect, creating an inverted swallowtail singularity (><).
+    /// This method detects such local self-intersections and collapses all vertices within the loop
+    /// to the intersection point, guaranteeing a non-self-intersecting boundary and converting
+    /// inverted quads into clean triangle fans around the corner apex.
+    pub fn untangled_road_edges(&self) -> (Vec<Vec2>, Vec<Vec2>) {
+        let n = self.samples.len();
+        if n == 0 {
+            return (Vec::new(), Vec::new());
+        }
+        let mut left_edges: Vec<Vec2> = self.samples.iter().map(|s| s.point + s.normal * (s.width * 0.5)).collect();
+        let mut right_edges: Vec<Vec2> = self.samples.iter().map(|s| s.point - s.normal * (s.width * 0.5)).collect();
+
+        untangle_offset_vertices(&mut left_edges, self.closed);
+        untangle_offset_vertices(&mut right_edges, self.closed);
+
+        (left_edges, right_edges)
+    }
+
+    /// Computes untangled left and right curb outer edge vertices, exactly matching `samples.len()`.
+    pub fn untangled_curb_edges(&self, curb_extra_width: f32) -> (Vec<Vec2>, Vec<Vec2>) {
+        let n = self.samples.len();
+        if n == 0 {
+            return (Vec::new(), Vec::new());
+        }
+        let mut left_curb: Vec<Vec2> = self.samples.iter().map(|s| {
+            let extra = if s.left_curb { curb_extra_width } else { 0.0 };
+            s.point + s.normal * (s.width * 0.5 + extra)
+        }).collect();
+        let mut right_curb: Vec<Vec2> = self.samples.iter().map(|s| {
+            let extra = if s.right_curb { curb_extra_width } else { 0.0 };
+            s.point - s.normal * (s.width * 0.5 + extra)
+        }).collect();
+
+        untangle_offset_vertices(&mut left_curb, self.closed);
+        untangle_offset_vertices(&mut right_curb, self.closed);
+
+        (left_curb, right_curb)
     }
 
     /// Evaluates the next upcoming or active curve ahead of the given track progress distance.
@@ -646,16 +722,19 @@ impl TrackSpline {
             return stored;
         }
         let segments = if self.closed { num_wp } else { num_wp - 1 };
+        let (seg, t) = if let Some(&(s, t_val)) = self.sample_segments.get(index) {
+            (s, t_val)
+        } else {
         let steps = Self::STEPS_PER_SEGMENT;
         if self.samples.len() != segments * steps + 1 {
             // Baked samples from a different sampling layout: keep them as they are.
             return stored;
         }
-
-        let (seg, t) = if index == segments * steps {
+            if index == segments * steps {
             if self.closed { (0, 0.0) } else { (segments - 1, 1.0) }
         } else {
             (index / steps, (index % steps) as f32 / steps as f32)
+            }
         };
         let wp1 = &self.waypoints[seg % num_wp];
         let wp2 = &self.waypoints[(seg + 1) % num_wp];
@@ -1088,9 +1167,159 @@ impl TrackSpline {
     }
 }
 
-/// 2D Catmull-Rom interpolation for points p0, p1, p2, p3 at parameter t in [0, 1].
+/// Trims local self-intersecting swallowtail loops from an offset boundary vertex array
+/// by collapsing all vertices within the self-intersecting loop to the loop intersection point.
+///
+/// Preserves the exact length of the slice so vertex indices remain 1-to-1 with centerline samples.
+pub fn untangle_offset_vertices(pts: &mut [Vec2], closed: bool) {
+    let n = pts.len();
+    if n < 4 {
+        return;
+    }
+    let max_loop_span = 40.min(n / 2);
+    let mut changed = true;
+    let mut passes = 0;
+
+    while changed && passes < 16 {
+        changed = false;
+        passes += 1;
+
+        'outer: for i in 0..n {
+            let p0 = pts[i];
+            let next_i = (i + 1) % n;
+            let p1 = pts[next_i];
+            if (p1 - p0).length_squared() < 1e-6 {
+                continue;
+            }
+            let seg_a = LineSegment::new(p0, p1);
+
+            for span in 2..=max_loop_span {
+                let j = (i + span) % n;
+                if !closed && i + span >= n {
+                    break;
+                }
+                let next_j = (j + 1) % n;
+                if !closed && j + 1 >= n {
+                    break;
+                }
+                if next_j == i || next_i == j {
+                    continue;
+                }
+
+                let p2 = pts[j];
+                let p3 = pts[next_j];
+                if (p3 - p2).length_squared() < 1e-6 {
+                    continue;
+                }
+                let seg_b = LineSegment::new(p2, p3);
+
+                if (seg_a.start - seg_b.start).length_squared() < 1e-4
+                    || (seg_a.start - seg_b.end).length_squared() < 1e-4
+                    || (seg_a.end - seg_b.start).length_squared() < 1e-4
+                    || (seg_a.end - seg_b.end).length_squared() < 1e-4
+                {
+                    continue;
+                }
+
+                if let Some(hit) = seg_a.intersect_segment(&seg_b) {
+                    if j > i {
+                        for k in (i + 1)..=j {
+                            pts[k] = hit;
+                        }
+                    } else if closed {
+                        for k in (i + 1)..n {
+                            pts[k] = hit;
+                        }
+                        for k in 0..=j {
+                            pts[k] = hit;
+                        }
+                    }
+                    changed = true;
+                    break 'outer;
+                }
+            }
+        }
+    }
+}
+
+/// 2D Centripetal Catmull-Rom interpolation (alpha = 0.5) for points p0, p1, p2, p3 at parameter t in [0, 1].
+///
+/// Uses the Barry and Goldman pyramidal formulation with chord lengths parameterized by Euclidean distance:
+/// t_i+1 = t_i + ||p_i+1 - p_i||^0.5.
+///
+/// Proven by Yuksel et al. (2011) to eliminate cusps, self-intersections, and overshoot when waypoint spacing varies widely.
 #[inline]
-fn catmull_rom_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: f32) -> Vec2 {
+pub fn catmull_rom_centripetal_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t_norm: f32) -> Vec2 {
+    if (p2 - p1).length_squared() < 1e-8 {
+        return p1;
+    }
+
+    let d01 = (p1 - p0).length().sqrt().max(1e-4);
+    let d12 = (p2 - p1).length().sqrt().max(1e-4);
+    let d23 = (p3 - p2).length().sqrt().max(1e-4);
+
+    let t0 = 0.0;
+    let t1 = d01;
+    let t2 = t1 + d12;
+    let t3 = t2 + d23;
+
+    let t = t1 + t_norm.clamp(0.0, 1.0) * d12;
+
+    let a1 = p0 + (p1 - p0) * ((t - t0) / (t1 - t0));
+    let a2 = p1 + (p2 - p1) * ((t - t1) / (t2 - t1));
+    let a3 = p2 + (p3 - p2) * ((t - t2) / (t3 - t2));
+
+    let b1 = a1 + (a2 - a1) * ((t - t0) / (t2 - t0));
+    let b2 = a2 + (a3 - a2) * ((t - t1) / (t3 - t1));
+
+    b1 + (b2 - b1) * ((t - t1) / (t2 - t1))
+}
+
+/// 1D Centripetal Catmull-Rom interpolation using provided physical track chord lengths.
+#[inline]
+pub fn catmull_rom_centripetal_1d_with_chords(
+    p0: f32,
+    p1: f32,
+    p2: f32,
+    p3: f32,
+    d01: f32,
+    d12: f32,
+    d23: f32,
+    t_norm: f32,
+) -> f32 {
+    let d01 = d01.max(1e-4);
+    let d12 = d12.max(1e-4);
+    let d23 = d23.max(1e-4);
+
+    let t0 = 0.0;
+    let t1 = d01;
+    let t2 = t1 + d12;
+    let t3 = t2 + d23;
+
+    let t = t1 + t_norm.clamp(0.0, 1.0) * d12;
+
+    let a1 = p0 + (p1 - p0) * ((t - t0) / (t1 - t0));
+    let a2 = p1 + (p2 - p1) * ((t - t1) / (t2 - t1));
+    let a3 = p2 + (p3 - p2) * ((t - t2) / (t3 - t2));
+
+    let b1 = a1 + (a2 - a1) * ((t - t0) / (t2 - t0));
+    let b2 = a2 + (a3 - a2) * ((t - t1) / (t3 - t1));
+
+    b1 + (b2 - b1) * ((t - t1) / (t2 - t1))
+}
+
+/// 1D Centripetal Catmull-Rom interpolation for scalar values p0, p1, p2, p3 at parameter t in [0, 1].
+#[inline]
+pub fn catmull_rom_centripetal_1d(p0: f32, p1: f32, p2: f32, p3: f32, t_norm: f32) -> f32 {
+    let d01 = (p1 - p0).abs().sqrt().max(1e-4);
+    let d12 = (p2 - p1).abs().sqrt().max(1e-4);
+    let d23 = (p3 - p2).abs().sqrt().max(1e-4);
+    catmull_rom_centripetal_1d_with_chords(p0, p1, p2, p3, d01, d12, d23, t_norm)
+}
+
+/// 2D Uniform Catmull-Rom interpolation for points p0, p1, p2, p3 at parameter t in [0, 1].
+#[inline]
+pub fn catmull_rom_uniform_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: f32) -> Vec2 {
     let t2 = t * t;
     let t3 = t2 * t;
 
@@ -1102,9 +1331,9 @@ fn catmull_rom_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: f32) -> Vec2 {
     p0 * f0 + p1 * f1 + p2 * f2 + p3 * f3
 }
 
-/// 1D Catmull-Rom interpolation for scalar values p0, p1, p2, p3 at parameter t in [0, 1].
+/// 1D Uniform Catmull-Rom interpolation for scalar values p0, p1, p2, p3 at parameter t in [0, 1].
 #[inline]
-fn catmull_rom_1d(p0: f32, p1: f32, p2: f32, p3: f32, t: f32) -> f32 {
+pub fn catmull_rom_uniform_1d(p0: f32, p1: f32, p2: f32, p3: f32, t: f32) -> f32 {
     let t2 = t * t;
     let t3 = t2 * t;
 
@@ -1114,6 +1343,20 @@ fn catmull_rom_1d(p0: f32, p1: f32, p2: f32, p3: f32, t: f32) -> f32 {
     let f3 = 0.5 * t3 - 0.5 * t2;
 
     p0 * f0 + p1 * f1 + p2 * f2 + p3 * f3
+}
+
+/// 2D Catmull-Rom interpolation for points p0, p1, p2, p3 at parameter t in [0, 1].
+/// Delegates to Centripetal Catmull-Rom (alpha = 0.5).
+#[inline]
+pub fn catmull_rom_2d(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, t: f32) -> Vec2 {
+    catmull_rom_centripetal_2d(p0, p1, p2, p3, t)
+}
+
+/// 1D Catmull-Rom interpolation for scalar values p0, p1, p2, p3 at parameter t in [0, 1].
+/// Delegates to Centripetal Catmull-Rom (alpha = 0.5).
+#[inline]
+pub fn catmull_rom_1d(p0: f32, p1: f32, p2: f32, p3: f32, t: f32) -> f32 {
+    catmull_rom_centripetal_1d(p0, p1, p2, p3, t)
 }
 
 #[cfg(test)]
@@ -1249,4 +1492,203 @@ mod tests {
         assert_eq!(s2.left_runoff_surface, None);
         assert_eq!(s2.right_runoff_surface, None);
     }
+
+    #[test]
+    fn test_centripetal_catmull_rom_equidistant_equivalence() {
+        let p0 = Vec2::new(0.0, 0.0);
+        let p1 = Vec2::new(10.0, 0.0);
+        let p2 = Vec2::new(20.0, 10.0);
+        let p3 = Vec2::new(30.0, 10.0);
+
+        for step in 0..=10 {
+            let t = step as f32 / 10.0;
+            let p_centripetal = catmull_rom_centripetal_2d(p0, p1, p2, p3, t);
+            let p_uniform = catmull_rom_uniform_2d(p0, p1, p2, p3, t);
+            let diff = (p_centripetal - p_uniform).length();
+            assert!(
+                diff < 0.15,
+                "Equidistant knots must produce near-identical results: diff={diff} at t={t}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_centripetal_catmull_rom_suppresses_extreme_overshoot() {
+        // A 60m straight transitioning into an abrupt 3m turn
+        let p0 = Vec2::new(0.0, 0.0);
+        let p1 = Vec2::new(60.0, 0.0);
+        let p2 = Vec2::new(60.0, 3.0);
+        let p3 = Vec2::new(57.0, 3.0);
+
+        let mut max_x_uniform = 0.0f32;
+        let mut max_x_centripetal = 0.0f32;
+
+        for step in 0..=20 {
+            let t = step as f32 / 20.0;
+            let u_pt = catmull_rom_uniform_2d(p0, p1, p2, p3, t);
+            let c_pt = catmull_rom_centripetal_2d(p0, p1, p2, p3, t);
+
+            max_x_uniform = max_x_uniform.max(u_pt.x);
+            max_x_centripetal = max_x_centripetal.max(c_pt.x);
+
+            if step == 0 {
+                assert!((c_pt - p1).length() < 1e-4);
+            }
+            if step == 20 {
+                assert!((c_pt - p2).length() < 1e-4);
+            }
+        }
+
+        // Uniform Catmull-Rom shoots over by > 4.4 meters past x=60
+        assert!(
+            max_x_uniform > 64.0,
+            "Uniform Catmull-Rom must demonstrate massive overshoot (x={max_x_uniform})"
+        );
+
+        // Centripetal Catmull-Rom must suppress this overshoot (< 0.6m past x=60)
+        assert!(
+            max_x_centripetal <= 60.55,
+            "Centripetal Catmull-Rom must suppress corner overshoot: x={max_x_centripetal}"
+        );
+    }
+
+    #[test]
+    fn test_adaptive_spline_sampling_density() {
+        // Track with a 100m straight and a 4m hairpin apex
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(104.0, 4.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 8.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 8.0), 10.0),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+
+        // Waypoint 0 to 1 is 100m: must allocate ~100 steps
+        let wp0_idx = spline.waypoint_sample_index(0).unwrap();
+        let wp1_idx = spline.waypoint_sample_index(1).unwrap();
+        let straight_steps = wp1_idx - wp0_idx;
+        assert_eq!(straight_steps, 100);
+
+        // Waypoint 1 to 2 is ~5.65m: must allocate ~6 steps
+        let wp2_idx = spline.waypoint_sample_index(2).unwrap();
+        let curve_steps = wp2_idx - wp1_idx;
+        assert_eq!(curve_steps, 6);
+
+        // Sample delta distances along the entire spline must be bounded around target 1.0m
+        for (i, window) in spline.samples.windows(2).enumerate() {
+            let step_dist = (window[1].point - window[0].point).length();
+            assert!(
+                step_dist >= 0.25 && step_dist <= 1.5,
+                "Sample step distance must stay bounded near 1.0m (got {step_dist:.3}m at {i})"
+            );
+        }
+    }
+
+    #[test]
+    fn test_swallowtail_loop_trimming_on_tight_hairpin() {
+        // Construct a sharp 180° hairpin with apex radius R = 2.0m, but road width w = 12.0m (w/2 = 6.0m > R).
+        // This causes the raw inner boundary to cross over itself (swallowtail loop).
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(30.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(32.0, 2.0), 12.0),
+            TrackWaypoint::new(Vec2::new(30.0, 4.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, 4.0), 12.0),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+
+        // Raw inner road edge has self-intersections
+        let raw_left: Vec<Vec2> = spline.samples.iter().map(|s| s.point + s.normal * (s.width * 0.5)).collect();
+        let mut raw_has_self_intersection = false;
+        'check_raw: for i in 0..raw_left.len() {
+            let seg_a = LineSegment::new(raw_left[i], raw_left[(i + 1) % raw_left.len()]);
+            for span in 2..=(15.min(raw_left.len() / 2)) {
+                let j = (i + span) % raw_left.len();
+                let seg_b = LineSegment::new(raw_left[j], raw_left[(j + 1) % raw_left.len()]);
+                if seg_a.intersect_segment(&seg_b).is_some() {
+                    raw_has_self_intersection = true;
+                    break 'check_raw;
+                }
+            }
+        }
+        assert!(raw_has_self_intersection, "Raw inner boundary of R < w/2 hairpin must self-intersect");
+
+        // Untangled road edges must eliminate all local self-intersections
+        let (untangled_left, untangled_right) = spline.untangled_road_edges();
+        assert_eq!(untangled_left.len(), spline.samples.len());
+        assert_eq!(untangled_right.len(), spline.samples.len());
+
+        for pts in [&untangled_left, &untangled_right] {
+            for i in 0..pts.len() {
+                let p0 = pts[i];
+                let p1 = pts[(i + 1) % pts.len()];
+                if (p1 - p0).length_squared() < 1e-4 {
+                    continue;
+                }
+                let seg_a = LineSegment::new(p0, p1);
+                for span in 2..=(15.min(pts.len() / 2)) {
+                    let j = (i + span) % pts.len();
+                    let p2 = pts[j];
+                    let p3 = pts[(j + 1) % pts.len()];
+                    if (p3 - p2).length_squared() < 1e-4 {
+                        continue;
+                    }
+                    let seg_b = LineSegment::new(p2, p3);
+                    if (seg_a.start - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.start - seg_b.end).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.end).length_squared() < 1e-4
+                    {
+                        continue;
+                    }
+                    assert!(
+                        seg_a.intersect_segment(&seg_b).is_none(),
+                        "Untangled boundary must not contain self-intersecting loops at ({i}, {j})"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_silverstone_loop_has_zero_self_intersections() {
+        let track = crate::track::test_circuit("gt", "silverstone");
+        let (left_road, right_road) = track.spline.untangled_road_edges();
+        let (left_curb, right_curb) = track.spline.untangled_curb_edges(1.35);
+
+        for edge in [&left_road, &right_road, &left_curb, &right_curb] {
+            let n = edge.len();
+            for i in 0..n {
+                let p0 = edge[i];
+                let p1 = edge[(i + 1) % n];
+                if (p1 - p0).length_squared() < 1e-4 {
+                    continue;
+                }
+                let seg_a = LineSegment::new(p0, p1);
+                for span in 2..=(15.min(n / 2)) {
+                    let j = (i + span) % n;
+                    let p2 = edge[j];
+                    let p3 = edge[(j + 1) % n];
+                    if (p3 - p2).length_squared() < 1e-4 {
+                        continue;
+                    }
+                    let seg_b = LineSegment::new(p2, p3);
+                    if (seg_a.start - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.start - seg_b.end).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.end).length_squared() < 1e-4
+                    {
+                        continue;
+                    }
+                    assert!(
+                        seg_a.intersect_segment(&seg_b).is_none(),
+                        "Silverstone boundary must have zero self-intersections at segments {} and {}",
+                        i, j
+                    );
+                }
+            }
+        }
+    }
 }
+

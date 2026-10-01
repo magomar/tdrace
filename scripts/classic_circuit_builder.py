@@ -372,6 +372,12 @@ def check_segments(circuit, segments):
         road = replace(circuit.road, **seg.road)
         side = "left" if seg.turn_deg > 0 else "right"
         radius = seg.length / abs(math.radians(seg.turn_deg))
+        min_radius = road.width * 0.5 + 1.0
+        if radius < min_radius:
+            raise ValueError(
+                f"{circuit.id}: segment {k} (radius {radius:.1f} m) is below minimum centerline radius "
+                f"w/2 + 1.0 m ({min_radius:.1f} m)"
+            )
         inner = radius - road.width * 0.5 - getattr(road, f"{side}_wall_distance")
         if inner < MIN_INNER_WALL_RADIUS_M:
             raise ValueError(
@@ -417,12 +423,13 @@ def check_inner_wall_steps(circuit, segments, reach_m=10.0, max_step_m=0.6):
             break
 
 
-def trace(circuit, segments=None):
+def trace(circuit, segments=None, variable_density=True):
     """Walks the segments (default: `segments_of(circuit)`).
 
-    Returns (points, end pose). Points are spaced evenly along the whole lap (about `circuit.step`, at least
-    3.2 m): track_bake draws a uniform Catmull-Rom spline through the waypoints, which kinks and turns
-    tighter than the design wherever the spacing jumps. A point is (x, y, heading_rad, lap_m, road); it
+    When variable_density is True (Spec 071), straights contain only endpoint anchors
+    (unless eased properties vary), and curved arcs contain waypoint density proportional
+    to their subtended angle.
+    Returns (points, end pose). A point is (x, y, heading_rad, lap_m, road); it
     carries the settings of the segment it falls in (width, elevation and bank eased from the previous
     segment). The end pose (x, y, heading_rad) is the end of the last segment.
     """
@@ -457,25 +464,65 @@ def trace(circuit, segments=None):
         lap += seg.length
         prev = target
 
-    count = max(3, round(lap / circuit.step))
-    if lap / count < MIN_WAYPOINT_GAP_M:
-        count = max(3, math.floor(lap / MIN_WAYPOINT_GAP_M))
     points = []
-    k = 0
-    for i in range(count):
-        d = lap * i / count
-        while k + 1 < len(pieces) and pieces[k + 1][0] <= d:
-            k += 1
-        start, seg, pose, before, target = pieces[k]
-        t = (d - start) / seg.length
-        px, py, h = pose(t)
-        e = smoothstep(t)
-        eased = {
-            key: getattr(before, key)
-            + (getattr(target, key) - getattr(before, key)) * e
-            for key in EASED
-        }
-        points.append((px, py, h, d, replace(target, **eased)))
+    if variable_density:
+        for k, (start, seg, pose, before, target) in enumerate(pieces):
+            turn = math.radians(seg.turn_deg)
+            if not turn:
+                # Straight segment
+                varies = any(getattr(before, f) != getattr(target, f) for f in EASED)
+                if varies:
+                    num_sub = max(1, round(seg.length / 20.0))
+                elif seg.length > 50.0:
+                    num_sub = max(1, round(seg.length / 45.0))
+                else:
+                    num_sub = 1
+            else:
+                # Curved arc: density proportional to subtended angle (~20 deg per waypoint)
+                turn_abs_deg = abs(seg.turn_deg)
+                num_sub = max(1, round(turn_abs_deg / 20.0))
+                radius = seg.length / abs(turn)
+                d_theta = math.radians(turn_abs_deg) / num_sub
+                sagitta = radius * (1.0 - math.cos(d_theta / 2.0))
+                if sagitta > 0.08 and radius > 1.0:
+                    max_d_theta = 2.0 * math.acos(max(-1.0, 1.0 - 0.08 / radius))
+                    if max_d_theta > 1e-4:
+                        num_sub = max(num_sub, math.ceil(math.radians(turn_abs_deg) / max_d_theta))
+
+            if seg.length / num_sub < MIN_WAYPOINT_GAP_M:
+                num_sub = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
+
+            for step_i in range(num_sub):
+                t = step_i / num_sub
+                d = start + seg.length * t
+                px, py, h = pose(t)
+                e = smoothstep(t)
+                eased = {
+                    key: getattr(before, key)
+                    + (getattr(target, key) - getattr(before, key)) * e
+                    for key in EASED
+                }
+                points.append((px, py, h, d, replace(target, **eased)))
+    else:
+        count = max(3, round(lap / circuit.step))
+        if lap / count < MIN_WAYPOINT_GAP_M:
+            count = max(3, math.floor(lap / MIN_WAYPOINT_GAP_M))
+        k = 0
+        for i in range(count):
+            d = lap * i / count
+            while k + 1 < len(pieces) and pieces[k + 1][0] <= d:
+                k += 1
+            start, seg, pose, before, target = pieces[k]
+            t = (d - start) / seg.length
+            px, py, h = pose(t)
+            e = smoothstep(t)
+            eased = {
+                key: getattr(before, key)
+                + (getattr(target, key) - getattr(before, key)) * e
+                for key in EASED
+            }
+            points.append((px, py, h, d, replace(target, **eased)))
+
     return points, (x, y, heading)
 
 
@@ -527,7 +574,14 @@ def waypoints(circuit):
         f = lap / total
         out.append(waypoint(px - ex * f, py - ey * f, road_at(road, lap)))
     if circuit.finish_at:
-        first = round(lap_of(circuit.finish_at) / total * len(out)) % len(out)
+        target_lap = lap_of(circuit.finish_at) % total
+        first = min(
+            range(len(out)),
+            key=lambda i: min(
+                abs(points[i][3] - target_lap),
+                total - abs(points[i][3] - target_lap),
+            ),
+        )
         out = out[first:] + out[:first]
     return out
 

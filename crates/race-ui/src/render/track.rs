@@ -825,6 +825,9 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     };
     let mut fringe_builder = BatchMeshBuilder::new(fringe_tex);
 
+    let (untangled_road_left, untangled_road_right) = spline.untangled_road_edges();
+    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(curb_extra_width);
+
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
@@ -853,8 +856,8 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
             let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
             if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                let p0_inner = s0.point + s0.normal * (hw0 + curb_w0);
-                let p1_inner = s1.point + s1.normal * (hw1 + curb_w1);
+                let p0_inner = if s0.left_curb { untangled_curb_left[i] } else { untangled_road_left[i] };
+                let p1_inner = if s1.left_curb { untangled_curb_left[(i + 1) % n] } else { untangled_road_left[(i + 1) % n] };
                 let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
                 let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
 
@@ -918,8 +921,8 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
             let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
 
             if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
-                let p0_inner = s0.point - s0.normal * (hw0 + curb_w0);
-                let p1_inner = s1.point - s1.normal * (hw1 + curb_w1);
+                let p0_inner = if s0.right_curb { untangled_curb_right[i] } else { untangled_road_right[i] };
+                let p1_inner = if s1.right_curb { untangled_curb_right[(i + 1) % n] } else { untangled_road_right[(i + 1) % n] };
                 let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
                 let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
 
@@ -992,6 +995,9 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     let (curb_tex, curb_tile_scale, quality) = get_curb_material_info();
     let mut curb_builder = BatchMeshBuilder::new(curb_tex);
 
+    let (untangled_road_left, untangled_road_right) = spline.untangled_road_edges();
+    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(curb_extra_width);
+
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
@@ -1019,12 +1025,10 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
 
         // Left curb
         if s0.left_curb || s1.left_curb {
-            let hw0 = s0.width * 0.5;
-            let hw1 = s1.width * 0.5;
-            let p0_inner = s0.point + s0.normal * hw0;
-            let p1_inner = s1.point + s1.normal * hw1;
-            let p0_outer = s0.point + s0.normal * (hw0 + curb_extra_width);
-            let p1_outer = s1.point + s1.normal * (hw1 + curb_extra_width);
+            let p0_inner = untangled_road_left[i];
+            let p1_inner = untangled_road_left[(i + 1) % n];
+            let p0_outer = untangled_curb_left[i];
+            let p1_outer = untangled_curb_left[(i + 1) % n];
 
             if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
                 curb_builder.push_quad(
@@ -1045,12 +1049,10 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
 
         // Right curb
         if s0.right_curb || s1.right_curb {
-            let hw0 = s0.width * 0.5;
-            let hw1 = s1.width * 0.5;
-            let p0_inner = s0.point - s0.normal * hw0;
-            let p1_inner = s1.point - s1.normal * hw1;
-            let p0_outer = s0.point - s0.normal * (hw0 + curb_extra_width);
-            let p1_outer = s1.point - s1.normal * (hw1 + curb_extra_width);
+            let p0_inner = untangled_road_right[i];
+            let p1_inner = untangled_road_right[(i + 1) % n];
+            let p0_outer = untangled_curb_right[i];
+            let p1_outer = untangled_curb_right[(i + 1) % n];
 
             if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
                 curb_builder.push_quad(
@@ -1086,6 +1088,9 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
     let mut surface_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
     let mut lines_to_draw: Vec<(Vec2, Vec2, f32, Color)> = Vec::with_capacity(seg_count * 2);
 
+    let (untangled_left, untangled_right) = spline.untangled_road_edges();
+    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(1.35);
+
     for i in 0..seg_count {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
@@ -1097,10 +1102,10 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
         let hw0 = s0.width * 0.5;
         let hw1 = s1.width * 0.5;
 
-        let left0 = s0.point + s0.normal * hw0;
-        let right0 = s0.point - s0.normal * hw0;
-        let left1 = s1.point + s1.normal * hw1;
-        let right1 = s1.point - s1.normal * hw1;
+        let left0 = untangled_left[i];
+        let right0 = untangled_right[i];
+        let left1 = untangled_left[(i + 1) % n];
+        let right1 = untangled_right[(i + 1) % n];
 
         let avg_bank = (s0.bank_angle + s1.bank_angle) * 0.5;
         let is_banked = avg_bank.abs() > 0.8;
@@ -1124,11 +1129,10 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 }
             }
 
-            let curb_extra_width = 1.35;
-            let l0_base = left0 + s0.normal * (if s0.left_curb { curb_extra_width } else { 0.0 });
-            let l1_base = left1 + s1.normal * (if s1.left_curb { curb_extra_width } else { 0.0 });
-            let r0_base = right0 - s0.normal * (if s0.right_curb { curb_extra_width } else { 0.0 });
-            let r1_base = right1 - s1.normal * (if s1.right_curb { curb_extra_width } else { 0.0 });
+            let l0_base = if s0.left_curb { untangled_curb_left[i] } else { left0 };
+            let l1_base = if s1.left_curb { untangled_curb_left[(i + 1) % n] } else { left1 };
+            let r0_base = if s0.right_curb { untangled_curb_right[i] } else { right0 };
+            let r1_base = if s1.right_curb { untangled_curb_right[(i + 1) % n] } else { right1 };
 
             if l_shade_w0 > 0.001 || l_shade_w1 > 0.001 {
                 let l0_outer = l0_base + s0.normal * l_shade_w0;
@@ -1596,7 +1600,9 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
     // Render markings and seams on top of the surface
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         for (p0, p1, th, col) in lines_to_draw {
-            draw_line(p0.x, p0.y, p1.x, p1.y, th, col);
+            if (p1 - p0).length_squared() > 1e-4 {
+                draw_line(p0.x, p0.y, p1.x, p1.y, th, col);
+            }
         }
     }));
 }
