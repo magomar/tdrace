@@ -6,6 +6,7 @@ use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::ai::DriverCharacter;
 use crate::render::color::Palette;
+use cabinet::ui::{LayoutRect, MetricBar, ScreenFooter, SplitPane};
 
 /// Renders the full-screen Driver Cards Dossier and Roster Browser.
 pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], selected_idx: usize) {
@@ -63,13 +64,17 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     let name_str = format!("{} — \"{}\"", driver.name, driver.alias);
     fonts.draw_ui_bold(&name_str, x + scaler.s(120.0), y + scaler.s(53.0), scaler.font_s(22.0), Palette::WHITE);
 
-    // Two-Column Layout inside Card
+    // Two-Column Layout inside Card (platform SplitPane)
     let content_y = y + scaler.s(88.0);
-    let col_gap = scaler.s(20.0);
-    let col_w = (box_w - scaler.s(32.0) - col_gap) * 0.5;
-    let col1_x = x + scaler.s(16.0);
-    let col2_x = col1_x + col_w + col_gap;
     let col_h = box_h - scaler.s(110.0);
+    let split_pane = SplitPane::new(
+        LayoutRect::new(x + scaler.s(16.0), content_y, box_w - scaler.s(32.0), col_h),
+        0.5,
+        scaler.s(20.0),
+    );
+    let col1_x = split_pane.left_rect().x;
+    let col2_x = split_pane.right_rect().x;
+    let col_w = split_pane.left_rect().w;
 
     // --- Left Column: Bio, Vehicle & Livery ---
     scaler.draw_glass_card(col1_x, content_y, col_w, col_h, Color::new(0.06, 0.08, 0.12, 0.85), Palette::UI_CARD_BORDER, 1.2);
@@ -175,15 +180,20 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     fonts.draw_ui_bold(&style_str, col2_x + scaler.s(16.0), right_y, scaler.font_s(12.0), Palette::NEON_CYAN);
     right_y += scaler.s(22.0);
 
-    // Skill Stat Bars
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "PACE & SPEED", preview_stats.speed, Palette::NEON_CYAN);
-    right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "OVERTAKE AGGRESSION", preview_stats.aggression, Palette::RED);
-    right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "APEX PRECISION", preview_stats.precision, Palette::NEON_GOLD);
-    right_y += scaler.s(26.0);
-    render_character_stat_bar(scaler, fonts, col2_x + scaler.s(16.0), right_y, "DEFENSIVE POSITION", preview_stats.defense, Palette::NEON_GREEN);
-    right_y += scaler.s(32.0);
+    // Skill Stat Bars (platform MetricBar)
+    let stat_x = col2_x + scaler.s(16.0);
+    let stat_w = col_w - scaler.s(32.0);
+    let stat_bars = [
+        MetricBar::stat("PACE & SPEED", preview_stats.speed, format!("{:.0}%", preview_stats.speed * 100.0), Palette::NEON_CYAN),
+        MetricBar::stat("OVERTAKE AGGRESSION", preview_stats.aggression, format!("{:.0}%", preview_stats.aggression * 100.0), Palette::RED),
+        MetricBar::stat("APEX PRECISION", preview_stats.precision, format!("{:.0}%", preview_stats.precision * 100.0), Palette::NEON_GOLD),
+        MetricBar::stat("DEFENSIVE POSITION", preview_stats.defense, format!("{:.0}%", preview_stats.defense * 100.0), Palette::NEON_GREEN),
+    ];
+    for bar in &stat_bars {
+        bar.draw(&scaler, fonts, LayoutRect::new(stat_x, right_y, stat_w, scaler.s(20.0)));
+        right_y += scaler.s(26.0);
+    }
+    right_y += scaler.s(6.0);
 
     // Operationalized AI Parameters Table
     fonts.draw_ui_bold("AI TELEMETRY PARAMETERS (PRO BASELINE)", col2_x + scaler.s(16.0), right_y, scaler.font_s(13.5), Palette::UI_TEXT_MUTED);
@@ -204,35 +214,19 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     fonts.draw_ui_regular(&p3, col2_x + param_box_w * 0.5 + scaler.s(10.0), right_y + scaler.s(20.0), scaler.font_s(12.0), Color::new(0.85, 0.90, 0.96, 1.0));
     fonts.draw_ui_regular(&p4, col2_x + param_box_w * 0.5 + scaler.s(10.0), right_y + scaler.s(40.0), scaler.font_s(12.0), Color::new(0.85, 0.90, 0.96, 1.0));
 
-    // Footer Navigation Controls
-    let nav_prompt = "[LEFT / A] Previous Driver | [RIGHT / D] Next Driver | [ESC / SPACE] Close Dossier";
-    fonts.draw_ui_bold_centered(
-        nav_prompt,
-        sw * 0.5,
-        sh - scaler.s(20.0),
-        scaler.font_s(15.0),
-        Palette::WHITE,
-    );
+    // Footer Navigation Controls (platform ScreenFooter)
+    let footer_h = scaler.s(56.0);
+    let mut footer = ScreenFooter::new(0.0, sh - footer_h, sw, footer_h);
+    footer.add_prompt("LEFT / A", "Previous Driver");
+    footer.add_prompt("RIGHT / D", "Next Driver");
+    footer.add_prompt("ESC / SPACE", "Close Dossier");
+    footer.render_frame();
+    let prompt_w = sw / footer.prompts.len().max(1) as f32;
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let size = scaler.font_s(13.0);
+        let text = fonts.fit_ui_bold(&format!("[{}] {}", prompt.badge, prompt.label), size, prompt_w - scaler.s(8.0));
+        fonts.draw_ui_bold_centered(&text, (i as f32 + 0.5) * prompt_w, sh - footer_h + footer_h * 0.65, size, Palette::WHITE);
+    }
 }
 
-fn render_character_stat_bar(
-    scaler: UiScaler,
-    fonts: &Fonts,
-    x: f32,
-    y: f32,
-    label: &str,
-    val: f32,
-    color: Color,
-) {
-    fonts.draw_ui_bold(label, x, y + scaler.s(7.0), scaler.font_s(11.0), Palette::WHITE);
-    let bar_w = scaler.s(140.0);
-    let bar_h = scaler.s(10.0);
-    let bar_x = x + scaler.s(160.0);
 
-    draw_rectangle(bar_x, y, bar_w, bar_h, Color::new(0.12, 0.14, 0.20, 0.95));
-    draw_rectangle(bar_x, y, bar_w * val.clamp(0.0, 1.0), bar_h, color);
-    draw_rectangle_lines(bar_x, y, bar_w, bar_h, 1.0, Palette::UI_CARD_BORDER);
-
-    let pct_str = format!("{:.0}%", val * 100.0);
-    fonts.draw_ui_regular(&pct_str, bar_x + bar_w + scaler.s(8.0), y + scaler.s(8.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-}
