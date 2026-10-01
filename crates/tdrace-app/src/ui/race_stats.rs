@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 use crate::render::color::Palette;
 use crate::ui::scaler::UiScaler;
 use cabinet::ui::font::Fonts;
+use cabinet::ui::{ColumnAlign, DataColumn, DataRow, DataTable, KpiTile, LayoutRect, ScreenFooter, SplitPane};
 use crate::game::PlayerRaceTelemetry;
 use crate::ui::hud::format_lap_time;
 
@@ -18,6 +19,63 @@ fn determine_stunt_rank(total_score: u32) -> (&'static str, Color) {
     } else {
         ("PRECISION RACER", Color::new(0.70, 0.78, 0.88, 1.0))
     }
+}
+
+/// A single lap's split times, formatted for the lap-splits `DataTable`.
+#[derive(Clone)]
+struct LapSplit {
+    lap: String,
+    time: String,
+    s1: String,
+    s2: String,
+    s3: String,
+    status: String,
+}
+
+/// Builds display-ready lap split rows from the player's lap telemetry.
+fn build_lap_splits(stats: &PlayerRaceTelemetry, max_laps: usize) -> Vec<LapSplit> {
+    let best_time = stats
+        .best_lap_idx
+        .and_then(|idx| stats.laps.get(idx))
+        .map(|l| l.lap_time)
+        .or_else(|| stats.laps.iter().map(|l| l.lap_time).min_by(|a, b| a.partial_cmp(b).unwrap()));
+
+    stats
+        .laps
+        .iter()
+        .take(max_laps)
+        .enumerate()
+        .map(|(i, lap)| {
+            let is_best = Some(i) == stats.best_lap_idx;
+            let s1 = lap.sector_times.first().copied().unwrap_or(0.0);
+            let s2 = lap.sector_times.get(1).copied().unwrap_or(0.0);
+            let s3 = lap.sector_times.get(2).copied().unwrap_or(0.0);
+            let s1_lbl = if s1 > 0.05 { format!("{:.2}s", s1) } else { "--".to_string() };
+            let s2_lbl = if s2 > 0.05 { format!("{:.2}s", s2) } else { "--".to_string() };
+            let s3_lbl = if s3 > 0.05 { format!("{:.2}s", s3) } else { "--".to_string() };
+            let lap_lbl = if is_best {
+                format!("★L{}", lap.lap_number)
+            } else {
+                format!("L{}", lap.lap_number)
+            };
+            let status_lbl = if is_best {
+                "PB (BEST)".to_string()
+            } else if let Some(bt) = best_time {
+                let diff = lap.lap_time - bt;
+                format!("+{:.2}s", diff.max(0.0))
+            } else {
+                "-".to_string()
+            };
+            LapSplit {
+                lap: lap_lbl,
+                time: format_lap_time(lap.lap_time),
+                s1: s1_lbl,
+                s2: s2_lbl,
+                s3: s3_lbl,
+                status: status_lbl,
+            }
+        })
+        .collect()
 }
 
 /// Renders the full-screen Detailed Race Telemetry & Acrobatic Stunt Statistics screen.
@@ -38,7 +96,7 @@ pub fn render_race_stats_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.96));
 
     let box_w = (sw * 0.92).clamp(scaler.s(680.0), scaler.s(1040.0));
-    let box_h = (sh * 0.90).clamp(scaler.s(520.0), scaler.s(760.0));
+    let box_h = (sh * 0.84).clamp(scaler.s(520.0), scaler.s(760.0));
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -69,15 +127,19 @@ pub fn render_race_stats_screen(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Split Columns Setup
+    // Split Columns Setup (platform SplitPane)
     let pad = scaler.s(18.0);
-    let col_gap = scaler.s(14.0);
     let content_w = box_w - pad * 2.0;
-    let col_w = (content_w - col_gap) * 0.5;
-    let left_x = x + pad;
-    let right_x = left_x + col_w + col_gap;
     let content_top_y = y + scaler.s(66.0);
     let content_h = box_h - scaler.s(96.0);
+    let split_pane = SplitPane::new(
+        LayoutRect::new(x + pad, content_top_y, content_w, content_h),
+        0.5,
+        scaler.s(14.0),
+    );
+    let left_x = split_pane.left_rect().x;
+    let right_x = split_pane.right_rect().x;
+    let col_w = split_pane.left_rect().w;
 
     // ─────────────────────────────────────────────────────────────────────────
     // LEFT COLUMN: LAP TIMES & SECTOR SPLITS
@@ -100,96 +162,50 @@ pub fn render_race_stats_screen(
         Palette::NEON_CYAN,
     );
 
-    // Table Header
+    // Lap splits DataTable (platform DataTable<LapSplit>)
     let tbl_x = left_x + scaler.s(12.0);
     let tbl_w = col_w - scaler.s(24.0);
-    let mut row_y = content_top_y + scaler.s(32.0);
-    let hdr_h = scaler.s(22.0);
 
-    draw_rectangle(tbl_x, row_y, tbl_w, hdr_h, Color::new(0.12, 0.16, 0.24, 0.90));
-    fonts.draw_ui_bold("LAP", tbl_x + scaler.s(8.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
-    fonts.draw_ui_bold("TIME", tbl_x + scaler.s(45.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
-    fonts.draw_ui_bold("S1", tbl_x + scaler.s(125.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
-    fonts.draw_ui_bold("S2", tbl_x + scaler.s(180.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
-    fonts.draw_ui_bold("S3", tbl_x + scaler.s(235.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
-    fonts.draw_ui_bold("STATUS / GAP", tbl_x + tbl_w - scaler.s(80.0), row_y + scaler.s(15.0), scaler.font_s(11.5), Palette::WHITE);
+    // Left Column Summary Card (anchored at bottom)
+    let sum_box_h = scaler.s(76.0);
+    let sum_box_y = content_top_y + content_h - sum_box_h - scaler.s(10.0);
 
-    row_y += hdr_h + scaler.s(4.0);
+    if stats.laps.is_empty() {
+        fonts.draw_ui_regular(
+            "No full laps completed during session",
+            tbl_x + scaler.s(12.0),
+            content_top_y + scaler.s(56.0),
+            scaler.font_s(12.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    } else {
+        let table_bounds = LayoutRect::new(
+            tbl_x,
+            content_top_y + scaler.s(32.0),
+            tbl_w,
+            (sum_box_y - scaler.s(8.0)) - (content_top_y + scaler.s(32.0)),
+        );
+        let mut table = DataTable::<LapSplit>::new(0.0, 0.0, table_bounds.w, scaler.s(24.0), scaler.s(22.0));
+        table.add_column(DataColumn::new("lap", "LAP", 10.0, ColumnAlign::Left, |r| r.lap.clone()));
+        table.add_column(DataColumn::new("time", "TIME", 22.0, ColumnAlign::Left, |r| r.time.clone()));
+        table.add_column(DataColumn::new("s1", "S1", 18.0, ColumnAlign::Right, |r| r.s1.clone()));
+        table.add_column(DataColumn::new("s2", "S2", 18.0, ColumnAlign::Right, |r| r.s2.clone()));
+        table.add_column(DataColumn::new("s3", "S3", 18.0, ColumnAlign::Right, |r| r.s3.clone()));
+        table.add_column(DataColumn::new("status", "STATUS / GAP", 14.0, ColumnAlign::Right, |r| r.status.clone()));
+        let laps = build_lap_splits(stats, 10);
+        table.set_rows(laps.iter().enumerate().map(|(i, s)| DataRow::new(i.to_string(), s.clone())).collect());
+        table.draw(&scaler, fonts, table_bounds);
+    }
+
+    // Left Column Summary Card at bottom
+    draw_rectangle(tbl_x, sum_box_y, tbl_w, sum_box_h, Color::new(0.09, 0.12, 0.18, 0.85));
+    draw_rectangle_lines(tbl_x, sum_box_y, tbl_w, sum_box_h, 1.0, Color::new(0.25, 0.35, 0.50, 0.6));
 
     let best_time = stats
         .best_lap_idx
         .and_then(|idx| stats.laps.get(idx))
         .map(|l| l.lap_time)
         .or_else(|| stats.laps.iter().map(|l| l.lap_time).min_by(|a, b| a.partial_cmp(b).unwrap()));
-
-    let row_h = scaler.s(22.0);
-    let max_display_laps = 10;
-    for (i, lap) in stats.laps.iter().take(max_display_laps).enumerate() {
-        let is_best = Some(i) == stats.best_lap_idx;
-        let (row_bg, text_col) = if is_best {
-            (Color::new(0.18, 0.32, 0.22, 0.85), Palette::NEON_GOLD)
-        } else if i % 2 == 1 {
-            (Color::new(0.08, 0.11, 0.16, 0.60), Color::new(0.85, 0.90, 0.96, 1.0))
-        } else {
-            (Color::new(0.06, 0.08, 0.12, 0.60), Color::new(0.85, 0.90, 0.96, 1.0))
-        };
-
-        draw_rectangle(tbl_x, row_y, tbl_w, row_h, row_bg);
-        if is_best {
-            draw_rectangle_lines(tbl_x, row_y, tbl_w, row_h, 1.0, Palette::NEON_GOLD);
-        }
-
-        // Lap number
-        let lap_lbl = format!("L{}", lap.lap_number);
-        fonts.draw_ui_bold(&lap_lbl, tbl_x + scaler.s(8.0), row_y + scaler.s(15.0), scaler.font_s(11.5), text_col);
-
-        // Lap time
-        let time_lbl = format_lap_time(lap.lap_time);
-        fonts.draw_ui_bold(&time_lbl, tbl_x + scaler.s(45.0), row_y + scaler.s(15.0), scaler.font_s(12.0), text_col);
-
-        // Sector splits
-        let s1 = lap.sector_times.first().copied().unwrap_or(0.0);
-        let s2 = lap.sector_times.get(1).copied().unwrap_or(0.0);
-        let s3 = lap.sector_times.get(2).copied().unwrap_or(0.0);
-
-        let s1_lbl = if s1 > 0.05 { format!("{:.2}s", s1) } else { "--".to_string() };
-        let s2_lbl = if s2 > 0.05 { format!("{:.2}s", s2) } else { "--".to_string() };
-        let s3_lbl = if s3 > 0.05 { format!("{:.2}s", s3) } else { "--".to_string() };
-
-        fonts.draw_ui_regular(&s1_lbl, tbl_x + scaler.s(125.0), row_y + scaler.s(15.0), scaler.font_s(11.0), text_col);
-        fonts.draw_ui_regular(&s2_lbl, tbl_x + scaler.s(180.0), row_y + scaler.s(15.0), scaler.font_s(11.0), text_col);
-        fonts.draw_ui_regular(&s3_lbl, tbl_x + scaler.s(235.0), row_y + scaler.s(15.0), scaler.font_s(11.0), text_col);
-
-        // Gap / Status
-        let status_lbl = if is_best {
-            "PB (BEST)".to_string()
-        } else if let Some(bt) = best_time {
-            let diff = lap.lap_time - bt;
-            format!("+{:.2}s", diff.max(0.0))
-        } else {
-            "-".to_string()
-        };
-        let status_col = if is_best { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED };
-        fonts.draw_ui_bold(&status_lbl, tbl_x + tbl_w - scaler.s(80.0), row_y + scaler.s(15.0), scaler.font_s(11.0), status_col);
-
-        row_y += row_h + scaler.s(3.0);
-    }
-
-    if stats.laps.is_empty() {
-        fonts.draw_ui_regular(
-            "No full laps completed during session",
-            tbl_x + scaler.s(12.0),
-            row_y + scaler.s(24.0),
-            scaler.font_s(12.5),
-            Palette::UI_TEXT_MUTED,
-        );
-    }
-
-    // Left Column Summary Card at bottom
-    let sum_box_h = scaler.s(76.0);
-    let sum_box_y = content_top_y + content_h - sum_box_h - scaler.s(10.0);
-    draw_rectangle(tbl_x, sum_box_y, tbl_w, sum_box_h, Color::new(0.09, 0.12, 0.18, 0.85));
-    draw_rectangle_lines(tbl_x, sum_box_y, tbl_w, sum_box_h, 1.0, Color::new(0.25, 0.35, 0.50, 0.6));
 
     let best_lap_str = best_time.map(format_lap_time).unwrap_or_else(|| "--:--.--".to_string());
     let avg_lap_str = if !stats.laps.is_empty() {
@@ -267,127 +283,58 @@ pub fn render_race_stats_screen(
         rank_color,
     );
 
-    // Total Stunt Score Card
-    let score_card_y = banner_y + banner_h + scaler.s(10.0);
-    let score_card_h = scaler.s(48.0);
-    draw_rectangle(right_inner_x, score_card_y, right_inner_w, score_card_h, Color::new(0.12, 0.18, 0.14, 0.85));
-    draw_rectangle_lines(right_inner_x, score_card_y, right_inner_w, score_card_h, 1.0, if stunt_scoring_enabled { Palette::NEON_GOLD } else { Color::new(0.30, 0.40, 0.50, 0.6) });
-
-    fonts.draw_ui_regular(
-        if stunt_scoring_enabled { "TOTAL ACROBATIC SCORE" } else { "TOTAL ACROBATIC SCORE (INACTIVE)" },
-        right_inner_x + scaler.s(12.0),
-        score_card_y + scaler.s(20.0),
-        scaler.font_s(11.5),
-        Palette::UI_TEXT_MUTED,
-    );
-    let score_str = if stunt_scoring_enabled {
+    // Total Stunt Score KPI tile (platform KpiTile)
+    let total_score_str = if stunt_scoring_enabled {
         format!("{} PTS", stunt.total_stunt_score)
     } else {
-        "OFF (CLASSIC ARCADE ONLY)".to_string()
+        "OFF".to_string()
     };
-    fonts.draw_display(
-        &score_str,
-        right_inner_x + scaler.s(12.0),
-        score_card_y + scaler.s(41.0),
-        if stunt_scoring_enabled { scaler.font_s(20.0) } else { scaler.font_s(14.0) },
+    let total_tile = KpiTile::new(
+        if stunt_scoring_enabled { "TOTAL ACROBATIC SCORE" } else { "TOTAL ACROBATIC SCORE (INACTIVE)" },
+        total_score_str,
         if stunt_scoring_enabled { Palette::NEON_GOLD } else { Color::new(0.60, 0.70, 0.80, 0.85) },
-    );
+    )
+    .with_subtext(rank_title);
+    let total_tile_h = scaler.s(88.0);
+    let total_tile_y = banner_y + banner_h + scaler.s(10.0);
+    total_tile.draw(&scaler, fonts, LayoutRect::new(right_inner_x, total_tile_y, right_inner_w, total_tile_h));
 
-    // Stunt Details Rows
-    let mut detail_y = score_card_y + score_card_h + scaler.s(16.0);
-    let section_h = scaler.s(20.0);
-
-    // Section 1: Drifting
-    fonts.draw_ui_bold(
-        "DRIFT PERFORMANCE",
-        right_inner_x,
-        detail_y + scaler.s(14.0),
-        scaler.font_s(13.0),
-        Palette::NEON_CYAN,
-    );
-    detail_y += section_h;
-
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Total Drift Points", &format!("{} PTS", stunt.total_drift_points), Palette::NEON_GREEN);
-    detail_y += scaler.s(22.0);
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Drift Count", &format!("{}", stunt.drift_count), Palette::WHITE);
-    detail_y += scaler.s(22.0);
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Peak Single Drift", &format!("{:.0} PTS", stunt.max_single_drift_score), Palette::WHITE);
-    detail_y += scaler.s(28.0);
-
-    // Section 2: Airborne / Jumps
-    fonts.draw_ui_bold(
-        "AIRBORNE JUMP PERFORMANCE",
-        right_inner_x,
-        detail_y + scaler.s(14.0),
-        scaler.font_s(13.0),
-        Palette::NEON_MAGENTA,
-    );
-    detail_y += section_h;
-
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Ramp Jumps Completed", &format!("{}", stunt.jump_count), Palette::WHITE);
-    detail_y += scaler.s(22.0);
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Cumulative Air Time", &format!("{:.2}s", stunt.total_air_time), Palette::NEON_CYAN);
-    detail_y += scaler.s(22.0);
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Longest Single Jump", &format!("{:.2}s", stunt.longest_jump_time), Palette::WHITE);
-    detail_y += scaler.s(22.0);
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Air Stunt Bonus", &format!("{} PTS", stunt.jump_points), Palette::NEON_GREEN);
-    detail_y += scaler.s(28.0);
-
-    // Section 3: Combo Mastery
-    fonts.draw_ui_bold(
-        "COMBO & STREAK MULTIPLIER",
-        right_inner_x,
-        detail_y + scaler.s(14.0),
-        scaler.font_s(13.0),
-        Palette::NEON_GOLD,
-    );
-    detail_y += section_h;
-
-    render_stat_row(fonts, &scaler, right_inner_x, right_inner_w, detail_y, "Peak Combo Streak", &format!("{}x STREAK", stunt.max_combo), Palette::NEON_GOLD);
+    // Stunt metric KPI tiles (platform KpiTile)
+    let tile_gap = scaler.s(10.0);
+    let tile_w = (right_inner_w - tile_gap) * 0.5;
+    let tile_h = scaler.s(72.0);
+    let tiles_y = total_tile_y + total_tile_h + scaler.s(12.0);
+    let tiles = [
+        KpiTile::new("DRIFT POINTS", format!("{} PTS", stunt.total_drift_points), Palette::NEON_GREEN)
+            .with_subtext(format!("{} DRIFTS", stunt.drift_count)),
+        KpiTile::new("AIR STUNT BONUS", format!("{} PTS", stunt.jump_points), Palette::NEON_MAGENTA)
+            .with_subtext(format!("{:.2}s AIR", stunt.total_air_time)),
+        KpiTile::new("PEAK COMBO", format!("{}x STREAK", stunt.max_combo), Palette::NEON_GOLD),
+        KpiTile::new("LONGEST JUMP", format!("{:.2}s", stunt.longest_jump_time), Palette::NEON_CYAN)
+            .with_subtext(format!("{} JUMPS", stunt.jump_count)),
+    ];
+    for (i, tile) in tiles.iter().enumerate() {
+        let col = i % 2;
+        let row = i / 2;
+        let tx = right_inner_x + col as f32 * (tile_w + tile_gap);
+        let ty = tiles_y + row as f32 * (tile_h + tile_gap);
+        tile.draw(&scaler, fonts, LayoutRect::new(tx, ty, tile_w, tile_h));
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // BOTTOM ACTION PROMPT
+    // BOTTOM ACTION BAR (platform ScreenFooter)
     // ─────────────────────────────────────────────────────────────────────────
     let back_target = if prev_is_hof { "Hall of Fame" } else { "Race Results" };
-    let prompt = format!(
-        "Press [TAB / ESC] Back to {}  |  [R] Restart Race  |  [SPACE / ENTER] Proceed",
-        back_target
-    );
-    fonts.draw_ui_bold_centered(
-        &prompt,
-        sw * 0.5,
-        y + box_h - scaler.s(16.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
-}
-
-/// Helper to render a clean key-value stat row with alternating background.
-fn render_stat_row(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    x: f32,
-    w: f32,
-    y: f32,
-    label: &str,
-    val: &str,
-    val_col: Color,
-) {
-    let row_h = scaler.s(20.0);
-    draw_rectangle(x, y, w, row_h, Color::new(0.08, 0.11, 0.16, 0.45));
-    fonts.draw_ui_regular(
-        label,
-        x + scaler.s(8.0),
-        y + scaler.s(14.0),
-        scaler.font_s(12.0),
-        Palette::UI_TEXT_MUTED,
-    );
-    let val_w = fonts.measure_ui_bold(val, scaler.font_s(12.0)).width;
-    fonts.draw_ui_bold(
-        val,
-        x + w - scaler.s(12.0) - val_w,
-        y + scaler.s(14.0),
-        scaler.font_s(12.0),
-        val_col,
-    );
+    let footer_h = scaler.s(56.0);
+    let mut footer = ScreenFooter::new(0.0, sh - footer_h, sw, footer_h);
+    footer.add_prompt("TAB / ESC", &format!("Back to {}", back_target));
+    footer.add_prompt("R", "Restart Race");
+    footer.add_prompt("SPACE / ENTER", "Proceed");
+    footer.render_frame();
+    let prompt_w = sw / footer.prompts.len().max(1) as f32;
+    for (i, prompt) in footer.prompts.iter().enumerate() {
+        let size = scaler.font_s(13.0);
+        let text = fonts.fit_ui_bold(&format!("[{}] {}", prompt.badge, prompt.label), size, prompt_w - scaler.s(8.0));
+        fonts.draw_ui_bold_centered(&text, (i as f32 + 0.5) * prompt_w, sh - footer_h + footer_h * 0.65, size, Palette::WHITE);
+    }
 }
