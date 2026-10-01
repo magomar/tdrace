@@ -15,7 +15,7 @@ use crate::render::color::{CarColorScheme, Palette};
 use cabinet::input::GamepadSnapshot;
 use cabinet::state::{CabinetContext, CabinetScreen, UniversalConfirmModal};
 use cabinet::ui::theme::CabinetTheme;
-use cabinet::ui::{FilterBar, FilterBarStyle, FilterItem};
+use cabinet::ui::{FilterBar, FilterBarStyle, FilterItem, LayoutRect, SplitPane, VStack};
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::CarCategory;
@@ -1117,10 +1117,20 @@ pub fn render_track_select_menu(
         Palette::UI_TEXT_MUTED,
     );
 
-    // Columns geometry
+    // Columns geometry (platform SplitPane: left track list vs right dossier)
     let col_w = (sw * 0.40).clamp(scaler.s(320.0), scaler.s(480.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(16.0)).max(scaler.safe_pad_x);
-    let col2_x = (sw * 0.5 + scaler.s(16.0)).min(sw - col_w - scaler.safe_pad_x);
+    let split_pane = SplitPane::new(
+        LayoutRect::new(
+            (sw * 0.5 - col_w - scaler.s(16.0)).max(scaler.safe_pad_x),
+            0.0,
+            col_w * 2.0 + scaler.s(32.0),
+            1.0,
+        ),
+        0.5,
+        scaler.s(32.0),
+    );
+    let col1_x = split_pane.left_rect().x;
+    let col2_x = split_pane.right_rect().x.min(sw - col_w - scaler.safe_pad_x);
 
     // Active Profile Badge Banner
     let badge_w = col_w * 2.0 + scaler.s(32.0);
@@ -1350,9 +1360,11 @@ pub fn render_track_select_menu(
         let end_idx = (start_idx + max_visible).min(total_items);
 
         let is_tracks_focused = focused_panel == MenuPanelFocus::LeftTracks;
+        let track_stack = VStack::new_uniform(col1_x, curr_y, col_w, scaler.s(58.0), scaler.s(6.0));
         for i in start_idx..end_idx {
             let is_sel = i == selected_track_idx;
             let box_h = scaler.s(58.0);
+            let curr_y = track_stack.item_rect_windowed(i, start_idx).y;
 
             if i < total_tracks {
                 let track_opt = &available_tracks[i];
@@ -1647,8 +1659,6 @@ pub fn render_track_select_menu(
                     },
                 );
             }
-
-            curr_y += box_h + scaler.s(6.0);
         }
     }
 
@@ -4240,7 +4250,7 @@ pub fn render_modality_select_screen(
         Palette::UI_TEXT_MUTED,
     );
 
-    // 3 Category Tabs at Top
+    // 3 Category Tabs at Top (platform FilterBar, Pills style)
     let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
     let tab_h = scaler.s(30.0);
     let tab_gap = scaler.s(12.0);
@@ -4248,58 +4258,25 @@ pub fn render_modality_select_screen(
     let tabs_start_x = (sw - total_tabs_w) * 0.5;
     let tab_y = scaler.s(64.0);
 
-    for (cat_idx, cat) in ModalityCategory::ALL.iter().enumerate() {
-        let is_cat_active = *cat == category;
-        let tx = tabs_start_x + (cat_idx as f32) * (tab_w + tab_gap);
-        let tab_bg = if is_cat_active {
-            Color::new(0.12, 0.16, 0.26, 0.95)
-        } else {
-            Color::new(0.06, 0.08, 0.12, 0.60)
-        };
-        let tab_border = if is_cat_active {
-            active_module_accent
-        } else {
-            Palette::UI_CARD_BORDER
-        };
-
-        scaler.draw_glass_card(
-            tx,
-            tab_y,
-            tab_w,
-            tab_h,
-            tab_bg,
-            tab_border,
-            if is_cat_active { 2.0 } else { 1.0 },
-        );
-
-        if is_cat_active {
-            draw_rectangle(
-                tx,
-                tab_y + tab_h - scaler.s(2.5),
-                tab_w,
-                scaler.s(2.5),
-                active_module_accent,
-            );
-        }
-
-        let tab_label = match cat {
-            ModalityCategory::SinglePlayer => "[ 1. SINGLE PLAYER ]",
-            ModalityCategory::Multiplayer => "[ 2. MULTIPLAYER ]",
-            ModalityCategory::Options => "[ 3. OPTIONS ]",
-        };
-        let tab_text_col = if is_cat_active {
-            Palette::WHITE
-        } else {
-            Palette::UI_TEXT_MUTED
-        };
-        fonts.draw_ui_bold_centered(
-            tab_label,
-            tx + tab_w * 0.5,
-            tab_y + scaler.s(19.0),
-            scaler.font_s(11.5),
-            tab_text_col,
-        );
-    }
+    let tab_labels: Vec<&str> = ModalityCategory::ALL.iter().map(|c| c.title()).collect();
+    let tab_active_idx = ModalityCategory::ALL
+        .iter()
+        .position(|c| *c == category)
+        .unwrap_or(0);
+    let category_tabs = FilterBar::from_labels(&tab_labels)
+        .with_style(FilterBarStyle::Pills)
+        .with_gap(12.0)
+        .with_active(tab_active_idx)
+        .with_focus(true);
+    category_tabs.draw(
+        &scaler,
+        fonts,
+        tabs_start_x,
+        tab_y,
+        total_tabs_w,
+        tab_h,
+        active_module_accent,
+    );
 
     // Selected Menu Content Layout (Centered single-menu view)
     let col_w = total_tabs_w;
@@ -4315,8 +4292,9 @@ pub fn render_modality_select_screen(
                 / sp_items.len() as f32)
                 .clamp(scaler.s(54.0), scaler.s(88.0));
 
-            let mut curr_y = start_y;
+            let sp_stack = VStack::new_uniform(col_x, start_y, col_w, sp_card_h, card_gap);
             for (i, item) in sp_items.iter().enumerate() {
+                let curr_y = sp_stack.item_rect(i).y;
                 let is_sel = i == selected_idx;
                 let accent = item.accent_color();
 
@@ -4418,7 +4396,6 @@ pub fn render_modality_select_screen(
                     );
                 }
 
-                curr_y += sp_card_h + card_gap;
             }
         }
         ModalityCategory::Multiplayer => {
@@ -4428,8 +4405,9 @@ pub fn render_modality_select_screen(
                 / mp_items.len() as f32)
                 .clamp(scaler.s(68.0), scaler.s(110.0));
 
-            let mut curr_y = start_y;
+            let mp_stack = VStack::new_uniform(col_x, start_y, col_w, mp_card_h, card_gap);
             for (i, item) in mp_items.iter().enumerate() {
+                let curr_y = mp_stack.item_rect(i).y;
                 let is_sel = i == selected_idx;
                 let accent = item.accent_color();
                 let is_avail = item.is_available();
@@ -4541,7 +4519,6 @@ pub fn render_modality_select_screen(
                     );
                 }
 
-                curr_y += mp_card_h + card_gap;
             }
         }
         ModalityCategory::Options => {
@@ -4551,8 +4528,9 @@ pub fn render_modality_select_screen(
                 / opt_items.len() as f32)
                 .clamp(scaler.s(68.0), scaler.s(110.0));
 
-            let mut curr_y = start_y;
+            let opt_stack = VStack::new_uniform(col_x, start_y, col_w, opt_card_h, card_gap);
             for (i, item) in opt_items.iter().enumerate() {
+                let curr_y = opt_stack.item_rect(i).y;
                 let is_sel = i == selected_idx;
                 let accent = item.accent_color();
 
@@ -4699,7 +4677,6 @@ pub fn render_modality_select_screen(
                     );
                 }
 
-                curr_y += opt_card_h + card_gap;
             }
         }
     }
