@@ -16,6 +16,7 @@ use crate::render::lateral::render_real_car_lateral_by_id;
 use crate::render::trophy_textures::draw_trophy_badge;
 use crate::render::vehicle_assets::get_vehicle_lateral_texture;
 use crate::series::{ChampionshipManager, ChampionshipSession, SeriesDefinition};
+use cabinet::ui::{HStack, KpiTile, SwatchPicker};
 
 /// Official motorsport disciplines displayed in the 5x5 Player Profile Trophy Cabinet.
 pub const CABINET_DISCIPLINES: &[(&str, &str)] = &[
@@ -524,21 +525,27 @@ fn render_overview_tab(
     let inner_w = w - pad * 2.0;
     let mut cy = y + pad;
 
-    // --- Top Row: 6 KPI Stat Tiles ---
+    // --- Top Row: 6 KPI Stat Tiles (platform HStack of KpiTile) ---
     let tile_gap = scaler.s(10.0);
-    let tile_w = (inner_w - tile_gap * 5.0) / 6.0;
     let tile_h = scaler.s(54.0);
 
     let win_str = format!("{} ({:.0}%)", stats.wins, stats.win_rate);
     let podium_str = format!("{} ({:.0}%)", stats.podiums, stats.podium_rate);
     let clean_str = format!("{:.1}%", stats.clean_rate);
 
-    render_kpi_tile(scaler, fonts, x + pad, cy, tile_w, tile_h, "TOTAL RACES", &stats.total_races.to_string(), Palette::NEON_CYAN);
-    render_kpi_tile(scaler, fonts, x + pad + (tile_w + tile_gap), cy, tile_w, tile_h, "WINS (P1)", &win_str, Palette::NEON_GOLD);
-    render_kpi_tile(scaler, fonts, x + pad + (tile_w + tile_gap) * 2.0, cy, tile_w, tile_h, "P2 RUNNER-UP", &stats.p2_count.to_string(), Color::new(0.85, 0.88, 0.95, 1.0));
-    render_kpi_tile(scaler, fonts, x + pad + (tile_w + tile_gap) * 3.0, cy, tile_w, tile_h, "P3 THIRD PLACE", &stats.p3_count.to_string(), Color::new(0.88, 0.55, 0.25, 1.0));
-    render_kpi_tile(scaler, fonts, x + pad + (tile_w + tile_gap) * 4.0, cy, tile_w, tile_h, "PODIUMS (P1-P3)", &podium_str, Palette::NEON_GREEN);
-    render_kpi_tile(scaler, fonts, x + pad + (tile_w + tile_gap) * 5.0, cy, tile_w, tile_h, "CLEAN RACE %", &clean_str, Palette::NEON_MAGENTA);
+    let kpis: [(&str, String, Color); 6] = [
+        ("TOTAL RACES", stats.total_races.to_string(), Palette::NEON_CYAN),
+        ("WINS (P1)", win_str, Palette::NEON_GOLD),
+        ("P2 RUNNER-UP", stats.p2_count.to_string(), Color::new(0.85, 0.88, 0.95, 1.0)),
+        ("P3 THIRD PLACE", stats.p3_count.to_string(), Color::new(0.88, 0.55, 0.25, 1.0)),
+        ("PODIUMS (P1-P3)", podium_str, Palette::NEON_GREEN),
+        ("CLEAN RACE %", clean_str, Palette::NEON_MAGENTA),
+    ];
+
+    let kpi_stack = HStack::new_equal(x + pad, cy, inner_w, tile_h, 6, tile_gap);
+    for (i, (label, val, col)) in kpis.iter().enumerate() {
+        KpiTile::new(*label, val.as_str(), *col).draw(scaler, fonts, kpi_stack.item_rect(i));
+    }
 
     cy += tile_h + scaler.s(14.0);
 
@@ -2136,23 +2143,17 @@ pub fn render_profile_create_screen(
 
     fonts.draw_ui_bold("TEAM LIVERY & CAR COLORS [Left/Right]", field_x + scaler.s(12.0), field_y - scaler.s(5.0), scaler.font_s(11.0), if f3_sel { Palette::NEON_MAGENTA } else { Palette::UI_TEXT_MUTED });
 
-    let scheme = CarColorScheme::from_index(livery_idx);
-    let sw_w = scaler.s(28.0);
-    let sw_h = scaler.s(20.0);
+    // Team livery ribbon (platform SwatchPicker over scheme primary colors)
+    let livery_colors: Vec<Color> = Palette::CAR_COLORS.iter().map(|(p, _, _)| *p).collect();
     let sw_x = field_x + scaler.s(16.0);
     let sw_y = field_y + scaler.s(13.0);
-
-    draw_rectangle(sw_x, sw_y, sw_w, sw_h, scheme.primary);
-    draw_rectangle_lines(sw_x, sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
-
-    draw_rectangle(sw_x + sw_w + scaler.s(6.0), sw_y, sw_w, sw_h, scheme.secondary);
-    draw_rectangle_lines(sw_x + sw_w + scaler.s(6.0), sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
-
-    draw_rectangle(sw_x + (sw_w + scaler.s(6.0)) * 2.0, sw_y, sw_w, sw_h, scheme.helmet);
-    draw_rectangle_lines(sw_x + (sw_w + scaler.s(6.0)) * 2.0, sw_y, sw_w, sw_h, 1.0, Palette::WHITE);
+    let mut picker = SwatchPicker::new(sw_x, sw_y, scaler.s(24.0), scaler.s(6.0), livery_colors);
+    picker.selected_idx = livery_idx % Palette::CAR_COLORS.len();
+    picker.is_focused = f3_sel;
+    picker.render_frame();
 
     let livery_name = format!("Livery Theme #{}", (livery_idx % Palette::CAR_COLORS.len()) + 1);
-    fonts.draw_ui_bold(&livery_name, sw_x + (sw_w + scaler.s(6.0)) * 3.0 + scaler.s(10.0), field_y + scaler.s(28.0), scaler.font_s(14.0), Palette::WHITE);
+    fonts.draw_ui_bold(&livery_name, sw_x, field_y + scaler.s(44.0), scaler.font_s(14.0), Palette::WHITE);
     fonts.draw_ui_regular("[Left / Right]", field_x + field_w - scaler.s(90.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_MAGENTA);
 
     // Footer Prompts
