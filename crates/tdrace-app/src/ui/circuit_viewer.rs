@@ -4,7 +4,6 @@ use macroquad::input::{
     is_key_down, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position,
     mouse_wheel, KeyCode, MouseButton,
 };
-use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{clear_background, screen_height, screen_width};
 use tdrace_core::track::Track;
 
@@ -12,6 +11,7 @@ use super::font::Fonts;
 use super::scaler::UiScaler;
 use super::track_preview::{compute_track_bounds, surface_preview_color};
 use crate::render::color::Palette;
+use cabinet::ui::{draw_action_button, Counter, LayoutRect, MetricBar, ScreenFooter};
 
 /// Origin screen that launched the full-circuit topdown viewer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -209,7 +209,7 @@ fn render_viewer_hud(
         1.5,
     );
 
-    // Back button
+    // Back button (platform draw_action_button)
     let back_btn_w = scaler.s(90.0);
     let back_btn_h = scaler.s(36.0);
     let back_btn_x = header_x + scaler.s(14.0);
@@ -222,26 +222,7 @@ fn render_viewer_hud(
         && mouse_vec.y >= back_btn_y
         && mouse_vec.y <= back_btn_y + back_btn_h;
 
-    scaler.draw_glass_card(
-        back_btn_x,
-        back_btn_y,
-        back_btn_w,
-        back_btn_h,
-        if back_hover {
-            Color::new(0.20, 0.24, 0.35, 0.95)
-        } else {
-            Color::new(0.10, 0.14, 0.22, 0.85)
-        },
-        if back_hover { Palette::WHITE } else { Palette::UI_CARD_BORDER },
-        if back_hover { 1.8 } else { 1.0 },
-    );
-    fonts.draw_ui_bold_centered(
-        "◄ BACK",
-        back_btn_x + back_btn_w * 0.5,
-        back_btn_y + scaler.s(22.0),
-        scaler.font_s(12.0),
-        Palette::WHITE,
-    );
+    draw_action_button(&scaler, fonts, back_btn_x, back_btn_y, back_btn_w, back_btn_h, "◄ BACK", None, false, back_hover, Palette::WHITE);
 
     // Circuit Title & Category
     let title_x = back_btn_x + back_btn_w + scaler.s(18.0);
@@ -292,7 +273,7 @@ fn render_viewer_hud(
     let zoom_pct = (state.camera_zoom / state.base_zoom) * 100.0;
     let is_fit = (zoom_pct - 100.0).abs() < 2.0;
 
-    // Zoom Out Button [-]
+    // Zoom Out Button [-] (platform draw_action_button)
     let btn_step_w = scaler.s(32.0);
     let zoom_out_rect = (zoom_pill_x, zoom_pill_y, btn_step_w, back_btn_h);
     let zoom_out_hover = mouse_vec.x >= zoom_out_rect.0
@@ -300,22 +281,7 @@ fn render_viewer_hud(
         && mouse_vec.y >= zoom_out_rect.1
         && mouse_vec.y <= zoom_out_rect.1 + zoom_out_rect.3;
 
-    scaler.draw_glass_card(
-        zoom_out_rect.0,
-        zoom_out_rect.1,
-        zoom_out_rect.2,
-        zoom_out_rect.3,
-        if zoom_out_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-        Palette::UI_CARD_BORDER,
-        1.0,
-    );
-    fonts.draw_ui_bold_centered(
-        "-",
-        zoom_out_rect.0 + btn_step_w * 0.5,
-        zoom_out_rect.1 + scaler.s(22.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
+    draw_action_button(&scaler, fonts, zoom_out_rect.0, zoom_out_rect.1, zoom_out_rect.2, zoom_out_rect.3, "-", None, false, zoom_out_hover, Palette::NEON_CYAN);
 
     // Zoom Pill Label
     let pill_mid_x = zoom_pill_x + btn_step_w + scaler.s(4.0);
@@ -342,7 +308,7 @@ fn render_viewer_hud(
         if is_fit { Palette::NEON_GREEN } else { Palette::WHITE },
     );
 
-    // Zoom In Button [+]
+    // Zoom In Button [+] (platform draw_action_button)
     let zoom_in_x = pill_mid_x + pill_mid_w + scaler.s(4.0);
     let zoom_in_rect = (zoom_in_x, zoom_pill_y, btn_step_w, back_btn_h);
     let zoom_in_hover = mouse_vec.x >= zoom_in_rect.0
@@ -350,24 +316,9 @@ fn render_viewer_hud(
         && mouse_vec.y >= zoom_in_rect.1
         && mouse_vec.y <= zoom_in_rect.1 + zoom_in_rect.3;
 
-    scaler.draw_glass_card(
-        zoom_in_rect.0,
-        zoom_in_rect.1,
-        zoom_in_rect.2,
-        zoom_in_rect.3,
-        if zoom_in_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-        Palette::UI_CARD_BORDER,
-        1.0,
-    );
-    fonts.draw_ui_bold_centered(
-        "+",
-        zoom_in_rect.0 + btn_step_w * 0.5,
-        zoom_in_rect.1 + scaler.s(22.0),
-        scaler.font_s(14.0),
-        Palette::WHITE,
-    );
+    draw_action_button(&scaler, fonts, zoom_in_rect.0, zoom_in_rect.1, zoom_in_rect.2, zoom_in_rect.3, "+", None, false, zoom_in_hover, Palette::NEON_CYAN);
 
-    // Reset Fit Button [FIT]
+    // Reset Fit Button [FIT] (platform draw_action_button)
     let fit_btn_x = zoom_in_x + btn_step_w + scaler.s(4.0);
     let fit_btn_w = scaler.s(48.0);
     let fit_rect = (fit_btn_x, zoom_pill_y, fit_btn_w, back_btn_h);
@@ -376,63 +327,35 @@ fn render_viewer_hud(
         && mouse_vec.y >= fit_rect.1
         && mouse_vec.y <= fit_rect.1 + fit_rect.3;
 
-    scaler.draw_glass_card(
-        fit_rect.0,
-        fit_rect.1,
-        fit_rect.2,
-        fit_rect.3,
-        if fit_hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-        if is_fit { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER },
-        1.0,
-    );
-    fonts.draw_ui_bold_centered(
-        "FIT",
-        fit_rect.0 + fit_btn_w * 0.5,
-        fit_rect.1 + scaler.s(22.0),
-        scaler.font_s(11.0),
-        if is_fit { Palette::NEON_GREEN } else { Palette::WHITE },
-    );
+    draw_action_button(&scaler, fonts, fit_rect.0, fit_rect.1, fit_rect.2, fit_rect.3, "FIT", None, false, fit_hover, Palette::NEON_GREEN);
 
-    // --- BOTTOM TELEMETRY & CONTROLS FOOTER ---
+    // --- BOTTOM TELEMETRY & CONTROLS FOOTER (platform ScreenFooter) ---
     let footer_h = scaler.s(48.0);
     let footer_y = sh - footer_h - scaler.safe_pad_y;
     let footer_w = sw - scaler.safe_pad_x * 2.0;
     let footer_x = scaler.safe_pad_x;
 
-    scaler.draw_glass_card(
-        footer_x,
-        footer_y,
-        footer_w,
-        footer_h,
-        Color::new(0.04, 0.06, 0.10, 0.92),
-        Palette::UI_CARD_BORDER,
-        1.2,
-    );
+    let footer = ScreenFooter::new(footer_x, footer_y, footer_w, footer_h);
+    footer.render_frame();
 
-    // Surface Breakdown bar on left side of footer
+    // Surface Composition Breakdown (platform segmented MetricBars)
     let breakdown = state.track.surface_breakdown();
     let bar_x = footer_x + scaler.s(16.0);
-    let bar_w = scaler.s(280.0);
-    let bar_h = scaler.s(6.0);
-    let bar_y = footer_y + scaler.s(24.0);
+    let seg_w = scaler.s(240.0);
+    let seg_h = scaler.s(20.0);
+    let seg_gap = scaler.s(12.0);
+    let seg_y = footer_y + scaler.s(4.0);
 
-    let mut curr_bx = bar_x;
-    for (surf, pct) in &breakdown {
-        let seg_w = bar_w * (pct / 100.0);
-        let col = surface_preview_color(*surf);
-        draw_rectangle(curr_bx, bar_y, seg_w, bar_h, col);
-        curr_bx += seg_w;
+    for (i, (surf, pct)) in breakdown.iter().enumerate() {
+        let sx = bar_x + i as f32 * (seg_w + seg_gap);
+        let seg = MetricBar::stat(
+            surf.name(),
+            pct / 100.0,
+            format!("{:.0}%", pct),
+            surface_preview_color(*surf),
+        );
+        seg.draw(&scaler, fonts, LayoutRect::new(sx, seg_y, seg_w, seg_h));
     }
-    draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 0.8, Palette::UI_CARD_BORDER);
-
-    let surf_label = format!("SURFACES: {}", state.track.surface_summary_string());
-    fonts.draw_ui_bold(
-        &surf_label,
-        bar_x,
-        footer_y + scaler.s(18.0),
-        scaler.font_s(9.5),
-        Palette::WHITE,
-    );
 
     // Interactive Controls Hints on right side of footer
     let controls_hint = "[ESC / V / B] Return • [Drag / WASD] Pan • [Scroll Wheel / Triggers] Zoom • [R / Space] Reset Fit";
@@ -501,25 +424,25 @@ pub fn handle_circuit_viewer_input(
         state.reset_to_fit();
     }
 
-    // 3. Zoom handling
+    // 3. Zoom handling (platform Counter for discrete steps with hold-to-repeat)
     let min_zoom = state.base_zoom * 0.5;
     let max_zoom = state.base_zoom * 20.0;
 
+    let mut zoom_counter = Counter::new(-64, 64, 1, 0);
     let wheel = mouse_wheel().1;
-    let mut zoom_factor = 1.0;
 
     if wheel > 0.0 {
-        zoom_factor *= 1.15;
+        zoom_counter.increment();
     } else if wheel < 0.0 {
-        zoom_factor /= 1.15;
+        zoom_counter.decrement();
     }
 
-    // Keyboard zoom shortcuts
-    if is_key_pressed(KeyCode::Equal) || is_key_pressed(KeyCode::PageUp) || is_key_pressed(KeyCode::E) {
-        zoom_factor *= 1.25;
+    // Keyboard zoom shortcuts (hold-to-repeat)
+    if is_key_down(KeyCode::Equal) || is_key_down(KeyCode::PageUp) || is_key_down(KeyCode::E) {
+        zoom_counter.increment();
     }
-    if is_key_pressed(KeyCode::Minus) || is_key_pressed(KeyCode::PageDown) || is_key_pressed(KeyCode::Q) {
-        zoom_factor /= 1.25;
+    if is_key_down(KeyCode::Minus) || is_key_down(KeyCode::PageDown) || is_key_down(KeyCode::Q) {
+        zoom_counter.decrement();
     }
 
     // Interactive button clicks [-] and [+]
@@ -538,10 +461,15 @@ pub fn handle_circuit_viewer_input(
         && mouse_vec.y <= zoom_pill_y + back_btn_h;
 
     if clicked_zoom_in {
-        zoom_factor *= 1.25;
+        zoom_counter.increment();
     }
     if clicked_zoom_out {
-        zoom_factor /= 1.25;
+        zoom_counter.decrement();
+    }
+
+    let mut zoom_factor = 1.0;
+    if zoom_counter.value != 0 {
+        zoom_factor *= 1.25f32.powi(zoom_counter.value as i32);
     }
 
     // Gamepad triggers zoom
