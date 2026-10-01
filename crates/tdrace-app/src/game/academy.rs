@@ -7,6 +7,7 @@
 use serde::{Deserialize, Serialize};
 pub use tdrace_core::profile::{
     AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal, ClassicAcademyProgress,
+    LicenseGrade,
 };
 use crate::game::RaceSession;
 use crate::profile::PlayerProfile;
@@ -174,6 +175,30 @@ pub fn evaluate_academy_attempt(
     if credits_payout > 0 {
         profile.add_credits(credits_payout);
     }
+    if xp_payout > 0 {
+        profile.add_driver_xp(xp_payout as u64);
+    }
+
+    let mut total_credits_awarded = credits_payout;
+    let mut total_xp_awarded = xp_payout;
+
+    if clean {
+        // Base distance XP (10% of track length in meters ~ 100 XP)
+        let distance_xp = 100u32;
+        profile.add_driver_xp(distance_xp as u64);
+        total_xp_awarded += distance_xp;
+
+        // Practice stipend on rerun if first-time bounty was already claimed (Spec 060)
+        if credits_payout == 0 && medal > AcademyMedal::None {
+            let practice_stipend = 1_500u64;
+            profile.add_credits(practice_stipend);
+            total_credits_awarded += practice_stipend;
+        }
+    }
+
+    if profile.academy_progress.is_graduated() {
+        profile.license_grade = profile.license_grade.max(LicenseGrade::ClassD);
+    }
 
     let is_new_best = clean
         && medal > AcademyMedal::None
@@ -186,8 +211,8 @@ pub fn evaluate_academy_attempt(
         time_sec,
         clean_attempt: clean,
         medal,
-        credits_awarded: credits_payout,
-        xp_awarded: xp_payout,
+        credits_awarded: total_credits_awarded,
+        xp_awarded: total_xp_awarded,
         is_new_best,
         newly_graduated,
         total_stars,

@@ -28,8 +28,11 @@ In the baseline career system ([Spec 013](013_player_profile_enhancement_and_car
 ### 1.2 Architectural Goals
 This specification establishes a clean, decoupled architecture:
 - **Dual-Currency Separation**:
-  - **Discipline XP (Reputation)**: Permanent, non-spendable driver skill rating within each motorsport discipline. XP unlocks tier licenses, championship eligibility, and AI difficulty tiers.
-  - **Global Bank Credits ($\text{Cr} / \$)**: Liquid cash earned through race prize purses, championship podium finishes, and clean race bonuses. Credits are spent in the Garage to purchase machinery.
+  - **Global Driver XP (Reputation)**: Permanent, non-spendable driver experience accumulated across all racing sessions (Academy, casual races, time trials, and career championships). Driver XP levels up the driver dossier, earns accreditation stars, and satisfies motorsport licensing requirements.
+  - **Global Bank Credits ($\text{Cr} / \$)**: Liquid cash starting at $\$10,000\,\text{Cr}$ and earned through race prize purses, championship podium finishes, and clean race bonuses. Credits are spent in the Garage to purchase machinery and pay maintenance/repairs (Spec 063).
+- **License Grade Mechanism**:
+  - Gating between disciplines and tiers is governed by authoritative **License Grades** (Class D, Class C, Class B, Class A, Class S) rather than isolated module XP.
+  - Licenses are attainable via a **Dual-Track Progression**: fast-tracked through the **Classic Academy** (Spec 060 / 064) or naturally unlocked by completing championship seasons in the **feeder ladder** (Karting $\to$ Dirt AX/RX $\to$ Stock/GT).
 - **Multi-Championship Branching per Tier**:
   - Each career tier supports multiple distinct, declarative championships (e.g., in Rallycross Tier 1: *British Rallycross Sprint*, *Nordic RX Trophy*, *French RX Challenge*).
   - Players can choose their path to advance: achieving a podium in **any** championship within the tier satisfies the competition requirement for promotion.
@@ -63,18 +66,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    RaceEnd["Race Finish & Telemetry"]
+    RaceEnd["Race Finish & Telemetry (Any Modality)"]
     
-    subgraph ReputationTrack ["Discipline Reputation & Licensing (Non-Spendable)"]
+    subgraph ReputationTrack ["Global Driver Reputation & Licensing (Non-Spendable)"]
         LapDist["Track Distance & Completed Laps"] --> LapXP["Base Lap XP"]
         FinishPosXP["Finishing Position Multiplier (1.0x - 1.5x)"] --> LapXP
         CleanTelemetry["Clean Race Telemetry (0 Collisions)"] --> CleanXP["Clean Race XP Bonus (+25%)"]
         FirstTimeCheck["First-Time Circuit Visit"] --> ExploreXP["First-Time Bonus (Tier * 250 XP)"]
         
-        LapXP & CleanXP & ExploreXP --> DisciplineXP["ModuleCareerProgress.xp (Cumulative)"]
-        DisciplineXP --> TierLicense["Discipline Tier License (Tier 1..=5)"]
-        TierLicense --> ChampEligibility["Championship Eligibility Gate"]
-        TierLicense --> CarTierEligibility["Vehicle Tier Eligibility Gate"]
+        LapXP & CleanXP & ExploreXP --> GlobalXP["PlayerProfile.driver_xp (Global Cumulative)"]
+        GlobalXP --> LicenseGrade["PlayerProfile.license_grade (Class D..=S)"]
+        
+        AcadTrack["Route A: Classic Academy Challenges"] --> LicenseGrade
+        FeederTrack["Route B: Career Season Podiums (Kart -> AX/RX -> GT)"] --> LicenseGrade
+        
+        LicenseGrade --> ChampEligibility["Championship & Category Eligibility Gate"]
+        LicenseGrade --> CarTierEligibility["Vehicle Tier Eligibility Gate"]
     end
     
     subgraph CashEconomyTrack ["Commercial Economy & Garage (Global Liquid Wallet)"]
@@ -82,24 +89,22 @@ flowchart TD
         CleanCash["Clean Race Telemetry"] --> CleanPurseBonus["Clean Race Cash Bonus (+20%)"]
         ChampStandings["Championship Season Podium"] --> SeasonPurseBonus["Championship Winner Payout ($ Cr)"]
         
-        PrizePurse & CleanPurseBonus & SeasonPurseBonus --> ProfileWallet["PlayerProfile.credits (Global Cash Wallet)"]
-        ProfileWallet --> BuyCarCash["Garage: Buy Cars ($ Cr)"]
+        PrizePurse & CleanPurseBonus & SeasonPurseBonus --> ProfileWallet["PlayerProfile.credits (Global Cash Wallet: Starts 10,000 Cr)"]
+        ProfileWallet --> BuyCarCash["Garage: Buy Cars ($ Cr) & Repairs (Spec 063)"]
         BuyCarCash -.->|Requires License| CarTierEligibility
         BuyCarCash --> ZeroXPDeduction["Zero XP Deducted! Wallet Drains, Reputation Intact"]
     end
 
     subgraph BranchingTierEngine ["Multi-Championship Tier Graph"]
-        TierLicense --> AvailableChamps["SeriesManager::get_all_by_module_and_tier(module, tier)"]
+        LicenseGrade --> AvailableChamps["SeriesManager::get_all_by_module_and_tier(module, tier)"]
         AvailableChamps --> ChampA["Regional Champ A (e.g. British RX)"]
         AvailableChamps --> ChampB["Regional Champ B (e.g. Nordic RX)"]
         AvailableChamps --> ChampC["Regional Champ C (e.g. French RX)"]
         
-        ChampA -->|Finish P1-P3| PodiumAward["Podium Trophy Earned"]
-        ChampB -->|Finish P1-P3| PodiumAward
-        ChampC -->|Finish P1-P3| PodiumAward
-        
-        PodiumAward & TierLicense --> PromotionGate{"Promotion Gate:\nDiscipline XP >= Threshold AND\nAny Tier Championship Podium >= 1"}
-        PromotionGate -->|Qualified| PromoteAction["[P] Advance to Next Tier License"]
+        ChampA -->|Finish P1-P3| SeasonFeeder["Season Complete (Feeder Promotion Check)"]
+        ChampB -->|Finish P1-P3| SeasonFeeder
+        ChampC -->|Finish P1-P3| SeasonFeeder
+        SeasonFeeder --> FeederTrack
     end
 
     RaceEnd --> LapDist
@@ -174,12 +179,12 @@ Vehicles are priced in Credits, replacing the legacy XP pricing model:
 
 ---
 
-### 3. Cumulative Driver Experience Points (XP) & License Gates
+### 3. Cumulative Global Driver Experience Points (XP) & License Grades
 
-XP measures driving mastery, race participation, and discipline loyalty. It is **permanent and non-spendable**.
+Experience Points (`PlayerProfile.driver_xp`) measure overall driving mastery, race participation, and continuous development across any game mode (Academy, casual arcade, time attack, and career). Global XP is **permanent, cumulative, and non-spendable**.
 
-#### 3.1 Race XP Award Formula
-$$\text{race\_xp} = (\text{lap\_xp} \times M_{\text{xp\_pos}}) + \text{clean\_xp\_bonus} + \text{first\_time\_bonus}$$
+#### 3.1 Race & Session XP Award Formula
+$$\text{session\_xp} = (\text{lap\_xp} \times M_{\text{xp\_pos}}) + \text{clean\_xp\_bonus} + \text{first\_time\_bonus} + \text{academy\_delta\_xp}$$
 
 - **Base Lap XP**: $\text{per\_lap\_xp} = \text{round\_to\_10}(L_{\text{track}} / 10.0) \times N_{\text{completed\_laps}}$
 - **Position Multipliers ($M_{\text{xp\_pos}}$)**:
@@ -187,19 +192,20 @@ $$\text{race\_xp} = (\text{lap\_xp} \times M_{\text{xp\_pos}}) + \text{clean\_xp
   - 2nd: $1.30\times$
   - 3rd: $1.15\times$
   - 4th–10th: $1.00\times$
-- **Clean Race XP Bonus**: $+25\%$ of base lap XP.
+- **Clean Race XP Bonus**: $+25\%$ of base lap XP (zero barrier hits and zero car-to-car collision incidents).
 - **First-Time Circuit Bonus**: $\text{round\_to\_10}(\text{tier} \times 250\,\text{XP})$.
+- **Classic Academy Delta XP**: Awarded upon earning or improving medal grades on an Academy mission (Bronze: $+150\text{ XP}$, Silver: $+100\text{ XP}$, Gold: $+150\text{ XP}$). Replaying cleared lessons awards continuous base lap XP.
 
-#### 3.2 Tier License Thresholds
-To be eligible for promotion to the next tier license, the driver must accumulate the cumulative XP threshold for that discipline:
+#### 3.2 Authoritative License Grade Hierarchy & Dual-Track Matrix
+Access to career disciplines and vehicle tiers is governed by the driver's authoritative **License Grade** (`PlayerProfile.license_grade`). Licenses can be earned either through the **Academy Express Track** (Spec 060 / 064) or through the **Feeder Ladder Track** (completing championship seasons in prerequisite categories):
 
-| Target Tier License | Cumulative Discipline XP Required |
-| :---: | :---: |
-| **Tier 1 (Starter)** | $0\text{ XP}$ (Default) |
-| **Tier 2 License** | **$3,000\text{ XP}$** |
-| **Tier 3 License** | **$7,500\text{ XP}$** |
-| **Tier 4 License** | **$15,000\text{ XP}$** |
-| **Tier 5 License (Apex)** | **$30,000\text{ XP}$** |
+| License Grade | Title | Cumulative Global XP | Route A: Classic Academy Fast-Track | Route B: Feeder Ladder Season Podium | Career Disciplines & Tiers Unlocked |
+| :---: | :--- | :---: | :--- | :--- | :--- |
+| **Class D** | 🥉 **National Grassroots** | $0\text{ XP}$ | Pass Academy Tier 1 *(Lesson 4 Graduation)* | *Starting rookie accreditation* | **Karting** (Tier 1 & 2) |
+| **Class C** | 🥈 **Junior Competition** | **$1,500\text{ XP}$** | Pass Academy Tier 2 *(Surface Mastery)* | Complete a full **Karting** season (P1–P3) | **Autocross** (Cross Car)<br>**Rallycross** (Junior FWD) |
+| **Class B** | 🥇 **National Pro-Am** | **$4,500\text{ XP}$** | Pass Academy Tier 3 *(Tire Care & Ovals)* | Complete an **Autocross** or **Rallycross** season (P1–P3) | **Stock Car** (Street Stock)<br>**Extreme Off-Road** |
+| **Class A** | 💎 **International GT** | **$10,000\text{ XP}$** | Pass Academy Tier 4 *(Endurance & Pits)* | Complete a **Stock Car**, **AX**, or **RX** season (P1–P3) | **GT Racing** (GT4, GT3)<br>**High-Tier Dirt / Ovals** |
+| **Class S** | 👑 **FIA Superlicense** | **$25,000\text{ XP}$** | Master Academy Finale with all-Gold | Win Championship in **Tier 4/5 GT** or **World RX** | **Apex Prototypes** (LMH, LMDh)<br>**Nitrocross Group E** |
 
 ---
 
@@ -223,15 +229,16 @@ impl SeriesManager {
 }
 ```
 
-### 2. Non-Linear Tier Advancement Gate
-In [`ModuleCareerProgress::can_advance_tier`](../crates/tdrace-app/src/profile/mod.rs):
+### 2. Dual-Track Tier Advancement Gate
+In [`ModuleCareerProgress::can_advance_tier`](../crates/tdrace-app/src/profile/mod.rs) and `PlayerProfile::can_enter_championship`:
 
-$$\text{can\_advance\_tier} = (\text{xp} \ge \text{tier\_license\_threshold}(\text{level} + 1)) \;\land\; (\text{tier\_podiums}(\text{level}) \ge 1)$$
+$$\text{can\_enter\_championship} = (\text{profile.license\_grade} \ge \text{champ.required\_license}) \;\land\; (\text{profile.driver\_xp} \ge \text{champ.required\_xp})$$
+$$\text{can\_advance\_tier} = (\text{driver\_xp} \ge \text{next\_tier\_xp}) \;\land\; (\text{tier\_podiums}(\text{level}) \ge 1 \;\lor\; \text{academy\_tier\_cleared})$$
 
 Where $\text{tier\_podiums}(\text{level})$ counts podium trophies earned across **any** championship registered under that tier:
 - The driver does not need to complete all championships in Tier 1.
-- Achieving 1st, 2nd, or 3rd in the *British RX Sprint* or *Nordic RX Trophy* satisfies the tournament gate for Tier 1.
-- Drivers who enjoy exploring all content can complete the remaining Tier 1 championships anytime for additional prize money, trophies, and 100% completion records.
+- Achieving 1st, 2nd, or 3rd in the *British RX Sprint* or *Nordic RX Trophy* satisfies the tournament gate for Tier 1 and satisfies the Feeder Ladder requirement for promotion to Class B!
+- Drivers who enjoy exploring all content can complete the remaining championships anytime for additional prize money, trophies, and 100% completion records.
 
 ---
 

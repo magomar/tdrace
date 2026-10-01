@@ -188,12 +188,75 @@ pub struct AcademyLessonProgress {
     pub attempts: u32,
 }
 
+/// Official motorsport license grade accredited to a driver (Spec 053, 060, 064).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
+pub enum LicenseGrade {
+    #[default]
+    None = 0,
+    ClassD = 1, // National Grassroots (Karting)
+    ClassC = 2, // Junior Competition (Autocross / Rallycross)
+    ClassB = 3, // National Pro-Am (Stock Car / Extreme Off-Road)
+    ClassA = 4, // International GT (GT Racing)
+    ClassS = 5, // FIA Superlicense (Apex Prototypes)
+}
+
+impl LicenseGrade {
+    pub fn title(&self) -> &'static str {
+        match self {
+            Self::None => "Unlicensed Rookie",
+            Self::ClassD => "Class D (National Grassroots)",
+            Self::ClassC => "Class C (Junior Competition)",
+            Self::ClassB => "Class B (National Pro-Am)",
+            Self::ClassA => "Class A (International GT)",
+            Self::ClassS => "Class S (FIA Superlicense)",
+        }
+    }
+
+    pub fn badge(&self) -> &'static str {
+        match self {
+            Self::None => "ROOKIE",
+            Self::ClassD => "CLASS D",
+            Self::ClassC => "CLASS C",
+            Self::ClassB => "CLASS B",
+            Self::ClassA => "CLASS A",
+            Self::ClassS => "CLASS S",
+        }
+    }
+
+    pub fn as_u8(&self) -> u8 {
+        *self as u8
+    }
+
+    pub fn from_u8(val: u8) -> Self {
+        match val {
+            1 => Self::ClassD,
+            2 => Self::ClassC,
+            3 => Self::ClassB,
+            4 => Self::ClassA,
+            5 => Self::ClassS,
+            _ => Self::None,
+        }
+    }
+
+    pub fn required_for_category(category: &str) -> Self {
+        match category {
+            "kart" => Self::ClassD,
+            "autocross" | "ax" | "rally" | "rx" => Self::ClassC,
+            "nascar" | "stock" | "extreme_offroad" | "offroad" => Self::ClassB,
+            "gt" | "gt_challenge" => Self::ClassA,
+            _ => Self::ClassD,
+        }
+    }
+}
+
 /// Global Classic Academy progress stored on the driver profile.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ClassicAcademyProgress {
     pub lessons: HashMap<AcademyLessonId, AcademyLessonProgress>,
     pub license_granted: bool,
     pub license_granted_timestamp: Option<String>,
+    #[serde(default)]
+    pub license_grade: LicenseGrade,
 }
 
 impl ClassicAcademyProgress {
@@ -207,12 +270,14 @@ impl ClassicAcademyProgress {
             lessons,
             license_granted: false,
             license_granted_timestamp: None,
+            license_grade: LicenseGrade::None,
         }
     }
 
     /// Checks if player has graduated and earned the National Grassroots License.
     pub fn is_graduated(&self) -> bool {
         self.license_granted
+            || self.license_grade >= LicenseGrade::ClassD
             || self
                 .lessons
                 .get(&AcademyLessonId::Lesson4GraduationSprint)
@@ -299,6 +364,9 @@ impl ClassicAcademyProgress {
         // Check graduation on Lesson 4
         if lesson_id == AcademyLessonId::Lesson4GraduationSprint && medal >= AcademyMedal::Bronze {
             self.license_granted = true;
+            if self.license_grade < LicenseGrade::ClassD {
+                self.license_grade = LicenseGrade::ClassD;
+            }
             if self.license_granted_timestamp.is_none() {
                 self.license_granted_timestamp = Some("2026-10-01T00:00:00Z".to_string());
             }

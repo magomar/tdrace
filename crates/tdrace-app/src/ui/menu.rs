@@ -4480,7 +4480,7 @@ pub fn render_modality_select_screen(
                 let title_str = if is_sel {
                     if *item == ModalityItem::CareerMode && !active_profile.can_access_career() {
                         if !active_profile.has_racing_license() {
-                            format!("▶ {}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                            format!("▶ {}  [ 🔒 CLASS D LICENSE REQUIRED ]", item.title())
                         } else {
                             format!("▶ {}  [ 🔒 VEHICLE REQUIRED ]", item.title())
                         }
@@ -4489,7 +4489,7 @@ pub fn render_modality_select_screen(
                     }
                 } else if *item == ModalityItem::CareerMode && !active_profile.can_access_career() {
                     if !active_profile.has_racing_license() {
-                        format!("{}  [ 🔒 LICENSE REQUIRED ]", item.title())
+                        format!("{}  [ 🔒 CLASS D LICENSE REQUIRED ]", item.title())
                     } else {
                         format!("{}  [ 🔒 VEHICLE REQUIRED ]", item.title())
                     }

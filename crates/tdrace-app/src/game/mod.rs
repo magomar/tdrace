@@ -201,8 +201,8 @@ use crate::module::{
     NascarGameModule, RallyGameModule, VaultGameModule,
 };
 use crate::profile::{
-    ChampionshipAward, CountryRegistry, ModuleCareerProgress, PlayerProfile, ProfileCareerStats,
-    RaceHistoryEntry,
+    ChampionshipAward, CountryRegistry, LicenseGrade, ModuleCareerProgress, PlayerProfile,
+    ProfileCareerStats, RaceHistoryEntry,
 };
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
@@ -6881,6 +6881,27 @@ impl RaceSession {
                 let _ = db.save_championship_award(&award);
             }
             self.refresh_profile_awards();
+
+            // Feeder Ladder Promotion Invariant (Spec 053, 060)
+            let promo_grade = match award.module_id.as_str() {
+                "kart" => Some(LicenseGrade::ClassC),
+                "autocross" | "ax" | "rally" | "rx" => Some(LicenseGrade::ClassB),
+                "nascar" | "stock" | "extreme_offroad" | "offroad" => Some(LicenseGrade::ClassA),
+                _ => None,
+            };
+            if let Some(target_grade) = promo_grade {
+                if target_grade > self.active_profile.license_grade {
+                    self.active_profile.license_grade = target_grade;
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.update_license_grade(award.profile_id, target_grade);
+                        let _ = db.update_profile(&self.active_profile);
+                    }
+                    self.spawn_hud_alert(
+                        format!("LICENSE PROMOTION! {} ACCREDITED!", target_grade.badge()),
+                        Palette::NEON_CYAN,
+                    );
+                }
+            }
         }
     }
 
@@ -7886,6 +7907,9 @@ impl RaceSession {
                         last_mode: assist_mode,
                         credits: p.credits,
                         lifetime_credits: p.lifetime_credits,
+                        driver_xp: p.driver_xp,
+                        lifetime_driver_xp: p.lifetime_driver_xp,
+                        license_grade: p.license_grade,
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
                     })
@@ -13015,6 +13039,7 @@ impl RaceSession {
 
                 let total_xp = lap_xp + clean_xp_bonus + first_time_bonus;
                 self.active_career_progress.add_xp(total_xp);
+                self.active_profile.add_driver_xp(total_xp);
 
                 // Prize purse calculation (Credits) (Spec 053)
                 let (finish_prize, clean_credit_bonus) = ModuleCareerProgress::calculate_round_purse(
@@ -14244,6 +14269,22 @@ impl RaceSession {
 
         if confirm_pressed {
             if let Some(card) = cards.get(selected_idx) {
+                // Check if driver has sufficient license grade for this discipline
+                if !self.active_profile.can_enter_category(&card.module_id) {
+                    let req_license = PlayerProfile::required_license_for_category(&card.module_id);
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.spawn_hud_alert(
+                        format!(
+                            "ENTRY RESTRICTED: {} REQUIRED FOR {}!",
+                            req_license.badge(),
+                            card.module_title.to_uppercase()
+                        ),
+                        Palette::RED,
+                    );
+                    self.state = GameState::CareerSelect { selected_idx };
+                    return;
+                }
+
                 self.audio.play_sfx(SfxType::UiSelect);
 
                 // Replay prompt for completed championships
