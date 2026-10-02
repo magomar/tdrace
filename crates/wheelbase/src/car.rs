@@ -267,6 +267,9 @@ pub struct CarState {
     /// Aerodynamic drafting / slipstream drag reduction factor [0.0 = clean air, up to ~0.40 = 40% drag reduction in wake].
     #[serde(default)]
     pub draft_intensity: f32,
+    /// Vehicle chassis structural health [0.0 = destroyed, 1.0 = pristine].
+    #[serde(default = "one_f32")]
+    pub health: f32,
 }
 
 impl Default for CarState {
@@ -316,6 +319,7 @@ impl Default for CarState {
             jump_count: 0,
             just_landed: false,
             draft_intensity: 0.0,
+            health: 1.0,
         }
     }
 }
@@ -357,6 +361,23 @@ impl Car {
             flick_headroom_remaining_s: 0.0,
             flick_rearm_remaining_s: 0.0,
         }
+    }
+
+    /// Resets mechanical tread wear across all wheels to 0.0.
+    pub fn service_tires(&mut self) {
+        for w in &mut self.state.wheels {
+            w.wear = 0.0;
+        }
+        for a in &mut self.state.wheel_assemblies {
+            a.wear = 0.0;
+        }
+    }
+
+    /// Restores chassis health by `amount` up to 1.0. Returns actual health restored.
+    pub fn apply_field_repair(&mut self, amount: f32) -> f32 {
+        let old_health = self.state.health;
+        self.state.health = (self.state.health + amount).clamp(0.0, 1.0);
+        self.state.health - old_health
     }
 
     pub fn set_digital_steering_source(&mut self, digital: bool) {

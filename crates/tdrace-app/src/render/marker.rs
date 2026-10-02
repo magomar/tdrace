@@ -634,6 +634,39 @@ pub fn render_floating_bot_nameplates(
     }
 }
 
+/// Renders a pulsing overhead chevron indicator above the designated team pit stall (Spec 062).
+pub fn render_pit_box_chevron(
+    stall_pos: Vec2,
+    current_zoom: f32,
+    anim_time: f32,
+    color_scheme: &CarColorScheme,
+) {
+    let zoom = current_zoom.max(0.5);
+    let pulse = (anim_time * 5.0).sin().abs() * 0.35 + 0.65;
+    let bob = (anim_time * 6.0).sin() * (4.0 / zoom);
+    let anchor = stall_pos + Vec2::new(0.0, 4.0 + (16.0 / zoom) + bob);
+
+    let half_w = 12.0 / zoom;
+    let height = 16.0 / zoom;
+
+    let p_tip = anchor;
+    let p_left = anchor + Vec2::new(-half_w, height);
+    let p_right = anchor + Vec2::new(half_w, height);
+
+    let mut col = color_scheme.primary;
+    col.a = pulse;
+    let border = Color::new(0.0, 0.0, 0.0, 0.9 * pulse);
+
+    // Drop shadow
+    let shadow_off = Vec2::new(1.0 / zoom, 1.5 / zoom);
+    let m = |v: Vec2| macroquad::math::Vec2::new(v.x, v.y);
+    draw_triangle(m(p_tip + shadow_off), m(p_left + shadow_off), m(p_right + shadow_off), Color::new(0.0, 0.0, 0.0, 0.4 * pulse));
+    draw_triangle(m(p_tip), m(p_left), m(p_right), col);
+    draw_line(p_tip.x, p_tip.y, p_left.x, p_left.y, (2.0 / zoom).max(0.1), border);
+    draw_line(p_left.x, p_left.y, p_right.x, p_right.y, (2.0 / zoom).max(0.1), border);
+    draw_line(p_right.x, p_right.y, p_tip.x, p_tip.y, (2.0 / zoom).max(0.1), border);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

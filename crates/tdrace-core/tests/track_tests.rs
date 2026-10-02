@@ -141,6 +141,7 @@ fn test_pit_lane_and_pit_stop_trigger() {
         is_pit_exit: false,
         target_distance: 0.0,
         elevation: 0.0,
+        pit_box_idx: None,
     });
     track.checkpoints.push(arcade_race_core::track::checkpoint::Checkpoint {
         id: 101,
@@ -155,6 +156,7 @@ fn test_pit_lane_and_pit_stop_trigger() {
         is_pit_exit: true,
         target_distance: 0.0,
         elevation: 0.0,
+        pit_box_idx: None,
     });
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());

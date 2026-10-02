@@ -96,8 +96,8 @@ fn test_corner_clip_yaw_deflection() {
 
 #[test]
 fn test_car_to_car_head_on_momentum_conservation() {
-    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-0.8, 0.0), 0.0);
-    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.8, 0.0), PI);
+    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.8, 0.0), 0.0);
+    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.8, 0.0), PI);
 
     let m_a = car_a.config.mass;
     let m_b = car_b.config.mass;
@@ -259,9 +259,9 @@ fn test_corner_no_phantom_collision_past_endpoint() {
         BarrierType::TireWall,
     );
 
-    // Car centered at x = 2.0, y = 0.5 (past the wall's end at x = 0.0)
+    // Car centered at x = 3.0, y = 0.5 (past the wall's end at x = 0.0 with 4.3m body)
     // Rear corners of car are at x ~ 0.65, y ~ -0.35 (in open space beyond the wall)
-    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(2.0, 0.5), 0.0);
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(3.0, 0.5), 0.0);
     car.state.velocity = Vec2::new(15.0, 0.0);
 
     let col = resolve_car_wall_collision(&mut car, &wall);
@@ -287,8 +287,8 @@ fn test_corner_turn_does_not_freeze_car() {
         WallBarrier::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, -15.0), BarrierType::TireWall),
     ];
 
-    // Place car at (-1.5, 0.9) heading along +X with full throttle, turning right
-    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.5, 0.9), 0.0);
+    // Place car at (-2.5, 1.2) heading along +X with full throttle, turning right
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-2.5, 1.2), 0.0);
     car.state.velocity = Vec2::new(10.0, 0.0);
 
     let dt = 1.0 / 120.0;

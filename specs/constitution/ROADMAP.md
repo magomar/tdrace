@@ -126,7 +126,7 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 - **Dynamic Track Grip & Rubbering-In**: Racing line rubbers in over consecutive laps, while off-line sections collect marbles and lose grip.
 
 ### 3. Arcade Damage Modelling, Pitstops & Multi-Tier Academy
-- `[ ]` **[Circuit Pit Lanes and Interactive Pit Stop Procedures](../062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md)**: Physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences.
+- `[x]` **[Circuit Pit Lanes and Interactive Pit Stop Procedures](../062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md)**: Physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences.
 - `[ ]` **[Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy](../063_damage_modelling_inrace_field_repairs_and_garage_maintenance_economy.md)**: 0–100% vehicle durability model driven by SAT collision impulse energy, progressive visual and handling degradation, in-race emergency patching, persistent car condition, and a balanced post-race garage repair economy with anti-bankruptcy safeguards.
 - `[ ]` **[Classic Module Multi-Tier Academy Missions and Degradation Curriculum](../064_classic_module_multitier_academy_missions_and_degradation_curriculum.md)**: 4-tier progressive Academy curriculum across the 18 revamped circuits, taking players from damage-free grassroots basics to technical tire wear management and pit stop mastery, while serving as a reliable credit-earning engine.
 

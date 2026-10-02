@@ -1039,6 +1039,59 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 11. Pit Lane Validation (Spec 062)
+    if let Some(lane) = &track.pit_lane {
+        if lane.road_width < 4.0 {
+            diagnostics.push(
+                TrackValidationError::warning(
+                    "WARN_PIT_LANE_NARROW",
+                    format!("Pit lane road width ({:.1}m) is below recommended 4.0m minimum.", lane.road_width),
+                )
+                .with_details("Widen the pit road ribbon to >= 4.0m to allow safe overtaking/servicing."),
+            );
+        }
+
+        if lane.spline.total_length > 1.0 && track.spline.total_length > 1.0 {
+            let entry_sample = lane.spline.sample_at_distance(0.0);
+            let main_proj_entry = track.spline.project_point(entry_sample.point);
+            let dot_entry = entry_sample.tangent.dot(main_proj_entry.tangent).clamp(-1.0, 1.0);
+            let angle_entry_deg = dot_entry.acos().to_degrees();
+            if angle_entry_deg > 60.0 {
+                diagnostics.push(
+                    TrackValidationError::warning(
+                        "WARN_PIT_ENTRY_ACUTE",
+                        format!("Pit lane entry diverges at acute angle ({:.1}° > 60°).", angle_entry_deg),
+                    )
+                    .with_details("Smooth the pit lane entry divergence path to merge under 60°."),
+                );
+            }
+
+            let exit_sample = lane.spline.sample_at_distance(lane.spline.total_length);
+            let main_proj_exit = track.spline.project_point(exit_sample.point);
+            let dot_exit = exit_sample.tangent.dot(main_proj_exit.tangent).clamp(-1.0, 1.0);
+            let angle_exit_deg = dot_exit.acos().to_degrees();
+            if angle_exit_deg > 60.0 {
+                diagnostics.push(
+                    TrackValidationError::warning(
+                        "WARN_PIT_EXIT_ACUTE",
+                        format!("Pit lane exit merges at acute angle ({:.1}° > 60°).", angle_exit_deg),
+                    )
+                    .with_details("Align the pit lane exit merge path to rejoin under 60°."),
+                );
+            }
+        }
+
+        if lane.pit_boxes.is_empty() {
+            diagnostics.push(
+                TrackValidationError::info(
+                    "INFO_NO_PIT_BOXES",
+                    "Pit lane is defined without any designated pit boxes.",
+                )
+                .with_details("Place pit box stalls along the pit lane for pit stop servicing."),
+            );
+        }
+    }
+
     diagnostics
 }
 
@@ -1076,6 +1129,7 @@ mod tests {
             ],
             default_surface: wheelbase::SurfaceType::Grass,
             pit_box_area: None,
+            pit_lane: None,
             default_laps: 3,
             car_category: CarCategory::OffRoad,
             car_model_id: None,

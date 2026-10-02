@@ -1135,6 +1135,64 @@ pub fn generate_water_splash_sound(sample_rate: u32) -> Vec<u8> {
     encode_wav_16bit_mono(&samples, sample_rate)
 }
 
+/// Generates staccato pit speed limiter audio chatter (~0.18s) (Spec 062).
+pub fn generate_pit_limiter_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.18;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+    let mut filter = BiquadBandPass::new(sample_rate, 950.0, 2.0);
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let gate = if (t * 25.0).fract() < 0.55 { 1.0 } else { 0.15 };
+        let env = (1.0 - t / duration).max(0.0).powi(2);
+        let tone = Oscillator::square(t * 880.0, 0.4) * 0.6 + Oscillator::sine(t * 440.0) * 0.4;
+        let filtered = filter.process(tone * gate);
+        *sample = soft_saturate(filtered * env, 1.2) * 0.85;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
+/// Generates pneumatic impact wrench / ratchet whir (~0.35s) (Spec 062).
+pub fn generate_pit_wrench_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.35;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+    let mut filter = BiquadBandPass::new(sample_rate, 1800.0, 2.5);
+    let mut noise_gen = NoiseGenerator::new(0x13579bdf2468ace0);
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let env = (1.0 - t / duration).max(0.0);
+        let impact_phase = (t * 35.0).fract();
+        let impact = (-impact_phase * 15.0).exp();
+        let noise = noise_gen.next_sample() * 0.4;
+        let metal = Oscillator::triangle(t * 2400.0) * 0.6;
+        let filtered = filter.process((metal + noise) * impact);
+        *sample = soft_saturate(filtered * env, 1.4) * 0.90;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
+/// Generates bright celebratory release chime ("GO! GO! GO!") (~0.25s) (Spec 062).
+pub fn generate_pit_release_sound(sample_rate: u32) -> Vec<u8> {
+    let duration = 0.25;
+    let total_samples = (duration * sample_rate as f32).round() as usize;
+    let mut samples = vec![0.0f32; total_samples];
+
+    for (i, sample) in samples.iter_mut().enumerate().take(total_samples) {
+        let t = i as f32 / sample_rate as f32;
+        let env = (1.0 - t / duration).max(0.0).powi(2);
+        let freq = if t < 0.12 { 659.25 } else { 880.0 };
+        let tone = Oscillator::sine(t * freq) * 0.7 + Oscillator::triangle(t * freq * 2.0) * 0.3;
+        *sample = soft_saturate(tone * env, 1.1) * 0.85;
+    }
+
+    encode_wav_16bit_mono(&samples, sample_rate)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1159,6 +1217,9 @@ mod tests {
             ("ui_select", generate_ui_select(DEFAULT_SAMPLE_RATE)),
             ("ui_move", generate_ui_move(DEFAULT_SAMPLE_RATE)),
             ("finish", generate_race_finish(DEFAULT_SAMPLE_RATE)),
+            ("pit_limiter", generate_pit_limiter_sound(DEFAULT_SAMPLE_RATE)),
+            ("pit_wrench", generate_pit_wrench_sound(DEFAULT_SAMPLE_RATE)),
+            ("pit_release", generate_pit_release_sound(DEFAULT_SAMPLE_RATE)),
         ];
 
         for (name, wav) in sfx_list {

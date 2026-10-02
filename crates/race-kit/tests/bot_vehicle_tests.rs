@@ -134,3 +134,69 @@ fn bot_drives_a_non_car_vehicle() {
     assert!(matches!(world.finish[0], FinishState::Finished { .. }), "the cart must finish 2 laps, state {:?}, lap {}", world.finish[0], world.trackers[0].current_lap);
     assert!(longest_slow <= 3.0, "the cart stalled for {:.1} s", longest_slow);
 }
+
+/// Scenario: Bot AI evaluates pit heuristics and executes pit lane braking/acceleration
+#[test]
+fn test_bot_ai_pit_tactics_and_stall_stopping() {
+    use arcade_race_core::track::{Checkpoint, LineSegment, PitBox, PitLane, TrackSpline};
+    use wheelbase::{Car, CarConfig};
+
+    let mut track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+    let entry_gate = LineSegment::new(Vec2::new(10.0, -10.0), Vec2::new(10.0, 10.0));
+    let exit_gate = LineSegment::new(Vec2::new(100.0, -10.0), Vec2::new(100.0, 10.0));
+    let pit_spline = TrackSpline::from_points(&[Vec2::new(10.0, 0.0), Vec2::new(55.0, 0.0), Vec2::new(100.0, 0.0)], 6.0, false);
+    let pit_box = PitBox::new(Vec2::new(50.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+
+    track.pit_lane = Some(PitLane::new(
+        pit_spline,
+        6.0,
+        PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+        vec![pit_box],
+        entry_gate,
+        exit_gate,
+    ));
+
+    track.checkpoints = vec![
+        Checkpoint::new(0, entry_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(true, false),
+        Checkpoint::new(1, exit_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(false, true),
+    ];
+
+    let mut bot = BotAiDriver::with_seed(BotProfile::pro(), 42);
+
+    // 1. Pit decision heuristic tests
+    let mut fresh_car = Car::new(CarConfig::sports_car());
+    fresh_car.state.health = 1.0;
+    for w in &mut fresh_car.state.wheels {
+        w.wear = 0.20;
+    }
+    assert!(!bot.should_pit(&fresh_car), "Fresh car with 20% wear should not pit");
+
+    fresh_car.state.wheels[0].wear = 0.75;
+    assert!(bot.should_pit(&fresh_car), "Car with 75% wear on any wheel should pit");
+
+    fresh_car.state.wheels[0].wear = 0.20;
+    fresh_car.state.health = 0.55;
+    assert!(bot.should_pit(&fresh_car), "Car with 55% health should pit");
+
+    // 2. Bot navigating pit lane approaching stall brakes to a stop
+    let mut pitting_car = Car::new(CarConfig::sports_car());
+    pitting_car.state.health = 0.50;
+    pitting_car.state.position = Vec2::new(50.0, 0.0); // Inside pit stall
+    pitting_car.state.velocity = Vec2::new(2.0, 0.0);
+    pitting_car.state.speed = 2.0;
+
+    bot.is_pitting = true;
+    let ctrl = bot.compute_controls(&pitting_car, &track, &[], 0.016);
+    assert_eq!(ctrl.brake, 1.0, "Bot inside pit stall must apply full brake");
+    assert_eq!(ctrl.throttle, 0.0, "Bot inside pit stall must not apply throttle");
+
+    // 3. Once serviced, bot accelerates
+    pitting_car.state.health = 1.0;
+    for w in &mut pitting_car.state.wheels {
+        w.wear = 0.0;
+    }
+    bot.pit_serviced = true;
+    let ctrl_exit = bot.compute_controls(&pitting_car, &track, &[], 0.016);
+    assert!(ctrl_exit.throttle > 0.0, "Bot after service must apply throttle to exit");
+    assert_eq!(ctrl_exit.brake, 0.0, "Bot after service must release brake");
+}

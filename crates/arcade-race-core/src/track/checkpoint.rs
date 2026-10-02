@@ -31,6 +31,9 @@ pub struct Checkpoint {
     pub is_pit_entry: bool,
     /// True if this checkpoint marks the pit lane exit.
     pub is_pit_exit: bool,
+    /// Optional index of the pit box stall associated with this checkpoint.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pit_box_idx: Option<usize>,
     /// Arc-length distance along the spline in meters.
     pub target_distance: f32,
     /// Track surface elevation at this checkpoint in meters (default: 0.0).
@@ -54,9 +57,15 @@ impl Checkpoint {
             is_finish_line,
             is_pit_entry: false,
             is_pit_exit: false,
+            pit_box_idx: None,
             target_distance: 0.0,
             elevation: 0.0,
         }
+    }
+
+    pub fn with_pit_box(mut self, stall_idx: usize) -> Self {
+        self.pit_box_idx = Some(stall_idx);
+        self
     }
 
     pub fn with_pit_flags(mut self, is_entry: bool, is_exit: bool) -> Self {
@@ -136,6 +145,8 @@ pub struct TrackProgressTracker {
     pub off_track_timer: f32,
     /// Whether the car is currently navigating the pit lane.
     pub in_pit_lane: bool,
+    /// Whether the car has come to a stop in a pit box during the current pit visit.
+    pub has_stopped_in_pit_box: bool,
     /// Total count of completed pit stops.
     pub pit_stops: u32,
     /// Whether a new lap was completed on the most recent step.
@@ -169,6 +180,7 @@ impl TrackProgressTracker {
             is_off_track: false,
             off_track_timer: 0.0,
             in_pit_lane: false,
+            has_stopped_in_pit_box: false,
             pit_stops: 0,
             lap_completed: false,
             last_position: None,
@@ -197,6 +209,7 @@ impl TrackProgressTracker {
         self.is_off_track = false;
         self.off_track_timer = 0.0;
         self.in_pit_lane = false;
+        self.has_stopped_in_pit_box = false;
         self.pit_stops = 0;
         self.lap_completed = false;
         self.last_position = None;
@@ -267,11 +280,13 @@ impl TrackProgressTracker {
                         CheckpointCrossResult::Forward => {
                             if cp.is_pit_entry {
                                 self.in_pit_lane = true;
+                                self.has_stopped_in_pit_box = false;
                             } else if cp.is_pit_exit {
-                                if self.in_pit_lane {
+                                if self.in_pit_lane && self.has_stopped_in_pit_box {
                                     self.pit_stops += 1;
                                 }
                                 self.in_pit_lane = false;
+                                self.has_stopped_in_pit_box = false;
                             } else if idx == self.next_checkpoint_idx {
                                 self.handle_forward_checkpoint_pass(idx, cp, checkpoints.len());
                             } else if idx > self.next_checkpoint_idx && (idx - self.next_checkpoint_idx) <= 3 {
@@ -308,12 +323,14 @@ impl TrackProgressTracker {
         // Pit lane triggers
         if cp.is_pit_entry {
             self.in_pit_lane = true;
+            self.has_stopped_in_pit_box = false;
         }
         if cp.is_pit_exit {
-            if self.in_pit_lane {
+            if self.in_pit_lane && self.has_stopped_in_pit_box {
                 self.pit_stops += 1;
             }
             self.in_pit_lane = false;
+            self.has_stopped_in_pit_box = false;
         }
 
         // Sector split tracking
@@ -484,5 +501,53 @@ mod tests {
         assert!(tracker.lap_completed);
         assert_eq!(tracker.current_lap, 2);
         assert!(tracker.best_lap_time.is_some());
+    }
+
+    #[test]
+    fn test_pit_lane_anti_cut_stops_only_on_service() {
+        let entry_gate = LineSegment::new(Vec2::new(10.0, -10.0), Vec2::new(10.0, 10.0));
+        let exit_gate = LineSegment::new(Vec2::new(50.0, -10.0), Vec2::new(50.0, 10.0));
+        let cp_entry = Checkpoint::new(0, entry_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(true, false);
+        let cp_exit = Checkpoint::new(1, exit_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(false, true);
+        let checkpoints = vec![cp_entry, cp_exit];
+
+        let mut tracker = TrackProgressTracker::new(2, 1);
+        let spline = TrackSpline::from_points(&[Vec2::new(0.0, 0.0), Vec2::new(100.0, 0.0)], 10.0, false);
+        let mut car = Car::new(CarConfig::sports_car());
+
+        // 1. Transit through pit lane without stopping
+        car.state.position = Vec2::new(8.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        car.state.position = Vec2::new(12.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        assert!(tracker.in_pit_lane);
+        assert!(!tracker.has_stopped_in_pit_box);
+
+        // Cross exit gate without stopping
+        car.state.position = Vec2::new(48.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        car.state.position = Vec2::new(52.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        assert!(!tracker.in_pit_lane);
+        // Pit stops must NOT increment (anti-cut invariant)
+        assert_eq!(tracker.pit_stops, 0);
+
+        // 2. Transit with stopping in pit box
+        car.state.position = Vec2::new(8.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        car.state.position = Vec2::new(12.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        assert!(tracker.in_pit_lane);
+
+        // Simulated stop inside pit box
+        tracker.has_stopped_in_pit_box = true;
+
+        // Cross exit gate after stopping
+        car.state.position = Vec2::new(48.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        car.state.position = Vec2::new(52.0, 0.0);
+        tracker.update(&car, &spline, &checkpoints, 0.016);
+        assert!(!tracker.in_pit_lane);
+        assert_eq!(tracker.pit_stops, 1);
     }
 }

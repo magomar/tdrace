@@ -3,8 +3,8 @@ use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
-use tdrace_core::track::spline::TrackWaypoint;
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
+use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, TrackKind};
 
 use super::camera::EditorCamera;
@@ -80,6 +80,8 @@ pub struct ToolSettings {
     pub active_surface_layer: SurfaceLayer,
     pub active_obstacle_shape: ObstacleShapeType,
     pub active_polygon_vertices: Vec<Vec2>,
+    pub active_pit_waypoints: Vec<Vec2>,
+    pub active_pit_boxes: Vec<PitBox>,
     pub new_waypoint_width: f32,
     pub new_waypoint_left_curb: bool,
     pub new_waypoint_right_curb: bool,
@@ -148,6 +150,8 @@ impl Default for ToolSettings {
             active_surface_layer: SurfaceLayer::BelowTrack,
             active_obstacle_shape: ObstacleShapeType::Circle,
             active_polygon_vertices: Vec::new(),
+            active_pit_waypoints: Vec::new(),
+            active_pit_boxes: Vec::new(),
             new_waypoint_width: 14.0,
             new_waypoint_left_curb: false,
             new_waypoint_right_curb: false,
@@ -244,6 +248,89 @@ impl ToolSettings {
         true
     }
 
+    /// Handles left-click waypoint node placement for pit lane spline authoring (Spec 062).
+    pub fn add_pit_lane_node(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        let snapped_mouse = state.grid_snap.snap_point(mouse_world);
+
+        // If at least 2 waypoints already exist, check if clicking near main track ribbon to merge
+        if self.active_pit_waypoints.len() >= 2 {
+            let proj = state.track.spline.project_point(snapped_mouse);
+            if proj.distance_to_spline < proj.track_width * 0.75 {
+                self.active_pit_waypoints.push(snapped_mouse);
+                self.finalize_pit_lane(state);
+                return;
+            }
+        }
+
+        self.active_pit_waypoints.push(snapped_mouse);
+    }
+
+    /// Places a PitBox stall at cursor position (Shift + Left Click).
+    pub fn place_pit_box_stall(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        let snapped_mouse = state.grid_snap.snap_point(mouse_world);
+        let stall = PitBox::new(snapped_mouse, Vec2::X, 3.0, 0.0);
+
+        if state.track.pit_lane.is_some() {
+            state.record_undo();
+            if let Some(lane) = &mut state.track.pit_lane {
+                lane.pit_boxes.push(stall);
+            }
+            state.selection = Selection::PitBox;
+            state.revalidate();
+        } else {
+            self.active_pit_boxes.push(stall);
+        }
+    }
+
+    /// Finalizes in-progress pit lane waypoints into a dedicated PitLane on state.track.
+    pub fn finalize_pit_lane(&mut self, state: &mut EditorState) -> bool {
+        if self.active_pit_waypoints.len() < 2 {
+            return false;
+        }
+
+        let waypoints = std::mem::take(&mut self.active_pit_waypoints);
+        let mut pit_boxes = std::mem::take(&mut self.active_pit_boxes);
+
+        state.record_undo();
+
+        let mut spline_points = waypoints.clone();
+        if spline_points.len() == 2 {
+            spline_points.insert(1, (spline_points[0] + spline_points[1]) * 0.5);
+        }
+
+        let road_width = 6.0;
+        let pit_spline = TrackSpline::from_points(&spline_points, road_width, false);
+
+        let p0 = waypoints[0];
+        let p1 = waypoints[1];
+        let dir0 = (p1 - p0).normalize_or_zero();
+        let norm0 = Vec2::new(-dir0.y, dir0.x);
+        let entry_gate = LineSegment::new(p0 - norm0 * 3.0, p0 + norm0 * 3.0);
+
+        let pn = *waypoints.last().unwrap();
+        let pn_prev = waypoints[waypoints.len() - 2];
+        let dirn = (pn - pn_prev).normalize_or_zero();
+        let normn = Vec2::new(-dirn.y, dirn.x);
+        let exit_gate = LineSegment::new(pn - normn * 3.0, pn + normn * 3.0);
+
+        if pit_boxes.is_empty() {
+            let mid = spline_points[spline_points.len() / 2];
+            pit_boxes.push(PitBox::new(mid, dir0, 3.0, 0.0));
+        }
+
+        state.track.pit_lane = Some(PitLane::new(
+            pit_spline,
+            road_width,
+            PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+            pit_boxes,
+            entry_gate,
+            exit_gate,
+        ));
+        state.selection = Selection::PitBox;
+        state.revalidate();
+        true
+    }
+
     /// Selects all elements matching the active tool (or all track elements if Select tool is active).
     pub fn select_all_for_active_tool(&mut self, state: &mut EditorState) -> bool {
         let selection = match self.active_tool {
@@ -286,7 +373,7 @@ impl ToolSettings {
                 Selection::from_multi(vec![], vec![], vec![], vec![], checkpoints, vec![], false)
             }
             EditorToolType::PitLane => {
-                let pit_box = state.track.pit_box_area.is_some();
+                let pit_box = state.track.pit_box_area.is_some() || state.track.pit_lane.is_some();
                 Selection::from_multi(vec![], vec![], vec![], vec![], vec![], vec![], pit_box)
             }
             EditorToolType::ArenaFloor => {
@@ -1794,6 +1881,13 @@ impl ToolSettings {
                     self.handle_secondary_down(state, mouse_world);
                 }
             }
+            EditorToolType::PitLane => {
+                if is_multi_key {
+                    self.place_pit_box_stall(state, mouse_world);
+                } else {
+                    self.add_pit_lane_node(state, mouse_world);
+                }
+            }
             _ => {
                 self.handle_secondary_down(state, mouse_world);
             }
@@ -1915,6 +2009,7 @@ impl ToolSettings {
             Selection::PitBox => {
                 state.record_undo();
                 state.track.pit_box_area = None;
+                state.track.pit_lane = None;
                 state.selection = Selection::None;
                 state.revalidate();
                 return true;
@@ -2087,7 +2182,20 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
         }
     }
 
-    // 7. Pit Box
+    // 7. Pit Box & Pit Lane
+    if let Some(lane) = &state.track.pit_lane {
+        for b in &lane.pit_boxes {
+            if b.contains_point(point) || (b.position - point).length() < pick_dist {
+                return Some(Selection::PitBox);
+            }
+        }
+        if lane.spline.total_length > 1.0 {
+            let proj = lane.spline.project_point(point);
+            if proj.distance_to_spline < lane.road_width * 0.5 {
+                return Some(Selection::PitBox);
+            }
+        }
+    }
     if let Some(pit) = &state.track.pit_box_area {
         if pit.contains(point) {
             return Some(Selection::PitBox);
@@ -2131,7 +2239,17 @@ fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> 
         Selection::JumpRamp(idx) => state.track.geometry.jump_ramps.get(*idx).map(|r| get_surface_shape_center(&r.shape)),
         Selection::Checkpoint(idx) => state.track.checkpoints.get(*idx).map(|c| (c.gate.start + c.gate.end) * 0.5),
         Selection::GridSlot(idx) => state.track.grid_positions.get(*idx).map(|g| g.position),
-        Selection::PitBox => state.track.pit_box_area.as_ref().map(get_surface_shape_center),
+        Selection::PitBox => {
+            if let Some(lane) = &state.track.pit_lane {
+                if let Some(b) = lane.pit_boxes.first() {
+                    return Some(b.position);
+                }
+                if let Some(s) = lane.spline.samples.first() {
+                    return Some(s.point);
+                }
+            }
+            state.track.pit_box_area.as_ref().map(get_surface_shape_center)
+        }
         Selection::Multi {
             waypoints,
             surface_zones,
@@ -2883,6 +3001,35 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
             let last = *tools.active_polygon_vertices.last().unwrap();
             draw_circle_lines(first.x, first.y, 3.0, 0.4, Palette::NEON_GOLD);
             draw_line(last.x, last.y, first.x, first.y, 0.25, Color::new(col.r, col.g, col.b, 0.4));
+        }
+    }
+
+    // 9b. Render In-progress Pit Lane waypoints and stalls
+    if !tools.active_pit_waypoints.is_empty() {
+        for (i, pt) in tools.active_pit_waypoints.iter().enumerate() {
+            draw_circle(pt.x, pt.y, 1.2, Palette::NEON_CYAN);
+            if i > 0 {
+                let prev = tools.active_pit_waypoints[i - 1];
+                draw_line(prev.x, prev.y, pt.x, pt.y, 0.4, Palette::NEON_CYAN);
+            }
+        }
+        for b in &tools.active_pit_boxes {
+            draw_circle_lines(b.position.x, b.position.y, b.stop_radius, 0.4, Palette::NEON_GOLD);
+        }
+    }
+
+    // 9c. Render Built Pit Lane
+    if let Some(lane) = &state.track.pit_lane {
+        for (i, s) in lane.spline.samples.iter().enumerate() {
+            if i > 0 {
+                let prev = lane.spline.samples[i - 1].point;
+                draw_line(prev.x, prev.y, s.point.x, s.point.y, 0.35, Palette::NEON_CYAN);
+            }
+        }
+        draw_line(lane.entry_gate.start.x, lane.entry_gate.start.y, lane.entry_gate.end.x, lane.entry_gate.end.y, 0.5, Palette::NEON_GREEN);
+        draw_line(lane.exit_gate.start.x, lane.exit_gate.start.y, lane.exit_gate.end.x, lane.exit_gate.end.y, 0.5, Palette::NEON_GOLD);
+        for b in &lane.pit_boxes {
+            draw_circle_lines(b.position.x, b.position.y, b.stop_radius, 0.4, Palette::NEON_CYAN);
         }
     }
 

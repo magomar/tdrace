@@ -1823,8 +1823,13 @@ fn render_inspector(
             fonts.draw_ui_bold("Pit Lane Box", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
             curr_y += scaler.s(24.0);
 
-            let has_pit = state.track.pit_box_area.is_some();
-            fonts.draw_ui_regular(&format!("Configured: {}", has_pit), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
+            let has_pit = state.track.pit_box_area.is_some() || state.track.pit_lane.is_some();
+            let details = if let Some(lane) = &state.track.pit_lane {
+                format!("Spline: {} m | Stalls: {}", lane.spline.total_length as u32, lane.pit_boxes.len())
+            } else {
+                format!("Configured: {}", has_pit)
+            };
+            fonts.draw_ui_regular(&details, x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
             curr_y += scaler.s(32.0);
 
             if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "CLEAR PIT LANE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {

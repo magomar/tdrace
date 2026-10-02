@@ -116,6 +116,7 @@ impl Body2D for Car {
     #[inline]
     fn add_velocity(&mut self, d: Vec2) {
         self.state.velocity += d;
+        self.state.speed = self.state.velocity.length();
     }
     #[inline]
     fn add_angular_velocity(&mut self, d: f32) {

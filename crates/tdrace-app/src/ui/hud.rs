@@ -62,7 +62,8 @@ pub fn render_hud(
     pb_notification: Option<&PersonalBestNotification>,
     visibility_toast: Option<&VisibilityToast>,
     _visibility_options: &PlayerVisibilityOptions,
-    _session_time: f32,
+    session_time: f32,
+    player_pit_state: Option<&race_kit::PitServiceState>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -111,6 +112,17 @@ pub fn render_hud(
         render_visibility_toast(fonts, &scaler, sw * 0.5, toast_y, vt);
     }
 
+    // 2d. Pit Limiter Banner (Top Center below Lap Timer or Toasts) (Spec 062)
+    if player_pit_state.map(|s| s.is_limiter_active()).unwrap_or(false) {
+        let limiter_y = if pb_notification.is_some() || visibility_toast.is_some() {
+            scaler.safe_pad_y + scaler.s(150.0)
+        } else {
+            scaler.safe_pad_y + scaler.s(65.0)
+        };
+        let speed_limit_kmh = track.pit_lane.as_ref().map(|pl| pl.speed_limit * 3.6).unwrap_or(60.0);
+        render_pit_limiter_banner(fonts, &scaler, sw * 0.5, limiter_y, speed_limit_kmh);
+    }
+
     // 3. Mini-Map Radar (Top Right)
     let map_w = scaler.s(175.0);
     let map_h = scaler.s(145.0);
@@ -125,6 +137,14 @@ pub fn render_hud(
         all_cars,
         color_schemes,
     );
+
+    // 3b. Tactical Pit Recommendation Alert ("BOX THIS LAP") beside Mini-Map (Spec 062)
+    let max_wear = player_car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0f32, f32::max);
+    if max_wear > 0.60 || player_car.state.health < 0.50 {
+        let alert_x = sw - map_w - scaler.safe_pad_x - scaler.s(134.0);
+        let alert_y = scaler.safe_pad_y + scaler.s(8.0);
+        render_box_this_lap_alert(fonts, &scaler, alert_x, alert_y, session_time);
+    }
 
     // 4. Speedometer & Cluster (Bottom Right)
     let speedo_cx = sw - scaler.s(110.0) - scaler.safe_pad_x;
@@ -142,7 +162,12 @@ pub fn render_hud(
     // 6. Warnings & Alerts (Wrong Way, Off Track)
     render_warning_alerts(fonts, &scaler, sw, sh, player_progress);
 
-    // 7. Race Countdown Animation ("3", "2", "1", "GO!")
+    // 7. Interactive Pit Service Overlay (Countdown Ring & GO! Prompt) (Spec 062)
+    if let Some(pit_state) = player_pit_state {
+        render_pit_service_overlay(fonts, &scaler, sw, sh, pit_state, session_time);
+    }
+
+    // 8. Race Countdown Animation ("3", "2", "1", "GO!")
     if let Some(cd) = countdown_timer {
         render_countdown(fonts, &scaler, sw, sh, cd);
     }
@@ -750,4 +775,166 @@ fn render_split_player_panel(
     // Warnings (Wrong Way, Off Track)
     render_warning_alerts(fonts, scaler, pw, ph, progress);
 }
+
+/// Tactical pit recommendation alert ("BOX THIS LAP") flashing beside the mini-map (Spec 062).
+fn render_box_this_lap_alert(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    session_time: f32,
+) {
+    let flash = (session_time * 5.0).sin() > 0.0;
+    if !flash {
+        return;
+    }
+    let w = scaler.s(128.0);
+    let h = scaler.s(26.0);
+    draw_rectangle(x, y, w, h, Color::new(0.18, 0.14, 0.02, 0.90));
+    draw_rectangle_lines(x, y, w, h, 1.5, Palette::NEON_GOLD);
+    fonts.draw_ui_bold_centered(
+        "BOX THIS LAP",
+        x + w * 0.5,
+        y + scaler.s(17.5),
+        scaler.font_s(11.5),
+        Palette::NEON_GOLD,
+    );
+}
+
+/// Cyan speed governor banner ("PIT LIMITER: 60 KM/H") displayed when navigating the pit lane (Spec 062).
+fn render_pit_limiter_banner(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    center_x: f32,
+    y: f32,
+    speed_limit_kmh: f32,
+) {
+    let card_w = scaler.s(230.0);
+    let card_h = scaler.s(32.0);
+    let x = center_x - card_w * 0.5;
+
+    draw_rectangle(x, y, card_w, card_h, Color::new(0.02, 0.10, 0.14, 0.92));
+    draw_rectangle_lines(x, y, card_w, card_h, 1.8, Palette::NEON_CYAN);
+    let banner_text = format!("PIT LIMITER: {:.0} KM/H", speed_limit_kmh);
+    fonts.draw_display_centered_with_shadow(
+        &banner_text,
+        center_x,
+        y + scaler.s(22.0),
+        scaler.font_s(13.5),
+        Palette::NEON_CYAN,
+        Color::new(0.0, 0.0, 0.0, 0.7),
+        scaler.s(1.2),
+    );
+}
+
+/// Interactive 2.5s arcade pit service countdown overlay with progress ring and stage cues (Spec 062).
+fn render_pit_service_overlay(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    sw: f32,
+    sh: f32,
+    pit_state: &race_kit::PitServiceState,
+    session_time: f32,
+) {
+    match pit_state {
+        race_kit::PitServiceState::StationaryInBox { timer, target_duration } => {
+            let cx = sw * 0.5;
+            let cy = sh * 0.40;
+            let radius = scaler.s(46.0);
+
+            // Semi-transparent circular dark card backdrop
+            draw_circle(cx, cy, radius + scaler.s(12.0), Color::new(0.02, 0.04, 0.08, 0.85));
+            draw_circle_lines(cx, cy, radius + scaler.s(12.0), scaler.s(1.5), Palette::UI_CARD_BORDER);
+
+            // Circular progress arc
+            let progress = (timer / target_duration.max(0.01)).clamp(0.0, 1.0);
+            let arc_steps = 40;
+            let start_angle = -std::f32::consts::FRAC_PI_2;
+            let sweep = std::f32::consts::TAU * progress;
+
+            for i in 0..arc_steps {
+                let t0 = i as f32 / arc_steps as f32;
+                let t1 = (i + 1) as f32 / arc_steps as f32;
+                if t0 > progress {
+                    break;
+                }
+                let a0 = start_angle + sweep * (t0 / progress.max(0.001));
+                let a1 = start_angle + sweep * (t1.min(progress) / progress.max(0.001));
+
+                let p0 = Vec2::new(cx + a0.cos() * radius, cy + a0.sin() * radius);
+                let p1 = Vec2::new(cx + a1.cos() * radius, cy + a1.sin() * radius);
+
+                let arc_col = if *timer < 1.0 {
+                    Palette::NEON_CYAN
+                } else if *timer < 2.0 {
+                    Palette::NEON_GOLD
+                } else {
+                    Palette::NEON_GREEN
+                };
+                draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(5.0), arc_col);
+            }
+
+            // Remaining seconds centered in ring
+            let remaining = (target_duration - timer).max(0.0);
+            let rem_str = format!("{:.1}s", remaining);
+            fonts.draw_display_centered_with_shadow(
+                &rem_str,
+                cx,
+                cy + scaler.s(8.0),
+                scaler.font_s(26.0),
+                Palette::WHITE,
+                Color::new(0.0, 0.0, 0.0, 0.8),
+                scaler.s(1.5),
+            );
+
+            // Stage-specific text below the countdown ring
+            let (stage_text, stage_col) = if *timer < 1.0 {
+                ("CHANGING TIRES...", Palette::NEON_CYAN)
+            } else if *timer < 2.0 {
+                ("CLEARING RADIATOR & TAPE...", Palette::NEON_GOLD)
+            } else {
+                ("SERVICE COMPLETE!", Palette::NEON_GREEN)
+            };
+
+            fonts.draw_display_centered_with_shadow(
+                stage_text,
+                cx,
+                cy + radius + scaler.s(32.0),
+                scaler.font_s(16.0),
+                stage_col,
+                Color::new(0.0, 0.0, 0.0, 0.85),
+                scaler.s(1.5),
+            );
+
+            if *timer >= 2.0 {
+                let pulse = (session_time * 8.0).sin().abs() * 0.4 + 0.6;
+                fonts.draw_ui_bold_centered(
+                    "+FRESH TIRES   +PATCHED",
+                    cx,
+                    cy + radius + scaler.s(52.0),
+                    scaler.font_s(13.0),
+                    Color::new(Palette::NEON_GREEN.r, Palette::NEON_GREEN.g, Palette::NEON_GREEN.b, pulse),
+                );
+            }
+        }
+        race_kit::PitServiceState::ServiceComplete { release_time } => {
+            // Flash celebratory "GO! GO! GO!" prompt upon release
+            let elapsed = session_time - release_time;
+            if (0.0..1.8).contains(&elapsed) {
+                let flash = (session_time * 8.0).sin().abs() * 0.3 + 0.7;
+                fonts.draw_display_centered_with_shadow(
+                    "GO! GO! GO!",
+                    sw * 0.5,
+                    sh * 0.40,
+                    scaler.font_s(42.0),
+                    Color::new(0.15, 1.0, 0.45, flash),
+                    Color::new(0.0, 0.0, 0.0, 0.9),
+                    scaler.s(2.5),
+                );
+            }
+        }
+        _ => {}
+    }
+}
+
 

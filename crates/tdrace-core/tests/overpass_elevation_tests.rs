@@ -145,6 +145,7 @@ fn test_lidar_elevation_filtering() {
         grid_positions: Vec::new(),
         default_surface: SurfaceType::Asphalt,
         pit_box_area: None,
+        pit_lane: None,
         default_laps: 3,
         car_category: arcade_race_core::CarCategory::Gt,
         car_model_id: None,

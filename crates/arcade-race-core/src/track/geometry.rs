@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
 use super::scenery::{Building, Grandstand, Rock, Tree};
+use super::spline::TrackSpline;
 
 /// 2D Line Segment defined by two endpoints.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -1044,6 +1045,76 @@ impl TrackGeometry {
     }
 }
 
+/// Designated pit service stall along the pit road.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct PitBox {
+    /// World coordinates of the service box center.
+    pub position: Vec2,
+    /// Forward orientation vector of the stall.
+    pub direction: Vec2,
+    /// Stop target radius in meters (typically 2.5 - 3.5m).
+    pub stop_radius: f32,
+    /// Elevation above ground datum.
+    pub elevation: f32,
+}
+
+impl PitBox {
+    pub fn new(position: Vec2, direction: Vec2, stop_radius: f32, elevation: f32) -> Self {
+        Self {
+            position,
+            direction: direction.normalize_or_zero(),
+            stop_radius,
+            elevation,
+        }
+    }
+
+    /// Checks if a world position falls within this pit box's stop radius.
+    #[inline]
+    pub fn contains_point(&self, p: Vec2) -> bool {
+        self.position.distance(p) <= self.stop_radius
+    }
+}
+
+/// Comprehensive physical pit lane definition for a circuit.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLane {
+    /// Dedicated spline ribbon for the pit road bypass.
+    pub spline: TrackSpline,
+    /// Road width of the pit road (typically 4.0 - 6.0m).
+    pub road_width: f32,
+    /// Pit lane maximum regulated speed in m/s (default: 16.67 m/s = 60 km/h).
+    pub speed_limit: f32,
+    /// Service box stalls for racing participants.
+    pub pit_boxes: Vec<PitBox>,
+    /// Entrance line segment separating main track from pit lane.
+    pub entry_gate: LineSegment,
+    /// Exit merge line segment rejoining main track.
+    pub exit_gate: LineSegment,
+}
+
+impl PitLane {
+    pub const DEFAULT_ROAD_SPEED_LIMIT: f32 = 16.67; // 60 km/h
+    pub const DEFAULT_OVAL_SPEED_LIMIT: f32 = 22.22; // 80 km/h
+
+    pub fn new(
+        spline: TrackSpline,
+        road_width: f32,
+        speed_limit: f32,
+        pit_boxes: Vec<PitBox>,
+        entry_gate: LineSegment,
+        exit_gate: LineSegment,
+    ) -> Self {
+        Self {
+            spline,
+            road_width,
+            speed_limit,
+            pit_boxes,
+            entry_gate,
+            exit_gate,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1220,6 +1291,29 @@ mod tests {
 
         let wall_conc = WallBarrier::new(Vec2::ZERO, Vec2::new(10.0, 0.0), BarrierType::Concrete);
         assert!(wall_conc.is_physical());
+    }
+
+    #[test]
+    fn test_pit_lane_geometry() {
+        let p1 = Vec2::new(0.0, 0.0);
+        let p2 = Vec2::new(100.0, 0.0);
+        let spline = TrackSpline::from_points(&[p1, p2], 5.0, false);
+        let pit_box = PitBox::new(Vec2::new(50.0, 5.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+        assert!(pit_box.contains_point(Vec2::new(51.0, 5.0)));
+        assert!(!pit_box.contains_point(Vec2::new(60.0, 5.0)));
+
+        let entry = LineSegment::new(Vec2::new(0.0, 0.0), Vec2::new(0.0, 10.0));
+        let exit = LineSegment::new(Vec2::new(100.0, 0.0), Vec2::new(100.0, 10.0));
+        let pit_lane = PitLane::new(spline, 5.0, PitLane::DEFAULT_ROAD_SPEED_LIMIT, vec![pit_box], entry, exit);
+
+        assert_eq!(pit_lane.road_width, 5.0);
+        assert!((pit_lane.speed_limit - 16.67).abs() < 1e-2);
+        assert_eq!(pit_lane.pit_boxes.len(), 1);
+
+        // Serialization roundtrip
+        let serialized = serde_json::to_string(&pit_lane).expect("Serialize pit lane");
+        let deserialized: PitLane = serde_json::from_str(&serialized).expect("Deserialize pit lane");
+        assert_eq!(pit_lane, deserialized);
     }
 }
 

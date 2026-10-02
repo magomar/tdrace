@@ -14,7 +14,7 @@ pub use curve::{
 };
 pub use geometry::{
     point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
-    SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+    PitBox, PitLane, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
@@ -124,6 +124,8 @@ pub struct Track {
     pub grid_positions: Vec<SpawnPose>,
     pub default_surface: SurfaceType,
     pub pit_box_area: Option<SurfaceShape>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pit_lane: Option<PitLane>,
     #[serde(default = "default_laps_fallback")]
     pub default_laps: u32,
     #[serde(default)]
@@ -171,6 +173,7 @@ impl Default for Track {
             grid_positions: Vec::new(),
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
+            pit_lane: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
             car_model_id: None,
@@ -524,6 +527,11 @@ impl wheelbase::SurfaceSampler for Track {
 impl Track {
     /// Tests if a car's center is currently inside the pit box servicing zone.
     pub fn is_in_pit_box<B: crate::body::Body2D>(&self, car: &B) -> bool {
+        if let Some(lane) = &self.pit_lane {
+            if lane.pit_boxes.iter().any(|b| b.contains_point(car.position())) {
+                return true;
+            }
+        }
         if let Some(pit_shape) = &self.pit_box_area {
             pit_shape.contains(car.position())
         } else {
