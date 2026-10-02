@@ -53,6 +53,18 @@ fn test_steering_speed_setting_changes_time_to_full_input() {
 }
 
 #[test]
+fn test_steering_source_latch_prefers_analog_and_resets() {
+    let mut input = tdrace_app::input::InputController::new();
+    input.set_steering_source_digital(true);
+    assert!(input.last_steering_was_digital());
+    input.set_steering_source_digital(false);
+    assert!(!input.last_steering_was_digital());
+    input.set_steering_source_digital(true);
+    input.reset();
+    assert!(!input.last_steering_was_digital());
+}
+
+#[test]
 fn test_steering_profiles_configuration_and_cycling() {
     let mut cfg = DigitalInputConfig::default();
     assert_eq!(cfg.profile, SteeringProfile::Balanced);
@@ -206,4 +218,3 @@ fn test_player_car_physics_receives_unattenuated_steering_when_direct_or_raw() {
         "Steering Authority 130% must steer clearly more than 100% ({angle_13:.3} vs {angle_1:.3})"
     );
 }
-

@@ -485,6 +485,17 @@ impl TouchController {
         }
     }
 
+    pub fn uses_digital_steering(&self) -> bool {
+        self.enabled && matches!(self.layout, TouchLayout::SplitButtons)
+    }
+
+    pub fn steering_active(&self) -> bool {
+        self.enabled && match self.layout {
+            TouchLayout::VirtualJoystick => self.joystick.deflection_x.abs() > 1e-3,
+            TouchLayout::SplitButtons => self.btn_steer_left.is_pressed || self.btn_steer_right.is_pressed,
+        }
+    }
+
     // --- Geometry Layout Helpers ---
 
     pub fn compute_joystick_center(&self, _sw: f32, sh: f32) -> Vec2 {
