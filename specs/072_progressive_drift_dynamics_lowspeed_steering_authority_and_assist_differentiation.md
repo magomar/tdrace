@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Progressive Drift Dynamics, Low-Speed Steering Authority, and Assist Differentiation"
 description: "Restores responsive arcade drifting and turn-in agility under 100 km/h, un-chokes throttle during power-slides, recalibrates Arcade/Sport/Pro driving profiles, and introduces digital caster for keyboard playability in Pro mode."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-072-receipt.md"
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T20:45:35Z }
