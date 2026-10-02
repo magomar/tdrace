@@ -1,6 +1,9 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
+use super::surface::CompoundId;
+use super::tire::TireCompoundConfig;
+
 /// Configuration for an individual wheel corner or axle assembly.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct WheelAssemblyConfig {
@@ -10,11 +13,15 @@ pub struct WheelAssemblyConfig {
     pub tire_width: f32,
     /// Rotational polar moment of inertia (kg·m²).
     pub rotational_inertia: f32,
+    /// Active physical tire compound model governing slip and terrain affinities (Spec 074).
+    #[serde(default)]
+    pub compound: TireCompoundConfig,
     /// Tire model of this wheel. Derived from `CarConfig::tire` / `rear_axle` by `CarConfig::finalize()`.
+    #[serde(default)]
     pub tire_model: TireConfig,
-    /// Brake torque share of this wheel. Derived from `CarConfig::brake_bias` by `CarConfig::finalize()`.
+    /// Proportion of total brake torque routed to this wheel [0.0, 1.0].
     pub brake_bias_factor: f32,
-    /// Drive torque share of this wheel. Derived from `CarConfig::drive_bias` by `CarConfig::finalize()`.
+    /// Proportion of differential drive torque routed to this wheel [0.0, 1.0].
     pub drive_torque_factor: f32,
 }
 
@@ -24,6 +31,7 @@ impl Default for WheelAssemblyConfig {
             tire_radius: 0.32,
             tire_width: 0.24,
             rotational_inertia: 1.25,
+            compound: TireCompoundConfig::default(),
             tire_model: TireConfig::default(),
             brake_bias_factor: 0.25, // 25% per wheel = 50% front / 50% rear baseline
             drive_torque_factor: 0.50, // RWD: 50% per rear wheel
@@ -44,6 +52,30 @@ impl WheelAssemblyConfig {
             tire_radius,
             tire_width,
             rotational_inertia,
+            compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
+            tire_model,
+            brake_bias_factor,
+            drive_torque_factor,
+        }
+    }
+
+    /// Constructs a physically consistent wheel assembly where rotational inertia
+    /// is derived directly from corner mass: I = 0.5 * m * r^2 (Spec 074).
+    pub fn from_corner_mass(
+        tire_radius: f32,
+        tire_width: f32,
+        corner_mass: f32,
+        compound: TireCompoundConfig,
+        brake_bias_factor: f32,
+        drive_torque_factor: f32,
+    ) -> Self {
+        let rotational_inertia = 0.5 * corner_mass * tire_radius * tire_radius;
+        let tire_model = compound.to_tire_config();
+        Self {
+            tire_radius,
+            tire_width,
+            rotational_inertia,
+            compound,
             tire_model,
             brake_bias_factor,
             drive_torque_factor,
@@ -64,6 +96,7 @@ impl WheelAssemblyConfig {
             tire_radius,
             tire_width,
             rotational_inertia,
+            compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
             tire_model,
             brake_bias_factor,
             drive_torque_factor,
@@ -1245,6 +1278,7 @@ impl CarConfig {
                 tire_radius: 0.32,
                 tire_width: 0.24,
                 rotational_inertia: 1.25,
+                compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
                 tire_model: tire,
                 brake_bias_factor: front_brake,
                 drive_torque_factor: front_drive,
@@ -1253,6 +1287,7 @@ impl CarConfig {
                 tire_radius: 0.32,
                 tire_width: 0.24,
                 rotational_inertia: 1.25,
+                compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
                 tire_model: tire,
                 brake_bias_factor: front_brake,
                 drive_torque_factor: front_drive,
@@ -1261,6 +1296,7 @@ impl CarConfig {
                 tire_radius: 0.32,
                 tire_width: 0.24,
                 rotational_inertia: 1.25,
+                compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
                 tire_model: tire,
                 brake_bias_factor: rear_brake,
                 drive_torque_factor: rear_drive,
@@ -1269,6 +1305,7 @@ impl CarConfig {
                 tire_radius: 0.32,
                 tire_width: 0.24,
                 rotational_inertia: 1.25,
+                compound: TireCompoundConfig::from_id(CompoundId::MediumSlick),
                 tire_model: tire,
                 brake_bias_factor: rear_brake,
                 drive_torque_factor: rear_drive,
@@ -1287,7 +1324,9 @@ impl CarConfig {
         let db = self.drive_bias.clamp(0.0, 1.0);
         for (i, w) in self.wheels.iter_mut().enumerate() {
             let front = i < 2;
-            w.tire_model = if front { self.tire } else { rear_tire };
+            let tire_cfg = if front { self.tire } else { rear_tire };
+            w.tire_model = tire_cfg;
+            w.compound.base_grip = tire_cfg.grip;
             w.brake_bias_factor = if front { bb * 0.5 } else { (1.0 - bb) * 0.5 };
             w.drive_torque_factor = if front { db * 0.5 } else { (1.0 - db) * 0.5 };
         }
@@ -1414,6 +1453,7 @@ impl CarConfig {
                 tire_radius: 0.18,
                 tire_width: 0.12,
                 rotational_inertia: 0.15,
+                compound: TireCompoundConfig::from_id(CompoundId::SoftSlick),
                 tire_model: front_tire,
                 brake_bias_factor: 0.25,
                 drive_torque_factor: 0.0,
@@ -1422,6 +1462,7 @@ impl CarConfig {
                 tire_radius: 0.18,
                 tire_width: 0.12,
                 rotational_inertia: 0.15,
+                compound: TireCompoundConfig::from_id(CompoundId::SoftSlick),
                 tire_model: front_tire,
                 brake_bias_factor: 0.25,
                 drive_torque_factor: 0.0,
@@ -1430,6 +1471,7 @@ impl CarConfig {
                 tire_radius: 0.20,
                 tire_width: 0.21,
                 rotational_inertia: 0.24,
+                compound: TireCompoundConfig::from_id(CompoundId::SoftSlick),
                 tire_model: rear_tire,
                 brake_bias_factor: 0.25,
                 drive_torque_factor: 0.50,
@@ -1438,6 +1480,7 @@ impl CarConfig {
                 tire_radius: 0.20,
                 tire_width: 0.21,
                 rotational_inertia: 0.24,
+                compound: TireCompoundConfig::from_id(CompoundId::SoftSlick),
                 tire_model: rear_tire,
                 brake_bias_factor: 0.25,
                 drive_torque_factor: 0.50,
@@ -1578,6 +1621,7 @@ impl CarConfig {
                 tire_radius: 0.36,
                 tire_width: 0.30,
                 rotational_inertia: 1.65,
+                compound: TireCompoundConfig::from_id(CompoundId::HardSlick),
                 tire_model: tire,
                 brake_bias_factor: 0.31,
                 drive_torque_factor: 0.0,
@@ -1586,6 +1630,7 @@ impl CarConfig {
                 tire_radius: 0.36,
                 tire_width: 0.30,
                 rotational_inertia: 1.65,
+                compound: TireCompoundConfig::from_id(CompoundId::HardSlick),
                 tire_model: tire,
                 brake_bias_factor: 0.31,
                 drive_torque_factor: 0.0,
@@ -1594,6 +1639,7 @@ impl CarConfig {
                 tire_radius: 0.36,
                 tire_width: 0.30,
                 rotational_inertia: 1.65,
+                compound: TireCompoundConfig::from_id(CompoundId::HardSlick),
                 tire_model: tire,
                 brake_bias_factor: 0.19,
                 drive_torque_factor: 0.50,
@@ -1602,6 +1648,7 @@ impl CarConfig {
                 tire_radius: 0.36,
                 tire_width: 0.30,
                 rotational_inertia: 1.65,
+                compound: TireCompoundConfig::from_id(CompoundId::HardSlick),
                 tire_model: tire,
                 brake_bias_factor: 0.19,
                 drive_torque_factor: 0.50,
@@ -1679,6 +1726,7 @@ impl CarConfig {
                 tire_radius: 0.38,
                 tire_width: 0.18,
                 rotational_inertia: 1.10,
+                compound: TireCompoundConfig::from_id(CompoundId::AllTerrain),
                 tire_model: tire,
                 brake_bias_factor: 0.275,
                 drive_torque_factor: 0.0,
@@ -1687,6 +1735,7 @@ impl CarConfig {
                 tire_radius: 0.38,
                 tire_width: 0.18,
                 rotational_inertia: 1.10,
+                compound: TireCompoundConfig::from_id(CompoundId::AllTerrain),
                 tire_model: tire,
                 brake_bias_factor: 0.275,
                 drive_torque_factor: 0.0,
@@ -1695,6 +1744,7 @@ impl CarConfig {
                 tire_radius: 0.42,
                 tire_width: 0.38,
                 rotational_inertia: 1.85,
+                compound: TireCompoundConfig::from_id(CompoundId::AllTerrain),
                 tire_model: tire,
                 brake_bias_factor: 0.225,
                 drive_torque_factor: 0.50,
@@ -1703,6 +1753,7 @@ impl CarConfig {
                 tire_radius: 0.42,
                 tire_width: 0.38,
                 rotational_inertia: 1.85,
+                compound: TireCompoundConfig::from_id(CompoundId::AllTerrain),
                 tire_model: tire,
                 brake_bias_factor: 0.225,
                 drive_torque_factor: 0.50,
@@ -1977,5 +2028,22 @@ mod tests {
         assert_eq!(config.wheels[1].drive_torque_factor, 0.0);
         assert_eq!(config.wheels[2].drive_torque_factor, 0.50);
         assert_eq!(config.wheels[3].drive_torque_factor, 0.50);
+    }
+
+    #[test]
+    fn test_wheel_assembly_inertia_derivation() {
+        let r = 0.35;
+        let w = 0.28;
+        let m = 22.0; // 22 kg
+        let compound = TireCompoundConfig::from_id(CompoundId::SoftSlick);
+        let assembly = WheelAssemblyConfig::from_corner_mass(r, w, m, compound, 0.30, 0.50);
+
+        let expected_i = 0.5 * m * r * r;
+        assert!((assembly.rotational_inertia - expected_i).abs() < 1e-6);
+        assert_eq!(assembly.compound.id, CompoundId::SoftSlick);
+        assert_eq!(assembly.tire_radius, r);
+        assert_eq!(assembly.tire_width, w);
+        assert_eq!(assembly.brake_bias_factor, 0.30);
+        assert_eq!(assembly.drive_torque_factor, 0.50);
     }
 }

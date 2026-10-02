@@ -3,9 +3,10 @@ type: Architecture Spec
 template: architecture
 title: "Decoupled Wheel Geometry, Dynamic Tire Compound Affinities, and Presentation Articulation"
 description: "Decouples physical wheel geometry and rotational inertia from data-driven tire compound configs, introduces surface affinity matrices across 15 terrain types, and binds visual wheel archetypes with procedural compound accents in the top-down renderer."
-status: draft
+status: in_progress
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T23:55:00Z }
+verified: { by: "human:mario", at: "2026-10-02T15:48:00Z", hash: "7b6d13835101" }
 depends_on:
   - "072"
 ---

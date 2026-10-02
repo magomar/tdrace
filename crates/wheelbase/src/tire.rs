@@ -7,7 +7,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::config::{PacejkaTireConfig, TireConfig, WheelAssemblyConfig};
-use super::surface::SurfaceType;
+use super::surface::{CompoundId, SurfaceAffinityMap, SurfaceType};
 
 /// Floor on the slip-ratio reference speed (m/s).
 ///
@@ -335,6 +335,223 @@ pub fn compute_skid_telemetry(
     (intensity, is_skidding)
 }
 
+/// Static compound profile governing friction, wear, and surface affinities (Spec 074).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
+pub struct TireCompoundConfig {
+    /// Unique compound identifier.
+    pub id: CompoundId,
+    /// Human-readable display label (e.g. "Soft Slick", "All-Terrain ATX").
+    pub name: &'static str,
+    /// Baseline compound grip multiplier on optimal surface (nominally 1.0).
+    pub base_grip: f32,
+    /// Slip angle in degrees where lateral force peaks (sharp: 6-8°, progressive: 12-14°).
+    pub peak_slip_angle_deg: f32,
+    /// Longitudinal slip ratio where traction peaks (typically 0.08 - 0.15).
+    pub peak_slip_ratio: f32,
+    /// Friction retention ratio during deep sliding [0.6 = snappy drop, 1.0 = plateau].
+    pub slide_grip: f32,
+    /// Rate of mechanical tread loss per unit of frictional dissipation energy (1/J).
+    pub wear_rate: f32,
+    /// Optimal bulk tread temperature window (°C) [T_min, T_max].
+    pub optimal_temp_range: (f32, f32),
+    /// Critical overheat temperature (°C) where rubber blistering rapidly reduces grip.
+    pub overheat_temp: f32,
+    /// Complete affinity multiplier matrix across all 15 SurfaceTypes.
+    pub surface_affinity: SurfaceAffinityMap,
+}
+
+#[derive(Deserialize)]
+struct TireCompoundConfigRaw {
+    #[serde(default)]
+    pub id: Option<CompoundId>,
+    #[serde(default)]
+    pub _name: Option<String>,
+    #[serde(default)]
+    pub base_grip: Option<f32>,
+    #[serde(default)]
+    pub peak_slip_angle_deg: Option<f32>,
+    #[serde(default)]
+    pub peak_slip_ratio: Option<f32>,
+    #[serde(default)]
+    pub slide_grip: Option<f32>,
+    #[serde(default)]
+    pub wear_rate: Option<f32>,
+    #[serde(default)]
+    pub optimal_temp_range: Option<(f32, f32)>,
+    #[serde(default)]
+    pub overheat_temp: Option<f32>,
+    #[serde(default)]
+    pub surface_affinity: Option<SurfaceAffinityMap>,
+}
+
+impl<'de> Deserialize<'de> for TireCompoundConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let raw = TireCompoundConfigRaw::deserialize(deserializer)?;
+        Ok(TireCompoundConfig::from(raw))
+    }
+}
+
+impl From<TireCompoundConfigRaw> for TireCompoundConfig {
+    fn from(raw: TireCompoundConfigRaw) -> Self {
+        let id = raw.id.unwrap_or(CompoundId::MediumSlick);
+        let mut d = TireCompoundConfig::from_id(id);
+        if let Some(bg) = raw.base_grip {
+            d.base_grip = bg;
+        }
+        if let Some(psa) = raw.peak_slip_angle_deg {
+            d.peak_slip_angle_deg = psa;
+        }
+        if let Some(psr) = raw.peak_slip_ratio {
+            d.peak_slip_ratio = psr;
+        }
+        if let Some(sg) = raw.slide_grip {
+            d.slide_grip = sg;
+        }
+        if let Some(wr) = raw.wear_rate {
+            d.wear_rate = wr;
+        }
+        if let Some(otr) = raw.optimal_temp_range {
+            d.optimal_temp_range = otr;
+        }
+        if let Some(oht) = raw.overheat_temp {
+            d.overheat_temp = oht;
+        }
+        if let Some(aff) = raw.surface_affinity {
+            d.surface_affinity = aff;
+        }
+        d
+    }
+}
+
+impl Default for TireCompoundConfig {
+    fn default() -> Self {
+        Self::from_id(CompoundId::MediumSlick)
+    }
+}
+
+impl TireCompoundConfig {
+    /// Builds a calibrated `TireCompoundConfig` from a `CompoundId`.
+    pub const fn from_id(id: CompoundId) -> Self {
+        let surface_affinity = SurfaceAffinityMap::for_compound(id);
+        match id {
+            CompoundId::SoftSlick => Self {
+                id,
+                name: "Soft Slick",
+                base_grip: 1.20,
+                peak_slip_angle_deg: 8.0,
+                peak_slip_ratio: 0.09,
+                slide_grip: 0.82,
+                wear_rate: 0.00000045,
+                optimal_temp_range: (85.0, 110.0),
+                overheat_temp: 120.0,
+                surface_affinity,
+            },
+            CompoundId::MediumSlick => Self {
+                id,
+                name: "Medium Slick",
+                base_grip: 1.00,
+                peak_slip_angle_deg: 10.0,
+                peak_slip_ratio: 0.10,
+                slide_grip: 0.88,
+                wear_rate: 0.00000025,
+                optimal_temp_range: (80.0, 105.0),
+                overheat_temp: 125.0,
+                surface_affinity,
+            },
+            CompoundId::HardSlick => Self {
+                id,
+                name: "Hard Slick",
+                base_grip: 0.95,
+                peak_slip_angle_deg: 11.5,
+                peak_slip_ratio: 0.11,
+                slide_grip: 0.90,
+                wear_rate: 0.00000012,
+                optimal_temp_range: (75.0, 100.0),
+                overheat_temp: 130.0,
+                surface_affinity,
+            },
+            CompoundId::IntermediateWet => Self {
+                id,
+                name: "Intermediate Wet",
+                base_grip: 0.95,
+                peak_slip_angle_deg: 11.0,
+                peak_slip_ratio: 0.11,
+                slide_grip: 0.85,
+                wear_rate: 0.00000030,
+                optimal_temp_range: (60.0, 85.0),
+                overheat_temp: 105.0,
+                surface_affinity,
+            },
+            CompoundId::MonsoonWet => Self {
+                id,
+                name: "Monsoon Wet",
+                base_grip: 0.90,
+                peak_slip_angle_deg: 12.0,
+                peak_slip_ratio: 0.12,
+                slide_grip: 0.85,
+                wear_rate: 0.00000040,
+                optimal_temp_range: (50.0, 75.0),
+                overheat_temp: 95.0,
+                surface_affinity,
+            },
+            CompoundId::AllTerrain => Self {
+                id,
+                name: "All-Terrain",
+                base_grip: 1.00,
+                peak_slip_angle_deg: 13.0,
+                peak_slip_ratio: 0.13,
+                slide_grip: 0.88,
+                wear_rate: 0.00000020,
+                optimal_temp_range: (65.0, 95.0),
+                overheat_temp: 115.0,
+                surface_affinity,
+            },
+            CompoundId::ExtremeMud => Self {
+                id,
+                name: "Extreme Mud",
+                base_grip: 0.95,
+                peak_slip_angle_deg: 14.0,
+                peak_slip_ratio: 0.15,
+                slide_grip: 0.92,
+                wear_rate: 0.00000025,
+                optimal_temp_range: (60.0, 90.0),
+                overheat_temp: 110.0,
+                surface_affinity,
+            },
+            CompoundId::StuddedIce => Self {
+                id,
+                name: "Studded Ice",
+                base_grip: 0.90,
+                peak_slip_angle_deg: 13.5,
+                peak_slip_ratio: 0.14,
+                slide_grip: 0.90,
+                wear_rate: 0.00000035,
+                optimal_temp_range: (40.0, 75.0),
+                overheat_temp: 90.0,
+                surface_affinity,
+            },
+        }
+    }
+
+    /// Converts this compound configuration into a baseline [`TireConfig`].
+    pub fn to_tire_config(&self) -> TireConfig {
+        TireConfig {
+            grip: self.base_grip,
+            peak_slip_angle_deg: self.peak_slip_angle_deg,
+            peak_slip_ratio: self.peak_slip_ratio,
+            slide_grip: self.slide_grip,
+            falloff: 1.5,
+            load_sensitivity: 0.15,
+            power_slide: 0.85,
+            skid_threshold: 0.10,
+            skid_full_threshold: 0.35,
+        }
+    }
+}
+
 /// Physical wheel assembly combining configuration, rotational dynamics, and thermal wear state.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct WheelAssembly {
@@ -368,28 +585,29 @@ impl WheelAssembly {
         }
     }
 
-    /// Evaluates the dynamic thermal grip multiplier based on tread temperature T.
-    ///
-    /// Optimal operating window is [80°C, 105°C] where grip reaches ~1.05.
-    /// Below 45°C (cold tire), grip is reduced (~0.88 - 0.96).
-    /// Above 120°C (overheated tire), grip degrades by >= 15% down towards 0.55 clamp limit.
+    /// Evaluates the dynamic thermal grip multiplier based on tread temperature T and active compound.
     pub fn thermal_grip_multiplier(&self) -> f32 {
         let t = self.temperature;
-        let mult = if t < 45.0 {
-            // Cold tire: ramp from 0.96 at 0°C up to 1.00 at 45°C
-            0.96 + (t.max(0.0) / 45.0) * 0.04
-        } else if t < 75.0 {
-            // Warm-up phase: ramp from 1.00 to 1.06 at 75°C
-            1.00 + ((t - 45.0) / 30.0) * 0.06
-        } else if t <= 105.0 {
+        let (t_min, t_max) = self.config.compound.optimal_temp_range;
+        let t_overheat = self.config.compound.overheat_temp;
+        let t_cold_span = (t_min - 35.0).max(10.0);
+        let mult = if t < t_min - 35.0 {
+            // Cold tire: ramp from 0.96 at 0°C up to 1.00 at t_min - 35°C
+            0.96 + (t.max(0.0) / t_cold_span) * 0.04
+        } else if t < t_min {
+            // Warm-up phase: ramp from 1.00 to 1.06 at t_min
+            1.00 + ((t - (t_min - 35.0)) / 35.0) * 0.06
+        } else if t <= t_max {
             // Optimal peak grip window: 1.06
             1.06
-        } else if t <= 120.0 {
-            // Overheating transition: drops to 0.88 at 120°C (17% drop from peak, satisfying >=15% SLA)
-            1.06 - ((t - 105.0) / 15.0) * 0.18
+        } else if t <= t_overheat {
+            // Overheating transition: drops to 0.88 at t_overheat
+            let span = (t_overheat - t_max).max(1.0);
+            1.06 - ((t - t_max) / span) * 0.18
         } else {
-            // Severe overheat: gradual degradation from 0.88 down to 0.82 at 200°C
-            0.88 - ((t - 120.0) / 80.0) * 0.06
+            // Severe overheat: gradual degradation from 0.88 down to 0.82
+            let span = 80.0f32;
+            0.88 - ((t - t_overheat) / span).min(1.0) * 0.06
         };
         mult.clamp(0.82, 1.08)
     }
@@ -528,12 +746,12 @@ impl WheelAssembly {
         self.temperature = self.temperature.clamp(0.0, 200.0);
 
         // Mechanical tread wear
-        let temp_wear_boost = if self.temperature > 105.0 {
-            1.0 + (self.temperature - 105.0) * 0.05
+        let temp_wear_boost = if self.temperature > self.config.compound.optimal_temp_range.1 {
+            1.0 + (self.temperature - self.config.compound.optimal_temp_range.1) * 0.05
         } else {
             1.0
         };
-        let k_wear = 0.00000025;
+        let k_wear = self.config.compound.wear_rate;
         let wear_rate = p_diss * k_wear * temp_wear_boost;
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
     }
@@ -545,10 +763,24 @@ impl WheelAssembly {
         friction_coeff * self.thermal_grip_multiplier() * wear_mult
     }
 
+    /// Surface friction coefficient scaled by compound surface affinity, tread temperature, and wear (Spec 074).
+    #[inline]
+    pub fn effective_friction_on_surface(&self, friction_coeff: f32, surface: SurfaceType) -> f32 {
+        let affinity = self.config.compound.surface_affinity.get(surface);
+        self.effective_friction(friction_coeff) * affinity
+    }
+
     /// Load-sensitive friction envelope of this tire including thermal and wear effects (N).
     #[inline]
     pub fn friction_envelope(&self, normal_load: f32, nominal_load: f32, friction_coeff: f32) -> f32 {
         tire_friction_envelope(normal_load, nominal_load, self.effective_friction(friction_coeff), &self.config.tire_model)
+    }
+
+    /// Load-sensitive friction envelope of this tire on a specific surface including compound affinity, thermal and wear effects (N).
+    #[inline]
+    pub fn friction_envelope_on_surface(&self, normal_load: f32, nominal_load: f32, friction_coeff: f32, surface: SurfaceType) -> f32 {
+        let eff_mu = self.effective_friction_on_surface(friction_coeff, surface);
+        tire_friction_envelope(normal_load, nominal_load, eff_mu, &self.config.tire_model)
     }
 }
 
@@ -665,6 +897,7 @@ mod tests {
             tire_radius: 0.32,
             tire_width: 0.24,
             rotational_inertia: 1.25,
+            compound: TireCompoundConfig::default(),
             tire_model: TireConfig::default(),
             brake_bias_factor: 0.30,
             drive_torque_factor: 0.50,
