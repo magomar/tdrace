@@ -4,6 +4,7 @@ template: feature
 title: "Circuit Pit Lanes and Interactive Pit Stop Procedures"
 description: "Establishes physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences across circuits."
 status: in_progress
+receipt: "docs/receipts/spec-062-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:52:00Z }
 verified: { by: "human:mario", at: "2026-10-02T18:47:19Z", hash: "7142099e5e85" }
