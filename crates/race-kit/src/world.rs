@@ -5,8 +5,8 @@
 
 use std::cmp::Ordering;
 
-use arcade_race_core::collision::{resolve_all_wall_collisions, resolve_multi_car_collisions};
-use arcade_race_core::track::{Track, TrackProgressTracker};
+use arcade_race_core::collision::{resolve_all_wall_collisions, resolve_car_car_collision};
+use arcade_race_core::track::{LineSegment, Track, TrackProgressTracker};
 use serde::{Deserialize, Serialize};
 use wheelbase::{Car, SurfaceType};
 
@@ -48,6 +48,27 @@ impl Default for RaceRules {
     }
 }
 
+/// Runtime state of a vehicle navigating the pit lane.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum PitServiceState {
+    NotPitting,
+    InTransit { distance: f32 },
+    StationaryInBox { timer: f32, target_duration: f32 },
+    ServiceComplete { release_time: f32 },
+}
+
+impl PitServiceState {
+    #[inline]
+    pub fn is_limiter_active(&self) -> bool {
+        !matches!(self, Self::NotPitting)
+    }
+
+    #[inline]
+    pub fn are_controls_locked(&self) -> bool {
+        matches!(self, Self::StationaryInBox { .. })
+    }
+}
+
 /// Where a vehicle is in the race.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum FinishState {
@@ -83,6 +104,8 @@ pub struct RaceWorld<V: Vehicle = Car> {
     pub vehicles: Vec<V>,
     pub trackers: Vec<TrackProgressTracker>,
     pub finish: Vec<FinishState>,
+    /// Runtime pit service state for each vehicle.
+    pub pit_states: Vec<PitServiceState>,
     /// Highest speed of each vehicle, in m/s, read after the step and canopy drag.
     pub top_speed: Vec<f32>,
     /// Surfaces under each vehicle in the last step, for effects and sounds.
@@ -100,6 +123,7 @@ impl<V: Vehicle> RaceWorld<V> {
             vehicles: Vec::new(),
             trackers: Vec::new(),
             finish: Vec::new(),
+            pit_states: Vec::new(),
             top_speed: Vec::new(),
             last_surfaces: Vec::new(),
             time: 0.0,
@@ -121,6 +145,7 @@ impl<V: Vehicle> RaceWorld<V> {
         self.vehicles.clear();
         self.trackers.clear();
         self.finish.clear();
+        self.pit_states.clear();
         self.top_speed.clear();
         self.last_surfaces.clear();
         self.time = 0.0;
@@ -131,6 +156,7 @@ impl<V: Vehicle> RaceWorld<V> {
     fn fit(&mut self) {
         let n = self.vehicles.len();
         self.finish.resize(n, FinishState::Racing);
+        self.pit_states.resize(n, PitServiceState::NotPitting);
         self.top_speed.resize(n, 0.0);
         self.last_surfaces.resize(n, [SurfaceType::Asphalt; 4]);
     }
@@ -171,17 +197,47 @@ impl<V: Vehicle> RaceWorld<V> {
             self.vehicles[i].set_draft(drafts[i]);
         }
 
+        // Track vehicle positions before step for crossing checks
+        let mut prev_positions = Vec::with_capacity(n_cars);
+        for i in 0..n_cars {
+            prev_positions.push(self.vehicles[i].position());
+        }
+
         // Step individual vehicle dynamics and update road elevation & cross-slope banking
         for i in 0..n_cars {
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
             let proj = track.spline.project_point_continuity(self.vehicles[i].position(), prev_prog, 50.0);
             self.vehicles[i].set_road(&proj);
 
-            let ctrl = match self.finish[i] {
+            let mut ctrl = match self.finish[i] {
                 FinishState::Dnf { .. } => DriveControls::default(),
                 _ => controls.get(i).copied().unwrap_or_default(),
             };
+            if self.pit_states[i].are_controls_locked() {
+                ctrl = DriveControls {
+                    throttle: 0.0,
+                    brake: 1.0,
+                    handbrake: true,
+                    steer: 0.0,
+                    ..Default::default()
+                };
+            }
             self.vehicles[i].step(&ctrl, self.last_surfaces[i], dt);
+
+            // Controls lock or pit speed limiter enforcement
+            if self.pit_states[i].are_controls_locked() {
+                let v = self.vehicles[i].velocity();
+                self.vehicles[i].add_velocity(-v);
+            } else if self.pit_states[i].is_limiter_active() {
+                let pit_speed_limit = track.pit_lane.as_ref().map_or(16.67, |lane| lane.speed_limit);
+                let spd = self.vehicles[i].speed();
+                if spd > pit_speed_limit {
+                    let v = self.vehicles[i].velocity();
+                    let excess = spd - pit_speed_limit;
+                    let dir = v.normalize_or_zero();
+                    self.vehicles[i].add_velocity(-dir * excess);
+                }
+            }
 
             self.brushes.clear();
             self.vehicles[i].brush_canopy(&track.geometry.trees, dt, &mut self.brushes);
@@ -203,12 +259,31 @@ impl<V: Vehicle> RaceWorld<V> {
         }
 
         // Car-to-car collisions with momentum exchange and penetration pushback
+        // Ghost collision safety: cars stationary in pit box are neutralized
         if n_cars > 1 && self.rules.collision.iterations > 0 {
             let c = self.rules.collision;
-            for ev in resolve_multi_car_collisions(&mut self.vehicles, c.restitution, c.friction, c.iterations) {
-                self.events.push(RaceEvent::VehicleImpact(ev));
-                for car in [ev.car_a_idx, ev.car_b_idx] {
-                    self.impact(car, ev.closing_speed);
+            for iter in 0..c.iterations {
+                for i in 0..n_cars {
+                    if self.pit_states.get(i).map_or(false, |s| s.are_controls_locked()) {
+                        continue;
+                    }
+                    for j in (i + 1)..n_cars {
+                        if self.pit_states.get(j).map_or(false, |s| s.are_controls_locked()) {
+                            continue;
+                        }
+                        let (left, right) = self.vehicles.split_at_mut(j);
+                        let car_i = &mut left[i];
+                        let car_j = &mut right[0];
+                        if let Some(mut ev) = resolve_car_car_collision(car_i, car_j, c.restitution, c.friction) {
+                            if iter == 0 {
+                                ev.car_a_idx = i;
+                                ev.car_b_idx = j;
+                                self.events.push(RaceEvent::VehicleImpact(ev));
+                                self.impact(i, ev.closing_speed);
+                                self.impact(j, ev.closing_speed);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -225,9 +300,81 @@ impl<V: Vehicle> RaceWorld<V> {
             }
         }
 
-        // Race progression, lap tracking, sector splits
+        // Race progression, lap tracking, sector splits, pit service state machine
         for i in 0..n_cars {
+            let was_in_pit = self.trackers[i].in_pit_lane;
             self.trackers[i].update(&self.vehicles[i], &track.spline, &track.checkpoints, dt);
+
+            // Also check track.pit_lane entry and exit line segments if defined
+            if let Some(lane) = &track.pit_lane {
+                let car_seg = LineSegment::new(prev_positions[i], self.vehicles[i].position());
+                if lane.entry_gate.intersect_segment(&car_seg).is_some() {
+                    self.trackers[i].in_pit_lane = true;
+                    self.trackers[i].has_stopped_in_pit_box = false;
+                }
+                if lane.exit_gate.intersect_segment(&car_seg).is_some() {
+                    if self.trackers[i].in_pit_lane && self.trackers[i].has_stopped_in_pit_box {
+                        self.trackers[i].pit_stops += 1;
+                    }
+                    self.trackers[i].in_pit_lane = false;
+                    self.trackers[i].has_stopped_in_pit_box = false;
+                }
+            }
+
+            let now_in_pit = self.trackers[i].in_pit_lane;
+
+            if !was_in_pit && now_in_pit {
+                if self.pit_states[i] == PitServiceState::NotPitting {
+                    self.pit_states[i] = PitServiceState::InTransit { distance: 0.0 };
+                    self.events.push(RaceEvent::PitEntry { car: i });
+                    let pit_speed_limit = track.pit_lane.as_ref().map_or(16.67, |lane| lane.speed_limit);
+                    let spd = self.vehicles[i].speed();
+                    if spd > pit_speed_limit {
+                        let v = self.vehicles[i].velocity();
+                        let excess = spd - pit_speed_limit;
+                        let dir = v.normalize_or_zero();
+                        self.vehicles[i].add_velocity(-dir * excess);
+                    }
+                }
+            } else if was_in_pit && !now_in_pit {
+                self.pit_states[i] = PitServiceState::NotPitting;
+                self.events.push(RaceEvent::PitExit { car: i });
+            }
+
+            match self.pit_states[i] {
+                PitServiceState::InTransit { distance } => {
+                    let new_dist = distance + self.vehicles[i].speed() * dt;
+                    if track.is_in_pit_box(&self.vehicles[i]) && self.vehicles[i].speed() < 1.5 {
+                        let v = self.vehicles[i].velocity();
+                        self.vehicles[i].add_velocity(-v);
+                        self.pit_states[i] = PitServiceState::StationaryInBox {
+                            timer: 0.0,
+                            target_duration: 2.5,
+                        };
+                        self.events.push(RaceEvent::PitServiceStart { car: i });
+                    } else {
+                        self.pit_states[i] = PitServiceState::InTransit { distance: new_dist };
+                    }
+                }
+                PitServiceState::StationaryInBox { timer, target_duration } => {
+                    let new_timer = timer + dt;
+                    if new_timer >= target_duration {
+                        self.vehicles[i].service_tires();
+                        self.vehicles[i].apply_field_repair(0.25);
+                        self.trackers[i].has_stopped_in_pit_box = true;
+                        self.pit_states[i] = PitServiceState::ServiceComplete {
+                            release_time: self.time,
+                        };
+                        self.events.push(RaceEvent::PitServiceComplete { car: i });
+                    } else {
+                        self.pit_states[i] = PitServiceState::StationaryInBox {
+                            timer: new_timer,
+                            target_duration,
+                        };
+                    }
+                }
+                _ => {}
+            }
         }
 
         self.time += dt;

@@ -195,3 +195,101 @@ fn wreck_gives_dnf_and_stays_collidable() {
     assert_eq!(world.finish[1], FinishState::Racing, "the sturdy vehicle is not wrecked");
     assert_eq!(world.standings().last(), Some(&0), "a DNF ranks last");
 }
+
+/// Scenario: Pit service state machine, speed limiter, 2.5s servicing, and ghost collision
+#[test]
+fn test_pit_service_state_machine() {
+    use arcade_race_core::track::{Checkpoint, LineSegment, PitBox, PitLane, TrackSpline};
+
+    let mut track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+
+    // Create pit lane spline and gates
+    let entry_gate = LineSegment::new(Vec2::new(10.0, -10.0), Vec2::new(10.0, 10.0));
+    let exit_gate = LineSegment::new(Vec2::new(100.0, -10.0), Vec2::new(100.0, 10.0));
+    let pit_spline = TrackSpline::from_points(&[Vec2::new(10.0, 0.0), Vec2::new(100.0, 0.0)], 6.0, false);
+    let pit_box = PitBox::new(Vec2::new(50.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+
+    track.pit_lane = Some(PitLane::new(
+        pit_spline,
+        6.0,
+        PitLane::DEFAULT_ROAD_SPEED_LIMIT, // 16.67 m/s (60 km/h)
+        vec![pit_box],
+        entry_gate,
+        exit_gate,
+    ));
+
+    // Also add pit entry and pit exit checkpoints
+    track.checkpoints = vec![
+        Checkpoint::new(0, entry_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(true, false),
+        Checkpoint::new(1, exit_gate, Vec2::new(1.0, 0.0), 0, false).with_pit_flags(false, true),
+    ];
+
+    let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules::default());
+    let mut car = Car::new(CarConfig::sports_car());
+    // Give car 80% tire wear and 40% health
+    for w in &mut car.state.wheels {
+        w.wear = 0.80;
+    }
+    for a in &mut car.state.wheel_assemblies {
+        a.wear = 0.80;
+    }
+    car.state.health = 0.40;
+    car.state.position = Vec2::new(8.0, 0.0);
+    car.state.velocity = Vec2::new(25.0, 0.0); // 25 m/s > 16.67 m/s
+    car.state.speed = 25.0;
+
+    let tracker = TrackProgressTracker::new(track.checkpoints.len(), 1);
+    world.spawn(car, tracker);
+
+    // 1. Cross pit entry gate (moves from ~8.0 across 10.0)
+    let controls = vec![DriveControls::new(1.0, 0.0, 0.0, false)];
+    let events = world.step(&track, &controls, 0.2).to_vec();
+
+    assert!(events.iter().any(|ev| matches!(ev, RaceEvent::PitEntry { car: 0 })));
+    assert!(world.pit_states[0].is_limiter_active());
+    // Speed should be clamped to <= 16.67 m/s by speed limiter
+    assert!(world.vehicles[0].speed() <= 16.67 + 1e-3);
+
+    // 2. Drive to pit box and slow down to stop
+    world.vehicles[0].state.position = Vec2::new(50.0, 0.0);
+    world.vehicles[0].state.velocity = Vec2::new(0.5, 0.0);
+    world.vehicles[0].state.speed = 0.5;
+
+    let events = world.step(&track, &controls, 0.016).to_vec();
+    assert!(events.iter().any(|ev| matches!(ev, RaceEvent::PitServiceStart { car: 0 })));
+    assert!(world.pit_states[0].are_controls_locked());
+
+    // 3. While stationary in box: step for 2.4 seconds (still in service)
+    let steps = (2.4 / 0.016) as usize;
+    for _ in 0..steps {
+        world.step(&track, &controls, 0.016);
+    }
+    assert!(world.pit_states[0].are_controls_locked());
+    assert_eq!(world.vehicles[0].state.health, 0.40);
+
+    // 4. Complete the remaining service duration (past 2.5s)
+    let mut completed = false;
+    for _ in 0..20 {
+        let events = world.step(&track, &controls, 0.016).to_vec();
+        if events.iter().any(|ev| matches!(ev, RaceEvent::PitServiceComplete { car: 0 })) {
+            completed = true;
+            break;
+        }
+    }
+    assert!(completed, "PitServiceComplete event must be emitted");
+    assert!(!world.pit_states[0].are_controls_locked(), "Controls must be unlocked after service");
+    // Tire wear reset to 0.0
+    assert_eq!(world.vehicles[0].state.wheels[0].wear, 0.0);
+    assert_eq!(world.vehicles[0].state.wheel_assemblies[0].wear, 0.0);
+    // Health increased by +25% (0.40 -> 0.65)
+    assert!((world.vehicles[0].state.health - 0.65).abs() < 1e-4);
+
+    // 5. Cross pit exit gate (moves from 98.0 across 100.0)
+    world.vehicles[0].state.position = Vec2::new(98.0, 0.0);
+    world.vehicles[0].state.velocity = Vec2::new(20.0, 0.0);
+    world.vehicles[0].state.speed = 20.0;
+    let events = world.step(&track, &controls, 0.2).to_vec();
+    assert!(events.iter().any(|ev| matches!(ev, RaceEvent::PitExit { car: 0 })));
+    assert!(!world.pit_states[0].is_limiter_active(), "Limiter must disengage upon pit exit");
+    assert_eq!(world.trackers[0].pit_stops, 1, "Pit stop counter must increment");
+}

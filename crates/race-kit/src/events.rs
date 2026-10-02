@@ -27,4 +27,12 @@ pub enum RaceEvent {
     Finished { car: usize, position: usize, time: f32 },
     /// An impact wrecked a vehicle. It is out of the race from now on.
     Wrecked { car: usize, cause: DnfCause },
+    /// A vehicle entered the pit lane corridor. Speed limiter is engaged.
+    PitEntry { car: usize },
+    /// A vehicle came to a stop in a pit box. Service sequence started.
+    PitServiceStart { car: usize },
+    /// Pit service sequence completed. Tires refreshed, emergency chassis repair applied.
+    PitServiceComplete { car: usize },
+    /// A vehicle crossed the pit exit gate. Speed limiter is disengaged.
+    PitExit { car: usize },
 }
