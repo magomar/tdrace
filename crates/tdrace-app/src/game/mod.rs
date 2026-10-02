@@ -14703,6 +14703,12 @@ impl RaceSession {
                 self.editor_tools.escape_consumed = true;
                 self.audio.play_sfx(SfxType::UiMove);
             }
+            if !self.editor_tools.active_pit_waypoints.is_empty() || !self.editor_tools.active_pit_boxes.is_empty() {
+                self.editor_tools.active_pit_waypoints.clear();
+                self.editor_tools.active_pit_boxes.clear();
+                self.editor_tools.escape_consumed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
         }
 
         // Surface Zone Layer & Shape Shortcuts (with Ctrl/Cmd modifier)

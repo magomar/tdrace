@@ -2515,3 +2515,46 @@ fn test_editor_keeps_track_barrier_setup_on_rebuild() {
     assert!(walls.clone().all(|w| w.barrier_type == BarrierType::Concrete));
     assert!((state.track.effective_barrier_offset() - 1.5).abs() < 0.11);
 }
+
+#[test]
+fn test_editor_pit_lane_tool_spline_and_box_placement() {
+    let track = tdrace_core::catalog::official_track("nascar", "daytona_superspeedway");
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::PitLane;
+
+    // 1. Place divergence waypoint
+    tools.handle_mouse_down_with_mods(&mut state, Vec2::new(10.0, 10.0), false);
+    assert_eq!(tools.active_pit_waypoints.len(), 1);
+
+    // 2. Place bypass waypoint
+    tools.handle_mouse_down_with_mods(&mut state, Vec2::new(50.0, 20.0), false);
+    assert_eq!(tools.active_pit_waypoints.len(), 2);
+
+    // 3. Shift + click places a pit box stall
+    tools.handle_mouse_down_with_mods(&mut state, Vec2::new(50.0, 20.0), true);
+    assert_eq!(tools.active_pit_boxes.len(), 1);
+
+    // 4. Place merge waypoint and finalize pit lane
+    tools.handle_mouse_down_with_mods(&mut state, Vec2::new(90.0, 10.0), false);
+    if state.track.pit_lane.is_none() {
+        assert!(tools.finalize_pit_lane(&mut state));
+    }
+
+    // Verify track pit_lane is created
+    assert!(state.track.pit_lane.is_some());
+    let lane = state.track.pit_lane.as_ref().unwrap();
+    assert_eq!(lane.pit_boxes.len(), 1);
+    assert_eq!(lane.road_width, 6.0);
+    assert!(lane.spline.total_length() > 0.0);
+
+    // 5. Shift + click adds an additional stall to existing pit lane
+    tools.handle_mouse_down_with_mods(&mut state, Vec2::new(60.0, 20.0), true);
+    assert_eq!(state.track.pit_lane.as_ref().unwrap().pit_boxes.len(), 2);
+
+    // 6. Delete selected clears the pit lane
+    state.selection = Selection::PitBox;
+    assert!(tools.delete_selected(&mut state));
+    assert!(state.track.pit_lane.is_none());
+}
+
