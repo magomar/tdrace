@@ -355,6 +355,254 @@ impl SurfaceSampler for UniformSurface {
     }
 }
 
+/// Standardized motorsport tire compound identifiers (Spec 074).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+pub enum CompoundId {
+    /// Ultra-high grip asphalt slick with rapid thermal degradation.
+    SoftSlick,
+    /// Balanced dry asphalt competition slick.
+    #[default]
+    MediumSlick,
+    /// Durable endurance asphalt slick with high heat resistance.
+    HardSlick,
+    /// Grooved transitional tire for damp tracks and standing drizzle.
+    IntermediateWet,
+    /// Deep-tread directional rain tire with maximum hydroplaning evacuation.
+    MonsoonWet,
+    /// Dual-purpose multi-surface tire for gravel, dirt, and light tarmac.
+    AllTerrain,
+    /// Heavy open-lug mud and sand tire with high loose-soil bite.
+    ExtremeMud,
+    /// Steel-studded winter competition tire for hard-packed snow and sheet ice.
+    StuddedIce,
+}
+
+impl CompoundId {
+    pub const ALL: [Self; 8] = [
+        Self::SoftSlick,
+        Self::MediumSlick,
+        Self::HardSlick,
+        Self::IntermediateWet,
+        Self::MonsoonWet,
+        Self::AllTerrain,
+        Self::ExtremeMud,
+        Self::StuddedIce,
+    ];
+
+    /// Human-readable display label.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::SoftSlick => "Soft Slick",
+            Self::MediumSlick => "Medium Slick",
+            Self::HardSlick => "Hard Slick",
+            Self::IntermediateWet => "Intermediate Wet",
+            Self::MonsoonWet => "Monsoon Wet",
+            Self::AllTerrain => "All-Terrain",
+            Self::ExtremeMud => "Extreme Mud",
+            Self::StuddedIce => "Studded Ice",
+        }
+    }
+
+    /// Single or two-letter compact acronym for HUD badges.
+    pub const fn badge_code(self) -> &'static str {
+        match self {
+            Self::SoftSlick => "S",
+            Self::MediumSlick => "M",
+            Self::HardSlick => "H",
+            Self::IntermediateWet => "INT",
+            Self::MonsoonWet => "W",
+            Self::AllTerrain => "AT",
+            Self::ExtremeMud => "MUD",
+            Self::StuddedIce => "ICE",
+        }
+    }
+
+    /// Normalized RGBA color [r, g, b, a] for compound presentation accents.
+    pub const fn accent_rgba(self) -> [f32; 4] {
+        match self {
+            Self::SoftSlick => [0.95, 0.15, 0.15, 1.0],       // Red [S]
+            Self::MediumSlick => [0.95, 0.85, 0.10, 1.0],     // Yellow [M]
+            Self::HardSlick => [0.90, 0.90, 0.90, 1.0],       // White [H]
+            Self::IntermediateWet => [0.15, 0.80, 0.20, 1.0], // Green [INT]
+            Self::MonsoonWet => [0.10, 0.50, 0.95, 1.0],      // Blue [WET]
+            Self::AllTerrain => [0.95, 0.55, 0.10, 1.0],      // Orange [AT]
+            Self::ExtremeMud => [0.55, 0.35, 0.15, 1.0],      // Brown [MUD]
+            Self::StuddedIce => [0.60, 0.90, 1.00, 1.0],      // Cyan [ICE]
+        }
+    }
+}
+
+/// Compact 15-element array mapping each SurfaceType to its compound friction multiplier (Spec 074).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct SurfaceAffinityMap {
+    affinities: [f32; 15],
+}
+
+impl Default for SurfaceAffinityMap {
+    fn default() -> Self {
+        Self::for_compound(CompoundId::MediumSlick)
+    }
+}
+
+impl SurfaceAffinityMap {
+    #[inline]
+    pub const fn new(affinities: [f32; 15]) -> Self {
+        Self { affinities }
+    }
+
+    #[inline]
+    pub fn get(&self, surface: SurfaceType) -> f32 {
+        self.affinities[surface as usize]
+    }
+
+    #[inline]
+    pub fn set(&mut self, surface: SurfaceType, val: f32) {
+        self.affinities[surface as usize] = val;
+    }
+
+    /// Returns calibrated affinity multipliers for a standard compound across all 15 SurfaceTypes.
+    pub const fn for_compound(id: CompoundId) -> Self {
+        match id {
+            CompoundId::SoftSlick => Self::new([
+                1.20, // Asphalt
+                1.18, // Concrete
+                1.10, // Curb
+                0.45, // Dirt
+                0.35, // Gravel
+                0.30, // Grass
+                0.30, // PackedSand
+                0.15, // DeepSand
+                0.25, // MudTrack
+                0.10, // DeepMud
+                0.15, // PackedSnow
+                0.10, // DeepSnow
+                0.05, // SheetIce
+                0.20, // Water
+                0.10, // Oil
+            ]),
+            CompoundId::MediumSlick => Self::new([
+                1.00, // Asphalt
+                0.98, // Concrete
+                0.95, // Curb
+                0.85, // Dirt
+                0.32, // Gravel
+                0.30, // Grass
+                0.28, // PackedSand
+                0.15, // DeepSand
+                0.22, // MudTrack
+                0.10, // DeepMud
+                0.13, // PackedSnow
+                0.09, // DeepSnow
+                0.05, // SheetIce
+                0.22, // Water
+                0.10, // Oil
+            ]),
+            CompoundId::HardSlick => Self::new([
+                1.00, // Asphalt
+                0.98, // Concrete
+                0.95, // Curb
+                0.40, // Dirt
+                0.30, // Gravel
+                0.30, // Grass
+                0.25, // PackedSand
+                0.15, // DeepSand
+                0.20, // MudTrack
+                0.10, // DeepMud
+                0.12, // PackedSnow
+                0.08, // DeepSnow
+                0.05, // SheetIce
+                0.25, // Water
+                0.10, // Oil
+            ]),
+            CompoundId::IntermediateWet => Self::new([
+                0.88, // Asphalt
+                0.86, // Concrete
+                0.85, // Curb
+                0.65, // Dirt
+                0.55, // Gravel
+                0.50, // Grass
+                0.40, // PackedSand
+                0.25, // DeepSand
+                0.50, // MudTrack
+                0.25, // DeepMud
+                0.30, // PackedSnow
+                0.20, // DeepSnow
+                0.15, // SheetIce
+                1.10, // Water
+                0.15, // Oil
+            ]),
+            CompoundId::MonsoonWet => Self::new([
+                0.72, // Asphalt
+                0.70, // Concrete
+                0.75, // Curb
+                0.70, // Dirt
+                0.60, // Gravel
+                0.60, // Grass
+                0.45, // PackedSand
+                0.30, // DeepSand
+                0.65, // MudTrack
+                0.40, // DeepMud
+                0.40, // PackedSnow
+                0.30, // DeepSnow
+                0.20, // SheetIce
+                1.35, // Water
+                0.20, // Oil
+            ]),
+            CompoundId::AllTerrain => Self::new([
+                0.85, // Asphalt
+                0.83, // Concrete
+                0.88, // Curb
+                1.15, // Dirt
+                1.20, // Gravel
+                0.95, // Grass
+                1.10, // PackedSand
+                0.80, // DeepSand
+                1.05, // MudTrack
+                0.75, // DeepMud
+                0.80, // PackedSnow
+                0.70, // DeepSnow
+                0.40, // SheetIce
+                0.90, // Water
+                0.25, // Oil
+            ]),
+            CompoundId::ExtremeMud => Self::new([
+                0.65, // Asphalt
+                0.62, // Concrete
+                0.70, // Curb
+                1.10, // Dirt
+                1.05, // Gravel
+                1.00, // Grass
+                1.25, // PackedSand
+                1.35, // DeepSand
+                1.30, // MudTrack
+                1.40, // DeepMud
+                0.90, // PackedSnow
+                1.10, // DeepSnow
+                0.50, // SheetIce
+                0.80, // Water
+                0.25, // Oil
+            ]),
+            CompoundId::StuddedIce => Self::new([
+                0.50, // Asphalt
+                0.48, // Concrete
+                0.55, // Curb
+                0.80, // Dirt
+                0.75, // Gravel
+                0.60, // Grass
+                0.50, // PackedSand
+                0.40, // DeepSand
+                0.60, // MudTrack
+                0.40, // DeepMud
+                1.35, // PackedSnow
+                1.30, // DeepSnow
+                1.45, // SheetIce
+                0.60, // Water
+                0.20, // Oil
+            ]),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -439,5 +687,36 @@ mod tests {
         assert!(!SurfaceType::SheetIce.is_snow());
 
         assert!(SurfaceType::SheetIce.is_ice());
+    }
+
+    #[test]
+    fn test_compound_surface_affinities() {
+        let soft = SurfaceAffinityMap::for_compound(CompoundId::SoftSlick);
+        let hard = SurfaceAffinityMap::for_compound(CompoundId::HardSlick);
+        let inter = SurfaceAffinityMap::for_compound(CompoundId::IntermediateWet);
+        let monsoon = SurfaceAffinityMap::for_compound(CompoundId::MonsoonWet);
+        let at = SurfaceAffinityMap::for_compound(CompoundId::AllTerrain);
+        let mud = SurfaceAffinityMap::for_compound(CompoundId::ExtremeMud);
+        let ice = SurfaceAffinityMap::for_compound(CompoundId::StuddedIce);
+
+        // Asphalt: SoftSlick > HardSlick > AllTerrain > MonsoonWet > ExtremeMud > StuddedIce
+        assert!(soft.get(SurfaceType::Asphalt) > hard.get(SurfaceType::Asphalt));
+        assert!(hard.get(SurfaceType::Asphalt) > at.get(SurfaceType::Asphalt));
+        assert!(at.get(SurfaceType::Asphalt) > monsoon.get(SurfaceType::Asphalt));
+
+        // Water: MonsoonWet (1.35) > IntermediateWet (1.10) > HardSlick (0.25)
+        assert_eq!(monsoon.get(SurfaceType::Water), 1.35);
+        assert_eq!(inter.get(SurfaceType::Water), 1.10);
+        assert_eq!(hard.get(SurfaceType::Water), 0.25);
+
+        // DeepMud: ExtremeMud (1.40) > AllTerrain (0.75) > SoftSlick (0.10)
+        assert_eq!(mud.get(SurfaceType::DeepMud), 1.40);
+        assert_eq!(at.get(SurfaceType::DeepMud), 0.75);
+        assert_eq!(soft.get(SurfaceType::DeepMud), 0.10);
+
+        // SheetIce: StuddedIce (1.45) > AllTerrain (0.40) > SoftSlick (0.05)
+        assert_eq!(ice.get(SurfaceType::SheetIce), 1.45);
+        assert!(ice.get(SurfaceType::SheetIce) > at.get(SurfaceType::SheetIce));
+        assert!(at.get(SurfaceType::SheetIce) > soft.get(SurfaceType::SheetIce));
     }
 }

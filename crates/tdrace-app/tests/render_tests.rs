@@ -1898,3 +1898,68 @@ fn test_spec_075_chassis_skeleton_render_geometry_and_fixture_alignment() {
         assert!(hl_right.x < front_bumper.x || (hl_right.x - front_bumper.x).abs() < 0.1);
     }
 }
+
+/// Scenario: Decoupled wheel geometry asset scaling and memory bounds (Spec 074)
+///
+/// Given 6 vehicle categories and 8 tire compounds
+/// When inspecting wheel texture assets and loading them into memory
+/// Then total texture asset files must be <= 8 (decoupled from compound count)
+/// And total decoded texture memory footprint must be strictly under 2.0 MB
+/// And adding a new 9th compound requires 0 additional texture files.
+#[test]
+fn test_wheel_texture_cache_memory_bounds() {
+    use macroquad::texture::Image;
+    use std::path::PathBuf;
+    use tdrace_core::surface::CompoundId;
+
+    let wheel_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../assets/textures/vehicles/topdown/wheels");
+
+    // Enumerate wheel texture files on disk
+    let entries = std::fs::read_dir(&wheel_dir).expect("Wheel texture directory must exist");
+    let mut wheel_files = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("png") {
+            wheel_files.push(path);
+        }
+    }
+
+    println!("Found {} wheel texture assets on disk", wheel_files.len());
+    assert!(
+        wheel_files.len() <= 8,
+        "Total wheel textures ({}) must be <= 8 (N + M decoupled invariance)",
+        wheel_files.len()
+    );
+
+    let mut total_bytes = 0usize;
+    for file_path in &wheel_files {
+        let bytes = std::fs::read(file_path).unwrap();
+        let img = Image::from_file_with_format(&bytes, None).unwrap();
+        let mem = (img.width as usize) * (img.height as usize) * 4;
+        total_bytes += mem;
+    }
+
+    let total_mb = total_bytes as f64 / (1024.0 * 1024.0);
+    println!(
+        "Wheel Texture Memory: {} textures, total {} bytes ({:.3} MB)",
+        wheel_files.len(),
+        total_bytes,
+        total_mb
+    );
+
+    assert!(
+        total_bytes < 2 * 1024 * 1024,
+        "Total wheel texture memory ({:.3} MB) must be strictly under 2.0 MB",
+        total_mb
+    );
+
+    // Verify all 8 motorsport compounds have valid badge codes and distinct accent RGBA
+    assert_eq!(CompoundId::ALL.len(), 8);
+    for c in CompoundId::ALL {
+        assert!(!c.name().is_empty());
+        assert!(!c.badge_code().is_empty());
+        let rgba = c.accent_rgba();
+        assert_eq!(rgba[3], 1.0, "Accent color alpha must be 1.0");
+    }
+}

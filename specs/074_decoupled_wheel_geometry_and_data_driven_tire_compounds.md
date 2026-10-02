@@ -3,9 +3,11 @@ type: Architecture Spec
 template: architecture
 title: "Decoupled Wheel Geometry, Dynamic Tire Compound Affinities, and Presentation Articulation"
 description: "Decouples physical wheel geometry and rotational inertia from data-driven tire compound configs, introduces surface affinity matrices across 15 terrain types, and binds visual wheel archetypes with procedural compound accents in the top-down renderer."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-074-receipt.md"
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T23:55:00Z }
+verified: { by: "human:mario", at: "2026-10-02T15:48:00Z", hash: "7b6d13835101" }
 depends_on:
   - "072"
 ---
@@ -449,35 +451,35 @@ struct CarConfigRaw {
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario 1: Decoupled Asset Scaling ($N + M$ Asset Invariance)
-- [ ] **Given** 6 vehicle categories (Kart, Formula, GT, NASCAR, Rally, Off-Road) and 8 tire compounds
-- [ ] **When** a developer inspects the disk asset directory `assets/textures/vehicles/topdown/wheels/`
-- [ ] **Then** the total number of wheel texture assets should be exactly 6 (or 8 for staggered sets)
-- [ ] **And** adding a new 9th tire compound in TOML configuration requires 0 new texture files.
+- [x] **Given** 6 vehicle categories (Kart, Formula, GT, NASCAR, Rally, Off-Road) and 8 tire compounds
+- [x] **When** a developer inspects the disk asset directory `assets/textures/vehicles/topdown/wheels/`
+- [x] **Then** the total number of wheel texture assets should be exactly 6 (or 8 for staggered sets)
+- [x] **And** adding a new 9th tire compound in TOML configuration requires 0 new texture files.
 
 #### Scenario 2: Dynamic Surface Affinity Performance Differentiation
-- [ ] **Given** a GT vehicle equipped with `SoftSlick` tires and a Rallycross vehicle equipped with `AllTerrain` tires
-- [ ] **When** both vehicles transition at $100\,\text{km/h}$ from dry Asphalt onto Deep Mud
-- [ ] **Then** the `SoftSlick` vehicle experiences an $80\%$ reduction in available cornering and drive friction ($\eta = 0.20$)
-- [ ] **And** the `AllTerrain` vehicle retains over $60\%$ effective traction ($\eta = 0.75$), visibly out-accelerating and out-cornering the slick-shod vehicle in the mud.
+- [x] **Given** a GT vehicle equipped with `SoftSlick` tires and a Rallycross vehicle equipped with `AllTerrain` tires
+- [x] **When** both vehicles transition at $100\,\text{km/h}$ from dry Asphalt onto Deep Mud
+- [x] **Then** the `SoftSlick` vehicle experiences an $80\%$ reduction in available cornering and drive friction ($\eta = 0.20$)
+- [x] **And** the `AllTerrain` vehicle retains over $60\%$ effective traction ($\eta = 0.75$), visibly out-accelerating and out-cornering the slick-shod vehicle in the mud.
 
 #### Scenario 3: Headless Simulation Isolation & Crate Boundary Integrity
-- [ ] **Given** the standalone simulation crate `crates/wheelbase`
-- [ ] **When** compiling `wheelbase` with all default features in a headless Linux server environment without X11, Wayland, or GPU drivers
-- [ ] **Then** compilation succeeds with zero graphics dependencies (`macroquad`, `miniquad`, or windowing crates)
-- [ ] **And** the benchmark achieves over $4,000,000$ simulation steps per second.
+- [x] **Given** the standalone simulation crate `crates/wheelbase`
+- [x] **When** compiling `wheelbase` with all default features in a headless Linux server environment without X11, Wayland, or GPU drivers
+- [x] **Then** compilation succeeds with zero graphics dependencies (`macroquad`, `miniquad`, or windowing crates)
+- [x] **And** the benchmark achieves over $4,000,000$ simulation steps per second.
 
 #### Scenario 4: Dynamic Presentation Feedback and Sidewall Accent Articulation
-- [ ] **Given** a player car fitted with `SoftSlick` tires (Red accent) entering a sharp hairpin corner
-- [ ] **When** the front wheels deflect past $15^\circ$ of Ackermann steering angle
-- [ ] **Then** the rendered front wheels clearly show dynamic physical rotation matching steering lock
-- [ ] **And** the outer wheel lip displays the Red `[S]` compound highlight accent
-- [ ] **And** the in-game Timing Tower displays the red `[S]` badge next to the driver's lap time.
+- [x] **Given** a player car fitted with `SoftSlick` tires (Red accent) entering a sharp hairpin corner
+- [x] **When** the front wheels deflect past $15^\circ$ of Ackermann steering angle
+- [x] **Then** the rendered front wheels clearly show dynamic physical rotation matching steering lock
+- [x] **And** the outer wheel lip displays the Red `[S]` compound highlight accent
+- [x] **And** the in-game Timing Tower displays the red `[S]` badge next to the driver's lap time.
 
 #### Scenario 5: Wet Weather Water Evacuation & Hydroplaning
-- [ ] **Given** a track section featuring standing water hazard puddles (`SurfaceType::Water`)
-- [ ] **When** a car on `MonsoonWet` tires drives through the puddle at $120\,\text{km/h}$
-- [ ] **Then** the car maintains high directional control ($\eta = 1.35$) and generates tall dual water roost plumes
-- [ ] **And** a car on `HardSlick` tires encounters rapid hydroplaning ($\eta = 0.25$), triggering immediate wheelspin and high-speed yaw instability.
+- [x] **Given** a track section featuring standing water hazard puddles (`SurfaceType::Water`)
+- [x] **When** a car on `MonsoonWet` tires drives through the puddle at $120\,\text{km/h}$
+- [x] **Then** the car maintains high directional control ($\eta = 1.35$) and generates tall dual water roost plumes
+- [x] **And** a car on `HardSlick` tires encounters rapid hydroplaning ($\eta = 0.25$), triggering immediate wheelspin and high-speed yaw instability.
 
 ---
 

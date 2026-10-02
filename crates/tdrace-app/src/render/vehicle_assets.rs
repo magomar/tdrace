@@ -2,6 +2,20 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use macroquad::color::Color;
 use macroquad::texture::{Image, Texture2D};
+use tdrace_core::surface::CompoundId;
+
+/// Extension trait adding macroquad color support to `CompoundId` (Spec 074).
+pub trait CompoundColorExt {
+    /// FIA-standardized color coding for compound identification.
+    fn accent_color(self) -> Color;
+}
+
+impl CompoundColorExt for CompoundId {
+    fn accent_color(self) -> Color {
+        let [r, g, b, a] = self.accent_rgba();
+        Color::new(r, g, b, a)
+    }
+}
 
 static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
 static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");

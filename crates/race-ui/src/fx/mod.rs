@@ -12,7 +12,7 @@ use arcade_race_core::track::geometry::BarrierType;
 use arcade_race_core::Body2D;
 use glam::Vec2;
 use wheelbase::car::Car;
-use wheelbase::surface::SurfaceType;
+use wheelbase::surface::{CompoundId, SurfaceAffinityMap, SurfaceType};
 use wheelbase::WheelTelemetry;
 
 /// What the effects need from a vehicle besides its [`Body2D`] state. Spec 065.
@@ -30,6 +30,10 @@ pub trait FxVehicle: Body2D {
     }
     fn drift_score(&self) -> f32 {
         0.0
+    }
+    /// Returns the active tire compound ID for wheel w (Spec 074).
+    fn compound_id(&self, _w: usize) -> CompoundId {
+        CompoundId::MediumSlick
     }
 }
 
@@ -57,6 +61,10 @@ impl FxVehicle for Car {
     #[inline]
     fn drift_score(&self) -> f32 {
         self.state.drift_score
+    }
+    #[inline]
+    fn compound_id(&self, w: usize) -> CompoundId {
+        self.state.wheel_assemblies[w].config.compound.id
     }
 }
 
@@ -124,13 +132,17 @@ impl EffectsManager {
                     let pos = wheel_pos[w];
                     let surf = car_surfaces[w];
 
+                    let compound = car.compound_id(w);
+                    let affinity = SurfaceAffinityMap::for_compound(compound).get(surf);
+                    let mismatch_scale = 1.0 + (1.0 - affinity).max(0.0);
+
                     // Tire smoke on asphalt/curb/concrete
                     if surf.produces_tire_smoke()
                         && telemetry.skid_intensity > 0.30
                         && car.speed() > 3.0
                     {
                         self.particles
-                            .emit_tire_smoke(pos, car.velocity(), telemetry.skid_intensity);
+                            .emit_tire_smoke(pos, car.velocity(), telemetry.skid_intensity * mismatch_scale);
                     }
 
                     // Debris particle roost on loose / deformable terrain (Gravel, Mud, Snow, Dirt, Sand, Grass)
@@ -138,17 +150,20 @@ impl EffectsManager {
                         && (telemetry.skid_intensity > 0.08 || telemetry.slip_ratio.abs() > 0.12 || telemetry.slip_angle.abs() > 0.08)
                         && car.speed() > 1.5
                     {
-                        let roost_intensity = telemetry
+                        let base_roost = telemetry
                             .skid_intensity
                             .max(telemetry.slip_ratio.abs())
                             .max(telemetry.slip_angle.abs());
+                        let roost_intensity = base_roost * mismatch_scale;
                         self.particles
                             .emit_dirt_roost(pos, surf, car.velocity(), roost_intensity);
                     }
 
                     // Water splash on puddles / water hazard
                     if surf == SurfaceType::Water && car.speed() > 1.5 {
-                        self.particles.emit_water_splash(pos, car.velocity(), car.speed());
+                        let is_wet_compound = matches!(compound, CompoundId::IntermediateWet | CompoundId::MonsoonWet);
+                        let water_scale = if is_wet_compound { 2.2 } else { 1.0 };
+                        self.particles.emit_water_splash(pos, car.velocity(), car.speed() * water_scale);
                     }
                 }
             }

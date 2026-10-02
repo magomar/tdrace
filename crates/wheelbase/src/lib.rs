@@ -17,11 +17,11 @@ pub use config::{
     default_wheel_assemblies, pacejka_peak_slip_angle_deg, CarConfig, ChassisSkeleton, DifferentialType,
     DriverAssistsConfig, PacejkaTireConfig, PlayerHandling, RearAxleTire, TireConfig, WheelAssemblyConfig,
 };
-pub use surface::{SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
+pub use surface::{CompoundId, SurfaceAffinityMap, SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
 pub use tire::{
     combined_slip_forces, compute_skid_telemetry, longitudinal_slip_stiffness,
     normalized_grip_curve, pacejka_lateral_force, solve_combined_slip_forces,
-    tire_friction_envelope, WheelAssembly, WheelId, WheelTelemetry,
+    tire_friction_envelope, TireCompoundConfig, WheelAssembly, WheelId, WheelTelemetry,
 };
 
 pub use glam::Vec2;
