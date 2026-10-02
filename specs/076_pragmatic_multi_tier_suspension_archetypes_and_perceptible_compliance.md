@@ -4,6 +4,7 @@ template: architecture
 title: "Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation"
 description: "Introduces a lightweight, closed-form 4-corner suspension compliance model in wheelbase::CarConfig governed by six discrete suspension archetypes, differentiating motorsport categories and competitive tiers through dynamic kerb absorption, body roll kinematics, camber degradation, and bottoming-out telemetry."
 status: implemented
+receipt: "docs/receipts/spec-076-receipt.md"
 created: 2026-10-02
 generated: { by: agent/antigravity, at: 2026-10-02T00:36:00Z }
 depends_on:

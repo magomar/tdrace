@@ -95,3 +95,13 @@ Table of contents providing progressive disclosure of project constitution and t
 | [072](072_progressive_drift_dynamics_lowspeed_steering_authority_and_assist_differentiation.md) | Progressive Drift Dynamics, Low-Speed Steering Authority, and Assist Differentiation | Architecture Spec | `implemented` | - | Restores responsive arcade drifting and turn-in agility under 100 km/h, un-chokes throttle during power-slides, recalibrates Arcade/Sport/Pro driving profiles, and introduces digital caster for keyboard playability in Pro mode. |
 | [073](073_realistic_vehicle_sprite_harmonization_and_modular_steered_wheel_articulation.md) | Realistic Vehicle Sprite Harmonization and Modular Steered Wheel Articulation | Feature Spec | `implemented` | - | Establishes a balanced 12-car Classic fantasy roster (2x per category: Karts, GT, Stock, RX, AX, All-Terrain) with accessible vintage/retro power profiles, upgrades flat vector sprites to high-fidelity pre-rendered orthographic assets, and enforces modular Ackermann steered wheels across the fleet. |
 | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization | Architecture Spec | `implemented` | - | Establishes a zero-graphics 2D chassis skeleton in wheelbase::CarConfig defining front/rear overhangs and body dimensions, anchors wheels and lighting to physical axles rather than the center of gravity, unifies SAT collision hulls with visual bounds, and harmonizes procedural and sprite-based top-down vehicle rendering. |
+| [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation | Architecture Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Introduces a lightweight, closed-form 4-corner suspension compliance model in wheelbase::CarConfig governed by six discrete suspension archetypes, differentiating motorsport categories and competitive tiers through dynamic kerb absorption, body roll kinematics, camber degradation, and bottoming-out telemetry. |
+
+### 🗺️ Specification Dependency Graph
+
+```mermaid
+flowchart LR
+    075["075: Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization"]
+    076["076: Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation"]
+    075 --> 076
+```
