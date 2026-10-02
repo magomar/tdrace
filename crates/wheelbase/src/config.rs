@@ -589,7 +589,7 @@ pub fn default_rear_differential() -> DifferentialType {
     }
 }
 
-/// Physical exterior chassis dimensions and anchor points.
+/// Physical exterior chassis dimensions and anchor points (Spec 075).
 ///
 /// Decouples visual geometry and collision bounds from dynamic mass distribution.
 /// All longitudinal measurements are relative to front and rear axle centers.
@@ -714,6 +714,277 @@ impl ChassisSkeleton {
     }
 }
 
+/// High-level suspension kinematic architecture.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SuspensionArchetype {
+    /// 1. Racing Karts: near-zero travel, rigid tubular chassis, no dampers.
+    RigidKart,
+    /// 2. NASCAR Cup / Classic Muscle: Solid rear live axle with coupled roll and axle tramp.
+    SolidLiveAxle,
+    /// 3. Grassroots / GT4 / Rally Hatch: MacPherson strut front, camber loss under heavy roll.
+    MacPhersonStrut,
+    /// 4. GT3 / Sports Prototypes: Double wishbone front & rear with camber gain geometry.
+    DoubleWishbone,
+    /// 5. Hypercars / GT1 Legends: Inboard pushrod, rising-rate heave spring, sensitive to bottoming.
+    PushrodInboard,
+    /// 6. Rallycross / Extreme Off-Road: Long-travel (250-400mm) bypass damping with high compliance.
+    LongTravelOffRoad,
+}
+
+impl Default for SuspensionArchetype {
+    fn default() -> Self {
+        Self::DoubleWishbone
+    }
+}
+
+/// Detailed suspension geometry and compliance settings for an axle or vehicle corner.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct SuspensionCornerConfig {
+    /// Suspension kinematic architecture.
+    pub archetype: SuspensionArchetype,
+    /// Wheel rate stiffness (N/m).
+    pub spring_rate: f32,
+    /// Damping ratio in bump / compression [0.2 - 0.9].
+    pub bump_damping_ratio: f32,
+    /// Damping ratio in rebound / extension [0.4 - 1.2].
+    pub rebound_damping_ratio: f32,
+    /// Maximum bump travel before hitting bump stop (meters).
+    pub max_bump_travel: f32,
+    /// Maximum rebound extension travel (meters).
+    pub max_rebound_travel: f32,
+    /// Static camber angle at rest (radians, negative = top tilted inward).
+    pub static_camber: f32,
+    /// Camber recovery factor [0.0 = full camber loss with roll, 1.0 = full camber preservation].
+    pub camber_recovery: f32,
+}
+
+impl Default for SuspensionCornerConfig {
+    fn default() -> Self {
+        Self {
+            archetype: SuspensionArchetype::DoubleWishbone,
+            spring_rate: 85_000.0,
+            bump_damping_ratio: 0.68,
+            rebound_damping_ratio: 0.82,
+            max_bump_travel: 0.045,
+            max_rebound_travel: 0.035,
+            static_camber: -0.052,
+            camber_recovery: 0.85,
+        }
+    }
+}
+
+/// Vehicle-level suspension setup comprising front and rear axle configurations.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct SuspensionConfig {
+    /// Front axle corner suspension settings.
+    pub front: SuspensionCornerConfig,
+    /// Rear axle corner suspension settings.
+    pub rear: SuspensionCornerConfig,
+    /// Front anti-roll bar torsional stiffness (N*m/rad).
+    pub front_arb_rate: f32,
+    /// Rear anti-roll bar torsional stiffness (N*m/rad).
+    pub rear_arb_rate: f32,
+    /// Height of front roll center above ground (meters).
+    pub front_roll_center_height: f32,
+    /// Height of rear roll center above ground (meters).
+    pub rear_roll_center_height: f32,
+    /// Suspension natural frequency for body lag filtering (Hz).
+    pub response_frequency_hz: f32,
+}
+
+impl Default for SuspensionConfig {
+    fn default() -> Self {
+        Self::for_archetype(SuspensionArchetype::DoubleWishbone)
+    }
+}
+
+impl SuspensionConfig {
+    /// Generates factory calibrated presets for standard archetypes.
+    pub fn for_archetype(archetype: SuspensionArchetype) -> Self {
+        match archetype {
+            SuspensionArchetype::RigidKart => Self::rigid_kart(),
+            SuspensionArchetype::SolidLiveAxle => Self::solid_live_axle(),
+            SuspensionArchetype::MacPhersonStrut => Self::macpherson_strut(),
+            SuspensionArchetype::DoubleWishbone => Self::double_wishbone(),
+            SuspensionArchetype::PushrodInboard => Self::pushrod_inboard(),
+            SuspensionArchetype::LongTravelOffRoad => Self::long_travel_offroad(),
+        }
+    }
+
+    pub fn rigid_kart() -> Self {
+        let corner = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::RigidKart,
+            spring_rate: 450_000.0,
+            bump_damping_ratio: 0.10,
+            rebound_damping_ratio: 0.15,
+            max_bump_travel: 0.008,
+            max_rebound_travel: 0.005,
+            static_camber: 0.0,
+            camber_recovery: 0.0,
+        };
+        Self {
+            front: corner,
+            rear: corner,
+            front_arb_rate: 0.0,
+            rear_arb_rate: 0.0,
+            front_roll_center_height: 0.02,
+            rear_roll_center_height: 0.02,
+            response_frequency_hz: 8.0,
+        }
+    }
+
+    pub fn double_wishbone() -> Self {
+        let front = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::DoubleWishbone,
+            spring_rate: 85_000.0,
+            bump_damping_ratio: 0.68,
+            rebound_damping_ratio: 0.82,
+            max_bump_travel: 0.045,
+            max_rebound_travel: 0.035,
+            static_camber: -0.052, // ~ -3.0 deg GT3 setup
+            camber_recovery: 0.90,
+        };
+        let rear = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::DoubleWishbone,
+            spring_rate: 95_000.0,
+            bump_damping_ratio: 0.70,
+            rebound_damping_ratio: 0.85,
+            max_bump_travel: 0.045,
+            max_rebound_travel: 0.035,
+            static_camber: -0.035, // ~ -2.0 deg GT3 setup
+            camber_recovery: 0.90,
+        };
+        Self {
+            front,
+            rear,
+            front_arb_rate: 4500.0,
+            rear_arb_rate: 3200.0,
+            front_roll_center_height: 0.08,
+            rear_roll_center_height: 0.10,
+            response_frequency_hz: 4.2,
+        }
+    }
+
+    pub fn macpherson_strut() -> Self {
+        let front = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::MacPhersonStrut,
+            spring_rate: 38_000.0,
+            bump_damping_ratio: 0.58,
+            rebound_damping_ratio: 0.70,
+            max_bump_travel: 0.075,
+            max_rebound_travel: 0.060,
+            static_camber: -0.035, // ~ -2.0 deg GT4 setup
+            camber_recovery: 0.40, // MacPherson loses camber with roll
+        };
+        let rear = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::DoubleWishbone,
+            spring_rate: 42_000.0,
+            bump_damping_ratio: 0.60,
+            rebound_damping_ratio: 0.72,
+            max_bump_travel: 0.070,
+            max_rebound_travel: 0.055,
+            static_camber: -0.026,
+            camber_recovery: 0.75,
+        };
+        Self {
+            front,
+            rear,
+            front_arb_rate: 1800.0,
+            rear_arb_rate: 1400.0,
+            front_roll_center_height: 0.06,
+            rear_roll_center_height: 0.09,
+            response_frequency_hz: 3.5,
+        }
+    }
+
+    pub fn solid_live_axle() -> Self {
+        let front = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::DoubleWishbone,
+            spring_rate: 65_000.0,
+            bump_damping_ratio: 0.62,
+            rebound_damping_ratio: 0.75,
+            max_bump_travel: 0.065,
+            max_rebound_travel: 0.050,
+            static_camber: -0.060,
+            camber_recovery: 0.80,
+        };
+        let rear = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::SolidLiveAxle,
+            spring_rate: 55_000.0,
+            bump_damping_ratio: 0.55,
+            rebound_damping_ratio: 0.70,
+            max_bump_travel: 0.065,
+            max_rebound_travel: 0.050,
+            static_camber: 0.0,
+            camber_recovery: 0.0,
+        };
+        Self {
+            front,
+            rear,
+            front_arb_rate: 4800.0,
+            rear_arb_rate: 1800.0,
+            front_roll_center_height: 0.09,
+            rear_roll_center_height: 0.22, // High truck-arm roll center
+            response_frequency_hz: 3.8,
+        }
+    }
+
+    pub fn pushrod_inboard() -> Self {
+        let front = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::PushrodInboard,
+            spring_rate: 140_000.0,
+            bump_damping_ratio: 0.82,
+            rebound_damping_ratio: 0.95,
+            max_bump_travel: 0.025,
+            max_rebound_travel: 0.020,
+            static_camber: -0.045,
+            camber_recovery: 0.95,
+        };
+        let rear = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::PushrodInboard,
+            spring_rate: 160_000.0,
+            bump_damping_ratio: 0.85,
+            rebound_damping_ratio: 0.98,
+            max_bump_travel: 0.025,
+            max_rebound_travel: 0.020,
+            static_camber: -0.030,
+            camber_recovery: 0.95,
+        };
+        Self {
+            front,
+            rear,
+            front_arb_rate: 8500.0,
+            rear_arb_rate: 6500.0,
+            front_roll_center_height: 0.05,
+            rear_roll_center_height: 0.06,
+            response_frequency_hz: 5.5,
+        }
+    }
+
+    pub fn long_travel_offroad() -> Self {
+        let corner = SuspensionCornerConfig {
+            archetype: SuspensionArchetype::LongTravelOffRoad,
+            spring_rate: 22_000.0,
+            bump_damping_ratio: 0.45,
+            rebound_damping_ratio: 0.65,
+            max_bump_travel: 0.240,
+            max_rebound_travel: 0.180,
+            static_camber: -0.015,
+            camber_recovery: 0.60,
+        };
+        Self {
+            front: corner,
+            rear: corner,
+            front_arb_rate: 1200.0,
+            rear_arb_rate: 800.0,
+            front_roll_center_height: 0.16,
+            rear_roll_center_height: 0.18,
+            response_frequency_hz: 2.8,
+        }
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(from = "CarConfigRaw")]
@@ -804,9 +1075,12 @@ pub struct CarConfig {
     /// Decoupled wheel assembly configurations for all 4 corners [FL, FR, RL, RR].
     #[serde(default = "default_wheel_assemblies")]
     pub wheels: [WheelAssemblyConfig; 4],
-    /// Physical exterior chassis skeleton defining overhangs, body width, and fixture anchors.
+    /// Physical chassis exterior dimensions and anchor points (Spec 075).
     #[serde(default)]
     pub chassis: ChassisSkeleton,
+    /// 4-corner suspension compliance, damping, and roll kinematics (Spec 076).
+    #[serde(default)]
+    pub suspension: SuspensionConfig,
 }
 
 #[derive(Deserialize)]
@@ -867,6 +1141,8 @@ struct CarConfigRaw {
     pub wheels: Option<[WheelAssemblyConfig; 4]>,
     #[serde(default)]
     pub chassis: Option<ChassisSkeleton>,
+    #[serde(default)]
+    pub suspension: Option<SuspensionConfig>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -888,6 +1164,14 @@ impl From<CarConfigRaw> for CarConfig {
 
         let chassis = raw.chassis.unwrap_or_else(|| {
             ChassisSkeleton::synthesize_proportional(raw.wheelbase, raw.track_width)
+        });
+
+        let suspension = raw.suspension.unwrap_or_else(|| {
+            if raw.caster_jacking_factor > 0.0 {
+                SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart)
+            } else {
+                SuspensionConfig::default()
+            }
         });
 
         let mut cfg = Self {
@@ -932,6 +1216,7 @@ impl From<CarConfigRaw> for CarConfig {
             player: raw.player,
             wheels,
             chassis,
+            suspension,
         };
         cfg.finalize();
         cfg
@@ -1074,6 +1359,7 @@ impl CarConfig {
             player: PlayerHandling::default(),
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
             chassis: ChassisSkeleton::new(0.80, 0.90, 1.70, -0.40, 0.30, 0.65, 0.70, 0.05),
+            suspension: SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone),
         }
         .finalized()
     }
@@ -1222,6 +1508,7 @@ impl CarConfig {
             player: PlayerHandling::default(),
             wheels,
             chassis: ChassisSkeleton::new(0.16, 0.12, 1.10, -0.15, 0.10, 0.65, 0.70, 0.05),
+            suspension: SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart),
         }
         .finalized()
     }
@@ -1235,6 +1522,7 @@ impl CarConfig {
     pub fn rally_car() -> Self {
         let mut cfg = Self::sports_car();
         cfg.chassis = ChassisSkeleton::new(0.76, 0.68, 1.82, -0.35, 0.25, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
         cfg.drive_bias = 0.5; // AWD
         cfg.angular_damping = 126.0;
         cfg.engine_brake_front_share = 0.50;
@@ -1364,6 +1652,7 @@ impl CarConfig {
             player: PlayerHandling::default(),
             wheels,
             chassis: ChassisSkeleton::new(0.98, 1.25, 1.98, -0.45, 0.35, 0.70, 0.75, 0.06),
+            suspension: SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle),
         }
         .finalized()
     }
@@ -1468,6 +1757,7 @@ impl CarConfig {
             player: PlayerHandling::default(),
             wheels,
             chassis: ChassisSkeleton::new(0.15, 0.42, 1.95, -0.40, 0.25, 0.60, 0.65, 0.05),
+            suspension: SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad),
         }
         .finalized()
     }
