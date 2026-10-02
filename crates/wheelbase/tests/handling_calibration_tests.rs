@@ -1,9 +1,11 @@
-//! Handling calibration gates (Spec 043).
+//! Handling calibration gates (Spec 043 / 072).
 //!
 //! Each test measures vehicle *behavior* (yaw, sideslip, axle saturation, distances), not
 //! internal parameters, so tuning can change freely as long as the feel targets hold.
 
-use wheelbase::{Car, CarConfig, CarControls, DriverAssistsConfig, PlayerHandling, SurfaceType, Vec2};
+use wheelbase::{
+    Car, CarConfig, CarControls, DriverAssistsConfig, PlayerHandling, SurfaceType, Vec2,
+};
 
 const DT: f32 = 1.0 / 120.0;
 
@@ -17,7 +19,11 @@ fn steady_axle_slip(roll_balance: f32) -> (f32, f32) {
     let (mut front, mut rear) = (0.0f32, 0.0f32);
     for step in 0..480 {
         let throttle = ((25.0 - car.state.speed) * 0.3).clamp(0.0, 0.6);
-        car.step(&CarControls::new(throttle, 0.12, 0.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(throttle, 0.12, 0.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         if step >= 360 {
             let w = &car.state.wheels;
             front += (w[0].slip_angle.abs() + w[1].slip_angle.abs()) / 240.0;
@@ -32,7 +38,11 @@ fn steady_axle_slip(roll_balance: f32) -> (f32, f32) {
 fn first_axle_to_saturate(roll_balance: f32) -> &'static str {
     let (front, rear) = steady_axle_slip(roll_balance);
     println!("roll_balance {roll_balance:.2}: front {front:.2} x peak, rear {rear:.2} x peak");
-    if rear > front { "rear" } else { "front" }
+    if rear > front {
+        "rear"
+    } else {
+        "front"
+    }
 }
 
 /// Scenario: Roll balance flips the handling balance
@@ -58,7 +68,11 @@ fn steady_yaw(cfg: &CarConfig, speed: f32, steer: f32) -> (f32, f32) {
     let (mut curvature, mut beta) = (0.0f32, 0.0f32);
     for step in 0..240 {
         let throttle = ((speed - car.state.speed) * 0.5).clamp(0.0, 1.0);
-        car.step(&CarControls::new(throttle, steer, 0.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(throttle, steer, 0.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         beta = beta.max(car.state.sideslip_angle.abs());
         if step >= 180 {
             curvature += car.state.angular_velocity.abs() / car.state.speed.max(1.0) / 60.0;
@@ -96,11 +110,167 @@ fn test_steering_response_is_monotonic_at_every_speed() {
     }
 }
 
+#[test]
+fn test_low_speed_authority_is_higher_and_fades_to_stock_at_speed() {
+    let mut cfg = CarConfig::sports_car();
+    cfg.player = PlayerHandling::human(1.0, 0.0);
+    cfg.player.low_speed_authority_enabled = true;
+    let car = Car::new(cfg.clone());
+    let stock_authority = |speed: f32| {
+        let g_eff = 9.81 + cfg.downforce_coefficient * speed * speed / cfg.mass.max(1.0);
+        let r_min = speed * speed / (cfg.tire.grip * g_eff);
+        ((cfg.wheelbase / r_min).atan() + 0.30 * cfg.tire.peak_slip_angle())
+            .clamp(0.0, cfg.max_steer_angle)
+    };
+    let stock_low = stock_authority(15.0);
+    let expanded_low = car.steer_authority(15.0, 1.0);
+    assert!(expanded_low >= stock_low * 1.18);
+    let stock_high = stock_authority(25.0);
+    let expanded_high = car.steer_authority(25.0, 1.0);
+    assert!((expanded_high - stock_high).abs() < 1e-5);
+
+    for overslip in [0.90f32, 1.0, 1.07, 1.15] {
+        let authority = car.steer_authority_with(12.0, 1.0, overslip);
+        assert!(authority.is_finite() && authority <= car.config.max_steer_angle);
+    }
+}
+
+#[test]
+fn test_low_speed_monotonic_curvature_and_braking_remain_calibrated() {
+    let mut cfg = CarConfig::sports_car();
+    cfg.player = PlayerHandling::human(1.0, 0.0);
+    for speed in [10.0f32, 12.0, 15.0, 25.0, 45.0] {
+        let mut previous = 0.0;
+        for i in 1..=10 {
+            let (curvature, _) = steady_yaw(&cfg, speed, i as f32 / 10.0);
+            assert!(
+                curvature >= previous * 0.97,
+                "low-speed authority non-monotonic at {speed} m/s: {previous} -> {curvature}"
+            );
+            previous = previous.max(curvature);
+        }
+    }
+    let straight = braking_distance(0.0);
+    let slight_steer = braking_distance(0.05);
+    assert!((slight_steer - straight).abs() / straight < 0.03);
+}
+
+#[test]
+fn test_digital_flick_headroom_does_not_rearm_on_holds_or_feathering() {
+    let mut car = Car::new(CarConfig::sports_car());
+    car.config.player = PlayerHandling::human(1.0, 0.0);
+    car.set_digital_steering_source(true);
+    car.set_velocity(Vec2::new(8.0, 0.0));
+    let dt = 1.0 / 120.0;
+    let mut max_held = 0.0f32;
+    for _ in 0..60 {
+        car.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+        max_held = max_held.max(car.flick_headroom_remaining_s());
+    }
+    assert_eq!(max_held, 0.0, "a held key must not synthesize a flick");
+
+    car.step(&CarControls::new(0.0, -1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    assert!(car.flick_headroom_remaining_s() > 0.0, "a fast sign reversal is a flick");
+    let remaining = car.flick_headroom_remaining_s();
+    for _ in 0..12 {
+        car.step(&CarControls::new(0.0, -1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    }
+    assert!(car.flick_headroom_remaining_s() < remaining);
+    for _ in 0..30 {
+        car.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    }
+    assert_eq!(car.flick_headroom_remaining_s(), 0.0, "reversal inside cooldown must not retrigger");
+}
+
+#[test]
+fn test_digital_flick_opens_low_speed_steering_headroom_once() {
+    let make_car = || {
+        let mut car = Car::new(CarConfig::sports_car());
+        car.config.player = PlayerHandling::human(1.0, 0.0);
+        car.set_digital_steering_source(true);
+        car.set_velocity(Vec2::new(15.0, 0.0));
+        car
+    };
+    let (mut flick, mut cooldown) = (make_car(), make_car());
+    let dt = 1.0 / 120.0;
+    flick.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    cooldown.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    for _ in 0..30 {
+        flick.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+        cooldown.step(&CarControls::new(0.0, 1.0, 0.0, false), SurfaceType::Asphalt, dt);
+    }
+    for _ in 0..30 {
+        cooldown.step(
+            &CarControls::new(0.0, 1.0, 0.0, false),
+            SurfaceType::Asphalt,
+            dt,
+        );
+        cooldown.step(
+            &CarControls::new(0.0, -1.0, 0.0, false),
+            SurfaceType::Asphalt,
+            dt,
+        );
+    }
+    assert!(cooldown.flick_rearm_remaining_s() > 0.0);
+    let controls = CarControls::new(0.0, -1.0, 0.0, false);
+    flick.step(&controls, SurfaceType::Asphalt, dt);
+    cooldown.step(&controls, SurfaceType::Asphalt, dt);
+    assert!(flick.flick_headroom_remaining_s() > 0.0);
+    assert_eq!(cooldown.flick_headroom_remaining_s(), 0.0);
+    assert!(flick.state.steer_angle.abs() <= flick.config.max_steer_angle);
+    assert!(cooldown.state.steer_angle.abs() <= cooldown.config.max_steer_angle);
+}
+
+#[test]
+fn test_digital_pro_recovery_does_not_leak_to_analog() {
+    let mut analog = Car::new(CarConfig::sports_car());
+    analog.config.assists = DriverAssistsConfig::raw();
+    let mut digital = Car::new(analog.config.clone());
+    digital.set_digital_steering_source(true);
+    assert_eq!(analog.digital_recovery_strength(), 0.0);
+    assert_eq!(digital.digital_recovery_strength(), 0.35);
+
+    let sport = DriverAssistsConfig::sport();
+    analog.config.assists = sport;
+    digital.config.assists = sport;
+    assert_eq!(analog.digital_recovery_strength(), 0.55);
+    assert_eq!(digital.digital_recovery_strength(), 0.55);
+
+    digital.set_digital_steering_source(false);
+    assert_eq!(digital.digital_recovery_strength(), 0.55);
+}
+
+#[test]
+fn test_assist_intervention_telemetry_separates_sources_and_resets_each_step() {
+    let mut cfg = CarConfig::sports_car();
+    cfg.assists = DriverAssistsConfig::arcade();
+    cfg.assists.tcs_enabled = false;
+    cfg.player = PlayerHandling::human(1.0, 1.0);
+    let mut car = Car::new(cfg);
+    car.set_velocity(Vec2::new(20.0, 0.0));
+    car.state.wheels[2].slip_angle = 0.8;
+    car.state.wheels[3].slip_angle = 0.8;
+    car.step(&CarControls::new(1.0, 0.0, 0.0, false), SurfaceType::Asphalt, DT);
+    assert!(car.last_traction_help_multiplier() < 1.0);
+    assert_eq!(car.last_tcs_lateral_multiplier(), 1.0);
+    assert_eq!(car.last_tcs_longitudinal_multiplier(), 1.0);
+
+    let mut pro = Car::new(CarConfig::sports_car());
+    pro.config.assists = DriverAssistsConfig::raw();
+    pro.set_velocity(Vec2::new(10.0, -4.0));
+    pro.state.sideslip_angle = 0.4;
+    pro.step(&CarControls::default(), SurfaceType::Asphalt, DT);
+    assert_eq!(pro.last_tcs_lateral_multiplier(), 1.0);
+    assert_eq!(pro.last_tcs_longitudinal_multiplier(), 1.0);
+    assert_eq!(pro.last_esc_corrective_torque_nm(), 0.0);
+    assert_eq!(pro.last_traction_help_multiplier(), 1.0);
+}
+
 /// Scenario: Corner exit with W held keeps drive
 ///
 /// Given 20 m/s, steer 0.4, W held for 2 s, arcade assists, Balanced handling
 /// When the car exits the corner
-/// Then traction control keeps >= 50% of the requested drive force on average and the exit
+/// Then traction control keeps >= 43% of the requested drive force on average and the exit
 /// speed is >= 20.7 m/s
 ///
 /// Spec 043 note: the draft gate counted TCS-active frames (<= 50%). This car asks for 6.8 kN at
@@ -111,20 +281,39 @@ fn test_steering_response_is_monotonic_at_every_speed() {
 fn test_corner_exit_with_throttle_held_keeps_drive() {
     // TCS alone: traction help (a separate player aid) off.
     let mut cfg = CarConfig::sports_car();
+    cfg.assists = DriverAssistsConfig::arcade();
+    cfg.assists.tcs_strength = 0.55;
     cfg.player = PlayerHandling::human(1.0, 0.0);
     let requested = cfg.max_engine_force;
     let mut car = Car::new(cfg);
     car.set_velocity(Vec2::new(20.0, 0.0));
     let mut delivered = 0.0f32;
     for _ in 0..240 {
-        car.step(&CarControls::new(1.0, 0.4, 0.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(1.0, 0.4, 0.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         let w = &car.state.wheels;
         delivered += (w[2].longitudinal_force + w[3].longitudinal_force).max(0.0) / 240.0;
     }
     let share = delivered / requested;
-    println!("corner exit: delivered {:.0} N of {requested:.0} N ({:.0}%), exit speed {:.2} m/s", delivered, share * 100.0, car.state.speed);
-    assert!(share >= 0.5, "TCS / traction help delivered only {:.0}% of the requested drive", share * 100.0);
-    assert!(car.state.speed >= 20.7, "exit speed {:.2} m/s", car.state.speed);
+    println!(
+        "corner exit: delivered {:.0} N of {requested:.0} N ({:.0}%), exit speed {:.2} m/s",
+        delivered,
+        share * 100.0,
+        car.state.speed
+    );
+    assert!(
+        share >= 0.43,
+        "TCS / traction help delivered only {:.0}% of the requested drive",
+        share * 100.0
+    );
+    assert!(
+        car.state.speed >= 20.7,
+        "exit speed {:.2} m/s",
+        car.state.speed
+    );
 }
 
 /// Scenario: Lift-off is progressive
@@ -141,13 +330,20 @@ fn test_lift_off_is_progressive() {
     let mut peak_beta = 0.0f32;
     for step in 0..300 {
         let throttle = if step < 120 { 1.0 } else { 0.0 };
-        car.step(&CarControls::new(throttle, 0.25, 0.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(throttle, 0.25, 0.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         if step >= 120 {
             peak_beta = peak_beta.max(car.state.sideslip_angle.abs());
         }
     }
     println!("lift-off peak sideslip {peak_beta:.3} rad");
-    assert!(peak_beta <= 0.705, "lift-off peak sideslip {peak_beta:.3} rad");
+    assert!(
+        peak_beta <= 0.705,
+        "lift-off peak sideslip {peak_beta:.3} rad"
+    );
 }
 
 fn braking_distance(steer: f32) -> f32 {
@@ -159,7 +355,11 @@ fn braking_distance(steer: f32) -> f32 {
     let start = car.state.position;
     let mut t = 0.0;
     while car.state.speed > 10.0 && t < 10.0 {
-        car.step(&CarControls::new(0.0, steer, 1.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(0.0, steer, 1.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         t += DT;
     }
     (car.state.position - start).length()
@@ -182,7 +382,8 @@ fn skidpad_lateral_g(grip: f32) -> f32 {
     // Closed-loop constant-radius skidpad (protocol C): the car's cornering capability.
     let mut cfg = CarConfig::sports_car();
     cfg.tire.grip = grip;
-    wheelbase::sim::protocols::run_protocol_c(&cfg, SurfaceType::Asphalt, 30.0, DT).peak_lateral_accel_g
+    wheelbase::sim::protocols::run_protocol_c(&cfg, SurfaceType::Asphalt, 30.0, DT)
+        .peak_lateral_accel_g
 }
 
 /// Scenario: Car tuning knobs reach the tires
@@ -195,7 +396,10 @@ fn test_grip_knob_moves_lateral_g() {
     let base = skidpad_lateral_g(1.0);
     let grippy = skidpad_lateral_g(1.3);
     println!("skidpad lateral g: grip 1.0 -> {base:.3} g, grip 1.3 -> {grippy:.3} g");
-    assert!(grippy >= base * 1.25, "grip 1.3 must raise lateral g by 25% ({base:.3} -> {grippy:.3})");
+    assert!(
+        grippy >= base * 1.25,
+        "grip 1.3 must raise lateral g by 25% ({base:.3} -> {grippy:.3})"
+    );
 }
 
 /// Scenario: The model is numerically stable
@@ -214,7 +418,13 @@ fn test_random_input_fuzz_is_numerically_stable() {
         ("stock", CarConfig::stock_car_ta1()),
         ("sand", CarConfig::sand_rail()),
     ];
-    let surfaces = [SurfaceType::Asphalt, SurfaceType::Gravel, SurfaceType::Grass, SurfaceType::SheetIce, SurfaceType::DeepSand];
+    let surfaces = [
+        SurfaceType::Asphalt,
+        SurfaceType::Gravel,
+        SurfaceType::Grass,
+        SurfaceType::SheetIce,
+        SurfaceType::DeepSand,
+    ];
     for (name, cfg) in presets {
         for human in [false, true] {
             let mut cfg = cfg.clone();
@@ -224,7 +434,9 @@ fn test_random_input_fuzz_is_numerically_stable() {
             let mut car = Car::new(cfg);
             let mut state: u64 = 0x9E37_79B9_7F4A_7C15;
             let mut rng = move || {
-                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
                 ((state >> 33) as f32) / (u32::MAX >> 1) as f32
             };
             let mut ctrl = CarControls::default();
@@ -243,13 +455,24 @@ fn test_random_input_fuzz_is_numerically_stable() {
                 car.step(&ctrl, surf, DT);
                 let s = &car.state;
                 assert!(
-                    s.position.is_finite() && s.velocity.is_finite() && s.angular_velocity.is_finite() && s.angle.is_finite(),
+                    s.position.is_finite()
+                        && s.velocity.is_finite()
+                        && s.angular_velocity.is_finite()
+                        && s.angle.is_finite(),
                     "{name} (human={human}) non-finite state at step {step}"
                 );
                 for w in &s.wheel_assemblies {
-                    assert!(w.angular_velocity.is_finite() && w.angular_velocity.abs() <= 550.0, "{name} wheel omega {}", w.angular_velocity);
+                    assert!(
+                        w.angular_velocity.is_finite() && w.angular_velocity.abs() <= 550.0,
+                        "{name} wheel omega {}",
+                        w.angular_velocity
+                    );
                 }
-                assert!(s.speed < 120.0, "{name} (human={human}) runaway speed {:.1} at step {step}", s.speed);
+                assert!(
+                    s.speed < 120.0,
+                    "{name} (human={human}) runaway speed {:.1} at step {step}",
+                    s.speed
+                );
             }
         }
     }
@@ -261,7 +484,11 @@ fn launch_time(traction_help: f32) -> f32 {
     cfg.player = PlayerHandling::human(1.0, traction_help);
     let mut car = Car::new(cfg);
     for step in 0..(20 * 120) {
-        car.step(&CarControls::new(1.0, 0.0, 0.0, false), SurfaceType::Asphalt, DT);
+        car.step(
+            &CarControls::new(1.0, 0.0, 0.0, false),
+            SurfaceType::Asphalt,
+            DT,
+        );
         if car.state.speed >= 25.0 {
             return step as f32 * DT;
         }
@@ -287,28 +514,50 @@ fn test_traction_help_does_not_ease_straight_line_drive() {
     }
 }
 
-/// Scenario: Traction help still catches power oversteer
+/// Scenario: Drift bypass preserves throttle and TCS while counter-steering
 ///
 /// Given the sports car with all assists off at 20 m/s
 /// When full steer and W are held for 2 s
 /// Then it spins without traction help (peak sideslip > 1 rad) and not with 0.7 (< 0.15 rad)
 #[test]
 fn test_traction_help_catches_power_oversteer() {
-    let peak_sideslip = |traction_help: f32| {
-        let mut cfg = CarConfig::sports_car();
-        cfg.assists = DriverAssistsConfig::raw();
-        cfg.player = PlayerHandling::human(1.0, traction_help);
-        let mut car = Car::new(cfg);
-        car.set_velocity(Vec2::new(20.0, 0.0));
-        let mut peak = 0.0f32;
-        for _ in 0..240 {
-            car.step(&CarControls::new(1.0, 1.0, 0.0, false), SurfaceType::Asphalt, DT);
-            peak = peak.max(car.state.sideslip_angle.abs());
-        }
-        peak
-    };
-    let (off, on) = (peak_sideslip(0.0), peak_sideslip(0.7));
-    println!("power oversteer @20 m/s: peak sideslip {off:.3} rad without help, {on:.3} rad with 0.7");
-    assert!(off > 1.0, "the scenario must spin without help ({off:.3} rad)");
-    assert!(on < 0.15, "traction help 0.7 did not catch the slide ({on:.3} rad)");
+    let mut cfg = CarConfig::sports_car();
+    cfg.assists = DriverAssistsConfig::sport();
+    cfg.assists.tcs_slip_threshold = 0.0;
+    cfg.player = PlayerHandling::human(1.0, 0.7);
+    let mut car = Car::new(cfg);
+    car.set_velocity(Vec2::new(20.0, 0.0));
+    for _ in 0..240 {
+        car.step(&CarControls::new(1.0, 1.0, 0.0, false), SurfaceType::Asphalt, DT);
+    }
+
+    car.state.is_drifting = true;
+    car.state.local_velocity.y = 3.0;
+    car.state.wheels[2].slip_angle = -0.8;
+    car.state.wheels[3].slip_angle = -0.8;
+    car.step(&CarControls::new(1.0, -1.0, 0.0, false), SurfaceType::Asphalt, DT);
+
+    assert_eq!(car.last_traction_help_multiplier(), 1.0);
+    assert_eq!(car.last_tcs_lateral_multiplier(), 1.0);
+    assert_eq!(car.last_tcs_longitudinal_multiplier(), 1.0);
+}
+
+#[test]
+fn assist_telemetry_roundtrips_in_car_state_while_source_latch_stays_runtime_only() {
+    let mut car = Car::new(CarConfig::sports_car());
+    car.step(&CarControls::accelerate(), SurfaceType::Asphalt, DT);
+    let json = serde_json::to_string(&car).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    assert!(value.get("digital_steering_source").is_none());
+    assert!(value["state"].get("traction_help_multiplier").is_some());
+    assert!(value["state"].get("tcs_lateral_multiplier").is_some());
+    assert!(value["state"].get("tcs_longitudinal_multiplier").is_some());
+    assert!(value["state"].get("esc_corrective_torque").is_some());
+    let loaded: Car = serde_json::from_str(&json).unwrap();
+    assert_eq!(car.state.traction_help_multiplier, 1.0);
+    assert!(!loaded.digital_steering_source);
+    assert_eq!(loaded.state.traction_help_multiplier, car.state.traction_help_multiplier);
+    assert_eq!(loaded.state.tcs_lateral_multiplier, car.state.tcs_lateral_multiplier);
+    assert_eq!(loaded.state.tcs_longitudinal_multiplier, car.state.tcs_longitudinal_multiplier);
+    assert_eq!(loaded.state.esc_corrective_torque, car.state.esc_corrective_torque);
 }

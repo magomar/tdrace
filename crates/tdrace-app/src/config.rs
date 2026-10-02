@@ -1,13 +1,17 @@
-use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use tdrace_core::physics::CarConfig;
-use cabinet::input::{DigitalInputConfig, SteeringProfile};
+use crate::profile::AssistProfile;
 use crate::render::surface_material::SurfaceTextureQuality;
 use crate::ui::menu::CarChoice;
+use cabinet::input::{DigitalInputConfig, SteeringProfile};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+use tdrace_core::physics::config::PlayerHandling;
+use tdrace_core::physics::CarConfig;
 
 // Camera settings moved to race-ui (spec 058); re-exported so `crate::config::` paths keep working.
-pub use race_ui::camera::{CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH};
+pub use race_ui::camera::{
+    CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
+};
 
 /// Keyboard handling settings (Spec 043): a preset plus five values.
 ///
@@ -58,6 +62,19 @@ impl InputConfig {
             traction_help: cfg.traction_help,
         }
     }
+}
+
+/// Resolves the car-side human handling from the independent assist mode and input response.
+/// Stored input settings remain unchanged; Arcade scales the stored traction-help preference,
+/// while Sport and Pro disable this player aid.
+pub fn player_handling_for(mode: AssistProfile, cfg: &DigitalInputConfig) -> PlayerHandling {
+    let traction_help = match mode {
+        AssistProfile::Arcade => cfg.traction_help.clamp(0.0, 1.0),
+        AssistProfile::Sport | AssistProfile::Pro => 0.0,
+    };
+    let mut handling = PlayerHandling::human(cfg.steer_authority, traction_help);
+    handling.low_speed_authority_enabled = true;
+    handling
 }
 
 impl Default for InputConfig {
@@ -399,7 +416,10 @@ impl GameConfig {
 
         let default_config = Self::default();
         default_config.save_to_path(&user_path)?;
-        println!("[Config] Installed generated default config to {:?}", user_path);
+        println!(
+            "[Config] Installed generated default config to {:?}",
+            user_path
+        );
         Ok(user_path)
     }
 
@@ -465,7 +485,10 @@ impl GameConfig {
         // Fallback to git-tracked default template (read-only)
         if let Some(default_path) = Self::resolve_default_config_path() {
             if let Ok(config) = Self::load_from_path(&default_path) {
-                println!("[Config] Loaded default configuration from {:?}", default_path);
+                println!(
+                    "[Config] Loaded default configuration from {:?}",
+                    default_path
+                );
                 return config;
             }
         }
@@ -494,7 +517,10 @@ impl GameConfig {
             if path.exists() {
                 if let Ok(content) = std::fs::read_to_string(&path) {
                     if let Ok(val) = toml::from_str::<toml::Value>(&content) {
-                        println!("[Config] Loaded module override for '{}' from {:?}", module_id, path);
+                        println!(
+                            "[Config] Loaded module override for '{}' from {:?}",
+                            module_id, path
+                        );
                         return Some(val);
                     }
                 }
@@ -642,11 +668,17 @@ impl GameConfig {
                 CarChoice::DriftCar => CarConfig::drift_car(),
                 CarChoice::Kart => CarConfig::kart(),
                 CarChoice::RallyCar => CarConfig::rally_car(),
-                CarChoice::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
+                CarChoice::GT4Clubsport => {
+                    crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport()
+                }
                 CarChoice::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
-                CarChoice::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
+                CarChoice::GT2Biturbo => {
+                    crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo()
+                }
                 CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
-                CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
+                CarChoice::HypercarPrototype => {
+                    crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype()
+                }
                 CarChoice::StockCar => CarConfig::stock_car_ta1(),
                 CarChoice::SandRail | CarChoice::CrossCar => CarConfig::sand_rail(),
             }

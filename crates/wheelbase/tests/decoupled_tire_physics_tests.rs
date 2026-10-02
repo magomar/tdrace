@@ -452,4 +452,3 @@ fn test_kart_cornering_under_throttle_preserves_drive_and_prevents_runaway_wheel
         car.speed_kmh()
     );
 }
-

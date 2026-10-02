@@ -4,13 +4,19 @@
 //! slip-based tire forces, implicit wheel spin and differential coupling, roll-balance load
 //! transfer, grip-aware steering authority for human drivers, and continuous assists.
 
-use std::f32::consts::PI;
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
+use std::f32::consts::PI;
 
 use super::config::{CarConfig, DifferentialType};
 use super::surface::{SurfaceSampler, SurfaceType};
-use super::tire::{combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry};
+use super::tire::{
+    combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
+};
+
+fn one_f32() -> f32 {
+    1.0
+}
 
 /// Helper returning default wheel assemblies state for CarState deserialization.
 pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
@@ -182,6 +188,15 @@ pub struct CarState {
     pub esc_active: bool,
     /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
     pub abs_active: bool,
+    /// Per-step assist torque multipliers and ESC correction telemetry.
+    #[serde(default = "one_f32")]
+    pub traction_help_multiplier: f32,
+    #[serde(default = "one_f32")]
+    pub tcs_lateral_multiplier: f32,
+    #[serde(default = "one_f32")]
+    pub tcs_longitudinal_multiplier: f32,
+    #[serde(default)]
+    pub esc_corrective_torque: f32,
     /// Whether brakes (service brake or handbrake) are actively being applied.
     #[serde(default)]
     pub is_braking: bool,
@@ -249,6 +264,10 @@ impl Default for CarState {
             tcs_active: false,
             esc_active: false,
             abs_active: false,
+            traction_help_multiplier: 1.0,
+            tcs_lateral_multiplier: 1.0,
+            tcs_longitudinal_multiplier: 1.0,
+            esc_corrective_torque: 0.0,
             is_braking: false,
             road_elevation: 0.0,
             ramp_elevation: 0.0,
@@ -274,6 +293,16 @@ impl Default for CarState {
 pub struct Car {
     pub config: CarConfig,
     pub state: CarState,
+    /// Runtime-only input source for recovery tuning. Not part of replay/LAN car controls.
+    #[serde(skip)]
+    pub digital_steering_source: bool,
+    /// Transient intentional flick state. Runtime-only; fixed-step deterministic.
+    #[serde(skip)]
+    previous_control_steer: f32,
+    #[serde(skip)]
+    flick_headroom_remaining_s: f32,
+    #[serde(skip)]
+    flick_rearm_remaining_s: f32,
 }
 
 impl Car {
@@ -291,7 +320,55 @@ impl Car {
         Self {
             config,
             state,
+            digital_steering_source: false,
+            previous_control_steer: 0.0,
+            flick_headroom_remaining_s: 0.0,
+            flick_rearm_remaining_s: 0.0,
         }
+    }
+
+    pub fn set_digital_steering_source(&mut self, digital: bool) {
+        self.digital_steering_source = digital;
+        if !digital {
+            self.flick_headroom_remaining_s = 0.0;
+            self.flick_rearm_remaining_s = 0.0;
+        }
+    }
+
+    pub fn reset_assist_telemetry(&mut self) {
+        self.state.traction_help_multiplier = 1.0;
+        self.state.tcs_lateral_multiplier = 1.0;
+        self.state.tcs_longitudinal_multiplier = 1.0;
+        self.state.esc_corrective_torque = 0.0;
+    }
+
+    pub fn last_traction_help_multiplier(&self) -> f32 { self.state.traction_help_multiplier }
+    pub fn last_tcs_lateral_multiplier(&self) -> f32 { self.state.tcs_lateral_multiplier }
+    pub fn last_tcs_longitudinal_multiplier(&self) -> f32 { self.state.tcs_longitudinal_multiplier }
+    pub fn last_esc_corrective_torque_nm(&self) -> f32 { self.state.esc_corrective_torque }
+
+    /// Recovery is an electronic assist for analog inputs; digital inputs receive a minimum
+    /// playability accommodation in Pro and use the stronger of the two in Arcade/Sport.
+    pub fn digital_recovery_strength(&self) -> f32 {
+        if self.digital_steering_source {
+            0.35f32.max(if self.config.assists.counter_steer_assist_enabled {
+                self.config.assists.counter_steer_assist_strength
+            } else {
+                0.0
+            })
+        } else if self.config.assists.counter_steer_assist_enabled {
+            self.config.assists.counter_steer_assist_strength
+        } else {
+            0.0
+        }
+    }
+
+    pub fn flick_headroom_remaining_s(&self) -> f32 {
+        self.flick_headroom_remaining_s
+    }
+
+    pub fn flick_rearm_remaining_s(&self) -> f32 {
+        self.flick_rearm_remaining_s
     }
 
     /// Sets the initial pose (position and yaw angle).
@@ -438,14 +515,33 @@ impl Car {
     /// until the kinematic term alone exceeds mechanical lock, so parking-speed steering keeps full
     /// lock without a separate blend (a speed blend overshot the useful angle at 8-12 m/s).
     pub fn steer_authority(&self, speed: f32, surface_mu: f32) -> f32 {
-        self.steer_authority_with(speed, surface_mu, self.config.player.steer_overslip)
+        let overslip = self.config.player.steer_overslip;
+        let grip_authority = self.steer_authority_with(speed, surface_mu, overslip);
+        if !self.config.player.grip_aware_steering
+            || !self.config.player.low_speed_authority_enabled
+            || self.config.caster_jacking_factor > 0.0
+            || !self.config.assists.tcs_enabled
+        {
+            return grip_authority;
+        }
+        let smoothstep = |t: f32| {
+            let t = t.clamp(0.0, 1.0);
+            t * t * (3.0 - 2.0 * t)
+        };
+        let blend = smoothstep((speed - 14.0) / 1.5)
+            * (1.0 - smoothstep((speed - 17.0) / 1.0));
+        let preset_scale = (1.0 + (overslip - 1.0) * 0.35).clamp(0.94, 1.06);
+        let expanded = self.config.max_steer_angle * 0.68 * preset_scale;
+        (grip_authority + (expanded - grip_authority) * blend)
+            .clamp(0.0, self.config.max_steer_angle)
     }
 
     /// [`Car::steer_authority`] with an explicit overslip instead of the driver's setting.
     pub fn steer_authority_with(&self, speed: f32, surface_mu: f32, steer_overslip: f32) -> f32 {
         let lock = self.config.max_steer_angle;
         let tire = &self.config.tire;
-        let g_eff = 9.81 + self.config.downforce_coefficient * speed * speed / self.config.mass.max(1.0);
+        let g_eff =
+            9.81 + self.config.downforce_coefficient * speed * speed / self.config.mass.max(1.0);
         let mu = (surface_mu * tire.grip).max(0.01);
         let r_min = (speed * speed / (mu * g_eff)).max(1e-3);
         let kinematic = (self.config.wheelbase / r_min).atan();
@@ -459,10 +555,16 @@ impl Car {
         // Past-the-limit authority (overslip > 1) shrinks to 30% at high speed: the stable window beyond
         // the limit is ~0.1 peak-widths at 45 m/s (Sharp/Raw keep their extra bite in slow corners).
         let beyond = steer_overslip - 1.0;
-        let beyond = if beyond > 0.0 { beyond * (1.0 - 0.7 * high_speed) } else { beyond };
+        let beyond = if beyond > 0.0 {
+            beyond * (1.0 - 0.7 * high_speed)
+        } else {
+            beyond
+        };
         let slip_share = limit_fraction + beyond;
         let grip_limit = kinematic + slip_share.max(0.0) * tire.peak_slip_angle();
-        grip_limit.clamp(0.0, lock)
+        let grip_limit = grip_limit.clamp(0.0, lock);
+
+        grip_limit
     }
 
     /// Computes the aerodynamic slipstream drafting intensity [0.0..0.40] based on opponent vehicles
@@ -522,7 +624,11 @@ fn differential_lock_torque(diff_type: DifferentialType, input_torque: f32) -> f
             coast_lock,
             preload_nm,
         } => {
-            let ramp = if input_torque >= 0.0 { power_lock } else { coast_lock };
+                let ramp = if input_torque >= 0.0 {
+                    power_lock
+                } else {
+                    coast_lock
+                };
             preload_nm.max(0.0) + ramp.clamp(0.0, 1.0) * input_torque.abs()
         }
         DifferentialType::Spool => f32::INFINITY,
@@ -560,6 +666,7 @@ fn couple_axle(
         self.step_per_wheel(controls, [surface; 4], dt);
     }
 
+
     /// Steps the physics simulation forward using an arbitrary terrain `SurfaceSampler`.
     ///
     /// Evaluates contact patches for all 4 wheels in world coordinates and queries the sampler.
@@ -585,12 +692,10 @@ fn couple_axle(
     }
 
     /// Steps the physics simulation forward with independent surface types per wheel.
-    pub fn step_per_wheel(
-        &mut self,
-        controls: &CarControls,
-        surfaces: [SurfaceType; 4],
-        dt: f32,
-    ) {
+    pub fn step_per_wheel(&mut self, controls: &CarControls, surfaces: [SurfaceType; 4], dt: f32) {
+        self.reset_assist_telemetry();
+        self.flick_rearm_remaining_s = (self.flick_rearm_remaining_s - dt).max(0.0);
+        self.flick_headroom_remaining_s = (self.flick_headroom_remaining_s - dt).max(0.0);
         // 0. Update vertical elevation dynamics
         self.state.just_landed = false;
         if self.state.elevation > 0.0 || self.state.vertical_velocity.abs() > 1e-4 {
@@ -635,34 +740,77 @@ fn couple_axle(
         // positive. (Pre-043 the test was `< -0.05`, which flagged normal cornering at speed, where
         // the velocity also points outside the heading; with slip headroom that fed slides.)
         let is_counter_steering = (clamped_ctrl.steer * v_lat) > 0.05;
+        let tcs_drift_bypass = self.config.assists.tcs_drift_bypass
+            && is_counter_steering
+            && self.state.is_drifting
+            && v_long > 1.0
+            && !clamped_ctrl.reverse;
 
         // Human drivers (grip-aware steering): full input maps to the largest road-wheel angle the
         // front tires can use at this speed, so more input never gives less turn. Counter-steering
         // adds the body slip angle as headroom, so the wheels can still point down the road in a
         // slide. Bots and scripted controllers keep the linear full-lock mapping.
-        let front_mu = 0.5 * (surfaces[0].friction_coefficient() + surfaces[1].friction_coefficient());
-        let counter_headroom = if is_counter_steering { self.state.sideslip_angle.abs() } else { 0.0 };
+        let front_mu =
+            0.5 * (surfaces[0].friction_coefficient() + surfaces[1].friction_coefficient());
+        let steer_delta_per_second =
+            (clamped_ctrl.steer - self.previous_control_steer).abs() / dt.max(1e-5);
+        let intentional_flick = self.digital_steering_source
+            && self.flick_rearm_remaining_s <= 0.0
+            && self.previous_control_steer.abs() > 0.35
+            && clamped_ctrl.steer.abs() > 0.35
+            && clamped_ctrl.steer.signum() != self.previous_control_steer.signum()
+            && steer_delta_per_second >= 3.0
+            && self.state.speed < 28.0;
+        if intentional_flick {
+            self.flick_headroom_remaining_s = 0.18;
+            self.flick_rearm_remaining_s = 0.30;
+        }
+        self.previous_control_steer = clamped_ctrl.steer;
+        let flick_headroom = if self.config.player.grip_aware_steering {
+            self.config.max_steer_angle * 0.18 * (self.flick_headroom_remaining_s / 0.18).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let counter_headroom = if is_counter_steering {
+            self.state.sideslip_angle.abs()
+        } else {
+            0.0
+        };
         let mut target_steer = if self.config.player.grip_aware_steering {
-            let authority = (self.steer_authority(self.state.speed, front_mu) + counter_headroom)
+            let authority = (self.steer_authority(self.state.speed, front_mu)
+                + counter_headroom
+                + flick_headroom)
                 .min(self.config.max_steer_angle);
             -clamped_ctrl.steer * authority
         } else {
             // Linear full-lock mapping keeps closed-loop controller gains; the angle is capped at a
             // generous grip limit (overslip 1.5) so saturated commands cannot scrub past the tire.
-            let cap = (self.steer_authority_with(self.state.speed, front_mu, BOT_STEER_OVERSLIP) + counter_headroom)
+            let cap = (self.steer_authority_with(self.state.speed, front_mu, BOT_STEER_OVERSLIP)
+                + counter_headroom)
                 .min(self.config.max_steer_angle);
             (-clamped_ctrl.steer * self.config.max_steer_angle).clamp(-cap, cap)
         };
 
         // Counter-steer / self-aligning drift recovery assist (forward motion only)
-        if self.config.assists.counter_steer_assist_enabled
+        let recovery_strength = if self.digital_steering_source {
+            0.35f32.max(if self.config.assists.counter_steer_assist_enabled {
+                self.config.assists.counter_steer_assist_strength
+            } else {
+                0.0
+            })
+        } else if self.config.assists.counter_steer_assist_enabled {
+            self.config.assists.counter_steer_assist_strength
+        } else {
+            0.0
+        };
+        if recovery_strength > 0.0
             && !clamped_ctrl.handbrake
             && !clamped_ctrl.reverse
             && v_long > 1.0
             && self.state.speed > 2.0
             && self.state.sideslip_angle.abs() > 0.04
         {
-            let align_angle = -self.state.sideslip_angle * self.config.assists.counter_steer_assist_strength;
+            let align_angle = -self.state.sideslip_angle * recovery_strength;
             if clamped_ctrl.steer.abs() < 0.35 {
                 let blend = 1.0 - (clamped_ctrl.steer.abs() / 0.35);
                 target_steer += align_angle * blend;
@@ -753,13 +901,16 @@ fn couple_axle(
             0.0
         };
 
-        let static_front_load = effective_normal_weight * (lr / wheelbase) + bank_compression * (lr / wheelbase);
-        let static_rear_load = effective_normal_weight * (lf / wheelbase) + bank_compression * (lf / wheelbase);
+        let static_front_load =
+            effective_normal_weight * (lr / wheelbase) + bank_compression * (lr / wheelbase);
+        let static_rear_load =
+            effective_normal_weight * (lf / wheelbase) + bank_compression * (lf / wheelbase);
 
         // Acceleration squat (a_long > 0): front unloads, rear loads
         // Grade incline pitch (grade_sin > 0 = uphill): front unloads, rear loads
         let grade_pitch = self.config.mass * g * grade_sin * (self.config.cg_height / wheelbase);
-        let delta_fz_long = self.config.mass * a_long * (self.config.cg_height / wheelbase) + grade_pitch;
+        let delta_fz_long =
+            self.config.mass * a_long * (self.config.cg_height / wheelbase) + grade_pitch;
 
         // Cornering roll & gravity cross-slope roll moment
         let cross_slope_roll = if bank_deg.abs() > 1e-4 {
@@ -772,7 +923,9 @@ fn couple_axle(
         // carries it. With load-sensitive tires, the axle that carries more transfer loses more
         // grip, so roll_balance moves the handling balance (Spec 043).
         let roll_balance = self.config.roll_balance.clamp(0.0, 1.0);
-        let delta_fz_lat_total = self.config.mass * a_lat * (self.config.cg_height / self.config.track_width) + cross_slope_roll;
+        let delta_fz_lat_total =
+            self.config.mass * a_lat * (self.config.cg_height / self.config.track_width)
+                + cross_slope_roll;
         let delta_fz_lat_f = delta_fz_lat_total * roll_balance;
         let delta_fz_lat_r = delta_fz_lat_total * (1.0 - roll_balance);
 
@@ -796,21 +949,29 @@ fn couple_axle(
         // In solid-axle vehicles (e.g. racing karts with 10°-15° kingpin caster and rigid chassis),
         // steering lock dynamically jacks the chassis diagonally, unloading the inside rear wheel
         // (down to near-zero load) to eliminate rear spool binding and allow razor-sharp apex pivoting.
-        let nom_fz_fl = (static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front;
-        let nom_fz_fr = (static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front;
-        let nom_fz_rl = (static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear;
-        let nom_fz_rr = (static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear;
+        let nom_fz_fl =
+            (static_front_load - delta_fz_long) * 0.5 + delta_fz_lat_f * 0.5 + downforce_front;
+        let nom_fz_fr =
+            (static_front_load - delta_fz_long) * 0.5 - delta_fz_lat_f * 0.5 + downforce_front;
+        let nom_fz_rl =
+            (static_rear_load + delta_fz_long) * 0.5 + delta_fz_lat_r * 0.5 + downforce_rear;
+        let nom_fz_rr =
+            (static_rear_load + delta_fz_long) * 0.5 - delta_fz_lat_r * 0.5 + downforce_rear;
 
         let (delta_fz_caster_fl, delta_fz_caster_fr, delta_fz_caster_rl, delta_fz_caster_rr) =
             if self.config.caster_jacking_factor > 1e-4 && self.state.steer_angle.abs() > 1e-4 {
-                let steer_frac = (self.state.steer_angle.abs() / self.config.max_steer_angle.max(1e-3)).min(1.0);
+                let steer_frac =
+                    (self.state.steer_angle.abs() / self.config.max_steer_angle.max(1e-3)).min(1.0);
                 // At walking pace there is no lateral load transfer to unload the inside rear, so the
                 // lift curve is front-loaded (steer_frac^0.4) to free the spool up to 4 m/s; by 14 m/s it returns
                 // to the racing curve (^1.15). Spec 043: with ^1.15 everywhere, weak karts pivoted in
                 // place off the grid; with ^0.4 everywhere the kart spun at 50 km/h.
                 let crawl = 1.0 - ((self.state.speed - 4.0) / 10.0).clamp(0.0, 1.0);
                 let lift_exponent = 1.15 - 0.75 * crawl;
-                let raw_delta = static_rear_load * 0.5 * self.config.caster_jacking_factor * steer_frac.powf(lift_exponent);
+                let raw_delta = static_rear_load
+                    * 0.5
+                    * self.config.caster_jacking_factor
+                    * steer_frac.powf(lift_exponent);
 
                 if self.state.steer_angle < 0.0 {
                     // Turning right (steer_angle < 0): RR (inside rear) unloads, RL (outside rear) and FR (inside front) load
@@ -874,16 +1035,27 @@ fn couple_axle(
         // TCS: the lateral term cuts engine torque when the rear axle slides past the trigger
         // angle; the longitudinal term (per wheel, Pass B) holds driven-wheel slip at its target.
         let tcs_engaged = self.config.assists.tcs_enabled
+            && !tcs_drift_bypass
             && clamped_ctrl.throttle > 0.0
             && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake);
         let mut tcs_active = false;
         let mut drive_torque_multiplier = 1.0f32;
         if tcs_engaged && !clamped_ctrl.reverse {
-            let rear_slip_lat = self.state.wheels[2].slip_angle.abs().max(self.state.wheels[3].slip_angle.abs());
-            let trigger = self.config.assists.tcs_slip_angle_deg.to_radians().max(1e-3);
+            let rear_slip_lat = self.state.wheels[2]
+                .slip_angle
+                .abs()
+                .max(self.state.wheels[3].slip_angle.abs());
+            let trigger = self
+                .config
+                .assists
+                .tcs_slip_angle_deg
+                .to_radians()
+                .max(1e-3);
             if rear_slip_lat > trigger {
                 let excess_lat = (rear_slip_lat - trigger) / trigger;
-                drive_torque_multiplier = 1.0 - (excess_lat * self.config.assists.tcs_strength).clamp(0.0, 0.75);
+                drive_torque_multiplier =
+                    1.0 - (excess_lat * self.config.assists.tcs_strength).clamp(0.0, 0.75);
+                self.state.tcs_lateral_multiplier = drive_torque_multiplier;
                 tcs_active = true;
             }
         }
@@ -899,12 +1071,17 @@ fn couple_axle(
         // larger of the rear tires' combined force use and slip angle relative to peak: lateral
         // force alone drops as drive force grows, so it hid power oversteer until too late.
         let traction_help = self.config.player.traction_help.clamp(0.0, 1.0);
-        let throttle_scale = if traction_help > 0.0 && !clamped_ctrl.reverse {
+        let throttle_scale = if traction_help > 0.0
+            && !clamped_ctrl.reverse
+            && !is_counter_steering
+            && !self.state.is_drifting
+        {
             // Force use counts only while cornering: straight-line drive (a launch, a straight)
             // uses the rear grip fully without any risk of power oversteer, and TCS already limits
             // wheelspin there. Steering input counts as cornering too, because in a direction
             // change the yaw rate passes through zero. Slip angle is a lateral signal by itself.
-            let cornering = (self.state.speed * self.state.angular_velocity.abs() / TH_CORNERING_ACCEL)
+            let cornering = (self.state.speed * self.state.angular_velocity.abs()
+                / TH_CORNERING_ACCEL)
                 .max(clamped_ctrl.steer.abs() / TH_CORNERING_STEER)
                 .clamp(0.0, 1.0);
             let rear_use = [2usize, 3]
@@ -912,7 +1089,8 @@ fn couple_axle(
                 .map(|&j| {
                     let w = &self.state.wheels[j];
                     let tire = &self.state.wheel_assemblies[j].config.tire_model;
-                    let envelope = (w.normal_load * w.surface.friction_coefficient() * tire.grip).max(1.0);
+                    let envelope =
+                        (w.normal_load * w.surface.friction_coefficient() * tire.grip).max(1.0);
                     let force_use = w.lateral_force.hypot(w.longitudinal_force) / envelope;
                     let slip_use = w.slip_angle.abs() / tire.peak_slip_angle().max(1e-3);
                     (force_use * cornering).max(slip_use)
@@ -922,11 +1100,16 @@ fn couple_axle(
         } else {
             1.0
         };
+        self.state.traction_help_multiplier = throttle_scale;
 
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
-            clamped_ctrl.throttle * throttle_scale * self.config.max_engine_force * engine_taper * drive_torque_multiplier
+            clamped_ctrl.throttle
+                * throttle_scale
+                * self.config.max_engine_force
+                * engine_taper
+                * drive_torque_multiplier
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
             // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
@@ -1001,7 +1184,11 @@ fn couple_axle(
             wheel_v_longs[i] = w_v_long;
             // Slip angle: angle between wheel direction and velocity vector
             slip_angles[i] = -w_v_lat.atan2(w_v_long.abs().max(2.5));
-            envelopes[i] = self.state.wheel_assemblies[i].friction_envelope(normal_loads[i], nominal_fz, surface_mus[i]);
+            envelopes[i] = self.state.wheel_assemblies[i].friction_envelope(
+                normal_loads[i],
+                nominal_fz,
+                surface_mus[i],
+            );
 
             // Kinematic rolling synchronization: if vehicle was spawned/set at speed without previous lockup
             let r = self.state.wheel_assemblies[i].config.tire_radius.max(1e-2);
@@ -1019,7 +1206,8 @@ fn couple_axle(
         // Cornering Brake Control (CBC): trim inside rear brake pressure under oversteering yaw divergence
         let kinematic_yaw_rate = (v_long / self.config.wheelbase) * self.state.steer_angle.tan();
         let yaw_divergence = omega - kinematic_yaw_rate;
-        let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum() && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
+        let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum()
+            && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
             || (kinematic_yaw_rate.abs() < 0.05 && omega.abs() > 0.08)
             || (omega.signum() != kinematic_yaw_rate.signum() && omega.abs() > 0.12);
 
@@ -1039,16 +1227,33 @@ fn couple_axle(
         for (axle_start, is_front_axle) in [(0usize, true), (2usize, false)] {
             let pair = [axle_start, axle_start + 1];
             // Drive torque follows drive_bias; engine-braking retard follows engine_brake_front_share.
-            let front_share = if is_coasting { self.config.engine_brake_front_share.clamp(0.0, 1.0) } else { self.config.drive_bias };
-            let (diff_type, axle_force) = if is_front_axle {
-                (self.config.front_differential, total_drive_force * front_share)
+            let front_share = if is_coasting {
+                self.config.engine_brake_front_share.clamp(0.0, 1.0)
             } else {
-                (self.config.rear_differential, total_drive_force * (1.0 - front_share))
+                self.config.drive_bias
+            };
+            let (diff_type, axle_force) = if is_front_axle {
+                (
+                    self.config.front_differential,
+                    total_drive_force * front_share,
+                )
+            } else {
+                (
+                    self.config.rear_differential,
+                    total_drive_force * (1.0 - front_share),
+                )
             };
             // Handbrake declutches the rear axle (arcade convention: the handbrake always wins over
             // throttle on the rear wheels, so a held throttle cannot stop the rear from locking).
-            let axle_force = if !is_front_axle && clamped_ctrl.handbrake { 0.0 } else { axle_force };
-            let r_axle = self.state.wheel_assemblies[axle_start].config.tire_radius.max(1e-2);
+            let axle_force = if !is_front_axle && clamped_ctrl.handbrake {
+                0.0
+            } else {
+                axle_force
+            };
+            let r_axle = self.state.wheel_assemblies[axle_start]
+                .config
+                .tire_radius
+                .max(1e-2);
             let mut axle_torque = axle_force * r_axle;
 
             // TCS torque reduction at the axle input: trim towards the torque the differential can
@@ -1056,29 +1261,51 @@ fn couple_axle(
             // spool: both sides).
             let axle_driven = axle_force.abs() > 1e-4;
             // Drive direction: forward gear pushes slip positive, reverse gear pushes it negative.
-            let drive_dir = if clamped_ctrl.reverse { -1.0f32 } else { 1.0f32 };
+            let drive_dir = if clamped_ctrl.reverse {
+                -1.0f32
+            } else {
+                1.0f32
+            };
             let tcs_axle = tcs_engaged && axle_driven && axle_torque * drive_dir > 0.0;
             let tcs_targets = pair.map(|j| {
-                self.state.wheel_assemblies[j].config.tire_model.peak_slip_ratio * tcs_target_scale * drive_dir
+                self.state.wheel_assemblies[j]
+                    .config
+                    .tire_model
+                    .peak_slip_ratio
+                    * tcs_target_scale
+                    * drive_dir
             });
             if tcs_axle {
                 let caps = [0, 1].map(|k| {
                     let j = pair[k];
                     let a = &self.state.wheel_assemblies[j];
-                    (combined_slip_forces(tcs_targets[k], slip_angles[j], envelopes[j], &a.config.tire_model).0 * drive_dir).max(0.0)
+                    (combined_slip_forces(
+                        tcs_targets[k],
+                        slip_angles[j],
+                        envelopes[j],
+                        &a.config.tire_model,
+                    )
+                    .0 * drive_dir)
+                        .max(0.0)
                         * a.config.tire_radius
                 });
                 let weak = caps[0].min(caps[1]);
                 let axle_cap = match diff_type {
                     DifferentialType::Open => 2.0 * weak,
-                    DifferentialType::LimitedSlip { .. } => {
-                        (2.0 * weak + Self::differential_lock_torque(diff_type, axle_torque.abs())).min(caps[0] + caps[1])
-                    }
+                    DifferentialType::LimitedSlip { .. } => (2.0 * weak
+                        + Self::differential_lock_torque(diff_type, axle_torque.abs()))
+                    .min(caps[0] + caps[1]),
                     DifferentialType::Spool => caps[0] + caps[1],
                 };
                 let demand = axle_torque.abs();
                 if demand > axle_cap {
+                    let before = axle_torque.abs();
                     axle_torque -= (demand - axle_cap) * tcs_strength * drive_dir;
+                    if before > 1e-3 {
+                        self.state.tcs_longitudinal_multiplier = self
+                            .state.tcs_longitudinal_multiplier
+                            .min((axle_torque.abs() / before).clamp(0.0, 1.0));
+                    }
                     tcs_active = true;
                 }
             }
@@ -1089,14 +1316,23 @@ fn couple_axle(
                 let r = self.state.wheel_assemblies[i].config.tire_radius.max(1e-2);
                 let w_v_long = wheel_v_longs[i];
 
-                let axle_brake_share = if is_front_axle { front_brake_share } else { 1.0 - front_brake_share };
+                let axle_brake_share = if is_front_axle {
+                    front_brake_share
+                } else {
+                    1.0 - front_brake_share
+                };
                 let mut wheel_brake_force = total_brake_force * axle_brake_share * 0.5;
-                if self.config.assists.abs_enabled && is_oversteering_under_brake && w_v_long.abs() > 0.5 {
+                if self.config.assists.abs_enabled
+                    && is_oversteering_under_brake
+                    && w_v_long.abs() > 0.5
+                {
                     let yaw_sign = omega.signum();
                     let is_inside_rear = (yaw_sign > 0.0 && wheel_id == WheelId::RearLeft)
                         || (yaw_sign < 0.0 && wheel_id == WheelId::RearRight);
                     if is_inside_rear {
-                        let cbc_cut = (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength).clamp(0.0, 0.45);
+                        let cbc_cut =
+                            (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength)
+                                .clamp(0.0, 0.45);
                         wheel_brake_force *= 1.0 - cbc_cut;
                     }
                 }
@@ -1106,7 +1342,14 @@ fn couple_axle(
                     let rear_cap = |j: usize| {
                         let a = &self.state.wheel_assemblies[j];
                         let target = a.config.tire_model.peak_slip_ratio * abs_target_scale * 0.6;
-                        combined_slip_forces(-target, slip_angles[j], envelopes[j], &a.config.tire_model).0.abs()
+                        combined_slip_forces(
+                            -target,
+                            slip_angles[j],
+                            envelopes[j],
+                            &a.config.tire_model,
+                        )
+                        .0
+                        .abs()
                     };
                     wheel_brake_force = wheel_brake_force.min(rear_cap(2).min(rear_cap(3)));
                 }
@@ -1116,7 +1359,12 @@ fn couple_axle(
                 }
                 let brake_torque = wheel_brake_force * r;
 
-                effective_inertias[k] = self.state.wheel_assemblies[i].effective_inertia(w_v_long, slip_angles[i], envelopes[i], dt);
+                effective_inertias[k] = self.state.wheel_assemblies[i].effective_inertia(
+                    w_v_long,
+                    slip_angles[i],
+                    envelopes[i],
+                    dt,
+                );
                 self.state.wheel_assemblies[i].step_implicit(
                     0.5 * axle_torque,
                     brake_torque,
@@ -1129,7 +1377,11 @@ fn couple_axle(
                 // ABS: hold braking slip at the target; the target shrinks with lateral utilization so
                 // the tire keeps steering authority while cornering (continuous, no steering gate).
                 let assembly = &mut self.state.wheel_assemblies[i];
-                if self.config.assists.abs_enabled && !is_handbraking_wheel && brake_torque > 0.0 && w_v_long.abs() > 0.5 {
+                if self.config.assists.abs_enabled
+                    && !is_handbraking_wheel
+                    && brake_torque > 0.0
+                    && w_v_long.abs() > 0.5
+                {
                     let lateral_use = if envelopes[i] > 1e-3 {
                         (self.state.wheels[i].lateral_force.abs() / envelopes[i]).clamp(0.0, 1.0)
                     } else {
@@ -1138,8 +1390,12 @@ fn couple_axle(
                     // EBD: the rear axle is held further below its peak than the front so it keeps the
                     // lateral stiffness that holds the car straight under braking.
                     let axle_share = if is_front_axle { 1.0 } else { 0.6 };
-                    let target = assembly.config.tire_model.peak_slip_ratio * abs_target_scale * axle_share * (1.0 - 0.4 * lateral_use);
-                    let omega_limit = assembly.omega_for_slip(-target * w_v_long.signum(), w_v_long);
+                    let target = assembly.config.tire_model.peak_slip_ratio
+                        * abs_target_scale
+                        * axle_share
+                        * (1.0 - 0.4 * lateral_use);
+                    let omega_limit =
+                        assembly.omega_for_slip(-target * w_v_long.signum(), w_v_long);
                     let over_slipping = if w_v_long > 0.0 {
                         assembly.angular_velocity < omega_limit
                     } else {
@@ -1147,7 +1403,8 @@ fn couple_axle(
                     };
                     if over_slipping {
                         let strength = self.config.assists.abs_strength.clamp(0.0, 1.0);
-                        assembly.angular_velocity += (omega_limit - assembly.angular_velocity) * strength;
+                        assembly.angular_velocity +=
+                            (omega_limit - assembly.angular_velocity) * strength;
                         assembly.is_locked = false;
                         abs_active = true;
                     }
@@ -1192,7 +1449,13 @@ fn couple_axle(
                 for (j, omega_limit) in pair.into_iter().zip(limits) {
                     let w = &mut self.state.wheel_assemblies[j];
                     if (w.angular_velocity - omega_limit) * drive_dir > 0.0 {
+                        let before = w.angular_velocity.abs();
                         w.angular_velocity += (omega_limit - w.angular_velocity) * tcs_strength;
+                        if before > 1e-3 {
+                            self.state.tcs_longitudinal_multiplier = self
+                                .state.tcs_longitudinal_multiplier
+                                .min((w.angular_velocity.abs() / before).clamp(0.0, 1.0));
+                        }
                         tcs_active = true;
                     }
                 }
@@ -1246,7 +1509,10 @@ fn couple_axle(
             let fy = fy_tire * low_speed_blend;
             // Rolling resistance shares the tire's longitudinal budget (braking on grass is still
             // grip-limited), but its own drag is always available so off-track coasting slows the car.
-            let fx_room = (envelope * envelope - fy * fy).max(0.0).sqrt().max(rr_force.abs());
+            let fx_room = (envelope * envelope - fy * fy)
+                .max(0.0)
+                .sqrt()
+                .max(rr_force.abs());
             let fx = (fx_tire + rr_force).clamp(-fx_room, fx_room);
 
             // Step thermal dissipation and mechanical tread wear
@@ -1260,7 +1526,8 @@ fn couple_axle(
             );
 
             // Skid telemetry (suppressed in mid-air)
-            let (skid_intensity, is_skidding) = if self.state.is_airborne || self.state.elevation > 0.0 {
+            let (skid_intensity, is_skidding) =
+                if self.state.is_airborne || self.state.elevation > 0.0 {
                 (0.0, false)
             } else {
                 compute_skid_telemetry(
@@ -1278,10 +1545,12 @@ fn couple_axle(
             total_wheel_force_world += wheel_force_world;
 
             // Torque around CG = r_world.x * F_world.y - r_world.y * F_world.x
-            let torque = offset_world.x * wheel_force_world.y - offset_world.y * wheel_force_world.x;
+            let torque =
+                offset_world.x * wheel_force_world.y - offset_world.y * wheel_force_world.x;
             total_wheel_torque += torque;
 
-            let (new_dirt, new_dirt_surface) = if surf.is_loose_deformable() || surf == SurfaceType::Grass {
+            let (new_dirt, new_dirt_surface) =
+                if surf.is_loose_deformable() || surf == SurfaceType::Grass {
                 let accumulated = (prev_dirt + 3.5 * dt).min(1.0);
                 (accumulated, surf)
             } else if surf.is_rigid_pavement() {
@@ -1317,11 +1586,21 @@ fn couple_axle(
         self.state.abs_active = abs_active;
 
         // 5. Aerodynamic drag, yaw damping, and ESC
-        let avg_surface_drag: f32 = surfaces.iter().map(|s| s.surface_drag_multiplier()).sum::<f32>() / 4.0;
-        let avg_surface_mu: f32 = surfaces.iter().map(|s| s.friction_coefficient()).sum::<f32>() / 4.0;
-        let effective_drag_coeff = self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50));
+        let avg_surface_drag: f32 = surfaces
+            .iter()
+            .map(|s| s.surface_drag_multiplier())
+            .sum::<f32>()
+            / 4.0;
+        let avg_surface_mu: f32 = surfaces
+            .iter()
+            .map(|s| s.friction_coefficient())
+            .sum::<f32>()
+            / 4.0;
+        let effective_drag_coeff =
+            self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50));
         let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
-        let drag_lat = -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
+        let drag_lat =
+            -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let drag_world = fwd * drag_fwd + right * drag_lat;
 
         let base_yaw_damping = -self.config.angular_damping * omega;
@@ -1345,12 +1624,15 @@ fn couple_axle(
             let low_speed_floor = 0.60 * (1.0 - speed_fade * speed_fade * (3.0 - 2.0 * speed_fade));
             // Effective surface grip (ice studs, dirt contamination) times tire grip
             let grip_mu = surface_mus.iter().sum::<f32>() * 0.25 * self.config.tire.grip;
-            let max_physical_yaw_rate = ((grip_mu * effective_g) / v_long.abs().max(2.0)).max(low_speed_floor);
-            let target_yaw_rate = kinematic_yaw_rate.clamp(-max_physical_yaw_rate, max_physical_yaw_rate);
+            let max_physical_yaw_rate =
+                ((grip_mu * effective_g) / v_long.abs().max(2.0)).max(low_speed_floor);
+            let target_yaw_rate =
+                kinematic_yaw_rate.clamp(-max_physical_yaw_rate, max_physical_yaw_rate);
 
             let yaw_error = omega - target_yaw_rate;
             // ESC targets oversteer (rotating faster into turn than commanded, opposite to target, or uncommanded yaw)
-            let is_oversteering = (omega.signum() == target_yaw_rate.signum() && omega.abs() > (target_yaw_rate.abs() + 0.06))
+            let is_oversteering = (omega.signum() == target_yaw_rate.signum()
+                && omega.abs() > (target_yaw_rate.abs() + 0.06))
                 || (omega.signum() != target_yaw_rate.signum() && omega.abs() > 0.10)
                 || (target_yaw_rate.abs() < 0.05 && omega.abs() > 0.08);
 
@@ -1359,7 +1641,8 @@ fn couple_axle(
                 if yaw_error.abs() > yaw_thresh {
                     let excess_yaw = (yaw_error.abs() - yaw_thresh) * yaw_error.signum();
                     let speed_boost = 1.0 + (self.state.speed / 20.0).min(3.5);
-                    let esc_gain = self.config.inertia * 10.0 * speed_boost * self.config.assists.esc_strength;
+                    let esc_gain =
+                        self.config.inertia * 10.0 * speed_boost * self.config.assists.esc_strength;
                     esc_torque = -excess_yaw * esc_gain;
                     esc_active = true;
                 }
@@ -1370,7 +1653,12 @@ fn couple_axle(
             // (sports car, 45 m/s, full input: +0.13 rad/s of sideslip with the yaw term alone).
             let beta = self.state.sideslip_angle;
             let strength = self.config.assists.esc_strength.clamp(0.0, 1.0);
-            let beta_limit = 0.08 + 0.25 * (1.0 - strength);
+            let beta_limit = self
+                .config
+                .assists
+                .esc_sideslip_limit_deg
+                .to_radians()
+                .clamp(0.0, PI);
             if strength > 0.0 && beta.abs() > beta_limit {
                 let speed_boost = 1.0 + (self.state.speed / 20.0).min(3.5);
                 let beta_gain = self.config.inertia * 8.0 * speed_boost * strength;
@@ -1379,6 +1667,7 @@ fn couple_axle(
             }
         }
         self.state.esc_active = esc_active;
+        self.state.esc_corrective_torque = esc_torque.abs();
 
         let yaw_damping_torque = base_yaw_damping + esc_torque;
 
@@ -1415,7 +1704,8 @@ fn couple_axle(
         // Static friction reaction for stationary or near-stopped vehicle on slopes:
         // Rubber tires cannot roll laterally; static Coulomb friction resists downhill slope forces
         // up to the traction limit (mu * N).
-        let static_friction_world = if !self.state.is_airborne && ground_contact > 0.0 && self.state.speed < 0.25 {
+        let static_friction_world =
+            if !self.state.is_airborne && ground_contact > 0.0 && self.state.speed < 0.25 {
             let total_slope_gravity = bank_gravity_world + grade_gravity_world;
             if total_slope_gravity.length_squared() > 1e-4 {
                 let static_blend = (1.0 - (self.state.speed / 0.25)).clamp(0.0, 1.0);
@@ -1423,14 +1713,18 @@ fn couple_axle(
 
                 // Lateral holding: tires cannot roll sideways, so static friction resists lateral slope force
                 let lat_slope_force = total_slope_gravity.dot(right);
-                let lat_holding = -lat_slope_force.clamp(-max_static_friction, max_static_friction) * static_blend;
+                    let lat_holding = -lat_slope_force
+                        .clamp(-max_static_friction, max_static_friction)
+                        * static_blend;
 
                 // Longitudinal holding: resisted by brakes/handbrake or rolling resistance
                 let long_slope_force = total_slope_gravity.dot(fwd);
                 let long_holding = if is_holding_brakes {
-                    -long_slope_force.clamp(-max_static_friction, max_static_friction) * static_blend
+                        -long_slope_force.clamp(-max_static_friction, max_static_friction)
+                            * static_blend
                 } else {
-                    let rr_holding_cap = self.config.rolling_resistance_coefficient * total_normal_load;
+                        let rr_holding_cap =
+                            self.config.rolling_resistance_coefficient * total_normal_load;
                     -long_slope_force.clamp(-rr_holding_cap, rr_holding_cap) * static_blend
                 };
 
@@ -1443,7 +1737,11 @@ fn couple_axle(
         };
 
         // 6. Net world forces & accelerations
-        let net_force_world = total_wheel_force_world + drag_world + bank_gravity_world + grade_gravity_world + static_friction_world;
+        let net_force_world = total_wheel_force_world
+            + drag_world
+            + bank_gravity_world
+            + grade_gravity_world
+            + static_friction_world;
         let net_torque = total_wheel_torque + yaw_damping_torque;
 
         let linear_accel_world = net_force_world / self.config.mass;
@@ -1477,7 +1775,11 @@ fn couple_axle(
             clamped_ctrl.throttle * self.config.max_engine_force
         };
         let brake_holding_mag = clamped_ctrl.brake * self.config.max_brake_force
-            + if clamped_ctrl.handbrake { self.config.handbrake_force } else { 0.0 };
+            + if clamped_ctrl.handbrake {
+                self.config.handbrake_force
+            } else {
+                0.0
+            };
         let brakes_overpower_engine = is_holding_brakes && brake_holding_mag >= drive_force_mag;
 
         if self.state.speed < 0.08
@@ -1501,7 +1803,8 @@ fn couple_axle(
 
         self.state.sideslip_angle = updated_v_lat.atan2(updated_v_long.abs().max(0.1));
 
-        let is_any_rear_skidding = self.state.wheels[2].is_skidding || self.state.wheels[3].is_skidding;
+        let is_any_rear_skidding =
+            self.state.wheels[2].is_skidding || self.state.wheels[3].is_skidding;
         let is_drifting = !self.state.is_airborne
             && self.state.elevation <= 0.0
             && self.state.sideslip_angle.abs() > 0.16
@@ -1526,7 +1829,12 @@ fn couple_axle(
     }
 
     /// Initiates a realistic ballistic jump launch off a ramp lip of specified height.
-    pub fn launch_jump_with_height(&mut self, direction: Vec2, ramp_angle_deg: f32, takeoff_elevation: f32) {
+    pub fn launch_jump_with_height(
+        &mut self,
+        direction: Vec2,
+        ramp_angle_deg: f32,
+        takeoff_elevation: f32,
+    ) {
         let dir = direction.normalize_or_zero();
         let speed_along_dir = self.state.velocity.dot(dir).max(0.0);
         let angle_rad = ramp_angle_deg.to_radians();
@@ -1551,11 +1859,7 @@ fn couple_axle(
     }
 
     /// Checks if car can launch off the given jump ramp.
-    pub fn try_trigger_jump(
-        &mut self,
-        is_on_ramp: bool,
-        ramp: &JumpRampProperties,
-    ) -> bool {
+    pub fn try_trigger_jump(&mut self, is_on_ramp: bool, ramp: &JumpRampProperties) -> bool {
         if !self.state.is_airborne && is_on_ramp {
             let speed_along_dir = self.state.velocity.dot(ramp.direction);
             if speed_along_dir > 3.5 {
@@ -1578,10 +1882,31 @@ pub struct JumpRampProperties {
     pub height: f32,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn low_speed_authority_expands_progressively_and_preserves_profile_order() {
+        let mut cfg = CarConfig::sports_car();
+        let car = Car::new(cfg.clone());
+        let stock = [0.90f32, 1.0, 1.07, 1.15].map(|p| {
+            let mut c = Car::new(cfg.clone());
+            c.config.player.steer_overslip = p;
+            c.steer_authority(12.0, 1.0)
+        });
+        for pair in stock.windows(2) {
+            assert!(pair[0] < pair[1], "preset authority order collapsed: {stock:?}");
+        }
+        let base = car.steer_authority_with(18.0, 1.0, 1.0);
+        let expanded = car.steer_authority_with(15.5, 1.0, 1.0);
+        assert!(expanded > base * 1.20, "low speed authority did not expand enough");
+        let high_speed = car.steer_authority_with(28.0, 1.0, 1.0);
+        assert!((high_speed - car.steer_authority_with(28.0, 1.0, 1.0)).abs() < 1e-6);
+        cfg.max_steer_angle = 0.2;
+        let capped = Car::new(cfg).steer_authority_with(12.0, 1.0, 1.0);
+        assert!(capped <= 0.2);
+    }
 
     #[test]
     fn test_car_initialization() {
@@ -1604,13 +1929,21 @@ mod tests {
         let (fl_r, fr_r) = car.compute_ackermann_angles(-0.3);
         assert!(fl_r < 0.0);
         assert!(fr_r < 0.0);
-        assert!(fr_r.abs() > fl_r.abs(), "Inner wheel FR ({fr_r}) must steer more than outer FL ({fl_r})");
+        assert!(
+            fr_r.abs() > fl_r.abs(),
+            "Inner wheel FR ({fr_r}) must steer more than outer FL ({fl_r})"
+        );
 
         // Left turn (steer_angle > 0, counter-clockwise): inner wheel FL has larger positive angle than outer FR
         let (fl_l, fr_l) = car.compute_ackermann_angles(0.3);
         assert!(fl_l > 0.0);
         assert!(fr_l > 0.0);
-        assert!(fl_l > fr_l, "Inner wheel FL ({}) must exceed outer FR ({})", fl_l, fr_l);
+        assert!(
+            fl_l > fr_l,
+            "Inner wheel FL ({}) must exceed outer FR ({})",
+            fl_l,
+            fr_l
+        );
     }
 
     #[test]
@@ -1622,9 +1955,16 @@ mod tests {
             car.step(&controls, SurfaceType::Asphalt, 1.0 / 60.0);
         }
 
-        assert!(car.state.speed > 5.0, "Car should accelerate forward, speed is {}", car.state.speed);
+        assert!(
+            car.state.speed > 5.0,
+            "Car should accelerate forward, speed is {}",
+            car.state.speed
+        );
         assert!(car.state.position.x > 1.0, "Car should move in +X");
-        assert!(car.state.position.y.abs() < 1e-3, "Car should not deviate laterally");
+        assert!(
+            car.state.position.y.abs() < 1e-3,
+            "Car should not deviate laterally"
+        );
     }
 
     #[test]
@@ -1637,9 +1977,20 @@ mod tests {
         for _ in 0..120 {
             car.step(&ctrl, SurfaceType::Asphalt, dt);
         }
-        assert!(car.state.local_velocity.x < -3.0, "Car should accelerate backward, was {}", car.state.local_velocity.x);
-        assert!(car.state.steer_angle.abs() < 1e-3, "Steer angle should remain zero without input");
-        assert!(car.state.angle.abs() < 1e-3, "Car should not deviate or force turning, angle was {}", car.state.angle);
+        assert!(
+            car.state.local_velocity.x < -3.0,
+            "Car should accelerate backward, was {}",
+            car.state.local_velocity.x
+        );
+        assert!(
+            car.state.steer_angle.abs() < 1e-3,
+            "Steer angle should remain zero without input"
+        );
+        assert!(
+            car.state.angle.abs() < 1e-3,
+            "Car should not deviate or force turning, angle was {}",
+            car.state.angle
+        );
 
         // Active steering in reverse turns the car
         let mut car_steer = Car::new(CarConfig::sports_car());
@@ -1648,7 +1999,10 @@ mod tests {
         for _ in 0..120 {
             car_steer.step(&ctrl_steer, SurfaceType::Asphalt, dt);
         }
-        assert!(car_steer.state.angular_velocity.abs() > 0.1, "Steering in reverse should turn the car");
+        assert!(
+            car_steer.state.angular_velocity.abs() > 0.1,
+            "Steering in reverse should turn the car"
+        );
 
         // Transition from forward turning to stopping to reverse without steering
         let mut car_turn = Car::new(CarConfig::sports_car());
@@ -1669,8 +2023,14 @@ mod tests {
         for _ in 0..60 {
             car_turn.step(&ctrl_rev, SurfaceType::Asphalt, dt);
         }
-        assert!((car_turn.state.angle - angle_at_stop).abs() < 0.01, "Car should reverse straight along stopped heading");
-        assert!(car_turn.state.angular_velocity.abs() < 1e-3, "Angular velocity should settle to zero");
+        assert!(
+            (car_turn.state.angle - angle_at_stop).abs() < 0.01,
+            "Car should reverse straight along stopped heading"
+        );
+        assert!(
+            car_turn.state.angular_velocity.abs() < 1e-3,
+            "Angular velocity should settle to zero"
+        );
 
         // After turning in reverse, releasing steer straightens out trajectory
         let mut car_straighten = Car::new(CarConfig::sports_car());
@@ -1684,7 +2044,10 @@ mod tests {
         for _ in 0..60 {
             car_straighten.step(&ctrl_neutral_rev, SurfaceType::Asphalt, dt);
         }
-        assert!(car_straighten.state.angular_velocity.abs() < 1e-3, "Releasing steering in reverse must eliminate yaw rate");
+        assert!(
+            car_straighten.state.angular_velocity.abs() < 1e-3,
+            "Releasing steering in reverse must eliminate yaw rate"
+        );
     }
 
     #[test]
@@ -1700,8 +2063,14 @@ mod tests {
         for _ in 0..60 {
             car_straight.step(&ctrl_neutral, SurfaceType::Asphalt, dt);
         }
-        assert!((car_straight.state.angle - (-0.23337)).abs() < 1e-3, "Car must not turn involuntarily in reverse");
-        assert!(car_straight.state.angular_velocity.abs() < 1e-3, "Reverse yaw rate must remain stable");
+        assert!(
+            (car_straight.state.angle - (-0.23337)).abs() < 1e-3,
+            "Car must not turn involuntarily in reverse"
+        );
+        assert!(
+            car_straight.state.angular_velocity.abs() < 1e-3,
+            "Reverse yaw rate must remain stable"
+        );
 
         // 2. Reversing with yaw disturbance damps smoothly to zero without sign oscillations
         let mut car_disturbed = Car::new(config);
@@ -1709,7 +2078,10 @@ mod tests {
         for _ in 0..60 {
             car_disturbed.step(&ctrl_neutral, SurfaceType::Asphalt, dt);
         }
-        assert!(car_disturbed.state.angular_velocity.abs() < 1e-3, "Reverse yaw disturbance must damp out smoothly");
+        assert!(
+            car_disturbed.state.angular_velocity.abs() < 1e-3,
+            "Reverse yaw disturbance must damp out smoothly"
+        );
 
         // 3. Symmetrical left and right steering in reverse
         let mut car_right = Car::new(config);
@@ -1726,10 +2098,17 @@ mod tests {
             car_left.step(&ctrl_left, SurfaceType::Asphalt, dt);
         }
 
-        assert!(car_right.state.angular_velocity.abs() > 0.1, "Right steering must produce yaw in reverse");
-        assert!(car_left.state.angular_velocity.abs() > 0.1, "Left steering must produce yaw in reverse");
         assert!(
-            (car_right.state.angular_velocity.abs() - car_left.state.angular_velocity.abs()).abs() < 1e-4,
+            car_right.state.angular_velocity.abs() > 0.1,
+            "Right steering must produce yaw in reverse"
+        );
+        assert!(
+            car_left.state.angular_velocity.abs() > 0.1,
+            "Left steering must produce yaw in reverse"
+        );
+        assert!(
+            (car_right.state.angular_velocity.abs() - car_left.state.angular_velocity.abs()).abs()
+                < 1e-4,
             "Reverse steering must be perfectly symmetric"
         );
         assert!(
@@ -1824,7 +2203,10 @@ mod tests {
         for _ in 0..120 {
             car_fwd_rev.step(&ctrl_accel, SurfaceType::Asphalt, dt);
         }
-        println!("After 2s accel: speed={:.2}, v_long={:.2}", car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x);
+        println!(
+            "After 2s accel: speed={:.2}, v_long={:.2}",
+            car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x
+        );
         // Brake to full stop
         let ctrl_brake = CarControls::full_brake();
         let mut brake_frames = 0;
@@ -1832,7 +2214,10 @@ mod tests {
             car_fwd_rev.step(&ctrl_brake, SurfaceType::Asphalt, dt);
             brake_frames += 1;
         }
-        println!("Stopped after {} brake frames: speed={:.3}, v_long={:.3}", brake_frames, car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x);
+        println!(
+            "Stopped after {} brake frames: speed={:.3}, v_long={:.3}",
+            brake_frames, car_fwd_rev.state.speed, car_fwd_rev.state.local_velocity.x
+        );
 
         // Now reverse for 300 frames with steer=0
         let mut ctrl_rev = CarControls::new(1.0, 0.0, 0.0, false);
@@ -1851,7 +2236,9 @@ mod tests {
             }
         }
 
-        println!("\n=== SIMULATION: Reversing while turning for 180 frames then reverse steering ===");
+        println!(
+            "\n=== SIMULATION: Reversing while turning for 180 frames then reverse steering ==="
+        );
         let mut car_turn_swap = Car::new(config);
         let mut ctrl_turn1 = CarControls::new(1.0, 0.25, 0.0, false);
         ctrl_turn1.reverse = true;
@@ -1900,18 +2287,42 @@ mod tests {
         let mut sports_step = sports;
         sports_step.step(&ctrl, SurfaceType::Asphalt, dt);
         // Sports car RWD: front wheels have 0 longitudinal drive demand, rear wheels have full drive demand
-        assert_eq!(sports_step.state.wheels[0].longitudinal_force, 0.0, "RWD front left wheel should have no drive force");
-        assert_eq!(sports_step.state.wheels[1].longitudinal_force, 0.0, "RWD front right wheel should have no drive force");
-        assert!(sports_step.state.wheels[2].longitudinal_force < 0.0, "RWD rear left wheel must have reverse drive force");
-        assert!(sports_step.state.wheels[3].longitudinal_force < 0.0, "RWD rear right wheel must have reverse drive force");
+        assert_eq!(
+            sports_step.state.wheels[0].longitudinal_force, 0.0,
+            "RWD front left wheel should have no drive force"
+        );
+        assert_eq!(
+            sports_step.state.wheels[1].longitudinal_force, 0.0,
+            "RWD front right wheel should have no drive force"
+        );
+        assert!(
+            sports_step.state.wheels[2].longitudinal_force < 0.0,
+            "RWD rear left wheel must have reverse drive force"
+        );
+        assert!(
+            sports_step.state.wheels[3].longitudinal_force < 0.0,
+            "RWD rear right wheel must have reverse drive force"
+        );
 
         let mut rally_step = rally;
         rally_step.step(&ctrl, SurfaceType::Asphalt, dt);
         // Rally car AWD: all 4 wheels receive reverse drive torque
-        assert!(rally_step.state.wheels[0].longitudinal_force < 0.0, "AWD front left wheel must receive reverse drive");
-        assert!(rally_step.state.wheels[1].longitudinal_force < 0.0, "AWD front right wheel must receive reverse drive");
-        assert!(rally_step.state.wheels[2].longitudinal_force < 0.0, "AWD rear left wheel must receive reverse drive");
-        assert!(rally_step.state.wheels[3].longitudinal_force < 0.0, "AWD rear right wheel must receive reverse drive");
+        assert!(
+            rally_step.state.wheels[0].longitudinal_force < 0.0,
+            "AWD front left wheel must receive reverse drive"
+        );
+        assert!(
+            rally_step.state.wheels[1].longitudinal_force < 0.0,
+            "AWD front right wheel must receive reverse drive"
+        );
+        assert!(
+            rally_step.state.wheels[2].longitudinal_force < 0.0,
+            "AWD rear left wheel must receive reverse drive"
+        );
+        assert!(
+            rally_step.state.wheels[3].longitudinal_force < 0.0,
+            "AWD rear right wheel must receive reverse drive"
+        );
     }
 
     #[test]
@@ -2017,7 +2428,10 @@ mod tests {
         while car.speed_kmh() < 100.0 {
             car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
         }
-        assert!(!car.state.is_braking, "Accelerating must not set is_braking");
+        assert!(
+            !car.state.is_braking,
+            "Accelerating must not set is_braking"
+        );
 
         // 3. Off-throttle coasting (engine braking):
         // Slip ratio on rear wheel becomes negative from engine drag,
@@ -2046,10 +2460,7 @@ mod tests {
 
         // 6. Handbrake: must set is_braking = true
         car.step(&CarControls::handbrake_turn(0.0), SurfaceType::Asphalt, dt);
-        assert!(
-            car.state.is_braking,
-            "Handbrake must set is_braking = true"
-        );
+        assert!(car.state.is_braking, "Handbrake must set is_braking = true");
     }
 
     #[test]
@@ -2074,8 +2485,7 @@ mod tests {
             car_asphalt.state.velocity
         );
         assert_eq!(
-            car_asphalt.state.speed,
-            0.0,
+            car_asphalt.state.speed, 0.0,
             "Stopped car speed must be 0.0"
         );
 
@@ -2155,7 +2565,11 @@ mod tests {
             car.step(&ctrl_rev, SurfaceType::Asphalt, dt);
         }
         let speed_before = car.state.local_velocity.x;
-        assert!(speed_before < -5.0, "Car should reach reverse speed before handbrake, was {:.2}", speed_before);
+        assert!(
+            speed_before < -5.0,
+            "Car should reach reverse speed before handbrake, was {:.2}",
+            speed_before
+        );
 
         let mut ctrl_hb = CarControls::new(0.0, 0.0, 0.0, true);
         ctrl_hb.reverse = true;
@@ -2166,9 +2580,18 @@ mod tests {
                 locked_during_brake = true;
             }
         }
-        assert!(locked_during_brake, "Rear wheels must lock up when handbrake is engaged in reverse");
-        assert_eq!(car.state.speed, 0.0, "Handbrake must bring reversing car to a complete stop and hold it");
-        assert_eq!(car.state.wheels[2].longitudinal_force, 0.0, "Resting lock must eliminate longitudinal force when held");
+        assert!(
+            locked_during_brake,
+            "Rear wheels must lock up when handbrake is engaged in reverse"
+        );
+        assert_eq!(
+            car.state.speed, 0.0,
+            "Handbrake must bring reversing car to a complete stop and hold it"
+        );
+        assert_eq!(
+            car.state.wheels[2].longitudinal_force, 0.0,
+            "Resting lock must eliminate longitudinal force when held"
+        );
 
         // Test reverse handbrake turn with steering (J-turn / slide)
         let mut car_rev_turn = Car::new(CarConfig::sports_car());
@@ -2193,9 +2616,19 @@ mod tests {
                 entered_drift = true;
             }
         }
-        assert!(entered_drift, "Steering with handbrake in reverse must initiate drift state");
-        assert!(max_yaw > 1.0, "Reverse handbrake turn must generate high yaw rate, got {:.2} rad/s", max_yaw);
-        assert!(max_sideslip > 0.4, "Reverse handbrake turn must generate high sideslip, got {:.2} rad", max_sideslip);
+        assert!(
+            entered_drift,
+            "Steering with handbrake in reverse must initiate drift state"
+        );
+        assert!(
+            max_yaw > 1.0,
+            "Reverse handbrake turn must generate high yaw rate, got {:.2} rad/s",
+            max_yaw
+        );
+        assert!(
+            max_sideslip > 0.4,
+            "Reverse handbrake turn must generate high sideslip, got {:.2} rad",
+            max_sideslip
+        );
     }
 }
-

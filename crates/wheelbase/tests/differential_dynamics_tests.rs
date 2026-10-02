@@ -46,6 +46,8 @@ fn test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor() 
     let mut cfg_open = CarConfig::sports_car();
     cfg_open.rear_differential = DifferentialType::Open;
     cfg_open.front_differential = DifferentialType::Open;
+    cfg_open.assists = DriverAssistsConfig::arcade();
+    cfg_open.assists.tcs_strength = 0.75;
     let mut car_open = Car::new(cfg_open);
 
     // 2. Vehicle with Limited Slip Differential
@@ -55,6 +57,8 @@ fn test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor() 
         coast_lock: 0.25,
         preload_nm: 60.0,
     };
+    cfg_lsd.assists = DriverAssistsConfig::arcade();
+    cfg_lsd.assists.tcs_strength = 0.75;
     let mut car_lsd = Car::new(cfg_lsd);
 
     let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
@@ -96,10 +100,8 @@ fn test_lsd_transfers_torque_to_gripping_wheel_proportional_to_locking_factor() 
 /// Then the Spool differential must deliver full drive thrust to the gripping wheel without one-wheel runaway
 /// And achieve higher forward acceleration than an Open differential
 ///
-/// Spec 043: both cars run full (arcade) traction control. An open diff under engine-torque TCS is
-/// held to twice the ice wheel's grip, while the spool passes torque to the asphalt side. With the
-/// stock car's mild sport TCS (0.40) half the axle torque already saturates the asphalt tire in both
-/// cases, so the two diffs are grip-limited alike (measured 4.69 vs 4.66 m/s): physically correct.
+/// Both configurations use full TCS for this differential-only comparison. The profile values are
+/// set explicitly so future assist-envelope calibration does not silently redefine this gate.
 #[test]
 fn test_spool_differential_transfers_100_percent_torque_when_one_wheel_unloaded() {
     let dt = 1.0 / 60.0;
@@ -107,11 +109,15 @@ fn test_spool_differential_transfers_100_percent_torque_when_one_wheel_unloaded(
     let mut cfg_spool = CarConfig::stock_car_ta1();
     cfg_spool.rear_differential = DifferentialType::Spool;
     cfg_spool.assists = DriverAssistsConfig::arcade();
+    cfg_spool.assists.tcs_strength = 0.75;
+    cfg_spool.assists.tcs_slip_angle_deg = 12.0;
     let mut car_spool = Car::new(cfg_spool);
 
     let mut cfg_open = CarConfig::stock_car_ta1();
     cfg_open.rear_differential = DifferentialType::Open;
     cfg_open.assists = DriverAssistsConfig::arcade();
+    cfg_open.assists.tcs_strength = 0.75;
+    cfg_open.assists.tcs_slip_angle_deg = 12.0;
     let mut car_open = Car::new(cfg_open);
 
     let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
@@ -260,7 +266,10 @@ fn test_spool_produces_understeer_moment_versus_open() {
     let yaw_open = steady_yaw_rate(DifferentialType::Open, 0.3, 0.15, 15.0);
     let yaw_spool = steady_yaw_rate(DifferentialType::Spool, 0.3, 0.15, 15.0);
     println!("Steady yaw: open = {yaw_open:.3} rad/s, spool = {yaw_spool:.3} rad/s");
-    assert!(yaw_spool < yaw_open * 0.97, "spool {yaw_spool:.3} must turn less than open {yaw_open:.3}");
+    assert!(
+        yaw_spool < yaw_open * 0.97,
+        "spool {yaw_spool:.3} must turn less than open {yaw_open:.3}"
+    );
 }
 
 /// Scenario: LSD power lock shapes corner-exit balance (Spec 043)
@@ -273,10 +282,21 @@ fn test_spool_produces_understeer_moment_versus_open() {
 /// the lock cannot matter there; on partial power it moves yaw by 13-17%.
 #[test]
 fn test_lsd_power_lock_changes_corner_exit_yaw() {
-    let lsd = |power_lock: f32| DifferentialType::LimitedSlip { power_lock, coast_lock: 0.3, preload_nm: 0.0 };
+    let lsd = |power_lock: f32| DifferentialType::LimitedSlip {
+        power_lock,
+        coast_lock: 0.3,
+        preload_nm: 0.0,
+    };
     let yaw_free = steady_yaw_rate(lsd(0.0), 0.3, 0.15, 15.0);
     let yaw_locked = steady_yaw_rate(lsd(0.8), 0.3, 0.15, 15.0);
     let diff = (yaw_locked - yaw_free).abs() / yaw_free.max(1e-3);
-    println!("Exit yaw: power_lock 0.0 = {yaw_free:.3}, 0.8 = {yaw_locked:.3} (diff {:.1}%)", diff * 100.0);
-    assert!(diff >= 0.10, "power_lock must move exit yaw by >= 10% (got {:.1}%)", diff * 100.0);
+    println!(
+        "Exit yaw: power_lock 0.0 = {yaw_free:.3}, 0.8 = {yaw_locked:.3} (diff {:.1}%)",
+        diff * 100.0
+    );
+    assert!(
+        diff >= 0.10,
+        "power_lock must move exit yaw by >= 10% (got {:.1}%)",
+        diff * 100.0
+    );
 }
