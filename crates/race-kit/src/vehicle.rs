@@ -47,6 +47,14 @@ pub trait Vehicle: Body2D {
     fn on_impact(&mut self, _impact_speed: f32) -> Option<DnfCause> {
         None
     }
+    /// Resets mechanical tire wear across all wheels to 0.0. The default does nothing.
+    fn service_tires(&mut self) {}
+    /// Restores chassis health by amount (clamped to 1.0). Returns health gained. The default returns 0.0.
+    fn apply_field_repair(&mut self, _amount: f32) -> f32 { 0.0 }
+    /// Current chassis health [0.0..1.0]. The default returns 1.0.
+    fn health(&self) -> f32 { 1.0 }
+    /// Maximum tire wear across all wheels [0.0..1.0]. The default returns 0.0.
+    fn max_tire_wear(&self) -> f32 { 0.0 }
 }
 
 impl Vehicle for Car {
@@ -125,5 +133,25 @@ impl Vehicle for Car {
     #[inline]
     fn landed(&self) -> Option<f32> {
         self.state.just_landed.then_some(self.state.last_air_time)
+    }
+
+    #[inline]
+    fn service_tires(&mut self) {
+        self.service_tires();
+    }
+
+    #[inline]
+    fn apply_field_repair(&mut self, amount: f32) -> f32 {
+        self.apply_field_repair(amount)
+    }
+
+    #[inline]
+    fn health(&self) -> f32 {
+        self.state.health
+    }
+
+    #[inline]
+    fn max_tire_wear(&self) -> f32 {
+        self.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0f32, f32::max)
     }
 }
