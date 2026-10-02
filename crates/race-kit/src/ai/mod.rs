@@ -28,6 +28,14 @@ pub trait BotVehicle: Body2D {
     fn planning_grip(&self) -> f32 {
         0.78
     }
+    /// Maximum tire wear across wheels [0.0..1.0]. The default returns 0.0.
+    fn max_tire_wear(&self) -> f32 {
+        0.0
+    }
+    /// Chassis health [0.0..1.0]. The default returns 1.0.
+    fn health(&self) -> f32 {
+        1.0
+    }
 }
 
 impl BotVehicle for Car {
@@ -42,6 +50,14 @@ impl BotVehicle for Car {
     #[inline]
     fn grip(&self) -> f32 {
         self.config.tire.grip
+    }
+    #[inline]
+    fn max_tire_wear(&self) -> f32 {
+        self.state.wheels.iter().map(|w| w.wear).fold(0.0, f32::max)
+    }
+    #[inline]
+    fn health(&self) -> f32 {
+        self.state.health
     }
 }
 
@@ -498,6 +514,10 @@ pub struct BotAiDriver {
     pub last_pos: Option<Vec2>,
     pub total_distance_travelled: f32,
     pub human: HumanDriver,
+    /// Whether this bot is actively executing a pit stop entry or pit road traverse.
+    pub is_pitting: bool,
+    /// Whether the bot has stopped in its stall and received fresh tires/repairs.
+    pub pit_serviced: bool,
 }
 
 impl BotAiDriver {
@@ -521,7 +541,16 @@ impl BotAiDriver {
             recovery_attempts: 0,
             last_pos: None,
             total_distance_travelled: 0.0,
+            is_pitting: false,
+            pit_serviced: false,
         }
+    }
+
+    /// Evaluates tactical pit stop decision heuristic:
+    /// Returns true when tire wear > 70% or chassis health < 60%. Spec 062.
+    #[inline]
+    pub fn should_pit<V: BotVehicle>(&self, car: &V) -> bool {
+        car.max_tire_wear() > 0.70 || car.health() < 0.60
     }
 
     /// Computes deterministic driving controls (throttle, steer, brake, handbrake)
@@ -578,53 +607,102 @@ impl BotAiDriver {
             target_point += target_sample.normal * self.human.line_offset(spline, target_dist, target_sample.width, dt);
         }
 
-        // Obstacle clearance: shift target point away from track obstacles (apex tire stacks)
-        for obs in &track.geometry.obstacles {
-            let obs_center = obs.center();
-            let to_obs = obs_center - car_pos;
-            let dist = to_obs.length();
-            if dist < 10.0 {
-                let obs_lat = to_obs.dot(car_right);
-                if obs_lat.abs() < 3.5 {
-                    let push_dir: f32 = if obs_lat > 0.0 { 1.0 } else { -1.0 };
-                    let urgency: f32 = (1.0f32 - (dist / 10.0)).clamp(0.0f32, 1.0f32);
-                    target_point += target_sample.normal * (push_dir * urgency * 3.5);
+        // Pit lane navigation and strategy (Spec 062)
+        let mut in_pit_lane = false;
+        if let Some(lane) = &track.pit_lane {
+            if lane.spline.total_length() > 1.0 {
+                let entry_center = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
+                let entry_proj = track.spline.project_point(entry_center);
+                let dist_to_pit_entry_along_track = (entry_proj.progress_distance - curr_dist).rem_euclid(track.spline.total_length());
+
+                if self.should_pit(car) && dist_to_pit_entry_along_track < 100.0 {
+                    self.is_pitting = true;
+                }
+
+                let pit_proj = lane.spline.project_point(car_pos);
+                let is_on_pit_ribbon = pit_proj.distance_to_spline < lane.road_width * 1.5;
+
+                if self.is_pitting {
+                    if is_on_pit_ribbon {
+                        in_pit_lane = true;
+                        let pit_target_dist = (pit_proj.progress_distance + lookahead_dist).min(lane.spline.total_length());
+                        let mut pit_target = lane.spline.sample_at_distance(pit_target_dist).point;
+
+                        if !self.pit_serviced {
+                            if let Some(pbox) = lane.pit_boxes.first() {
+                                let dist_to_box = (pbox.position - car_pos).length();
+                                if dist_to_box < 15.0 {
+                                    pit_target = pbox.position;
+                                }
+                            }
+                            if car.max_tire_wear() < 0.10 && car.health() >= 0.65 {
+                                self.pit_serviced = true;
+                            }
+                        }
+
+                        target_point = pit_target;
+
+                        if pit_proj.progress_distance >= lane.spline.total_length() - 5.0 {
+                            self.is_pitting = false;
+                            self.pit_serviced = false;
+                        }
+                    } else if dist_to_pit_entry_along_track < 100.0 {
+                        let blend = (1.0 - (dist_to_pit_entry_along_track / 100.0)).clamp(0.0, 1.0);
+                        target_point = target_point.lerp(entry_center, blend * 0.85);
+                    }
                 }
             }
         }
 
-        // Keep the straight line to the target off close walls. Around a bend it passes inside the target
-        // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
-        // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
-        // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
-        // slower than the keyboard reference, spec 046).
-        let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
-        let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
-        let (wall_on, wall_dist) = if chord_lat > 0.0 {
-            (mid.left_wall, mid.left_wall_distance)
-        } else {
-            (mid.right_wall, mid.right_wall_distance)
-        };
-        if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
-            let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
-            if excess > 0.0 {
-                // Moving the target moves the middle of the line by half as much.
-                target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
+        if !in_pit_lane {
+            // Obstacle clearance: shift target point away from track obstacles (apex tire stacks)
+            for obs in &track.geometry.obstacles {
+                let obs_center = obs.center();
+                let to_obs = obs_center - car_pos;
+                let dist = to_obs.length();
+                if dist < 10.0 {
+                    let obs_lat = to_obs.dot(car_right);
+                    if obs_lat.abs() < 3.5 {
+                        let push_dir: f32 = if obs_lat > 0.0 { 1.0 } else { -1.0 };
+                        let urgency: f32 = (1.0f32 - (dist / 10.0)).clamp(0.0f32, 1.0f32);
+                        target_point += target_sample.normal * (push_dir * urgency * 3.5);
+                    }
+                }
             }
-        }
-        // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
-        // heading error and slid along the wall.
-        let here = spline.sample_at_distance(curr_dist);
-        let car_lat = (car_pos - here.point).dot(here.normal);
-        let (wall_on, wall_dist) = if car_lat > 0.0 {
-            (here.left_wall, here.left_wall_distance)
-        } else {
-            (here.right_wall, here.right_wall_distance)
-        };
-        if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
-            let excess = car_lat.abs() - (here.width * 0.5 + d - WALL_CLEARANCE_M);
-            if excess > 0.0 {
-                target_point -= target_sample.normal * (car_lat.signum() * excess * CAR_WALL_PUSH);
+
+            // Keep the straight line to the target off close walls. Around a bend it passes inside the target
+            // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
+            // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
+            // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
+            // slower than the keyboard reference, spec 046).
+            let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
+            let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
+            let (wall_on, wall_dist) = if chord_lat > 0.0 {
+                (mid.left_wall, mid.left_wall_distance)
+            } else {
+                (mid.right_wall, mid.right_wall_distance)
+            };
+            if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+                let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
+                if excess > 0.0 {
+                    // Moving the target moves the middle of the line by half as much.
+                    target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
+                }
+            }
+            // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
+            // heading error and slid along the wall.
+            let here = spline.sample_at_distance(curr_dist);
+            let car_lat = (car_pos - here.point).dot(here.normal);
+            let (wall_on, wall_dist) = if car_lat > 0.0 {
+                (here.left_wall, here.left_wall_distance)
+            } else {
+                (here.right_wall, here.right_wall_distance)
+            };
+            if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+                let excess = car_lat.abs() - (here.width * 0.5 + d - WALL_CLEARANCE_M);
+                if excess > 0.0 {
+                    target_point -= target_sample.normal * (car_lat.signum() * excess * CAR_WALL_PUSH);
+                }
             }
         }
 
@@ -746,6 +824,33 @@ impl BotAiDriver {
 
         target_speed = target_speed.clamp(7.0, car.top_speed_mps());
 
+        // Pit lane speed governing and pit box stopping (Spec 062)
+        if let Some(lane) = &track.pit_lane {
+            if self.is_pitting {
+                let entry_center = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
+                let entry_proj = track.spline.project_point(entry_center);
+                let dist_to_pit_entry_along_track = (entry_proj.progress_distance - curr_dist).rem_euclid(track.spline.total_length());
+
+                if in_pit_lane {
+                    target_speed = target_speed.min(lane.speed_limit);
+                    if !self.pit_serviced {
+                        if let Some(pbox) = lane.pit_boxes.first() {
+                            let dist_to_box = (pbox.position - car_pos).length();
+                            if dist_to_box < 15.0 {
+                                let stop_speed = (dist_to_box / 15.0).clamp(0.0, 1.0) * lane.speed_limit;
+                                target_speed = target_speed.min(stop_speed);
+                                if dist_to_box <= pbox.stop_radius || pbox.contains_point(car_pos) {
+                                    target_speed = 0.0;
+                                }
+                            }
+                        }
+                    }
+                } else if dist_to_pit_entry_along_track < 30.0 {
+                    target_speed = target_speed.min(lane.speed_limit * 1.2);
+                }
+            }
+        }
+
         // 4. Multi-car Collision Avoidance & Overtaking
         let mut throttle_limit = 1.0f32;
         let mut extra_brake = 0.0f32;
@@ -859,7 +964,9 @@ impl BotAiDriver {
 
         // 6. Longitudinal Throttle & Brake Management
         let speed_err = target_speed - car_speed;
-        let (throttle_cmd, brake_cmd) = if extra_brake > 0.2 {
+        let (throttle_cmd, brake_cmd) = if in_pit_lane && target_speed <= 0.1 {
+            (0.0, 1.0)
+        } else if extra_brake > 0.2 {
             (0.0, extra_brake)
         } else if speed_err > 0.5 {
             // Accelerate

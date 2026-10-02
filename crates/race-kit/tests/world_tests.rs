@@ -206,7 +206,7 @@ fn test_pit_service_state_machine() {
     // Create pit lane spline and gates
     let entry_gate = LineSegment::new(Vec2::new(10.0, -10.0), Vec2::new(10.0, 10.0));
     let exit_gate = LineSegment::new(Vec2::new(100.0, -10.0), Vec2::new(100.0, 10.0));
-    let pit_spline = TrackSpline::from_points(&[Vec2::new(10.0, 0.0), Vec2::new(100.0, 0.0)], 6.0, false);
+    let pit_spline = TrackSpline::from_points(&[Vec2::new(10.0, 0.0), Vec2::new(55.0, 0.0), Vec2::new(100.0, 0.0)], 6.0, false);
     let pit_box = PitBox::new(Vec2::new(50.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
 
     track.pit_lane = Some(PitLane::new(
