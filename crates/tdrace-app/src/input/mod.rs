@@ -57,6 +57,8 @@ pub struct InputController {
     pub filter: DigitalInputFilter,
     pub gamepad: GamepadController,
     pub input_map: InputMap,
+    last_steering_digital: bool,
+    last_p2_steering_digital: bool,
 }
 
 impl Default for InputController {
@@ -75,6 +77,8 @@ impl InputController {
             filter: DigitalInputFilter::default(),
             gamepad: GamepadController::new(),
             input_map,
+            last_steering_digital: false,
+            last_p2_steering_digital: false,
         }
     }
 
@@ -82,6 +86,8 @@ impl InputController {
     pub fn reset(&mut self) {
         self.filter.reset();
         self.gamepad.reset();
+        self.last_steering_digital = false;
+        self.last_p2_steering_digital = false;
     }
 
     /// Saves current input bindings to user storage directory.
@@ -132,6 +138,18 @@ impl InputController {
     /// Returns the active steering smoothing profile.
     pub fn steering_profile(&self) -> SteeringProfile {
         self.filter.config.profile
+    }
+
+    pub fn last_steering_was_digital(&self) -> bool {
+        self.last_steering_digital
+    }
+
+    pub fn set_steering_source_digital(&mut self, digital: bool) {
+        self.last_steering_digital = digital;
+    }
+
+    pub fn last_p2_steering_was_digital(&self) -> bool {
+        self.last_p2_steering_digital
     }
 
     /// Polls player driving controls (Keyboard + Gamepad with progressive smoothing & analog precision).
@@ -187,6 +205,9 @@ impl InputController {
 
         let (steer, mut throttle, mut brake) =
             self.filter.update(raw_steer, raw_throttle, raw_brake, dt);
+        if raw_steer.abs() > 1e-3 || steer.abs() > 1e-3 {
+            self.last_steering_digital = true;
+        }
         let mut reverse = false;
 
         if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle <= 0.05 {
@@ -215,6 +236,11 @@ impl InputController {
         } else {
             0.0
         };
+        if gp.steer.abs() > 1e-3 {
+            self.last_p2_steering_digital = false;
+        } else if gp_digital_steer.abs() > 1e-3 {
+            self.last_p2_steering_digital = true;
+        }
 
         let steer = if gp.steer.abs() > 0.001 {
             gp.steer.clamp(-1.0, 1.0)
@@ -290,6 +316,9 @@ impl InputController {
 
         let (steer, mut throttle, mut brake) =
             filter_p2.update(raw_steer, raw_throttle, raw_brake, dt);
+        if raw_steer.abs() > 1e-3 || steer.abs() > 1e-3 {
+            self.last_p2_steering_digital = true;
+        }
         let mut reverse = false;
 
         if current_speed_fwd <= 0.25 && (brake > 0.0 || raw_brake > 0.0) && throttle == 0.0 {
@@ -340,6 +369,13 @@ impl InputController {
 
         // Blend Keyboard and Analog Gamepad controls seamlessly
         let gp = &self.gamepad.snapshot;
+        let gp_digital_steer = self.input_map.is_gamepad_btn_down(ArcadeAction::Left, gp)
+            || self.input_map.is_gamepad_btn_down(ArcadeAction::Right, gp);
+        if gp.steer.abs() > 1e-3 {
+            self.last_steering_digital = false;
+        } else if gp_digital_steer || raw_steer.abs() > 1e-3 || kb_steer.abs() > 1e-3 {
+            self.last_steering_digital = true;
+        }
         let gp_digital_steer: f32 = if self.input_map.is_gamepad_btn_down(ArcadeAction::Left, gp) {
             -1.0
         } else if self.input_map.is_gamepad_btn_down(ArcadeAction::Right, gp) {

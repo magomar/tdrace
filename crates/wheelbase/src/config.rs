@@ -130,7 +130,11 @@ pub fn pacejka_peak_slip_angle_deg(b: f32, c: f32, e: f32) -> f32 {
     }
     for _ in 0..60 {
         let mid = 0.5 * (lo + hi);
-        if f(mid) < 0.0 { lo = mid; } else { hi = mid; }
+        if f(mid) < 0.0 {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
     }
     (0.5 * (lo + hi) / b).to_degrees().clamp(3.0, 25.0)
 }
@@ -225,11 +229,18 @@ impl From<TireConfigRaw> for TireConfig {
     fn from(raw: TireConfigRaw) -> Self {
         let d = TireConfig::default();
         let legacy_peak = raw.stiffness_b.map(|b| {
-            pacejka_peak_slip_angle_deg(b, raw.shape_c.unwrap_or(1.45), raw.curvature_e.unwrap_or(-0.15))
+            pacejka_peak_slip_angle_deg(
+                b,
+                raw.shape_c.unwrap_or(1.45),
+                raw.curvature_e.unwrap_or(-0.15),
+            )
         });
         Self {
             grip: raw.grip.unwrap_or(d.grip),
-            peak_slip_angle_deg: raw.peak_slip_angle_deg.or(legacy_peak).unwrap_or(d.peak_slip_angle_deg),
+            peak_slip_angle_deg: raw
+                .peak_slip_angle_deg
+                .or(legacy_peak)
+                .unwrap_or(d.peak_slip_angle_deg),
             peak_slip_ratio: raw.peak_slip_ratio.unwrap_or(d.peak_slip_ratio),
             slide_grip: raw.slide_grip.unwrap_or(d.slide_grip),
             falloff: raw.falloff.unwrap_or(d.falloff),
@@ -255,6 +266,12 @@ pub struct DriverAssistsConfig {
     /// TCS lateral trigger: rear slip angle (degrees) above which engine torque is cut (Spec 043).
     #[serde(default = "default_tcs_slip_angle_deg")]
     pub tcs_slip_angle_deg: f32,
+    /// Independent ESC body-sideslip intervention threshold, in degrees.
+    #[serde(default = "default_esc_sideslip_limit_deg")]
+    pub esc_sideslip_limit_deg: f32,
+    /// Skip TCS torque and wheel-slip corrections during established forward counter-steered drifts.
+    #[serde(default)]
+    pub tcs_drift_bypass: bool,
 
     /// Electronic Stability Control (ESC) enabled.
     /// Applies corrective stabilizing yaw moment when unintended sideslip/yaw rate occurs.
@@ -288,6 +305,10 @@ fn default_tcs_slip_angle_deg() -> f32 {
     12.0
 }
 
+fn default_esc_sideslip_limit_deg() -> f32 {
+    12.0
+}
+
 impl Default for DriverAssistsConfig {
     fn default() -> Self {
         Self::arcade()
@@ -301,12 +322,14 @@ impl DriverAssistsConfig {
             tcs_enabled: true,
             tcs_slip_threshold: 0.18,
             tcs_strength: 0.75,
-            tcs_slip_angle_deg: 12.0,
+            tcs_slip_angle_deg: 18.0,
+            esc_sideslip_limit_deg: 22.0,
+            tcs_drift_bypass: false,
             esc_enabled: true,
             esc_yaw_threshold: 0.10,
-            esc_strength: 0.85,
+            esc_strength: 0.70,
             counter_steer_assist_enabled: true,
-            counter_steer_assist_strength: 0.70,
+            counter_steer_assist_strength: 0.75,
             abs_enabled: true,
             abs_slip_threshold: 0.15,
             abs_strength: 0.95,
@@ -318,14 +341,16 @@ impl DriverAssistsConfig {
     pub const fn sport() -> Self {
         Self {
             tcs_enabled: true,
-            tcs_slip_threshold: 0.30,
-            tcs_strength: 0.40,
-            tcs_slip_angle_deg: 16.0,
+            tcs_slip_threshold: 0.45,
+            tcs_strength: 0.25,
+            tcs_slip_angle_deg: 32.0,
+            esc_sideslip_limit_deg: 38.0,
+            tcs_drift_bypass: true,
             esc_enabled: true,
-            esc_yaw_threshold: 0.22,
-            esc_strength: 0.50,
+            esc_yaw_threshold: 0.40,
+            esc_strength: 0.30,
             counter_steer_assist_enabled: true,
-            counter_steer_assist_strength: 0.60,
+            counter_steer_assist_strength: 0.55,
             abs_enabled: true,
             abs_slip_threshold: 0.20,
             abs_strength: 0.75,
@@ -340,6 +365,8 @@ impl DriverAssistsConfig {
             tcs_slip_threshold: 0.50,
             tcs_strength: 0.0,
             tcs_slip_angle_deg: 30.0,
+            esc_sideslip_limit_deg: 180.0,
+            tcs_drift_bypass: false,
             esc_enabled: false,
             esc_yaw_threshold: 1.0,
             esc_strength: 0.0,
@@ -362,6 +389,12 @@ pub enum AssistProfile {
     Sport,
     /// Pro / Expert: All electronic aids OFF. Pure simulation physics.
     Pro,
+}
+
+impl Default for AssistProfile {
+    fn default() -> Self {
+        Self::Arcade
+    }
 }
 
 impl AssistProfile {
@@ -447,13 +480,19 @@ impl Default for RearAxleTire {
     /// in the linear range. With equal tires the factory cars were neutral and several GT,
     /// stock-car and kart models diverged into slow spins above ~40 m/s with a steer key held.
     fn default() -> Self {
-        Self { grip_scale: 1.0, peak_slip_scale: 0.85 }
+        Self {
+            grip_scale: 1.0,
+            peak_slip_scale: 0.85,
+        }
     }
 }
 
 impl RearAxleTire {
     /// Identical front and rear tires (neutral linear balance, lively rear).
-    pub const NEUTRAL: Self = Self { grip_scale: 1.0, peak_slip_scale: 1.0 };
+    pub const NEUTRAL: Self = Self {
+        grip_scale: 1.0,
+        peak_slip_scale: 1.0,
+    };
 
     /// The rear tire for a given front tire.
     pub fn apply(&self, front: &TireConfig) -> TireConfig {
@@ -478,18 +517,31 @@ pub struct PlayerHandling {
     pub steer_overslip: f32,
     /// Traction help [0, 1]: eases throttle as the rear axle nears its lateral limit.
     pub traction_help: f32,
+    /// Enables the Spec 072 preset-aware low-speed authority envelope for human drivers.
+    #[serde(default)]
+    pub low_speed_authority_enabled: bool,
 }
 
 impl Default for PlayerHandling {
     fn default() -> Self {
-        Self { grip_aware_steering: false, steer_overslip: 1.0, traction_help: 0.0 }
+        Self {
+            grip_aware_steering: false,
+            steer_overslip: 1.0,
+            traction_help: 0.0,
+            low_speed_authority_enabled: false,
+        }
     }
 }
 
 impl PlayerHandling {
     /// Human-driver handling with grip-aware steering on.
     pub fn human(steer_overslip: f32, traction_help: f32) -> Self {
-        Self { grip_aware_steering: true, steer_overslip, traction_help }
+        Self {
+            grip_aware_steering: true,
+            steer_overslip,
+            traction_help,
+            low_speed_authority_enabled: false,
+        }
     }
 }
 
@@ -823,7 +875,9 @@ impl From<CarConfigRaw> for CarConfig {
             CarConfig::default_wheel_assemblies_for(raw.tire, raw.brake_bias, raw.drive_bias)
         });
 
-        let front_differential = raw.front_differential.unwrap_or_else(default_front_differential);
+        let front_differential = raw
+            .front_differential
+            .unwrap_or_else(default_front_differential);
         let rear_differential = raw.rear_differential.unwrap_or_else(|| {
             if raw.caster_jacking_factor > 0.0 {
                 DifferentialType::Spool
@@ -1011,7 +1065,10 @@ impl CarConfig {
             tire,
             // Rear tires peak earlier (stiffer) than the fronts: a stable understeer gradient in
             // the linear range. With equal tires the car is neutral and diverges above ~40 m/s.
-            rear_axle: RearAxleTire { grip_scale: 1.0, peak_slip_scale: 0.81 },
+            rear_axle: RearAxleTire {
+                grip_scale: 1.0,
+                peak_slip_scale: 0.81,
+            },
             assists: DriverAssistsConfig::arcade(),
             terrain: TerrainInteractionConfig::default(),
             player: PlayerHandling::default(),
@@ -1060,7 +1117,10 @@ impl CarConfig {
             ..TireConfig::default()
         };
         // Wide rear slicks: more grip than the narrow fronts (1.50 vs 1.35)
-        let rear_axle = RearAxleTire { grip_scale: 1.50 / 1.35, peak_slip_scale: 0.85 };
+        let rear_axle = RearAxleTire {
+            grip_scale: 1.50 / 1.35,
+            peak_slip_scale: 0.85,
+        };
         let rear_tire = rear_axle.apply(&front_tire);
         // I_front = 0.15 kg*m^2, I_rear = 0.24 kg*m^2 (I_rear > I_front)
         let wheels = [
@@ -1142,6 +1202,8 @@ impl CarConfig {
                 tcs_slip_threshold: 0.16,
                 tcs_strength: 0.70,
                 tcs_slip_angle_deg: 12.0,
+                esc_sideslip_limit_deg: 12.0,
+                tcs_drift_bypass: false,
                 esc_enabled: false, // Pure analog chassis yaw rotation for karts
                 esc_yaw_threshold: 0.40,
                 esc_strength: 0.0,
@@ -1472,7 +1534,12 @@ mod tests {
         // Wide rear slicks carry more grip than the narrow fronts (Spec 043: grip is a true mu scale)
         let f_front = kart.wheels[0].tire_model.grip;
         let f_rear = kart.wheels[2].tire_model.grip;
-        assert!(f_rear > f_front, "rear grip ({}) should exceed front grip ({})", f_rear, f_front);
+        assert!(
+            f_rear > f_front,
+            "rear grip ({}) should exceed front grip ({})",
+            f_rear,
+            f_front
+        );
     }
 
     #[test]
@@ -1501,7 +1568,10 @@ mod tests {
         sports.tire.grip = 1.3;
         sports.finalize();
         assert!((sports.wheels[2].tire_model.grip - 1.3).abs() < 1e-6);
-        assert!(sports.wheels[2].tire_model.peak_slip_angle_deg < sports.wheels[0].tire_model.peak_slip_angle_deg);
+        assert!(
+            sports.wheels[2].tire_model.peak_slip_angle_deg
+                < sports.wheels[0].tire_model.peak_slip_angle_deg
+        );
 
         // Idempotent
         let again = cfg.finalized();
@@ -1580,7 +1650,11 @@ mod tests {
         }"#;
 
         let deserialized: Result<CarConfig, _> = serde_json::from_str(legacy_json);
-        assert!(deserialized.is_ok(), "Failed to deserialize legacy config: {:?}", deserialized.err());
+        assert!(
+            deserialized.is_ok(),
+            "Failed to deserialize legacy config: {:?}",
+            deserialized.err()
+        );
         let config = deserialized.unwrap();
 
         // All 4 wheels inherit the migrated tire: peak_d -> grip, Pacejka B/C/E -> peak slip angle
@@ -1588,8 +1662,15 @@ mod tests {
         for i in 0..4 {
             assert_eq!(config.wheels[i].tire_model.grip, 1.10);
             // Rear axle: default stiffer rear (peak at 0.85x the front)
-            let axle = if i < 2 { 1.0 } else { RearAxleTire::default().peak_slip_scale };
-            assert!((config.wheels[i].tire_model.peak_slip_angle_deg - expected_peak * axle).abs() < 1e-4);
+            let axle = if i < 2 {
+                1.0
+            } else {
+                RearAxleTire::default().peak_slip_scale
+            };
+            assert!(
+                (config.wheels[i].tire_model.peak_slip_angle_deg - expected_peak * axle).abs()
+                    < 1e-4
+            );
             assert_eq!(config.wheels[i].tire_model.slide_grip, 0.88);
             assert_eq!(config.wheels[i].tire_radius, 0.32);
             assert_eq!(config.wheels[i].rotational_inertia, 1.25);

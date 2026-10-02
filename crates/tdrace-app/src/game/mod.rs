@@ -1204,6 +1204,20 @@ impl RaceSession {
         let my_idx = self.player_car_index();
         if let Some(player_car) = self.world.vehicles.get_mut(my_idx) {
             player_car.config.assists = profile.to_config();
+            player_car.config.player = crate::config::player_handling_for(profile, &self.input.filter.config);
+        }
+        if self.is_split_screen() {
+            if let Some(player2_car) = self.world.vehicles.get_mut(1) {
+                player2_car.config.player = crate::config::player_handling_for(self.assist_profile_p2, &self.filter_p2.config);
+            }
+        }
+    }
+
+    fn set_player2_assist_profile(&mut self, profile: AssistProfile) {
+        self.assist_profile_p2 = profile;
+        if let Some(car) = self.world.vehicles.get_mut(1) {
+            car.config.assists = profile.to_config();
+            car.config.player = crate::config::player_handling_for(profile, &self.filter_p2.config);
         }
     }
 
@@ -1396,22 +1410,20 @@ impl RaceSession {
     }
 
     /// Car-side handling aids for a human driver's keyboard settings (Spec 043).
-    fn player_handling(cfg: &DigitalInputConfig) -> PlayerHandling {
-        PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
+    fn player_handling(profile: AssistProfile, cfg: &DigitalInputConfig) -> PlayerHandling {
+        crate::config::player_handling_for(profile, cfg)
     }
 
     /// Applies the primary keyboard settings to the split-screen filter and to every human car.
     /// The single place that syncs handling settings into live cars (Spec 043).
     pub fn apply_player_handling(&mut self) {
-        self.filter_p2.config = self.input.filter.config;
-        let handling = Self::player_handling(&self.input.filter.config);
         let my_idx = self.player_car_index();
         if let Some(car) = self.world.vehicles.get_mut(my_idx) {
-            car.config.player = handling;
+            car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
         }
         if self.is_split_screen() {
             if let Some(car) = self.world.vehicles.get_mut(1) {
-                car.config.player = handling;
+                car.config.player = Self::player_handling(self.assist_profile_p2, &self.filter_p2.config);
             }
         }
     }
@@ -4532,7 +4544,8 @@ impl RaceSession {
                 grid_slot: player_slot,
             });
         let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
-        player_car.config.player = Self::player_handling(&self.input.filter.config);
+                    player_car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
+                    player_car.config.assists = self.assist_profile.to_config();
         self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
@@ -4559,7 +4572,7 @@ impl RaceSession {
             let mut p2_config = base_config;
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
-            p2_car.config.player = Self::player_handling(&self.filter_p2.config);
+            p2_car.config.player = Self::player_handling(self.assist_profile_p2, &self.filter_p2.config);
             self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
@@ -5588,10 +5601,10 @@ impl RaceSession {
             }
         }
         if assist_keys && self.is_split_screen() && pad_assist {
-            self.assist_profile_p2 = self.assist_profile_p2.next();
+            let next = self.assist_profile_p2.next();
+            self.set_player2_assist_profile(next);
             self.audio.play_sfx(SfxType::UiMove);
             if let Some(p2_car) = self.world.vehicles.get_mut(1) {
-                p2_car.config.assists = self.assist_profile_p2.to_config();
                 self.fx.drift_popups.spawn_text(
                     p2_car.state.position,
                     &format!("P2 ASSISTS: {}", self.assist_profile_p2.short_name()),
@@ -9453,7 +9466,7 @@ impl RaceSession {
                     self.car_choice = m.base_car_choice;
                     self.current_visual_type = m.visual_type;
                 }
-                car.config.player = Self::player_handling(&self.input.filter.config);
+                car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
             }
 
             self.world.spawn(car, TrackProgressTracker::new(num_cps, num_sectors));
@@ -12209,6 +12222,11 @@ impl RaceSession {
                 p1_speed,
                 p2_speed,
             );
+            self.world.vehicles[0]
+                .set_digital_steering_source(self.input.last_steering_was_digital());
+            if let Some(p2) = self.world.vehicles.get_mut(1) {
+                p2.set_digital_steering_source(self.input.last_p2_steering_was_digital());
+            }
             if p1_speed <= 0.25 && p1_ctrl.brake > 0.0 && p1_ctrl.throttle == 0.0 {
                 p1_ctrl.reverse = true;
                 p1_ctrl.throttle = p1_ctrl.brake;
@@ -12260,6 +12278,12 @@ impl RaceSession {
                 let kb_ctrl = self.input.poll_player_controls(dt, player_speed);
                 let touch_ctrl = self.touch.poll_controls();
                 let mut ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
+                if self.touch.steering_active() {
+                    self.input.set_steering_source_digital(self.touch.uses_digital_steering());
+                }
+                if let Some(car) = self.world.vehicles.first_mut() {
+                    car.set_digital_steering_source(self.input.last_steering_was_digital());
+                }
                 if player_speed <= 0.25 && ctrl.brake > 0.0 && ctrl.throttle == 0.0 {
                     ctrl.reverse = true;
                     ctrl.throttle = ctrl.brake;

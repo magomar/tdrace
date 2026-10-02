@@ -13,8 +13,8 @@ pub mod module;
 pub mod profile;
 pub mod render;
 pub mod replay;
-pub mod storage;
 pub mod series;
+pub mod storage;
 pub use series as tournament;
 pub mod track_manager;
 pub mod tracks;
@@ -26,57 +26,70 @@ pub use storage::{
 };
 pub use tracks::{DevTrackStore, PresetCatalog, UserTrackStore};
 
-pub use ai::{BotAiDriver, BotProfile, DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
-pub use audio::{AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType};
+pub use ai::{
+    BotAiDriver, BotProfile, DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets,
+    DriverStats,
+};
+pub use audio::{
+    AudioManager, AudioSettings, EngineSoundConfig, EngineSoundType, MusicTrack, SfxType,
+};
 pub use camera::{CameraMode, RaceCamera, SplitLayout};
 pub use config::{
-    AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig, PlayerHelpersConfig,
-    ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
+    player_handling_for, AudioConfig, CameraConfig, GameConfig, GameplayConfig, InputConfig,
+    PlayerHelpersConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
 };
 pub use fx::{DriftPopup, EffectsManager, ParticleSystem, SkidmarkBuffer};
 pub use game::{
-    AcrobaticStats, DriverCardsOrigin, EditorOrigin, FinishedScreenView, GameState, GridParticipant, LapTelemetry,
-    PlayerRaceTelemetry, ProfileOrigin, RaceSession, XpAwardReceipt,
+    AcrobaticStats, DriverCardsOrigin, EditorOrigin, FinishedScreenView, GameState,
+    GridParticipant, LapTelemetry, PlayerRaceTelemetry, ProfileOrigin, RaceSession, XpAwardReceipt,
 };
 pub use module::{
     ClassicGameModule, EngineAudioProfile, ExtremeOffRoadModule, GameModule,
     GtWorldChallengeModule, KartGameModule, ModuleTheme, NascarGameModule, RallyGameModule,
     TrackDefinition, VehicleModelDefinition, VehicleVisualType,
 };
-pub use series::{
-    ChampionshipManager, ChampionshipRoundResult, ChampionshipSession, EliminationSession, PointSystem, QualifyingResult,
-    QualifyingSession, RallyStageResult, RoundDriverResult, SeriesFormat, SeriesManager, SeriesRoundResult,
-    SeriesSession, SeriesStandingEntry, StageRallySession, TournamentFormat, TournamentStandingEntry,
-};
 pub use series::format::{
-    ChampionshipDefinition, ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig, SeriesDefinition,
-    SeriesMeta,
+    ChampionshipDefinition, ChampionshipMeta, DriverConfig, RoundConfig, ScoringConfig,
+    SeriesDefinition, SeriesMeta,
+};
+pub use series::{
+    ChampionshipManager, ChampionshipRoundResult, ChampionshipSession, EliminationSession,
+    PointSystem, QualifyingResult, QualifyingSession, RallyStageResult, RoundDriverResult,
+    SeriesFormat, SeriesManager, SeriesRoundResult, SeriesSession, SeriesStandingEntry,
+    StageRallySession, TournamentFormat, TournamentStandingEntry,
 };
 pub use track_manager::{CustomTrackInfo, TrackManager};
 
-pub use input::touch::{RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout};
+pub use input::touch::{
+    RawTouchPhase, RawTouchPoint, TouchButtonState, TouchController, TouchLayout,
+};
 pub use input::{DebugOverlays, InputController};
 pub use profile::{
     draw_country_banner, ChampionshipAward, ChampionshipRecord, CountryInfo, CountryRegistry,
     ModuleCareerProgress, PlayerProfile, ProfileCareerStats, RaceHistoryEntry, TrophyMetal,
 };
 pub use render::color::{CarColorScheme, Palette};
-pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
 pub use render::ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
-pub use render::trophy_textures::{draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename};
+pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
+pub use render::trophy_textures::{
+    draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename,
+};
 pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
-pub use replay::{PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer, ReplayRecorder};
+pub use replay::{
+    PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer,
+    ReplayRecorder,
+};
+pub use ui::career_hub::CareerHubFocus;
 pub use ui::curve_indicator::CurveColorScheme;
+pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::hud::{render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
 pub use ui::profile_ui::{
     championship_visible_count, get_sorted_championships, render_profile_badge,
     render_profile_create_screen, render_profile_manager_screen, ProfileFocusArea,
 };
-pub use ui::career_hub::CareerHubFocus;
-pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::starting_grid::{
     render_starting_grid_screen, starting_grid_circuit_card_rect, starting_grid_garage_button_rect,
-    starting_grid_grid_button_rect, starting_grid_launch_button_rect, starting_grid_player_card_rect,
-    StartingGridFocus,
+    starting_grid_grid_button_rect, starting_grid_launch_button_rect,
+    starting_grid_player_card_rect, StartingGridFocus,
 };

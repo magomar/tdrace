@@ -1,16 +1,18 @@
-use macroquad::color::Color;
-use macroquad::input::KeyCode;
-use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use crate::audio::AudioSettings;
 use crate::input::{DigitalInputConfig, GamepadConfig, NavGrid2D, SteeringProfile};
 use crate::state::stack::{CabinetContext, CabinetScreen, ScreenAction};
-use crate::ui::display::{safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode};
+use crate::ui::display::{
+    safe_request_screen_size, safe_set_fullscreen, DisplayResolution, WindowMode,
+};
 use crate::ui::scaler::UiScaler;
 use crate::ui::theme::Palette;
 use crate::ui::widgets::{
     draw_dropdown, draw_dropdown_popup, draw_slider, draw_tab_bar, DropdownWidget, SliderWidget,
     TabBar,
 };
+use macroquad::color::Color;
+use macroquad::input::KeyCode;
+use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 
 #[inline]
 fn safe_key_pressed(key: KeyCode) -> bool {
@@ -162,12 +164,14 @@ impl Default for UnsavedSettingsModal {
 
 impl UnsavedSettingsModal {
     pub fn new() -> Self {
-        Self {
-            selected_button: 0,
-        }
+        Self { selected_button: 0 }
     }
 
-    pub fn handle_input(&mut self, ctx: &mut CabinetContext, scaler: &UiScaler) -> UnsavedSettingsAction {
+    pub fn handle_input(
+        &mut self,
+        ctx: &mut CabinetContext,
+        scaler: &UiScaler,
+    ) -> UnsavedSettingsAction {
         // Direct key shortcuts:
         if safe_key_pressed(KeyCode::S) {
             ctx.play_ui_select();
@@ -187,8 +191,11 @@ impl UnsavedSettingsModal {
         }
 
         // Arrow navigation:
-        let nav_left = safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
-        let nav_right = safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || ctx.gamepad.nav_right;
+        let nav_left =
+            safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
+        let nav_right = safe_key_pressed(KeyCode::Right)
+            || safe_key_pressed(KeyCode::D)
+            || ctx.gamepad.nav_right;
 
         if nav_left {
             if self.selected_button > 0 {
@@ -287,7 +294,15 @@ impl UnsavedSettingsModal {
         let box_y = (sh - box_h) * 0.5;
 
         // Glassmorphism card with warning gold border
-        scaler.draw_glass_card(box_x, box_y, box_w, box_h, Palette::UI_CARD_BG, Palette::NEON_GOLD, 2.2);
+        scaler.draw_glass_card(
+            box_x,
+            box_y,
+            box_w,
+            box_h,
+            Palette::UI_CARD_BG,
+            Palette::NEON_GOLD,
+            2.2,
+        );
 
         // Title
         fonts.draw_display_centered_with_shadow(
@@ -506,7 +521,11 @@ impl ArcadeSettingsModal {
             "Custom...".to_string(),
         ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
-        let ribbon_options = vec!["Chevrons".to_string(), "Rally Pacenote".to_string(), "Disabled".to_string()];
+        let ribbon_options = vec![
+            "Chevrons".to_string(),
+            "Rally Pacenote".to_string(),
+            "Disabled".to_string(),
+        ];
         let steering_profile_options: Vec<String> = SteeringProfile::PRESETS
             .iter()
             .chain(std::iter::once(&SteeringProfile::Custom))
@@ -529,15 +548,73 @@ impl ArcadeSettingsModal {
                 steering_profile_options,
                 SteeringProfile::Balanced.to_index(),
             ),
-            steer_time_slider: SliderWidget::new("STEERING SPEED", 30.0, 300.0, 10.0, default_keys.steer_time_ms).with_suffix(" ms"),
-            steer_authority_slider: SliderWidget::new("STEERING AUTHORITY", 80.0, 140.0, 5.0, default_keys.steer_authority * 100.0).with_suffix(" %"),
-            center_precision_slider: SliderWidget::new("CENTER PRECISION", 1.0, 1.8, 0.05, default_keys.center_precision),
-            pedal_time_slider: SliderWidget::new("PEDAL SPEED", 0.0, 300.0, 10.0, default_keys.pedal_time_ms).with_suffix(" ms"),
-            traction_help_slider: SliderWidget::new("TRACTION HELP", 0.0, 100.0, 10.0, default_keys.traction_help * 100.0).with_suffix(" %"),
-            stick_deadzone_slider: SliderWidget::new("STICK DEADZONE", 0.0, 0.40, 0.02, gamepad.stick_deadzone),
-            trigger_deadzone_slider: SliderWidget::new("TRIGGER DEADZONE", 0.0, 0.30, 0.01, gamepad.trigger_deadzone),
-            steer_sensitivity_slider: SliderWidget::new("STEER SENSITIVITY", 0.50, 2.00, 0.05, gamepad.steer_scale),
-            steer_exponent_slider: SliderWidget::new("STEER EXPONENT", 1.00, 1.50, 0.05, gamepad.steer_exponent),
+            steer_time_slider: SliderWidget::new(
+                "STEERING SPEED",
+                30.0,
+                300.0,
+                10.0,
+                default_keys.steer_time_ms,
+            )
+            .with_suffix(" ms"),
+            steer_authority_slider: SliderWidget::new(
+                "STEERING AUTHORITY",
+                80.0,
+                140.0,
+                5.0,
+                default_keys.steer_authority * 100.0,
+            )
+            .with_suffix(" %"),
+            center_precision_slider: SliderWidget::new(
+                "CENTER PRECISION",
+                1.0,
+                1.8,
+                0.05,
+                default_keys.center_precision,
+            ),
+            pedal_time_slider: SliderWidget::new(
+                "PEDAL SPEED",
+                0.0,
+                300.0,
+                10.0,
+                default_keys.pedal_time_ms,
+            )
+            .with_suffix(" ms"),
+            traction_help_slider: SliderWidget::new(
+                "TRACTION HELP",
+                0.0,
+                100.0,
+                10.0,
+                default_keys.traction_help * 100.0,
+            )
+            .with_suffix(" %"),
+            stick_deadzone_slider: SliderWidget::new(
+                "STICK DEADZONE",
+                0.0,
+                0.40,
+                0.02,
+                gamepad.stick_deadzone,
+            ),
+            trigger_deadzone_slider: SliderWidget::new(
+                "TRIGGER DEADZONE",
+                0.0,
+                0.30,
+                0.01,
+                gamepad.trigger_deadzone,
+            ),
+            steer_sensitivity_slider: SliderWidget::new(
+                "STEER SENSITIVITY",
+                0.50,
+                2.00,
+                0.05,
+                gamepad.steer_scale,
+            ),
+            steer_exponent_slider: SliderWidget::new(
+                "STEER EXPONENT",
+                1.00,
+                1.50,
+                0.05,
+                gamepad.steer_exponent,
+            ),
 
             resolution_dropdown: DropdownWidget::new(
                 "SCREEN RESOLUTION",
@@ -557,18 +634,47 @@ impl ArcadeSettingsModal {
             assist_dropdown: DropdownWidget::new("ASSIST PROFILE", assist_options, 0),
             speed_unit_dropdown: DropdownWidget::new("SPEEDOMETER UNIT", speed_options, 0),
             ghost_car_dropdown: DropdownWidget::new("GHOST REPLAY", ghost_options, 0),
-            visual_aids_preset_dropdown: DropdownWidget::new("VISUAL DRIVING AIDS", preset_options, 0),
+            visual_aids_preset_dropdown: DropdownWidget::new(
+                "VISUAL DRIVING AIDS",
+                preset_options,
+                0,
+            ),
             gameplay_sub_tab: 0,
 
             aura_dropdown: DropdownWidget::new("GROUND AURA DISC", enabled_options.clone(), 0),
-            aura_ratio_slider: SliderWidget::new("AURA GLOW RADIUS", 0.40, 1.80, 0.05, 1.00).with_suffix("x"),
-            aura_brightness_slider: SliderWidget::new("AURA BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            ribbon_dropdown: DropdownWidget::new("CURVE INDICATOR", ribbon_options, RIBBON_PACENOTE),
-            ribbon_brightness_slider: SliderWidget::new("RIBBON BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00).with_suffix("x"),
+            aura_ratio_slider: SliderWidget::new("AURA GLOW RADIUS", 0.40, 1.80, 0.05, 1.00)
+                .with_suffix("x"),
+            aura_brightness_slider: SliderWidget::new("AURA BRIGHTNESS", 0.20, 2.50, 0.05, 1.00)
+                .with_suffix("x"),
+            ribbon_dropdown: DropdownWidget::new(
+                "CURVE INDICATOR",
+                ribbon_options,
+                RIBBON_PACENOTE,
+            ),
+            ribbon_brightness_slider: SliderWidget::new(
+                "RIBBON BRIGHTNESS",
+                0.20,
+                2.50,
+                0.05,
+                1.00,
+            )
+            .with_suffix("x"),
+            ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00)
+                .with_suffix("x"),
             chevron_dropdown: DropdownWidget::new("OVERHEAD CHEVRON", enabled_options.clone(), 0),
-            chevron_brightness_slider: SliderWidget::new("CHEVRON BRIGHTNESS", 0.20, 2.50, 0.05, 1.00).with_suffix("x"),
-            adaptive_dropdown: DropdownWidget::new("ADAPTIVE VISIBILITY", enabled_options.clone(), 0),
+            chevron_brightness_slider: SliderWidget::new(
+                "CHEVRON BRIGHTNESS",
+                0.20,
+                2.50,
+                0.05,
+                1.00,
+            )
+            .with_suffix("x"),
+            adaptive_dropdown: DropdownWidget::new(
+                "ADAPTIVE VISIBILITY",
+                enabled_options.clone(),
+                0,
+            ),
             radar_ping_dropdown: DropdownWidget::new("RADAR / SONAR PING", enabled_options, 0),
 
             is_tab_focused: true,
@@ -593,15 +699,18 @@ impl ArcadeSettingsModal {
         self.music_slider.set_normalized(def_audio.music_volume);
         self.sfx_slider.set_normalized(def_audio.sfx_volume);
         self.ui_slider.set_normalized(def_audio.ui_volume);
-        self.mute_dropdown.set_selected(if def_audio.is_muted { 1 } else { 0 });
+        self.mute_dropdown
+            .set_selected(if def_audio.is_muted { 1 } else { 0 });
 
         self.stick_deadzone_slider.set_value(def_gp.stick_deadzone);
-        self.trigger_deadzone_slider.set_value(def_gp.trigger_deadzone);
+        self.trigger_deadzone_slider
+            .set_value(def_gp.trigger_deadzone);
         self.steer_sensitivity_slider.set_value(def_gp.steer_scale);
         self.steer_exponent_slider.set_value(def_gp.steer_exponent);
         self.set_input_filter_state(&DigitalInputConfig::default());
 
-        self.resolution_dropdown.set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
+        self.resolution_dropdown
+            .set_selected(DisplayResolution::DEFAULT_PRESET_INDEX);
         self.display_mode_dropdown.set_selected(0);
         self.ui_scale_dropdown.set_selected(0);
         self.scanlines_dropdown.set_selected(0);
@@ -773,7 +882,8 @@ impl ArcadeSettingsModal {
 
     /// Sets the player helpers settings widgets from an external state.
     pub fn set_helpers_state(&mut self, state: &HelpersSettingsState) {
-        self.aura_dropdown.set_selected(if state.aura_enabled { 0 } else { 1 });
+        self.aura_dropdown
+            .set_selected(if state.aura_enabled { 0 } else { 1 });
         self.aura_ratio_slider.set_value(state.aura_ratio);
         self.aura_brightness_slider.set_value(state.aura_brightness);
         self.ribbon_dropdown.set_selected(if !state.ribbon_enabled {
@@ -783,12 +893,17 @@ impl ArcadeSettingsModal {
         } else {
             RIBBON_CHEVRONS
         });
-        self.ribbon_brightness_slider.set_value(state.ribbon_brightness);
+        self.ribbon_brightness_slider
+            .set_value(state.ribbon_brightness);
         self.ribbon_scale_slider.set_value(state.ribbon_scale);
-        self.chevron_dropdown.set_selected(if state.chevron_enabled { 0 } else { 1 });
-        self.chevron_brightness_slider.set_value(state.chevron_brightness);
-        self.adaptive_dropdown.set_selected(if state.adaptive_enabled { 0 } else { 1 });
-        self.radar_ping_dropdown.set_selected(if state.radar_sonar_ping { 0 } else { 1 });
+        self.chevron_dropdown
+            .set_selected(if state.chevron_enabled { 0 } else { 1 });
+        self.chevron_brightness_slider
+            .set_value(state.chevron_brightness);
+        self.adaptive_dropdown
+            .set_selected(if state.adaptive_enabled { 0 } else { 1 });
+        self.radar_ping_dropdown
+            .set_selected(if state.radar_sonar_ping { 0 } else { 1 });
         self.sync_preset_from_helpers();
     }
 
@@ -796,7 +911,8 @@ impl ArcadeSettingsModal {
     pub fn set_display_state(&mut self, width: u32, height: u32, is_fullscreen: bool) {
         let res_idx = DisplayResolution::find_closest_preset_index(width, height);
         self.resolution_dropdown.set_selected(res_idx);
-        self.display_mode_dropdown.set_selected(if is_fullscreen { 1 } else { 0 });
+        self.display_mode_dropdown
+            .set_selected(if is_fullscreen { 1 } else { 0 });
     }
 
     /// Returns the currently selected screen resolution in pixels `(width, height)`.
@@ -857,16 +973,19 @@ impl ArcadeSettingsModal {
 
     /// Sets the steering smoothing and hold-lock bleed widgets from external state.
     pub fn set_input_filter_state(&mut self, cfg: &DigitalInputConfig) {
-        self.steering_profile_dropdown.set_selected(cfg.profile.to_index());
+        self.steering_profile_dropdown
+            .set_selected(cfg.profile.to_index());
         self.set_keyboard_sliders(cfg);
     }
 
     fn set_keyboard_sliders(&mut self, cfg: &DigitalInputConfig) {
         self.steer_time_slider.set_value(cfg.steer_time_ms);
-        self.steer_authority_slider.set_value(cfg.steer_authority * 100.0);
+        self.steer_authority_slider
+            .set_value(cfg.steer_authority * 100.0);
         self.center_precision_slider.set_value(cfg.center_precision);
         self.pedal_time_slider.set_value(cfg.pedal_time_ms);
-        self.traction_help_slider.set_value(cfg.traction_help * 100.0);
+        self.traction_help_slider
+            .set_value(cfg.traction_help * 100.0);
     }
 
     /// Keyboard handling settings as currently shown (Spec 043).
@@ -911,7 +1030,8 @@ impl ArcadeSettingsModal {
 
     /// Sets the vehicle ground shadows dropdown selection state.
     pub fn set_vehicle_shadows(&mut self, enabled: bool) {
-        self.vehicle_shadows_dropdown.set_selected(if enabled { 0 } else { 1 });
+        self.vehicle_shadows_dropdown
+            .set_selected(if enabled { 0 } else { 1 });
     }
 
     /// Captures the current state of all setting widgets into a `SettingsSnapshot`.
@@ -974,35 +1094,46 @@ impl ArcadeSettingsModal {
         self.ui_slider.set_normalized(snap.ui_volume);
         self.mute_dropdown.set_selected(snap.mute_idx);
         self.stick_deadzone_slider.set_value(snap.stick_deadzone);
-        self.trigger_deadzone_slider.set_value(snap.trigger_deadzone);
-        self.steer_sensitivity_slider.set_value(snap.steer_sensitivity);
+        self.trigger_deadzone_slider
+            .set_value(snap.trigger_deadzone);
+        self.steer_sensitivity_slider
+            .set_value(snap.steer_sensitivity);
         self.steer_exponent_slider.set_value(snap.steer_exponent);
-        self.steering_profile_dropdown.set_selected(snap.steering_profile_idx);
+        self.steering_profile_dropdown
+            .set_selected(snap.steering_profile_idx);
         self.steer_time_slider.set_value(snap.steer_time_ms);
-        self.steer_authority_slider.set_value(snap.steer_authority_pct);
-        self.center_precision_slider.set_value(snap.center_precision);
+        self.steer_authority_slider
+            .set_value(snap.steer_authority_pct);
+        self.center_precision_slider
+            .set_value(snap.center_precision);
         self.pedal_time_slider.set_value(snap.pedal_time_ms);
         self.traction_help_slider.set_value(snap.traction_help_pct);
         self.resolution_dropdown.set_selected(snap.resolution_idx);
-        self.display_mode_dropdown.set_selected(snap.display_mode_idx);
+        self.display_mode_dropdown
+            .set_selected(snap.display_mode_idx);
         self.ui_scale_dropdown.set_selected(snap.ui_scale_idx);
         self.scanlines_dropdown.set_selected(snap.scanlines_idx);
-        self.vehicle_shadows_dropdown.set_selected(snap.vehicle_shadows_idx);
+        self.vehicle_shadows_dropdown
+            .set_selected(snap.vehicle_shadows_idx);
         self.theme_dropdown.set_selected(snap.theme_idx);
         self.assist_dropdown.set_selected(snap.assist_idx);
         self.speed_unit_dropdown.set_selected(snap.speed_unit_idx);
         self.ghost_car_dropdown.set_selected(snap.ghost_car_idx);
-        self.visual_aids_preset_dropdown.set_selected(snap.visual_aids_preset_idx);
+        self.visual_aids_preset_dropdown
+            .set_selected(snap.visual_aids_preset_idx);
         self.aura_dropdown.set_selected(snap.aura_idx);
         self.aura_ratio_slider.set_value(snap.aura_ratio);
         self.aura_brightness_slider.set_value(snap.aura_brightness);
         self.ribbon_dropdown.set_selected(snap.ribbon_idx);
-        self.ribbon_brightness_slider.set_value(snap.ribbon_brightness);
+        self.ribbon_brightness_slider
+            .set_value(snap.ribbon_brightness);
         self.ribbon_scale_slider.set_value(snap.ribbon_scale);
         self.chevron_dropdown.set_selected(snap.chevron_idx);
-        self.chevron_brightness_slider.set_value(snap.chevron_brightness);
+        self.chevron_brightness_slider
+            .set_value(snap.chevron_brightness);
         self.adaptive_dropdown.set_selected(snap.adaptive_idx);
-        self.radar_ping_dropdown.set_selected(snap.radar_sonar_ping_idx);
+        self.radar_ping_dropdown
+            .set_selected(snap.radar_sonar_ping_idx);
     }
 
     /// Returns true if any setting differs from the initial baseline snapshot.
@@ -1103,7 +1234,11 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.radar_ping_dropdown.is_open;
 
         // Cancel / Back closes modal or prompts confirmation if settings have changed
-        if self.nav.is_cancelled(ctx.gamepad.btn_cancel_pressed || ctx.gamepad.btn_b_pressed || ctx.gamepad.btn_back_pressed) {
+        if self.nav.is_cancelled(
+            ctx.gamepad.btn_cancel_pressed
+                || ctx.gamepad.btn_b_pressed
+                || ctx.gamepad.btn_back_pressed,
+        ) {
             if is_any_dropdown_open {
                 // If a dropdown was open, close it first
                 self.mute_dropdown.is_open = false;
@@ -1136,7 +1271,9 @@ impl CabinetScreen for ArcadeSettingsModal {
             }
 
             // If focused on the subtab bar in Controls or Gameplay, Back returns to Main Tab Bar
-            if (self.tab_bar.active_tab == 1 || self.tab_bar.active_tab == 3) && self.is_subtab_focused {
+            if (self.tab_bar.active_tab == 1 || self.tab_bar.active_tab == 3)
+                && self.is_subtab_focused
+            {
                 self.is_subtab_focused = false;
                 self.is_tab_focused = true;
                 ctx.play_ui_cancel();
@@ -1203,10 +1340,17 @@ impl CabinetScreen for ArcadeSettingsModal {
 
         let mut was_header_focused = false;
         if !is_any_dropdown_open {
-            let nav_left = safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || ctx.gamepad.nav_left;
-            let nav_right = safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || ctx.gamepad.nav_right;
-            let nav_up = safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) || ctx.gamepad.nav_up;
-            let nav_down = safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S) || ctx.gamepad.nav_down;
+            let nav_left = safe_key_pressed(KeyCode::Left)
+                || safe_key_pressed(KeyCode::A)
+                || ctx.gamepad.nav_left;
+            let nav_right = safe_key_pressed(KeyCode::Right)
+                || safe_key_pressed(KeyCode::D)
+                || ctx.gamepad.nav_right;
+            let nav_up =
+                safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) || ctx.gamepad.nav_up;
+            let nav_down = safe_key_pressed(KeyCode::Down)
+                || safe_key_pressed(KeyCode::S)
+                || ctx.gamepad.nav_down;
             let is_confirm = safe_key_pressed(KeyCode::Enter)
                 || safe_key_pressed(KeyCode::KpEnter)
                 || safe_key_pressed(KeyCode::Space)
@@ -1214,7 +1358,13 @@ impl CabinetScreen for ArcadeSettingsModal {
                 || ctx.gamepad.btn_a_pressed;
 
             let active_tab = self.tab_bar.active_tab;
-            let last_row = self.nav.column_lengths.get(active_tab).copied().unwrap_or(1).saturating_sub(1);
+            let last_row = self
+                .nav
+                .column_lengths
+                .get(active_tab)
+                .copied()
+                .unwrap_or(1)
+                .saturating_sub(1);
 
             was_header_focused = self.is_tab_focused || self.is_subtab_focused;
 
@@ -1413,20 +1563,55 @@ impl CabinetScreen for ArcadeSettingsModal {
                 // AUDIO: 0: Master, 1: Music, 2: SFX, 3: UI, 4: Mute, 5: Bottom Buttons
                 let r0 = (content_x, content_y, content_w, row_h);
                 let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
-                let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
-                let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
-                let r4 = (content_x, content_y + (row_h + row_gap) * 4.0, content_w, row_h);
+                let r2 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 2.0,
+                    content_w,
+                    row_h,
+                );
+                let r3 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 3.0,
+                    content_w,
+                    row_h,
+                );
+                let r4 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 4.0,
+                    content_w,
+                    row_h,
+                );
 
-                if self.master_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                if self.master_slider.handle_input(
+                    active_row == 0,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    r0,
+                ) {
                     ctx.play_ui_move();
                 }
-                if self.music_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                if self.music_slider.handle_input(
+                    active_row == 1,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    r1,
+                ) {
                     ctx.play_ui_move();
                 }
-                if self.sfx_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                if self.sfx_slider.handle_input(
+                    active_row == 2,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    r2,
+                ) {
                     ctx.play_ui_move();
                 }
-                if self.ui_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                if self.ui_slider.handle_input(
+                    active_row == 3,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    r3,
+                ) {
                     ctx.play_ui_move();
                 }
                 if self.mute_dropdown.handle_input(
@@ -1450,7 +1635,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let pill_gap = scaler.s(8.0);
                 let pill_w = (content_w - pill_gap) * 0.5;
                 let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
-                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (
+                    content_x + pill_w + pill_gap,
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
 
                 if NavGrid2D::check_mouse_click(pill0_rect) && self.controls_sub_tab != 0 {
                     self.switch_controls_subtab(0);
@@ -1467,8 +1657,16 @@ impl CabinetScreen for ArcadeSettingsModal {
                 if self.controls_sub_tab == 0 {
                     // KEYBOARD HANDLING (Spec 043):
                     // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help, 6: Bottom Buttons
-                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
-                    let row = |k: f32| (content_x, ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * k, content_w, ctrl_row_h);
+                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) =
+                        (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
+                    let row = |k: f32| {
+                        (
+                            content_x,
+                            ctrl_content_y + (ctrl_row_h + ctrl_row_gap) * k,
+                            content_w,
+                            ctrl_row_h,
+                        )
+                    };
 
                     let prev_profile_idx = self.steering_profile_dropdown.selected_index;
                     if self.steering_profile_dropdown.handle_input(
@@ -1484,7 +1682,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ) {
                         ctx.play_ui_select();
                         if self.steering_profile_dropdown.selected_index != prev_profile_idx {
-                            let profile = SteeringProfile::from_index(self.steering_profile_dropdown.selected_index);
+                            let profile = SteeringProfile::from_index(
+                                self.steering_profile_dropdown.selected_index,
+                            );
                             if profile != SteeringProfile::Custom {
                                 self.set_keyboard_sliders(&profile.to_config());
                             }
@@ -1502,7 +1702,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                     .enumerate()
                     {
                         let k = k + 1;
-                        if slider.handle_input(active_row == k, ctx.gamepad.nav_left, ctx.gamepad.nav_right, row(k as f32)) {
+                        if slider.handle_input(
+                            active_row == k,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            row(k as f32),
+                        ) {
                             slider_changed = true;
                         }
                     }
@@ -1510,18 +1715,41 @@ impl CabinetScreen for ArcadeSettingsModal {
                         ctx.play_ui_move();
                         // Editing a slider shows the matching preset, or Custom.
                         let profile = self.selected_input_config().profile;
-                        self.steering_profile_dropdown.set_selected(profile.to_index());
+                        self.steering_profile_dropdown
+                            .set_selected(profile.to_index());
                     }
                 } else {
                     // GAMEPAD CONTROLLER:
                     // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent,
                     // 4: Open Gamepad Mapper, 5: Bottom Buttons
-                    let (gp_row_h, gp_row_gap, gp_content_y) = (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
+                    let (gp_row_h, gp_row_gap, gp_content_y) =
+                        (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
                     let r0 = (content_x, gp_content_y, content_w, gp_row_h);
-                    let r1 = (content_x, gp_content_y + (gp_row_h + gp_row_gap), content_w, gp_row_h);
-                    let r2 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 2.0, content_w, gp_row_h);
-                    let r3 = (content_x, gp_content_y + (gp_row_h + gp_row_gap) * 3.0, content_w, gp_row_h);
-                    let r4 = gamepad_mapper_button_rect(content_x, gp_content_y, content_w, gp_row_h, gp_row_gap);
+                    let r1 = (
+                        content_x,
+                        gp_content_y + (gp_row_h + gp_row_gap),
+                        content_w,
+                        gp_row_h,
+                    );
+                    let r2 = (
+                        content_x,
+                        gp_content_y + (gp_row_h + gp_row_gap) * 2.0,
+                        content_w,
+                        gp_row_h,
+                    );
+                    let r3 = (
+                        content_x,
+                        gp_content_y + (gp_row_h + gp_row_gap) * 3.0,
+                        content_w,
+                        gp_row_h,
+                    );
+                    let r4 = gamepad_mapper_button_rect(
+                        content_x,
+                        gp_content_y,
+                        content_w,
+                        gp_row_h,
+                        gp_row_gap,
+                    );
 
                     let is_confirm = safe_key_pressed(KeyCode::Enter)
                         || safe_key_pressed(KeyCode::KpEnter)
@@ -1533,16 +1761,36 @@ impl CabinetScreen for ArcadeSettingsModal {
                         ctx.play_ui_select();
                     }
 
-                    if self.stick_deadzone_slider.handle_input(active_row == 0, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r0) {
+                    if self.stick_deadzone_slider.handle_input(
+                        active_row == 0,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r0,
+                    ) {
                         ctx.play_ui_move();
                     }
-                    if self.trigger_deadzone_slider.handle_input(active_row == 1, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r1) {
+                    if self.trigger_deadzone_slider.handle_input(
+                        active_row == 1,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r1,
+                    ) {
                         ctx.play_ui_move();
                     }
-                    if self.steer_sensitivity_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                    if self.steer_sensitivity_slider.handle_input(
+                        active_row == 2,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r2,
+                    ) {
                         ctx.play_ui_move();
                     }
-                    if self.steer_exponent_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                    if self.steer_exponent_slider.handle_input(
+                        active_row == 3,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r3,
+                    ) {
                         ctx.play_ui_move();
                     }
                 }
@@ -1551,10 +1799,30 @@ impl CabinetScreen for ArcadeSettingsModal {
                 // DISPLAY: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Theme, 6: Bottom Buttons
                 let r0 = (content_x, content_y, content_w, row_h);
                 let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
-                let r2 = (content_x, content_y + (row_h + row_gap) * 2.0, content_w, row_h);
-                let r3 = (content_x, content_y + (row_h + row_gap) * 3.0, content_w, row_h);
-                let r4 = (content_x, content_y + (row_h + row_gap) * 4.0, content_w, row_h);
-                let r5 = (content_x, content_y + (row_h + row_gap) * 5.0, content_w, row_h);
+                let r2 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 2.0,
+                    content_w,
+                    row_h,
+                );
+                let r3 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 3.0,
+                    content_w,
+                    row_h,
+                );
+                let r4 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 4.0,
+                    content_w,
+                    row_h,
+                );
+                let r5 = (
+                    content_x,
+                    content_y + (row_h + row_gap) * 5.0,
+                    content_w,
+                    row_h,
+                );
 
                 if self.resolution_dropdown.handle_input(
                     active_row == 0,
@@ -1643,7 +1911,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let pill_gap = scaler.s(8.0);
                 let pill_w = (content_w - pill_gap) * 0.5;
                 let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
-                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (
+                    content_x + pill_w + pill_gap,
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
 
                 if NavGrid2D::check_mouse_click(pill0_rect) && self.gameplay_sub_tab != 0 {
                     self.switch_gameplay_subtab(0);
@@ -1660,12 +1933,33 @@ impl CabinetScreen for ArcadeSettingsModal {
                 if self.gameplay_sub_tab == 0 {
                     // GENERAL SUB-TAB:
                     // 0: Assist, 1: Speed, 2: Ghost, 3: Visual Aids Preset, 4: Customize Button, 5: Bottom Buttons
-                    let (gen_row_h, gen_row_gap, gen_content_y) = (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                    let (gen_row_h, gen_row_gap, gen_content_y) =
+                        (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
                     let r0 = (content_x, gen_content_y, content_w, gen_row_h);
-                    let r1 = (content_x, gen_content_y + (gen_row_h + gen_row_gap), content_w, gen_row_h);
-                    let r2 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 2.0, content_w, gen_row_h);
-                    let r3 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 3.0, content_w, gen_row_h);
-                    let r4 = (content_x, gen_content_y + (gen_row_h + gen_row_gap) * 4.0, content_w, gen_row_h);
+                    let r1 = (
+                        content_x,
+                        gen_content_y + (gen_row_h + gen_row_gap),
+                        content_w,
+                        gen_row_h,
+                    );
+                    let r2 = (
+                        content_x,
+                        gen_content_y + (gen_row_h + gen_row_gap) * 2.0,
+                        content_w,
+                        gen_row_h,
+                    );
+                    let r3 = (
+                        content_x,
+                        gen_content_y + (gen_row_h + gen_row_gap) * 3.0,
+                        content_w,
+                        gen_row_h,
+                    );
+                    let r4 = (
+                        content_x,
+                        gen_content_y + (gen_row_h + gen_row_gap) * 4.0,
+                        content_w,
+                        gen_row_h,
+                    );
 
                     if self.assist_dropdown.handle_input(
                         active_row == 0,
@@ -1746,18 +2040,29 @@ impl CabinetScreen for ArcadeSettingsModal {
                     // VISUAL AIDS SUB-TAB:
                     // 0: Preset, 1: Aura, 2: Aura Ratio, 3: Aura Brightness, 4: Ribbon, 5: Ribbon Brightness, 6: Ribbon Scale
                     // 7: Chevron, 8: Chevron Brightness, 9: Adaptive, 10: Radar Ping, 11: Bottom Buttons
-                    let (aid_row_h, aid_row_gap, aid_content_y) = (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                    let (aid_row_h, aid_row_gap, aid_content_y) =
+                        (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
                     let mut y = aid_content_y;
-                    let r0 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r1 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r2 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r3 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r4 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r5 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r6 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r7 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r8 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
-                    let r9 = (content_x, y, content_w, aid_row_h); y += aid_row_h + aid_row_gap;
+                    let r0 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r1 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r2 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r3 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r4 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r5 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r6 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r7 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r8 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r9 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
                     let r10 = (content_x, y, content_w, aid_row_h);
 
                     let prev_preset = self.visual_aids_preset_dropdown.selected_index;
@@ -1793,11 +2098,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_select();
                     }
-                    if self.aura_ratio_slider.handle_input(active_row == 2, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r2) {
+                    if self.aura_ratio_slider.handle_input(
+                        active_row == 2,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r2,
+                    ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_move();
                     }
-                    if self.aura_brightness_slider.handle_input(active_row == 3, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r3) {
+                    if self.aura_brightness_slider.handle_input(
+                        active_row == 3,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r3,
+                    ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_move();
                     }
@@ -1815,11 +2130,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_select();
                     }
-                    if self.ribbon_brightness_slider.handle_input(active_row == 5, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r5) {
+                    if self.ribbon_brightness_slider.handle_input(
+                        active_row == 5,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r5,
+                    ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_move();
                     }
-                    if self.ribbon_scale_slider.handle_input(active_row == 6, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r6) {
+                    if self.ribbon_scale_slider.handle_input(
+                        active_row == 6,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r6,
+                    ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_move();
                     }
@@ -1837,7 +2162,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_select();
                     }
-                    if self.chevron_brightness_slider.handle_input(active_row == 8, ctx.gamepad.nav_left, ctx.gamepad.nav_right, r8) {
+                    if self.chevron_brightness_slider.handle_input(
+                        active_row == 8,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r8,
+                    ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_move();
                     }
@@ -1879,8 +2209,18 @@ impl CabinetScreen for ArcadeSettingsModal {
         let btn_gap = scaler.s(16.0);
         let single_btn_w = (box_w - scaler.s(48.0) - btn_gap) * 0.5;
 
-        let reset_rect = (box_x + scaler.s(24.0), bottom_btn_y, single_btn_w, bottom_btn_h);
-        let save_rect = (box_x + scaler.s(24.0) + single_btn_w + btn_gap, bottom_btn_y, single_btn_w, bottom_btn_h);
+        let reset_rect = (
+            box_x + scaler.s(24.0),
+            bottom_btn_y,
+            single_btn_w,
+            bottom_btn_h,
+        );
+        let save_rect = (
+            box_x + scaler.s(24.0) + single_btn_w + btn_gap,
+            bottom_btn_y,
+            single_btn_w,
+            bottom_btn_h,
+        );
 
         if NavGrid2D::check_mouse_click(reset_rect) {
             ctx.play_ui_select();
@@ -1912,7 +2252,10 @@ impl CabinetScreen for ArcadeSettingsModal {
         let box_y = (sh - box_h) * 0.5;
 
         // Opaque card: rows of the screen behind must not show through the settings list
-        let card_bg = Color { a: 1.0, ..Palette::UI_CARD_BG };
+        let card_bg = Color {
+            a: 1.0,
+            ..Palette::UI_CARD_BG
+        };
         scaler.draw_glass_card(box_x, box_y, box_w, box_h, card_bg, accent, 2.2);
 
         // Header Title
@@ -1962,19 +2305,97 @@ impl CabinetScreen for ArcadeSettingsModal {
             0 => {
                 // AUDIO TAB
                 let mut y = content_y;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.master_slider.label, &self.master_slider.formatted_value(), self.master_slider.normalized(), active_row == 0, false, accent);
+                draw_slider(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.master_slider.label,
+                    &self.master_slider.formatted_value(),
+                    self.master_slider.normalized(),
+                    active_row == 0,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.music_slider.label, &self.music_slider.formatted_value(), self.music_slider.normalized(), active_row == 1, false, accent);
+                draw_slider(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.music_slider.label,
+                    &self.music_slider.formatted_value(),
+                    self.music_slider.normalized(),
+                    active_row == 1,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.sfx_slider.label, &self.sfx_slider.formatted_value(), self.sfx_slider.normalized(), active_row == 2, false, accent);
+                draw_slider(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.sfx_slider.label,
+                    &self.sfx_slider.formatted_value(),
+                    self.sfx_slider.normalized(),
+                    active_row == 2,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
-                draw_slider(scaler, fonts, content_x, y, content_w, row_h, &self.ui_slider.label, &self.ui_slider.formatted_value(), self.ui_slider.normalized(), active_row == 3, false, accent);
+                draw_slider(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.ui_slider.label,
+                    &self.ui_slider.formatted_value(),
+                    self.ui_slider.normalized(),
+                    active_row == 3,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r4 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.mute_dropdown.label, &self.mute_dropdown.options, self.mute_dropdown.selected_index, false, self.mute_dropdown.popup_hovered_index, active_row == 4, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.mute_dropdown.label,
+                    &self.mute_dropdown.options,
+                    self.mute_dropdown.selected_index,
+                    false,
+                    self.mute_dropdown.popup_hovered_index,
+                    active_row == 4,
+                    false,
+                    accent,
+                );
 
                 if self.mute_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.mute_dropdown.options, self.mute_dropdown.selected_index, self.mute_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r4.0,
+                        r4.1,
+                        r4.2,
+                        r4.3,
+                        &self.mute_dropdown.options,
+                        self.mute_dropdown.selected_index,
+                        self.mute_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 }
             }
             1 => {
@@ -1985,7 +2406,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let pill_gap = scaler.s(8.0);
                 let pill_w = (content_w - pill_gap) * 0.5;
                 let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
-                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (
+                    content_x + pill_w + pill_gap,
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
 
                 // Pill 0: KEYBOARD & FILTER
                 let is_p0_active = self.controls_sub_tab == 0;
@@ -2007,7 +2433,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     Palette::UI_CARD_BORDER
                 };
-                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_focused { 2.5 } else if is_p0_active { 2.0 } else { 1.0 });
+                scaler.draw_glass_card(
+                    pill0_rect.0,
+                    pill0_rect.1,
+                    pill0_rect.2,
+                    pill0_rect.3,
+                    p0_bg,
+                    p0_border,
+                    if is_p0_focused {
+                        2.5
+                    } else if is_p0_active {
+                        2.0
+                    } else {
+                        1.0
+                    },
+                );
                 let p0_label = if is_p0_focused {
                     "< KEYBOARD & FILTER >"
                 } else {
@@ -2018,7 +2458,13 @@ impl CabinetScreen for ArcadeSettingsModal {
                     pill0_rect.0 + pill0_rect.2 * 0.5,
                     pill0_rect.1 + pill0_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p0_focused { Palette::NEON_GOLD } else if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p0_focused {
+                        Palette::NEON_GOLD
+                    } else if is_p0_active {
+                        Palette::WHITE
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 // Pill 1: GAMEPAD CONTROLLER
@@ -2041,7 +2487,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     Palette::UI_CARD_BORDER
                 };
-                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_focused { 2.5 } else if is_p1_active { 2.0 } else { 1.0 });
+                scaler.draw_glass_card(
+                    pill1_rect.0,
+                    pill1_rect.1,
+                    pill1_rect.2,
+                    pill1_rect.3,
+                    p1_bg,
+                    p1_border,
+                    if is_p1_focused {
+                        2.5
+                    } else if is_p1_active {
+                        2.0
+                    } else {
+                        1.0
+                    },
+                );
                 let p1_label = if is_p1_focused {
                     "< GAMEPAD CONTROLLER >"
                 } else {
@@ -2052,16 +2512,38 @@ impl CabinetScreen for ArcadeSettingsModal {
                     pill1_rect.0 + pill1_rect.2 * 0.5,
                     pill1_rect.1 + pill1_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p1_focused { Palette::NEON_GOLD } else if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p1_focused {
+                        Palette::NEON_GOLD
+                    } else if is_p1_active {
+                        Palette::WHITE
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if self.controls_sub_tab == 0 {
                     // KEYBOARD HANDLING (Spec 043):
                     // 0: Preset, 1: Steering Speed, 2: Steering Authority, 3: Center Precision, 4: Pedal Speed, 5: Traction Help
-                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) = (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
+                    let (ctrl_row_h, ctrl_row_gap, ctrl_content_y) =
+                        (scaler.s(36.0), scaler.s(5.0), box_y + scaler.s(122.0));
                     let mut y = ctrl_content_y;
                     let r0 = (content_x, y, content_w, ctrl_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, ctrl_row_h, &self.steering_profile_dropdown.label, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, false, self.steering_profile_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        ctrl_row_h,
+                        &self.steering_profile_dropdown.label,
+                        &self.steering_profile_dropdown.options,
+                        self.steering_profile_dropdown.selected_index,
+                        false,
+                        self.steering_profile_dropdown.popup_hovered_index,
+                        active_row == 0,
+                        false,
+                        accent,
+                    );
                     for (k, slider) in [
                         &self.steer_time_slider,
                         &self.steer_authority_slider,
@@ -2073,38 +2555,152 @@ impl CabinetScreen for ArcadeSettingsModal {
                     .enumerate()
                     {
                         y += ctrl_row_h + ctrl_row_gap;
-                        draw_slider(scaler, fonts, content_x, y, content_w, ctrl_row_h, &slider.label, &slider.formatted_value(), slider.normalized(), active_row == k + 1, false, accent);
+                        let inactive_help_label;
+                        let label = if k == 4 && self.assist_dropdown.selected_index != 0 {
+                            inactive_help_label = "TRACTION HELP (SAVED; INACTIVE IN THIS MODE)";
+                            inactive_help_label
+                        } else {
+                            &slider.label
+                        };
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            ctrl_row_h,
+                            label,
+                            &slider.formatted_value(),
+                            slider.normalized(),
+                            active_row == k + 1,
+                            false,
+                            accent,
+                        );
                     }
 
                     if self.steering_profile_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.steering_profile_dropdown.options, self.steering_profile_dropdown.selected_index, self.steering_profile_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r0.0,
+                            r0.1,
+                            r0.2,
+                            r0.3,
+                            &self.steering_profile_dropdown.options,
+                            self.steering_profile_dropdown.selected_index,
+                            self.steering_profile_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     }
                 } else {
                     // GAMEPAD CONTROLLER:
                     // 0: Stick Deadzone, 1: Trigger Deadzone, 2: Steer Sensitivity, 3: Steer Exponent
-                    let (gp_row_h, gp_row_gap, gp_content_y) = (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
+                    let (gp_row_h, gp_row_gap, gp_content_y) =
+                        (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(124.0));
                     let mut y = gp_content_y;
-                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.stick_deadzone_slider.label, &self.stick_deadzone_slider.formatted_value(), self.stick_deadzone_slider.normalized(), active_row == 0, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gp_row_h,
+                        &self.stick_deadzone_slider.label,
+                        &self.stick_deadzone_slider.formatted_value(),
+                        self.stick_deadzone_slider.normalized(),
+                        active_row == 0,
+                        false,
+                        accent,
+                    );
                     y += gp_row_h + gp_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.trigger_deadzone_slider.label, &self.trigger_deadzone_slider.formatted_value(), self.trigger_deadzone_slider.normalized(), active_row == 1, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gp_row_h,
+                        &self.trigger_deadzone_slider.label,
+                        &self.trigger_deadzone_slider.formatted_value(),
+                        self.trigger_deadzone_slider.normalized(),
+                        active_row == 1,
+                        false,
+                        accent,
+                    );
                     y += gp_row_h + gp_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_sensitivity_slider.label, &self.steer_sensitivity_slider.formatted_value(), self.steer_sensitivity_slider.normalized(), active_row == 2, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gp_row_h,
+                        &self.steer_sensitivity_slider.label,
+                        &self.steer_sensitivity_slider.formatted_value(),
+                        self.steer_sensitivity_slider.normalized(),
+                        active_row == 2,
+                        false,
+                        accent,
+                    );
                     y += gp_row_h + gp_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, gp_row_h, &self.steer_exponent_slider.label, &self.steer_exponent_slider.formatted_value(), self.steer_exponent_slider.normalized(), active_row == 3, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gp_row_h,
+                        &self.steer_exponent_slider.label,
+                        &self.steer_exponent_slider.formatted_value(),
+                        self.steer_exponent_slider.normalized(),
+                        active_row == 3,
+                        false,
+                        accent,
+                    );
 
                     // Row 4: Open the external gamepad-mapper calibration tool
-                    let r4 = gamepad_mapper_button_rect(content_x, gp_content_y, content_w, gp_row_h, gp_row_gap);
+                    let r4 = gamepad_mapper_button_rect(
+                        content_x,
+                        gp_content_y,
+                        content_w,
+                        gp_row_h,
+                        gp_row_gap,
+                    );
                     let is_mapper_focused = active_row == 4;
                     let mapper_active = is_mapper_focused || NavGrid2D::check_mouse_hover(r4);
-                    let mapper_bg = if mapper_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-                    let mapper_border = if mapper_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
-                    scaler.draw_glass_card(r4.0, r4.1, r4.2, r4.3, mapper_bg, mapper_border, if mapper_active { 2.0 } else { 1.0 });
+                    let mapper_bg = if mapper_active {
+                        Palette::UI_CARD_BG_HOVER
+                    } else {
+                        Palette::UI_CARD_BG
+                    };
+                    let mapper_border = if mapper_active {
+                        Palette::NEON_CYAN
+                    } else {
+                        Palette::UI_CARD_BORDER
+                    };
+                    scaler.draw_glass_card(
+                        r4.0,
+                        r4.1,
+                        r4.2,
+                        r4.3,
+                        mapper_bg,
+                        mapper_border,
+                        if mapper_active { 2.0 } else { 1.0 },
+                    );
                     fonts.draw_ui_bold_centered(
-                        if is_mapper_focused { "[ENTER] OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔" } else { "OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔" },
+                        if is_mapper_focused {
+                            "[ENTER] OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔"
+                        } else {
+                            "OPEN GAMEPAD MAPPER (CALIBRATE & REMAP) ➔"
+                        },
                         r4.0 + r4.2 * 0.5,
                         r4.1 + r4.3 * 0.62,
                         scaler.font_s(12.5),
-                        if mapper_active { Palette::NEON_CYAN } else { Palette::WHITE },
+                        if mapper_active {
+                            Palette::NEON_CYAN
+                        } else {
+                            Palette::WHITE
+                        },
                     );
                     let note = self
                         .gamepad_mapper_note
@@ -2123,36 +2719,192 @@ impl CabinetScreen for ArcadeSettingsModal {
                 // DISPLAY TAB: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Theme
                 let mut y = content_y;
                 let r0 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.resolution_dropdown.label, &self.resolution_dropdown.options, self.resolution_dropdown.selected_index, false, self.resolution_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.resolution_dropdown.label,
+                    &self.resolution_dropdown.options,
+                    self.resolution_dropdown.selected_index,
+                    false,
+                    self.resolution_dropdown.popup_hovered_index,
+                    active_row == 0,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r1 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.display_mode_dropdown.label, &self.display_mode_dropdown.options, self.display_mode_dropdown.selected_index, false, self.display_mode_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.display_mode_dropdown.label,
+                    &self.display_mode_dropdown.options,
+                    self.display_mode_dropdown.selected_index,
+                    false,
+                    self.display_mode_dropdown.popup_hovered_index,
+                    active_row == 1,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r2 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.ui_scale_dropdown.label, &self.ui_scale_dropdown.options, self.ui_scale_dropdown.selected_index, false, self.ui_scale_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.ui_scale_dropdown.label,
+                    &self.ui_scale_dropdown.options,
+                    self.ui_scale_dropdown.selected_index,
+                    false,
+                    self.ui_scale_dropdown.popup_hovered_index,
+                    active_row == 2,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r3 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.scanlines_dropdown.label, &self.scanlines_dropdown.options, self.scanlines_dropdown.selected_index, false, self.scanlines_dropdown.popup_hovered_index, active_row == 3, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.scanlines_dropdown.label,
+                    &self.scanlines_dropdown.options,
+                    self.scanlines_dropdown.selected_index,
+                    false,
+                    self.scanlines_dropdown.popup_hovered_index,
+                    active_row == 3,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r4 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.vehicle_shadows_dropdown.label, &self.vehicle_shadows_dropdown.options, self.vehicle_shadows_dropdown.selected_index, false, self.vehicle_shadows_dropdown.popup_hovered_index, active_row == 4, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.vehicle_shadows_dropdown.label,
+                    &self.vehicle_shadows_dropdown.options,
+                    self.vehicle_shadows_dropdown.selected_index,
+                    false,
+                    self.vehicle_shadows_dropdown.popup_hovered_index,
+                    active_row == 4,
+                    false,
+                    accent,
+                );
                 y += row_h + row_gap;
                 let r5 = (content_x, y, content_w, row_h);
-                draw_dropdown(scaler, fonts, content_x, y, content_w, row_h, &self.theme_dropdown.label, &self.theme_dropdown.options, self.theme_dropdown.selected_index, false, self.theme_dropdown.popup_hovered_index, active_row == 5, false, accent);
+                draw_dropdown(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    row_h,
+                    &self.theme_dropdown.label,
+                    &self.theme_dropdown.options,
+                    self.theme_dropdown.selected_index,
+                    false,
+                    self.theme_dropdown.popup_hovered_index,
+                    active_row == 5,
+                    false,
+                    accent,
+                );
 
                 // Foreground layer: Draw open popup over other rows
                 if self.resolution_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.resolution_dropdown.options, self.resolution_dropdown.selected_index, self.resolution_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r0.0,
+                        r0.1,
+                        r0.2,
+                        r0.3,
+                        &self.resolution_dropdown.options,
+                        self.resolution_dropdown.selected_index,
+                        self.resolution_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 } else if self.display_mode_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.display_mode_dropdown.options, self.display_mode_dropdown.selected_index, self.display_mode_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r1.0,
+                        r1.1,
+                        r1.2,
+                        r1.3,
+                        &self.display_mode_dropdown.options,
+                        self.display_mode_dropdown.selected_index,
+                        self.display_mode_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 } else if self.ui_scale_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ui_scale_dropdown.options, self.ui_scale_dropdown.selected_index, self.ui_scale_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r2.0,
+                        r2.1,
+                        r2.2,
+                        r2.3,
+                        &self.ui_scale_dropdown.options,
+                        self.ui_scale_dropdown.selected_index,
+                        self.ui_scale_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 } else if self.scanlines_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.scanlines_dropdown.options, self.scanlines_dropdown.selected_index, self.scanlines_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r3.0,
+                        r3.1,
+                        r3.2,
+                        r3.3,
+                        &self.scanlines_dropdown.options,
+                        self.scanlines_dropdown.selected_index,
+                        self.scanlines_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 } else if self.vehicle_shadows_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.vehicle_shadows_dropdown.options, self.vehicle_shadows_dropdown.selected_index, self.vehicle_shadows_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r4.0,
+                        r4.1,
+                        r4.2,
+                        r4.3,
+                        &self.vehicle_shadows_dropdown.options,
+                        self.vehicle_shadows_dropdown.selected_index,
+                        self.vehicle_shadows_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 } else if self.theme_dropdown.is_open {
-                    draw_dropdown_popup(scaler, fonts, r5.0, r5.1, r5.2, r5.3, &self.theme_dropdown.options, self.theme_dropdown.selected_index, self.theme_dropdown.popup_hovered_index, accent);
+                    draw_dropdown_popup(
+                        scaler,
+                        fonts,
+                        r5.0,
+                        r5.1,
+                        r5.2,
+                        r5.3,
+                        &self.theme_dropdown.options,
+                        self.theme_dropdown.selected_index,
+                        self.theme_dropdown.popup_hovered_index,
+                        accent,
+                    );
                 }
             }
             _ => {
@@ -2163,7 +2915,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                 let pill_gap = scaler.s(8.0);
                 let pill_w = (content_w - pill_gap) * 0.5;
                 let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
-                let pill1_rect = (content_x + pill_w + pill_gap, subtab_pills_y, pill_w, subtab_pills_h);
+                let pill1_rect = (
+                    content_x + pill_w + pill_gap,
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
 
                 // Pill 0: GENERAL
                 let is_p0_active = self.gameplay_sub_tab == 0;
@@ -2185,7 +2942,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     Palette::UI_CARD_BORDER
                 };
-                scaler.draw_glass_card(pill0_rect.0, pill0_rect.1, pill0_rect.2, pill0_rect.3, p0_bg, p0_border, if is_p0_focused { 2.5 } else if is_p0_active { 2.0 } else { 1.0 });
+                scaler.draw_glass_card(
+                    pill0_rect.0,
+                    pill0_rect.1,
+                    pill0_rect.2,
+                    pill0_rect.3,
+                    p0_bg,
+                    p0_border,
+                    if is_p0_focused {
+                        2.5
+                    } else if is_p0_active {
+                        2.0
+                    } else {
+                        1.0
+                    },
+                );
                 let p0_label = if is_p0_focused {
                     "< GAMEPLAY GENERAL >"
                 } else {
@@ -2196,7 +2967,13 @@ impl CabinetScreen for ArcadeSettingsModal {
                     pill0_rect.0 + pill0_rect.2 * 0.5,
                     pill0_rect.1 + pill0_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p0_focused { Palette::NEON_GOLD } else if is_p0_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p0_focused {
+                        Palette::NEON_GOLD
+                    } else if is_p0_active {
+                        Palette::WHITE
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 // Pill 1: VISUAL AIDS
@@ -2219,7 +2996,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     Palette::UI_CARD_BORDER
                 };
-                scaler.draw_glass_card(pill1_rect.0, pill1_rect.1, pill1_rect.2, pill1_rect.3, p1_bg, p1_border, if is_p1_focused { 2.5 } else if is_p1_active { 2.0 } else { 1.0 });
+                scaler.draw_glass_card(
+                    pill1_rect.0,
+                    pill1_rect.1,
+                    pill1_rect.2,
+                    pill1_rect.3,
+                    p1_bg,
+                    p1_border,
+                    if is_p1_focused {
+                        2.5
+                    } else if is_p1_active {
+                        2.0
+                    } else {
+                        1.0
+                    },
+                );
                 let p1_label = if is_p1_focused {
                     "< VISUAL DRIVING AIDS >"
                 } else {
@@ -2230,24 +3021,91 @@ impl CabinetScreen for ArcadeSettingsModal {
                     pill1_rect.0 + pill1_rect.2 * 0.5,
                     pill1_rect.1 + pill1_rect.3 * 0.65,
                     scaler.font_s(11.5),
-                    if is_p1_focused { Palette::NEON_GOLD } else if is_p1_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    if is_p1_focused {
+                        Palette::NEON_GOLD
+                    } else if is_p1_active {
+                        Palette::WHITE
+                    } else {
+                        Palette::UI_TEXT_MUTED
+                    },
                 );
 
                 if self.gameplay_sub_tab == 0 {
                     // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Preset, 4: Customize Button
-                    let (gen_row_h, gen_row_gap, gen_content_y) = (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                    let (gen_row_h, gen_row_gap, gen_content_y) =
+                        (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
                     let mut y = gen_content_y;
                     let r0 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.assist_dropdown.label, &self.assist_dropdown.options, self.assist_dropdown.selected_index, false, self.assist_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gen_row_h,
+                        &self.assist_dropdown.label,
+                        &self.assist_dropdown.options,
+                        self.assist_dropdown.selected_index,
+                        false,
+                        self.assist_dropdown.popup_hovered_index,
+                        active_row == 0,
+                        false,
+                        accent,
+                    );
                     y += gen_row_h + gen_row_gap;
                     let r1 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.speed_unit_dropdown.label, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, false, self.speed_unit_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gen_row_h,
+                        &self.speed_unit_dropdown.label,
+                        &self.speed_unit_dropdown.options,
+                        self.speed_unit_dropdown.selected_index,
+                        false,
+                        self.speed_unit_dropdown.popup_hovered_index,
+                        active_row == 1,
+                        false,
+                        accent,
+                    );
                     y += gen_row_h + gen_row_gap;
                     let r2 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.ghost_car_dropdown.label, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, false, self.ghost_car_dropdown.popup_hovered_index, active_row == 2, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gen_row_h,
+                        &self.ghost_car_dropdown.label,
+                        &self.ghost_car_dropdown.options,
+                        self.ghost_car_dropdown.selected_index,
+                        false,
+                        self.ghost_car_dropdown.popup_hovered_index,
+                        active_row == 2,
+                        false,
+                        accent,
+                    );
                     y += gen_row_h + gen_row_gap;
                     let r3 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, gen_row_h, &self.visual_aids_preset_dropdown.label, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, false, self.visual_aids_preset_dropdown.popup_hovered_index, active_row == 3, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gen_row_h,
+                        &self.visual_aids_preset_dropdown.label,
+                        &self.visual_aids_preset_dropdown.options,
+                        self.visual_aids_preset_dropdown.selected_index,
+                        false,
+                        self.visual_aids_preset_dropdown.popup_hovered_index,
+                        active_row == 3,
+                        false,
+                        accent,
+                    );
                     y += gen_row_h + gen_row_gap;
                     let r4 = (content_x, y, content_w, gen_row_h);
 
@@ -2255,72 +3113,362 @@ impl CabinetScreen for ArcadeSettingsModal {
                     let is_cust_focused = active_row == 4;
                     let is_cust_hovered = NavGrid2D::check_mouse_hover(r4);
                     let cust_active = is_cust_focused || is_cust_hovered;
-                    let cust_bg = if cust_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-                    let cust_border = if cust_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
-                    scaler.draw_glass_card(r4.0, r4.1, r4.2, r4.3, cust_bg, cust_border, if cust_active { 2.0 } else { 1.0 });
+                    let cust_bg = if cust_active {
+                        Palette::UI_CARD_BG_HOVER
+                    } else {
+                        Palette::UI_CARD_BG
+                    };
+                    let cust_border = if cust_active {
+                        Palette::NEON_CYAN
+                    } else {
+                        Palette::UI_CARD_BORDER
+                    };
+                    scaler.draw_glass_card(
+                        r4.0,
+                        r4.1,
+                        r4.2,
+                        r4.3,
+                        cust_bg,
+                        cust_border,
+                        if cust_active { 2.0 } else { 1.0 },
+                    );
                     fonts.draw_ui_bold_centered(
-                        if is_cust_focused { "[ENTER] CUSTOMIZE 10 INDIVIDUAL AIDS ➔" } else { "CUSTOMIZE 10 INDIVIDUAL AIDS ➔" },
+                        if is_cust_focused {
+                            "[ENTER] CUSTOMIZE 10 INDIVIDUAL AIDS ➔"
+                        } else {
+                            "CUSTOMIZE 10 INDIVIDUAL AIDS ➔"
+                        },
                         r4.0 + r4.2 * 0.5,
                         r4.1 + r4.3 * 0.62,
                         scaler.font_s(12.5),
-                        if cust_active { Palette::NEON_CYAN } else { Palette::WHITE },
+                        if cust_active {
+                            Palette::NEON_CYAN
+                        } else {
+                            Palette::WHITE
+                        },
                     );
 
                     // Popups
                     if self.assist_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.assist_dropdown.options, self.assist_dropdown.selected_index, self.assist_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r0.0,
+                            r0.1,
+                            r0.2,
+                            r0.3,
+                            &self.assist_dropdown.options,
+                            self.assist_dropdown.selected_index,
+                            self.assist_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.speed_unit_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.speed_unit_dropdown.options, self.speed_unit_dropdown.selected_index, self.speed_unit_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r1.0,
+                            r1.1,
+                            r1.2,
+                            r1.3,
+                            &self.speed_unit_dropdown.options,
+                            self.speed_unit_dropdown.selected_index,
+                            self.speed_unit_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.ghost_car_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r2.0, r2.1, r2.2, r2.3, &self.ghost_car_dropdown.options, self.ghost_car_dropdown.selected_index, self.ghost_car_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r2.0,
+                            r2.1,
+                            r2.2,
+                            r2.3,
+                            &self.ghost_car_dropdown.options,
+                            self.ghost_car_dropdown.selected_index,
+                            self.ghost_car_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.visual_aids_preset_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r3.0, r3.1, r3.2, r3.3, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, self.visual_aids_preset_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r3.0,
+                            r3.1,
+                            r3.2,
+                            r3.3,
+                            &self.visual_aids_preset_dropdown.options,
+                            self.visual_aids_preset_dropdown.selected_index,
+                            self.visual_aids_preset_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     }
                 } else {
                     // VISUAL AIDS SUB-TAB (Tab 3, Sub-tab 1):
-                    let (aid_row_h, aid_row_gap, aid_content_y) = (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                    let (aid_row_h, aid_row_gap, aid_content_y) =
+                        (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
                     let mut y = aid_content_y;
                     let r0 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.visual_aids_preset_dropdown.label, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, false, self.visual_aids_preset_dropdown.popup_hovered_index, active_row == 0, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.visual_aids_preset_dropdown.label,
+                        &self.visual_aids_preset_dropdown.options,
+                        self.visual_aids_preset_dropdown.selected_index,
+                        false,
+                        self.visual_aids_preset_dropdown.popup_hovered_index,
+                        active_row == 0,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
                     let r1 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_dropdown.label, &self.aura_dropdown.options, self.aura_dropdown.selected_index, false, self.aura_dropdown.popup_hovered_index, active_row == 1, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.aura_dropdown.label,
+                        &self.aura_dropdown.options,
+                        self.aura_dropdown.selected_index,
+                        false,
+                        self.aura_dropdown.popup_hovered_index,
+                        active_row == 1,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_ratio_slider.label, &self.aura_ratio_slider.formatted_value(), self.aura_ratio_slider.normalized(), active_row == 2, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.aura_ratio_slider.label,
+                        &self.aura_ratio_slider.formatted_value(),
+                        self.aura_ratio_slider.normalized(),
+                        active_row == 2,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.aura_brightness_slider.label, &self.aura_brightness_slider.formatted_value(), self.aura_brightness_slider.normalized(), active_row == 3, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.aura_brightness_slider.label,
+                        &self.aura_brightness_slider.formatted_value(),
+                        self.aura_brightness_slider.normalized(),
+                        active_row == 3,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
                     let r4 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_dropdown.label, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, false, self.ribbon_dropdown.popup_hovered_index, active_row == 4, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.ribbon_dropdown.label,
+                        &self.ribbon_dropdown.options,
+                        self.ribbon_dropdown.selected_index,
+                        false,
+                        self.ribbon_dropdown.popup_hovered_index,
+                        active_row == 4,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_brightness_slider.label, &self.ribbon_brightness_slider.formatted_value(), self.ribbon_brightness_slider.normalized(), active_row == 5, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.ribbon_brightness_slider.label,
+                        &self.ribbon_brightness_slider.formatted_value(),
+                        self.ribbon_brightness_slider.normalized(),
+                        active_row == 5,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.ribbon_scale_slider.label, &self.ribbon_scale_slider.formatted_value(), self.ribbon_scale_slider.normalized(), active_row == 6, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.ribbon_scale_slider.label,
+                        &self.ribbon_scale_slider.formatted_value(),
+                        self.ribbon_scale_slider.normalized(),
+                        active_row == 6,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
                     let r7 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.chevron_dropdown.label, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, false, self.chevron_dropdown.popup_hovered_index, active_row == 7, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.chevron_dropdown.label,
+                        &self.chevron_dropdown.options,
+                        self.chevron_dropdown.selected_index,
+                        false,
+                        self.chevron_dropdown.popup_hovered_index,
+                        active_row == 7,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
-                    draw_slider(scaler, fonts, content_x, y, content_w, aid_row_h, &self.chevron_brightness_slider.label, &self.chevron_brightness_slider.formatted_value(), self.chevron_brightness_slider.normalized(), active_row == 8, false, accent);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.chevron_brightness_slider.label,
+                        &self.chevron_brightness_slider.formatted_value(),
+                        self.chevron_brightness_slider.normalized(),
+                        active_row == 8,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
                     let r9 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.adaptive_dropdown.label, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, false, self.adaptive_dropdown.popup_hovered_index, active_row == 9, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.adaptive_dropdown.label,
+                        &self.adaptive_dropdown.options,
+                        self.adaptive_dropdown.selected_index,
+                        false,
+                        self.adaptive_dropdown.popup_hovered_index,
+                        active_row == 9,
+                        false,
+                        accent,
+                    );
                     y += aid_row_h + aid_row_gap;
                     let r10 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(scaler, fonts, content_x, y, content_w, aid_row_h, &self.radar_ping_dropdown.label, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, false, self.radar_ping_dropdown.popup_hovered_index, active_row == 10, false, accent);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.radar_ping_dropdown.label,
+                        &self.radar_ping_dropdown.options,
+                        self.radar_ping_dropdown.selected_index,
+                        false,
+                        self.radar_ping_dropdown.popup_hovered_index,
+                        active_row == 10,
+                        false,
+                        accent,
+                    );
 
                     // Popups
                     if self.visual_aids_preset_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r0.0, r0.1, r0.2, r0.3, &self.visual_aids_preset_dropdown.options, self.visual_aids_preset_dropdown.selected_index, self.visual_aids_preset_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r0.0,
+                            r0.1,
+                            r0.2,
+                            r0.3,
+                            &self.visual_aids_preset_dropdown.options,
+                            self.visual_aids_preset_dropdown.selected_index,
+                            self.visual_aids_preset_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.aura_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r1.0, r1.1, r1.2, r1.3, &self.aura_dropdown.options, self.aura_dropdown.selected_index, self.aura_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r1.0,
+                            r1.1,
+                            r1.2,
+                            r1.3,
+                            &self.aura_dropdown.options,
+                            self.aura_dropdown.selected_index,
+                            self.aura_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.ribbon_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r4.0, r4.1, r4.2, r4.3, &self.ribbon_dropdown.options, self.ribbon_dropdown.selected_index, self.ribbon_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r4.0,
+                            r4.1,
+                            r4.2,
+                            r4.3,
+                            &self.ribbon_dropdown.options,
+                            self.ribbon_dropdown.selected_index,
+                            self.ribbon_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.chevron_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r7.0, r7.1, r7.2, r7.3, &self.chevron_dropdown.options, self.chevron_dropdown.selected_index, self.chevron_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r7.0,
+                            r7.1,
+                            r7.2,
+                            r7.3,
+                            &self.chevron_dropdown.options,
+                            self.chevron_dropdown.selected_index,
+                            self.chevron_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.adaptive_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r9.0, r9.1, r9.2, r9.3, &self.adaptive_dropdown.options, self.adaptive_dropdown.selected_index, self.adaptive_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r9.0,
+                            r9.1,
+                            r9.2,
+                            r9.3,
+                            &self.adaptive_dropdown.options,
+                            self.adaptive_dropdown.selected_index,
+                            self.adaptive_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     } else if self.radar_ping_dropdown.is_open {
-                        draw_dropdown_popup(scaler, fonts, r10.0, r10.1, r10.2, r10.3, &self.radar_ping_dropdown.options, self.radar_ping_dropdown.selected_index, self.radar_ping_dropdown.popup_hovered_index, accent);
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r10.0,
+                            r10.1,
+                            r10.2,
+                            r10.3,
+                            &self.radar_ping_dropdown.options,
+                            self.radar_ping_dropdown.selected_index,
+                            self.radar_ping_dropdown.popup_hovered_index,
+                            accent,
+                        );
                     }
                 }
             }
@@ -2332,10 +3480,28 @@ impl CabinetScreen for ArcadeSettingsModal {
         let btn_gap = scaler.s(16.0);
         let single_btn_w = (box_w - scaler.s(48.0) - btn_gap) * 0.5;
 
-        let reset_rect = (box_x + scaler.s(24.0), bottom_btn_y, single_btn_w, bottom_btn_h);
-        let save_rect = (box_x + scaler.s(24.0) + single_btn_w + btn_gap, bottom_btn_y, single_btn_w, bottom_btn_h);
+        let reset_rect = (
+            box_x + scaler.s(24.0),
+            bottom_btn_y,
+            single_btn_w,
+            bottom_btn_h,
+        );
+        let save_rect = (
+            box_x + scaler.s(24.0) + single_btn_w + btn_gap,
+            bottom_btn_y,
+            single_btn_w,
+            bottom_btn_h,
+        );
 
-        let is_last_row = !self.is_tab_focused && active_row == self.nav.column_lengths.get(active_tab).copied().unwrap_or(1) - 1;
+        let is_last_row = !self.is_tab_focused
+            && active_row
+                == self
+                    .nav
+                    .column_lengths
+                    .get(active_tab)
+                    .copied()
+                    .unwrap_or(1)
+                    - 1;
 
         // Reset Button
         let is_reset_focused = is_last_row && self.selected_bottom_btn == 0;
@@ -2347,18 +3513,36 @@ impl CabinetScreen for ArcadeSettingsModal {
             reset_rect.1,
             reset_rect.2,
             reset_rect.3,
-            if is_reset_active { Color::new(0.35, 0.12, 0.14, 0.95) } else { Color::new(0.20, 0.08, 0.10, 0.85) },
+            if is_reset_active {
+                Color::new(0.35, 0.12, 0.14, 0.95)
+            } else {
+                Color::new(0.20, 0.08, 0.10, 0.85)
+            },
         );
         draw_rectangle_lines(
             reset_rect.0,
             reset_rect.1,
             reset_rect.2,
             reset_rect.3,
-            if is_reset_active { 2.4 * scaler.scale } else { 1.0 * scaler.scale },
-            if is_reset_focused { Palette::NEON_GOLD } else if is_reset_hovered { Palette::NEON_RED } else { Palette::RED },
+            if is_reset_active {
+                2.4 * scaler.scale
+            } else {
+                1.0 * scaler.scale
+            },
+            if is_reset_focused {
+                Palette::NEON_GOLD
+            } else if is_reset_hovered {
+                Palette::NEON_RED
+            } else {
+                Palette::RED
+            },
         );
         fonts.draw_ui_bold_centered(
-            if is_reset_focused { "[ENTER] RESTORE DEFAULTS" } else { "RESTORE DEFAULTS" },
+            if is_reset_focused {
+                "[ENTER] RESTORE DEFAULTS"
+            } else {
+                "RESTORE DEFAULTS"
+            },
             reset_rect.0 + reset_rect.2 * 0.5,
             reset_rect.1 + reset_rect.3 * 0.65,
             scaler.font_s(13.0),
@@ -2375,18 +3559,36 @@ impl CabinetScreen for ArcadeSettingsModal {
             save_rect.1,
             save_rect.2,
             save_rect.3,
-            if is_save_active { Color::new(0.12, 0.50, 0.28, 0.95) } else { Color::new(0.08, 0.32, 0.18, 0.85) },
+            if is_save_active {
+                Color::new(0.12, 0.50, 0.28, 0.95)
+            } else {
+                Color::new(0.08, 0.32, 0.18, 0.85)
+            },
         );
         draw_rectangle_lines(
             save_rect.0,
             save_rect.1,
             save_rect.2,
             save_rect.3,
-            if is_save_active { 2.4 * scaler.scale } else { 1.2 * scaler.scale },
-            if is_save_focused { Palette::NEON_GOLD } else if is_save_active { Palette::NEON_GREEN } else { Color::new(0.20, 0.70, 0.35, 0.85) },
+            if is_save_active {
+                2.4 * scaler.scale
+            } else {
+                1.2 * scaler.scale
+            },
+            if is_save_focused {
+                Palette::NEON_GOLD
+            } else if is_save_active {
+                Palette::NEON_GREEN
+            } else {
+                Color::new(0.20, 0.70, 0.35, 0.85)
+            },
         );
         fonts.draw_ui_bold_centered(
-            if is_save_focused { "[ENTER] SAVE & CLOSE" } else { "SAVE & CLOSE" },
+            if is_save_focused {
+                "[ENTER] SAVE & CLOSE"
+            } else {
+                "SAVE & CLOSE"
+            },
             save_rect.0 + save_rect.2 * 0.5,
             save_rect.1 + save_rect.3 * 0.65,
             scaler.font_s(13.5),
@@ -2425,6 +3627,17 @@ impl CabinetScreen for ArcadeSettingsModal {
 }
 
 /// Rectangle of the OPEN GAMEPAD MAPPER button, the row after the four gamepad sliders.
-fn gamepad_mapper_button_rect(content_x: f32, content_y: f32, content_w: f32, row_h: f32, row_gap: f32) -> (f32, f32, f32, f32) {
-    (content_x, content_y + (row_h + row_gap) * 4.0 + row_gap, content_w, row_h)
+fn gamepad_mapper_button_rect(
+    content_x: f32,
+    content_y: f32,
+    content_w: f32,
+    row_h: f32,
+    row_gap: f32,
+) -> (f32, f32, f32, f32) {
+    (
+        content_x,
+        content_y + (row_h + row_gap) * 4.0 + row_gap,
+        content_w,
+        row_h,
+    )
 }

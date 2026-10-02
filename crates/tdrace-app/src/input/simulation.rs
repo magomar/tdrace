@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
 use tdrace_core::physics::car::{normalize_angle, CarControls};
-use tdrace_core::physics::config::{CarConfig, PlayerHandling};
+use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::sim::SimulationRunner;
 use tdrace_core::physics::surface::SurfaceType;
 
@@ -42,7 +42,11 @@ impl KeyboardSteerPattern {
         Self::LiftOffTurn,
     ];
     /// Styles driven through the chicane (the reversal itself is scripted by the scenario).
-    pub const CHICANE: [Self; 3] = [Self::SustainedHold, Self::RapidFeathering, Self::CadencePulse];
+    pub const CHICANE: [Self; 3] = [
+        Self::SustainedHold,
+        Self::RapidFeathering,
+        Self::CadencePulse,
+    ];
 
     /// Short stable id used in driver profile ids and reports (matches the pre-043 report ids).
     pub fn id(&self) -> &'static str {
@@ -76,6 +80,8 @@ pub struct KeyboardDriverProfile {
     pub description: String,
     pub steer_pattern: KeyboardSteerPattern,
     pub filter_profile: SteeringProfile,
+    #[serde(default)]
+    pub assist_profile: AssistProfile,
     pub custom_filter_config: Option<DigitalInputConfig>,
 }
 
@@ -93,6 +99,7 @@ impl KeyboardDriverProfile {
             description: description.into(),
             steer_pattern,
             filter_profile,
+            assist_profile: AssistProfile::Arcade,
             custom_filter_config: None,
         }
     }
@@ -197,10 +204,28 @@ impl KeyboardDriverProfile {
         )
     }
 
-    /// Car-side handling aids this driver's keyboard settings apply (Spec 043).
-    pub fn player_handling(&self) -> PlayerHandling {
+    /// A key-pressing style, response preset, and assist mode combination.
+    pub fn for_mode_pattern(
+        pattern: KeyboardSteerPattern,
+        filter_profile: SteeringProfile,
+        assist_profile: AssistProfile,
+    ) -> Self {
+        let mut driver = Self::for_pattern(pattern, filter_profile);
+        driver.assist_profile = assist_profile;
+        driver.id = format!(
+            "{}_{}",
+            assist_profile.short_name().to_lowercase(),
+            driver.id
+        );
+        driver.name = format!("{} / {}", assist_profile.short_name(), driver.name);
+        driver.description = format!("{} mode: {}", assist_profile.title(), driver.description);
+        driver
+    }
+
+    /// Car-side handling aids this driver's keyboard settings and assist mode apply (Spec 072).
+    pub fn player_handling(&self) -> tdrace_core::physics::config::PlayerHandling {
         let cfg = self.filter_config();
-        PlayerHandling::human(cfg.steer_authority, cfg.traction_help)
+        crate::config::player_handling_for(self.assist_profile, &cfg)
     }
 
     pub fn filter_config(&self) -> DigitalInputConfig {
@@ -231,7 +256,11 @@ impl KeyboardDriverProfile {
                     0.0 // Coast / set slip
                 } else {
                     let phase = (t - 0.450) % 0.200;
-                    if phase < 0.100 { 1.0 } else { 0.0 } // Maintenance taps
+                    if phase < 0.100 {
+                        1.0
+                    } else {
+                        0.0
+                    } // Maintenance taps
                 };
                 (steer, 1.0, 0.0)
             }
@@ -291,6 +320,8 @@ pub struct KeyboardSweeperResult {
     pub driver_profile_id: String,
     pub driver_profile_name: String,
     pub filter_profile: SteeringProfile,
+    #[serde(default)]
+    pub assist_profile: AssistProfile,
     #[serde(default = "default_pattern")]
     pub steer_pattern: KeyboardSteerPattern,
     pub entry_speed_kmh: f32,
@@ -309,6 +340,10 @@ pub struct KeyboardSweeperResult {
     pub peak_front_slip_deg: f32,
     pub peak_rear_slip_deg: f32,
     pub understeer_slip_delta_deg: f32,
+    pub mean_traction_help_reduction_pct: f32,
+    pub mean_tcs_lateral_reduction_pct: f32,
+    pub mean_tcs_longitudinal_reduction_pct: f32,
+    pub mean_esc_corrective_torque_nm: f32,
     pub outcome: KeyboardHandlingOutcome,
 }
 
@@ -323,6 +358,8 @@ pub struct KeyStyleSensitivity {
     pub vehicle_id: String,
     pub surface: SurfaceType,
     pub filter_profile: SteeringProfile,
+    #[serde(default)]
+    pub assist_profile: AssistProfile,
     pub min_exit_kmh: f32,
     pub max_exit_kmh: f32,
     /// (max - min) / max exit speed across styles, in percent.
@@ -335,23 +372,48 @@ pub struct KeyStyleSensitivity {
 
 /// Groups sweeper results by (vehicle, surface, preset) and measures the spread across key styles.
 pub fn key_style_sensitivity(results: &[KeyboardSweeperResult]) -> Vec<KeyStyleSensitivity> {
-    let mut groups: Vec<(String, SurfaceType, SteeringProfile, Vec<&KeyboardSweeperResult>)> = Vec::new();
+    let mut groups: Vec<(
+        String,
+        SurfaceType,
+        SteeringProfile,
+        AssistProfile,
+        Vec<&KeyboardSweeperResult>,
+    )> = Vec::new();
     for r in results {
-        match groups
-            .iter_mut()
-            .find(|g| g.0 == r.vehicle_id && g.1 == r.surface && g.2 == r.filter_profile)
-        {
-            Some(g) => g.3.push(r),
-            None => groups.push((r.vehicle_id.clone(), r.surface, r.filter_profile, vec![r])),
+        match groups.iter_mut().find(|g| {
+            g.0 == r.vehicle_id
+                && g.1 == r.surface
+                && g.2 == r.filter_profile
+                && g.3 == r.assist_profile
+        }) {
+            Some(g) => g.4.push(r),
+            None => groups.push((
+                r.vehicle_id.clone(),
+                r.surface,
+                r.filter_profile,
+                r.assist_profile,
+                vec![r],
+            )),
         }
     }
     groups
         .into_iter()
-        .filter(|g| g.3.len() > 1)
-        .map(|(vehicle_id, surface, filter_profile, rs)| {
-            let fastest = rs.iter().max_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh)).unwrap();
-            let slowest = rs.iter().min_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh)).unwrap();
-            let exit_of = |p: KeyboardSteerPattern| rs.iter().find(|r| r.steer_pattern == p).map(|r| r.exit_speed_kmh);
+        .filter(|g| g.4.len() > 1)
+        .map(
+            |(vehicle_id, surface, filter_profile, assist_profile, rs)| {
+                let fastest = rs
+                    .iter()
+                    .max_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh))
+                    .unwrap();
+                let slowest = rs
+                    .iter()
+                    .min_by(|a, b| a.exit_speed_kmh.total_cmp(&b.exit_speed_kmh))
+                    .unwrap();
+                let exit_of = |p: KeyboardSteerPattern| {
+                    rs.iter()
+                        .find(|r| r.steer_pattern == p)
+                        .map(|r| r.exit_speed_kmh)
+                };
             let hold_vs_feathering_pct = match (
                 exit_of(KeyboardSteerPattern::SustainedHold),
                 exit_of(KeyboardSteerPattern::RapidFeathering),
@@ -363,14 +425,18 @@ pub fn key_style_sensitivity(results: &[KeyboardSweeperResult]) -> Vec<KeyStyleS
                 vehicle_id,
                 surface,
                 filter_profile,
+                    assist_profile,
                 min_exit_kmh: slowest.exit_speed_kmh,
                 max_exit_kmh: fastest.exit_speed_kmh,
-                spread_pct: (fastest.exit_speed_kmh - slowest.exit_speed_kmh) / fastest.exit_speed_kmh.max(1e-3) * 100.0,
+                    spread_pct: (fastest.exit_speed_kmh - slowest.exit_speed_kmh)
+                        / fastest.exit_speed_kmh.max(1e-3)
+                        * 100.0,
                 fastest_style: fastest.steer_pattern,
                 slowest_style: slowest.steer_pattern,
                 hold_vs_feathering_pct,
             }
-        })
+            },
+        )
         .collect()
 }
 
@@ -405,6 +471,8 @@ pub struct KeyboardChicaneResult {
     pub vehicle_name: String,
     pub surface: SurfaceType,
     pub driver_profile_id: String,
+    #[serde(default)]
+    pub assist_profile: AssistProfile,
     pub entry_speed_kmh: f32,
     pub exit_speed_kmh: f32,
     pub reversal_latency_ms: f32,
@@ -444,6 +512,8 @@ pub struct KeyboardSlideCatchResult {
     pub vehicle_name: String,
     pub surface: SurfaceType,
     pub driver_profile_id: String,
+    #[serde(default)]
+    pub assist_profile: AssistProfile,
     pub initial_slide_yaw_deg_s: f32,
     pub recovery_time_s: Option<f32>,
     pub max_sideslip_deg: f32,
@@ -482,11 +552,16 @@ pub fn run_keyboard_sweeper_simulation(
     dt: f32,
 ) -> KeyboardSweeperResult {
     let v0_mps = v0_kmh / 3.6;
-    let mut runner = SimulationRunner::new(car_config.clone(), dt)
-        .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
+    let mut runner = SimulationRunner::new(car_config.clone(), dt).with_state(
+        Vec2::ZERO,
+        0.0,
+        Vec2::new(v0_mps, 0.0),
+    );
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
     runner.car.config.player = driver.player_handling();
+    runner.car.config.assists = driver.assist_profile.to_config();
+    runner.car.set_digital_steering_source(true);
 
     let mut min_speed_mps = v0_mps;
     let mut sum_speed = 0.0f32;
@@ -498,6 +573,7 @@ pub fn run_keyboard_sweeper_simulation(
     let mut peak_lateral_g = 0.0f32;
     let mut peak_front_slip = 0.0f32;
     let mut peak_rear_slip = 0.0f32;
+    let (mut sum_traction_help_cut, mut sum_tcs_lateral_cut, mut sum_tcs_longitudinal_cut, mut sum_esc_torque) = (0.0f32, 0.0f32, 0.0f32, 0.0f32);
     let mut step_count = 0u32;
 
     let initial_heading = runner.car.state().angle;
@@ -531,9 +607,13 @@ pub fn run_keyboard_sweeper_simulation(
             peak_lateral_g = lat_g;
         }
 
-        let front_slip = ((car.state().wheels[0].slip_angle.abs() + car.state().wheels[1].slip_angle.abs()) * 0.5)
+        let front_slip = ((car.state().wheels[0].slip_angle.abs()
+            + car.state().wheels[1].slip_angle.abs())
+            * 0.5)
             .to_degrees();
-        let rear_slip = ((car.state().wheels[2].slip_angle.abs() + car.state().wheels[3].slip_angle.abs()) * 0.5)
+        let rear_slip = ((car.state().wheels[2].slip_angle.abs()
+            + car.state().wheels[3].slip_angle.abs())
+            * 0.5)
             .to_degrees();
 
         if front_slip > peak_front_slip {
@@ -544,6 +624,11 @@ pub fn run_keyboard_sweeper_simulation(
         }
 
         step_count += 1;
+
+        sum_traction_help_cut += 1.0 - car.state.traction_help_multiplier;
+        sum_tcs_lateral_cut += 1.0 - car.state.tcs_lateral_multiplier;
+        sum_tcs_longitudinal_cut += 1.0 - car.state.tcs_longitudinal_multiplier;
+        sum_esc_torque += car.state.esc_corrective_torque;
 
         CarControls {
             throttle,
@@ -563,8 +648,16 @@ pub fn run_keyboard_sweeper_simulation(
         0.0
     };
 
-    let avg_speed_mps = if step_count > 0 { sum_speed / (step_count as f32) } else { 0.0 };
-    let avg_yaw_rate_deg_s = if step_count > 0 { sum_yaw_rate / (step_count as f32) } else { 0.0 };
+    let avg_speed_mps = if step_count > 0 {
+        sum_speed / (step_count as f32)
+    } else {
+        0.0
+    };
+    let avg_yaw_rate_deg_s = if step_count > 0 {
+        sum_yaw_rate / (step_count as f32)
+    } else {
+        0.0
+    };
     let avg_yaw_rate_rad_s = avg_yaw_rate_deg_s.to_radians();
     let effective_radius_m = if avg_yaw_rate_rad_s > 1e-3 {
         avg_speed_mps / avg_yaw_rate_rad_s
@@ -579,7 +672,8 @@ pub fn run_keyboard_sweeper_simulation(
     let understeer_slip_delta_deg = peak_front_slip - peak_rear_slip;
 
     // Outcome determination
-    let outcome = if peak_yaw_rate > 240.0 || (heading_change_deg > 140.0 && exit_speed_kmh < 15.0) {
+    let outcome = if peak_yaw_rate > 240.0 || (heading_change_deg > 140.0 && exit_speed_kmh < 15.0)
+    {
         KeyboardHandlingOutcome::Spinout
     } else if understeer_slip_delta_deg > 3.0 && speed_retention_pct < 68.0 {
         KeyboardHandlingOutcome::ScrubUndersteer
@@ -596,23 +690,36 @@ pub fn run_keyboard_sweeper_simulation(
         driver_profile_id: driver.id.clone(),
         driver_profile_name: driver.name.clone(),
         filter_profile: driver.filter_profile,
+        assist_profile: driver.assist_profile,
         steer_pattern: driver.steer_pattern,
         entry_speed_kmh: v0_kmh,
         exit_speed_kmh,
         min_speed_kmh: min_speed_mps * 3.6,
         speed_retention_pct,
         speed_loss_kmh,
-        avg_steer_angle_deg: if step_count > 0 { sum_steer_deg / (step_count as f32) } else { 0.0 },
+        avg_steer_angle_deg: if step_count > 0 {
+            sum_steer_deg / (step_count as f32)
+        } else {
+            0.0
+        },
         peak_steer_angle_deg: peak_steer_deg,
         avg_yaw_rate_deg_s,
         peak_yaw_rate_deg_s: peak_yaw_rate,
-        avg_lateral_g: if step_count > 0 { sum_lateral_g / (step_count as f32) } else { 0.0 },
+        avg_lateral_g: if step_count > 0 {
+            sum_lateral_g / (step_count as f32)
+        } else {
+            0.0
+        },
         peak_lateral_g,
         effective_radius_m,
         heading_change_deg,
         peak_front_slip_deg: peak_front_slip,
         peak_rear_slip_deg: peak_rear_slip,
         understeer_slip_delta_deg,
+        mean_traction_help_reduction_pct: sum_traction_help_cut * 100.0 / step_count.max(1) as f32,
+        mean_tcs_lateral_reduction_pct: sum_tcs_lateral_cut * 100.0 / step_count.max(1) as f32,
+        mean_tcs_longitudinal_reduction_pct: sum_tcs_longitudinal_cut * 100.0 / step_count.max(1) as f32,
+        mean_esc_corrective_torque_nm: sum_esc_torque / step_count.max(1) as f32,
         outcome,
     }
 }
@@ -628,11 +735,16 @@ pub fn run_keyboard_chicane_simulation(
     dt: f32,
 ) -> KeyboardChicaneResult {
     let v0_mps = v0_kmh / 3.6;
-    let mut runner = SimulationRunner::new(car_config.clone(), dt)
-        .with_state(Vec2::ZERO, 0.0, Vec2::new(v0_mps, 0.0));
+    let mut runner = SimulationRunner::new(car_config.clone(), dt).with_state(
+        Vec2::ZERO,
+        0.0,
+        Vec2::new(v0_mps, 0.0),
+    );
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
     runner.car.config.player = driver.player_handling();
+    runner.car.config.assists = driver.assist_profile.to_config();
+    runner.car.set_digital_steering_source(true);
 
     let mut initial_yaw_sign = 0.0f32;
     let mut reversal_latency_ms = 0.0f32;
@@ -662,11 +774,19 @@ pub fn run_keyboard_chicane_simulation(
             match driver.steer_pattern {
                 KeyboardSteerPattern::RapidFeathering => {
                     let phase = t % 0.150;
-                    if phase < 0.075 { base_sign } else { 0.0 }
+                    if phase < 0.075 {
+                        base_sign
+                    } else {
+                        0.0
+                    }
                 }
                 KeyboardSteerPattern::CadencePulse => {
                     let phase = t % 0.300;
-                    if phase < 0.180 { base_sign } else { 0.0 }
+                    if phase < 0.180 {
+                        base_sign
+                    } else {
+                        0.0
+                    }
                 }
                 _ => base_sign,
             }
@@ -683,7 +803,10 @@ pub fn run_keyboard_chicane_simulation(
                 initial_yaw_sign = yaw_rate.signum();
             }
         } else if !measured_reversal {
-            if initial_yaw_sign != 0.0 && yaw_rate.signum() != initial_yaw_sign && yaw_deg_s.abs() > 1.0 {
+            if initial_yaw_sign != 0.0
+                && yaw_rate.signum() != initial_yaw_sign
+                && yaw_deg_s.abs() > 1.0
+            {
                 reversal_latency_ms = (t - reversal_time) * 1000.0;
                 measured_reversal = true;
             }
@@ -710,9 +833,13 @@ pub fn run_keyboard_chicane_simulation(
             max_lateral_disp_m = lat_disp;
         }
 
-        let front_slip = ((car.state().wheels[0].slip_angle.abs() + car.state().wheels[1].slip_angle.abs()) * 0.5)
+        let front_slip = ((car.state().wheels[0].slip_angle.abs()
+            + car.state().wheels[1].slip_angle.abs())
+            * 0.5)
             .to_degrees();
-        let rear_slip = ((car.state().wheels[2].slip_angle.abs() + car.state().wheels[3].slip_angle.abs()) * 0.5)
+        let rear_slip = ((car.state().wheels[2].slip_angle.abs()
+            + car.state().wheels[3].slip_angle.abs())
+            * 0.5)
             .to_degrees();
 
         if front_slip > peak_front_slip {
@@ -738,7 +865,8 @@ pub fn run_keyboard_chicane_simulation(
     let final_heading = normalize_angle(runner.car.state().angle).to_degrees().abs();
     // A timed-out reversal is a spin only if the rear slid: a car that keeps its line because the
     // filtered input is too small to reverse it (Smooth feathering on dirt) is in control.
-    let outcome = if final_heading > 80.0 || (reversal_latency_ms > 1200.0 && peak_rear_slip > 10.0) {
+    let outcome = if final_heading > 80.0 || (reversal_latency_ms > 1200.0 && peak_rear_slip > 10.0)
+    {
         ChicaneTransitionOutcome::Spinout
     } else if fishtail_count > 1 || peak_rear_slip > 22.0 {
         ChicaneTransitionOutcome::ViolentSnapOversteer
@@ -753,6 +881,7 @@ pub fn run_keyboard_chicane_simulation(
         vehicle_name: vehicle_name.to_string(),
         surface,
         driver_profile_id: driver.id.clone(),
+        assist_profile: driver.assist_profile,
         entry_speed_kmh: v0_kmh,
         exit_speed_kmh: runner.car.state().speed * 3.6,
         reversal_latency_ms,
@@ -781,12 +910,17 @@ pub fn run_keyboard_slide_catch_simulation(
     let initial_heading = 15.0f32.to_radians();
     let initial_slide_yaw_deg_s = 35.0f32;
 
-    let mut runner = SimulationRunner::new(car_config.clone(), dt)
-        .with_state(Vec2::ZERO, initial_heading, Vec2::new(v0_mps, 0.0));
+    let mut runner = SimulationRunner::new(car_config.clone(), dt).with_state(
+        Vec2::ZERO,
+        initial_heading,
+        Vec2::new(v0_mps, 0.0),
+    );
     runner.car.state_mut().angular_velocity = initial_slide_yaw_deg_s.to_radians();
 
     let mut filter = DigitalInputFilter::new(driver.filter_config());
     runner.car.config.player = driver.player_handling();
+    runner.car.config.assists = driver.assist_profile.to_config();
+    runner.car.set_digital_steering_source(true);
 
     let mut recovery_time_s = None;
     let mut max_sideslip_deg = 0.0f32;
@@ -802,7 +936,11 @@ pub fn run_keyboard_slide_catch_simulation(
             let raw_steer = match driver.steer_pattern {
                 KeyboardSteerPattern::RapidFeathering => {
                     let phase = t % 0.150;
-                    if phase < 0.075 { 1.0 } else { 0.0 }
+                    if phase < 0.075 {
+                        1.0
+                    } else {
+                        0.0
+                    }
                 }
                 _ => 1.0, // Sustained countersteer hold
             };
@@ -849,6 +987,7 @@ pub fn run_keyboard_slide_catch_simulation(
         vehicle_name: vehicle_name.to_string(),
         surface,
         driver_profile_id: driver.id.clone(),
+        assist_profile: driver.assist_profile,
         initial_slide_yaw_deg_s,
         recovery_time_s,
         max_sideslip_deg,
