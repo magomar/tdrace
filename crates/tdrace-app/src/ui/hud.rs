@@ -13,7 +13,10 @@ use crate::render::marker::PlayerVisibilityOptions;
 use cabinet::ui::{
     CountDown, HelpChip, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
 };
-use race_ui::hud::widgets::{render_lap_timer, render_minimap, render_position_and_lap};
+use race_ui::hud::widgets::{
+    render_cockpit_tire_monitor, render_compound_badge, render_lap_timer, render_minimap,
+    render_position_and_lap,
+};
 
 pub use race_ui::hud::widgets::format_lap_time;
 
@@ -127,6 +130,11 @@ pub fn render_hud(
     let speedo_cx = sw - scaler.s(110.0) - scaler.safe_pad_x;
     let speedo_cy = sh - scaler.s(110.0) - scaler.safe_pad_y;
     render_speedometer(fonts, &scaler, speedo_cx, speedo_cy, player_car, gamepad_connected);
+
+    // 4b. Cockpit Tire Monitor (Spec 074)
+    let monitor_x = scaler.safe_pad_x;
+    let monitor_y = sh - scaler.s(145.0) - scaler.safe_pad_y * 0.5;
+    render_cockpit_tire_monitor(fonts, &scaler, monitor_x, monitor_y, player_car);
 
     // 5. Controls tooltip (Bottom Left)
     render_controls_guide(fonts, &scaler, scaler.safe_pad_x, sh - scaler.s(22.0) - scaler.safe_pad_y * 0.5);
@@ -278,6 +286,17 @@ fn render_speedometer(
             Palette::BLACK,
         );
     }
+
+    // Active Tire Compound Badge (Spec 074)
+    let compound = car.state.wheel_assemblies[0].config.compound.id;
+    let badge_compound_x = if car.state.esc_active {
+        badge_x + scaler.s(134.0)
+    } else if car.state.tcs_active {
+        badge_x + scaler.s(100.0)
+    } else {
+        badge_x + scaler.s(64.0)
+    };
+    render_compound_badge(fonts, scaler, badge_compound_x, badge_y, compound);
 
     // Drift Score Meter Bar (platform MetricBar)
     if car.state.is_drifting || car.state.drift_score > 0.0 {

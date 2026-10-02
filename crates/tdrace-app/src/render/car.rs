@@ -182,12 +182,15 @@ pub fn render_wheel_shadow(pos: Vec2, angle: f32, size: Vec2, alpha: f32) {
     draw_quad(p0, p1, p2, p3, shadow_color);
 }
 
-/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle.
-pub fn draw_steered_wheel(
+/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle,
+/// with procedural compound accent coloring on the outer sidewall rim lip.
+pub fn draw_steered_wheel_with_accent(
     texture: &Texture2D,
     pos: Vec2,
     angle: f32,
     size: Vec2,
+    accent: Option<Color>,
+    is_left: bool,
 ) {
     let dest_w = size.x;
     let dest_h = size.y;
@@ -203,6 +206,31 @@ pub fn draw_steered_wheel(
             ..Default::default()
         },
     );
+
+    if let Some(col) = accent {
+        let tire_fwd = Vec2::new(angle.cos(), angle.sin());
+        let tire_right = Vec2::new(angle.sin(), -angle.cos());
+        let outer_dir = if is_left { -tire_right } else { tire_right };
+
+        // Sidewall outer lip colored highlight stripe (Spec 074)
+        let lip_pos = pos + outer_dir * (dest_w * 0.42);
+        let p_start = lip_pos - tire_fwd * (dest_h * 0.35);
+        let p_end = lip_pos + tire_fwd * (dest_h * 0.35);
+        draw_line(p_start.x, p_start.y, p_end.x, p_end.y, (dest_w * 0.16).max(2.0), col);
+
+        // Center hub colored indicator dot
+        draw_circle(pos.x, pos.y, (dest_w * 0.18).max(1.2), col);
+    }
+}
+
+/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle.
+pub fn draw_steered_wheel(
+    texture: &Texture2D,
+    pos: Vec2,
+    angle: f32,
+    size: Vec2,
+) {
+    draw_steered_wheel_with_accent(texture, pos, angle, size, None, false);
 }
 
 /// Renders steered front wheels with ground shadows and exact Ackermann geometry.
@@ -396,10 +424,13 @@ pub fn render_car_with_visual_type_model_and_shadows(
                     render_wheel_shadow(p_fr + shadow_offset, ang_fr, wheel_size * shadow_scale, shadow_alpha);
                 }
 
+                let accent_rgba = car.config.wheels[0].compound.id.accent_rgba();
+                let accent = Some(Color::new(accent_rgba[0], accent_rgba[1], accent_rgba[2], accent_rgba[3]));
+
                 // 2. UnderChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                    draw_steered_wheel_with_accent(w_tex, p_fl, ang_fl, wheel_size, accent, true);
+                    draw_steered_wheel_with_accent(w_tex, p_fr, ang_fr, wheel_size, accent, false);
                 }
 
                 // 3. Chassis bodywork
@@ -417,8 +448,8 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
                 // 4. OverChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                    draw_steered_wheel_with_accent(w_tex, p_fl, ang_fl, wheel_size, accent, true);
+                    draw_steered_wheel_with_accent(w_tex, p_fr, ang_fr, wheel_size, accent, false);
                 }
 
                 return;
