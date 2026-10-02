@@ -481,10 +481,10 @@ impl SurfaceAffinityMap {
                 0.10, // Oil
             ]),
             CompoundId::MediumSlick => Self::new([
-                1.10, // Asphalt
-                1.05, // Concrete
-                1.00, // Curb
-                0.42, // Dirt
+                1.00, // Asphalt
+                0.98, // Concrete
+                0.95, // Curb
+                0.85, // Dirt
                 0.32, // Gravel
                 0.30, // Grass
                 0.28, // PackedSand

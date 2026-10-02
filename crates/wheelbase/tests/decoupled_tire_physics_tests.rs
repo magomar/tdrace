@@ -452,3 +452,62 @@ fn test_kart_cornering_under_throttle_preserves_drive_and_prevents_runaway_wheel
         car.speed_kmh()
     );
 }
+
+/// Scenario: Compound surface affinity tractive force differential (Spec 074 Criterion 1)
+///
+/// Given a vehicle configured with CompoundId::SoftSlick tires and another vehicle with CompoundId::ExtremeMud tires running on a SurfaceType::Mud segment,
+/// When their longitudinal acceleration and lateral cornering forces are evaluated under identical normal loads,
+/// Then the ExtremeMud compound achieves at least 2.5x higher tractive force than the SoftSlick compound.
+#[test]
+fn test_compound_surface_affinity_mud_tractive_force_ratio() {
+    use wheelbase::surface::CompoundId;
+
+    let cfg_slick = CarConfig::sports_car().with_compound(CompoundId::SoftSlick);
+    let cfg_mud = CarConfig::sports_car().with_compound(CompoundId::ExtremeMud);
+
+    let a_slick = WheelAssembly::new(cfg_slick.wheels[0]);
+    let a_mud = WheelAssembly::new(cfg_mud.wheels[0]);
+
+    let normal_load = 2500.0;
+    let base_mu = SurfaceType::MudTrack.friction_coefficient();
+
+    let env_slick = a_slick.friction_envelope_on_surface(normal_load, normal_load, base_mu, SurfaceType::MudTrack);
+    let env_mud = a_mud.friction_envelope_on_surface(normal_load, normal_load, base_mu, SurfaceType::MudTrack);
+
+    let force_ratio = env_mud / env_slick;
+    println!(
+        "MudTrack Friction Envelope: SoftSlick={:.1} N, ExtremeMud={:.1} N (Ratio={:.2}x)",
+        env_slick, env_mud, force_ratio
+    );
+    assert!(
+        force_ratio >= 2.5,
+        "ExtremeMud envelope ({:.1} N) must be >= 2.5x SoftSlick ({:.1} N), got {:.2}x",
+        env_mud, env_slick, force_ratio
+    );
+
+    // Verify under dynamic car acceleration
+    let mut car_slick = Car::new(cfg_slick);
+    let mut car_mud = Car::new(cfg_mud);
+
+    let dt = 1.0 / 60.0;
+    let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+
+    for _ in 0..15 {
+        car_slick.step(&ctrl, SurfaceType::MudTrack, dt);
+        car_mud.step(&ctrl, SurfaceType::MudTrack, dt);
+    }
+
+    let slick_speed = car_slick.state().speed;
+    let mud_speed = car_mud.state().speed;
+
+    println!(
+        "Dynamic Mud Launch: SoftSlick speed = {:.3} m/s, ExtremeMud speed = {:.3} m/s (ratio = {:.2}x)",
+        slick_speed, mud_speed, mud_speed / slick_speed.max(1e-4)
+    );
+
+    assert!(
+        mud_speed >= slick_speed * 2.5,
+        "ExtremeMud ({:.3} m/s) must achieve at least 2.5x higher speed than SoftSlick ({:.3} m/s)",
+        mud_speed, slick_speed
+    );
+}

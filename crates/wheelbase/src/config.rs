@@ -1342,6 +1342,22 @@ impl CarConfig {
         self
     }
 
+    /// Equips all four wheels with the specified tire compound profile.
+    pub fn set_compound(&mut self, compound_id: CompoundId) {
+        let profile = TireCompoundConfig::from_id(compound_id);
+        for w in self.wheels.iter_mut() {
+            w.compound = profile;
+            w.compound.base_grip = w.tire_model.grip;
+        }
+    }
+
+    /// Builder method to equip all four wheels with the specified tire compound.
+    #[must_use]
+    pub fn with_compound(mut self, compound_id: CompoundId) -> Self {
+        self.set_compound(compound_id);
+        self
+    }
+
     /// Standard balanced sports car tuned for GeneRally-style arcade drift racing.
     pub fn sports_car() -> Self {
         let tire = TireConfig::default();

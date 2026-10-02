@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
 use super::config::{CarConfig, DifferentialType, SuspensionArchetype};
-use super::surface::{SurfaceSampler, SurfaceType};
+use super::surface::{CompoundId, SurfaceSampler, SurfaceType};
 use super::tire::{
     combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
 };
@@ -461,6 +461,14 @@ impl Car {
             self.state.wheel_assemblies[i].config = config.wheels[i];
         }
         self.config = config;
+    }
+
+    /// Changes tire compound across all wheels on both config and runtime assembly state.
+    pub fn set_compound(&mut self, compound: CompoundId) {
+        self.config.set_compound(compound);
+        for i in 0..4 {
+            self.state.wheel_assemblies[i].config.compound = self.config.wheels[i].compound;
+        }
     }
 
     /// Returns the current forward unit vector in world space.
@@ -1397,6 +1405,8 @@ fn couple_axle(
         for i in 0..4 {
             let surf = surfaces[i];
             let mut mu = surf.friction_coefficient();
+            let affinity = self.state.wheel_assemblies[i].config.compound.surface_affinity.get(surf);
+            mu *= affinity;
             if surf == SurfaceType::SheetIce {
                 let alpha = self.config.terrain.ice_grip_multiplier.clamp(0.50, 10.0);
                 mu = (mu * alpha).min(1.20);
