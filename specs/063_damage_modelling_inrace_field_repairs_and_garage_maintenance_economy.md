@@ -6,6 +6,8 @@ description: "Establishes a 0-100% vehicle durability model driven by SAT collis
 status: draft
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:54:00Z }
+depends_on:
+  - "062"
 ---
 
 # Feature Spec: Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy 💥🛠️💰

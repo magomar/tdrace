@@ -6,6 +6,8 @@ description: "Replaces every real car maker, model, series, sanctioning body, te
 status: draft
 created: 2026-09-28
 generated: { by: agent/claude-code, at: 2026-09-28T00:00:00Z }
+depends_on:
+  - "055"
 ---
 
 

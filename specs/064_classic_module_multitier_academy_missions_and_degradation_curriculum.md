@@ -6,6 +6,10 @@ description: "Expands the Classic Module into a 4-tier progressive Academy curri
 status: draft
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:56:00Z }
+depends_on:
+  - "055"
+  - "062"
+  - "063"
 ---
 
 # Feature Spec: Classic Module Multi-Tier Academy Missions and Degradation Curriculum 🎓🏎️🏁
