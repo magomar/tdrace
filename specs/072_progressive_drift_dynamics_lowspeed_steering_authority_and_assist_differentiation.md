@@ -4,6 +4,7 @@ template: architecture
 title: "Progressive Drift Dynamics, Low-Speed Steering Authority, and Assist Differentiation"
 description: "Restores responsive arcade drifting and turn-in agility under 100 km/h, un-chokes throttle during power-slides, recalibrates Arcade/Sport/Pro driving profiles, and introduces digital caster for keyboard playability in Pro mode."
 status: in_progress
+receipt: "docs/receipts/spec-072-receipt.md"
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T20:45:35Z }
 verified: { by: human:Mario, at: 2026-10-01T21:09:36Z }
@@ -93,12 +94,9 @@ Modify [`Car::steer_authority_with`](../crates/wheelbase/src/car.rs):
 - **Current formula**:
   $$\text{authority}(v) = \text{clamp}\left(\arctan\left(\frac{L}{R_{\min}}\right) + (0.30 - 0.25 \cdot h(v) + \text{beyond}) \cdot \alpha_{\text{peak}}, 0, \delta_{\max}\right)$$
   Where $R_{\min} = \frac{v^2}{\mu g_{\text{eff}}}$ collapses rapidly as speed rises above 10 m/s.
-- **Proposed Enhancement**:
-The following formulas are exploratory candidates, not implementation-ready contracts. They must preserve preset authority differentiation, remove speed-boundary discontinuities, and distinguish intentional flicks from ordinary filtered key presses. Angle guarantees require headless measurement, not a floor formula alone. Two shared authority-envelope candidates regressed the existing 3%-monotonic turn-curvature calibration (one also regressed corner-exit/braking checks), so both are rejected. The current grip-aware authority mapping remains unchanged until a validated per-vehicle curve passes those gates and the twelve-combination matrix. Record the candidate measurements in the task evidence; do not claim the low-speed authority acceptance scenario is complete yet.
-   1. **Expanded Authority Envelope**: Below $28\text{ m/s}$ ($100\text{ km/h}$), a future preset-aware blend may increase turn-in authority while preserving the existing grip mapping:
-     $$\text{authority}_{\text{base}}(v) = \max\left(\text{authority}(v), \delta_{\max} \cdot \left(1.0 - \left(\frac{v}{28}\right)^{1.4} \cdot 0.65\right)\right)$$
-      For the current Classic GT lock, this candidate floor is approximately $32.0^\circ$ at 40 km/h, $25.3^\circ$ at 65 km/h, and $20.6^\circ$ at 80 km/h; it does not guarantee $22^\circ$ throughout that range.
-   2. **Transient Turn-in Flick Headroom**: A future candidate may add bounded transient headroom on a measured intentional flick. The initial $2.0\text{ s}^{-1}$ trigger is rejected because normal filtered key rises exceed it. Define filtered-input units, reversal/retrigger rules, speed envelope and decay, then pass the full key-style matrix before enabling it.
+ - **Implemented candidate, automated validation only**:
+   For human handling with `PlayerHandling.low_speed_authority_enabled`, `steer_authority` smoothly blends toward `0.68 * mechanical_lock * preset_scale` over 14–17 m/s. `preset_scale = clamp(1 + 0.35 * (steer_overslip - 1), 0.94, 1.06)`. The cubic smoothstep blend is bounded by mechanical lock. Generic/scripted configs, caster-jacking karts, and speeds outside the band retain the prior mapping. Automated monotonic-curvature, authority, and braking tests pass; manual driver acceptance remains open.
+    1. **Transient Turn-in Flick Headroom**: For digital steering only, a sign reversal between inputs whose magnitudes both exceed `0.35`, with normalized input rate `>=3.0 s⁻¹` and speed `<28 m/s`, grants `0.18 * mechanical_lock` headroom for `180 ms`. A `300 ms` rearm delay prevents retriggering from holds/feathering. Analog steering receives no flick headroom. Automated tests cover trigger, hold, decay, and cooldown; live-controller evaluation remains open.
 
 ---
 
