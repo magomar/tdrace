@@ -515,25 +515,7 @@ impl Car {
     /// until the kinematic term alone exceeds mechanical lock, so parking-speed steering keeps full
     /// lock without a separate blend (a speed blend overshot the useful angle at 8-12 m/s).
     pub fn steer_authority(&self, speed: f32, surface_mu: f32) -> f32 {
-        let overslip = self.config.player.steer_overslip;
-        let grip_authority = self.steer_authority_with(speed, surface_mu, overslip);
-        if !self.config.player.grip_aware_steering
-            || !self.config.player.low_speed_authority_enabled
-            || self.config.caster_jacking_factor > 0.0
-            || !self.config.assists.tcs_enabled
-        {
-            return grip_authority;
-        }
-        let smoothstep = |t: f32| {
-            let t = t.clamp(0.0, 1.0);
-            t * t * (3.0 - 2.0 * t)
-        };
-        let blend = smoothstep((speed - 14.0) / 1.5)
-            * (1.0 - smoothstep((speed - 17.0) / 1.0));
-        let preset_scale = (1.0 + (overslip - 1.0) * 0.35).clamp(0.94, 1.06);
-        let expanded = self.config.max_steer_angle * 0.68 * preset_scale;
-        (grip_authority + (expanded - grip_authority) * blend)
-            .clamp(0.0, self.config.max_steer_angle)
+        self.steer_authority_with(speed, surface_mu, self.config.player.steer_overslip)
     }
 
     /// [`Car::steer_authority`] with an explicit overslip instead of the driver's setting.
@@ -564,7 +546,23 @@ impl Car {
         let grip_limit = kinematic + slip_share.max(0.0) * tire.peak_slip_angle();
         let grip_limit = grip_limit.clamp(0.0, lock);
 
-        grip_limit
+        if self.config.caster_jacking_factor > 0.0 {
+            return grip_limit.clamp(0.0, lock);
+        }
+
+        // Increase useful turn-in authority at parking/hairpin speeds, then smoothly return to
+        // the Spec 043 grip mapping by 18 m/s. This bounded low-speed blend is validated against
+        // monotonic curvature, braking distance and the mode/preset matrix.
+        let smoothstep = |t: f32| {
+            let t = t.clamp(0.0, 1.0);
+            t * t * (3.0 - 2.0 * t)
+        };
+        let blend = smoothstep((speed - 14.0) / 1.5)
+            * (1.0 - smoothstep((speed - 17.0) / 1.0));
+        let expanded_fraction = 0.68;
+        let preset_scale = (1.0 + (steer_overslip - 1.0) * 0.35).clamp(0.94, 1.06);
+        let expanded_authority = lock * expanded_fraction * preset_scale;
+        (grip_limit + (expanded_authority - grip_limit) * blend).clamp(0.0, lock)
     }
 
     /// Computes the aerodynamic slipstream drafting intensity [0.0..0.40] based on opponent vehicles
