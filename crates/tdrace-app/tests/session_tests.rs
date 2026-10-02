@@ -1119,21 +1119,31 @@ fn test_countdown_all_engines_warmup_and_roar() {
 
     assert_eq!(session.world.vehicles.len(), 4);
 
-    // Initial countdown state
+    // Initial countdown state without player input
     session.state = GameState::Countdown(2.5);
     session.update();
 
     // Player 1 engine audio active
     assert!(session.audio.is_engine_active, "Player engine audio should be active during countdown");
 
-    // Player engine RPM is kept revolutionized and warm (well above 1100 idle)
+    // Warmup sequence applies to bots only: player engine remains at idle when player is not pressing throttle
     assert!(
-        session.engine_rpm.current_rpm > 1200.0,
-        "Player engine RPM should be revolutionized during countdown, got {}",
+        (session.engine_rpm.current_rpm - 1100.0).abs() < 50.0,
+        "Player engine RPM should remain at idle without input during countdown, got {}",
         session.engine_rpm.current_rpm
     );
 
-    // Proximity engines: if backend is available, nearby grid opponents are active
+    // If player presses throttle during countdown, player engine revs up accordingly
+    session.touch.enabled = true;
+    session.touch.btn_gas.is_pressed = true;
+    session.update();
+    assert!(
+        session.engine_rpm.current_rpm > 1200.0,
+        "Player engine RPM should rev up when player presses throttle during countdown, got {}",
+        session.engine_rpm.current_rpm
+    );
+
+    // Proximity engines: if backend is available, nearby grid opponents roar with warmup sequence
     if session.audio.backend.is_available() {
         let active_voices = session
             .audio
@@ -1143,7 +1153,7 @@ fn test_countdown_all_engines_warmup_and_roar() {
             .count();
         assert!(
             active_voices > 0,
-            "Opponents on starting grid should roar through proximity voices during countdown"
+            "Opponent bots on starting grid should roar through proximity voices during countdown"
         );
     }
 }

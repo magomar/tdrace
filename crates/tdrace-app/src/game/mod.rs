@@ -5689,23 +5689,21 @@ impl RaceSession {
                 let my_idx = self.player_car_index();
                 let is_split = self.is_split_screen();
 
-                // Player launch throttle / revs on grid (warmup accelerations to keep engine revolutionized)
+                // Player launch throttle / revs on grid (responds strictly to player input; warmup sequence is for bots only)
                 if is_split {
                     let (p1_ctrl, p2_ctrl) = self.input.poll_split_player_controls(&mut self.filter_p2, frame_dt, 0.0, 0.0);
-                    let warmup_thr1 = calculate_countdown_warmup_throttle(0, remaining);
                     let eff_throttle1 = if p1_ctrl.reverse {
                         -p1_ctrl.throttle
                     } else {
-                        (p1_ctrl.throttle - p1_ctrl.brake).max(0.0).max(warmup_thr1)
+                        (p1_ctrl.throttle - p1_ctrl.brake).max(0.0)
                     };
                     let (rpm1, is_shift1) = self.engine_rpm.update(0.0, eff_throttle1, 0.0, frame_dt);
                     self.audio.update_engine_telemetry(rpm1, eff_throttle1, is_shift1, 0.0, self.engine_rpm.current_gear, frame_dt);
 
-                    let warmup_thr2 = calculate_countdown_warmup_throttle(1, remaining);
                     let eff_throttle2 = if p2_ctrl.reverse {
                         -p2_ctrl.throttle
                     } else {
-                        (p2_ctrl.throttle - p2_ctrl.brake).max(0.0).max(warmup_thr2)
+                        (p2_ctrl.throttle - p2_ctrl.brake).max(0.0)
                     };
                     let (rpm2, is_shift2) = self.engine_rpm_p2.update(0.0, eff_throttle2, 0.0, frame_dt);
                     self.audio.update_engine_telemetry_p2(rpm2, eff_throttle2, is_shift2, 0.0, self.engine_rpm_p2.current_gear, frame_dt);
@@ -5714,11 +5712,10 @@ impl RaceSession {
                     let kb_ctrl = self.input.poll_player_controls(frame_dt, my_speed);
                     let touch_ctrl = self.touch.poll_controls();
                     let player_ctrl = InputController::combine_controls(kb_ctrl, touch_ctrl);
-                    let warmup_thr = calculate_countdown_warmup_throttle(my_idx, remaining);
                     let eff_throttle = if player_ctrl.reverse {
                         -player_ctrl.throttle
                     } else {
-                        (player_ctrl.throttle - player_ctrl.brake).max(0.0).max(warmup_thr)
+                        (player_ctrl.throttle - player_ctrl.brake).max(0.0)
                     };
                     let (rpm, is_shift) = self.engine_rpm.update(0.0, eff_throttle, 0.0, frame_dt);
                     self.audio.update_engine_telemetry(rpm, eff_throttle, is_shift, 0.0, self.engine_rpm.current_gear, frame_dt);
