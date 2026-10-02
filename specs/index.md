@@ -97,6 +97,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md) | Decoupled Wheel Geometry, Dynamic Tire Compound Affinities, and Presentation Articulation | Architecture Spec | `implemented` | [072](072_progressive_drift_dynamics_lowspeed_steering_authority_and_assist_differentiation.md) | Decouples physical wheel geometry and rotational inertia from data-driven tire compound configs, introduces surface affinity matrices across 15 terrain types, and binds visual wheel archetypes with procedural compound accents in the top-down renderer. |
 | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization | Architecture Spec | `implemented` | - | Establishes a zero-graphics 2D chassis skeleton in wheelbase::CarConfig defining front/rear overhangs and body dimensions, anchors wheels and lighting to physical axles rather than the center of gravity, unifies SAT collision hulls with visual bounds, and harmonizes procedural and sprite-based top-down vehicle rendering. |
 | [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation | Architecture Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Introduces a lightweight, closed-form 4-corner suspension compliance model in wheelbase::CarConfig governed by six discrete suspension archetypes, differentiating motorsport categories and competitive tiers through dynamic kerb absorption, body roll kinematics, camber degradation, and bottoming-out telemetry. |
+| [077](077_procedural_gt_circuit_pit_lanes_from_openstreetmap_survey_data.md) | Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data | Feature Spec | `draft` | [062](062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md) | Extracts, calibrates, scales, and bakes authentic physical pit lane geometry (entry gates, exit gates, bypass splines, team pit stalls) across all 18 GT circuits using OpenStreetMap survey data and procedural fallbacks. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -111,6 +112,7 @@ flowchart LR
     074["074: Decoupled Wheel Geometry, Dynamic Tire Compound Affinities, and Presentation Articulation"]
     075["075: Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization"]
     076["076: Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation"]
+    077["077: Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -118,4 +120,5 @@ flowchart LR
     063 --> 064
     072 --> 074
     075 --> 076
+    062 --> 077
 ```
