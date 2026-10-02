@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Circuit Pit Lanes and Interactive Pit Stop Procedures"
 description: "Establishes physical pit lane branch geometry, Track Studio authoring tools, speed-limited corridors, pit box detection, and interactive 2-3s arcade pit stop service sequences across circuits."
-status: in_progress
+status: implemented
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:52:00Z }
 verified: { by: "human:mario", at: "2026-10-02T18:47:19Z", hash: "7142099e5e85" }
@@ -193,35 +193,35 @@ In `crates/race-kit/src/ai`:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Entering pit lane activates speed governor**
-  - [ ] **Given** a vehicle racing at $150\text{ km/h}$ on the main straight
-  - [ ] **When** the vehicle steers into the pit lane and crosses the `is_pit_entry` gate
-  - [ ] **Then** the vehicle automatically decelerates with pit limiter audio chatter until speed $\le 60\text{ km/h}$
-  - [ ] **And** the Cockpit HUD displays the cyan `[PIT LIMITER: 60 KM/H]` indicator
+  - [x] **Given** a vehicle racing at $150\text{ km/h}$ on the main straight
+  - [x] **When** the vehicle steers into the pit lane and crosses the `is_pit_entry` gate
+  - [x] **Then** the vehicle automatically decelerates with pit limiter audio chatter until speed $\le 60\text{ km/h}$
+  - [x] **And** the Cockpit HUD displays the cyan `[PIT LIMITER: 60 KM/H]` indicator
 
 - **Scenario: Interactive pit stop resets tire wear and field repairs chassis**
-  - [ ] **Given** a vehicle in the pit lane with $80\%$ tire wear and $40\%$ chassis health
-  - [ ] **When** the vehicle comes to a stop ($v < 1.0\text{ m/s}$) inside the designated pit box
-  - [ ] **Then** vehicle controls are locked for $2.5\text{ seconds}$ during the service sequence
-  - [ ] **And** pneumatic wrench sound effects play while the service countdown displays on screen
-  - [ ] **And** tire wear across all four wheels is reset to $0.0$
-  - [ ] **And** chassis health is increased by $+25\%$ (restoring health from $40\%$ to $65\%$)
-  - [ ] **And** controls are released with a green `[GO! GO! GO!]` indicator
+  - [x] **Given** a vehicle in the pit lane with $80\%$ tire wear and $40\%$ chassis health
+  - [x] **When** the vehicle comes to a stop ($v < 1.0\text{ m/s}$) inside the designated pit box
+  - [x] **Then** vehicle controls are locked for $2.5\text{ seconds}$ during the service sequence
+  - [x] **And** pneumatic wrench sound effects play while the service countdown displays on screen
+  - [x] **And** tire wear across all four wheels is reset to $0.0$
+  - [x] **And** chassis health is increased by $+25\%$ (restoring health from $40\%$ to $65\%$)
+  - [x] **And** controls are released with a green `[GO! GO! GO!]` indicator
 
 - **Scenario: Exiting pit lane restores full racing throttle authority**
-  - [ ] **Given** a vehicle completing its service in the pit lane
-  - [ ] **When** the vehicle accelerates down the pit exit and crosses the `is_pit_exit` gate
-  - [ ] **Then** the pit speed governor is disengaged
-  - [ ] **And** the vehicle has unrestricted throttle authority to blend back into the racing line
+  - [x] **Given** a vehicle completing its service in the pit lane
+  - [x] **When** the vehicle accelerates down the pit exit and crosses the `is_pit_exit` gate
+  - [x] **Then** the pit speed governor is disengaged
+  - [x] **And** the vehicle has unrestricted throttle authority to blend back into the racing line
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` `crates/arcade-race-core/src/track/checkpoint.rs` -> Enhances checkpoint pit flags with stall indices.
-- `[ ]` `crates/arcade-race-core/src/track/geometry.rs` -> Adds `PitBox` and `PitLane` data structures.
-- `[ ]` `crates/race-kit/src/world.rs` -> Implements speed limiter enforcement and service countdown loop.
-- `[ ]` `crates/race-kit/src/vehicle.rs` -> Adds `service_tires()` and `apply_field_repair()` trait methods.
-- `[ ]` `crates/race-kit/src/ai/driver.rs` -> Adds autonomous bot pit entry and stopping logic.
-- `[ ]` `crates/tdrace-app/src/editor/` -> Implements spline and stall placement for `EditorToolType::PitLane`.
-- `[ ]` `crates/tdrace-app/src/ui/hud.rs` -> Adds pit limiter warning, box chevron, and service countdown widgets.
+- `[x]` `crates/arcade-race-core/src/track/checkpoint.rs` -> Enhances checkpoint pit flags with stall indices.
+- `[x]` `crates/arcade-race-core/src/track/geometry.rs` -> Adds `PitBox` and `PitLane` data structures.
+- `[x]` `crates/race-kit/src/world.rs` -> Implements speed limiter enforcement and service countdown loop.
+- `[x]` `crates/race-kit/src/vehicle.rs` -> Adds `service_tires()` and `apply_field_repair()` trait methods.
+- `[x]` `crates/race-kit/src/ai/driver.rs` -> Adds autonomous bot pit entry and stopping logic.
+- `[x]` `crates/tdrace-app/src/editor/` -> Implements spline and stall placement for `EditorToolType::PitLane`.
+- `[x]` `crates/tdrace-app/src/ui/hud.rs` -> Adds pit limiter warning, box chevron, and service countdown widgets.
