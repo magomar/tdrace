@@ -67,10 +67,22 @@ pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, seco
                 let accent = lum > 0.65 && sat < 0.22;
                 (body, accent)
             }
+            "classic_gt_vintage" => {
+                // British Racing Green bodywork
+                let body = g > r * 1.08 && g > b * 1.08 && g > 0.12 && sat > 0.10;
+                let accent = lum > 0.70 && sat < 0.25;
+                (body, accent)
+            }
             "classic_nascar" => {
                 // Blue bodywork: all pixels where blue is dominant
                 let body = b > r * 1.08 && b > g * 1.05 && b > 0.12 && sat > 0.10;
                 let accent = r > 0.45 && g > 0.35 && b < 0.35 && sat > 0.20;
+                (body, accent)
+            }
+            "classic_stock_vintage" => {
+                // Maroon/Red muscle bodywork
+                let body = r > g * 1.15 && r > b * 1.15 && r > 0.12 && sat > 0.12;
+                let accent = lum > 0.70 && sat < 0.22;
                 (body, accent)
             }
             "classic_offroad" => {
@@ -79,15 +91,45 @@ pub fn apply_vehicle_tint(base_img: &Image, model_id: &str, primary: Color, seco
                 let accent = lum > 0.65 && sat < 0.22;
                 (body, accent)
             }
+            "classic_at_safari" => {
+                // Tan / Khaki 4x4 bodywork
+                let body = r > 0.18 && g > 0.14 && b > 0.08 && r > b * 1.15 && sat > 0.10 && sat < 0.55;
+                let accent = lum > 0.65 && sat < 0.20;
+                (body, accent)
+            }
             "classic_kart" => {
                 // Green bodywork, pods and front fairing: green is dominant
                 let body = g > r * 1.08 && g > b * 1.08 && g > 0.12 && sat > 0.10;
                 let accent = lum > 0.65 && sat < 0.22;
                 (body, accent)
             }
+            "classic_kart_vintage" => {
+                // Yellow nosecone and seat
+                let body = r > 0.18 && g > 0.14 && (r + g) > b * 1.7 && sat > 0.15;
+                let accent = lum > 0.75 && sat < 0.20;
+                (body, accent)
+            }
             "classic_rally" => {
                 // Yellow bodywork: red and green both high, blue low
                 let body = r > 0.18 && g > 0.16 && (r + g) > b * 1.8 && sat > 0.15;
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
+            }
+            "classic_rx_vintage" => {
+                // White bodywork with blue rally stripes
+                let body = lum > 0.75 && sat < 0.18;
+                let accent = b > r * 1.10 && b > g * 1.05 && b > 0.15 && sat > 0.15;
+                (body, accent)
+            }
+            "classic_ax_mudlark" => {
+                // Cyan / Sky Blue bodywork & nosecone
+                let body = b > 0.20 && g > 0.18 && b > r * 1.15 && sat > 0.15;
+                let accent = lum > 0.65 && sat < 0.22;
+                (body, accent)
+            }
+            "classic_ax_brawler" => {
+                // Crimson Red bodywork
+                let body = r > g * 1.15 && r > b * 1.15 && r > 0.12 && sat > 0.12;
                 let accent = lum > 0.65 && sat < 0.22;
                 (body, accent)
             }
@@ -291,6 +333,7 @@ pub enum WheelLayerMode {
 /// Returns the steered wheel configuration for a model, if modular wheel animation is enabled.
 pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
     match model_id {
+        // Karting
         "classic_kart" => Some(SteeredWheelConfig {
             wheel_texture_id: "kart_slick_front",
             front_axle_offset: 0.41,
@@ -298,6 +341,15 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.20, 0.28),
             layering: WheelLayerMode::OverChassis,
         }),
+        "classic_kart_vintage" => Some(SteeredWheelConfig {
+            wheel_texture_id: "kart_slick_front",
+            front_axle_offset: 0.39,
+            half_track_width: 0.36,
+            wheel_size: glam::Vec2::new(0.18, 0.26),
+            layering: WheelLayerMode::OverChassis,
+        }),
+
+        // GT / Road Racing
         "classic_gt" => Some(SteeredWheelConfig {
             wheel_texture_id: "gt_slick_front",
             front_axle_offset: 0.75,
@@ -305,6 +357,15 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.24, 0.48),
             layering: WheelLayerMode::UnderChassis,
         }),
+        "classic_gt_vintage" => Some(SteeredWheelConfig {
+            wheel_texture_id: "gt_slick_front",
+            front_axle_offset: 0.71,
+            half_track_width: 0.44,
+            wheel_size: glam::Vec2::new(0.22, 0.46),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+
+        // Stock Cars
         "classic_nascar" => Some(SteeredWheelConfig {
             wheel_texture_id: "nascar_wheel_front",
             front_axle_offset: 0.66,
@@ -312,13 +373,15 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.26, 0.50),
             layering: WheelLayerMode::UnderChassis,
         }),
-        "classic_offroad" => Some(SteeredWheelConfig {
-            wheel_texture_id: "offroad_wheel_front",
-            front_axle_offset: 1.03,
-            half_track_width: 0.66,
-            wheel_size: glam::Vec2::new(0.30, 0.62),
-            layering: WheelLayerMode::OverChassis,
+        "classic_stock_vintage" => Some(SteeredWheelConfig {
+            wheel_texture_id: "nascar_wheel_front",
+            front_axle_offset: 0.72,
+            half_track_width: 0.49,
+            wheel_size: glam::Vec2::new(0.26, 0.50),
+            layering: WheelLayerMode::UnderChassis,
         }),
+
+        // Rallycross
         "classic_rally" => Some(SteeredWheelConfig {
             wheel_texture_id: "rally_wheel_front",
             front_axle_offset: 0.73,
@@ -326,6 +389,15 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.24, 0.46),
             layering: WheelLayerMode::UnderChassis,
         }),
+        "classic_rx_vintage" => Some(SteeredWheelConfig {
+            wheel_texture_id: "rally_wheel_front",
+            front_axle_offset: 0.69,
+            half_track_width: 0.40,
+            wheel_size: glam::Vec2::new(0.22, 0.44),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+
+        // Autocross
         "classic_ax_mudlark" => Some(SteeredWheelConfig {
             wheel_texture_id: "offroad_wheel_front",
             front_axle_offset: 0.85,
@@ -340,6 +412,24 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             wheel_size: glam::Vec2::new(0.25, 0.48),
             layering: WheelLayerMode::UnderChassis,
         }),
+
+        // All-Terrain
+        "classic_offroad" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 0.98,
+            half_track_width: 0.62,
+            wheel_size: glam::Vec2::new(0.28, 0.58),
+            layering: WheelLayerMode::OverChassis,
+        }),
+        "classic_at_safari" => Some(SteeredWheelConfig {
+            wheel_texture_id: "offroad_wheel_front",
+            front_axle_offset: 0.82,
+            half_track_width: 0.48,
+            wheel_size: glam::Vec2::new(0.26, 0.54),
+            layering: WheelLayerMode::UnderChassis,
+        }),
+
+        // Legacy / Fallback
         "classic_ax_talon" => Some(SteeredWheelConfig {
             wheel_texture_id: "offroad_wheel_front",
             front_axle_offset: 1.05,

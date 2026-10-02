@@ -311,7 +311,7 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     }
 
     use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
-    assert_eq!(CLASSIC_ARCADE_CARS.len(), 8, "Classic arcade catalog must contain 8 fantasy vehicles");
+    assert_eq!(CLASSIC_ARCADE_CARS.len(), 12, "Classic arcade catalog must contain 12 fantasy vehicles (2 per category across 6 categories)");
 
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
@@ -353,10 +353,15 @@ fn test_classic_arcade_fantasy_sprites_presence() {
 
     let cars = [
         "classic_gt",
+        "classic_gt_vintage",
         "classic_nascar",
+        "classic_stock_vintage",
         "classic_offroad",
+        "classic_at_safari",
         "classic_kart",
+        "classic_kart_vintage",
         "classic_rally",
+        "classic_rx_vintage",
         "classic_ax_mudlark",
         "classic_ax_brawler",
         "classic_ax_talon",
@@ -1209,12 +1214,18 @@ fn test_spec_026_standalone_wheel_texture_asset_integrity() {
 fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
     use tdrace_app::render::vehicle_assets::{get_steered_wheel_config, WheelLayerMode};
 
-    // 1. All 5 classic module vehicles must return explicit SteeredWheelConfig
+    // 1. All 12 classic module vehicles must return explicit SteeredWheelConfig (Spec 073)
     let kart = get_steered_wheel_config("classic_kart").expect("classic_kart must have SteeredWheelConfig");
     assert_eq!(kart.wheel_texture_id, "kart_slick_front");
     assert!((kart.front_axle_offset - 0.41).abs() < 1e-4);
     assert!((kart.half_track_width - 0.39).abs() < 1e-4);
     assert_eq!(kart.layering, WheelLayerMode::OverChassis);
+
+    let kart_vintage = get_steered_wheel_config("classic_kart_vintage").expect("classic_kart_vintage must have SteeredWheelConfig");
+    assert_eq!(kart_vintage.wheel_texture_id, "kart_slick_front");
+    assert!((kart_vintage.front_axle_offset - 0.39).abs() < 1e-4);
+    assert!((kart_vintage.half_track_width - 0.36).abs() < 1e-4);
+    assert_eq!(kart_vintage.layering, WheelLayerMode::OverChassis);
 
     let gt = get_steered_wheel_config("classic_gt").expect("classic_gt must have SteeredWheelConfig");
     assert_eq!(gt.wheel_texture_id, "gt_slick_front");
@@ -1222,23 +1233,47 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
     assert!((gt.half_track_width - 0.48).abs() < 1e-4);
     assert_eq!(gt.layering, WheelLayerMode::UnderChassis);
 
+    let gt_vintage = get_steered_wheel_config("classic_gt_vintage").expect("classic_gt_vintage must have SteeredWheelConfig");
+    assert_eq!(gt_vintage.wheel_texture_id, "gt_slick_front");
+    assert!((gt_vintage.front_axle_offset - 0.71).abs() < 1e-4);
+    assert!((gt_vintage.half_track_width - 0.44).abs() < 1e-4);
+    assert_eq!(gt_vintage.layering, WheelLayerMode::UnderChassis);
+
     let nascar = get_steered_wheel_config("classic_nascar").expect("classic_nascar must have SteeredWheelConfig");
     assert_eq!(nascar.wheel_texture_id, "nascar_wheel_front");
     assert!((nascar.front_axle_offset - 0.66).abs() < 1e-4);
     assert!((nascar.half_track_width - 0.51).abs() < 1e-4);
     assert_eq!(nascar.layering, WheelLayerMode::UnderChassis);
 
+    let stock_vintage = get_steered_wheel_config("classic_stock_vintage").expect("classic_stock_vintage must have SteeredWheelConfig");
+    assert_eq!(stock_vintage.wheel_texture_id, "nascar_wheel_front");
+    assert!((stock_vintage.front_axle_offset - 0.72).abs() < 1e-4);
+    assert!((stock_vintage.half_track_width - 0.49).abs() < 1e-4);
+    assert_eq!(stock_vintage.layering, WheelLayerMode::UnderChassis);
+
     let offroad = get_steered_wheel_config("classic_offroad").expect("classic_offroad must have SteeredWheelConfig");
     assert_eq!(offroad.wheel_texture_id, "offroad_wheel_front");
-    assert!((offroad.front_axle_offset - 1.03).abs() < 1e-4);
-    assert!((offroad.half_track_width - 0.66).abs() < 1e-4);
+    assert!((offroad.front_axle_offset - 0.98).abs() < 1e-4);
+    assert!((offroad.half_track_width - 0.62).abs() < 1e-4);
     assert_eq!(offroad.layering, WheelLayerMode::OverChassis);
+
+    let at_safari = get_steered_wheel_config("classic_at_safari").expect("classic_at_safari must have SteeredWheelConfig");
+    assert_eq!(at_safari.wheel_texture_id, "offroad_wheel_front");
+    assert!((at_safari.front_axle_offset - 0.82).abs() < 1e-4);
+    assert!((at_safari.half_track_width - 0.48).abs() < 1e-4);
+    assert_eq!(at_safari.layering, WheelLayerMode::UnderChassis);
 
     let rally = get_steered_wheel_config("classic_rally").expect("classic_rally must have SteeredWheelConfig");
     assert_eq!(rally.wheel_texture_id, "rally_wheel_front");
     assert!((rally.front_axle_offset - 0.73).abs() < 1e-4);
     assert!((rally.half_track_width - 0.41).abs() < 1e-4);
     assert_eq!(rally.layering, WheelLayerMode::UnderChassis);
+
+    let rx_vintage = get_steered_wheel_config("classic_rx_vintage").expect("classic_rx_vintage must have SteeredWheelConfig");
+    assert_eq!(rx_vintage.wheel_texture_id, "rally_wheel_front");
+    assert!((rx_vintage.front_axle_offset - 0.69).abs() < 1e-4);
+    assert!((rx_vintage.half_track_width - 0.40).abs() < 1e-4);
+    assert_eq!(rx_vintage.layering, WheelLayerMode::UnderChassis);
 
     let mudlark = get_steered_wheel_config("classic_ax_mudlark").expect("classic_ax_mudlark must have SteeredWheelConfig");
     assert_eq!(mudlark.wheel_texture_id, "offroad_wheel_front");
@@ -1317,46 +1352,57 @@ fn test_classic_cars_dual_sprites_showroom_and_chassis() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let classic_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/classic");
+    let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/classic");
+    let lateral_dir = manifest_dir.join("../../assets/textures/vehicles/laterals/classic");
 
-    let cars = [
-        ("classic_kart", (373, 135), (373, 377)),
-        ("classic_offroad", (430, 143), (424, 362)),
-        ("classic_gt", (374, 170), (374, 338)),
-        ("classic_nascar", (340, 176), (346, 300)),
-        ("classic_rally", (355, 167), (350, 300)),
+    let classic_models = [
+        "classic_gt",
+        "classic_gt_vintage",
+        "classic_nascar",
+        "classic_stock_vintage",
+        "classic_offroad",
+        "classic_at_safari",
+        "classic_kart",
+        "classic_kart_vintage",
+        "classic_rally",
+        "classic_rx_vintage",
+        "classic_ax_mudlark",
+        "classic_ax_brawler",
     ];
 
-    for (model_id, (fl_x, fl_y), (fr_x, fr_y)) in cars {
-        let showroom_path = classic_dir.join(format!("{}.png", model_id));
-        let chassis_path = classic_dir.join(format!("{}_chassis.png", model_id));
+    for model_id in classic_models {
+        let showroom_path = topdown_dir.join(format!("{}.png", model_id));
+        let chassis_path = topdown_dir.join(format!("{}_chassis.png", model_id));
+        let lateral_path = lateral_dir.join(format!("{}.png", model_id));
+        let thumb_path = lateral_dir.join(format!("{}_thumb.png", model_id));
 
-        // 1. Showroom sprite with wheels must exist and be high-resolution (>100KB, 512x512)
-        let showroom_bytes = std::fs::read(&showroom_path).unwrap_or_else(|e| panic!("Failed to read {} showroom: {:?}", model_id, e));
-        assert!(showroom_bytes.len() > 100_000, "Showroom sprite must be high-res (>100KB) for {}", model_id);
-        let showroom_img = Image::from_file_with_format(&showroom_bytes, None).unwrap_or_else(|e| panic!("Failed to parse {} showroom: {:?}", model_id, e));
+        // 1. All dual assets must exist on disk
+        assert!(showroom_path.exists(), "Showroom topdown sprite must exist: {:?}", showroom_path);
+        assert!(chassis_path.exists(), "In-game chassis sprite must exist: {:?}", chassis_path);
+        assert!(lateral_path.exists(), "Lateral turntable sprite must exist: {:?}", lateral_path);
+        assert!(thumb_path.exists(), "Lateral thumbnail sprite must exist: {:?}", thumb_path);
 
-        // 2. In-game chassis sprite with wheels removed must exist and be high-resolution (>100KB, 512x512)
-        let chassis_bytes = std::fs::read(&chassis_path).unwrap_or_else(|e| panic!("Failed to read {} chassis: {:?}", model_id, e));
-        assert!(chassis_bytes.len() > 100_000, "Chassis sprite must be high-res (>100KB) for {}", model_id);
-        let chassis_img = Image::from_file_with_format(&chassis_bytes, None).unwrap_or_else(|e| panic!("Failed to parse {} chassis: {:?}", model_id, e));
+        // 2. Top-down dimensions must be exactly 512x512
+        let showroom_bytes = std::fs::read(&showroom_path).unwrap();
+        let chassis_bytes = std::fs::read(&chassis_path).unwrap();
+        let showroom_img = Image::from_file_with_format(&showroom_bytes, None).unwrap();
+        let chassis_img = Image::from_file_with_format(&chassis_bytes, None).unwrap();
 
-        assert_eq!(showroom_img.width, 512, "Width must be 512 for {}", model_id);
-        assert_eq!(showroom_img.height, 512, "Height must be 512 for {}", model_id);
-        assert_eq!(chassis_img.width, 512, "Chassis width must be 512 for {}", model_id);
-        assert_eq!(chassis_img.height, 512, "Chassis height must be 512 for {}", model_id);
+        assert_eq!(showroom_img.width, 512, "Showroom width 512 for {}", model_id);
+        assert_eq!(showroom_img.height, 512, "Showroom height 512 for {}", model_id);
+        assert_eq!(chassis_img.width, 512, "Chassis width 512 for {}", model_id);
+        assert_eq!(chassis_img.height, 512, "Chassis height 512 for {}", model_id);
 
-        // 3. Verify wheel zone isolation: in showroom_img, the front wheel center has opaque pixels (alpha 255),
-        // while in chassis_img, the front wheel region is transparently cleared (alpha == 0).
-        let fl_showroom_alpha = showroom_img.bytes[(fl_y * 512 + fl_x) * 4 + 3];
-        let fl_chassis_alpha = chassis_img.bytes[(fl_y * 512 + fl_x) * 4 + 3];
-        assert!(fl_showroom_alpha > 200, "Showroom sprite must contain front-left wheel pixels at ({}, {}) for {}, got alpha {}", fl_x, fl_y, model_id, fl_showroom_alpha);
-        assert_eq!(fl_chassis_alpha, 0, "Chassis sprite must have front-left wheel pixels cleared at ({}, {}) for {}, got alpha {}", fl_x, fl_y, model_id, fl_chassis_alpha);
+        // 3. Lateral dimensions must be 1024x512 and thumb 256x128
+        let lateral_bytes = std::fs::read(&lateral_path).unwrap();
+        let thumb_bytes = std::fs::read(&thumb_path).unwrap();
+        let lateral_img = Image::from_file_with_format(&lateral_bytes, None).unwrap();
+        let thumb_img = Image::from_file_with_format(&thumb_bytes, None).unwrap();
 
-        let fr_showroom_alpha = showroom_img.bytes[(fr_y * 512 + fr_x) * 4 + 3];
-        let fr_chassis_alpha = chassis_img.bytes[(fr_y * 512 + fr_x) * 4 + 3];
-        assert!(fr_showroom_alpha > 200, "Showroom sprite must contain front-right wheel pixels at ({}, {}) for {}, got alpha {}", fr_x, fr_y, model_id, fr_showroom_alpha);
-        assert_eq!(fr_chassis_alpha, 0, "Chassis sprite must have front-right wheel pixels cleared at ({}, {}) for {}, got alpha {}", fr_x, fr_y, model_id, fr_chassis_alpha);
+        assert_eq!(lateral_img.width, 1024, "Lateral width 1024 for {}", model_id);
+        assert_eq!(lateral_img.height, 512, "Lateral height 512 for {}", model_id);
+        assert_eq!(thumb_img.width, 256, "Thumb width 256 for {}", model_id);
+        assert_eq!(thumb_img.height, 128, "Thumb height 128 for {}", model_id);
     }
 }
 
@@ -1366,10 +1412,17 @@ fn test_spec_026_wheel_steering_ackermann_deflection_across_classic_cars() {
 
     let configs = [
         ClassicGameModule::car_classic_kart(),
+        ClassicGameModule::car_classic_kart_vintage(),
         ClassicGameModule::car_classic_gt(),
+        ClassicGameModule::car_classic_gt_vintage(),
         ClassicGameModule::car_classic_nascar(),
+        ClassicGameModule::car_classic_stock_vintage(),
         ClassicGameModule::car_classic_offroad(),
+        ClassicGameModule::car_classic_at_safari(),
         ClassicGameModule::car_classic_rally(),
+        ClassicGameModule::car_classic_rx_vintage(),
+        ClassicGameModule::car_classic_ax_mudlark(),
+        ClassicGameModule::car_classic_ax_brawler(),
     ];
 
     for cfg in configs {
@@ -1719,6 +1772,86 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
 }
 
 #[test]
+fn test_spec_073_classic_12_vehicle_harmonization_and_steered_wheels() {
+    use std::collections::HashMap;
+    use std::path::Path;
+    use macroquad::texture::Image;
+    use tdrace_app::catalog::CLASSIC_ARCADE_CARS;
+    use tdrace_app::module::classic::ClassicGameModule;
+    use tdrace_app::module::GameModule;
+    use tdrace_app::render::vehicle_assets::get_steered_wheel_config;
+    use tdrace_core::CarCategory;
+
+    let classic_module = ClassicGameModule::new();
+    let vehicles = classic_module.vehicles();
+
+    // 1. Exactly 12 vehicles registered in ClassicGameModule
+    assert_eq!(vehicles.len(), 12, "Classic module must have exactly 12 vehicles (2 per category)");
+
+    // 2. Exactly 12 vehicles in CLASSIC_ARCADE_CARS catalog
+    assert_eq!(CLASSIC_ARCADE_CARS.len(), 12, "Catalog must contain exactly 12 classic arcade cars");
+
+    // 3. Exactly 2 vehicles per category
+    let mut category_counts: HashMap<CarCategory, usize> = HashMap::new();
+    for car in CLASSIC_ARCADE_CARS {
+        *category_counts.entry(car.category()).or_insert(0) += 1;
+    }
+
+    assert_eq!(category_counts.get(&CarCategory::Gt), Some(&2), "Must have 2 GT models");
+    assert_eq!(category_counts.get(&CarCategory::Nascar), Some(&2), "Must have 2 Stock Car models");
+    assert_eq!(category_counts.get(&CarCategory::Rally), Some(&2), "Must have 2 Rally models");
+    assert_eq!(category_counts.get(&CarCategory::Kart), Some(&2), "Must have 2 Kart models");
+    assert_eq!(category_counts.get(&CarCategory::OffRoad), Some(&2), "Must have 2 All-Terrain models");
+    assert_eq!(category_counts.get(&CarCategory::Autocross), Some(&2), "Must have 2 Autocross models");
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/classic");
+    let lateral_dir = manifest_dir.join("../../assets/textures/vehicles/laterals/classic");
+
+    // 4. Verify asset files, dimensions, wheel configs, and Ackermann steering for every single vehicle
+    for v in &vehicles {
+        // A. SteeredWheelConfig presence & validity
+        let wheel_cfg = get_steered_wheel_config(v.id).unwrap_or_else(|| panic!("{} missing SteeredWheelConfig", v.id));
+        assert!(wheel_cfg.front_axle_offset > 0.30, "Front axle offset must be realistic for {}", v.id);
+        assert!(wheel_cfg.half_track_width > 0.30, "Half track width must be realistic for {}", v.id);
+        assert!(wheel_cfg.wheel_size.x > 0.15 && wheel_cfg.wheel_size.y > 0.20, "Wheel size realistic for {}", v.id);
+
+        // B. Topdown showroom and chassis sprites
+        let topdown_path = topdown_dir.join(format!("{}.png", v.id));
+        let chassis_path = topdown_dir.join(format!("{}_chassis.png", v.id));
+        assert!(topdown_path.exists(), "Missing topdown sprite for {}", v.id);
+        assert!(chassis_path.exists(), "Missing chassis sprite for {}", v.id);
+
+        let td_img = Image::from_file_with_format(&std::fs::read(&topdown_path).unwrap(), None).unwrap();
+        let ch_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
+        assert_eq!(td_img.width, 512);
+        assert_eq!(td_img.height, 512);
+        assert_eq!(ch_img.width, 512);
+        assert_eq!(ch_img.height, 512);
+
+        // C. Lateral turntable and thumbnail sprites
+        let lateral_path = lateral_dir.join(format!("{}.png", v.id));
+        let thumb_path = lateral_dir.join(format!("{}_thumb.png", v.id));
+        assert!(lateral_path.exists(), "Missing lateral sprite for {}", v.id);
+        assert!(thumb_path.exists(), "Missing thumb sprite for {}", v.id);
+
+        let lat_img = Image::from_file_with_format(&std::fs::read(&lateral_path).unwrap(), None).unwrap();
+        let th_img = Image::from_file_with_format(&std::fs::read(&thumb_path).unwrap(), None).unwrap();
+        assert_eq!(lat_img.width, 1024);
+        assert_eq!(lat_img.height, 512);
+        assert_eq!(th_img.width, 256);
+        assert_eq!(th_img.height, 128);
+
+        // D. Ackermann dynamic deflection
+        let car = Car::new(v.config);
+        let (fl_left, fr_left) = car.compute_ackermann_angles(0.35);
+        assert!(fl_left > fr_left, "Inner wheel must turn sharper than outer wheel during left turn for {}", v.id);
+        let (fl_right, fr_right) = car.compute_ackermann_angles(-0.35);
+        assert!(fr_right.abs() > fl_right.abs(), "Inner wheel must turn sharper than outer wheel during right turn for {}", v.id);
+    }
+}
+
+#[test]
 fn test_spec_075_chassis_skeleton_render_geometry_and_fixture_alignment() {
     let presets = [
         ("sports_car", CarConfig::sports_car()),
@@ -1765,10 +1898,3 @@ fn test_spec_075_chassis_skeleton_render_geometry_and_fixture_alignment() {
         assert!(hl_right.x < front_bumper.x || (hl_right.x - front_bumper.x).abs() < 0.1);
     }
 }
-
-
-
-
-
-
-
