@@ -655,21 +655,6 @@ impl BotAiDriver {
         }
 
         if !in_pit_lane {
-            // Obstacle clearance: shift target point away from track obstacles (apex tire stacks)
-            for obs in &track.geometry.obstacles {
-                let obs_center = obs.center();
-                let to_obs = obs_center - car_pos;
-                let dist = to_obs.length();
-                if dist < 10.0 {
-                    let obs_lat = to_obs.dot(car_right);
-                    if obs_lat.abs() < 3.5 {
-                        let push_dir: f32 = if obs_lat > 0.0 { 1.0 } else { -1.0 };
-                        let urgency: f32 = (1.0f32 - (dist / 10.0)).clamp(0.0f32, 1.0f32);
-                        target_point += target_sample.normal * (push_dir * urgency * 3.5);
-                    }
-                }
-            }
-
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
             // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
