@@ -76,12 +76,6 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .barrier_type
         .or_else(|| track.dominant_barrier_type())
         .unwrap_or(BarrierType::Steel);
-    track.apply_default_runoff_surfaces();
-    if opts.rebuild || track.spline.samples.is_empty() {
-        track.spline = TrackSpline::new(track.spline.waypoints.clone(), track.spline.closed);
-        report.spline = true;
-    }
-
     let checkpoint_count = opts
         .checkpoint_count
         .unwrap_or_else(|| {
@@ -96,6 +90,12 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
         .unwrap_or(3);
     let grid_layout = current_grid_layout(track);
+
+    track.apply_default_runoff_surfaces();
+    if opts.rebuild || track.spline.samples.is_empty() {
+        track.spline = TrackSpline::new(track.spline.waypoints.clone(), track.spline.closed);
+        report.spline = true;
+    }
     let geometry = &mut track.geometry;
     let no_walls = geometry.inner_walls.is_empty()
         && geometry.outer_walls.is_empty()
