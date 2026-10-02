@@ -1,6 +1,7 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::{
-    CarConfig, ChassisSkeleton, DifferentialType, DriverAssistsConfig, TerrainInteractionConfig, TireConfig,
+    CarConfig, ChassisSkeleton, DifferentialType, DriverAssistsConfig, SuspensionConfig,
+    TerrainInteractionConfig, TireConfig,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -103,6 +104,7 @@ impl GtWorldChallengeModule {
                 0.0,
             ),
             chassis: ChassisSkeleton::new(0.88, 1.18, 2.04, -0.40, 0.30, 0.65, 0.70, 0.05),
+            suspension: SuspensionConfig::double_wishbone(),
         }
         .finalized()
     }
@@ -125,6 +127,7 @@ impl GtWorldChallengeModule {
         let mut cfg = Self::car_gt3_evo();
         cfg.mass = 1320.0;
         cfg.inertia = 1620.0;
+        cfg.suspension = SuspensionConfig::macpherson_strut();
         cfg.max_engine_force = 7200.0; // ~420 BHP GT4
         cfg.max_reverse_force = 4680.0;
         cfg.max_brake_force = 18000.0;
@@ -157,6 +160,7 @@ impl GtWorldChallengeModule {
         cfg.inertia = 1250.0;
         cfg.wheelbase = 3.15;
         cfg.track_width = 2.00;
+        cfg.suspension = SuspensionConfig::pushrod_inboard();
         cfg.max_engine_force = 12200.0; // ~800 BHP LMH Hybrid
         cfg.max_reverse_force = 7930.0;
         cfg.max_brake_force = 26000.0;

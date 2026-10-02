@@ -1,5 +1,5 @@
 use macroquad::color::Color;
-use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, TireConfig};
+use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, SuspensionConfig, TireConfig};
 use tdrace_core::physics::surface::SurfaceType;
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DrivingStyle};
@@ -46,6 +46,7 @@ impl RallyGameModule {
             ..TireConfig::default()
         };
         cfg.assists = DriverAssistsConfig::sport();
+        cfg.suspension = SuspensionConfig::long_travel_offroad();
         cfg
     }
 

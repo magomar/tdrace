@@ -8,15 +8,11 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
-use super::config::{CarConfig, DifferentialType};
+use super::config::{CarConfig, DifferentialType, SuspensionArchetype};
 use super::surface::{SurfaceSampler, SurfaceType};
 use super::tire::{
     combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
 };
-
-fn one_f32() -> f32 {
-    1.0
-}
 
 /// Helper returning default wheel assemblies state for CarState deserialization.
 pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
@@ -26,6 +22,10 @@ pub fn default_wheel_assemblies_state() -> [WheelAssembly; 4] {
         WheelAssembly::default(),
         WheelAssembly::default(),
     ]
+}
+
+fn one_f32() -> f32 {
+    1.0
 }
 
 /// Steering overslip cap for bots and scripted controllers (linear mapping, see `step_per_wheel`).
@@ -152,6 +152,21 @@ impl CarControls {
     }
 }
 
+/// Telemetry record for an individual suspension corner.
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct SuspensionTelemetry {
+    /// Instantaneous suspension deflection (meters, >0 = bump compression, <0 = rebound).
+    pub deflection: f32,
+    /// Instantaneous deflection velocity (m/s).
+    pub deflection_velocity: f32,
+    /// Total spring + damping + ARB vertical normal force (Newtons).
+    pub normal_force: f32,
+    /// Dynamic wheel inclination angle under roll (radians).
+    pub dynamic_camber: f32,
+    /// True if suspension reached max bump travel this tick (bottomed out).
+    pub bottomed_out: bool,
+}
+
 /// Complete serializable state of the vehicle at any instant in time.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CarState {
@@ -188,13 +203,14 @@ pub struct CarState {
     pub esc_active: bool,
     /// Whether Anti-lock Braking System (ABS) is actively modulating brake force.
     pub abs_active: bool,
-    /// Per-step assist torque multipliers and ESC correction telemetry.
+    /// Assist reductions for this physics step, expressed as multipliers applied to drive force.
     #[serde(default = "one_f32")]
     pub traction_help_multiplier: f32,
     #[serde(default = "one_f32")]
     pub tcs_lateral_multiplier: f32,
     #[serde(default = "one_f32")]
     pub tcs_longitudinal_multiplier: f32,
+    /// Absolute corrective ESC yaw torque applied during the previous step (N·m).
     #[serde(default)]
     pub esc_corrective_torque: f32,
     /// Whether brakes (service brake or handbrake) are actively being applied.
@@ -221,6 +237,18 @@ pub struct CarState {
     /// Track longitudinal forward vector in world space for resolving grade incline gravity.
     #[serde(default)]
     pub track_forward: Vec2,
+    /// Dynamic vehicle body roll angle in radians (+ = rolled right, - = rolled left).
+    #[serde(default)]
+    pub roll_angle: f32,
+    /// Dynamic vehicle body pitch angle in radians (+ = pitch up/squat, - = pitch down/dive).
+    #[serde(default)]
+    pub pitch_angle: f32,
+    /// Detailed suspension telemetry for each corner [FL, FR, RL, RR].
+    #[serde(default)]
+    pub suspension: [SuspensionTelemetry; 4],
+    /// Ground elevation under each wheel contact patch in meters (z >= 0.0).
+    #[serde(default)]
+    pub wheel_elevations: [f32; 4],
     /// Elevation / vertical jump altitude above road in meters (z >= 0.0).
     pub elevation: f32,
     /// Vertical velocity in m/s (positive = ascending, negative = falling).
@@ -276,6 +304,10 @@ impl Default for CarState {
             road_grade_slope: 0.0,
             road_vertical_curvature: 0.0,
             track_forward: Vec2::ZERO,
+            roll_angle: 0.0,
+            pitch_angle: 0.0,
+            suspension: [SuspensionTelemetry::default(); 4],
+            wheel_elevations: [0.0; 4],
             elevation: 0.0,
             vertical_velocity: 0.0,
             is_airborne: false,
@@ -341,11 +373,6 @@ impl Car {
         self.state.tcs_longitudinal_multiplier = 1.0;
         self.state.esc_corrective_torque = 0.0;
     }
-
-    pub fn last_traction_help_multiplier(&self) -> f32 { self.state.traction_help_multiplier }
-    pub fn last_tcs_lateral_multiplier(&self) -> f32 { self.state.tcs_lateral_multiplier }
-    pub fn last_tcs_longitudinal_multiplier(&self) -> f32 { self.state.tcs_longitudinal_multiplier }
-    pub fn last_esc_corrective_torque_nm(&self) -> f32 { self.state.esc_corrective_torque }
 
     /// Recovery is an electronic assist for analog inputs; digital inputs receive a minimum
     /// playability accommodation in Pro and use the stronger of the two in Arcade/Sport.
@@ -458,6 +485,36 @@ impl Car {
     #[inline]
     pub fn speed_mph(&self) -> f32 {
         self.state.speed * 2.23694
+    }
+
+    /// Assist reduction multiplier for traction help in the previous step.
+    #[inline]
+    pub fn last_traction_help_multiplier(&self) -> f32 {
+        self.state.traction_help_multiplier
+    }
+
+    /// Assist reduction multiplier for lateral TCS in the previous step.
+    #[inline]
+    pub fn last_tcs_lateral_multiplier(&self) -> f32 {
+        self.state.tcs_lateral_multiplier
+    }
+
+    /// Assist reduction multiplier for longitudinal TCS in the previous step.
+    #[inline]
+    pub fn last_tcs_longitudinal_multiplier(&self) -> f32 {
+        self.state.tcs_longitudinal_multiplier
+    }
+
+    /// Corrective ESC stabilizing yaw torque in N·m applied in the previous step.
+    #[inline]
+    pub fn last_esc_corrective_torque_nm(&self) -> f32 {
+        self.state.esc_corrective_torque
+    }
+
+    /// Sets wheel ground elevation offsets (e.g. for kerbs, ruts, or bumps) in meters.
+    #[inline]
+    pub fn set_wheel_elevations(&mut self, elevations: [f32; 4]) {
+        self.state.wheel_elevations = elevations;
     }
 
     /// Computes world positions of all 4 wheels.
@@ -675,11 +732,21 @@ fn couple_axle(
         dt: f32,
     ) {
         let wheel_positions = self.wheel_positions_world();
+        let p0 = sampler.sample_surface(wheel_positions[0]);
+        let p1 = sampler.sample_surface(wheel_positions[1]);
+        let p2 = sampler.sample_surface(wheel_positions[2]);
+        let p3 = sampler.sample_surface(wheel_positions[3]);
         let surfaces = [
-            sampler.sample_surface(wheel_positions[0]).surface_type,
-            sampler.sample_surface(wheel_positions[1]).surface_type,
-            sampler.sample_surface(wheel_positions[2]).surface_type,
-            sampler.sample_surface(wheel_positions[3]).surface_type,
+            p0.surface_type,
+            p1.surface_type,
+            p2.surface_type,
+            p3.surface_type,
+        ];
+        self.state.wheel_elevations = [
+            p0.elevation,
+            p1.elevation,
+            p2.elevation,
+            p3.elevation,
         ];
         let center_props = sampler.sample_surface(self.state.position);
         self.state.road_elevation = center_props.elevation;
@@ -696,12 +763,14 @@ fn couple_axle(
         self.flick_headroom_remaining_s = (self.flick_headroom_remaining_s - dt).max(0.0);
         // 0. Update vertical elevation dynamics
         self.state.just_landed = false;
+        let mut touchdown_vz = 0.0f32;
         if self.state.elevation > 0.0 || self.state.vertical_velocity.abs() > 1e-4 {
             let gravity_z = 13.5f32; // snappy arcade gravity
             self.state.vertical_velocity -= gravity_z * dt;
             self.state.elevation += self.state.vertical_velocity * dt;
             if self.state.elevation <= 0.0 {
                 self.state.elevation = 0.0;
+                touchdown_vz = self.state.vertical_velocity.abs();
                 self.state.vertical_velocity = 0.0;
                 self.state.is_airborne = false;
                 self.state.last_air_time = self.state.air_time;
@@ -986,13 +1055,207 @@ fn couple_axle(
                 (0.0, 0.0, 0.0, 0.0)
             };
 
+        // 3B. Dynamic 4-Corner Compliant Suspension & Body Articulation (Spec 076)
+        let susp = &self.config.suspension;
+        let track_w = self.config.track_width;
+
+        // Roll center axis height at vehicle CG
+        let rc_front = susp.front_roll_center_height;
+        let rc_rear = susp.rear_roll_center_height;
+        let rc_cg = rc_rear + (rc_front - rc_rear) * (lr / wheelbase);
+        let h_roll = (self.config.cg_height - rc_cg).max(0.05);
+
+        // Axle roll stiffnesses (springs + anti-roll bars)
+        let k_phi_front = 0.5 * susp.front.spring_rate * track_w * track_w + susp.front_arb_rate;
+        let k_phi_rear = 0.5 * susp.rear.spring_rate * track_w * track_w + susp.rear_arb_rate;
+        let k_phi_total = (k_phi_front + k_phi_rear).max(1000.0);
+
+        // Total overturning roll moment
+        let roll_moment = self.config.mass * a_lat * h_roll
+            + (if bank_deg.abs() > 1e-4 {
+                self.config.mass * g * bank_sin * h_roll
+            } else {
+                0.0
+            });
+
+        let target_roll = if self.state.is_airborne {
+            0.0
+        } else {
+            (roll_moment / k_phi_total).clamp(-0.15, 0.15)
+        };
+
+        // Pitch stiffness (front and rear axle springs)
+        let k_theta_total = (2.0 * susp.front.spring_rate * lf * lf
+            + 2.0 * susp.rear.spring_rate * lr * lr)
+            .max(1000.0);
+        let h_pitch = self.config.cg_height;
+
+        // Total pitch moment: deceleration dive (a_long < 0) produces positive pitch (dive)
+        let pitch_moment = -self.config.mass * a_long * h_pitch
+            - (if grade_rad.abs() > 1e-4 {
+                self.config.mass * g * grade_sin * h_pitch
+            } else {
+                0.0
+            });
+
+        let target_pitch = if self.state.is_airborne {
+            0.0
+        } else {
+            (pitch_moment / k_theta_total).clamp(-0.15, 0.15)
+        };
+
+        // First-order response filter for body roll & pitch
+        let f_susp = susp.response_frequency_hz.clamp(1.0, 20.0);
+        let alpha_susp = 1.0 - (-2.0 * PI * f_susp * dt).exp();
+        self.state.roll_angle += (target_roll - self.state.roll_angle) * alpha_susp;
+        self.state.pitch_angle += (target_pitch - self.state.pitch_angle) * alpha_susp;
+
+        let phi = self.state.roll_angle;
+        let theta = self.state.pitch_angle;
+
+        let mut strokes = [0.0f32; 4];
+        let mut stroke_vels = [0.0f32; 4];
+        let mut bottomed_outs = [false; 4];
+        let mut bumpstop_forces = [0.0f32; 4];
+        let mut damper_forces = [0.0f32; 4];
+        let mut dynamic_cambers = [0.0f32; 4];
+        let mut mu_cambers = [1.0f32; 4];
+
+        for i in 0..4 {
+            let wheel_id = WheelId::ALL[i];
+            let corner = if wheel_id.is_front() {
+                &susp.front
+            } else {
+                &susp.rear
+            };
+            let xi = if wheel_id.is_front() { lf } else { -lr };
+            let yi = if wheel_id.is_left() { -half_w } else { half_w };
+
+            // Vertical chassis corner displacement (positive theta = braking dive, positive phi = left roll)
+            let z_chassis = -xi * theta.sin() + yi * phi.sin();
+
+            // Track elevation profile under wheel
+            let mut z_track = self.state.wheel_elevations[i];
+            if z_track.abs() < 1e-4 && surfaces[i] == SurfaceType::Curb {
+                z_track = 0.04;
+            }
+
+            // Landing compression from aerial drop touchdown
+            let corner_mass = if wheel_id.is_front() {
+                static_front_load * 0.5 / g
+            } else {
+                static_rear_load * 0.5 / g
+            };
+            let z_landing = if touchdown_vz > 0.0 {
+                let omega_n = (corner.spring_rate / corner_mass.max(1.0)).sqrt();
+                let zeta = corner.bump_damping_ratio;
+                let sqrt_term = (1.0 - zeta * zeta).max(1e-4).sqrt();
+                let peak_ratio = (-(zeta * sqrt_term.atan2(zeta)) / sqrt_term).exp();
+                (touchdown_vz / omega_n) * peak_ratio
+            } else {
+                0.0
+            };
+
+            let delta_z = if self.state.is_airborne {
+                -corner.max_rebound_travel
+            } else {
+                z_track - z_chassis + z_landing
+            };
+
+            let s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
+            strokes[i] = s;
+
+            let prev_s = self.state.suspension[i].deflection;
+            let s_dot = if dt > 1e-5 {
+                ((s - prev_s) / dt).clamp(-10.0, 10.0)
+            } else {
+                0.0
+            };
+            stroke_vels[i] = s_dot;
+
+            // Damping force
+            let c_damping = if s_dot >= 0.0 {
+                2.0 * corner.bump_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+            } else {
+                2.0 * corner.rebound_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+            };
+            damper_forces[i] = c_damping * s_dot;
+
+            // Bump-stop bottoming
+            let delta_stop = (delta_z - corner.max_bump_travel).max(0.0);
+            let bottomed = delta_stop > 0.002;
+            bottomed_outs[i] = bottomed;
+            bumpstop_forces[i] = if delta_stop > 0.0 {
+                4.0 * corner.spring_rate * delta_stop + 2.0 * c_damping * s_dot.max(0.0)
+            } else {
+                0.0
+            };
+
+            // Dynamic camber calculation: outside tire in turn (FR in left turn, FL in right turn)
+            // degrades towards positive camber (rolling onto outer shoulder)
+            let roll_sign = if wheel_id.is_left() { 1.0 } else { -1.0 };
+            let camber = if corner.archetype == SuspensionArchetype::SolidLiveAxle && !wheel_id.is_front() {
+                // Live axle coupled camber will be updated after axle stroke calculation
+                corner.static_camber
+            } else {
+                corner.static_camber + roll_sign * phi * (1.0 - corner.camber_recovery)
+            };
+            dynamic_cambers[i] = camber;
+
+            // Camber grip degradation: quadratic drop-off + shoulder scrub when rolling positive
+            let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0);
+            mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.80, 1.05);
+        }
+
+        // Coupled rear solid axle camber update
+        if susp.rear.archetype == SuspensionArchetype::SolidLiveAxle {
+            let beam_tilt = (strokes[3] - strokes[2]) / track_w.max(0.1);
+            dynamic_cambers[2] = susp.rear.static_camber + beam_tilt;
+            dynamic_cambers[3] = susp.rear.static_camber - beam_tilt;
+            mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2]).clamp(0.80, 1.05);
+            mu_cambers[3] = (1.0 - 1.8 * dynamic_cambers[3] * dynamic_cambers[3]).clamp(0.80, 1.05);
+        }
+
+        // Anti-roll bar forces (represented in roll stiffness k_phi)
+        let f_arb_f = susp.front_arb_rate * (strokes[0] - strokes[1]) / (track_w * track_w).max(0.01);
+        let f_arb_r = susp.rear_arb_rate * (strokes[2] - strokes[3]) / (track_w * track_w).max(0.01);
+        let _arb_forces = [-f_arb_f, f_arb_f, -f_arb_r, f_arb_r];
+
+        // Rigid kart diagonal jacking
+        let mut diag_forces = [0.0f32; 4];
+        if susp.front.archetype == SuspensionArchetype::RigidKart {
+            let shock_0 = (susp.front.spring_rate * self.state.wheel_elevations[0].max(if surfaces[0] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[0]).max(0.0);
+            let shock_1 = (susp.front.spring_rate * self.state.wheel_elevations[1].max(if surfaces[1] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[1]).max(0.0);
+            let shock_2 = (susp.rear.spring_rate * self.state.wheel_elevations[2].max(if surfaces[2] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[2]).max(0.0);
+            let shock_3 = (susp.rear.spring_rate * self.state.wheel_elevations[3].max(if surfaces[3] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[3]).max(0.0);
+
+            diag_forces[0] -= 0.50 * shock_3;
+            diag_forces[3] -= 0.50 * shock_0;
+            diag_forces[1] -= 0.50 * shock_2;
+            diag_forces[2] -= 0.50 * shock_1;
+        }
+
         // Wheel 0 = FL (left), Wheel 1 = FR (right), Wheel 2 = RL (left), Wheel 3 = RR (right)
-        let normal_loads = [
-            ((nom_fz_fl + delta_fz_caster_fl).max(min_load_f)) * ground_contact, // FL (left)
-            ((nom_fz_fr + delta_fz_caster_fr).max(min_load_f)) * ground_contact, // FR (right)
-            ((nom_fz_rl + delta_fz_caster_rl).max(min_load_r)) * ground_contact, // RL (left)
-            ((nom_fz_rr + delta_fz_caster_rr).max(min_load_r)) * ground_contact, // RR (right)
-        ];
+        let mut normal_loads = [0.0f32; 4];
+        for i in 0..4 {
+            let wheel_id = WheelId::ALL[i];
+            let corner = if wheel_id.is_front() { &susp.front } else { &susp.rear };
+            let nom = match i {
+                0 => nom_fz_fl + delta_fz_caster_fl,
+                1 => nom_fz_fr + delta_fz_caster_fr,
+                2 => nom_fz_rl + delta_fz_caster_rl,
+                _ => nom_fz_rr + delta_fz_caster_rr,
+            };
+            let min_load = if wheel_id.is_front() { min_load_f } else { min_load_r };
+
+            let z_bump = self.state.wheel_elevations[i].max(if surfaces[i] == SurfaceType::Curb { 0.04 } else { 0.0 });
+            let f_susp_bump = corner.spring_rate * z_bump;
+            let f_susp_damper = if z_bump > 0.0 || touchdown_vz > 0.0 { damper_forces[i] } else { 0.0 };
+            let delta_fz_susp = f_susp_bump + f_susp_damper + bumpstop_forces[i] + diag_forces[i];
+
+            let fz = ((nom + delta_fz_susp).max(min_load)) * ground_contact;
+            normal_loads[i] = fz.min(4.0 * total_weight);
+        }
 
         // 4. Tires, wheel spin and drivetrain (Spec 043)
         //
@@ -1142,6 +1405,8 @@ fn couple_axle(
             if surf.is_rigid_pavement() && prev_dirt > 0.02 {
                 mu *= (1.0 - 0.20 * prev_dirt).max(0.65);
             }
+            // Camber-induced tire friction degradation (Spec 076)
+            mu *= mu_cambers[i];
             surface_mus[i] = mu;
         }
 
@@ -1301,7 +1566,8 @@ fn couple_axle(
                     axle_torque -= (demand - axle_cap) * tcs_strength * drive_dir;
                     if before > 1e-3 {
                         self.state.tcs_longitudinal_multiplier = self
-                            .state.tcs_longitudinal_multiplier
+                            .state
+                            .tcs_longitudinal_multiplier
                             .min((axle_torque.abs() / before).clamp(0.0, 1.0));
                     }
                     tcs_active = true;
@@ -1451,7 +1717,8 @@ fn couple_axle(
                         w.angular_velocity += (omega_limit - w.angular_velocity) * tcs_strength;
                         if before > 1e-3 {
                             self.state.tcs_longitudinal_multiplier = self
-                                .state.tcs_longitudinal_multiplier
+                                .state
+                                .tcs_longitudinal_multiplier
                                 .min((w.angular_velocity.abs() / before).clamp(0.0, 1.0));
                         }
                         tcs_active = true;
@@ -1579,6 +1846,14 @@ fn couple_axle(
                 temperature: self.state.wheel_assemblies[i].temperature,
                 wear: self.state.wheel_assemblies[i].wear,
                 is_locked: self.state.wheel_assemblies[i].is_locked,
+            };
+
+            self.state.suspension[i] = SuspensionTelemetry {
+                deflection: strokes[i],
+                deflection_velocity: stroke_vels[i],
+                normal_force: normal_loads[i],
+                dynamic_camber: dynamic_cambers[i],
+                bottomed_out: bottomed_outs[i],
             };
         }
         self.state.abs_active = abs_active;
