@@ -492,8 +492,22 @@ def trace(circuit, segments=None, variable_density=True):
             if seg.length / num_sub < MIN_WAYPOINT_GAP_M:
                 num_sub = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
 
-            for step_i in range(num_sub):
-                t = step_i / num_sub
+            step_ts = [step_i / num_sub for step_i in range(num_sub)]
+            if not turn and seg.length > 15.0:
+                nxt_target = pieces[(k + 1) % len(pieces)][4]
+                wall_changes = (
+                    nxt_target.left_wall_distance != target.left_wall_distance
+                    or nxt_target.right_wall_distance != target.right_wall_distance
+                    or nxt_target.left_runoff != target.left_runoff
+                    or nxt_target.right_runoff != target.right_runoff
+                    or nxt_target.wall_type != target.wall_type
+                )
+                if wall_changes:
+                    end_t = (seg.length - 4.0) / seg.length
+                    if end_t > step_ts[-1] and (seg.length * (end_t - step_ts[-1])) >= MIN_WAYPOINT_GAP_M:
+                        step_ts.append(end_t)
+
+            for t in step_ts:
                 d = start + seg.length * t
                 px, py, h = pose(t)
                 e = smoothstep(t)
@@ -805,10 +819,16 @@ def grandstand_json(stand_id, spline, prop):
 
 def building_json(bldg_id, spline, prop):
     sample = spline.nearest(prop.at)
-    wall_d = sample.get(f"{prop.side}_wall_distance")
-    if wall_d is None:
-        wall_d = 4.0
-    has_curb = sample.get(f"{prop.side}_curb", False)
+    span_half = prop.width * 0.5
+    samples_to_check = [prop.at, (prop.at - span_half) % spline.total, (prop.at + span_half) % spline.total]
+    wall_d = max(
+        (spline.nearest(s).get(f"{prop.side}_wall_distance") or 4.0)
+        for s in samples_to_check
+    )
+    has_curb = any(
+        spline.nearest(s).get(f"{prop.side}_curb", False)
+        for s in samples_to_check
+    )
     min_front = wall_d + 1.5
     if has_curb:
         min_front = max(min_front, 1.4 + 1.5)
@@ -1090,6 +1110,7 @@ def track_bake(paths, rebuild):
     cmd = ["cargo", "run", "--quiet", "--bin", "track_bake", "--", *paths]
     if rebuild:
         cmd.append("--rebuild")
+        cmd.append("--adaptive-checkpoints")
     return subprocess.run(cmd, cwd=REPO_ROOT, check=False).returncode == 0
 
 
@@ -2177,7 +2198,7 @@ THUNDER_BOWL = Circuit(
         GrandstandProp(at=250.0, side="right", offset=3.5, length=55.0, depth=8.0, style="open_bleachers", tiers=8),
         # Buildings: infield control tower and pit garages
         BuildingProp(at=15.0, side="left", offset=8.5, width=10.0, depth=10.0, style="control_tower"),
-        BuildingProp(at=45.0, side="left", offset=8.5, width=28.0, depth=9.0, style="pit_garage"),
+        BuildingProp(at=40.0, side="left", offset=8.5, width=22.0, depth=9.0, style="pit_garage"),
         BuildingProp(at=250.0, side="left", offset=8.5, width=32.0, depth=9.0, style="pit_garage"),
         # Lake: infield lake centered at (70, 35)
         Spot(at=0.0, lateral=35.0, radius=16.0, surface="Water", name="Thunder Bowl Infield Lake"),
