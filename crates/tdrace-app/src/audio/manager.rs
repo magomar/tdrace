@@ -35,7 +35,8 @@ use crate::audio::sfx::{
     generate_curb_rumble_sound, generate_engine_sound, generate_gear_shift_pop,
     generate_generic_engine_rpm_band, generate_jump_launch_sound, generate_kart_125cc_rpm_band,
     generate_landing_sound, generate_lap_chime, generate_nascar_v8_rpm_band,
-    generate_offroad_sound, generate_race_finish, generate_rally_turbo_rpm_band,
+    generate_offroad_sound, generate_pit_limiter_sound, generate_pit_release_sound,
+    generate_pit_wrench_sound, generate_race_finish, generate_rally_turbo_rpm_band,
     generate_sand_rail_boxer_rpm_band, generate_sector_ping, generate_skid_sound,
     generate_sport_gt_rpm_band, generate_ui_move, generate_ui_select, generate_wall_crash_sound,
     generate_water_splash_sound, EngineSoundConfig,
@@ -207,6 +208,9 @@ pub enum SfxType {
     JumpLaunch,
     Landing,
     WaterSplash,
+    PitLimiter,
+    PitWrench,
+    PitRelease,
 }
 
 /// Loaded Sound Handles Cache.
@@ -237,6 +241,9 @@ pub struct SoundBank {
     pub sfx_jump_launch: Option<Sound>,
     pub sfx_landing: Option<Sound>,
     pub sfx_water_splash: Option<Sound>,
+    pub sfx_pit_limiter: Option<Sound>,
+    pub sfx_pit_wrench: Option<Sound>,
+    pub sfx_pit_release: Option<Sound>,
     pub kira_sfx: HashMap<SfxType, SoundData>,
     pub kira_music: HashMap<MusicTrack, SoundData>,
 }
@@ -270,6 +277,9 @@ impl SoundBank {
             sfx_jump_launch: None,
             sfx_landing: None,
             sfx_water_splash: None,
+            sfx_pit_limiter: None,
+            sfx_pit_wrench: None,
+            sfx_pit_release: None,
             kira_sfx: HashMap::new(),
             kira_music: HashMap::new(),
         }
@@ -327,6 +337,9 @@ impl SoundBank {
         let jump_wav = generate_jump_launch_sound(sample_rate);
         let land_wav = generate_landing_sound(sample_rate);
         let water_wav = generate_water_splash_sound(sample_rate);
+        let pit_limiter_wav = generate_pit_limiter_sound(sample_rate);
+        let pit_wrench_wav = generate_pit_wrench_sound(sample_rate);
+        let pit_release_wav = generate_pit_release_sound(sample_rate);
 
         let mut kira_sfx = HashMap::new();
         let mut kira_music = HashMap::new();
@@ -356,6 +369,9 @@ impl SoundBank {
             (SfxType::JumpLaunch, &jump_wav),
             (SfxType::Landing, &land_wav),
             (SfxType::WaterSplash, &water_wav),
+            (SfxType::PitLimiter, &pit_limiter_wav),
+            (SfxType::PitWrench, &pit_wrench_wav),
+            (SfxType::PitRelease, &pit_release_wav),
         ];
 
         for (sfx_type, bytes) in sfx_sources {
@@ -391,6 +407,9 @@ impl SoundBank {
             sfx_jump_launch: safe_load_sound_from_bytes(&jump_wav).await,
             sfx_landing: safe_load_sound_from_bytes(&land_wav).await,
             sfx_water_splash: safe_load_sound_from_bytes(&water_wav).await,
+            sfx_pit_limiter: safe_load_sound_from_bytes(&pit_limiter_wav).await,
+            sfx_pit_wrench: safe_load_sound_from_bytes(&pit_wrench_wav).await,
+            sfx_pit_release: safe_load_sound_from_bytes(&pit_release_wav).await,
             kira_sfx,
             kira_music,
         }
@@ -462,6 +481,9 @@ impl SoundBank {
             SfxType::JumpLaunch => self.sfx_jump_launch.as_ref(),
             SfxType::Landing => self.sfx_landing.as_ref(),
             SfxType::WaterSplash => self.sfx_water_splash.as_ref(),
+            SfxType::PitLimiter => self.sfx_pit_limiter.as_ref(),
+            SfxType::PitWrench => self.sfx_pit_wrench.as_ref(),
+            SfxType::PitRelease => self.sfx_pit_release.as_ref(),
         }
     }
 

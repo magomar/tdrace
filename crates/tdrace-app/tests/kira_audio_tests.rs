@@ -96,6 +96,9 @@ fn test_soundbank_kira_sfx_and_music_population() {
         SfxType::JumpLaunch,
         SfxType::Landing,
         SfxType::WaterSplash,
+        SfxType::PitLimiter,
+        SfxType::PitWrench,
+        SfxType::PitRelease,
     ];
 
     for sfx in all_sfx {

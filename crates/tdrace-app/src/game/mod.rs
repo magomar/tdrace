@@ -220,7 +220,7 @@ use crate::render::{
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_player_ground_aura,
-    render_player_overhead_chevron, render_player_sonar_ping,
+    render_player_overhead_chevron, render_player_sonar_ping, render_pit_box_chevron,
     render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
@@ -12386,6 +12386,41 @@ impl RaceSession {
             }
         }
 
+        // Pit Lane Audio & Events (Spec 062)
+        for ev in &race_events {
+            match *ev {
+                RaceEvent::PitEntry { car: i } => {
+                    if i == my_car_idx {
+                        self.audio.play_sfx(SfxType::PitLimiter);
+                    } else if i == 1 && is_split {
+                        self.audio.play_sfx(SfxType::PitLimiter);
+                    }
+                }
+                RaceEvent::PitServiceStart { car: i } => {
+                    if i == my_car_idx {
+                        self.audio.play_sfx(SfxType::PitWrench);
+                    } else if i == 1 && is_split {
+                        self.audio.play_sfx(SfxType::PitWrench);
+                    }
+                }
+                RaceEvent::PitServiceComplete { car: i } => {
+                    if i == my_car_idx {
+                        self.audio.play_sfx(SfxType::PitRelease);
+                    } else if i == 1 && is_split {
+                        self.audio.play_sfx(SfxType::PitRelease);
+                    }
+                }
+                RaceEvent::PitExit { car: i } => {
+                    if i == my_car_idx {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    } else if i == 1 && is_split {
+                        self.audio.play_sfx(SfxType::UiSelect);
+                    }
+                }
+                _ => {}
+            }
+        }
+
         if let Some(air_time) = player_jump_air_time {
             if self.is_stunt_scoring_enabled() && self.player_collision_stunt_lockout <= 0.0 {
                 let pts = (air_time * 250.0).round() as u32;
@@ -15460,6 +15495,20 @@ impl RaceSession {
                     0.75,
                 );
             }
+
+            // 10b. Team Pit Box Chevron (Spec 062)
+            if let Some(pit_lane) = &self.track.pit_lane {
+                if !pit_lane.pit_boxes.is_empty() {
+                    let box_idx = focus_car_idx % pit_lane.pit_boxes.len();
+                    let stall = &pit_lane.pit_boxes[box_idx];
+                    render_pit_box_chevron(
+                        stall.position,
+                        camera.current_zoom,
+                        self.session_time,
+                        scheme,
+                    );
+                }
+            }
         }
 
         // 11. Tree Foliage Canopies (Above Vehicles with proximity alpha fading)
@@ -15640,6 +15689,7 @@ impl RaceSession {
                     self.visibility_toast.as_ref(),
                     &self.visibility_options,
                     self.session_time,
+                    self.world.pit_states.get(my_idx),
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {
