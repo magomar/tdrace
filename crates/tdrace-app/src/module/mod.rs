@@ -695,7 +695,7 @@ mod tests {
         let classic = ClassicGameModule::new();
         assert_eq!(classic.id(), "classic");
         assert!(!classic.title().is_empty());
-        assert_eq!(classic.vehicles().len(), 8);
+        assert_eq!(classic.vehicles().len(), 12);
         assert_eq!(classic.tracks().len(), 18);
         assert!(!classic.drivers().is_empty());
         assert_eq!(classic.default_vehicle_id(), "classic_gt");
@@ -706,13 +706,17 @@ mod tests {
             vehicle_ids,
             vec![
                 "classic_gt",
+                "classic_gt_vintage",
                 "classic_nascar",
+                "classic_stock_vintage",
                 "classic_offroad",
+                "classic_at_safari",
                 "classic_kart",
+                "classic_kart_vintage",
                 "classic_rally",
+                "classic_rx_vintage",
                 "classic_ax_mudlark",
                 "classic_ax_brawler",
-                "classic_ax_talon",
             ]
         );
 
@@ -736,7 +740,7 @@ mod tests {
         assert!(kart.steer_speed >= 10.0);
 
         let rally = ClassicGameModule::car_classic_rally();
-        assert_eq!(rally.drive_bias, 0.5);
+        assert_eq!(rally.drive_bias, 0.45);
         assert!(rally.assists.counter_steer_assist_enabled);
 
         let mudlark = ClassicGameModule::car_classic_ax_mudlark();

@@ -412,7 +412,7 @@ fn test_classic_cars_audio_profile_and_tier_one_sound_bank_mapping() {
     assert_eq!(kart.audio_profile.expect("profile missing").sound_type, EngineSoundType::KartCadet60);
 
     let rally = vehicles.iter().find(|v| v.id == "classic_rally").expect("classic_rally missing");
-    assert_eq!(rally.audio_profile.expect("profile missing").sound_type, EngineSoundType::CrossCarMotorcycle);
+    assert_eq!(rally.audio_profile.expect("profile missing").sound_type, EngineSoundType::Rally2Turbo);
 
     // 2. Verify CLASSIC_ARCADE_CARS RealCarModel sound_type dispatch
     let expected = [
@@ -420,7 +420,7 @@ fn test_classic_cars_audio_profile_and_tier_one_sound_bank_mapping() {
         ("classic_nascar", EngineSoundType::LateModelV8),
         ("classic_offroad", EngineSoundType::SandRailBoxer),
         ("classic_kart", EngineSoundType::KartCadet60),
-        ("classic_rally", EngineSoundType::CrossCarMotorcycle),
+        ("classic_rally", EngineSoundType::Rally2Turbo),
     ];
 
     for (id, expected_sound) in expected {
@@ -460,7 +460,7 @@ fn test_session_resolve_active_sound_type_for_classic_vehicles() {
     assert_eq!(session.resolve_active_sound_type(), EngineSoundType::KartCadet60);
 
     session.selected_car_model_id = Some("classic_rally");
-    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::CrossCarMotorcycle);
+    assert_eq!(session.resolve_active_sound_type(), EngineSoundType::Rally2Turbo);
 
     session.selected_car_model_id = Some("classic_nascar");
     assert_eq!(session.resolve_active_sound_type(), EngineSoundType::LateModelV8);
@@ -480,7 +480,7 @@ fn test_session_resolve_active_sound_type_for_classic_vehicles() {
         (1, EngineSoundType::LateModelV8),       // classic_nascar
         (2, EngineSoundType::SandRailBoxer),     // classic_offroad
         (3, EngineSoundType::KartCadet60),       // classic_kart
-        (4, EngineSoundType::CrossCarMotorcycle), // classic_rally
+        (4, EngineSoundType::Rally2Turbo),       // classic_rally
     ];
 
     for (idx, sound) in garage_expected {

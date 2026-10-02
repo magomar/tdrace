@@ -768,6 +768,11 @@ impl AudioManager {
         self.play_sfx_with_gain(sfx, 1.0);
     }
 
+    /// Plays bottoming out impact thud SFX (Spec 076).
+    pub fn play_bottoming_thud_sfx(&self, intensity: f32) {
+        self.play_sfx_with_gain(SfxType::Landing, intensity.clamp(0.2, 1.0));
+    }
+
     /// Plays a one-shot sound effect with custom volume multiplier.
     pub fn play_sfx_with_gain(&self, sfx: SfxType, gain: f32) {
         let vol = match sfx {

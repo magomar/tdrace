@@ -176,7 +176,7 @@ fn test_classic_arcade_vehicles_preserve_tier_one_mapping() {
         ("classic_nascar", EngineSoundType::LateModelV8),
         ("classic_offroad", EngineSoundType::SandRailBoxer),
         ("classic_kart", EngineSoundType::KartCadet60),
-        ("classic_rally", EngineSoundType::CrossCarMotorcycle),
+        ("classic_rally", EngineSoundType::Rally2Turbo),
     ];
 
     // 1. Verify VehicleModelDefinition audio_profile
