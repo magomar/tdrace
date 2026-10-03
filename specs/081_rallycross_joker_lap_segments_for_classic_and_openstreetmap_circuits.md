@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits"
 description: "Introduces authentic Joker Lap branching segments to all Classic and real-world OpenStreetMap Rallycross circuits via Directed Ribbon Graph (TrackNetwork), with mixed-surface transitions, gore crash attenuators, and snap-to-merge stitching."
-status: draft
+status: in_progress
+verified: { by: human:mario, at: 2026-10-03T15:23:16Z, hash: "119bd4d6cc99" }
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T15:12:21Z }
 depends_on:
