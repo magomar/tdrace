@@ -99,6 +99,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation | Architecture Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Introduces a lightweight, closed-form 4-corner suspension compliance model in wheelbase::CarConfig governed by six discrete suspension archetypes, differentiating motorsport categories and competitive tiers through dynamic kerb absorption, body roll kinematics, camber degradation, and bottoming-out telemetry. |
 | [077](077_procedural_gt_circuit_pit_lanes_from_openstreetmap_survey_data.md) | Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data | Feature Spec | `approved` | [062](062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md) | Extracts, calibrates, scales, and bakes authentic physical pit lane geometry (entry gates, exit gates, bypass splines, team pit stalls) across all 18 GT circuits using OpenStreetMap survey data and procedural fallbacks. |
 | [078](078_directional_impact_masking_engine_placement_damage_and_archetype_suspension_failure.md) | Directional Impact Masking, Engine Placement Damage, and Archetype Suspension Failure | Feature Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Establishes directional collision impact masking, engine placement vulnerability (Front/Mid/Rear), archetype-specific suspension damage coupling into steering alignment and jump compliance, and itemized post-race repair economics. |
+| [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Tactical Hologram Cockpit Telemetry HUD: Proportional Chassis Geometry, Powertrain Damage, Dual-Mode Suspension, and Dynamic Steered Wheels | Feature Spec | `in_progress` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md), [078](078_directional_impact_masking_engine_placement_damage_and_archetype_suspension_failure.md) | Redesigns the cockpit telemetry HUD into a pure graphical Tactical Hologram depicting proportional chassis geometry (ChassisSkeleton), authentic engine placement/damage, decoupled tire wear vs casing temperature, thick perimeter impact indicators, dynamic front wheel Ackermann steering articulation, and dual switchable suspension modes (Variant B Kinematics vs Variant C Telemetry) toggled in settings and via Ctrl+1 / Ctrl+2. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -115,6 +116,7 @@ flowchart LR
     076["076: Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation"]
     077["077: Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data"]
     078["078: Directional Impact Masking, Engine Placement Damage, and Archetype Suspension Failure"]
+    079["079: Tactical Hologram Cockpit Telemetry HUD: Proportional Chassis Geometry, Powertrain Damage, Dual-Mode Suspension, and Dynamic Steered Wheels"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -125,4 +127,8 @@ flowchart LR
     062 --> 077
     075 --> 078
     076 --> 078
+    074 --> 079
+    075 --> 079
+    076 --> 079
+    078 --> 079
 ```
