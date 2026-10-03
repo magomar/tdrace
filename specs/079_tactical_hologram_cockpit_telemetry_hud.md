@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Tactical Hologram Cockpit Telemetry HUD: Proportional Chassis Geometry, Powertrain Damage, Dual-Mode Suspension, and Dynamic Steered Wheels"
 description: "Redesigns the cockpit telemetry HUD into a pure graphical Tactical Hologram depicting proportional chassis geometry (ChassisSkeleton), authentic engine placement/damage, decoupled tire wear vs casing temperature, thick perimeter impact indicators, dynamic front wheel Ackermann steering articulation, and dual switchable suspension modes (Variant B Kinematics vs Variant C Telemetry) toggled in settings and via Ctrl+1 / Ctrl+2."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-079-receipt.md"
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T08:35:00Z }
