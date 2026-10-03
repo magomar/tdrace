@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits"
 description: "Introduces authentic Joker Lap branching segments to all Classic and real-world OpenStreetMap Rallycross circuits via Directed Ribbon Graph (TrackNetwork), with mixed-surface transitions, gore crash attenuators, and snap-to-merge stitching."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-081-receipt.md"
 verified: { by: human:mario, at: 2026-10-03T15:23:16Z, hash: "119bd4d6cc99" }
 created: 2026-10-03
@@ -118,26 +118,26 @@ For the 20 real-world World RX circuits (Spec 021), authentic Joker Lap paths ar
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Classic RX circuits load valid Joker track networks**
-  - [ ] **Given** the 4 Classic Module Rallycross circuits (`rx_quarry_sprint`, `rx_hilltop_leap`, `rx_canyon_flyer`, `classic_rallycross`)
-  - [ ] **When** each track is loaded via `catalog::official_track`
-  - [ ] **Then** `track.network` contains both `"main"` and `"joker"` layouts
-  - [ ] **And** the `"joker"` layout has an arc-length between 30 m and 70 m longer than `"main"`
+  - [x] **Given** the 4 Classic Module Rallycross circuits (`rx_quarry_sprint`, `rx_hilltop_leap`, `rx_canyon_flyer`, `classic_rallycross`)
+  - [x] **When** each track is loaded via `catalog::official_track`
+  - [x] **Then** `track.network` contains both `"main"` and `"joker"` layouts
+  - [x] **And** the `"joker"` layout has an arc-length between 30 m and 70 m longer than `"main"`
 
 - **Scenario: OpenStreetMap World RX circuits feature authentic Joker Lap splines**
-  - [ ] **Given** the 20 official World RX tracks loaded from `tracks/rally/*.json`
-  - [ ] **When** inspected for topological network definitions
-  - [ ] **Then** all 20 tracks define split junctions with gore crash attenuators and $C^1$ tangent divergence $\Delta\theta < 10^{-4}\,\text{rad}$
-  - [ ] **And** `track.trim_walls_for_network()` leaves zero blocking barrier segments across split and merge throats
+  - [x] **Given** the 20 official World RX tracks loaded from `tracks/rally/*.json`
+  - [x] **When** inspected for topological network definitions
+  - [x] **Then** all 20 tracks define split junctions with gore crash attenuators and $C^1$ tangent divergence $\Delta\theta < 10^{-4}\,\text{rad}$
+  - [x] **And** `track.trim_walls_for_network()` leaves zero blocking barrier segments across split and merge throats
 
 - **Scenario: Cars driving Joker branch incur realistic time delta**
-  - [ ] **Given** a vehicle driven along `Layout::Main` and `Layout::Joker` on `holjes_rx`
-  - [ ] **When** simulated at maximum grip with identical entry velocity
-  - [ ] **Then** the Joker lap time is between 2.0 and 4.5 seconds slower than the main lap time
+  - [x] **Given** a vehicle driven along `Layout::Main` and `Layout::Joker` on `holjes_rx`
+  - [x] **When** simulated at maximum grip with identical entry velocity
+  - [x] **Then** the Joker lap time is between 2.0 and 4.5 seconds slower than the main lap time
 
 - **Scenario: Backward compatibility for legacy callers**
-  - [ ] **Given** an external consumer requesting `track.spline` without querying `network`
-  - [ ] **When** accessing waypoints, samples, and walls
-  - [ ] **Then** the primary `"main"` layout spline is returned with zero panic or breaking interface changes
+  - [x] **Given** an external consumer requesting `track.spline` without querying `network`
+  - [x] **When** accessing waypoints, samples, and walls
+  - [x] **Then** the primary `"main"` layout spline is returned with zero panic or breaking interface changes
 
 ---
 

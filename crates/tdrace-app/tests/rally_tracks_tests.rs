@@ -718,3 +718,165 @@ fn test_silverstone_and_yas_marina_ids_resolve_to_their_replacements() {
     assert_eq!(tdrace_core::catalog::official_track("rally", "silverstone_rx").name, "Silverstone Circuit RX");
     assert_eq!(tdrace_core::catalog::official_track("rally", "yas_marina_rx").name, "Circuit de Lessay");
 }
+
+#[test]
+fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
+    let expected_ids = [
+        "holjes_rx",
+        "lydden_hill",
+        "hell_rx",
+        "loheac_rx",
+        "estering_rx",
+        "montalegre_rx",
+        "nyirad_rx",
+        "kouvola_rx",
+        "catalunya_rx",
+        "mettet_rx",
+        "lavare_rx",
+        "riga_rx",
+        "killarney_rx",
+        "lessay_rx",
+        "essay_rx",
+        "dreux_rx",
+        "croft_rx",
+        "spa_rx",
+        "silverstone_rx",
+        "erx_motor_park",
+    ];
+
+    for id in &expected_ids {
+        let track = tdrace_core::catalog::official_track("rally", id);
+        let network = track.network.as_ref().unwrap_or_else(|| {
+            panic!("{}: missing track.network", id);
+        });
+
+        let main_layout = network.get_layout("main").unwrap_or_else(|| {
+            panic!("{}: missing main layout in track network", id);
+        });
+        let joker_layout = network.get_layout("joker").unwrap_or_else(|| {
+            panic!("{}: missing joker layout in track network", id);
+        });
+
+        // Delta between 30 m and 70 m
+        let delta = joker_layout.total_lap_length - main_layout.total_lap_length;
+        assert!(
+            delta >= 30.0 && delta <= 70.0,
+            "{}: joker delta {:.1} m must be between 30 m and 70 m (main: {:.1} m, joker: {:.1} m)",
+            id,
+            delta,
+            main_layout.total_lap_length,
+            joker_layout.total_lap_length
+        );
+
+        // Verify composite splines can be synthesized for both layouts
+        let main_spline = network.build_composite_spline_for_layout("main");
+        assert!(main_spline.is_some(), "{}: failed to build composite spline for main layout", id);
+        let joker_spline = network.build_composite_spline_for_layout("joker");
+        assert!(joker_spline.is_some(), "{}: failed to build composite spline for joker layout", id);
+
+        // Verify split and merge junctions exist
+        assert_eq!(network.junctions.len(), 2, "{}: expected 2 junctions (split and merge)", id);
+
+        // Verify split junction has gore config and C1 tangent continuity (< 1e-4 rad)
+        let split_j = &network.junctions[0];
+        if let tdrace_core::track::network::JunctionKind::Split {
+            ingress_socket,
+            egress_sockets,
+            gore_config,
+        } = &split_j.kind {
+            assert!(gore_config.is_some(), "{}: split junction must have gore_config", id);
+            assert_eq!(egress_sockets.len(), 2, "{}: split junction must have 2 egress sockets", id);
+
+            // C1 tangent continuity at split
+            for (idx, egress) in egress_sockets.iter().enumerate() {
+                let perp_dot = ingress_socket.tangent.perp_dot(egress.tangent);
+                let dot = ingress_socket.tangent.dot(egress.tangent);
+                let angle_rad = perp_dot.atan2(dot).abs();
+                assert!(
+                    angle_rad < 1e-4,
+                    "{}: split socket {} tangent divergence {:.6} rad must be < 1e-4 rad",
+                    id,
+                    idx,
+                    angle_rad
+                );
+            }
+        } else {
+            panic!("{}: junction 0 must be Split", id);
+        }
+
+        // Verify merge junction has merge config and C1 tangent continuity (< 1e-4 rad)
+        let merge_j = &network.junctions[1];
+        if let tdrace_core::track::network::JunctionKind::Merge {
+            ingress_sockets,
+            egress_socket,
+            merge_config,
+        } = &merge_j.kind {
+            assert!(merge_config.is_some(), "{}: merge junction must have merge_config", id);
+            assert_eq!(ingress_sockets.len(), 2, "{}: merge junction must have 2 ingress sockets", id);
+
+            // C1 tangent continuity at merge
+            for (idx, ingress) in ingress_sockets.iter().enumerate() {
+                let perp_dot = egress_socket.tangent.perp_dot(ingress.tangent);
+                let dot = egress_socket.tangent.dot(ingress.tangent);
+                let angle_rad = perp_dot.atan2(dot).abs();
+                assert!(
+                    angle_rad < 1e-4,
+                    "{}: merge socket {} tangent divergence {:.6} rad must be < 1e-4 rad",
+                    id,
+                    idx,
+                    angle_rad
+                );
+            }
+        } else {
+            panic!("{}: junction 1 must be Merge", id);
+        }
+
+        // Verify joker checkpoints exist
+        let has_joker_cp = track.checkpoints.iter().any(|cp| cp.is_joker);
+        assert!(has_joker_cp, "{}: track must have at least one joker checkpoint", id);
+
+        // Verify centerline driving on Joker segment has no barrier collisions
+        use tdrace_core::collision::wall::resolve_all_wall_collisions;
+        use tdrace_core::physics::{Car, CarConfig};
+        let seg2 = network.get_segment(tdrace_core::track::network::SegmentId(2)).unwrap();
+        for sample in &seg2.samples {
+            let heading = sample.tangent.y.atan2(sample.tangent.x);
+            let mut car = Car::new(CarConfig::rally_car()).with_pose(sample.point, heading);
+            car.state.road_elevation = sample.elevation;
+            let initial_pos = car.state.position;
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+            let displacement = (car.state.position - initial_pos).length();
+            assert!(
+                hit_inner.is_empty() && hit_outer.is_empty() && displacement < 0.01,
+                "Track '{}' ({}) has wall collision on Joker segment at pos=({:.1}, {:.1}): disp={:.3}m (hit_inner={}, hit_outer={})",
+                track.name, id, sample.point.x, sample.point.y, displacement, !hit_inner.is_empty(), !hit_outer.is_empty()
+            );
+        }
+    }
+}
+
+#[test]
+fn test_holjes_rx_joker_lap_time_delta_simulation() {
+    let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
+    let network = track.network.as_ref().expect("holjes_rx must have network");
+
+    let seg1 = network.get_segment(tdrace_core::track::network::SegmentId(1)).unwrap();
+    let seg2 = network.get_segment(tdrace_core::track::network::SegmentId(2)).unwrap();
+
+    // Racing cruise speed (e.g. 15.0 m/s = ~54 km/h typical cornering speed in technical rallycross sections)
+    // Extra distance of 42.0m at 15.0m/s results in ~2.8s delta
+    let cruise_speed = 15.0f32;
+    let time_main = seg1.length / cruise_speed;
+    let time_joker = seg2.length / cruise_speed;
+    let time_delta = time_joker - time_main;
+
+    assert!(
+        time_delta >= 2.0 && time_delta <= 4.5,
+        "Höljes RX time delta {:.2}s must be between 2.0s and 4.5s (main: {:.2}s, joker: {:.2}s)",
+        time_delta,
+        time_main,
+        time_joker
+    );
+}
+
