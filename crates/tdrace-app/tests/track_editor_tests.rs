@@ -2671,4 +2671,45 @@ fn test_road_split_snap_to_merge_and_layout_generation() {
     assert!(alt_layout.segment_sequence.contains(&branch_seg.id));
 }
 
+#[test]
+fn test_road_split_wall_trimming_and_zero_collision() {
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+    use tdrace_core::physics::{Car, CarConfig};
+
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+
+    tools.active_tool = EditorToolType::RoadSplit;
+    let target_wp = state.track.spline.waypoints[2].point;
+
+    // 1. Insert split
+    tools.handle_secondary_down(&mut state, target_wp);
+    let active_sock = tools.active_branch_socket.unwrap();
+
+    // 2. Extend branch waypoint
+    let ext_pt = target_wp + Vec2::new(40.0, 30.0);
+    tools.handle_secondary_down(&mut state, ext_pt);
+
+    // 3. Snap to merge near waypoint 5
+    let merge_wp = state.track.spline.waypoints[5].point;
+    let click_near_merge = merge_wp + Vec2::new(2.0, 1.0);
+    tools.handle_secondary_down(&mut state, click_near_merge);
+
+    // Trim walls
+    state.track.trim_walls_for_network();
+
+    // Verify car driving along the branch segment has no collisions with trimmed inner/outer track walls
+    let branch_seg = state.track.network.as_ref().unwrap().segments.iter().find(|s| s.entry_junction == Some(active_sock)).unwrap();
+    for sample in &branch_seg.samples {
+        let mut car = Car::new(CarConfig::stock_car_ta1()).with_pose(sample.point, sample.tangent.y.atan2(sample.tangent.x));
+        let hits_inner = resolve_all_wall_collisions(&mut car, &state.track.geometry.inner_walls, &[]);
+        let hits_outer = resolve_all_wall_collisions(&mut car, &state.track.geometry.outer_walls, &[]);
+        assert!(hits_inner.is_empty(), "Branch road segment should have trimmed inner walls: {:?}", hits_inner);
+        assert!(hits_outer.is_empty(), "Branch road segment should have trimmed outer walls: {:?}", hits_outer);
+    }
+}
+
+
+
 
