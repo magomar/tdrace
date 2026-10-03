@@ -5,12 +5,31 @@ use macroquad::color::{Color, WHITE};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use wheelbase::surface::SurfaceType;
-use arcade_race_core::track::geometry::{SurfaceLayer, SurfaceShape};
+use arcade_race_core::track::geometry::{LineSegment, SurfaceLayer, SurfaceShape};
 use arcade_race_core::track::spline::{SplineSample, TrackSpline};
 use arcade_race_core::track::Track;
 
 use super::color::Palette;
 use super::surface_material::{evaluate_macro_modulation, SurfaceMaterialRegistry, SurfaceTextureQuality};
+
+/// Validates whether a quad (p0_in -> p1_in -> p1_out -> p0_out) is non-degenerate
+/// and non-self-intersecting (preventing bowtie/hourglass artifacts).
+#[inline]
+fn is_quad_valid(p0_in: Vec2, p1_in: Vec2, p1_out: Vec2, p0_out: Vec2) -> bool {
+    let in_len_sq = (p1_in - p0_in).length_squared();
+    let out_len_sq = (p1_out - p0_out).length_squared();
+    if in_len_sq < 1e-4 && out_len_sq < 1e-4 {
+        return false;
+    }
+    if in_len_sq > 1e-4 && out_len_sq > 1e-4 {
+        let seg_radial_0 = LineSegment::new(p0_in, p0_out);
+        let seg_radial_1 = LineSegment::new(p1_in, p1_out);
+        if seg_radial_0.intersect_segment(&seg_radial_1).is_some() {
+            return false;
+        }
+    }
+    true
+}
 
 /// Computes instantaneous track curvature (radians per meter) between two spline samples.
 #[inline]
@@ -825,8 +844,8 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     };
     let mut fringe_builder = BatchMeshBuilder::new(fringe_tex);
 
-    let (untangled_road_left, untangled_road_right) = spline.untangled_road_edges();
-    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(curb_extra_width);
+    let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
+        spline.untangled_boundaries(curb_extra_width);
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -861,51 +880,53 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
                 let p0_outer = s0.point + s0.normal * (hw0 + wall_dist0);
                 let p1_outer = s1.point + s1.normal * (hw1 + wall_dist1);
 
-                let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
-                    let (tex, _, _) = get_surface_material_info(runoff_surf);
-                    BatchMeshBuilder::new(tex)
-                });
+                if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
+                    let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
+                        let (tex, _, _) = get_surface_material_info(runoff_surf);
+                        BatchMeshBuilder::new(tex)
+                    });
 
-                let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
-                let (fill_col, _) = get_surface_zone_colors(runoff_surf);
+                    let scale = with_surface_registry(|r| r.tile_scale(runoff_surf)).unwrap_or(4.0);
+                    let (fill_col, _) = get_surface_zone_colors(runoff_surf);
 
-                if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
-                    let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
-                    let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
-                    let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
-                    let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
+                    if quality != SurfaceTextureQuality::Off && builder.texture.is_some() {
+                        let uv0 = macroquad::prelude::Vec2::new(p0_inner.x / scale, p0_inner.y / scale);
+                        let uv1 = macroquad::prelude::Vec2::new(p1_inner.x / scale, p1_inner.y / scale);
+                        let uv2 = macroquad::prelude::Vec2::new(p1_outer.x / scale, p1_outer.y / scale);
+                        let uv3 = macroquad::prelude::Vec2::new(p0_outer.x / scale, p0_outer.y / scale);
 
-                    let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
-                        let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
-                        let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
-                        let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
-                        let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
-                        (
-                            Color::new(m0, m0, m0, 1.0),
-                            Color::new(m1, m1, m1, 1.0),
-                            Color::new(m2, m2, m2, 1.0),
-                            Color::new(m3, m3, m3, 1.0),
-                        )
+                        let (c0, c1, c2, c3) = if quality == SurfaceTextureQuality::High {
+                            let m0 = 1.0 + evaluate_macro_modulation(p0_inner.x, p0_inner.y) * 0.18;
+                            let m1 = 1.0 + evaluate_macro_modulation(p1_inner.x, p1_inner.y) * 0.18;
+                            let m2 = 1.0 + evaluate_macro_modulation(p1_outer.x, p1_outer.y) * 0.18;
+                            let m3 = 1.0 + evaluate_macro_modulation(p0_outer.x, p0_outer.y) * 0.18;
+                            (
+                                Color::new(m0, m0, m0, 1.0),
+                                Color::new(m1, m1, m1, 1.0),
+                                Color::new(m2, m2, m2, 1.0),
+                                Color::new(m3, m3, m3, 1.0),
+                            )
+                        } else {
+                            (WHITE, WHITE, WHITE, WHITE)
+                        };
+
+                        builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
+
+                        // Outer organic fringe feathering
+                        if fringe_builder.texture.is_some() {
+                            let p0_fringe = p0_outer + s0.normal * 0.6;
+                            let p1_fringe = p1_outer + s1.normal * 0.6;
+                            let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
+                            fringe_builder.push_quad(
+                                p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
+                                p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
+                                p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
+                                p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
+                            );
+                        }
                     } else {
-                        (WHITE, WHITE, WHITE, WHITE)
-                    };
-
-                    builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
-
-                    // Outer organic fringe feathering
-                    if fringe_builder.texture.is_some() {
-                        let p0_fringe = p0_outer + s0.normal * 0.6;
-                        let p1_fringe = p1_outer + s1.normal * 0.6;
-                        let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
-                        fringe_builder.push_quad(
-                            p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
-                            p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), fringe_c,
-                            p1_fringe, macroquad::prelude::Vec2::new(u1, 0.0), fringe_c,
-                            p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
-                        );
+                        builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                     }
-                } else {
-                    builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
                 }
             }
         }
@@ -925,6 +946,8 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
                 let p1_inner = if s1.right_curb { untangled_curb_right[(i + 1) % n] } else { untangled_road_right[(i + 1) % n] };
                 let p0_outer = s0.point - s0.normal * (hw0 + wall_dist0);
                 let p1_outer = s1.point - s1.normal * (hw1 + wall_dist1);
+
+                if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
 
                 let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
                     let (tex, _, _) = get_surface_material_info(runoff_surf);
@@ -969,8 +992,9 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
                             p0_fringe, macroquad::prelude::Vec2::new(u0, 0.0), fringe_c,
                         );
                     }
-                } else {
-                    builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
+                    } else {
+                        builder.push_quad(p0_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_inner, macroquad::prelude::Vec2::ZERO, fill_col, p1_outer, macroquad::prelude::Vec2::ZERO, fill_col, p0_outer, macroquad::prelude::Vec2::ZERO, fill_col);
+                    }
                 }
             }
         }
@@ -995,8 +1019,8 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     let (curb_tex, curb_tile_scale, quality) = get_curb_material_info();
     let mut curb_builder = BatchMeshBuilder::new(curb_tex);
 
-    let (untangled_road_left, untangled_road_right) = spline.untangled_road_edges();
-    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(curb_extra_width);
+    let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
+        spline.untangled_boundaries(curb_extra_width);
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -1030,20 +1054,22 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
             let p0_outer = untangled_curb_left[i];
             let p1_outer = untangled_curb_left[(i + 1) % n];
 
-            if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
-                curb_builder.push_quad(
-                    p0_inner, macroquad::prelude::Vec2::new(u0, 0.0), WHITE,
-                    p1_inner, macroquad::prelude::Vec2::new(u1, 0.0), WHITE,
-                    p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), WHITE,
-                    p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), WHITE,
-                );
-            } else {
-                curb_builder.push_quad(
-                    p0_inner, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p1_inner, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p1_outer, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p0_outer, macroquad::prelude::Vec2::ZERO, curb_color,
-                );
+            if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
+                if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
+                    curb_builder.push_quad(
+                        p0_inner, macroquad::prelude::Vec2::new(u0, 0.0), WHITE,
+                        p1_inner, macroquad::prelude::Vec2::new(u1, 0.0), WHITE,
+                        p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), WHITE,
+                        p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), WHITE,
+                    );
+                } else {
+                    curb_builder.push_quad(
+                        p0_inner, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p1_inner, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p1_outer, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p0_outer, macroquad::prelude::Vec2::ZERO, curb_color,
+                    );
+                }
             }
         }
 
@@ -1054,20 +1080,22 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
             let p0_outer = untangled_curb_right[i];
             let p1_outer = untangled_curb_right[(i + 1) % n];
 
-            if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
-                curb_builder.push_quad(
-                    p0_inner, macroquad::prelude::Vec2::new(u0, 0.0), WHITE,
-                    p1_inner, macroquad::prelude::Vec2::new(u1, 0.0), WHITE,
-                    p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), WHITE,
-                    p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), WHITE,
-                );
-            } else {
-                curb_builder.push_quad(
-                    p0_inner, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p1_inner, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p1_outer, macroquad::prelude::Vec2::ZERO, curb_color,
-                    p0_outer, macroquad::prelude::Vec2::ZERO, curb_color,
-                );
+            if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
+                if quality != SurfaceTextureQuality::Off && curb_builder.texture.is_some() {
+                    curb_builder.push_quad(
+                        p0_inner, macroquad::prelude::Vec2::new(u0, 0.0), WHITE,
+                        p1_inner, macroquad::prelude::Vec2::new(u1, 0.0), WHITE,
+                        p1_outer, macroquad::prelude::Vec2::new(u1, 1.0), WHITE,
+                        p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), WHITE,
+                    );
+                } else {
+                    curb_builder.push_quad(
+                        p0_inner, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p1_inner, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p1_outer, macroquad::prelude::Vec2::ZERO, curb_color,
+                        p0_outer, macroquad::prelude::Vec2::ZERO, curb_color,
+                    );
+                }
             }
         }
     }
@@ -1088,8 +1116,8 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
     let mut surface_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
     let mut lines_to_draw: Vec<(Vec2, Vec2, f32, Color)> = Vec::with_capacity(seg_count * 2);
 
-    let (untangled_left, untangled_right) = spline.untangled_road_edges();
-    let (untangled_curb_left, untangled_curb_right) = spline.untangled_curb_edges(1.35);
+    let (untangled_left, untangled_right, untangled_curb_left, untangled_curb_right) =
+        spline.untangled_boundaries(1.35);
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -1880,5 +1908,41 @@ mod tests {
         // Must execute cleanly without panics for both ground and elevated passes
         render_surface_pass(&spline, false, None);
         render_surface_pass(&spline, true, None);
+    }
+
+    #[test]
+    fn test_is_quad_valid_rejects_bowtie_and_accepts_apex_fan() {
+        // Normal convex quad: inner from (0, 0) to (5, 0), outer from (0, 2) to (5, 2)
+        assert!(is_quad_valid(
+            Vec2::new(0.0, 0.0),
+            Vec2::new(5.0, 0.0),
+            Vec2::new(5.0, 2.0),
+            Vec2::new(0.0, 2.0),
+        ));
+
+        // Triangle fan quad with collapsed inner edge: inner is single apex point (2, 0)
+        assert!(is_quad_valid(
+            Vec2::new(2.0, 0.0),
+            Vec2::new(2.0, 0.0),
+            Vec2::new(5.0, 2.0),
+            Vec2::new(0.0, 2.0),
+        ));
+
+        // Degenerate zero-area quad: both inner and outer collapsed to single points
+        assert!(!is_quad_valid(
+            Vec2::new(2.0, 0.0),
+            Vec2::new(2.0, 0.0),
+            Vec2::new(2.0, 2.0),
+            Vec2::new(2.0, 2.0),
+        ));
+
+        // Bowtie quad: radial lines cross each other
+        // Radial 0 from (0, 0) to (5, 2), Radial 1 from (5, 0) to (0, 2) -> lines cross at (2.5, 1.0)
+        assert!(!is_quad_valid(
+            Vec2::new(0.0, 0.0),
+            Vec2::new(5.0, 0.0),
+            Vec2::new(0.0, 2.0),
+            Vec2::new(5.0, 2.0),
+        ));
     }
 }

@@ -254,6 +254,132 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 2b. Drivable Road Edge and Curb Boundary Self-Intersection Checks (Spec 080)
+    if !track.is_arena() && n_samples >= 4 {
+        let n_segs = if track.spline.closed { n_samples } else { n_samples - 1 };
+
+        let mut left_road = Vec::with_capacity(n_samples);
+        let mut right_road = Vec::with_capacity(n_samples);
+        let mut left_curb = Vec::with_capacity(n_samples);
+        let mut right_curb = Vec::with_capacity(n_samples);
+
+        for s in samples {
+            let hw = s.width * 0.5;
+            left_road.push(s.point + s.normal * hw);
+            right_road.push(s.point - s.normal * hw);
+
+            let lc_extra = if s.left_curb { 1.35 } else { 0.0 };
+            let rc_extra = if s.right_curb { 1.35 } else { 0.0 };
+            left_curb.push(s.point + s.normal * (hw + lc_extra));
+            right_curb.push(s.point - s.normal * (hw + rc_extra));
+        }
+
+        let mut check_boundary_polyline = |pts: &[glam::Vec2],
+                                           is_curb: bool,
+                                           side: &'static str,
+                                           active_mask: Option<&[bool]>| {
+            let max_span = 40.min(n_segs / 2);
+            let mut skip_until = 0;
+            for i in 0..n_segs {
+                if i < skip_until {
+                    continue;
+                }
+                let next_i = (i + 1) % n_samples;
+                if let Some(mask) = active_mask {
+                    if !mask[i] && !mask[next_i] {
+                        continue;
+                    }
+                }
+
+                let p0 = pts[i];
+                let p1 = pts[next_i];
+                if (p1 - p0).length_squared() < 1e-4 {
+                    continue;
+                }
+                let seg_i = LineSegment::new(p0, p1);
+
+                for span in 2..=max_span {
+                    let j = (i + span) % n_samples;
+                    if !track.spline.closed && i + span >= n_segs {
+                        break;
+                    }
+                    let next_j = (j + 1) % n_samples;
+                    if !track.spline.closed && j + 1 >= n_samples {
+                        break;
+                    }
+                    if next_j == i || next_i == j {
+                        continue;
+                    }
+
+                    if let Some(mask) = active_mask {
+                        if !mask[j] && !mask[next_j] {
+                            continue;
+                        }
+                    }
+
+                    let p2 = pts[j];
+                    let p3 = pts[next_j];
+                    if (p3 - p2).length_squared() < 1e-4 {
+                        continue;
+                    }
+                    let seg_j = LineSegment::new(p2, p3);
+
+                    if (seg_i.start - seg_j.start).length_squared() < 1e-3
+                        || (seg_i.start - seg_j.end).length_squared() < 1e-3
+                        || (seg_i.end - seg_j.start).length_squared() < 1e-3
+                        || (seg_i.end - seg_j.end).length_squared() < 1e-3
+                    {
+                        continue;
+                    }
+
+                    if let Some(hit) = seg_i.intersect_segment(&seg_j) {
+                        let elev_i = (samples[i].elevation + samples[next_i].elevation) * 0.5;
+                        let elev_j = (samples[j].elevation + samples[next_j].elevation) * 0.5;
+                        if (elev_i - elev_j).abs() < 2.5 {
+                            if is_curb {
+                                diagnostics.push(
+                                    TrackValidationError::error(
+                                        "ERR_CURB_SELF_INTERSECTION",
+                                        format!(
+                                            "Curb outer boundary ({}) self-intersects at ({:.1}, {:.1}) between segment near distance {:.0}m and {:.0}m.",
+                                            side, hit.x, hit.y, samples[i].distance, samples[j].distance
+                                        ),
+                                    )
+                                    .with_index(i)
+                                    .with_details("Curvature radius is smaller than road half-width plus curb width. Widen corner radius, taper width, or disable curb on sharp apex."),
+                                );
+                            } else {
+                                diagnostics.push(
+                                    TrackValidationError::error(
+                                        "ERR_ROAD_SELF_INTERSECTION",
+                                        format!(
+                                            "Road drivable edge ({}) self-intersects at ({:.1}, {:.1}) between segment near distance {:.0}m and {:.0}m.",
+                                            side, hit.x, hit.y, samples[i].distance, samples[j].distance
+                                        ),
+                                    )
+                                    .with_index(i)
+                                    .with_details("Curvature radius is smaller than road half-width (R < W/2), causing the inner boundary to fold into a swallowtail cusp. Increase corner radius or taper road width through the apex."),
+                                );
+                            }
+                            if j > i {
+                                skip_until = j;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+
+        check_boundary_polyline(&left_road, false, "left", None);
+        check_boundary_polyline(&right_road, false, "right", None);
+
+        let left_curb_active: Vec<bool> = samples.iter().map(|s| s.left_curb).collect();
+        let right_curb_active: Vec<bool> = samples.iter().map(|s| s.right_curb).collect();
+        check_boundary_polyline(&left_curb, true, "left", Some(&left_curb_active));
+        check_boundary_polyline(&right_curb, true, "right", Some(&right_curb_active));
+    }
+
     // 3. Wall Barriers vs Track Spline & Drivable Ribbon Checks
     let all_walls: Vec<_> = track.geometry.all_walls().copied().collect();
     let n_walls = all_walls.len();
@@ -1345,6 +1471,53 @@ mod tests {
             d3
         );
     }
+
+    #[test]
+    fn test_road_boundary_self_intersection_detected() {
+        // Build a track with an acute hairpin: road half-width 6.0m, hairpin gap only 4.0m
+        let wps = vec![
+            TrackWaypoint::new(glam::Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(glam::Vec2::new(80.0, 0.0), 12.0),
+            TrackWaypoint::new(glam::Vec2::new(83.0, 4.0), 12.0),
+            TrackWaypoint::new(glam::Vec2::new(80.0, 8.0), 12.0),
+            TrackWaypoint::new(glam::Vec2::new(0.0, 8.0), 12.0),
+        ];
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        track.spline = crate::track::TrackSpline::new(wps, true);
+        let diags = validate_track(&track);
+        assert!(
+            diags.iter().any(|d| d.code == "ERR_ROAD_SELF_INTERSECTION"),
+            "Acute hairpin with R < W/2 must emit ERR_ROAD_SELF_INTERSECTION: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn test_curb_boundary_self_intersection_detected() {
+        // Build a track where road just barely clears (gap 13.0m for width 12.0m),
+        // but active curb adds 1.35m on inside (total 14.7m > 13.0m)
+        let mut wp2 = TrackWaypoint::new(glam::Vec2::new(85.0, 6.5), 12.0);
+        wp2.left_curb = true;
+        let mut wp3 = TrackWaypoint::new(glam::Vec2::new(80.0, 13.0), 12.0);
+        wp3.left_curb = true;
+
+        let wps = vec![
+            TrackWaypoint::new(glam::Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(glam::Vec2::new(80.0, 0.0), 12.0),
+            wp2,
+            wp3,
+            TrackWaypoint::new(glam::Vec2::new(0.0, 13.0), 12.0),
+        ];
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        track.spline = crate::track::TrackSpline::new(wps, true);
+        let diags = validate_track(&track);
+        assert!(
+            diags.iter().any(|d| d.code == "ERR_CURB_SELF_INTERSECTION" || d.code == "ERR_ROAD_SELF_INTERSECTION"),
+            "Hairpin with curb outer loop must emit boundary self-intersection: {:?}",
+            diags
+        );
+    }
 }
+
 
 

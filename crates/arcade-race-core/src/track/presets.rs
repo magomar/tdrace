@@ -6,78 +6,15 @@ use super::geometry::{
     BarrierType, JumpRamp, LineSegment, SpawnPose, SurfaceShape,
     TrackGeometry, WallBarrier,
 };
-use super::spline::{TrackSpline, TrackWaypoint};
+use super::spline::{untangle_offset_vertices, TrackSpline, TrackWaypoint};
 use super::{CarCategory, Track, TrackCategory, TrackKind};
 use wheelbase::SurfaceType;
 
-/// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline.
+/// Trims local self-intersecting loops (swallowtail singularities) from an offset boundary polyline
+/// by collapsing vertices within the loop to the intersection point, preserving vertex count and
+/// 1-to-1 sample alignment.
 pub fn untangle_polyline(pts: &mut Vec<Vec2>, closed: bool) {
-    let mut changed = true;
-    let mut passes = 0;
-    // Local swallowtail singularities on sharp corners can span up to ~30-40 consecutive samples on 1000m+ tracks.
-    let max_loop_span = 40;
-
-    while changed && passes < 16 {
-        changed = false;
-        passes += 1;
-        let n = pts.len();
-        if n < 4 {
-            break;
-        }
-
-        'outer: for i in 0..n {
-            let p0 = pts[i];
-            let next_i = (i + 1) % n;
-            let p1 = pts[next_i];
-            let seg_a = LineSegment::new(p0, p1);
-
-            let max_span = max_loop_span.min(n / 2);
-            for span in 2..=max_span {
-                let j = (i + span) % n;
-                if !closed && i + span >= n {
-                    break;
-                }
-                let next_j = (j + 1) % n;
-                if !closed && j + 1 >= n {
-                    break;
-                }
-                if next_j == i || next_i == j {
-                    continue;
-                }
-
-                let p2 = pts[j];
-                let p3 = pts[next_j];
-                let seg_b = LineSegment::new(p2, p3);
-
-                if let Some(hit) = seg_a.intersect_segment(&seg_b) {
-                    // Local loop between i and j (span samples)
-                    if j > i {
-                        let mut new_pts = Vec::with_capacity(n);
-                        for k in 0..=i {
-                            new_pts.push(pts[k]);
-                        }
-                        new_pts.push(hit);
-                        for k in (j + 1)..n {
-                            new_pts.push(pts[k]);
-                        }
-                        *pts = new_pts;
-                        changed = true;
-                        break 'outer;
-                    } else if closed {
-                        // Loop wraps around the array boundary (j < i)
-                        let mut new_pts = Vec::with_capacity(n);
-                        new_pts.push(hit);
-                        for k in (j + 1)..=i {
-                            new_pts.push(pts[k]);
-                        }
-                        *pts = new_pts;
-                        changed = true;
-                        break 'outer;
-                    }
-                }
-            }
-        }
-    }
+    untangle_offset_vertices(pts.as_mut_slice(), closed);
 }
 
 /// Trims or removes wall barrier segments that intersect or fall inside non-local drivable road corridors at the same elevation.
@@ -431,6 +368,9 @@ pub fn generate_walls_from_spline_raw(
     let seg_count_left = if spline.closed { left_pts.len() } else { left_pts.len().saturating_sub(1) };
     for i in 0..seg_count_left {
         let next_i = (i + 1) % left_pts.len();
+        if (left_pts[next_i] - left_pts[i]).length_squared() < 1e-4 {
+            continue;
+        }
         let s_curr = &spline.samples[i % n];
         let s_next = &spline.samples[next_i % n];
         if s_curr.left_wall && s_next.left_wall {
@@ -447,6 +387,9 @@ pub fn generate_walls_from_spline_raw(
     let seg_count_right = if spline.closed { right_pts.len() } else { right_pts.len().saturating_sub(1) };
     for i in 0..seg_count_right {
         let next_i = (i + 1) % right_pts.len();
+        if (right_pts[next_i] - right_pts[i]).length_squared() < 1e-4 {
+            continue;
+        }
         let s_curr = &spline.samples[i % n];
         let s_next = &spline.samples[next_i % n];
         if s_curr.right_wall && s_next.right_wall {
