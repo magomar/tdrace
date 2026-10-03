@@ -44,6 +44,13 @@ MIN_INNER_WALL_RADIUS_M = 0.2
 BRIDGE_EXIT_STRAIGHT_M = 20.0
 BRIDGE_EXIT_MAX_TURN_DEG = 5.0
 
+# Density generation modes
+MODE_ANGULAR_45 = "angular_45"        # Approach 1 (Adopted default): ~45° per curve knot, straight endpoints
+MODE_RADIAL_30 = "radial_30"          # Approach 2 (Alternative): ~30° per curve knot, 60m straight subdivisions
+MODE_APEX_CAD = "apex_cad"            # Approach 3 (Alternative): Canonical apex-centered CAD knots
+MODE_CHORD_SAGITTA = "chord_sagitta"  # Alternative: Chord-sagitta polygon approximation (<= 0.08m)
+MODE_LEGACY_UNIFORM = "legacy_uniform"# Alternative: Legacy uniform step spacing
+
 # ---------------------------------------------------------------------------------------------------------------
 # Circuit data
 # ---------------------------------------------------------------------------------------------------------------
@@ -423,12 +430,16 @@ def check_inner_wall_steps(circuit, segments, reach_m=10.0, max_step_m=0.6):
             break
 
 
-def trace(circuit, segments=None, variable_density=True):
+def trace(circuit, segments=None, density_mode=MODE_ANGULAR_45):
     """Walks the segments (default: `segments_of(circuit)`).
 
-    When variable_density is True (Spec 071), straights contain only endpoint anchors
-    (unless eased properties vary), and curved arcs contain waypoint density proportional
-    to their subtended angle.
+    Density generation modes:
+      - MODE_ANGULAR_45 (default, Approach 1): Angular knot budget (~45° per curve knot, straight endpoints).
+      - MODE_RADIAL_30 (Approach 2): Spline radial error budget (~30° per curve knot, 60m straight spans).
+      - MODE_APEX_CAD (Approach 3): Canonical apex-centered CAD knots (entry + geometric apexes).
+      - MODE_CHORD_SAGITTA: Chord sagitta error budget (<= 0.08m).
+      - MODE_LEGACY_UNIFORM: Uniform arc-length stepping based on circuit.step.
+
     Returns (points, end pose). A point is (x, y, heading_rad, lap_m, road); it
     carries the settings of the segment it falls in (width, elevation and bank eased from the previous
     segment). The end pose (x, y, heading_rad) is the end of the last segment.
@@ -465,45 +476,7 @@ def trace(circuit, segments=None, variable_density=True):
         prev = target
 
     points = []
-    if variable_density:
-        for k, (start, seg, pose, before, target) in enumerate(pieces):
-            turn = math.radians(seg.turn_deg)
-            if not turn:
-                # Straight segment
-                varies = any(getattr(before, f) != getattr(target, f) for f in EASED)
-                if varies:
-                    num_sub = max(1, round(seg.length / 20.0))
-                elif seg.length > 50.0:
-                    num_sub = max(1, round(seg.length / 45.0))
-                else:
-                    num_sub = 1
-            else:
-                # Curved arc: density proportional to subtended angle (~20 deg per waypoint)
-                turn_abs_deg = abs(seg.turn_deg)
-                num_sub = max(1, round(turn_abs_deg / 20.0))
-                radius = seg.length / abs(turn)
-                d_theta = math.radians(turn_abs_deg) / num_sub
-                sagitta = radius * (1.0 - math.cos(d_theta / 2.0))
-                if sagitta > 0.08 and radius > 1.0:
-                    max_d_theta = 2.0 * math.acos(max(-1.0, 1.0 - 0.08 / radius))
-                    if max_d_theta > 1e-4:
-                        num_sub = max(num_sub, math.ceil(math.radians(turn_abs_deg) / max_d_theta))
-
-            if seg.length / num_sub < MIN_WAYPOINT_GAP_M:
-                num_sub = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
-
-            for step_i in range(num_sub):
-                t = step_i / num_sub
-                d = start + seg.length * t
-                px, py, h = pose(t)
-                e = smoothstep(t)
-                eased = {
-                    key: getattr(before, key)
-                    + (getattr(target, key) - getattr(before, key)) * e
-                    for key in EASED
-                }
-                points.append((px, py, h, d, replace(target, **eased)))
-    else:
+    if density_mode == MODE_LEGACY_UNIFORM:
         count = max(3, round(lap / circuit.step))
         if lap / count < MIN_WAYPOINT_GAP_M:
             count = max(3, math.floor(lap / MIN_WAYPOINT_GAP_M))
@@ -522,25 +495,128 @@ def trace(circuit, segments=None, variable_density=True):
                 for key in EASED
             }
             points.append((px, py, h, d, replace(target, **eased)))
+    else:
+        profile_ts_per_piece = [[] for _ in pieces]
+        if circuit.profile:
+            for where, _elev in circuit.profile:
+                if isinstance(where, tuple):
+                    pk, pfrac, *pextra = where
+                    if 0 <= pk < len(pieces) and 0.0 <= pfrac < 1.0:
+                        profile_ts_per_piece[pk].append(float(pfrac))
+
+        for k, (start, seg, pose, before, target) in enumerate(pieces):
+            turn = math.radians(seg.turn_deg)
+            varies = any(getattr(before, f) != getattr(target, f) for f in EASED)
+            if not turn:
+                # Straight segment
+                if varies and seg.length > 25.0:
+                    num = max(1, round(seg.length / 25.0))
+                    step_ts = [i / num for i in range(num)]
+                elif density_mode == MODE_RADIAL_30:
+                    num = max(1, round(seg.length / 60.0))
+                    step_ts = [i / num for i in range(num)]
+                elif density_mode == MODE_CHORD_SAGITTA:
+                    if seg.length > 50.0:
+                        num = max(1, round(seg.length / 45.0))
+                        step_ts = [i / num for i in range(num)]
+                    else:
+                        step_ts = [0.0]
+                elif seg.length > 80.0:
+                    num = max(1, round(seg.length / 80.0))
+                    step_ts = [i / num for i in range(num)]
+                else:  # MODE_ANGULAR_45 (default) and MODE_APEX_CAD
+                    step_ts = [0.0]
+
+                prev_seg = pieces[(k - 1) % len(pieces)][1]
+                if abs(prev_seg.turn_deg) > 0.0 and seg.length > 35.0:
+                    exit_t = 20.0 / seg.length
+                    if exit_t < (step_ts[1] if len(step_ts) > 1 else 1.0) - 10.0 / seg.length:
+                        step_ts.append(exit_t)
+
+                next_seg = pieces[(k + 1) % len(pieces)][1]
+                if abs(next_seg.turn_deg) > 0.0 and seg.length > 35.0:
+                    approach_t = (seg.length - 20.0) / seg.length
+                    if approach_t > step_ts[-1] + 10.0 / seg.length:
+                        step_ts.append(approach_t)
+            else:
+                # Curved segment
+                deg = abs(seg.turn_deg)
+                side = "left" if seg.turn_deg > 0 else "right"
+                wall_d = getattr(target, f"{side}_wall_distance")
+                radius = seg.length / abs(turn)
+                inner_r = radius - target.width * 0.5 - wall_d
+
+                if density_mode == MODE_ANGULAR_45:
+                    budget = 30.0 if (wall_d >= 12.0 or inner_r < 18.0) else 45.0
+                    num = max(2 if deg >= 30.0 else 1, math.ceil(deg / budget))
+                    num = max(num, math.ceil(seg.length / 50.0))
+                    if seg.length / num < MIN_WAYPOINT_GAP_M:
+                        num = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
+                    step_ts = [i / num for i in range(num)]
+                elif density_mode == MODE_RADIAL_30:
+                    num = max(1, math.ceil(deg / 30.0))
+                    if seg.length / num < MIN_WAYPOINT_GAP_M:
+                        num = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
+                    step_ts = [i / num for i in range(num)]
+                elif density_mode == MODE_APEX_CAD:
+                    if deg <= 90.0:
+                        step_ts = [0.0, 0.5]
+                    else:
+                        step_ts = [0.0, 1.0 / 3.0, 2.0 / 3.0]
+                elif density_mode == MODE_CHORD_SAGITTA:
+                    num_sub = max(1, round(deg / 20.0))
+                    d_theta = math.radians(deg) / num_sub
+                    sagitta = radius * (1.0 - math.cos(d_theta / 2.0))
+                    if sagitta > 0.08 and radius > 1.0:
+                        max_d_theta = 2.0 * math.acos(max(-1.0, 1.0 - 0.08 / radius))
+                        if max_d_theta > 1e-4:
+                            num_sub = max(num_sub, math.ceil(math.radians(deg) / max_d_theta))
+                    if seg.length / num_sub < MIN_WAYPOINT_GAP_M:
+                        num_sub = max(1, math.floor(seg.length / MIN_WAYPOINT_GAP_M))
+                    step_ts = [i / num_sub for i in range(num_sub)]
+
+            if profile_ts_per_piece[k]:
+                for pt in profile_ts_per_piece[k]:
+                    if 0.0 <= pt < 1.0:
+                        step_ts.append(pt)
+            step_ts = sorted(list(set(step_ts)))
+
+            # Filter step_ts to enforce MIN_WAYPOINT_GAP_M between steps
+            valid_ts = [step_ts[0]]
+            for t in step_ts[1:]:
+                if (t - valid_ts[-1]) * seg.length >= MIN_WAYPOINT_GAP_M:
+                    valid_ts.append(t)
+            step_ts = valid_ts
+
+            for t in step_ts:
+                d = start + seg.length * t
+                px, py, h = pose(t)
+                e = smoothstep(t)
+                eased = {
+                    key: getattr(before, key)
+                    + (getattr(target, key) - getattr(before, key)) * e
+                    for key in EASED
+                }
+                points.append((px, py, h, d, replace(target, **eased)))
 
     return points, (x, y, heading)
 
 
-def closure_gap(circuit):
+def closure_gap(circuit, density_mode=MODE_ANGULAR_45):
     """(distance m, heading difference deg) between the end of the last segment and the start pose."""
-    _points, (x, y, heading) = trace(circuit)
+    _points, (x, y, heading) = trace(circuit, density_mode=density_mode)
     sx, sy = circuit.start
     dh = math.degrees(heading) - circuit.heading_deg
     dh = (dh + 180.0) % 360.0 - 180.0
     return math.hypot(x - sx, y - sy), dh
 
 
-def waypoints(circuit):
+def waypoints(circuit, density_mode=MODE_ANGULAR_45):
     """The Track JSON waypoints of a circuit. Raises ValueError when the lap does not close."""
     segments = segments_of(circuit)
     check_segments(circuit, segments)
-    points, (x, y, _h) = trace(circuit, segments)
-    gap, dh = closure_gap(circuit)
+    points, (x, y, _h) = trace(circuit, segments, density_mode=density_mode)
+    gap, dh = closure_gap(circuit, density_mode=density_mode)
     if gap > CLOSURE_TOLERANCE_M or abs(dh) > CLOSURE_TOLERANCE_DEG:
         raise ValueError(
             f"{circuit.id}: the lap does not close: end is {gap:.2f} m and {dh:+.2f} deg from the start "
@@ -620,7 +696,7 @@ def waypoint(x, y, road):
     }
 
 
-def source_track(circuit):
+def source_track(circuit, density_mode=MODE_ANGULAR_45):
     """The circuit as a source file: metadata and waypoints; track_bake fills the rest."""
     track = {
         "name": circuit.name,
@@ -628,7 +704,7 @@ def source_track(circuit):
         "category": "main",
         "kind": {"type": "circuit"},
         "spline": {
-            "waypoints": waypoints(circuit),
+            "waypoints": waypoints(circuit, density_mode=density_mode),
             "closed": True,
             "samples": [],
             "total_length": 0.0,
@@ -765,11 +841,10 @@ def ramp_json(
 
 
 def grandstand_json(stand_id, spline, prop):
-    sample = spline.nearest(prop.at)
-    wall_d = sample.get(f"{prop.side}_wall_distance")
-    if wall_d is None:
-        wall_d = 4.0
-    has_curb = sample.get(f"{prop.side}_curb", False)
+    half_l = prop.length * 0.5
+    samples_span = [spline.nearest(prop.at), spline.nearest(prop.at - half_l), spline.nearest(prop.at + half_l)]
+    wall_d = max(s.get(f"{prop.side}_wall_distance") or 4.0 for s in samples_span)
+    has_curb = any(s.get(f"{prop.side}_curb", False) for s in samples_span)
     min_front = wall_d + 1.2
     if has_curb:
         min_front = max(min_front, 1.4 + 1.2)
@@ -787,6 +862,7 @@ def grandstand_json(stand_id, spline, prop):
     else:
         raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
 
+    sample = spline.nearest(prop.at)
     elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
     data = {
         "id": stand_id,
@@ -804,11 +880,10 @@ def grandstand_json(stand_id, spline, prop):
 
 
 def building_json(bldg_id, spline, prop):
-    sample = spline.nearest(prop.at)
-    wall_d = sample.get(f"{prop.side}_wall_distance")
-    if wall_d is None:
-        wall_d = 4.0
-    has_curb = sample.get(f"{prop.side}_curb", False)
+    half_w = prop.width * 0.5
+    samples_span = [spline.nearest(prop.at), spline.nearest(prop.at - half_w), spline.nearest(prop.at + half_w)]
+    wall_d = max(s.get(f"{prop.side}_wall_distance") or 4.0 for s in samples_span)
+    has_curb = any(s.get(f"{prop.side}_curb", False) for s in samples_span)
     min_front = wall_d + 1.5
     if has_curb:
         min_front = max(min_front, 1.4 + 1.5)
@@ -826,6 +901,7 @@ def building_json(bldg_id, spline, prop):
     else:
         raise ValueError(f"side must be 'left' or 'right', got {prop.side!r}")
 
+    sample = spline.nearest(prop.at)
     elevation = prop.elevation if prop.elevation is not None else sample["elevation"]
     data = {
         "id": bldg_id,
@@ -1089,7 +1165,7 @@ def grid_json(spline, slots, spacing, stagger):
 def track_bake(paths, rebuild):
     cmd = ["cargo", "run", "--quiet", "--bin", "track_bake", "--", *paths]
     if rebuild:
-        cmd.append("--rebuild")
+        cmd.extend(["--rebuild", "--adaptive-checkpoints"])
     return subprocess.run(cmd, cwd=REPO_ROOT, check=False).returncode == 0
 
 
@@ -1253,7 +1329,7 @@ def turns_under_bridges(track):
     return found
 
 
-def build(circuits, tracks_dir):
+def build(circuits, tracks_dir, density_mode=MODE_ANGULAR_45):
     """Builds the circuits into <tracks_dir>/classic/. Returns True when every circuit validated."""
     if not circuits:
         print("no circuits to build")
@@ -1261,7 +1337,7 @@ def build(circuits, tracks_dir):
     os.makedirs(os.path.join(tracks_dir, MODULE), exist_ok=True)
     paths = [os.path.join(tracks_dir, MODULE, f"{c.id}.json") for c in circuits]
     for circuit, path in zip(circuits, paths):
-        write_json(path, source_track(circuit))
+        write_json(path, source_track(circuit, density_mode=density_mode))
     register(circuits, tracks_dir)
 
     if not track_bake(paths, rebuild=True):
@@ -1309,11 +1385,11 @@ def build(circuits, tracks_dir):
     return True
 
 
-def check(circuits):
+def check(circuits, density_mode=MODE_ANGULAR_45):
     """Builds into a temp folder and compares with tracks/. Returns True when every file matches."""
     with tempfile.TemporaryDirectory() as tmp:
         shutil.copy(os.path.join(TRACKS_DIR, ".track_order.json"), tmp)
-        if not build(circuits, tmp):
+        if not build(circuits, tmp, density_mode=density_mode):
             return False
         ok = True
         for c in circuits:
@@ -2540,6 +2616,22 @@ def main(argv=None):
         "--only", action="append", metavar="ID", help="Build one circuit (repeatable)"
     )
     parser.add_argument(
+        "--density-mode",
+        choices=[
+            MODE_ANGULAR_45,
+            MODE_RADIAL_30,
+            MODE_APEX_CAD,
+            MODE_CHORD_SAGITTA,
+            MODE_LEGACY_UNIFORM,
+        ],
+        default=MODE_ANGULAR_45,
+        help="Waypoint density strategy: 'angular_45' (adopted default, Approach 1: ~45° per knot), "
+             "'radial_30' (Approach 2: ~30° per knot, 60m straight spans), "
+             "'apex_cad' (Approach 3: canonical apex-centered CAD knots), "
+             "'chord_sagitta' (chord-sagitta budget <= 0.08m), "
+             "'legacy_uniform' (uniform step spacing)",
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="Build into a temp folder and compare with tracks/",
@@ -2555,13 +2647,13 @@ def main(argv=None):
     else:
         circuits = list(CIRCUITS)
     for c in circuits:
-        gap, dh = closure_gap(c)
+        gap, dh = closure_gap(c, density_mode=args.density_mode)
         length = sum(s.length for s in segments_of(c))
         print(
             f"{c.id}: {length:.0f} m of segments, closure gap {gap:.2f} m / {dh:+.2f} deg"
         )
 
-    ok = check(circuits) if args.check else build(circuits, TRACKS_DIR)
+    ok = check(circuits, density_mode=args.density_mode) if args.check else build(circuits, TRACKS_DIR, density_mode=args.density_mode)
     return 0 if ok else 1
 
 
