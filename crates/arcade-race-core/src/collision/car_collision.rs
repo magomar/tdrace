@@ -16,6 +16,13 @@ pub struct CarCarCollisionEvent {
     pub impulse_magnitude: f32,
 }
 
+impl CarCarCollisionEvent {
+    /// Computes estimated raw mechanical damage energy for vehicle damage simulation.
+    pub fn estimated_damage_energy(&self) -> f32 {
+        0.5 * self.impulse_magnitude * self.closing_speed
+    }
+}
+
 /// Resolves pairwise rigid body collision between two cars.
 pub fn resolve_car_car_collision<B: Body2D>(
     car_a: &mut B,

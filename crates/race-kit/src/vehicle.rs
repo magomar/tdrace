@@ -53,6 +53,12 @@ pub trait Vehicle: Body2D {
     fn apply_field_repair(&mut self, _amount: f32) -> f32 { 0.0 }
     /// Current chassis health [0.0..1.0]. The default returns 1.0.
     fn health(&self) -> f32 { 1.0 }
+    /// Applies collision impact damage partitioned by impact zone and engine placement (Spec 078).
+    fn apply_collision_damage(&mut self, _contact_point: Vec2, _damage_energy: f32) {}
+    /// Current engine health [0.0..1.0]. The default returns 1.0.
+    fn engine_health(&self) -> f32 { 1.0 }
+    /// 4-corner suspension health [FL, FR, RL, RR] [0.0..1.0]. The default returns [1.0; 4].
+    fn suspension_health(&self) -> [f32; 4] { [1.0, 1.0, 1.0, 1.0] }
     /// Maximum tire wear across all wheels [0.0..1.0]. The default returns 0.0.
     fn max_tire_wear(&self) -> f32 { 0.0 }
 }
@@ -148,6 +154,21 @@ impl Vehicle for Car {
     #[inline]
     fn health(&self) -> f32 {
         self.state.health
+    }
+
+    #[inline]
+    fn apply_collision_damage(&mut self, contact_point: Vec2, damage_energy: f32) {
+        self.apply_collision_damage(contact_point, damage_energy);
+    }
+
+    #[inline]
+    fn engine_health(&self) -> f32 {
+        self.state.engine_health
+    }
+
+    #[inline]
+    fn suspension_health(&self) -> [f32; 4] {
+        self.state.suspension_health
     }
 
     #[inline]

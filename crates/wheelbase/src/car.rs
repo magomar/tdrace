@@ -406,8 +406,8 @@ impl Car {
     /// Restores chassis health (capped at 0.70 in-race ceiling), engine health (capped at 0.70),
     /// and 4-corner suspension health (capped at 0.60) (Spec 078). Returns actual chassis health restored.
     pub fn apply_field_repair(&mut self, amount: f32) -> f32 {
-        let old_health = self.state.chassis_health;
-        self.state.chassis_health = self.state.chassis_health.max((self.state.chassis_health + amount).min(0.70));
+        let old_health = self.state.chassis_health.min(self.state.health);
+        self.state.chassis_health = old_health.max((old_health + amount).min(0.70));
         self.state.health = self.state.chassis_health;
         self.state.engine_health = self.state.engine_health.max((self.state.engine_health + amount).min(0.70));
         for s in &mut self.state.suspension_health {
