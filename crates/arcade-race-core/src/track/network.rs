@@ -618,7 +618,7 @@ impl RoadSegment {
         if self.samples.len() < 2 {
             return SplineProjection {
                 closest_point: pos,
-                distance_to_spline: 0.0,
+                distance_to_spline: f32::INFINITY,
                 lateral_offset: 0.0,
                 progress_distance: 0.0,
                 normalized_progress: 0.0,
@@ -627,7 +627,7 @@ impl RoadSegment {
                 track_width: 10.0,
                 left_curb: false,
                 right_curb: false,
-                is_on_track: true,
+                is_on_track: false,
                 is_on_curb: false,
                 base_surface: SurfaceType::Asphalt,
                 elevation: 0.0,
