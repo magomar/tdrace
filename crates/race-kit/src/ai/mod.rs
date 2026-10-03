@@ -698,8 +698,6 @@ impl BotAiDriver {
             }
         }
     }
-        }
-    }
 
     /// Configures the assigned team pit box stall index.
     pub fn with_pit_stall(mut self, stall_idx: usize) -> Self {
