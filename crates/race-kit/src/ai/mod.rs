@@ -552,6 +552,14 @@ pub struct BotAiDriver {
     pub joker_laps_taken: u32,
     /// Flag indicating whether the bot is currently executing a Joker lap.
     pub was_in_joker: bool,
+    /// Previous progress distance for detecting lap transitions.
+    pub last_progress_dist: f32,
+    /// Assigned pit stall index along the team pit road.
+    pub pit_stall_idx: usize,
+    /// Cooldown timer in seconds after leaving pit lane before considering another pit stop.
+    pub pit_cooldown: f32,
+    /// Timer measuring duration stationary inside team pit box stall (s).
+    pub stall_stop_timer: f32,
 }
 
 impl BotAiDriver {
@@ -584,6 +592,10 @@ impl BotAiDriver {
             current_lap: 1,
             joker_laps_taken: 0,
             was_in_joker: false,
+            last_progress_dist: 0.0,
+            pit_stall_idx: 0,
+            pit_cooldown: 0.0,
+            stall_stop_timer: 0.0,
         }
     }
 
@@ -687,6 +699,18 @@ impl BotAiDriver {
         }
     }
 
+    /// Configures the assigned team pit box stall index.
+    pub fn with_pit_stall(mut self, stall_idx: usize) -> Self {
+        self.pit_stall_idx = stall_idx;
+        self
+    }
+
+    /// Synchronizes the current race lap number for tactical pit stop gating.
+    pub fn with_current_lap(mut self, lap: u32) -> Self {
+        self.current_lap = lap;
+        self
+    }
+
     /// Evaluates tactical pit stop decision heuristic:
     /// Returns true when tire wear > 70% or chassis health < 60%. Spec 062.
     #[inline]
@@ -738,6 +762,19 @@ impl BotAiDriver {
         let curr_dist = proj.progress_distance;
         self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
+        // Detect lap progression if not explicitly updated
+        let lap_len = spline.total_length();
+        if self.last_progress_dist > 0.0 && lap_len > 10.0 {
+            if curr_dist < lap_len * 0.25 && self.last_progress_dist > lap_len * 0.75 {
+                self.current_lap += 1;
+            }
+        }
+        self.last_progress_dist = curr_dist;
+
+        if self.pit_cooldown > 0.0 {
+            self.pit_cooldown = (self.pit_cooldown - dt).max(0.0);
+        }
+
         // 2. Dynamic lookahead based on speed and profile
         let mut lookahead_dist = (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0);
         // In a very tight turn (a kart hairpin) the line to a target this far ahead crosses the inside of the
@@ -780,7 +817,7 @@ impl BotAiDriver {
             target_point += target_sample.normal * self.human.line_offset(spline, target_dist, target_sample.width, dt);
         }
 
-        // Pit lane navigation and strategy (Spec 062)
+        // Pit lane navigation and strategy (Spec 062/077)
         let mut in_pit_lane = false;
         if let Some(lane) = &track.pit_lane {
             if lane.spline.total_length() > 1.0 {
@@ -788,41 +825,57 @@ impl BotAiDriver {
                 let entry_proj = spline.project_point(entry_center);
                 let dist_to_pit_entry_along_track = (entry_proj.progress_distance - curr_dist).rem_euclid(spline.total_length());
 
-                if self.should_pit(car) && dist_to_pit_entry_along_track < 100.0 {
+                // Divergence throat avoidance for cars not pitting: keep them away from the pit entrance gore
+                let pit_side = (entry_center - entry_proj.closest_point).dot(entry_proj.normal).signum();
+                if !self.is_pitting && dist_to_pit_entry_along_track < 80.0 {
+                    let bias = (1.0 - (dist_to_pit_entry_along_track / 80.0)).clamp(0.0, 1.0);
+                    target_point -= target_sample.normal * (pit_side * bias * 1.5);
+                }
+
+                // Gated pit entry decision: Only enter if current_lap > 1, cooldown expired, should_pit is true, and near entry
+                if self.current_lap > 1 && self.pit_cooldown <= 0.0 && self.should_pit(car) && dist_to_pit_entry_along_track < 100.0 {
                     self.is_pitting = true;
                 }
 
                 let pit_proj = lane.spline.project_point(car_pos);
-                let is_on_pit_ribbon = pit_proj.distance_to_spline < lane.road_width * 1.5;
+                // Tight pit ribbon distance threshold prevents false positives on parallel main straights
+                let is_on_pit_ribbon = pit_proj.distance_to_spline < (lane.road_width * 0.5 + 0.8);
 
-                if self.is_pitting {
-                    if is_on_pit_ribbon {
-                        in_pit_lane = true;
-                        let pit_target_dist = (pit_proj.progress_distance + lookahead_dist).min(lane.spline.total_length());
-                        let mut pit_target = lane.spline.sample_at_distance(pit_target_dist).point;
+                // Any car physically on the pit road ribbon follows the pit spline out to avoid ramming the dividing wall
+                if is_on_pit_ribbon {
+                    in_pit_lane = true;
+                    let pit_target_dist = (pit_proj.progress_distance + lookahead_dist).min(lane.spline.total_length());
+                    let mut pit_target = lane.spline.sample_at_distance(pit_target_dist).point;
 
-                        if !self.pit_serviced {
-                            if let Some(pbox) = lane.pit_boxes.first() {
-                                let dist_to_box = (pbox.position - car_pos).length();
-                                if dist_to_box < 15.0 {
-                                    pit_target = pbox.position;
-                                }
-                            }
-                            if car.max_tire_wear() < 0.10 && car.health() >= 0.65 {
-                                self.pit_serviced = true;
+                    if self.is_pitting && !self.pit_serviced && !lane.pit_boxes.is_empty() {
+                        let num_boxes = lane.pit_boxes.len();
+                        let stall_idx = self.pit_stall_idx % num_boxes;
+                        let pbox = &lane.pit_boxes[stall_idx];
+                        let dist_to_box = (pbox.position - car_pos).length();
+                        if dist_to_box < 15.0 {
+                            pit_target = pbox.position;
+                        }
+                        if dist_to_box <= pbox.stop_radius || pbox.contains_point(car_pos) {
+                            if car_speed < 1.0 {
+                                self.stall_stop_timer += dt;
                             }
                         }
-
-                        target_point = pit_target;
-
-                        if pit_proj.progress_distance >= lane.spline.total_length() - 5.0 {
-                            self.is_pitting = false;
-                            self.pit_serviced = false;
+                        if self.stall_stop_timer >= 2.0 || (car.max_tire_wear() < 0.10 && car.health() >= 0.65) {
+                            self.pit_serviced = true;
                         }
-                    } else if dist_to_pit_entry_along_track < 100.0 {
-                        let blend = (1.0 - (dist_to_pit_entry_along_track / 100.0)).clamp(0.0, 1.0);
-                        target_point = target_point.lerp(entry_center, blend * 0.85);
                     }
+
+                    target_point = pit_target;
+
+                    if pit_proj.progress_distance >= lane.spline.total_length() - 5.0 {
+                        self.is_pitting = false;
+                        self.pit_serviced = false;
+                        self.stall_stop_timer = 0.0;
+                        self.pit_cooldown = 30.0;
+                    }
+                } else if self.is_pitting && dist_to_pit_entry_along_track < 100.0 {
+                    let blend = (1.0 - (dist_to_pit_entry_along_track / 100.0)).clamp(0.0, 1.0);
+                    target_point = target_point.lerp(entry_center, blend * 0.85);
                 }
             }
         }
@@ -982,28 +1035,28 @@ impl BotAiDriver {
 
         target_speed = target_speed.clamp(7.0, car.top_speed_mps());
 
-        // Pit lane speed governing and pit box stopping (Spec 062)
+        // Pit lane speed governing and pit box stopping (Spec 062/077)
         if let Some(lane) = &track.pit_lane {
-            if self.is_pitting {
+            if in_pit_lane {
+                target_speed = target_speed.min(lane.speed_limit);
+                if self.is_pitting && !self.pit_serviced && !lane.pit_boxes.is_empty() {
+                    let num_boxes = lane.pit_boxes.len();
+                    let stall_idx = self.pit_stall_idx % num_boxes;
+                    let pbox = &lane.pit_boxes[stall_idx];
+                    let dist_to_box = (pbox.position - car_pos).length();
+                    if dist_to_box < 15.0 {
+                        let stop_speed = (dist_to_box / 15.0).clamp(0.0, 1.0) * lane.speed_limit;
+                        target_speed = target_speed.min(stop_speed);
+                        if dist_to_box <= pbox.stop_radius || pbox.contains_point(car_pos) {
+                            target_speed = 0.0;
+                        }
+                    }
+                }
+            } else if self.is_pitting {
                 let entry_center = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
                 let entry_proj = spline.project_point(entry_center);
                 let dist_to_pit_entry_along_track = (entry_proj.progress_distance - curr_dist).rem_euclid(spline.total_length());
-
-                if in_pit_lane {
-                    target_speed = target_speed.min(lane.speed_limit);
-                    if !self.pit_serviced {
-                        if let Some(pbox) = lane.pit_boxes.first() {
-                            let dist_to_box = (pbox.position - car_pos).length();
-                            if dist_to_box < 15.0 {
-                                let stop_speed = (dist_to_box / 15.0).clamp(0.0, 1.0) * lane.speed_limit;
-                                target_speed = target_speed.min(stop_speed);
-                                if dist_to_box <= pbox.stop_radius || pbox.contains_point(car_pos) {
-                                    target_speed = 0.0;
-                                }
-                            }
-                        }
-                    }
-                } else if dist_to_pit_entry_along_track < 30.0 {
+                if dist_to_pit_entry_along_track < 30.0 {
                     target_speed = target_speed.min(lane.speed_limit * 1.2);
                 }
             }

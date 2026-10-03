@@ -883,7 +883,7 @@ impl TrackSpline {
                 track_width: 10.0,
                 left_curb: false,
                 right_curb: false,
-                is_on_track: true,
+                is_on_track: false,
                 is_on_curb: false,
                 base_surface: SurfaceType::Asphalt,
                 elevation: 0.0,

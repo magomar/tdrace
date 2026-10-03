@@ -4694,7 +4694,7 @@ impl RaceSession {
             };
             let bot_profile = character.resolve_profile(bot_tier);
             let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
-            let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed);
+            let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed).with_pit_stall(bot_idx + 1);
             if bot_ai.profile.aggression > 0.8 {
                 bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
                     planned_joker_lap: 2,

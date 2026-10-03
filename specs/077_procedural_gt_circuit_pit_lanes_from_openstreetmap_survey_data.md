@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data"
 description: "Extracts, calibrates, scales, and bakes authentic physical pit lane geometry (entry gates, exit gates, bypass splines, team pit stalls) across all 18 GT circuits using OpenStreetMap survey data and procedural fallbacks."
-status: approved
+status: completed
+receipt: "docs/receipts/spec-077-receipt.md"
 created: 2026-10-02
 generated: { by: agent/antigravity, at: 2026-10-02T21:42:19Z }
 verified: { by: "human:mario", at: "2026-10-03T05:33:37Z", hash: "539252161c32" }
@@ -180,34 +181,34 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: All 18 GT circuits contain valid physical pit lanes**
-  - [ ] **Given** the 18 official GT circuit JSON definitions in `tracks/gt/`
-  - [ ] **When** each circuit is deserialized by `Track::from_json`
-  - [ ] **Then** `track.pit_lane` is `Some(lane)`
-  - [ ] **And** `lane.spline.total_length()` is $\ge 80.0\text{ m}$
-  - [ ] **And** `lane.pit_boxes.len()` is between $4$ and $10$
-  - [ ] **And** `lane.speed_limit` equals $16.67\text{ m/s} \pm 0.1$ ($60\text{ km/h}$)
+  - [x] **Given** the 18 official GT circuit JSON definitions in `tracks/gt/`
+  - [x] **When** each circuit is deserialized by `Track::from_json`
+  - [x] **Then** `track.pit_lane` is `Some(lane)`
+  - [x] **And** `lane.spline.total_length()` is $\ge 80.0\text{ m}$
+  - [x] **And** `lane.pit_boxes.len()` is between $4$ and $10$
+  - [x] **And** `lane.speed_limit` equals $16.67\text{ m/s} \pm 0.1$ ($60\text{ km/h}$)
 
 - **Scenario: GT pit lane entry and exit gates bridge the track corridor cleanly**
-  - [ ] **Given** any official GT track with a defined `pit_lane`
-  - [ ] **When** validating `lane.entry_gate` and `lane.exit_gate`
-  - [ ] **Then** the entry gate starts near the main track edge and ends near the pit road entrance
-  - [ ] **And** the exit gate cleanly bridges the pit road exit back to the main circuit ribbon
-  - [ ] **And** `track.validate_pit_lane()` returns no acute angle or overlap errors
+  - [x] **Given** any official GT track with a defined `pit_lane`
+  - [x] **When** validating `lane.entry_gate` and `lane.exit_gate`
+  - [x] **Then** the entry gate starts near the main track edge and ends near the pit road entrance
+  - [x] **And** the exit gate cleanly bridges the pit road exit back to the main circuit ribbon
+  - [x] **And** `track.validate_pit_lane()` returns no acute angle or overlap errors
 
 - **Scenario: In-game pit stop execution on Monza Autodromo**
-  - [ ] **Given** a player racing a GT car at Monza with $85\%$ tire wear
-  - [ ] **When** steering right into the pit lane across the entry gate
-  - [ ] **Then** the cyan `[PIT LIMITER: 60 KM/H]` banner illuminates
-  - [ ] **And** stopping in the team pit box triggers the $2.5\text{s}$ service loop
-  - [ ] **And** tires are reset to $0.0$ wear and released with green `[GO! GO! GO!]`
+  - [x] **Given** a player racing a GT car at Monza with $85\%$ tire wear
+  - [x] **When** steering right into the pit lane across the entry gate
+  - [x] **Then** the cyan `[PIT LIMITER: 60 KM/H]` banner illuminates
+  - [x] **And** stopping in the team pit box triggers the $2.5\text{s}$ service loop
+  - [x] **And** tires are reset to $0.0$ wear and released with green `[GO! GO! GO!]`
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `scripts/osm_importer.py` -> Adds GT pit lane extractor, transformer, and generator logic.
-- `[ ]` `tracks/gt/*.json` -> Updates all 18 GT circuit JSONs with baked `pit_lane` definitions.
-- `[ ]` `crates/tdrace-core/tests/gt_pit_lane_tests.rs` -> Integration tests verifying pit lanes across all 18 GT circuits.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Registers Spec 077 in Phase 6.
-- `[ ]` `specs/index.md` -> Registers Spec 077 in the progressive specification index.
+- `[x]` `scripts/osm_importer.py` -> Adds GT pit lane extractor, transformer, and generator logic.
+- `[x]` `tracks/gt/*.json` -> Updates all 18 GT circuit JSONs with baked `pit_lane` definitions.
+- `[x]` `crates/tdrace-core/tests/gt_pit_lane_tests.rs` -> Integration tests verifying pit lanes across all 18 GT circuits.
+- `[x]` `specs/constitution/ROADMAP.md` -> Registers Spec 077 in Phase 6.
+- `[x]` `specs/index.md` -> Registers Spec 077 in the progressive specification index.

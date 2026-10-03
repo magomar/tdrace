@@ -95,6 +95,12 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
         .unwrap_or(3);
     let grid_layout = current_grid_layout(track);
+    track.apply_default_runoff_surfaces();
+    if let Some(lane) = &mut track.pit_lane {
+        if opts.rebuild || lane.spline.samples.is_empty() {
+            lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
+        }
+    }
     let geometry = &mut track.geometry;
     let no_walls = geometry.inner_walls.is_empty()
         && geometry.outer_walls.is_empty()
@@ -110,7 +116,16 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         geometry.outer_walls = right_walls;
         geometry.left_boundary_polyline = left_poly;
         geometry.right_boundary_polyline = right_poly;
+        if track.pit_lane.is_some() {
+            track.trim_walls_for_pit_lane();
+            track.generate_pit_lane_walls();
+        }
         report.walls = true;
+    } else {
+        if track.pit_lane.is_some() {
+            track.trim_walls_for_pit_lane();
+            track.generate_pit_lane_walls();
+        }
     }
     if opts.rebuild || track.checkpoints.is_empty() {
         track.checkpoints = generate_checkpoints(&track.spline, checkpoint_count, sector_count);

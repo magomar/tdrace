@@ -200,3 +200,69 @@ fn test_bot_ai_pit_tactics_and_stall_stopping() {
     assert!(ctrl_exit.throttle > 0.0, "Bot after service must apply throttle to exit");
     assert_eq!(ctrl_exit.brake, 0.0, "Bot after service must release brake");
 }
+
+/// Scenario: Bot AI respects Lap 1 gating, assigned stall targeting, and 30s cooldown
+#[test]
+fn test_bot_ai_lap1_pit_gating_stall_assignment_and_cooldown() {
+    use arcade_race_core::track::{LineSegment, PitBox, PitLane, TrackSpline};
+    use wheelbase::{Car, CarConfig};
+
+    let mut track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+    let entry_gate = LineSegment::new(Vec2::new(10.0, -10.0), Vec2::new(10.0, 10.0));
+    let exit_gate = LineSegment::new(Vec2::new(100.0, -10.0), Vec2::new(100.0, 10.0));
+    let pit_spline = TrackSpline::from_points(&[Vec2::new(10.0, 0.0), Vec2::new(55.0, 0.0), Vec2::new(100.0, 0.0)], 6.0, false);
+    let pit_box_0 = PitBox::new(Vec2::new(35.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+    let pit_box_1 = PitBox::new(Vec2::new(65.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+
+    track.pit_lane = Some(PitLane::new(
+        pit_spline,
+        6.0,
+        PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+        vec![pit_box_0, pit_box_1],
+        entry_gate,
+        exit_gate,
+    ));
+
+    // 1. Bot on Lap 1 with damaged car does not pit
+    let mut bot_lap1 = BotAiDriver::with_seed(BotProfile::pro(), 1).with_current_lap(1);
+    let mut damaged_car = Car::new(CarConfig::sports_car());
+    damaged_car.state.health = 0.40;
+    damaged_car.state.position = Vec2::new(8.0, 0.0);
+    damaged_car.state.speed = 15.0;
+
+    let _ = bot_lap1.compute_controls(&damaged_car, &track, &[], 0.016);
+    assert!(!bot_lap1.is_pitting, "Bot on Lap 1 must NOT enter pit lane even when damaged");
+
+    // 2. Bot on Lap 2 with damaged car DOES pit
+    let mut bot_lap2 = BotAiDriver::with_seed(BotProfile::pro(), 2).with_current_lap(2).with_pit_stall(1);
+    let _ = bot_lap2.compute_controls(&damaged_car, &track, &[], 0.016);
+    assert!(bot_lap2.is_pitting, "Bot on Lap 2 with severe damage MUST enter pit lane");
+
+    // 3. Assigned stall targeting: bot with stall_idx = 1 targets stall 1 at x=65.0, not stall 0 at x=35.0
+    let mut pit_car = Car::new(CarConfig::sports_car());
+    pit_car.state.health = 0.40;
+    pit_car.state.position = Vec2::new(35.0, 0.0); // Inside stall 0
+    pit_car.state.speed = 10.0;
+    let ctrl_stall1 = bot_lap2.compute_controls(&pit_car, &track, &[], 0.016);
+    assert!(ctrl_stall1.throttle > 0.0, "Bot assigned to stall 1 must NOT stop at stall 0");
+
+    // Move to stall 1: must brake to full stop
+    pit_car.state.position = Vec2::new(65.0, 0.0);
+    pit_car.state.speed = 1.0;
+    let ctrl_in_stall1 = bot_lap2.compute_controls(&pit_car, &track, &[], 0.016);
+    assert_eq!(ctrl_in_stall1.brake, 1.0, "Bot in its assigned stall 1 must brake");
+
+    // 4. Stall timer release after 2.0s even with low health
+    pit_car.state.speed = 0.0;
+    for _ in 0..150 {
+        bot_lap2.compute_controls(&pit_car, &track, &[], 0.016);
+    }
+    assert!(bot_lap2.pit_serviced, "Bot must be released after 2s stationary in stall");
+
+    // 5. Leaving pit lane at exit gate sets 30s cooldown and resets is_pitting
+    pit_car.state.position = Vec2::new(98.0, 0.0);
+    pit_car.state.speed = 15.0;
+    bot_lap2.compute_controls(&pit_car, &track, &[], 0.016);
+    assert!(!bot_lap2.is_pitting, "Bot at exit gate must reset is_pitting");
+    assert!(bot_lap2.pit_cooldown >= 29.0, "Bot exiting pit must receive ~30s cooldown");
+}
