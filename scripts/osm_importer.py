@@ -340,14 +340,117 @@ def generate_fallback_pit_lane(final_track_pts):
 
 
 PILOT_PIT_BOUNDS = {
-    "catalunya": (-4.0,     15.0,  65.0,  78.0),
-    "monza":     (-170.0, -130.0, 50.0, 100.0),
-    "spa":       (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
+    "catalunya":   (-4.0,     15.0,  65.0,  78.0),
+    "monza":       (-170.0, -130.0, 50.0, 100.0),
+    "spa":         (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
+    "silverstone": (-5.0,    15.0,  75.0,  90.0, -7.0, -14.5),
+    "madring":     (-5.0,    15.0,  70.0,  85.0, -7.0, -14.0),
+    "bahrain":     (12.0,    32.0, 125.0, 150.0, -7.0, -15.0),
+    "cota":        (15.0,    35.0, 150.0, 180.0,  7.35,  14.5),
 }
 
 
 def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
     """Builds a complete, geometry-governed PitLane dictionary anchored by OSM metadata (Spec 062/077)."""
+    if cid == "zandvoort":
+        # Zandvoort's start straight in source JSON runs from wp 26 (50.0, -143.6) to wp 0 (0.0, 0.0)
+        p_start = (50.0, -143.6)
+        p_end = (0.0, 0.0)
+        dx = p_end[0] - p_start[0]
+        dy = p_end[1] - p_start[1]
+        L = math.hypot(dx, dy)
+        tx = dx / L
+        ty = dy / L
+        nx = ty
+        ny = -tx  # pointing right
+        u_entry, u_start, u_end, u_exit = 10.0, 30.0, 105.0, 130.0
+        d_split = 7.6
+        d_parallel = 12.5
+        w_pit = 7.0
+
+        pit_waypoints = []
+        for i in range(4):
+            v = i / 3.0
+            s = 3.0 * v * v - 2.0 * v * v * v
+            u = u_entry + v * (u_start - u_entry)
+            dist = d_split + (d_parallel - d_split) * s
+            px = p_start[0] + u * tx + dist * nx
+            py = p_start[1] + u * ty + dist * ny
+            pit_waypoints.append({
+                "point": [round(px, 2), round(py, 2)],
+                "width": w_pit,
+                "left_curb": False, "right_curb": False, "surface": "Asphalt",
+                "elevation": 0.0, "bank_angle": 0.0, "left_wall": False, "right_wall": False,
+                "left_wall_distance": None, "right_wall_distance": None,
+                "left_runoff_surface": "Asphalt", "right_runoff_surface": "Asphalt"
+            })
+        for i in range(1, 10):
+            v = i / 9.0
+            u = u_start + v * (u_end - u_start)
+            px = p_start[0] + u * tx + d_parallel * nx
+            py = p_start[1] + u * ty + d_parallel * ny
+            pit_waypoints.append({
+                "point": [round(px, 2), round(py, 2)],
+                "width": w_pit,
+                "left_curb": False, "right_curb": False, "surface": "Asphalt",
+                "elevation": 0.0, "bank_angle": 0.0, "left_wall": False, "right_wall": False,
+                "left_wall_distance": None, "right_wall_distance": None,
+                "left_runoff_surface": "Asphalt", "right_runoff_surface": "Asphalt"
+            })
+        for i in range(1, 4):
+            v = i / 3.0
+            s = 3.0 * v * v - 2.0 * v * v * v
+            u = u_end + v * (u_exit - u_end)
+            dist = d_parallel + (d_split - d_parallel) * s
+            px = p_start[0] + u * tx + dist * nx
+            py = p_start[1] + u * ty + dist * ny
+            pit_waypoints.append({
+                "point": [round(px, 2), round(py, 2)],
+                "width": w_pit,
+                "left_curb": False, "right_curb": False, "surface": "Asphalt",
+                "elevation": 0.0, "bank_angle": 0.0, "left_wall": False, "right_wall": False,
+                "left_wall_distance": None, "right_wall_distance": None,
+                "left_runoff_surface": "Asphalt", "right_runoff_surface": "Asphalt"
+            })
+
+        p_start_main = (p_start[0] + u_start * tx, p_start[1] + u_start * ty)
+        g_entry_start = [round(p_start_main[0] + (d_parallel - w_pit * 0.5) * nx, 2), round(p_start_main[1] + (d_parallel - w_pit * 0.5) * ny, 2)]
+        g_entry_end = [round(p_start_main[0] + (d_parallel + w_pit * 0.5) * nx, 2), round(p_start_main[1] + (d_parallel + w_pit * 0.5) * ny, 2)]
+
+        p_end_main = (p_start[0] + u_end * tx, p_start[1] + u_end * ty)
+        g_exit_start = [round(p_end_main[0] + (d_parallel - w_pit * 0.5) * nx, 2), round(p_end_main[1] + (d_parallel - w_pit * 0.5) * ny, 2)]
+        g_exit_end = [round(p_end_main[0] + (d_parallel + w_pit * 0.5) * nx, 2), round(p_end_main[1] + (d_parallel + w_pit * 0.5) * ny, 2)]
+
+        num_boxes = 6
+        pit_boxes = []
+        step_u = (u_end - u_start - 20.0) / (num_boxes - 1)
+        for k in range(num_boxes):
+            uk = u_start + 10.0 + k * step_u
+            dist = d_parallel + 1.8
+            px = p_start[0] + uk * tx + dist * nx
+            py = p_start[1] + uk * ty + dist * ny
+            pit_boxes.append({
+                "position": [round(px, 2), round(py, 2)],
+                "direction": [round(tx, 2), round(ty, 2)],
+                "stop_radius": 3.0,
+                "elevation": 0.0,
+            })
+
+        return {
+            "spline": {
+                "waypoints": pit_waypoints,
+                "closed": False,
+                "samples": [],
+                "total_length": round(u_exit - u_entry, 2),
+                "curves": [],
+            },
+            "road_width": w_pit,
+            "speed_limit": 16.67,
+            "pit_boxes": pit_boxes,
+            "entry_gate": {"start": g_entry_start, "end": g_entry_end},
+            "exit_gate": {"start": g_exit_start, "end": g_exit_end},
+        }
+
     pit_nodes = extract_pit_nodes(cid, cfg, root, ways)
     osm_pts = []
     if pit_nodes and len(pit_nodes) >= 2:

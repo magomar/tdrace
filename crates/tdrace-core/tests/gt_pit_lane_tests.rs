@@ -5,7 +5,26 @@ use std::fs;
 use std::path::Path;
 use tdrace_core::track::Track;
 
-const PILOT_CIRCUITS: &[&str] = &["monza", "catalunya", "spa"];
+const ALL_GT_CIRCUITS: &[&str] = &[
+    "monza",
+    "spa",
+    "catalunya",
+    "silverstone",
+    "red_bull_ring",
+    "nurburgring_gp",
+    "interlagos",
+    "le_mans_sarthe",
+    "bathurst",
+    "portimao_gp",
+    "madring",
+    "suzuka",
+    "cota",
+    "montreal",
+    "marina_bay",
+    "monaco",
+    "bahrain",
+    "zandvoort",
+];
 
 fn load_track_from_tracks_dir(slug: &str) -> Track {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
@@ -21,8 +40,8 @@ fn load_track_from_tracks_dir(slug: &str) -> Track {
 }
 
 #[test]
-fn test_pilot_circuits_have_valid_baked_pit_lanes() {
-    for &slug in PILOT_CIRCUITS {
+fn test_all_18_gt_circuits_have_valid_baked_pit_lanes() {
+    for &slug in ALL_GT_CIRCUITS {
         let track = load_track_from_tracks_dir(slug);
         let lane = track.pit_lane.as_ref().unwrap_or_else(|| {
             panic!("Circuit '{}' must declare a physical pit lane", slug);
