@@ -4,6 +4,7 @@ template: architecture
 title: "Curvature-Aware Track Boundary Geometry, Swallowtail Pinch Elimination, and Global Circuit Validation"
 description: "Eliminates self-intersecting boundary loops (swallowtail singularities) across road edges, apex curbs, and perimeter walls caused by sub-width curvature radii (R < W/2), establishes rigorous validation guardrails in validate_track, repairs all 53 affected catalog circuits including scaled-down real tracks like Catalunya, and implements curvature-adaptive width tapering and synchronized boundary untangling."
 status: implemented
+receipt: "docs/receipts/spec-080-receipt.md"
 verified: { by: "human:mario", at: "2026-10-03T10:38:51Z", hash: "dd245cb94018" }
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T10:00:00Z }
