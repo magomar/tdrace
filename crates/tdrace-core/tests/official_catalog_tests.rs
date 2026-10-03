@@ -39,14 +39,22 @@ fn test_catalog_counts_per_module() {
 
 #[test]
 fn test_no_embedded_circuit_has_validation_errors() {
+    let mut failures = Vec::new();
     for c in catalog::circuits() {
         let track = c.load().unwrap();
         let errors: Vec<_> = validate_track(&track)
             .into_iter()
             .filter(|d| d.severity == ValidationSeverity::Error)
             .collect();
-        assert!(errors.is_empty(), "{}/{}: {:?}", c.module, c.id, errors);
+        if !errors.is_empty() {
+            eprintln!("FAILING TRACK: {}/{}", c.module, c.id);
+            for err in &errors {
+                eprintln!("   {:?}: {}", err.code, err.message);
+            }
+            failures.push((c.module, c.id, errors));
+        }
     }
+    assert!(failures.is_empty(), "{} circuits have validation errors: {:?}", failures.len(), failures.iter().map(|(m, id, _)| format!("{}/{}", m, id)).collect::<Vec<_>>());
 }
 
 #[test]
