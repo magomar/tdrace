@@ -4,6 +4,7 @@ template: feature
 title: "Directional Impact Masking, Engine Placement Damage, and Archetype Suspension Failure"
 description: "Establishes directional collision impact masking, engine placement vulnerability (Front/Mid/Rear), archetype-specific suspension damage coupling into steering alignment and jump compliance, and itemized post-race repair economics."
 status: in_progress
+receipt: "docs/receipts/spec-078-receipt.md"
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T08:26:00Z }
 verified: { by: human:mario, at: 2026-10-03T06:31:08Z, hash: "5ee92f71bf22" }
