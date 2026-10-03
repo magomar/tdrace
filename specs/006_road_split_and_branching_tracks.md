@@ -8,7 +8,6 @@ verified: { by: human:mario, at: 2026-10-03T16:00:00Z, hash: "26028f3b2d7d" }
 receipt: "docs/receipts/spec-006-receipt.md"
 created: 2026-09-15
 generated: { by: agent/antigravity, at: 2026-09-18T12:30:00Z }
-
 ---
 # Architecture Spec: Road Split Segments, Branching Splines & Alternative Circuit Layouts 🏗️
 
