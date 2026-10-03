@@ -6,7 +6,7 @@ description: "5-tier grassroots karting career ladder from 60cc Cadet karts to 2
 status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
-verified: { by: "human:mario", at: "2026-09-22T17:15:00Z" }
+verified: { by: "human:mario", at: "2026-09-22T17:15:00Z", hash: "23df50a2236c" }
 ---
 # Feature Spec: Karting World Cup Career Mode 🏎️
 

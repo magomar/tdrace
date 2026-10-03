@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-051-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-28T22:45:00Z }
-verified: { by: "human:mario", at: 2026-09-28T22:39:42Z }
+verified: { by: "human:mario", at: 2026-09-28T22:39:42Z, hash: "83162425dbcc" }
 ---
 
 # Feature Spec: Rallycross 6-Tier Career Progression and Expanded Circuit Roster 🏁

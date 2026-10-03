@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-056-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T10:30:00Z }
-verified: { by: human:mario, at: 2026-09-29T12:00:00Z }
+verified: { by: human:mario, at: 2026-09-29T12:00:00Z, hash: "df3475f4664d" }
 ---
 
 # Architecture Spec: race-kit Headless Race World 🏗️

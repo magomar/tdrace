@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-052-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T00:53:00Z }
-verified: { by: "human:mario", at: "2026-09-29T11:40:20Z" }
+verified: { by: "human:mario", at: "2026-09-29T11:40:20Z", hash: "5ac932571944" }
 ---
 
 # Feature Spec 052: Karting 6-Tier Career Progression and Expanded 20-Circuit Roster 🏎️🏆

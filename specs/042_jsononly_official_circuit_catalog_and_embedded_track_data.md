@@ -6,7 +6,7 @@ description: "Makes tracks/<module>/<slug>.json the single source of truth for t
 status: implemented
 receipt: "docs/receipts/spec-042-receipt.md"
 created: 2026-09-28
-verified: { by: "human:mario", at: "2026-09-27T22:33:11Z" }
+verified: { by: "human:mario", at: "2026-09-27T22:33:11Z", hash: "ff5737521760" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T00:00:00Z }
 ---
 

@@ -6,7 +6,7 @@ description: "Establishes a unified platform UI/UX architecture and reusable com
 status: implemented
 receipt: "docs/receipts/spec-068-receipt.md"
 created: 2026-09-30
-verified: { by: "human:mario", at: "2026-09-30T08:31:00Z" }
+verified: { by: "human:mario", at: "2026-09-30T08:31:00Z", hash: "8babc198ebb5" }
 generated: { by: agent/antigravity, at: 2026-09-30T08:15:42Z }
 ---
 

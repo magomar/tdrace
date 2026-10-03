@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-058-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T13:30:00Z }
-verified: { by: human:mario, at: 2026-09-29T14:00:00Z }
+verified: { by: human:mario, at: 2026-09-29T14:00:00Z, hash: "e04cd6b299b0" }
 ---
 
 # Architecture Spec: race-ui Rendering, Camera, Effects and HUD Primitives 🏗️

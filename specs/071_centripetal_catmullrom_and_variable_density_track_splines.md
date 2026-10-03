@@ -5,7 +5,7 @@ title: "Centripetal Catmull-Rom and Variable-Density Track Splines"
 description: "Upgrades track spline interpolation from uniform to centripetal Catmull-Rom (alpha=0.5), introduces arc-length-based sampling in TrackSpline, and enables variable-density waypoint authoring where straightaways require only sparse boundary nodes while curves retain high resolution."
 status: implemented
 receipt: "docs/receipts/spec-071-receipt.md"
-verified: { by: "human:mario", at: "2026-10-01T20:36:13Z" }
+verified: { by: "human:mario", at: "2026-10-01T20:36:13Z", hash: "45ea2a4a99e5" }
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T19:22:17Z }
 ---

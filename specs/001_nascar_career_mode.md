@@ -6,7 +6,7 @@ description: "5-tier American stock car and Trans-Am TA1 career progression feat
 status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:20:00Z }
-verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z", hash: "bd3b0c263cde" }
 ---
 # Feature Spec: NASCAR & Trans-Am TA1 Career Mode 🏁
 

@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-072-receipt.md"
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T20:45:35Z }
-verified: { by: human:Mario, at: 2026-10-01T21:09:36Z }
+verified: { by: human:Mario, at: 2026-10-01T21:09:36Z, hash: "6b3cc160c5ea" }
 ---
 
 # Architecture Spec: Progressive Drift Dynamics, Low-Speed Steering Authority, and Assist Differentiation 🏎️💨

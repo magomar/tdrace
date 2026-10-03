@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-060-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T14:42:47Z }
-verified: { by: "human:mario", at: "2026-09-29T20:24:27Z" }
+verified: { by: "human:mario", at: "2026-09-29T20:24:27Z", hash: "8dc8867adf1a" }
 ---
 
 # Feature Spec: Classic Academy and Grassroots Career Onboarding 🎓🏁💰

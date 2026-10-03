@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-049-receipt.md"
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T18:40:00Z }
-verified: { by: human:mario, at: 2026-09-28T22:00:00Z }
+verified: { by: human:mario, at: 2026-09-28T22:00:00Z, hash: "e82c59d7e8cb" }
 ---
 
 # Architecture Spec: Reusable Racing Platform Layers 🏗️

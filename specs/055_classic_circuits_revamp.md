@@ -6,7 +6,7 @@ description: "The Classic module replaces its 10 flat, bare circuits with 18 new
 status: in_progress
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T07:47:27Z }
-verified: { by: "human:mario", at: "2026-09-29T08:27:38Z" }
+verified: { by: "human:mario", at: "2026-09-29T08:27:38Z", hash: "62b710f98d35" }
 ---
 
 

@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-069-receipt.md"
 created: 2026-09-30
 generated: { by: agent/antigravity, at: 2026-09-30T11:15:00Z }
-verified: { by: "human:mario", at: "2026-10-01T19:26:53Z" }
+verified: { by: "human:mario", at: "2026-10-01T19:26:53Z", hash: "7e865c843ffc" }
 ---
 
 # Feature Spec: Legacy UI Migration and Reusable Platform Component Adoption 🕹️

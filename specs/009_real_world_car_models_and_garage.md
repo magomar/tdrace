@@ -6,7 +6,7 @@ description: "Migration from prototypical archetypes to authentic real-world mot
 status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T14:15:00Z }
-verified: { by: "human:mario", at: "2026-09-23T11:04:00Z" }
+verified: { by: "human:mario", at: "2026-09-23T11:04:00Z", hash: "f7539364eb1c" }
 ---
 # Feature Spec: Real-World Vehicle Rosters, Physics Balance & Interactive Garage 🏎️🏛️
 

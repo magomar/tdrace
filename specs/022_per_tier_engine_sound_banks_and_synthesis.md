@@ -6,7 +6,7 @@ description: "Expands the motor audio architecture to discrete per-vehicle physi
 status: implemented
 created: 2026-09-23
 generated: { by: agent/antigravity, at: 2026-09-23T19:55:00Z }
-verified: { by: human:mario, at: 2026-09-25T17:15:00Z }
+verified: { by: human:mario, at: 2026-09-25T17:15:00Z, hash: "d3b12898415d" }
 ---
 # Feature Spec 022: Per-Vehicle Engine Sound Banks, Discrete Acoustic Modeling, and Physical Synthesis 🔊🏎️
 

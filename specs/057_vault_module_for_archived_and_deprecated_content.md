@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-057-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T08:55:35Z }
-verified: { by: "human:mario", at: "2026-09-29T09:09:48Z" }
+verified: { by: "human:mario", at: "2026-09-29T09:09:48Z", hash: "0837c923d48d" }
 ---
 
 # Architecture Spec: Vault Module for Archived and Deprecated Content 🏛️

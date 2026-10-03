@@ -6,7 +6,7 @@ description: "5-tier career progression combining open desert raids, ice driftin
 status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
-verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z", hash: "796ac7e31b16" }
 ---
 # Feature Spec: Extreme Off-Road & Stunt Arenas Career Mode 🚜
 

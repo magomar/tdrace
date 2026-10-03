@@ -6,7 +6,7 @@ description: "Replaces the LAN in-race netcode: each machine simulates only its 
 status: implemented
 receipt: "docs/receipts/spec-044-receipt.md"
 created: 2026-09-28
-verified: { by: "human:mario", at: "2026-09-28T07:52:09Z" }
+verified: { by: "human:mario", at: "2026-09-28T07:52:09Z", hash: "1bc5ff08babe" }
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T07:40:00Z }
 ---
 

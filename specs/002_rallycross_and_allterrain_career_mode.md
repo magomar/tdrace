@@ -6,7 +6,7 @@ description: "5-tier Rallycross and All-Terrain career ladder covering 17 global
 status: implemented
 created: 2026-09-18
 generated: { by: agent/antigravity, at: 2026-09-18T12:21:00Z }
-verified: { by: "human:mario", at: "2026-09-22T17:45:00Z" }
+verified: { by: "human:mario", at: "2026-09-22T17:45:00Z", hash: "a8eada2dd58c" }
 ---
 # Feature Spec: Rallycross & All-Terrain World Cup Career Mode 🏆
 

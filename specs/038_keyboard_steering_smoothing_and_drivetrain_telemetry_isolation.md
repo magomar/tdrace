@@ -6,7 +6,7 @@ description: "Comprehensive physics and input architecture specification resolvi
 status: implemented
 receipt: "docs/receipts/spec-038-receipt.md"
 created: 2026-09-26
-verified: { by: "human:mario", at: "2026-09-26T17:35:00Z" }
+verified: { by: "human:mario", at: "2026-09-26T17:35:00Z", hash: "289b5a6d9ce9" }
 generated: { by: agent/antigravity, at: 2026-09-26T17:18:00Z }
 ---
 # Architecture Spec: Keyboard Steering Signal Smoothing, Drivetrain Power Governor Decoupling, and Audio RPM Telemetry Isolation 🏎️🎛️🔊

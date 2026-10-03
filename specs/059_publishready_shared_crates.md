@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-059-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T17:30:00Z }
-verified: { by: human:mario, at: 2026-09-29T18:00:00Z }
+verified: { by: human:mario, at: 2026-09-29T18:00:00Z, hash: "e51b9c353f7e" }
 ---
 
 # Architecture Spec: Publish-Ready Shared Crates 🏗️

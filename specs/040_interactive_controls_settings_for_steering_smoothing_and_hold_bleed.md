@@ -6,7 +6,7 @@ description: "Extends ArcadeSettingsModal Controls tab and the in-game Controls 
 status: implemented
 receipt: "docs/receipts/spec-040-receipt.md"
 created: 2026-09-27
-verified: { by: "human:mario", at: "2026-09-27T19:00:00Z" }
+verified: { by: "human:mario", at: "2026-09-27T19:00:00Z", hash: "78d34101c503" }
 generated: { by: agent/antigravity, at: 2026-09-27T19:01:00Z }
 ---
 
