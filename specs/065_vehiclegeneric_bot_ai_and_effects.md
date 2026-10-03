@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-065-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T16:50:00Z }
-verified: { by: human:mario, at: 2026-09-29T17:03:07Z }
+verified: { by: human:mario, at: 2026-09-29T17:03:07Z, hash: "696ab3c8c511" }
 ---
 
 # Architecture Spec: Vehicle-Generic Bot AI and Effects 🏗️

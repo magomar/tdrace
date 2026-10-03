@@ -771,6 +771,33 @@ impl Default for SuspensionArchetype {
     }
 }
 
+impl SuspensionArchetype {
+    /// Structural resilience factor governing resistance to collision, kerb, and landing damage (Spec 078).
+    /// Higher values indicate greater robustness against failure.
+    pub fn robustness_factor(&self) -> f32 {
+        match self {
+            Self::PushrodInboard => 0.45,
+            Self::RigidKart => 0.55,
+            Self::MacPhersonStrut => 0.75,
+            Self::DoubleWishbone => 1.00,
+            Self::SolidLiveAxle => 1.45,
+            Self::LongTravelOffRoad => 2.20,
+        }
+    }
+
+    /// Post-race replacement part cost multiplier (Spec 078).
+    pub fn part_cost_multiplier(&self) -> f32 {
+        match self {
+            Self::RigidKart => 0.50,
+            Self::SolidLiveAxle => 0.65,
+            Self::MacPhersonStrut => 0.80,
+            Self::LongTravelOffRoad => 1.10,
+            Self::DoubleWishbone => 1.20,
+            Self::PushrodInboard => 2.20,
+        }
+    }
+}
+
 /// Detailed suspension geometry and compliance settings for an axle or vehicle corner.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SuspensionCornerConfig {
@@ -1018,10 +1045,42 @@ impl SuspensionConfig {
     }
 }
 
+/// Physical powertrain and engine layout architecture (Spec 078).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EnginePlacement {
+    /// Front-mounted engine (Stock Car, GT4 Coupe, Rally Hatch).
+    FrontEngine,
+    /// Mid-mounted engine behind cockpit, ahead of rear axle (Supercar Lites, Ferrari 296, Kart).
+    MidEngine,
+    /// Rear-mounted engine over or behind rear axle (Porsche 911 GT3).
+    RearEngine,
+}
+
+impl Default for EnginePlacement {
+    fn default() -> Self {
+        Self::FrontEngine
+    }
+}
+
+impl EnginePlacement {
+    /// Powertrain overhaul labor and complexity cost multiplier for garage repairs (Spec 078).
+    pub fn repair_cost_multiplier(&self) -> f32 {
+        match self {
+            Self::FrontEngine => 1.00,
+            Self::MidEngine => 1.35,
+            Self::RearEngine => 1.50,
+        }
+    }
+}
+
 /// Vehicle physical dimensions, mass properties, powertrain parameters, and steering geometry.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(from = "CarConfigRaw")]
 pub struct CarConfig {
+    /// Physical engine mounting location governing collision vulnerability (Spec 078).
+    #[serde(default)]
+    pub engine_placement: EnginePlacement,
     /// Total vehicle mass in kilograms.
     pub mass: f32,
     /// Yaw moment of inertia around the vertical axis in kg*m^2.
@@ -1176,6 +1235,8 @@ struct CarConfigRaw {
     pub chassis: Option<ChassisSkeleton>,
     #[serde(default)]
     pub suspension: Option<SuspensionConfig>,
+    #[serde(default)]
+    pub engine_placement: Option<EnginePlacement>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -1207,7 +1268,16 @@ impl From<CarConfigRaw> for CarConfig {
             }
         });
 
+        let engine_placement = raw.engine_placement.unwrap_or_else(|| {
+            if raw.caster_jacking_factor > 0.0 {
+                EnginePlacement::MidEngine
+            } else {
+                EnginePlacement::FrontEngine
+            }
+        });
+
         let mut cfg = Self {
+            engine_placement,
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -1415,6 +1485,7 @@ impl CarConfig {
             wheels: Self::default_wheel_assemblies_for(tire, 0.56, 0.0),
             chassis: ChassisSkeleton::new(0.80, 0.90, 1.70, -0.40, 0.30, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone),
+            engine_placement: EnginePlacement::FrontEngine,
         }
         .finalized()
     }
@@ -1568,6 +1639,7 @@ impl CarConfig {
             wheels,
             chassis: ChassisSkeleton::new(0.16, 0.12, 1.10, -0.15, 0.10, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart),
+            engine_placement: EnginePlacement::MidEngine,
         }
         .finalized()
     }
@@ -1716,6 +1788,7 @@ impl CarConfig {
             wheels,
             chassis: ChassisSkeleton::new(0.98, 1.25, 1.98, -0.45, 0.35, 0.70, 0.75, 0.06),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle),
+            engine_placement: EnginePlacement::FrontEngine,
         }
         .finalized()
     }
@@ -1825,6 +1898,7 @@ impl CarConfig {
             wheels,
             chassis: ChassisSkeleton::new(0.15, 0.42, 1.95, -0.40, 0.25, 0.60, 0.65, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad),
+            engine_placement: EnginePlacement::RearEngine,
         }
         .finalized()
     }
@@ -1861,6 +1935,14 @@ mod tests {
         assert!(sand.top_speed_mps * 3.6 > 195.0);
         assert!(sand.track_width > sports.track_width);
 
+        // Engine placement verification (Spec 078)
+        assert_eq!(sports.engine_placement, EnginePlacement::FrontEngine);
+        assert_eq!(drift.engine_placement, EnginePlacement::FrontEngine);
+        assert_eq!(kart.engine_placement, EnginePlacement::MidEngine);
+        assert_eq!(rally.engine_placement, EnginePlacement::FrontEngine);
+        assert_eq!(stock.engine_placement, EnginePlacement::FrontEngine);
+        assert_eq!(sand.engine_placement, EnginePlacement::RearEngine);
+
         // All presets must have 4 populated wheels
         assert_eq!(sports.wheels.len(), 4);
         assert_eq!(drift.wheels.len(), 4);
@@ -1868,6 +1950,97 @@ mod tests {
         assert_eq!(rally.wheels.len(), 4);
         assert_eq!(stock.wheels.len(), 4);
         assert_eq!(sand.wheels.len(), 4);
+    }
+
+    #[test]
+    fn test_suspension_archetype_factors_and_engine_placement() {
+        assert!((SuspensionArchetype::PushrodInboard.robustness_factor() - 0.45).abs() < 1e-6);
+        assert!((SuspensionArchetype::PushrodInboard.part_cost_multiplier() - 2.20).abs() < 1e-6);
+
+        assert!((SuspensionArchetype::RigidKart.robustness_factor() - 0.55).abs() < 1e-6);
+        assert!((SuspensionArchetype::RigidKart.part_cost_multiplier() - 0.50).abs() < 1e-6);
+
+        assert!((SuspensionArchetype::MacPhersonStrut.robustness_factor() - 0.75).abs() < 1e-6);
+        assert!((SuspensionArchetype::MacPhersonStrut.part_cost_multiplier() - 0.80).abs() < 1e-6);
+
+        assert!((SuspensionArchetype::DoubleWishbone.robustness_factor() - 1.00).abs() < 1e-6);
+        assert!((SuspensionArchetype::DoubleWishbone.part_cost_multiplier() - 1.20).abs() < 1e-6);
+
+        assert!((SuspensionArchetype::SolidLiveAxle.robustness_factor() - 1.45).abs() < 1e-6);
+        assert!((SuspensionArchetype::SolidLiveAxle.part_cost_multiplier() - 0.65).abs() < 1e-6);
+
+        assert!((SuspensionArchetype::LongTravelOffRoad.robustness_factor() - 2.20).abs() < 1e-6);
+        assert!((SuspensionArchetype::LongTravelOffRoad.part_cost_multiplier() - 1.10).abs() < 1e-6);
+
+        assert!((EnginePlacement::FrontEngine.repair_cost_multiplier() - 1.00).abs() < 1e-6);
+        assert!((EnginePlacement::MidEngine.repair_cost_multiplier() - 1.35).abs() < 1e-6);
+        assert!((EnginePlacement::RearEngine.repair_cost_multiplier() - 1.50).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_engine_placement_serde_compatibility() {
+        // Deserializing without engine_placement defaults gracefully
+        let json_without = r#"{
+            "mass": 1000.0,
+            "inertia": 1200.0,
+            "wheelbase": 2.5,
+            "track_width": 1.5,
+            "cg_to_front": 1.2,
+            "cg_to_rear": 1.3,
+            "cg_height": 0.3,
+            "max_engine_force": 6000.0,
+            "max_reverse_force": 3000.0,
+            "max_brake_force": 10000.0,
+            "handbrake_force": 5000.0,
+            "brake_bias": 0.6,
+            "drive_bias": 0.0,
+            "top_speed_mps": 50.0,
+            "max_steer_angle": 0.6,
+            "steer_speed": 5.0,
+            "steer_return_speed": 6.0,
+            "counter_steer_assist": 1.0,
+            "air_drag_coefficient": 0.4,
+            "lateral_drag_coefficient": 1.0,
+            "rolling_resistance_coefficient": 0.015,
+            "angular_damping": 100.0,
+            "engine_braking_coefficient": 0.1,
+            "downforce_coefficient": 0.5,
+            "tire": {
+                "grip": 1.0,
+                "peak_slip_angle_deg": 8.0,
+                "slide_grip": 0.8,
+                "skid_threshold": 0.1,
+                "skid_full_threshold": 0.3
+            },
+            "assists": {
+                "tcs_enabled": false,
+                "tcs_slip_threshold": 0.2,
+                "tcs_strength": 0.5,
+                "tcs_slip_angle_deg": 10.0,
+                "esc_sideslip_limit_deg": 10.0,
+                "tcs_drift_bypass": false,
+                "esc_enabled": false,
+                "esc_yaw_threshold": 0.3,
+                "esc_strength": 0.5,
+                "counter_steer_assist_enabled": false,
+                "counter_steer_assist_strength": 0.5,
+                "abs_enabled": false,
+                "abs_slip_threshold": 0.2,
+                "abs_strength": 0.5,
+                "handbrake_bypass": true
+            }
+        }"#;
+
+        let cfg: CarConfig = serde_json::from_str(json_without).unwrap();
+        assert_eq!(cfg.engine_placement, EnginePlacement::FrontEngine);
+
+        // Deserializing with explicit rear_engine
+        let json_with_rear = json_without.replace(
+            "\"mass\": 1000.0,",
+            "\"engine_placement\": \"rear_engine\",\n            \"mass\": 1000.0,",
+        );
+        let cfg_rear: CarConfig = serde_json::from_str(&json_with_rear).unwrap();
+        assert_eq!(cfg_rear.engine_placement, EnginePlacement::RearEngine);
     }
 
     #[test]

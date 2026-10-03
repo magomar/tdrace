@@ -6,7 +6,7 @@ description: "Expands keyboard steering smoothing to 5 distinct profiles (Balanc
 status: implemented
 receipt: "docs/receipts/spec-041-receipt.md"
 created: 2026-09-27
-verified: { by: "human:mario", at: "2026-09-27T20:45:00Z" }
+verified: { by: "human:mario", at: "2026-09-27T20:45:00Z", hash: "f859349e1904" }
 generated: { by: agent/antigravity, at: 2026-09-27T20:45:00Z }
 ---
 

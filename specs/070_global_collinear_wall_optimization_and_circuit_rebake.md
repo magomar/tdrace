@@ -6,7 +6,7 @@ description: "Enables collinear wall merging by default across all official spli
 status: implemented
 receipt: "docs/receipts/spec-070-receipt.md"
 created: 2026-09-30
-verified: { by: "human:mario", at: "2026-09-30T14:01:12Z" }
+verified: { by: "human:mario", at: "2026-09-30T14:01:12Z", hash: "d7f377d74ba4" }
 generated: { by: agent/antigravity, at: 2026-09-30T13:17:34Z }
 ---
 

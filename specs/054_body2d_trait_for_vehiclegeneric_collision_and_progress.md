@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-054-receipt.md"
 created: 2026-09-28
 generated: { by: agent/claude-opus-5-5, at: 2026-09-28T22:30:00Z }
-verified: { by: human:mario, at: 2026-09-29T08:00:00Z }
+verified: { by: human:mario, at: 2026-09-29T08:00:00Z, hash: "300c196e4dc8" }
 ---
 
 # Architecture Spec: Body2D Trait for Vehicle-Generic Collision and Progress 🏗️

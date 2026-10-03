@@ -5,7 +5,7 @@ title: "Realistic Vehicle Sprite Harmonization and Modular Steered Wheel Articul
 description: "Establishes a balanced 12-car Classic fantasy roster (2x per category: Karts, GT, Stock, RX, AX, All-Terrain) with accessible vintage/retro power profiles, upgrades flat vector sprites to high-fidelity pre-rendered orthographic assets, and enforces modular Ackermann steered wheels across the fleet."
 status: implemented
 receipt: "docs/receipts/spec-073-receipt.md"
-verified: { by: "human:mario", at: "2026-10-01T21:35:30Z" }
+verified: { by: "human:mario", at: "2026-10-01T21:35:30Z", hash: "9fcdf15e1e55" }
 created: 2026-10-01
 generated: { by: agent/antigravity, at: 2026-10-01T21:18:31Z }
 ---

@@ -9,9 +9,8 @@ generated: { by: agent/antigravity, at: 2026-09-29T15:56:00Z }
 depends_on:
   - "055"
   - "062"
-  - "063"
+  - "078"
 ---
-
 # Feature Spec: Classic Module Multi-Tier Academy Missions and Degradation Curriculum 🎓🏎️🏁
 
 A comprehensive feature specification expanding the **Classic Arcade Module** into a structured, **4-Tier Motorsport Academy** leveraging the 18 newly revamped fictional circuits ([Spec 055](055_classic_circuits_revamp.md)) and the dual-currency economy ([Spec 053](053_dual_currency_economy_and_branching_career_progression_architecture.md)). Under this design, the Classic Academy serves as both an essential **driving school curriculum** and a **risk-free economic earning engine**. Initial tiers feature zero damage to teach clean car control, while advanced tiers introduce accelerated tire wear, thermal discipline, chassis preservation, and mandatory pit stop strategy.

@@ -278,6 +278,9 @@ impl<V: Vehicle> RaceWorld<V> {
                             if iter == 0 {
                                 ev.car_a_idx = i;
                                 ev.car_b_idx = j;
+                                let damage_energy = ev.estimated_damage_energy();
+                                car_i.apply_collision_damage(ev.contact_point, damage_energy);
+                                car_j.apply_collision_damage(ev.contact_point, damage_energy);
                                 self.events.push(RaceEvent::VehicleImpact(ev));
                                 self.impact(i, ev.closing_speed);
                                 self.impact(j, ev.closing_speed);
@@ -291,9 +294,16 @@ impl<V: Vehicle> RaceWorld<V> {
         // Wall and obstacle boundary collisions for each car (including grandstands & tree trunks)
         let scenery_obstacles = track.geometry.all_obstacles_with_scenery();
         for i in 0..n_cars {
-            let car = &mut self.vehicles[i];
-            let mut wall_events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, &scenery_obstacles);
-            wall_events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
+            let wall_events = {
+                let car = &mut self.vehicles[i];
+                let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, &scenery_obstacles);
+                events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
+                for ev in &events {
+                    let damage_energy = ev.estimated_damage_energy();
+                    car.apply_collision_damage(ev.contact_point, damage_energy);
+                }
+                events
+            };
             for ev in wall_events {
                 self.events.push(RaceEvent::WallImpact { car: i, event: ev });
                 self.impact(i, ev.impact_speed);

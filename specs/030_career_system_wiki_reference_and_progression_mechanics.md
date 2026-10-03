@@ -6,7 +6,7 @@ description: "Comprehensive specification and Astro Starlight technical wiki doc
 status: implemented
 created: 2026-09-24
 generated: { by: agent/antigravity, at: 2026-09-24T20:24:01Z }
-verified: { by: human:mario, at: 2026-09-24T20:23:03Z }
+verified: { by: human:mario, at: 2026-09-24T20:23:03Z, hash: "be8e5c9bae5f" }
 ---
 # Feature Spec 030: Career System Wiki Reference and Progression Mechanics 🏆📚
 

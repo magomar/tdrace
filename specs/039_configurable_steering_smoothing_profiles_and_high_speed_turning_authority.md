@@ -6,7 +6,7 @@ description: "Input and physics architecture eliminating high-speed steering cho
 status: implemented
 receipt: "docs/receipts/spec-039-receipt.md"
 created: 2026-09-26
-verified: { by: "human:mario", at: "2026-09-26T23:55:00Z" }
+verified: { by: "human:mario", at: "2026-09-26T23:55:00Z", hash: "7e61e72915e8" }
 generated: { by: agent/antigravity, at: 2026-09-26T23:56:00Z }
 ---
 

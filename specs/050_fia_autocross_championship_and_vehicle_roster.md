@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-050-receipt.md"
 created: 2026-09-28
 generated: { by: agent/antigravity, at: 2026-09-28T21:12:04Z }
-verified: { by: "human:mario", at: "2026-09-28T22:23:04Z" }
+verified: { by: "human:mario", at: "2026-09-28T22:23:04Z", hash: "6307d90f4ab4" }
 ---
 
 # Feature Spec: FIA Autocross Championship and Vehicle Roster 🏁

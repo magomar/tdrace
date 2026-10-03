@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-075-receipt.md"
 created: 2026-10-02
 generated: { by: agent/antigravity, at: 2026-10-01T22:08:53Z }
-verified: { by: "human:mario", at: "2026-10-01T22:32:40Z" }
+verified: { by: "human:mario", at: "2026-10-01T22:32:40Z", hash: "caf0e7014266" }
 ---
 
 # Architecture Spec: Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization 🏗️🏎️📐

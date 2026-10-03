@@ -12,10 +12,11 @@ pub mod surface;
 pub mod tire;
 
 pub use bike::{Motorbike, MotorbikeConfig, MotorbikeControls, MotorbikeState};
-pub use car::{normalize_angle, Car, CarControls, CarState, JumpRampProperties};
+pub use car::{normalize_angle, Car, CarControls, CarState, ImpactZone, JumpRampProperties};
 pub use config::{
     default_wheel_assemblies, pacejka_peak_slip_angle_deg, CarConfig, ChassisSkeleton, DifferentialType,
-    DriverAssistsConfig, PacejkaTireConfig, PlayerHandling, RearAxleTire, TireConfig, WheelAssemblyConfig,
+    DriverAssistsConfig, EnginePlacement, PacejkaTireConfig, PlayerHandling, RearAxleTire,
+    SuspensionArchetype, SuspensionConfig, SuspensionCornerConfig, TireConfig, WheelAssemblyConfig,
 };
 pub use surface::{CompoundId, SurfaceAffinityMap, SurfaceProperties, SurfaceSampler, SurfaceType, UniformSurface};
 pub use tire::{

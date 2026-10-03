@@ -4,7 +4,7 @@ template: feature
 title: "Navigation Reorganization, Category Circuit Filter, and Tiered Career Championships"
 description: "Reorganizes game navigation by removing the Grand Hub, starting directly on ModalitySelect (1P, MP, Options), adding category filtering to the circuit selector for non-career modes, and introducing a unified tier-gated championship selector for Career Mode displaying Tier 1 initially with progressive tier unlocks and replayable completed championships."
 status: implemented
-verified: { by: "human:mario", at: "2026-09-29T21:25:16Z" }
+verified: { by: "human:mario", at: "2026-09-29T21:25:16Z", hash: "dab8dd50a805" }
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T20:48:00Z }
 ---

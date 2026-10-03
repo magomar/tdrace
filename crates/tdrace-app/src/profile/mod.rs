@@ -10,6 +10,9 @@ pub use tdrace_core::profile::{
     LicenseGrade,
 };
 
+pub mod repair;
+pub use repair::ItemizedRepairInvoice;
+
 /// Player Profile representing driver identity, livery customizations, nationality, and driving mode.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PlayerProfile {

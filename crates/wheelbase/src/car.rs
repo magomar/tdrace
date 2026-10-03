@@ -8,7 +8,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
-use super::config::{CarConfig, DifferentialType, SuspensionArchetype};
+use super::config::{CarConfig, DifferentialType, EnginePlacement, SuspensionArchetype};
 use super::surface::{CompoundId, SurfaceSampler, SurfaceType};
 use super::tire::{
     combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
@@ -167,6 +167,24 @@ pub struct SuspensionTelemetry {
     pub bottomed_out: bool,
 }
 
+/// Discrete impact zone resolved from local collision coordinates (Spec 078).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ImpactZone {
+    FrontNose,
+    RearTail,
+    FlankLeft,
+    FlankRight,
+    CornerFL,
+    CornerFR,
+    CornerRL,
+    CornerRR,
+}
+
+const fn default_suspension_health() -> [f32; 4] {
+    [1.0, 1.0, 1.0, 1.0]
+}
+
 /// Complete serializable state of the vehicle at any instant in time.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CarState {
@@ -267,9 +285,18 @@ pub struct CarState {
     /// Aerodynamic drafting / slipstream drag reduction factor [0.0 = clean air, up to ~0.40 = 40% drag reduction in wake].
     #[serde(default)]
     pub draft_intensity: f32,
-    /// Vehicle chassis structural health [0.0 = destroyed, 1.0 = pristine].
+    /// Vehicle chassis structural health [0.0 = destroyed, 1.0 = pristine] (Spec 063).
     #[serde(default = "one_f32")]
     pub health: f32,
+    /// Structural health of chassis frame [0.0 = wrecked, 1.0 = pristine] (Spec 078).
+    #[serde(default = "one_f32")]
+    pub chassis_health: f32,
+    /// Mechanical health of engine & cooling block [0.0 = blown, 1.0 = pristine] (Spec 078).
+    #[serde(default = "one_f32")]
+    pub engine_health: f32,
+    /// 4-corner suspension health [FL, FR, RL, RR] [0.0 = destroyed, 1.0 = pristine] (Spec 078).
+    #[serde(default = "default_suspension_health")]
+    pub suspension_health: [f32; 4],
 }
 
 impl Default for CarState {
@@ -320,6 +347,9 @@ impl Default for CarState {
             just_landed: false,
             draft_intensity: 0.0,
             health: 1.0,
+            chassis_health: 1.0,
+            engine_health: 1.0,
+            suspension_health: [1.0, 1.0, 1.0, 1.0],
         }
     }
 }
@@ -373,11 +403,167 @@ impl Car {
         }
     }
 
-    /// Restores chassis health by `amount` up to 1.0. Returns actual health restored.
+    /// Restores chassis health (capped at 0.70 in-race ceiling), engine health (capped at 0.70),
+    /// and 4-corner suspension health (capped at 0.60) (Spec 078). Returns actual chassis health restored.
     pub fn apply_field_repair(&mut self, amount: f32) -> f32 {
-        let old_health = self.state.health;
-        self.state.health = (self.state.health + amount).clamp(0.0, 1.0);
-        self.state.health - old_health
+        let old_health = self.state.chassis_health.min(self.state.health);
+        self.state.chassis_health = old_health.max((old_health + amount).min(0.70));
+        self.state.health = self.state.chassis_health;
+        self.state.engine_health = self.state.engine_health.max((self.state.engine_health + amount).min(0.70));
+        for s in &mut self.state.suspension_health {
+            *s = (*s).max((*s + amount).min(0.60));
+        }
+        self.state.chassis_health - old_health
+    }
+
+    /// Complete post-race garage repair restoring all vehicle components to 100% health (Spec 078).
+    pub fn full_garage_repair(&mut self) {
+        self.state.chassis_health = 1.0;
+        self.state.health = 1.0;
+        self.state.engine_health = 1.0;
+        self.state.suspension_health = [1.0, 1.0, 1.0, 1.0];
+    }
+
+    /// Classifies contact point in world coordinates into a discrete vehicle impact zone (Spec 078).
+    pub fn classify_impact_zone(&self, contact_point_world: Vec2) -> ImpactZone {
+        let delta = contact_point_world - self.state.position;
+        let x_local = delta.dot(self.forward_vector());
+        let y_local = delta.dot(self.right_vector());
+        self.classify_impact_zone_local(x_local, y_local)
+    }
+
+    /// Classifies vehicle local coordinates (x = forward, y = right) into an impact zone (Spec 078).
+    pub fn classify_impact_zone_local(&self, x_local: f32, y_local: f32) -> ImpactZone {
+        let lf = self.config.cg_to_front;
+        let lr = self.config.cg_to_rear;
+        let w_half = self.config.chassis.half_width().max(self.config.track_width * 0.5);
+        let corner_lat_threshold = 0.55 * w_half;
+
+        if y_local.abs() > corner_lat_threshold {
+            // Lateral outer boundary: either corner wheel or flank
+            if x_local >= (lf - 0.40) {
+                if y_local > 0.0 {
+                    ImpactZone::CornerFR
+                } else {
+                    ImpactZone::CornerFL
+                }
+            } else if x_local <= (-lr + 0.40) {
+                if y_local > 0.0 {
+                    ImpactZone::CornerRR
+                } else {
+                    ImpactZone::CornerRL
+                }
+            } else if y_local > 0.0 {
+                ImpactZone::FlankRight
+            } else {
+                ImpactZone::FlankLeft
+            }
+        } else {
+            // Central width: Front nose or rear tail
+            if x_local >= 0.0 {
+                ImpactZone::FrontNose
+            } else {
+                ImpactZone::RearTail
+            }
+        }
+    }
+
+    /// Applies collision impact damage partitioned by impact zone and engine placement (Spec 078).
+    pub fn apply_collision_damage(&mut self, contact_point_world: Vec2, damage_energy: f32) -> ImpactZone {
+        let zone = self.classify_impact_zone(contact_point_world);
+        self.apply_collision_damage_to_zone(zone, damage_energy);
+        zone
+    }
+
+    /// Partitions collision damage energy into chassis, engine, and 4-corner suspension health (Spec 078).
+    pub fn apply_collision_damage_to_zone(&mut self, zone: ImpactZone, damage_energy: f32) {
+        if damage_energy <= 0.0 {
+            return;
+        }
+
+        let placement = self.config.engine_placement;
+        let (w_chassis, w_engine, w_susp) = match (zone, placement) {
+            (ImpactZone::FrontNose, EnginePlacement::FrontEngine) => (0.20, 0.70, [0.05, 0.05, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::MidEngine)   => (0.65, 0.05, [0.15, 0.15, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::RearEngine)  => (0.70, 0.00, [0.15, 0.15, 0.0, 0.0]),
+
+            (ImpactZone::RearTail, EnginePlacement::FrontEngine)  => (0.75, 0.05, [0.0, 0.0, 0.10, 0.10]),
+            (ImpactZone::RearTail, EnginePlacement::MidEngine)    => (0.45, 0.40, [0.0, 0.0, 0.075, 0.075]),
+            (ImpactZone::RearTail, EnginePlacement::RearEngine)   => (0.15, 0.75, [0.0, 0.0, 0.05, 0.05]),
+
+            (ImpactZone::FlankLeft, EnginePlacement::FrontEngine) => (0.60, 0.15, [0.125, 0.0, 0.125, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::MidEngine)   => (0.40, 0.45, [0.075, 0.0, 0.075, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::RearEngine)  => (0.50, 0.30, [0.10, 0.0, 0.10, 0.0]),
+
+            (ImpactZone::FlankRight, EnginePlacement::FrontEngine)=> (0.60, 0.15, [0.0, 0.125, 0.0, 0.125]),
+            (ImpactZone::FlankRight, EnginePlacement::MidEngine)  => (0.40, 0.45, [0.0, 0.075, 0.0, 0.075]),
+            (ImpactZone::FlankRight, EnginePlacement::RearEngine) => (0.50, 0.30, [0.0, 0.10, 0.0, 0.10]),
+
+            (ImpactZone::CornerFL, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.60, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+
+            (ImpactZone::CornerFR, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.0, 0.60, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+
+            (ImpactZone::CornerRL, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.55, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.50, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.50, 0.0]),
+
+            (ImpactZone::CornerRR, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.0, 0.55]),
+            (ImpactZone::CornerRR, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.0, 0.50]),
+            (ImpactZone::CornerRR, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.0, 0.50]),
+        };
+
+        const CHASSIS_CAPACITY: f32 = 10000.0;
+        const ENGINE_CAPACITY: f32 = 6500.0;
+        const SUSP_CAPACITY: f32 = 5000.0;
+
+        let delta_chassis = (damage_energy * w_chassis) / CHASSIS_CAPACITY;
+        let delta_engine = (damage_energy * w_engine) / ENGINE_CAPACITY;
+
+        self.state.chassis_health = (self.state.chassis_health - delta_chassis).clamp(0.0, 1.0);
+        self.state.health = self.state.chassis_health;
+        self.state.engine_health = (self.state.engine_health - delta_engine).clamp(0.0, 1.0);
+
+        for (i, &w_s) in w_susp.iter().enumerate() {
+            if w_s > 0.0 {
+                let corner_cfg = if i < 2 {
+                    self.config.suspension.front
+                } else {
+                    self.config.suspension.rear
+                };
+                let k_rob = corner_cfg.archetype.robustness_factor();
+                let delta_susp = (damage_energy * w_s) / (SUSP_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_susp).clamp(0.0, 1.0);
+            }
+        }
+    }
+
+    /// Steering pull bias from asymmetric front suspension damage in driver control units (Spec 078).
+    /// Returns negative value when front-left is damaged (pulling left), positive when front-right is damaged.
+    pub fn steering_pull_bias(&self) -> f32 {
+        (self.state.suspension_health[0] - self.state.suspension_health[1]) * 0.087
+    }
+
+    /// Engine power attenuation ratio as a function of engine health (Spec 078 Section 5.D).
+    pub fn available_engine_power_ratio(&self) -> f32 {
+        0.40 + 0.60 * self.state.engine_health.clamp(0.0, 1.0).powf(1.5)
+    }
+
+    /// Effective aerodynamic drag coefficient including draft reduction and pushrod failure drag penalty (Spec 078).
+    pub fn effective_air_drag_coefficient(&self) -> f32 {
+        let has_collapsed_pushrod = self.state.suspension_health.iter().enumerate().any(|(i, &h)| {
+            let arch = if i < 2 {
+                self.config.suspension.front.archetype
+            } else {
+                self.config.suspension.rear.archetype
+            };
+            arch == SuspensionArchetype::PushrodInboard && h < 0.30
+        });
+        let drag_mult = if has_collapsed_pushrod { 1.40 } else { 1.0 };
+        self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50)) * drag_mult
     }
 
     pub fn set_digital_steering_source(&mut self, digital: bool) {
@@ -913,6 +1099,11 @@ fn couple_axle(
             }
         }
 
+        // Steering pull bias from asymmetric front suspension damage (Spec 078 Section 5.A)
+        let pull_bias_ctrl = self.steering_pull_bias();
+        let phys_bias = -pull_bias_ctrl;
+        let effective_target_steer = target_steer + phys_bias;
+
         let steer_rate = if clamped_ctrl.steer.abs() < 1e-3 {
             self.config.steer_return_speed
         } else if is_counter_steering {
@@ -921,7 +1112,7 @@ fn couple_axle(
             self.config.steer_speed
         };
 
-        let steer_delta = target_steer - self.state.steer_angle;
+        let steer_delta = effective_target_steer - self.state.steer_angle;
         let max_steer_change = steer_rate * dt;
         self.state.steer_angle += steer_delta.clamp(-max_steer_change, max_steer_change);
 
@@ -1175,12 +1366,17 @@ fn couple_axle(
             } else {
                 static_rear_load * 0.5 / g
             };
+            let h_susp = self.state.suspension_health[i];
             let z_landing = if touchdown_vz > 0.0 {
                 let omega_n = (corner.spring_rate / corner_mass.max(1.0)).sqrt();
-                let zeta = corner.bump_damping_ratio;
-                let sqrt_term = (1.0 - zeta * zeta).max(1e-4).sqrt();
-                let peak_ratio = (-(zeta * sqrt_term.atan2(zeta)) / sqrt_term).exp();
-                (touchdown_vz / omega_n) * peak_ratio
+                let zeta = corner.bump_damping_ratio * h_susp;
+                if h_susp <= 0.05 {
+                    corner.max_bump_travel
+                } else {
+                    let sqrt_term = (1.0 - zeta * zeta).max(1e-4).sqrt();
+                    let peak_ratio = (-(zeta * sqrt_term.atan2(zeta)) / sqrt_term).exp();
+                    (touchdown_vz / omega_n) * peak_ratio
+                }
             } else {
                 0.0
             };
@@ -1191,7 +1387,10 @@ fn couple_axle(
                 z_track - z_chassis + z_landing
             };
 
-            let s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
+            let mut s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
+            if corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30 {
+                s = corner.max_bump_travel;
+            }
             strokes[i] = s;
 
             let prev_s = self.state.suspension[i].deflection;
@@ -1202,47 +1401,84 @@ fn couple_axle(
             };
             stroke_vels[i] = s_dot;
 
-            // Damping force
+            // Damping force degraded by suspension health (Spec 078 Section 4.B)
             let c_damping = if s_dot >= 0.0 {
-                2.0 * corner.bump_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.bump_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
             } else {
-                2.0 * corner.rebound_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.rebound_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
             };
             damper_forces[i] = c_damping * s_dot;
 
             // Bump-stop bottoming
             let delta_stop = (delta_z - corner.max_bump_travel).max(0.0);
-            let bottomed = delta_stop > 0.002;
+            let bottomed = delta_stop > 0.002
+                || (s >= corner.max_bump_travel - 1e-4 && (s_dot > 0.5 || (corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30)));
             bottomed_outs[i] = bottomed;
-            bumpstop_forces[i] = if delta_stop > 0.0 {
-                4.0 * corner.spring_rate * delta_stop + 2.0 * c_damping * s_dot.max(0.0)
+            bumpstop_forces[i] = if delta_stop > 0.0 || (bottomed && corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30) {
+                4.0 * corner.spring_rate * delta_stop.max(0.004) + 2.0 * c_damping * s_dot.max(0.0)
             } else {
                 0.0
             };
 
+            // Kerb bottom-out damage accumulation (Spec 078 Section 4.A)
+            const V_BOTTOM_CRIT: f32 = 1.8;
+            const E_BUMPSTOP_CAPACITY: f32 = 600.0;
+            if (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
+                let v_excess = s_dot - V_BOTTOM_CRIT;
+                let k_rob = corner.archetype.robustness_factor();
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_BUMPSTOP_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
+            }
+
+            // Violent jump touchdown damage accumulation (Spec 078 Section 4.A)
+            const V_LANDING_LIMIT: f32 = 3.5;
+            const E_LANDING_CAPACITY: f32 = 1500.0;
+            if touchdown_vz > V_LANDING_LIMIT {
+                let v_excess = touchdown_vz - V_LANDING_LIMIT;
+                let k_rob = corner.archetype.robustness_factor();
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_LANDING_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
+            }
+
             // Dynamic camber calculation: outside tire in turn (FR in left turn, FL in right turn)
             // degrades towards positive camber (rolling onto outer shoulder)
             let roll_sign = if wheel_id.is_left() { 1.0 } else { -1.0 };
+            let damage_camber = roll_sign * (1.0 - self.state.suspension_health[i]) * 0.10;
             let camber = if corner.archetype == SuspensionArchetype::SolidLiveAxle && !wheel_id.is_front() {
                 // Live axle coupled camber will be updated after axle stroke calculation
-                corner.static_camber
+                corner.static_camber + damage_camber
             } else {
-                corner.static_camber + roll_sign * phi * (1.0 - corner.camber_recovery)
+                corner.static_camber + roll_sign * phi * (1.0 - corner.camber_recovery) + damage_camber
             };
             dynamic_cambers[i] = camber;
 
             // Camber grip degradation: quadratic drop-off + shoulder scrub when rolling positive
-            let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0);
-            mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.80, 1.05);
+            let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0)
+                + (1.0 - self.state.suspension_health[i]) * 0.10;
+            mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.65, 1.05);
         }
 
         // Coupled rear solid axle camber update
         if susp.rear.archetype == SuspensionArchetype::SolidLiveAxle {
             let beam_tilt = (strokes[3] - strokes[2]) / track_w.max(0.1);
-            dynamic_cambers[2] = susp.rear.static_camber + beam_tilt;
-            dynamic_cambers[3] = susp.rear.static_camber - beam_tilt;
-            mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2]).clamp(0.80, 1.05);
-            mu_cambers[3] = (1.0 - 1.8 * dynamic_cambers[3] * dynamic_cambers[3]).clamp(0.80, 1.05);
+            let dmg_2 = (1.0 - self.state.suspension_health[2]) * 0.10;
+            let dmg_3 = -(1.0 - self.state.suspension_health[3]) * 0.10;
+            dynamic_cambers[2] = susp.rear.static_camber + beam_tilt + dmg_2;
+            dynamic_cambers[3] = susp.rear.static_camber - beam_tilt + dmg_3;
+            mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2] - dmg_2.abs()).clamp(0.65, 1.05);
+            mu_cambers[3] = (1.0 - 1.8 * dynamic_cambers[3] * dynamic_cambers[3] - dmg_3.abs()).clamp(0.65, 1.05);
+        }
+
+        // Touchdown asymmetric roll snap (Spec 078 Section 5.C)
+        if touchdown_vz > 0.0 {
+            let fz_left = bumpstop_forces[0] + bumpstop_forces[2] + damper_forces[0] + damper_forces[2];
+            let fz_right = bumpstop_forces[1] + bumpstop_forces[3] + damper_forces[1] + damper_forces[3];
+            let tau_roll_snap = (fz_left - fz_right) * half_w;
+            if (fz_left - fz_right).abs() > 400.0 {
+                let roll_snap = (tau_roll_snap / k_phi_total).clamp(-0.40, 0.40);
+                self.state.roll_angle += roll_snap;
+                self.state.angular_velocity += (roll_snap / half_w) * 0.5;
+            }
         }
 
         // Anti-roll bar forces (represented in roll stiffness k_phi)
@@ -1300,7 +1536,7 @@ fn couple_axle(
         // Average driven-wheel speed (representing driveshaft / differential carrier speed)
         // governs top-speed power taper alongside chassis speed, preventing a single unloaded
         // spinning inside wheel from choking engine power during cornering.
-        let top_speed = self.config.top_speed_mps;
+        let top_speed = self.config.top_speed_mps * (0.60 + 0.40 * self.state.engine_health.clamp(0.0, 1.0));
         let mut driven_count = 0.0f32;
         let mut driven_speed_sum = 0.0f32;
         for w in self.state.wheel_assemblies.iter() {
@@ -1395,11 +1631,13 @@ fn couple_axle(
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
+            let engine_power_mult = self.available_engine_power_ratio();
             clamped_ctrl.throttle
                 * throttle_scale
                 * self.config.max_engine_force
                 * engine_taper
                 * drive_torque_multiplier
+                * engine_power_mult
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
             // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
@@ -1900,8 +2138,7 @@ fn couple_axle(
             .map(|s| s.friction_coefficient())
             .sum::<f32>()
             / 4.0;
-        let effective_drag_coeff =
-            self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50));
+        let effective_drag_coeff = self.effective_air_drag_coefficient();
         let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat =
             -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
@@ -2146,7 +2383,10 @@ fn couple_axle(
 
         // Realistic vertical launch velocity from incline angle and suspension compliance:
         // Long-travel chassis suspension absorbs ~25% of vertical impulse upon climbing the curve.
-        let suspension_efficiency = 0.75f32;
+        // Degradation reduces absorption: eta = 0.25 * min(H_susp) (Spec 078 Section 5.C)
+        let min_susp = self.state.suspension_health.iter().copied().fold(1.0f32, f32::min);
+        let absorption = 0.25 * min_susp;
+        let suspension_efficiency = 1.0 - absorption;
         let v_z = speed_along_dir * sin_theta * suspension_efficiency;
 
         // Partition forward momentum along ramp incline (conserving kinetic energy):
@@ -2935,4 +3175,55 @@ mod tests {
             max_sideslip
         );
     }
+
+    #[test]
+    fn test_directional_impact_classification_and_damage_partitioning() {
+        let mut car_front = Car::new(CarConfig::sports_car()); // FrontEngine
+        assert_eq!(car_front.config.engine_placement, EnginePlacement::FrontEngine);
+
+        // Test zone classification in local coordinates
+        assert_eq!(car_front.classify_impact_zone_local(1.5, 0.0), ImpactZone::FrontNose);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, 0.0), ImpactZone::RearTail);
+        assert_eq!(car_front.classify_impact_zone_local(1.5, -0.9), ImpactZone::CornerFL);
+        assert_eq!(car_front.classify_impact_zone_local(1.5, 0.9), ImpactZone::CornerFR);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, -0.9), ImpactZone::CornerRL);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, 0.9), ImpactZone::CornerRR);
+        assert_eq!(car_front.classify_impact_zone_local(0.0, -0.9), ImpactZone::FlankLeft);
+        assert_eq!(car_front.classify_impact_zone_local(0.0, 0.9), ImpactZone::FlankRight);
+
+        // Test FrontEngine takes heavy engine damage on FrontNose impact
+        car_front.apply_collision_damage_to_zone(ImpactZone::FrontNose, 2000.0);
+        assert!(car_front.state.engine_health < 0.80, "FrontEngine should suffer significant engine damage on head-on collision");
+        assert!(car_front.state.chassis_health < 1.0);
+
+        // Test RearEngine takes 0 engine damage on FrontNose impact
+        let mut car_rear = Car::new(CarConfig::sand_rail()); // RearEngine
+        assert_eq!(car_rear.config.engine_placement, EnginePlacement::RearEngine);
+        car_rear.apply_collision_damage_to_zone(ImpactZone::FrontNose, 2000.0);
+        assert_eq!(car_rear.state.engine_health, 1.0, "RearEngine must suffer 0% engine damage on head-on nose collision");
+        assert!(car_rear.state.chassis_health < 1.0, "RearEngine chassis absorbs front impact");
+
+        // Test CornerFL impact damages FL suspension heavily
+        let mut car_corner = Car::new(CarConfig::sports_car());
+        car_corner.apply_collision_damage_to_zone(ImpactZone::CornerFL, 2000.0);
+        assert!(car_corner.state.suspension_health[0] < car_corner.state.suspension_health[1], "FL suspension should take the brunt of CornerFL impact");
+        assert_eq!(car_corner.state.suspension_health[2], 1.0);
+        assert_eq!(car_corner.state.suspension_health[3], 1.0);
+
+        // Test field repair ceilings (0.70 chassis/engine, 0.60 suspension)
+        car_front.state.chassis_health = 0.10;
+        car_front.state.engine_health = 0.10;
+        car_front.state.suspension_health = [0.10, 0.10, 0.10, 0.10];
+        car_front.apply_field_repair(1.0);
+        assert!((car_front.state.chassis_health - 0.70).abs() < 1e-4);
+        assert!((car_front.state.engine_health - 0.70).abs() < 1e-4);
+        assert!((car_front.state.suspension_health[0] - 0.60).abs() < 1e-4);
+
+        // Test full garage repair restores 100%
+        car_front.full_garage_repair();
+        assert_eq!(car_front.state.chassis_health, 1.0);
+        assert_eq!(car_front.state.engine_health, 1.0);
+        assert_eq!(car_front.state.suspension_health, [1.0, 1.0, 1.0, 1.0]);
+    }
 }
+

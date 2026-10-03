@@ -7,7 +7,7 @@ status: implemented
 receipt: "docs/receipts/spec-061-receipt.md"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:01:11Z }
-verified: { by: human:mario, at: 2026-09-29T16:03:40Z }
+verified: { by: human:mario, at: 2026-09-29T16:03:40Z, hash: "97b1119af6cd" }
 ---
 
 # Feature Spec 061: Proximity Engine Audio and Doppler Shift Simulation 🏎️🔊
