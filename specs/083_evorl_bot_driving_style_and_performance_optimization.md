@@ -14,7 +14,7 @@ depends_on:
 
 # Architecture Spec 083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization 🧬🏁
 
-A comprehensive architectural blueprint establishing an automated evolutionary and reinforcement learning optimization pipeline for **TDRace** bot characters, driving styles, and performance tiers using our sibling **[EvoRL](../../../evorl/README.md)** framework.
+A comprehensive architectural blueprint establishing an automated evolutionary and reinforcement learning optimization pipeline for **TDRace** bot characters, driving styles, and performance tiers using our sibling **EvoRL** framework.
 
 ---
 
@@ -35,7 +35,7 @@ Despite the solid architectural design, the current implementation exhibits sign
 4. **Lack of Automated Regression Verification**: Whenever vehicle dynamics ([Spec 043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)), tire compound affinities ([Spec 074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md)), or track splines ([Spec 071](071_centripetal_catmullrom_and_variable_density_track_splines.md)) are modified, bot tuning must be manually re-inspected, creating architectural friction.
 
 ### 3. The EvoRL Solution
-The sibling repository **[EvoRL](../../../evorl/README.md)** is an Evolutionary Reinforcement Learning and strategy optimization framework built around immutable genomes, SQLite match ledgers, pair-atomic Common Random Numbers (CRN), CMA-ES search, and Behavior Tree AST evolution.
+The sibling repository **EvoRL** is an Evolutionary Reinforcement Learning and strategy optimization framework built around immutable genomes, SQLite match ledgers, pair-atomic Common Random Numbers (CRN), CMA-ES search, and Behavior Tree AST evolution.
 
 By establishing a high-speed bridge between TDRace's deterministic headless simulation and EvoRL's optimization campaigns, we replace manual guesswork with **continuous mathematical calibration, multi-objective style shaping, and verifiable quality gates**.
 
