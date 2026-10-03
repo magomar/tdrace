@@ -14681,6 +14681,7 @@ impl RaceSession {
         let (mx, my) = mouse_position_safe();
         let mouse_pos = Vec2::new(mx, my);
         let world_mouse = self.editor_camera.screen_to_world(mouse_pos, sw, sh);
+        self.editor_tools.drag_current_world = world_mouse;
 
         // Check if cursor is over floating UI palettes or modal
         let over_ui = is_mouse_over_editor_ui(
@@ -14763,14 +14764,15 @@ impl RaceSession {
 
         if is_key_pressed(KeyCode::Key1) { self.editor_tools.active_tool = EditorToolType::Select; }
         if is_key_pressed(KeyCode::Key2) { self.editor_tools.active_tool = EditorToolType::RoadSpline; }
-        if is_key_pressed(KeyCode::Key3) { self.editor_tools.active_tool = EditorToolType::SurfaceZone; }
-        if is_key_pressed(KeyCode::Key4) { self.editor_tools.active_tool = EditorToolType::JumpRamp; }
-        if is_key_pressed(KeyCode::Key5) { self.editor_tools.active_tool = EditorToolType::Obstacle; }
-        if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
-        if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::PitLane; }
-        if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::ArenaFloor; }
-        if is_key_pressed(KeyCode::Key9) { self.editor_tools.active_tool = EditorToolType::WhoopSection; }
-        if is_key_pressed(KeyCode::Key0) { self.editor_tools.active_tool = EditorToolType::StuntRamp; }
+        if is_key_pressed(KeyCode::Key3) { self.editor_tools.active_tool = EditorToolType::RoadSplit; }
+        if is_key_pressed(KeyCode::Key4) { self.editor_tools.active_tool = EditorToolType::SurfaceZone; }
+        if is_key_pressed(KeyCode::Key5) { self.editor_tools.active_tool = EditorToolType::JumpRamp; }
+        if is_key_pressed(KeyCode::Key6) { self.editor_tools.active_tool = EditorToolType::Obstacle; }
+        if is_key_pressed(KeyCode::Key7) { self.editor_tools.active_tool = EditorToolType::Checkpoint; }
+        if is_key_pressed(KeyCode::Key8) { self.editor_tools.active_tool = EditorToolType::PitLane; }
+        if is_key_pressed(KeyCode::Key9) { self.editor_tools.active_tool = EditorToolType::ArenaFloor; }
+        if is_key_pressed(KeyCode::Key0) { self.editor_tools.active_tool = EditorToolType::WhoopSection; }
+        if is_key_pressed(KeyCode::Minus) { self.editor_tools.active_tool = EditorToolType::StuntRamp; }
 
         if (is_key_down(KeyCode::LeftControl)
             || is_key_down(KeyCode::RightControl)
@@ -14878,6 +14880,11 @@ impl RaceSession {
         }
 
         if is_key_pressed(KeyCode::Escape) {
+            if self.editor_tools.active_branch_socket.is_some() {
+                self.editor_tools.active_branch_socket = None;
+                self.editor_tools.escape_consumed = true;
+                self.audio.play_sfx(SfxType::UiMove);
+            }
             if !self.editor_tools.active_polygon_vertices.is_empty() {
                 self.editor_tools.active_polygon_vertices.clear();
                 self.editor_tools.escape_consumed = true;
