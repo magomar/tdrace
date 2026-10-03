@@ -11,11 +11,11 @@ use super::scaler::UiScaler;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::marker::PlayerVisibilityOptions;
 use cabinet::ui::{
-    CountDown, HelpChip, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
+    CountDown, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
 };
 use race_ui::hud::widgets::{
-    render_cockpit_tire_monitor, render_compound_badge, render_lap_timer, render_minimap,
-    render_position_and_lap,
+    render_cockpit_chassis_telemetry, render_compound_badge, render_lap_timer, render_minimap,
+    render_position_and_lap, CockpitTelemetryMode,
 };
 
 pub use race_ui::hud::widgets::format_lap_time;
@@ -64,6 +64,7 @@ pub fn render_hud(
     _visibility_options: &PlayerVisibilityOptions,
     session_time: f32,
     player_pit_state: Option<&race_kit::PitServiceState>,
+    telemetry_mode: CockpitTelemetryMode,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -151,15 +152,12 @@ pub fn render_hud(
     let speedo_cy = sh - scaler.s(110.0) - scaler.safe_pad_y;
     render_speedometer(fonts, &scaler, speedo_cx, speedo_cy, player_car, gamepad_connected);
 
-    // 4b. Cockpit Tire Monitor (Spec 074)
+    // 4b. Cockpit Chassis Telemetry HUD (Spec 079)
     let monitor_x = scaler.safe_pad_x;
-    let monitor_y = sh - scaler.s(145.0) - scaler.safe_pad_y * 0.5;
-    render_cockpit_tire_monitor(fonts, &scaler, monitor_x, monitor_y, player_car);
+    let monitor_y = sh - scaler.s(220.0) - scaler.safe_pad_y * 0.5;
+    render_cockpit_chassis_telemetry(fonts, &scaler, monitor_x, monitor_y, player_car, telemetry_mode);
 
-    // 5. Controls tooltip (Bottom Left)
-    render_controls_guide(fonts, &scaler, scaler.safe_pad_x, sh - scaler.s(22.0) - scaler.safe_pad_y * 0.5);
-
-    // 6. Warnings & Alerts (Wrong Way, Off Track)
+    // 5. Warnings & Alerts (Wrong Way, Off Track)
     render_warning_alerts(fonts, &scaler, sw, sh, player_progress);
 
     // 7. Interactive Pit Service Overlay (Countdown Ring & GO! Prompt) (Spec 062)
@@ -338,12 +336,6 @@ fn render_speedometer(
         );
         drift_bar.draw(scaler, fonts, LayoutRect::new(bar_x, bar_y, bar_w, bar_h));
     }
-}
-
-/// Small keyboard and gamepad controls tooltip in lower left corner.
-fn render_controls_guide(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32) {
-    let guide = "Q/Up: Gas | A/Down: Brake | O/P: Steer | Space: Handbrake | 1-4: Car Aids | Tab: Cam | Esc: Pause";
-    HelpChip::new("KEYS", guide).draw(scaler, fonts, x, y);
 }
 
 /// High-visibility caution banner for Wrong Way alert.

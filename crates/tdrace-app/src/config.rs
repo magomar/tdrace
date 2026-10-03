@@ -145,6 +145,8 @@ pub struct GameplayConfig {
     pub default_num_bots: usize,
     /// Default driver assist profile: "arcade", "sport", "pro".
     pub default_assist_profile: String,
+    /// Default cockpit telemetry HUD mode: "kinematic_damage", "dynamic_telemetry" (Spec 079).
+    pub default_cockpit_telemetry_mode: String,
     /// When true, unlocks all circuits and vehicles for testing.
     pub dev_mode: bool,
 }
@@ -157,6 +159,7 @@ impl Default for GameplayConfig {
             default_laps: 3,
             default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
+            default_cockpit_telemetry_mode: "kinematic_damage".to_string(),
             dev_mode: crate::storage::is_dev_mode(),
         }
     }
