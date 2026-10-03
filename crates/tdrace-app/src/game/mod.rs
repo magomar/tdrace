@@ -733,6 +733,7 @@ pub struct RaceSession {
     pub pending_replay_series: Option<(String, String)>,
     pub settings_modal: Option<ArcadeSettingsModal>,
     pub circuit_viewer_state: Option<CircuitViewerState>,
+    pub cockpit_telemetry_mode: race_ui::hud::widgets::CockpitTelemetryMode,
 
     // Track Editor & Test Drive state
     pub editor_state: Option<EditorState>,
@@ -826,6 +827,10 @@ impl RaceSession {
         };
         let assist_profile = AssistProfile::Arcade;
         let assist_profile_p2 = AssistProfile::Arcade;
+        let cockpit_telemetry_mode = match config.gameplay.default_cockpit_telemetry_mode.as_str() {
+            "dynamic_telemetry" => race_ui::hud::widgets::CockpitTelemetryMode::DynamicTelemetry,
+            _ => race_ui::hud::widgets::CockpitTelemetryMode::KinematicDamage,
+        };
 
         let track_manager = TrackManager::default();
         let track = track_manager.load_track(&track_choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
@@ -991,6 +996,7 @@ impl RaceSession {
             pending_replay_series: None,
             settings_modal: None,
             circuit_viewer_state: None,
+            cockpit_telemetry_mode,
             editor_state: None,
             editor_camera,
             editor_tools: ToolSettings::default(),
@@ -5285,125 +5291,164 @@ impl RaceSession {
         if is_gameplay_state {
             let my_pos = self.world.vehicles.get(self.player_car_index()).map(|c| c.state.position);
 
-            // [1] Toggle Overhead Chevron Indicator
-            if is_key_pressed(KeyCode::Key1) {
-                self.visibility_options.overhead_chevron = !self.visibility_options.overhead_chevron;
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.overhead_chevron { "ON" } else { "OFF" };
-                let col = if self.visibility_options.overhead_chevron { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[1] CHEVRON: {}", state_str), col);
-                }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[1] OVERHEAD CHEVRON: {}", state_str),
-                    is_on: self.visibility_options.overhead_chevron,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
-            }
+            let ctrl_down = is_key_down(KeyCode::LeftControl)
+                || is_key_down(KeyCode::RightControl)
+                || is_key_down(KeyCode::LeftSuper)
+                || is_key_down(KeyCode::RightSuper);
 
-            // [2] Toggle Player Ground Aura / Underglow Disc
-            if is_key_pressed(KeyCode::Key2) {
-                self.visibility_options.ground_aura = !self.visibility_options.ground_aura;
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.ground_aura { "ON" } else { "OFF" };
-                let col = if self.visibility_options.ground_aura { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[2] GROUND AURA: {}", state_str), col);
+            if ctrl_down {
+                // [Ctrl + 1] Switch Cockpit HUD to Variant B (Kinematic Linkages & Damage) (Spec 079)
+                if is_key_pressed(KeyCode::Key1) {
+                    self.cockpit_telemetry_mode = race_ui::hud::widgets::CockpitTelemetryMode::KinematicDamage;
+                    self.config.gameplay.default_cockpit_telemetry_mode = "kinematic_damage".to_string();
+                    let _ = self.config.save_to_first_existing_or_default();
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, "TELEMETRY: KINEMATICS", Palette::NEON_CYAN);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: "TELEMETRY: KINEMATICS (Ctrl+1)".to_string(),
+                        is_on: true,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
+                } else if is_key_pressed(KeyCode::Key2) {
+                    // [Ctrl + 2] Switch Cockpit HUD to Variant C (Dynamic Telemetry & Damper Travel) (Spec 079)
+                    self.cockpit_telemetry_mode = race_ui::hud::widgets::CockpitTelemetryMode::DynamicTelemetry;
+                    self.config.gameplay.default_cockpit_telemetry_mode = "dynamic_telemetry".to_string();
+                    let _ = self.config.save_to_first_existing_or_default();
+                    self.audio.play_sfx(SfxType::UiMove);
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, "TELEMETRY: DYNAMICS", Palette::NEON_GOLD);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: "TELEMETRY: DYNAMICS (Ctrl+2)".to_string(),
+                        is_on: true,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
                 }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[2] GROUND AURA: {}", state_str),
-                    is_on: self.visibility_options.ground_aura,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
-            }
+            } else {
+                // [1] Toggle Overhead Chevron Indicator
+                if is_key_pressed(KeyCode::Key1) {
+                    self.visibility_options.overhead_chevron = !self.visibility_options.overhead_chevron;
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let state_str = if self.visibility_options.overhead_chevron { "ON" } else { "OFF" };
+                    let col = if self.visibility_options.overhead_chevron { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[1] CHEVRON: {}", state_str), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[1] OVERHEAD CHEVRON: {}", state_str),
+                        is_on: self.visibility_options.overhead_chevron,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
+                }
 
-            // [3] Toggle Context-Aware Adaptive Visibility
-            if is_key_pressed(KeyCode::Key3) {
-                self.visibility_options.adaptive_visibility = !self.visibility_options.adaptive_visibility;
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.adaptive_visibility { "ON" } else { "OFF" };
-                let col = if self.visibility_options.adaptive_visibility { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[3] ADAPTIVE: {}", state_str), col);
+                // [2] Toggle Player Ground Aura / Underglow Disc
+                if is_key_pressed(KeyCode::Key2) {
+                    self.visibility_options.ground_aura = !self.visibility_options.ground_aura;
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let state_str = if self.visibility_options.ground_aura { "ON" } else { "OFF" };
+                    let col = if self.visibility_options.ground_aura { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[2] GROUND AURA: {}", state_str), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[2] GROUND AURA: {}", state_str),
+                        is_on: self.visibility_options.ground_aura,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
                 }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[3] ADAPTIVE SCALING: {}", state_str),
-                    is_on: self.visibility_options.adaptive_visibility,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
-            }
 
-            // [4] Toggle Sonar Ping Shockwave Ripple
-            if is_key_pressed(KeyCode::Key4) {
-                self.visibility_options.sonar_ping = !self.visibility_options.sonar_ping;
-                if self.visibility_options.sonar_ping {
-                    self.trigger_sonar_ping();
+                // [3] Toggle Context-Aware Adaptive Visibility
+                if is_key_pressed(KeyCode::Key3) {
+                    self.visibility_options.adaptive_visibility = !self.visibility_options.adaptive_visibility;
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let state_str = if self.visibility_options.adaptive_visibility { "ON" } else { "OFF" };
+                    let col = if self.visibility_options.adaptive_visibility { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[3] ADAPTIVE: {}", state_str), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[3] ADAPTIVE SCALING: {}", state_str),
+                        is_on: self.visibility_options.adaptive_visibility,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
                 }
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.sonar_ping { "ON" } else { "OFF" };
-                let col = if self.visibility_options.sonar_ping { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[4] SONAR PING: {}", state_str), col);
-                }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[4] SONAR PING: {}", state_str),
-                    is_on: self.visibility_options.sonar_ping,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
-            }
 
-            // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
-            if is_key_pressed(KeyCode::Key5) {
-                self.visibility_options.cycle_curve_indicator();
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = self.visibility_options.curve_indicator_label();
-                let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
+                // [4] Toggle Sonar Ping Shockwave Ripple
+                if is_key_pressed(KeyCode::Key4) {
+                    self.visibility_options.sonar_ping = !self.visibility_options.sonar_ping;
+                    if self.visibility_options.sonar_ping {
+                        self.trigger_sonar_ping();
+                    }
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let state_str = if self.visibility_options.sonar_ping { "ON" } else { "OFF" };
+                    let col = if self.visibility_options.sonar_ping { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[4] SONAR PING: {}", state_str), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[4] SONAR PING: {}", state_str),
+                        is_on: self.visibility_options.sonar_ping,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
                 }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[5] CORNER ASSIST: {}", state_str),
-                    is_on: self.visibility_options.curve_helper,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
-            }
 
-            // [6] Cycle Curve Helper Color Scheme (Traffic -> Synthwave -> Contrast -> Rally)
-            if is_key_pressed(KeyCode::Key6) {
-                self.visibility_options.curve_color_scheme = self.visibility_options.curve_color_scheme.next();
-                self.audio.play_sfx(SfxType::UiMove);
-                let scheme_str = self.visibility_options.curve_color_scheme.as_str();
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[6] COLOR: {}", scheme_str), Palette::NEON_GOLD);
+                // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
+                if is_key_pressed(KeyCode::Key5) {
+                    self.visibility_options.cycle_curve_indicator();
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let state_str = self.visibility_options.curve_indicator_label();
+                    let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[5] CORNER ASSIST: {}", state_str),
+                        is_on: self.visibility_options.curve_helper,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
                 }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[6] COLOR: {}", scheme_str),
-                    is_on: true,
-                    timer: 2.2,
-                    duration: 2.2,
-                });
-            }
 
-            // [7] Toggle / Cycle CRT Scanlines Post-Processing Overlay
-            if is_key_pressed(KeyCode::Key7) || is_key_pressed(KeyCode::F7) {
-                let mode = self.cycle_scanline_mode();
-                self.audio.play_sfx(SfxType::UiMove);
-                let is_on = mode != ScanlineMode::Disabled;
-                let col = if is_on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[7] CRT: {}", mode.label()), col);
+                // [6] Cycle Curve Helper Color Scheme (Traffic -> Synthwave -> Contrast -> Rally)
+                if is_key_pressed(KeyCode::Key6) {
+                    self.visibility_options.curve_color_scheme = self.visibility_options.curve_color_scheme.next();
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let scheme_str = self.visibility_options.curve_color_scheme.as_str();
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[6] COLOR: {}", scheme_str), Palette::NEON_GOLD);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[6] COLOR: {}", scheme_str),
+                        is_on: true,
+                        timer: 2.2,
+                        duration: 2.2,
+                    });
                 }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[7] CRT SCANLINES: {}", mode.label().to_uppercase()),
-                    is_on,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
+
+                // [7] Toggle / Cycle CRT Scanlines Post-Processing Overlay
+                if is_key_pressed(KeyCode::Key7) || is_key_pressed(KeyCode::F7) {
+                    let mode = self.cycle_scanline_mode();
+                    self.audio.play_sfx(SfxType::UiMove);
+                    let is_on = mode != ScanlineMode::Disabled;
+                    let col = if is_on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    if let Some(pos) = my_pos {
+                        self.fx.drift_popups.spawn_text(pos, &format!("[7] CRT: {}", mode.label()), col);
+                    }
+                    self.visibility_toast = Some(VisibilityToast {
+                        text: format!("[7] CRT SCANLINES: {}", mode.label().to_uppercase()),
+                        is_on,
+                        timer: 1.8,
+                        duration: 1.8,
+                    });
+                }
             }
 
             // [ALT] Toggle In-Race Floating Bot Nameplates (Spec 029)
@@ -15687,6 +15732,7 @@ impl RaceSession {
                     &self.visibility_options,
                     self.session_time,
                     self.world.pit_states.get(my_idx),
+                    self.cockpit_telemetry_mode,
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {

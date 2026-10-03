@@ -321,7 +321,12 @@ pub fn render_timing_tower_row(
     fonts.draw_ui_regular(time_text, x + scaler.s(125.0), y + scaler.s(16.0), scaler.font_s(11.5), time_col);
 }
 
-/// Draws cockpit 4-wheel tire monitor displaying compound badge, temperature, and wear.
+pub use super::chassis_telemetry::{
+    compute_ackermann_steer_angles, render_cockpit_chassis_telemetry, ChassisHudGeometry,
+    CockpitTelemetryMode,
+};
+
+/// Backward-compatible entrypoint: draws cockpit telemetry HUD defaulting to Kinematic Damage mode (Spec 079).
 pub fn render_cockpit_tire_monitor(
     fonts: &Fonts,
     scaler: &UiScaler,
@@ -329,58 +334,5 @@ pub fn render_cockpit_tire_monitor(
     y: f32,
     car: &wheelbase::car::Car,
 ) {
-    let box_w = scaler.s(120.0);
-    let box_h = scaler.s(110.0);
-
-    scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.5);
-
-    // Header with compound badge
-    let front_compound = car.state.wheel_assemblies[0].config.compound.id;
-    render_compound_badge(fonts, scaler, x + scaler.s(8.0), y + scaler.s(6.0), front_compound);
-    fonts.draw_ui_bold("TIRES", x + scaler.s(45.0), y + scaler.s(18.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-
-    // 4 Tire corner indicators: FL, FR, RL, RR
-    let tire_offsets = [
-        (scaler.s(20.0), scaler.s(32.0)), // FL
-        (scaler.s(76.0), scaler.s(32.0)), // FR
-        (scaler.s(20.0), scaler.s(68.0)), // RL
-        (scaler.s(76.0), scaler.s(68.0)), // RR
-    ];
-
-    let t_w = scaler.s(24.0);
-    let t_h = scaler.s(30.0);
-
-    for (i, &(tx, ty)) in tire_offsets.iter().enumerate() {
-        let wheel = &car.state.wheel_assemblies[i];
-        let temp = wheel.temperature;
-        let wear = wheel.wear;
-
-        // Color based on temperature:
-        // Blue < 65°C (cold), Green 65-105°C (optimal), Red > 105°C (overheated)
-        let temp_col = if temp < 65.0 {
-            Palette::NEON_CYAN
-        } else if temp <= 105.0 {
-            Palette::NEON_GREEN
-        } else {
-            Palette::RED
-        };
-
-        let px = x + tx;
-        let py = y + ty;
-
-        // Tire shape
-        draw_rectangle(px, py, t_w, t_h, Color::new(0.12, 0.14, 0.18, 0.90));
-        draw_rectangle_lines(px, py, t_w, t_h, scaler.s(1.2), temp_col);
-
-        // Tread life remaining fill [0.0 = worn, 1.0 = fresh]
-        let tread_ratio = (1.0 - wear).clamp(0.0, 1.0);
-        let fill_h = (t_h - scaler.s(4.0)) * tread_ratio;
-        draw_rectangle(
-            px + scaler.s(2.0),
-            py + t_h - scaler.s(2.0) - fill_h,
-            t_w - scaler.s(4.0),
-            fill_h,
-            temp_col,
-        );
-    }
+    render_cockpit_chassis_telemetry(fonts, scaler, x, y, car, CockpitTelemetryMode::KinematicDamage);
 }
