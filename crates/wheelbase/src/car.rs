@@ -541,6 +541,31 @@ impl Car {
         }
     }
 
+    /// Steering pull bias from asymmetric front suspension damage in driver control units (Spec 078).
+    /// Returns negative value when front-left is damaged (pulling left), positive when front-right is damaged.
+    pub fn steering_pull_bias(&self) -> f32 {
+        (self.state.suspension_health[0] - self.state.suspension_health[1]) * 0.087
+    }
+
+    /// Engine power attenuation ratio as a function of engine health (Spec 078 Section 5.D).
+    pub fn available_engine_power_ratio(&self) -> f32 {
+        0.40 + 0.60 * self.state.engine_health.clamp(0.0, 1.0).powf(1.5)
+    }
+
+    /// Effective aerodynamic drag coefficient including draft reduction and pushrod failure drag penalty (Spec 078).
+    pub fn effective_air_drag_coefficient(&self) -> f32 {
+        let has_collapsed_pushrod = self.state.suspension_health.iter().enumerate().any(|(i, &h)| {
+            let arch = if i < 2 {
+                self.config.suspension.front.archetype
+            } else {
+                self.config.suspension.rear.archetype
+            };
+            arch == SuspensionArchetype::PushrodInboard && h < 0.30
+        });
+        let drag_mult = if has_collapsed_pushrod { 1.40 } else { 1.0 };
+        self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50)) * drag_mult
+    }
+
     pub fn set_digital_steering_source(&mut self, digital: bool) {
         self.digital_steering_source = digital;
         if !digital {
@@ -1074,6 +1099,11 @@ fn couple_axle(
             }
         }
 
+        // Steering pull bias from asymmetric front suspension damage (Spec 078 Section 5.A)
+        let pull_bias_ctrl = self.steering_pull_bias();
+        let phys_bias = -pull_bias_ctrl;
+        let effective_target_steer = target_steer + phys_bias;
+
         let steer_rate = if clamped_ctrl.steer.abs() < 1e-3 {
             self.config.steer_return_speed
         } else if is_counter_steering {
@@ -1082,7 +1112,7 @@ fn couple_axle(
             self.config.steer_speed
         };
 
-        let steer_delta = target_steer - self.state.steer_angle;
+        let steer_delta = effective_target_steer - self.state.steer_angle;
         let max_steer_change = steer_rate * dt;
         self.state.steer_angle += steer_delta.clamp(-max_steer_change, max_steer_change);
 
@@ -1336,12 +1366,17 @@ fn couple_axle(
             } else {
                 static_rear_load * 0.5 / g
             };
+            let h_susp = self.state.suspension_health[i];
             let z_landing = if touchdown_vz > 0.0 {
                 let omega_n = (corner.spring_rate / corner_mass.max(1.0)).sqrt();
-                let zeta = corner.bump_damping_ratio;
-                let sqrt_term = (1.0 - zeta * zeta).max(1e-4).sqrt();
-                let peak_ratio = (-(zeta * sqrt_term.atan2(zeta)) / sqrt_term).exp();
-                (touchdown_vz / omega_n) * peak_ratio
+                let zeta = corner.bump_damping_ratio * h_susp;
+                if h_susp <= 0.05 {
+                    corner.max_bump_travel
+                } else {
+                    let sqrt_term = (1.0 - zeta * zeta).max(1e-4).sqrt();
+                    let peak_ratio = (-(zeta * sqrt_term.atan2(zeta)) / sqrt_term).exp();
+                    (touchdown_vz / omega_n) * peak_ratio
+                }
             } else {
                 0.0
             };
@@ -1352,7 +1387,10 @@ fn couple_axle(
                 z_track - z_chassis + z_landing
             };
 
-            let s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
+            let mut s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
+            if corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30 {
+                s = corner.max_bump_travel;
+            }
             strokes[i] = s;
 
             let prev_s = self.state.suspension[i].deflection;
@@ -1363,47 +1401,84 @@ fn couple_axle(
             };
             stroke_vels[i] = s_dot;
 
-            // Damping force
+            // Damping force degraded by suspension health (Spec 078 Section 4.B)
             let c_damping = if s_dot >= 0.0 {
-                2.0 * corner.bump_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.bump_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
             } else {
-                2.0 * corner.rebound_damping_ratio * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.rebound_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
             };
             damper_forces[i] = c_damping * s_dot;
 
             // Bump-stop bottoming
             let delta_stop = (delta_z - corner.max_bump_travel).max(0.0);
-            let bottomed = delta_stop > 0.002;
+            let bottomed = delta_stop > 0.002
+                || (s >= corner.max_bump_travel - 1e-4 && (s_dot > 0.5 || (corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30)));
             bottomed_outs[i] = bottomed;
-            bumpstop_forces[i] = if delta_stop > 0.0 {
-                4.0 * corner.spring_rate * delta_stop + 2.0 * c_damping * s_dot.max(0.0)
+            bumpstop_forces[i] = if delta_stop > 0.0 || (bottomed && corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30) {
+                4.0 * corner.spring_rate * delta_stop.max(0.004) + 2.0 * c_damping * s_dot.max(0.0)
             } else {
                 0.0
             };
 
+            // Kerb bottom-out damage accumulation (Spec 078 Section 4.A)
+            const V_BOTTOM_CRIT: f32 = 1.8;
+            const E_BUMPSTOP_CAPACITY: f32 = 1200.0;
+            if (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
+                let v_excess = s_dot - V_BOTTOM_CRIT;
+                let k_rob = corner.archetype.robustness_factor();
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_BUMPSTOP_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
+            }
+
+            // Violent jump touchdown damage accumulation (Spec 078 Section 4.A)
+            const V_LANDING_LIMIT: f32 = 3.5;
+            const E_LANDING_CAPACITY: f32 = 1500.0;
+            if touchdown_vz > V_LANDING_LIMIT {
+                let v_excess = touchdown_vz - V_LANDING_LIMIT;
+                let k_rob = corner.archetype.robustness_factor();
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_LANDING_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
+            }
+
             // Dynamic camber calculation: outside tire in turn (FR in left turn, FL in right turn)
             // degrades towards positive camber (rolling onto outer shoulder)
             let roll_sign = if wheel_id.is_left() { 1.0 } else { -1.0 };
+            let damage_camber = roll_sign * (1.0 - self.state.suspension_health[i]) * 0.10;
             let camber = if corner.archetype == SuspensionArchetype::SolidLiveAxle && !wheel_id.is_front() {
                 // Live axle coupled camber will be updated after axle stroke calculation
-                corner.static_camber
+                corner.static_camber + damage_camber
             } else {
-                corner.static_camber + roll_sign * phi * (1.0 - corner.camber_recovery)
+                corner.static_camber + roll_sign * phi * (1.0 - corner.camber_recovery) + damage_camber
             };
             dynamic_cambers[i] = camber;
 
             // Camber grip degradation: quadratic drop-off + shoulder scrub when rolling positive
-            let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0);
-            mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.80, 1.05);
+            let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0)
+                + (1.0 - self.state.suspension_health[i]) * 0.10;
+            mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.65, 1.05);
         }
 
         // Coupled rear solid axle camber update
         if susp.rear.archetype == SuspensionArchetype::SolidLiveAxle {
             let beam_tilt = (strokes[3] - strokes[2]) / track_w.max(0.1);
-            dynamic_cambers[2] = susp.rear.static_camber + beam_tilt;
-            dynamic_cambers[3] = susp.rear.static_camber - beam_tilt;
-            mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2]).clamp(0.80, 1.05);
-            mu_cambers[3] = (1.0 - 1.8 * dynamic_cambers[3] * dynamic_cambers[3]).clamp(0.80, 1.05);
+            let dmg_2 = (1.0 - self.state.suspension_health[2]) * 0.10;
+            let dmg_3 = -(1.0 - self.state.suspension_health[3]) * 0.10;
+            dynamic_cambers[2] = susp.rear.static_camber + beam_tilt + dmg_2;
+            dynamic_cambers[3] = susp.rear.static_camber - beam_tilt + dmg_3;
+            mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2] - dmg_2.abs()).clamp(0.65, 1.05);
+            mu_cambers[3] = (1.0 - 1.8 * dynamic_cambers[3] * dynamic_cambers[3] - dmg_3.abs()).clamp(0.65, 1.05);
+        }
+
+        // Touchdown asymmetric roll snap (Spec 078 Section 5.C)
+        if touchdown_vz > 0.0 {
+            let fz_left = bumpstop_forces[0] + bumpstop_forces[2] + damper_forces[0] + damper_forces[2];
+            let fz_right = bumpstop_forces[1] + bumpstop_forces[3] + damper_forces[1] + damper_forces[3];
+            let tau_roll_snap = (fz_left - fz_right) * half_w;
+            if (fz_left - fz_right).abs() > 400.0 {
+                let roll_snap = (tau_roll_snap / k_phi_total).clamp(-0.40, 0.40);
+                self.state.roll_angle += roll_snap;
+                self.state.angular_velocity += (roll_snap / half_w) * 0.5;
+            }
         }
 
         // Anti-roll bar forces (represented in roll stiffness k_phi)
@@ -1461,7 +1536,7 @@ fn couple_axle(
         // Average driven-wheel speed (representing driveshaft / differential carrier speed)
         // governs top-speed power taper alongside chassis speed, preventing a single unloaded
         // spinning inside wheel from choking engine power during cornering.
-        let top_speed = self.config.top_speed_mps;
+        let top_speed = self.config.top_speed_mps * (0.60 + 0.40 * self.state.engine_health.clamp(0.0, 1.0));
         let mut driven_count = 0.0f32;
         let mut driven_speed_sum = 0.0f32;
         for w in self.state.wheel_assemblies.iter() {
@@ -1556,11 +1631,13 @@ fn couple_axle(
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
+            let engine_power_mult = self.available_engine_power_ratio();
             clamped_ctrl.throttle
                 * throttle_scale
                 * self.config.max_engine_force
                 * engine_taper
                 * drive_torque_multiplier
+                * engine_power_mult
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
             // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
@@ -2061,8 +2138,7 @@ fn couple_axle(
             .map(|s| s.friction_coefficient())
             .sum::<f32>()
             / 4.0;
-        let effective_drag_coeff =
-            self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50));
+        let effective_drag_coeff = self.effective_air_drag_coefficient();
         let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat =
             -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
@@ -2307,7 +2383,10 @@ fn couple_axle(
 
         // Realistic vertical launch velocity from incline angle and suspension compliance:
         // Long-travel chassis suspension absorbs ~25% of vertical impulse upon climbing the curve.
-        let suspension_efficiency = 0.75f32;
+        // Degradation reduces absorption: eta = 0.25 * min(H_susp) (Spec 078 Section 5.C)
+        let min_susp = self.state.suspension_health.iter().copied().fold(1.0f32, f32::min);
+        let absorption = 0.25 * min_susp;
+        let suspension_efficiency = 1.0 - absorption;
         let v_z = speed_along_dir * sin_theta * suspension_efficiency;
 
         // Partition forward momentum along ramp incline (conserving kinetic energy):
