@@ -481,6 +481,14 @@ impl Car {
             return;
         }
 
+        // Bumper elastic deformation absorption deadzone (500 Joules).
+        // Low-speed bumper taps and glancing blows are absorbed elastically without structural deformation.
+        const MIN_DAMAGE_THRESHOLD: f32 = 500.0;
+        let effective_energy = (damage_energy - MIN_DAMAGE_THRESHOLD).max(0.0);
+        if effective_energy <= 0.0 {
+            return;
+        }
+
         let placement = self.config.engine_placement;
         let (w_chassis, w_engine, w_susp) = match (zone, placement) {
             (ImpactZone::FrontNose, EnginePlacement::FrontEngine) => (0.20, 0.70, [0.05, 0.05, 0.0, 0.0]),
@@ -517,11 +525,11 @@ impl Car {
         };
 
         const CHASSIS_CAPACITY: f32 = 10000.0;
-        const ENGINE_CAPACITY: f32 = 6500.0;
-        const SUSP_CAPACITY: f32 = 5000.0;
+        const ENGINE_CAPACITY: f32 = 5000.0;
+        const SUSP_CAPACITY: f32 = 4500.0;
 
-        let delta_chassis = (damage_energy * w_chassis) / CHASSIS_CAPACITY;
-        let delta_engine = (damage_energy * w_engine) / ENGINE_CAPACITY;
+        let delta_chassis = (effective_energy * w_chassis) / CHASSIS_CAPACITY;
+        let delta_engine = (effective_energy * w_engine) / ENGINE_CAPACITY;
 
         self.state.chassis_health = (self.state.chassis_health - delta_chassis).clamp(0.0, 1.0);
         self.state.health = self.state.chassis_health;
@@ -535,7 +543,7 @@ impl Car {
                     self.config.suspension.rear
                 };
                 let k_rob = corner_cfg.archetype.robustness_factor();
-                let delta_susp = (damage_energy * w_s) / (SUSP_CAPACITY * k_rob);
+                let delta_susp = (effective_energy * w_s) / (SUSP_CAPACITY * k_rob);
                 self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_susp).clamp(0.0, 1.0);
             }
         }
@@ -543,13 +551,26 @@ impl Car {
 
     /// Steering pull bias from asymmetric front suspension damage in driver control units (Spec 078).
     /// Returns negative value when front-left is damaged (pulling left), positive when front-right is damaged.
+    /// Incorporates a 10% deadzone so minor wear or small discrepancies do not impair steering.
     pub fn steering_pull_bias(&self) -> f32 {
-        (self.state.suspension_health[0] - self.state.suspension_health[1]) * 0.087
+        let delta = self.state.suspension_health[0] - self.state.suspension_health[1];
+        if delta.abs() <= 0.10 {
+            0.0
+        } else {
+            let excess = (delta.abs() - 0.10) / 0.90;
+            delta.signum() * excess * 0.087
+        }
     }
 
     /// Engine power attenuation ratio as a function of engine health (Spec 078 Section 5.D).
+    /// Preserves 100% full engine horsepower when engine health >= 80%.
     pub fn available_engine_power_ratio(&self) -> f32 {
-        0.40 + 0.60 * self.state.engine_health.clamp(0.0, 1.0).powf(1.5)
+        let h = self.state.engine_health.clamp(0.0, 1.0);
+        if h >= 0.80 {
+            1.0
+        } else {
+            0.40 + 0.60 * (h / 0.80).powf(1.3)
+        }
     }
 
     /// Effective aerodynamic drag coefficient including draft reduction and pushrod failure drag penalty (Spec 078).
@@ -1402,10 +1423,15 @@ fn couple_axle(
             stroke_vels[i] = s_dot;
 
             // Damping force degraded by suspension health (Spec 078 Section 4.B)
-            let c_damping = if s_dot >= 0.0 {
-                2.0 * corner.bump_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+            let eff_h_susp = if h_susp >= 0.85 {
+                1.0
             } else {
-                2.0 * corner.rebound_damping_ratio * h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                h_susp / 0.85
+            };
+            let c_damping = if s_dot >= 0.0 {
+                2.0 * corner.bump_damping_ratio * eff_h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+            } else {
+                2.0 * corner.rebound_damping_ratio * eff_h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
             };
             damper_forces[i] = c_damping * s_dot;
 
@@ -1431,8 +1457,8 @@ fn couple_axle(
             }
 
             // Violent jump touchdown damage accumulation (Spec 078 Section 4.A)
-            const V_LANDING_LIMIT: f32 = 3.5;
-            const E_LANDING_CAPACITY: f32 = 1500.0;
+            const V_LANDING_LIMIT: f32 = 4.2;
+            const E_LANDING_CAPACITY: f32 = 2500.0;
             if touchdown_vz > V_LANDING_LIMIT {
                 let v_excess = touchdown_vz - V_LANDING_LIMIT;
                 let k_rob = corner.archetype.robustness_factor();
@@ -1443,7 +1469,9 @@ fn couple_axle(
             // Dynamic camber calculation: outside tire in turn (FR in left turn, FL in right turn)
             // degrades towards positive camber (rolling onto outer shoulder)
             let roll_sign = if wheel_id.is_left() { 1.0 } else { -1.0 };
-            let damage_camber = roll_sign * (1.0 - self.state.suspension_health[i]) * 0.10;
+            let susp_wear = (1.0 - self.state.suspension_health[i]).clamp(0.0, 1.0);
+            let effective_susp_damage = (susp_wear - 0.15).max(0.0) / 0.85;
+            let damage_camber = roll_sign * effective_susp_damage * 0.10;
             let camber = if corner.archetype == SuspensionArchetype::SolidLiveAxle && !wheel_id.is_front() {
                 // Live axle coupled camber will be updated after axle stroke calculation
                 corner.static_camber + damage_camber
@@ -1454,15 +1482,19 @@ fn couple_axle(
 
             // Camber grip degradation: quadratic drop-off + shoulder scrub when rolling positive
             let delta_gamma_loss = (roll_sign * phi * (1.0 - corner.camber_recovery)).max(0.0)
-                + (1.0 - self.state.suspension_health[i]) * 0.10;
+                + effective_susp_damage * 0.10;
             mu_cambers[i] = (1.0 - 1.8 * camber * camber - 1.0 * delta_gamma_loss).clamp(0.65, 1.05);
         }
 
         // Coupled rear solid axle camber update
         if susp.rear.archetype == SuspensionArchetype::SolidLiveAxle {
             let beam_tilt = (strokes[3] - strokes[2]) / track_w.max(0.1);
-            let dmg_2 = (1.0 - self.state.suspension_health[2]) * 0.10;
-            let dmg_3 = -(1.0 - self.state.suspension_health[3]) * 0.10;
+            let susp_wear_2 = (1.0 - self.state.suspension_health[2]).clamp(0.0, 1.0);
+            let susp_wear_3 = (1.0 - self.state.suspension_health[3]).clamp(0.0, 1.0);
+            let eff_dmg_2 = (susp_wear_2 - 0.15).max(0.0) / 0.85;
+            let eff_dmg_3 = (susp_wear_3 - 0.15).max(0.0) / 0.85;
+            let dmg_2 = eff_dmg_2 * 0.10;
+            let dmg_3 = -eff_dmg_3 * 0.10;
             dynamic_cambers[2] = susp.rear.static_camber + beam_tilt + dmg_2;
             dynamic_cambers[3] = susp.rear.static_camber - beam_tilt + dmg_3;
             mu_cambers[2] = (1.0 - 1.8 * dynamic_cambers[2] * dynamic_cambers[2] - dmg_2.abs()).clamp(0.65, 1.05);
@@ -1536,7 +1568,8 @@ fn couple_axle(
         // Average driven-wheel speed (representing driveshaft / differential carrier speed)
         // governs top-speed power taper alongside chassis speed, preventing a single unloaded
         // spinning inside wheel from choking engine power during cornering.
-        let top_speed = self.config.top_speed_mps * (0.60 + 0.40 * self.state.engine_health.clamp(0.0, 1.0));
+        let power_ratio = self.available_engine_power_ratio();
+        let top_speed = self.config.top_speed_mps * (0.60 + 0.40 * power_ratio);
         let mut driven_count = 0.0f32;
         let mut driven_speed_sum = 0.0f32;
         for w in self.state.wheel_assemblies.iter() {
@@ -2385,7 +2418,8 @@ fn couple_axle(
         // Long-travel chassis suspension absorbs ~25% of vertical impulse upon climbing the curve.
         // Degradation reduces absorption: eta = 0.25 * min(H_susp) (Spec 078 Section 5.C)
         let min_susp = self.state.suspension_health.iter().copied().fold(1.0f32, f32::min);
-        let absorption = 0.25 * min_susp;
+        let eff_min_susp = if min_susp >= 0.85 { 1.0 } else { min_susp / 0.85 };
+        let absorption = 0.25 * eff_min_susp;
         let suspension_efficiency = 1.0 - absorption;
         let v_z = speed_along_dir * sin_theta * suspension_efficiency;
 

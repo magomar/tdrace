@@ -225,3 +225,42 @@ fn test_jump_landing_damping_loss_roll_snap() {
         car.state.angular_velocity
     );
 }
+
+/// Scenario: Low-energy collisions (< 500J) and minor component wear (< 10-15%)
+/// are absorbed with zero damage and zero driving penalties (Beads: tdrace-dqwn).
+#[test]
+fn test_minor_collision_and_deadzone_immunity() {
+    let mut car = Car::new(CarConfig::sports_car());
+
+    // 1. Minor bumper collision (< 500 J) produces zero damage
+    let nose_contact = car.state.position + car.forward_vector() * 2.0;
+    car.apply_collision_damage(nose_contact, 450.0);
+    assert_eq!(car.state.chassis_health, 1.0, "Minor impact under 500J must not damage chassis");
+    assert_eq!(car.state.engine_health, 1.0, "Minor impact under 500J must not damage engine");
+    assert_eq!(car.state.suspension_health, [1.0, 1.0, 1.0, 1.0], "Minor impact under 500J must not damage suspension");
+
+    // 2. Minor asymmetric suspension wear (delta <= 10%) produces 0.0 steering pull
+    car.state.suspension_health[0] = 0.92;
+    car.state.suspension_health[1] = 1.0;
+    assert_eq!(
+        car.steering_pull_bias(),
+        0.0,
+        "Asymmetric front suspension wear <= 10% must remain within the steering pull deadzone"
+    );
+
+    // 3. Engine health >= 80% maintains 100% available horsepower
+    car.state.engine_health = 0.85;
+    assert_eq!(
+        car.available_engine_power_ratio(),
+        1.0,
+        "Engine health >= 80% must deliver 100% engine power ratio"
+    );
+
+    // 4. Moderate structural impact (> 500J) deducts damage beyond absorption buffer
+    car.state.engine_health = 1.0;
+    car.state.chassis_health = 1.0;
+    car.apply_collision_damage(nose_contact, 2000.0);
+    assert!(car.state.engine_health < 1.0, "Impact exceeding 500J buffer must cause damage");
+    assert!(car.state.chassis_health < 1.0, "Impact exceeding 500J buffer must cause chassis damage");
+}
+
