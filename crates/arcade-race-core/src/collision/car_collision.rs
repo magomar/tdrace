@@ -18,8 +18,14 @@ pub struct CarCarCollisionEvent {
 
 impl CarCarCollisionEvent {
     /// Computes estimated raw mechanical damage energy for vehicle damage simulation.
+    /// Low speed bumps (< 3.0 m/s closing speed or < 1000 N*s impulse) produce zero damage energy,
+    /// absorbing elastically through bumper covers.
     pub fn estimated_damage_energy(&self) -> f32 {
-        0.5 * self.impulse_magnitude * self.closing_speed
+        if self.closing_speed < 3.0 || self.impulse_magnitude < 1000.0 {
+            return 0.0;
+        }
+        let eff_closing_speed = (self.closing_speed - 2.0).max(0.0);
+        0.5 * self.impulse_magnitude * eff_closing_speed
     }
 }
 

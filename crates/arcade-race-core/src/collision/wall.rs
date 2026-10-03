@@ -32,10 +32,16 @@ const fn default_barrier_type() -> BarrierType {
 impl WallCollisionEvent {
     /// Computes estimated raw mechanical damage energy for vehicle damage simulation.
     /// Incorporates the barrier's structural energy absorption factor (e.g. TireWall absorbs 75%, Concrete absorbs 10%).
+    /// Minor bumper impacts (< 3.0 m/s or normal impulse < 1000 N*s) produce zero structural damage energy.
+    /// Longitudinal scraping friction is excluded from structural deformation damage.
     pub fn estimated_damage_energy(&self) -> f32 {
+        if self.impact_speed < 3.0 || self.normal_impulse < 1000.0 {
+            return 0.0;
+        }
         let absorbed = self.barrier_type.energy_absorption_factor();
-        let raw_energy = 0.5 * (self.normal_impulse * self.impact_speed + self.friction_impulse * 0.5);
-        (raw_energy * (1.0 - absorbed)).max(0.0)
+        let eff_speed = (self.impact_speed - 2.0).max(0.0);
+        let normal_energy = 0.5 * self.normal_impulse * eff_speed;
+        (normal_energy * (1.0 - absorbed)).max(0.0)
     }
 }
 
@@ -372,15 +378,19 @@ pub fn resolve_all_wall_collisions<B: Body2D>(
 ) -> Vec<WallCollisionEvent> {
     let mut events = Vec::new();
 
-    for _ in 0..2 {
+    for iter in 0..2 {
         for wall in walls {
             if let Some(ev) = resolve_car_wall_collision(car, wall) {
-                events.push(ev);
+                if iter == 0 {
+                    events.push(ev);
+                }
             }
         }
         for obs in obstacles {
             if let Some(ev) = resolve_car_obstacle_collision(car, obs) {
-                events.push(ev);
+                if iter == 0 {
+                    events.push(ev);
+                }
             }
         }
     }
@@ -458,6 +468,39 @@ mod tests {
         assert_eq!(
             car.state.velocity.x, 20.0,
             "Car velocity must remain completely unaffected by virtual barrier"
+        );
+    }
+
+    #[test]
+    fn test_low_speed_wall_impact_damage_deadzone() {
+        let low_speed_event = WallCollisionEvent {
+            contact_point: Vec2::ZERO,
+            normal: Vec2::new(-1.0, 0.0),
+            penetration: 0.01,
+            impact_speed: 2.5, // < 3.0 m/s
+            normal_impulse: 500.0,
+            friction_impulse: 300.0,
+            barrier_type: BarrierType::Concrete,
+        };
+        assert_eq!(
+            low_speed_event.estimated_damage_energy(),
+            0.0,
+            "Low-speed collision below 3 m/s must produce 0 damage energy"
+        );
+
+        let scraping_event = WallCollisionEvent {
+            contact_point: Vec2::ZERO,
+            normal: Vec2::new(-1.0, 0.0),
+            penetration: 0.01,
+            impact_speed: 1.0,
+            normal_impulse: 400.0,
+            friction_impulse: 2000.0, // High friction from sliding alongside barrier
+            barrier_type: BarrierType::Concrete,
+        };
+        assert_eq!(
+            scraping_event.estimated_damage_energy(),
+            0.0,
+            "Wall scraping with low normal impulse must produce 0 damage energy"
         );
     }
 }
