@@ -8,7 +8,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
 
-use super::config::{CarConfig, DifferentialType, SuspensionArchetype};
+use super::config::{CarConfig, DifferentialType, EnginePlacement, SuspensionArchetype};
 use super::surface::{CompoundId, SurfaceSampler, SurfaceType};
 use super::tire::{
     combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
@@ -167,6 +167,24 @@ pub struct SuspensionTelemetry {
     pub bottomed_out: bool,
 }
 
+/// Discrete impact zone resolved from local collision coordinates (Spec 078).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ImpactZone {
+    FrontNose,
+    RearTail,
+    FlankLeft,
+    FlankRight,
+    CornerFL,
+    CornerFR,
+    CornerRL,
+    CornerRR,
+}
+
+const fn default_suspension_health() -> [f32; 4] {
+    [1.0, 1.0, 1.0, 1.0]
+}
+
 /// Complete serializable state of the vehicle at any instant in time.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CarState {
@@ -267,9 +285,18 @@ pub struct CarState {
     /// Aerodynamic drafting / slipstream drag reduction factor [0.0 = clean air, up to ~0.40 = 40% drag reduction in wake].
     #[serde(default)]
     pub draft_intensity: f32,
-    /// Vehicle chassis structural health [0.0 = destroyed, 1.0 = pristine].
+    /// Vehicle chassis structural health [0.0 = destroyed, 1.0 = pristine] (Spec 063).
     #[serde(default = "one_f32")]
     pub health: f32,
+    /// Structural health of chassis frame [0.0 = wrecked, 1.0 = pristine] (Spec 078).
+    #[serde(default = "one_f32")]
+    pub chassis_health: f32,
+    /// Mechanical health of engine & cooling block [0.0 = blown, 1.0 = pristine] (Spec 078).
+    #[serde(default = "one_f32")]
+    pub engine_health: f32,
+    /// 4-corner suspension health [FL, FR, RL, RR] [0.0 = destroyed, 1.0 = pristine] (Spec 078).
+    #[serde(default = "default_suspension_health")]
+    pub suspension_health: [f32; 4],
 }
 
 impl Default for CarState {
@@ -320,6 +347,9 @@ impl Default for CarState {
             just_landed: false,
             draft_intensity: 0.0,
             health: 1.0,
+            chassis_health: 1.0,
+            engine_health: 1.0,
+            suspension_health: [1.0, 1.0, 1.0, 1.0],
         }
     }
 }
@@ -373,11 +403,142 @@ impl Car {
         }
     }
 
-    /// Restores chassis health by `amount` up to 1.0. Returns actual health restored.
+    /// Restores chassis health (capped at 0.70 in-race ceiling), engine health (capped at 0.70),
+    /// and 4-corner suspension health (capped at 0.60) (Spec 078). Returns actual chassis health restored.
     pub fn apply_field_repair(&mut self, amount: f32) -> f32 {
-        let old_health = self.state.health;
-        self.state.health = (self.state.health + amount).clamp(0.0, 1.0);
-        self.state.health - old_health
+        let old_health = self.state.chassis_health;
+        self.state.chassis_health = self.state.chassis_health.max((self.state.chassis_health + amount).min(0.70));
+        self.state.health = self.state.chassis_health;
+        self.state.engine_health = self.state.engine_health.max((self.state.engine_health + amount).min(0.70));
+        for s in &mut self.state.suspension_health {
+            *s = (*s).max((*s + amount).min(0.60));
+        }
+        self.state.chassis_health - old_health
+    }
+
+    /// Complete post-race garage repair restoring all vehicle components to 100% health (Spec 078).
+    pub fn full_garage_repair(&mut self) {
+        self.state.chassis_health = 1.0;
+        self.state.health = 1.0;
+        self.state.engine_health = 1.0;
+        self.state.suspension_health = [1.0, 1.0, 1.0, 1.0];
+    }
+
+    /// Classifies contact point in world coordinates into a discrete vehicle impact zone (Spec 078).
+    pub fn classify_impact_zone(&self, contact_point_world: Vec2) -> ImpactZone {
+        let delta = contact_point_world - self.state.position;
+        let x_local = delta.dot(self.forward_vector());
+        let y_local = delta.dot(self.right_vector());
+        self.classify_impact_zone_local(x_local, y_local)
+    }
+
+    /// Classifies vehicle local coordinates (x = forward, y = right) into an impact zone (Spec 078).
+    pub fn classify_impact_zone_local(&self, x_local: f32, y_local: f32) -> ImpactZone {
+        let lf = self.config.cg_to_front;
+        let lr = self.config.cg_to_rear;
+        let w_half = self.config.chassis.half_width().max(self.config.track_width * 0.5);
+        let corner_lat_threshold = 0.55 * w_half;
+
+        if y_local.abs() > corner_lat_threshold {
+            // Lateral outer boundary: either corner wheel or flank
+            if x_local >= (lf - 0.40) {
+                if y_local > 0.0 {
+                    ImpactZone::CornerFR
+                } else {
+                    ImpactZone::CornerFL
+                }
+            } else if x_local <= (-lr + 0.40) {
+                if y_local > 0.0 {
+                    ImpactZone::CornerRR
+                } else {
+                    ImpactZone::CornerRL
+                }
+            } else if y_local > 0.0 {
+                ImpactZone::FlankRight
+            } else {
+                ImpactZone::FlankLeft
+            }
+        } else {
+            // Central width: Front nose or rear tail
+            if x_local >= 0.0 {
+                ImpactZone::FrontNose
+            } else {
+                ImpactZone::RearTail
+            }
+        }
+    }
+
+    /// Applies collision impact damage partitioned by impact zone and engine placement (Spec 078).
+    pub fn apply_collision_damage(&mut self, contact_point_world: Vec2, damage_energy: f32) -> ImpactZone {
+        let zone = self.classify_impact_zone(contact_point_world);
+        self.apply_collision_damage_to_zone(zone, damage_energy);
+        zone
+    }
+
+    /// Partitions collision damage energy into chassis, engine, and 4-corner suspension health (Spec 078).
+    pub fn apply_collision_damage_to_zone(&mut self, zone: ImpactZone, damage_energy: f32) {
+        if damage_energy <= 0.0 {
+            return;
+        }
+
+        let placement = self.config.engine_placement;
+        let (w_chassis, w_engine, w_susp) = match (zone, placement) {
+            (ImpactZone::FrontNose, EnginePlacement::FrontEngine) => (0.20, 0.70, [0.05, 0.05, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::MidEngine)   => (0.65, 0.05, [0.15, 0.15, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::RearEngine)  => (0.70, 0.00, [0.15, 0.15, 0.0, 0.0]),
+
+            (ImpactZone::RearTail, EnginePlacement::FrontEngine)  => (0.75, 0.05, [0.0, 0.0, 0.10, 0.10]),
+            (ImpactZone::RearTail, EnginePlacement::MidEngine)    => (0.45, 0.40, [0.0, 0.0, 0.075, 0.075]),
+            (ImpactZone::RearTail, EnginePlacement::RearEngine)   => (0.15, 0.75, [0.0, 0.0, 0.05, 0.05]),
+
+            (ImpactZone::FlankLeft, EnginePlacement::FrontEngine) => (0.60, 0.15, [0.125, 0.0, 0.125, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::MidEngine)   => (0.40, 0.45, [0.075, 0.0, 0.075, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::RearEngine)  => (0.50, 0.30, [0.10, 0.0, 0.10, 0.0]),
+
+            (ImpactZone::FlankRight, EnginePlacement::FrontEngine)=> (0.60, 0.15, [0.0, 0.125, 0.0, 0.125]),
+            (ImpactZone::FlankRight, EnginePlacement::MidEngine)  => (0.40, 0.45, [0.0, 0.075, 0.0, 0.075]),
+            (ImpactZone::FlankRight, EnginePlacement::RearEngine) => (0.50, 0.30, [0.0, 0.10, 0.0, 0.10]),
+
+            (ImpactZone::CornerFL, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.60, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+
+            (ImpactZone::CornerFR, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.0, 0.60, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+
+            (ImpactZone::CornerRL, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.55, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.50, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.50, 0.0]),
+
+            (ImpactZone::CornerRR, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.0, 0.55]),
+            (ImpactZone::CornerRR, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.0, 0.50]),
+            (ImpactZone::CornerRR, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.0, 0.50]),
+        };
+
+        const CHASSIS_CAPACITY: f32 = 10000.0;
+        const ENGINE_CAPACITY: f32 = 6500.0;
+        const SUSP_CAPACITY: f32 = 5000.0;
+
+        let delta_chassis = (damage_energy * w_chassis) / CHASSIS_CAPACITY;
+        let delta_engine = (damage_energy * w_engine) / ENGINE_CAPACITY;
+
+        self.state.chassis_health = (self.state.chassis_health - delta_chassis).clamp(0.0, 1.0);
+        self.state.health = self.state.chassis_health;
+        self.state.engine_health = (self.state.engine_health - delta_engine).clamp(0.0, 1.0);
+
+        for (i, &w_s) in w_susp.iter().enumerate() {
+            if w_s > 0.0 {
+                let corner_cfg = if i < 2 {
+                    self.config.suspension.front
+                } else {
+                    self.config.suspension.rear
+                };
+                let k_rob = corner_cfg.archetype.robustness_factor();
+                let delta_susp = (damage_energy * w_s) / (SUSP_CAPACITY * k_rob);
+                self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_susp).clamp(0.0, 1.0);
+            }
+        }
     }
 
     pub fn set_digital_steering_source(&mut self, digital: bool) {
@@ -2935,4 +3096,55 @@ mod tests {
             max_sideslip
         );
     }
+
+    #[test]
+    fn test_directional_impact_classification_and_damage_partitioning() {
+        let mut car_front = Car::new(CarConfig::sports_car()); // FrontEngine
+        assert_eq!(car_front.config.engine_placement, EnginePlacement::FrontEngine);
+
+        // Test zone classification in local coordinates
+        assert_eq!(car_front.classify_impact_zone_local(1.5, 0.0), ImpactZone::FrontNose);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, 0.0), ImpactZone::RearTail);
+        assert_eq!(car_front.classify_impact_zone_local(1.5, -0.9), ImpactZone::CornerFL);
+        assert_eq!(car_front.classify_impact_zone_local(1.5, 0.9), ImpactZone::CornerFR);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, -0.9), ImpactZone::CornerRL);
+        assert_eq!(car_front.classify_impact_zone_local(-1.5, 0.9), ImpactZone::CornerRR);
+        assert_eq!(car_front.classify_impact_zone_local(0.0, -0.9), ImpactZone::FlankLeft);
+        assert_eq!(car_front.classify_impact_zone_local(0.0, 0.9), ImpactZone::FlankRight);
+
+        // Test FrontEngine takes heavy engine damage on FrontNose impact
+        car_front.apply_collision_damage_to_zone(ImpactZone::FrontNose, 2000.0);
+        assert!(car_front.state.engine_health < 0.80, "FrontEngine should suffer significant engine damage on head-on collision");
+        assert!(car_front.state.chassis_health < 1.0);
+
+        // Test RearEngine takes 0 engine damage on FrontNose impact
+        let mut car_rear = Car::new(CarConfig::sand_rail()); // RearEngine
+        assert_eq!(car_rear.config.engine_placement, EnginePlacement::RearEngine);
+        car_rear.apply_collision_damage_to_zone(ImpactZone::FrontNose, 2000.0);
+        assert_eq!(car_rear.state.engine_health, 1.0, "RearEngine must suffer 0% engine damage on head-on nose collision");
+        assert!(car_rear.state.chassis_health < 1.0, "RearEngine chassis absorbs front impact");
+
+        // Test CornerFL impact damages FL suspension heavily
+        let mut car_corner = Car::new(CarConfig::sports_car());
+        car_corner.apply_collision_damage_to_zone(ImpactZone::CornerFL, 2000.0);
+        assert!(car_corner.state.suspension_health[0] < car_corner.state.suspension_health[1], "FL suspension should take the brunt of CornerFL impact");
+        assert_eq!(car_corner.state.suspension_health[2], 1.0);
+        assert_eq!(car_corner.state.suspension_health[3], 1.0);
+
+        // Test field repair ceilings (0.70 chassis/engine, 0.60 suspension)
+        car_front.state.chassis_health = 0.10;
+        car_front.state.engine_health = 0.10;
+        car_front.state.suspension_health = [0.10, 0.10, 0.10, 0.10];
+        car_front.apply_field_repair(1.0);
+        assert!((car_front.state.chassis_health - 0.70).abs() < 1e-4);
+        assert!((car_front.state.engine_health - 0.70).abs() < 1e-4);
+        assert!((car_front.state.suspension_health[0] - 0.60).abs() < 1e-4);
+
+        // Test full garage repair restores 100%
+        car_front.full_garage_repair();
+        assert_eq!(car_front.state.chassis_health, 1.0);
+        assert_eq!(car_front.state.engine_health, 1.0);
+        assert_eq!(car_front.state.suspension_health, [1.0, 1.0, 1.0, 1.0]);
+    }
 }
+
