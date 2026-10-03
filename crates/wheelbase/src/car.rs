@@ -1422,7 +1422,7 @@ fn couple_axle(
 
             // Kerb bottom-out damage accumulation (Spec 078 Section 4.A)
             const V_BOTTOM_CRIT: f32 = 1.8;
-            const E_BUMPSTOP_CAPACITY: f32 = 1200.0;
+            const E_BUMPSTOP_CAPACITY: f32 = 600.0;
             if (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
                 let v_excess = s_dot - V_BOTTOM_CRIT;
                 let k_rob = corner.archetype.robustness_factor();
