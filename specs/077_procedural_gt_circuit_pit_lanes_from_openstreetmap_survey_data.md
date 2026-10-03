@@ -3,9 +3,10 @@ type: Feature Spec
 template: feature
 title: "Procedural GT Circuit Pit Lanes from OpenStreetMap Survey Data"
 description: "Extracts, calibrates, scales, and bakes authentic physical pit lane geometry (entry gates, exit gates, bypass splines, team pit stalls) across all 18 GT circuits using OpenStreetMap survey data and procedural fallbacks."
-status: draft
+status: approved
 created: 2026-10-02
 generated: { by: agent/antigravity, at: 2026-10-02T21:42:19Z }
+verified: { by: "human:mario", at: "2026-10-03T05:33:37Z", hash: "539252161c32" }
 depends_on:
   - "062"
 ---
