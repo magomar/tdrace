@@ -1089,6 +1089,7 @@ pub fn create_prototypical_track(
         category: TrackCategory::Draft,
         kind: TrackKind::Circuit,
         spline,
+        network: None,
         geometry: TrackGeometry {
             inner_walls: left_walls,
             outer_walls: right_walls,

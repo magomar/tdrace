@@ -6,9 +6,11 @@ use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use wheelbase::surface::SurfaceType;
 use arcade_race_core::track::geometry::{LineSegment, SurfaceLayer, SurfaceShape};
+use arcade_race_core::track::network::{JunctionKind, RoadSegment};
 use arcade_race_core::track::spline::{SplineSample, TrackSpline};
 use arcade_race_core::track::Track;
 
+use super::barrier;
 use super::color::Palette;
 use super::surface_material::{evaluate_macro_modulation, SurfaceMaterialRegistry, SurfaceTextureQuality};
 
@@ -29,6 +31,78 @@ fn is_quad_valid(p0_in: Vec2, p1_in: Vec2, p1_out: Vec2, p0_out: Vec2) -> bool {
         }
     }
     true
+}
+
+/// Edge suppression flags indicating whether the left or right road edge intersects another ribbon.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct EdgeSuppression {
+    pub suppress_left: bool,
+    pub suppress_right: bool,
+}
+
+/// Computes edge suppression masks preventing outer white lines and curbs from drawing across open junction throats.
+pub fn compute_segment_edge_suppressions(
+    samples: &[SplineSample],
+    closed: bool,
+    other_segments: &[&RoadSegment],
+    other_spline: Option<&TrackSpline>,
+) -> Vec<EdgeSuppression> {
+    let n = samples.len();
+    if n < 2 {
+        return Vec::new();
+    }
+    let seg_count = if closed { n } else { n - 1 };
+    let mut suppressions = Vec::with_capacity(seg_count);
+
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+
+        let hw0 = s0.width * 0.5;
+        let hw1 = s1.width * 0.5;
+
+        let left0 = s0.point + s0.normal * hw0;
+        let left1 = s1.point + s1.normal * hw1;
+        let right0 = s0.point - s0.normal * hw0;
+        let right1 = s1.point - s1.normal * hw1;
+
+        let left_mid = (left0 + left1) * 0.5;
+        let right_mid = (right0 + right1) * 0.5;
+        let elev = (s0.elevation + s1.elevation) * 0.5;
+
+        let is_in_ribbon = |pt: Vec2| -> bool {
+            if let Some(sp) = other_spline {
+                if sp.samples.len() >= 2 {
+                    let proj = sp.project_point(pt);
+                    if (elev - proj.elevation).abs() < 1.5 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.25) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            for o_seg in other_segments {
+                if o_seg.samples.len() >= 2 {
+                    let proj = o_seg.project_point(pt);
+                    if (elev - proj.elevation).abs() < 1.5 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.25) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            false
+        };
+
+        suppressions.push(EdgeSuppression {
+            suppress_left: is_in_ribbon(left_mid),
+            suppress_right: is_in_ribbon(right_mid),
+        });
+    }
+
+    suppressions
 }
 
 /// Computes instantaneous track curvature (radians per meter) between two spline samples.
@@ -302,9 +376,43 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
     }
 
     // 3. Render segment runoff corridors, ground curbs and ground surface quads
-    render_runoff_pass(&track.spline, false, view_bounds);
-    render_curbs_pass(&track.spline, false, view_bounds);
-    render_surface_pass(&track.spline, false, view_bounds);
+    if let Some(ref net) = track.network {
+        let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+        let main_suppressions = compute_segment_edge_suppressions(
+            &track.spline.samples,
+            track.spline.closed,
+            &branch_segs,
+            None,
+        );
+
+        render_runoff_pass(&track.spline, false, view_bounds);
+        render_curbs_pass_filtered(&track.spline, false, view_bounds, Some(&main_suppressions));
+        render_surface_pass_filtered(&track.spline, false, view_bounds, Some(&main_suppressions));
+
+        for seg in &net.segments {
+            if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                let other_branches: Vec<&RoadSegment> =
+                    net.segments.iter().filter(|s| s.id != seg.id).collect();
+                let branch_suppressions = compute_segment_edge_suppressions(
+                    &seg.samples,
+                    false,
+                    &other_branches,
+                    Some(&track.spline),
+                );
+                let seg_spline = seg.to_spline();
+                render_runoff_pass(&seg_spline, false, view_bounds);
+                render_curbs_pass_filtered(&seg_spline, false, view_bounds, Some(&branch_suppressions));
+                render_surface_pass_filtered(&seg_spline, false, view_bounds, Some(&branch_suppressions));
+            }
+        }
+    } else {
+        render_runoff_pass(&track.spline, false, view_bounds);
+        render_curbs_pass(&track.spline, false, view_bounds);
+        render_surface_pass(&track.spline, false, view_bounds);
+    }
+
+    // 3b. Render network junctions (paved throat wedges, gore triangles, chevrons, nose attenuators)
+    render_network_junctions_pass(track, false, view_bounds);
 
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
@@ -327,12 +435,49 @@ pub fn render_elevated_track(track: &Track) {
 /// Renders elevated overpass bridges with camera viewport culling.
 pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     ensure_surface_registry();
-    let has_elevated = track.spline.samples.iter().any(|s| s.is_bridge);
+    let has_elevated = track.spline.samples.iter().any(|s| s.is_bridge)
+        || track.network.as_ref().map_or(false, |net| {
+            net.segments.iter().any(|seg| seg.id.0 != 0 && seg.samples.iter().any(|s| s.is_bridge || s.elevation >= 0.6))
+        });
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
-        render_runoff_pass(&track.spline, true, view_bounds);
-        render_curbs_pass(&track.spline, true, view_bounds);
-        render_surface_pass(&track.spline, true, view_bounds);
+
+        if let Some(ref net) = track.network {
+            let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+            let main_suppressions = compute_segment_edge_suppressions(
+                &track.spline.samples,
+                track.spline.closed,
+                &branch_segs,
+                None,
+            );
+
+            render_runoff_pass(&track.spline, true, view_bounds);
+            render_curbs_pass_filtered(&track.spline, true, view_bounds, Some(&main_suppressions));
+            render_surface_pass_filtered(&track.spline, true, view_bounds, Some(&main_suppressions));
+
+            for seg in &net.segments {
+                if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                    let other_branches: Vec<&RoadSegment> =
+                        net.segments.iter().filter(|s| s.id != seg.id).collect();
+                    let branch_suppressions = compute_segment_edge_suppressions(
+                        &seg.samples,
+                        false,
+                        &other_branches,
+                        Some(&track.spline),
+                    );
+                    let seg_spline = seg.to_spline();
+                    render_runoff_pass(&seg_spline, true, view_bounds);
+                    render_curbs_pass_filtered(&seg_spline, true, view_bounds, Some(&branch_suppressions));
+                    render_surface_pass_filtered(&seg_spline, true, view_bounds, Some(&branch_suppressions));
+                }
+            }
+        } else {
+            render_runoff_pass(&track.spline, true, view_bounds);
+            render_curbs_pass(&track.spline, true, view_bounds);
+            render_surface_pass(&track.spline, true, view_bounds);
+        }
+
+        render_network_junctions_pass(track, true, view_bounds);
     }
 }
 
@@ -1006,8 +1151,13 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     fringe_builder.flush();
 }
 
-/// Draws curb rumble strips for either ground or elevated bridge segments.
-fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression.
+fn render_curbs_pass_filtered(
+    spline: &TrackSpline,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+) {
     let samples = &spline.samples;
     let n = samples.len();
     if n < 2 {
@@ -1030,6 +1180,9 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
             continue;
         }
 
+        let supp_l = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_left));
+        let supp_r = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_right));
+
         let d0 = s0.distance;
         let d1 = if (i + 1) % n == 0 && spline.closed {
             s0.distance + (s1.point - s0.point).length()
@@ -1048,7 +1201,7 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
         };
 
         // Left curb
-        if s0.left_curb || s1.left_curb {
+        if !supp_l && (s0.left_curb || s1.left_curb) {
             let p0_inner = untangled_road_left[i];
             let p1_inner = untangled_road_left[(i + 1) % n];
             let p0_outer = untangled_curb_left[i];
@@ -1074,7 +1227,7 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
         }
 
         // Right curb
-        if s0.right_curb || s1.right_curb {
+        if !supp_r && (s0.right_curb || s1.right_curb) {
             let p0_inner = untangled_road_right[i];
             let p1_inner = untangled_road_right[(i + 1) % n];
             let p0_outer = untangled_curb_right[i];
@@ -1103,8 +1256,17 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     curb_builder.flush();
 }
 
-/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments.
-fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    render_curbs_pass_filtered(spline, elevated, view_bounds, None);
+}
+
+/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments with optional edge suppression.
+fn render_surface_pass_filtered(
+    spline: &TrackSpline,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+) {
     let samples = &spline.samples;
     let n = samples.len();
     if n < 2 {
@@ -1126,6 +1288,9 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
         if is_seg_elevated != elevated || !is_segment_in_view(s0, s1, view_bounds) {
             continue;
         }
+
+        let supp_l = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_left));
+        let supp_r = suppressions.map_or(false, |s| s.get(i).map_or(false, |m| m.suppress_right));
 
         let hw0 = s0.width * 0.5;
         let hw1 = s1.width * 0.5;
@@ -1246,8 +1411,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     builder.push_quad(mid_l0, uv_ml0, c_m, mid_l1, uv_ml1, c_m, mid_r1, uv_mr1, c_m, mid_r0, uv_mr0, c_m);
                     builder.push_quad(mid_r0, uv_mr0, c_r, mid_r1, uv_mr1, c_r, right1, uv_r1, c_r, right0, uv_r0, c_r);
 
-                    lines_to_draw.push((left0, left1, 0.32, Palette::DIRT_EDGE));
-                    lines_to_draw.push((right0, right1, 0.32, Palette::DIRT_EDGE));
+                    if !supp_l {
+                        lines_to_draw.push((left0, left1, 0.32, Palette::DIRT_EDGE));
+                    }
+                    if !supp_r {
+                        lines_to_draw.push((right0, right1, 0.32, Palette::DIRT_EDGE));
+                    }
                 } else {
                     let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                     let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
@@ -1268,8 +1437,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     };
 
                     builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                    lines_to_draw.push((left0, left1, 0.32, Palette::DIRT_EDGE));
-                    lines_to_draw.push((right0, right1, 0.32, Palette::DIRT_EDGE));
+                    if !supp_l {
+                        lines_to_draw.push((left0, left1, 0.32, Palette::DIRT_EDGE));
+                    }
+                    if !supp_r {
+                        lines_to_draw.push((right0, right1, 0.32, Palette::DIRT_EDGE));
+                    }
 
                     let groove_l0 = s0.point + s0.normal * (hw0 * 0.45);
                     let groove_l1 = s1.point + s1.normal * (hw1 * 0.45);
@@ -1300,8 +1473,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     (Palette::SAND, Palette::SAND, Palette::SAND, Palette::SAND)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                lines_to_draw.push((left0, left1, 0.32, Palette::SAND_DARK));
-                lines_to_draw.push((right0, right1, 0.32, Palette::SAND_DARK));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Palette::SAND_DARK));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Palette::SAND_DARK));
+                }
             }
             SurfaceType::Grass => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
@@ -1322,8 +1499,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     (Palette::GRASS_DARK, Palette::GRASS_DARK, Palette::GRASS_DARK, Palette::GRASS_DARK)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                lines_to_draw.push((left0, left1, 0.32, Palette::GRASS));
-                lines_to_draw.push((right0, right1, 0.32, Palette::GRASS));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Palette::GRASS));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Palette::GRASS));
+                }
             }
             SurfaceType::SheetIce => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
@@ -1332,8 +1513,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
                 let col = if has_tex { Color::new(1.0, 1.0, 1.0, 0.95) } else { Color::new(0.85, 0.92, 0.98, 0.95) };
                 builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
-                lines_to_draw.push((left0, left1, 0.32, Color::new(0.65, 0.82, 0.95, 0.8)));
-                lines_to_draw.push((right0, right1, 0.32, Color::new(0.65, 0.82, 0.95, 0.8)));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Color::new(0.65, 0.82, 0.95, 0.8)));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Color::new(0.65, 0.82, 0.95, 0.8)));
+                }
             }
             SurfaceType::Water => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
@@ -1342,8 +1527,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
                 let col = if has_tex { WHITE } else { Palette::WATER };
                 builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
-                lines_to_draw.push((left0, left1, 0.32, Palette::WATER_BORDER));
-                lines_to_draw.push((right0, right1, 0.32, Palette::WATER_BORDER));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Palette::WATER_BORDER));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Palette::WATER_BORDER));
+                }
             }
             SurfaceType::Oil => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
@@ -1352,8 +1541,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                 let uv3 = macroquad::prelude::Vec2::new(1.0, v0);
                 let col = if has_tex { WHITE } else { Color::new(0.12, 0.12, 0.15, 0.95) };
                 builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
-                lines_to_draw.push((left0, left1, 0.32, Color::new(0.35, 0.25, 0.40, 0.85)));
-                lines_to_draw.push((right0, right1, 0.32, Color::new(0.35, 0.25, 0.40, 0.85)));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Color::new(0.35, 0.25, 0.40, 0.85)));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Color::new(0.35, 0.25, 0.40, 0.85)));
+                }
             }
             SurfaceType::Curb => {
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
@@ -1384,8 +1577,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     (Palette::MUD, Palette::MUD, Palette::MUD, Palette::MUD)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                lines_to_draw.push((left0, left1, 0.34, Palette::MUD_DARK));
-                lines_to_draw.push((right0, right1, 0.34, Palette::MUD_DARK));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.34, Palette::MUD_DARK));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.34, Palette::MUD_DARK));
+                }
 
                 let rut_l0 = s0.point + s0.normal * (hw0 * 0.40);
                 let rut_l1 = s1.point + s1.normal * (hw1 * 0.40);
@@ -1413,8 +1610,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     (Palette::SNOW, Palette::SNOW, Palette::SNOW, Palette::SNOW)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                lines_to_draw.push((left0, left1, 0.32, Palette::SNOW_EDGE));
-                lines_to_draw.push((right0, right1, 0.32, Palette::SNOW_EDGE));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Palette::SNOW_EDGE));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Palette::SNOW_EDGE));
+                }
 
                 let track_l0 = s0.point + s0.normal * (hw0 * 0.42);
                 let track_l1 = s1.point + s1.normal * (hw1 * 0.42);
@@ -1442,8 +1643,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     (Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
-                lines_to_draw.push((left0, left1, 0.32, Palette::GRAVEL_EDGE));
-                lines_to_draw.push((right0, right1, 0.32, Palette::GRAVEL_EDGE));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.32, Palette::GRAVEL_EDGE));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.32, Palette::GRAVEL_EDGE));
+                }
 
                 let track_l0 = s0.point + s0.normal * (hw0 * 0.44);
                 let track_l1 = s1.point + s1.normal * (hw1 * 0.44);
@@ -1548,8 +1753,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     builder.push_quad(mid_r0, uv_mr0, c_r, mid_r1, uv_mr1, c_r, right1, uv_r1, c_r, right0, uv_r0, c_r);
                 }
 
-                lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
-                lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                if !supp_l {
+                    lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
+                }
+                if !supp_r {
+                    lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                }
 
                 if is_banked {
                     lines_to_draw.push((mid_l0, mid_l1, 0.12, Color::new(0.40, 0.42, 0.46, 0.4)));
@@ -1596,8 +1805,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     builder.push_quad(mid_l0, uv_ml0, c_m, mid_l1, uv_ml1, c_m, mid_r1, uv_mr1, c_m, mid_r0, uv_mr0, c_m);
                     builder.push_quad(mid_r0, uv_mr0, c_r, mid_r1, uv_mr1, c_r, right1, uv_r1, c_r, right0, uv_r0, c_r);
 
-                    lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
-                    lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                    if !supp_l {
+                        lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
+                    }
+                    if !supp_r {
+                        lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                    }
                     lines_to_draw.push((mid_l0, mid_l1, 0.12, Color::new(0.50, 0.52, 0.55, 0.45)));
                     lines_to_draw.push((mid_r0, mid_r1, 0.12, Color::new(0.50, 0.52, 0.55, 0.45)));
                 } else {
@@ -1608,8 +1821,12 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
                     let col = if has_tex { WHITE } else { Palette::CONCRETE };
 
                     builder.push_quad(left0, uv0, col, left1, uv1, col, right1, uv2, col, right0, uv3, col);
-                    lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
-                    lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                    if !supp_l {
+                        lines_to_draw.push((left0, left1, 0.28, Palette::WHITE_LINE));
+                    }
+                    if !supp_r {
+                        lines_to_draw.push((right0, right1, 0.28, Palette::WHITE_LINE));
+                    }
 
                     let center_stripe = ((s0.distance / 3.0).floor() as usize).is_multiple_of(2);
                     if center_stripe {
@@ -1633,6 +1850,132 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
             }
         }
     }));
+}
+
+/// Draws track surface quads for either ground or elevated bridge segments.
+fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    render_surface_pass_filtered(spline, elevated, view_bounds, None);
+}
+
+/// Renders network junction geometry: paved throat wedges, gore triangles, painted chevrons, and nose crash cushions.
+pub fn render_network_junctions_pass(
+    track: &Track,
+    elevated: bool,
+    _view_bounds: Option<(Vec2, Vec2)>,
+) {
+    let Some(ref net) = track.network else { return; };
+
+    for junction in &net.junctions {
+        match &junction.kind {
+            JunctionKind::Split {
+                ingress_socket,
+                egress_sockets,
+                gore_config,
+            } => {
+                let is_junc_elev = ingress_socket.elevation >= 0.6;
+                if is_junc_elev != elevated {
+                    continue;
+                }
+
+                // 1. Paved Bifurcation Throat Wedge
+                if egress_sockets.len() >= 2 {
+                    let in_l = ingress_socket.left_edge();
+                    let in_r = ingress_socket.right_edge();
+                    let e0_l = egress_sockets[0].left_edge();
+                    let e0_r = egress_sockets[0].right_edge();
+                    let e1_l = egress_sockets[1].left_edge();
+                    let e1_r = egress_sockets[1].right_edge();
+
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(in_l.x, in_l.y),
+                        macroquad::prelude::Vec2::new(e0_l.x, e0_l.y),
+                        macroquad::prelude::Vec2::new(e1_l.x, e1_l.y),
+                        Palette::ASPHALT,
+                    );
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(in_r.x, in_r.y),
+                        macroquad::prelude::Vec2::new(e0_r.x, e0_r.y),
+                        macroquad::prelude::Vec2::new(e1_r.x, e1_r.y),
+                        Palette::ASPHALT,
+                    );
+                    draw_quad(in_l, in_r, e0_r, e0_l, Palette::ASPHALT);
+                    draw_quad(in_l, in_r, e1_r, e1_l, Palette::ASPHALT);
+                }
+
+                // 2. Gore Triangle & Markings
+                if let Some(gore) = gore_config {
+                    let p_apex = gore.apex_point;
+                    let v0 = egress_sockets.get(0).map_or(ingress_socket.tangent, |s| s.tangent);
+                    let v1 = egress_sockets.get(1).map_or(ingress_socket.tangent, |s| s.tangent);
+
+                    let gore_len = gore.gore_length.max(6.0);
+                    let p0 = p_apex + v0 * gore_len;
+                    let p1 = p_apex + v1 * gore_len;
+
+                    // A. Paved asphalt gore triangle
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(p_apex.x, p_apex.y),
+                        macroquad::prelude::Vec2::new(p0.x, p0.y),
+                        macroquad::prelude::Vec2::new(p1.x, p1.y),
+                        Palette::RUNOFF_ASPHALT,
+                    );
+
+                    // B. White gore perimeter lines
+                    draw_line(p_apex.x, p_apex.y, p0.x, p0.y, 0.35, Palette::WHITE_LINE);
+                    draw_line(p_apex.x, p_apex.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
+                    draw_line(p0.x, p0.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
+
+                    // C. Painted Chevrons (V-stripes) pointing toward incoming traffic
+                    if gore.has_chevrons {
+                        let num_chevrons = (gore_len / 2.8).floor() as usize;
+                        let bisect = (v0 + v1).normalize_or_zero();
+                        for step in 1..=num_chevrons {
+                            let d = step as f32 * 2.8;
+                            if d >= gore_len - 0.5 { break; }
+                            let a = p_apex + v0 * d;
+                            let b = p_apex + v1 * d;
+                            let apex_chevron = p_apex + bisect * (d - 1.2).max(0.2);
+                            draw_line(apex_chevron.x, apex_chevron.y, a.x, a.y, 0.32, Palette::WHITE_LINE);
+                            draw_line(apex_chevron.x, apex_chevron.y, b.x, b.y, 0.32, Palette::WHITE_LINE);
+                        }
+                    }
+
+                    // D. Attenuator Nose Barrier & Hazard Cap
+                    let w_len = (gore.nose_barrier.segment.end - gore.nose_barrier.segment.start).length();
+                    if w_len > 0.05 {
+                        barrier::render_wall_shadow(&gore.nose_barrier);
+                        barrier::render_wall_body(&gore.nose_barrier);
+                    }
+                    // High-visibility impact attenuator nose cap at apex
+                    draw_circle(p_apex.x, p_apex.y, 0.9, Palette::CURB_RED);
+                    draw_circle(p_apex.x, p_apex.y, 0.6, Palette::CURB_WHITE);
+                    draw_circle(p_apex.x, p_apex.y, 0.3, Palette::CURB_RED);
+                }
+            }
+            JunctionKind::Merge {
+                ingress_sockets,
+                egress_socket,
+                merge_config: _,
+            } => {
+                let is_junc_elev = egress_socket.elevation >= 0.6;
+                if is_junc_elev != elevated {
+                    continue;
+                }
+
+                // Smooth asphalt merge taper patch
+                if !ingress_sockets.is_empty() {
+                    let eg_l = egress_socket.left_edge();
+                    let eg_r = egress_socket.right_edge();
+                    for in_sock in ingress_sockets {
+                        let in_l = in_sock.left_edge();
+                        let in_r = in_sock.right_edge();
+                        draw_quad(in_l, in_r, eg_r, eg_l, Palette::ASPHALT);
+                    }
+                }
+            }
+            JunctionKind::Terminal { .. } => {}
+        }
+    }
 }
 
 /// Renders the start/finish timing line with a classic black/white checkered pattern.

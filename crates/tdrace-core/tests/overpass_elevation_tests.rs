@@ -129,6 +129,7 @@ fn test_lidar_elevation_filtering() {
             ],
             false,
         ),
+        network: None,
         geometry: TrackGeometry {
             inner_walls: vec![elevated_wall],
             outer_walls: Vec::new(),

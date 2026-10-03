@@ -21,6 +21,7 @@ use cabinet::ui::{
 };
 use tdrace_core::physics::config::{AssistProfile, CarConfig};
 use tdrace_core::physics::surface::SurfaceType;
+use tdrace_core::track::TrackLayout;
 use tdrace_core::CarCategory;
 
 /// Available track options in track selection menu.
@@ -1075,6 +1076,9 @@ pub fn render_track_select_menu(
     is_lan_host: bool,
     returns_to_grid: bool,
     focused_panel: MenuPanelFocus,
+    selected_layout_id: Option<&str>,
+    show_layout_modal: bool,
+    layout_modal_idx: usize,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -2074,7 +2078,15 @@ pub fn render_track_select_menu(
         let chip_y1 = c2_y + scaler.s(2.0);
         let chip_y2 = c2_y + scaler.s(27.0);
 
-        let len_text = if let Some(tr) = tr_ref {
+        let effective_layout = tr_ref.and_then(|tr| {
+            tr.network.as_ref().and_then(|net| {
+                let id = selected_layout_id.unwrap_or(&net.default_layout_id);
+                net.get_layout(id).or_else(|| net.layouts.first())
+            })
+        });
+        let len_text = if let Some(layout) = effective_layout {
+            format!("{:.0}m Track Length", layout.total_lap_length)
+        } else if let Some(tr) = tr_ref {
             format!("{:.0}m Track Length", tr.total_length_m())
         } else {
             "N/A Length".to_string()
@@ -2174,6 +2186,41 @@ pub fn render_track_select_menu(
             scaler.font_s(10.0),
             Palette::NEON_GREEN,
         );
+
+        c2_y = chip_y2 + spec_chip_h + scaler.s(10.0);
+
+        // Circuit Layout Variant Selector Card
+        let net_opt = tr_ref.and_then(|t| t.network.as_ref());
+        if let Some(net) = net_opt {
+            if net.layouts.len() > 1 {
+                let layout_card_h = scaler.s(48.0);
+                scaler.draw_glass_card(col2_x, c2_y, col_w, layout_card_h, Palette::UI_CARD_BG, module_accent, 1.3);
+
+                fonts.draw_ui_bold(
+                    "CIRCUIT LAYOUT [L to Select / Cycle]",
+                    col2_x + scaler.s(14.0),
+                    c2_y + scaler.s(14.0),
+                    scaler.font_s(10.0),
+                    module_accent,
+                );
+
+                let cur_layout_id = selected_layout_id.unwrap_or(&net.default_layout_id);
+                let cur_layout = net.get_layout(cur_layout_id).unwrap_or(&net.layouts[0]);
+                let is_joker = cur_layout.id.to_lowercase().contains("joker")
+                    || cur_layout.display_name.to_lowercase().contains("joker");
+                let tag_badge = if is_joker { "JOKER ROUTE" } else { "MAIN ROUTE" };
+                let tag_col = if is_joker { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+
+                let layout_title = format!("{} ({} • {:.0}m)", cur_layout.display_name, tag_badge, cur_layout.total_lap_length);
+                fonts.draw_ui_bold(
+                    &layout_title,
+                    col2_x + scaler.s(14.0),
+                    c2_y + scaler.s(32.0),
+                    scaler.font_s(12.5),
+                    tag_col,
+                );
+            }
+        }
 
         if track_opt.is_user_custom() {
             fonts.draw_ui_bold(
@@ -2461,6 +2508,129 @@ pub fn render_track_select_menu(
         btn_y + scaler.s(25.0),
         scaler.font_s(16.0),
         Palette::WHITE,
+    );
+
+    // Layout selection modal overlay
+    if show_layout_modal {
+        if let Some(track_opt) = available_tracks.get(selected_track_idx) {
+            if let Some(mut tr) = resolve_track_for_menu(track_opt) {
+                let net = tr.ensure_network();
+                if !net.layouts.is_empty() {
+                    render_layout_select_modal(fonts, &net.layouts, layout_modal_idx, module_accent);
+                }
+            }
+        }
+    }
+}
+
+/// Renders the layout selection modal dialog centered on the screen.
+pub fn render_layout_select_modal(
+    fonts: &Fonts,
+    layouts: &[TrackLayout],
+    selected_idx: usize,
+    accent_color: Color,
+) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+
+    // Dim backdrop overlay
+    draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.02, 0.03, 0.05, 0.85));
+
+    let modal_w = scaler.s(520.0).min(sw - scaler.s(32.0));
+    let row_h = scaler.s(48.0);
+    let modal_h = scaler.s(90.0) + (layouts.len() as f32) * (row_h + scaler.s(8.0)) + scaler.s(40.0);
+    let modal_x = (sw - modal_w) * 0.5;
+    let modal_y = (sh - modal_h) * 0.5;
+
+    scaler.draw_glass_card(
+        modal_x,
+        modal_y,
+        modal_w,
+        modal_h,
+        Color::new(0.08, 0.10, 0.15, 0.96),
+        accent_color,
+        2.2,
+    );
+
+    // Header Title
+    fonts.draw_ui_bold(
+        "SELECT CIRCUIT LAYOUT",
+        modal_x + scaler.s(24.0),
+        modal_y + scaler.s(32.0),
+        scaler.font_s(18.0),
+        accent_color,
+    );
+    fonts.draw_ui_regular(
+        "Choose an alternative circuit configuration or Joker Lap detour",
+        modal_x + scaler.s(24.0),
+        modal_y + scaler.s(50.0),
+        scaler.font_s(11.5),
+        Palette::UI_TEXT_MUTED,
+    );
+
+    let mut list_y = modal_y + scaler.s(70.0);
+    for (idx, layout) in layouts.iter().enumerate() {
+        let is_sel = idx == selected_idx;
+        let bg_col = if is_sel {
+            Palette::UI_CARD_BG_HOVER
+        } else {
+            Palette::UI_CARD_BG
+        };
+        let border_col = if is_sel {
+            accent_color
+        } else {
+            Palette::UI_CARD_BORDER
+        };
+
+        scaler.draw_glass_card(
+            modal_x + scaler.s(20.0),
+            list_y,
+            modal_w - scaler.s(40.0),
+            row_h,
+            bg_col,
+            border_col,
+            if is_sel { 2.2 } else { 1.0 },
+        );
+
+        let is_joker = layout.id.to_lowercase().contains("joker")
+            || layout.display_name.to_lowercase().contains("joker");
+        let tag = if is_joker { "JOKER LAP" } else { "STANDARD CIRCUIT" };
+        let tag_col = if is_joker {
+            Palette::NEON_GOLD
+        } else {
+            Palette::NEON_CYAN
+        };
+
+        let dot_str = if is_sel { "● " } else { "○ " };
+        let name_str = format!("{}{}", dot_str, layout.display_name);
+        fonts.draw_ui_bold(
+            &name_str,
+            modal_x + scaler.s(34.0),
+            list_y + scaler.s(20.0),
+            scaler.font_s(14.0),
+            if is_sel { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+        );
+
+        let details_str = format!("{} • {:.0}m • {} Segments", tag, layout.total_lap_length, layout.segment_sequence.len());
+        fonts.draw_ui_bold(
+            &details_str,
+            modal_x + scaler.s(34.0),
+            list_y + scaler.s(36.0),
+            scaler.font_s(10.5),
+            tag_col,
+        );
+
+        list_y += row_h + scaler.s(8.0);
+    }
+
+    // Footer Hint
+    fonts.draw_ui_regular_centered(
+        "[Up/Down] Navigate • [Enter/Space] Select • [Esc/L] Close",
+        modal_x + modal_w * 0.5,
+        modal_y + modal_h - scaler.s(18.0),
+        scaler.font_s(11.5),
+        Palette::UI_TEXT_MUTED,
     );
 }
 

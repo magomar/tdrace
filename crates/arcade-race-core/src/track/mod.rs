@@ -2,15 +2,20 @@ pub mod bake;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
+pub mod network;
 pub mod presets;
 pub mod scenery;
 pub mod spline;
 pub mod validation;
 
-pub use checkpoint::{Checkpoint, CheckpointCrossResult, TrackProgressTracker};
+pub use checkpoint::{Checkpoint, CheckpointCrossResult, MultiRouteProgressTracker, TrackProgressTracker};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
     CurveApproachStatus, CurveDirection, TrackCurve,
+};
+pub use network::{
+    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, MergeConfig,
+    RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
 pub use geometry::{
     point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
@@ -119,6 +124,8 @@ pub struct Track {
     #[serde(default)]
     pub kind: TrackKind,
     pub spline: TrackSpline,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub network: Option<TrackNetwork>,
     pub geometry: TrackGeometry,
     pub checkpoints: Vec<Checkpoint>,
     pub grid_positions: Vec<SpawnPose>,
@@ -168,6 +175,7 @@ impl Default for Track {
             category: TrackCategory::Main,
             kind: TrackKind::Circuit,
             spline: TrackSpline::default(),
+            network: None,
             geometry: TrackGeometry::default(),
             checkpoints: Vec::new(),
             grid_positions: Vec::new(),
@@ -194,6 +202,21 @@ impl Default for Track {
 }
 
 impl Track {
+    /// Ensures that the track network exists, promoting the legacy single spline if needed.
+    pub fn ensure_network(&mut self) -> &mut TrackNetwork {
+        if self.network.is_none() {
+            self.network = Some(TrackNetwork::from_single_spline(&self.spline));
+        }
+        self.network.as_mut().unwrap()
+    }
+
+    /// Returns the active track network, falling back to a synthesized single-spline network.
+    pub fn active_network(&self) -> TrackNetwork {
+        self.network
+            .clone()
+            .unwrap_or_else(|| TrackNetwork::from_single_spline(&self.spline))
+    }
+
     /// Returns the scale of the track model (defaults to "1:1").
     pub fn scale(&self) -> &str {
         if self.scale.is_empty() {
@@ -370,6 +393,13 @@ impl Track {
             }
         }
 
+        // 4b. Also check network branch segments and junction areas if present
+        if let Some(ref net) = self.network {
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
+            }
+        }
+
         // 5. Check Arena / Hybrid floor surface inside boundary hull:
         match &self.kind {
             TrackKind::Arena { boundary_hull, floor_surface, .. } => {
@@ -474,6 +504,13 @@ impl Track {
             }
         }
 
+        // 4b. Also check network branch segments and junction areas if present
+        if let Some(ref net) = self.network {
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
+            }
+        }
+
         // 5. Check Arena / Hybrid floor surface inside boundary hull:
         match &self.kind {
             TrackKind::Arena { boundary_hull, floor_surface, .. } => {
@@ -506,13 +543,115 @@ impl Track {
         // 8. Default terrain
         self.default_surface
     }
+
+    /// Projects a 2D world position onto the track centerline or any of its network segments.
+    pub fn project_point(&self, point: Vec2) -> SplineProjection {
+        let proj = self.spline.project_point(point);
+        if proj.is_on_track || proj.is_on_curb {
+            return proj;
+        }
+
+        if let Some(ref net) = self.network {
+            let mut best_proj = proj;
+            let mut best_dist = proj.distance_to_spline;
+            for seg in &net.segments {
+                if seg.samples.len() >= 2 {
+                    let seg_proj = seg.project_point(point);
+                    if seg_proj.is_on_track || seg_proj.is_on_curb {
+                        return seg_proj;
+                    }
+                    if seg_proj.distance_to_spline < best_dist {
+                        best_dist = seg_proj.distance_to_spline;
+                        best_proj = seg_proj;
+                    }
+                }
+            }
+            return best_proj;
+        }
+
+        proj
+    }
+
+    /// Projects a 2D world position onto the track centerline with continuity constraint around `hint_dist`,
+    /// automatically falling back to check any active network segments if off the primary spline.
+    pub fn project_point_near(&self, point: Vec2, hint_dist: f32) -> SplineProjection {
+        let proj = self.spline.project_point_continuity(point, hint_dist, 45.0);
+        if proj.is_on_track || proj.is_on_curb {
+            return proj;
+        }
+
+        if let Some(ref net) = self.network {
+            let mut best_proj = proj;
+            let mut best_dist = proj.distance_to_spline;
+            for seg in &net.segments {
+                if seg.samples.len() >= 2 {
+                    let seg_proj = seg.project_point(point);
+                    if seg_proj.is_on_track || seg_proj.is_on_curb {
+                        return seg_proj;
+                    }
+                    if seg_proj.distance_to_spline < best_dist {
+                        best_dist = seg_proj.distance_to_spline;
+                        best_proj = seg_proj;
+                    }
+                }
+            }
+            return best_proj;
+        }
+
+        proj
+    }
+
+    /// Prunes or removes any wall barriers in `inner_walls` and `outer_walls` that penetrate
+    /// or cross within the drivable road ribbon of any segment in `self.network`.
+    pub fn trim_walls_for_network(&mut self) {
+        let Some(net) = &self.network else { return; };
+        if net.segments.is_empty() { return; }
+
+        let should_keep_wall = |wall: &WallBarrier| -> bool {
+            let p0 = wall.segment.start;
+            let p1 = wall.segment.end;
+            let p_mid = (p0 + p1) * 0.5;
+
+            for seg in &net.segments {
+                if seg.samples.len() < 2 { continue; }
+
+                // Check endpoints and midpoint against this segment
+                for pt in [p0, p1, p_mid] {
+                    let proj = seg.project_point(pt);
+                    if (wall.elevation - proj.elevation).abs() < 2.0 {
+                        let half_w = proj.track_width * 0.5;
+                        if proj.lateral_offset.abs() < (half_w - 0.2) {
+                            return false; // Point inside drivable road surface
+                        }
+                    }
+                }
+
+                // Check centerline intersections
+                for i in 0..seg.samples.len() - 1 {
+                    let s0 = &seg.samples[i];
+                    let s1 = &seg.samples[i + 1];
+                    let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+                    if (wall.elevation - seg_elev).abs() < 2.0 {
+                        let center_seg = LineSegment::new(s0.point, s1.point);
+                        if wall.segment.intersect_segment(&center_seg).is_some() {
+                            return false; // Intersects road centerline
+                        }
+                    }
+                }
+            }
+            true
+        };
+
+        self.geometry.inner_walls.retain(should_keep_wall);
+        self.geometry.outer_walls.retain(should_keep_wall);
+    }
 }
 
 impl wheelbase::SurfaceSampler for Track {
     #[inline]
     fn sample_surface(&self, world_pos: Vec2) -> wheelbase::SurfaceProperties {
         let surface_type = self.sample_surface(world_pos);
-        let proj = self.spline.project_point(world_pos);
+        let proj = self.project_point(world_pos);
         let mut props = wheelbase::SurfaceProperties::from_type(surface_type);
         props.elevation = proj.elevation;
         props.bank_angle = proj.bank_angle;
@@ -738,6 +877,9 @@ impl Track {
             );
         }
         track.apply_default_runoff_surfaces();
+        if track.network.is_some() {
+            track.trim_walls_for_network();
+        }
         Ok(track)
     }
 
@@ -788,6 +930,9 @@ impl Track {
             self.geometry.outer_walls = right_walls;
             self.geometry.left_boundary_polyline = left_poly;
             self.geometry.right_boundary_polyline = right_poly;
+            if self.network.is_some() {
+                self.trim_walls_for_network();
+            }
             self.apply_default_runoff_surfaces();
         }
     }

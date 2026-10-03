@@ -27,7 +27,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [003](003_extreme_offroad_and_stunt_arenas_career_mode.md) | Extreme Off-Road & Stunt Arenas Career Mode | Feature Spec | `implemented` | - | 5-tier career progression combining open desert raids, ice drifting, deep mud bogs, supercross stadium whoops, and monster truck freestyle stunt arenas across a 17-venue calendar. |
 | [004](004_karting_career_mode.md) | Karting World Cup Career Mode | Feature Spec | `implemented` | - | 5-tier grassroots karting career ladder from 60cc Cadet karts to 240 km/h 250cc Superkarts and novelty racing lawnmowers across a 17-venue calendar. |
 | [005](005_modular_racing_architecture.md) | Modular Motorsport Architecture (wheelbase & arcade-race-core) | Architecture Spec | `implemented` | - | Extraction of reusable zero-dependency Rust engine crates: wheelbase (Pacejka vehicle physics) and arcade-race-core (SAT collisions, splines, timing). |
-| [006](006_road_split_and_branching_tracks.md) | Road Split Segments, Branching Splines & Alternative Circuit Layouts | Architecture Spec | `draft` | - | Directed Ribbon Graph (TrackNetwork) architecture enabling branching splines, Rallycross Joker Laps, and multi-layout tracks. |
+| [006](006_road_split_and_branching_tracks.md) | Road Split Segments, Branching Splines & Alternative Circuit Layouts | Architecture Spec | `implemented` | - | Directed Ribbon Graph (TrackNetwork) architecture enabling branching splines, Rallycross Joker Laps, and multi-layout tracks. |
 | [007](007_extreme_offroad_and_stunt_arenas.md) | Extreme Off-Road & Stunt Arenas Module | Feature Spec | `implemented` | - | High-octane off-road module featuring the 300 BHP Sand Rail Buggy, 15 circuits and open arenas, Mud/Snow physics, and rhythm whoops. |
 | [008](008_modality_selection_and_menu_flow.md) | Race Modality Selection & Interface Flow Restructuring | Feature Spec | `implemented` | - | Dedicated ModalitySelect screen separating Single Player (Quick, Custom, Career, Time Trial) from Multiplayer (Split Screen, LAN, Cloud). |
 | [009](009_real_world_car_models_and_garage.md) | Real-World Vehicle Rosters, Physics Balance & Interactive Garage | Feature Spec | `implemented` | - | Migration from prototypical archetypes to authentic real-world motorsport models across 5 modules and 25 categories, with BoP parity, dual-view 2D rendering, and interactive garage showroom. |
@@ -101,12 +101,16 @@ Table of contents providing progressive disclosure of project constitution and t
 | [078](078_directional_impact_masking_engine_placement_damage_and_archetype_suspension_failure.md) | Directional Impact Masking, Engine Placement Damage, and Archetype Suspension Failure | Feature Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Establishes directional collision impact masking, engine placement vulnerability (Front/Mid/Rear), archetype-specific suspension damage coupling into steering alignment and jump compliance, and itemized post-race repair economics. |
 | [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Tactical Hologram Cockpit Telemetry HUD: Proportional Chassis Geometry, Powertrain Damage, Dual-Mode Suspension, and Dynamic Steered Wheels | Feature Spec | `implemented` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md), [078](078_directional_impact_masking_engine_placement_damage_and_archetype_suspension_failure.md) | Redesigns the cockpit telemetry HUD into a pure graphical Tactical Hologram depicting proportional chassis geometry (ChassisSkeleton), authentic engine placement/damage, decoupled tire wear vs casing temperature, thick perimeter impact indicators, dynamic front wheel Ackermann steering articulation, and dual switchable suspension modes (Variant B Kinematics vs Variant C Telemetry) toggled in settings and via Ctrl+1 / Ctrl+2. |
 | [080](080_curvatureaware_track_boundary_geometry_swallowtail_pinch_elimination_and_global_circuit_validation.md) | Curvature-Aware Track Boundary Geometry, Swallowtail Pinch Elimination, and Global Circuit Validation | Architecture Spec | `implemented` | [042](042_jsononly_official_circuit_catalog_and_embedded_track_data.md), [070](070_global_collinear_wall_optimization_and_circuit_rebake.md), [071](071_centripetal_catmullrom_and_variable_density_track_splines.md) | Eliminates self-intersecting boundary loops (swallowtail singularities) across road edges, apex curbs, and perimeter walls caused by sub-width curvature radii (R < W/2), establishes rigorous validation guardrails in validate_track, repairs all 53 affected catalog circuits including scaled-down real tracks like Catalunya, and implements curvature-adaptive width tapering and synchronized boundary untangling. |
+| [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits | Feature Spec | `in_progress` | [006](006_road_split_and_branching_tracks.md), [021](021_authentic_openstreetmap_references_and_circuit_provenance.md) | Introduces authentic Joker Lap branching segments to all Classic and real-world OpenStreetMap Rallycross circuits via Directed Ribbon Graph (TrackNetwork), with mixed-surface transitions, gore crash attenuators, and snap-to-merge stitching. |
+| [082](082_mandatory_rallycross_joker_lap_tracking_and_penalty_enforcement.md) | Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement | Feature Spec | `draft` | [006](006_road_split_and_branching_tracks.md), [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Implements FIA Rallycross sporting regulation enforcement requiring every participant to complete at least one Joker Lap per race, featuring multi-car session tracking, dynamic HUD/spotter alerts, AI strategic decision-making, and post-race time penalties. |
 | [083](083_evorl_bot_driving_style_and_performance_optimization.md) | EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization | Architecture Spec | `draft` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [065](065_vehiclegeneric_bot_ai_and_effects.md) | Architectural blueprint and evolutionary optimization pipeline leveraging the EvoRL framework to calibrate TDRace bot control laws, amplify authentic driving style uniqueness, enforce monotonic tier progression, and evolve tactical Behavior Trees via high-throughput headless simulation. |
 
 ### 🗺️ Specification Dependency Graph
 
 ```mermaid
 flowchart LR
+    006["006: Road Split Segments, Branching Splines & Alternative Circuit Layouts"]
+    021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
     046["046: Human-Like Bot Driving with Tiered Mistakes and Varied Lines"]
@@ -126,6 +130,8 @@ flowchart LR
     078["078: Directional Impact Masking, Engine Placement Damage, and Archetype Suspension Failure"]
     079["079: Tactical Hologram Cockpit Telemetry HUD: Proportional Chassis Geometry, Powertrain Damage, Dual-Mode Suspension, and Dynamic Steered Wheels"]
     080["080: Curvature-Aware Track Boundary Geometry, Swallowtail Pinch Elimination, and Global Circuit Validation"]
+    081["081: Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits"]
+    082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
     083["083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"]
     055 --> 047
     062 --> 063
@@ -144,6 +150,10 @@ flowchart LR
     042 --> 080
     070 --> 080
     071 --> 080
+    006 --> 081
+    021 --> 081
+    006 --> 082
+    081 --> 082
     023 --> 083
     046 --> 083
     065 --> 083

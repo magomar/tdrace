@@ -1247,6 +1247,7 @@ mod tests {
                 perimeter_barrier: Some(BarrierType::Concrete),
             },
             spline: crate::track::TrackSpline::new(vec![], false),
+            network: None,
             geometry: TrackGeometry::default(),
             checkpoints: vec![],
             grid_positions: vec![
