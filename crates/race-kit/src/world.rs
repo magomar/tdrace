@@ -313,7 +313,11 @@ impl<V: Vehicle> RaceWorld<V> {
         // Race progression, lap tracking, sector splits, pit service state machine
         for i in 0..n_cars {
             let was_in_pit = self.trackers[i].in_pit_lane;
-            self.trackers[i].update(&self.vehicles[i], &track.spline, &track.checkpoints, dt);
+            if let Some(net) = &track.network {
+                self.trackers[i].update_network(&self.vehicles[i], net, &track.checkpoints, dt);
+            } else {
+                self.trackers[i].update(&self.vehicles[i], &track.spline, &track.checkpoints, dt);
+            }
 
             // Also check track.pit_lane entry and exit line segments if defined
             if let Some(lane) = &track.pit_lane {

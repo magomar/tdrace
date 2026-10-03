@@ -587,6 +587,9 @@ pub struct RaceSession {
     pub track: Track,
     pub track_choice: TrackChoice,
     pub track_manager: TrackManager,
+    pub selected_layout_id: Option<String>,
+    pub show_layout_modal: bool,
+    pub layout_modal_idx: usize,
     pub car_choice: CarChoice,
     pub free_car_selection: bool,
     pub game_mode: GameMode,
@@ -864,6 +867,9 @@ impl RaceSession {
             track,
             track_choice,
             track_manager,
+            selected_layout_id: None,
+            show_layout_modal: false,
+            layout_modal_idx: 0,
             car_choice,
             free_car_selection: false,
             game_mode: GameMode::StandardRace,
@@ -2092,7 +2098,18 @@ impl RaceSession {
 
     /// Loads the track corresponding to a TrackChoice respecting specialized modules.
     pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
-        self.track_manager.load_track(choice).unwrap_or_else(|_| crate::tracks::official::fallback_track())
+        let mut track = self.track_manager.load_track(choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
+        if let Some(ref layout_id) = self.selected_layout_id {
+            if let Some(ref mut network) = track.network {
+                if network.get_layout(layout_id).is_some() {
+                    network.default_layout_id = layout_id.clone();
+                    if let Some(composite_spline) = network.build_composite_spline_for_layout(layout_id) {
+                        track.spline = composite_spline;
+                    }
+                }
+            }
+        }
+        track
     }
 
     /// Resolves and applies the effective configuration for the given module ID
@@ -4676,9 +4693,22 @@ impl RaceSession {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
             let bot_profile = character.resolve_profile(bot_tier);
-            // Spec 046: the grid entry seed (session seed + bot index) drives the human layer.
             let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
-            self.ai_drivers.push(BotAiDriver::with_seed(bot_profile, bot_seed));
+            let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed);
+            if bot_ai.profile.aggression > 0.8 {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
+                    planned_joker_lap: 2,
+                    adaptive_traffic_undercut: true,
+                });
+            } else if matches!(character.style, crate::ai::DrivingStyle::Calculating | crate::ai::DrivingStyle::Smooth) {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
+                    planned_joker_lap: 3,
+                    adaptive_traffic_undercut: false,
+                });
+            } else {
+                bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::DynamicTrafficAvoidance);
+            }
+            self.ai_drivers.push(bot_ai);
         }
     }
 
@@ -10579,6 +10609,42 @@ impl RaceSession {
             return;
         }
 
+        let available_tracks = self.filtered_menu_tracks();
+        // Handle Layout Selection Modal inputs if open
+        if self.show_layout_modal {
+            if let Some(track_opt) = available_tracks.get(self.menu_track_idx) {
+                if let Some(mut tr) = resolve_track_for_menu(track_opt) {
+                    let net = tr.ensure_network();
+                    let num_layouts = net.layouts.len();
+                    if num_layouts > 0 {
+                        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.layout_modal_idx = self.layout_modal_idx.saturating_sub(1);
+                        }
+                        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            if self.layout_modal_idx + 1 < num_layouts {
+                                self.layout_modal_idx += 1;
+                            }
+                        }
+                        if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::Space) || self.input.gamepad.snapshot.btn_confirm_pressed {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.selected_layout_id = Some(net.layouts[self.layout_modal_idx].id.clone());
+                            self.show_layout_modal = false;
+                            return;
+                        }
+                        if is_key_pressed(KeyCode::Escape) || is_key_pressed(KeyCode::L) || self.input.gamepad.snapshot.btn_b_pressed {
+                            self.audio.play_sfx(SfxType::UiSelect);
+                            self.show_layout_modal = false;
+                            return;
+                        }
+                        return;
+                    }
+                }
+            }
+            self.show_layout_modal = false;
+        }
+
         // Open Arcade Settings Modal (X key or O key)
         if is_key_pressed(KeyCode::X) || is_key_pressed(KeyCode::O) {
             self.audio.play_sfx(SfxType::UiSelect);
@@ -11094,6 +11160,22 @@ impl RaceSession {
                         track_choice.title().to_string(),
                         CircuitViewerOrigin::Menu,
                     );
+                    return;
+                }
+            }
+        }
+
+        // Circuit Layout Selector Modal (L key)
+        if is_key_pressed(KeyCode::L) && self.menu_track_idx < available_tracks.len() {
+            let chosen = &available_tracks[self.menu_track_idx];
+            if let Some(mut tr) = resolve_track_for_menu(chosen) {
+                let net = tr.ensure_network();
+                if net.layouts.len() > 1 {
+                    self.audio.play_sfx(SfxType::UiSelect);
+                    let cur_id = self.selected_layout_id.as_deref().unwrap_or(&net.default_layout_id);
+                    let cur_idx = net.layouts.iter().position(|l| l.id == cur_id).unwrap_or(0);
+                    self.layout_modal_idx = cur_idx;
+                    self.show_layout_modal = true;
                     return;
                 }
             }
@@ -12293,6 +12375,15 @@ impl RaceSession {
                     .collect();
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                    if let Some(tracker) = self.world.trackers.get(i) {
+                        if tracker.current_lap > ai.current_lap {
+                            if ai.was_in_joker {
+                                ai.joker_laps_taken += 1;
+                                ai.was_in_joker = false;
+                            }
+                            ai.current_lap = tracker.current_lap;
+                        }
+                    }
                     ai.compute_controls(
                         &self.world.vehicles[i],
                         &self.track,
@@ -12355,6 +12446,15 @@ impl RaceSession {
                         .collect();
 
                     if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
+                        if let Some(tracker) = self.world.trackers.get(i) {
+                            if tracker.current_lap > ai.current_lap {
+                                if ai.was_in_joker {
+                                    ai.joker_laps_taken += 1;
+                                    ai.was_in_joker = false;
+                                }
+                                ai.current_lap = tracker.current_lap;
+                            }
+                        }
                         ai.compute_controls(
                             &self.world.vehicles[i],
                             &self.track,
@@ -13636,6 +13736,9 @@ impl RaceSession {
                     is_lan_host,
                     self.menu_origin == MenuOrigin::StartingGrid,
                     self.menu_focused_panel,
+                    self.selected_layout_id.as_deref(),
+                    self.show_layout_modal,
+                    self.layout_modal_idx,
                 );
                 if self.show_exit_confirm {
                     if let Some(ref modal) = self.exit_confirm_modal {
