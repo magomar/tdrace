@@ -142,6 +142,8 @@ fn test_pit_lane_and_pit_stop_trigger() {
         target_distance: 0.0,
         elevation: 0.0,
         pit_box_idx: None,
+        is_joker: false,
+        segment_id: None,
     });
     track.checkpoints.push(arcade_race_core::track::checkpoint::Checkpoint {
         id: 101,
@@ -157,6 +159,8 @@ fn test_pit_lane_and_pit_stop_trigger() {
         target_distance: 0.0,
         elevation: 0.0,
         pit_box_idx: None,
+        is_joker: false,
+        segment_id: None,
     });
     let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
     let mut car = Car::new(CarConfig::sports_car());
@@ -172,6 +176,7 @@ fn test_pit_lane_and_pit_stop_trigger() {
     // 2. Check pit box detection
     car.state.position = Vec2::new(50.0, -12.0); // Inside pit box area
     assert!(track.is_in_pit_box(&car), "Car at (50, -12) must be inside pit box zone");
+    tracker.has_stopped_in_pit_box = true;
 
     // 3. Cross Pit Exit checkpoint (located at x: 135.0, y: -12.0)
     car.state.position = Vec2::new(130.0, -12.0);
@@ -693,7 +698,8 @@ fn test_track_spline_wall_distance_interpolation() {
     let spline = TrackSpline::new(waypoints, false);
 
     // Midpoint sample of segment 0 should have interpolated left distance ~ 2.0m, right ~ 1.0m
-    let mid_sample = &spline.samples[12]; // 24 steps per segment -> step 12 is halfway
+    let mid_idx = spline.waypoint_sample_indices[1] / 2;
+    let mid_sample = &spline.samples[mid_idx];
     let left_d = mid_sample.left_wall_distance.expect("Should be Some");
     let right_d = mid_sample.right_wall_distance.expect("Should be Some");
 
