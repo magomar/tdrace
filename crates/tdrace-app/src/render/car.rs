@@ -216,10 +216,8 @@ pub fn draw_steered_wheel_with_accent(
         let lip_pos = pos + outer_dir * (dest_w * 0.42);
         let p_start = lip_pos - tire_fwd * (dest_h * 0.35);
         let p_end = lip_pos + tire_fwd * (dest_h * 0.35);
-        draw_line(p_start.x, p_start.y, p_end.x, p_end.y, (dest_w * 0.16).max(2.0), col);
-
-        // Center hub colored indicator dot
-        draw_circle(pos.x, pos.y, (dest_w * 0.18).max(1.2), col);
+        let stripe_thickness = (dest_w * 0.16).clamp(0.02, 0.05);
+        draw_line(p_start.x, p_start.y, p_end.x, p_end.y, stripe_thickness, col);
     }
 }
 

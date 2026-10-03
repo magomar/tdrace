@@ -1963,3 +1963,41 @@ fn test_wheel_texture_cache_memory_bounds() {
         assert_eq!(rgba[3], 1.0, "Accent color alpha must be 1.0");
     }
 }
+
+#[test]
+fn test_spec_074_steered_wheel_accent_scale_and_dimensions() {
+    use tdrace_app::render::vehicle_assets::get_steered_wheel_config;
+
+    let models = [
+        "classic_kart",
+        "classic_kart_vintage",
+        "classic_gt",
+        "classic_gt_vintage",
+        "classic_nascar",
+        "classic_stock_vintage",
+        "classic_rally",
+        "classic_rx_vintage",
+        "classic_ax_mudlark",
+        "classic_ax_brawler",
+        "classic_offroad",
+        "classic_at_safari",
+    ];
+
+    for m in models {
+        let cfg = get_steered_wheel_config(m).expect("Steered wheel config must exist");
+        let dest_w = cfg.wheel_size.x;
+        let dest_h = cfg.wheel_size.y;
+
+        // Physical wheel size bounds in meters
+        assert!(dest_w >= 0.15 && dest_w <= 0.35, "Wheel width {dest_w} out of physical range for {m}");
+        assert!(dest_h >= 0.20 && dest_h <= 0.65, "Wheel height {dest_h} out of physical range for {m}");
+
+        // Sidewall stripe thickness must be strictly sub-decimeter (e.g. 2-5 cm) to avoid obscuring car sprites
+        let stripe_thickness = (dest_w * 0.16).clamp(0.02, 0.05);
+        assert!(stripe_thickness <= 0.05, "Stripe thickness {stripe_thickness} must be <= 5cm");
+        assert!(stripe_thickness >= 0.02, "Stripe thickness {stripe_thickness} must be >= 2cm");
+        assert!(stripe_thickness < dest_w * 0.25, "Stripe thickness must not dominate wheel width");
+    }
+}
+
+
