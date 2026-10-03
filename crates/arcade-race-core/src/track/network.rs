@@ -326,6 +326,19 @@ impl RoadSegment {
         self
     }
 
+    /// Converts this road segment into a flat open `TrackSpline` using its waypoints and samples.
+    pub fn to_spline(&self) -> TrackSpline {
+        TrackSpline {
+            waypoints: self.waypoints.clone(),
+            closed: false,
+            samples: self.samples.clone(),
+            total_length: self.length,
+            curves: Vec::new(),
+            sample_segments: Vec::new(),
+            waypoint_sample_indices: Vec::new(),
+        }
+    }
+
     /// Recomputes dense spline samples with optional socket boundary constraints.
     ///
     /// When `entry_socket` is provided:
