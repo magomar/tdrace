@@ -638,33 +638,23 @@ impl TrackSpline {
         self.waypoint_sample_indices.get(waypoint_index).copied()
     }
 
-    /// Computes untangled left and right road edge vertices, exactly matching `samples.len()`.
+    /// Computes synchronized untangled left/right road and curb outer boundary vertices,
+    /// each slice exactly matching `samples.len()`.
     ///
-    /// When curve radius R is smaller than road half-width w/2, offsetting the centerline
-    /// causes the inner boundary to self-intersect, creating an inverted swallowtail singularity (><).
-    /// This method detects such local self-intersections and collapses all vertices within the loop
-    /// to the intersection point, guaranteeing a non-self-intersecting boundary and converting
-    /// inverted quads into clean triangle fans around the corner apex.
-    pub fn untangled_road_edges(&self) -> (Vec<Vec2>, Vec<Vec2>) {
+    /// Synchronizes loop collapse intervals between road and curb boundaries to eliminate
+    /// bowtie quads and inverted mesh artifacts at tight corner apexes.
+    pub fn untangled_boundaries(
+        &self,
+        curb_extra_width: f32,
+    ) -> (Vec<Vec2>, Vec<Vec2>, Vec<Vec2>, Vec<Vec2>) {
         let n = self.samples.len();
         if n == 0 {
-            return (Vec::new(), Vec::new());
+            return (Vec::new(), Vec::new(), Vec::new(), Vec::new());
         }
-        let mut left_edges: Vec<Vec2> = self.samples.iter().map(|s| s.point + s.normal * (s.width * 0.5)).collect();
-        let mut right_edges: Vec<Vec2> = self.samples.iter().map(|s| s.point - s.normal * (s.width * 0.5)).collect();
 
-        untangle_offset_vertices(&mut left_edges, self.closed);
-        untangle_offset_vertices(&mut right_edges, self.closed);
+        let mut left_road: Vec<Vec2> = self.samples.iter().map(|s| s.point + s.normal * (s.width * 0.5)).collect();
+        let mut right_road: Vec<Vec2> = self.samples.iter().map(|s| s.point - s.normal * (s.width * 0.5)).collect();
 
-        (left_edges, right_edges)
-    }
-
-    /// Computes untangled left and right curb outer edge vertices, exactly matching `samples.len()`.
-    pub fn untangled_curb_edges(&self, curb_extra_width: f32) -> (Vec<Vec2>, Vec<Vec2>) {
-        let n = self.samples.len();
-        if n == 0 {
-            return (Vec::new(), Vec::new());
-        }
         let mut left_curb: Vec<Vec2> = self.samples.iter().map(|s| {
             let extra = if s.left_curb { curb_extra_width } else { 0.0 };
             s.point + s.normal * (s.width * 0.5 + extra)
@@ -674,9 +664,21 @@ impl TrackSpline {
             s.point - s.normal * (s.width * 0.5 + extra)
         }).collect();
 
-        untangle_offset_vertices(&mut left_curb, self.closed);
-        untangle_offset_vertices(&mut right_curb, self.closed);
+        untangle_road_and_curb(&mut left_road, &mut left_curb, self.closed);
+        untangle_road_and_curb(&mut right_road, &mut right_curb, self.closed);
 
+        (left_road, right_road, left_curb, right_curb)
+    }
+
+    /// Computes untangled left and right road edge vertices, exactly matching `samples.len()`.
+    pub fn untangled_road_edges(&self) -> (Vec<Vec2>, Vec<Vec2>) {
+        let (left_road, right_road, _, _) = self.untangled_boundaries(1.35);
+        (left_road, right_road)
+    }
+
+    /// Computes untangled left and right curb outer edge vertices, exactly matching `samples.len()`.
+    pub fn untangled_curb_edges(&self, curb_extra_width: f32) -> (Vec<Vec2>, Vec<Vec2>) {
+        let (_, _, left_curb, right_curb) = self.untangled_boundaries(curb_extra_width);
         (left_curb, right_curb)
     }
 
@@ -1242,6 +1244,123 @@ pub fn untangle_offset_vertices(pts: &mut [Vec2], closed: bool) {
     }
 }
 
+/// Finds the intersection point of two 2D lines defined by (origin, direction).
+#[inline]
+pub fn line_intersection_2d(p1: Vec2, d1: Vec2, p2: Vec2, d2: Vec2) -> Option<Vec2> {
+    let cross = d1.x * d2.y - d1.y * d2.x;
+    if cross.abs() < 1e-5 {
+        return None;
+    }
+    let dp = p2 - p1;
+    let t = (dp.x * d2.y - dp.y * d2.x) / cross;
+    Some(p1 + d1 * t)
+}
+
+/// Synchronously untangles drivable road edges and curb outer edges.
+///
+/// When a tight corner causes the inner road boundary to cross itself (swallowtail loop),
+/// collapsing only the road edge or collapsing road and curb independently creates
+/// misaligned collapsed intervals, inverted trapezoids, and bowtie quad artifacts.
+///
+/// This function synchronously detects loop intervals on the road boundary and collapses
+/// the corresponding curb vertices within the exact same sample interval to the apex curb
+/// intersection, guaranteeing synchronized apex fans and zero boundary self-intersections.
+pub fn untangle_road_and_curb(
+    road_pts: &mut [Vec2],
+    curb_pts: &mut [Vec2],
+    closed: bool,
+) {
+    let n = road_pts.len();
+    if n < 4 || curb_pts.len() != n {
+        return;
+    }
+    let max_loop_span = 40.min(n / 2);
+    let mut changed = true;
+    let mut passes = 0;
+
+    while changed && passes < 16 {
+        changed = false;
+        passes += 1;
+
+        'outer: for i in 0..n {
+            let p0 = road_pts[i];
+            let next_i = (i + 1) % n;
+            let p1 = road_pts[next_i];
+            if (p1 - p0).length_squared() < 1e-6 {
+                continue;
+            }
+            let seg_a = LineSegment::new(p0, p1);
+
+            for span in 2..=max_loop_span {
+                let j = (i + span) % n;
+                if !closed && i + span >= n {
+                    break;
+                }
+                let next_j = (j + 1) % n;
+                if !closed && j + 1 >= n {
+                    break;
+                }
+                if next_j == i || next_i == j {
+                    continue;
+                }
+
+                let p2 = road_pts[j];
+                let p3 = road_pts[next_j];
+                if (p3 - p2).length_squared() < 1e-6 {
+                    continue;
+                }
+                let seg_b = LineSegment::new(p2, p3);
+
+                if (seg_a.start - seg_b.start).length_squared() < 1e-4
+                    || (seg_a.start - seg_b.end).length_squared() < 1e-4
+                    || (seg_a.end - seg_b.start).length_squared() < 1e-4
+                    || (seg_a.end - seg_b.end).length_squared() < 1e-4
+                {
+                    continue;
+                }
+
+                if let Some(road_hit) = seg_a.intersect_segment(&seg_b) {
+                    let c0 = curb_pts[i];
+                    let c1 = curb_pts[next_i];
+                    let c2 = curb_pts[j];
+                    let c3 = curb_pts[next_j];
+
+                    let dir_a = c1 - c0;
+                    let dir_b = c3 - c2;
+                    let curb_hit = line_intersection_2d(c0, dir_a, c2, dir_b)
+                        .filter(|hit| (*hit - road_hit).length_squared() <= 625.0)
+                        .unwrap_or_else(|| {
+                            let offset_a = c0 - p0;
+                            let offset_b = c2 - p2;
+                            road_hit + (offset_a + offset_b) * 0.5
+                        });
+
+                    if j > i {
+                        for k in (i + 1)..=j {
+                            road_pts[k] = road_hit;
+                            curb_pts[k] = curb_hit;
+                        }
+                    } else if closed {
+                        for k in (i + 1)..n {
+                            road_pts[k] = road_hit;
+                            curb_pts[k] = curb_hit;
+                        }
+                        for k in 0..=j {
+                            road_pts[k] = road_hit;
+                            curb_pts[k] = curb_hit;
+                        }
+                    }
+                    changed = true;
+                    break 'outer;
+                }
+            }
+        }
+    }
+
+    // Resolve any remaining curb-only self-intersections
+    untangle_offset_vertices(curb_pts, closed);
+}
+
 /// 2D Centripetal Catmull-Rom interpolation (alpha = 0.5) for points p0, p1, p2, p3 at parameter t in [0, 1].
 ///
 /// Uses the Barry and Goldman pyramidal formulation with chord lengths parameterized by Euclidean distance:
@@ -1687,6 +1806,67 @@ mod tests {
                         i, j
                     );
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn test_synchronized_road_and_curb_untangling_on_hairpin() {
+        let waypoints = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(30.0, 0.0), 12.0).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(32.0, 2.0), 12.0).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(30.0, 4.0), 12.0).with_curbs(true, true),
+            TrackWaypoint::new(Vec2::new(0.0, 4.0), 12.0).with_curbs(true, true),
+        ];
+        let spline = TrackSpline::new(waypoints, true);
+        let n = spline.samples.len();
+
+        let (road_l, road_r, curb_l, curb_r) = spline.untangled_boundaries(1.35);
+        assert_eq!(road_l.len(), n);
+        assert_eq!(road_r.len(), n);
+        assert_eq!(curb_l.len(), n);
+        assert_eq!(curb_r.len(), n);
+
+        // Verify zero boundary self-intersections on road and curb
+        for edge in [&road_l, &road_r, &curb_l, &curb_r] {
+            for i in 0..n {
+                let p0 = edge[i];
+                let p1 = edge[(i + 1) % n];
+                if (p1 - p0).length_squared() < 1e-4 {
+                    continue;
+                }
+                let seg_a = LineSegment::new(p0, p1);
+                for span in 2..=(15.min(n / 2)) {
+                    let j = (i + span) % n;
+                    let p2 = edge[j];
+                    let p3 = edge[(j + 1) % n];
+                    if (p3 - p2).length_squared() < 1e-4 {
+                        continue;
+                    }
+                    let seg_b = LineSegment::new(p2, p3);
+                    if (seg_a.start - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.start - seg_b.end).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.start).length_squared() < 1e-4
+                        || (seg_a.end - seg_b.end).length_squared() < 1e-4
+                    {
+                        continue;
+                    }
+                    assert!(
+                        seg_a.intersect_segment(&seg_b).is_none(),
+                        "Synchronized boundary must not contain self-intersections at ({i}, {j})"
+                    );
+                }
+            }
+        }
+
+        // Verify synchronized collapse on inner side (left)
+        for i in 0..n {
+            let next_i = (i + 1) % n;
+            let road_collapsed = (road_l[next_i] - road_l[i]).length_squared() < 1e-4;
+            let curb_collapsed = (curb_l[next_i] - curb_l[i]).length_squared() < 1e-4;
+            if road_collapsed {
+                assert!(curb_collapsed, "When road collapses, curb must also collapse at sample {i}");
             }
         }
     }
