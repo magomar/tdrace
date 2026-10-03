@@ -1,7 +1,7 @@
 use macroquad::color::Color;
 use tdrace_core::physics::config::{
-    CarConfig, ChassisSkeleton, DifferentialType, DriverAssistsConfig, SuspensionConfig,
-    TerrainInteractionConfig, TireConfig,
+    CarConfig, ChassisSkeleton, DifferentialType, DriverAssistsConfig, EnginePlacement,
+    SuspensionConfig, TerrainInteractionConfig, TireConfig,
 };
 
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
@@ -105,6 +105,7 @@ impl GtWorldChallengeModule {
             ),
             chassis: ChassisSkeleton::new(0.88, 1.18, 2.04, -0.40, 0.30, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::double_wishbone(),
+            engine_placement: EnginePlacement::RearEngine,
         }
         .finalized()
     }
@@ -125,6 +126,7 @@ impl GtWorldChallengeModule {
     /// GT4 Clubsport Spec: 420 BHP, RWD, lightweight, low aero (Cl=0.85)
     pub fn car_gt4_clubsport() -> CarConfig {
         let mut cfg = Self::car_gt3_evo();
+        cfg.engine_placement = EnginePlacement::FrontEngine;
         cfg.mass = 1320.0;
         cfg.inertia = 1620.0;
         cfg.suspension = SuspensionConfig::macpherson_strut();
@@ -141,6 +143,7 @@ impl GtWorldChallengeModule {
     /// 90s Le Mans GT1 Legend Spec: 650 BHP, raw RWD, twin-turbo, high aero (Cl=2.60), analog zero assists
     pub fn car_gt1_legend() -> CarConfig {
         let mut cfg = Self::car_gt3_evo();
+        cfg.engine_placement = EnginePlacement::MidEngine;
         cfg.mass = 1120.0;
         cfg.inertia = 1380.0;
         cfg.max_engine_force = 10400.0; // ~650 BHP GT1 Twin-Turbo
@@ -156,6 +159,7 @@ impl GtWorldChallengeModule {
     /// LMH & LMDh Hypercar Prototype Spec: 800 BHP, hybrid deploy, ground-effect tunnels (Cl=3.10)
     pub fn car_hypercar_prototype() -> CarConfig {
         let mut cfg = Self::car_gt3_evo();
+        cfg.engine_placement = EnginePlacement::MidEngine;
         cfg.mass = 1030.0;
         cfg.inertia = 1250.0;
         cfg.wheelbase = 3.15;
