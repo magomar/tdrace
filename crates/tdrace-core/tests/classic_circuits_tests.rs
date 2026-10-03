@@ -348,6 +348,59 @@ fn test_canyon_flyer_has_water_gap_and_whoops() {
     assert!(whoops_count >= 6, "Canyon Flyer should have a whoops section with at least 6 ramps (found {})", whoops_count);
 }
 
+/// Scenario: Classic RX circuits load valid Joker track networks (Spec 081)
+///
+/// Given the 4 Classic Module Rallycross circuits (`rx_quarry_sprint`, `rx_hilltop_leap`, `rx_canyon_flyer`, `classic_rallycross`)
+/// When each track is loaded via `catalog::official_track`
+/// Then `track.network` contains both `"main"` and `"joker"` layouts
+/// And the `"joker"` layout has an arc-length between 30 m and 70 m longer than `"main"`
+#[test]
+fn test_classic_rallycross_circuits_have_joker_track_networks() {
+    let rx_circuits = [
+        "rx_quarry_sprint",
+        "rx_hilltop_leap",
+        "rx_canyon_flyer",
+        "classic_rallycross",
+    ];
+
+    for id in rx_circuits {
+        let track = catalog::official_track("classic", id);
+        let network = track.network.as_ref().unwrap_or_else(|| {
+            panic!("{}: missing track.network", id);
+        });
+
+        let main_layout = network.get_layout("main").unwrap_or_else(|| {
+            panic!("{}: missing main layout in track network", id);
+        });
+        let joker_layout = network.get_layout("joker").unwrap_or_else(|| {
+            panic!("{}: missing joker layout in track network", id);
+        });
+
+        let delta = joker_layout.total_lap_length - main_layout.total_lap_length;
+        assert!(
+            delta >= 30.0 && delta <= 70.0,
+            "{}: joker delta {:.1} m must be between 30 m and 70 m (main: {:.1} m, joker: {:.1} m)",
+            id,
+            delta,
+            main_layout.total_lap_length,
+            joker_layout.total_lap_length
+        );
+
+        // Verify composite splines can be synthesized for both layouts
+        let main_spline = network.build_composite_spline_for_layout("main");
+        assert!(main_spline.is_some(), "{}: failed to build composite spline for main layout", id);
+        let joker_spline = network.build_composite_spline_for_layout("joker");
+        assert!(joker_spline.is_some(), "{}: failed to build composite spline for joker layout", id);
+
+        // Verify split and merge junctions exist
+        assert_eq!(network.junctions.len(), 2, "{}: expected 2 junctions (split and merge)", id);
+
+        // Verify joker checkpoints exist
+        let has_joker_cp = track.checkpoints.iter().any(|cp| cp.is_joker);
+        assert!(has_joker_cp, "{}: track must have at least one joker checkpoint", id);
+    }
+}
+
 /// (id, design lap m, car_model_id, min_berm_deg, min_elev_range, laps)
 const AUTOCROSS: [(&str, f32, &str, f32, f32, u32); 3] = [
     ("ax_meadow_sprint", 800.0, "classic_ax_mudlark", 6.0, 2.0, 6),
