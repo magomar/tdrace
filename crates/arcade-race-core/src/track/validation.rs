@@ -1216,6 +1216,44 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                 .with_details("Place pit box stalls along the pit lane for pit stop servicing."),
             );
         }
+
+        for (i, box_slot) in lane.pit_boxes.iter().enumerate() {
+            let main_proj = track.spline.project_point(box_slot.position);
+            if main_proj.is_on_track {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_PIT_BOX_ON_TRACK",
+                        format!("Pit stall {} overlaps the main track drivable asphalt.", i),
+                    )
+                    .with_details("Shift the pit box stall outward into the dedicated working lane."),
+                );
+            }
+        }
+
+        let half_w = lane.road_width * 0.5;
+        for wall in track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls) {
+            let p0 = wall.segment.start;
+            let p1 = wall.segment.end;
+            let p_mid = (p0 + p1) * 0.5;
+            let mut wall_blocks = false;
+            for pt in [p0, p1, p_mid] {
+                let proj = lane.spline.project_point(pt);
+                if (wall.elevation - proj.elevation).abs() < 1.5 && proj.lateral_offset.abs() < (half_w - 0.25) {
+                    wall_blocks = true;
+                    break;
+                }
+            }
+            if wall_blocks {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_WALL_BLOCKS_PIT_LANE",
+                        "A barrier wall penetrates the drivable pit road ribbon.",
+                    )
+                    .with_details("Trim barrier walls intersecting the pit lane entrance or exit."),
+                );
+                break;
+            }
+        }
     }
 
     diagnostics

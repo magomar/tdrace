@@ -88,7 +88,55 @@ async fn main() {
             if args.iter().any(|a| a == "--gallery") {
                 session.garage_gallery_mode = true;
             }
-            session.state = tdrace_app::game::GameState::Garage(tdrace_app::game::GarageOrigin::ModalitySelect);
+        } else if clean_arg == "track" || clean_arg == "circuit" {
+            if let Some(target) = args.get(i + 1) {
+                let track_opt = if target.ends_with(".json") || target.contains('/') {
+                    tdrace_core::track::Track::load_from_file(target).ok()
+                } else if let Ok(t) = tdrace_core::track::Track::load_from_file(format!("tracks/gt/{}.json", target)) {
+                    Some(t)
+                } else {
+                    session.track_manager.load_track_by_slug(target).ok()
+                };
+                if let Some(track) = track_opt {
+                    let id = target.trim_end_matches(".json").split('/').next_back().unwrap_or(target).to_string();
+                    let name = track.name.clone();
+                    let path = format!("tracks/gt/{}.json", id);
+                    session.track_choice = tdrace_app::ui::menu::TrackChoice::Custom {
+                        id,
+                        title: name,
+                        description: String::new(),
+                        path,
+                    };
+                    session.track = track;
+                }
+            }
+        } else if clean_arg == "editor" {
+            let track = session.track.clone();
+            session.enter_track_editor(track);
+        } else if clean_arg == "in-pit" || clean_arg == "pit-stop" {
+            session.init_race();
+            if let Some(lane) = &session.track.pit_lane {
+                if let Some(b0) = lane.pit_boxes.first() {
+                    if let Some(v0) = session.world.vehicles.first_mut() {
+                        let fwd = if b0.direction.length_squared() > 1e-4 {
+                            b0.direction.normalize()
+                        } else {
+                            tdrace_core::Vec2::X
+                        };
+                        let angle = fwd.y.atan2(fwd.x);
+                        v0.state.position = b0.position;
+                        v0.state.velocity = tdrace_core::Vec2::ZERO;
+                        v0.state.angle = angle;
+                    }
+                    if let Some(pit_state) = session.world.pit_states.first_mut() {
+                        *pit_state = race_kit::PitServiceState::StationaryInBox {
+                            timer: 1.25,
+                            target_duration: 2.5,
+                        };
+                    }
+                }
+            }
+            session.state = tdrace_app::game::GameState::Racing;
         } else if clean_arg == "race" || clean_arg == "quick-race" {
             session.init_race();
             session.state = tdrace_app::game::GameState::StartingGrid;
@@ -119,9 +167,28 @@ async fn main() {
         .and_then(|i| args.get(i + 1))
         .and_then(|s| s.parse().ok())
         .unwrap_or(10);
+    let focus_pit = args.iter().any(|a| a == "--focus-pit");
     let mut frame_count: u32 = 0;
 
     loop {
+        if focus_pit && frame_count <= 2 {
+            if let Some(lane) = &session.track.pit_lane {
+                let mut min = tdrace_core::Vec2::splat(f32::MAX);
+                let mut max = tdrace_core::Vec2::splat(f32::MIN);
+                for wp in &lane.spline.waypoints {
+                    min = min.min(wp.point);
+                    max = max.max(wp.point);
+                }
+                min -= tdrace_core::Vec2::splat(30.0);
+                max += tdrace_core::Vec2::splat(30.0);
+                let sw = screen_width();
+                let sh = screen_height();
+                session.editor_camera.focus_bounds(min, max, sw, sh);
+                session.editor_camera.center = session.editor_camera.target_center;
+                session.editor_camera.zoom = session.editor_camera.target_zoom;
+            }
+        }
+
         // Clear background with active track's pallid backdrop color
         clear_background(session.active_backdrop_color());
 

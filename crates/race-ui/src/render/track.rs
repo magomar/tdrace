@@ -5,7 +5,7 @@ use macroquad::color::{Color, WHITE};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use wheelbase::surface::SurfaceType;
-use arcade_race_core::track::geometry::{LineSegment, SurfaceLayer, SurfaceShape};
+use arcade_race_core::track::geometry::{LineSegment, PitLane, SurfaceLayer, SurfaceShape};
 use arcade_race_core::track::network::{JunctionKind, RoadSegment};
 use arcade_race_core::track::spline::{SplineSample, TrackSpline};
 use arcade_race_core::track::Track;
@@ -375,6 +375,11 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
+    // 2b. Render procedural pit lane road ribbon (Spec 062/077)
+    if let Some(pit_lane) = &track.pit_lane {
+        render_surface_pass(&pit_lane.spline, false, view_bounds);
+    }
+
     // 3. Render segment runoff corridors, ground curbs and ground surface quads
     if let Some(ref net) = track.network {
         let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
@@ -414,6 +419,11 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
     // 3b. Render network junctions (paved throat wedges, gore triangles, chevrons, nose attenuators)
     render_network_junctions_pass(track, false, view_bounds);
 
+    // 3c. Render pit lane junctions (throat wedge, gore triangle, chevrons, attenuators, merge patch)
+    if let Some(pit_lane) = &track.pit_lane {
+        render_pit_lane_junctions_pass(track, pit_lane, view_bounds);
+    }
+
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
 
@@ -422,6 +432,11 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
 
     // 6. Render starting grid slots
     render_starting_grid(track);
+
+    // 6b. Render procedural pit lane stalls & speed limit gates (Spec 062/077)
+    if let Some(pit_lane) = &track.pit_lane {
+        render_pit_boxes(pit_lane, view_bounds);
+    }
 
     // 7. Render start/finish line checkerboard
     render_finish_line(track);
@@ -2054,6 +2069,225 @@ fn render_starting_grid(track: &Track) {
     }));
 }
 
+/// Renders pit lane junctions: paved entrance wedge, gore triangle, chevrons, impact attenuator, and exit merge taper.
+pub fn render_pit_lane_junctions_pass(
+    track: &Track,
+    pit_lane: &PitLane,
+    view_bounds: Option<(Vec2, Vec2)>,
+) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if pit_lane.spline.samples.len() < 4 || track.spline.samples.len() < 4 {
+            return;
+        }
+
+        let is_in_view = |pos: Vec2, radius: f32| -> bool {
+            if let Some((min, max)) = view_bounds {
+                !(pos.x + radius < min.x || pos.x - radius > max.x || pos.y + radius < min.y || pos.y - radius > max.y)
+            } else {
+                true
+            }
+        };
+
+        let n_pit = pit_lane.spline.samples.len();
+        let pit_w = pit_lane.road_width;
+        let pit_hw = pit_w * 0.5;
+
+        // 1. Analyze entrance split geometry
+        // Find where the pit lane branches from the main track
+        let mut apex_sample_idx = None;
+        let mut pit_side = -1.0f32;
+
+        for (i, s) in pit_lane.spline.samples.iter().enumerate().take(n_pit / 2) {
+            let proj = track.spline.project_point(s.point);
+            let track_hw = proj.track_width * 0.5;
+            let to_pit = s.point - proj.closest_point;
+            let side = if to_pit.dot(proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
+            pit_side = side;
+
+            let track_edge = proj.closest_point + proj.normal * (side * track_hw);
+            let pit_inner = s.point - proj.normal * (side * pit_hw);
+            let gap = (pit_inner - track_edge).dot(proj.normal * side);
+
+            if gap >= 1.2 {
+                apex_sample_idx = Some(i);
+                break;
+            }
+        }
+
+        // 2. Render Entrance Throat Wedge & Gore Triangle
+        if let Some(apex_idx) = apex_sample_idx {
+            let s_apex = &pit_lane.spline.samples[apex_idx];
+            let proj_apex = track.spline.project_point(s_apex.point);
+            let track_hw_apex = proj_apex.track_width * 0.5;
+            let track_edge_apex = proj_apex.closest_point + proj_apex.normal * (pit_side * track_hw_apex);
+            let pit_inner_apex = s_apex.point - proj_apex.normal * (pit_side * pit_hw);
+
+            let p_apex = (track_edge_apex + pit_inner_apex) * 0.5;
+
+            if is_in_view(p_apex, 35.0) {
+                // A. Paved entrance throat wedge between sample 0 and apex
+                for i in 0..apex_idx {
+                    let s0 = &pit_lane.spline.samples[i];
+                    let s1 = &pit_lane.spline.samples[i + 1];
+                    let p0 = track.spline.project_point(s0.point);
+                    let p1 = track.spline.project_point(s1.point);
+
+                    let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                    let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                    let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                    let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+
+                    draw_quad(te0, te1, pe1, pe0, Palette::ASPHALT);
+                }
+
+                // B. Gore Triangle
+                let s_start = &pit_lane.spline.samples[0];
+                let p_start = track.spline.project_point(s_start.point);
+                let te_start = p_start.closest_point + p_start.normal * (pit_side * p_start.track_width * 0.5);
+                let pe_start = s_start.point - p_start.normal * (pit_side * pit_hw);
+
+                let v_track = (track_edge_apex - te_start).normalize_or_zero();
+                let v_pit = (pit_inner_apex - pe_start).normalize_or_zero();
+
+                // Paved asphalt gore triangle
+                draw_triangle(
+                    macroquad::prelude::Vec2::new(p_apex.x, p_apex.y),
+                    macroquad::prelude::Vec2::new(track_edge_apex.x, track_edge_apex.y),
+                    macroquad::prelude::Vec2::new(pit_inner_apex.x, pit_inner_apex.y),
+                    Palette::RUNOFF_ASPHALT,
+                );
+
+                // White perimeter border lines
+                draw_line(p_apex.x, p_apex.y, te_start.x, te_start.y, 0.35, Palette::WHITE_LINE);
+                draw_line(p_apex.x, p_apex.y, pe_start.x, pe_start.y, 0.35, Palette::WHITE_LINE);
+
+                // Directional Chevron Markings (V-stripes pointing upstream toward traffic)
+                let gore_len = (p_apex - te_start).length();
+                if gore_len > 8.0 {
+                    let num_chevrons = ((gore_len - 4.0) / 3.0).floor() as usize;
+                    let bisect = -(v_track + v_pit).normalize_or_zero();
+                    for step in 1..=num_chevrons {
+                        let d = step as f32 * 3.0;
+                        if d >= gore_len - 2.0 { break; }
+                        let t_frac = d / gore_len;
+                        let pt_t = te_start.lerp(track_edge_apex, t_frac);
+                        let pt_p = pe_start.lerp(pit_inner_apex, t_frac);
+                        let chevron_apex = (pt_t + pt_p) * 0.5 + bisect * 1.2;
+
+                        draw_line(chevron_apex.x, chevron_apex.y, pt_t.x, pt_t.y, 0.30, Palette::WHITE_LINE);
+                        draw_line(chevron_apex.x, chevron_apex.y, pt_p.x, pt_p.y, 0.30, Palette::WHITE_LINE);
+                    }
+                }
+
+                // High-visibility impact attenuator nose cap at apex
+                draw_circle(p_apex.x, p_apex.y, 1.1, Palette::CURB_RED);
+                draw_circle(p_apex.x, p_apex.y, 0.75, Palette::CURB_WHITE);
+                draw_circle(p_apex.x, p_apex.y, 0.4, Palette::CURB_RED);
+            }
+        }
+
+        // 3. Render Exit Merge Taper
+        // Find where the pit lane rejoins the main track (in the second half of samples)
+        let mut merge_start_idx = None;
+        for i in (n_pit / 2..n_pit).rev() {
+            let s = &pit_lane.spline.samples[i];
+            let proj = track.spline.project_point(s.point);
+            let track_hw = proj.track_width * 0.5;
+            let track_edge = proj.closest_point + proj.normal * (pit_side * track_hw);
+            let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
+            let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
+
+            if gap >= 1.2 {
+                merge_start_idx = Some(i);
+                break;
+            }
+        }
+
+        if let Some(merge_idx) = merge_start_idx {
+            for i in merge_idx..n_pit - 1 {
+                let s0 = &pit_lane.spline.samples[i];
+                let s1 = &pit_lane.spline.samples[i + 1];
+                let p0 = track.spline.project_point(s0.point);
+                let p1 = track.spline.project_point(s1.point);
+
+                let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+
+                if is_in_view(pe0, 20.0) {
+                    draw_quad(te0, te1, pe1, pe0, Palette::ASPHALT);
+                    // Dashed merge guidance line
+                    if i % 2 == 0 {
+                        draw_line(pe0.x, pe0.y, pe1.x, pe1.y, 0.28, Palette::WHITE_LINE);
+                    }
+                }
+            }
+        }
+    }));
+}
+
+/// Renders pit box team stalls and speed limit gates along the pit lane.
+fn render_pit_boxes(pit_lane: &PitLane, view_bounds: Option<(Vec2, Vec2)>) {
+    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let is_in_view = |pos: Vec2, radius: f32| -> bool {
+            if let Some((min, max)) = view_bounds {
+                !(pos.x + radius < min.x || pos.x - radius > max.x || pos.y + radius < min.y || pos.y - radius > max.y)
+            } else {
+                true
+            }
+        };
+
+        // Draw yellow speed limiter entry and exit lines
+        let entry = &pit_lane.entry_gate;
+        let entry_mid = (entry.start + entry.end) * 0.5;
+        if is_in_view(entry_mid, 8.0) {
+            draw_line(entry.start.x, entry.start.y, entry.end.x, entry.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
+        }
+        let exit = &pit_lane.exit_gate;
+        let exit_mid = (exit.start + exit.end) * 0.5;
+        if is_in_view(exit_mid, 8.0) {
+            draw_line(exit.start.x, exit.start.y, exit.end.x, exit.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
+        }
+
+        // Draw team pit stalls
+        for pit_box in &pit_lane.pit_boxes {
+            if !is_in_view(pit_box.position, 6.0) {
+                continue;
+            }
+            let pos = pit_box.position;
+            let fwd = if pit_box.direction.length_squared() > 1e-4 {
+                pit_box.direction.normalize()
+            } else {
+                Vec2::new(1.0, 0.0)
+            };
+            let right = Vec2::new(-fwd.y, fwd.x);
+
+            let box_len = 4.8;
+            let box_w = 2.4;
+
+            let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
+            let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
+            let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
+            let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
+
+            // Team stall box outline and center stop line
+            let line_thickness = 0.22;
+            let box_col = Color::new(0.95, 0.95, 0.95, 0.75);
+            let stop_col = Color::new(0.95, 0.25, 0.25, 0.70);
+            draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, box_col);
+            draw_line(p_fr.x, p_fr.y, p_rr.x, p_rr.y, line_thickness, box_col);
+            draw_line(p_rr.x, p_rr.y, p_rl.x, p_rl.y, line_thickness, box_col);
+            draw_line(p_rl.x, p_rl.y, p_fl.x, p_fl.y, line_thickness, box_col);
+
+            // Center stop line
+            let stop_l = pos - right * (box_w * 0.45);
+            let stop_r = pos + right * (box_w * 0.45);
+            draw_line(stop_l.x, stop_l.y, stop_r.x, stop_r.y, line_thickness * 1.5, stop_col);
+        }
+    }));
+}
+
 /// Utility to draw a filled convex quad from 4 vertices in CCW/CW order.
 #[inline]
 pub fn draw_quad(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, color: Color) {
@@ -2288,4 +2522,86 @@ mod tests {
             Vec2::new(5.0, 2.0),
         ));
     }
+
+    #[test]
+    fn test_pit_lane_and_pit_boxes_ground_rendering() {
+        use arcade_race_core::track::geometry::PitBox;
+        let mut track = arcade_race_core::track::create_prototypical_track("gt", arcade_race_core::track::TrackShape::Oval, arcade_race_core::track::RaceDirection::Right);
+        track.spline = TrackSpline::empty();
+        for i in 0..10 {
+            track.spline.samples.push(SplineSample {
+                point: Vec2::new(i as f32 * 10.0, 0.0),
+                tangent: Vec2::X,
+                normal: Vec2::Y,
+                distance: i as f32 * 10.0,
+                width: 10.0,
+                left_curb: false,
+                right_curb: false,
+                surface: SurfaceType::Asphalt,
+                elevation: 0.0,
+                bank_angle: 0.0,
+                is_bridge: false,
+                grade_slope: 0.0,
+                vertical_curvature: 0.0,
+                left_wall: false,
+                right_wall: false,
+                left_wall_distance: None,
+                right_wall_distance: None,
+                wall_type: None,
+                left_runoff_surface: None,
+                right_runoff_surface: None,
+            });
+        }
+        let mut pit_spline = TrackSpline::empty();
+        for i in 0..8 {
+            pit_spline.samples.push(SplineSample {
+                point: Vec2::new(i as f32 * 10.0 + 5.0, 8.0),
+                tangent: Vec2::X,
+                normal: Vec2::Y,
+                distance: i as f32 * 10.0,
+                width: 6.0,
+                left_curb: false,
+                right_curb: false,
+                surface: SurfaceType::Asphalt,
+                elevation: 0.0,
+                bank_angle: 0.0,
+                is_bridge: false,
+                grade_slope: 0.0,
+                vertical_curvature: 0.0,
+                left_wall: false,
+                right_wall: false,
+                left_wall_distance: None,
+                right_wall_distance: None,
+                wall_type: None,
+                left_runoff_surface: None,
+                right_runoff_surface: None,
+            });
+        }
+        track.pit_lane = Some(PitLane {
+            spline: pit_spline,
+            road_width: 6.0,
+            entry_gate: LineSegment::new(Vec2::new(5.0, 0.0), Vec2::new(5.0, 8.0)),
+            exit_gate: LineSegment::new(Vec2::new(75.0, 8.0), Vec2::new(75.0, 0.0)),
+            speed_limit: 16.67,
+            pit_boxes: vec![
+                PitBox {
+                    position: Vec2::new(30.0, 8.0),
+                    direction: Vec2::X,
+                    stop_radius: 3.0,
+                    elevation: 0.0,
+                },
+                PitBox {
+                    position: Vec2::new(50.0, 8.0),
+                    direction: Vec2::X,
+                    stop_radius: 3.0,
+                    elevation: 0.0,
+                },
+            ],
+        });
+
+        // Must execute cleanly without panicking
+        render_ground_track_culled(&track, None);
+        render_ground_track_culled(&track, Some((Vec2::new(0.0, -10.0), Vec2::new(100.0, 20.0))));
+    }
 }
+

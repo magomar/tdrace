@@ -132,6 +132,420 @@ def resample_polyline(points, target_count, props=None):
     return resampled, resampled_props, total_len
 
 
+def resample_open_polyline(points, target_count):
+    """Resample an open polyline to target_count points at equal arc-length steps."""
+    n = len(points)
+    if n < 2:
+        return list(points), 0.0
+    cum_dists = [0.0]
+    for i in range(n - 1):
+        p0 = points[i]
+        p1 = points[i + 1]
+        cum_dists.append(cum_dists[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+
+    total_len = cum_dists[-1]
+    if total_len < 1e-6:
+        return [points[0]] * target_count, 0.0
+
+    step = total_len / (target_count - 1)
+    resampled = [points[0]]
+    seg_idx = 0
+    for k in range(1, target_count - 1):
+        d = k * step
+        while seg_idx < n - 2 and cum_dists[seg_idx + 1] < d:
+            seg_idx += 1
+        d0 = cum_dists[seg_idx]
+        d1 = cum_dists[seg_idx + 1]
+        t = (d - d0) / (d1 - d0) if (d1 - d0) > 1e-6 else 0.0
+        p0 = points[seg_idx]
+        p1 = points[seg_idx + 1]
+        resampled.append((p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1])))
+    resampled.append(points[-1])
+    return resampled, total_len
+
+
+def sample_open_polyline(points, d):
+    """Returns (position, unit_tangent) at distance d along an open polyline."""
+    n = len(points)
+    if n < 2:
+        return (points[0] if n > 0 else (0.0, 0.0)), (1.0, 0.0)
+    cum_dists = [0.0]
+    for i in range(n - 1):
+        p0 = points[i]
+        p1 = points[i + 1]
+        cum_dists.append(cum_dists[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+
+    total_len = cum_dists[-1]
+    d = max(0.0, min(total_len, d))
+    seg_idx = 0
+    while seg_idx < n - 2 and cum_dists[seg_idx + 1] < d:
+        seg_idx += 1
+    d0 = cum_dists[seg_idx]
+    d1 = cum_dists[seg_idx + 1]
+    t = (d - d0) / (d1 - d0) if (d1 - d0) > 1e-6 else 0.0
+    p0 = points[seg_idx]
+    p1 = points[seg_idx + 1]
+    pos = (p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1]))
+    dx = p1[0] - p0[0]
+    dy = p1[1] - p0[1]
+    l = math.hypot(dx, dy)
+    tan = (dx / l, dy / l) if l > 1e-6 else (1.0, 0.0)
+    return pos, tan
+
+
+def sample_closed_polyline(points, d):
+    """Returns (position, unit_tangent) at distance d along a closed polyline."""
+    n = len(points)
+    if n < 2:
+        return (points[0] if n > 0 else (0.0, 0.0)), (1.0, 0.0)
+    cum_dists = [0.0]
+    for i in range(n):
+        p0 = points[i]
+        p1 = points[(i + 1) % n]
+        cum_dists.append(cum_dists[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+    total_len = cum_dists[-1]
+    if total_len < 1e-6:
+        return points[0], (1.0, 0.0)
+    d = d % total_len
+    seg_idx = 0
+    while seg_idx < n and cum_dists[seg_idx + 1] < d:
+        seg_idx += 1
+    d0 = cum_dists[seg_idx]
+    d1 = cum_dists[seg_idx + 1]
+    t = (d - d0) / (d1 - d0) if (d1 - d0) > 1e-6 else 0.0
+    p0 = points[seg_idx]
+    p1 = points[(seg_idx + 1) % n]
+    pos = (p0[0] + t * (p1[0] - p0[0]), p0[1] + t * (p1[1] - p0[1]))
+    dx = p1[0] - p0[0]
+    dy = p1[1] - p0[1]
+    l = math.hypot(dx, dy)
+    tan = (dx / l, dy / l) if l > 1e-6 else (1.0, 0.0)
+    return pos, tan
+
+
+def project_point_to_closed_polyline(p, polyline):
+    """Finds arc-length distance and total length of projection of point p onto a closed polyline."""
+    n = len(polyline)
+    cum_dists = [0.0]
+    for i in range(n):
+        p0 = polyline[i]
+        p1 = polyline[(i + 1) % n]
+        cum_dists.append(cum_dists[-1] + math.hypot(p1[0] - p0[0], p1[1] - p0[1]))
+    total_len = cum_dists[-1]
+
+    min_d = 999999.0
+    best_dist = 0.0
+    for i in range(n):
+        p0 = polyline[i]
+        p1 = polyline[(i + 1) % n]
+        vx = p1[0] - p0[0]
+        vy = p1[1] - p0[1]
+        l2 = vx * vx + vy * vy
+        if l2 < 1e-6:
+            continue
+        t = max(0.0, min(1.0, ((p[0] - p0[0]) * vx + (p[1] - p0[1]) * vy) / l2))
+        proj_x = p0[0] + t * vx
+        proj_y = p0[1] + t * vy
+        d = math.hypot(p[0] - proj_x, p[1] - proj_y)
+        if d < min_d:
+            min_d = d
+            best_dist = cum_dists[i] + t * math.sqrt(l2)
+    return best_dist, total_len
+
+
+def transform_geo_points(pts_geo, ctx):
+    """Transforms a list of (lat, lon) coordinates using track projective parameters."""
+    metric = [latlon_to_meters(lat, lon, ctx["lat0"], ctx["lon0"]) for lat, lon in pts_geo]
+    rot1 = rotate_points(metric, ctx["heading"])
+    scaled = [(x * ctx["scale_factor"], y * ctx["scale_factor"]) for x, y in rot1]
+    aligned = [(x - ctx["x0"], y - ctx["y0"]) for x, y in scaled]
+    rot2 = rotate_points(aligned, ctx["heading2"])
+    final = [(x - ctx["fx0"], y - ctx["fy0"]) for x, y in rot2]
+    if ctx.get("crossover"):
+        heading_s, sx0, sy0 = ctx["crossover"]
+        rot_s = rotate_points(final, heading_s)
+        final = [(x - sx0, y - sy0) for x, y in rot_s]
+    return final
+
+
+def extract_pit_nodes(cid, cfg, root, ways):
+    """Extracts ordered list of node IDs for the circuit's pit lane from OSM ways."""
+    pit_ways = cfg.get("pit_ways")
+    if not pit_ways:
+        # Auto-detect ways in the relation with role='pit_lane'
+        if "rel_id" in cfg:
+            rel = next((r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"])), None)
+            if rel:
+                found_ways = [
+                    m.get("ref")
+                    for m in rel.findall("member")
+                    if m.get("type") == "way" and m.get("role") == "pit_lane" and m.get("ref") in ways
+                ]
+                if found_ways:
+                    pit_ways = found_ways
+        if not pit_ways:
+            # Search by name or raceway tag in all ways
+            matches = []
+            for wid in ways:
+                w_elem = next((e for e in root.findall("way") if e.get("id") == wid), None)
+                if w_elem is not None:
+                    tags = {tag.get("k"): tag.get("v") for tag in w_elem.findall("tag")}
+                    name = tags.get("name", "").lower()
+                    raceway = tags.get("raceway", "").lower()
+                    if "pit lane" in name or "boxen" in name or raceway == "pit_lane":
+                        matches.append(wid)
+            if matches:
+                pit_ways = matches
+
+    if not pit_ways:
+        return None
+
+    # Chain the pit ways in topological order
+    pit_nodes = []
+    for wid in pit_ways:
+        if wid not in ways:
+            continue
+        nds = ways[wid]
+        if not pit_nodes:
+            pit_nodes.extend(nds)
+        else:
+            if pit_nodes[-1] == nds[0]:
+                pit_nodes.extend(nds[1:])
+            elif pit_nodes[-1] == nds[-1]:
+                pit_nodes.extend(reversed(nds[:-1]))
+            elif pit_nodes[0] == nds[-1]:
+                pit_nodes = nds[:-1] + pit_nodes
+            elif pit_nodes[0] == nds[0]:
+                pit_nodes = list(reversed(nds[1:])) + pit_nodes
+            else:
+                pit_nodes.extend(nds)
+
+    return pit_nodes
+
+
+def generate_fallback_pit_lane(final_track_pts):
+    """Generates a procedural parallel pit lane offset along the start straight for street circuits."""
+    return [
+        (-70.0, -2.0),
+        (-60.0, -5.0),
+        (-50.0, -8.0),
+        (-40.0, -9.0),
+        (0.0, -9.0),
+        (40.0, -9.0),
+        (80.0, -9.0),
+        (95.0, -7.0),
+        (105.0, -4.0),
+        (110.0, -1.0),
+    ]
+
+
+PILOT_PIT_BOUNDS = {
+    "catalunya": (-4.0,     15.0,  65.0,  78.0),
+    "monza":     (-170.0, -130.0, 50.0, 100.0),
+    "spa":       (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
+}
+
+
+def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
+    """Builds a complete, geometry-governed PitLane dictionary anchored by OSM metadata (Spec 062/077)."""
+    pit_nodes = extract_pit_nodes(cid, cfg, root, ways)
+    osm_pts = []
+    if pit_nodes and len(pit_nodes) >= 2:
+        pts_geo = [nodes[n] for n in pit_nodes if n in nodes]
+        osm_pts = transform_geo_points(pts_geo, transform_ctx)
+
+    # 1. Determine side of the track (left: +1.0, right: -1.0)
+    # Check OSM points near the start straight (|x| < 400, |y| < 100)
+    side = -1.0  # Default right side for standard racing circuits
+    valid_osm = [p for p in osm_pts if abs(p[0]) < 400.0 and abs(p[1]) < 100.0]
+    if valid_osm:
+        avg_y = sum(p[1] for p in valid_osm) / len(valid_osm)
+        side = 1.0 if avg_y > 0.0 else -1.0
+    elif cfg.get("pit_side") is not None:
+        side = float(cfg["pit_side"])
+
+    # 2. Determine longitudinal extent along the start straight
+    straight_w = cfg.get("straight_width", cfg.get("default_width", 14.0))
+    h_main = straight_w * 0.5
+    w_pit = 7.0
+    w_wall_buf = 2.0
+    d_parallel = h_main + w_wall_buf + w_pit * 0.5
+    y_parallel = side * d_parallel
+    y_split = side * (h_main + 0.6)
+
+    if cid in PILOT_PIT_BOUNDS:
+        bounds = PILOT_PIT_BOUNDS[cid]
+        x_entry, x_start, x_end, x_exit = bounds[:4]
+        if len(bounds) >= 6:
+            y_split = bounds[4]
+            y_parallel = bounds[5]
+            d_parallel = abs(y_parallel)
+    else:
+        # Detect straight limits around (0, 0)
+        n_pts = len(final_track_pts)
+        min_straight_x = 0.0
+        for i in range(n_pts - 1, 0, -1):
+            x, y = final_track_pts[i]
+            if x < min_straight_x and abs(y) < 15.0:
+                min_straight_x = x
+            else:
+                break
+        max_straight_x = 0.0
+        for i in range(1, n_pts):
+            x, y = final_track_pts[i]
+            if x > max_straight_x and abs(y) < 15.0:
+                max_straight_x = x
+            else:
+                break
+
+        # Check OSM x bounds if valid
+        if valid_osm:
+            osm_xs = [p[0] for p in valid_osm]
+            x_min_osm = max(min(osm_xs), min_straight_x + 10.0)
+            x_max_osm = min(max(osm_xs), max_straight_x - 10.0)
+            if x_max_osm - x_min_osm >= 120.0:
+                x_entry = x_min_osm
+                x_exit = x_max_osm
+                x_start = x_entry + 40.0
+                x_end = x_exit - 45.0
+            else:
+                x_start = max(min_straight_x + 40.0, -100.0)
+                x_end = min(max_straight_x - 45.0, 70.0)
+                x_entry = x_start - 40.0
+                x_exit = x_end + 45.0
+        else:
+            x_start = max(min_straight_x + 40.0, -100.0)
+            x_end = min(max_straight_x - 45.0, 70.0)
+            x_entry = x_start - 40.0
+            x_exit = x_end + 45.0
+
+    # Ensure minimum working length for non-pilot circuits
+    if cid not in PILOT_PIT_BOUNDS and (x_end - x_start < 60.0):
+        x_start = -60.0
+        x_end = 60.0
+        x_entry = -100.0
+        x_exit = 105.0
+
+    # 3. Synthesize smooth C¹ waypoints
+    pit_waypoints = []
+    # Entry transition (4 waypoints)
+    n_entry = 4
+    for i in range(n_entry):
+        u = i / (n_entry - 1)
+        s = 3.0 * u * u - 2.0 * u * u * u
+        x = x_entry + u * (x_start - x_entry)
+        y = y_split + (y_parallel - y_split) * s
+        pit_waypoints.append({
+            "point": [round(x, 2), round(y, 2)],
+            "width": w_pit,
+            "left_curb": False,
+            "right_curb": False,
+            "surface": "Asphalt",
+            "elevation": 0.0,
+            "bank_angle": 0.0,
+            "left_wall": False,
+            "right_wall": False,
+            "left_wall_distance": None,
+            "right_wall_distance": None,
+            "left_runoff_surface": "Asphalt",
+            "right_runoff_surface": "Asphalt",
+        })
+
+    # Parallel working section (10 waypoints)
+    n_work = 10
+    for i in range(1, n_work):
+        u = i / n_work
+        x = x_start + u * (x_end - x_start)
+        y = y_parallel
+        pit_waypoints.append({
+            "point": [round(x, 2), round(y, 2)],
+            "width": w_pit,
+            "left_curb": False,
+            "right_curb": False,
+            "surface": "Asphalt",
+            "elevation": 0.0,
+            "bank_angle": 0.0,
+            "left_wall": False,
+            "right_wall": False,
+            "left_wall_distance": None,
+            "right_wall_distance": None,
+            "left_runoff_surface": "Asphalt",
+            "right_runoff_surface": "Asphalt",
+        })
+
+    # Exit transition (4 waypoints)
+    n_exit = 4
+    for i in range(1, n_exit + 1):
+        v = i / n_exit
+        s = 3.0 * v * v - 2.0 * v * v * v
+        x = x_end + v * (x_exit - x_end)
+        y = y_parallel + (y_split - y_parallel) * s
+        pit_waypoints.append({
+            "point": [round(x, 2), round(y, 2)],
+            "width": w_pit,
+            "left_curb": False,
+            "right_curb": False,
+            "surface": "Asphalt",
+            "elevation": 0.0,
+            "bank_angle": 0.0,
+            "left_wall": False,
+            "right_wall": False,
+            "left_wall_distance": None,
+            "right_wall_distance": None,
+            "left_runoff_surface": "Asphalt",
+            "right_runoff_surface": "Asphalt",
+        })
+
+    # Compute approximate total length
+    pit_len = 0.0
+    for i in range(len(pit_waypoints) - 1):
+        p0 = pit_waypoints[i]["point"]
+        p1 = pit_waypoints[i + 1]["point"]
+        pit_len += math.hypot(p1[0] - p0[0], p1[1] - p0[1])
+
+    # Timing / Detection gates across pit road entrance and exit
+    y_inner = side * (d_parallel - w_pit * 0.5)
+    y_outer = side * (d_parallel + w_pit * 0.5)
+    entry_gate = {
+        "start": [round(x_start, 2), round(min(y_inner, y_outer), 2)],
+        "end": [round(x_start, 2), round(max(y_inner, y_outer), 2)],
+    }
+    exit_gate = {
+        "start": [round(x_end, 2), round(min(y_inner, y_outer), 2)],
+        "end": [round(x_end, 2), round(max(y_inner, y_outer), 2)],
+    }
+
+    # Pit boxes: 6 team stalls evenly spaced along the working lane
+    num_boxes = 6
+    pit_boxes = []
+    stall_margin = min(15.0, (x_end - x_start) * 0.1)
+    step_d = (x_end - x_start - 2.0 * stall_margin) / (num_boxes - 1) if num_boxes > 1 else 0.0
+    for k in range(num_boxes):
+        xk = x_start + stall_margin + k * step_d
+        yk = side * (d_parallel + 1.8)
+        pit_boxes.append({
+            "position": [round(xk, 2), round(yk, 2)],
+            "direction": [1.0, 0.0],
+            "stop_radius": 3.0,
+            "elevation": 0.0,
+        })
+
+    return {
+        "spline": {
+            "waypoints": pit_waypoints,
+            "closed": False,
+            "samples": [],
+            "total_length": round(pit_len, 2),
+            "curves": [],
+        },
+        "road_width": w_pit,
+        "speed_limit": 16.67,
+        "pit_boxes": pit_boxes,
+        "entry_gate": entry_gate,
+        "exit_gate": exit_gate,
+    }
+
+
 def deflection_sine(points, i):
     """Sine of the turn angle at closed-loop point `i` (>0 left, <0 right), independent of spacing and scale."""
     n = len(points)
@@ -311,6 +725,7 @@ GT_CIRCUITS = {
         "name": "Monza Autodromo Nazionale",
         "description": "High-speed Italian Grand Prix temple of speed.",
         "rel_id": 284565,
+        "start_node": "1828499259",  # Start/finish node in Monza relation 284565 on the main straight
         "fia_length": 5793.0,
         "num_waypoints": 28,
         "default_width": 13.5,
@@ -319,11 +734,13 @@ GT_CIRCUITS = {
         "barrier_offset": 4.5,
         "default_laps": 3,
         "tag": "TEMPLE OF SPEED",
+        "pit_ways": ["38168747"],
     },
     "spa": {
         "name": "Circuit de Spa-Francorchamps",
         "description": "Belgian Ardennes rollercoaster featuring Eau Rouge and Pouhon.",
         "rel_id": 284560,
+        "start_node": "258602622",  # Modern F1 start/finish node in Spa relation 284560 on the pit straight
         "fia_length": 7004.0,
         "num_waypoints": 32,
         "default_width": 14.0,
@@ -332,6 +749,7 @@ GT_CIRCUITS = {
         "barrier_offset": 4.5,
         "default_laps": 3,
         "tag": "ARDENNES ROLLERCOASTER",
+        "pit_ways": ["323851541"],
         "elevations": {
             # Eau Rouge & Raidillon uphill climb
             3: 2.0, 4: 4.5, 5: 3.0,
@@ -459,6 +877,7 @@ GT_CIRCUITS = {
             (1560896061, 7765791210, 385973423), (893732520, 385973423, 8553774009), (831804325, 8553774009, 7765791228),
             (990483278, 7765791228, 1300807861),
         ],
+        "start_node": "385973430",  # FIA start/finish line node on the front straight
         "fia_length": 4657.0,
         "num_waypoints": 28,
         "default_width": 13.0,
@@ -467,6 +886,7 @@ GT_CIRCUITS = {
         "barrier_offset": 3.5,
         "default_laps": 3,
         "tag": "SPANISH GP BENCHMARK",
+        "pit_ways": ["33742214", "178416729", "178416733"],
         "elevations": {
             # Turn 9 Campsa uphill crest
             15: 2.0, 16: 3.5, 17: 2.0,
@@ -722,6 +1142,14 @@ def process_gt_circuit(cid, cache_dir):
             ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
             chain_nodes = stitch_ways(cid, [ways[wid] for wid in ordered], nodes)
 
+    if len(chain_nodes) > 1 and chain_nodes[-1] == chain_nodes[0]:
+        chain_nodes.pop()
+    dedup = []
+    for n in chain_nodes:
+        if not dedup or dedup[-1] != n:
+            dedup.append(n)
+    chain_nodes = dedup
+
     if "start_node" in cfg and cfg["start_node"] in chain_nodes:
         idx_start = chain_nodes.index(cfg["start_node"])
         chain_nodes = chain_nodes[idx_start:] + chain_nodes[:idx_start]
@@ -758,7 +1186,8 @@ def process_gt_circuit(cid, cache_dir):
     # Start line alignment along +X
     dx = resampled[1][0] - resampled[0][0]
     dy = resampled[1][1] - resampled[0][1]
-    final_pts = rotate_points(resampled, math.atan2(dy, dx))
+    heading2 = math.atan2(dy, dx)
+    final_pts = rotate_points(resampled, heading2)
 
     fx0, fy0 = final_pts[0]
     final_pts = [(x - fx0, y - fy0) for x, y in final_pts]
@@ -768,7 +1197,8 @@ def process_gt_circuit(cid, cache_dir):
         # The main straight on Suzuka runs from waypoint index 31 through 0 into 1
         dx_s = final_pts[0][0] - final_pts[-3][0]
         dy_s = final_pts[0][1] - final_pts[-3][1]
-        suzuka_pts = rotate_points(final_pts, math.atan2(dy_s, dx_s))
+        heading_s = math.atan2(dy_s, dx_s)
+        suzuka_pts = rotate_points(final_pts, heading_s)
         # Zero out start line at (0, 0)
         sx0, sy0 = suzuka_pts[0]
         final_pts = [(x - sx0, y - sy0) for x, y in suzuka_pts]
@@ -777,6 +1207,24 @@ def process_gt_circuit(cid, cache_dir):
         final_pts[-2] = (final_pts[-2][0], 0.0)
         final_pts[-3] = (final_pts[-3][0], 0.0)
         final_pts[1] = (final_pts[1][0], 0.0)
+        crossover_ctx = (heading_s, sx0, sy0)
+    else:
+        crossover_ctx = None
+
+    transform_ctx = {
+        "lat0": lat0,
+        "lon0": lon0,
+        "heading": heading,
+        "scale_factor": scale_factor,
+        "x0": x0,
+        "y0": y0,
+        "heading2": heading2,
+        "fx0": fx0,
+        "fy0": fy0,
+        "crossover": crossover_ctx,
+    }
+
+    pit_lane = build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_pts)
 
     n = len(final_pts)
     waypoints = []
@@ -837,11 +1285,16 @@ def process_gt_circuit(cid, cache_dir):
         "half_length": target_half_len,
         "final_len": round(final_len, 1),
         "waypoints": waypoints,
+        "pit_lane": pit_lane,
     }
 
 
 def print_gt_summary(data):
-    print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, 0.5x FIA)")
+    pit_info = ""
+    if data.get("pit_lane"):
+        pl = data["pit_lane"]
+        pit_info = f" | Pit: {pl['spline']['total_length']:.1f}m ({len(pl['pit_boxes'])} stalls)"
+    print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, 0.5x FIA){pit_info}")
 
 
 # ---------------------------------------------------------------------------
@@ -2440,12 +2893,13 @@ def source_waypoint(w, discipline):
     return wp
 
 
-def write_source_json(discipline, data, tracks_dir=None):
+def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
     """Writes the imported waypoints to tracks/<module>/<id>.json; returns (path, track_bake command).
 
     An existing circuit keeps every other field (names, tag, provenance, scenery, walls); only the waypoints
     change, and `track_bake --rebuild` then regenerates spline, walls, checkpoints and grid from them, keeping
-    the current wall setup. A new circuit gets a minimal file and is appended to tracks/.track_order.json.
+    the current wall setup. When pit_lane_only is True, waypoints are left untouched and bake runs without --rebuild.
+    A new circuit gets a minimal file and is appended to tracks/.track_order.json.
     """
     tracks_dir = tracks_dir or TRACKS_DIR
     module = discipline
@@ -2456,9 +2910,14 @@ def write_source_json(discipline, data, tracks_dir=None):
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             track = json.load(f)
-        track["spline"]["waypoints"] = waypoints
-        track["spline"]["closed"] = True
-        bake_args = ["--rebuild"]
+        if "pit_lane" in data and data["pit_lane"] is not None:
+            track["pit_lane"] = data["pit_lane"]
+        if not pit_lane_only:
+            track["spline"]["waypoints"] = waypoints
+            track["spline"]["closed"] = True
+            bake_args = ["--rebuild"]
+        else:
+            bake_args = []
     else:
         track = {
             "name": data["name"],
@@ -2479,6 +2938,7 @@ def write_source_json(discipline, data, tracks_dir=None):
             "grid_positions": [],
             "default_surface": "Grass",
             "pit_box_area": None,
+            "pit_lane": data.get("pit_lane"),
             "default_laps": data.get("default_laps", 3),
             "car_category": module,
             "module_id": module,
@@ -2528,6 +2988,9 @@ def main():
         p.add_argument(
             "--json", action="store_true", help="Write tracks/<module>/<id>.json and print the track_bake command"
         )
+        p.add_argument(
+            "--pit-lane-only", action="store_true", help="Only update pit_lane in existing track JSON without modifying track waypoints or geometry"
+        )
     real_ids = list(provenance_osm_urls().keys())
     p = sub.add_parser("download", help="Download OSM map data for the real circuits in tracks/")
     p.add_argument("--track", choices=real_ids, action="append", help="Circuit id (repeatable; default: all)")
@@ -2543,8 +3006,10 @@ def main():
     for tid in track_ids:
         data = process(tid, args.cache_dir)
         print_summary(data)
-        if args.json:
-            path, bake_cmd = write_source_json(args.discipline, data)
+        if args.json or getattr(args, "pit_lane_only", False):
+            path, bake_cmd = write_source_json(
+                args.discipline, data, pit_lane_only=getattr(args, "pit_lane_only", False)
+            )
             print(f"  Wrote {path}")
             print(f"  Next: {bake_cmd}")
 

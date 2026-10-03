@@ -813,6 +813,192 @@ impl Track {
         }
     }
 
+    /// Prunes or removes any wall barriers in `inner_walls` and `outer_walls` that penetrate
+    /// or cross within the drivable road ribbon of `self.pit_lane`.
+    pub fn trim_walls_for_pit_lane(&mut self) {
+        let Some(ref lane) = self.pit_lane else { return; };
+        if lane.spline.samples.len() < 2 { return; }
+
+        let should_keep_wall = |wall: &WallBarrier| -> bool {
+            let p0 = wall.segment.start;
+            let p1 = wall.segment.end;
+            let p_mid = (p0 + p1) * 0.5;
+            let p_q1 = (p0 * 3.0 + p1) * 0.25;
+            let p_q3 = (p0 + p1 * 3.0) * 0.25;
+
+            for pt in [p0, p_q1, p_mid, p_q3, p1] {
+                let proj = lane.spline.project_point(pt);
+                if (wall.elevation - proj.elevation).abs() < 2.0 {
+                    let half_w = proj.track_width * 0.5;
+                    if proj.lateral_offset.abs() < (half_w - 0.2) {
+                        return false;
+                    }
+                }
+            }
+
+            for i in 0..lane.spline.samples.len() - 1 {
+                let s0 = &lane.spline.samples[i];
+                let s1 = &lane.spline.samples[i + 1];
+                let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+                if (wall.elevation - seg_elev).abs() < 2.0 {
+                    let center_seg = LineSegment::new(s0.point, s1.point);
+                    if wall.segment.intersect_segment(&center_seg).is_some() {
+                        return false;
+                    }
+                }
+            }
+            true
+        };
+
+        self.geometry.inner_walls.retain(should_keep_wall);
+        self.geometry.outer_walls.retain(should_keep_wall);
+    }
+
+    /// Generates physical wall barriers for `self.pit_lane`:
+    /// - A solid dividing concrete barrier separating the main straight from the pit road along parallel sections.
+    /// - An impact attenuator nose at the entrance gore apex.
+    /// - Outer perimeter retaining wall along the team garage frontage.
+    pub fn generate_pit_lane_walls(&mut self) {
+        let Some(ref lane) = self.pit_lane else { return; };
+        if lane.spline.samples.len() < 4 || self.spline.samples.len() < 4 { return; }
+
+        let pit_w = lane.road_width;
+        let mut dividing_wall_pts: Vec<Vec2> = Vec::new();
+        let mut outer_wall_pts: Vec<Vec2> = Vec::new();
+        let mut pit_side = 0.0f32;
+
+        for s in &lane.spline.samples {
+            let proj = self.spline.project_point(s.point);
+            if (s.elevation - proj.elevation).abs() > 2.0 {
+                continue;
+            }
+            let track_half_w = proj.track_width * 0.5;
+            let pit_half_w = pit_w * 0.5;
+
+            // Determine which side of the track the pit lane is on
+            let to_pit = s.point - proj.closest_point;
+            let side_dot = to_pit.dot(proj.normal);
+            let side = if side_dot >= 0.0 { 1.0f32 } else { -1.0f32 };
+            if pit_side == 0.0 {
+                pit_side = side;
+            }
+
+            // Coordinates of the two adjacent edges
+            let track_edge = proj.closest_point + proj.normal * (side * track_half_w);
+            let pit_inner_edge = s.point - proj.normal * (side * pit_half_w);
+
+            let gap_dist = (pit_inner_edge - track_edge).dot(proj.normal * side);
+
+            // The dividing pit wall sits where there is a valid clearance gap between track edge and pit road
+            if gap_dist >= 1.2 && gap_dist <= 6.0 {
+                let wall_pt = (track_edge + pit_inner_edge) * 0.5;
+                let check_main = self.spline.project_point(wall_pt);
+                let check_pit = lane.spline.project_point(wall_pt);
+                let curb_extra = if check_main.left_curb || check_main.right_curb { 1.4 } else { 0.0 };
+                if check_main.distance_to_spline >= (check_main.track_width * 0.5 + curb_extra + 0.3)
+                    && check_pit.distance_to_spline >= (lane.road_width * 0.5 + 0.3)
+                {
+                    if dividing_wall_pts.is_empty() || dividing_wall_pts.last().unwrap().distance(wall_pt) >= 1.0 {
+                        dividing_wall_pts.push(wall_pt);
+                    }
+                }
+
+                let outer_pt = s.point + proj.normal * (side * (pit_half_w + 2.0));
+                let check_outer_main = self.spline.project_point(outer_pt);
+                let outer_curb = if check_outer_main.left_curb || check_outer_main.right_curb { 1.4 } else { 0.0 };
+                if check_outer_main.distance_to_spline >= (check_outer_main.track_width * 0.5 + outer_curb + 0.5) {
+                    if outer_wall_pts.is_empty() || outer_wall_pts.last().unwrap().distance(outer_pt) >= 1.0 {
+                        outer_wall_pts.push(outer_pt);
+                    }
+                }
+            }
+        }
+
+        if dividing_wall_pts.len() >= 2 {
+            // Check if dividing pit wall already exists to prevent duplicate walls
+            let wall_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                .any(|w| (w.segment.start.distance(dividing_wall_pts[0]) < 1.0 && w.segment.end.distance(dividing_wall_pts[1]) < 1.0)
+                      || (w.segment.start.distance(dividing_wall_pts[1]) < 1.0 && w.segment.end.distance(dividing_wall_pts[0]) < 1.0));
+
+            if !wall_exists {
+                // Build continuous segments for the dividing pit wall
+                for i in 0..dividing_wall_pts.len() - 1 {
+                    let p0 = dividing_wall_pts[i];
+                    let p1 = dividing_wall_pts[i + 1];
+                    if (p1 - p0).length() < 0.1 { continue; }
+                    let check_m0 = self.spline.project_point(p0);
+                    let check_m1 = self.spline.project_point(p1);
+                    let curb_m0 = if check_m0.left_curb || check_m0.right_curb { 1.4 } else { 0.0 };
+                    let curb_m1 = if check_m1.left_curb || check_m1.right_curb { 1.4 } else { 0.0 };
+                    if check_m0.distance_to_spline < (check_m0.track_width * 0.5 + curb_m0 + 0.25)
+                        || check_m1.distance_to_spline < (check_m1.track_width * 0.5 + curb_m1 + 0.25)
+                    {
+                        continue;
+                    }
+                    let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
+                    let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                        .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
+                    if !intersects_existing {
+                        if pit_side > 0.0 {
+                            self.geometry.inner_walls.push(wall);
+                        } else {
+                            self.geometry.outer_walls.push(wall);
+                        }
+                    }
+                }
+
+                // Place an impact attenuator barrier at the entrance gore apex (first station)
+                let p_apex = dividing_wall_pts[0];
+                let dir_fwd = (dividing_wall_pts[1] - dividing_wall_pts[0]).normalize_or_zero();
+                let dir_trans = Vec2::new(-dir_fwd.y, dir_fwd.x);
+                let p_att_0 = p_apex - dir_trans * 0.8;
+                let p_att_1 = p_apex + dir_trans * 0.8;
+                let c_a0 = self.spline.project_point(p_att_0);
+                let c_a1 = self.spline.project_point(p_att_1);
+                let curb_a0 = if c_a0.left_curb || c_a0.right_curb { 1.4 } else { 0.0 };
+                let curb_a1 = if c_a1.left_curb || c_a1.right_curb { 1.4 } else { 0.0 };
+                if c_a0.distance_to_spline >= (c_a0.track_width * 0.5 + curb_a0 + 0.3)
+                    && c_a1.distance_to_spline >= (c_a1.track_width * 0.5 + curb_a1 + 0.3)
+                {
+                    let attenuator = WallBarrier::new(p_att_0, p_att_1, BarrierType::TireWall);
+                    let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                        .any(|w| w.segment.intersect_segment(&attenuator.segment).is_some());
+                    if !intersects_existing {
+                        if pit_side > 0.0 {
+                            self.geometry.inner_walls.push(attenuator);
+                        } else {
+                            self.geometry.outer_walls.push(attenuator);
+                        }
+                    }
+                }
+            }
+        }
+
+        if outer_wall_pts.len() >= 2 {
+            let outer_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                .any(|w| (w.segment.start.distance(outer_wall_pts[0]) < 1.0 && w.segment.end.distance(outer_wall_pts[1]) < 1.0)
+                      || (w.segment.start.distance(outer_wall_pts[1]) < 1.0 && w.segment.end.distance(outer_wall_pts[0]) < 1.0));
+
+            if !outer_exists {
+                for i in 0..outer_wall_pts.len() - 1 {
+                    let p0 = outer_wall_pts[i];
+                    let p1 = outer_wall_pts[i + 1];
+                    if (p1 - p0).length() < 0.1 { continue; }
+                    let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
+                    let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                        .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
+                    if !intersects_existing {
+                        if pit_side > 0.0 {
+                            self.geometry.inner_walls.push(wall);
+                        } else {
+                            self.geometry.outer_walls.push(wall);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// Populates segment runoff surfaces (`left_runoff_surface` / `right_runoff_surface`)
     /// and wall distances (`left_wall_distance` / `right_wall_distance`) across all waypoints
     /// and spline samples where they have not been explicitly customized.
@@ -876,6 +1062,15 @@ impl Track {
                 track.spline.closed,
             );
         }
+        if let Some(lane) = &mut track.pit_lane {
+            if lane.spline.samples.is_empty() && !lane.spline.waypoints.is_empty() {
+                lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
+            }
+        }
+        if track.pit_lane.is_some() {
+            track.trim_walls_for_pit_lane();
+            track.generate_pit_lane_walls();
+        }
         track.apply_default_runoff_surfaces();
         if track.network.is_some() {
             track.trim_walls_for_network();
@@ -930,6 +1125,15 @@ impl Track {
             self.geometry.outer_walls = right_walls;
             self.geometry.left_boundary_polyline = left_poly;
             self.geometry.right_boundary_polyline = right_poly;
+            if let Some(lane) = &mut self.pit_lane {
+                if lane.spline.samples.is_empty() && !lane.spline.waypoints.is_empty() {
+                    lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
+                }
+            }
+            if self.pit_lane.is_some() {
+                self.trim_walls_for_pit_lane();
+                self.generate_pit_lane_walls();
+            }
             if self.network.is_some() {
                 self.trim_walls_for_network();
             }
