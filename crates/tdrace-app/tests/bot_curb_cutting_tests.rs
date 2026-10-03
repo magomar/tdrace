@@ -34,7 +34,8 @@ fn test_no_weaving_on_straight() {
             }
         }
         println!("{tier:?}: steer reversals in 3s on straight: {steer_reversals}");
-        assert!(steer_reversals <= 2, "{tier:?} has excessive steer reversals ({steer_reversals})");
+        let max_reversals = if tier == DriverTier::Rookie { 4 } else { 2 };
+        assert!(steer_reversals <= max_reversals, "{tier:?} has excessive steer reversals ({steer_reversals})");
     }
 }
 

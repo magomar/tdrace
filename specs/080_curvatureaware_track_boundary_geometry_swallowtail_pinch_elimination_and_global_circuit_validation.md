@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Curvature-Aware Track Boundary Geometry, Swallowtail Pinch Elimination, and Global Circuit Validation"
 description: "Eliminates self-intersecting boundary loops (swallowtail singularities) across road edges, apex curbs, and perimeter walls caused by sub-width curvature radii (R < W/2), establishes rigorous validation guardrails in validate_track, repairs all 53 affected catalog circuits including scaled-down real tracks like Catalunya, and implements curvature-adaptive width tapering and synchronized boundary untangling."
-status: in_progress
+status: implemented
 verified: { by: "human:mario", at: "2026-10-03T10:38:51Z", hash: "dd245cb94018" }
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T10:00:00Z }
@@ -208,35 +208,35 @@ In `arcade-race-core` and `race-ui`:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: validate_track detects road edge self-intersections**
-  - [ ] **Given** a track spline where local curvature radius $R(s) < \frac{W(s)}{2}$ causes the inner road boundary polyline to cross itself
-  - [ ] **When** `validate_track` audits the circuit
-  - [ ] **Then** diagnostic `ERR_ROAD_SELF_INTERSECTION` with `ValidationSeverity::Error` is emitted
-  - [ ] **And** the diagnostic detail contains the intersection coordinates and progress distance.
+  - [x] **Given** a track spline where local curvature radius $R(s) < \frac{W(s)}{2}$ causes the inner road boundary polyline to cross itself
+  - [x] **When** `validate_track` audits the circuit
+  - [x] **Then** diagnostic `ERR_ROAD_SELF_INTERSECTION` with `ValidationSeverity::Error` is emitted
+  - [x] **And** the diagnostic detail contains the intersection coordinates and progress distance.
 
 - **Scenario: validate_track detects curb outer boundary self-intersections**
-  - [ ] **Given** a track spline with active apex curbs where $R(s) < \frac{W(s)}{2} + w_{\text{curb}}$
-  - [ ] **When** `validate_track` audits the circuit
-  - [ ] **Then** diagnostic `ERR_CURB_SELF_INTERSECTION` with `ValidationSeverity::Error` is emitted
-  - [ ] **And** `track_bake` refuses to write the baked circuit file.
+  - [x] **Given** a track spline with active apex curbs where $R(s) < \frac{W(s)}{2} + w_{\text{curb}}$
+  - [x] **When** `validate_track` audits the circuit
+  - [x] **Then** diagnostic `ERR_CURB_SELF_INTERSECTION` with `ValidationSeverity::Error` is emitted
+  - [x] **And** `track_bake` refuses to write the baked circuit file.
 
 - **Scenario: Catalunya GT circuit Turn 10 hairpin is free from boundary self-intersections**
-  - [ ] **Given** the remediated `tracks/gt/catalunya.json` circuit definition
-  - [ ] **When** `validate_track` executes on the circuit
-  - [ ] **Then** zero diagnostics with `ValidationSeverity::Error` are reported
-  - [ ] **And** the inner road edge at Turn 10 has no self-intersecting loops
-  - [ ] **And** the apex curb lines and steel wall barriers do not cross each other or form an hourglass swallowtail.
+  - [x] **Given** the remediated `tracks/gt/catalunya.json` circuit definition
+  - [x] **When** `validate_track` executes on the circuit
+  - [x] **Then** zero diagnostics with `ValidationSeverity::Error` are reported
+  - [x] **And** the inner road edge at Turn 10 has no self-intersecting loops
+  - [x] **And** the apex curb lines and steel wall barriers do not cross each other or form an hourglass swallowtail.
 
 - **Scenario: All official catalog circuits pass full validation without boundary defects**
-  - [ ] **Given** the complete catalog of 134 official circuits across all 8 modules
-  - [ ] **When** `test_no_embedded_circuit_has_validation_errors` executes
-  - [ ] **Then** all 134 circuits report zero errors
-  - [ ] **And** no circuit has road or curb self-intersections.
+  - [x] **Given** the complete catalog of 134 official circuits across all 8 modules
+  - [x] **When** `test_no_embedded_circuit_has_validation_errors` executes
+  - [x] **Then** all 134 circuits report zero errors
+  - [x] **And** no circuit has road or curb self-intersections.
 
 - **Scenario: In-game track rendering produces clean non-inverted apex geometry**
-  - [ ] **Given** a vehicle driving through the Turn 10 hairpin on Circuit de Barcelona-Catalunya
-  - [ ] **When** `race_ui::render::track` draws the track surface, apex curbs, and wall barriers
-  - [ ] **Then** the red-and-white curb texture is rendered without inverted quads, X-shaped crossovers, or bowtie artifacts
-  - [ ] **And** the steel guardrail smoothly encloses the corner without forming an hourglass pinch trap.
+  - [x] **Given** a vehicle driving through the Turn 10 hairpin on Circuit de Barcelona-Catalunya
+  - [x] **When** `race_ui::render::track` draws the track surface, apex curbs, and wall barriers
+  - [x] **Then** the red-and-white curb texture is rendered without inverted quads, X-shaped crossovers, or bowtie artifacts
+  - [x] **And** the steel guardrail smoothly encloses the corner without forming an hourglass pinch trap.
 
 ---
 
@@ -244,11 +244,11 @@ In `arcade-race-core` and `race-ui`:
 
 ### Created/Modified Files
 
-- `[ ]` `crates/arcade-race-core/src/track/validation.rs` -> Adds `ERR_ROAD_SELF_INTERSECTION`, `ERR_CURB_SELF_INTERSECTION`, and `ERR_MINIMUM_RADIUS_VIOLATION` validation checks.
-- `[ ]` `crates/arcade-race-core/src/track/spline.rs` -> Enhances `untangle_offset_vertices` for synchronized multi-boundary untangling and apex fan generation.
-- `[ ]` `crates/arcade-race-core/src/track/presets.rs` -> Fixes `untangle_polyline` and wall generation to preserve sample index alignment and prevent inner barrier loops.
-- `[ ]` `crates/race-ui/src/render/track.rs` -> Hardens quad mesh generation for curbs and runoffs on tight hairpins.
-- `[ ]` `tracks/gt/catalunya.json` -> Tapers width and eases Turn 10 apex to eliminate swallowtail loop and barrier crossing.
-- `[ ]` `tracks/` (affected circuits across GT, Kart, Rally, Autocross, Extreme Off-Road) -> Remediates boundary geometry and re-bakes clean files.
-- `[ ]` `crates/tdrace-app/tests/gt_circuit_geometry_tests.rs` -> Adds regression test verifying non-self-intersecting boundaries across GT circuits.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 080 under Phase 4 track milestones.
+- `[x]` `crates/arcade-race-core/src/track/validation.rs` -> Adds `ERR_ROAD_SELF_INTERSECTION`, `ERR_CURB_SELF_INTERSECTION`, and `ERR_MINIMUM_RADIUS_VIOLATION` validation checks.
+- `[x]` `crates/arcade-race-core/src/track/spline.rs` -> Enhances `untangle_offset_vertices` for synchronized multi-boundary untangling and apex fan generation.
+- `[x]` `crates/arcade-race-core/src/track/presets.rs` -> Fixes `untangle_polyline` and wall generation to preserve sample index alignment and prevent inner barrier loops.
+- `[x]` `crates/race-ui/src/render/track.rs` -> Hardens quad mesh generation for curbs and runoffs on tight hairpins.
+- `[x]` `tracks/gt/catalunya.json` -> Tapers width and eases Turn 10 apex to eliminate swallowtail loop and barrier crossing.
+- `[x]` `tracks/` (affected circuits across GT, Kart, Rally, Autocross, Extreme Off-Road) -> Remediates boundary geometry and re-bakes clean files.
+- `[x]` `crates/tdrace-app/tests/gt_circuit_geometry_tests.rs` -> Adds regression test verifying non-self-intersecting boundaries across GT circuits.
+- `[x]` `specs/constitution/ROADMAP.md` -> Links Spec 080 under Phase 4 track milestones.
