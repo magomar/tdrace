@@ -2,8 +2,9 @@
 type: Feature Spec
 template: feature
 title: "Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"
-description: "Implements FIA Rallycross sporting regulation enforcement requiring every participant to complete at least one Joker Lap per race, featuring multi-car session tracking, dynamic HUD/spotter alerts, AI strategic decision-making, and post-race time penalties."
-status: draft
+description: "Makes Rallycross joker laps work end to end in the live race (correct route data, surfaces, lap counting and bot route choice) and enforces one mandatory joker per race with a HUD badge, a final-lap warning and a +30 s results penalty."
+status: in_progress
+verified: { by: human:mario, at: 2026-10-04T14:50:25Z }
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T15:12:25Z }
 depends_on:
@@ -13,171 +14,190 @@ depends_on:
 
 # Feature Spec: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement ⏱️
 
-In authentic Rallycross competitions (FIA World RX, Nitrocross, British RX), the Joker Lap is not merely an optional shortcut or novelty detour; it is a **mandatory sporting requirement**. Every participant on the starting grid must complete the Joker Lap at least once during a race heat. Failing to do so before crossing the checkered flag carries severe penalties that alter the race outcome. This specification introduces session-level tracking, real-time HUD and spotter warnings, AI tactical decision-making, and automated post-race time penalties across all Rallycross events in **TdRace**.
+In Rallycross, every driver must take the joker route once per race. A driver who does not gets a time penalty. TDRace has the joker geometry (spec 081) and a multi-route lap tracker (spec 006), but the live race does not use them as a rule: nothing tells the player about the joker, nothing penalises a missed joker, and bots switch routes in an unreliable way.
+
+Rallycross ships in the first Steam release (Classic, Karting, Autocross and Rallycross modules). This spec makes the joker a working, enforced game rule in that release.
+
+## Current State (audit, 2026-10-04)
+
+What works today:
+- 23 official tracks have a `TrackNetwork` with a `main` and a `joker` layout: `tracks/classic/rx_quarry_sprint.json`, `rx_hilltop_leap.json`, `rx_canyon_flyer.json` and all 20 `tracks/rally/*.json`. `classic_rallycross` is an alias of `rx_quarry_sprint`.
+- `Track::from_json` calls `trim_walls_for_network()`, so the main walls open at the split and merge throats.
+- The race renderer (`crates/race-ui/src/render/track.rs`) draws the joker ribbon and the junction gores.
+- `RaceWorld::step` (`crates/race-kit/src/world.rs`) calls `TrackProgressTracker::update_network` on network tracks. `MultiRouteProgressTracker` (`crates/arcade-race-core/src/track/checkpoint.rs`) counts `joker_laps_completed` at the finish line.
+
+What is wrong or missing:
+1. **Route data.** Some checkpoints lie on one route but are listed in the other route's layout (seen on `hell_rx`, `montalegre_rx`, `nyirad_rx` and `spa_rx`). A car on the affected route can miss a checkpoint and lose its lap.
+2. **Surfaces.** `Track::sample_surface` checks the main spline's run-off corridor before it checks the network, so joker road inside that corridor can read as run-off.
+3. **No end-to-end test.** No test drives a car through `RaceWorld::step` on an official RX track along the joker route.
+4. **Bots.** `decide_active_layout` (`crates/race-kit/src/ai/mod.rs`) runs every tick, so a bot can change route inside a branch. `DynamicTrafficAvoidance` has no joker limit. The bot's `current_lap` increments in two places per lap, so `planned_joker_lap` fires on the wrong lap.
+5. **No rule.** Nothing reads `joker_laps_completed`. `RaceRules` has no joker setting and `RaceWorld::results` has no penalty.
+6. **No UI.** The HUD and results screen show no joker state.
+7. **LAN.** `FinishRecord` (`crates/cabinet/src/net/protocol.rs`) carries no penalty.
+8. **Menu.** Picking the `joker` layout in the menu makes it the default layout and replaces `track.spline` (`GameState::load_track_for_session`), which breaks the rule.
 
 ---
 
 ## 🗺️ User Flow & Interface Design
 
-### 1. In-Race HUD & Leaderboard Telemetry
-During an active Rallycross race session, drivers require immediate situational awareness of their own Joker status and that of their rivals:
+### 1. In-race HUD badge (own car)
+In a Rallycross race only, a pill is drawn next to the position/lap widget (`render_position_and_lap`, `crates/race-ui/src/hud/widgets.rs`), and next to its split-screen copy:
+- **Pending**: amber `JOKER` pill.
+- **Done**: green `JOKER ✓` pill.
+- **Final lap, still pending**: red `JOKER THIS LAP!` pill that pulses (alpha 0.5 → 1.0 at 2 Hz).
 
-1. **Cockpit Telemetry HUD Badge**:
-   - Positioned alongside the lap counter:
-     - **Pending State**: Amber pill `[JOKER REQUIRED]` indicating the driver has not yet taken their detour.
-     - **Completed State**: Green pill `[JOKER DONE ✓]` indicating the driver has satisfied the regulation.
-     - **Urgent Warning State**: When crossing the Start/Finish line into the final lap (`lap == total_laps`) with `joker_laps_taken == 0`, the badge flashes bright red with a high-contrast pulsating border: `[⚠️ JOKER MANDATORY THIS LAP]`.
-2. **Audio & Spotter Alerts**:
-   - When entering the final lap without having completed the Joker, the spotter issues an urgent callout: *"Joker lap mandatory! Take the detour now!"*
-3. **Live Leaderboard / Tower Overlay**:
-   - A dedicated `[J]` column next to each competitor's name:
-     - Dimmed grey `[J]` icon: Pending.
-     - High-visibility green `[J]` icon: Completed.
-     - Allows human players to strategically observe when rivals have burned their Joker lap.
+No badge is drawn in non-Rallycross races.
+
+### 2. Results screen
+In `render_results_screen` (`crates/tdrace-app/src/ui/menu.rs`), each row of a Rallycross race shows:
+- A green `J` when the driver took the joker.
+- An amber `+30.0s NO JOKER` tag when a penalty applies. The time column shows the penalised time, and the rows are in penalised order.
+
+Championship points and credit payouts use this penalised order.
+
+### 3. Layout picker
+For a Rallycross race, the menu's layout choice does not change the race's default layout. The race always starts on `main`, and the driver picks the joker route by driving it.
 
 ---
 
 ## ⚙️ Backend Models & API Endpoints
 
-### 1. Multi-Car Session State Extension (`crates/tdrace-app/src/game/`)
-
-To track compliance across both human drivers and AI opponents, `DriverRaceState` in `crates/tdrace-app/src/game/` is extended:
-
+### 1. Race rule (`crates/race-kit/src/world.rs`)
 ```rust
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DriverJokerState {
-    /// Number of valid Joker laps completed during the current session.
-    pub joker_laps_completed: u32,
-    /// Exact race lap numbers on which each Joker was executed (e.g. [2]).
-    pub completed_on_laps: Vec<u32>,
-    /// Whether the driver has fulfilled the mandatory Joker lap requirement.
-    pub is_compliant: bool,
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct JokerRule {
+    /// Joker laps each vehicle must complete. 0 turns the rule off.
+    pub mandatory: u32,
+    /// Seconds added to the finish time of a vehicle with fewer jokers than `mandatory`.
+    pub penalty_s: f32,
 }
+// Default: { mandatory: 0, penalty_s: 0.0 }
+
+pub struct RaceRules { pub format: RaceFormat, pub collision: CollisionParams, pub joker: JokerRule }
 ```
+- `RaceRules::default()` keeps `joker` off, so existing callers (`..RaceRules::default()`, including `tdchariots`) do not change.
+- `RaceWorld` gets `pub fn jokers_taken(&self, car: usize) -> u32`, which reads `trackers[car].multi_route.joker_laps_completed` (0 when there is no network).
+- `RaceWorld` gets `penalty: Vec<f32>`. When a vehicle finishes with `jokers_taken < joker.mandatory`, its entry is set to `joker.penalty_s`.
+- `standings()` orders finished vehicles by `time + penalty`, with crossing position as the tie-break. Without penalties, this order is the same as today.
+- `ParticipantResult` gets `pub penalty: f32` and `pub jokers: u32`. `time` stays the raw time. In `results()`, finished and projected rows are ordered by `time + penalty`.
 
-#### Race Configuration Parameters
-Rallycross race sessions configure the sporting rule defaults:
-- `mandatory_joker_laps: u32` (Default: `1` for all Rallycross races; `0` for GT, NASCAR, and Autocross).
-- `joker_penalty_seconds: f32` (Default: `30.0` seconds, adhering to FIA World RX standard post-race time penalties).
+### 2. Who sets the rule (`crates/tdrace-app/src/game/mod.rs`)
+When a race starts on a track with `track.car_category == CarCategory::Rally` and a `network` that has a `joker` layout, the app sets `RaceRules.joker = JokerRule { mandatory: 1, penalty_s: 30.0 }`. Every other race keeps the default (off).
 
----
+### 3. Route data and surfaces
+- Fix the layout checkpoint lists in the affected `tracks/` JSON files, so every checkpoint in a layout lies on a segment of that layout. The fix goes into the `tracks` submodule, which is pushed before `main` (see the project memory on tracks).
+- `Track::sample_surface` and `sample_surface_near` (`crates/arcade-race-core/src/track/mod.rs`) check network segment road before the main spline's run-off corridor.
 
-### 2. Checkpoint Validation & Anti-Abuse Logic (`arcade-race-core::track::checkpoint`)
+### 4. Bot route choice (`crates/race-kit/src/ai/mod.rs`)
+- A bot chooses its route once per lap, before the split junction, and keeps it until it passes the merge.
+- When the bot runs inside a `RaceWorld`, it takes its lap number and joker count from the race tracker. Remove the two internal `current_lap += 1` increments for that case. The standalone path (no tracker) keeps its own counting.
+- A bot never takes more jokers than `mandatory`.
+- On the last lap (and on lap N−1 if the planned lap has passed), a bot that still owes a joker always takes it.
+- The existing strategies (`RallycrossJoker { lap }`, `DynamicTrafficAvoidance` undercut) only choose which lap the joker happens on.
 
-The `MultiRouteProgressTracker` (Spec 006) monitors gate crossings:
-1. **Gate Sequence Verification**:
-   - A Joker lap is only credited if the vehicle enters the split throat, crosses the dedicated `CheckpointKind::Joker` gate, and successfully negotiates the merge junction into the return straight.
-2. **Directional Normal Enforcement**:
-   - Driving backwards through the merge throat or executing reverse shortcuts does not increment `joker_laps_completed` and flags an instant wrong-way warning.
-3. **Start Grid Immunity**:
-   - A vehicle starting on the grid cannot claim a Joker lap on Lap 0 before crossing the Start/Finish line.
+### 5. LAN (`crates/cabinet/src/net/protocol.rs`, `crates/tdrace-app/src/game/lan.rs`)
+- `FinishRecord` gets `penalty_ms: u32`. The car's owner computes its own penalty and reports it with `finish_ms`. The host and the clients sort LAN results by `finish_ms + penalty_ms`.
+- `PROTOCOL_VERSION` goes from 2 to 3.
 
----
-
-### 3. AI Strategic Decision-Making (`crates/tdrace-app/src/ai/`)
-
-AI bot competitors navigate the dual-route topology intelligently rather than choosing randomly:
-
-```mermaid
-graph TD
-    Assess[AI Bot Route Assessment<br/>Approaching Split Horizon] --> CheckDone{Joker Already<br/>Completed?}
-    CheckDone -->|Yes| MainRoute[Select Main Line<br/>Optimal Racing Groove]
-    CheckDone -->|No| CheckLap{Is Final or<br/>Penultimate Lap?}
-    CheckLap -->|Yes| ForceJoker[Force Joker Detour<br/>Failsafe Compliance]
-    CheckLap -->|No| CheckTraffic{Traffic Ahead in Dirty Air<br/>or Gap to Behind?}
-    CheckTraffic -->|Stuck behind slow car| UndercutJoker[Take Joker Early<br/>Undercut Clean Air]
-    CheckTraffic -->|Large gap ahead| MainLine[Continue Main Line]
-```
-
-1. **Traffic Undercut**: If an AI bot is held up behind slower traffic (delta speed $< 0.8 \times v_{\text{target}}$ for $> 1.5\,\text{s}$), it dives into the Joker detour to seek clean track air.
-2. **Leader Overcut / Gap Protection**: If leading with a sufficient gap ($> 4.0\,\text{s}$), the bot takes the Joker and re-emerges still in the lead.
-3. **Failsafe Compliance**: If reaching Lap $N-1$ or Lap $N$ without having completed the Joker, the bot route selection is hard-locked to `Layout::Joker`, guaranteeing $100\%$ AI compliance with zero unforced penalties.
-
----
-
-### 4. Post-Race Classification & Penalty Resolution
-
-When the checkered flag drops and cars finish the race:
-
-```rust
-pub fn resolve_rallycross_penalties(session: &mut RaceSession) {
-    for driver in &mut session.driver_states {
-        if driver.joker_state.joker_laps_completed < session.config.mandatory_joker_laps {
-            driver.total_time += session.config.joker_penalty_seconds;
-            driver.penalty_applied = Some(PenaltyReason::MissingMandatoryJoker {
-                penalty_seconds: session.config.joker_penalty_seconds,
-            });
-        }
-    }
-    // Re-sort final classification order based on penalty-adjusted elapsed times
-    session.driver_states.sort_by(|a, b| a.total_time.partial_cmp(&b.total_time).unwrap());
-}
-```
-
-- In the final results classification screen, penalized competitors are highlighted with an amber/red penalty badge: `+30.0s (NO JOKER)`.
-- Championship points and purse payouts are awarded strictly according to the finalized, penalty-adjusted finishing order.
+### Out of scope (follow-up Beads issues)
+- Walls along the joker branch (`RoadSegment.walls` is empty on all tracks).
+- A live timing tower with a per-driver joker column (`render_timing_tower_row` exists but nothing calls it).
+- Spotter or voice callouts (no spotter audio system exists).
+- Trackside joker signage.
 
 ---
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-### 1. Invariants & Sporting Anti-Cheat Rules
-1. **Immutable Gate Crossings**:
-   - `DriverJokerState.completed_on_laps` is strictly appended upon authentic physics collision with the `CheckpointKind::Joker` gate and cannot be forged or toggled via debug UI in competition modes.
-2. **Deterministic Race Resolution**:
-   - Race penalties are applied in a single deterministic pass upon session termination, preventing race outcome drifting or ambiguous classifications.
-3. **LAN Multiplayer Authority**:
-   - In multiplayer sessions (Spec 044), the host referee is authoritative for Joker gate crossing timestamps, discarding client-reported crossings that disagree with server-side SAT raycasts.
+### Invariants
+1. **Only the tracker credits a joker.** `joker_laps_completed` only goes up when `MultiRouteProgressTracker` sees the joker layout's checkpoints in order and the car crosses the finish line. No UI or debug path changes it.
+2. **Deterministic.** The penalty depends only on tracker state at the finish step. Given the same inputs, two runs give the same results. The race-kit golden state hashes do not change for races with the rule off.
+3. **No change for other categories.** Races that are not Rallycross keep `JokerRule` off and show no joker UI.
+4. **LAN trust model is unchanged.** Each owner already reports its own finish (spec 044). The penalty follows the same model.
 
 ---
 
 ## 🧪 Verification & Acceptance Criteria
 
 ### Automated Tests
-- Command to run session rules tests: `cargo test -p tdrace-app --test rally_tracks_tests`
-- Command to run bot strategic joker tests: `cargo test -p tdrace-app --test ai_tests test_bot_ai_strategic_joker`
+- `cargo test -p race-kit --test joker_rule_tests`: rule, penalty, standings and results ordering on a synthetic network.
+- `cargo test -p tdrace-app --test rally_tracks_tests`: layout data check and end-to-end drive on all 23 RX tracks.
+- `cargo test -p tdrace-app --test ai_tests`: bot route lock, joker cap and 8-bot compliance.
+- `cargo test -p cabinet`: `FinishRecord` round trip with `penalty_ms`.
+- Full suite and lint as listed in `specs/constitution/TECH_STACK.md`.
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-- **Scenario: Driver completes Joker lap and receives clean race classification**
-  - [ ] **Given** a 5-lap Rallycross race on `classic_rallycross` with `mandatory_joker_laps = 1`
-  - [ ] **When** the human player dives into the Joker branch on Lap 3 and finishes the race
-  - [ ] **Then** the HUD displays `[JOKER DONE ✓]`
-  - [ ] **And** the post-race classification applies zero time penalty
+- **Scenario: Every RX layout's checkpoints lie on its own route**
+  - [ ] **Given** the 23 official tracks that have a joker layout
+  - [ ] **When** each checkpoint of each layout is checked against the segments of that layout
+  - [ ] **Then** every checkpoint centre is within the road width of a segment in that layout
 
-- **Scenario: Missing Joker lap applies +30s time penalty and drops final position**
-  - [ ] **Given** a 5-lap Rallycross race where the leading human driver runs 5 laps exclusively on the main line
-  - [ ] **When** crossing the finish line in physical 1st position without taking the Joker
-  - [ ] **Then** the final classification adds $+30.0\,\text{s}$ to the driver's total elapsed time
-  - [ ] **And** the results screen displays `+30.0s (NO JOKER)` with the driver relegated down the finishing order
+- **Scenario: A car that drives the joker route gets its lap and its joker**
+  - [ ] **Given** each of the 23 RX tracks in a `RaceWorld` with `RaceFormat::Laps(2)`
+  - [ ] **When** a car is moved along the `joker` centerline on lap 1 and along the `main` centerline on lap 2
+  - [ ] **Then** the car finishes with `current_lap == 3` and no wrong-way state
+  - [ ] **And** `jokers_taken` is 1
 
-- **Scenario: Final lap HUD warning triggers when Joker is pending**
-  - [ ] **Given** a driver starting the final lap (Lap 5 of 5) without having completed a Joker lap
-  - [ ] **When** crossing the Start/Finish timing gate into Lap 5
-  - [ ] **Then** the cockpit HUD displays a flashing red warning `[⚠️ JOKER MANDATORY THIS LAP]`
-  - [ ] **And** the spotter triggers an urgent audio alert
+- **Scenario: Joker road reads as road, not run-off**
+  - [ ] **Given** each RX track's joker segment
+  - [ ] **When** the surface is sampled at points along the joker centerline
+  - [ ] **Then** every sample returns the joker segment's road surface
 
-- **Scenario: All AI competitors fulfill mandatory Joker requirement**
-  - [ ] **Given** a full 8-car Rallycross race populated with AI bots across all quality tiers
-  - [ ] **When** the race completes
-  - [ ] **Then** $100\%$ of AI finishers have `joker_laps_completed >= 1`
-  - [ ] **And** zero AI bots receive missing Joker penalties
+- **Scenario: A driver who took the joker gets no penalty**
+  - [ ] **Given** a 5-lap Rallycross race with `JokerRule { mandatory: 1, penalty_s: 30.0 }`
+  - [ ] **When** a car takes the joker on lap 3 and finishes
+  - [ ] **Then** its result row has `penalty == 0.0` and `jokers == 1`
+  - [ ] **And** the in-race HUD showed the green `JOKER ✓` pill after lap 3
 
-- **Scenario: Non-Rallycross disciplines bypass Joker requirements**
-  - [ ] **Given** a GT or NASCAR race on a road circuit
-  - [ ] **When** the race concludes
-  - [ ] **Then** `mandatory_joker_laps` is 0 and no participant receives Joker penalties
+- **Scenario: A missed joker adds 30 s and drops the driver down the order**
+  - [ ] **Given** the same race, where car A crosses the line first without a joker and car B crosses 5 s later with a joker
+  - [ ] **When** the results are built
+  - [ ] **Then** car A has `penalty == 30.0` and is classified behind car B
+  - [ ] **And** the results screen shows `+30.0s NO JOKER` on car A's row
+
+- **Scenario: Final-lap warning**
+  - [ ] **Given** a driver that starts the last lap without a joker
+  - [ ] **When** the driver crosses the line into the last lap
+  - [ ] **Then** the HUD shows the pulsing red `JOKER THIS LAP!` pill (checked by screenshot)
+
+- **Scenario: Bots take exactly one joker and never switch inside a branch**
+  - [ ] **Given** an 8-bot, 5-lap Rallycross race on `rx_quarry_sprint` and on `holjes_rx`, bots of all tiers
+  - [ ] **When** the race runs to the end
+  - [ ] **Then** every bot that finishes has `jokers == 1` and no penalty
+  - [ ] **And** no bot changes its active layout between the split and the merge
+
+- **Scenario: Other categories are not affected**
+  - [ ] **Given** a race on a GT, Karting or Autocross track
+  - [ ] **When** the race starts and ends
+  - [ ] **Then** `RaceRules.joker.mandatory == 0`, no joker HUD pill is drawn, and no penalty is applied
+  - [ ] **And** the race-kit golden state hash tests pass unchanged
+
+- **Scenario: RX race ignores the joker layout pick**
+  - [ ] **Given** the player picked the `joker` layout in the menu for an RX track
+  - [ ] **When** the race loads
+  - [ ] **Then** the race's default layout is `main`
+
+- **Scenario: LAN results carry the penalty**
+  - [ ] **Given** a `FinishRecord` with `finish_ms = 120000` and `penalty_ms = 30000`
+  - [ ] **When** it is encoded and decoded with protocol version 3
+  - [ ] **Then** both fields round-trip, and LAN results order uses 150000 ms for that car
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `crates/arcade-race-core/src/track/checkpoint.rs` -> Joker gate completion signals and directional normal checks.
-- `crates/tdrace-app/src/game/session.rs` -> `DriverJokerState`, mandatory joker configuration, and post-race penalty sorting.
-- `crates/tdrace-app/src/ai/mod.rs` -> AI bot traffic undercut and failsafe deadline selection.
-- `crates/race-ui/src/hud/` -> Cockpit telemetry Joker badge, flashing final lap warning, and leaderboard `[J]` column.
-- `crates/tdrace-app/tests/ai_tests.rs` -> Unit tests verifying AI strategic Joker decision making and 100% compliance.
+- `crates/race-kit/src/world.rs` -> `JokerRule`, `jokers_taken`, penalty in `standings()` and `results()`.
+- `crates/race-kit/tests/joker_rule_tests.rs` -> rule and ordering tests (new).
+- `crates/race-kit/src/ai/mod.rs` -> once-per-lap route lock, joker cap, lap count from tracker.
+- `crates/arcade-race-core/src/track/mod.rs` -> network road checked before main run-off in surface sampling.
+- `tracks/classic/*.json`, `tracks/rally/*.json` (submodule) -> layout checkpoint list fixes.
+- `crates/tdrace-app/src/game/mod.rs` -> set `JokerRule` for Rallycross races; keep `main` as the RX default layout.
+- `crates/race-ui/src/hud/widgets.rs`, `crates/tdrace-app/src/ui/hud.rs` -> joker pill.
+- `crates/tdrace-app/src/ui/menu.rs` -> results screen joker mark and penalty tag.
+- `crates/cabinet/src/net/protocol.rs`, `crates/tdrace-app/src/game/lan.rs` -> `penalty_ms`, protocol version 3.
+- `crates/tdrace-app/tests/rally_tracks_tests.rs`, `crates/tdrace-app/tests/ai_tests.rs` -> data, end-to-end and bot tests.
 
 ### Beads Epic Mapping
 - Governed by Beads Epic: `tdrace-eo64` ("Fulfill Spec 082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement").
