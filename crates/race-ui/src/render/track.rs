@@ -105,6 +105,124 @@ pub fn compute_segment_edge_suppressions(
     suppressions
 }
 
+/// Synchronized untangled boundaries tuple: (left_road, right_road, left_curb, right_curb).
+pub type UntangledBoundaryTuple = (Vec<Vec2>, Vec<Vec2>, Vec<Vec2>, Vec<Vec2>);
+
+/// Borrowed slices of untangled boundaries.
+pub type UntangledBoundarySlices<'a> = (&'a [Vec2], &'a [Vec2], &'a [Vec2], &'a [Vec2]);
+
+/// Cached render data for a single network branch segment (Spec 084).
+#[derive(Debug, Clone)]
+pub struct CachedSegmentRenderData {
+    pub id: arcade_race_core::track::network::SegmentId,
+    pub spline: TrackSpline,
+    pub boundaries: UntangledBoundaryTuple,
+    pub suppressions: Vec<EdgeSuppression>,
+}
+
+/// Precomputed track rendering cache retaining untangled boundaries, branch splines,
+/// and junction edge suppressions across frames (Spec 084).
+#[derive(Debug, Clone)]
+pub struct TrackRenderCache {
+    pub track_ptr: usize,
+    pub sample_count: usize,
+    pub total_length_bits: u32,
+    pub segments_len: usize,
+    pub junctions_len: usize,
+    pub has_pit_lane: bool,
+    pub main_boundaries: UntangledBoundaryTuple,
+    pub main_suppressions: Vec<EdgeSuppression>,
+    pub pit_lane_boundaries: Option<UntangledBoundaryTuple>,
+    pub branch_segments: Vec<CachedSegmentRenderData>,
+}
+
+impl TrackRenderCache {
+    pub fn new(track: &Track) -> Self {
+        let main_boundaries = track.spline.untangled_boundaries(1.35);
+        let mut main_suppressions = Vec::new();
+        let mut branch_segments = Vec::new();
+
+        if let Some(ref net) = track.network {
+            let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+            main_suppressions = compute_segment_edge_suppressions(
+                &track.spline.samples,
+                track.spline.closed,
+                &branch_segs,
+                None,
+            );
+
+            for seg in &net.segments {
+                if seg.id.0 != 0 && seg.samples.len() >= 2 {
+                    let other_branches: Vec<&RoadSegment> =
+                        net.segments.iter().filter(|s| s.id != seg.id).collect();
+                    let branch_supp = compute_segment_edge_suppressions(
+                        &seg.samples,
+                        false,
+                        &other_branches,
+                        Some(&track.spline),
+                    );
+                    let seg_spline = seg.to_spline();
+                    let branch_bnd = seg_spline.untangled_boundaries(1.35);
+                    branch_segments.push(CachedSegmentRenderData {
+                        id: seg.id,
+                        spline: seg_spline,
+                        boundaries: branch_bnd,
+                        suppressions: branch_supp,
+                    });
+                }
+            }
+        }
+
+        let pit_lane_boundaries = track.pit_lane.as_ref().map(|lane| {
+            lane.spline.untangled_boundaries(1.35)
+        });
+
+        Self {
+            track_ptr: track as *const Track as usize,
+            sample_count: track.spline.samples.len(),
+            total_length_bits: track.spline.total_length.to_bits(),
+            segments_len: track.network.as_ref().map_or(0, |n| n.segments.len()),
+            junctions_len: track.network.as_ref().map_or(0, |n| n.junctions.len()),
+            has_pit_lane: track.pit_lane.is_some(),
+            main_boundaries,
+            main_suppressions,
+            pit_lane_boundaries,
+            branch_segments,
+        }
+    }
+
+    pub fn matches(&self, track: &Track) -> bool {
+        self.track_ptr == (track as *const Track as usize)
+            && self.sample_count == track.spline.samples.len()
+            && self.total_length_bits == track.spline.total_length.to_bits()
+            && self.segments_len == track.network.as_ref().map_or(0, |n| n.segments.len())
+            && self.junctions_len == track.network.as_ref().map_or(0, |n| n.junctions.len())
+            && self.has_pit_lane == track.pit_lane.is_some()
+    }
+}
+
+static TRACK_RENDER_CACHE: Mutex<Option<TrackRenderCache>> = Mutex::new(None);
+
+/// Clears the global track render cache, forcing boundary and junction suppression recomputation on next render.
+pub fn clear_track_render_cache() {
+    if let Ok(mut lock) = TRACK_RENDER_CACHE.lock() {
+        *lock = None;
+    }
+}
+
+/// Accesses the global track render cache with automatic creation and validation.
+pub fn with_track_render_cache<R>(track: &Track, f: impl FnOnce(&TrackRenderCache) -> R) -> R {
+    let mut lock = TRACK_RENDER_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let needs_update = match lock.as_ref() {
+        Some(c) => !c.matches(track),
+        None => true,
+    };
+    if needs_update {
+        *lock = Some(TrackRenderCache::new(track));
+    }
+    f(lock.as_ref().unwrap())
+}
+
 /// Computes instantaneous track curvature (radians per meter) between two spline samples.
 #[inline]
 pub fn compute_segment_curvature(s0: &SplineSample, s1: &SplineSample) -> f32 {
@@ -375,46 +493,29 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 2b. Render procedural pit lane road ribbon (Spec 062/077)
-    if let Some(pit_lane) = &track.pit_lane {
-        render_surface_pass(&pit_lane.spline, false, view_bounds);
-    }
+    // 2b. & 3. Render pit ribbon, segment runoff corridors, ground curbs and ground surface quads
+    with_track_render_cache(track, |cache| {
+        if let Some(pit_lane) = &track.pit_lane {
+            let pit_bnd = cache.pit_lane_boundaries.as_ref().map(|b| (&b.0[..], &b.1[..], &b.2[..], &b.3[..]));
+            render_surface_pass_filtered(&pit_lane.spline, false, view_bounds, None, pit_bnd);
+        }
 
-    // 3. Render segment runoff corridors, ground curbs and ground surface quads
-    if let Some(ref net) = track.network {
-        let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
-        let main_suppressions = compute_segment_edge_suppressions(
-            &track.spline.samples,
-            track.spline.closed,
-            &branch_segs,
-            None,
-        );
+        let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
+        let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
 
-        render_runoff_pass(&track.spline, false, view_bounds);
-        render_curbs_pass_filtered(&track.spline, false, view_bounds, Some(&main_suppressions));
-        render_surface_pass_filtered(&track.spline, false, view_bounds, Some(&main_suppressions));
+        render_runoff_pass_filtered(&track.spline, false, view_bounds, Some(main_bnd));
+        render_curbs_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
+        render_surface_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
 
-        for seg in &net.segments {
-            if seg.id.0 != 0 && seg.samples.len() >= 2 {
-                let other_branches: Vec<&RoadSegment> =
-                    net.segments.iter().filter(|s| s.id != seg.id).collect();
-                let branch_suppressions = compute_segment_edge_suppressions(
-                    &seg.samples,
-                    false,
-                    &other_branches,
-                    Some(&track.spline),
-                );
-                let seg_spline = seg.to_spline();
-                render_runoff_pass(&seg_spline, false, view_bounds);
-                render_curbs_pass_filtered(&seg_spline, false, view_bounds, Some(&branch_suppressions));
-                render_surface_pass_filtered(&seg_spline, false, view_bounds, Some(&branch_suppressions));
+        if track.network.is_some() {
+            for branch in &cache.branch_segments {
+                let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
+                render_runoff_pass_filtered(&branch.spline, false, view_bounds, Some(b_bnd));
+                render_curbs_pass_filtered(&branch.spline, false, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+                render_surface_pass_filtered(&branch.spline, false, view_bounds, Some(&branch.suppressions), Some(b_bnd));
             }
         }
-    } else {
-        render_runoff_pass(&track.spline, false, view_bounds);
-        render_curbs_pass(&track.spline, false, view_bounds);
-        render_surface_pass(&track.spline, false, view_bounds);
-    }
+    });
 
     // 3b. Render network junctions (paved throat wedges, gore triangles, chevrons, nose attenuators)
     render_network_junctions_pass(track, false, view_bounds);
@@ -457,40 +558,23 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
 
-        if let Some(ref net) = track.network {
-            let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
-            let main_suppressions = compute_segment_edge_suppressions(
-                &track.spline.samples,
-                track.spline.closed,
-                &branch_segs,
-                None,
-            );
+        with_track_render_cache(track, |cache| {
+            let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
+            let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
 
-            render_runoff_pass(&track.spline, true, view_bounds);
-            render_curbs_pass_filtered(&track.spline, true, view_bounds, Some(&main_suppressions));
-            render_surface_pass_filtered(&track.spline, true, view_bounds, Some(&main_suppressions));
+            render_runoff_pass_filtered(&track.spline, true, view_bounds, Some(main_bnd));
+            render_curbs_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
+            render_surface_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
 
-            for seg in &net.segments {
-                if seg.id.0 != 0 && seg.samples.len() >= 2 {
-                    let other_branches: Vec<&RoadSegment> =
-                        net.segments.iter().filter(|s| s.id != seg.id).collect();
-                    let branch_suppressions = compute_segment_edge_suppressions(
-                        &seg.samples,
-                        false,
-                        &other_branches,
-                        Some(&track.spline),
-                    );
-                    let seg_spline = seg.to_spline();
-                    render_runoff_pass(&seg_spline, true, view_bounds);
-                    render_curbs_pass_filtered(&seg_spline, true, view_bounds, Some(&branch_suppressions));
-                    render_surface_pass_filtered(&seg_spline, true, view_bounds, Some(&branch_suppressions));
+            if track.network.is_some() {
+                for branch in &cache.branch_segments {
+                    let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
+                    render_runoff_pass_filtered(&branch.spline, true, view_bounds, Some(b_bnd));
+                    render_curbs_pass_filtered(&branch.spline, true, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+                    render_surface_pass_filtered(&branch.spline, true, view_bounds, Some(&branch.suppressions), Some(b_bnd));
                 }
             }
-        } else {
-            render_runoff_pass(&track.spline, true, view_bounds);
-            render_curbs_pass(&track.spline, true, view_bounds);
-            render_surface_pass(&track.spline, true, view_bounds);
-        }
+        });
 
         render_network_junctions_pass(track, true, view_bounds);
     }
@@ -986,7 +1070,18 @@ fn render_bridge_structure_pass(spline: &TrackSpline, view_bounds: Option<(Vec2,
 }
 
 /// Draws track runoff ribbon quads between track/curb edge and wall boundary for ground or elevated segments.
+#[allow(dead_code)]
 fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    render_runoff_pass_filtered(spline, elevated, view_bounds, None);
+}
+
+/// Draws track runoff ribbon quads with optional precomputed untangled boundaries (Spec 084).
+fn render_runoff_pass_filtered(
+    spline: &TrackSpline,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    cached_boundaries: Option<UntangledBoundarySlices>,
+) {
     let samples = &spline.samples;
     let n = samples.len();
     if n < 2 {
@@ -1004,8 +1099,14 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     };
     let mut fringe_builder = BatchMeshBuilder::new(fringe_tex);
 
+    let fallback;
     let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
-        spline.untangled_boundaries(curb_extra_width);
+        if let Some(b) = cached_boundaries {
+            b
+        } else {
+            fallback = spline.untangled_boundaries(curb_extra_width);
+            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+        };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -1166,12 +1267,13 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     fringe_builder.flush();
 }
 
-/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression.
+/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
 fn render_curbs_pass_filtered(
     spline: &TrackSpline,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
     suppressions: Option<&[EdgeSuppression]>,
+    cached_boundaries: Option<UntangledBoundarySlices>,
 ) {
     let samples = &spline.samples;
     let n = samples.len();
@@ -1184,8 +1286,14 @@ fn render_curbs_pass_filtered(
     let (curb_tex, curb_tile_scale, quality) = get_curb_material_info();
     let mut curb_builder = BatchMeshBuilder::new(curb_tex);
 
+    let fallback;
     let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
-        spline.untangled_boundaries(curb_extra_width);
+        if let Some(b) = cached_boundaries {
+            b
+        } else {
+            fallback = spline.untangled_boundaries(curb_extra_width);
+            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+        };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -1271,16 +1379,18 @@ fn render_curbs_pass_filtered(
     curb_builder.flush();
 }
 
+#[allow(dead_code)]
 fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
-    render_curbs_pass_filtered(spline, elevated, view_bounds, None);
+    render_curbs_pass_filtered(spline, elevated, view_bounds, None, None);
 }
 
-/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments with optional edge suppression.
+/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
 fn render_surface_pass_filtered(
     spline: &TrackSpline,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
     suppressions: Option<&[EdgeSuppression]>,
+    cached_boundaries: Option<UntangledBoundarySlices>,
 ) {
     let samples = &spline.samples;
     let n = samples.len();
@@ -1293,8 +1403,14 @@ fn render_surface_pass_filtered(
     let mut surface_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
     let mut lines_to_draw: Vec<(Vec2, Vec2, f32, Color)> = Vec::with_capacity(seg_count * 2);
 
+    let fallback;
     let (untangled_left, untangled_right, untangled_curb_left, untangled_curb_right) =
-        spline.untangled_boundaries(1.35);
+        if let Some(b) = cached_boundaries {
+            b
+        } else {
+            fallback = spline.untangled_boundaries(1.35);
+            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+        };
 
     for i in 0..seg_count {
         let s0 = &samples[i];
@@ -1868,8 +1984,9 @@ fn render_surface_pass_filtered(
 }
 
 /// Draws track surface quads for either ground or elevated bridge segments.
+#[allow(dead_code)]
 fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
-    render_surface_pass_filtered(spline, elevated, view_bounds, None);
+    render_surface_pass_filtered(spline, elevated, view_bounds, None, None);
 }
 
 /// Renders network junction geometry: paved throat wedges, gore triangles, painted chevrons, and nose crash cushions.
@@ -2602,6 +2719,31 @@ mod tests {
         // Must execute cleanly without panicking
         render_ground_track_culled(&track, None);
         render_ground_track_culled(&track, Some((Vec2::new(0.0, -10.0), Vec2::new(100.0, 20.0))));
+    }
+
+    #[test]
+    fn test_track_render_cache_hit_and_performance() {
+        clear_track_render_cache();
+        let track = arcade_race_core::track::create_prototypical_track(
+            "gt",
+            arcade_race_core::track::TrackShape::Oval,
+            arcade_race_core::track::RaceDirection::Right,
+        );
+
+        // First render initializes the cache
+        with_track_render_cache(&track, |cache| {
+            assert!(cache.matches(&track));
+            assert_eq!(cache.main_boundaries.0.len(), track.spline.samples.len());
+        });
+
+        // Verify cache hit and consistency across frames
+        with_track_render_cache(&track, |cache| {
+            assert!(cache.matches(&track));
+        });
+
+        // Run render passes to ensure zero panics and valid execution
+        render_ground_track_culled(&track, None);
+        render_elevated_track_culled(&track, None);
     }
 }
 

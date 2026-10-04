@@ -1003,14 +1003,48 @@ pub fn generate_tire_rubber_image(width: u16, height: u16) -> Image {
     }
 }
 
+/// Fast polynomial approximation of sine for visual macro-modulation (Spec 084).
+/// Maximum relative error < 0.16% using Bhaskara's algebraic formula, bypassing transcendental instructions.
+#[inline(always)]
+pub fn fast_sin(x: f32) -> f32 {
+    const TWO_PI: f32 = 2.0 * std::f32::consts::PI;
+    const PI: f32 = std::f32::consts::PI;
+    const FIVE_PI_SQ: f32 = 5.0 * PI * PI;
+
+    let mut a = x % TWO_PI;
+    if a > PI {
+        a -= TWO_PI;
+    } else if a < -PI {
+        a += TWO_PI;
+    }
+
+    if a >= 0.0 {
+        let num = 16.0 * a * (PI - a);
+        let den = FIVE_PI_SQ - 4.0 * a * (PI - a);
+        num / den
+    } else {
+        let neg_a = -a;
+        let num = 16.0 * neg_a * (PI - neg_a);
+        let den = FIVE_PI_SQ - 4.0 * neg_a * (PI - neg_a);
+        -num / den
+    }
+}
+
+/// Fast polynomial approximation of cosine for visual macro-modulation (Spec 084).
+#[inline(always)]
+pub fn fast_cos(x: f32) -> f32 {
+    fast_sin(x + std::f32::consts::FRAC_PI_2)
+}
+
 /// Continuous multi-octave trigonometric value field for macro-modulation repetition breaking.
 /// Operates at 32m - 64m spatial wavelength and returns a normalized offset in [-1.0, 1.0].
-#[inline]
+/// Uses algebraic fast trigonometric approximations to eliminate per-vertex transcendental calls (Spec 084).
+#[inline(always)]
 pub fn evaluate_macro_modulation(x: f32, y: f32) -> f32 {
-    let w1 = (x * 0.13 + y * 0.09).sin() * (x * 0.07 - y * 0.11).cos();
-    let w2 = 0.5 * (x * 0.19 - y * 0.15 + 1.2).sin();
-    let w3 = 0.25 * (x * 0.08 + y * 0.14 - 0.7).cos();
-    (w1 + w2 + w3) / 1.75
+    let w1 = fast_sin(x * 0.13 + y * 0.09) * fast_cos(x * 0.07 - y * 0.11);
+    let w2 = 0.5 * fast_sin(x * 0.19 - y * 0.15 + 1.2);
+    let w3 = 0.25 * fast_cos(x * 0.08 + y * 0.14 - 0.7);
+    ((w1 + w2 + w3) * (1.0 / 1.75)).clamp(-1.0, 1.0)
 }
 
 /// Dynamic track surface wear state (Phase 2 dynamic evolution hook).
