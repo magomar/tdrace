@@ -919,6 +919,12 @@ pub struct RaceResultEntry {
     /// The car was still racing when the race ended: `total_time` is an estimate.
     #[serde(default)]
     pub projected: bool,
+    /// Joker laps taken, when the race had the joker rule (spec 082).
+    #[serde(default)]
+    pub jokers: Option<u32>,
+    /// Joker penalty in seconds, already included in `total_time`.
+    #[serde(default)]
+    pub penalty: f32,
 }
 
 use super::profile_ui::render_profile_badge;
@@ -2894,11 +2900,24 @@ fn draw_menu_footer(fonts: &Fonts, scaler: &UiScaler, bounds: LayoutRect, prompt
 /// Builds a display-only results table without changing the authoritative finish order.
 pub fn race_results_table(results: &[RaceResultEntry], championship: bool) -> DataTable<RaceResultEntry> {
     let mut table = DataTable::new(0.0, 0.0, 1.0, 32.0, 28.0);
+    let joker_race = results.iter().any(|r| r.jokers.is_some());
     table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &RaceResultEntry| format!("P{}", r.position)));
-    table.add_column(DataColumn::new("driver", "DRIVER / VEHICLE", 35.0, ColumnAlign::Left, |r| r.car_name.clone()));
+    let driver_w = if joker_race { 19.0 } else { 35.0 };
+    table.add_column(DataColumn::new("driver", "DRIVER / VEHICLE", driver_w, ColumnAlign::Left, |r| r.car_name.clone()));
     table.add_column(DataColumn::new("total", "TOTAL TIME", 18.0, ColumnAlign::Right, |r| {
         format!("{}{}", if r.projected { "~" } else { "" }, format_lap_time(r.total_time))
     }));
+    if joker_race {
+        table.add_column(DataColumn::new("joker", "JOKER", 16.0, ColumnAlign::Left, |r| {
+            if r.penalty > 0.0 {
+                format!("+{:.1}s NO JOKER", r.penalty)
+            } else if r.jokers.unwrap_or(0) > 0 {
+                "J".to_string()
+            } else {
+                "-".to_string()
+            }
+        }));
+    }
     table.add_column(DataColumn::new("lap", "BEST LAP", 17.0, ColumnAlign::Right, |r| format_lap_time(r.best_lap.unwrap_or(0.0))));
     table.add_column(DataColumn::new("gap", "GAP", 13.0, ColumnAlign::Right, |r| {
         if r.position == 1 { "-".to_string() } else {

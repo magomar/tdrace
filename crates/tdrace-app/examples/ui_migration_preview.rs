@@ -15,7 +15,7 @@ async fn main() {
         position: i + 1, car_name: format!("Driver {} / Long vehicle designation", i + 1),
         is_player: i == 6, total_time: 180.0 + i as f32, best_lap: Some(59.125),
         delta_to_leader: i as f32, car_idx: i, points_awarded: 25 - i as u32,
-        projected: i > 9,
+        projected: i > 9, jokers: None, penalty: 0.0,
     }).collect();
     for (name, width, height) in [("results", 1280., 720.), ("results-small", 800., 600.), ("pause", 1280., 720.), ("controls", 1280., 720.)] {
         request_new_screen_size(width, height);

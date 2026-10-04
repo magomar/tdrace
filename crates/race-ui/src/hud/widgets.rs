@@ -270,6 +270,61 @@ pub fn render_compound_badge(
     fonts.draw_ui_bold(code, text_x, text_y, scaler.font_s(11.0), col);
 }
 
+/// Joker rule state of one driver, shown as a pill under the position and lap card (spec 082).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JokerBadge {
+    /// The driver still owes a joker lap.
+    Pending,
+    /// The driver has taken the joker laps the rule requires.
+    Done,
+    /// The driver is on the last lap (or past it) and still owes a joker lap.
+    LastLap,
+}
+
+impl JokerBadge {
+    /// The badge for a driver on `lap` of `total_laps` who took `taken` of `mandatory` joker laps. None when
+    /// the rule is off.
+    pub fn for_driver(mandatory: u32, taken: u32, lap: u32, total_laps: u32) -> Option<Self> {
+        if mandatory == 0 {
+            None
+        } else if taken >= mandatory {
+            Some(Self::Done)
+        } else if lap >= total_laps {
+            Some(Self::LastLap)
+        } else {
+            Some(Self::Pending)
+        }
+    }
+
+    /// Pill text. Plain ASCII: emoji glyphs render as boxes in the UI fonts.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Pending => "JOKER",
+            Self::Done => "JOKER DONE",
+            Self::LastLap => "JOKER THIS LAP!",
+        }
+    }
+}
+
+/// Draws the joker pill: amber while pending, green when done, red and pulsing at 2 Hz on the last lap.
+pub fn render_joker_badge(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32, badge: JokerBadge) {
+    let col = match badge {
+        JokerBadge::Pending => Palette::NEON_ORANGE,
+        JokerBadge::Done => Palette::NEON_GREEN,
+        JokerBadge::LastLap => {
+            let pulse = 0.75 + 0.25 * (macroquad::time::get_time() as f32 * std::f32::consts::TAU * 2.0).sin();
+            Color::new(Palette::RED.r, Palette::RED.g, Palette::RED.b, pulse)
+        }
+    };
+    let text = badge.label();
+    let pill_h = scaler.s(22.0);
+    let text_w = text.len() as f32 * scaler.s(8.0);
+    let pill_w = text_w + scaler.s(16.0);
+    draw_rectangle(x, y, pill_w, pill_h, Color::new(col.r * 0.25, col.g * 0.25, col.b * 0.25, 0.90 * col.a));
+    draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.6), col);
+    fonts.draw_ui_bold(text, x + (pill_w - text_w) * 0.5, y + scaler.s(16.0), scaler.font_s(13.0), col);
+}
+
 /// Draws an in-game timing tower entry row with position, driver tag, compound badge, and lap time / split.
 #[allow(clippy::too_many_arguments)]
 pub fn render_timing_tower_row(

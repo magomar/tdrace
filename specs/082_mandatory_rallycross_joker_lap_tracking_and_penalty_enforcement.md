@@ -52,7 +52,7 @@ The end-to-end test (item 3) found more than the audit did. These fixes are part
 ### 1. In-race HUD badge (own car)
 In a Rallycross race only, a pill is drawn next to the position/lap widget (`render_position_and_lap`, `crates/race-ui/src/hud/widgets.rs`), and next to its split-screen copy:
 - **Pending**: amber `JOKER` pill.
-- **Done**: green `JOKER ✓` pill.
+- **Done**: green `JOKER DONE` pill (plain ASCII: emoji glyphs render as boxes in the UI fonts, see `tdrace-lm6l`).
 - **Final lap, still pending**: red `JOKER THIS LAP!` pill that pulses (alpha 0.5 → 1.0 at 2 Hz).
 
 No badge is drawn in non-Rallycross races.
@@ -162,7 +162,7 @@ When a race starts on a track with `track.car_category == CarCategory::Rally` an
   - [ ] **Given** a 5-lap Rallycross race with `JokerRule { mandatory: 1, penalty_s: 30.0 }`
   - [ ] **When** a car takes the joker on lap 3 and finishes
   - [ ] **Then** its result row has `penalty == 0.0` and `jokers == 1`
-  - [ ] **And** the in-race HUD showed the green `JOKER ✓` pill after lap 3
+  - [ ] **And** the in-race HUD showed the green `JOKER DONE` pill after lap 3
 
 - **Scenario: A missed joker adds 30 s and drops the driver down the order**
   - [ ] **Given** the same race, where car A crosses the line first without a joker and car B crosses 5 s later with a joker

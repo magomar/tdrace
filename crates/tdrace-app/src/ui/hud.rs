@@ -15,7 +15,7 @@ use cabinet::ui::{
 };
 use race_ui::hud::widgets::{
     render_cockpit_chassis_telemetry, render_compound_badge, render_lap_timer, render_minimap,
-    render_position_and_lap, CockpitTelemetryMode,
+    render_joker_badge, render_position_and_lap, CockpitTelemetryMode, JokerBadge,
 };
 
 pub use race_ui::hud::widgets::format_lap_time;
@@ -65,6 +65,7 @@ pub fn render_hud(
     session_time: f32,
     player_pit_state: Option<&race_kit::PitServiceState>,
     telemetry_mode: CockpitTelemetryMode,
+    joker_badge: Option<JokerBadge>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -82,6 +83,9 @@ pub fn render_hud(
         total_laps,
         is_time_attack,
     );
+    if let Some(badge) = joker_badge {
+        render_joker_badge(fonts, &scaler, scaler.safe_pad_x, scaler.safe_pad_y + scaler.s(86.0), badge);
+    }
 
     // 2. Lap Timing & Sector Splits (Top Center)
     render_lap_timer(
@@ -573,6 +577,7 @@ pub fn render_split_hud(
     countdown_timer: Option<f32>,
     gamepad_connected: bool,
     layout: crate::camera::SplitLayout,
+    joker_badges: [Option<JokerBadge>; 2],
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -614,6 +619,7 @@ pub fn render_split_hud(
         total_racers,
         total_laps,
         false,
+        joker_badges[0],
     );
 
     // 3. Player 2 Pane HUD
@@ -641,6 +647,7 @@ pub fn render_split_hud(
         total_racers,
         total_laps,
         gamepad_connected,
+        joker_badges[1],
     );
 
     // 4. Shared Center Countdown
@@ -670,6 +677,7 @@ fn render_split_player_panel(
     total_racers: usize,
     total_laps: u32,
     is_gamepad: bool,
+    joker_badge: Option<JokerBadge>,
 ) {
     let pad_x = scaler.safe_pad_x.clamp(8.0, 24.0);
     let pad_y = scaler.safe_pad_y.clamp(8.0, 24.0);
@@ -720,6 +728,9 @@ fn render_split_player_panel(
         scaler.font_s(12.5),
         Palette::WHITE,
     );
+    if let Some(badge) = joker_badge {
+        render_joker_badge(fonts, scaler, card_x, card_y + card_h + scaler.s(6.0), badge);
+    }
 
     // Top-Right: Lap Timing
     let timer_w = scaler.s(170.0).min(pw * 0.40);

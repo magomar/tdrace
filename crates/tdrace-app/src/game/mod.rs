@@ -13508,7 +13508,8 @@ impl RaceSession {
         let my_car_idx = self.player_car_index();
         let race_results = self.world.results(&self.track);
         self.results.clear();
-        let leader_time = race_results.first().map(|r| r.time).unwrap_or(0.0);
+        let leader_time = race_results.first().map(|r| r.time + r.penalty).unwrap_or(0.0);
+        let joker_race = joker_rule_for(&self.track).mandatory > 0;
 
         for row in &race_results {
             let (rank, car_idx) = (row.position - 1, row.car);
@@ -13540,7 +13541,7 @@ impl RaceSession {
                 }
             };
 
-            let mut total_time = row.time;
+            let mut total_time = row.time + row.penalty;
             let mut best_lap = row.best_lap;
             if let Some(result) = self.lan_result_of(car_idx) {
                 total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(row.time);
@@ -13564,6 +13565,8 @@ impl RaceSession {
                 car_idx,
                 points_awarded: 0,
                 projected: row.projected,
+                jokers: joker_race.then_some(row.jokers),
+                penalty: row.penalty,
             });
         }
     }
@@ -15831,6 +15834,12 @@ impl RaceSession {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
 
+        let joker_mandatory = joker_rule_for(&self.track).mandatory;
+        let joker_badge = |i: usize| {
+            self.world.trackers.get(i).and_then(|t| {
+                race_ui::hud::widgets::JokerBadge::for_driver(joker_mandatory, self.world.jokers_taken(i), t.current_lap, self.total_laps)
+            })
+        };
         if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let standings = self.compute_standings();
             let p1_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
@@ -15852,6 +15861,7 @@ impl RaceSession {
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
                 self.split_layout,
+                [joker_badge(0), joker_badge(1)],
             );
         } else {
             let my_idx = self.player_car_index();
@@ -15879,6 +15889,7 @@ impl RaceSession {
                     self.session_time,
                     self.world.pit_states.get(my_idx),
                     self.cockpit_telemetry_mode,
+                    joker_badge(my_idx),
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {

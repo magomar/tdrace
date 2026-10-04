@@ -3,8 +3,8 @@ use tdrace_app::ui::menu::{race_results_table, RaceResultEntry};
 #[test]
 fn results_columns_preserve_order_and_racing_formatting() {
     let results = vec![
-        RaceResultEntry { position: 1, car_name: "A very long driver / vehicle name".repeat(8), is_player: true, total_time: 120.0, best_lap: Some(60.0), delta_to_leader: 0.0, car_idx: 7, points_awarded: 25, projected: false },
-        RaceResultEntry { position: 2, car_name: "Opponent".into(), is_player: false, total_time: 123.5, best_lap: None, delta_to_leader: 3.5, car_idx: 2, points_awarded: 18, projected: true },
+        RaceResultEntry { position: 1, car_name: "A very long driver / vehicle name".repeat(8), is_player: true, total_time: 120.0, best_lap: Some(60.0), delta_to_leader: 0.0, car_idx: 7, points_awarded: 25, projected: false, jokers: None, penalty: 0.0 },
+        RaceResultEntry { position: 2, car_name: "Opponent".into(), is_player: false, total_time: 123.5, best_lap: None, delta_to_leader: 3.5, car_idx: 2, points_awarded: 18, projected: true, jokers: None, penalty: 0.0 },
     ];
     let table = race_results_table(&results, true);
     assert!(!table.is_focused);
