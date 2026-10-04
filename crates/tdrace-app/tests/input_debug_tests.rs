@@ -26,3 +26,18 @@ fn test_input_controller_lidar_scan() {
     let hits = controller.lidar_scanner.scan(&car, &track, &opponents);
     assert_eq!(hits.len(), 32); // 32 beams by default
 }
+
+/// Scenario: Headless test runner executes input polling without panic unwinding (Spec 084)
+#[test]
+fn test_headless_input_polling_without_panic() {
+    use macroquad::input::KeyCode;
+    use tdrace_app::input::is_key_down;
+
+    // In headless test environments without an active Macroquad context,
+    // input polling must return safe defaults (false) without panicking.
+    assert!(!is_key_down(KeyCode::Left));
+    assert!(!is_key_down(KeyCode::Right));
+    assert!(!is_key_down(KeyCode::Up));
+    assert!(!is_key_down(KeyCode::Down));
+}
+

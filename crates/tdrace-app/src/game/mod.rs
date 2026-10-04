@@ -7405,7 +7405,7 @@ impl RaceSession {
 
         // Mouse click on Hero Card, Tab bar, Module Filter Pills, or Championship Cards
         if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
-            let (mx, my) = macroquad::input::mouse_position();
+            let (mx, my) = mouse_position_safe();
             let sw = screen_width();
             let sh = screen_height();
             let scaler = UiScaler::new(sw, sh);
