@@ -1709,6 +1709,9 @@ impl CarConfig {
             w.tire_width = 0.22;
             w.rotational_inertia = 1.30;
         }
+        // Gravel and dirt tyres. Spec 074 gave every car MediumSlick, so rally and autocross cars ran
+        // slicks on gravel (affinity 0.32) and bots stalled on Classic RX/AX circuits (tdrace-lxkv).
+        cfg.set_compound(CompoundId::AllTerrain);
         cfg.finalized()
     }
 
