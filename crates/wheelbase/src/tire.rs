@@ -183,24 +183,58 @@ pub fn pacejka_lateral_force(
 }
 
 /// Shape of the rising branch: a Pacejka curve (C = 1.45, E = -0.15) rescaled so it peaks at s = 1.
-/// Its initial slope (B * C = 2.56) matches a real tire's cornering stiffness at a given peak slip;
-/// a softer rise (e.g. s * (2 - s), slope 2) under-damps the chassis yaw.
-const CURVE_C: f32 = 1.45;
-const CURVE_E: f32 = -0.15;
-/// `B` such that `C * atan(B - E * (B - atan(B))) = PI / 2` (peak at s = 1).
-const CURVE_B: f32 = 1.7646;
+/// Its initial slope (B * C = 2.56) matches a real tire's cornering stiffness at a given peak slip.
+/// Precomputed 256-interval lookup table with linear interpolation (Spec 084)
+/// eliminating three transcendental calls (two atan, one sin) per evaluation.
+const PACEJKA_RISING_LUT: [f32; 257] = [
+    0.00000000, 0.00999450, 0.01998720, 0.02997629, 0.03995997, 0.04993644, 0.05990390, 0.06986058,
+    0.07980468, 0.08973445, 0.09964811, 0.10954392, 0.11942014, 0.12927505, 0.13910692, 0.14891407,
+    0.15869482, 0.16844751, 0.17817049, 0.18786213, 0.19752085, 0.20714504, 0.21673317, 0.22628368,
+    0.23579508, 0.24526586, 0.25469458, 0.26407980, 0.27342012, 0.28271414, 0.29196054, 0.30115798,
+    0.31030518, 0.31940088, 0.32844385, 0.33743289, 0.34636684, 0.35524458, 0.36406499, 0.37282702,
+    0.38152964, 0.39017184, 0.39875266, 0.40727118, 0.41572650, 0.42411775, 0.43244412, 0.44070481,
+    0.44889907, 0.45702617, 0.46508543, 0.47307620, 0.48099785, 0.48884981, 0.49663152, 0.50434248,
+    0.51198219, 0.51955021, 0.52704613, 0.53446956, 0.54182015, 0.54909759, 0.55630159, 0.56343189,
+    0.57048828, 0.57747056, 0.58437856, 0.59121216, 0.59797124, 0.60465573, 0.61126559, 0.61780079,
+    0.62426134, 0.63064726, 0.63695863, 0.64319552, 0.64935804, 0.65544631, 0.66146050, 0.66740079,
+    0.67326736, 0.67906045, 0.68478029, 0.69042714, 0.69600130, 0.70150304, 0.70693271, 0.71229062,
+    0.71757713, 0.72279262, 0.72793747, 0.73301207, 0.73801685, 0.74295223, 0.74781865, 0.75261658,
+    0.75734647, 0.76200880, 0.76660407, 0.77113277, 0.77559541, 0.77999252, 0.78432463, 0.78859226,
+    0.79279596, 0.79693630, 0.80101381, 0.80502908, 0.80898266, 0.81287514, 0.81670710, 0.82047912,
+    0.82419180, 0.82784572, 0.83144149, 0.83497969, 0.83846095, 0.84188585, 0.84525501, 0.84856903,
+    0.85182853, 0.85503410, 0.85818637, 0.86128593, 0.86433341, 0.86732940, 0.87027452, 0.87316938,
+    0.87601458, 0.87881072, 0.88155841, 0.88425825, 0.88691084, 0.88951678, 0.89207665, 0.89459105,
+    0.89706057, 0.89948579, 0.90186729, 0.90420566, 0.90650147, 0.90875528, 0.91096767, 0.91313919,
+    0.91527041, 0.91736188, 0.91941416, 0.92142778, 0.92340329, 0.92534123, 0.92724212, 0.92910650,
+    0.93093489, 0.93272781, 0.93448576, 0.93620926, 0.93789881, 0.93955491, 0.94117805, 0.94276872,
+    0.94432739, 0.94585456, 0.94735068, 0.94881623, 0.95025167, 0.95165745, 0.95303402, 0.95438184,
+    0.95570134, 0.95699296, 0.95825712, 0.95949425, 0.96070478, 0.96188911, 0.96304766, 0.96418082,
+    0.96528900, 0.96637260, 0.96743199, 0.96846757, 0.96947972, 0.97046879, 0.97143518, 0.97237923,
+    0.97330130, 0.97420176, 0.97508095, 0.97593921, 0.97677688, 0.97759430, 0.97839180, 0.97916970,
+    0.97992832, 0.98066798, 0.98138900, 0.98209167, 0.98277630, 0.98344319, 0.98409263, 0.98472491,
+    0.98534032, 0.98593914, 0.98652164, 0.98708810, 0.98763879, 0.98817397, 0.98869389, 0.98919883,
+    0.98968903, 0.99016474, 0.99062621, 0.99107367, 0.99150736, 0.99192753, 0.99233439, 0.99272818,
+    0.99310912, 0.99347743, 0.99383333, 0.99417702, 0.99450873, 0.99482865, 0.99513698, 0.99543394,
+    0.99571971, 0.99599450, 0.99625848, 0.99651185, 0.99675480, 0.99698749, 0.99721013, 0.99742287,
+    0.99762589, 0.99781937, 0.99800347, 0.99817836, 0.99834419, 0.99850113, 0.99864934, 0.99878897,
+    0.99892017, 0.99904309, 0.99915788, 0.99926468, 0.99936364, 0.99945490, 0.99953859, 0.99961485,
+    0.99968382, 0.99974562, 0.99980038, 0.99984823, 0.99988930, 0.99992371, 0.99995158, 0.99997303,
+    1.00000000,
+];
 
-/// Normalized tire curve (Spec 043): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
+/// Normalized tire curve (Spec 043, Spec 084): 0 at s = 0, 1.0 at the peak (s = 1), then a smooth fall
 /// to `slide_grip` over `falloff` peak-widths.
 #[inline]
 pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
     let s = s.abs();
-    if s <= 1.0 {
-        let bs = CURVE_B * s;
-        (CURVE_C * (bs - CURVE_E * (bs - bs.atan())).atan()).sin().min(1.0)
-    } else {
+    if s >= 1.0 {
         let t = ((s - 1.0) / tire.falloff.max(0.1)).min(1.0);
         1.0 - (1.0 - tire.slide_grip) * t * t * (3.0 - 2.0 * t)
+    } else {
+        let scaled = s * 256.0;
+        let idx = scaled as usize;
+        let frac = scaled - idx as f32;
+        PACEJKA_RISING_LUT[idx] + frac * (PACEJKA_RISING_LUT[idx + 1] - PACEJKA_RISING_LUT[idx])
     }
 }
 
@@ -231,7 +265,11 @@ pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tir
         return (0.0, 0.0);
     }
     let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
-    let sy = slip_angle.tan() / tire.peak_slip_angle().tan().max(1e-3);
+    let sy = if slip_angle.abs() < 1e-5 {
+        0.0
+    } else {
+        slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
+    };
     let s = (sx * sx + sy * sy).sqrt();
     if s < 1e-6 {
         return (0.0, 0.0);
@@ -252,15 +290,61 @@ pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tir
     (fx, fy)
 }
 
+/// Computes only the longitudinal force Fx of combined slip (Spec 084).
+///
+/// Skips lateral force evaluation and friction circle budget calculation,
+/// yielding a significant speedup for implicit integration and ABS/TCS solvers.
+#[inline]
+pub fn combined_slip_fx(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
+    if envelope <= 1e-4 {
+        return 0.0;
+    }
+    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
+    let sy = if slip_angle.abs() < 1e-5 {
+        0.0
+    } else {
+        slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
+    };
+    let s_sq = sx * sx + sy * sy;
+    if s_sq < 1e-12 {
+        return 0.0;
+    }
+    let s = s_sq.sqrt();
+    let f = envelope * normalized_grip_curve(s, tire);
+    f * sx / s
+}
+
 /// Longitudinal stiffness `dFx/d(slip_ratio)` at the given combined slip state (N per unit slip).
 ///
 /// Used by the implicit wheel spin integrator. Evaluated by central difference and floored at a
 /// small positive value so the implicit step stays well conditioned past the peak.
 #[inline]
 pub fn longitudinal_slip_stiffness(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
+    if envelope <= 1e-4 {
+        return 0.0;
+    }
+    let sy = if slip_angle.abs() < 1e-5 {
+        0.0
+    } else {
+        slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
+    };
+    let sy_sq = sy * sy;
+    let inv_peak_sr = 1.0 / tire.peak_slip_ratio.max(1e-3);
     let h = tire.peak_slip_ratio.max(1e-3) * 0.05;
-    let (fx_hi, _) = combined_slip_forces(slip_ratio + h, slip_angle, envelope, tire);
-    let (fx_lo, _) = combined_slip_forces(slip_ratio - h, slip_angle, envelope, tire);
+
+    let fx_for_sr = |sr: f32| -> f32 {
+        let sx = sr * inv_peak_sr;
+        let s_sq = sx * sx + sy_sq;
+        if s_sq < 1e-12 {
+            0.0
+        } else {
+            let s = s_sq.sqrt();
+            envelope * normalized_grip_curve(s, tire) * sx / s
+        }
+    };
+
+    let fx_hi = fx_for_sr(slip_ratio + h);
+    let fx_lo = fx_for_sr(slip_ratio - h);
     let slope = (fx_hi - fx_lo) / (2.0 * h);
     slope.max(envelope * 0.05)
 }
@@ -655,7 +739,30 @@ impl WheelAssembly {
         envelope: f32,
         dt: f32,
     ) {
-        let inertia = self.config.rotational_inertia.max(1e-3);
+        let eff_inertia = self.effective_inertia(v_long, slip_angle, envelope, dt);
+        self.step_implicit_with_inertia(
+            drive_torque,
+            brake_torque,
+            v_long,
+            slip_angle,
+            envelope,
+            eff_inertia,
+            dt,
+        );
+    }
+
+    /// Optimized implicit integration using precomputed effective inertia (Spec 084).
+    /// Avoids duplicate evaluations of longitudinal slip stiffness across differential coupling.
+    pub fn step_implicit_with_inertia(
+        &mut self,
+        drive_torque: f32,
+        brake_torque: f32,
+        v_long: f32,
+        slip_angle: f32,
+        envelope: f32,
+        effective_inertia: f32,
+        dt: f32,
+    ) {
         let r = self.config.tire_radius.max(1e-2);
         let brake_torque = brake_torque.max(0.0);
 
@@ -674,14 +781,7 @@ impl WheelAssembly {
 
         let tire = &self.config.tire_model;
         let slip = self.slip_ratio_raw(v_long);
-        let (fx0, _) = combined_slip_forces(slip, slip_angle, envelope, tire);
-        let stiffness = if envelope > 1e-4 {
-            longitudinal_slip_stiffness(slip, slip_angle, envelope, tire)
-        } else {
-            0.0
-        };
-        let k = r * r * stiffness / v_long.abs().max(SLIP_REFERENCE_SPEED);
-        let effective_inertia = inertia + dt * k;
+        let fx0 = combined_slip_fx(slip, slip_angle, envelope, tire);
 
         let omega_free = self.angular_velocity + dt * (drive_torque - r * fx0) / effective_inertia;
         let brake_dw = dt * brake_torque / effective_inertia;
