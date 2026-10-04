@@ -106,6 +106,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [083](083_evorl_bot_driving_style_and_performance_optimization.md) | EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization | Architecture Spec | `draft` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [065](065_vehiclegeneric_bot_ai_and_effects.md) | Comprehensive computational architecture and evolutionary optimization pipeline leveraging the EvoRL framework to algorithmically calibrate TDRace bot control laws, amplify authentic driving style uniqueness, enforce monotonic tier progression, and evolve tactical Behavior Trees via high-throughput headless simulation. |
 | [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation | Architecture Spec | `implemented` | - | Resolves simulation, raycasting, and rallycross rendering bottlenecks, bringing wheelbase physics above 1.5M steps/s floor, LIDAR above 14M rays/s floor, Höljes RX frame times from 15.3ms down to <5.0ms, and equips bot AI with robust pit lane recognition and tactical entry gating. |
 | [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions | Feature Spec | `approved` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries. |
+| [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md) | Rallycross Jokers Built From OpenStreetMap Joker Ways | Feature Spec | `draft` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Builds the World RX joker branch from the joker ways mapped in OpenStreetMap on the 10 circuits that have them, keeps the synthetic joker elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, and keeps joker walls out of the main road's wall gap. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -136,6 +137,7 @@ flowchart LR
     082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
     083["083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"]
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
+    088["088: Rallycross Jokers Built From OpenStreetMap Joker Ways"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -161,4 +163,5 @@ flowchart LR
     046 --> 083
     065 --> 083
     081 --> 085
+    081 --> 088
 ```

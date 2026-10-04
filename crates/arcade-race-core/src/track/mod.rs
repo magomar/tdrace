@@ -624,9 +624,9 @@ impl Track {
     /// Builds `geometry.network_walls` along the network segments that are not on the default
     /// layout (the Rallycross joker branch). The walls use the gap that the main walls keep
     /// from the main road around the branch, and the track's most common barrier type.
-    /// Every piece that comes within 0.3 m of a network road or the main spline (with its
-    /// curbs), or crosses a network road or a main wall, is dropped, so the split and merge
-    /// throats stay open. The check ignores elevation: some joker data overlaps the main road
+    /// Every piece that comes within 0.3 m of a network road, or nearer the main road (with its
+    /// curbs) than the main walls stand, or crosses a network road or a main wall, or runs along
+    /// a main wall, is dropped, so the split and merge throats stay open. The check ignores elevation: some joker data overlaps the main road
     /// at a different height, and a wall there would block the main road.
     pub fn generate_network_walls(&mut self) {
         self.geometry.network_walls.clear();
@@ -634,16 +634,22 @@ impl Track {
         let barrier_type = self.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
 
         // The main spline is smoothed across the segment seams, so check its ribbon (with curbs)
-        // as well. A piece that crosses a main wall is dropped too, so the walls never pinch.
-        let clear_of_main = |w: &WallBarrier| {
+        // as well, out to `gap`: where the joker runs on or beside the main road, a joker wall
+        // inside the main road's own wall gap stood ~1 m off its edge, and essay_rx bots on the
+        // main route hit its end. A piece that crosses a main wall is dropped too, so the walls
+        // never pinch. So is a piece within 0.5 m of a main wall along its length: it only doubles
+        // that wall, and once the pieces are joined the line zigzags across it (holjes_rx).
+        let main_walls = || self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+        let clear_of_main = |w: &WallBarrier, gap: f32| {
             let off_road = [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5].into_iter().all(|p| {
                 let proj = self.spline.project_point(p);
                 let curb_extra = if proj.left_curb || proj.right_curb { 1.35 } else { 0.0 };
-                proj.distance_to_spline >= proj.track_width * 0.5 + curb_extra + 0.3
+                proj.distance_to_spline >= proj.track_width * 0.5 + curb_extra + gap
             });
-            off_road
-                && !self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
-                    .any(|m| m.segment.intersect_segment(&w.segment).is_some())
+            let doubles_main_wall = [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5]
+                .into_iter()
+                .all(|p| main_walls().any(|m| m.segment.distance_to_point(p) < 0.5));
+            off_road && !doubles_main_wall && !main_walls().any(|m| m.segment.intersect_segment(&w.segment).is_some())
         };
 
         let mut walls = Vec::new();
@@ -664,10 +670,12 @@ impl Track {
                 s.is_bridge = false;
             }
             let (left, right, _, _) = generate_walls_from_spline_raw(&spline, barrier_offset, barrier_type);
+            // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept.
+            let main_gap = (barrier_offset - 0.5).max(0.3);
             for side in [left, right] {
                 let kept: Vec<WallBarrier> = side
                     .into_iter()
-                    .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w))
+                    .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
                     .collect();
                 walls.extend(merge_collinear_walls(kept));
             }
