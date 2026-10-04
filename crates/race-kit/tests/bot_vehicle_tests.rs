@@ -266,3 +266,125 @@ fn test_bot_ai_lap1_pit_gating_stall_assignment_and_cooldown() {
     assert!(!bot_lap2.is_pitting, "Bot at exit gate must reset is_pitting");
     assert!(bot_lap2.pit_cooldown >= 29.0, "Bot exiting pit must receive ~30s cooldown");
 }
+
+/// Scenario: Bots recognize pit lanes and only enter when tactical conditions require pit service (Spec 084)
+#[test]
+fn test_bot_parallel_straight_immunity_and_throat_lateral_repulsion() {
+    use arcade_race_core::track::{LineSegment, PitBox, PitLane, TrackSpline};
+    use wheelbase::{Car, CarConfig};
+
+    // Front straight is at y = -60.0 heading +X from x = -75.0 to 75.0, road width 15m
+    let mut track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+    // Parallel pit lane to the right (y = -68.0) from x = -20.0 to x = 40.0, road width 6m
+    let entry_gate = LineSegment::new(Vec2::new(-20.0, -71.0), Vec2::new(-20.0, -65.0));
+    let exit_gate = LineSegment::new(Vec2::new(40.0, -71.0), Vec2::new(40.0, -65.0));
+    let pit_spline = TrackSpline::from_points(
+        &[Vec2::new(-20.0, -68.0), Vec2::new(10.0, -68.0), Vec2::new(40.0, -68.0)],
+        6.0,
+        false,
+    );
+    let pit_box = PitBox::new(Vec2::new(10.0, -68.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+
+    track.pit_lane = Some(PitLane::new(
+        pit_spline,
+        6.0,
+        PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+        vec![pit_box],
+        entry_gate,
+        exit_gate,
+    ));
+
+    // Fresh car (no damage, no tire wear) racing down the main straight at speed (30 m/s)
+    let mut bot = BotAiDriver::with_seed(BotProfile::pro(), 99).with_current_lap(3);
+    let mut car = Car::new(CarConfig::sports_car());
+    car.state.health = 1.0;
+    for w in &mut car.state.wheels {
+        w.wear = 0.05;
+    }
+    car.state.angle = 0.0;
+    car.state.speed = 30.0;
+    car.state.velocity = Vec2::new(30.0, 0.0);
+
+    // 1. Check throat repulsion approaching entry gate (at x = -45.0, 25m before entry at x=-20.0)
+    car.state.position = Vec2::new(-45.0, -61.0); // Slightly right of center towards pit side
+    let ctrl_near_throat = bot.compute_controls(&car, &track, &[], 0.016);
+    assert!(!bot.is_pitting, "Undamaged bot must NOT pit");
+    assert!(!bot.is_in_pit_lane, "Undamaged bot must NOT be marked in pit lane");
+    // Controls must maintain acceleration, not clamp to pit limit (16.67 m/s)
+    assert!(ctrl_near_throat.throttle > 0.0, "Bot must maintain throttle past throat");
+    assert_eq!(ctrl_near_throat.brake, 0.0, "Bot must NOT brake for pit lane on main straight");
+
+    // 2. Drive directly adjacent to the pit lane at x = 10.0, y = -64.0 (drivable main track edge)
+    car.state.position = Vec2::new(10.0, -64.0);
+    car.state.speed = 35.0;
+    car.state.velocity = Vec2::new(35.0, 0.0);
+    let ctrl_parallel = bot.compute_controls(&car, &track, &[], 0.016);
+    assert!(!bot.is_in_pit_lane, "Main track immunity: bot must NOT enter pit lane on parallel straight");
+    assert!(!bot.is_pitting, "Bot must NOT trigger pitting on parallel straight");
+    assert_eq!(ctrl_parallel.brake, 0.0, "Bot must NOT clamp speed on parallel straight");
+}
+
+/// Scenario: Bots executing a pit stop successfully navigate through entry gate, stall service, and exit gate (Spec 084)
+#[test]
+fn test_bot_tactical_pit_stop_entry_service_and_rejoin_pipeline() {
+    use arcade_race_core::track::{LineSegment, PitBox, PitLane, TrackSpline};
+    use wheelbase::{Car, CarConfig};
+
+    let mut track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+    let entry_gate = LineSegment::new(Vec2::new(20.0, -5.0), Vec2::new(20.0, 5.0));
+    let exit_gate = LineSegment::new(Vec2::new(120.0, -5.0), Vec2::new(120.0, 5.0));
+    let pit_spline = TrackSpline::from_points(
+        &[Vec2::new(20.0, 0.0), Vec2::new(70.0, 0.0), Vec2::new(120.0, 0.0)],
+        6.0,
+        false,
+    );
+    let pit_box = PitBox::new(Vec2::new(70.0, 0.0), Vec2::new(1.0, 0.0), 3.0, 0.0);
+
+    track.pit_lane = Some(PitLane::new(
+        pit_spline,
+        6.0,
+        PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+        vec![pit_box],
+        entry_gate,
+        exit_gate,
+    ));
+
+    // Damaged car on Lap 2 approaching pit entrance from x = 10.0 (10m before entry at x = 20.0)
+    let mut bot = BotAiDriver::with_seed(BotProfile::pro(), 7).with_current_lap(2).with_pit_stall(0);
+    let mut car = Car::new(CarConfig::sports_car());
+    car.state.health = 0.45;
+    for w in &mut car.state.wheels {
+        w.wear = 0.75;
+    }
+    car.state.position = Vec2::new(10.0, 0.0);
+    car.state.speed = 20.0;
+    car.state.velocity = Vec2::new(20.0, 0.0);
+
+    // Step 1: Decision to pit triggers approaching gate
+    let _ = bot.compute_controls(&car, &track, &[], 0.016);
+    assert!(bot.is_pitting, "Bot with 75% tire wear on Lap 2 must enter is_pitting");
+    assert!(!bot.is_in_pit_lane, "Bot before entry gate is not yet in pit lane");
+
+    // Step 2: Car crosses entry gate from x = 10.0 to x = 25.0
+    car.state.position = Vec2::new(25.0, 0.0);
+    car.state.speed = 15.0;
+    let ctrl_entered = bot.compute_controls(&car, &track, &[], 0.016);
+    assert!(bot.is_in_pit_lane, "Crossing entry gate transitions to is_in_pit_lane = true");
+    assert!(ctrl_entered.throttle <= 1.0);
+
+    // Step 3: Stop in pit box at x = 70.0
+    car.state.position = Vec2::new(70.0, 0.0);
+    car.state.speed = 0.0;
+    for _ in 0..150 {
+        bot.compute_controls(&car, &track, &[], 0.016);
+    }
+    assert!(bot.pit_serviced, "Bot serviced after holding in stall");
+
+    // Step 4: Exit through exit gate at x = 120.0
+    car.state.position = Vec2::new(122.0, 0.0);
+    car.state.speed = 15.0;
+    bot.compute_controls(&car, &track, &[], 0.016);
+    assert!(!bot.is_in_pit_lane, "Exiting through exit gate clears is_in_pit_lane");
+    assert!(!bot.is_pitting, "Exiting clears is_pitting");
+    assert!(bot.pit_cooldown >= 29.0, "Exit sets 30s cooldown");
+}
