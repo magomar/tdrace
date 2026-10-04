@@ -72,12 +72,12 @@ impl SurfaceType {
             Self::Curb => 1.3,
             Self::PackedSnow => 2.2,
             Self::Gravel => 2.5,
+            Self::Grass => 2.5,
             Self::Water => 3.5,
             Self::MudTrack => 5.0,
             Self::PackedSand => 5.2,
             Self::DeepSnow => 12.0,
             Self::DeepMud => 14.0,
-            Self::Grass => 18.0,
             Self::DeepSand => 30.0,
         }
     }

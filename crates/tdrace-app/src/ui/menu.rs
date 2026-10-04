@@ -860,6 +860,13 @@ impl GameMode {
 
     pub fn allows_grid_customization(&self) -> bool {
         match self {
+            Self::ExperimentalRace | Self::SplitScreen => true,
+            Self::StandardRace | Self::Career | Self::TimeTrial | Self::FreeRide => false,
+        }
+    }
+
+    pub fn allows_difficulty_customization(&self) -> bool {
+        match self {
             Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => true,
             Self::Career | Self::TimeTrial | Self::FreeRide => false,
         }

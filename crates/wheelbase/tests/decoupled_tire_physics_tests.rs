@@ -511,3 +511,30 @@ fn test_compound_surface_affinity_mud_tractive_force_ratio() {
         mud_speed, slick_speed
     );
 }
+
+#[test]
+fn test_grass_runoff_mobility_and_acceleration() {
+    let mut car = Car::new(CarConfig::sports_car());
+    let dt = 1.0 / 60.0;
+    let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+    for _ in 0..120 {
+        car.step(&ctrl, SurfaceType::Grass, dt);
+    }
+    // Sports car must achieve positive drive and avoid getting stuck on grass runoffs
+    assert!(
+        car.state().speed > 0.5,
+        "Sports car must accelerate cleanly on grass run-off, reached {:.2} m/s",
+        car.state().speed
+    );
+
+    let mut kart = Car::new(CarConfig::kart());
+    for _ in 0..120 {
+        kart.step(&ctrl, SurfaceType::Grass, dt);
+    }
+    // Kart must also maintain tractive authority to escape grass runoffs
+    assert!(
+        kart.state().speed > 1.0,
+        "Kart must accelerate cleanly on grass run-off, reached {:.2} m/s",
+        kart.state().speed
+    );
+}

@@ -3936,9 +3936,16 @@ impl RaceSession {
         self.prev_casual_ai_difficulty = tier;
         if self.game_mode != GameMode::Career && self.championship_session.is_none() {
             let human_count = if self.is_split_screen() { 2 } else { 1 };
-            let racer_count = human_count + self.num_bots;
+            let racer_count = if !self.game_mode.allows_grid_customization() {
+                self.max_grid_participants()
+            } else {
+                human_count + self.num_bots
+            };
             if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
                 pref.difficulty = tier;
+                if !self.game_mode.allows_grid_customization() {
+                    pref.racer_count = racer_count;
+                }
             } else {
                 self.modality_preferences.insert(
                     self.game_mode,
@@ -3964,7 +3971,11 @@ impl RaceSession {
     pub fn update_active_modality_racer_count(&mut self) {
         if self.game_mode != GameMode::Career && self.championship_session.is_none() {
             let human_count = if self.is_split_screen() { 2 } else { 1 };
-            let racer_count = human_count + self.num_bots;
+            let racer_count = if !self.game_mode.allows_grid_customization() {
+                self.max_grid_participants()
+            } else {
+                human_count + self.num_bots
+            };
             if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
                 pref.racer_count = racer_count;
             } else {
@@ -3982,17 +3993,22 @@ impl RaceSession {
 
     /// Explicitly updates saved preference for a game mode.
     pub fn update_modality_preference(&mut self, mode: GameMode, racer_count: usize, difficulty: DriverTier) {
+        let stored_racers = if !mode.allows_grid_customization() {
+            self.max_grid_participants()
+        } else {
+            racer_count
+        };
         self.modality_preferences.insert(
             mode,
             ModalityPreference {
-                racer_count,
+                racer_count: stored_racers,
                 difficulty,
             },
         );
         if self.game_mode == mode {
             let human_count = if self.is_split_screen() { 2 } else { 1 };
             let max_grid = self.max_grid_participants();
-            let clamped = racer_count.clamp(human_count, max_grid);
+            let clamped = stored_racers.clamp(human_count, max_grid);
             let min_bots = if self.is_split_screen() { 0 } else { 1 };
             self.num_bots = clamped.saturating_sub(human_count).max(min_bots);
             self.casual_ai_difficulty = difficulty;
@@ -4850,7 +4866,34 @@ impl RaceSession {
 
             let min_bots = if self.is_split_screen() { 0 } else { 1 };
 
-            if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
+            if !self.game_mode.allows_grid_customization() {
+                // In modes where grid customization is not allowed (Quick Race / StandardRace):
+                // Explicit bot assignment (e.g. from unit tests) is respected; otherwise locked to the track's full grid capacity.
+                // Difficulty tier is preserved across races/sessions.
+                let target_difficulty = if let Some(diff) = explicit_difficulty {
+                    diff
+                } else if let Some(pref) = self.modality_preferences.get(&self.game_mode) {
+                    pref.difficulty
+                } else {
+                    DriverTier::Rookie
+                };
+                let target_racers = if let Some(bots) = explicit_bots {
+                    (human_count + bots).clamp(human_count, max_grid)
+                } else if let Some(pref) = self.modality_preferences.get(&self.game_mode) {
+                    pref.racer_count.clamp(human_count, max_grid)
+                } else {
+                    max_grid
+                };
+                self.num_bots = target_racers.saturating_sub(human_count).max(min_bots);
+                self.casual_ai_difficulty = target_difficulty;
+                self.modality_preferences.insert(
+                    self.game_mode,
+                    ModalityPreference {
+                        racer_count: target_racers,
+                        difficulty: target_difficulty,
+                    },
+                );
+            } else if let Some(pref) = self.modality_preferences.get_mut(&self.game_mode) {
                 if let Some(bots) = explicit_bots {
                     pref.racer_count = human_count + bots;
                 }
@@ -6329,6 +6372,9 @@ impl RaceSession {
                 }
                 self.rebuild_roster_participants();
                 self.update_active_modality_racer_count();
+            } else if self.game_mode.allows_difficulty_customization() {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.cycle_casual_ai_difficulty();
             }
             return;
         }
@@ -6482,6 +6528,15 @@ impl RaceSession {
                                 self.rebuild_roster_participants();
                                 self.update_active_modality_racer_count();
                             }
+                        } else if self.game_mode.allows_difficulty_customization() {
+                            if is_key_pressed(KeyCode::Enter)
+                                || is_key_pressed(KeyCode::KpEnter)
+                                || is_key_pressed(KeyCode::RightBracket)
+                                || is_key_pressed(KeyCode::Equal)
+                            {
+                                self.audio.play_sfx(SfxType::UiMove);
+                                self.cycle_casual_ai_difficulty();
+                            }
                         }
                     }
                     2 => {
@@ -6592,6 +6647,15 @@ impl RaceSession {
                             self.rebuild_roster_participants();
                             self.update_active_modality_racer_count();
                         }
+                    } else if self.game_mode.allows_difficulty_customization() {
+                        if is_key_pressed(KeyCode::Enter)
+                            || is_key_pressed(KeyCode::KpEnter)
+                            || is_key_pressed(KeyCode::RightBracket)
+                            || is_key_pressed(KeyCode::Equal)
+                        {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.cycle_casual_ai_difficulty();
+                        }
                     }
                 } else {
                     // Roster entries are active
@@ -6668,7 +6732,7 @@ impl RaceSession {
         }
 
         // Cycle Casual AI Difficulty shortcut (T key)
-        if is_key_pressed(KeyCode::T) && self.game_mode.allows_grid_customization() {
+        if is_key_pressed(KeyCode::T) && self.game_mode.allows_difficulty_customization() {
             self.audio.play_sfx(SfxType::UiMove);
             self.cycle_casual_ai_difficulty();
         }
@@ -10038,9 +10102,9 @@ impl RaceSession {
         if let Some((module, tier, car_idx)) = self.garage_entry.take() {
             if module != self.active_module_id {
                 self.garage_view_module(module);
-                self.garage_tier = tier;
-                self.garage_car_idx = car_idx;
             }
+            self.garage_tier = tier;
+            self.garage_car_idx = car_idx;
         }
     }
 
@@ -10391,6 +10455,22 @@ impl RaceSession {
 
                 if is_unlocked {
                     if confirm_pressed {
+                        let car_change_allowed = if origin == GarageOrigin::StartingGrid {
+                            self.game_mode.allows_car_change()
+                        } else {
+                            true
+                        };
+                        if !car_change_allowed {
+                            let alert_msg = if self.game_mode == GameMode::StandardRace {
+                                "VEHICLE LOCKED IN QUICK RACE"
+                            } else {
+                                "VEHICLE LOCKED FOR RACE"
+                            };
+                            self.spawn_hud_alert(alert_msg, Palette::RED);
+                            self.audio.play_sfx(SfxType::UiMove);
+                            return;
+                        }
+
                         // A car from another discipline than the Garage opened in switches the whole
                         // session to that discipline, but only while no race is set up yet.
                         let entry_module = self.garage_entry.map(|(m, _, _)| m).unwrap_or(self.active_module_id);
@@ -13696,6 +13776,13 @@ impl RaceSession {
                         1
                     }
                 };
+                let is_lan = self.state == GameState::Garage(GarageOrigin::LanLobby);
+                let car_change_allowed = if self.state == GameState::Garage(GarageOrigin::StartingGrid) {
+                    self.game_mode.allows_car_change()
+                } else {
+                    true
+                };
+                let module_locked = is_lan || !car_change_allowed;
                 crate::ui::render_garage_screen(
                     &self.fonts,
                     self.active_module_id,
@@ -13713,7 +13800,8 @@ impl RaceSession {
                     unlocked_tier as u32,
                     Some(&self.active_career_progress),
                     self.active_profile.credits,
-                    self.state == GameState::Garage(GarageOrigin::LanLobby),
+                    module_locked,
+                    car_change_allowed,
                 );
             }
             GameState::CircuitViewer(_) => {
