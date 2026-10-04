@@ -364,10 +364,12 @@ pub fn render_starting_grid_screen(
         if game_mode.allows_car_change() {
             "GARAGE [ACTIVE • CLICK / ENTER / G to open • [ / ] to switch]"
         } else {
-            "GARAGE [ACTIVE • CLICK / ENTER / G to open]"
+            "GARAGE [ACTIVE • CLICK / ENTER / G to inspect]"
         }
-    } else {
+    } else if game_mode.allows_car_change() {
         "GARAGE [ACTIVE CAR • CLICK / ENTER / G to open]"
+    } else {
+        "GARAGE [ACTIVE CAR • CLICK / ENTER / G to inspect]"
     };
     let garage_header_col = if !is_car_unlocked {
         Palette::RED
@@ -619,6 +621,12 @@ pub fn render_starting_grid_screen(
         let grid_hdr = if is_roster_locked {
             if game_mode == GameMode::Career {
                 "GRID CONFIG: 🔒 LOCKED [Championship Roster]"
+            } else if game_mode.allows_difficulty_customization() {
+                if is_grid_active {
+                    "GRID CONFIG [ROSTER LOCKED • T: Change Difficulty]"
+                } else {
+                    "GRID CONFIG: [🔒 Official Grid • T to change difficulty]"
+                }
             } else {
                 "GRID CONFIG: 🔒 LOCKED [Official Roster]"
             }
@@ -645,10 +653,25 @@ pub fn render_starting_grid_screen(
         let stepper_w = (col2_w - scaler.s(24.0) - stepper_gap) * 0.5;
         let stepper_x = col2_x + scaler.s(12.0);
         draw_stepper(&scaler, fonts, stepper_x, stepper_y, stepper_w, stepper_h, "LAPS", &laps_stepper.value.to_string(), is_grid_active, is_grid_hovered, Palette::NEON_CYAN);
-        draw_stepper(&scaler, fonts, stepper_x + stepper_w + stepper_gap, stepper_y, stepper_w, stepper_h, "BOTS", &bots_counter.value.to_string(), is_grid_active, is_grid_hovered, Palette::NEON_GOLD);
+        let bots_label = if is_roster_locked { "BOTS 🔒" } else { "BOTS" };
+        draw_stepper(
+            &scaler,
+            fonts,
+            stepper_x + stepper_w + stepper_gap,
+            stepper_y,
+            stepper_w,
+            stepper_h,
+            bots_label,
+            &bots_counter.value.to_string(),
+            !is_roster_locked && is_grid_active,
+            !is_roster_locked && is_grid_hovered,
+            if is_roster_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_GOLD },
+        );
 
         let difficulty_note = if is_roster_locked && game_mode == GameMode::Career {
             format!("{} Racers (Championship Grid) • Difficulty: {} • Max {} Slots", num_drivers, casual_ai_difficulty.short_name(), max_grid_size)
+        } else if is_roster_locked && game_mode.allows_difficulty_customization() {
+            format!("{} Racers (Official Grid) • Difficulty: {} [T: Change] • Max {} Slots", num_drivers, casual_ai_difficulty.short_name(), max_grid_size)
         } else if game_mode == GameMode::SplitScreen {
             format!("{} Racers (2 Players + {} Bots) • Difficulty: {} • Max {}", num_drivers, bot_count, casual_ai_difficulty.short_name(), max_grid_size)
         } else {

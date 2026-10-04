@@ -64,6 +64,7 @@ pub fn render_garage_screen(
     career_progress: Option<&ModuleCareerProgress>,
     available_credits: u64,
     module_locked: bool,
+    car_change_allowed: bool,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -528,7 +529,9 @@ pub fn render_garage_screen(
             .map_or(is_tier_unlocked, |cp| cp.level >= active_car_tier as u32);
 
     // Hero CTA frame (platform HeroActionButton, via ScreenFooter)
-    let (hero_label, hero_focused, hero_disabled) = if is_car_unlocked {
+    let (hero_label, hero_focused, hero_disabled) = if !car_change_allowed {
+        ("VEHICLE PRESET FOR RACE".to_string(), false, true)
+    } else if is_car_unlocked {
         ("SELECT VEHICLE FOR RACE".to_string(), true, false)
     } else if !tier_eligible {
         (format!("VEHICLE LOCKED — TIER {} REQUIRED", active_car_tier), false, true)
@@ -544,7 +547,22 @@ pub fn render_garage_screen(
     cta_footer.set_hero_button(hero_btn);
     cta_footer.render_frame();
 
-    if is_car_unlocked {
+    if !car_change_allowed {
+        fonts.draw_ui_bold_centered(
+            "🔒 VEHICLE PRESET FOR RACE  [ESC TO RETURN]",
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(22.0),
+            scaler.font_s(12.5),
+            Palette::UI_TEXT_MUTED,
+        );
+        fonts.draw_ui_regular_centered(
+            "Vehicle category and model are locked in this mode — inspect showroom specs or press ESC",
+            btn_x + btn_w * 0.5,
+            btn_y + scaler.s(38.0),
+            scaler.font_s(10.0),
+            Palette::UI_TEXT_MUTED,
+        );
+    } else if is_car_unlocked {
         fonts.draw_ui_bold_centered(
             "▶ SELECT VEHICLE FOR RACE  [ENTER / SPACE]",
             btn_x + btn_w * 0.5,
@@ -651,7 +669,9 @@ pub fn render_garage_screen(
 
     // Bottom Navigation Bar
     let bottom_y = sh - scaler.s(16.0);
-    let nav_prompt = if module_locked {
+    let nav_prompt = if !car_change_allowed {
+        "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [ESC] RETURN"
+    } else if module_locked {
         "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN TO LOBBY"
     } else {
         "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [1..5] MODULES  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN"
