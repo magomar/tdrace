@@ -941,6 +941,18 @@ fn test_rx_layout_checkpoints_lie_on_their_route_in_driving_order() {
                 prev = at;
             }
         }
+        // The tracker moves a car to a checkpoint's segment_id when the car crosses it, so the tag must name
+        // a segment the checkpoint lies on.
+        for cp in &track.checkpoints {
+            let Some(sid) = cp.segment_id else { continue };
+            let seg = network.get_segment(sid).unwrap_or_else(|| panic!("{}: checkpoint {} names missing segment {:?}", id, cp.id, sid));
+            let proj = seg.project_point((cp.gate.start + cp.gate.end) * 0.5);
+            assert!(
+                proj.distance_to_spline <= proj.track_width * 0.5,
+                "{}: checkpoint {} is tagged segment {:?} but lies {:.1} m from it",
+                id, cp.id, sid, proj.distance_to_spline
+            );
+        }
     }
 }
 
@@ -978,4 +990,115 @@ fn test_rx_joker_road_reads_as_its_own_surface_not_runoff() {
         }
         assert!(wrong.is_empty(), "{}: joker road reads wrong at {} samples, e.g. {:?}", id, wrong.len(), &wrong[..wrong.len().min(3)]);
     }
+}
+
+#[test]
+fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
+    // End to end through race_kit::RaceWorld::step: lap 1 on the joker route, lap 2 on the main route.
+    use race_kit::{DriveControls, RaceFormat, RaceRules, RaceWorld};
+    use tdrace_core::physics::{Car, CarConfig};
+    use tdrace_core::track::TrackProgressTracker;
+
+    const DT: f32 = 1.0 / 60.0;
+    const SPEED: f32 = 15.0;
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let joker = network.build_composite_spline_for_layout("joker").expect("joker spline");
+        let main = network.build_composite_spline_for_layout("main").expect("main spline");
+        let route = [(&joker, 1.0f32), (&main, 0.0f32)];
+
+        let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules { format: RaceFormat::Laps(2), ..RaceRules::default() });
+        let start = joker.sample_at_distance(1.0);
+        world.spawn(
+            Car::new(CarConfig::rally_car()).with_pose(start.point, start.tangent.y.atan2(start.tangent.x)),
+            TrackProgressTracker::new(track.checkpoints.len(), 3),
+        );
+
+        let mut surface_mismatches = 0;
+        let mut wrong_way = None;
+        let mut first_mismatch = None;
+        'laps: for (spline, from) in route {
+            let mut d = from;
+            while d < spline.total_length() {
+                let s = spline.sample_at_distance(d);
+                let car = &mut world.vehicles[0];
+                car.state.position = s.point;
+                car.state.angle = s.tangent.y.atan2(s.tangent.x);
+                car.set_velocity(s.tangent * SPEED);
+                let expected = track.sample_car_surfaces(car);
+                world.step(&track, &[DriveControls::default()], DT);
+                // Where the main curb overlaps branch road near a junction, curb and road are both right.
+                let differs = world.last_surfaces[0]
+                    .iter()
+                    .zip(expected.iter())
+                    .any(|(got, want)| got != want && *got != SurfaceType::Curb && *want != SurfaceType::Curb);
+                if differs {
+                    surface_mismatches += 1;
+                    if first_mismatch.is_none() {
+                        first_mismatch = Some(format!("{} lap at {:.0} m: {:?} instead of {:?}", if from > 0.0 { "joker" } else { "main" }, d, world.last_surfaces[0], expected));
+                    }
+                }
+                if world.trackers[0].is_wrong_way && wrong_way.is_none() {
+                    wrong_way = Some(format!("{} lap at {:.0} m", if from > 0.0 { "joker" } else { "main" }, d));
+                }
+                if world.is_finished(0) {
+                    break 'laps;
+                }
+                d += SPEED * DT;
+            }
+        }
+        // Cross the line once more if the last step stopped just short of it.
+        for k in 1..=8 {
+            if world.is_finished(0) {
+                break;
+            }
+            let s = main.sample_at_distance(k as f32 * SPEED * DT);
+            world.vehicles[0].state.position = s.point;
+            world.step(&track, &[DriveControls::default()], DT);
+        }
+
+        let tracker = &world.trackers[0];
+        let jokers = tracker.multi_route.as_ref().map_or(0, |m| m.joker_laps_completed);
+        if !world.is_finished(0) || tracker.current_lap != 3 || jokers != 1 || surface_mismatches > 0 || wrong_way.is_some() {
+            failures.push(format!(
+                "{}: finished {}, lap {}, jokers {}, surface mismatches {} (first {:?}), first wrong way {:?}",
+                id, world.is_finished(0), tracker.current_lap, jokers, surface_mismatches, first_mismatch, wrong_way
+            ));
+        }
+    }
+    assert!(failures.is_empty(), "{} RX tracks failed:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn test_rx_joker_branch_never_turns_tighter_than_3_m() {
+    // A joker built as a sideways offset of the main branch folded back on itself where the offset was larger
+    // than the bend radius (turn radii 0.0-0.8 m). Points within 2 m of the main branch are skipped: there the
+    // joker follows the main road, whose OSM geometry has its own tight kinks.
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let joker = network.get_layout("joker").expect("joker layout");
+        let main = network.get_layout("main").expect("main layout");
+        let joker_seg = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
+        let main_seg = main.segment_sequence.iter().find(|s| !joker.segment_sequence.contains(s)).expect("main-only segment");
+        let seg = network.get_segment(*joker_seg).unwrap();
+        let main_branch = network.get_segment(*main_seg).unwrap();
+        let tightest = seg
+            .samples
+            .windows(2)
+            .filter(|w| main_branch.project_point(w[0].point).distance_to_spline > 2.0)
+            .filter_map(|w| {
+                let angle = w[0].tangent.dot(w[1].tangent).clamp(-1.0, 1.0).acos();
+                let ds = w[1].distance - w[0].distance;
+                (angle > 1e-4 && ds > 0.0).then(|| (ds / angle, w[0].distance))
+            })
+            .fold((f32::INFINITY, 0.0), |a, b| if b.0 < a.0 { b } else { a });
+        if tightest.0 < 3.0 {
+            failures.push(format!("{}: joker turns at {:.1} m radius, {:.0} m into the branch", id, tightest.0, tightest.1));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

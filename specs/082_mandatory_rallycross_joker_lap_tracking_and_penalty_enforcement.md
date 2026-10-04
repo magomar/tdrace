@@ -36,6 +36,13 @@ What is wrong or missing:
 7. **LAN.** `FinishRecord` (`crates/cabinet/src/net/protocol.rs`) carries no penalty.
 8. **Menu.** Picking the `joker` layout in the menu makes it the default layout and replaces `track.spline` (`GameState::load_track_for_session`), which breaks the rule.
 
+### Amendment (found during implementation, 2026-10-04)
+The end-to-end test (item 3) found more than the audit did. These fixes are part of this spec:
+- **Item 1 was misread.** The checkpoints lie on the right route, but on the same 4 tracks the checkpoint at the merge point is tagged `segment_id: 0` and is listed before the joker gate. The cause is the tagging rule in `crates/tdrace-app/src/bin/build_world_rx_joker.rs`.
+- **Folded jokers.** That builder made each World RX joker by offsetting the main branch sideways along raw waypoint normals. Where the offset was larger than the bend radius, the joker folded back on itself (turn radius 0.0–0.8 m on `loheac_rx`, `lessay_rx`, `riga_rx` and others), and a car on it read as wrong way. The builder now offsets the smooth main samples and switches to the other side when the configured side turns tighter than 3 m. All 20 World RX files are rebaked from `tracks` commit `77a0abe` (the state before the first joker bake), so no wall gaps from the old jokers remain. The 3 Classic RX jokers are unchanged.
+- **Tracker at the split.** `MultiRouteProgressTracker` picked the branch nearest the car at the split and never checked the other branch again, and it followed junction sockets that on all 23 networks make the merge feed both the return straight and the start straight. It now takes the next segment from the layouts, moves to a sibling branch when the car leaves the current one, and measures lap distance along a layout that contains the current segment.
+- **Surface sampling** also let one segment's curb win over another segment's road near a junction (`TrackNetwork::sample_surface`).
+
 ---
 
 ## 🗺️ User Flow & Interface Design
@@ -133,6 +140,11 @@ When a race starts on a track with `track.car_category == CarCategory::Rally` an
   - [ ] **When** each checkpoint of each layout is checked against the segments of that layout
   - [ ] **Then** every checkpoint centre is within the road width of a segment in that layout
 
+- **Scenario: No joker folds back on itself**
+  - [ ] **Given** the joker-only segment of each of the 23 RX tracks
+  - [ ] **When** the turn radius between consecutive samples is measured, skipping points within 2 m of the main branch
+  - [ ] **Then** no turn is tighter than 3 m
+
 - **Scenario: A car that drives the joker route gets its lap and its joker**
   - [ ] **Given** each of the 23 RX tracks in a `RaceWorld` with `RaceFormat::Laps(2)`
   - [ ] **When** a car is moved along the `joker` centerline on lap 1 and along the `main` centerline on lap 2
@@ -192,7 +204,10 @@ When a race starts on a track with `track.car_category == CarCategory::Rally` an
 - `crates/race-kit/tests/joker_rule_tests.rs` -> rule and ordering tests (new).
 - `crates/race-kit/src/ai/mod.rs` -> once-per-lap route lock, joker cap, lap count from tracker.
 - `crates/arcade-race-core/src/track/mod.rs` -> network road checked before main run-off in surface sampling.
-- `tracks/classic/*.json`, `tracks/rally/*.json` (submodule) -> layout checkpoint list fixes.
+- `crates/arcade-race-core/src/track/network.rs` -> segment road wins over another segment's curb.
+- `crates/arcade-race-core/src/track/checkpoint.rs` -> layout-based segment transitions, sibling branch recovery, lap distance along the segment's layout.
+- `crates/tdrace-app/src/bin/build_world_rx_joker.rs` -> smooth offset, fold check with side switch, merge checkpoint tagging.
+- `tracks/rally/*.json` (submodule) -> 20 World RX jokers rebaked from `77a0abe`.
 - `crates/tdrace-app/src/game/mod.rs` -> set `JokerRule` for Rallycross races; keep `main` as the RX default layout.
 - `crates/race-ui/src/hud/widgets.rs`, `crates/tdrace-app/src/ui/hud.rs` -> joker pill.
 - `crates/tdrace-app/src/ui/menu.rs` -> results screen joker mark and penalty tag.
