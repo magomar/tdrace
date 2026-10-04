@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation"
 description: "Resolves simulation, raycasting, and rallycross rendering bottlenecks, bringing wheelbase physics above 1.5M steps/s floor, LIDAR above 14M rays/s floor, Höljes RX frame times from 15.3ms down to <5.0ms, and equips bot AI with robust pit lane recognition and tactical entry gating."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-084-receipt.md"
 created: 2026-10-04
 generated: { by: agent/antigravity, at: 2026-10-04T05:45:36Z }
 verified: { by: human:mario, at: 2026-10-04T05:51:00Z, hash: "87774ee817bc" }
@@ -196,44 +197,44 @@ List exactly how a developer or agent will test and prove correct execution:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Wheelbase physics benchmark exceeds regression floor**
-  - [ ] **Given** the optimized `wheelbase` vehicle solver with deduplicated Pacejka stiffness and hoisted trigonometry
-  - [ ] **When** executing `cargo bench -p wheelbase --bench physics_bench`
-  - [ ] **Then** the simulation throughput must exceed the 1,500,000 steps/s floor, reaching at least 2,500,000 steps/s without regression in vehicle dynamics tests.
+  - [x] **Given** the optimized `wheelbase` vehicle solver with deduplicated Pacejka stiffness and hoisted trigonometry
+  - [x] **When** executing `cargo bench -p wheelbase --bench physics_bench`
+  - [x] **Then** the simulation throughput must exceed the 1,500,000 steps/s floor, reaching at least 2,500,000 steps/s without regression in vehicle dynamics tests.
 
 - **Scenario: LIDAR raycaster operates with zero heap allocations and exceeds regression floor**
-  - [ ] **Given** the optimized `LidarSensor` with reusable scratch buffers
-  - [ ] **When** executing `cargo bench -p arcade-race-core --bench lidar_bench`
-  - [ ] **Then** `scan_into` performs zero heap allocations per sweep and raycasting throughput exceeds the 14,000,000 rays/s floor.
+  - [x] **Given** the optimized `LidarSensor` with reusable scratch buffers
+  - [x] **When** executing `cargo bench -p arcade-race-core --bench lidar_bench`
+  - [x] **Then** `scan_into` performs zero heap allocations per sweep and raycasting throughput exceeds the 14,000,000 rays/s floor.
 
 - **Scenario: Höljes RX rendering overhead drops below 4.0 ms per frame**
-  - [ ] **Given** precomputed junction edge suppressions and cached untangled boundaries in `race-ui`
-  - [ ] **When** running 120 live rendered frames on the Höljes RX World Rallycross circuit
-  - [ ] **Then** the track rendering pass completes in under 4.0 ms on average, with zero visual artifacts at branch junctions.
+  - [x] **Given** precomputed junction edge suppressions and cached untangled boundaries in `race-ui`
+  - [x] **When** running 120 live rendered frames on the Höljes RX World Rallycross circuit
+  - [x] **Then** the track rendering pass completes in under 4.0 ms on average, with zero visual artifacts at branch junctions.
 
 - **Scenario: Headless simulation stepping executes without hot-loop heap allocations**
-  - [ ] **Given** cached scenery obstacle slices and cached composite splines in `race-kit`
-  - [ ] **When** stepping `RaceWorld` for 1,000 ticks on a multi-layout rallycross track with 8 bot competitors
-  - [ ] **Then** the simulation update time remains under 1.0 ms per frame with zero per-tick scenery obstacle allocations.
+  - [x] **Given** cached scenery obstacle slices and cached composite splines in `race-kit`
+  - [x] **When** stepping `RaceWorld` for 1,000 ticks on a multi-layout rallycross track with 8 bot competitors
+  - [x] **Then** the simulation update time remains under 1.0 ms per frame with zero per-tick scenery obstacle allocations.
 
 - **Scenario: Bots recognize pit lanes and only enter when tactical conditions require pit service**
-  - [ ] **Given** a multi-car race on a GT circuit with a physical pit lane running parallel to the main straight (Monaco, Monza, or Interlagos)
-  - [ ] **When** bots drive multiple laps without excessive tire wear or chassis damage (`should_pit` is false)
-  - [ ] **Then** zero bots enter the pit lane or clamp their speed to the pit limit on the main straight, maintaining full racing speed past the pit throat.
+  - [x] **Given** a multi-car race on a GT circuit with a physical pit lane running parallel to the main straight (Monaco, Monza, or Interlagos)
+  - [x] **When** bots drive multiple laps without excessive tire wear or chassis damage (`should_pit` is false)
+  - [x] **Then** zero bots enter the pit lane or clamp their speed to the pit limit on the main straight, maintaining full racing speed past the pit throat.
 
 - **Scenario: Bots executing a pit stop successfully navigate through entry gate, stall service, and exit gate**
-  - [ ] **Given** a bot vehicle with tire wear exceeding 70% or chassis health below 60% on lap 2 or later
-  - [ ] **When** approaching the pit entrance
-  - [ ] **Then** the bot enters the pit lane through `lane.entry_gate`, obeys `lane.speed_limit`, halts inside its assigned pit stall for service, receives fresh tires and repairs, and rejoins the race through `lane.exit_gate`.
+  - [x] **Given** a bot vehicle with tire wear exceeding 70% or chassis health below 60% on lap 2 or later
+  - [x] **When** approaching the pit entrance
+  - [x] **Then** the bot enters the pit lane through `lane.entry_gate`, obeys `lane.speed_limit`, halts inside its assigned pit stall for service, receives fresh tires and repairs, and rejoins the race through `lane.exit_gate`.
 
 - **Scenario: Determinism and telemetry parity preserved across vehicle fleet**
-  - [ ] **Given** the optimized `wheelbase` and `arcade-race-core` crates
-  - [ ] **When** executing the comprehensive workspace test suite across all 25 vehicle categories
-  - [ ] **Then** all vehicle tests pass with bit-identical trajectory and handling invariants.
+  - [x] **Given** the optimized `wheelbase` and `arcade-race-core` crates
+  - [x] **When** executing the comprehensive workspace test suite across all 25 vehicle categories
+  - [x] **Then** all vehicle tests pass with bit-identical trajectory and handling invariants.
 
 - **Scenario: Headless test runner executes input polling without panic unwinding**
-  - [ ] **Given** the input polling safety guard in `tdrace-app`
-  - [ ] **When** executing tests in a headless environment without an active Macroquad window context
-  - [ ] **Then** input checks return safe default values without triggering panic or `catch_unwind` overhead.
+  - [x] **Given** the input polling safety guard in `tdrace-app`
+  - [x] **When** executing tests in a headless environment without an active Macroquad window context
+  - [x] **Then** input checks return safe default values without triggering panic or `catch_unwind` overhead.
 
 ---
 
@@ -242,16 +243,16 @@ List exactly how a developer or agent will test and prove correct execution:
 List the exact files in the codebase that implement or are governed by this specification.
 
 ### Created/Modified Files
-- `[ ]` `crates/wheelbase/src/car.rs` -> Longitudinal slip stiffness deduplication and trigonometric hoisting.
-- `[ ]` `crates/wheelbase/src/tire.rs` -> Precomputed peak slip angle tangent and combined slip optimization.
-- `[ ]` `crates/arcade-race-core/src/lidar/mod.rs` -> Scratch buffer internalization and zero-allocation `scan_into`.
-- `[ ]` `crates/arcade-race-core/src/track/geometry.rs` -> Precomputed scenery obstacles slice retention.
-- `[ ]` `crates/arcade-race-core/src/track/network.rs` -> Layout composite spline caching.
-- `[ ]` `crates/race-kit/src/world.rs` -> Zero-allocation obstacle and drafting queries.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Bot pit lane recognition, state machine, divergence throat avoidance, and entry gating.
-- `[ ]` `crates/race-ui/src/render/track.rs` -> Precomputed junction edge suppression and cached boundary meshes.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Headless input context presence guard.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Roadmap tracking for performance and pit lane navigation milestone.
+- `[x]` `crates/wheelbase/src/car.rs` -> Longitudinal slip stiffness deduplication and trigonometric hoisting.
+- `[x]` `crates/wheelbase/src/tire.rs` -> Precomputed peak slip angle tangent and combined slip optimization.
+- `[x]` `crates/arcade-race-core/src/lidar/mod.rs` -> Scratch buffer internalization and zero-allocation `scan_into`.
+- `[x]` `crates/arcade-race-core/src/track/geometry.rs` -> Precomputed scenery obstacles slice retention.
+- `[x]` `crates/arcade-race-core/src/track/network.rs` -> Layout composite spline caching.
+- `[x]` `crates/race-kit/src/world.rs` -> Zero-allocation obstacle and drafting queries.
+- `[x]` `crates/race-kit/src/ai/mod.rs` -> Bot pit lane recognition, state machine, divergence throat avoidance, and entry gating.
+- `[x]` `crates/race-ui/src/render/track.rs` -> Precomputed junction edge suppression and cached boundary meshes.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Headless input context presence guard.
+- `[x]` `specs/constitution/ROADMAP.md` -> Roadmap tracking for performance and pit lane navigation milestone.
 
 ### Verification Assertions
 - The code in `crates/wheelbase/src/car.rs`, `crates/arcade-race-core/src/lidar/mod.rs`, and `crates/race-kit/src/ai/mod.rs` references `specs/084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md` in comments.
