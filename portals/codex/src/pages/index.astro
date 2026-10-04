@@ -4,9 +4,14 @@ import CarCard from '../components/CarCard.astro';
 import CircuitCard from '../components/CircuitCard.astro';
 import PacejkaGraph from '../components/PacejkaGraph.astro';
 import GlobalViewSwitcher from '../components/GlobalViewSwitcher.astro';
-import vehiclesData from '../../../shared/data/vehicles.json';
-import circuitsData from '../../../shared/data/circuits.json';
-import surfacesData from '../../../shared/data/surfaces.json';
+import { getCars, getCircuits, getModules, getSurfaces, SECTIONS } from '../lib/codex';
+
+const [vehiclesData, circuitsData, surfacesData, modules] = await Promise.all([
+  getCars(),
+  getCircuits(),
+  getSurfaces(),
+  getModules(),
+]);
 
 const featuredCars = vehiclesData.filter((c) =>
   ['gt_ferrari_296_gt3', 'nascar_corvette_ta1', 'rally_audi_sport_quattro_s1', 'offroad_sand_rail_buggy', 'kart_anderson_cs250', 'autocross_peters_superbuggy'].includes(c.id)
@@ -17,19 +22,19 @@ const featuredCircuits = circuitsData.filter((c) =>
 );
 ---
 
-<Layout title="Motorsport Showroom & Game Asset Portal">
+<Layout title="The Encyclopedia of TDRace">
   <!-- Hero Section -->
   <section class="py-12 border-b border-racing-border">
     <div class="max-w-4xl">
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-racing-blue/10 border border-racing-blue/30 text-racing-cyan text-xs font-mono mb-4">
         <span>🏎️</span>
-        <span>TdRace Motorsport Knowledge Portal • Option B</span>
+        <span>TDRace Codex</span>
       </div>
       <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
-        Authentic Motorsport Assets & <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">Physical Simulation</span>.
+        Every car, circuit and rule of <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">TDRace</span>, explained.
       </h1>
       <p class="mt-4 text-base sm:text-lg text-racing-muted leading-relaxed">
-        Explore {vehiclesData.length} authentic motorsport models across motorsport progression categories, {circuitsData.length} homologated circuit layouts, and real-time Pacejka '96 tire and surface physics—all backed by a unified Google OKF v0.2 knowledge graph.
+        Explore {vehiclesData.length} cars and {circuitsData.length} circuits across {modules.length} modules, and learn how the simulation, the controls and the race rules work. Every number on these pages is exported from the game itself.
       </p>
 
       <!-- Quick Metrics Grid -->
@@ -37,7 +42,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{vehiclesData.length}</div>
           <div class="text-xs text-racing-muted uppercase font-mono mt-1">Car Models</div>
-          <div class="text-[11px] text-racing-cyan mt-0.5">30 Classes in 6 Modules</div>
+          <div class="text-[11px] text-racing-cyan mt-0.5">{modules.length} modules</div>
         </div>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">{circuitsData.length}</div>
@@ -52,9 +57,25 @@ const featuredCircuits = circuitsData.filter((c) =>
         <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
           <div class="text-3xl font-extrabold text-white font-mono">60 Hz</div>
           <div class="text-xs text-racing-muted uppercase font-mono mt-1">Physics Tick</div>
-          <div class="text-[11px] text-purple-400 mt-0.5">Pacejka '96 + Weight Transfer</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Tyre model + weight transfer</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Codex Sections -->
+  <section class="py-12 border-b border-racing-border">
+    <h2 class="text-2xl font-bold text-white tracking-tight mb-6">Explore the Codex</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {SECTIONS.map((section) => (
+        <a href={section.href} class="p-5 rounded-xl bg-racing-surface border border-racing-border hover:border-racing-cyan/50 transition-colors group">
+          <div class="text-lg font-bold text-white group-hover:text-racing-cyan transition-colors">{section.label}</div>
+          <p class="text-xs text-racing-muted mt-2">{section.blurb}</p>
+          <div class="text-[11px] font-mono text-racing-cyan mt-3">
+            {section.pages.filter((p) => p.ready).length} of {section.pages.length} pages ready
+          </div>
+        </a>
+      ))}
     </div>
   </section>
 
@@ -63,9 +84,9 @@ const featuredCircuits = circuitsData.filter((c) =>
     <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight">Interactive Simulation Physics Lab</h2>
-        <p class="text-xs text-racing-muted font-mono mt-1">Live client-side Pacejka '96 curve tuning and lateral slip angle computation.</p>
+        <p class="text-xs text-racing-muted font-mono mt-1">Live client-side tyre curve tuning and lateral slip angle computation.</p>
       </div>
-      <a href="/physics" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+      <a href="/technical/physics-lab" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
         Full Physics Reference <span>→</span>
       </a>
     </div>
@@ -82,7 +103,7 @@ const featuredCircuits = circuitsData.filter((c) =>
       </div>
       <div class="flex items-center gap-3">
         <GlobalViewSwitcher />
-        <a href="/vehicles" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        <a href="/showroom/cars" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
           View All Categories <span>→</span>
         </a>
       </div>
@@ -102,7 +123,7 @@ const featuredCircuits = circuitsData.filter((c) =>
         <h2 class="text-2xl font-bold text-white tracking-tight">Homologated World Circuits</h2>
         <p class="text-xs text-racing-muted font-mono mt-1">Vector splines, surface zones, barrier perimeters, and Joker Laps.</p>
       </div>
-      <a href="/circuits" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+      <a href="/showroom/circuits" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
         View All {circuitsData.length} Tracks <span>→</span>
       </a>
     </div>

@@ -1,25 +1,20 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import CircuitCard from '../components/CircuitCard.astro';
-import circuitsData from '../../../shared/data/circuits.json';
+import Layout from '../../layouts/Layout.astro';
+import CircuitCard from '../../components/CircuitCard.astro';
+import { categoryLabel, getCircuits, getModules, moduleLabel } from '../../lib/codex';
 
+const circuitsData = await getCircuits();
 const modules = [
   { id: 'all', label: 'All modules' },
-  { id: 'classic', label: 'Arcade' },
-  { id: 'kart', label: 'Karting' },
-  { id: 'rally', label: 'Rallycross' },
-  { id: 'autocross', label: 'Autocross' },
-  { id: 'extreme_offroad', label: 'All terrain' },
-  { id: 'gt', label: 'Gran Turismo' },
-  { id: 'nascar', label: 'Stock cars' },
+  ...(await getModules()).map((m) => ({ id: m.id, label: moduleLabel(m.id) })),
 ];
 ---
 
-<Layout title="World Circuit & Track Directory" description={`Explore ${circuitsData.length} homologated circuit layouts across Gran Turismo, Stock cars, Rallycross, Autocross, All terrain, Karting, and Arcade.`}>
+<Layout title="Circuit Directory" description={`Explore ${circuitsData.length} official circuits with length, width, surfaces, joker laps and pit lanes.`}>
   <div class="py-6 border-b border-racing-border">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">World Circuit Explorer</h1>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">Circuit Directory</h1>
         <p class="text-sm text-racing-muted font-mono mt-1">
           {circuitsData.length} vector tracks with surface compositions, Joker Laps, and jump ramps.
         </p>
@@ -59,9 +54,8 @@ const modules = [
     {circuitsData.map((c) => (
       <div
         class="circuit-item"
-        data-module={c.module || c.category}
-        data-category={c.category}
-        data-search={`${c.name} ${c.category} ${c.modality} ${c.surfaces.join(' ')} ${c.module || ''} ${c.category === 'offroad' || c.module === 'extreme_offroad' ? 'all terrain all-terrain offroad' : ''} ${c.category === 'nascar' ? 'stock cars stockcar' : ''} ${c.category === 'classic' || c.module === 'classic' ? 'arcade classic' : ''} ${c.category === 'gt' ? 'gran turismo' : ''} ${c.category === 'autocross' || c.module === 'autocross' ? 'autocross ax dirt buggy crosscar' : ''}`.toLowerCase()}
+        data-module={c.module}
+        data-search={`${c.name} ${c.tag} ${c.category_label} ${c.country_name ?? ''} ${c.surfaces.map((s) => s.surface).join(' ')} ${moduleLabel(c.module)} ${categoryLabel(c.category)}`.toLowerCase()}
       >
         <CircuitCard circuit={c} />
       </div>
@@ -95,15 +89,9 @@ const modules = [
       items.forEach((el) => {
         const item = el as HTMLElement;
         const itemModule = item.dataset.module || '';
-        const itemCategory = item.dataset.category || '';
         const itemSearch = item.dataset.search || '';
 
-        const matchesModule =
-          currentModule === 'all' ||
-          itemModule === currentModule ||
-          itemCategory === currentModule ||
-          (currentModule === 'extreme_offroad' && (itemModule === 'extreme_offroad' || itemCategory === 'offroad' || itemModule === 'offroad')) ||
-          (currentModule === 'all_terrain' && (itemModule === 'extreme_offroad' || itemCategory === 'offroad' || itemModule === 'offroad'));
+        const matchesModule = currentModule === 'all' || itemModule === currentModule;
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
         if (matchesModule && matchesSearch) {

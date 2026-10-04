@@ -1,32 +1,14 @@
 ---
+import { categoryLabel, moduleBadge, moduleLabel, type Circuit } from '../lib/codex';
+
 interface Props {
-  circuit: {
-    id: string;
-    name: string;
-    module?: string;
-    category: string;
-    modality: string;
-    description: string;
-    scale?: string;
-    wikipedia_url?: string | null;
-    osm_url?: string | null;
-    country_code?: string;
-    country_name?: string;
-    min_width_meters?: number;
-    max_width_meters?: number;
-    is_inspired?: boolean;
-    length_meters: number;
-    turns_count: number;
-    surfaces: string[];
-    has_jumps: boolean;
-    image_url?: string | null;
-  };
+  circuit: Circuit;
 }
 
 const { circuit } = Astro.props;
 
 // Convert 2-letter ISO country code to Unicode regional indicator flag emoji
-const getFlagEmoji = (code?: string) => {
+const getFlagEmoji = (code?: string | null) => {
   if (!code || code === 'INT' || code.length !== 2) return '🌐';
   const offset = 127397;
   return String.fromCodePoint(...[...code.toUpperCase()].map(c => c.charCodeAt(0) + offset));
@@ -34,38 +16,16 @@ const getFlagEmoji = (code?: string) => {
 
 const flagEmoji = getFlagEmoji(circuit.country_code);
 
-const modalityColors: Record<string, string> = {
-  gt: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  nascar: 'bg-red-500/15 text-red-400 border-red-500/30',
-  rally: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  autocross: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  offroad: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  extreme_offroad: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  kart: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-  classic: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
-};
-
-const categoryLabels: Record<string, string> = {
-  gt: 'Gran Turismo',
-  nascar: 'Stock cars',
-  rally: 'Rallycross',
-  autocross: 'Autocross',
-  offroad: 'All terrain',
-  extreme_offroad: 'All terrain',
-  kart: 'Karting',
-  classic: 'Arcade',
-};
-
-const badgeColor = modalityColors[circuit.category] || modalityColors[circuit.module || ''] || 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+const badgeColor = moduleBadge(circuit.module);
 ---
 
 <div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden hover:border-racing-cyan/50 hover:shadow-xl hover:shadow-racing-cyan/5 transition-all flex flex-col justify-between group">
   <!-- Track Visual Miniature Showcase -->
   <div class="relative bg-racing-bg/80 border-b border-racing-border/60 overflow-hidden h-44 flex items-center justify-center p-3 group/preview">
-    {circuit.image_url ? (
+    {circuit.image ? (
       <div class="relative w-full h-full flex items-center justify-center">
         <img
-          src={circuit.image_url}
+          src={circuit.image}
           alt={`${circuit.name} Track Layout`}
           class="w-full h-full object-contain filter drop-shadow-[0_0_12px_rgba(56,189,248,0.25)] group-hover:scale-105 transition-transform duration-300"
           decoding="async"
@@ -99,11 +59,11 @@ const badgeColor = modalityColors[circuit.category] || modalityColors[circuit.mo
           </span>
         )}
         <span class={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-semibold ${badgeColor}`}>
-          {categoryLabels[circuit.category] || categoryLabels[circuit.module || ''] || circuit.category}
+          {categoryLabel(circuit.category)}
         </span>
         {circuit.module === 'classic' && (
           <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono font-medium">
-            Arcade
+            {moduleLabel(circuit.module)}
           </span>
         )}
         {circuit.is_inspired && (
@@ -139,24 +99,22 @@ const badgeColor = modalityColors[circuit.category] || modalityColors[circuit.mo
       <div>
         <div class="text-[10px] text-racing-muted uppercase">Lap Distance</div>
         <div class="font-bold text-racing-text mt-0.5">
-          {circuit.length_meters >= 1000
-            ? `${(circuit.length_meters / 1000).toFixed(2)} km`
-            : `${circuit.length_meters} m`}
+          {circuit.length_m >= 1000
+            ? `${(circuit.length_m / 1000).toFixed(2)} km`
+            : `${circuit.length_m} m`}
         </div>
       </div>
       <div>
         <div class="text-[10px] text-racing-muted uppercase">Track Width</div>
         <div class="font-bold text-racing-cyan mt-0.5">
-          {circuit.min_width_meters && circuit.max_width_meters
-            ? circuit.min_width_meters === circuit.max_width_meters
-              ? `${circuit.min_width_meters} m`
-              : `${circuit.min_width_meters} – ${circuit.max_width_meters} m`
-            : '12.0 m'}
+          {circuit.min_width_m === circuit.max_width_m
+            ? `${circuit.min_width_m} m`
+            : `${circuit.min_width_m} – ${circuit.max_width_m} m`}
         </div>
       </div>
       <div>
-        <div class="text-[10px] text-racing-muted uppercase">Turns / Apexes</div>
-        <div class="font-bold text-racing-text mt-0.5">{circuit.turns_count > 0 ? circuit.turns_count : 'Fast Arc'}</div>
+        <div class="text-[10px] text-racing-muted uppercase">Default Laps</div>
+        <div class="font-bold text-racing-text mt-0.5">{circuit.default_laps}</div>
       </div>
     </div>
 
@@ -193,7 +151,7 @@ const badgeColor = modalityColors[circuit.category] || modalityColors[circuit.mo
     <span class="text-[10px] uppercase font-mono text-racing-muted mr-1">Surfaces:</span>
     {circuit.surfaces.map((s) => (
       <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-surface border border-racing-border text-racing-text">
-        {s}
+        {s.surface} {s.share_pct}%
       </span>
     ))}
   </div>

@@ -27,7 +27,7 @@ PYTHON   := $(VENV_DIR)/bin/python
 MATURIN  := $(VENV_DIR)/bin/maturin
 PYTEST   := $(VENV_DIR)/bin/pytest
 
-.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-windows package-windows build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki showroom build-portals build-wiki build-showroom ingest-assets verify-okf
+.PHONY: help setup setup-python run run-dev dev play run-gt run-f1 run-nascar run-rally run-kart run-classic build build-release build-windows package-windows build-web serve-web build-android build-ios test test-rust test-python bench bench-rust bench-python clean wiki codex build-portals build-wiki build-codex build-codex-launch export-codex ingest-assets verify-okf
 
 help: ## Display this help screen
 	@echo -e "$(CYAN)🏎️  TDRace Make Commands$(RESET)"
@@ -187,21 +187,30 @@ wiki: ## Launch Option A (Astro + Starlight Technical Reference Manual on port 4
 	@echo -e "$(CYAN)📚 Launching TdRace Wiki (Astro + Starlight) on http://localhost:4321...$(RESET)"
 	@cd portals/option-a-starlight && bun run dev -- --host 0.0.0.0 --port 4321
 
-showroom: ## Launch Option B (Custom Motorsport Showroom & Physics Lab on port 4322)
-	@echo -e "$(CYAN)🏎️  Launching TdRace Showroom (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
-	@cd portals/showroom && bun run dev -- --host 0.0.0.0 --port 4322
+codex: ## Launch the TDRace Codex (Custom Astro + Tailwind, spec 087) on port 4322
+	@echo -e "$(CYAN)🏎️  Launching TDRace Codex (Custom Astro + Tailwind) on http://localhost:4322...$(RESET)"
+	@cd portals/codex && bun run dev -- --host 0.0.0.0 --port 4322
 
-build-portals: ## Rebuild both static web portals (Wiki + Showroom) after re-ingesting assets
-	@echo -e "$(CYAN)🌐 Rebuilding static web portals (Wiki + Showroom)...$(RESET)"
+export-codex: ## Re-export game data for the Codex (portals/shared/data/codex)
+	@echo -e "$(YELLOW)🔄 Exporting game data for the Codex...$(RESET)"
+	cargo run -q -p tdrace-app --bin export_codex
+
+build-portals: ## Rebuild both static web portals (Wiki + Codex) after re-ingesting assets
+	@echo -e "$(CYAN)🌐 Rebuilding static web portals (Wiki + Codex)...$(RESET)"
 	@cd portals && bun run build:all
 
 build-wiki: ## Rebuild static site for Option A (Astro + Starlight Wiki)
 	@echo -e "$(CYAN)📚 Building static site for TdRace Wiki...$(RESET)"
 	@cd portals && bun run build:starlight
 
-build-showroom: ## Rebuild static site for Option B (Motorsport Showroom)
-	@echo -e "$(CYAN)🏎️  Building static site for Motorsport Showroom...$(RESET)"
-	@cd portals && bun run build:showroom
+build-codex: ## Rebuild static site for the TDRace Codex
+	@echo -e "$(CYAN)🏎️  Building static site for the TDRace Codex...$(RESET)"
+	@cd portals && bun run build:codex
+
+build-codex-launch: ## Build the Codex with Steam v1 launch content only (Classic, Karting, Autocross, Rallycross)
+	@echo -e "$(CYAN)🏎️  Building the launch-scope TDRace Codex...$(RESET)"
+	cargo run -q -p tdrace-app --bin export_codex -- --scope launch --out portals/codex/.launch-data
+	@cd portals/codex && CODEX_DATA_DIR=.launch-data bun run build
 
 ingest-assets: ## Re-ingest game tracks and vehicle specs into JSON datasets
 	@echo -e "$(YELLOW)🔄 Ingesting circuits and vehicles into portal data...$(RESET)"

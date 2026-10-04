@@ -1,23 +1,17 @@
 ---
 import '../styles/global.css';
-import circuitsData from '../../../shared/data/circuits.json';
-import vehiclesData from '../../../shared/data/vehicles.json';
-import surfacesData from '../../../shared/data/surfaces.json';
+import { getCars, getCircuits, getSurfaces, SECTIONS } from '../lib/codex';
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = 'TdRace Motorsport Asset Catalog & Interactive Physics Showroom' } = Astro.props;
+const { title, description = 'TDRace Codex: the encyclopedia of the game, its cars, circuits and simulation' } = Astro.props;
 const pathname = new URL(Astro.request.url).pathname;
 
-const navItems = [
-  { label: 'Dashboard', href: '/' },
-  { label: 'Garage Showroom', href: '/vehicles' },
-  { label: 'Circuit Explorer', href: '/circuits' },
-  { label: 'Physics Lab', href: '/physics' },
-];
+const navItems = [{ label: 'Home', href: '/' }, ...SECTIONS.map((s) => ({ label: s.label, href: s.href }))];
+const [cars, circuits, surfaces] = await Promise.all([getCars(), getCircuits(), getSurfaces()]);
 ---
 
 <!doctype html>
@@ -25,7 +19,7 @@ const navItems = [
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} | TdRace Portal</title>
+    <title>{title} | TDRace Codex</title>
     <meta name="description" content={description} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -42,8 +36,8 @@ const navItems = [
               🏁
             </div>
             <div>
-              <span class="font-extrabold text-lg tracking-tight text-white group-hover:text-racing-cyan transition-colors">TdRace</span>
-              <span class="text-xs px-2 py-0.5 ml-1.5 rounded-full bg-racing-surface2 border border-racing-border text-racing-amber font-mono">OPTION B</span>
+              <span class="font-extrabold text-lg tracking-tight text-white group-hover:text-racing-cyan transition-colors">TDRace</span>
+              <span class="text-xs px-2 py-0.5 ml-1.5 rounded-full bg-racing-surface2 border border-racing-border text-racing-amber font-mono">CODEX</span>
             </div>
           </a>
         </div>
@@ -71,15 +65,15 @@ const navItems = [
         <div class="flex items-center space-x-3">
           <div class="hidden lg:flex items-center space-x-2 text-xs font-mono bg-racing-surface2/60 border border-racing-border px-3 py-1 rounded-full">
             <span class="w-2 h-2 rounded-full bg-racing-green animate-pulse"></span>
-            <span class="text-racing-muted">Pacejka 60Hz Engine</span>
+            <span class="text-racing-muted">60 Hz physics</span>
           </div>
           <a
             href="http://localhost:4321"
             target="_blank"
             class="text-xs font-mono bg-racing-surface2 hover:bg-racing-border border border-racing-border text-racing-cyan px-3 py-1.5 rounded-md flex items-center space-x-1.5 transition-colors"
-            title="Open Option A (Starlight Technical Manual)"
+            title="Open the contributor manual (Starlight)"
           >
-            <span>Option A (Docs)</span>
+            <span>Contributor manual</span>
             <span>↗</span>
           </a>
         </div>
@@ -95,18 +89,18 @@ const navItems = [
     <footer class="bg-racing-surface border-t border-racing-border py-8 text-xs text-racing-muted">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center space-x-3">
-          <span>Single-source backed by <strong class="text-racing-text">Google OKF v0.2</strong> Markdown</span>
+          <span>Data exported from the game by <strong class="text-racing-text font-mono">export_codex</strong></span>
           <span>•</span>
-          <span class="font-mono">{circuitsData.length} Circuits</span>
+          <span class="font-mono">{circuits.length} Circuits</span>
           <span>•</span>
-          <span class="font-mono">{vehiclesData.length} Vehicles</span>
+          <span class="font-mono">{cars.length} Cars</span>
           <span>•</span>
-          <span class="font-mono">{surfacesData.length} Surfaces</span>
+          <span class="font-mono">{surfaces.length} Surfaces</span>
         </div>
         <div class="flex items-center space-x-4">
           <a href="https://github.com/magomar/tdrace" target="_blank" class="hover:text-racing-cyan transition-colors">GitHub</a>
-          <a href="/physics" class="hover:text-racing-cyan transition-colors">Physics Equations</a>
-          <a href="/vehicles" class="hover:text-racing-cyan transition-colors">Garage Showroom</a>
+          <a href="/technical/physics-lab" class="hover:text-racing-cyan transition-colors">Physics lab</a>
+          <a href="/showroom/cars" class="hover:text-racing-cyan transition-colors">Cars</a>
         </div>
       </div>
     </footer>

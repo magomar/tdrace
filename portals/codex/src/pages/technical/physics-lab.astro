@@ -1,10 +1,14 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import PacejkaGraph from '../components/PacejkaGraph.astro';
-import SurfaceMatrix from '../components/SurfaceMatrix.astro';
+import Layout from '../../layouts/Layout.astro';
+import PacejkaGraph from '../../components/PacejkaGraph.astro';
+import SurfaceMatrix from '../../components/SurfaceMatrix.astro';
+import { getCars, getSurfaces } from '../../lib/codex';
+
+const surfaceCount = (await getSurfaces()).length;
+const carCount = (await getCars()).length;
 ---
 
-<Layout title="Simulation Physics Laboratory" description="Explore the mathematical physics engine: Pacejka '96 slip curves, chassis weight transfer, aerodynamic downforce, and 11-surface friction models.">
+<Layout title="Simulation Physics Laboratory" description={`Explore the mathematical physics engine: Pacejka '96 slip curves, chassis weight transfer, aerodynamic downforce, and ${surfaceCount}-surface friction models.`}>
   <div class="py-6 border-b border-racing-border">
     <h1 class="text-3xl font-extrabold text-white tracking-tight">Simulation Physics Laboratory</h1>
     <p class="text-sm text-racing-muted font-mono mt-1">
@@ -26,7 +30,7 @@ import SurfaceMatrix from '../components/SurfaceMatrix.astro';
   <!-- Surface Physics Matrix -->
   <section class="py-8 border-b border-racing-border">
     <div class="mb-4">
-      <h2 class="text-xl font-bold text-white tracking-tight">2. 11-Surface Environmental Friction & Drag Matrix</h2>
+      <h2 class="text-xl font-bold text-white tracking-tight">2. {surfaceCount}-Surface Environmental Friction & Drag Matrix</h2>
       <p class="text-xs text-racing-muted font-mono mt-1">
         Per-wheel split-μ sampling across dry tarmac, compacted dirt, gravel, viscous mud, ice, and standing water.
       </p>
@@ -241,11 +245,11 @@ import SurfaceMatrix from '../components/SurfaceMatrix.astro';
       <div>
         <h4 class="text-sm font-bold text-white">Unified 6-Stat Telemetry Alignment</h4>
         <p class="text-xs text-racing-muted font-mono mt-0.5">
-          All 80 models in the Showroom and In-Game Garage reflect these dynamic parameters across Speed, Accel, Grip, Agility, Braking, and Downforce.
+          All {carCount} models in the Showroom and In-Game Garage reflect these dynamic parameters across Speed, Accel, Grip, Agility, Braking, and Downforce.
         </p>
       </div>
       <a
-        href="/vehicles"
+        href="/showroom/cars"
         class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-racing-blue hover:bg-racing-blue/80 text-white text-xs font-mono font-bold transition-colors shrink-0"
       >
         Explore Garage Showroom &rarr;
