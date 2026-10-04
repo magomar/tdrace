@@ -636,6 +636,7 @@ impl MultiRouteProgressTracker {
     ) {
         self.lap_completed = false;
         let car_pos = car.position();
+        let (prev_segment, prev_segment_progress) = (self.current_segment_id, self.segment_progress_distance);
 
         // 1. Advance timing clocks
         self.lap_time += dt;
@@ -723,22 +724,26 @@ impl MultiRouteProgressTracker {
                 let mut best_cand: Option<(SegmentId, SplineProjection)> = None;
                 let mut min_cand_dist = f32::INFINITY;
 
+                // The segment that follows this one in any layout. Junction sockets are only a fallback for
+                // segments no layout lists: on the baked RX networks the merge junction feeds both the
+                // return straight and the start straight, so it does not say which one comes next.
                 let mut candidate_ids = Vec::new();
-                if let Some(exit_sock) = seg.exit_junction {
-                    for s in &network.segments {
-                        if let Some(entry_sock) = s.entry_junction {
-                            if entry_sock.junction_id == exit_sock.junction_id {
-                                candidate_ids.push(s.id);
-                            }
-                        }
-                    }
-                }
-
-                if let Some(layout) = network.active_or_default_layout(Some(&self.active_layout_id)) {
+                for layout in &network.layouts {
                     if let Some(pos) = layout.segment_sequence.iter().position(|&sid| sid == seg.id) {
                         let next_sid = layout.segment_sequence[(pos + 1) % layout.segment_sequence.len()];
                         if !candidate_ids.contains(&next_sid) {
                             candidate_ids.push(next_sid);
+                        }
+                    }
+                }
+                if candidate_ids.is_empty() {
+                    if let Some(exit_sock) = seg.exit_junction {
+                        for s in &network.segments {
+                            if let Some(entry_sock) = s.entry_junction {
+                                if entry_sock.junction_id == exit_sock.junction_id {
+                                    candidate_ids.push(s.id);
+                                }
+                            }
                         }
                     }
                 }
@@ -767,10 +772,64 @@ impl MultiRouteProgressTracker {
             }
         }
 
+        // 4b. Sibling branch: at a split the transition above picks the branch nearest the car, which can be
+        //     the main line while the car takes the joker. When the car is off the current segment and on a
+        //     segment that follows the same predecessor in another layout, move to that sibling.
+        if !proj.is_on_track && !proj.is_on_curb {
+            let current = self.current_segment_id;
+            let prev = network.layouts.iter().find_map(|l| {
+                let i = l.segment_sequence.iter().position(|&s| s == current)?;
+                Some(l.segment_sequence[(i + l.segment_sequence.len() - 1) % l.segment_sequence.len()])
+            });
+            if let Some(prev) = prev {
+                let siblings = network.layouts.iter().filter_map(|l| {
+                    let i = l.segment_sequence.iter().position(|&s| s == prev)?;
+                    let next = l.segment_sequence[(i + 1) % l.segment_sequence.len()];
+                    (next != current).then_some(next)
+                });
+                for sid in siblings {
+                    if let Some(sib) = network.get_segment(sid) {
+                        let sib_proj = sib.project_point(car_pos);
+                        if (sib_proj.is_on_track || sib_proj.is_on_curb) && car.forward_vector().dot(sib_proj.tangent) > -0.25 {
+                            self.current_segment_id = sid;
+                            proj = sib_proj;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         self.segment_progress_distance = proj.progress_distance;
 
-        // 5. Layout distance and normalized progress
-        if let Some(layout) = network.active_or_default_layout(Some(&self.active_layout_id)) {
+        // 4c. A car that passes the joker checkpoint's point on the joker branch gets it even if it went round
+        //     the end of the gate, which spans only the road width (a wide line, or a bot cutting in). At that
+        //     moment it must be within JOKER_CREDIT_MARGIN_M of the joker road's edge, so a car in the infield
+        //     next to the joker, or one that cuts the infield and rejoins the joker later, gets no joker.
+        const JOKER_CREDIT_MARGIN_M: f32 = 4.0;
+        let seg_id = self.current_segment_id;
+        if !self.is_joker_lap
+            && seg_id == prev_segment
+            && proj.distance_to_spline <= proj.track_width * 0.5 + JOKER_CREDIT_MARGIN_M
+        {
+            if let (Some(seg), Some(cp)) =
+                (network.get_segment(seg_id), checkpoints.iter().find(|c| c.is_joker && c.segment_id == Some(seg_id)))
+            {
+                let gate_at = seg.project_point((cp.gate.start + cp.gate.end) * 0.5).progress_distance;
+                if prev_segment_progress < gate_at && self.segment_progress_distance >= gate_at {
+                    self.process_forward_crossing(cp, network, checkpoints);
+                }
+            }
+        }
+
+        // 5. Layout distance and normalized progress, along a layout that contains the current segment
+        //    (the active layout only switches when the car crosses a checkpoint of the other layout).
+        let active = network.active_or_default_layout(Some(&self.active_layout_id));
+        let distance_layout = active
+            .filter(|l| l.segment_sequence.contains(&self.current_segment_id))
+            .or_else(|| network.layouts.iter().find(|l| l.segment_sequence.contains(&self.current_segment_id)))
+            .or(active);
+        if let Some(layout) = distance_layout {
             if let Some(seg_idx) = layout.segment_sequence.iter().position(|&sid| sid == self.current_segment_id) {
                 let dist_before: f32 = layout.segment_sequence[0..seg_idx]
                     .iter()

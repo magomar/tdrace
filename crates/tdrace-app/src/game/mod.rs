@@ -178,12 +178,23 @@ pub fn is_under_bridge_deck(track: &Track, pos: Vec2, elevation: f32) -> bool {
         s.is_bridge && s.elevation - elevation >= 2.5 && s.point.distance(pos) < s.width * 0.5 + 1.0
     })
 }
+
+/// Joker rule for a race on `track` (spec 082): on a Rallycross track with a joker layout, every driver must
+/// take the joker once or gets 30 s added to their finish time. Off on every other track.
+pub fn joker_rule_for(track: &Track) -> JokerRule {
+    let has_joker = track.network.as_ref().is_some_and(|n| n.get_layout("joker").is_some());
+    if track.car_category == tdrace_core::CarCategory::Rally && has_joker {
+        JokerRule { mandatory: 1, penalty_s: 30.0 }
+    } else {
+        JokerRule::default()
+    }
+}
 use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use race_kit::{CollisionParams, RaceEvent, RaceFormat, RaceRules, RaceWorld};
+use race_kit::{CollisionParams, JokerRule, RaceEvent, RaceFormat, RaceRules, RaceWorld};
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::{Track, TrackCategory};
 
@@ -2119,7 +2130,9 @@ impl RaceSession {
     /// Loads the track corresponding to a TrackChoice respecting specialized modules.
     pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
         let mut track = self.track_manager.load_track(choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
-        if let Some(ref layout_id) = self.selected_layout_id {
+        // Under the joker rule every race starts on the main layout; drivers take the joker by driving it.
+        let joker_race = joker_rule_for(&track).mandatory > 0;
+        if let Some(layout_id) = self.selected_layout_id.as_ref().filter(|_| !joker_race) {
             if let Some(ref mut network) = track.network {
                 if network.get_layout(layout_id).is_some() {
                     network.default_layout_id = layout_id.clone();
@@ -12439,6 +12452,7 @@ impl RaceSession {
 
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
+        let joker_rule = joker_rule_for(&self.track);
         if is_split {
             let p1_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let p2_speed = self.world.vehicles.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
@@ -12478,13 +12492,12 @@ impl RaceSession {
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                     if let Some(tracker) = self.world.trackers.get(i) {
-                        if tracker.current_lap > ai.current_lap {
-                            if ai.was_in_joker {
-                                ai.joker_laps_taken += 1;
-                                ai.was_in_joker = false;
-                            }
-                            ai.current_lap = tracker.current_lap;
-                        }
+                        ai.sync_race_state(crate::ai::BotRaceState {
+                            lap: tracker.current_lap,
+                            jokers: self.world.jokers_taken(i),
+                            total_laps: self.total_laps,
+                            mandatory_jokers: joker_rule.mandatory,
+                        });
                     }
                     ai.compute_controls(
                         &self.world.vehicles[i],
@@ -12549,13 +12562,12 @@ impl RaceSession {
 
                     if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                         if let Some(tracker) = self.world.trackers.get(i) {
-                            if tracker.current_lap > ai.current_lap {
-                                if ai.was_in_joker {
-                                    ai.joker_laps_taken += 1;
-                                    ai.was_in_joker = false;
-                                }
-                                ai.current_lap = tracker.current_lap;
-                            }
+                            ai.sync_race_state(crate::ai::BotRaceState {
+                                lap: tracker.current_lap,
+                                jokers: self.world.jokers_taken(i),
+                                total_laps: self.total_laps,
+                                mandatory_jokers: joker_rule.mandatory,
+                            });
                         }
                         ai.compute_controls(
                             &self.world.vehicles[i],
@@ -12576,6 +12588,7 @@ impl RaceSession {
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
         self.world.rules.damage_enabled = self.config.gameplay.car_damage;
+        self.world.rules.joker = joker_rule_for(&self.track);
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
         } else {
@@ -13575,7 +13588,8 @@ impl RaceSession {
         let my_car_idx = self.player_car_index();
         let race_results = self.world.results(&self.track);
         self.results.clear();
-        let leader_time = race_results.first().map(|r| r.time).unwrap_or(0.0);
+        let leader_time = race_results.first().map(|r| r.time + r.penalty).unwrap_or(0.0);
+        let joker_race = joker_rule_for(&self.track).mandatory > 0;
 
         for row in &race_results {
             let (rank, car_idx) = (row.position - 1, row.car);
@@ -13607,16 +13621,18 @@ impl RaceSession {
                 }
             };
 
-            let mut total_time = row.time;
+            let mut total_time = row.time + row.penalty;
             let mut best_lap = row.best_lap;
+            let mut penalty = row.penalty;
             if let Some(result) = self.lan_result_of(car_idx) {
-                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(row.time);
+                penalty = result.penalty_ms as f32 / 1000.0;
+                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0 + penalty).unwrap_or(row.time);
                 best_lap = result.best_lap_ms.map(|ms| ms as f32 / 1000.0).or(best_lap);
             }
             let leader_time = self
                 .lan_result_order()
                 .and_then(|order| order.first().and_then(|&i| self.lan_result_of(i)))
-                .and_then(|r| r.finish_ms)
+                .and_then(|r| r.finish_ms.map(|ms| ms.saturating_add(r.penalty_ms)))
                 .map(|ms| ms as f32 / 1000.0)
                 .unwrap_or(leader_time);
             let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
@@ -13631,6 +13647,8 @@ impl RaceSession {
                 car_idx,
                 points_awarded: 0,
                 projected: row.projected,
+                jokers: joker_race.then_some(row.jokers),
+                penalty,
             });
         }
     }
@@ -15906,6 +15924,12 @@ impl RaceSession {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
 
+        let joker_mandatory = joker_rule_for(&self.track).mandatory;
+        let joker_badge = |i: usize| {
+            self.world.trackers.get(i).and_then(|t| {
+                race_ui::hud::widgets::JokerBadge::for_driver(joker_mandatory, self.world.jokers_taken(i), t.current_lap, self.total_laps)
+            })
+        };
         if self.is_split_screen() && self.world.vehicles.len() >= 2 {
             let standings = self.compute_standings();
             let p1_pos = standings.iter().position(|&idx| idx == 0).unwrap_or(0) + 1;
@@ -15927,6 +15951,7 @@ impl RaceSession {
                 countdown,
                 self.input.gamepad.snapshot.is_connected,
                 self.split_layout,
+                [joker_badge(0), joker_badge(1)],
             );
         } else {
             let my_idx = self.player_car_index();
@@ -15954,6 +15979,7 @@ impl RaceSession {
                     self.session_time,
                     self.world.pit_states.get(my_idx),
                     self.cockpit_telemetry_mode,
+                    joker_badge(my_idx),
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {

@@ -287,6 +287,7 @@ impl RaceSession {
                 status: RaceStatus::Finished,
                 finish_ms: Some(f.finish_ms),
                 best_lap_ms: f.best_lap_ms,
+                penalty_ms: f.penalty_ms,
             })
             .collect();
         for car_idx in self.compute_standings() {
@@ -297,7 +298,7 @@ impl RaceSession {
                 continue;
             }
             let status = if lan.left.contains(&slot_id) { RaceStatus::Left } else { RaceStatus::Dnf };
-            results.push(RaceResult { slot_id, position: 0, status, finish_ms: None, best_lap_ms: None });
+            results.push(RaceResult { slot_id, position: 0, status, finish_ms: None, best_lap_ms: None, penalty_ms: 0 });
         }
         results.sort_by_key(|r| (r.status == RaceStatus::Left) as u8);
         for (i, r) in results.iter_mut().enumerate() {
@@ -420,11 +421,14 @@ impl RaceSession {
         lan.local_finished = true;
         let finish_ms = (clock.unwrap_or(0.0).max(0.0) * 1000.0) as u32;
         let best_lap_ms = self.world.trackers.get(my_idx).and_then(|t| t.best_lap_time).map(|s| (s * 1000.0) as u32);
+        // Each owner adds its own joker penalty, as it reports its own finish time (spec 082).
+        let rule = super::joker_rule_for(&self.track);
+        let penalty_ms = if self.world.jokers_taken(my_idx) < rule.mandatory { (rule.penalty_s * 1000.0) as u32 } else { 0 };
         if let Some(ref mut host) = self.lan_host {
-            let events = host.report_finish(finish_ms, best_lap_ms);
+            let events = host.report_finish(finish_ms, best_lap_ms, penalty_ms);
             self.lan_apply_host_events(events);
         } else if let Some(ref mut client) = self.lan_client {
-            let _ = client.report_finish(finish_ms, best_lap_ms);
+            let _ = client.report_finish(finish_ms, best_lap_ms, penalty_ms);
         }
         self.audio.play_sfx(SfxType::RaceFinish);
         self.lan_alert("FINISHED! WAITING FOR THE OTHER RACERS".to_string(), Palette::NEON_GREEN);

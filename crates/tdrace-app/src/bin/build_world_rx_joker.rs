@@ -207,6 +207,23 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
     },
 ];
 
+/// Tightest turn a baked joker may have, in metres. The folds this guards against had radii of 0.0-0.8 m.
+const MIN_JOKER_RADIUS_M: f32 = 3.0;
+
+/// Smallest turn radius between consecutive samples of `seg`, in metres. Samples within 2 m of `main`
+/// are skipped: there the joker follows the main road, whose OSM geometry has its own tight kinks.
+fn min_turn_radius(seg: &RoadSegment, main: &RoadSegment) -> f32 {
+    seg.samples
+        .windows(2)
+        .filter(|w| main.project_point(w[0].point).distance_to_spline > 2.0)
+        .filter_map(|w| {
+            let angle = w[0].tangent.dot(w[1].tangent).clamp(-1.0, 1.0).acos();
+            let ds = w[1].distance - w[0].distance;
+            (angle > 1e-4 && ds > 0.0).then(|| ds / angle)
+        })
+        .fold(f32::INFINITY, f32::min)
+}
+
 fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path) {
     let path = tracks_base_dir.join(format!("{}.json", cfg.slug));
     println!("Processing {} ({:?})...", cfg.slug, path);
@@ -227,32 +244,13 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path) {
     let seg1_prelim = RoadSegment::new(SegmentId(1), "Main Racing Line", seg1_wps.clone());
     let main_len = seg1_prelim.length;
 
-    // Resample the main line between s_idx and m_idx to get arc-length parameterized points and normals
-    let main_pts: Vec<Vec2> = seg1_wps.iter().map(|w| w.point).collect();
-    let mut main_dists = vec![0.0f32];
-    for i in 0..main_pts.len() - 1 {
-        let d = (main_pts[i + 1] - main_pts[i]).length();
-        main_dists.push(main_dists.last().unwrap() + d);
-    }
-    let total_main_dist = *main_dists.last().unwrap();
-
-    let sample_main = |dist: f32| -> (Vec2, Vec2, Vec2) {
-        let clamped = dist.clamp(0.0, total_main_dist);
-        for i in 0..main_dists.len() - 1 {
-            if main_dists[i] <= clamped && clamped <= main_dists[i + 1] {
-                let seg_len = (main_dists[i + 1] - main_dists[i]).max(1e-4);
-                let u = (clamped - main_dists[i]) / seg_len;
-                let p = main_pts[i].lerp(main_pts[i + 1], u);
-                let tangent = (main_pts[i + 1] - main_pts[i]).normalize_or_zero();
-                let normal = Vec2::new(-tangent.y, tangent.x);
-                return (p, tangent, normal);
-            }
-        }
-        (
-            *main_pts.last().unwrap(),
-            Vec2::X,
-            Vec2::Y,
-        )
+    // Offset the main line's smooth samples sideways. Sampling the raw waypoint polyline gave normals that
+    // jump at every waypoint, and an offset larger than the bend radius on the inside of a bend folds the
+    // road back on itself (loheac_rx, lessay_rx, riga_rx, nyirad_rx, erx_motor_park).
+    let total_main_dist = seg1_prelim.length;
+    let sample_main = |dist: f32| -> (Vec2, Vec2) {
+        let s = seg1_prelim.sample_at_distance(dist.clamp(0.0, total_main_dist));
+        (s.point, Vec2::new(-s.tangent.y, s.tangent.x))
     };
 
     // Number of waypoints along Joker detour
@@ -260,58 +258,77 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path) {
     let target_delta = 42.0f32;
 
     // Binary search for peak lateral offset D_peak such that seg2.length - seg1.length == target_delta
-    let mut low = 0.0f32;
-    let mut high = 150.0f32;
-    let mut best_seg2_wps = Vec::new();
+    let build_joker_wps = |side: f32| -> Vec<TrackWaypoint> {
+        let mut low = 0.0f32;
+        let mut high = 150.0f32;
+        let mut best_seg2_wps = Vec::new();
 
-    for _ in 0..30 {
-        let mid = (low + high) * 0.5;
-        let mut candidate_wps = Vec::new();
+        for _ in 0..30 {
+            let mid = (low + high) * 0.5;
+            let mut candidate_wps = Vec::new();
 
-        for k in 0..=num_joker_steps {
-            let t = k as f32 / num_joker_steps as f32;
-            let (p, _tang, norm) = sample_main(t * total_main_dist);
-            let offset = mid * (std::f32::consts::PI * t).sin().powi(2);
-            let pt = p + norm * (offset * cfg.side);
+            for k in 0..=num_joker_steps {
+                let t = k as f32 / num_joker_steps as f32;
+                let (p, norm) = sample_main(t * total_main_dist);
+                let offset = mid * (std::f32::consts::PI * t).sin().powi(2);
+                let pt = p + norm * (offset * side);
 
-            let elev = wps[s_idx].elevation + (wps[m_idx].elevation - wps[s_idx].elevation) * t;
-            let width = if k == 0 {
-                wps[s_idx].width
-            } else if k == num_joker_steps {
-                wps[m_idx].width
-            } else {
-                13.0
-            };
-            let bank = if k == 0 || k == num_joker_steps {
-                0.0
-            } else {
-                cfg.bank_angle
-            };
-
-            let wp = TrackWaypoint::new(pt, width)
-                .with_surface(if k == 0 {
-                    wps[s_idx].surface.unwrap_or(SurfaceType::Asphalt)
+                let elev = wps[s_idx].elevation + (wps[m_idx].elevation - wps[s_idx].elevation) * t;
+                let width = if k == 0 {
+                    wps[s_idx].width
                 } else if k == num_joker_steps {
-                    wps[m_idx].surface.unwrap_or(SurfaceType::Asphalt)
+                    wps[m_idx].width
                 } else {
-                    cfg.surface
-                })
-                .with_elevation(elev)
-                .with_bank_angle(bank);
+                    13.0
+                };
+                let bank = if k == 0 || k == num_joker_steps {
+                    0.0
+                } else {
+                    cfg.bank_angle
+                };
 
-            candidate_wps.push(wp);
+                let wp = TrackWaypoint::new(pt, width)
+                    .with_surface(if k == 0 {
+                        wps[s_idx].surface.unwrap_or(SurfaceType::Asphalt)
+                    } else if k == num_joker_steps {
+                        wps[m_idx].surface.unwrap_or(SurfaceType::Asphalt)
+                    } else {
+                        cfg.surface
+                    })
+                    .with_elevation(elev)
+                    .with_bank_angle(bank);
+
+                candidate_wps.push(wp);
+            }
+
+            let test_seg = RoadSegment::new(SegmentId(2), cfg.name, candidate_wps.clone());
+            let cur_delta = test_seg.length - main_len;
+
+            if cur_delta < target_delta {
+                low = mid;
+            } else {
+                high = mid;
+            }
+            best_seg2_wps = candidate_wps;
         }
+        best_seg2_wps
+    };
 
-        let test_seg = RoadSegment::new(SegmentId(2), cfg.name, candidate_wps.clone());
-        let cur_delta = test_seg.length - main_len;
-
-        if cur_delta < target_delta {
-            low = mid;
-        } else {
-            high = mid;
-        }
-        best_seg2_wps = candidate_wps;
-    }
+    // Keep the configured side unless its joker turns tighter than MIN_JOKER_RADIUS_M; then take the other
+    // side if that one is smoother.
+    let preferred = build_joker_wps(cfg.side);
+    let preferred_radius = min_turn_radius(&RoadSegment::new(SegmentId(2), cfg.name, preferred.clone()), &seg1_prelim);
+    let best_seg2_wps = if preferred_radius >= MIN_JOKER_RADIUS_M {
+        preferred
+    } else {
+        let other = build_joker_wps(-cfg.side);
+        let other_radius = min_turn_radius(&RoadSegment::new(SegmentId(2), cfg.name, other.clone()), &seg1_prelim);
+        println!(
+            "  {} -> side {:+} turns at {:.1} m, side {:+} at {:.1} m",
+            cfg.slug, cfg.side, preferred_radius, -cfg.side, other_radius
+        );
+        if other_radius > preferred_radius { other } else { preferred }
+    };
 
     let t_split = if s_idx > 0 && s_idx + 1 < wps.len() {
         (wps[s_idx + 1].point - wps[s_idx - 1].point).normalize_or_zero()
@@ -417,9 +434,11 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path) {
         let d1 = (p_seg1.closest_point - center).length();
         let d3 = (p_seg3.closest_point - center).length();
 
+        // A checkpoint on the merge point (the end of seg1) belongs to seg3, which both layouts share. Comparing
+        // it with seg1 too tagged it seg0 and put it before the joker gate in the joker layout.
         if d1 < d0 && d1 < d3 && p_seg1.progress_distance > 1.0 && p_seg1.progress_distance < seg1.length - 1.0 {
             cp.segment_id = Some(SegmentId(1));
-        } else if d3 < d0 && d3 < d1 && p_seg3.progress_distance > 1.0 {
+        } else if d3 < d0 {
             cp.segment_id = Some(SegmentId(3));
         } else {
             cp.segment_id = Some(SegmentId(0));

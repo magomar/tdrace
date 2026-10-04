@@ -12,6 +12,6 @@ pub use career::{
 pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
 pub use race_kit::ai::humanize;
 pub use race_kit::ai::{
-    BotAiDriver, BotDrivingStats, BotProfile, BotRouteStrategy, DriverQuality, DriverTier, DrivingStyle, HumanDriver, HumanTraits,
+    BotAiDriver, BotDrivingStats, BotProfile, BotRaceState, BotRouteStrategy, DriverQuality, DriverTier, DrivingStyle, HumanDriver, HumanTraits,
     LcgRng, MistakeKind,
 };
