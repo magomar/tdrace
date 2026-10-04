@@ -92,21 +92,25 @@ fn race(track: &Track, rules: RaceRules, routes: &[(Vec<&str>, f32)]) -> RaceWor
 }
 
 fn rx_rules() -> RaceRules {
-    RaceRules { format: RaceFormat::Laps(2), joker: JokerRule { mandatory: 1, penalty_s: 30.0 }, ..RaceRules::default() }
+    RaceRules { format: RaceFormat::Laps(5), joker: JokerRule { mandatory: 1, penalty_s: 30.0 }, ..RaceRules::default() }
 }
 
 /// Scenario: A missed joker adds 30 s and drops the driver down the order
 #[test]
 fn missed_joker_adds_penalty_and_drops_the_driver_behind_a_slower_finisher() {
     let track = joker_track();
-    // Car 0 skips the joker and is faster; car 1 takes the joker on lap 1.
-    let world = race(&track, rx_rules(), &[(vec!["main", "main"], 22.0), (vec!["joker", "main"], 20.0)]);
+    // 5 laps. Car 0 skips the joker and is a little faster; car 1 takes the joker on lap 3.
+    let world = race(
+        &track,
+        rx_rules(),
+        &[(vec!["main"; 5], 21.0), (vec!["main", "main", "joker", "main", "main"], 20.0)],
+    );
 
     let (t0, t1) = match (world.finish[0], world.finish[1]) {
         (FinishState::Finished { time: a, position: 1 }, FinishState::Finished { time: b, position: 2 }) => (a, b),
         other => panic!("car 0 must cross the line first: {:?}", other),
     };
-    assert!(t1 - t0 < 30.0, "the gap ({:.1} s) must be smaller than the penalty", t1 - t0);
+    assert!(t1 - t0 > 0.0 && t1 - t0 < 30.0, "car 1 crosses {:.1} s later, less than the penalty", t1 - t0);
     assert_eq!(world.jokers_taken(0), 0);
     assert_eq!(world.jokers_taken(1), 1);
     assert_eq!(world.penalty, vec![30.0, 0.0]);
@@ -122,7 +126,7 @@ fn missed_joker_adds_penalty_and_drops_the_driver_behind_a_slower_finisher() {
 #[test]
 fn driver_who_took_the_joker_gets_no_penalty() {
     let track = joker_track();
-    let world = race(&track, rx_rules(), &[(vec!["main", "joker"], 20.0)]);
+    let world = race(&track, rx_rules(), &[(vec!["main", "main", "joker", "main", "main"], 20.0)]);
     let row = world.results(&track)[0];
     assert_eq!((row.penalty, row.jokers), (0.0, 1));
 }
