@@ -681,7 +681,16 @@ impl BotAiDriver {
 
                 for layout in &network.layouts {
                     let mut traffic_count = 0;
-                    if let Some(comp_spline) = network.build_composite_spline_for_layout(&layout.id) {
+                    let fallback;
+                    let comp_spline = match network.composite_spline_for_layout(&layout.id) {
+                        Some(s) => Some(s),
+                        None => {
+                            fallback = network.build_composite_spline_for_layout(&layout.id);
+                            fallback.as_ref()
+                        }
+                    };
+
+                    if let Some(comp_spline) = comp_spline {
                         for opp in other_cars {
                             let proj = comp_spline.project_point(opp.position());
                             if proj.is_on_track && proj.distance_to_spline < 8.0 {
@@ -727,14 +736,18 @@ impl BotAiDriver {
         other_cars: &[&V],
         dt: f32,
     ) -> CarControls {
-        // 0. Resolve active layout and composite spline caching
+        // 0. Resolve active layout and composite spline caching (Spec 084)
         let active_layout_opt = self.decide_active_layout(track, other_cars);
         if let Some(ref target_layout) = active_layout_opt {
             if self.cached_layout_id.as_deref() != Some(target_layout.as_str())
                 || self.cached_layout_spline.is_none()
             {
                 if let Some(network) = &track.network {
-                    if let Some(composite) = network.build_composite_spline_for_layout(target_layout) {
+                    let composite = network
+                        .composite_spline_for_layout(target_layout)
+                        .cloned()
+                        .or_else(|| network.build_composite_spline_for_layout(target_layout));
+                    if let Some(composite) = composite {
                         self.cached_layout_spline = Some(composite);
                         self.cached_layout_id = Some(target_layout.clone());
                         self.active_layout_id = Some(target_layout.clone());

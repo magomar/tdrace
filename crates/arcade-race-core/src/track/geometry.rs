@@ -1054,6 +1054,8 @@ pub struct TrackGeometry {
     pub rocks: Vec<Rock>,
     #[serde(default)]
     pub buildings: Vec<Building>,
+    #[serde(default, skip_serializing)]
+    pub scenery_obstacles: Vec<Obstacle>,
 }
 
 impl TrackGeometry {
@@ -1066,8 +1068,8 @@ impl TrackGeometry {
         self.inner_walls.iter().chain(self.outer_walls.iter())
     }
 
-    /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.
-    pub fn all_obstacles_with_scenery(&self) -> Vec<Obstacle> {
+    /// Recomputes and caches aggregated static and scenery obstacles (tree trunks, grandstands, rocks, buildings) (Spec 084).
+    pub fn recompute_scenery_obstacles(&mut self) {
         let mut obs = self.obstacles.clone();
         for tree in &self.trees {
             if tree.has_trunk() {
@@ -1083,7 +1085,17 @@ impl TrackGeometry {
         for building in &self.buildings {
             obs.push(building.to_obstacle());
         }
-        obs
+        self.scenery_obstacles = obs;
+    }
+
+    /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.
+    /// Returns a borrowed slice with zero heap allocations (Spec 084).
+    pub fn all_obstacles_with_scenery(&self) -> &[Obstacle] {
+        if !self.scenery_obstacles.is_empty() {
+            &self.scenery_obstacles
+        } else {
+            &self.obstacles
+        }
     }
 }
 

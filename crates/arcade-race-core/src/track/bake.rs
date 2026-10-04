@@ -143,6 +143,10 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         report.grid = true;
     }
     track.apply_default_runoff_surfaces();
+    if let Some(ref mut net) = track.network {
+        net.recompute_composite_splines();
+    }
+    track.geometry.recompute_scenery_obstacles();
     Ok(report)
 }
 
