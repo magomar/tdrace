@@ -37,17 +37,33 @@ impl Default for CollisionParams {
     }
 }
 
+/// Rallycross joker rule: each vehicle must drive the joker route `mandatory` times.
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub struct JokerRule {
+    /// Joker laps each vehicle must complete. 0 turns the rule off.
+    pub mandatory: u32,
+    /// Seconds added to the finish time of a vehicle with fewer jokers than `mandatory`.
+    pub penalty_s: f32,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct RaceRules {
     pub format: RaceFormat,
     pub collision: CollisionParams,
     #[serde(default)]
     pub damage_enabled: bool,
+    #[serde(default)]
+    pub joker: JokerRule,
 }
 
 impl Default for RaceRules {
     fn default() -> Self {
-        Self { format: RaceFormat::Laps(3), collision: CollisionParams::default(), damage_enabled: false }
+        Self {
+            format: RaceFormat::Laps(3),
+            collision: CollisionParams::default(),
+            damage_enabled: false,
+            joker: JokerRule::default(),
+        }
     }
 }
 
@@ -96,6 +112,11 @@ pub struct ParticipantResult {
     /// still has to drive at its average speed so far.
     pub projected: bool,
     pub best_lap: Option<f32>,
+    /// Seconds added for missing joker laps (see [`JokerRule`]). Not included in `time`; rows are
+    /// ordered by `time + penalty`.
+    pub penalty: f32,
+    /// Joker laps the vehicle completed.
+    pub jokers: u32,
 }
 
 /// A race: vehicles, their trackers, their finish states and the race clock.
@@ -113,6 +134,8 @@ pub struct RaceWorld<V: Vehicle = Car> {
     pub top_speed: Vec<f32>,
     /// Surfaces under each vehicle in the last step, for effects and sounds.
     pub last_surfaces: Vec<[SurfaceType; 4]>,
+    /// Joker penalty of each vehicle in seconds, set when it finishes (see [`JokerRule`]).
+    pub penalty: Vec<f32>,
     /// Race time in seconds: the sum of every step's `dt`.
     pub time: f32,
     events: Vec<RaceEvent>,
@@ -131,6 +154,7 @@ impl<V: Vehicle> RaceWorld<V> {
             pit_states: Vec::new(),
             top_speed: Vec::new(),
             last_surfaces: Vec::new(),
+            penalty: Vec::new(),
             time: 0.0,
             events: Vec::new(),
             brushes: Vec::new(),
@@ -155,6 +179,7 @@ impl<V: Vehicle> RaceWorld<V> {
         self.pit_states.clear();
         self.top_speed.clear();
         self.last_surfaces.clear();
+        self.penalty.clear();
         self.time = 0.0;
         self.events.clear();
         self.prev_positions.clear();
@@ -168,6 +193,7 @@ impl<V: Vehicle> RaceWorld<V> {
         self.pit_states.resize(n, PitServiceState::NotPitting);
         self.top_speed.resize(n, 0.0);
         self.last_surfaces.resize(n, [SurfaceType::Asphalt; 4]);
+        self.penalty.resize(n, 0.0);
         self.prev_positions.resize(n, Vec2::ZERO);
         self.drafts.resize(n, 0.0);
     }
@@ -179,6 +205,11 @@ impl<V: Vehicle> RaceWorld<V> {
 
     pub fn is_finished(&self, car: usize) -> bool {
         matches!(self.finish.get(car), Some(FinishState::Finished { .. }))
+    }
+
+    /// Joker laps vehicle `car` has completed. 0 on a track without a network.
+    pub fn jokers_taken(&self, car: usize) -> u32 {
+        self.trackers.get(car).and_then(|t| t.multi_route.as_ref()).map_or(0, |m| m.joker_laps_completed)
     }
 
     /// Advances the race by `dt` seconds. `controls[i]` drives vehicle `i`; a missing entry or a
@@ -423,6 +454,9 @@ impl<V: Vehicle> RaceWorld<V> {
                 if self.finish[i] == FinishState::Racing && self.trackers[i].current_lap > laps {
                     let position = 1 + self.finish.iter().filter(|f| matches!(f, FinishState::Finished { .. })).count();
                     self.finish[i] = FinishState::Finished { time: self.time, position };
+                    if self.jokers_taken(i) < self.rules.joker.mandatory {
+                        self.penalty[i] = self.rules.joker.penalty_s;
+                    }
                     self.events.push(RaceEvent::Finished { car: i, position, time: self.time });
                 }
             }
@@ -440,11 +474,12 @@ impl<V: Vehicle> RaceWorld<V> {
         }
     }
 
-    /// Vehicle indices from first to last: finished vehicles in finish order, then racing
-    /// vehicles by lap and progress, then wrecked vehicles, the latest wreck first.
+    /// Vehicle indices from first to last: finished vehicles by finish time plus joker penalty (finish
+    /// order breaks ties), then racing vehicles by lap and progress, then wrecked vehicles, the latest
+    /// wreck first.
     pub fn standings(&self) -> Vec<usize> {
         let group = |i: usize| match self.finish.get(i).copied().unwrap_or(FinishState::Racing) {
-            FinishState::Finished { position, .. } => (0, position as f32),
+            FinishState::Finished { time, .. } => (0, time + self.penalty.get(i).copied().unwrap_or(0.0)),
             FinishState::Racing => (1, 0.0),
             FinishState::Dnf { time, .. } => (2, -time),
         };
@@ -454,6 +489,13 @@ impl<V: Vehicle> RaceWorld<V> {
             let (gb, kb) = group(b);
             if ga != gb {
                 return ga.cmp(&gb);
+            }
+            if ga == 0 {
+                let pos = |i: usize| match self.finish[i] {
+                    FinishState::Finished { position, .. } => position,
+                    _ => 0,
+                };
+                return ka.partial_cmp(&kb).unwrap_or(Ordering::Equal).then(pos(a).cmp(&pos(b)));
             }
             if ga != 1 {
                 return ka.partial_cmp(&kb).unwrap_or(Ordering::Equal);
@@ -474,7 +516,9 @@ impl<V: Vehicle> RaceWorld<V> {
     ///
     /// In a `Laps` race, a vehicle still racing gets a projected time: the race time plus the
     /// distance it still has to drive, divided by its average speed so far (at least 1 m/s).
-    /// Projected times never come before the time of the row above.
+    /// Projected times never come before the time of a vehicle that finished ahead. Rows are ordered by
+    /// `time + penalty`, with wrecked vehicles last, so a penalised finisher can drop behind a vehicle
+    /// that is still racing.
     pub fn results(&self, track: &Track) -> Vec<ParticipantResult> {
         let lap_len = track.spline.total_length();
         let mut rows = Vec::with_capacity(self.vehicles.len());
@@ -495,7 +539,27 @@ impl<V: Vehicle> RaceWorld<V> {
             if !matches!(state, FinishState::Dnf { .. }) {
                 prev_time = time;
             }
-            rows.push(ParticipantResult { car, position: rank + 1, state, time, projected, best_lap: tracker.best_lap_time });
+            rows.push(ParticipantResult {
+                car,
+                position: rank + 1,
+                state,
+                time,
+                projected,
+                best_lap: tracker.best_lap_time,
+                penalty: self.penalty[car],
+                jokers: self.jokers_taken(car),
+            });
+        }
+        // Without penalties the rows are already in this order and the sort changes nothing.
+        rows.sort_by(|a, b| {
+            let dnf = |r: &ParticipantResult| matches!(r.state, FinishState::Dnf { .. });
+            if dnf(a) || dnf(b) {
+                return dnf(a).cmp(&dnf(b));
+            }
+            (a.time + a.penalty).partial_cmp(&(b.time + b.penalty)).unwrap_or(Ordering::Equal)
+        });
+        for (rank, row) in rows.iter_mut().enumerate() {
+            row.position = rank + 1;
         }
         rows
     }

@@ -13,7 +13,9 @@ pub mod world;
 
 pub use events::{DnfCause, RaceEvent};
 pub use vehicle::{CanopyBrush, DriveControls, Vehicle};
-pub use world::{CollisionParams, FinishState, ParticipantResult, PitServiceState, RaceFormat, RaceRules, RaceWorld};
+pub use world::{
+    CollisionParams, FinishState, JokerRule, ParticipantResult, PitServiceState, RaceFormat, RaceRules, RaceWorld,
+};
 
 /// Compiles the README code as a doc test.
 #[cfg(doctest)]
