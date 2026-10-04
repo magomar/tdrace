@@ -10,7 +10,7 @@ pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
 pub use rng::LcgRng;
 
 use arcade_race_core::Body2D;
-use arcade_race_core::track::{LineSegment, Track, TrackSpline};
+use arcade_race_core::track::{LineSegment, Track, TrackLayout, TrackNetwork, TrackSpline};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use wheelbase::{normalize_angle, Car, CarControls};
@@ -516,6 +516,38 @@ impl Default for BotRouteStrategy {
     }
 }
 
+/// What a bot reads from its race tracker each tick (spec 082), set with [`BotAiDriver::sync_race_state`].
+/// Without it the bot counts laps and jokers itself.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct BotRaceState {
+    /// Current lap, from 1.
+    pub lap: u32,
+    /// Joker laps completed.
+    pub jokers: u32,
+    /// Laps in the race.
+    pub total_laps: u32,
+    /// Joker laps the race rule requires (0 when the rule is off).
+    pub mandatory_jokers: u32,
+}
+
+/// The joker layout (if any) and the main layout of `network`. The main layout is the default one, or the
+/// first non-joker layout when the default is a joker.
+fn joker_and_main_layout_ids(network: &TrackNetwork) -> (Option<String>, String) {
+    let is_joker = |l: &TrackLayout| l.id.to_lowercase().contains("joker") || l.display_name.to_lowercase().contains("joker");
+    let joker = network.layouts.iter().find(|l| is_joker(l)).map(|l| l.id.clone());
+    let main = if network.default_layout_id.to_lowercase().contains("joker") {
+        network
+            .layouts
+            .iter()
+            .find(|l| !is_joker(l))
+            .map(|l| l.id.clone())
+            .unwrap_or_else(|| network.default_layout_id.clone())
+    } else {
+        network.default_layout_id.clone()
+    };
+    (joker, main)
+}
+
 /// Multi-car Bot Racing AI Controller.
 #[derive(Debug, Clone)]
 pub struct BotAiDriver {
@@ -554,6 +586,10 @@ pub struct BotAiDriver {
     pub joker_laps_taken: u32,
     /// Flag indicating whether the bot is currently executing a Joker lap.
     pub was_in_joker: bool,
+    /// Lap and joker count from the race tracker, when the bot races in a world that tracks them.
+    pub race_state: Option<BotRaceState>,
+    /// Lap the active route was chosen for; the route is chosen once per lap.
+    pub route_lap: Option<u32>,
     /// Previous progress distance for detecting lap transitions.
     pub last_progress_dist: f32,
     /// Assigned pit stall index along the team pit road.
@@ -595,6 +631,8 @@ impl BotAiDriver {
             current_lap: 1,
             joker_laps_taken: 0,
             was_in_joker: false,
+            race_state: None,
+            route_lap: None,
             last_progress_dist: 0.0,
             pit_stall_idx: 0,
             pit_cooldown: 0.0,
@@ -617,13 +655,31 @@ impl BotAiDriver {
         self
     }
 
+    /// Takes the lap and joker count from the race tracker and stops the bot's own lap counting.
+    pub fn sync_race_state(&mut self, state: BotRaceState) {
+        self.current_lap = state.lap;
+        self.joker_laps_taken = state.jokers;
+        self.race_state = Some(state);
+    }
+
     /// Evaluates route strategy against the track network and opponent cars to select
-    /// the active circuit layout.
+    /// the active circuit layout. The route is chosen once per lap: the finish line comes before the split
+    /// on the RX networks, so a route chosen at the start of a lap never changes inside a branch.
     pub fn decide_active_layout<V: Body2D>(&mut self, track: &Track, other_cars: &[&V]) -> Option<String> {
         let network = track.network.as_ref()?;
         if network.layouts.is_empty() {
             return None;
         }
+        if self.route_lap == Some(self.current_lap) && self.active_layout_id.is_some() {
+            return self.active_layout_id.clone();
+        }
+        self.route_lap = Some(self.current_lap);
+
+        // Joker cap and last-lap failsafe. Without a race state the bot owes one joker, as before spec 082.
+        let mandatory = self.race_state.map_or(1, |s| s.mandatory_jokers);
+        let owes_joker = self.joker_laps_taken < mandatory;
+        let last_lap = self.race_state.is_some_and(|s| self.current_lap >= s.total_laps);
+        let (joker_id, main_id) = joker_and_main_layout_ids(network);
 
         match &self.route_strategy {
             BotRouteStrategy::FixedLayout(ref layout_id) => {
@@ -637,31 +693,17 @@ impl BotAiDriver {
                 planned_joker_lap,
                 adaptive_traffic_undercut,
             } => {
-                let joker_layout = network
-                    .layouts
-                    .iter()
-                    .find(|l| l.id.to_lowercase().contains("joker") || l.display_name.to_lowercase().contains("joker"));
-                let main_layout_id = if network.default_layout_id.to_lowercase().contains("joker") {
-                    network
-                        .layouts
-                        .iter()
-                        .find(|l| !l.id.to_lowercase().contains("joker") && !l.display_name.to_lowercase().contains("joker"))
-                        .map(|l| l.id.clone())
-                        .unwrap_or_else(|| network.default_layout_id.clone())
-                } else {
-                    network.default_layout_id.clone()
-                };
-
-                let joker_id = match joker_layout {
-                    Some(j) => j.id.clone(),
+                let main_layout_id = main_id;
+                let joker_id = match joker_id {
+                    Some(j) => j,
                     None => return Some(main_layout_id),
                 };
 
-                if self.joker_laps_taken >= 1 {
+                if !owes_joker {
                     return Some(main_layout_id);
                 }
 
-                let mut take_joker = self.current_lap == *planned_joker_lap;
+                let mut take_joker = self.current_lap >= *planned_joker_lap || last_lap;
                 if !take_joker && *adaptive_traffic_undercut && self.current_lap >= 2 {
                     if let Some(pos) = self.last_pos {
                         let heavy_traffic = other_cars.iter().any(|opp| {
@@ -683,6 +725,14 @@ impl BotAiDriver {
             BotRouteStrategy::DynamicTrafficAvoidance => {
                 if network.layouts.len() <= 1 {
                     return Some(network.default_layout_id.clone());
+                }
+                if let Some(joker_id) = joker_id {
+                    if !owes_joker {
+                        return Some(main_id);
+                    }
+                    if last_lap {
+                        return Some(joker_id);
+                    }
                 }
                 let mut best_layout = network.default_layout_id.clone();
                 let mut min_traffic = usize::MAX;
@@ -785,7 +835,7 @@ impl BotAiDriver {
 
         // Detect lap progression if not explicitly updated
         let lap_len = spline.total_length();
-        if self.last_progress_dist > 0.0 && lap_len > 10.0 {
+        if self.race_state.is_none() && self.last_progress_dist > 0.0 && lap_len > 10.0 {
             if curr_dist < lap_len * 0.25 && self.last_progress_dist > lap_len * 0.75 {
                 self.current_lap += 1;
             }
@@ -819,7 +869,7 @@ impl BotAiDriver {
 
         // Lap wrap detection for untracked/standalone execution
         let total_len = spline.total_length();
-        if prev_target_dist > total_len * 0.75 && target_dist < total_len * 0.25 {
+        if self.race_state.is_none() && prev_target_dist > total_len * 0.75 && target_dist < total_len * 0.25 {
             self.current_lap += 1;
             if self.was_in_joker {
                 self.joker_laps_taken += 1;

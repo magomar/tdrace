@@ -300,3 +300,36 @@ fn test_track_progress_tracker_update_network_sync() {
     assert_eq!(tracker.last_checkpoint_idx, 1);
     assert!(tracker.normalized_progress > 0.0);
 }
+
+#[test]
+fn test_joker_counts_when_the_car_runs_wide_past_the_gate_end() {
+    // The joker gate spans x = 110, y 25..45. This car takes the joker but runs wide to y = 47 there.
+    let (network, checkpoints) = create_test_branching_network();
+    let mut tracker = MultiRouteProgressTracker::from_network(&network, None, 3);
+    let mut car = Car::new(CarConfig::sports_car());
+    let path = [
+        Vec2::new(-2.0, 0.0),
+        Vec2::new(60.0, 0.0),
+        Vec2::new(85.0, 24.0),
+        Vec2::new(110.0, 47.0),
+        Vec2::new(135.0, 24.0),
+        Vec2::new(160.0, 0.0),
+        Vec2::new(220.0, 0.0),
+        Vec2::new(220.0, -60.0),
+        Vec2::new(0.0, -60.0),
+        Vec2::new(0.0, -2.0),
+        Vec2::new(0.0, 0.0),
+        Vec2::new(2.0, 0.0),
+    ];
+    for leg in path.windows(2) {
+        let steps = (leg[1] - leg[0]).length().ceil() as usize;
+        for k in 1..=steps {
+            car.state.position = leg[0].lerp(leg[1], k as f32 / steps as f32);
+            let dir = (leg[1] - leg[0]).normalize();
+            car.state.angle = dir.y.atan2(dir.x);
+            tracker.update(&car, &network, &checkpoints, 0.016);
+        }
+    }
+    assert_eq!(tracker.current_lap, 2, "the lap counts");
+    assert_eq!(tracker.joker_laps_completed, 1, "the joker counts although the car missed the gate");
+}

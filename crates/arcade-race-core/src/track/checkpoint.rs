@@ -801,6 +801,19 @@ impl MultiRouteProgressTracker {
 
         self.segment_progress_distance = proj.progress_distance;
 
+        // 4c. A car on the joker branch that has driven past the joker checkpoint gets it even if it went
+        //     round the end of the gate, which spans only the road width (a wide line, or a bot cutting in).
+        if !self.is_joker_lap {
+            let seg_id = self.current_segment_id;
+            if let (Some(seg), Some(cp)) =
+                (network.get_segment(seg_id), checkpoints.iter().find(|c| c.is_joker && c.segment_id == Some(seg_id)))
+            {
+                if self.segment_progress_distance >= seg.project_point((cp.gate.start + cp.gate.end) * 0.5).progress_distance {
+                    self.process_forward_crossing(cp, network, checkpoints);
+                }
+            }
+        }
+
         // 5. Layout distance and normalized progress, along a layout that contains the current segment
         //    (the active layout only switches when the car crosses a checkpoint of the other layout).
         let active = network.active_or_default_layout(Some(&self.active_layout_id));

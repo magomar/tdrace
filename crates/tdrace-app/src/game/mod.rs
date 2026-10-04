@@ -12372,6 +12372,7 @@ impl RaceSession {
 
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
+        let joker_rule = joker_rule_for(&self.track);
         if is_split {
             let p1_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let p2_speed = self.world.vehicles.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
@@ -12411,13 +12412,12 @@ impl RaceSession {
 
                 let bot_ctrl = if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                     if let Some(tracker) = self.world.trackers.get(i) {
-                        if tracker.current_lap > ai.current_lap {
-                            if ai.was_in_joker {
-                                ai.joker_laps_taken += 1;
-                                ai.was_in_joker = false;
-                            }
-                            ai.current_lap = tracker.current_lap;
-                        }
+                        ai.sync_race_state(crate::ai::BotRaceState {
+                            lap: tracker.current_lap,
+                            jokers: self.world.jokers_taken(i),
+                            total_laps: self.total_laps,
+                            mandatory_jokers: joker_rule.mandatory,
+                        });
                     }
                     ai.compute_controls(
                         &self.world.vehicles[i],
@@ -12482,13 +12482,12 @@ impl RaceSession {
 
                     if let Some(ai) = self.ai_drivers.get_mut(ai_idx) {
                         if let Some(tracker) = self.world.trackers.get(i) {
-                            if tracker.current_lap > ai.current_lap {
-                                if ai.was_in_joker {
-                                    ai.joker_laps_taken += 1;
-                                    ai.was_in_joker = false;
-                                }
-                                ai.current_lap = tracker.current_lap;
-                            }
+                            ai.sync_race_state(crate::ai::BotRaceState {
+                                lap: tracker.current_lap,
+                                jokers: self.world.jokers_taken(i),
+                                total_laps: self.total_laps,
+                                mandatory_jokers: joker_rule.mandatory,
+                            });
                         }
                         ai.compute_controls(
                             &self.world.vehicles[i],

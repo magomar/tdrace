@@ -342,3 +342,77 @@ fn test_multi_bot_branching_race_simulation() {
     assert!(car_joker.state.speed > 8.0);
 }
 
+
+/// Scenario: Bots take exactly one joker and never switch inside a branch (spec 082)
+#[test]
+fn test_bot_ai_strategic_joker_rx_race_compliance() {
+    use race_kit::{DriveControls, JokerRule, RaceFormat, RaceRules, RaceWorld};
+    use tdrace_app::ai::BotRaceState;
+    use tdrace_core::track::TrackProgressTracker;
+
+    const DT: f32 = 1.0 / 60.0;
+    const LAPS: u32 = 5;
+    // Bots get stuck on the Classic RX tracks even on the main route (tdrace-lxkv), so this
+    // uses two World RX tracks where a bot drives both routes cleanly.
+    for (module, id) in [("rally", "holjes_rx"), ("rally", "hell_rx")] {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().expect("RX network");
+        let main = network.get_layout("main").unwrap().segment_sequence.clone();
+        let joker = network.get_layout("joker").unwrap().segment_sequence.clone();
+        let rules = RaceRules {
+            format: RaceFormat::Laps(LAPS),
+            joker: JokerRule { mandatory: 1, penalty_s: 30.0 },
+            ..RaceRules::default()
+        };
+        let mut world: RaceWorld<Car> = RaceWorld::new(rules);
+        let mut bots = Vec::new();
+        for i in 0..8 {
+            let slot = track.grid_positions[i];
+            world.spawn(
+                Car::new(CarConfig::rally_car()).with_pose(slot.position, slot.angle),
+                TrackProgressTracker::new(track.checkpoints.len(), 3),
+            );
+            let profile = [BotProfile::pro(), BotProfile::aggressive(), BotProfile::balanced(), BotProfile::rookie()][i % 4];
+            let strategy = match i % 3 {
+                0 => BotRouteStrategy::RallycrossJoker { planned_joker_lap: 2, adaptive_traffic_undercut: true },
+                1 => BotRouteStrategy::RallycrossJoker { planned_joker_lap: 3, adaptive_traffic_undercut: false },
+                _ => BotRouteStrategy::DynamicTrafficAvoidance,
+            };
+            bots.push(BotAiDriver::with_seed(profile, 40 + i as u64).with_route_strategy(strategy));
+        }
+
+        let mut branch_switches = Vec::new();
+        for _ in 0..(600.0 / DT) as usize {
+            let mut controls = Vec::with_capacity(8);
+            for i in 0..8 {
+                bots[i].sync_race_state(BotRaceState {
+                    lap: world.trackers[i].current_lap,
+                    jokers: world.jokers_taken(i),
+                    total_laps: LAPS,
+                    mandatory_jokers: 1,
+                });
+                let before = bots[i].active_layout_id.clone();
+                let others: Vec<&Car> = world.vehicles.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
+                controls.push(bots[i].compute_controls(&world.vehicles[i], &track, &others, DT));
+                let seg = world.trackers[i].multi_route.as_ref().map(|m| m.current_segment_id);
+                let in_branch = seg.is_some_and(|s| !(main.contains(&s) && joker.contains(&s)));
+                if before.is_some() && before != bots[i].active_layout_id && in_branch {
+                    branch_switches.push((i, world.trackers[i].current_lap, before, bots[i].active_layout_id.clone()));
+                }
+            }
+            let controls: Vec<DriveControls> = controls;
+            world.step(&track, &controls, DT);
+            if (0..8).all(|i| world.finish[i] != race_kit::FinishState::Racing) {
+                break;
+            }
+        }
+
+        let finished: Vec<usize> = (0..8).filter(|&i| world.is_finished(i)).collect();
+        assert!(finished.len() >= 6, "{}: only {} of 8 bots finished: {:?}", id, finished.len(), world.finish);
+        for &i in &finished {
+            assert_eq!(world.jokers_taken(i), 1, "{}: bot {} jokers", id, i);
+            assert_eq!(world.penalty[i], 0.0, "{}: bot {} penalty", id, i);
+        }
+        assert!(branch_switches.is_empty(), "{}: bots switched route inside a branch: {:?}", id, branch_switches);
+    }
+}

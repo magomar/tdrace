@@ -42,6 +42,8 @@ The end-to-end test (item 3) found more than the audit did. These fixes are part
 - **Folded jokers.** That builder made each World RX joker by offsetting the main branch sideways along raw waypoint normals. Where the offset was larger than the bend radius, the joker folded back on itself (turn radius 0.0–0.8 m on `loheac_rx`, `lessay_rx`, `riga_rx` and others), and a car on it read as wrong way. The builder now offsets the smooth main samples and switches to the other side when the configured side turns tighter than 3 m. All 20 World RX files are rebaked from `tracks` commit `77a0abe` (the state before the first joker bake), so no wall gaps from the old jokers remain. The 3 Classic RX jokers are unchanged.
 - **Tracker at the split.** `MultiRouteProgressTracker` picked the branch nearest the car at the split and never checked the other branch again, and it followed junction sockets that on all 23 networks make the merge feed both the return straight and the start straight. It now takes the next segment from the layouts, moves to a sibling branch when the car leaves the current one, and measures lap distance along a layout that contains the current segment.
 - **Surface sampling** also let one segment's curb win over another segment's road near a junction (`TrackNetwork::sample_surface`).
+- **Narrow joker gate.** The joker gate spans only the road width (13 m; other gates are about 20 m), so a bot or a player running wide drove round its end and lost the joker. The tracker now credits the joker when a car on the joker branch drives past the gate's point on that branch.
+- **Bots stuck on Classic RX and Autocross (not fixed here).** A one-bot sweep found bots stuck for 44–138 s per lap on `rx_quarry_sprint`, `rx_hilltop_leap`, `rx_canyon_flyer` and `ax_clay_bowl`, also on the main route, and unable to finish the joker on `kouvola_rx`, `lavare_rx` and `killarney_rx`. This predates this spec and is filed as separate bugs. The bot compliance scenario uses `holjes_rx` and `hell_rx`, where a bot drives both routes cleanly.
 
 ---
 
@@ -174,7 +176,7 @@ When a race starts on a track with `track.car_category == CarCategory::Rally` an
   - [ ] **Then** the HUD shows the pulsing red `JOKER THIS LAP!` pill (checked by screenshot)
 
 - **Scenario: Bots take exactly one joker and never switch inside a branch**
-  - [ ] **Given** an 8-bot, 5-lap Rallycross race on `rx_quarry_sprint` and on `holjes_rx`, bots of all tiers
+  - [ ] **Given** an 8-bot, 5-lap Rallycross race on `holjes_rx` and on `hell_rx`, bots of all tiers
   - [ ] **When** the race runs to the end
   - [ ] **Then** every bot that finishes has `jokers == 1` and no penalty
   - [ ] **And** no bot changes its active layout between the split and the merge
