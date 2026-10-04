@@ -880,3 +880,66 @@ fn test_holjes_rx_joker_lap_time_delta_simulation() {
     );
 }
 
+
+/// The 23 official circuits with a joker layout: 3 Classic RX venues and the 20 World RX circuits.
+const RX_JOKER_TRACKS: [(&str, &str); 23] = [
+    ("classic", "rx_quarry_sprint"),
+    ("classic", "rx_hilltop_leap"),
+    ("classic", "rx_canyon_flyer"),
+    ("rally", "holjes_rx"),
+    ("rally", "lydden_hill"),
+    ("rally", "hell_rx"),
+    ("rally", "loheac_rx"),
+    ("rally", "estering_rx"),
+    ("rally", "montalegre_rx"),
+    ("rally", "nyirad_rx"),
+    ("rally", "kouvola_rx"),
+    ("rally", "catalunya_rx"),
+    ("rally", "mettet_rx"),
+    ("rally", "lavare_rx"),
+    ("rally", "riga_rx"),
+    ("rally", "killarney_rx"),
+    ("rally", "lessay_rx"),
+    ("rally", "essay_rx"),
+    ("rally", "dreux_rx"),
+    ("rally", "croft_rx"),
+    ("rally", "spa_rx"),
+    ("rally", "silverstone_rx"),
+    ("rally", "erx_motor_park"),
+];
+
+#[test]
+fn test_rx_layout_checkpoints_lie_on_their_route_in_driving_order() {
+    // The progress tracker expects each layout's checkpoints in the order a car meets them on that route.
+    // A checkpoint listed out of order on the joker route makes a car that drives the joker lose its lap.
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        for layout_id in ["main", "joker"] {
+            let layout = network.get_layout(layout_id).unwrap_or_else(|| panic!("{}: missing {} layout", id, layout_id));
+            let spline = network.build_composite_spline_for_layout(layout_id).expect("composite spline");
+            let mut prev = f32::NEG_INFINITY;
+            for &cid in &layout.checkpoint_ids {
+                let cp = track.checkpoints.iter().find(|c| c.id == cid).unwrap_or_else(|| panic!("{}: no checkpoint {}", id, cid));
+                let mid = (cp.gate.start + cp.gate.end) * 0.5;
+                let proj = spline.project_point(mid);
+                assert!(
+                    proj.distance_to_spline <= proj.track_width * 0.5,
+                    "{} {}: checkpoint {} is {:.1} m from the route centerline (half width {:.1} m)",
+                    id, layout_id, cid, proj.distance_to_spline, proj.track_width * 0.5
+                );
+                // The finish line sits on the loop seam, so it can project to the end of the lap.
+                let mut at = proj.progress_distance;
+                if prev == f32::NEG_INFINITY && at > spline.total_length() * 0.5 {
+                    at -= spline.total_length();
+                }
+                assert!(
+                    at > prev,
+                    "{} {}: checkpoint {} at {:.0} m comes before the previous one at {:.0} m",
+                    id, layout_id, cid, at, prev
+                );
+                prev = at;
+            }
+        }
+    }
+}
