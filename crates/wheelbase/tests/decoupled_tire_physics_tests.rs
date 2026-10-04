@@ -538,3 +538,26 @@ fn test_grass_runoff_mobility_and_acceleration() {
         kart.state().speed
     );
 }
+
+/// Scenario: Rally cars run all-terrain tyres (tdrace-lxkv, tdrace-vd9k)
+///
+/// Given CarConfig::rally_car(), the base of the rally and autocross cars
+/// When it accelerates from a stop on gravel, and the same car does it on medium slicks
+/// Then every wheel has the AllTerrain compound and the rally car is faster on gravel than on slicks
+#[test]
+fn test_rally_car_runs_all_terrain_tyres() {
+    use wheelbase::CompoundId;
+    let rally = CarConfig::rally_car();
+    assert!(rally.wheels.iter().all(|w| w.compound.id == CompoundId::AllTerrain));
+    let speed_on_gravel = |cfg: CarConfig| {
+        let mut car = Car::new(cfg);
+        let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+        for _ in 0..180 {
+            car.step(&ctrl, SurfaceType::Gravel, 1.0 / 60.0);
+        }
+        car.state().speed
+    };
+    let all_terrain = speed_on_gravel(CarConfig::rally_car());
+    let slicks = speed_on_gravel(CarConfig::rally_car().with_compound(CompoundId::MediumSlick));
+    assert!(all_terrain > slicks * 1.2, "all-terrain {all_terrain:.1} m/s, slicks {slicks:.1} m/s after 3 s on gravel");
+}
