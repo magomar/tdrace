@@ -772,7 +772,7 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
             SurfaceType::Curb => "Rumble strips with slight vibration, 12% reduced grip",
             SurfaceType::Dirt => "Playable loose surface, progressive controllable drift slides",
             SurfaceType::Gravel => "Loose crushed stone, 2.5x rolling drag, high debris roost",
-            SurfaceType::Grass => "Run-off terrain, 18x rolling resistance, high understeer",
+            SurfaceType::Grass => "Run-off terrain, 2.5x rolling resistance, high understeer",
             SurfaceType::PackedSand => "Compacted dune ribbon, 5.2x rolling drag, high-speed desert drift line",
             SurfaceType::DeepSand => "Runaway arrestor trap, 30x rolling resistance, stops vehicles rapidly",
             SurfaceType::MudTrack => "Compacted mud ribbon, 5.0x rolling drag, high rooster spray",

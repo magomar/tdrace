@@ -246,7 +246,7 @@ Measures dynamic stability and chassis response across abrupt surface transition
 | 4 | **`Dirt`** | $0.78$ | $1.2\times$ | $1.10\times$ | Compacted clay/dirt; progressive slip, high drift controllability. |
 | 5 | **`Gravel`** | $0.70$ | $2.5\times$ | $1.25\times$ | Loose stone gravel; moderate displacement drag, reduced traction. |
 | 6 | **`Mud`** | $0.52$ | $6.5\times$ | $3.20\times$ | Viscous bog; heavy deceleration drag, power-sapping immersion. |
-| 7 | **`Grass`** | $0.45$ | $18.0\times$ | $2.20\times$ | Turf runoff; severe rolling resistance, rapid speed bleed off-track. |
+| 7 | **`Grass`** | $0.45$ | $2.5\times$ | $2.20\times$ | Turf runoff; rolling drag and surface bleed, non-immobilizing runoff. |
 | 8 | **`Snow`** | $0.34$ | $3.0\times$ | $1.60\times$ | Winter conditions; low friction, gentle breakaway, long braking. |
 | 9 | **`Sand`** | $0.30$ | $30.0\times$ | $4.50\times$ | Runaway arrestor bed / gravel trap; extreme deceleration, traps standard cars. |
 | 10 | **`Water`** | $0.22$ | $3.5\times$ | $2.00\times$ | Standing puddle; hydroplaning hazard, low lateral grip, viscous drag. |
