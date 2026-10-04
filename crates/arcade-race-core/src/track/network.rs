@@ -1104,17 +1104,20 @@ impl TrackNetwork {
 
     /// Samples surface type at a 2D world point across all road segments and junction throat/gore areas.
     pub fn sample_surface(&self, point: Vec2) -> Option<SurfaceType> {
-        // 1. Check road segments (drivable ribbon and curbs)
+        // 1. Check road segments (drivable ribbon and curbs). Road of any segment wins over another
+        //    segment's curb, since a branch's road can overlap a neighbour's curb near a junction.
+        let mut on_curb = false;
         for seg in &self.segments {
             if seg.samples.len() >= 2 {
                 let seg_proj = seg.project_point(point);
                 if seg_proj.is_on_track {
                     return Some(seg_proj.base_surface);
                 }
-                if seg_proj.is_on_curb {
-                    return Some(SurfaceType::Curb);
-                }
+                on_curb |= seg_proj.is_on_curb;
             }
+        }
+        if on_curb {
+            return Some(SurfaceType::Curb);
         }
 
         // 2. Check junction throat polygons & gore triangles

@@ -943,3 +943,39 @@ fn test_rx_layout_checkpoints_lie_on_their_route_in_driving_order() {
         }
     }
 }
+
+#[test]
+fn test_rx_joker_road_reads_as_its_own_surface_not_runoff() {
+    // The joker ribbon can run inside the main line's run-off corridor. Wheels on joker road must
+    // still get the joker's road surface, or a car on the joker drives on run-off grip.
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let joker = network.get_layout("joker").expect("joker layout");
+        let main = network.get_layout("main").expect("main layout");
+        let joker_only = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
+        let seg = network.get_segment(*joker_only).expect("joker segment");
+        let mut wrong = Vec::new();
+        for pair in seg.samples.windows(2) {
+            let sample = &pair[1];
+            // Skip the sample where the joker's own surface changes, since either side of that edge is right.
+            if pair[0].surface != sample.surface {
+                continue;
+            }
+            // Where other road overlaps the joker (junction throats, a crossing) either road is right, and
+            // jump ramps rightly take precedence.
+            let main_proj = track.spline.project_point(sample.point);
+            let other_road = network.segments.iter().any(|s| s.id != seg.id && s.project_point(sample.point).is_on_track);
+            if main_proj.is_on_track || main_proj.is_on_curb || other_road || track.geometry.jump_ramps.iter().any(|r| r.contains(sample.point)) {
+                continue;
+            }
+            let hint = main_proj.progress_distance;
+            for (how, got) in [("far", track.sample_surface(sample.point)), ("near", track.sample_surface_near(sample.point, hint))] {
+                if got != sample.surface {
+                    wrong.push(format!("{} at {:.0} m: {:?} instead of {:?}", how, sample.distance, got, sample.surface));
+                }
+            }
+        }
+        assert!(wrong.is_empty(), "{}: joker road reads wrong at {} samples, e.g. {:?}", id, wrong.len(), &wrong[..wrong.len().min(3)]);
+    }
+}

@@ -336,6 +336,7 @@ impl Track {
     /// 2. Track spline projection:
     ///    - Main drivable track ribbon (`SurfaceType::Dirt`, `SurfaceType::Asphalt`).
     ///    - Apex / exit curbs (`SurfaceType::Curb`).
+    ///    - Then the road, curbs and junction areas of `network` segments (e.g. a joker branch).
     /// 3. Segment runoff corridor:
     ///    - Off-track corridor between track/curb edge and segment wall boundary (`left_runoff_surface` / `right_runoff_surface`).
     /// 4. Arena / Hybrid open floor surface:
@@ -360,8 +361,8 @@ impl Track {
         }
 
         // 3. Project onto spline (if waypoints exist):
-        if self.spline.waypoints.len() >= 2 {
-            let proj = self.spline.project_point(point);
+        let proj = (self.spline.waypoints.len() >= 2).then(|| self.spline.project_point(point));
+        if let Some(proj) = &proj {
             if proj.is_on_track {
                 return proj.base_surface;
             }
@@ -369,7 +370,17 @@ impl Track {
             if proj.is_on_curb {
                 return SurfaceType::Curb;
             }
+        }
 
+        // 3b. Network branch road and junction areas come before the main line's run-off, because
+        // a branch (e.g. a joker lap) can run inside that run-off corridor.
+        if let Some(ref net) = self.network {
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
+            }
+        }
+
+        if let Some(proj) = proj {
             // 4. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
             let half_w = proj.track_width * 0.5;
             let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
@@ -390,13 +401,6 @@ impl Track {
                         return runoff;
                     }
                 }
-            }
-        }
-
-        // 4b. Also check network branch segments and junction areas if present
-        if let Some(ref net) = self.network {
-            if let Some(surf) = net.sample_surface(point) {
-                return surf;
             }
         }
 
@@ -482,6 +486,13 @@ impl Track {
             return SurfaceType::Curb;
         }
 
+        // 3b. Network branch road and junction areas, before the main line's run-off (see sample_surface)
+        if let Some(ref net) = self.network {
+            if let Some(surf) = net.sample_surface(point) {
+                return surf;
+            }
+        }
+
         // 4. Segment runoff corridor check
         let half_w = proj.track_width * 0.5;
         let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
@@ -501,13 +512,6 @@ impl Track {
                 if proj.lateral_offset <= limit {
                     return runoff;
                 }
-            }
-        }
-
-        // 4b. Also check network branch segments and junction areas if present
-        if let Some(ref net) = self.network {
-            if let Some(surf) = net.sample_surface(point) {
-                return surf;
             }
         }
 
