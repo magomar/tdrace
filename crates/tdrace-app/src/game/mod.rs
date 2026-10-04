@@ -178,12 +178,23 @@ pub fn is_under_bridge_deck(track: &Track, pos: Vec2, elevation: f32) -> bool {
         s.is_bridge && s.elevation - elevation >= 2.5 && s.point.distance(pos) < s.width * 0.5 + 1.0
     })
 }
+
+/// Joker rule for a race on `track` (spec 082): on a Rallycross track with a joker layout, every driver must
+/// take the joker once or gets 30 s added to their finish time. Off on every other track.
+pub fn joker_rule_for(track: &Track) -> JokerRule {
+    let has_joker = track.network.as_ref().is_some_and(|n| n.get_layout("joker").is_some());
+    if track.car_category == tdrace_core::CarCategory::Rally && has_joker {
+        JokerRule { mandatory: 1, penalty_s: 30.0 }
+    } else {
+        JokerRule::default()
+    }
+}
 use tdrace_core::collision::car_collision::CarCarCollisionEvent;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{AssistProfile, PlayerHandling};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use race_kit::{CollisionParams, RaceEvent, RaceFormat, RaceRules, RaceWorld};
+use race_kit::{CollisionParams, JokerRule, RaceEvent, RaceFormat, RaceRules, RaceWorld};
 use tdrace_core::track::geometry::SpawnPose;
 use tdrace_core::track::{Track, TrackCategory};
 
@@ -2119,7 +2130,9 @@ impl RaceSession {
     /// Loads the track corresponding to a TrackChoice respecting specialized modules.
     pub fn load_track_for_session(&self, choice: &TrackChoice) -> Track {
         let mut track = self.track_manager.load_track(choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
-        if let Some(ref layout_id) = self.selected_layout_id {
+        // Under the joker rule every race starts on the main layout; drivers take the joker by driving it.
+        let joker_race = joker_rule_for(&track).mandatory > 0;
+        if let Some(layout_id) = self.selected_layout_id.as_ref().filter(|_| !joker_race) {
             if let Some(ref mut network) = track.network {
                 if network.get_layout(layout_id).is_some() {
                     network.default_layout_id = layout_id.clone();
@@ -12496,6 +12509,7 @@ impl RaceSession {
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
         self.world.rules.damage_enabled = self.config.gameplay.car_damage;
+        self.world.rules.joker = joker_rule_for(&self.track);
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
         } else {

@@ -1102,3 +1102,30 @@ fn test_rx_joker_branch_never_turns_tighter_than_3_m() {
     }
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
+
+#[test]
+fn test_rx_races_get_the_joker_rule_and_other_races_do_not() {
+    use race_kit::JokerRule;
+    use tdrace_app::game::joker_rule_for;
+
+    let rx_rule = JokerRule { mandatory: 1, penalty_s: 30.0 };
+    for (module, id) in RX_JOKER_TRACKS {
+        assert_eq!(joker_rule_for(&tdrace_core::catalog::official_track(module, id)), rx_rule, "{}", id);
+    }
+    // Scenario: Other categories are not affected (Classic GT, Karting, Autocross, all-terrain and stock car).
+    for id in ["gt_coastal_grand_prix", "kart_pine_grove", "ax_clay_bowl", "ax_meadow_sprint", "at_dune_sea", "stock_roval"] {
+        assert_eq!(joker_rule_for(&tdrace_core::catalog::official_track("classic", id)), JokerRule::default(), "{}", id);
+    }
+}
+
+#[test]
+fn test_rx_race_ignores_the_joker_layout_pick() {
+    // Scenario: RX race ignores the joker layout pick
+    let mut session = RaceSession::new();
+    session.selected_layout_id = Some("joker".to_string());
+    let track = session.load_track_for_session(&TrackChoice::ClassicRallycross);
+    let network = track.network.as_ref().expect("classic rallycross has a network");
+    assert_eq!(network.default_layout_id, "main");
+    let main = network.build_composite_spline_for_layout("main").unwrap();
+    assert!((track.spline.total_length() - main.total_length()).abs() < 1.0, "the race spline is the main layout");
+}
