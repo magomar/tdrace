@@ -301,35 +301,54 @@ fn test_track_progress_tracker_update_network_sync() {
     assert!(tracker.normalized_progress > 0.0);
 }
 
-#[test]
-fn test_joker_counts_when_the_car_runs_wide_past_the_gate_end() {
-    // The joker gate spans x = 110, y 25..45. This car takes the joker but runs wide to y = 47 there.
-    let (network, checkpoints) = create_test_branching_network();
+/// Drives `car` along `path` in 1 m steps and returns the tracker. The joker gate is narrowed to the joker
+/// road width (12 m, y 29..41 at x = 110), as on the baked RX tracks.
+fn drive_with_road_width_joker_gate(path: &[Vec2]) -> MultiRouteProgressTracker {
+    let (network, mut checkpoints) = create_test_branching_network();
+    checkpoints[3].gate = LineSegment::new(Vec2::new(110.0, 29.0), Vec2::new(110.0, 41.0));
     let mut tracker = MultiRouteProgressTracker::from_network(&network, None, 3);
     let mut car = Car::new(CarConfig::sports_car());
-    let path = [
-        Vec2::new(-2.0, 0.0),
-        Vec2::new(60.0, 0.0),
-        Vec2::new(85.0, 24.0),
-        Vec2::new(110.0, 47.0),
-        Vec2::new(135.0, 24.0),
-        Vec2::new(160.0, 0.0),
-        Vec2::new(220.0, 0.0),
-        Vec2::new(220.0, -60.0),
-        Vec2::new(0.0, -60.0),
-        Vec2::new(0.0, -2.0),
-        Vec2::new(0.0, 0.0),
-        Vec2::new(2.0, 0.0),
-    ];
     for leg in path.windows(2) {
         let steps = (leg[1] - leg[0]).length().ceil() as usize;
+        let dir = (leg[1] - leg[0]).normalize();
         for k in 1..=steps {
             car.state.position = leg[0].lerp(leg[1], k as f32 / steps as f32);
-            let dir = (leg[1] - leg[0]).normalize();
             car.state.angle = dir.y.atan2(dir.x);
+            let before = tracker.is_joker_lap;
             tracker.update(&car, &network, &checkpoints, 0.016);
+            if std::env::var("DBG").is_ok() && !before && tracker.is_joker_lap {
+                println!("DBG joker at {:?} seg {:?} layout {} lastcp {}", car.state.position, tracker.current_segment_id, tracker.active_layout_id, tracker.last_checkpoint_id);
+            }
         }
     }
+    tracker
+}
+
+const RETURN_TO_FINISH: [Vec2; 7] = [
+    Vec2::new(160.0, 0.0),
+    Vec2::new(220.0, 0.0),
+    Vec2::new(220.0, -60.0),
+    Vec2::new(0.0, -60.0),
+    Vec2::new(0.0, -2.0),
+    Vec2::new(0.0, 0.0),
+    Vec2::new(2.0, 0.0),
+];
+
+#[test]
+fn test_joker_counts_when_the_car_runs_wide_past_the_gate_end() {
+    // The car takes the joker but runs 3 m wide of the road at the gate (y = 44), missing its end.
+    let mut path = vec![Vec2::new(-2.0, 0.0), Vec2::new(60.0, 0.0), Vec2::new(85.0, 24.0), Vec2::new(110.0, 44.0), Vec2::new(135.0, 24.0)];
+    path.extend(RETURN_TO_FINISH);
+    let tracker = drive_with_road_width_joker_gate(&path);
     assert_eq!(tracker.current_lap, 2, "the lap counts");
     assert_eq!(tracker.joker_laps_completed, 1, "the joker counts although the car missed the gate");
+}
+
+#[test]
+fn test_no_joker_for_a_car_in_the_infield_next_to_the_joker() {
+    // The car touches the joker road near the split, then cuts through the infield 21 m from the joker.
+    let mut path = vec![Vec2::new(-2.0, 0.0), Vec2::new(60.0, 0.0), Vec2::new(80.0, 13.0), Vec2::new(110.0, 14.0), Vec2::new(140.0, 8.0)];
+    path.extend(RETURN_TO_FINISH);
+    let tracker = drive_with_road_width_joker_gate(&path);
+    assert_eq!(tracker.joker_laps_completed, 0, "a car off the joker road gets no joker");
 }

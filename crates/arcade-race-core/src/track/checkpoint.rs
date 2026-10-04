@@ -636,6 +636,7 @@ impl MultiRouteProgressTracker {
     ) {
         self.lap_completed = false;
         let car_pos = car.position();
+        let (prev_segment, prev_segment_progress) = (self.current_segment_id, self.segment_progress_distance);
 
         // 1. Advance timing clocks
         self.lap_time += dt;
@@ -801,14 +802,21 @@ impl MultiRouteProgressTracker {
 
         self.segment_progress_distance = proj.progress_distance;
 
-        // 4c. A car on the joker branch that has driven past the joker checkpoint gets it even if it went
-        //     round the end of the gate, which spans only the road width (a wide line, or a bot cutting in).
-        if !self.is_joker_lap {
-            let seg_id = self.current_segment_id;
+        // 4c. A car that passes the joker checkpoint's point on the joker branch gets it even if it went round
+        //     the end of the gate, which spans only the road width (a wide line, or a bot cutting in). At that
+        //     moment it must be within JOKER_CREDIT_MARGIN_M of the joker road's edge, so a car in the infield
+        //     next to the joker, or one that cuts the infield and rejoins the joker later, gets no joker.
+        const JOKER_CREDIT_MARGIN_M: f32 = 4.0;
+        let seg_id = self.current_segment_id;
+        if !self.is_joker_lap
+            && seg_id == prev_segment
+            && proj.distance_to_spline <= proj.track_width * 0.5 + JOKER_CREDIT_MARGIN_M
+        {
             if let (Some(seg), Some(cp)) =
                 (network.get_segment(seg_id), checkpoints.iter().find(|c| c.is_joker && c.segment_id == Some(seg_id)))
             {
-                if self.segment_progress_distance >= seg.project_point((cp.gate.start + cp.gate.end) * 0.5).progress_distance {
+                let gate_at = seg.project_point((cp.gate.start + cp.gate.end) * 0.5).progress_distance;
+                if prev_segment_progress < gate_at && self.segment_progress_distance >= gate_at {
                     self.process_forward_crossing(cp, network, checkpoints);
                 }
             }
