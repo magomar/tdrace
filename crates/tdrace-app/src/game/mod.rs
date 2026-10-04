@@ -13543,14 +13543,16 @@ impl RaceSession {
 
             let mut total_time = row.time + row.penalty;
             let mut best_lap = row.best_lap;
+            let mut penalty = row.penalty;
             if let Some(result) = self.lan_result_of(car_idx) {
-                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0).unwrap_or(row.time);
+                penalty = result.penalty_ms as f32 / 1000.0;
+                total_time = result.finish_ms.map(|ms| ms as f32 / 1000.0 + penalty).unwrap_or(row.time);
                 best_lap = result.best_lap_ms.map(|ms| ms as f32 / 1000.0).or(best_lap);
             }
             let leader_time = self
                 .lan_result_order()
                 .and_then(|order| order.first().and_then(|&i| self.lan_result_of(i)))
-                .and_then(|r| r.finish_ms)
+                .and_then(|r| r.finish_ms.map(|ms| ms.saturating_add(r.penalty_ms)))
                 .map(|ms| ms as f32 / 1000.0)
                 .unwrap_or(leader_time);
             let delta = if rank == 0 { 0.0 } else { total_time - leader_time };
@@ -13566,7 +13568,7 @@ impl RaceSession {
                 points_awarded: 0,
                 projected: row.projected,
                 jokers: joker_race.then_some(row.jokers),
-                penalty: row.penalty,
+                penalty,
             });
         }
     }

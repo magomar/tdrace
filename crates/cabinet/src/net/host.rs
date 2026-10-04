@@ -494,9 +494,9 @@ impl LanHost {
     }
 
     /// Records the host's own finish.
-    pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>) -> Vec<HostEvent> {
+    pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>, penalty_ms: u32) -> Vec<HostEvent> {
         let mut events = Vec::new();
-        self.record_finish(0, finish_ms, best_lap_ms, &mut events);
+        self.record_finish(0, FinishRecord { slot_id: 0, finish_ms, best_lap_ms, penalty_ms }, &mut events);
         events
     }
 
@@ -829,8 +829,8 @@ impl LanHost {
                 }
                 self.try_schedule_start(false, events);
             }
-            ControlMessage::Finished { finish_ms, best_lap_ms } => {
-                self.record_finish(slot_id, finish_ms, best_lap_ms, events);
+            ControlMessage::Finished { finish_ms, best_lap_ms, penalty_ms } => {
+                self.record_finish(slot_id, FinishRecord { slot_id, finish_ms, best_lap_ms, penalty_ms }, events);
             }
             _ => {}
         }
@@ -863,7 +863,7 @@ impl LanHost {
         events.push(HostEvent::RaceStartScheduled { start_at });
     }
 
-    fn record_finish(&mut self, slot_id: u8, finish_ms: u32, best_lap_ms: Option<u32>, events: &mut Vec<HostEvent>) {
+    fn record_finish(&mut self, slot_id: u8, record: FinishRecord, events: &mut Vec<HostEvent>) {
         let now = self.now();
         let Some(ref mut race) = self.race else {
             return;
@@ -875,8 +875,8 @@ impl LanHost {
         {
             return;
         }
-        race.finishers.push(FinishRecord { slot_id, finish_ms, best_lap_ms });
-        race.finishers.sort_by_key(|f| f.finish_ms);
+        race.finishers.push(record);
+        race.finishers.sort_by_key(|f| f.finish_ms.saturating_add(f.penalty_ms));
         race.first_finish_at.get_or_insert(now);
         let finishers = race.finishers.clone();
         let _ = self.broadcast_control(&ControlMessage::Standings { finishers: finishers.clone() });
@@ -928,6 +928,7 @@ impl LanHost {
                 status: RaceStatus::Finished,
                 finish_ms: Some(f.finish_ms),
                 best_lap_ms: f.best_lap_ms,
+                penalty_ms: f.penalty_ms,
             });
         }
         let mut still_racing: Vec<u8> = racing
@@ -942,10 +943,10 @@ impl LanHost {
             lb.cmp(&la).then(pb.partial_cmp(&pa).unwrap_or(std::cmp::Ordering::Equal))
         });
         for s in still_racing {
-            results.push(RaceResult { slot_id: s, position: 0, status: RaceStatus::Dnf, finish_ms: None, best_lap_ms: None });
+            results.push(RaceResult { slot_id: s, position: 0, status: RaceStatus::Dnf, finish_ms: None, best_lap_ms: None, penalty_ms: 0 });
         }
         for &s in &race.left {
-            results.push(RaceResult { slot_id: s, position: 0, status: RaceStatus::Left, finish_ms: None, best_lap_ms: None });
+            results.push(RaceResult { slot_id: s, position: 0, status: RaceStatus::Left, finish_ms: None, best_lap_ms: None, penalty_ms: 0 });
         }
         for (i, r) in results.iter_mut().enumerate() {
             r.position = i as u8 + 1;

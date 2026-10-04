@@ -329,8 +329,8 @@ impl LanClient {
     }
 
     /// Tells the host that this client's car crossed the finish line.
-    pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>) -> Result<(), ProtocolError> {
-        self.send_control(&ControlMessage::Finished { finish_ms, best_lap_ms })
+    pub fn report_finish(&mut self, finish_ms: u32, best_lap_ms: Option<u32>, penalty_ms: u32) -> Result<(), ProtocolError> {
+        self.send_control(&ControlMessage::Finished { finish_ms, best_lap_ms, penalty_ms })
     }
 
     /// Sends a graceful disconnect notice to the host and resets state.

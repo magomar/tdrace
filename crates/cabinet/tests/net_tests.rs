@@ -493,3 +493,26 @@ fn test_v1_client_gets_a_v1_version_mismatch_reply() {
     assert_eq!(body["Lobby"]["JoinResponse"]["result"], "RejectedVersionMismatch");
     assert!(host.active_slots().len() == 1, "old client gets no slot");
 }
+
+/// Spec 082, scenario "LAN results carry the penalty": standings order by finish time plus joker penalty.
+#[test]
+fn test_lan_standings_order_by_finish_time_plus_penalty() {
+    let net = SimNetwork::new(SimLinkConfig::default(), 11);
+    let (mut host, mut clients) = sim_host_with_clients(&net, &["A"]);
+    host.launch_race().unwrap();
+    {
+        let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
+        sim_pump(&net, &mut host, &mut refs, 5);
+    }
+    // Client A crosses first (120.0 s) but missed the joker; the host crosses at 125.0 s.
+    clients[0].report_finish(120_000, None, 30_000).unwrap();
+    let _ = host.report_finish(125_000, None, 0);
+    {
+        let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
+        sim_pump(&net, &mut host, &mut refs, 10);
+    }
+    let order: Vec<(u8, u32, u32)> = host.standings().iter().map(|f| (f.slot_id, f.finish_ms, f.penalty_ms)).collect();
+    assert_eq!(order, vec![(0, 125_000, 0), (1, 120_000, 30_000)]);
+    let client_view: Vec<u8> = clients[0].standings().iter().map(|f| f.slot_id).collect();
+    assert_eq!(client_view, vec![0, 1], "the client gets the same order");
+}

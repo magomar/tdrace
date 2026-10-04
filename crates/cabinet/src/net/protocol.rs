@@ -15,7 +15,7 @@ pub const MAGIC_BYTES: [u8; 4] = [0x54, 0x44, 0x4C, 0x4E];
 pub const LAN_MAGIC: [u8; 4] = MAGIC_BYTES;
 
 /// Current supported wire protocol version.
-pub const PROTOCOL_VERSION: u8 = 2;
+pub const PROTOCOL_VERSION: u8 = 3;
 
 /// Default UDP port for local subnet discovery beacons.
 pub const DEFAULT_BEACON_PORT: u16 = 7776;
@@ -284,6 +284,9 @@ pub struct FinishRecord {
     /// Shared race clock at the finish line, in milliseconds.
     pub finish_ms: u32,
     pub best_lap_ms: Option<u32>,
+    /// Time penalty the car's owner added at the finish (a missed joker lap), in milliseconds. Results are
+    /// ordered by `finish_ms + penalty_ms`.
+    pub penalty_ms: u32,
 }
 
 /// Final status of one car.
@@ -305,6 +308,8 @@ pub struct RaceResult {
     pub status: RaceStatus,
     pub finish_ms: Option<u32>,
     pub best_lap_ms: Option<u32>,
+    /// See [`FinishRecord::penalty_ms`]; not included in `finish_ms`.
+    pub penalty_ms: u32,
 }
 
 /// Lobby and race-control messages, always sent on the reliable channel.
@@ -332,7 +337,7 @@ pub enum ControlMessage {
     /// Host → clients: the green light is at `start_at` on the host clock (seconds).
     RaceStart { start_at: f64 },
     /// Owner → host: the owner's car crossed the finish line.
-    Finished { finish_ms: u32, best_lap_ms: Option<u32> },
+    Finished { finish_ms: u32, best_lap_ms: Option<u32>, penalty_ms: u32 },
     /// Host → clients: finish order so far.
     Standings { finishers: Vec<FinishRecord> },
     /// Host → clients: a player left the race.
@@ -462,7 +467,7 @@ mod tests {
         assert_eq!(MAGIC_BYTES, [0x54, 0x44, 0x4C, 0x4E]);
         assert_eq!(LAN_MAGIC, MAGIC_BYTES);
         assert_eq!(&MAGIC_BYTES, b"TDLN");
-        assert_eq!(PROTOCOL_VERSION, 2);
+        assert_eq!(PROTOCOL_VERSION, 3);
         assert_eq!(DEFAULT_BEACON_PORT, 7776);
         assert_eq!(DEFAULT_GAME_PORT, 7777);
         assert_eq!(MAX_DATAGRAM_SIZE, 1400);
@@ -565,9 +570,9 @@ mod tests {
             }),
             ControlMessage::Loaded,
             ControlMessage::RaceStart { start_at: 42.125 },
-            ControlMessage::Finished { finish_ms: 90_000, best_lap_ms: Some(29_500) },
+            ControlMessage::Finished { finish_ms: 90_000, best_lap_ms: Some(29_500), penalty_ms: 30_000 },
             ControlMessage::Standings {
-                finishers: vec![FinishRecord { slot_id: 2, finish_ms: 90_000, best_lap_ms: None }],
+                finishers: vec![FinishRecord { slot_id: 2, finish_ms: 90_000, best_lap_ms: None, penalty_ms: 30_000 }],
             },
             ControlMessage::PlayerLeft { slot_id: 3, reason: "Heartbeat timeout".to_string() },
             ControlMessage::RaceOver {
@@ -577,6 +582,7 @@ mod tests {
                     status: RaceStatus::Finished,
                     finish_ms: Some(90_000),
                     best_lap_ms: Some(29_500),
+                    penalty_ms: 30_000,
                 }],
             },
         ];
