@@ -5,35 +5,6 @@ use serde::{Deserialize, Serialize};
 use wheelbase::car::Car;
 use arcade_race_core::track::curve::{CurveApproachStatus, CurveDirection, TrackCurve};
 use arcade_race_core::track::spline::TrackSpline;
-use arcade_race_core::track::Track;
-
-/// Visual style of the upcoming-curve indicator. Turning it off is `curve_helper = false`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub enum CurveIndicatorStyle {
-    /// Severity chevrons (`>>>`) beside the car: one chevron per degree.
-    Chevrons,
-    /// Rally pacenote icon beside the car: a small drawing of the curve's own shape.
-    #[default]
-    Pacenote,
-}
-
-impl CurveIndicatorStyle {
-    /// Name stored in `config.toml`.
-    pub const fn as_config_str(&self) -> &'static str {
-        match self {
-            Self::Chevrons => "chevrons",
-            Self::Pacenote => "pacenote",
-        }
-    }
-
-    /// Parses the `config.toml` name; unknown names fall back to the default (pacenote).
-    pub fn from_config_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "chevrons" => Self::Chevrons,
-            _ => Self::Pacenote,
-        }
-    }
-}
 
 /// Available color schemes for the curve approaching & braking indicator.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -225,125 +196,6 @@ pub fn curve_indicator_inner_clearance(player_car: &Car, current_zoom: f32) -> f
     player_car.config.track_width * 0.5 + 0.5 + 10.0 / current_zoom.max(0.5)
 }
 
-/// Computes the world-space center of the curve alert chevron block next to the player car.
-///
-/// Places the block on the car's own left or right side (perpendicular to its heading),
-/// so the arrows stay beside the car whichever way it faces on screen.
-/// Factors in the total width of the chevron block so multi-arrow clusters expand outward
-/// while maintaining generous clearance from the vehicle chassis.
-pub fn compute_curve_arrow_position(
-    player_car: &Car,
-    direction: CurveDirection,
-    degree: u8,
-    current_zoom: f32,
-) -> Vec2 {
-    let zoom = current_zoom.max(0.5);
-    let car_pos = player_car.state.position;
-
-    // Total width of the chevron cluster
-    let deg = degree.clamp(1, 5) as usize;
-    let spacing = 16.0 / zoom;
-    let chevron_w = 14.0 / zoom;
-    let total_w = (deg as f32 - 1.0) * spacing + chevron_w;
-
-    // Clearance between the car center and the nearest chevron
-    let inner_clearance = curve_indicator_inner_clearance(player_car, zoom);
-
-    // Center of the chevron block is offset so the innermost chevron maintains `inner_clearance`
-    let lateral_dist = inner_clearance + total_w * 0.5;
-    car_pos + curve_side_vector(player_car, direction) * lateral_dist
-}
-
-/// Backwards-compatible alias for `compute_curve_arrow_position` without dynamic repositioning overhead.
-#[inline]
-pub fn compute_smart_curve_arrow_position(
-    _track: &Track,
-    _all_cars: &[Car],
-    player_car: &Car,
-    direction: CurveDirection,
-    degree: u8,
-    current_zoom: f32,
-) -> Vec2 {
-    compute_curve_arrow_position(player_car, direction, degree, current_zoom)
-}
-
-/// Renders the simplified curve alert chevrons in world space beside the player car.
-///
-/// Features no background box and no text labels — only anti-aliased, glowing vector chevrons
-/// on the car's own left or right side, pointing away from the car toward the curve.
-pub fn render_curve_indicator(
-    player_car: &Car,
-    status: &CurveApproachStatus,
-    scheme: CurveColorScheme,
-    current_zoom: f32,
-    anim_time: f32,
-    scale: f32,
-    brightness: f32,
-) {
-    let base_alpha = compute_indicator_alpha(
-        status.distance_to_entry,
-        status.distance_to_apex,
-        status.is_inside_curve,
-        player_car.state.speed,
-    );
-    let alpha = (base_alpha * brightness).clamp(0.0, 1.0);
-
-    if alpha <= 0.02 {
-        return;
-    }
-
-    let degree = status.curve.degree.clamp(1, 5);
-    let (color, _border_color) = compute_curve_colors(scheme, status.urgency, degree, alpha);
-
-    // Pulse scale when in critical braking envelope
-    let is_critical = status.urgency >= 0.85;
-    let pulse_scale = if is_critical {
-        1.0 + (anim_time * 9.0).sin().abs() * 0.10
-    } else {
-        1.0
-    };
-
-    let zoom = current_zoom.max(0.5);
-
-    // Car frame: `side` points from the car toward the curve, `fwd` along the car heading
-    let side = curve_side_vector(player_car, status.curve.direction);
-    let fwd = player_car.forward_vector();
-    let inner_clearance = curve_indicator_inner_clearance(player_car, zoom);
-    let origin = player_car.state.position;
-
-    // Vector chevron dimensions in world units (scaled by 1.0 / zoom for fixed screen size, modulated by scale)
-    let chevron_w = (14.0 * pulse_scale * scale) / zoom;
-    let chevron_h = (22.0 * pulse_scale * scale) / zoom;
-    let chevron_thickness = (3.5 * pulse_scale * scale) / zoom;
-    let spacing = (16.0 * pulse_scale * scale) / zoom;
-    let shadow_offset = Vec2::new(1.6 * scale, -1.6 * scale) / zoom;
-
-    let shadow_col = Color::new(0.0, 0.0, 0.0, (0.70 * alpha).min(1.0));
-    let glow_alpha = (0.35 * alpha * brightness.min(2.0)).min(1.0);
-    let glow_col = Color::new(color.r, color.g, color.b, glow_alpha);
-
-    for i in 0..degree as usize {
-        // Each chevron points away from the car: arms at `u`, tip at `u + chevron_w`
-        let u = inner_clearance + (i as f32) * spacing;
-        let apex = origin + side * (u + chevron_w);
-        let top = origin + side * u + fwd * (chevron_h * 0.5);
-        let btm = origin + side * u - fwd * (chevron_h * 0.5);
-
-        // 1. Dark outer drop shadow
-        let (st, sa, sb) = (top + shadow_offset, apex + shadow_offset, btm + shadow_offset);
-        draw_line(st.x, st.y, sa.x, sa.y, chevron_thickness + 1.2 / zoom, shadow_col);
-        draw_line(sa.x, sa.y, sb.x, sb.y, chevron_thickness + 1.2 / zoom, shadow_col);
-
-        // 2. Glowing ambient stroke
-        draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness * 1.8, glow_col);
-        draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness * 1.8, glow_col);
-
-        // 3. Crisp sharp primary stroke
-        draw_line(top.x, top.y, apex.x, apex.y, chevron_thickness, color);
-        draw_line(apex.x, apex.y, btm.x, btm.y, chevron_thickness, color);
-    }
-}
-
 /// Track length (meters) drawn before the curve entry and after its exit in the pacenote icon.
 const PACENOTE_LEAD_M: f32 = 12.0;
 /// Number of centerline points in the pacenote icon.
@@ -384,7 +236,7 @@ pub fn compute_pacenote_polyline(
 /// Renders the rally pacenote curve icon beside the player car.
 ///
 /// A dark disc holds a drawing of the upcoming curve's shape with an arrowhead at the exit,
-/// colored by the same scheme and urgency as the chevrons.
+/// colored by the curve color scheme and urgency.
 pub fn render_curve_pacenote(
     player_car: &Car,
     status: &CurveApproachStatus,
@@ -423,7 +275,7 @@ pub fn render_curve_pacenote(
     let thickness = (4.0 * pulse_scale * scale) / zoom;
     let outline = thickness + 3.0 / zoom;
 
-    // Disc sits on the car's own left or right side, like the chevrons
+    // Disc sits on the car's own left or right side
     let side = curve_side_vector(player_car, status.curve.direction);
     let origin = player_car.state.position;
     let center = origin + side * (curve_indicator_inner_clearance(player_car, zoom) + plate_radius);
