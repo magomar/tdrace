@@ -40,7 +40,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         split_idx: 12,
         merge_idx: 16,
         side: 1.0,
-        surface: SurfaceType::Gravel,
+        surface: SurfaceType::Dirt,
         bank_angle: 6.0,
     },
     TrackJokerConfig {
@@ -139,7 +139,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         split_idx: 17,
         merge_idx: 22,
         side: 1.0,
-        surface: SurfaceType::Gravel,
+        surface: SurfaceType::Dirt,
         bank_angle: 6.0,
     },
     TrackJokerConfig {
@@ -175,7 +175,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         split_idx: 16,
         merge_idx: 21,
         side: 1.0,
-        surface: SurfaceType::Gravel,
+        surface: SurfaceType::Dirt,
         bank_angle: 6.0,
     },
     TrackJokerConfig {
@@ -184,7 +184,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         split_idx: 16,
         merge_idx: 22,
         side: 1.0,
-        surface: SurfaceType::Gravel,
+        surface: SurfaceType::Dirt,
         bank_angle: 7.0,
     },
     TrackJokerConfig {
