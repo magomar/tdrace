@@ -106,6 +106,7 @@ impl GtWorldChallengeModule {
             chassis: ChassisSkeleton::new(0.88, 1.18, 2.04, -0.40, 0.30, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::double_wishbone(),
             engine_placement: EnginePlacement::RearEngine,
+            damage_enabled: true,
         }
         .finalized()
     }

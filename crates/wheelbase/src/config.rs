@@ -633,6 +633,10 @@ pub fn default_rear_differential() -> DifferentialType {
     }
 }
 
+pub fn default_damage_enabled() -> bool {
+    true
+}
+
 /// Physical exterior chassis dimensions and anchor points (Spec 075).
 ///
 /// Decouples visual geometry and collision bounds from dynamic mass distribution.
@@ -1092,6 +1096,9 @@ pub struct CarConfig {
     /// Physical engine mounting location governing collision vulnerability (Spec 078).
     #[serde(default)]
     pub engine_placement: EnginePlacement,
+    /// Whether mechanical damage simulation (collisions, kerb strikes, jump landings) is enabled.
+    #[serde(default = "default_damage_enabled")]
+    pub damage_enabled: bool,
     /// Total vehicle mass in kilograms.
     pub mass: f32,
     /// Yaw moment of inertia around the vertical axis in kg*m^2.
@@ -1248,6 +1255,8 @@ struct CarConfigRaw {
     pub suspension: Option<SuspensionConfig>,
     #[serde(default)]
     pub engine_placement: Option<EnginePlacement>,
+    #[serde(default)]
+    pub damage_enabled: Option<bool>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -1289,6 +1298,7 @@ impl From<CarConfigRaw> for CarConfig {
 
         let mut cfg = Self {
             engine_placement,
+            damage_enabled: raw.damage_enabled.unwrap_or(true),
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -1497,6 +1507,7 @@ impl CarConfig {
             chassis: ChassisSkeleton::new(0.80, 0.90, 1.70, -0.40, 0.30, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone),
             engine_placement: EnginePlacement::FrontEngine,
+            damage_enabled: true,
         }
         .finalized()
     }
@@ -1651,6 +1662,7 @@ impl CarConfig {
             chassis: ChassisSkeleton::new(0.16, 0.12, 1.10, -0.15, 0.10, 0.65, 0.70, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart),
             engine_placement: EnginePlacement::MidEngine,
+            damage_enabled: true,
         }
         .finalized()
     }
@@ -1800,6 +1812,7 @@ impl CarConfig {
             chassis: ChassisSkeleton::new(0.98, 1.25, 1.98, -0.45, 0.35, 0.70, 0.75, 0.06),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle),
             engine_placement: EnginePlacement::FrontEngine,
+            damage_enabled: true,
         }
         .finalized()
     }
@@ -1910,6 +1923,7 @@ impl CarConfig {
             chassis: ChassisSkeleton::new(0.15, 0.42, 1.95, -0.40, 0.25, 0.60, 0.65, 0.05),
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad),
             engine_placement: EnginePlacement::RearEngine,
+            damage_enabled: true,
         }
         .finalized()
     }

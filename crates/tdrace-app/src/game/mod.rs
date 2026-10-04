@@ -1376,6 +1376,7 @@ impl RaceSession {
         modal.assist_dropdown.set_selected(assist_idx);
         modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
         modal.set_vehicle_shadows(self.config.display.vehicle_shadows);
+        modal.set_car_damage(self.config.gameplay.car_damage);
 
         let (w, h) = if self.config.display.window_width > 0 && self.config.display.window_height > 0 {
             (self.config.display.window_width, self.config.display.window_height)
@@ -1440,6 +1441,19 @@ impl RaceSession {
         }
     }
 
+    /// Synchronizes the car damage gameplay setting with world physics rules and vehicles.
+    /// When disabled, all vehicle damage is repaired to pristine full health.
+    pub fn apply_car_damage_setting(&mut self) {
+        let damage = self.config.gameplay.car_damage;
+        self.world.rules.damage_enabled = damage;
+        for car in &mut self.world.vehicles {
+            car.config.damage_enabled = damage;
+            if !damage {
+                car.full_garage_repair();
+            }
+        }
+    }
+
     /// Closes the settings modal, optionally applying the modified settings to audio, gamepad, assists, display resolution, and player car helpers.
     pub fn close_settings_modal(&mut self, save: bool) {
         if let Some(modal) = self.settings_modal.take() {
@@ -1499,10 +1513,16 @@ impl RaceSession {
                 self.visibility_options = PlayerVisibilityOptions::from(&self.config.player_helpers);
                 self.visibility_options.bot_nameplates = bot_nameplates;
 
+                let car_damage = modal.car_damage();
+                self.config.gameplay.car_damage = car_damage;
+                self.base_config.gameplay.car_damage = car_damage;
+                self.apply_car_damage_setting();
+
                 self.base_config.player_helpers = self.config.player_helpers.clone();
                 self.base_config.display = self.config.display.clone();
                 self.base_config.audio = self.config.audio.clone();
                 self.base_config.input = self.config.input.clone();
+                self.base_config.gameplay = self.config.gameplay.clone();
 
                 let _ = self.config.save_to_first_existing_or_default();
             }
@@ -4710,6 +4730,7 @@ impl RaceSession {
             }
             self.ai_drivers.push(bot_ai);
         }
+        self.apply_car_damage_setting();
     }
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
@@ -9543,6 +9564,7 @@ impl RaceSession {
 
             self.world.spawn(car, TrackProgressTracker::new(num_cps, num_sectors));
         }
+        self.apply_car_damage_setting();
 
         self.camera.setup_for_track(&self.track);
         let my_idx = self.player_car_index();
@@ -12473,6 +12495,7 @@ impl RaceSession {
         // elevation & banking, tree canopy drag, jump ramps, car-to-car and wall collisions, lap tracking.
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
+        self.world.rules.damage_enabled = self.config.gameplay.car_damage;
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
         } else {

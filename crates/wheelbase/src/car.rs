@@ -490,7 +490,7 @@ impl Car {
 
     /// Partitions collision damage energy into chassis, engine, and 4-corner suspension health (Spec 078).
     pub fn apply_collision_damage_to_zone(&mut self, zone: ImpactZone, damage_energy: f32) {
-        if damage_energy <= 0.0 {
+        if !self.config.damage_enabled || damage_energy <= 0.0 {
             return;
         }
 
@@ -1474,7 +1474,7 @@ fn couple_axle(
             // Kerb bottom-out damage accumulation (Spec 078 Section 4.A)
             const V_BOTTOM_CRIT: f32 = 1.8;
             const E_BUMPSTOP_CAPACITY: f32 = 600.0;
-            if (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
+            if self.config.damage_enabled && (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
                 let v_excess = s_dot - V_BOTTOM_CRIT;
                 let k_rob = corner.archetype.robustness_factor();
                 let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_BUMPSTOP_CAPACITY * k_rob);
@@ -1484,7 +1484,7 @@ fn couple_axle(
             // Violent jump touchdown damage accumulation (Spec 078 Section 4.A)
             const V_LANDING_LIMIT: f32 = 4.2;
             const E_LANDING_CAPACITY: f32 = 2500.0;
-            if touchdown_vz > V_LANDING_LIMIT {
+            if self.config.damage_enabled && touchdown_vz > V_LANDING_LIMIT {
                 let v_excess = touchdown_vz - V_LANDING_LIMIT;
                 let k_rob = corner.archetype.robustness_factor();
                 let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_LANDING_CAPACITY * k_rob);

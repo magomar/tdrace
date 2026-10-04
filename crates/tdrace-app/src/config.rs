@@ -147,6 +147,8 @@ pub struct GameplayConfig {
     pub default_assist_profile: String,
     /// Default cockpit telemetry HUD mode: "kinematic_damage", "dynamic_telemetry" (Spec 079).
     pub default_cockpit_telemetry_mode: String,
+    /// Whether vehicle collision, bottom-out, and jump damage is enabled.
+    pub car_damage: bool,
     /// When true, unlocks all circuits and vehicles for testing.
     pub dev_mode: bool,
 }
@@ -160,6 +162,7 @@ impl Default for GameplayConfig {
             default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
             default_cockpit_telemetry_mode: "kinematic_damage".to_string(),
+            car_damage: false,
             dev_mode: crate::storage::is_dev_mode(),
         }
     }

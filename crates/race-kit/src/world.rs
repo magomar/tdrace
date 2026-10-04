@@ -41,11 +41,13 @@ impl Default for CollisionParams {
 pub struct RaceRules {
     pub format: RaceFormat,
     pub collision: CollisionParams,
+    #[serde(default)]
+    pub damage_enabled: bool,
 }
 
 impl Default for RaceRules {
     fn default() -> Self {
-        Self { format: RaceFormat::Laps(3), collision: CollisionParams::default() }
+        Self { format: RaceFormat::Laps(3), collision: CollisionParams::default(), damage_enabled: false }
     }
 }
 
@@ -299,8 +301,10 @@ impl<V: Vehicle> RaceWorld<V> {
                                 ev.car_a_idx = i;
                                 ev.car_b_idx = j;
                                 let damage_energy = ev.estimated_damage_energy();
-                                car_i.apply_collision_damage(ev.contact_point, damage_energy);
-                                car_j.apply_collision_damage(ev.contact_point, damage_energy);
+                                if self.rules.damage_enabled {
+                                    car_i.apply_collision_damage(ev.contact_point, damage_energy);
+                                    car_j.apply_collision_damage(ev.contact_point, damage_energy);
+                                }
                                 self.events.push(RaceEvent::VehicleImpact(ev));
                                 self.impact(i, ev.closing_speed);
                                 self.impact(j, ev.closing_speed);
@@ -320,7 +324,9 @@ impl<V: Vehicle> RaceWorld<V> {
                 events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
                 for ev in &events {
                     let damage_energy = ev.estimated_damage_energy();
-                    car.apply_collision_damage(ev.contact_point, damage_energy);
+                    if self.rules.damage_enabled {
+                        car.apply_collision_damage(ev.contact_point, damage_energy);
+                    }
                 }
                 events
             };

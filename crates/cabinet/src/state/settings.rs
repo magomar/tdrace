@@ -46,6 +46,7 @@ pub struct SettingsSnapshot {
     pub assist_idx: usize,
     pub speed_unit_idx: usize,
     pub ghost_car_idx: usize,
+    pub car_damage_idx: usize,
     pub visual_aids_preset_idx: usize,
     pub aura_idx: usize,
     pub aura_ratio: f32,
@@ -86,6 +87,7 @@ impl Default for SettingsSnapshot {
             assist_idx: 0,
             speed_unit_idx: 0,
             ghost_car_idx: 0,
+            car_damage_idx: 0,
             visual_aids_preset_idx: 0,
             aura_idx: 0,
             aura_ratio: 1.0,
@@ -425,6 +427,7 @@ pub struct ArcadeSettingsModal {
     pub assist_dropdown: DropdownWidget,
     pub speed_unit_dropdown: DropdownWidget,
     pub ghost_car_dropdown: DropdownWidget,
+    pub car_damage_dropdown: DropdownWidget,
     pub visual_aids_preset_dropdown: DropdownWidget,
     pub gameplay_sub_tab: usize, // 0: General, 1: Visual Aids
 
@@ -474,9 +477,9 @@ impl ArcadeSettingsModal {
         // Tab 1 (Controls): 7 widgets + 1 bottom row = 8 rows
         // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
         // Tab 3 (Gameplay):
-        //   Sub-tab 0 (General): 4 widgets (assist, speed, ghost, preset) + 1 customize button + 1 bottom row = 6 rows
+        //   Sub-tab 0 (General): 5 widgets (assist, speed, ghost, damage, preset) + 1 customize button + 1 bottom row = 7 rows
         //   Sub-tab 1 (Visual Aids): 1 preset + 10 helper widgets + 1 bottom row = 12 rows
-        let nav = NavGrid2D::new(vec![6, 7, 7, 6]);
+        let nav = NavGrid2D::new(vec![6, 7, 7, 7]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -514,6 +517,7 @@ impl ArcadeSettingsModal {
 
         let speed_options = vec!["KM/H (Metric)".to_string(), "MPH (Imperial)".to_string()];
         let ghost_options = vec!["Enabled (Best Lap)".to_string(), "Disabled".to_string()];
+        let damage_options = vec!["Disabled".to_string(), "Enabled".to_string()];
         let preset_options = vec![
             "Full (All Aids)".to_string(),
             "Minimal (Clean HUD)".to_string(),
@@ -634,6 +638,7 @@ impl ArcadeSettingsModal {
             assist_dropdown: DropdownWidget::new("ASSIST PROFILE", assist_options, 0),
             speed_unit_dropdown: DropdownWidget::new("SPEEDOMETER UNIT", speed_options, 0),
             ghost_car_dropdown: DropdownWidget::new("GHOST REPLAY", ghost_options, 0),
+            car_damage_dropdown: DropdownWidget::new("CAR DAMAGE", damage_options, 0),
             visual_aids_preset_dropdown: DropdownWidget::new(
                 "VISUAL DRIVING AIDS",
                 preset_options,
@@ -719,6 +724,7 @@ impl ArcadeSettingsModal {
         self.assist_dropdown.set_selected(0);
         self.speed_unit_dropdown.set_selected(0);
         self.ghost_car_dropdown.set_selected(0);
+        self.car_damage_dropdown.set_selected(0);
         self.visual_aids_preset_dropdown.set_selected(0);
 
         self.set_helpers_state(&HelpersSettingsState::default());
@@ -748,7 +754,7 @@ impl ArcadeSettingsModal {
             self.nav.set_column_len(3, 12);
             self.nav.set_focus(3, 0);
         } else {
-            self.nav.set_column_len(3, 6);
+            self.nav.set_column_len(3, 7);
             self.nav.set_focus(3, 0);
         }
     }
@@ -1034,6 +1040,17 @@ impl ArcadeSettingsModal {
             .set_selected(if enabled { 0 } else { 1 });
     }
 
+    /// Returns true if car damage is enabled.
+    pub fn car_damage(&self) -> bool {
+        self.car_damage_dropdown.selected_index == 1
+    }
+
+    /// Sets the car damage dropdown selection state.
+    pub fn set_car_damage(&mut self, enabled: bool) {
+        self.car_damage_dropdown
+            .set_selected(if enabled { 1 } else { 0 });
+    }
+
     /// Captures the current state of all setting widgets into a `SettingsSnapshot`.
     pub fn current_snapshot(&self) -> SettingsSnapshot {
         SettingsSnapshot {
@@ -1061,6 +1078,7 @@ impl ArcadeSettingsModal {
             assist_idx: self.assist_dropdown.selected_index,
             speed_unit_idx: self.speed_unit_dropdown.selected_index,
             ghost_car_idx: self.ghost_car_dropdown.selected_index,
+            car_damage_idx: self.car_damage_dropdown.selected_index,
             visual_aids_preset_idx: self.visual_aids_preset_dropdown.selected_index,
             aura_idx: self.aura_dropdown.selected_index,
             aura_ratio: self.aura_ratio_slider.value,
@@ -1119,6 +1137,7 @@ impl ArcadeSettingsModal {
         self.assist_dropdown.set_selected(snap.assist_idx);
         self.speed_unit_dropdown.set_selected(snap.speed_unit_idx);
         self.ghost_car_dropdown.set_selected(snap.ghost_car_idx);
+        self.car_damage_dropdown.set_selected(snap.car_damage_idx);
         self.visual_aids_preset_dropdown
             .set_selected(snap.visual_aids_preset_idx);
         self.aura_dropdown.set_selected(snap.aura_idx);
@@ -1226,6 +1245,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.assist_dropdown.is_open
             || self.speed_unit_dropdown.is_open
             || self.ghost_car_dropdown.is_open
+            || self.car_damage_dropdown.is_open
             || self.visual_aids_preset_dropdown.is_open
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
@@ -1252,6 +1272,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 self.assist_dropdown.is_open = false;
                 self.speed_unit_dropdown.is_open = false;
                 self.ghost_car_dropdown.is_open = false;
+                self.car_damage_dropdown.is_open = false;
                 self.visual_aids_preset_dropdown.is_open = false;
                 self.aura_dropdown.is_open = false;
                 self.ribbon_dropdown.is_open = false;
@@ -1331,6 +1352,7 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.assist_dropdown.is_open
             || self.speed_unit_dropdown.is_open
             || self.ghost_car_dropdown.is_open
+            || self.car_damage_dropdown.is_open
             || self.visual_aids_preset_dropdown.is_open
             || self.aura_dropdown.is_open
             || self.ribbon_dropdown.is_open
@@ -1932,9 +1954,9 @@ impl CabinetScreen for ArcadeSettingsModal {
 
                 if self.gameplay_sub_tab == 0 {
                     // GENERAL SUB-TAB:
-                    // 0: Assist, 1: Speed, 2: Ghost, 3: Visual Aids Preset, 4: Customize Button, 5: Bottom Buttons
+                    // 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Visual Aids Preset, 5: Customize Button, 6: Bottom Buttons
                     let (gen_row_h, gen_row_gap, gen_content_y) =
-                        (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                        (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(124.0));
                     let r0 = (content_x, gen_content_y, content_w, gen_row_h);
                     let r1 = (
                         content_x,
@@ -1957,6 +1979,12 @@ impl CabinetScreen for ArcadeSettingsModal {
                     let r4 = (
                         content_x,
                         gen_content_y + (gen_row_h + gen_row_gap) * 4.0,
+                        content_w,
+                        gen_row_h,
+                    );
+                    let r5 = (
+                        content_x,
+                        gen_content_y + (gen_row_h + gen_row_gap) * 5.0,
                         content_w,
                         gen_row_h,
                     );
@@ -2000,9 +2028,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ) {
                         ctx.play_ui_select();
                     }
-
-                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
-                    if self.visual_aids_preset_dropdown.handle_input(
+                    if self.car_damage_dropdown.handle_input(
                         active_row == 3,
                         ctx.gamepad.nav_left,
                         ctx.gamepad.nav_right,
@@ -2011,6 +2037,21 @@ impl CabinetScreen for ArcadeSettingsModal {
                         ctx.gamepad.btn_confirm_pressed,
                         ctx.gamepad.btn_cancel_pressed,
                         r3,
+                        scaler,
+                    ) {
+                        ctx.play_ui_select();
+                    }
+
+                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
+                    if self.visual_aids_preset_dropdown.handle_input(
+                        active_row == 4,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r4,
                         scaler,
                     ) {
                         ctx.play_ui_select();
@@ -2024,15 +2065,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                         }
                     }
 
-                    // Row 4: Customize Button
-                    let is_cust_focused = active_row == 4;
+                    // Row 5: Customize Button
+                    let is_cust_focused = active_row == 5;
                     let is_confirm = safe_key_pressed(KeyCode::Enter)
                         || safe_key_pressed(KeyCode::KpEnter)
                         || safe_key_pressed(KeyCode::Space)
                         || ctx.gamepad.btn_confirm_pressed
                         || ctx.gamepad.btn_a_pressed;
 
-                    if (is_cust_focused && is_confirm) || NavGrid2D::check_mouse_click(r4) {
+                    if (is_cust_focused && is_confirm) || NavGrid2D::check_mouse_click(r5) {
                         self.switch_gameplay_subtab(1);
                         ctx.play_ui_select();
                     }
@@ -3031,9 +3072,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                 );
 
                 if self.gameplay_sub_tab == 0 {
-                    // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Preset, 4: Customize Button
+                    // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Preset, 5: Customize Button
                     let (gen_row_h, gen_row_gap, gen_content_y) =
-                        (scaler.s(40.0), scaler.s(7.0), box_y + scaler.s(124.0));
+                        (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(124.0));
                     let mut y = gen_content_y;
                     let r0 = (content_x, y, content_w, gen_row_h);
                     draw_dropdown(
@@ -3097,21 +3138,39 @@ impl CabinetScreen for ArcadeSettingsModal {
                         y,
                         content_w,
                         gen_row_h,
-                        &self.visual_aids_preset_dropdown.label,
-                        &self.visual_aids_preset_dropdown.options,
-                        self.visual_aids_preset_dropdown.selected_index,
+                        &self.car_damage_dropdown.label,
+                        &self.car_damage_dropdown.options,
+                        self.car_damage_dropdown.selected_index,
                         false,
-                        self.visual_aids_preset_dropdown.popup_hovered_index,
+                        self.car_damage_dropdown.popup_hovered_index,
                         active_row == 3,
                         false,
                         accent,
                     );
                     y += gen_row_h + gen_row_gap;
                     let r4 = (content_x, y, content_w, gen_row_h);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        gen_row_h,
+                        &self.visual_aids_preset_dropdown.label,
+                        &self.visual_aids_preset_dropdown.options,
+                        self.visual_aids_preset_dropdown.selected_index,
+                        false,
+                        self.visual_aids_preset_dropdown.popup_hovered_index,
+                        active_row == 4,
+                        false,
+                        accent,
+                    );
+                    y += gen_row_h + gen_row_gap;
+                    let r5 = (content_x, y, content_w, gen_row_h);
 
-                    // Row 4: Customize Button
-                    let is_cust_focused = active_row == 4;
-                    let is_cust_hovered = NavGrid2D::check_mouse_hover(r4);
+                    // Row 5: Customize Button
+                    let is_cust_focused = active_row == 5;
+                    let is_cust_hovered = NavGrid2D::check_mouse_hover(r5);
                     let cust_active = is_cust_focused || is_cust_hovered;
                     let cust_bg = if cust_active {
                         Palette::UI_CARD_BG_HOVER
@@ -3124,10 +3183,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                         Palette::UI_CARD_BORDER
                     };
                     scaler.draw_glass_card(
-                        r4.0,
-                        r4.1,
-                        r4.2,
-                        r4.3,
+                        r5.0,
+                        r5.1,
+                        r5.2,
+                        r5.3,
                         cust_bg,
                         cust_border,
                         if cust_active { 2.0 } else { 1.0 },
@@ -3138,8 +3197,8 @@ impl CabinetScreen for ArcadeSettingsModal {
                         } else {
                             "CUSTOMIZE 10 INDIVIDUAL AIDS ➔"
                         },
-                        r4.0 + r4.2 * 0.5,
-                        r4.1 + r4.3 * 0.62,
+                        r5.0 + r5.2 * 0.5,
+                        r5.1 + r5.3 * 0.62,
                         scaler.font_s(12.5),
                         if cust_active {
                             Palette::NEON_CYAN
@@ -3188,7 +3247,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                             self.ghost_car_dropdown.popup_hovered_index,
                             accent,
                         );
-                    } else if self.visual_aids_preset_dropdown.is_open {
+                    } else if self.car_damage_dropdown.is_open {
                         draw_dropdown_popup(
                             scaler,
                             fonts,
@@ -3196,6 +3255,19 @@ impl CabinetScreen for ArcadeSettingsModal {
                             r3.1,
                             r3.2,
                             r3.3,
+                            &self.car_damage_dropdown.options,
+                            self.car_damage_dropdown.selected_index,
+                            self.car_damage_dropdown.popup_hovered_index,
+                            accent,
+                        );
+                    } else if self.visual_aids_preset_dropdown.is_open {
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r4.0,
+                            r4.1,
+                            r4.2,
+                            r4.3,
                             &self.visual_aids_preset_dropdown.options,
                             self.visual_aids_preset_dropdown.selected_index,
                             self.visual_aids_preset_dropdown.popup_hovered_index,
