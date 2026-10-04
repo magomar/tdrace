@@ -117,14 +117,31 @@ impl LidarConfig {
 }
 
 /// High-speed deterministic 2D LIDAR raycaster for RL observations and sensor simulation.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+use std::cell::RefCell;
+
+/// High-speed deterministic 2D LIDAR raycaster for RL observations and sensor simulation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LidarScanner {
     pub config: LidarConfig,
+    #[serde(skip)]
+    scratch_walls: RefCell<Vec<crate::track::geometry::WallBarrier>>,
+    #[serde(skip)]
+    scratch_opponents: RefCell<Vec<LidarPreparedOpponent>>,
+}
+
+impl PartialEq for LidarScanner {
+    fn eq(&self, other: &Self) -> bool {
+        self.config == other.config
+    }
 }
 
 impl LidarScanner {
     pub const fn new(config: LidarConfig) -> Self {
-        Self { config }
+        Self {
+            config,
+            scratch_walls: RefCell::new(Vec::new()),
+            scratch_opponents: RefCell::new(Vec::new()),
+        }
     }
 
     /// Computes the ray directions in vehicle local space.
@@ -160,7 +177,7 @@ impl LidarScanner {
         results
     }
 
-    /// Zero-allocation LIDAR sweep writing directly into a pre-allocated output buffer.
+    /// Zero-allocation LIDAR sweep writing directly into a pre-allocated output buffer (Spec 084).
     pub fn scan_into<B: Body2D>(
         &self,
         car: &B,
@@ -181,28 +198,52 @@ impl LidarScanner {
         let max_range = self.config.max_range;
         let max_r_sq = (max_range + 6.0) * (max_range + 6.0);
         let car_elev = car.total_elevation();
+        let max_range_padded = max_range + 6.0;
+        let min_x = sensor_pos.x - max_range_padded;
+        let max_x = sensor_pos.x + max_range_padded;
+        let min_y = sensor_pos.y - max_range_padded;
+        let max_y = sensor_pos.y + max_range_padded;
 
-        // Pre-filter candidate walls within sensor range and vertical elevation proximity
-        let candidate_walls: Vec<&crate::track::geometry::WallBarrier> = track
-            .geometry
-            .all_walls()
-            .filter(|w| {
-                if !w.is_physical() {
-                    return false;
-                }
-                if (car_elev - w.elevation).abs() > 2.0 {
-                    return false;
-                }
-                w.segment.distance_sq_to_point(sensor_pos) < max_r_sq
-            })
-            .collect();
+        // Pre-filter candidate walls using reusable scratch buffer with zero heap allocations
+        let mut candidate_walls = self.scratch_walls.borrow_mut();
+        candidate_walls.clear();
+        for w in track.geometry.all_walls() {
+            if !w.is_physical() {
+                continue;
+            }
+            if (car_elev - w.elevation).abs() > 2.0 {
+                continue;
+            }
+            let w_min_x = w.segment.start.x.min(w.segment.end.x);
+            let w_max_x = w.segment.start.x.max(w.segment.end.x);
+            let w_min_y = w.segment.start.y.min(w.segment.end.y);
+            let w_max_y = w.segment.start.y.max(w.segment.end.y);
+            if w_max_x < min_x || w_min_x > max_x || w_max_y < min_y || w_min_y > max_y {
+                continue;
+            }
+            if w.segment.distance_sq_to_point(sensor_pos) < max_r_sq {
+                candidate_walls.push(*w);
+            }
+        }
 
-        // Precompute opponent bounding boxes and velocities (filtered by elevation)
-        let opponent_obbs: Vec<(OrientedBox, Vec2)> = opponents
-            .iter()
-            .filter(|opp| (car_elev - opp.total_elevation()).abs() <= 2.0)
-            .map(|opp| (OrientedBox::from_body(opp), opp.velocity()))
-            .collect();
+        // Precompute opponent bounding boxes using reusable scratch buffer
+        let mut opponent_obbs = self.scratch_opponents.borrow_mut();
+        opponent_obbs.clear();
+        for opp in opponents {
+            if (car_elev - opp.total_elevation()).abs() <= 2.0 {
+                let obb = OrientedBox::from_body(opp);
+                let (sin_a, cos_a) = obb.angle.sin_cos();
+                let d = sensor_pos - obb.center;
+                let local_origin = Vec2::new(d.x * cos_a + d.y * sin_a, -d.x * sin_a + d.y * cos_a);
+                opponent_obbs.push(LidarPreparedOpponent {
+                    local_origin,
+                    half_extents: obb.half_extents,
+                    cos_a,
+                    sin_a,
+                    opp_vel: opp.velocity(),
+                });
+            }
+        }
 
         for i in 0..n {
             let angle_rel = if is_full_360 {
@@ -215,7 +256,8 @@ impl LidarScanner {
             };
 
             let ray_angle = car_heading + angle_rel;
-            let ray_dir = Vec2::new(ray_angle.cos(), ray_angle.sin());
+            let (sin, cos) = ray_angle.sin_cos();
+            let ray_dir = Vec2::new(cos, sin);
 
             out_hits[i] = self.cast_ray_candidates(
                 sensor_pos,
@@ -238,18 +280,34 @@ impl LidarScanner {
         track: &Track,
         opponents: &[(OrientedBox, Vec2)],
     ) -> LidarHit {
-        let walls: Vec<&crate::track::geometry::WallBarrier> = track
-            .geometry
-            .all_walls()
-            .filter(|w| w.is_physical())
-            .collect();
+        let mut walls = self.scratch_walls.borrow_mut();
+        walls.clear();
+        for w in track.geometry.all_walls() {
+            if w.is_physical() {
+                walls.push(*w);
+            }
+        }
+        let mut opps = self.scratch_opponents.borrow_mut();
+        opps.clear();
+        for (obb, vel) in opponents {
+            let (sin_a, cos_a) = obb.angle.sin_cos();
+            let d = origin - obb.center;
+            let local_origin = Vec2::new(d.x * cos_a + d.y * sin_a, -d.x * sin_a + d.y * cos_a);
+            opps.push(LidarPreparedOpponent {
+                local_origin,
+                half_extents: obb.half_extents,
+                cos_a,
+                sin_a,
+                opp_vel: *vel,
+            });
+        }
         self.cast_ray_candidates(
             origin,
             dir,
             host_velocity,
             &walls,
             &track.geometry.obstacles,
-            opponents,
+            &opps,
         )
     }
 
@@ -260,9 +318,9 @@ impl LidarScanner {
         origin: Vec2,
         dir: Vec2,
         host_velocity: Vec2,
-        candidate_walls: &[&crate::track::geometry::WallBarrier],
+        candidate_walls: &[crate::track::geometry::WallBarrier],
         obstacles: &[crate::track::geometry::Obstacle],
-        opponents: &[(OrientedBox, Vec2)],
+        opponents: &[LidarPreparedOpponent],
     ) -> LidarHit {
         let max_range = self.config.max_range;
         let mut closest_dist = max_range;
@@ -270,12 +328,16 @@ impl LidarScanner {
         let mut hit_type = LidarHitType::None;
         let mut relative_vel = Vec2::ZERO;
 
-        // 1. Ray vs Candidate Track Wall Barriers
+        let mut winning_wall: Option<&crate::track::geometry::WallBarrier> = None;
+        let mut winning_obs_normal: Option<Vec2> = None;
+        let mut winning_opp_normal: Option<Vec2> = None;
+
+        // 1. Ray vs Candidate Track Wall Barriers (fast distance test without normal computation)
         for wall in candidate_walls {
-            if let Some((dist, normal)) = wall.segment.intersect_ray(origin, dir, closest_dist) {
+            if let Some(dist) = wall.segment.intersect_ray_dist(origin, dir, closest_dist) {
                 if dist < closest_dist {
                     closest_dist = dist;
-                    hit_normal = normal;
+                    winning_wall = Some(wall);
                     hit_type = LidarHitType::TrackWall;
                     relative_vel = -host_velocity;
                 }
@@ -287,7 +349,9 @@ impl LidarScanner {
             if let Some((dist, normal)) = obs.intersect_ray(origin, dir, closest_dist) {
                 if dist < closest_dist {
                     closest_dist = dist;
-                    hit_normal = normal;
+                    winning_wall = None;
+                    winning_obs_normal = Some(normal);
+                    winning_opp_normal = None;
                     hit_type = LidarHitType::Obstacle;
                     relative_vel = -host_velocity;
                 }
@@ -295,15 +359,30 @@ impl LidarScanner {
         }
 
         // 3. Ray vs Dynamic Opponent Cars
-        for (opp_box, opp_vel) in opponents {
-            if let Some((dist, normal)) = intersect_ray_obb(origin, dir, opp_box, closest_dist) {
+        for opp in opponents {
+            if let Some((dist, normal)) = intersect_ray_prepared_obb(dir, opp, closest_dist) {
                 if dist < closest_dist {
                     closest_dist = dist;
-                    hit_normal = normal;
+                    winning_wall = None;
+                    winning_obs_normal = None;
+                    winning_opp_normal = Some(normal);
                     hit_type = LidarHitType::OpponentCar;
-                    relative_vel = *opp_vel - host_velocity;
+                    relative_vel = opp.opp_vel - host_velocity;
                 }
             }
+        }
+
+        // Compute surface normal only for the winning impact surface
+        if let Some(wall) = winning_wall {
+            let mut normal = wall.segment.normal();
+            if normal.dot(dir) > 0.0 {
+                normal = -normal;
+            }
+            hit_normal = normal;
+        } else if let Some(normal) = winning_obs_normal {
+            hit_normal = normal;
+        } else if let Some(normal) = winning_opp_normal {
+            hit_normal = normal;
         }
 
         let normalized_distance = (closest_dist / max_range).clamp(0.0, 1.0);
@@ -320,21 +399,28 @@ impl LidarScanner {
     }
 }
 
-/// Ray vs OBB intersection helper.
-#[inline]
-fn intersect_ray_obb(
-    origin: Vec2,
+/// Precomputed opponent bounding geometry in sensor-relative space (Spec 084).
+/// Hoists trigonometric angle resolution and origin translation outside per-ray loops.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct LidarPreparedOpponent {
+    pub local_origin: Vec2,
+    pub half_extents: Vec2,
+    pub cos_a: f32,
+    pub sin_a: f32,
+    pub opp_vel: Vec2,
+}
+
+/// Ray vs precomputed OBB intersection helper.
+#[inline(always)]
+fn intersect_ray_prepared_obb(
     dir: Vec2,
-    obb: &OrientedBox,
+    opp: &LidarPreparedOpponent,
     max_range: f32,
 ) -> Option<(f32, Vec2)> {
-    let d = origin - obb.center;
-    let cos_a = obb.angle.cos();
-    let sin_a = obb.angle.sin();
-
-    // Transform ray into OBB local coordinate frame
-    let local_origin = Vec2::new(d.x * cos_a + d.y * sin_a, -d.x * sin_a + d.y * cos_a);
-    let local_dir = Vec2::new(dir.x * cos_a + dir.y * sin_a, -dir.x * sin_a + dir.y * cos_a);
+    let local_dir = Vec2::new(
+        dir.x * opp.cos_a + dir.y * opp.sin_a,
+        -dir.x * opp.sin_a + dir.y * opp.cos_a,
+    );
 
     let mut t_min = 0.0f32;
     let mut t_max = max_range;
@@ -343,8 +429,8 @@ fn intersect_ray_obb(
     // X slab
     if local_dir.x.abs() > 1e-6 {
         let inv_d = 1.0 / local_dir.x;
-        let mut t1 = (-obb.half_extents.x - local_origin.x) * inv_d;
-        let mut t2 = (obb.half_extents.x - local_origin.x) * inv_d;
+        let mut t1 = (-opp.half_extents.x - opp.local_origin.x) * inv_d;
+        let mut t2 = (opp.half_extents.x - opp.local_origin.x) * inv_d;
         let mut n1 = Vec2::new(-1.0, 0.0);
         if t1 > t2 {
             std::mem::swap(&mut t1, &mut t2);
@@ -358,15 +444,15 @@ fn intersect_ray_obb(
         if t_min > t_max {
             return None;
         }
-    } else if local_origin.x.abs() > obb.half_extents.x {
+    } else if opp.local_origin.x.abs() > opp.half_extents.x {
         return None;
     }
 
     // Y slab
     if local_dir.y.abs() > 1e-6 {
         let inv_d = 1.0 / local_dir.y;
-        let mut t1 = (-obb.half_extents.y - local_origin.y) * inv_d;
-        let mut t2 = (obb.half_extents.y - local_origin.y) * inv_d;
+        let mut t1 = (-opp.half_extents.y - opp.local_origin.y) * inv_d;
+        let mut t2 = (opp.half_extents.y - opp.local_origin.y) * inv_d;
         let mut n1 = Vec2::new(0.0, -1.0);
         if t1 > t2 {
             std::mem::swap(&mut t1, &mut t2);
@@ -380,20 +466,19 @@ fn intersect_ray_obb(
         if t_min > t_max {
             return None;
         }
-    } else if local_origin.y.abs() > obb.half_extents.y {
+    } else if opp.local_origin.y.abs() > opp.half_extents.y {
         return None;
     }
 
-    if t_min <= max_range {
-        // Transform local normal to world normal
-        let world_normal = Vec2::new(
-            hit_norm_local.x * cos_a - hit_norm_local.y * sin_a,
-            hit_norm_local.x * sin_a + hit_norm_local.y * cos_a,
-        );
-        Some((t_min, world_normal))
-    } else {
-        None
+    if t_min <= 0.0 {
+        return None;
     }
+
+    let world_norm = Vec2::new(
+        hit_norm_local.x * opp.cos_a - hit_norm_local.y * opp.sin_a,
+        hit_norm_local.x * opp.sin_a + hit_norm_local.y * opp.cos_a,
+    );
+    Some((t_min, world_norm))
 }
 
 #[cfg(test)]

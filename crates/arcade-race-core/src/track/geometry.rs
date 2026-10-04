@@ -143,6 +143,48 @@ impl LineSegment {
         }
         Some((t1, normal))
     }
+
+    /// Tests intersection of a ray with this line segment, returning only the hit distance.
+    /// Avoids square roots and normal vector calculations for high-throughput ray sweeps (Spec 084).
+    #[inline(always)]
+    pub fn intersect_ray_dist(&self, origin: Vec2, dir: Vec2, max_range: f32) -> Option<f32> {
+        // Quick AABB rejection
+        let seg_min_x = self.start.x.min(self.end.x);
+        let seg_max_x = self.start.x.max(self.end.x);
+        let seg_min_y = self.start.y.min(self.end.y);
+        let seg_max_y = self.start.y.max(self.end.y);
+
+        let end_x = origin.x + dir.x * max_range;
+        let end_y = origin.y + dir.y * max_range;
+        let ray_min_x = origin.x.min(end_x);
+        let ray_max_x = origin.x.max(end_x);
+        let ray_min_y = origin.y.min(end_y);
+        let ray_max_y = origin.y.max(end_y);
+
+        if ray_max_x < seg_min_x || ray_min_x > seg_max_x || ray_max_y < seg_min_y || ray_min_y > seg_max_y {
+            return None;
+        }
+
+        let v1 = origin - self.start;
+        let v2 = self.end - self.start;
+        let dot = v2.y * dir.x - v2.x * dir.y;
+        if dot.abs() < 1e-6 {
+            return None; // Parallel
+        }
+
+        let inv_dot = 1.0 / dot;
+        let t1 = (v2.x * v1.y - v2.y * v1.x) * inv_dot;
+        if t1 < 0.0 || t1 > max_range {
+            return None;
+        }
+
+        let t2 = (v1.y * dir.x - v1.x * dir.y) * inv_dot;
+        if !(0.0..=1.0).contains(&t2) {
+            return None;
+        }
+
+        Some(t1)
+    }
 }
 
 /// Physical classification of track barriers and walls.
