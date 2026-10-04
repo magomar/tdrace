@@ -143,6 +143,48 @@ impl LineSegment {
         }
         Some((t1, normal))
     }
+
+    /// Tests intersection of a ray with this line segment, returning only the hit distance.
+    /// Avoids square roots and normal vector calculations for high-throughput ray sweeps (Spec 084).
+    #[inline(always)]
+    pub fn intersect_ray_dist(&self, origin: Vec2, dir: Vec2, max_range: f32) -> Option<f32> {
+        // Quick AABB rejection
+        let seg_min_x = self.start.x.min(self.end.x);
+        let seg_max_x = self.start.x.max(self.end.x);
+        let seg_min_y = self.start.y.min(self.end.y);
+        let seg_max_y = self.start.y.max(self.end.y);
+
+        let end_x = origin.x + dir.x * max_range;
+        let end_y = origin.y + dir.y * max_range;
+        let ray_min_x = origin.x.min(end_x);
+        let ray_max_x = origin.x.max(end_x);
+        let ray_min_y = origin.y.min(end_y);
+        let ray_max_y = origin.y.max(end_y);
+
+        if ray_max_x < seg_min_x || ray_min_x > seg_max_x || ray_max_y < seg_min_y || ray_min_y > seg_max_y {
+            return None;
+        }
+
+        let v1 = origin - self.start;
+        let v2 = self.end - self.start;
+        let dot = v2.y * dir.x - v2.x * dir.y;
+        if dot.abs() < 1e-6 {
+            return None; // Parallel
+        }
+
+        let inv_dot = 1.0 / dot;
+        let t1 = (v2.x * v1.y - v2.y * v1.x) * inv_dot;
+        if t1 < 0.0 || t1 > max_range {
+            return None;
+        }
+
+        let t2 = (v1.y * dir.x - v1.x * dir.y) * inv_dot;
+        if !(0.0..=1.0).contains(&t2) {
+            return None;
+        }
+
+        Some(t1)
+    }
 }
 
 /// Physical classification of track barriers and walls.
@@ -1012,6 +1054,8 @@ pub struct TrackGeometry {
     pub rocks: Vec<Rock>,
     #[serde(default)]
     pub buildings: Vec<Building>,
+    #[serde(default, skip_serializing)]
+    pub scenery_obstacles: Vec<Obstacle>,
 }
 
 impl TrackGeometry {
@@ -1024,8 +1068,8 @@ impl TrackGeometry {
         self.inner_walls.iter().chain(self.outer_walls.iter())
     }
 
-    /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.
-    pub fn all_obstacles_with_scenery(&self) -> Vec<Obstacle> {
+    /// Recomputes and caches aggregated static and scenery obstacles (tree trunks, grandstands, rocks, buildings) (Spec 084).
+    pub fn recompute_scenery_obstacles(&mut self) {
         let mut obs = self.obstacles.clone();
         for tree in &self.trees {
             if tree.has_trunk() {
@@ -1041,7 +1085,17 @@ impl TrackGeometry {
         for building in &self.buildings {
             obs.push(building.to_obstacle());
         }
-        obs
+        self.scenery_obstacles = obs;
+    }
+
+    /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.
+    /// Returns a borrowed slice with zero heap allocations (Spec 084).
+    pub fn all_obstacles_with_scenery(&self) -> &[Obstacle] {
+        if !self.scenery_obstacles.is_empty() {
+            &self.scenery_obstacles
+        } else {
+            &self.obstacles
+        }
     }
 }
 

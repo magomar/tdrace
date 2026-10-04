@@ -1074,7 +1074,11 @@ impl Track {
         track.apply_default_runoff_surfaces();
         if track.network.is_some() {
             track.trim_walls_for_network();
+            if let Some(ref mut net) = track.network {
+                net.recompute_composite_splines();
+            }
         }
+        track.geometry.recompute_scenery_obstacles();
         Ok(track)
     }
 
@@ -1136,8 +1140,12 @@ impl Track {
             }
             if self.network.is_some() {
                 self.trim_walls_for_network();
+                if let Some(ref mut net) = self.network {
+                    net.recompute_composite_splines();
+                }
             }
             self.apply_default_runoff_surfaces();
+            self.geometry.recompute_scenery_obstacles();
         }
     }
 
@@ -1585,6 +1593,7 @@ mod tests {
         track.geometry.trees.clear();
         track.geometry.grandstands.push(stand.clone());
         track.geometry.trees.push(tree.clone());
+        track.geometry.recompute_scenery_obstacles();
 
         // Grandstand footprint must sample as SurfaceType::Concrete
         assert_eq!(track.sample_surface(Vec2::new(0.0, 50.0)), SurfaceType::Concrete);

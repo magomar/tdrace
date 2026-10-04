@@ -10,7 +10,7 @@ pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
 pub use rng::LcgRng;
 
 use arcade_race_core::Body2D;
-use arcade_race_core::track::{Track, TrackSpline};
+use arcade_race_core::track::{LineSegment, Track, TrackSpline};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use wheelbase::{normalize_angle, Car, CarControls};
@@ -536,6 +536,8 @@ pub struct BotAiDriver {
     pub human: HumanDriver,
     /// Whether this bot is actively executing a pit stop entry or pit road traverse.
     pub is_pitting: bool,
+    /// Whether the bot is physically inside and navigating the pit lane (Spec 084).
+    pub is_in_pit_lane: bool,
     /// Whether the bot has stopped in its stall and received fresh tires/repairs.
     pub pit_serviced: bool,
     /// Active route strategy for multi-branch track navigation.
@@ -584,6 +586,7 @@ impl BotAiDriver {
             last_pos: None,
             total_distance_travelled: 0.0,
             is_pitting: false,
+            is_in_pit_lane: false,
             pit_serviced: false,
             route_strategy: BotRouteStrategy::default(),
             active_layout_id: None,
@@ -597,6 +600,11 @@ impl BotAiDriver {
             pit_cooldown: 0.0,
             stall_stop_timer: 0.0,
         }
+    }
+
+    pub fn with_in_pit_lane(mut self, in_pit: bool) -> Self {
+        self.is_in_pit_lane = in_pit;
+        self
     }
 
     pub fn with_route_strategy(mut self, strategy: BotRouteStrategy) -> Self {
@@ -681,7 +689,16 @@ impl BotAiDriver {
 
                 for layout in &network.layouts {
                     let mut traffic_count = 0;
-                    if let Some(comp_spline) = network.build_composite_spline_for_layout(&layout.id) {
+                    let fallback;
+                    let comp_spline = match network.composite_spline_for_layout(&layout.id) {
+                        Some(s) => Some(s),
+                        None => {
+                            fallback = network.build_composite_spline_for_layout(&layout.id);
+                            fallback.as_ref()
+                        }
+                    };
+
+                    if let Some(comp_spline) = comp_spline {
                         for opp in other_cars {
                             let proj = comp_spline.project_point(opp.position());
                             if proj.is_on_track && proj.distance_to_spline < 8.0 {
@@ -727,14 +744,18 @@ impl BotAiDriver {
         other_cars: &[&V],
         dt: f32,
     ) -> CarControls {
-        // 0. Resolve active layout and composite spline caching
+        // 0. Resolve active layout and composite spline caching (Spec 084)
         let active_layout_opt = self.decide_active_layout(track, other_cars);
         if let Some(ref target_layout) = active_layout_opt {
             if self.cached_layout_id.as_deref() != Some(target_layout.as_str())
                 || self.cached_layout_spline.is_none()
             {
                 if let Some(network) = &track.network {
-                    if let Some(composite) = network.build_composite_spline_for_layout(target_layout) {
+                    let composite = network
+                        .composite_spline_for_layout(target_layout)
+                        .cloned()
+                        .or_else(|| network.build_composite_spline_for_layout(target_layout));
+                    if let Some(composite) = composite {
                         self.cached_layout_spline = Some(composite);
                         self.cached_layout_id = Some(target_layout.clone());
                         self.active_layout_id = Some(target_layout.clone());
@@ -813,37 +834,59 @@ impl BotAiDriver {
 
         let target_sample = spline.sample_at_distance(target_dist);
         let mut target_point = target_sample.point;
-        if self.human.is_active() {
-            target_point += target_sample.normal * self.human.line_offset(spline, target_dist, target_sample.width, dt);
-        }
+        let mut human_offset = if self.human.is_active() {
+            self.human.line_offset(spline, target_dist, target_sample.width, dt)
+        } else {
+            0.0
+        };
 
-        // Pit lane navigation and strategy (Spec 062/077)
-        let mut in_pit_lane = false;
+        // Pit lane navigation and strategy (Spec 062/077/084)
         if let Some(lane) = &track.pit_lane {
             if lane.spline.total_length() > 1.0 {
                 let entry_center = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
                 let entry_proj = spline.project_point(entry_center);
                 let dist_to_pit_entry_along_track = (entry_proj.progress_distance - curr_dist).rem_euclid(spline.total_length());
 
-                // Divergence throat avoidance for cars not pitting: keep them away from the pit entrance gore
+                // Divergence throat avoidance for cars not pitting: keep them away from the pit entrance gore (Spec 084)
                 let pit_side = (entry_center - entry_proj.closest_point).dot(entry_proj.normal).signum();
-                if !self.is_pitting && dist_to_pit_entry_along_track < 80.0 {
-                    let bias = (1.0 - (dist_to_pit_entry_along_track / 80.0)).clamp(0.0, 1.0);
-                    target_point -= target_sample.normal * (pit_side * bias * 1.5);
+                if !self.is_pitting && !self.is_in_pit_lane && dist_to_pit_entry_along_track < 100.0 {
+                    let bias = (1.0 - (dist_to_pit_entry_along_track / 100.0)).clamp(0.0, 1.0);
+                    // Dampen human line wandering toward the pit throat gore
+                    if human_offset * pit_side > 0.0 {
+                        human_offset *= 1.0 - bias;
+                    }
+                    // Enforce at least 3.0m of lateral repulsion away from the pit entrance gore
+                    target_point -= target_sample.normal * (pit_side * bias * 3.5);
                 }
 
                 // Gated pit entry decision: Only enter if current_lap > 1, cooldown expired, should_pit is true, and near entry
-                if self.current_lap > 1 && self.pit_cooldown <= 0.0 && self.should_pit(car) && dist_to_pit_entry_along_track < 100.0 {
+                if !self.is_pitting && !self.is_in_pit_lane
+                    && self.current_lap > 1
+                    && self.pit_cooldown <= 0.0
+                    && self.should_pit(car)
+                    && dist_to_pit_entry_along_track < 100.0
+                {
                     self.is_pitting = true;
                 }
 
                 let pit_proj = lane.spline.project_point(car_pos);
-                // Tight pit ribbon distance threshold prevents false positives on parallel main straights
                 let is_on_pit_ribbon = pit_proj.distance_to_spline < (lane.road_width * 0.5 + 0.8);
 
-                // Any car physically on the pit road ribbon follows the pit spline out to avoid ramming the dividing wall
-                if is_on_pit_ribbon {
-                    in_pit_lane = true;
+                // Entry gate transition: mark is_in_pit_lane = true upon crossing entry_gate or entering pit ribbon while pitting (Spec 084)
+                let entered_gate = if let Some(last_p) = self.last_pos {
+                    let seg = LineSegment::new(last_p, car_pos);
+                    lane.entry_gate.intersect_segment(&seg).is_some()
+                } else {
+                    is_on_pit_ribbon
+                };
+
+                if self.is_pitting && !self.is_in_pit_lane {
+                    if entered_gate || (is_on_pit_ribbon && !proj.is_on_track) || (self.last_pos.is_none() && is_on_pit_ribbon) {
+                        self.is_in_pit_lane = true;
+                    }
+                }
+
+                if self.is_in_pit_lane {
                     let pit_target_dist = (pit_proj.progress_distance + lookahead_dist).min(lane.spline.total_length());
                     let mut pit_target = lane.spline.sample_at_distance(pit_target_dist).point;
 
@@ -867,7 +910,15 @@ impl BotAiDriver {
 
                     target_point = pit_target;
 
-                    if pit_proj.progress_distance >= lane.spline.total_length() - 5.0 {
+                    let exited_gate = if let Some(last_p) = self.last_pos {
+                        let seg = LineSegment::new(last_p, car_pos);
+                        lane.exit_gate.intersect_segment(&seg).is_some()
+                    } else {
+                        false
+                    };
+
+                    if exited_gate || pit_proj.progress_distance >= lane.spline.total_length() - 5.0 {
+                        self.is_in_pit_lane = false;
                         self.is_pitting = false;
                         self.pit_serviced = false;
                         self.stall_stop_timer = 0.0;
@@ -875,12 +926,16 @@ impl BotAiDriver {
                     }
                 } else if self.is_pitting && dist_to_pit_entry_along_track < 100.0 {
                     let blend = (1.0 - (dist_to_pit_entry_along_track / 100.0)).clamp(0.0, 1.0);
-                    target_point = target_point.lerp(entry_center, blend * 0.85);
+                    target_point = target_point.lerp(entry_center, blend * 0.95);
                 }
             }
         }
 
-        if !in_pit_lane {
+        if !self.is_in_pit_lane {
+            target_point += target_sample.normal * human_offset;
+        }
+
+        if !self.is_in_pit_lane {
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
             // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
@@ -1035,9 +1090,9 @@ impl BotAiDriver {
 
         target_speed = target_speed.clamp(7.0, car.top_speed_mps());
 
-        // Pit lane speed governing and pit box stopping (Spec 062/077)
+        // Pit lane speed governing and pit box stopping (Spec 062/077/084)
         if let Some(lane) = &track.pit_lane {
-            if in_pit_lane {
+            if self.is_in_pit_lane {
                 target_speed = target_speed.min(lane.speed_limit);
                 if self.is_pitting && !self.pit_serviced && !lane.pit_boxes.is_empty() {
                     let num_boxes = lane.pit_boxes.len();
@@ -1175,7 +1230,7 @@ impl BotAiDriver {
 
         // 6. Longitudinal Throttle & Brake Management
         let speed_err = target_speed - car_speed;
-        let (throttle_cmd, brake_cmd) = if in_pit_lane && target_speed <= 0.1 {
+        let (throttle_cmd, brake_cmd) = if self.is_in_pit_lane && target_speed <= 0.1 {
             (0.0, 1.0)
         } else if extra_brake > 0.2 {
             (0.0, extra_brake)

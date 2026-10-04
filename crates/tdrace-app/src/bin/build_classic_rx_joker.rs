@@ -185,6 +185,7 @@ fn build_quarry_sprint() {
         segments: vec![seg0, seg1, seg2, seg3],
         layouts: vec![layout_main, layout_joker],
         default_layout_id: "main".to_string(),
+        ..Default::default()
     };
 
     network.validate().expect("rx_quarry_sprint TrackNetwork validation failed");
@@ -367,6 +368,7 @@ fn build_hilltop_leap() {
         segments: vec![seg0, seg1, seg2, seg3],
         layouts: vec![layout_main, layout_joker],
         default_layout_id: "main".to_string(),
+        ..Default::default()
     };
 
     network.validate().expect("rx_hilltop_leap TrackNetwork validation failed");
@@ -545,6 +547,7 @@ fn build_canyon_flyer() {
         segments: vec![seg0, seg1, seg2, seg3],
         layouts: vec![layout_main, layout_joker],
         default_layout_id: "main".to_string(),
+        ..Default::default()
     };
 
     network.validate().expect("rx_canyon_flyer TrackNetwork validation failed");

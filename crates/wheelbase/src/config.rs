@@ -207,6 +207,17 @@ impl TireConfig {
     pub fn peak_slip_angle(&self) -> f32 {
         self.peak_slip_angle_deg.to_radians()
     }
+
+    /// Peak lateral slip angle tangent (Spec 084).
+    /// Uses precomputed constant for default 10.5 deg to eliminate runtime tan() overhead.
+    #[inline]
+    pub fn peak_slip_angle_tan(&self) -> f32 {
+        if (self.peak_slip_angle_deg - Self::DEFAULT_PEAK_SLIP_ANGLE_DEG).abs() < 1e-4 {
+            0.18533965
+        } else {
+            self.peak_slip_angle_deg.to_radians().tan()
+        }
+    }
 }
 
 impl Default for TireConfig {

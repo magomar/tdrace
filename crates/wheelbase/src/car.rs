@@ -11,7 +11,8 @@ use std::f32::consts::PI;
 use super::config::{CarConfig, DifferentialType, EnginePlacement, SuspensionArchetype};
 use super::surface::{CompoundId, SurfaceSampler, SurfaceType};
 use super::tire::{
-    combined_slip_forces, compute_skid_telemetry, WheelAssembly, WheelId, WheelTelemetry,
+    combined_slip_forces, combined_slip_fx, compute_skid_telemetry, WheelAssembly, WheelId,
+    WheelTelemetry,
 };
 
 /// Helper returning default wheel assemblies state for CarState deserialization.
@@ -40,6 +41,18 @@ const TH_WIDTH: f32 = 0.20;
 const TH_CORNERING_ACCEL: f32 = 4.0;
 /// Steering input at which traction help acts fully.
 const TH_CORNERING_STEER: f32 = 0.25;
+
+/// Fast tanh approximation with saturation clipping past |x| >= 4.0 (Spec 084).
+#[inline]
+fn fast_tanh_clip(x: f32) -> f32 {
+    if x >= 4.0 {
+        1.0
+    } else if x <= -4.0 {
+        -1.0
+    } else {
+        x.tanh()
+    }
+}
 
 /// Normalizes an angle in radians to (-PI, PI].
 #[inline]
@@ -702,13 +715,15 @@ impl Car {
     /// Returns the current forward unit vector in world space.
     #[inline]
     pub fn forward_vector(&self) -> Vec2 {
-        Vec2::new(self.state.angle.cos(), self.state.angle.sin())
+        let (sin, cos) = self.state.angle.sin_cos();
+        Vec2::new(cos, sin)
     }
 
     /// Returns the current right unit vector in world space.
     #[inline]
     pub fn right_vector(&self) -> Vec2 {
-        Vec2::new(self.state.angle.sin(), -self.state.angle.cos())
+        let (sin, cos) = self.state.angle.sin_cos();
+        Vec2::new(sin, -cos)
     }
 
     /// Current speed in km/h.
@@ -839,7 +854,7 @@ impl Car {
         let grip_limit = kinematic + slip_share.max(0.0) * tire.peak_slip_angle();
         let grip_limit = grip_limit.clamp(0.0, lock);
 
-        if self.config.caster_jacking_factor > 0.0 {
+        if self.config.caster_jacking_factor > 0.0 || speed <= 14.0 || speed >= 18.0 {
             return grip_limit.clamp(0.0, lock);
         }
 
@@ -1025,8 +1040,9 @@ fn couple_axle(
 
         let clamped_ctrl = controls.clamped();
         self.state.is_braking = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
-        let fwd = self.forward_vector();
-        let right = self.right_vector();
+        let (body_sin, body_cos) = self.state.angle.sin_cos();
+        let fwd = Vec2::new(body_cos, body_sin);
+        let right = Vec2::new(body_sin, -body_cos);
 
         // Decompose velocity into vehicle chassis frame
         let v_long = self.state.velocity.dot(fwd);
@@ -1079,7 +1095,9 @@ fn couple_axle(
         } else {
             0.0
         };
-        let mut target_steer = if self.config.player.grip_aware_steering {
+        let mut target_steer = if clamped_ctrl.steer.abs() < 1e-4 {
+            0.0
+        } else if self.config.player.grip_aware_steering {
             let authority = (self.steer_authority(self.state.speed, front_mu)
                 + counter_headroom
                 + flick_headroom)
@@ -1169,7 +1187,7 @@ fn couple_axle(
         let bank_deg = self.state.road_bank_angle;
         let bank_rad = bank_deg.to_radians();
         let (bank_sin, bank_cos) = if bank_deg.abs() > 1e-4 {
-            (bank_rad.sin(), bank_rad.cos())
+            bank_rad.sin_cos()
         } else {
             (0.0, 1.0)
         };
@@ -1177,7 +1195,7 @@ fn couple_axle(
         // Longitudinal grade slope & vertical curvature (crest unloading / dip compression)
         let grade_rad = self.state.road_grade_slope;
         let (grade_sin, grade_cos) = if grade_rad.abs() > 1e-4 {
-            (grade_rad.sin(), grade_rad.cos())
+            grade_rad.sin_cos()
         } else {
             (0.0, 1.0)
         };
@@ -1353,6 +1371,8 @@ fn couple_axle(
 
         let phi = self.state.roll_angle;
         let theta = self.state.pitch_angle;
+        let sin_phi = phi.sin();
+        let sin_theta = theta.sin();
 
         let mut strokes = [0.0f32; 4];
         let mut stroke_vels = [0.0f32; 4];
@@ -1361,6 +1381,11 @@ fn couple_axle(
         let mut damper_forces = [0.0f32; 4];
         let mut dynamic_cambers = [0.0f32; 4];
         let mut mu_cambers = [1.0f32; 4];
+
+        let corner_mass_f = static_front_load * 0.5 / g;
+        let corner_mass_r = static_rear_load * 0.5 / g;
+        let sqrt_k_m_f = (susp.front.spring_rate * corner_mass_f.max(1.0)).sqrt();
+        let sqrt_k_m_r = (susp.rear.spring_rate * corner_mass_r.max(1.0)).sqrt();
 
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
@@ -1373,7 +1398,7 @@ fn couple_axle(
             let yi = if wheel_id.is_left() { -half_w } else { half_w };
 
             // Vertical chassis corner displacement (positive theta = braking dive, positive phi = left roll)
-            let z_chassis = -xi * theta.sin() + yi * phi.sin();
+            let z_chassis = -xi * sin_theta + yi * sin_phi;
 
             // Track elevation profile under wheel
             let mut z_track = self.state.wheel_elevations[i];
@@ -1382,14 +1407,14 @@ fn couple_axle(
             }
 
             // Landing compression from aerial drop touchdown
-            let corner_mass = if wheel_id.is_front() {
-                static_front_load * 0.5 / g
+            let (corner_mass, sqrt_k_m) = if wheel_id.is_front() {
+                (corner_mass_f, sqrt_k_m_f)
             } else {
-                static_rear_load * 0.5 / g
+                (corner_mass_r, sqrt_k_m_r)
             };
             let h_susp = self.state.suspension_health[i];
             let z_landing = if touchdown_vz > 0.0 {
-                let omega_n = (corner.spring_rate / corner_mass.max(1.0)).sqrt();
+                let omega_n = sqrt_k_m / corner_mass.max(1.0);
                 let zeta = corner.bump_damping_ratio * h_susp;
                 if h_susp <= 0.05 {
                     corner.max_bump_travel
@@ -1429,9 +1454,9 @@ fn couple_axle(
                 h_susp / 0.85
             };
             let c_damping = if s_dot >= 0.0 {
-                2.0 * corner.bump_damping_ratio * eff_h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.bump_damping_ratio * eff_h_susp * sqrt_k_m
             } else {
-                2.0 * corner.rebound_damping_ratio * eff_h_susp * (corner.spring_rate * corner_mass.max(1.0)).sqrt()
+                2.0 * corner.rebound_damping_ratio * eff_h_susp * sqrt_k_m
             };
             damper_forces[i] = c_damping * s_dot;
 
@@ -1677,7 +1702,7 @@ fn couple_axle(
             -self.config.engine_braking_coefficient
                 * generic_motor_brake_boost
                 * total_weight
-                * (v_long / 1.5).tanh()
+                * fast_tanh_clip(v_long / 1.5)
                 * engine_brake_multiplier
         } else {
             0.0
@@ -1687,7 +1712,7 @@ fn couple_axle(
         // Soft, progressive response at light-to-medium pedal travel for delicate trail-braking and apex adjustments,
         // smoothly ramping up to maximum deceleration on full brake application.
         let raw_brake = clamped_ctrl.brake;
-        let progressive_brake = raw_brake.powf(1.4);
+        let progressive_brake = if raw_brake > 0.0 { raw_brake.powf(1.4) } else { 0.0 };
         let total_brake_force = progressive_brake * self.config.max_brake_force;
         let mut abs_active = false;
 
@@ -1729,9 +1754,13 @@ fn couple_axle(
             let wheel_v_world = self.state.velocity + v_rot;
 
             // Wheel orientation
-            let wheel_angle_world = self.state.angle + wheel_steer_angles[i];
-            let wheel_fwd = Vec2::new(wheel_angle_world.cos(), wheel_angle_world.sin());
-            let wheel_right = Vec2::new(wheel_angle_world.sin(), -wheel_angle_world.cos());
+            let (wheel_fwd, wheel_right) = if i < 2 {
+                let wheel_angle_world = self.state.angle + wheel_steer_angles[i];
+                let (w_sin, w_cos) = wheel_angle_world.sin_cos();
+                (Vec2::new(w_cos, w_sin), Vec2::new(w_sin, -w_cos))
+            } else {
+                (fwd, right)
+            };
 
             let w_v_long = wheel_v_world.dot(wheel_fwd);
             let w_v_lat = wheel_v_world.dot(wheel_right);
@@ -1748,7 +1777,7 @@ fn couple_axle(
             wheel_rights[i] = wheel_right;
             wheel_v_longs[i] = w_v_long;
             // Slip angle: angle between wheel direction and velocity vector
-            slip_angles[i] = -w_v_lat.atan2(w_v_long.abs().max(2.5));
+            slip_angles[i] = (-w_v_lat / w_v_long.abs().max(2.5)).atan();
             envelopes[i] = self.state.wheel_assemblies[i].friction_envelope(
                 normal_loads[i],
                 nominal_fz,
@@ -1769,7 +1798,11 @@ fn couple_axle(
 
         // Pass B: drive / brake torques and implicit wheel spin, axle by axle
         // Cornering Brake Control (CBC): trim inside rear brake pressure under oversteering yaw divergence
-        let kinematic_yaw_rate = (v_long / self.config.wheelbase) * self.state.steer_angle.tan();
+        let kinematic_yaw_rate = if self.state.steer_angle.abs() > 1e-4 {
+            (v_long / self.config.wheelbase) * self.state.steer_angle.tan()
+        } else {
+            0.0
+        };
         let yaw_divergence = omega - kinematic_yaw_rate;
         let is_oversteering_under_brake = (omega.signum() == kinematic_yaw_rate.signum()
             && omega.abs() > (kinematic_yaw_rate.abs() + 0.08))
@@ -1844,13 +1877,12 @@ fn couple_axle(
                 let caps = [0, 1].map(|k| {
                     let j = pair[k];
                     let a = &self.state.wheel_assemblies[j];
-                    (combined_slip_forces(
+                    (combined_slip_fx(
                         tcs_targets[k],
                         slip_angles[j],
                         envelopes[j],
                         &a.config.tire_model,
-                    )
-                    .0 * drive_dir)
+                    ) * drive_dir)
                         .max(0.0)
                         * a.config.tire_radius
                 });
@@ -1876,6 +1908,25 @@ fn couple_axle(
                 }
             }
 
+            // ABS rear select-low precomputation (Spec 084): both rear brakes are capped to what the
+            // lower-grip rear tire can take at its slip target, evaluated once per axle using combined_slip_fx.
+            let rear_abs_cap = if self.config.assists.abs_enabled && !is_front_axle {
+                let cap_for = |j: usize| {
+                    let a = &self.state.wheel_assemblies[j];
+                    let target = a.config.tire_model.peak_slip_ratio * abs_target_scale * 0.6;
+                    combined_slip_fx(
+                        -target,
+                        slip_angles[j],
+                        envelopes[j],
+                        &a.config.tire_model,
+                    )
+                    .abs()
+                };
+                Some(cap_for(2).min(cap_for(3)))
+            } else {
+                None
+            };
+
             let mut effective_inertias = [0.0f32; 2];
             for (k, &i) in pair.iter().enumerate() {
                 let wheel_id = WheelId::ALL[i];
@@ -1898,26 +1949,14 @@ fn couple_axle(
                     if is_inside_rear {
                         let cbc_cut =
                             (yaw_divergence.abs() * 1.5 * self.config.assists.abs_strength)
-                                .clamp(0.0, 0.45);
+                                 .clamp(0.0, 0.45);
                         wheel_brake_force *= 1.0 - cbc_cut;
                     }
                 }
-                // ABS rear select-low: both rear brakes are capped to what the lower-grip rear tire can
-                // take at its slip target, so split-mu braking cannot build a rear yaw moment.
-                if self.config.assists.abs_enabled && !is_front_axle && w_v_long.abs() > 0.5 {
-                    let rear_cap = |j: usize| {
-                        let a = &self.state.wheel_assemblies[j];
-                        let target = a.config.tire_model.peak_slip_ratio * abs_target_scale * 0.6;
-                        combined_slip_forces(
-                            -target,
-                            slip_angles[j],
-                            envelopes[j],
-                            &a.config.tire_model,
-                        )
-                        .0
-                        .abs()
-                    };
-                    wheel_brake_force = wheel_brake_force.min(rear_cap(2).min(rear_cap(3)));
+                if let Some(cap) = rear_abs_cap {
+                    if w_v_long.abs() > 0.5 {
+                        wheel_brake_force = wheel_brake_force.min(cap);
+                    }
                 }
                 let is_handbraking_wheel = clamped_ctrl.handbrake && wheel_id.is_rear();
                 if is_handbraking_wheel {
@@ -1925,18 +1964,20 @@ fn couple_axle(
                 }
                 let brake_torque = wheel_brake_force * r;
 
-                effective_inertias[k] = self.state.wheel_assemblies[i].effective_inertia(
+                let eff_inertia = self.state.wheel_assemblies[i].effective_inertia(
                     w_v_long,
                     slip_angles[i],
                     envelopes[i],
                     dt,
                 );
-                self.state.wheel_assemblies[i].step_implicit(
+                effective_inertias[k] = eff_inertia;
+                self.state.wheel_assemblies[i].step_implicit_with_inertia(
                     0.5 * axle_torque,
                     brake_torque,
                     w_v_long,
                     slip_angles[i],
                     envelopes[i],
+                    eff_inertia,
                     dt,
                 );
 
@@ -2068,7 +2109,7 @@ fn couple_axle(
                 base_rr_mult
             };
             let rr_coeff = self.config.rolling_resistance_coefficient * effective_rr_mult;
-            let rr_force = -rr_coeff * fz * (w_v_long / 0.5).tanh();
+            let rr_force = -rr_coeff * fz * fast_tanh_clip(w_v_long / 0.5);
 
             // Low-speed lateral stabilization: below ~3.0 m/s the explicit chassis integration of
             // tire yaw damping violates its stability limit, so lateral force fades out.
@@ -2187,8 +2228,6 @@ fn couple_axle(
             && v_long.abs() > 0.5
             && !(self.config.assists.handbrake_bypass && clamped_ctrl.handbrake)
         {
-            let wheelbase = self.config.wheelbase;
-            let kinematic_yaw_rate = (v_long / wheelbase) * self.state.steer_angle.tan();
             // Max physical yaw rate governed by tire grip and aerodynamic downforce
             let downforce_load = self.config.downforce_coefficient * v_long * v_long;
             let effective_g = g + (downforce_load / self.config.mass.max(1.0));
@@ -2336,32 +2375,33 @@ fn couple_axle(
         // Low speed resting lock to prevent micro-jitter when stopped on flat ground or when holding brakes.
         // A slope is only "too steep" to remain static if the incline angle exceeds the static friction limit:
         // tan(theta) > mu for lateral banking, or grade exceeds rolling/braking limits.
-        let on_steep_bank = bank_rad.abs().tan() > avg_surface_mu;
-        let on_steep_grade = if is_holding_brakes {
-            grade_rad.abs().tan() > avg_surface_mu
-        } else {
-            grade_rad.abs() > 0.02
-        };
-        let on_steep_slope = on_steep_bank || on_steep_grade;
-        let drive_force_mag = if clamped_ctrl.reverse {
-            clamped_ctrl.throttle * self.config.max_reverse_force
-        } else {
-            clamped_ctrl.throttle * self.config.max_engine_force
-        };
-        let brake_holding_mag = clamped_ctrl.brake * self.config.max_brake_force
-            + if clamped_ctrl.handbrake {
-                self.config.handbrake_force
+        if self.state.speed < 0.08 {
+            let on_steep_bank = bank_rad.abs().tan() > avg_surface_mu;
+            let on_steep_grade = if is_holding_brakes {
+                grade_rad.abs().tan() > avg_surface_mu
             } else {
-                0.0
+                grade_rad.abs() > 0.02
             };
-        let brakes_overpower_engine = is_holding_brakes && brake_holding_mag >= drive_force_mag;
+            let on_steep_slope = on_steep_bank || on_steep_grade;
+            let drive_force_mag = if clamped_ctrl.reverse {
+                clamped_ctrl.throttle * self.config.max_reverse_force
+            } else {
+                clamped_ctrl.throttle * self.config.max_engine_force
+            };
+            let brake_holding_mag = clamped_ctrl.brake * self.config.max_brake_force
+                + if clamped_ctrl.handbrake {
+                    self.config.handbrake_force
+                } else {
+                    0.0
+                };
+            let brakes_overpower_engine = is_holding_brakes && brake_holding_mag >= drive_force_mag;
 
-        if self.state.speed < 0.08
-            && (clamped_ctrl.throttle < 1e-3 || brakes_overpower_engine)
-            && (is_holding_brakes || !on_steep_slope)
-        {
-            self.state.velocity = Vec2::ZERO;
-            self.state.angular_velocity = 0.0;
+            if (clamped_ctrl.throttle < 1e-3 || brakes_overpower_engine)
+                && (is_holding_brakes || !on_steep_slope)
+            {
+                self.state.velocity = Vec2::ZERO;
+                self.state.angular_velocity = 0.0;
+            }
         }
 
         self.state.position += self.state.velocity * dt;

@@ -74,6 +74,7 @@ fn create_test_branching_network() -> (TrackNetwork, Vec<Checkpoint>) {
         segments: vec![seg0, seg1, seg2, seg3],
         layouts: vec![layout_main, layout_joker],
         default_layout_id: "main".to_string(),
+        ..Default::default()
     };
 
     let checkpoints = vec![

@@ -110,6 +110,7 @@ Living list of security audits, performance profiling targets, or general worksp
 - **Performance**: Simulation throughput benchmarks ($\ge 4.0\text{M steps/sec}$) and collision checks ($\ge 22.0\text{M checks/sec}$).
 - **Hygiene**: Spec-Driven Development alignment via `keel doctor` and `keel validate`.
 - `[x]` **[Vault Module for Archived and Deprecated Content](../057_vault_module_for_archived_and_deprecated_content.md)**: Structured cold-storage repository for retired circuits, novelty vehicles, prototype rulesets, and deprecated mechanics, isolated from production gameplay and accessible via Dev Mode and Track Studio.
+- `[ ]` **[High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation](../084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md)**: Resolves simulation, raycasting, and rallycross rendering bottlenecks, bringing wheelbase physics above 1.5M steps/s floor, LIDAR above 14M rays/s floor, Höljes RX frame times from 15.3ms down to <5.0ms, and equips bot AI with robust pit lane recognition and tactical entry gating.
 
 ---
 

@@ -22,6 +22,20 @@ fn is_key_pressed(k: KeyCode) -> bool {
         }
     }
 }
+
+#[inline]
+pub fn is_key_down(k: KeyCode) -> bool {
+    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+        return false;
+    }
+    match std::panic::catch_unwind(|| macroquad::input::is_key_down(k)) {
+        Ok(v) => v,
+        Err(_) => {
+            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
+            false
+        }
+    }
+}
 use macroquad::shapes::{draw_circle, draw_line, draw_rectangle, draw_rectangle_lines};
 use macroquad::text::draw_text;
 use tdrace_core::collision::sat::OrientedBox;
@@ -293,13 +307,13 @@ impl InputController {
         let mut raw_throttle = 0.0f32;
         let mut raw_brake = 0.0f32;
 
-        let left_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Left)).unwrap_or(false);
-        let right_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Right)).unwrap_or(false);
-        let up_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Up)).unwrap_or(false);
-        let down_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Down)).unwrap_or(false);
-        let rctrl_down = std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::RightControl)).unwrap_or(false)
-            || std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::RightShift)).unwrap_or(false)
-            || std::panic::catch_unwind(|| macroquad::input::is_key_down(KeyCode::Slash)).unwrap_or(false);
+        let left_down = is_key_down(KeyCode::Left);
+        let right_down = is_key_down(KeyCode::Right);
+        let up_down = is_key_down(KeyCode::Up);
+        let down_down = is_key_down(KeyCode::Down);
+        let rctrl_down = is_key_down(KeyCode::RightControl)
+            || is_key_down(KeyCode::RightShift)
+            || is_key_down(KeyCode::Slash);
 
         if left_down {
             raw_steer -= 1.0;

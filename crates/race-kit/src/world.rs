@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 
 use arcade_race_core::collision::{resolve_all_wall_collisions, resolve_car_car_collision};
 use arcade_race_core::track::{LineSegment, Track, TrackProgressTracker};
+use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use wheelbase::{Car, SurfaceType};
 
@@ -114,6 +115,8 @@ pub struct RaceWorld<V: Vehicle = Car> {
     pub time: f32,
     events: Vec<RaceEvent>,
     brushes: Vec<CanopyBrush>,
+    prev_positions: Vec<Vec2>,
+    drafts: Vec<f32>,
 }
 
 impl<V: Vehicle> RaceWorld<V> {
@@ -129,6 +132,8 @@ impl<V: Vehicle> RaceWorld<V> {
             time: 0.0,
             events: Vec::new(),
             brushes: Vec::new(),
+            prev_positions: Vec::new(),
+            drafts: Vec::new(),
         }
     }
 
@@ -150,6 +155,8 @@ impl<V: Vehicle> RaceWorld<V> {
         self.last_surfaces.clear();
         self.time = 0.0;
         self.events.clear();
+        self.prev_positions.clear();
+        self.drafts.clear();
     }
 
     /// Keeps the per-vehicle state as long as `vehicles`, for callers that push vehicles directly.
@@ -159,6 +166,8 @@ impl<V: Vehicle> RaceWorld<V> {
         self.pit_states.resize(n, PitServiceState::NotPitting);
         self.top_speed.resize(n, 0.0);
         self.last_surfaces.resize(n, [SurfaceType::Asphalt; 4]);
+        self.prev_positions.resize(n, Vec2::ZERO);
+        self.drafts.resize(n, 0.0);
     }
 
     /// The events of the last step, in the order they happened.
@@ -186,21 +195,32 @@ impl<V: Vehicle> RaceWorld<V> {
             self.last_surfaces[i] = car.sample_surfaces(track, prog);
         }
 
-        // Aerodynamic slipstream wake drafting between cars
-        let mut drafts = Vec::with_capacity(n_cars);
+        // Aerodynamic slipstream wake drafting between cars (zero-allocation stack buffer for <= 32 cars)
         for i in 0..n_cars {
-            let other_refs: Vec<&V> =
-                self.vehicles.iter().enumerate().filter(|(idx, _)| *idx != i).map(|(_, c)| c).collect();
-            drafts.push(self.vehicles[i].draft_intensity(&other_refs));
+            let intensity = if n_cars <= 32 {
+                let mut buf = [&self.vehicles[0]; 32];
+                let mut count = 0;
+                for (idx, v) in self.vehicles.iter().enumerate() {
+                    if idx != i {
+                        buf[count] = v;
+                        count += 1;
+                    }
+                }
+                self.vehicles[i].draft_intensity(&buf[..count])
+            } else {
+                let other_refs: Vec<&V> =
+                    self.vehicles.iter().enumerate().filter(|(idx, _)| *idx != i).map(|(_, c)| c).collect();
+                self.vehicles[i].draft_intensity(&other_refs)
+            };
+            self.drafts[i] = intensity;
         }
         for i in 0..n_cars {
-            self.vehicles[i].set_draft(drafts[i]);
+            self.vehicles[i].set_draft(self.drafts[i]);
         }
 
-        // Track vehicle positions before step for crossing checks
-        let mut prev_positions = Vec::with_capacity(n_cars);
+        // Track vehicle positions before step for crossing checks (zero-allocation scratch buffer)
         for i in 0..n_cars {
-            prev_positions.push(self.vehicles[i].position());
+            self.prev_positions[i] = self.vehicles[i].position();
         }
 
         // Step individual vehicle dynamics and update road elevation & cross-slope banking
@@ -296,7 +316,7 @@ impl<V: Vehicle> RaceWorld<V> {
         for i in 0..n_cars {
             let wall_events = {
                 let car = &mut self.vehicles[i];
-                let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, &scenery_obstacles);
+                let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, scenery_obstacles);
                 events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
                 for ev in &events {
                     let damage_energy = ev.estimated_damage_energy();
@@ -321,7 +341,7 @@ impl<V: Vehicle> RaceWorld<V> {
 
             // Also check track.pit_lane entry and exit line segments if defined
             if let Some(lane) = &track.pit_lane {
-                let car_seg = LineSegment::new(prev_positions[i], self.vehicles[i].position());
+                let car_seg = LineSegment::new(self.prev_positions[i], self.vehicles[i].position());
                 if lane.entry_gate.intersect_segment(&car_seg).is_some() {
                     self.trackers[i].in_pit_lane = true;
                     self.trackers[i].has_stopped_in_pit_box = false;

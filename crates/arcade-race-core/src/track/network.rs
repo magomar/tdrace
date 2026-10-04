@@ -920,6 +920,8 @@ pub struct TrackNetwork {
     pub segments: Vec<RoadSegment>,
     pub layouts: Vec<TrackLayout>,
     pub default_layout_id: String,
+    #[serde(default, skip_serializing)]
+    pub cached_composite_splines: Vec<(String, TrackSpline)>,
 }
 
 impl TrackNetwork {
@@ -930,6 +932,7 @@ impl TrackNetwork {
             segments: Vec::new(),
             layouts: Vec::new(),
             default_layout_id: "main".to_string(),
+            cached_composite_splines: Vec::new(),
         }
     }
 
@@ -957,12 +960,34 @@ impl TrackNetwork {
             checkpoint_ids: Vec::new(),
         };
 
-        Self {
+        let mut net = Self {
             junctions: Vec::new(),
             segments: vec![segment],
             layouts: vec![layout],
             default_layout_id: "main".to_string(),
+            cached_composite_splines: Vec::new(),
+        };
+        net.recompute_composite_splines();
+        net
+    }
+
+    /// Recomputes and caches composite splines for each layout (Spec 084).
+    pub fn recompute_composite_splines(&mut self) {
+        let mut splines = Vec::with_capacity(self.layouts.len());
+        for layout in &self.layouts {
+            if let Some(spline) = self.build_composite_spline_for_layout(&layout.id) {
+                splines.push((layout.id.clone(), spline));
+            }
         }
+        self.cached_composite_splines = splines;
+    }
+
+    /// Returns a pre-cached composite spline for the given layout ID, if available (Spec 084).
+    pub fn composite_spline_for_layout(&self, layout_id: &str) -> Option<&TrackSpline> {
+        self.cached_composite_splines
+            .iter()
+            .find(|(id, _)| id.eq_ignore_ascii_case(layout_id))
+            .map(|(_, s)| s)
     }
 
     pub fn get_segment(&self, id: SegmentId) -> Option<&RoadSegment> {
