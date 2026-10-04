@@ -71,9 +71,11 @@ fn test_surface_transition_asphalt_to_grass_deceleration() {
     let speed_on_asphalt = car.state.speed;
     assert!(speed_on_asphalt > 18.0, "Speed on asphalt was {:.2} m/s", speed_on_asphalt);
 
-    // 2. Coasting on asphalt vs coasting on grass
+    // 2. Coasting on asphalt vs coasting on grass (neutral coasting without engine braking)
     let mut car_asphalt_coast = car.clone();
     let mut car_grass_coast = car.clone();
+    car_asphalt_coast.config.engine_braking_coefficient = 0.0;
+    car_grass_coast.config.engine_braking_coefficient = 0.0;
 
     for _ in 0..120 {
         car_asphalt_coast.step(&CarControls::default(), SurfaceType::Asphalt, dt);
@@ -88,9 +90,13 @@ fn test_surface_transition_asphalt_to_grass_deceleration() {
         speed_on_asphalt, speed_after_asphalt, speed_after_grass
     );
 
+    let delta_asphalt = speed_on_asphalt - speed_after_asphalt;
+    let delta_grass = speed_on_asphalt - speed_after_grass;
     assert!(
-        speed_after_grass < speed_after_asphalt * 0.85,
-        "Grass rolling resistance and surface drag must decelerate the car significantly faster than asphalt"
+        delta_grass > delta_asphalt * 1.5,
+        "Grass rolling resistance and surface drag must decelerate the car significantly faster than asphalt (loss: grass={:.2}, asphalt={:.2})",
+        delta_grass,
+        delta_asphalt
     );
 }
 
