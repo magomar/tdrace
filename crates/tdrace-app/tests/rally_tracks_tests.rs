@@ -995,7 +995,7 @@ fn test_rx_joker_road_reads_as_its_own_surface_not_runoff() {
 #[test]
 fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
     // End to end through race_kit::RaceWorld::step: lap 1 on the joker route, lap 2 on the main route.
-    use race_kit::{DriveControls, RaceFormat, RaceRules, RaceWorld};
+    use race_kit::{DriveControls, RaceEvent, RaceFormat, RaceRules, RaceWorld};
     use tdrace_core::physics::{Car, CarConfig};
     use tdrace_core::track::TrackProgressTracker;
 
@@ -1019,6 +1019,7 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
         let mut surface_mismatches = 0;
         let mut wrong_way = None;
         let mut first_mismatch = None;
+        let mut first_wall_hit = None;
         'laps: for (spline, from) in route {
             let mut d = from;
             while d < spline.total_length() {
@@ -1028,7 +1029,10 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
                 car.state.angle = s.tangent.y.atan2(s.tangent.x);
                 car.set_velocity(s.tangent * SPEED);
                 let expected = track.sample_car_surfaces(car);
-                world.step(&track, &[DriveControls::default()], DT);
+                let hit_wall = world.step(&track, &[DriveControls::default()], DT).iter().any(|e| matches!(e, RaceEvent::WallImpact { .. }));
+                if hit_wall && first_wall_hit.is_none() {
+                    first_wall_hit = Some(format!("{} lap at {:.0} m", if from > 0.0 { "joker" } else { "main" }, d));
+                }
                 // Where the main curb overlaps branch road near a junction, curb and road are both right.
                 let differs = world.last_surfaces[0]
                     .iter()
@@ -1061,14 +1065,81 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
 
         let tracker = &world.trackers[0];
         let jokers = tracker.multi_route.as_ref().map_or(0, |m| m.joker_laps_completed);
-        if !world.is_finished(0) || tracker.current_lap != 3 || jokers != 1 || surface_mismatches > 0 || wrong_way.is_some() {
+        if !world.is_finished(0) || tracker.current_lap != 3 || jokers != 1 || surface_mismatches > 0 || wrong_way.is_some() || first_wall_hit.is_some() {
             failures.push(format!(
-                "{}: finished {}, lap {}, jokers {}, surface mismatches {} (first {:?}), first wrong way {:?}",
-                id, world.is_finished(0), tracker.current_lap, jokers, surface_mismatches, first_mismatch, wrong_way
+                "{}: finished {}, lap {}, jokers {}, surface mismatches {} (first {:?}), first wrong way {:?}, first wall hit {:?}",
+                id, world.is_finished(0), tracker.current_lap, jokers, surface_mismatches, first_mismatch, wrong_way, first_wall_hit
             ));
         }
     }
     assert!(failures.is_empty(), "{} RX tracks failed:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
+    // The joker branch had no walls of its own: a car could leave it anywhere. Its walls must line the
+    // outside of the branch and never reach into the joker, the main road or the junction throats.
+    use tdrace_core::track::LineSegment;
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let joker = network.get_layout("joker").expect("joker layout");
+        let main = network.get_layout("main").expect("main layout");
+        let joker_seg = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
+        let seg = network.get_segment(*joker_seg).unwrap();
+        let walls = &track.geometry.network_walls;
+        let roads = network.segments.iter().map(|s| s.to_spline()).chain(std::iter::once(track.spline.clone())).collect::<Vec<_>>();
+
+        // On each side, wherever no other road (with its 3.5 m barrier gap) lies beside the joker, a wall
+        // stands within 5 m of the joker's edge.
+        for (side, sign) in [("left", 1.0f32), ("right", -1.0)] {
+            let (mut open, mut walled) = (0, 0);
+            for s in &seg.samples {
+                let end = s.point + s.normal * sign * (s.width * 0.5 + 5.0);
+                let beside_road = roads.iter().any(|r| {
+                    let proj = r.project_point(end);
+                    proj.distance_to_spline < proj.track_width * 0.5 + 4.0
+                });
+                if beside_road {
+                    continue;
+                }
+                open += 1;
+                let ray = LineSegment::new(s.point, end);
+                if track.geometry.all_walls().any(|w| w.segment.intersect_segment(&ray).is_some()) {
+                    walled += 1;
+                }
+            }
+            if open > 0 && (walled as f32) < 0.9 * open as f32 {
+                failures.push(format!("{}: walls line only {}/{} open joker samples on the {}", id, walled, open, side));
+            }
+        }
+
+        for w in walls {
+            for p in [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5] {
+                for road in &roads {
+                    let proj = road.project_point(p);
+                    if proj.distance_to_spline < proj.track_width * 0.5 {
+                        failures.push(format!("{}: joker wall point {:?} is {:.2} m inside a road", id, p, proj.track_width * 0.5 - proj.distance_to_spline));
+                    }
+                }
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn test_rx_joker_walls_are_rebuilt_on_load_and_never_saved() {
+    // Saving a track and loading it again must give the same joker walls, not a second copy of them.
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let json = track.to_json().unwrap();
+        assert!(!json.contains("network_walls"), "{}: joker walls are written to the track file", id);
+        let reloaded = tdrace_core::track::Track::from_json(&json).unwrap();
+        assert!(!reloaded.geometry.network_walls.is_empty(), "{}: no joker walls after reload", id);
+        assert_eq!(reloaded.geometry.network_walls, track.geometry.network_walls, "{}: joker walls change after a save and reload", id);
+    }
 }
 
 #[test]

@@ -353,6 +353,7 @@ impl<V: Vehicle> RaceWorld<V> {
                 let car = &mut self.vehicles[i];
                 let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, scenery_obstacles);
                 events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
+                events.extend(resolve_all_wall_collisions(car, &track.geometry.network_walls, &[]));
                 for ev in &events {
                     let damage_energy = ev.estimated_damage_energy();
                     if self.rules.damage_enabled {
