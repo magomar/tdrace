@@ -145,7 +145,7 @@ Unscheduled explorations, long-term visions, and community feature requests (ref
 
 ### 6. Rallycross Dual-Route Infrastructure & Joker Lap Regulations
 - `[x]` **[Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits](../081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md)**: Introduces authentic Joker Lap branching segments to all Classic and real-world OpenStreetMap Rallycross circuits via Directed Ribbon Graph (TrackNetwork), with mixed-surface transitions, gore crash attenuators, and snap-to-merge stitching.
-- `[ ]` **[Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement](../082_mandatory_rallycross_joker_lap_tracking_and_penalty_enforcement.md)**: Implements FIA Rallycross sporting regulation enforcement requiring every participant to complete at least one Joker Lap per race, featuring multi-car session tracking, dynamic HUD/spotter alerts, AI strategic decision-making, and post-race time penalties.
+- `[x]` **[Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement](../082_mandatory_rallycross_joker_lap_tracking_and_penalty_enforcement.md)**: Implements FIA Rallycross sporting regulation enforcement requiring every participant to complete at least one Joker Lap per race, featuring multi-car session tracking, dynamic HUD/spotter alerts, AI strategic decision-making, and post-race time penalties.
 
 ---
 
