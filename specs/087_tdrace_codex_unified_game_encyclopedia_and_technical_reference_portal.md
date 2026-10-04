@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"
 description: "Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files."
-status: draft
+status: approved
+verified: { by: "human:mario", at: "2026-10-04T20:30:47Z", hash: "b8b76d5a8826" }
 created: 2026-10-04
 generated: { by: agent/claude-opus-5-5, at: 2026-10-04T18:00:00Z }
 depends_on:
@@ -244,5 +245,5 @@ Each phase is one Beads task under the epic and ends with a green build.
 | `docs/vehicles/*`, `docs/physics/surfaces.md`, `docs/physics/tire_pacejka.md` | Removed after P5 |
 
 ### Beads Epic Mapping
-- Epic: to be created on approval.
+- Epic: `tdrace-b3u4`. Phase tasks: P0 `tdrace-b3u4.1`, P1 `.2`, P2 `.3`, P3 `.4`, P4 `.5`, P5 `.6`.
 - Related bugs filed during the sweep: `tdrace-0jvg` (hybrid/4WS drivetrain fallthrough), `tdrace-ilec` (rally tier names 6–7), `tdrace-t8vw` (unmatched sound override ids).
