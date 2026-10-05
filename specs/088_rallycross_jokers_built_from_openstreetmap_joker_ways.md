@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Rallycross Jokers Built From OpenStreetMap Joker Ways"
 description: "Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it."
-status: implemented
+status: in_progress
 receipt: "docs/receipts/spec-088-receipt.md"
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-04T22:08:08Z }
@@ -151,9 +151,9 @@ No access control is involved. `rally_joker_path` and `osm_cut` fail closed on j
   - [x] **Then** a bot changes its route between the split and the merge only while its car is off the road of the route it leaves
   - [x] **And** every finished bot has no penalty, and `jokers == 1` unless it moved onto the joker that way
 - **Scenario: Bots drive every changed joker**
-  - [x] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles
-  - [x] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
-  - [x] **Then** every bot finishes (on 2026-10-05 the longest stop was 12.5 s, on the `kouvola_rx` joker)
+  - [ ] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles
+  - [ ] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
+  - [ ] **Then** every bot finishes (on 2026-10-05 the longest stop was 12.5 s, on the `kouvola_rx` joker)
 
 ---
 
