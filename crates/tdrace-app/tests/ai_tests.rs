@@ -343,7 +343,8 @@ fn test_multi_bot_branching_race_simulation() {
 }
 
 
-/// Scenario: Bots take exactly one joker and never switch inside a branch (spec 082)
+/// Scenario: Bots take exactly one joker and never switch inside a branch (spec 082), unless their car has left
+/// its route onto the other branch, which they then follow and which can be an extra joker (spec 088)
 #[test]
 fn test_bot_ai_strategic_joker_rx_race_compliance() {
     use race_kit::{DriveControls, JokerRule, RaceFormat, RaceRules, RaceWorld};
@@ -359,6 +360,10 @@ fn test_bot_ai_strategic_joker_rx_race_compliance() {
         let network = track.network.as_ref().expect("RX network");
         let main = network.get_layout("main").unwrap().segment_sequence.clone();
         let joker = network.get_layout("joker").unwrap().segment_sequence.clone();
+        let route_splines: Vec<(String, _)> = ["main", "joker"]
+            .iter()
+            .map(|l| (l.to_string(), network.build_composite_spline_for_layout(l).unwrap()))
+            .collect();
         let rules = RaceRules {
             format: RaceFormat::Laps(LAPS),
             joker: JokerRule { mandatory: 1, penalty_s: 30.0 },
@@ -382,6 +387,7 @@ fn test_bot_ai_strategic_joker_rx_race_compliance() {
         }
 
         let mut branch_switches = Vec::new();
+        let mut onto_joker = [false; 8];
         for _ in 0..(600.0 / DT) as usize {
             let mut controls = Vec::with_capacity(8);
             for i in 0..8 {
@@ -397,7 +403,15 @@ fn test_bot_ai_strategic_joker_rx_race_compliance() {
                 let seg = world.trackers[i].multi_route.as_ref().map(|m| m.current_segment_id);
                 let in_branch = seg.is_some_and(|s| !(main.contains(&s) && joker.contains(&s)));
                 if before.is_some() && before != bots[i].active_layout_id && in_branch {
-                    branch_switches.push((i, world.trackers[i].current_lap, before, bots[i].active_layout_id.clone()));
+                    // Allowed only where the car is off the road of the route it leaves.
+                    let pos = world.vehicles[i].state.position;
+                    let old_route = &route_splines.iter().find(|(l, _)| Some(l) == before.as_ref()).unwrap().1;
+                    let proj = old_route.project_point(pos);
+                    if proj.distance_to_spline > proj.track_width * 0.5 {
+                        onto_joker[i] |= bots[i].active_layout_id.as_deref() == Some("joker");
+                    } else {
+                        branch_switches.push((i, world.trackers[i].current_lap, before, bots[i].active_layout_id.clone()));
+                    }
                 }
             }
             let controls: Vec<DriveControls> = controls;
@@ -410,7 +424,11 @@ fn test_bot_ai_strategic_joker_rx_race_compliance() {
         let finished: Vec<usize> = (0..8).filter(|&i| world.is_finished(i)).collect();
         assert!(finished.len() >= 6, "{}: only {} of 8 bots finished: {:?}", id, finished.len(), world.finish);
         for &i in &finished {
-            assert_eq!(world.jokers_taken(i), 1, "{}: bot {} jokers", id, i);
+            if onto_joker[i] {
+                assert!(world.jokers_taken(i) >= 1, "{}: bot {} jokers", id, i);
+            } else {
+                assert_eq!(world.jokers_taken(i), 1, "{}: bot {} jokers", id, i);
+            }
             assert_eq!(world.penalty[i], 0.0, "{}: bot {} penalty", id, i);
         }
         assert!(branch_switches.is_empty(), "{}: bots switched route inside a branch: {:?}", id, branch_switches);

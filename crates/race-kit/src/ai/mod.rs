@@ -495,6 +495,8 @@ const WALL_CLEARANCE_M: f32 = 1.2;
 /// How strongly a car closer than WALL_CLEARANCE_M to a close wall aims away from it (m per m).
 const CAR_WALL_PUSH: f32 = 3.0;
 const WATCHDOG_REVERSE_S: f32 = 3.0;
+/// How far outside its own road a bot's car must be before it follows another branch it is on (m).
+const OFF_ROUTE_MARGIN_M: f32 = 2.0;
 
 /// Strategic decision mode for AI navigating tracks with multiple branches or Joker laps.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -546,6 +548,20 @@ fn joker_and_main_layout_ids(network: &TrackNetwork) -> (Option<String>, String)
         network.default_layout_id.clone()
     };
     (joker, main)
+}
+
+/// The layout of a branch that the car at `pos` is on and its own layout `own` does not contain, if any.
+fn layout_of_branch_under(network: &TrackNetwork, own: &TrackLayout, pos: Vec2) -> Option<String> {
+    network
+        .segments
+        .iter()
+        .filter(|seg| !own.segment_sequence.contains(&seg.id))
+        .find(|seg| {
+            let q = seg.project_point(pos);
+            q.distance_to_spline < q.track_width * 0.5
+        })
+        .and_then(|seg| network.layouts.iter().find(|l| l.segment_sequence.contains(&seg.id)))
+        .map(|l| l.id.clone())
 }
 
 /// Multi-car Bot Racing AI Controller.
@@ -831,6 +847,19 @@ impl BotAiDriver {
             spline.project_point(car_pos)
         };
         let curr_dist = proj.progress_distance;
+
+        // A car that is stuck off its route on another branch follows that branch until the next route choice (spec
+        // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
+        // joker's inside wall for three minutes. A bot that is still making progress steers back: on killarney_rx
+        // it drifts onto the joker every lap and gets back. Stuck means a no-progress watchdog has fired.
+        // The new route takes over on the next tick.
+        if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
+            let network = track.network.as_ref();
+            let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
+            if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos)) {
+                self.active_layout_id = Some(id);
+            }
+        }
         self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
         // Detect lap progression if not explicitly updated

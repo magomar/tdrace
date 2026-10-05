@@ -886,7 +886,7 @@ fn test_holjes_rx_joker_lap_time_delta_simulation() {
     let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
     let network = track.network.as_ref().expect("holjes_rx must have network");
 
-    // The OSM joker is only ~27 m longer, but its tight turns cost the rest.
+    // The OSM joker is only 28 m longer, but its tight turns cost the rest.
     let time_main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").unwrap());
     let time_joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").unwrap());
     let time_delta = time_joker - time_main;
@@ -931,19 +931,19 @@ const RX_JOKER_TRACKS: [(&str, &str); 23] = [
 #[test]
 fn test_rx_joker_costs_lap_time() {
     // Every joker must cost time, mapped or synthetic, but not more than a slow corner. The model sees only the
-    // shape: estering_rx's mapped joker is 19 m shorter than the main branch and costs 0.65 s in it (a Pro bot
-    // loses ~1.3 s a lap there).
+    // shape. On 2026-10-05 the costs were 1.3-6.0 s; the mapped jokers cost 1.7-6.0 s, also the three that are
+    // shorter than the main branch they bypass (loheac_rx, estering_rx, dreux_rx).
     let mut failures = Vec::new();
     for (module, id) in RX_JOKER_TRACKS {
         let track = tdrace_core::catalog::official_track(module, id);
         let network = track.network.as_ref().expect("network");
         let main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").expect("main spline"));
         let joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").expect("joker spline"));
-        if !(0.5..=6.5).contains(&(joker - main)) {
+        if !(1.0..=6.5).contains(&(joker - main)) {
             failures.push(format!("{}: joker lap {:.2} s vs main {:.2} s ({:+.2} s)", id, joker, main, joker - main));
         }
     }
-    assert!(failures.is_empty(), "joker lap cost outside 0.5-6.5 s:\n{}", failures.join("\n"));
+    assert!(failures.is_empty(), "joker lap cost outside 1.0-6.5 s:\n{}", failures.join("\n"));
 }
 
 #[test]
