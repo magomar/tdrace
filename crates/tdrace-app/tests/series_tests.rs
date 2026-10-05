@@ -1399,8 +1399,8 @@ fn test_kart_championship_first_round_bots_move() {
                 seed, i, session.opponent_drivers[i - 1].name, speed
             );
             assert_eq!(
-                session.ai_drivers[i - 1].reverse_recovery_timer, 0.0,
-                "seed {}: Bot {} ({}) entered reverse recovery on the starting grid!",
+                session.ai_drivers[i - 1].turn, None,
+                "seed {}: Bot {} ({}) started a recovery turn on the starting grid!",
                 seed, i, session.opponent_drivers[i - 1].name
             );
         }

@@ -501,7 +501,7 @@ impl SurfaceAffinityMap {
                 1.10, // Curb
                 0.45, // Dirt
                 0.45, // PackedGravel (= Dirt, Spec 089)
-                0.30, // Grass
+                0.40, // Grass
                 0.30, // PackedSand
                 0.15, // DeepSand
                 0.25, // MudTrack
@@ -519,7 +519,7 @@ impl SurfaceAffinityMap {
                 0.95, // Curb
                 0.85, // Dirt
                 0.85, // PackedGravel (= Dirt, Spec 089)
-                0.30, // Grass
+                0.40, // Grass
                 0.28, // PackedSand
                 0.15, // DeepSand
                 0.22, // MudTrack
@@ -537,7 +537,7 @@ impl SurfaceAffinityMap {
                 0.95, // Curb
                 0.40, // Dirt
                 0.40, // PackedGravel (= Dirt, Spec 089)
-                0.30, // Grass
+                0.40, // Grass
                 0.25, // PackedSand
                 0.15, // DeepSand
                 0.20, // MudTrack
@@ -593,12 +593,12 @@ impl SurfaceAffinityMap {
                 1.15, // PackedGravel (= Dirt, Spec 089)
                 0.95, // Grass
                 1.10, // PackedSand
-                0.80, // DeepSand
+                1.20, // DeepSand
                 1.05, // MudTrack
                 0.75, // DeepMud
                 0.80, // PackedSnow
-                0.70, // DeepSnow
-                0.40, // SheetIce
+                1.30, // DeepSnow
+                0.90, // SheetIce
                 0.90, // Water
                 0.25, // Oil
                 1.10, // DeepGravel
@@ -754,7 +754,7 @@ mod tests {
         assert_eq!(at.get(SurfaceType::DeepMud), 0.75);
         assert_eq!(soft.get(SurfaceType::DeepMud), 0.10);
 
-        // SheetIce: StuddedIce (1.45) > AllTerrain (0.40) > SoftSlick (0.05)
+        // SheetIce: StuddedIce (1.45) > AllTerrain (0.90) > SoftSlick (0.05)
         assert_eq!(ice.get(SurfaceType::SheetIce), 1.45);
         assert!(ice.get(SurfaceType::SheetIce) > at.get(SurfaceType::SheetIce));
         assert!(at.get(SurfaceType::SheetIce) > soft.get(SurfaceType::SheetIce));

@@ -2040,7 +2040,7 @@ VELOCITY_PARK = Circuit(
         BuildingProp(at=55.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
         BuildingProp(at=100.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
         # Lake: infield lake
-        Spot(at=350.0, lateral=40.0, radius=22.0, surface="Water", name="Velocity Park Infield Lake"),
+        Spot(at=350.0, lateral=55.0, radius=22.0, surface="Water", name="Velocity Park Infield Lake"),
         # Trees: cypress, oaks, bushes (48 trees)
         tree_row(20.0, 200.0, 12, side="left", offset=14.0, tree_type="cypress"),
         tree_row(240.0, 440.0, 12, side="right", offset=14.0, tree_type="oak"),
@@ -2143,6 +2143,8 @@ COASTAL_GRAND_PRIX = Circuit(
     start=(0.0, 0.0),
     heading_deg=0.0,
     segments=[
+        # Asphalt run-off where GT bots ran wide and could not get back from grass or gravel (tdrace-le75):
+        # Turn 1 to the plateau (2-5), the carousel (6), after the sweeper (9) and the last turn (23).
         # Main Straight (>= 400 m) East (0 deg)
         S(330, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
         S(80, wall_type="TireWall", wall_distance=8.0, runoff="Grass"),                                  # 1: Braking zone (total straight = 410 m)

@@ -619,7 +619,7 @@ fn test_velocity_park_has_two_long_straights_and_chicanes() {
 
 /// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has DeepGravel traps and a straight >= 300 m
 #[test]
-fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
+fn test_ridge_ring_has_ridge_climb_and_gravel_traps() {
     let t = catalog::official_track("classic", "gt_ridge_ring");
     let min_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MAX, f32::min);
     let max_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MIN, f32::max);

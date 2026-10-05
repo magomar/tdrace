@@ -1292,29 +1292,6 @@ pub fn render_track_select_menu(
         module_accent,
     );
 
-    // The Circuit Manager is not reachable from the LAN host lobby.
-    if !is_lan_host {
-        let tm_badge_w = scaler.s(165.0);
-        let tm_badge_h = scaler.s(22.0);
-        let tm_badge_x = col1_x + col_w - tm_badge_w;
-        scaler.draw_glass_card(
-            tm_badge_x,
-            curr_y - scaler.s(2.0),
-            tm_badge_w,
-            tm_badge_h,
-            Color::new(0.18, 0.08, 0.30, 0.90),
-            Palette::NEON_MAGENTA,
-            1.2,
-        );
-        fonts.draw_ui_bold_centered(
-            "[T] CIRCUIT MANAGER",
-            tm_badge_x + tm_badge_w * 0.5,
-            curr_y + scaler.s(13.0),
-            scaler.font_s(10.5),
-            Palette::NEON_GOLD,
-        );
-    }
-
     curr_y += scaler.s(20.0);
 
     // Filter Tabs: [ OFFICIAL ]  [ CUSTOM ] (platform FilterBar, Shelf style)

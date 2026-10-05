@@ -143,7 +143,15 @@ impl TrackRenderCache {
         let mut branch_segments = Vec::new();
 
         if let Some(ref net) = track.network {
-            let branch_segs: Vec<&RoadSegment> = net.segments.iter().filter(|s| s.id.0 != 0).collect();
+            let default_seq = net
+                .active_or_default_layout(None)
+                .map(|l| &l.segment_sequence[..])
+                .unwrap_or(&[]);
+            let branch_segs: Vec<&RoadSegment> = if default_seq.is_empty() {
+                net.segments.iter().filter(|s| s.id.0 != 0).collect()
+            } else {
+                net.segments.iter().filter(|s| !default_seq.contains(&s.id)).collect()
+            };
             main_suppressions = compute_segment_edge_suppressions(
                 &track.spline.samples,
                 track.spline.closed,
@@ -151,10 +159,10 @@ impl TrackRenderCache {
                 None,
             );
 
-            for seg in &net.segments {
-                if seg.id.0 != 0 && seg.samples.len() >= 2 {
+            for seg in &branch_segs {
+                if seg.samples.len() >= 2 {
                     let other_branches: Vec<&RoadSegment> =
-                        net.segments.iter().filter(|s| s.id != seg.id).collect();
+                        branch_segs.iter().filter(|s| s.id != seg.id).copied().collect();
                     let branch_supp = compute_segment_edge_suppressions(
                         &seg.samples,
                         false,
@@ -553,7 +561,14 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
     ensure_surface_registry();
     let has_elevated = track.spline.samples.iter().any(|s| s.is_bridge)
         || track.network.as_ref().map_or(false, |net| {
-            net.segments.iter().any(|seg| seg.id.0 != 0 && seg.samples.iter().any(|s| s.is_bridge || s.elevation >= 0.6))
+            let default_seq = net
+                .active_or_default_layout(None)
+                .map(|l| &l.segment_sequence[..])
+                .unwrap_or(&[]);
+            net.segments
+                .iter()
+                .filter(|seg| if default_seq.is_empty() { seg.id.0 != 0 } else { !default_seq.contains(&seg.id) })
+                .any(|seg| seg.samples.iter().any(|s| s.is_bridge))
         });
     if has_elevated {
         render_bridge_structure_pass(&track.spline, view_bounds);
@@ -2756,6 +2771,60 @@ mod tests {
         // Run render passes to ensure zero panics and valid execution
         render_ground_track_culled(&track, None);
         render_elevated_track_culled(&track, None);
+    }
+
+    #[test]
+    fn test_track_render_cache_filters_default_layout_segments_from_branches() {
+        use arcade_race_core::track::network::{RoadSegment, SegmentId, TrackLayout, TrackNetwork};
+        use arcade_race_core::track::spline::TrackWaypoint;
+
+        let wps = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 50.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 50.0), 10.0),
+        ];
+        let mut track = Track::default();
+        track.spline = TrackSpline::new(wps.clone(), true);
+
+        let seg0 = RoadSegment::new(SegmentId(0), "Straight", wps[0..=2].to_vec());
+        let seg1 = RoadSegment::new(SegmentId(1), "Turn", wps[2..=4].to_vec());
+        let seg2 = RoadSegment::new(SegmentId(2), "Joker", vec![
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(50.0, -30.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+        ]);
+        let mut net = TrackNetwork::new();
+        net.segments = vec![seg0, seg1, seg2];
+        net.layouts = vec![
+            TrackLayout {
+                id: "main".into(),
+                display_name: "Main".into(),
+                segment_sequence: vec![SegmentId(0), SegmentId(1)],
+                is_closed: true,
+                total_lap_length: 200.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: Vec::new(),
+            },
+            TrackLayout {
+                id: "joker".into(),
+                display_name: "Joker".into(),
+                segment_sequence: vec![SegmentId(0), SegmentId(2)],
+                is_closed: true,
+                total_lap_length: 220.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: Vec::new(),
+            },
+        ];
+        net.default_layout_id = "main".into();
+        track.network = Some(net);
+
+        with_track_render_cache(&track, |cache| {
+            // Only segment 2 (Joker) should be in branch_segments; segment 1 is already in track.spline
+            assert_eq!(cache.branch_segments.len(), 1);
+            assert_eq!(cache.branch_segments[0].id, SegmentId(2));
+        });
     }
 }
 

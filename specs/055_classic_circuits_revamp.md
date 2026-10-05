@@ -168,7 +168,8 @@ walls 2.0 m out and cars drive on the kerb; a wall that steps in there stopped t
 - Coastal Grand Prix: a 400 m straight, a bus-stop chicane, a carousel (one long turn of 150° or
   more), a fast sweeper and a raised plateau of about 5 m.
 - Runoff width changes along each lap (3–30 m per side, set with `left/right_wall_distance`).
-  Each circuit uses Grass and DeepGravel run-off, and no Asphalt run-off (changed by Spec 089). Traps are `SurfaceZone`s with
+  Each circuit uses Grass and DeepGravel run-off, and no Asphalt run-off (changed by Spec 089). No DeepSand or
+  PackedSand: a GT car that stops on them cannot drive out (tdrace-le75). Traps are `SurfaceZone`s with
   `layer: below_track` or runoff surfaces per waypoint.
 
 **Stock Cars — banked ovals**

@@ -1386,6 +1386,10 @@ fn couple_axle(
         let corner_mass_r = static_rear_load * 0.5 / g;
         let sqrt_k_m_f = (susp.front.spring_rate * corner_mass_f.max(1.0)).sqrt();
         let sqrt_k_m_r = (susp.rear.spring_rate * corner_mass_r.max(1.0)).sqrt();
+        // A curb raises the wheels on it by 4 cm. With every wheel on the curb the whole car sits higher and no
+        // spring is compressed (tdrace-le75: the springs were compressed, so cars on curbs had odd loads).
+        let all_on_curb = surfaces.iter().all(|s| *s == SurfaceType::Curb);
+        let curb_bump = |i: usize| if surfaces[i] == SurfaceType::Curb && !all_on_curb { 0.04 } else { 0.0 };
 
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
@@ -1402,8 +1406,8 @@ fn couple_axle(
 
             // Track elevation profile under wheel
             let mut z_track = self.state.wheel_elevations[i];
-            if z_track.abs() < 1e-4 && surfaces[i] == SurfaceType::Curb {
-                z_track = 0.04;
+            if z_track.abs() < 1e-4 && curb_bump(i) > 0.0 {
+                z_track = curb_bump(i);
             }
 
             // Landing compression from aerial drop touchdown
@@ -1546,10 +1550,10 @@ fn couple_axle(
         // Rigid kart diagonal jacking
         let mut diag_forces = [0.0f32; 4];
         if susp.front.archetype == SuspensionArchetype::RigidKart {
-            let shock_0 = (susp.front.spring_rate * self.state.wheel_elevations[0].max(if surfaces[0] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[0]).max(0.0);
-            let shock_1 = (susp.front.spring_rate * self.state.wheel_elevations[1].max(if surfaces[1] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[1]).max(0.0);
-            let shock_2 = (susp.rear.spring_rate * self.state.wheel_elevations[2].max(if surfaces[2] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[2]).max(0.0);
-            let shock_3 = (susp.rear.spring_rate * self.state.wheel_elevations[3].max(if surfaces[3] == SurfaceType::Curb { 0.04 } else { 0.0 }) + bumpstop_forces[3]).max(0.0);
+            let shock_0 = (susp.front.spring_rate * self.state.wheel_elevations[0].max(curb_bump(0)) + bumpstop_forces[0]).max(0.0);
+            let shock_1 = (susp.front.spring_rate * self.state.wheel_elevations[1].max(curb_bump(1)) + bumpstop_forces[1]).max(0.0);
+            let shock_2 = (susp.rear.spring_rate * self.state.wheel_elevations[2].max(curb_bump(2)) + bumpstop_forces[2]).max(0.0);
+            let shock_3 = (susp.rear.spring_rate * self.state.wheel_elevations[3].max(curb_bump(3)) + bumpstop_forces[3]).max(0.0);
 
             diag_forces[0] -= 0.50 * shock_3;
             diag_forces[3] -= 0.50 * shock_0;
@@ -1559,6 +1563,7 @@ fn couple_axle(
 
         // Wheel 0 = FL (left), Wheel 1 = FR (right), Wheel 2 = RL (left), Wheel 3 = RR (right)
         let mut normal_loads = [0.0f32; 4];
+        let mut nominal_sum = 0.0f32;
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
             let corner = if wheel_id.is_front() { &susp.front } else { &susp.rear };
@@ -1570,13 +1575,24 @@ fn couple_axle(
             };
             let min_load = if wheel_id.is_front() { min_load_f } else { min_load_r };
 
-            let z_bump = self.state.wheel_elevations[i].max(if surfaces[i] == SurfaceType::Curb { 0.04 } else { 0.0 });
+            let z_bump = self.state.wheel_elevations[i].max(curb_bump(i));
             let f_susp_bump = corner.spring_rate * z_bump;
             let f_susp_damper = if z_bump > 0.0 || touchdown_vz > 0.0 { damper_forces[i] } else { 0.0 };
             let delta_fz_susp = f_susp_bump + f_susp_damper + bumpstop_forces[i] + diag_forces[i];
 
             let fz = ((nom + delta_fz_susp).max(min_load)) * ground_contact;
             normal_loads[i] = fz.min(4.0 * total_weight);
+            nominal_sum += nom.max(min_load) * ground_contact;
+        }
+        // The fixed curb height only compresses the springs (there is no chassis heave), so a stiff kart
+        // hit its bump stops and the curbs added up to 16 times its weight: a kart on a curb could not move,
+        // and other cars gained grip on curbs (tdrace-le75). A curb moves load between the wheels (and
+        // unloads a kart's opposite diagonal); outside a landing it does not add to the total.
+        let total_load: f32 = normal_loads.iter().sum();
+        if touchdown_vz <= 0.0 && surfaces.contains(&SurfaceType::Curb) && total_load > nominal_sum {
+            for fz in &mut normal_loads {
+                *fz *= nominal_sum / total_load;
+            }
         }
 
         // 4. Tires, wheel spin and drivetrain (Spec 043)

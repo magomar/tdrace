@@ -1,10 +1,7 @@
 use tdrace_app::ui::curve_indicator::{
-    compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
-    compute_pacenote_polyline, compute_smart_curve_arrow_position, curve_indicator_inner_clearance,
-    curve_indicator_lookahead, CurveColorScheme, CurveIndicatorStyle,
+    compute_curve_colors, compute_indicator_alpha, compute_pacenote_polyline, curve_indicator_lookahead,
+    CurveColorScheme,
 };
-use tdrace_core::physics::car::Car;
-use tdrace_core::physics::config::CarConfig;
 use tdrace_core::track::curve::{evaluate_curve_approach, CurveDirection, TrackCurve};
 
 #[test]
@@ -158,62 +155,6 @@ fn test_indicator_alpha_uses_time_to_entry_not_distance() {
 }
 
 #[test]
-fn test_curve_arrow_positioning_follows_car_heading_with_clearance() {
-    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
-    let sample = &track.spline.samples[0];
-    let zoom = 12.0;
-
-    for angle in [0.0f32, std::f32::consts::FRAC_PI_2, std::f32::consts::PI, -2.3] {
-        let mut player_car = Car::new(CarConfig::sports_car()).with_pose(sample.point, angle);
-        player_car.state.road_elevation = 4.75; // Even on elevated road / bridges, indicator stays beside the car!
-        let origin = player_car.state.position;
-        let right = player_car.right_vector();
-        let fwd = player_car.forward_vector();
-
-        let pos_left = compute_curve_arrow_position(&player_car, CurveDirection::Left, 3, zoom);
-        let pos_right = compute_curve_arrow_position(&player_car, CurveDirection::Right, 3, zoom);
-
-        // 1. Left curve arrow is on the car's own left, right curve arrow on the car's own right
-        assert!((pos_left - origin).dot(right) < 0.0, "Left arrow must be on the car's left (angle {})", angle);
-        assert!((pos_right - origin).dot(right) > 0.0, "Right arrow must be on the car's right (angle {})", angle);
-
-        // 2. Beside the car: level with it along its heading
-        assert!((pos_left - origin).dot(fwd).abs() < 1e-3, "Left arrow must be level with the car (angle {})", angle);
-        assert!((pos_right - origin).dot(fwd).abs() < 1e-3, "Right arrow must be level with the car (angle {})", angle);
-
-        // 3. Spacing: close to the car, but clear of its body (half track width + 0.5 m)
-        let body_half_w = player_car.config.track_width * 0.5 + 0.5;
-        let total_w_3 = (2.0 * 16.0 + 14.0) / zoom;
-        for (name, pos) in [("Left", pos_left), ("Right", pos_right)] {
-            let inner_edge = pos.distance(origin) - total_w_3 * 0.5;
-            assert!(inner_edge > body_half_w, "{} arrow must clear the car body (got {:.2}m)", name, inner_edge);
-            assert!(inner_edge < 3.0, "{} arrow must sit close to the car (got {:.2}m)", name, inner_edge);
-        }
-
-        // 4. Multi-arrow expansion: even with 5 chevrons, the nearest chevron keeps the same clearance
-        let pos_5 = compute_curve_arrow_position(&player_car, CurveDirection::Right, 5, zoom);
-        let total_w_5 = (4.0 * 16.0 + 14.0) / zoom;
-        let closest_chevron_dist = pos_5.distance(origin) - total_w_5 * 0.5;
-        assert!(
-            (closest_chevron_dist - curve_indicator_inner_clearance(&player_car, zoom)).abs() < 1e-3,
-            "Innermost chevron of 5-arrow alert must keep the inner clearance (got {:.2}m)",
-            closest_chevron_dist
-        );
-
-        // 5. Backwards compatibility alias returns identical position without dynamic computation
-        let pos_compat = compute_smart_curve_arrow_position(&track, &[], &player_car, CurveDirection::Right, 5, zoom);
-        assert_eq!(pos_compat, pos_5);
-    }
-
-    // 6. A car driving down the screen (facing -Y) shows its right-turn arrow on the screen's left, exactly level
-    let mut car_down = Car::new(CarConfig::sports_car()).with_pose(sample.point, -std::f32::consts::FRAC_PI_2);
-    car_down.state.road_elevation = 5.0; // road elevation must NOT cause the indicator to fall behind
-    let pos = compute_curve_arrow_position(&car_down, CurveDirection::Right, 3, zoom);
-    assert!(pos.x < car_down.state.position.x, "Right arrow of a car facing down must be screen-left");
-    assert!((pos.y - car_down.state.position.y).abs() < 1e-3, "Arrow must remain exactly level with car on Y axis");
-}
-
-#[test]
 fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
     let curve1 = TrackCurve {
         id: 0,
@@ -245,16 +186,12 @@ fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
     let total_len = 1000.0;
     let closed = true;
 
-    let car = Car::new(CarConfig::sports_car()).with_pose(glam::Vec2::new(50.0, 50.0), 0.0);
-    let zoom = 12.0;
 
     // Phase 1: On far approach (dist = 0m, speed = 40 m/s):
     // Turn 1 is returned (Right, Degree 1, Cruise Green)
     let s_far = evaluate_curve_approach(&curves, 0.0, total_len, closed, 40.0, 200.0).unwrap();
     assert_eq!(s_far.curve.id, 0);
     assert_eq!(s_far.curve.direction, CurveDirection::Right);
-    let pos_far = compute_curve_arrow_position(&car, s_far.curve.direction, s_far.curve.degree, zoom);
-    assert!((pos_far - car.state.position).dot(car.right_vector()) > 0.0, "Far approach shows Right arrow to right of car");
     let (col_far, _) = compute_curve_colors(CurveColorScheme::Traffic, s_far.urgency, s_far.curve.degree, 1.0);
     assert!(col_far.g > col_far.r, "Far approach on mild turn has green cruise color");
 
@@ -265,8 +202,6 @@ fn test_chained_curve_hud_preemption_updates_arrow_and_color() {
     assert_eq!(s_preempt.curve.id, 1, "Turn 2 must preempt Turn 1 before Turn 1 apex");
     assert_eq!(s_preempt.curve.direction, CurveDirection::Left);
     assert_eq!(s_preempt.curve.degree, 5);
-    let pos_preempt = compute_curve_arrow_position(&car, s_preempt.curve.direction, s_preempt.curve.degree, zoom);
-    assert!((pos_preempt - car.state.position).dot(car.right_vector()) < 0.0, "Preempted arrow updates to Left side of car");
     let alpha_preempt = compute_indicator_alpha(s_preempt.distance_to_entry, s_preempt.distance_to_apex, s_preempt.is_inside_curve, 40.0);
     assert!((alpha_preempt - 1.0).abs() < 1e-3, "Turn 2 alert is fully visible");
     let (col_preempt, _) = compute_curve_colors(CurveColorScheme::Traffic, s_preempt.urgency, s_preempt.curve.degree, alpha_preempt);
@@ -310,15 +245,9 @@ fn test_pacenote_polyline_draws_curve_shape_in_icon_box() {
 }
 
 #[test]
-fn test_curve_indicator_style_config_names() {
-    assert_eq!(CurveIndicatorStyle::default(), CurveIndicatorStyle::Pacenote);
-    for style in [CurveIndicatorStyle::Chevrons, CurveIndicatorStyle::Pacenote] {
-        assert_eq!(CurveIndicatorStyle::from_config_str(style.as_config_str()), style);
-    }
-    assert_eq!(CurveIndicatorStyle::from_config_str("CHEVRONS"), CurveIndicatorStyle::Chevrons);
-    assert_eq!(CurveIndicatorStyle::from_config_str("bogus"), CurveIndicatorStyle::Pacenote);
-
-    // A config.toml written before this setting existed gets the pacenote default
-    let old: tdrace_app::config::PlayerHelpersConfig = toml::from_str("curve_helper = true").unwrap();
-    assert_eq!(CurveIndicatorStyle::from_config_str(&old.curve_indicator_style), CurveIndicatorStyle::Pacenote);
+fn test_old_config_with_curve_indicator_style_still_loads() {
+    // config.toml files saved while the chevrons look existed still hold this key
+    let old: tdrace_app::config::PlayerHelpersConfig =
+        toml::from_str("curve_helper = true\ncurve_indicator_style = \"chevrons\"").unwrap();
+    assert!(old.curve_helper);
 }
