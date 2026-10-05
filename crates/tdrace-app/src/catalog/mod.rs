@@ -2047,7 +2047,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         engine_desc: "Custom 442ci Dougans Big Block V8",
         aero_downforce: "Cl 0.30 / Cd 0.72",
         brakes_desc: "Alcon 6-Piston 355mm Heavy-Duty",
-        history_bio: "The king of Sonora. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of bypass suspension travel.",
+        history_bio: "The titan of Sonora. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of bypass suspension travel.",
         stats: (0.85, 0.91, 0.84, 0.92, 0.86, 0.45),
         visual_type: VehicleVisualType::SandRail { lightbar: true, whip_antenna: true, paddle_tires: false },
         base_car_choice: CarChoice::SandRail,

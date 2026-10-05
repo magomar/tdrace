@@ -322,96 +322,96 @@ impl GameModule for GtWorldChallengeModule {
     fn drivers(&self) -> Vec<DriverCharacter> {
         vec![
             DriverCharacter {
-                id: "max_hunter",
-                name: "Max Hunter",
+                id: "magnus_wolff",
+                name: "Magnus Wolff",
                 alias: "The Dominator",
                 bio: "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
                 style: DrivingStyle::Aggressive,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(6),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, -0.01, 0.02, 0.0, 0.03),
-                favorite_cars: MAX_HUNTER_FAVORITES,
+                favorite_cars: MAGNUS_WOLFF_FAVORITES,
             },
             DriverCharacter {
-                id: "charles_laurent",
-                name: "Charles Laurent",
+                id: "cedric_laval",
+                name: "Cédric Laval",
                 alias: "The Qualifying King",
                 bio: "Scuderia prodigy with unbelievable single-lap hot-lap qualifying pace and unmatched precision on street circuits.",
                 style: DrivingStyle::Smooth,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(2),
                 offsets: DriverPersonalityOffsets::new(-0.02, 0.2, -0.01, -0.02, 0.04, -0.3, 0.04),
-                favorite_cars: CHARLES_LAURENT_FAVORITES,
+                favorite_cars: CEDRIC_LAVAL_FAVORITES,
             },
             DriverCharacter {
-                id: "lewis_vance",
-                name: "Lewis Vance",
+                id: "lawrence_sterling",
+                name: "Lawrence Sterling",
                 alias: "The Master",
                 bio: "7-time World Champion with legendary wet-weather mastery, flawless tire preservation, and icy composure.",
                 style: DrivingStyle::Smooth,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(7),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.01, 0.02, 0.0, 0.03),
-                favorite_cars: LEWIS_VANCE_FAVORITES,
+                favorite_cars: LAWRENCE_STERLING_FAVORITES,
             },
             DriverCharacter {
-                id: "fernando_toro",
-                name: "Fernando Toro",
+                id: "felix_navarro",
+                name: "Félix Navarro",
                 alias: "El Matador",
                 bio: "Relentless Spanish gladiator who wrestles ill-handling cars to the podium through sheer grit and racecraft.",
                 style: DrivingStyle::Tenacious,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(3),
                 offsets: DriverPersonalityOffsets::new(-0.04, 0.3, -0.01, -0.03, 0.08, -0.5, 0.02),
-                favorite_cars: FERNANDO_TORO_FAVORITES,
+                favorite_cars: FELIX_NAVARRO_FAVORITES,
             },
             DriverCharacter {
-                id: "george_speed",
-                name: "George Speed",
+                id: "gideon_palmer",
+                name: "Gideon Palmer",
                 alias: "The Silver Bullet",
                 bio: "Analytical young British ace who capitalizes on strategy and executes millimeter-perfect overtakes into hairpins.",
                 style: DrivingStyle::Balanced,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(1),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.2, 0.00, -0.02, 0.06, -0.5, 0.02),
-                favorite_cars: GEORGE_SPEED_FAVORITES,
+                favorite_cars: GIDEON_PALMER_FAVORITES,
             },
             DriverCharacter {
-                id: "lando_vance",
-                name: "Lando Vance",
-                alias: "Papaya Prodigy",
+                id: "lucian_wells",
+                name: "Lucian Wells",
+                alias: "Orange Prodigy",
                 bio: "Twitch-reflex specialist with lightning high-speed chicane flicks and formidable wet-weather bravery.",
                 style: DrivingStyle::Bold,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(4),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.0, 0.01, 0.02, 0.01, 0.2, 0.02),
-                favorite_cars: LANDO_VANCE_FAVORITES,
+                favorite_cars: LUCIAN_WELLS_FAVORITES,
             },
             DriverCharacter {
-                id: "oscar_rocket",
-                name: "Oscar Rocket",
+                id: "owen_prescott",
+                name: "Owen Prescott",
                 alias: "Melbourne Missile",
                 bio: "Ultra-composed Australian sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
                 style: DrivingStyle::Calculating,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(5),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.01, 0.02, 0.00, 0.0, 0.02),
-                favorite_cars: OSCAR_ROCKET_FAVORITES,
+                favorite_cars: OWEN_PRESCOTT_FAVORITES,
             },
             DriverCharacter {
-                id: "carlos_sainzfield",
-                name: "Carlos Sainzfield",
-                alias: "Smooth Operator",
+                id: "cristian_soler",
+                name: "Cristian Soler",
+                alias: "Precision Specialist",
                 bio: "Methodical Iberian racer who reads tire degradation with micro-precision, making strategic overtakes look effortless.",
                 style: DrivingStyle::Calculating,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
                 color_scheme: CarColorScheme::from_index(8),
                 offsets: DriverPersonalityOffsets::new(-0.01, 0.1, 0.00, 0.02, 0.02, -0.1, 0.02),
-                favorite_cars: CARLOS_SAINZFIELD_FAVORITES,
+                favorite_cars: CRISTIAN_SOLER_FAVORITES,
             },
             DriverCharacter {
-                id: "pierre_gaslyfield",
-                name: "Pierre Gaslyfield",
+                id: "patrice_garnier",
+                name: "Patrice Garnier",
                 alias: "The Underdog",
                 bio: "Fiery underdog specialist whose daring late-braking passes through the chicane catch favorites off guard.",
                 style: DrivingStyle::Bold,
@@ -422,11 +422,11 @@ impl GameModule for GtWorldChallengeModule {
                     macroquad::color::Color::new(0.12, 0.12, 0.14, 1.0),
                 ),
                 offsets: DriverPersonalityOffsets::new(0.01, -0.1, 0.00, 0.01, 0.01, 0.2, 0.01),
-                favorite_cars: PIERRE_GASLYFIELD_FAVORITES,
+                favorite_cars: PATRICE_GARNIER_FAVORITES,
             },
             DriverCharacter {
-                id: "esteban_connor",
-                name: "Esteban Connor",
+                id: "eloi_constantin",
+                name: "Eloi Constantin",
                 alias: "The Sentinel",
                 bio: "Resolute defender who plants his machine on the apex line and refuses to concede an inch on narrow circuits.",
                 style: DrivingStyle::Tenacious,
@@ -437,11 +437,11 @@ impl GameModule for GtWorldChallengeModule {
                     macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
                 ),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.1, 0.00, 0.01, 0.03, 0.2, 0.01),
-                favorite_cars: ESTEBAN_CONNOR_FAVORITES,
+                favorite_cars: ELOI_CONSTANTIN_FAVORITES,
             },
             DriverCharacter {
-                id: "alexander_albonfield",
-                name: "Alexander Albonfield",
+                id: "aron_somchai",
+                name: "Aron Somchai",
                 alias: "Apex Hunter",
                 bio: "Dynamic overtaker specializing in aggressive switchback cut-backs and high-speed outside line sweeps.",
                 style: DrivingStyle::Aggressive,
@@ -452,12 +452,12 @@ impl GameModule for GtWorldChallengeModule {
                     macroquad::color::Color::new(0.90, 0.85, 0.40, 1.0),
                 ),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.00, -0.03, 0.02, 0.1, 0.02),
-                favorite_cars: ALEXANDER_ALBONFIELD_FAVORITES,
+                favorite_cars: ARON_SOMCHAI_FAVORITES,
             },
             DriverCharacter {
-                id: "nico_hulkenstorm",
-                name: "Nico Hulkenstorm",
-                alias: "The Hulk",
+                id: "niklas_herrmann",
+                name: "Niklas Herrmann",
+                alias: "The Rock",
                 bio: "Iron-willed endurance veteran whose rock-solid pace and zero-mistake discipline make him a relentless podium threat.",
                 style: DrivingStyle::Balanced,
                 preferred_car: crate::ui::menu::CarChoice::GT3Car,
@@ -467,7 +467,7 @@ impl GameModule for GtWorldChallengeModule {
                     macroquad::color::Color::new(0.10, 0.85, 0.95, 1.0),
                 ),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.00, 0.04, -0.3, 0.02),
-                favorite_cars: NICO_HULKENSTORM_FAVORITES,
+                favorite_cars: NIKLAS_HERRMANN_FAVORITES,
             },
         ]
     }
@@ -513,7 +513,7 @@ impl GameModule for GtWorldChallengeModule {
 }
 
 
-const MAX_HUNTER_FAVORITES: &[DriverFavoriteCar] = &[
+const MAGNUS_WOLFF_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),
@@ -521,7 +521,7 @@ const MAX_HUNTER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
-const CHARLES_LAURENT_FAVORITES: &[DriverFavoriteCar] = &[
+const CEDRIC_LAVAL_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
@@ -529,7 +529,7 @@ const CHARLES_LAURENT_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
-const LEWIS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+const LAWRENCE_STERLING_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
@@ -537,7 +537,7 @@ const LEWIS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_crestline_sovereign_t5"),
 ];
 
-const FERNANDO_TORO_FAVORITES: &[DriverFavoriteCar] = &[
+const FELIX_NAVARRO_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
@@ -545,7 +545,7 @@ const FERNANDO_TORO_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
-const GEORGE_SPEED_FAVORITES: &[DriverFavoriteCar] = &[
+const GIDEON_PALMER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
@@ -553,7 +553,7 @@ const GEORGE_SPEED_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
-const LANDO_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+const LUCIAN_WELLS_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
@@ -561,7 +561,7 @@ const LANDO_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
-const OSCAR_ROCKET_FAVORITES: &[DriverFavoriteCar] = &[
+const OWEN_PRESCOTT_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
@@ -569,7 +569,7 @@ const OSCAR_ROCKET_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
-const CARLOS_SAINZFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+const CRISTIAN_SOLER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
@@ -577,7 +577,7 @@ const CARLOS_SAINZFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
-const PIERRE_GASLYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+const PATRICE_GARNIER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
@@ -585,7 +585,7 @@ const PIERRE_GASLYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_crestline_sovereign_t5"),
 ];
 
-const ESTEBAN_CONNOR_FAVORITES: &[DriverFavoriteCar] = &[
+const ELOI_CONSTANTIN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),
@@ -593,7 +593,7 @@ const ESTEBAN_CONNOR_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
-const ALEXANDER_ALBONFIELD_FAVORITES: &[DriverFavoriteCar] = &[
+const ARON_SOMCHAI_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
@@ -601,7 +601,7 @@ const ALEXANDER_ALBONFIELD_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
-const NICO_HULKENSTORM_FAVORITES: &[DriverFavoriteCar] = &[
+const NIKLAS_HERRMANN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
     DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
     DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),

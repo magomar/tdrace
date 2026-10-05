@@ -48,8 +48,8 @@ country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "miguel_gayoso"
-name = "Miguel Gayoso"
+id = "mateo_garrido"
+name = "Mateo Garrido"
 team = "LifeLive Academy"
 car_model_id = "autocross_ardennes_junior_t1"
 country = "ESP"
@@ -75,8 +75,8 @@ ai_character = "balanced"
 livery_idx = 3
 
 [[drivers]]
-id = "valentino_ledda"
-name = "Valentino Ledda"
+id = "valerio_ledda"
+name = "Valerio Ledda"
 team = "Team Italy XC"
 car_model_id = "autocross_iberian_furia_t1"
 country = "IT"
@@ -84,8 +84,8 @@ ai_character = "fast"
 livery_idx = 4
 
 [[drivers]]
-id = "elias_svensson"
-name = "Elias Svensson"
+id = "emil_svensson"
+name = "Emil Svensson"
 team = "Nordic Cross Racing"
 car_model_id = "autocross_ardennes_junior_t1"
 country = "SWE"

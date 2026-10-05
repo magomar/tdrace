@@ -440,7 +440,7 @@ car_model_id = "gt_yamato_hayate_t1"
 
 [[drivers]]
 id = "max"
-name = "Max Hunter"
+name = "Magnus Wolff"
 team = "Red Bull GT"
 car_model_id = "gt_porsche_718_cayman_gt4_rs"
 "#;
@@ -563,7 +563,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                 },
                 DriverConfig {
                     id: "dale".to_string(),
-                    name: "Dale Vance".to_string(),
+                    name: "Colt Reynolds".to_string(),
                     team: "RCR".to_string(),
                     is_player: false,
                     car_model_id: None,

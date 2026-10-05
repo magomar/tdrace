@@ -89,9 +89,9 @@ fn test_nascar_roster_integrity() {
         assert!(stats.aggression >= 0.50);
     }
 
-    assert!(drivers.iter().any(|d| d.name.contains("Dale") && d.alias == "The Intimidator"));
-    assert!(drivers.iter().any(|d| d.name.contains("Pettyfield") && d.alias == "The King"));
-    assert!(drivers.iter().any(|d| d.name.contains("Busch") && d.alias == "Wild Thing"));
+    assert!(drivers.iter().any(|d| d.name.contains("Colt") && d.alias == "The Ironclad"));
+    assert!(drivers.iter().any(|d| d.name.contains("Montgomery") && d.alias == "The Crown"));
+    assert!(drivers.iter().any(|d| d.name.contains("Harlan") && d.alias == "Thunder"));
 }
 
 #[test]
@@ -128,9 +128,9 @@ fn test_nascar_tournament_formats_and_points() {
     // Test in ChampionshipSession
     let track_ids = cup_champ.2.clone();
     let initial_drivers = [
-        ("dale_vance", "Dale Vance", "Earnhardt Motorsports"),
-        ("chase_gordon", "Chase Gordon", "Hendrick Heritage Racing"),
-        ("richard_pettyfield", "Richard Pettyfield", "Pettyfield Enterprises"),
+        ("colt_reynolds", "Colt Reynolds", "Heartland Competition"),
+        ("clayton_reed", "Clayton Reed", "Apex Vanguard Racing"),
+        ("rex_montgomery", "Rex Montgomery", "Highland Blue Racing"),
     ];
 
     let mut session = ChampionshipSession::new(
@@ -145,9 +145,9 @@ fn test_nascar_tournament_formats_and_points() {
 
     let round_results = vec![
         RoundDriverResult {
-            driver_id: "dale_vance".to_string(),
-            driver_name: "Dale Vance".to_string(),
-            team_name: "Earnhardt Motorsports".to_string(),
+            driver_id: "colt_reynolds".to_string(),
+            driver_name: "Colt Reynolds".to_string(),
+            team_name: "Heartland Competition".to_string(),
             finish_position: 1,
             total_time: 120.5,
             best_lap: Some(28.1),
@@ -155,9 +155,9 @@ fn test_nascar_tournament_formats_and_points() {
             has_fastest_lap: false,
         },
         RoundDriverResult {
-            driver_id: "chase_gordon".to_string(),
-            driver_name: "Chase Gordon".to_string(),
-            team_name: "Hendrick Heritage Racing".to_string(),
+            driver_id: "clayton_reed".to_string(),
+            driver_name: "Clayton Reed".to_string(),
+            team_name: "Apex Vanguard Racing".to_string(),
             finish_position: 2,
             total_time: 121.2,
             best_lap: Some(28.3),
@@ -165,9 +165,9 @@ fn test_nascar_tournament_formats_and_points() {
             has_fastest_lap: false,
         },
         RoundDriverResult {
-            driver_id: "richard_pettyfield".to_string(),
-            driver_name: "Richard Pettyfield".to_string(),
-            team_name: "Pettyfield Enterprises".to_string(),
+            driver_id: "rex_montgomery".to_string(),
+            driver_name: "Rex Montgomery".to_string(),
+            team_name: "Highland Blue Racing".to_string(),
             finish_position: 3,
             total_time: 122.0,
             best_lap: Some(28.5),
@@ -178,13 +178,13 @@ fn test_nascar_tournament_formats_and_points() {
 
     session.submit_round_results("Daytona International Speedway", round_results);
 
-    // Dale Vance: 1st place = 40 pts
-    assert_eq!(session.standings.iter().find(|s| s.driver_id == "dale_vance").unwrap().points, 40);
-    // Chase Gordon: 2nd place = 35 pts
-    assert_eq!(session.standings.iter().find(|s| s.driver_id == "chase_gordon").unwrap().points, 35);
-    // Richard Pettyfield: 3rd place = 34 pts
-    assert_eq!(session.standings.iter().find(|s| s.driver_id == "richard_pettyfield").unwrap().points, 34);
-    assert_eq!(session.leader().unwrap().driver_id, "dale_vance");
+    // Colt Reynolds: 1st place = 40 pts
+    assert_eq!(session.standings.iter().find(|s| s.driver_id == "colt_reynolds").unwrap().points, 40);
+    // Clayton Reed: 2nd place = 35 pts
+    assert_eq!(session.standings.iter().find(|s| s.driver_id == "clayton_reed").unwrap().points, 35);
+    // Rex Montgomery: 3rd place = 34 pts
+    assert_eq!(session.standings.iter().find(|s| s.driver_id == "rex_montgomery").unwrap().points, 34);
+    assert_eq!(session.leader().unwrap().driver_id, "colt_reynolds");
 }
 
 #[test]
@@ -294,16 +294,16 @@ fn test_nascar_phase2_championship_lifecycle() {
 
         // Drivers in championship should match circuit grid capacity (16 slots on Daytona)
         assert_eq!(champ.standings.len(), session.max_grid_participants());
-        assert!(champ.standings.iter().any(|s| s.driver_name.contains("Intimidator")));
-        assert!(champ.standings.iter().any(|s| s.driver_name.contains("The King")));
+        assert!(champ.standings.iter().any(|s| s.driver_name.contains("Ironclad")));
+        assert!(champ.standings.iter().any(|s| s.driver_name.contains("The Crown")));
     }
 
     // Submit round 1 results to advance championship round
     let results = vec![
         RoundDriverResult {
-            driver_id: "dale_vance".to_string(),
-            driver_name: "Dale Vance".to_string(),
-            team_name: "Richard Childress Racing".to_string(),
+            driver_id: "colt_reynolds".to_string(),
+            driver_name: "Colt Reynolds".to_string(),
+            team_name: "Heartland Competition".to_string(),
             finish_position: 1,
             total_time: 120.0,
             best_lap: Some(25.0),

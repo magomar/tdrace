@@ -60,8 +60,8 @@ country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "bernd_stubbe"
-name = "Bernd Stubbe"
+id = "bodo_richter"
+name = "Bodo Richter"
 team = "Stubbe SuperBuggy"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "DEU"
@@ -69,8 +69,8 @@ ai_character = "fast"
 livery_idx = 1
 
 [[drivers]]
-id = "petr_nikodem"
-name = "Petr Nikodém"
+id = "pavel_urban"
+name = "Pavel Urban"
 team = "Caravan Metropol"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "CZE"
@@ -78,8 +78,8 @@ ai_character = "aggressive"
 livery_idx = 2
 
 [[drivers]]
-id = "vincent_mercier"
-name = "Vincent Mercier"
+id = "valentin_moreau"
+name = "Valentin Moreau"
 team = "Mercier Competition"
 car_model_id = "autocross_petersen_superbuggy_t5"
 country = "FRA"
@@ -87,8 +87,8 @@ ai_character = "fast"
 livery_idx = 3
 
 [[drivers]]
-id = "mike_bartelen"
-name = "Mike Bartelen"
+id = "marten_bartelen"
+name = "Marten Bartelen"
 team = "Bartelen Motorsport"
 car_model_id = "autocross_rapid_superbuggy_t5"
 country = "NLD"
@@ -96,8 +96,8 @@ ai_character = "balanced"
 livery_idx = 4
 
 [[drivers]]
-id = "radek_jordak"
-name = "Radek Jordák"
+id = "radim_jordak"
+name = "Radim Jordák"
 team = "Jordák Motorsport"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "CZE"
@@ -105,8 +105,8 @@ ai_character = "aggressive"
 livery_idx = 5
 
 [[drivers]]
-id = "johnny_feuillade"
-name = "Johnny Feuillade"
+id = "jerome_feuillade"
+name = "Jerome Feuillade"
 team = "Feuillade Racing"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "FRA"

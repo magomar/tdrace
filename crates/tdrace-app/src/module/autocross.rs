@@ -112,92 +112,92 @@ impl GameModule for AutocrossGameModule {
     fn drivers(&self) -> Vec<DriverCharacter> {
         vec![
             DriverCharacter {
-                id: "petr_nikodem",
-                name: "Petr Nikodém",
+                id: "pavel_urban",
+                name: "Pavel Urban",
                 alias: "The Czech Rocket",
                 bio: "Multi-time European SuperBuggy champion who attacks Nova Paka's steep descents with relentless commitment.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(3),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.00, 0.03, -0.2, 0.02),
                 style: DrivingStyle::Aggressive,
-                favorite_cars: PETR_NIKODEM_FAVORITES,
+                favorite_cars: PAVEL_URBAN_FAVORITES,
             },
             DriverCharacter {
-                id: "bernd_stubbe",
-                name: "Bernd Stubbe",
+                id: "bodo_richter",
+                name: "Bodo Richter",
                 alias: "Der Meister",
                 bio: "Ten-time European SuperBuggy champion whose calculated, surgical racing lines define modern dirt circuit craft.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(1),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.00, -0.01, 0.05, -0.3, 0.03),
                 style: DrivingStyle::Calculating,
-                favorite_cars: BERND_STUBBE_FAVORITES,
+                favorite_cars: BODO_RICHTER_FAVORITES,
             },
             DriverCharacter {
-                id: "kevin_peters",
-                name: "Kevin Peters",
+                id: "klaus_petersen",
+                name: "Klaus Petersen",
                 alias: "B1600 Maestro",
                 bio: "Buggy1600 European champion with phenomenal launch traction and pinpoint rotation through tight dirt hairpins.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(2),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.00, 0.01, 0.02, 0.0, 0.01),
                 style: DrivingStyle::Smooth,
-                favorite_cars: KEVIN_PETERS_FAVORITES,
+                favorite_cars: KLAUS_PETERSEN_FAVORITES,
             },
             DriverCharacter {
-                id: "david_mendez",
-                name: "David Méndez",
+                id: "diego_morales",
+                name: "Diego Morales",
                 alias: "El Rápido",
                 bio: "Spanish Cross Car maestro whose aggressive Scandinavian flicks on Galician clay berms excite stadium crowds.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(5),
                 offsets: DriverPersonalityOffsets::new(-0.01, 0.1, 0.01, -0.02, 0.06, -0.4, 0.01),
                 style: DrivingStyle::Bold,
-                favorite_cars: DAVID_MENDEZ_FAVORITES,
+                favorite_cars: DIEGO_MORALES_FAVORITES,
             },
             DriverCharacter {
-                id: "miguel_gayoso",
-                name: "Miguel Gayoso",
+                id: "mateo_garrido",
+                name: "Mateo Garrido",
                 alias: "Junior Ace",
                 bio: "Cross Car Junior Academy Trophy phenom with rapid reflexes and momentum-focused lines in spec junior buggies.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(4),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.00, 0.00, 0.03, -0.1, 0.02),
                 style: DrivingStyle::Balanced,
-                favorite_cars: MIGUEL_GAYOSO_FAVORITES,
+                favorite_cars: MATEO_GARRIDO_FAVORITES,
             },
             DriverCharacter {
-                id: "vaclav_fejfar",
-                name: "Václav Fejfar",
+                id: "viktor_fiala",
+                name: "Viktor Fiala",
                 alias: "TAX Legend",
                 bio: "TouringAutocross legend who wrangles 550+ BHP turbo silhouettes through deep ruts and off-camber sweepers.",
                 preferred_car: crate::ui::menu::CarChoice::RallyCar,
                 color_scheme: CarColorScheme::from_index(6),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.01, -0.01, 0.04, -0.2, 0.01),
                 style: DrivingStyle::Tenacious,
-                favorite_cars: VACLAV_FEJFAR_FAVORITES,
+                favorite_cars: VIKTOR_FIALA_FAVORITES,
             },
             DriverCharacter {
-                id: "vincent_mercier",
-                name: "Vincent Mercier",
+                id: "valentin_moreau",
+                name: "Valentin Moreau",
                 alias: "Flying Frenchman",
                 bio: "French autocross virtuoso who attacks Saint-Georges and Faleyras amphitheatre bowls with full throttle commitment.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(7),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.2, 0.01, 0.01, 0.03, -0.2, 0.02),
                 style: DrivingStyle::Bold,
-                favorite_cars: VINCENT_MERCIER_FAVORITES,
+                favorite_cars: VALENTIN_MOREAU_FAVORITES,
             },
             DriverCharacter {
-                id: "jakub_novotny",
-                name: "Jakub Novotný",
+                id: "jiri_nemec",
+                name: "Jiří Němec",
                 alias: "Apex Hunter",
                 bio: "Young Czech charger specializing in high-revving 4WD buggies with devastating switchback exit speed.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(8),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.00, -0.01, 0.03, -0.2, 0.02),
                 style: DrivingStyle::Aggressive,
-                favorite_cars: JAKUB_NOVOTNY_FAVORITES,
+                favorite_cars: JIRI_NEMEC_FAVORITES,
             },
         ]
     }
@@ -230,41 +230,41 @@ impl GameModule for AutocrossGameModule {
     }
 }
 
-const PETR_NIKODEM_FAVORITES: &[DriverFavoriteCar] = &[
+const PAVEL_URBAN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
     DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
 ];
 
-const BERND_STUBBE_FAVORITES: &[DriverFavoriteCar] = &[
+const BODO_RICHTER_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
     DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
 ];
 
-const KEVIN_PETERS_FAVORITES: &[DriverFavoriteCar] = &[
+const KLAUS_PETERSEN_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 3, "autocross_petersen_buggy1600_t3"),
     DriverFavoriteCar::new("autocross", 5, "autocross_petersen_superbuggy_t5"),
 ];
 
-const DAVID_MENDEZ_FAVORITES: &[DriverFavoriteCar] = &[
+const DIEGO_MORALES_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 2, "autocross_iberian_relampago_t2"),
     DriverFavoriteCar::new("autocross", 1, "autocross_iberian_furia_t1"),
 ];
 
-const MIGUEL_GAYOSO_FAVORITES: &[DriverFavoriteCar] = &[
+const MATEO_GARRIDO_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 1, "autocross_ardennes_junior_t1"),
     DriverFavoriteCar::new("autocross", 2, "autocross_ardennes_pro_t2"),
 ];
 
-const VACLAV_FEJFAR_FAVORITES: &[DriverFavoriteCar] = &[
+const VIKTOR_FIALA_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 4, "autocross_bohemia_veloce_t4"),
 ];
 
-const VINCENT_MERCIER_FAVORITES: &[DriverFavoriteCar] = &[
+const VALENTIN_MOREAU_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 5, "autocross_petersen_superbuggy_t5"),
     DriverFavoriteCar::new("autocross", 3, "autocross_petersen_buggy1600_t3"),
 ];
 
-const JAKUB_NOVOTNY_FAVORITES: &[DriverFavoriteCar] = &[
+const JIRI_NEMEC_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
     DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
 ];

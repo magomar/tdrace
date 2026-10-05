@@ -60,8 +60,8 @@ country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "max_hunter"
-name = "Max Hunter"
+id = "magnus_wolff"
+name = "Magnus Wolff"
 team = "Manthey Racing"
 car_model_id = "gt_vandorn_stratus_t1"
 country = "NED"
@@ -69,8 +69,8 @@ ai_character = "aggressive"
 livery_idx = 1
 
 [[drivers]]
-id = "charles_laurent"
-name = "Charles Laurent"
+id = "cedric_laval"
+name = "Cédric Laval"
 team = "BMW Team RMG"
 car_model_id = "gt_bmr_bavaria_t1"
 country = "MCO"
@@ -78,8 +78,8 @@ ai_character = "smooth"
 livery_idx = 2
 
 [[drivers]]
-id = "fernando_toro"
-name = "Fernando Toro"
+id = "felix_navarro"
+name = "Félix Navarro"
 team = "Aston Martin Racing"
 car_model_id = "gt_albion_victor_t1"
 country = "ESP"
@@ -105,8 +105,8 @@ ai_character = "strategic"
 livery_idx = 5
 
 [[drivers]]
-id = "george_speed"
-name = "George Speed"
+id = "gideon_palmer"
+name = "Gideon Palmer"
 team = "Aston Martin Racing"
 car_model_id = "gt_albion_victor_t1"
 country = "GBR"

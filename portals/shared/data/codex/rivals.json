@@ -1974,8 +1974,8 @@
           ]
         },
         {
-          "id": "max_hunter",
-          "name": "Max Hunter",
+          "id": "magnus_wolff",
+          "name": "Magnus Wolff",
           "alias": "The Dominator",
           "bio": "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
           "style": "aggressive",
@@ -2033,8 +2033,8 @@
           ]
         },
         {
-          "id": "charles_laurent",
-          "name": "Charles Laurent",
+          "id": "cedric_laval",
+          "name": "Cédric Laval",
           "alias": "The Qualifying King",
           "bio": "Scuderia prodigy with unbelievable single-lap hot-lap qualifying pace and unmatched precision on street circuits.",
           "style": "smooth",
@@ -2092,8 +2092,8 @@
           ]
         },
         {
-          "id": "lewis_vance",
-          "name": "Lewis Vance",
+          "id": "lawrence_sterling",
+          "name": "Lawrence Sterling",
           "alias": "The Master",
           "bio": "7-time World Champion with legendary wet-weather mastery, flawless tire preservation, and icy composure.",
           "style": "smooth",
@@ -2151,8 +2151,8 @@
           ]
         },
         {
-          "id": "fernando_toro",
-          "name": "Fernando Toro",
+          "id": "felix_navarro",
+          "name": "Félix Navarro",
           "alias": "El Matador",
           "bio": "Relentless Spanish gladiator who wrestles ill-handling cars to the podium through sheer grit and racecraft.",
           "style": "tenacious",
@@ -2210,8 +2210,8 @@
           ]
         },
         {
-          "id": "george_speed",
-          "name": "George Speed",
+          "id": "gideon_palmer",
+          "name": "Gideon Palmer",
           "alias": "The Silver Bullet",
           "bio": "Analytical young British ace who capitalizes on strategy and executes millimeter-perfect overtakes into hairpins.",
           "style": "balanced",
@@ -2269,9 +2269,9 @@
           ]
         },
         {
-          "id": "lando_vance",
-          "name": "Lando Vance",
-          "alias": "Papaya Prodigy",
+          "id": "lucian_wells",
+          "name": "Lucian Wells",
+          "alias": "Orange Prodigy",
           "bio": "Twitch-reflex specialist with lightning high-speed chicane flicks and formidable wet-weather bravery.",
           "style": "bold",
           "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
@@ -2328,8 +2328,8 @@
           ]
         },
         {
-          "id": "oscar_rocket",
-          "name": "Oscar Rocket",
+          "id": "owen_prescott",
+          "name": "Owen Prescott",
           "alias": "Melbourne Missile",
           "bio": "Ultra-composed Australian sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
           "style": "calculating",
@@ -2387,9 +2387,9 @@
           ]
         },
         {
-          "id": "carlos_sainzfield",
-          "name": "Carlos Sainzfield",
-          "alias": "Smooth Operator",
+          "id": "cristian_soler",
+          "name": "Cristian Soler",
+          "alias": "Precision Specialist",
           "bio": "Methodical Iberian racer who reads tire degradation with micro-precision, making strategic overtakes look effortless.",
           "style": "calculating",
           "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
@@ -2446,8 +2446,8 @@
           ]
         },
         {
-          "id": "pierre_gaslyfield",
-          "name": "Pierre Gaslyfield",
+          "id": "patrice_garnier",
+          "name": "Patrice Garnier",
           "alias": "The Underdog",
           "bio": "Fiery underdog specialist whose daring late-braking passes through the chicane catch favorites off guard.",
           "style": "bold",
@@ -2505,8 +2505,8 @@
           ]
         },
         {
-          "id": "esteban_connor",
-          "name": "Esteban Connor",
+          "id": "eloi_constantin",
+          "name": "Eloi Constantin",
           "alias": "The Sentinel",
           "bio": "Resolute defender who plants his machine on the apex line and refuses to concede an inch on narrow circuits.",
           "style": "tenacious",
@@ -2564,8 +2564,8 @@
           ]
         },
         {
-          "id": "alexander_albonfield",
-          "name": "Alexander Albonfield",
+          "id": "aron_somchai",
+          "name": "Aron Somchai",
           "alias": "Apex Hunter",
           "bio": "Dynamic overtaker specializing in aggressive switchback cut-backs and high-speed outside line sweeps.",
           "style": "aggressive",
@@ -2623,9 +2623,9 @@
           ]
         },
         {
-          "id": "nico_hulkenstorm",
-          "name": "Nico Hulkenstorm",
-          "alias": "The Hulk",
+          "id": "niklas_herrmann",
+          "name": "Niklas Herrmann",
+          "alias": "The Rock",
           "bio": "Iron-willed endurance veteran whose rock-solid pace and zero-mistake discipline make him a relentless podium threat.",
           "style": "balanced",
           "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
@@ -2682,9 +2682,9 @@
           ]
         },
         {
-          "id": "dale_vance",
-          "name": "Dale 'The Intimidator' Vance",
-          "alias": "The Intimidator",
+          "id": "colt_reynolds",
+          "name": "Colt 'The Ironclad' Reynolds",
+          "alias": "The Ironclad",
           "bio": "Feared black #3 stock car legend. Master of the aggressive bumper tap, high-speed drafting lock, and relentless high-line intimidation.",
           "style": "aggressive",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -2741,9 +2741,9 @@
           ]
         },
         {
-          "id": "chase_gordon",
-          "name": "Chase 'Rainbow' Gordon",
-          "alias": "Rainbow Flash",
+          "id": "clayton_reed",
+          "name": "Clayton 'Viper' Reed",
+          "alias": "Viper Flash",
           "bio": "Precision road course virtuoso and aerodynamic drafting master. Lethal slingshot overtakes at Watkins Glen and Daytona.",
           "style": "calculating",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -2800,9 +2800,9 @@
           ]
         },
         {
-          "id": "richard_pettyfield",
-          "name": "Richard 'The King' Pettyfield",
-          "alias": "The King",
+          "id": "rex_montgomery",
+          "name": "Rex 'The Crown' Montgomery",
+          "alias": "The Crown",
           "bio": "The 200-win patriarch of American stock car racing. Runs the famous Carolina Petty Blue #43 with unmatched pack drafting defense.",
           "style": "smooth",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -2859,9 +2859,9 @@
           ]
         },
         {
-          "id": "rowdy_busch",
-          "name": "Rowdy 'Wild Thing' Busch",
-          "alias": "Wild Thing",
+          "id": "brant_harlan",
+          "name": "Brant 'Thunder' Harlan",
+          "alias": "Thunder",
           "bio": "Raw aggression and fearless dive-bombs into turn 1. Thrives in chaotic multicar packs and high-banked superspeedway shootouts.",
           "style": "aggressive",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -2918,10 +2918,10 @@
           ]
         },
         {
-          "id": "jimmie_johnson",
-          "name": "Jimmie 'Seven-Time' Johnson",
-          "alias": "Seven-Time",
-          "bio": "Seven-time Cup champion renowned for surgical consistency, tire management, and late-race charges on superspeedway restarts.",
+          "id": "judson_vance",
+          "name": "Judson 'Gold Rush' Vance",
+          "alias": "Gold Rush",
+          "bio": "Multi-time Cup champion renowned for surgical consistency, tire management, and late-race charges on superspeedway restarts.",
           "style": "calculating",
           "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
@@ -2977,9 +2977,9 @@
           ]
         },
         {
-          "id": "tony_stewart",
-          "name": "Tony 'Smoke' Stewart",
-          "alias": "Smoke",
+          "id": "tanner_cobb",
+          "name": "Tanner 'Hot Lap' Cobb",
+          "alias": "Hot Lap",
           "bio": "Dirt track and short-track brawler. Fearless high-line slider who thrives under the lights at Bristol Motor Speedway.",
           "style": "bold",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3036,10 +3036,10 @@
           ]
         },
         {
-          "id": "bobby_allison",
-          "name": "Bobby 'Alabama' Allison",
-          "alias": "Alabama Gang",
-          "bio": "Legendary leader of the Alabama Gang. Superspeedway high-bank specialist with ice-cold nerves in 3-wide pack racing.",
+          "id": "bo_mercer",
+          "name": "Bo 'Heartland' Mercer",
+          "alias": "Heartland Gang",
+          "bio": "Legendary leader of the Heartland Gang. Superspeedway high-bank specialist with ice-cold nerves in 3-wide pack racing.",
           "style": "tenacious",
           "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
@@ -3095,9 +3095,9 @@
           ]
         },
         {
-          "id": "bubba_wallace",
-          "name": "Bubba 'The Rocket' Wallace",
-          "alias": "The Rocket",
+          "id": "beau_chambers",
+          "name": "Beau 'The Comet' Chambers",
+          "alias": "The Comet",
           "bio": "Electrifying superspeedway ace and intermediate oval charger who uses draft pushes to catapult into the lead.",
           "style": "balanced",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3154,9 +3154,9 @@
           ]
         },
         {
-          "id": "joey_logano",
-          "name": "Joey 'Sliced Bread' Logano",
-          "alias": "Sliced Bread",
+          "id": "jasper_lowe",
+          "name": "Jasper 'Ace' Lowe",
+          "alias": "Ace",
           "bio": "Two-time Cup Series Champion famed for ruthless blocking maneuvers, restart mastery, and razor-sharp racecraft.",
           "style": "balanced",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3213,9 +3213,9 @@
           ]
         },
         {
-          "id": "bill_elliott",
-          "name": "Bill 'Awesome Bill' Elliott",
-          "alias": "Awesome Bill",
+          "id": "brayden_ellis",
+          "name": "Brayden 'Wildcard' Ellis",
+          "alias": "Wildcard",
           "bio": "From Dawsonville, Georgia. Holds the all-time stock car qualifying speed record at Talladega (212.809 mph).",
           "style": "smooth",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3272,9 +3272,9 @@
           ]
         },
         {
-          "id": "cale_yarborough",
-          "name": "Cale 'The Iron Man' Yarborough",
-          "alias": "The Iron Man",
+          "id": "curtis_yancey",
+          "name": "Curtis 'The Wall' Yancey",
+          "alias": "The Wall",
           "bio": "Tough-as-nails three-time consecutive Cup champion. Tireless high-line charger who battles wheel-to-wheel to the checkered flag.",
           "style": "bold",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3331,9 +3331,9 @@
           ]
         },
         {
-          "id": "rusty_wallace",
-          "name": "Rusty 'Thunder' Wallace",
-          "alias": "Thunder",
+          "id": "russ_warnock",
+          "name": "Russ 'Hammer' Warnock",
+          "alias": "Hammer",
           "bio": "Aggressive short-track and road course warrior. Legendary mastery of high-downforce braking zones and curb hops.",
           "style": "tenacious",
           "preferred_car": "850 BHP Premier Stock Car V8",
@@ -3390,8 +3390,8 @@
           ]
         },
         {
-          "id": "johan_vance",
-          "name": "Johan Vance",
+          "id": "jonas_lindqvist",
+          "name": "Jonas Lindqvist",
           "alias": "Ice Master",
           "bio": "Reigning multi-time Rallycross World Champion whose relentless joker lap strategy and surgical sliding precision dominate mixed surfaces.",
           "style": "calculating",
@@ -3454,8 +3454,8 @@
           ]
         },
         {
-          "id": "mattias_storm",
-          "name": "Mattias Storm",
+          "id": "mikael_stenmark",
+          "name": "Mikael Stenmark",
           "alias": "Stormy",
           "bio": "DTM and Rallycross double champion known for thunderous launches, aggressive switchbacks, and fearless dirt drifts.",
           "style": "aggressive",
@@ -3518,8 +3518,8 @@
           ]
         },
         {
-          "id": "timmy_hansenfield",
-          "name": "Timmy Hansenfield",
+          "id": "torsten_holmgren",
+          "name": "Torsten Holmgren",
           "alias": "Apex Predator",
           "bio": "World Rallycross titleholder born into rallycross royalty. Renowned for surgical overtaking and momentum conservation through loose gravel.",
           "style": "calculating",
@@ -3582,8 +3582,8 @@
           ]
         },
         {
-          "id": "kevin_hansenfield",
-          "name": "Kevin Hansenfield",
+          "id": "kasper_holmgren",
+          "name": "Kasper Holmgren",
           "alias": "Young Gun",
           "bio": "Junior European RX prodigy whose fearless high-speed Scandinavian flicks and rapid reflexes challenge the old guard.",
           "style": "tenacious",
@@ -3646,8 +3646,8 @@
           ]
         },
         {
-          "id": "niclas_gron",
-          "name": "Niclas Gron",
+          "id": "niko_salminen",
+          "name": "Niko Salminen",
           "alias": "Flying Finn",
           "bio": "Second-generation Finnish rallycross master renowned for unyielding speed on fast gravel sweeps and high-altitude jumps.",
           "style": "balanced",
@@ -3710,8 +3710,8 @@
           ]
         },
         {
-          "id": "anton_mark",
-          "name": "Anton Mark",
+          "id": "axel_markus",
+          "name": "Axel Markus",
           "alias": "The Hammer",
           "bio": "Continental Rallycross champion celebrated for ruthless defensive lines, heavy braking into hairpins, and exceptional wet tarmac pace.",
           "style": "tenacious",
@@ -3774,8 +3774,8 @@
           ]
         },
         {
-          "id": "timo_scheider",
-          "name": "Timo Scheider",
+          "id": "tobias_schmidt",
+          "name": "Tobias Schmidt",
           "alias": "The Veteran",
           "bio": "Two-time touring car champion turned rallycross warrior, leveraging decades of racecraft and composure under intense pressure.",
           "style": "smooth",
@@ -3838,8 +3838,8 @@
           ]
         },
         {
-          "id": "sebastien_loebfield",
-          "name": "Sebastien Loebfield",
+          "id": "stephane_lambert",
+          "name": "Stéphane Lambert",
           "alias": "The Maestro",
           "bio": "Nine-time rally champion and rallycross titan whose unmatched car control, gravel line intuition, and poise conquer any surface.",
           "style": "smooth",
@@ -3902,9 +3902,9 @@
           ]
         },
         {
-          "id": "petter_solbergfield",
-          "name": "Petter Solbergfield",
-          "alias": "Hollywood",
+          "id": "per_sundberg",
+          "name": "Per Sundberg",
+          "alias": "Showman",
           "bio": "Showman and rallycross legend whose blistering sideways slides, crowd-thrilling entries, and raw pace ignite every stadium.",
           "style": "bold",
           "preferred_car": "AWD Turbo Rally",
@@ -3966,10 +3966,10 @@
           ]
         },
         {
-          "id": "ken_blaster",
-          "name": "Ken Blaster",
+          "id": "kyle_blaze",
+          "name": "Kyle Blaze",
           "alias": "Gymkhana King",
-          "bio": "Stunt drifting maestro and rally specialist famous for smoke-filled all-wheel-drive donuts, fearless jumps, and barrier-grazing slides.",
+          "bio": "Stunt drifting maestro and rally specialist famous for rubber-burning all-wheel-drive donuts, fearless jumps, and barrier-grazing slides.",
           "style": "bold",
           "preferred_car": "AWD Turbo Rally",
           "primary_color": [
@@ -4030,9 +4030,9 @@
           ]
         },
         {
-          "id": "andreas_bakkerud",
-          "name": "Andreas Bakkerud",
-          "alias": "Baby Blue",
+          "id": "anders_brekke",
+          "name": "Anders Brekke",
+          "alias": "Cobalt",
           "bio": "Norwegian rallycross powerhouse with aggressive apex-hugging lines, explosive launches, and legendary Scandinavian flick entries.",
           "style": "aggressive",
           "preferred_car": "AWD Turbo Rally",
@@ -4094,8 +4094,8 @@
           ]
         },
         {
-          "id": "reinis_nitissfield",
-          "name": "Reinis Nitissfield",
+          "id": "roberts_kalnins",
+          "name": "Roberts Kalnins",
           "alias": "Baltic Bullet",
           "bio": "The youngest European RX champion in history, famed for cold-blooded calculated overtakes and razor-sharp joker lap execution.",
           "style": "balanced",

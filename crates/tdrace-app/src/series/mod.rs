@@ -659,8 +659,8 @@ mod tests {
             vec!["monza".to_string(), "spa".to_string()],
             5,
             &[
-                ("max", "Max Hunter", "Red Bull"),
-                ("lewis", "Lewis Hamilton", "Ferrari"),
+                ("max", "Magnus Wolff", "Apex Red"),
+                ("lewis", "Lawrence Sterling", "Valente Corse"),
             ],
         );
 
@@ -669,8 +669,8 @@ mod tests {
             vec![
                 RoundDriverResult {
                     driver_id: "max".to_string(),
-                    driver_name: "Max Hunter".to_string(),
-                    team_name: "Red Bull".to_string(),
+                    driver_name: "Magnus Wolff".to_string(),
+                    team_name: "Apex Red".to_string(),
                     finish_position: 1,
                     total_time: 120.5,
                     best_lap: Some(24.1),
@@ -679,8 +679,8 @@ mod tests {
                 },
                 RoundDriverResult {
                     driver_id: "lewis".to_string(),
-                    driver_name: "Lewis Hamilton".to_string(),
-                    team_name: "Ferrari".to_string(),
+                    driver_name: "Lawrence Sterling".to_string(),
+                    team_name: "Valente Corse".to_string(),
                     finish_position: 2,
                     total_time: 122.0,
                     best_lap: Some(24.4),

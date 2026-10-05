@@ -54,8 +54,8 @@ country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "vaclav_fejfar"
-name = "Václav Fejfar"
+id = "viktor_fiala"
+name = "Viktor Fiala"
 team = "Fejfar Motorsport"
 car_model_id = "autocross_bohemia_veloce_t4"
 country = "CZE"
@@ -63,8 +63,8 @@ ai_character = "fast"
 livery_idx = 1
 
 [[drivers]]
-id = "erwin_frieszl"
-name = "Erwin Frieszl"
+id = "erich_frieszl"
+name = "Erich Frieszl"
 team = "Frieszl Racing"
 car_model_id = "autocross_shinano_tsunami_t4"
 country = "AUT"
@@ -72,8 +72,8 @@ ai_character = "aggressive"
 livery_idx = 2
 
 [[drivers]]
-id = "adriaan_boele"
-name = "Adriaan Boele"
+id = "arjen_boele"
+name = "Arjen Boele"
 team = "Boele Autosport"
 car_model_id = "autocross_bohemia_veloce_t4"
 country = "NLD"
@@ -81,8 +81,8 @@ ai_character = "fast"
 livery_idx = 3
 
 [[drivers]]
-id = "marcel_egg"
-name = "Marcel Egg"
+id = "martin_egg"
+name = "Martin Egg"
 team = "Egg Racing Team"
 car_model_id = "autocross_vortek_quattro_t4"
 country = "CHE"
@@ -90,8 +90,8 @@ ai_character = "balanced"
 livery_idx = 4
 
 [[drivers]]
-id = "pavel_vyborny"
-name = "Pavel Výborný"
+id = "patrik_vyborny"
+name = "Patrik Výborný"
 team = "Výborný Motorsport"
 car_model_id = "autocross_shinano_tsunami_t4"
 country = "CZE"

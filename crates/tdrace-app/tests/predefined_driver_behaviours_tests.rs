@@ -30,14 +30,14 @@ fn test_find_global_resolves_all_modules() {
     let classic = DriverCharacter::find_global("silvia_tanaka").expect("silvia_tanaka in classic");
     assert_eq!(classic.name, "Silvia Tanaka");
 
-    let gt = DriverCharacter::find_global("max_hunter").expect("max_hunter in gt");
-    assert_eq!(gt.name, "Max Hunter");
+    let gt = DriverCharacter::find_global("magnus_wolff").expect("magnus_wolff in gt");
+    assert_eq!(gt.name, "Magnus Wolff");
 
-    let nascar = DriverCharacter::find_global("dale_vance").expect("dale_vance in nascar");
-    assert_eq!(nascar.name, "Dale 'The Intimidator' Vance");
+    let nascar = DriverCharacter::find_global("colt_reynolds").expect("colt_reynolds in nascar");
+    assert_eq!(nascar.name, "Colt 'The Ironclad' Reynolds");
 
-    let rally = DriverCharacter::find_global("johan_vance").expect("johan_vance in rally");
-    assert_eq!(rally.name, "Johan Vance");
+    let rally = DriverCharacter::find_global("jonas_lindqvist").expect("jonas_lindqvist in rally");
+    assert_eq!(rally.name, "Jonas Lindqvist");
 
     let kart = DriverCharacter::find_global("marco_armani").expect("marco_armani in kart");
     assert_eq!(kart.name, "Marco Armani");

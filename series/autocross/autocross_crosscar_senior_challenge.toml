@@ -54,8 +54,8 @@ country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "david_mendez"
-name = "David Méndez"
+id = "diego_morales"
+name = "Diego Morales"
 team = "Speedcar Factory Team"
 car_model_id = "autocross_iberian_relampago_t2"
 country = "ESP"
@@ -99,8 +99,8 @@ ai_character = "aggressive"
 livery_idx = 5
 
 [[drivers]]
-id = "alexandre_calvet"
-name = "Alexandre Calvet"
+id = "antoine_calvet"
+name = "Antoine Calvet"
 team = "Calvet Cross Car"
 car_model_id = "autocross_ardennes_pro_t2"
 country = "FR"

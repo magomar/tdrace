@@ -189,17 +189,17 @@ fn test_module_drivers_per_tier_favorite_cars_resolve_in_catalog() {
 fn test_rally_tier_4_ai_driver_signature_cars() {
     let rally_module = RallyGameModule::new();
     let drivers = rally_module.drivers();
-    let timmy = drivers.iter().find(|d| d.name == "Timmy Hansenfield").expect("Timmy Hansenfield");
+    let timmy = drivers.iter().find(|d| d.name == "Torsten Holmgren").expect("Torsten Holmgren");
     assert_eq!(
         timmy.favorite_car_for_discipline_and_tier("rally", 4),
         Some("rally_gallia_lyon_t4"),
-        "Timmy Hansenfield must drive Peugeot 208 WRX in Tier 4"
+        "Torsten Holmgren must drive Peugeot 208 WRX in Tier 4"
     );
-    let ken = drivers.iter().find(|d| d.name == "Ken Blaster").expect("Ken Blaster");
+    let ken = drivers.iter().find(|d| d.name == "Kyle Blaze").expect("Kyle Blaze");
     assert_eq!(
         ken.favorite_car_for_discipline_and_tier("rally", 4),
         Some("rally_forge_comet_t4"),
-        "Ken Blaster must drive Ford Focus RS RX in Tier 4"
+        "Kyle Blaze must drive Ford Focus RS RX in Tier 4"
     );
 }
 

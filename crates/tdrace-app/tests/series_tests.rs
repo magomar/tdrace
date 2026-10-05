@@ -641,8 +641,8 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     assert_eq!(champ.standings.len(), session.max_grid_participants());
     let standing_ids: Vec<String> = champ.standings.iter().map(|s| s.driver_id.clone()).collect();
     assert!(standing_ids.contains(&"player".to_string()));
-    assert!(standing_ids.contains(&"johan_vance".to_string()));
-    assert!(standing_ids.contains(&"mattias_storm".to_string()));
+    assert!(standing_ids.contains(&"jonas_lindqvist".to_string()));
+    assert!(standing_ids.contains(&"mikael_stenmark".to_string()));
 
     // 2. Init race for Round 1
     session.init_race();
@@ -657,8 +657,8 @@ fn test_rally_championship_points_awarded_to_all_drivers_and_persisted_across_ro
     }
 
     // 3. Simulate race finish where:
-    // Car 1 (Johan Vance) finishes 1st (with fastest lap)
-    // Car 2 (Mattias Storm) finishes 2nd
+    // Car 1 (Jonas Lindqvist) finishes 1st (with fastest lap)
+    // Car 2 (Mikael Stenmark) finishes 2nd
     // Car 0 (Player) finishes 3rd
     // Cars 3..7 finish 4th..8th
     for (idx, tracker) in session.world.trackers.iter_mut().enumerate() {

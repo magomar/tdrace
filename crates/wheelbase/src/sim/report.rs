@@ -767,7 +767,7 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
         let avg_grip = grip_mults.iter().sum::<f32>() / grip_mults.len() as f32;
 
         let char_desc = match surf {
-            SurfaceType::Asphalt => "Baseline optimal grip ribbon, dense rubber smoke on limit",
+            SurfaceType::Asphalt => "Baseline optimal grip ribbon, dense tire vapor on limit",
             SurfaceType::Concrete => "Poured solid pavement, high grip with low rolling drag for grandstands and stadium bowls",
             SurfaceType::Curb => "Rumble strips with slight vibration, 12% reduced grip",
             SurfaceType::Dirt => "Playable loose surface, progressive controllable drift slides",

@@ -1389,7 +1389,7 @@ fn hud_data() -> CodexHudData {
         CodexLocatorAid {
             id: "adaptive_visibility",
             name: "Adaptive Contrast Scaling",
-            description: "Automatically increases aura and chevron luminance when obscured by smoke, tire spray, or off-track foliage.",
+            description: "Automatically increases aura and chevron luminance when obscured by tire vapor, spray, or off-track foliage.",
         },
         CodexLocatorAid {
             id: "sonar_ping",
