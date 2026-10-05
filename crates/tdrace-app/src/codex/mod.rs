@@ -26,8 +26,12 @@ use tdrace_core::track::{Track, TrackKind};
 use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
 use cabinet::input::gamepad::GamepadConfig;
 use cabinet::input::mapping::{ArcadeAction, InputMap, InputSource};
+use cabinet::net::INTERP_DELAY_SEC;
+use race_kit::world::PIT_STOP_REPAIR_AMOUNT;
 use race_ui::camera::{CameraConfig, MAX_CAR_SCREEN_OFFSET_FRAC};
+use tdrace_core::profile::AcademyLessonDef;
 
+use crate::ai::{DriverCharacter, DriverQuality, DriverTier};
 use crate::audio::EngineSoundType;
 use crate::catalog::{get_tier_name, RealCarModel, ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
 use crate::profile::repair::{
@@ -39,6 +43,7 @@ use crate::module::{
     gt::GtWorldChallengeModule, kart::KartGameModule, nascar::NascarGameModule, rally::RallyGameModule,
     GameModule, VehicleVisualType,
 };
+use crate::series::{manager::EMBEDDED_PRESETS, PointSystem, SeriesDefinition};
 use crate::ui::menu::CarChoice;
 
 /// Version of the JSON layout. Bump it when a field changes meaning or is removed.
@@ -1449,6 +1454,1027 @@ fn hud_data() -> CodexHudData {
     }
 }
 
+// --- Racing DTOs (Spec 087 P4) ---
+
+#[derive(Serialize)]
+pub struct CodexTierInfo {
+    pub tier: u32,
+    pub name: String,
+    pub required_licence: &'static str,
+    pub car_cost_xp: u64,
+    pub base_purse: u64,
+}
+
+#[derive(Serialize)]
+pub struct CodexDisciplineInfo {
+    pub id: &'static str,
+    pub title: &'static str,
+    pub subtitle: &'static str,
+    pub description: &'static str,
+    pub launch: bool,
+    pub car_count: usize,
+    pub circuit_count: usize,
+    pub series_count: usize,
+    pub tiers: Vec<CodexTierInfo>,
+}
+
+#[derive(Serialize)]
+pub struct CodexFormatInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub tag: &'static str,
+    pub description: &'static str,
+    pub rules: Vec<&'static str>,
+    pub scoring_summary: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexJokerRuleInfo {
+    pub mandatory_laps: u32,
+    pub time_penalty_sec: f32,
+    pub applies_to: &'static str,
+    pub hud_indicator: &'static str,
+    pub strategy_notes: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexPitPhase {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexPitServiceInfo {
+    pub repair_amount: f32,
+    pub speed_limiter_kmh: f32,
+    pub field_repair_chassis_cap: f32,
+    pub field_repair_engine_cap: f32,
+    pub field_repair_suspension_cap: f32,
+    pub phases: Vec<CodexPitPhase>,
+}
+
+#[derive(Serialize)]
+pub struct CodexPositionPoints {
+    pub position: usize,
+    pub points: u32,
+}
+
+#[derive(Serialize)]
+pub struct CodexPointSystemInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub points_table: Vec<CodexPositionPoints>,
+    pub fastest_lap_bonus: Option<&'static str>,
+    pub stage_win_bonus: Option<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexRoundInfo {
+    pub order: usize,
+    pub track_id: String,
+    pub name: Option<String>,
+    pub laps: Option<u32>,
+}
+
+#[derive(Serialize)]
+pub struct CodexSeriesDriver {
+    pub id: String,
+    pub name: String,
+    pub team: String,
+    pub is_player: bool,
+    pub car_model_id: Option<String>,
+    pub country: Option<String>,
+    pub ai_style: Option<String>,
+    pub ai_tier: Option<u8>,
+}
+
+#[derive(Serialize)]
+pub struct CodexSeriesPresetInfo {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub module_id: String,
+    pub tier: u32,
+    pub laps_per_round: u32,
+    pub scoring_system: String,
+    pub fastest_lap_bonus: bool,
+    pub stage_win_bonus: bool,
+    pub round_count: usize,
+    pub rounds: Vec<CodexRoundInfo>,
+    pub driver_count: usize,
+    pub drivers: Vec<CodexSeriesDriver>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCareerTierDetails {
+    pub tier: u32,
+    pub name: &'static str,
+    pub promotion_criteria: &'static str,
+    pub starter_car_id: Option<&'static str>,
+    pub starter_car_name: Option<&'static str>,
+    pub car_cost_xp: u64,
+    pub first_time_exploration_xp: u64,
+    pub round_base_purse: u64,
+    pub unlocked_tracks: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCareerLadder {
+    pub module_id: &'static str,
+    pub module_name: &'static str,
+    pub tiers: Vec<CodexCareerTierDetails>,
+}
+
+#[derive(Serialize)]
+pub struct CodexXpEconomyInfo {
+    pub distance_divisor: f32,
+    pub completion_multiplier: f32,
+    pub first_time_bonus_per_tier: u64,
+    pub car_cost_per_tier: u64,
+    pub formulas: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexRepairEconomyInfo {
+    pub purse_cap_share: f64,
+    pub safety_net_credit_limit: u64,
+    pub safety_net_health: f32,
+    pub formulas: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCareerInfo {
+    pub ladders: Vec<CodexCareerLadder>,
+    pub xp_economy: CodexXpEconomyInfo,
+    pub repair_economy: CodexRepairEconomyInfo,
+}
+
+#[derive(Serialize)]
+pub struct CodexAcademyLesson {
+    pub id: &'static str,
+    pub index: usize,
+    pub title: String,
+    pub description: String,
+    pub track_slug: String,
+    pub car_slug: String,
+    pub gold_time_sec: f32,
+    pub silver_time_sec: f32,
+    pub bronze_time_sec: f32,
+    pub bronze_credit_bounty: u64,
+    pub silver_credit_bounty: u64,
+    pub gold_credit_bounty: u64,
+    pub base_xp_reward: u32,
+}
+
+#[derive(Serialize)]
+pub struct CodexLicenceGrade {
+    pub grade: &'static str,
+    pub title: &'static str,
+    pub badge: &'static str,
+    pub description: &'static str,
+    pub required_for: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexAcademyInfo {
+    pub curriculum: Vec<CodexAcademyLesson>,
+    pub max_permissible_impulse: f32,
+    pub max_permissible_off_track_sec: f32,
+    pub licence_grades: Vec<CodexLicenceGrade>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCollisionModeInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexMultiplayerInfo {
+    pub min_players: u32,
+    pub max_players: u32,
+    pub simulation_rate_hz: u32,
+    pub interpolation_delay_ms: u32,
+    pub discovery: &'static str,
+    pub collision_modes: Vec<CodexCollisionModeInfo>,
+    pub host_steps: Vec<&'static str>,
+    pub join_steps: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexRacingData {
+    pub id: &'static str,
+    pub disciplines: Vec<CodexDisciplineInfo>,
+    pub formats: Vec<CodexFormatInfo>,
+    pub joker_rule: CodexJokerRuleInfo,
+    pub pit_service: CodexPitServiceInfo,
+    pub point_systems: Vec<CodexPointSystemInfo>,
+    pub series: Vec<CodexSeriesPresetInfo>,
+    pub career: CodexCareerInfo,
+    pub academy: CodexAcademyInfo,
+    pub multiplayer: CodexMultiplayerInfo,
+}
+
+// --- Rivals DTOs (Spec 087 P4) ---
+
+#[derive(Serialize)]
+pub struct CodexDriverStatsInfo {
+    pub speed: f32,
+    pub aggression: f32,
+    pub precision: f32,
+    pub defense: f32,
+}
+
+#[derive(Serialize)]
+pub struct CodexDriverFavoriteCarInfo {
+    pub discipline: &'static str,
+    pub tier: u8,
+    pub model_id: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexDriverCharacterInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub alias: &'static str,
+    pub bio: &'static str,
+    pub style: &'static str,
+    pub preferred_car: &'static str,
+    pub primary_color: [f32; 4],
+    pub secondary_color: [f32; 4],
+    pub accent_color: [f32; 4],
+    pub stats: CodexDriverStatsInfo,
+    pub favorite_cars: Vec<CodexDriverFavoriteCarInfo>,
+}
+
+#[derive(Serialize)]
+pub struct CodexDrivingStyleInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub speed_mult: f32,
+    pub aggression: f32,
+    pub precision: f32,
+    pub defense: f32,
+    pub tactical_traits: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexSkillTierInfo {
+    pub tier: u8,
+    pub name: &'static str,
+    pub short_name: &'static str,
+    pub tag: &'static str,
+    pub pace_limit: f32,
+    pub consistency: f32,
+    pub composure: f32,
+    pub bell_curve_weights: [u8; 5],
+}
+
+#[derive(Serialize)]
+pub struct CodexMistakeKindInfo {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub trigger_condition: &'static str,
+    pub gameplay_impact: &'static str,
+    pub recovery_behavior: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexRivalsData {
+    pub id: &'static str,
+    pub drivers: Vec<CodexDriverCharacterInfo>,
+    pub driving_styles: Vec<CodexDrivingStyleInfo>,
+    pub skill_tiers: Vec<CodexSkillTierInfo>,
+    pub mistake_kinds: Vec<CodexMistakeKindInfo>,
+}
+
+fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> CodexRacingData {
+    let disciplines = modules()
+        .into_iter()
+        .filter(|m| scope.includes_module(m.id()))
+        .map(|m| {
+            let id = m.id();
+            let (desc, tiers) = match id {
+                "classic" => (
+                    "Retro top-down racing inspired by GeneRally, Super Sprint and Micro Machines, featuring fantasy muscle cars, karts, formula singles, and off-roaders.",
+                    vec![CodexTierInfo {
+                        tier: 1,
+                        name: "Open Competition".to_string(),
+                        required_licence: "Class D (National Grassroots)",
+                        car_cost_xp: 1_000,
+                        base_purse: 5_000,
+                    }],
+                ),
+                "kart" => (
+                    "Ultra-low inertia racing with rigid tubular chassis, high lateral g-forces, and split-second steering response from cadet classes up to Division 1 Superkarts.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "Cadet 60cc".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "Junior OK-J".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "Senior OK / Shifter".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "KZ2 Shifter Pro".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "Superkart Div 2".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 5_000, base_purse: 120_000 },
+                        CodexTierInfo { tier: 6, name: "Superkart World Series".to_string(), required_licence: "Class D (National Grassroots)", car_cost_xp: 6_000, base_purse: 150_000 },
+                    ],
+                ),
+                "autocross" => (
+                    "High-octane wheel-to-wheel dirt racing featuring screaming 600cc Cross Cars, Buggy 1600 single-seaters, and 600+ bhp SuperBuggy 4WD prototypes.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "Cross Car Junior".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "Cross Car Senior".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "Buggy 1600".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "Touring Autocross".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "SuperBuggy World Series".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 5_000, base_purse: 120_000 },
+                    ],
+                ),
+                "rally" => (
+                    "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Nitrocross Group E beasts.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "Rally4 Grassroots Cup".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "Supercar Lites Trophy".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "Euro RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "World RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "RX1e Electric Championship".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 5_000, base_purse: 120_000 },
+                        CodexTierInfo { tier: 6, name: "Nitrocross Group E".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 6_000, base_purse: 150_000 },
+                        CodexTierInfo { tier: 7, name: "Group B Masters".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 7_000, base_purse: 180_000 },
+                    ],
+                ),
+                "gt" => (
+                    "Prestigious sports car and endurance racing spanning production-based GT4, worldwide FIA GT3, high-downforce GT1 classics, and state-of-the-art hybrid Hypercars.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "GT4 Clubman Sprint".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "GT3 European Challenge".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "GT2 Power Masters".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "GT1 Heritage Trophy".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "Hypercar World GP".to_string(), required_licence: "Class S (FIA Superlicense)", car_cost_xp: 5_000, base_purse: 120_000 },
+                    ],
+                ),
+                "nascar" => (
+                    "Heavy V8 pushrod stock car combat from grassroots quarter-mile bullrings and dirt ovals to high-banked intermediate tracks and 200 mph restrictor-plate superspeedways.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "Street Stock Bullring".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "Late Model Challenge".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "ARCA National Tour".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "Craftsman Truck Series".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "NASCAR Cup Series".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 5_000, base_purse: 120_000 },
+                    ],
+                ),
+                "extreme_offroad" => (
+                    "Unrestricted terrain action featuring open tubular sand rails, 1000 bhp Trophy Trucks, Arctic ice conquerors, deep mud boggers, and 12-ton monster crushers.",
+                    vec![
+                        CodexTierInfo { tier: 1, name: "Desert Sand Sprint".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 1_000, base_purse: 5_000 },
+                        CodexTierInfo { tier: 2, name: "Canyon Raid".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "Extreme Offroad Cup".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "Mud Masters".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "Ultimate Monster Championship".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 5_000, base_purse: 120_000 },
+                    ],
+                ),
+                _ => ("Motorsport discipline.", Vec::new()),
+            };
+
+            let series_count = EMBEDDED_PRESETS
+                .iter()
+                .filter_map(|&(_, toml)| SeriesDefinition::from_toml(toml).ok())
+                .filter(|s| s.series.module_id == id)
+                .count();
+
+            CodexDisciplineInfo {
+                id,
+                title: m.title(),
+                subtitle: m.subtitle(),
+                description: desc,
+                launch: LAUNCH_MODULES.contains(&id),
+                car_count: cars.iter().filter(|c| c.module == id).count(),
+                circuit_count: circuits.iter().filter(|c| c.module == id).count(),
+                series_count,
+                tiers,
+            }
+        })
+        .collect();
+
+    let formats = vec![
+        CodexFormatInfo {
+            id: "laps",
+            name: "Lap Sprint & Feature Race",
+            tag: "GRID • STANDARD MOTORSPORT",
+            description: "Drivers line up on a staggered starting grid and race for a fixed number of laps. The first vehicle to cross the start/finish line after completing all scheduled laps takes the checkered flag.",
+            rules: vec![
+                "Staggered grid start based on qualifying or reverse championship standings.",
+                "Race duration defined by track length and championship regulations (typically 3 to 10 laps).",
+                "Full-contact Separating Axis Theorem (SAT) physics or non-contact ghosting.",
+                "DNF recorded if vehicle suffers terminal chassis or powertrain integrity loss.",
+            ],
+            scoring_summary: "Finishing positions determine race purse, championship points, and podium trophies.",
+        },
+        CodexFormatInfo {
+            id: "time_attack",
+            name: "Time Attack / Solo Hotlap",
+            tag: "SOLO • GHOST CAR TELEMETRY",
+            description: "Solo driving against the clock on an empty circuit. Continuous flying laps record personal best lap times, telemetry delta splits, and ghost shadow cars for trajectory comparison.",
+            rules: vec![
+                "No opponent vehicle collisions or traffic interference.",
+                "Flying start initiated as soon as vehicle crosses the start/finish timing gate.",
+                "Track limits enforced: exceeding track boundary thresholds invalidates the current lap.",
+                "Real-time ghost car mirrors the driver's fastest recorded lap trajectory.",
+            ],
+            scoring_summary: "Fastest single clean lap recorded on global circuit leaderboards and local Hall of Fame.",
+        },
+        CodexFormatInfo {
+            id: "qualifying",
+            name: "Timed Qualifying Session",
+            tag: "GRID POSITION • TIMED WINDOW",
+            description: "Pre-race timed session where drivers complete fast laps in clean air or light traffic to establish the starting grid order for the championship feature race.",
+            rules: vec![
+                "Session clock counts down (e.g. 5 to 10 minutes) with open track access.",
+                "Best valid single flying lap determines pole position and starting grid slots.",
+                "Drivers must manage track positioning for clean air and aerodynamic drafting.",
+                "Tire temperature warmup lap required to bring compound into optimal grip window.",
+            ],
+            scoring_summary: "Establishes starting grid order for the feature race. Pole position awards 1 bonus point in select series.",
+        },
+        CodexFormatInfo {
+            id: "stage_rally",
+            name: "Stage Rally / Point-to-Point",
+            tag: "POINT-TO-POINT • INTERVAL STARTS",
+            description: "Individual point-to-point stages against the stopwatch across demanding surfaces with co-driver pace notes, blind crests, and narrow roadside trees.",
+            rules: vec![
+                "Staggered interval starts with fixed separation between competitors.",
+                "Single continuous run from start timing gate to flying finish line.",
+                "Surfaces dynamically transition between tarmac, loose gravel, mud, and hardpack snow.",
+                "Exceeding track verges or striking obstacles incurs direct time penalties and vehicle damage.",
+            ],
+            scoring_summary: "Lowest cumulative elapsed stage time wins the rally event.",
+        },
+        CodexFormatInfo {
+            id: "elimination",
+            name: "Knockout / Elimination",
+            tag: "SUDDEN DEATH • TAIL-END KNOCKOUT",
+            description: "High-pressure survival format: at the end of each lap or elimination countdown timer, the driver in last position is instantly knocked out until only the champion remains.",
+            rules: vec![
+                "Starts with a full grid of 6 to 12 drivers battling in close quarters.",
+                "Every lap or 30-second interval, the last-place vehicle is eliminated with a siren alert.",
+                "Drivers must balance aggressive overtaking against defensive survival positioning.",
+                "The final two surviving drivers battle in a head-to-head sprint for the trophy.",
+            ],
+            scoring_summary: "Points and prize purse awarded in reverse order of elimination.",
+        },
+    ];
+
+    let joker_rule = CodexJokerRuleInfo {
+        mandatory_laps: 1,
+        time_penalty_sec: 30.0,
+        applies_to: "Rallycross circuits with dedicated joker route (e.g., Lydden Hill, Höljes, Mettet, Dreux)",
+        hud_indicator: "Cockpit HUD displays JOKER REQUIRED (yellow) until route traversed, then JOKER CLEARED (cyan)",
+        strategy_notes: "The joker lap is an alternative, longer detour layout. Taking the joker early allows clean air and undercut potential; taking it late risks rejoining in traffic.",
+    };
+
+    let pit_service = CodexPitServiceInfo {
+        repair_amount: PIT_STOP_REPAIR_AMOUNT,
+        speed_limiter_kmh: 60.0,
+        field_repair_chassis_cap: FIELD_REPAIR_CHASSIS_CAP,
+        field_repair_engine_cap: FIELD_REPAIR_ENGINE_CAP,
+        field_repair_suspension_cap: FIELD_REPAIR_SUSPENSION_CAP,
+        phases: vec![
+            CodexPitPhase {
+                id: "in_transit",
+                name: "Pit Lane Transit",
+                description: "Vehicle enters the pit lane. The automatic pit speed limiter engages (60 km/h) to prevent speeding infractions.",
+            },
+            CodexPitPhase {
+                id: "stationary_in_box",
+                name: "Stationary Service Box",
+                description: "Vehicle comes to a complete halt inside the designated pit stall box. Controls are locked while the pit crew refuels and applies 25% field repairs to chassis, engine, and suspension up to regulatory caps.",
+            },
+            CodexPitPhase {
+                id: "service_complete",
+                name: "Release & Exit Rejoin",
+                description: "Service is complete. The pit crew signals release; driver regains full throttle control and accelerates to the pit exit line before blending safely back into race traffic.",
+            },
+        ],
+    };
+
+    let point_systems = vec![
+        CodexPointSystemInfo {
+            id: "fia_standard",
+            name: "FIA Standard (F1 / GT World Challenge)",
+            description: "Official FIA championship points scale crediting the top 10 finishers. Encourages race-win pursuit with a steep podium gradient and rewards ultimate pace with a fastest-lap bonus point.",
+            points_table: (1..=10)
+                .map(|p| CodexPositionPoints {
+                    position: p,
+                    points: PointSystem::FiaStandard { fastest_lap_bonus: false }.points_for_position(p, false),
+                })
+                .collect(),
+            fastest_lap_bonus: Some("+1 bonus point (requires top-10 finish)"),
+            stage_win_bonus: None,
+        },
+        CodexPointSystemInfo {
+            id: "motogp",
+            name: "MotoGP World Championship",
+            description: "Deep top-15 points distribution engineered for motorcycle grand prix and multi-class racing, keeping mid-pack battles mathematically meaningful through the final round.",
+            points_table: (1..=15)
+                .map(|p| CodexPositionPoints {
+                    position: p,
+                    points: PointSystem::MotoGp.points_for_position(p, false),
+                })
+                .collect(),
+            fastest_lap_bonus: None,
+            stage_win_bonus: None,
+        },
+        CodexPointSystemInfo {
+            id: "classic_arcade",
+            name: "Classic Arcade (Top 6)",
+            description: "Nostalgic 6-place scoring with steep podium drop-offs modeled after 1990s arcade cabinets and GeneRally circuits. Zero points are awarded for 7th place and below.",
+            points_table: (1..=6)
+                .map(|p| CodexPositionPoints {
+                    position: p,
+                    points: PointSystem::ClassicArcade.points_for_position(p, false),
+                })
+                .collect(),
+            fastest_lap_bonus: None,
+            stage_win_bonus: None,
+        },
+        CodexPointSystemInfo {
+            id: "nascar_cup",
+            name: "NASCAR Cup Series",
+            description: "Authentic 40-driver field progression where every finishing spot yields points. Setting stage_win_bonus awards +10 points to the fastest lap / stage winner.",
+            points_table: (1..=36)
+                .map(|p| CodexPositionPoints {
+                    position: p,
+                    points: PointSystem::NascarCup { stage_win_bonus: false }.points_for_position(p, false),
+                })
+                .collect(),
+            fastest_lap_bonus: None,
+            stage_win_bonus: Some("+10 bonus points for stage win / fastest lap"),
+        },
+    ];
+
+    let mut series = Vec::new();
+    for &(preset_id, toml_str) in EMBEDDED_PRESETS {
+        if let Ok(def) = SeriesDefinition::from_toml(toml_str) {
+            if scope.includes_module(&def.series.module_id) {
+                let rounds: Vec<CodexRoundInfo> = def.rounds.iter().map(|r| CodexRoundInfo {
+                    order: r.order,
+                    track_id: r.track_id.clone(),
+                    name: r.name.clone(),
+                    laps: r.laps,
+                }).collect();
+
+                let drivers: Vec<CodexSeriesDriver> = def.drivers.iter().map(|d| CodexSeriesDriver {
+                    id: d.id.clone(),
+                    name: d.name.clone(),
+                    team: d.team.clone(),
+                    is_player: d.is_player,
+                    car_model_id: d.car_model_id.clone(),
+                    country: d.country.clone(),
+                    ai_style: d.ai_style.clone(),
+                    ai_tier: d.ai_tier,
+                }).collect();
+
+                series.push(CodexSeriesPresetInfo {
+                    id: preset_id.to_string(),
+                    name: def.series.name,
+                    description: def.series.description,
+                    module_id: def.series.module_id,
+                    tier: def.series.tier,
+                    laps_per_round: def.series.laps_per_round,
+                    scoring_system: def.scoring.system,
+                    fastest_lap_bonus: def.scoring.fastest_lap_bonus,
+                    stage_win_bonus: def.scoring.stage_win_bonus,
+                    round_count: rounds.len(),
+                    rounds,
+                    driver_count: drivers.len(),
+                    drivers,
+                });
+            }
+        }
+    }
+
+    let all_ladders = vec![
+        CodexCareerLadder {
+            module_id: "gt",
+            module_name: "GT World Challenge & Endurance",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: GT4 Clubman Sprint", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("gt_toyota_supra_gt4"), starter_car_name: Some("Toyota GR Supra GT4"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["red_bull_ring", "zandvoort", "nurburgring_gp", "portimao_gp", "montreal"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: GT3 European Challenge", promotion_criteria: "Finish top 3 in GT4 championship + 2,000 XP in wallet.", starter_car_id: Some("gt_porsche_911_gt3r"), starter_car_name: Some("Porsche 911 GT3.R (992)"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["monza", "silverstone", "catalunya"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: GT2 Power Masters", promotion_criteria: "Finish top 3 in GT3 championship + 3,000 XP in wallet.", starter_car_id: Some("gt_maserati_mc20_gt2"), starter_car_name: Some("Maserati MC20 GT2"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["spa", "cota", "bahrain"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: GT1 Heritage Trophy", promotion_criteria: "Finish top 3 in GT2 championship + 4,000 XP in wallet.", starter_car_id: Some("gt_porsche_911_gt1_98"), starter_car_name: Some("Porsche 911 GT1-98"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["suzuka", "interlagos", "bathurst"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: Hypercar World GP", promotion_criteria: "Finish top 3 in GT1 championship + 5,000 XP in wallet.", starter_car_id: Some("gt_porsche_963"), starter_car_name: Some("Porsche 963 LMDh"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["le_mans_sarthe", "monaco", "marina_bay"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "nascar",
+            module_name: "Stock Car Championship",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Street Stock Bullring", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("nascar_monte_carlo_ss"), starter_car_name: Some("Chevrolet Monte Carlo SS"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["martinsville_speedway", "bristol_motor_speedway", "eldora_speedway", "bowman_gray_stadium", "lucas_oil_irp"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Late Model Challenge", promotion_criteria: "Finish top 3 in Street Stock championship + 2,000 XP in wallet.", starter_car_id: Some("nascar_super_late_model"), starter_car_name: Some("Super Late Model Stock Car"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["charlotte_motor_speedway", "darlington_raceway", "north_wilkesboro_speedway"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: ARCA National Tour", promotion_criteria: "Finish top 3 in Late Model championship + 3,000 XP in wallet.", starter_car_id: Some("nascar_arca_chevy_ss"), starter_car_name: Some("ARCA Menards Chevrolet SS"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["iowa_speedway", "watkins_glen_nascar", "road_america"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Craftsman Truck Series", promotion_criteria: "Finish top 3 in ARCA championship + 4,000 XP in wallet.", starter_car_id: Some("nascar_silverado_truck"), starter_car_name: Some("Chevrolet Silverado Truck"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["indianapolis_motor_speedway", "pocono_raceway", "chicago_street_course"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: NASCAR Cup Series", promotion_criteria: "Finish top 3 in Truck championship + 5,000 XP in wallet.", starter_car_id: Some("nascar_corvette_ta1"), starter_car_name: Some("Corvette C8 Trans-Am TA1"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["daytona_superspeedway", "talladega_superspeedway", "phoenix_raceway"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "rally",
+            module_name: "Rallycross & All-Terrain",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Rally4 Grassroots Cup", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("rally_peugeot_208_rally4"), starter_car_name: Some("Peugeot 208 Rally4"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", "croft_rx"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Supercar Lites Trophy", promotion_criteria: "Finish top 3 in Rally4 championship + 2,000 XP in wallet.", starter_car_id: Some("rally_audi_s1_wrx"), starter_car_name: Some("Audi S1 EKS RX Quattro"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["hell_rx", "loheac_rx", "lavare_rx"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: Euro RX Supercars", promotion_criteria: "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.", starter_car_id: Some("rally_audi_sport_quattro_s1"), starter_car_name: Some("Audi Sport Quattro S1 E2"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["estering_rx", "montalegre_rx", "riga_rx"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: World RX Supercars", promotion_criteria: "Finish top 3 in Euro RX championship + 4,000 XP in wallet.", starter_car_id: Some("rally_toyota_hilux_dakar"), starter_car_name: Some("Toyota GR DKR Hilux T1+"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["nyirad_rx", "kouvola_rx", "killarney_rx"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: RX1e / Group E / Heritage", promotion_criteria: "Finish top 3 in World RX championship + 5,000 XP in wallet.", starter_car_id: Some("rally_robby_gordon_sst"), starter_car_name: Some("Stadium Super Truck (Speed Energy)"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["catalunya_rx", "lessay_rx", "essay_rx"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "kart",
+            module_name: "Grassroots & Shifter Karting",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Cadet 60cc Trophy", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("kart_crg_hero_60"), starter_car_name: Some("CRG Hero 60cc Cadet"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Junior OK-J National", promotion_criteria: "Finish top 3 in Cadet championship + 2,000 XP in wallet.", starter_car_id: Some("kart_tony_kart_racer_ok"), starter_car_name: Some("Tony Kart Racer 401R OK"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["sarno", "kristianstad", "seven_laghi"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: KZ2 Shifter Pro", promotion_criteria: "Finish top 3 in Junior OK championship + 3,000 XP in wallet.", starter_car_id: Some("kart_birel_art_kz2"), starter_car_name: Some("Birel ART CRY30 KZ2"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["pfi", "franciacorta", "ampfing"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Superkart Division 2", promotion_criteria: "Finish top 3 in KZ2 championship + 4,000 XP in wallet.", starter_car_id: Some("kart_honda_mean_mower"), starter_car_name: Some("Honda Mean Mower V2"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["zuera", "silverstone_national_kart", "le_mans_kart"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: Superkart World Series", promotion_criteria: "Finish top 3 in Superkart Div 2 championship + 5,000 XP in wallet.", starter_car_id: Some("kart_anderson_cs250"), starter_car_name: Some("Anderson CS250 Superkart"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["portimao_kart", "valencia_kart", "campillos"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "extreme_offroad",
+            module_name: "Extreme Off-Road & Stunt Arenas",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Desert Sand Sprint", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("offroad_sand_rail_buggy"), starter_car_name: Some("Buckshot Racing Sand Rail"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["sahara_dune_crossing", "dirt_figure_eight", "atacama_sand_basin", "glamis_dunes", "crandon_short_course"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Canyon Raid", promotion_criteria: "Finish top 3 in Sand Sprint championship + 2,000 XP in wallet.", starter_car_id: Some("offroad_ford_bronco_dr"), starter_car_name: Some("Ford Bronco Desert Racer"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["red_rock_canyon", "mud_slough_arena", "baja_500_desert_scrub"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: Arctic Ice Challenge", promotion_criteria: "Finish top 3 in Canyon Raid championship + 3,000 XP in wallet.", starter_car_id: Some("offroad_arctic_hilux_at44"), starter_car_name: Some("Arctic Trucks Hilux AT44"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["arctic_frozen_lake", "alpine_snow_ridge", "rovaniemi_ice_ring"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Pro4 Mud Masters", promotion_criteria: "Finish top 3 in Arctic Challenge championship + 4,000 XP in wallet.", starter_car_id: Some("offroad_pro4_unlimited_chevy"), starter_car_name: Some("Chevy Pro4 Unlimited Trophy Truck"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["supercross_stadium_arena", "gravel_quarry_chasm", "louisiana_mud_swampland"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: Monster Colosseum", promotion_criteria: "Finish top 3 in Mud Masters championship + 5,000 XP in wallet.", starter_car_id: Some("offroad_bigfoot_monster_truck"), starter_car_name: Some("Bigfoot 4x4 Monster Truck"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["monster_colosseum", "glacier_crest_pass", "stunt_city_megastructure"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "autocross",
+            module_name: "FIA European Autocross",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Cross Car Junior", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["ax_meadow_sprint", "ax_quarry_loop", "ax_forest_dash"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Cross Car Senior", promotion_criteria: "Finish top 3 in Junior Cross Car championship + 2,000 XP in wallet.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["ax_nova_paka", "ax_matschenberg"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: Buggy 1600 Championship", promotion_criteria: "Finish top 3 in Senior Cross Car championship + 3,000 XP in wallet.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["ax_seelow", "ax_vilkyciai"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Touring Autocross Masters", promotion_criteria: "Finish top 3 in Buggy 1600 championship + 4,000 XP in wallet.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["ax_st_georges", "ax_maggiore"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: SuperBuggy World Series", promotion_criteria: "Finish top 3 in Touring Autocross championship + 5,000 XP in wallet.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["ax_mollerussa", "ax_prerov"] },
+            ],
+        },
+        CodexCareerLadder {
+            module_id: "classic",
+            module_name: "Classic Arcade",
+            tiers: vec![
+                CodexCareerTierDetails { tier: 1, name: "Tier 1: Retro Arcade Cup", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("classic_gt"), starter_car_name: Some("Apex GT Coupe"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["gt_velocity_park", "gt_ridge_ring", "rx_quarry_sprint", "ax_meadow_sprint"] },
+            ],
+        },
+    ];
+
+    let ladders: Vec<CodexCareerLadder> = all_ladders
+        .into_iter()
+        .filter(|l| scope.includes_module(l.module_id))
+        .collect();
+
+    let xp_economy = CodexXpEconomyInfo {
+        distance_divisor: 10.0,
+        completion_multiplier: 2.0,
+        first_time_bonus_per_tier: 250,
+        car_cost_per_tier: 1_000,
+        formulas: vec![
+            "per_lap_xp = round_to_10(track_length_meters / 10.0)",
+            "lap_xp = per_lap_xp * completed_laps",
+            "completion_bonus = lap_xp (duplicates lap XP on race finish)",
+            "first_time_exploration_bonus = round_to_10(tier * 250 XP)",
+            "total_race_xp = lap_xp + completion_bonus + first_time_exploration_bonus",
+            "car_purchase_cost = tier * 1,000 XP",
+        ],
+    };
+
+    let repair_economy = CodexRepairEconomyInfo {
+        purse_cap_share: REPAIR_PURSE_CAP_SHARE,
+        safety_net_credit_limit: SAFETY_NET_CREDIT_LIMIT,
+        safety_net_health: SAFETY_NET_HEALTH,
+        formulas: vec![
+            "cost_chassis = round_to_10(base_purse(tier) * 0.15 * (1.0 - H_chassis)^1.2)",
+            "cost_engine = round_to_10(base_purse(tier) * 0.25 * k_powertrain * (1.0 - H_engine)^1.4)",
+            "cost_suspension[i] = round_to_10(base_purse(tier) * 0.08 * k_archetype * (1.0 - H_susp[i])^1.2)",
+            "net_repair_deduction = min(total_raw_damage, earned_purse * 0.40) [Sponsor pays the rest]",
+            "anti_bankruptcy_safety_net = free repair to 50% health if wallet balance < 1,000 Credits",
+        ],
+    };
+
+    let curriculum = AcademyLessonDef::default_curriculum()
+        .into_iter()
+        .map(|l| CodexAcademyLesson {
+            id: l.id.slug(),
+            index: l.id.index() + 1,
+            title: l.title,
+            description: l.description,
+            track_slug: l.track_slug,
+            car_slug: l.car_slug,
+            gold_time_sec: l.gold_time_sec,
+            silver_time_sec: l.silver_time_sec,
+            bronze_time_sec: l.bronze_time_sec,
+            bronze_credit_bounty: l.bronze_credit_bounty,
+            silver_credit_bounty: l.silver_credit_bounty,
+            gold_credit_bounty: l.gold_credit_bounty,
+            base_xp_reward: l.base_xp_reward,
+        })
+        .collect();
+
+    let licence_grades = vec![
+        CodexLicenceGrade {
+            grade: "ClassD",
+            title: "Class D (National Grassroots)",
+            badge: "CLASS D",
+            description: "Entry-level accredited motorsport licence for grassroots cadet, junior, and shifter karting competitions.",
+            required_for: vec!["kart", "classic"],
+        },
+        CodexLicenceGrade {
+            grade: "ClassC",
+            title: "Class C (Junior Competition)",
+            badge: "CLASS C",
+            description: "Junior competition licence authorizing participation in European Autocross cross-cars and mixed-surface Rallycross events.",
+            required_for: vec!["autocross", "rally"],
+        },
+        CodexLicenceGrade {
+            grade: "ClassB",
+            title: "Class B (National Pro-Am)",
+            badge: "CLASS B",
+            description: "National Pro-Am credentials for heavy stock cars on high-speed ovals and extreme off-road desert trophy trucks.",
+            required_for: vec!["nascar", "extreme_offroad"],
+        },
+        CodexLicenceGrade {
+            grade: "ClassA",
+            title: "Class A (International GT)",
+            badge: "CLASS A",
+            description: "International competition licence required for high-downforce GT4, GT3, GT2, and GT1 endurance machinery.",
+            required_for: vec!["gt"],
+        },
+        CodexLicenceGrade {
+            grade: "ClassS",
+            title: "Class S (FIA Superlicense)",
+            badge: "CLASS S",
+            description: "The pinnacle of motorsport accreditation, granting access to state-of-the-art hybrid Le Mans Hypercars and Apex Prototypes.",
+            required_for: vec!["gt_hypercar", "apex_prototypes"],
+        },
+    ];
+
+    let academy = CodexAcademyInfo {
+        curriculum,
+        max_permissible_impulse: 800.0,
+        max_permissible_off_track_sec: 2.0,
+        licence_grades,
+    };
+
+    let multiplayer = CodexMultiplayerInfo {
+        min_players: 2,
+        max_players: 8,
+        simulation_rate_hz: 60,
+        interpolation_delay_ms: (INTERP_DELAY_SEC * 1000.0).round() as u32,
+        discovery: "UDP Broadcast on local subnet, port auto-negotiated",
+        collision_modes: vec![
+            CodexCollisionModeInfo {
+                id: "full_sat_solid",
+                name: "Solid Body (SAT)",
+                description: "Full rigid-body Separating Axis Theorem (SAT) collision resolution between all competitor vehicles with authentic momentum transfer and spin dynamics.",
+            },
+            CodexCollisionModeInfo {
+                id: "ghost_passing",
+                name: "Ghost (Non-Contact)",
+                description: "Competitor vehicles pass freely through each other without collision contact, preventing first-turn pile-ups and ensuring pure lap-time racing.",
+            },
+            CodexCollisionModeInfo {
+                id: "verge_only",
+                name: "Verge Only",
+                description: "Vehicle-to-vehicle contact is disabled, but collisions remain fully active against track verges, curbs, barriers, and environmental props.",
+            },
+        ],
+        host_steps: vec![
+            "Navigate to Racing -> LAN Multiplayer in the in-game menu.",
+            "Select 'Host LAN Lobby'. Choose your driver name, country flag, and preferred car.",
+            "Select the official circuit, number of laps, and desired collision mode (Solid Body, Ghost, or Verge Only).",
+            "Wait for local network racers to appear in the lobby roster slots (up to 8 players).",
+            "When all drivers indicate 'Ready', press [Enter] / Gamepad [Start] to launch the synchronized race.",
+        ],
+        join_steps: vec![
+            "Ensure all machines are connected to the same local Wi-Fi or Ethernet subnet.",
+            "Navigate to Racing -> LAN Multiplayer -> 'Join LAN Lobby'.",
+            "The client auto-discovers active host beacons via UDP broadcast.",
+            "Select the host lobby from the discovered list and choose your vehicle and livery.",
+            "Press [R] / Gamepad [X] to toggle 'Ready'. The game will synchronize clock and load the track upon host start.",
+        ],
+    };
+
+    CodexRacingData {
+        id: "racing",
+        disciplines,
+        formats,
+        joker_rule,
+        pit_service,
+        point_systems,
+        series,
+        career: CodexCareerInfo {
+            ladders,
+            xp_economy,
+            repair_economy,
+        },
+        academy,
+        multiplayer,
+    }
+}
+
+fn rivals_data() -> CodexRivalsData {
+    let drivers: Vec<CodexDriverCharacterInfo> = DriverCharacter::all_across_modules()
+        .into_iter()
+        .map(|d| {
+            let stats = d.resolve_stats(DriverTier::Pro);
+            CodexDriverCharacterInfo {
+                id: d.id,
+                name: d.name,
+                alias: d.alias,
+                bio: d.bio,
+                style: d.style.as_str(),
+                preferred_car: d.preferred_car.title(),
+                primary_color: [d.color_scheme.primary.r, d.color_scheme.primary.g, d.color_scheme.primary.b, d.color_scheme.primary.a],
+                secondary_color: [d.color_scheme.secondary.r, d.color_scheme.secondary.g, d.color_scheme.secondary.b, d.color_scheme.secondary.a],
+                accent_color: [d.color_scheme.helmet.r, d.color_scheme.helmet.g, d.color_scheme.helmet.b, d.color_scheme.helmet.a],
+                stats: CodexDriverStatsInfo {
+                    speed: (stats.speed * 100.0).round() / 100.0,
+                    aggression: (stats.aggression * 100.0).round() / 100.0,
+                    precision: (stats.precision * 100.0).round() / 100.0,
+                    defense: (stats.defense * 100.0).round() / 100.0,
+                },
+                favorite_cars: d.favorite_cars.iter().map(|f| CodexDriverFavoriteCarInfo {
+                    discipline: f.discipline,
+                    tier: f.tier,
+                    model_id: f.model_id,
+                }).collect(),
+            }
+        })
+        .collect();
+
+    let driving_styles = vec![
+        CodexDrivingStyleInfo {
+            id: "smooth",
+            name: "Smooth",
+            description: "Prioritizes textbook geometric racing lines, gentle steering inputs, and momentum preservation. Minimizes unnecessary tire scrub to maintain high corner-exit speeds.",
+            speed_mult: 1.00,
+            aggression: 0.65,
+            precision: 0.98,
+            defense: 0.85,
+            tactical_traits: vec![
+                "Clips apex kerbs with millimeter accuracy.",
+                "Executes trail-braking smoothly to maintain vehicle pitch balance.",
+                "Rarely makes unforced slide errors; patient when trailing.",
+            ],
+        },
+        CodexDrivingStyleInfo {
+            id: "aggressive",
+            name: "Aggressive",
+            description: "Fearless wheel-to-wheel combatant who brakes at the absolute threshold, divebombs into braking zones, and forces opponents to compromise their line.",
+            speed_mult: 1.02,
+            aggression: 0.96,
+            precision: 0.80,
+            defense: 0.88,
+            tactical_traits: vec![
+                "Late-brakes deep into hairpins and chicanes.",
+                "Uses curb bounces and track verges aggressively.",
+                "Higher risk of lockups and corner-exit snap oversteer under pressure.",
+            ],
+        },
+        CodexDrivingStyleInfo {
+            id: "tenacious",
+            name: "Tenacious",
+            description: "Ironclad defensive specialist who positions their vehicle as wide as the track, fiercely protecting the inside line and frustrating overtake attempts.",
+            speed_mult: 0.96,
+            aggression: 0.82,
+            precision: 0.88,
+            defense: 0.98,
+            tactical_traits: vec![
+                "Anticipates opponent moves and covers the apex early.",
+                "Exceptional composure when under intense rear bumper pressure.",
+                "Relentless lap-time consistency over long championship stints.",
+            ],
+        },
+        CodexDrivingStyleInfo {
+            id: "calculating",
+            name: "Calculating",
+            description: "Telemetry-minded tactician who studies opponent delta splits, avoids low-percentage lunges, and ruthlessly capitalizes on mistakes ahead.",
+            speed_mult: 1.00,
+            aggression: 0.72,
+            precision: 0.96,
+            defense: 0.90,
+            tactical_traits: vec![
+                "Optimizes slip angles for maximum straight-line exit velocity.",
+                "Capitalizes on competitor contact and errors instantly.",
+                "Maintains disciplined tire wear and temperature management.",
+            ],
+        },
+        CodexDrivingStyleInfo {
+            id: "bold",
+            name: "Bold",
+            description: "Audacious cross-discipline daredevil known for spectacular overtakes around the outside, Scandinavian flicks, and high-slip angle car control.",
+            speed_mult: 1.01,
+            aggression: 0.92,
+            precision: 0.78,
+            defense: 0.80,
+            tactical_traits: vec![
+                "Willing to attempt passes where other drivers hesitate.",
+                "High slip-angle tolerance with lightning counter-steer reflexes.",
+                "Thrives on loose surfaces, dirt ruts, and jump landings.",
+            ],
+        },
+        CodexDrivingStyleInfo {
+            id: "balanced",
+            name: "Balanced",
+            description: "Well-rounded clubman racer blending solid single-lap pace, steady racecraft, clean overtakes, and dependable defensive awareness.",
+            speed_mult: 0.97,
+            aggression: 0.70,
+            precision: 0.85,
+            defense: 0.85,
+            tactical_traits: vec![
+                "Adaptable to varying track conditions and modalities.",
+                "Clean, respectful wheel-to-wheel battles.",
+                "Dependable performance across diverse performance tiers.",
+            ],
+        },
+    ];
+
+    let skill_tiers = [
+        DriverTier::Rookie,
+        DriverTier::Amateur,
+        DriverTier::Contender,
+        DriverTier::Pro,
+        DriverTier::Legend,
+    ]
+    .into_iter()
+    .map(|t| {
+        let q = DriverQuality::for_tier(t);
+        CodexSkillTierInfo {
+            tier: t.to_u8(),
+            name: t.title(),
+            short_name: t.short_name(),
+            tag: t.tag(),
+            pace_limit: q.pace_limit,
+            consistency: q.consistency,
+            composure: q.composure,
+            bell_curve_weights: t.bell_curve_weights(),
+        }
+    })
+    .collect();
+
+    let mistake_kinds = vec![
+        CodexMistakeKindInfo {
+            id: "late_brake",
+            name: "Late Braking Lockup",
+            description: "Over-estimates the car's braking threshold by 30–60% and enters the braking zone carrying excessive velocity, missing the turn-in point.",
+            trigger_condition: "High pressure from pursuing cars or aggressive overtake attempts.",
+            gameplay_impact: "Runs deep past the apex, leaving the door wide open for an undercut pass.",
+            recovery_behavior: "Applies maximum steering angle and trail brakes hard to scrub speed.",
+        },
+        CodexMistakeKindInfo {
+            id: "overdrive",
+            name: "Corner Overdrive",
+            description: "Enters the corner 8–25% above the tire grip limit, inducing understeer and washing out toward the track verge.",
+            trigger_condition: "Carrying too much apex momentum in fast sweepers.",
+            gameplay_impact: "Washes wide onto dirty track surfaces, grass, or curbs, losing exit speed.",
+            recovery_behavior: "Lifts off the throttle abruptly and counter-steers to re-establish front grip.",
+        },
+        CodexMistakeKindInfo {
+            id: "power_stab",
+            name: "Power Oversteer Snap",
+            description: "Applies full throttle and handbrake simultaneously on corner exit for 0.6–1.1s, overpowering the rear tires and snapping into an oversteer slide.",
+            trigger_condition: "Low-gear corner exits under heavy acceleration.",
+            gameplay_impact: "Violent rear slide that burns rear tire temperature and costs straight-line speed.",
+            recovery_behavior: "Counter-steers hard to catch the slide before it transitions into a 360-degree spin.",
+        },
+        CodexMistakeKindInfo {
+            id: "over_correct",
+            name: "Steering Over-Correction",
+            description: "Over-reacts to a minor lateral wiggle with 1.6x steering gain for 0.5s, inducing secondary tank-slapper oscillations.",
+            trigger_condition: "Kerb strikes or surface transitions that perturb chassis roll.",
+            gameplay_impact: "Erratic slalom weaving that slows the vehicle and destabilizes platform balance.",
+            recovery_behavior: "Rapidly relaxes steering input back to center after 500 ms.",
+        },
+        CodexMistakeKindInfo {
+            id: "cautious",
+            name: "Hesitation & Early Lift",
+            description: "Brakes 5–15 meters earlier than necessary or lifts off the throttle prematurely in apex compression.",
+            trigger_condition: "Low driver composure under pressure or wet/low-grip surfaces.",
+            gameplay_impact: "Gives away easy momentum to bolder drivers trailing closely behind.",
+            recovery_behavior: "Smoothly reapplies throttle once confidence in front grip is confirmed.",
+        },
+    ];
+
+    CodexRivalsData {
+        id: "rivals",
+        drivers,
+        driving_styles,
+        skill_tiers,
+        mistake_kinds,
+    }
+}
+
 fn to_json<T: Serialize>(value: &T) -> Result<String, String> {
     serde_json::to_string_pretty(value).map(|s| s + "\n").map_err(|e| e.to_string())
 }
@@ -1494,6 +2520,9 @@ pub fn export(scope: Scope, repo_root: &Path) -> Result<Vec<(&'static str, Strin
         })
         .collect();
 
+    let racing = racing_data(scope, &cars, &circuits);
+    let rivals = rivals_data();
+
     Ok(vec![
         ("modules.json", envelope(scope, modules)?),
         ("cars.json", envelope(scope, cars)?),
@@ -1507,5 +2536,7 @@ pub fn export(scope: Scope, repo_root: &Path) -> Result<Vec<(&'static str, Strin
         ("controls.json", envelope(scope, vec![controls_data()])?),
         ("driving.json", envelope(scope, vec![driving_data()])?),
         ("hud.json", envelope(scope, vec![hud_data()])?),
+        ("racing.json", envelope(scope, vec![racing])?),
+        ("rivals.json", envelope(scope, vec![rivals])?),
     ])
 }

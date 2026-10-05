@@ -12,6 +12,8 @@ export type DamageModel = CollectionEntry<'damage'>['data'];
 export type ControlsModel = CollectionEntry<'controls'>['data'];
 export type DrivingModel = CollectionEntry<'driving'>['data'];
 export type HudModel = CollectionEntry<'hud'>['data'];
+export type RacingModel = CollectionEntry<'racing'>['data'];
+export type RivalsModel = CollectionEntry<'rivals'>['data'];
 
 // Collections keep the export order (modules grouped in Codex order), so no sorting here.
 export const getCars = async () => (await getCollection('cars')).map((e) => e.data);
@@ -26,6 +28,8 @@ export const getDamageModel = async () => (await getCollection('damage'))[0].dat
 export const getControlsModel = async () => (await getCollection('controls'))[0].data;
 export const getDrivingModel = async () => (await getCollection('driving'))[0].data;
 export const getHudModel = async () => (await getCollection('hud'))[0].data;
+export const getRacingModel = async () => (await getCollection('racing'))[0].data;
+export const getRivalsModel = async () => (await getCollection('rivals'))[0].data;
 
 // Presentation only: a short label and a badge colour per module id. Titles come from the export.
 const MODULE_STYLE: Record<string, { label: string; badge: string }> = {
@@ -155,13 +159,13 @@ export const SECTIONS: CodexSection[] = [
     href: '/racing',
     blurb: 'How you race: disciplines, formats, championships, career, academy, rivals and LAN.',
     pages: [
-      { label: 'Disciplines', href: '/racing/disciplines', blurb: 'Each discipline with its cars, circuits and tiers.', ready: false },
-      { label: 'Formats', href: '/racing/formats', blurb: 'Laps, time attack, joker laps, pit stops, qualifying.', ready: false },
-      { label: 'Championships', href: '/racing/championships', blurb: 'Point systems and series presets.', ready: false },
-      { label: 'Career', href: '/racing/career', blurb: 'Tier ladders, promotion, credits and XP.', ready: false },
-      { label: 'Academy', href: '/racing/academy', blurb: 'Lessons, medals and licence grades.', ready: false },
-      { label: 'Rivals', href: '/racing/rivals', blurb: 'AI drivers, driving styles, skill tiers and mistakes.', ready: false },
-      { label: 'Multiplayer', href: '/racing/multiplayer', blurb: 'LAN races for two to eight players.', ready: false },
+      { label: 'Disciplines', href: '/racing/disciplines', blurb: 'Each discipline with its cars, circuits and tiers.', ready: true },
+      { label: 'Formats', href: '/racing/formats', blurb: 'Laps, time attack, joker laps, pit stops, qualifying.', ready: true },
+      { label: 'Championships', href: '/racing/championships', blurb: 'Point systems and series presets.', ready: true },
+      { label: 'Career', href: '/racing/career', blurb: 'Tier ladders, promotion, credits and XP.', ready: true },
+      { label: 'Academy', href: '/racing/academy', blurb: 'Lessons, medals and licence grades.', ready: true },
+      { label: 'Rivals', href: '/racing/rivals', blurb: 'AI drivers, driving styles, skill tiers and mistakes.', ready: true },
+      { label: 'Multiplayer', href: '/racing/multiplayer', blurb: 'LAN races for two to eight players.', ready: true },
     ],
   },
 ];

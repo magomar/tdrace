@@ -222,3 +222,103 @@ fn hud_matches_game_elements_and_cameras() {
     assert_eq!(cameras[0]["name"], "Close");
     assert_eq!(cameras[3]["name"], "Overview");
 }
+
+#[test]
+fn racing_data_matches_series_formats_and_academy() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let racing = &items(&files, "racing.json")[0];
+
+    // Disciplines
+    let disciplines = racing["disciplines"].as_array().unwrap();
+    assert_eq!(disciplines.len(), 7);
+    let disc_ids: Vec<&str> = disciplines.iter().map(|d| d["id"].as_str().unwrap()).collect();
+    assert_eq!(disc_ids, vec!["classic", "kart", "autocross", "rally", "gt", "nascar", "extreme_offroad"]);
+
+    // Formats
+    let formats = racing["formats"].as_array().unwrap();
+    assert_eq!(formats.len(), 5);
+    let fmt_ids: Vec<&str> = formats.iter().map(|f| f["id"].as_str().unwrap()).collect();
+    assert_eq!(fmt_ids, vec!["laps", "time_attack", "qualifying", "stage_rally", "elimination"]);
+
+    // Joker & Pit service
+    assert_eq!(racing["joker_rule"]["mandatory_laps"].as_u64().unwrap(), 1);
+    assert_eq!(racing["joker_rule"]["time_penalty_sec"].as_f64().unwrap(), 30.0);
+    assert_eq!(racing["pit_service"]["repair_amount"].as_f64().unwrap(), 0.25);
+    assert_eq!(racing["pit_service"]["speed_limiter_kmh"].as_f64().unwrap(), 60.0);
+
+    // Point Systems
+    let point_systems = racing["point_systems"].as_array().unwrap();
+    assert_eq!(point_systems.len(), 4);
+    let pts_ids: Vec<&str> = point_systems.iter().map(|p| p["id"].as_str().unwrap()).collect();
+    assert_eq!(pts_ids, vec!["fia_standard", "motogp", "classic_arcade", "nascar_cup"]);
+
+    let fia = point_systems.iter().find(|p| p["id"] == "fia_standard").unwrap();
+    let fia_table = fia["points_table"].as_array().unwrap();
+    assert_eq!(fia_table[0]["points"].as_u64().unwrap(), 25);
+    assert_eq!(fia_table[9]["points"].as_u64().unwrap(), 1);
+
+    // Series Presets (33 in Scope::All)
+    let series = racing["series"].as_array().unwrap();
+    assert_eq!(series.len(), 33);
+
+    // Career Ladders
+    let career = &racing["career"];
+    let ladders = career["ladders"].as_array().unwrap();
+    assert_eq!(ladders.len(), 7);
+    assert_eq!(career["xp_economy"]["distance_divisor"].as_f64().unwrap(), 10.0);
+    assert_eq!(career["repair_economy"]["purse_cap_share"].as_f64().unwrap(), 0.40);
+
+    // Academy
+    let academy = &racing["academy"];
+    let curriculum = academy["curriculum"].as_array().unwrap();
+    assert_eq!(curriculum.len(), 4);
+    assert_eq!(curriculum[0]["id"].as_str().unwrap(), "lesson_1_apex_line");
+    assert_eq!(curriculum[0]["gold_time_sec"].as_f64().unwrap(), 18.5);
+    assert_eq!(curriculum[3]["id"].as_str().unwrap(), "lesson_4_graduation_sprint");
+    assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap(), 68.0);
+
+    let licences = academy["licence_grades"].as_array().unwrap();
+    assert_eq!(licences.len(), 5);
+    let grade_names: Vec<&str> = licences.iter().map(|l| l["grade"].as_str().unwrap()).collect();
+    assert_eq!(grade_names, vec!["ClassD", "ClassC", "ClassB", "ClassA", "ClassS"]);
+
+    // Multiplayer
+    let mp = &racing["multiplayer"];
+    assert_eq!(mp["min_players"].as_u64().unwrap(), 2);
+    assert_eq!(mp["max_players"].as_u64().unwrap(), 8);
+    assert_eq!(mp["simulation_rate_hz"].as_u64().unwrap(), 60);
+    assert_eq!(mp["interpolation_delay_ms"].as_u64().unwrap(), 100);
+}
+
+#[test]
+fn rivals_data_matches_driver_roster_and_ai_traits() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let rivals = &items(&files, "rivals.json")[0];
+
+    // 72 drivers
+    let drivers = rivals["drivers"].as_array().unwrap();
+    assert_eq!(drivers.len(), 72);
+
+    let silvia = drivers.iter().find(|d| d["id"] == "silvia_tanaka").unwrap();
+    assert_eq!(silvia["name"].as_str().unwrap(), "Silvia Tanaka");
+    assert_eq!(silvia["alias"].as_str().unwrap(), "Apex Tanaka");
+    assert_eq!(silvia["style"].as_str().unwrap(), "smooth");
+
+    // 6 driving styles
+    let styles = rivals["driving_styles"].as_array().unwrap();
+    assert_eq!(styles.len(), 6);
+    let style_ids: Vec<&str> = styles.iter().map(|s| s["id"].as_str().unwrap()).collect();
+    assert_eq!(style_ids, vec!["smooth", "aggressive", "tenacious", "calculating", "bold", "balanced"]);
+
+    // 5 skill tiers
+    let tiers = rivals["skill_tiers"].as_array().unwrap();
+    assert_eq!(tiers.len(), 5);
+    assert_eq!(tiers[0]["tag"].as_str().unwrap(), "T1");
+    assert_eq!(tiers[4]["tag"].as_str().unwrap(), "T5");
+
+    // 5 mistake kinds
+    let mistakes = rivals["mistake_kinds"].as_array().unwrap();
+    assert_eq!(mistakes.len(), 5);
+    let mistake_ids: Vec<&str> = mistakes.iter().map(|m| m["id"].as_str().unwrap()).collect();
+    assert_eq!(mistake_ids, vec!["late_brake", "overdrive", "power_stab", "over_correct", "cautious"]);
+}

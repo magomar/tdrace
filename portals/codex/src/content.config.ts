@@ -473,6 +473,262 @@ const hud = defineCollection({
   }),
 });
 
+const racing = defineCollection({
+  loader: codexFile('racing.json'),
+  schema: z.object({
+    id: z.literal('racing'),
+    disciplines: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        subtitle: z.string(),
+        description: z.string(),
+        launch: z.boolean(),
+        car_count: z.number().int(),
+        circuit_count: z.number().int(),
+        series_count: z.number().int(),
+        tiers: z.array(
+          z.object({
+            tier: z.number().int(),
+            name: z.string(),
+            required_licence: z.string(),
+            car_cost_xp: z.number().int(),
+            base_purse: z.number().int(),
+          }),
+        ),
+      }),
+    ),
+    formats: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        tag: z.string(),
+        description: z.string(),
+        rules: z.array(z.string()),
+        scoring_summary: z.string(),
+      }),
+    ),
+    joker_rule: z.object({
+      mandatory_laps: z.number().int(),
+      time_penalty_sec: z.number(),
+      applies_to: z.string(),
+      hud_indicator: z.string(),
+      strategy_notes: z.string(),
+    }),
+    pit_service: z.object({
+      repair_amount: z.number(),
+      speed_limiter_kmh: z.number(),
+      field_repair_chassis_cap: z.number(),
+      field_repair_engine_cap: z.number(),
+      field_repair_suspension_cap: z.number(),
+      phases: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string(),
+        }),
+      ),
+    }),
+    point_systems: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        points_table: z.array(
+          z.object({
+            position: z.number().int(),
+            points: z.number().int(),
+          }),
+        ),
+        fastest_lap_bonus: z.string().nullable().optional(),
+        stage_win_bonus: z.string().nullable().optional(),
+      }),
+    ),
+    series: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        module_id: z.string(),
+        tier: z.number().int(),
+        laps_per_round: z.number().int(),
+        scoring_system: z.string(),
+        fastest_lap_bonus: z.boolean(),
+        stage_win_bonus: z.boolean(),
+        round_count: z.number().int(),
+        rounds: z.array(
+          z.object({
+            order: z.number().int(),
+            track_id: z.string(),
+            name: z.string().nullable().optional(),
+            laps: z.number().int().nullable().optional(),
+          }),
+        ),
+        driver_count: z.number().int(),
+        drivers: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            team: z.string(),
+            is_player: z.boolean(),
+            car_model_id: z.string().nullable().optional(),
+            country: z.string().nullable().optional(),
+            ai_style: z.string().nullable().optional(),
+            ai_tier: z.number().int().nullable().optional(),
+          }),
+        ),
+      }),
+    ),
+    career: z.object({
+      ladders: z.array(
+        z.object({
+          module_id: z.string(),
+          module_name: z.string(),
+          tiers: z.array(
+            z.object({
+              tier: z.number().int(),
+              name: z.string(),
+              promotion_criteria: z.string(),
+              starter_car_id: z.string().nullable().optional(),
+              starter_car_name: z.string().nullable().optional(),
+              car_cost_xp: z.number().int(),
+              first_time_exploration_xp: z.number().int(),
+              round_base_purse: z.number().int(),
+              unlocked_tracks: z.array(z.string()),
+            }),
+          ),
+        }),
+      ),
+      xp_economy: z.object({
+        distance_divisor: z.number(),
+        completion_multiplier: z.number(),
+        first_time_bonus_per_tier: z.number().int(),
+        car_cost_per_tier: z.number().int(),
+        formulas: z.array(z.string()),
+      }),
+      repair_economy: z.object({
+        purse_cap_share: z.number(),
+        safety_net_credit_limit: z.number().int(),
+        safety_net_health: z.number(),
+        formulas: z.array(z.string()),
+      }),
+    }),
+    academy: z.object({
+      curriculum: z.array(
+        z.object({
+          id: z.string(),
+          index: z.number().int(),
+          title: z.string(),
+          description: z.string(),
+          track_slug: z.string(),
+          car_slug: z.string(),
+          gold_time_sec: z.number(),
+          silver_time_sec: z.number(),
+          bronze_time_sec: z.number(),
+          bronze_credit_bounty: z.number().int(),
+          silver_credit_bounty: z.number().int(),
+          gold_credit_bounty: z.number().int(),
+          base_xp_reward: z.number().int(),
+        }),
+      ),
+      max_permissible_impulse: z.number(),
+      max_permissible_off_track_sec: z.number(),
+      licence_grades: z.array(
+        z.object({
+          grade: z.string(),
+          title: z.string(),
+          badge: z.string(),
+          description: z.string(),
+          required_for: z.array(z.string()),
+        }),
+      ),
+    }),
+    multiplayer: z.object({
+      min_players: z.number().int(),
+      max_players: z.number().int(),
+      simulation_rate_hz: z.number().int(),
+      interpolation_delay_ms: z.number().int(),
+      discovery: z.string(),
+      collision_modes: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string(),
+        }),
+      ),
+      host_steps: z.array(z.string()),
+      join_steps: z.array(z.string()),
+    }),
+  }),
+});
+
+const rivals = defineCollection({
+  loader: codexFile('rivals.json'),
+  schema: z.object({
+    id: z.literal('rivals'),
+    drivers: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        alias: z.string(),
+        bio: z.string(),
+        style: z.string(),
+        preferred_car: z.string(),
+        primary_color: z.array(z.number()),
+        secondary_color: z.array(z.number()),
+        accent_color: z.array(z.number()),
+        stats: z.object({
+          speed: z.number(),
+          aggression: z.number(),
+          precision: z.number(),
+          defense: z.number(),
+        }),
+        favorite_cars: z.array(
+          z.object({
+            discipline: z.string(),
+            tier: z.number().int(),
+            model_id: z.string(),
+          }),
+        ),
+      }),
+    ),
+    driving_styles: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        speed_mult: z.number(),
+        aggression: z.number(),
+        precision: z.number(),
+        defense: z.number(),
+        tactical_traits: z.array(z.string()),
+      }),
+    ),
+    skill_tiers: z.array(
+      z.object({
+        tier: z.number().int(),
+        name: z.string(),
+        short_name: z.string(),
+        tag: z.string(),
+        pace_limit: z.number(),
+        consistency: z.number(),
+        composure: z.number(),
+        bell_curve_weights: z.array(z.number().int()),
+      }),
+    ),
+    mistake_kinds: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        trigger_condition: z.string(),
+        gameplay_impact: z.string(),
+        recovery_behavior: z.string(),
+      }),
+    ),
+  }),
+});
+
 export const collections = {
   modules,
   cars,
@@ -486,4 +742,6 @@ export const collections = {
   controls,
   driving,
   hud,
+  racing,
+  rivals,
 };
