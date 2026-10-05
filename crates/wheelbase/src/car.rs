@@ -32,6 +32,33 @@ fn one_f32() -> f32 {
 /// Steering overslip cap for bots and scripted controllers (linear mapping, see `step_per_wheel`).
 pub const BOT_STEER_OVERSLIP: f32 = 1.5;
 
+/// Collision energy (J) the bumpers absorb elastically before any structural damage (Spec 078).
+pub const DAMAGE_ENERGY_DEADZONE_J: f32 = 500.0;
+/// Collision energy (J) above the dead zone that takes chassis health from 1.0 to 0.0 (Spec 078).
+pub const CHASSIS_DAMAGE_CAPACITY_J: f32 = 10000.0;
+/// Collision energy (J) above the dead zone that takes engine health from 1.0 to 0.0 (Spec 078).
+pub const ENGINE_DAMAGE_CAPACITY_J: f32 = 5000.0;
+/// Collision energy (J) that destroys one suspension corner, before the archetype robustness factor (Spec 078).
+pub const SUSPENSION_DAMAGE_CAPACITY_J: f32 = 4500.0;
+/// Damper compression speed (m/s) above which hitting the bump stop damages the corner (Spec 078).
+pub const KERB_BOTTOM_OUT_SPEED_MPS: f32 = 1.8;
+/// Excess bump-stop energy (J) that destroys one corner, before the robustness factor (Spec 078).
+pub const KERB_BOTTOM_OUT_CAPACITY_J: f32 = 600.0;
+/// Vertical touchdown speed (m/s) above which a jump landing damages the suspension (Spec 078).
+pub const LANDING_SPEED_LIMIT_MPS: f32 = 4.2;
+/// Excess landing energy (J) that destroys one corner, before the robustness factor (Spec 078).
+pub const LANDING_CAPACITY_J: f32 = 2500.0;
+/// A pushrod corner below this health collapses onto its bump stop (Spec 078).
+pub const PUSHROD_COLLAPSE_HEALTH: f32 = 0.30;
+/// Aerodynamic drag multiplier while a pushrod corner is collapsed (Spec 078).
+pub const PUSHROD_COLLAPSE_DRAG_MULTIPLIER: f32 = 1.40;
+/// Highest chassis health a field (pit) repair can restore (Spec 078).
+pub const FIELD_REPAIR_CHASSIS_CAP: f32 = 0.70;
+/// Highest engine health a field (pit) repair can restore (Spec 078).
+pub const FIELD_REPAIR_ENGINE_CAP: f32 = 0.70;
+/// Highest suspension corner health a field (pit) repair can restore (Spec 078).
+pub const FIELD_REPAIR_SUSPENSION_CAP: f32 = 0.60;
+
 /// Traction help starts to ease the throttle at this rear-axle limit use, and reaches its full
 /// cut `TH_WIDTH` later.
 const TH_START: f32 = 0.80;
@@ -192,6 +219,57 @@ pub enum ImpactZone {
     CornerFR,
     CornerRL,
     CornerRR,
+}
+
+impl ImpactZone {
+    pub const ALL: [Self; 8] = [
+        Self::FrontNose,
+        Self::RearTail,
+        Self::FlankLeft,
+        Self::FlankRight,
+        Self::CornerFL,
+        Self::CornerFR,
+        Self::CornerRL,
+        Self::CornerRR,
+    ];
+
+    /// Share of collision energy sent to `(chassis, engine, [suspension FL, FR, RL, RR])` for a hit
+    /// in this zone on a car with this engine placement (Spec 078).
+    pub const fn damage_weights(self, placement: EnginePlacement) -> (f32, f32, [f32; 4]) {
+        match (self, placement) {
+            (ImpactZone::FrontNose, EnginePlacement::FrontEngine) => (0.20, 0.70, [0.05, 0.05, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::MidEngine)   => (0.65, 0.05, [0.15, 0.15, 0.0, 0.0]),
+            (ImpactZone::FrontNose, EnginePlacement::RearEngine)  => (0.70, 0.00, [0.15, 0.15, 0.0, 0.0]),
+
+            (ImpactZone::RearTail, EnginePlacement::FrontEngine)  => (0.75, 0.05, [0.0, 0.0, 0.10, 0.10]),
+            (ImpactZone::RearTail, EnginePlacement::MidEngine)    => (0.45, 0.40, [0.0, 0.0, 0.075, 0.075]),
+            (ImpactZone::RearTail, EnginePlacement::RearEngine)   => (0.15, 0.75, [0.0, 0.0, 0.05, 0.05]),
+
+            (ImpactZone::FlankLeft, EnginePlacement::FrontEngine) => (0.60, 0.15, [0.125, 0.0, 0.125, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::MidEngine)   => (0.40, 0.45, [0.075, 0.0, 0.075, 0.0]),
+            (ImpactZone::FlankLeft, EnginePlacement::RearEngine)  => (0.50, 0.30, [0.10, 0.0, 0.10, 0.0]),
+
+            (ImpactZone::FlankRight, EnginePlacement::FrontEngine)=> (0.60, 0.15, [0.0, 0.125, 0.0, 0.125]),
+            (ImpactZone::FlankRight, EnginePlacement::MidEngine)  => (0.40, 0.45, [0.0, 0.075, 0.0, 0.075]),
+            (ImpactZone::FlankRight, EnginePlacement::RearEngine) => (0.50, 0.30, [0.0, 0.10, 0.0, 0.10]),
+
+            (ImpactZone::CornerFL, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.60, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+            (ImpactZone::CornerFL, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
+
+            (ImpactZone::CornerFR, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.0, 0.60, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+            (ImpactZone::CornerFR, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
+
+            (ImpactZone::CornerRL, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.55, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.50, 0.0]),
+            (ImpactZone::CornerRL, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.50, 0.0]),
+
+            (ImpactZone::CornerRR, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.0, 0.55]),
+            (ImpactZone::CornerRR, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.0, 0.50]),
+            (ImpactZone::CornerRR, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.0, 0.50]),
+        }
+    }
 }
 
 const fn default_suspension_health() -> [f32; 4] {
@@ -420,11 +498,11 @@ impl Car {
     /// and 4-corner suspension health (capped at 0.60) (Spec 078). Returns actual chassis health restored.
     pub fn apply_field_repair(&mut self, amount: f32) -> f32 {
         let old_health = self.state.chassis_health.min(self.state.health);
-        self.state.chassis_health = old_health.max((old_health + amount).min(0.70));
+        self.state.chassis_health = old_health.max((old_health + amount).min(FIELD_REPAIR_CHASSIS_CAP));
         self.state.health = self.state.chassis_health;
-        self.state.engine_health = self.state.engine_health.max((self.state.engine_health + amount).min(0.70));
+        self.state.engine_health = self.state.engine_health.max((self.state.engine_health + amount).min(FIELD_REPAIR_ENGINE_CAP));
         for s in &mut self.state.suspension_health {
-            *s = (*s).max((*s + amount).min(0.60));
+            *s = (*s).max((*s + amount).min(FIELD_REPAIR_SUSPENSION_CAP));
         }
         self.state.chassis_health - old_health
     }
@@ -494,55 +572,17 @@ impl Car {
             return;
         }
 
-        // Bumper elastic deformation absorption deadzone (500 Joules).
+        // Bumper elastic deformation absorption deadzone.
         // Low-speed bumper taps and glancing blows are absorbed elastically without structural deformation.
-        const MIN_DAMAGE_THRESHOLD: f32 = 500.0;
-        let effective_energy = (damage_energy - MIN_DAMAGE_THRESHOLD).max(0.0);
+        let effective_energy = (damage_energy - DAMAGE_ENERGY_DEADZONE_J).max(0.0);
         if effective_energy <= 0.0 {
             return;
         }
 
-        let placement = self.config.engine_placement;
-        let (w_chassis, w_engine, w_susp) = match (zone, placement) {
-            (ImpactZone::FrontNose, EnginePlacement::FrontEngine) => (0.20, 0.70, [0.05, 0.05, 0.0, 0.0]),
-            (ImpactZone::FrontNose, EnginePlacement::MidEngine)   => (0.65, 0.05, [0.15, 0.15, 0.0, 0.0]),
-            (ImpactZone::FrontNose, EnginePlacement::RearEngine)  => (0.70, 0.00, [0.15, 0.15, 0.0, 0.0]),
+        let (w_chassis, w_engine, w_susp) = zone.damage_weights(self.config.engine_placement);
 
-            (ImpactZone::RearTail, EnginePlacement::FrontEngine)  => (0.75, 0.05, [0.0, 0.0, 0.10, 0.10]),
-            (ImpactZone::RearTail, EnginePlacement::MidEngine)    => (0.45, 0.40, [0.0, 0.0, 0.075, 0.075]),
-            (ImpactZone::RearTail, EnginePlacement::RearEngine)   => (0.15, 0.75, [0.0, 0.0, 0.05, 0.05]),
-
-            (ImpactZone::FlankLeft, EnginePlacement::FrontEngine) => (0.60, 0.15, [0.125, 0.0, 0.125, 0.0]),
-            (ImpactZone::FlankLeft, EnginePlacement::MidEngine)   => (0.40, 0.45, [0.075, 0.0, 0.075, 0.0]),
-            (ImpactZone::FlankLeft, EnginePlacement::RearEngine)  => (0.50, 0.30, [0.10, 0.0, 0.10, 0.0]),
-
-            (ImpactZone::FlankRight, EnginePlacement::FrontEngine)=> (0.60, 0.15, [0.0, 0.125, 0.0, 0.125]),
-            (ImpactZone::FlankRight, EnginePlacement::MidEngine)  => (0.40, 0.45, [0.0, 0.075, 0.0, 0.075]),
-            (ImpactZone::FlankRight, EnginePlacement::RearEngine) => (0.50, 0.30, [0.0, 0.10, 0.0, 0.10]),
-
-            (ImpactZone::CornerFL, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.60, 0.0, 0.0, 0.0]),
-            (ImpactZone::CornerFL, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
-            (ImpactZone::CornerFL, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.65, 0.0, 0.0, 0.0]),
-
-            (ImpactZone::CornerFR, EnginePlacement::FrontEngine)  => (0.25, 0.15, [0.0, 0.60, 0.0, 0.0]),
-            (ImpactZone::CornerFR, EnginePlacement::MidEngine)    => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
-            (ImpactZone::CornerFR, EnginePlacement::RearEngine)   => (0.35, 0.00, [0.0, 0.65, 0.0, 0.0]),
-
-            (ImpactZone::CornerRL, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.55, 0.0]),
-            (ImpactZone::CornerRL, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.50, 0.0]),
-            (ImpactZone::CornerRL, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.50, 0.0]),
-
-            (ImpactZone::CornerRR, EnginePlacement::FrontEngine)  => (0.40, 0.05, [0.0, 0.0, 0.0, 0.55]),
-            (ImpactZone::CornerRR, EnginePlacement::MidEngine)    => (0.25, 0.25, [0.0, 0.0, 0.0, 0.50]),
-            (ImpactZone::CornerRR, EnginePlacement::RearEngine)   => (0.15, 0.35, [0.0, 0.0, 0.0, 0.50]),
-        };
-
-        const CHASSIS_CAPACITY: f32 = 10000.0;
-        const ENGINE_CAPACITY: f32 = 5000.0;
-        const SUSP_CAPACITY: f32 = 4500.0;
-
-        let delta_chassis = (effective_energy * w_chassis) / CHASSIS_CAPACITY;
-        let delta_engine = (effective_energy * w_engine) / ENGINE_CAPACITY;
+        let delta_chassis = (effective_energy * w_chassis) / CHASSIS_DAMAGE_CAPACITY_J;
+        let delta_engine = (effective_energy * w_engine) / ENGINE_DAMAGE_CAPACITY_J;
 
         self.state.chassis_health = (self.state.chassis_health - delta_chassis).clamp(0.0, 1.0);
         self.state.health = self.state.chassis_health;
@@ -556,7 +596,7 @@ impl Car {
                     self.config.suspension.rear
                 };
                 let k_rob = corner_cfg.archetype.robustness_factor();
-                let delta_susp = (effective_energy * w_s) / (SUSP_CAPACITY * k_rob);
+                let delta_susp = (effective_energy * w_s) / (SUSPENSION_DAMAGE_CAPACITY_J * k_rob);
                 self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_susp).clamp(0.0, 1.0);
             }
         }
@@ -594,9 +634,9 @@ impl Car {
             } else {
                 self.config.suspension.rear.archetype
             };
-            arch == SuspensionArchetype::PushrodInboard && h < 0.30
+            arch == SuspensionArchetype::PushrodInboard && h < PUSHROD_COLLAPSE_HEALTH
         });
-        let drag_mult = if has_collapsed_pushrod { 1.40 } else { 1.0 };
+        let drag_mult = if has_collapsed_pushrod { PUSHROD_COLLAPSE_DRAG_MULTIPLIER } else { 1.0 };
         self.config.air_drag_coefficient * (1.0 - self.state.draft_intensity.clamp(0.0, 0.50)) * drag_mult
     }
 
@@ -1434,7 +1474,7 @@ fn couple_axle(
             };
 
             let mut s = delta_z.clamp(-corner.max_rebound_travel, corner.max_bump_travel);
-            if corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30 {
+            if corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < PUSHROD_COLLAPSE_HEALTH {
                 s = corner.max_bump_travel;
             }
             strokes[i] = s;
@@ -1463,31 +1503,27 @@ fn couple_axle(
             // Bump-stop bottoming
             let delta_stop = (delta_z - corner.max_bump_travel).max(0.0);
             let bottomed = delta_stop > 0.002
-                || (s >= corner.max_bump_travel - 1e-4 && (s_dot > 0.5 || (corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30)));
+                || (s >= corner.max_bump_travel - 1e-4 && (s_dot > 0.5 || (corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < PUSHROD_COLLAPSE_HEALTH)));
             bottomed_outs[i] = bottomed;
-            bumpstop_forces[i] = if delta_stop > 0.0 || (bottomed && corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < 0.30) {
+            bumpstop_forces[i] = if delta_stop > 0.0 || (bottomed && corner.archetype == SuspensionArchetype::PushrodInboard && h_susp < PUSHROD_COLLAPSE_HEALTH) {
                 4.0 * corner.spring_rate * delta_stop.max(0.004) + 2.0 * c_damping * s_dot.max(0.0)
             } else {
                 0.0
             };
 
             // Kerb bottom-out damage accumulation (Spec 078 Section 4.A)
-            const V_BOTTOM_CRIT: f32 = 1.8;
-            const E_BUMPSTOP_CAPACITY: f32 = 600.0;
-            if self.config.damage_enabled && (bottomed || delta_stop > 0.0) && s_dot > V_BOTTOM_CRIT {
-                let v_excess = s_dot - V_BOTTOM_CRIT;
+            if self.config.damage_enabled && (bottomed || delta_stop > 0.0) && s_dot > KERB_BOTTOM_OUT_SPEED_MPS {
+                let v_excess = s_dot - KERB_BOTTOM_OUT_SPEED_MPS;
                 let k_rob = corner.archetype.robustness_factor();
-                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_BUMPSTOP_CAPACITY * k_rob);
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (KERB_BOTTOM_OUT_CAPACITY_J * k_rob);
                 self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
             }
 
             // Violent jump touchdown damage accumulation (Spec 078 Section 4.A)
-            const V_LANDING_LIMIT: f32 = 4.2;
-            const E_LANDING_CAPACITY: f32 = 2500.0;
-            if self.config.damage_enabled && touchdown_vz > V_LANDING_LIMIT {
-                let v_excess = touchdown_vz - V_LANDING_LIMIT;
+            if self.config.damage_enabled && touchdown_vz > LANDING_SPEED_LIMIT_MPS {
+                let v_excess = touchdown_vz - LANDING_SPEED_LIMIT_MPS;
                 let k_rob = corner.archetype.robustness_factor();
-                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (E_LANDING_CAPACITY * k_rob);
+                let delta_h = (0.5 * corner_mass * v_excess * v_excess) / (LANDING_CAPACITY_J * k_rob);
                 self.state.suspension_health[i] = (self.state.suspension_health[i] - delta_h).clamp(0.0, 1.0);
             }
 
