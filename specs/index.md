@@ -108,6 +108,8 @@ Table of contents providing progressive disclosure of project constitution and t
 | [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions | Feature Spec | `approved` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries. |
 | [087](087_tdrace_codex_unified_game_encyclopedia_and_technical_reference_portal.md) | TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal | Feature Spec | `implemented` | [011](011_game_asset_catalogue_and_physics_reference_portals.md) | Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files. |
 | [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md) | Rallycross Jokers Built From OpenStreetMap Joker Ways | Feature Spec | `implemented` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it. |
+| [089](089_tactical_cockpit_hud_tire_compound_borders_and_inrace_wheel_decoupling.md) | Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling | Feature Spec | `approved` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Removes intrusive procedural color bands from the in-race animated steered wheels, transfers compound visual identification to the outer tire casing borders in the Tactical Hologram Cockpit Telemetry HUD, and introduces a dedicated compound badge and full nameplate legend at the bottom of the cockpit HUD card. |
+| [090](090_autocross_fictional_vehicle_sprites_and_livery_pipeline.md) | Autocross Fictional Vehicle Sprites and Livery Pipeline | Feature Spec | `implemented` | [050](050_fia_autocross_championship_and_vehicle_roster.md) | End-to-end asset generation pipeline delivering 45 2D textures (15 lateral 1024x512, 15 thumb 256x128, 15 top-down 512x512) for all 5 tiers of the Continental Autocross fleet, facing right (+X), inspired by authentic racing liveries with zero IP markings. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -120,6 +122,7 @@ flowchart LR
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
     046["046: Human-Like Bot Driving with Tiered Mistakes and Varied Lines"]
     047["047: Fictional Branding and Real-World IP Removal for Steam Release"]
+    050["050: FIA Autocross Championship and Vehicle Roster"]
     055["055: Classic Circuits Revamp"]
     062["062: Circuit Pit Lanes and Interactive Pit Stop Procedures"]
     063["063: Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy"]
@@ -141,6 +144,8 @@ flowchart LR
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
     087["087: TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"]
     088["088: Rallycross Jokers Built From OpenStreetMap Joker Ways"]
+    089["089: Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling"]
+    090["090: Autocross Fictional Vehicle Sprites and Livery Pipeline"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -168,4 +173,7 @@ flowchart LR
     081 --> 085
     011 --> 087
     081 --> 088
+    074 --> 089
+    079 --> 089
+    050 --> 090
 ```

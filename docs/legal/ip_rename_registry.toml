@@ -1633,10 +1633,10 @@ tier = 1
 category = "Cross Car Junior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_ardennes_junior_t1.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_ardennes_junior_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_ardennes_junior_t1.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_ardennes_junior_t1.png"
 
 [cars."autocross_speedcar_xtrem_junior"]
 new_id = "autocross_iberian_furia_t1"
@@ -1649,10 +1649,10 @@ tier = 1
 category = "Cross Car Junior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_iberian_furia_t1.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_iberian_furia_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_iberian_furia_t1.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_iberian_furia_t1.png"
 
 [cars."autocross_planet_k3_junior"]
 new_id = "autocross_cosmo_nova_t1"
@@ -1665,10 +1665,10 @@ tier = 1
 category = "Cross Car Junior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_cosmo_nova_t1.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_cosmo_nova_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_cosmo_nova_t1.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_cosmo_nova_t1.png"
 
 [cars."autocross_lifelive_tn11_senior"]
 new_id = "autocross_ardennes_pro_t2"
@@ -1681,10 +1681,10 @@ tier = 2
 category = "Cross Car Senior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_ardennes_pro_t2.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_ardennes_pro_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_ardennes_pro_t2.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_ardennes_pro_t2.png"
 
 [cars."autocross_speedcar_wonder"]
 new_id = "autocross_iberian_relampago_t2"
@@ -1697,10 +1697,10 @@ tier = 2
 category = "Cross Car Senior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_iberian_relampago_t2.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_iberian_relampago_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_iberian_relampago_t2.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_iberian_relampago_t2.png"
 
 [cars."autocross_semog_bravo_sport"]
 new_id = "autocross_lusitania_bravo_t2"
@@ -1713,10 +1713,10 @@ tier = 2
 category = "Cross Car Senior"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_lusitania_bravo_t2.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_lusitania_bravo_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_lusitania_bravo_t2.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_lusitania_bravo_t2.png"
 
 [cars."autocross_peters_buggy1600"]
 new_id = "autocross_petersen_buggy1600_t3"
@@ -1729,10 +1729,10 @@ tier = 3
 category = "Buggy1600"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_petersen_buggy1600_t3.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_petersen_buggy1600_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_petersen_buggy1600_t3.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_petersen_buggy1600_t3.png"
 
 [cars."autocross_alfa_racing_buggy1600"]
 new_id = "autocross_bologna_buggy1600_t3"
@@ -1745,10 +1745,10 @@ tier = 3
 category = "Buggy1600"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_bologna_buggy1600_t3.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_bologna_buggy1600_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_bologna_buggy1600_t3.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_bologna_buggy1600_t3.png"
 
 [cars."autocross_fast_speed_buggy1600"]
 new_id = "autocross_rapid_buggy1600_t3"
@@ -1761,10 +1761,10 @@ tier = 3
 category = "Buggy1600"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_rapid_buggy1600_t3.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_rapid_buggy1600_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_rapid_buggy1600_t3.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_rapid_buggy1600_t3.png"
 
 [cars."autocross_skoda_fabia_tax"]
 new_id = "autocross_bohemia_veloce_t4"
@@ -1777,10 +1777,10 @@ tier = 4
 category = "TouringAutocross"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_bohemia_veloce_t4.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_bohemia_veloce_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_bohemia_veloce_t4.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_bohemia_veloce_t4.png"
 
 [cars."autocross_mitsubishi_evo_tax"]
 new_id = "autocross_shinano_tsunami_t4"
@@ -1793,10 +1793,10 @@ tier = 4
 category = "TouringAutocross"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_shinano_tsunami_t4.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_shinano_tsunami_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_shinano_tsunami_t4.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_shinano_tsunami_t4.png"
 
 [cars."autocross_audi_a4_tax"]
 new_id = "autocross_vortek_quattro_t4"
@@ -1809,10 +1809,10 @@ tier = 4
 category = "TouringAutocross"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_vortek_quattro_t4.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_vortek_quattro_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_vortek_quattro_t4.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_vortek_quattro_t4.png"
 
 [cars."autocross_peters_superbuggy"]
 new_id = "autocross_petersen_superbuggy_t5"
@@ -1825,10 +1825,10 @@ tier = 5
 category = "SuperBuggy"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_petersen_superbuggy_t5.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_petersen_superbuggy_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_petersen_superbuggy_t5.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_petersen_superbuggy_t5.png"
 
 [cars."autocross_alfa_racing_superbuggy"]
 new_id = "autocross_bologna_superbuggy_t5"
@@ -1841,10 +1841,10 @@ tier = 5
 category = "SuperBuggy"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_bologna_superbuggy_t5.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_bologna_superbuggy_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_bologna_superbuggy_t5.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_bologna_superbuggy_t5.png"
 
 [cars."autocross_fast_speed_superbuggy"]
 new_id = "autocross_rapid_superbuggy_t5"
@@ -1857,10 +1857,10 @@ tier = 5
 category = "SuperBuggy"
 shifted = false
 needs_lettering_fix = false
-lateral_sprite_current = "N/A"
-lateral_sprite_new = "N/A"
-topdown_sprite_current = "N/A"
-topdown_sprite_new = "N/A"
+lateral_sprite_current = "textures/vehicles/laterals/autocross/autocross_rapid_superbuggy_t5.png"
+lateral_sprite_new = "textures/vehicles/laterals/autocross/autocross_rapid_superbuggy_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/autocross/autocross_rapid_superbuggy_t5.png"
+topdown_sprite_new = "textures/vehicles/topdown/autocross/autocross_rapid_superbuggy_t5.png"
 
 # --- Module: CLASSIC ---
 
