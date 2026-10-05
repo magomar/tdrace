@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"
 description: "Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files."
-status: in_progress
+status: implemented
 verified: { by: "human:mario", at: "2026-10-04T20:30:47Z", hash: "b8b76d5a8826" }
 created: 2026-10-04
 generated: { by: agent/claude-opus-5-5, at: 2026-10-04T18:00:00Z }
@@ -177,38 +177,38 @@ Output files under `portals/shared/data/codex/`: `cars.json`, `circuits.json`, `
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Codex replaces the showroom**
-  - [ ] **Given** a fresh worktree with `tracks/` initialised and `bun install` done in `portals/`
-  - [ ] **When** I run `make codex`
-  - [ ] **Then** the Codex opens on port 4322
-  - [ ] **And** the header shows Showroom, Technical, Driving and Racing.
+  - [x] **Given** a fresh worktree with `tracks/` initialised and `bun install` done in `portals/`
+  - [x] **When** I run `make codex`
+  - [x] **Then** the Codex opens on port 4322
+  - [x] **And** the header shows Showroom, Technical, Driving and Racing.
 
 - **Scenario: Car data comes from the game**
-  - [ ] **Given** the car `classic_ax_brawler`
-  - [ ] **When** I open `/showroom/cars/classic_ax_brawler`
-  - [ ] **Then** the page shows 250 bhp, the same value as `catalog/mod.rs`
-  - [ ] **And** it shows its chassis skeleton, suspension archetype, compound, differential and engine placement, each linked to its technical page.
+  - [x] **Given** the car `classic_ax_brawler`
+  - [x] **When** I open `/showroom/cars/classic_ax_brawler`
+  - [x] **Then** the page shows 250 bhp, the same value as `catalog/mod.rs`
+  - [x] **And** it shows its chassis skeleton, suspension archetype, compound, differential and engine placement, each linked to its technical page.
 
 - **Scenario: Stale export fails the tests**
-  - [ ] **Given** I change `SuspensionArchetype::robustness_factor` for one archetype
-  - [ ] **When** I run `cargo test -p tdrace-app --test codex_export_tests` without re-exporting
-  - [ ] **Then** the test fails and names the changed file.
+  - [x] **Given** I change `SuspensionArchetype::robustness_factor` for one archetype
+  - [x] **When** I run `cargo test -p tdrace-app --test codex_export_tests` without re-exporting
+  - [x] **Then** the test fails and names the changed file.
 
 - **Scenario: Technical section explains the models**
-  - [ ] **Given** the Technical section
-  - [ ] **When** I open chassis, suspension, tyres, surfaces, drivetrain and damage
-  - [ ] **Then** each page has a plain-words explanation, at least one diagram and a data table
-  - [ ] **And** surfaces shows 15 surfaces and an 8 × 15 compound heatmap.
+  - [x] **Given** the Technical section
+  - [x] **When** I open chassis, suspension, tyres, surfaces, drivetrain and damage
+  - [x] **Then** each page has a plain-words explanation, at least one diagram and a data table
+  - [x] **And** surfaces shows 15 surfaces and an 8 × 15 compound heatmap.
 
 - **Scenario: Driving section matches the game**
-  - [ ] **Given** the Hybrid controls preset in `crates/cabinet/src/input/mapping.rs`
-  - [ ] **When** I open `/driving/controls`
-  - [ ] **Then** the keyboard diagram lights Q, ↑, A, ↓, O, ←, P, →, Space
-  - [ ] **And** `/driving/steering` shows Smooth, Balanced, Sharp and Raw with the values from `DigitalInputConfig::from_profile`.
+  - [x] **Given** the Hybrid controls preset in `crates/cabinet/src/input/mapping.rs`
+  - [x] **When** I open `/driving/controls`
+  - [x] **Then** the keyboard diagram lights Q, ↑, A, ↓, O, ←, P, →, Space
+  - [x] **And** `/driving/steering` shows Smooth, Balanced, Sharp and Raw with the values from `DigitalInputConfig::from_profile`.
 
 - **Scenario: Launch-scope build**
-  - [ ] **Given** an export with `--scope launch`
-  - [ ] **When** I build the Codex
-  - [ ] **Then** no page lists a GT, NASCAR, off-road or vault car or circuit.
+  - [x] **Given** an export with `--scope launch`
+  - [x] **When** I build the Codex
+  - [x] **Then** no page lists a GT, NASCAR, off-road or vault car or circuit.
 
 ---
 
