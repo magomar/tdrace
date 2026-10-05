@@ -192,13 +192,13 @@ fn test_rally_tier_4_ai_driver_signature_cars() {
     let timmy = drivers.iter().find(|d| d.name == "Timmy Hansenfield").expect("Timmy Hansenfield");
     assert_eq!(
         timmy.favorite_car_for_discipline_and_tier("rally", 4),
-        Some("rally_peugeot_208_wrx"),
+        Some("rally_gallia_lyon_t4"),
         "Timmy Hansenfield must drive Peugeot 208 WRX in Tier 4"
     );
     let ken = drivers.iter().find(|d| d.name == "Ken Blaster").expect("Ken Blaster");
     assert_eq!(
         ken.favorite_car_for_discipline_and_tier("rally", 4),
-        Some("rally_ford_focus_rs_rx"),
+        Some("rally_forge_comet_t4"),
         "Ken Blaster must drive Ford Focus RS RX in Tier 4"
     );
 }

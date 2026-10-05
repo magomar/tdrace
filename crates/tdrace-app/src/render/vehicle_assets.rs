@@ -17,9 +17,9 @@ impl CompoundColorExt for CompoundId {
     }
 }
 
-static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
-static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
-static PORSCHE_TOPDOWN_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+static PORSCHE_LATERAL_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2.png");
+static PORSCHE_LATERAL_THUMB_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2_thumb.png");
+static PORSCHE_TOPDOWN_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png");
 static KART_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/kart_slick_front.png");
 static GT_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/gt_slick_front.png");
 static NASCAR_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/nascar_wheel_front.png");
@@ -213,7 +213,7 @@ pub fn get_vehicle_lateral_texture(
 
     let bytes = if let Some(disk_bytes) = find_asset_file(&rel_path) {
         disk_bytes
-    } else if model_id == "gt_porsche_911_gt3r" {
+    } else if model_id == "gt_vandorn_arrowhead_t2" {
         if high_res {
             PORSCHE_LATERAL_PNG.to_vec()
         } else {
@@ -299,7 +299,7 @@ fn get_vehicle_topdown_texture_impl(
 
     let bytes = if let Some(disk_bytes) = bytes {
         disk_bytes
-    } else if base_model_id == "gt_porsche_911_gt3r" {
+    } else if base_model_id == "gt_vandorn_arrowhead_t2" {
         PORSCHE_TOPDOWN_PNG.to_vec()
     } else {
         return None;

@@ -13,7 +13,7 @@ fn test_autocross_game_module_identity_and_properties() {
     assert_eq!(ax.subtitle(), "Natural Unpaved Dirt & Buggy Racing");
     assert_eq!(ax.default_off_track_surface(), SurfaceType::Dirt);
     assert_eq!(ax.default_track_id(), "nova_paka_ax");
-    assert_eq!(ax.default_vehicle_id(), "autocross_lifelive_tn5_junior");
+    assert_eq!(ax.default_vehicle_id(), "autocross_ardennes_junior_t1");
 
     let theme = ax.theme();
     assert_eq!(theme.header_badge, "FIA AUTOCROSS CHAMPIONSHIP");

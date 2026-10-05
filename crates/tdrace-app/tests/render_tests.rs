@@ -269,7 +269,7 @@ fn test_tree_cenital_canopy_and_alpha_modulation() {
 
 #[test]
 fn test_porsche_gt3r_topdown_sprite_asset_presence() {
-    let png_bytes = include_bytes!("../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+    let png_bytes = include_bytes!("../../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png");
     assert!(!png_bytes.is_empty(), "Topdown sprite PNG asset must not be empty");
     assert_eq!(&png_bytes[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(png_bytes.len() > 100_000, "PNG file should contain high-resolution sprite data");
@@ -277,12 +277,12 @@ fn test_porsche_gt3r_topdown_sprite_asset_presence() {
 
 #[test]
 fn test_porsche_gt3r_lateral_sprite_asset_presence() {
-    let high_res = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
+    let high_res = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2.png");
     assert!(!high_res.is_empty(), "Lateral sprite PNG asset must not be empty");
     assert_eq!(&high_res[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(high_res.len() > 50_000, "High-res lateral PNG file should contain detailed sprite data");
 
-    let thumb = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
+    let thumb = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2_thumb.png");
     assert!(!thumb.is_empty(), "Thumbnail sprite PNG asset must not be empty");
     assert_eq!(&thumb[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(thumb.len() < high_res.len(), "Thumbnail must be more compact than high-res sprite");
@@ -428,9 +428,9 @@ fn test_peugeot_208_rally4_topdown_sprite_orientation() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png");
-    let bytes = std::fs::read(&path).expect("Failed to read rally_peugeot_208_rally4 topdown sprite");
-    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse rally_peugeot_208_rally4 image");
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/rally/rally_gallia_200_t1.png");
+    let bytes = std::fs::read(&path).expect("Failed to read rally_gallia_200_t1 topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse rally_gallia_200_t1 image");
 
     let width = img.width as usize;
     let height = img.height as usize;
@@ -470,8 +470,8 @@ fn test_tony_kart_topdown_sprite_orientation() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png");
-    let bytes = std::fs::read(&path).expect("Failed to read kart_tony_kart_racer_ok topdown sprite");
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/kart/kart_verde_apex_t3.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_verde_apex_t3 topdown sprite");
     let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart image");
 
     let width = img.width as usize;
@@ -557,9 +557,9 @@ fn test_crg_black_mirror_okj_lateral_sprite_orientation() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/kart/kart_crg_black_mirror_okj.png");
-    let bytes = std::fs::read(&path).expect("Failed to read kart_crg_black_mirror_okj lateral sprite");
-    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart_crg_black_mirror_okj lateral image");
+    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_blackline_obsidian_t2 lateral sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart_blackline_obsidian_t2 lateral image");
 
     let width = img.width as usize;
     let height = img.height as usize;
@@ -796,11 +796,11 @@ fn test_gt_models_mask_tinting_transforms_bodywork_pixels() {
     let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/gt");
 
     let gt_models = [
-        "gt_toyota_supra_gt4",
-        "gt_bmw_m4_gt4",
-        "gt_aston_vantage_gt4",
-        "gt_porsche_718_gt4",
-        "gt_porsche_911_gt3r",
+        "gt_yamato_hayate_t1",
+        "gt_bmr_bavaria_t1",
+        "gt_albion_victor_t1",
+        "gt_vandorn_stratus_t1",
+        "gt_vandorn_arrowhead_t2",
     ];
 
     let target_primary = Color::new(0.85, 0.10, 0.90, 1.0); // Vivid Magenta/Purple
@@ -1385,10 +1385,10 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
 
     // 2. Legacy fallback guarantee: all non-classic models return None
     let legacy_models = [
-        "gt_porsche_911_gt3r",
+        "gt_vandorn_arrowhead_t2",
         "nascar_camaro_zl1",
-        "rally_peugeot_208_rally4",
-        "offroad_baja_trophy_truck",
+        "rally_gallia_200_t1",
+        "offroad_desert_forge_truck_t2",
     ];
     for model_id in legacy_models {
         assert!(
@@ -1662,7 +1662,7 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
 
     // 3. GT / Touring: Full DRL headlights, dynamic brake lights, track illumination
     let gt_cfg = resolve_vehicle_lighting(
-        Some("gt_porsche_911_gt3r"),
+        Some("gt_vandorn_arrowhead_t2"),
         VehicleVisualType::TouringGT {
             widebody: true,
             gt_wing: true,
@@ -1678,7 +1678,7 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
 
     // 4. Rallycross / All-Terrain: Full headlights, brake lights, hood spotlight pods, track illumination
     let rally_cfg = resolve_vehicle_lighting(
-        Some("rally_peugeot_208_rally4"),
+        Some("rally_gallia_200_t1"),
         VehicleVisualType::RallyHatch {
             roof_scoop: true,
             mudflaps: true,
@@ -1784,7 +1784,7 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
 
     // 1. Cars with lights: GT, Rally, Offroad start with lights_on = true
     let mut gt = resolve_vehicle_lighting(
-        Some("gt_porsche_911_gt3r"),
+        Some("gt_vandorn_arrowhead_t2"),
         VehicleVisualType::TouringGT {
             widebody: true,
             gt_wing: true,
@@ -1803,7 +1803,7 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
     assert!(gt.lights_on, "GT lights must be switched on");
 
     let mut rally = resolve_vehicle_lighting(
-        Some("rally_peugeot_208_rally4"),
+        Some("rally_gallia_200_t1"),
         VehicleVisualType::RallyHatch {
             roof_scoop: true,
             mudflaps: true,

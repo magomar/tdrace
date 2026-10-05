@@ -2109,7 +2109,7 @@ impl RaceSession {
                 (CarChoice::SandRail.title(), CarChoice::SandRail.tag(), CarChoice::SandRail.description(), CarChoice::SandRail.stats()),
             ],
             "autocross" => vec![
-                ("80 BHP LifeLive TN5 Junior", "CROSS CAR JUNIOR", "FIA Cross Car Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.", (0.55, 0.88, 0.90, 0.50)),
+                ("80 BHP Ardennes Junior", "CROSS CAR JUNIOR", "Cross Car Junior Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.", (0.55, 0.88, 0.90, 0.50)),
                 ("680 BHP SuperBuggy V8", "SUPERBUGGY 4WD", "Premier unlimited dirt racing machine with 1:1 power-to-weight ratio and massive downforce.", (0.98, 1.00, 0.95, 0.96)),
             ],
             _ => vec![
@@ -2244,7 +2244,7 @@ impl RaceSession {
             roof_fins: true,
             window_net: true,
         };
-        self.selected_car_model_id = Some("nascar_monte_carlo_ss");
+        self.selected_car_model_id = Some("nascar_crossbow_montego_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2284,7 +2284,7 @@ impl RaceSession {
             whip_antenna: true,
             paddle_tires: true,
         };
-        self.selected_car_model_id = Some("offroad_sand_rail_buggy");
+        self.selected_car_model_id = Some("offroad_laurentian_nomad_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2324,7 +2324,7 @@ impl RaceSession {
             whip_antenna: false,
             paddle_tires: false,
         };
-        self.selected_car_model_id = Some("autocross_lifelive_tn5_junior");
+        self.selected_car_model_id = Some("autocross_ardennes_junior_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2564,7 +2564,7 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
-        self.selected_car_model_id = Some("gt_toyota_supra_gt4");
+        self.selected_car_model_id = Some("gt_yamato_hayate_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2604,7 +2604,7 @@ impl RaceSession {
             mudflaps: true,
             large_wing: true,
         };
-        self.selected_car_model_id = Some("rally_peugeot_208_rally4");
+        self.selected_car_model_id = Some("rally_gallia_200_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2638,7 +2638,7 @@ impl RaceSession {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.selected_car_model_id = Some("kart_crg_hero_60");
+        self.selected_car_model_id = Some("kart_blackline_cadet_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -3782,8 +3782,8 @@ impl RaceSession {
         );
         self.switch_to_nascar();
         self.championship_session = Some(champ.with_tier(5));
-        self.selected_car_model_id = Some("nascar_corvette_ta1");
-        self.active_career_progress.ensure_car("nascar_corvette_ta1");
+        self.selected_car_model_id = Some("nascar_crossbow_manta_t5");
+        self.active_career_progress.ensure_car("nascar_crossbow_manta_t5");
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
         }
@@ -9150,7 +9150,7 @@ impl RaceSession {
             let join_screen = cabinet::net::CabinetLanJoinScreen::new(
                 &self.active_profile.name,
                 self.active_profile.country.as_deref().unwrap_or("ESP"),
-                self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
+                self.selected_car_model_id.unwrap_or("gt_valente_corsa_t2"),
                 profile_livery,
             );
             self.lan_join_screen = Some(join_screen);
@@ -9178,7 +9178,7 @@ impl RaceSession {
         preferred
             .filter(|id| models.iter().any(|m| m.id == *id))
             .or_else(|| models.iter().find(|m| m.tier == 1).or(models.first()).map(|m| m.id))
-            .unwrap_or("gt_ferrari_296_gt3")
+            .unwrap_or("gt_valente_corsa_t2")
     }
 
     /// Game module of the LAN lobby: the host's module, or the module of the host circuit on a client.
@@ -9456,16 +9456,16 @@ impl RaceSession {
     /// Canonicalizes client lobby / network model IDs to verified catalog IDs.
     pub fn canonicalize_car_model_id(raw_id: &str) -> &'static str {
         match raw_id {
-            "scuderia_gt" => "gt_ferrari_296_gt3",
-            "stuttgart_gt" => "gt_porsche_911_gt3r",
-            "bavarian_m4" => "gt_bmw_m4_gt4",
-            "silverstone_vantage" => "gt_aston_vantage_gt4",
-            "shifter_kart_125" => "kart_birel_art_kz2",
+            "scuderia_gt" => "gt_valente_corsa_t2",
+            "stuttgart_gt" => "gt_vandorn_arrowhead_t2",
+            "bavarian_m4" => "gt_bmr_bavaria_t1",
+            "silverstone_vantage" => "gt_albion_victor_t1",
+            "shifter_kart_125" => "kart_rosso_corsa_t4",
             other => {
                 if let Some(m) = crate::catalog::find_model_by_id(other) {
                     m.id
                 } else {
-                    "gt_ferrari_296_gt3"
+                    "gt_valente_corsa_t2"
                 }
             }
         }

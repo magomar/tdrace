@@ -3528,7 +3528,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "rally_hyundai_i20_rx",
+                    "rally_hanguk_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3544,7 +3544,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "kart_tony_kart_racer_ok",
+                    "kart_verde_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3560,7 +3560,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "gt_porsche_911_gt3r",
+                    "gt_vandorn_arrowhead_t2",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3576,7 +3576,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "nascar_arca_chevy_ss",
+                    "nascar_crossbow_predator_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3592,7 +3592,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "offroad_sand_rail_buggy",
+                    "offroad_laurentian_nomad_t1",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),

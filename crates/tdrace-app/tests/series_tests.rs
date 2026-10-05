@@ -43,7 +43,7 @@ id = "player"
 name = "Apex Predator"
 team = "Scuderia Neon"
 is_player = true
-car_model_id = "gt_ferrari_296_gt3"
+car_model_id = "gt_valente_corsa_t2"
 country = "ITA"
 
 [[drivers]]
@@ -90,7 +90,7 @@ fn test_toml_deserialization_and_validation() {
     assert!(def.drivers[0].is_player);
     assert_eq!(def.drivers[0].id, "player");
     assert_eq!(def.drivers[0].name, "Apex Predator");
-    assert_eq!(def.drivers[0].car_model_id.as_deref(), Some("gt_ferrari_296_gt3"));
+    assert_eq!(def.drivers[0].car_model_id.as_deref(), Some("gt_valente_corsa_t2"));
     assert_eq!(def.drivers[0].country.as_deref(), Some("ITA"));
 
     assert!(!def.drivers[1].is_player);
@@ -355,11 +355,11 @@ fn test_gt_tiers_1_to_5_specifications() {
 
     // Expected tier metadata: (tier, id, min_rounds, starter_car)
     let expected_tiers = [
-        (1, "gt4_clubman_sprint", 5, "gt_toyota_supra_gt4"),
-        (2, "gt3_european_challenge", 7, "gt_porsche_911_gt3r"),
-        (3, "gt2_power_masters", 9, "gt_porsche_911_gt2_rs"),
-        (4, "gt1_heritage_trophy", 10, "gt_porsche_911_gt1_98"),
-        (5, "hypercar_world_gp", 12, "gt_ferrari_499p"),
+        (1, "gt4_clubman_sprint", 5, "gt_yamato_hayate_t1"),
+        (2, "gt3_european_challenge", 7, "gt_vandorn_arrowhead_t2"),
+        (3, "gt2_power_masters", 9, "gt_vandorn_arrowhead_t3"),
+        (4, "gt1_heritage_trophy", 10, "gt_vandorn_aeromax_t4"),
+        (5, "hypercar_world_gp", 12, "gt_valente_imperatore_t5"),
     ];
 
     for (tier, id, rounds_len, expected_car) in expected_tiers {
@@ -394,63 +394,63 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
         (
             "gt",
             vec![
-                (1, "gt4_clubman_sprint", 5, "gt_toyota_supra_gt4"),
-                (2, "gt3_european_challenge", 7, "gt_porsche_911_gt3r"),
-                (3, "gt2_power_masters", 9, "gt_porsche_911_gt2_rs"),
-                (4, "gt1_heritage_trophy", 10, "gt_porsche_911_gt1_98"),
-                (5, "hypercar_world_gp", 12, "gt_ferrari_499p"),
+                (1, "gt4_clubman_sprint", 5, "gt_yamato_hayate_t1"),
+                (2, "gt3_european_challenge", 7, "gt_vandorn_arrowhead_t2"),
+                (3, "gt2_power_masters", 9, "gt_vandorn_arrowhead_t3"),
+                (4, "gt1_heritage_trophy", 10, "gt_vandorn_aeromax_t4"),
+                (5, "hypercar_world_gp", 12, "gt_valente_imperatore_t5"),
             ],
         ),
         (
             "nascar",
             vec![
-                (1, "nascar_short_track_series", 5, "nascar_monte_carlo_ss"),
-                (2, "nascar_intermediate_oval_challenge", 7, "nascar_super_late_model"),
-                (3, "nascar_national_tour", 9, "nascar_arca_chevy_ss"),
-                (4, "nascar_premier_speedway_trophy", 10, "nascar_silverado_truck"),
-                (5, "nascar_cup_tier5", 12, "nascar_corvette_ta1"),
+                (1, "nascar_short_track_series", 5, "nascar_crossbow_montego_t1"),
+                (2, "nascar_intermediate_oval_challenge", 7, "nascar_crossbow_saber_t2"),
+                (3, "nascar_national_tour", 9, "nascar_crossbow_predator_t3"),
+                (4, "nascar_premier_speedway_trophy", 10, "nascar_crossbow_sierra_t4"),
+                (5, "nascar_cup_tier5", 12, "nascar_crossbow_manta_t5"),
             ],
         ),
         (
             "rally",
             vec![
-                (1, "rally_grassroots_cup", 5, "rally_peugeot_208_rally4"),
-                (2, "rally_supercar_lites_trophy", 6, "rally_omse_supercar_lites"),
-                (3, "rally_euro_rx_challenge", 7, "rally_polo_rx"),
-                (4, "rally_world_rx_supercars", 8, "rally_peugeot_208_wrx"),
-                (5, "rally_rx1e_electric_championship", 10, "rally_peugeot_208_rx1e"),
-                (6, "rally_nitrocross_group_e", 12, "rally_omse_fc1x"),
+                (1, "rally_grassroots_cup", 5, "rally_gallia_200_t1"),
+                (2, "rally_supercar_lites_trophy", 6, "rally_nordic_rx_lites_t2"),
+                (3, "rally_euro_rx_challenge", 7, "rally_volkskraft_strassen_t3"),
+                (4, "rally_world_rx_supercars", 8, "rally_gallia_lyon_t4"),
+                (5, "rally_rx1e_electric_championship", 10, "rally_gallia_volt_t5"),
+                (6, "rally_nitrocross_group_e", 12, "rally_nordic_valkyrie_t6"),
             ],
         ),
         (
             "kart",
             vec![
-                (1, "kart_world_cup", 5, "kart_crg_hero_60"),
-                (2, "kart_junior_trophy", 6, "kart_tony_kart_rookie_okj"),
-                (3, "kart_national_championship", 7, "kart_tony_kart_racer_ok"),
-                (4, "kart_continental_trophy", 8, "kart_birel_art_kz2"),
-                (5, "kart_superkart_div2_challenge", 9, "kart_anderson_maverick_mono"),
-                (6, "kart_superkart_world_series", 10, "kart_anderson_cs250"),
+                (1, "kart_world_cup", 5, "kart_blackline_cadet_t1"),
+                (2, "kart_junior_trophy", 6, "kart_verde_sprint_t2"),
+                (3, "kart_national_championship", 7, "kart_verde_apex_t3"),
+                (4, "kart_continental_trophy", 8, "kart_rosso_corsa_t4"),
+                (5, "kart_superkart_div2_challenge", 9, "kart_highland_hawk_t5"),
+                (6, "kart_superkart_world_series", 10, "kart_highland_eagle_t6"),
             ],
         ),
         (
             "extreme_offroad",
             vec![
-                (1, "extreme_desert_sand_sprint", 5, "offroad_sand_rail_buggy"),
-                (2, "extreme_canyon_raid", 7, "offroad_baja_trophy_truck"),
-                (3, "extreme_offroad_cup", 9, "offroad_subaru_ice_racer"),
-                (4, "extreme_mud_masters", 10, "offroad_mega_mud_truck"),
-                (5, "extreme_ultimate_championship", 12, "offroad_grave_crusher"),
+                (1, "extreme_desert_sand_sprint", 5, "offroad_laurentian_nomad_t1"),
+                (2, "extreme_canyon_raid", 7, "offroad_desert_forge_truck_t2"),
+                (3, "extreme_offroad_cup", 9, "offroad_sixstar_blizzard_t3"),
+                (4, "extreme_mud_masters", 10, "offroad_titan_mud_slinger_t4"),
+                (5, "extreme_ultimate_championship", 12, "offroad_havoc_tomb_raider_t5"),
             ],
         ),
         (
             "autocross",
             vec![
-                (1, "autocross_crosscar_junior_trophy", 3, "autocross_lifelive_tn5_junior"),
-                (2, "autocross_crosscar_senior_challenge", 4, "autocross_lifelive_tn11_senior"),
-                (3, "autocross_buggy1600_championship", 4, "autocross_peters_buggy1600"),
-                (4, "autocross_touring_masters", 4, "autocross_skoda_fabia_tax"),
-                (5, "autocross_superbuggy_world_series", 5, "autocross_peters_superbuggy"),
+                (1, "autocross_crosscar_junior_trophy", 3, "autocross_ardennes_junior_t1"),
+                (2, "autocross_crosscar_senior_challenge", 4, "autocross_ardennes_pro_t2"),
+                (3, "autocross_buggy1600_championship", 4, "autocross_petersen_buggy1600_t3"),
+                (4, "autocross_touring_masters", 4, "autocross_bohemia_veloce_t4"),
+                (5, "autocross_superbuggy_world_series", 5, "autocross_petersen_superbuggy_t5"),
             ],
         ),
     ];
@@ -860,7 +860,7 @@ fn test_rally_tier_1_championship_starting_grid_eligibility() {
     session.launch_or_resume_championship(&def);
 
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!(session.selected_car_model_id, Some("rally_peugeot_208_rally4"));
+    assert_eq!(session.selected_car_model_id, Some("rally_gallia_200_t1"));
     assert_eq!(session.active_player_car_tier(), 1, "Peugeot 208 Rally 4 must be Tier 1");
     let req_tier = session.current_race_required_tier();
     assert_eq!(req_tier, 1, "Rally Grassroots Cup requires Tier 1");

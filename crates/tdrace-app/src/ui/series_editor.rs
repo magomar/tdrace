@@ -175,7 +175,7 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
     let default_model_id = available_models
         .first()
         .map(|m| m.id.to_string())
-        .unwrap_or_else(|| "gt_toyota_supra_gt4".to_string());
+        .unwrap_or_else(|| "gt_yamato_hayate_t1".to_string());
 
     let (team_prefix, module_drivers) = match module.as_str() {
         "nascar" => (

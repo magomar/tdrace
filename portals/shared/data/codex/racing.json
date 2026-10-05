@@ -783,7 +783,7 @@
               "name": "Player",
               "team": "Apex GT Racing",
               "is_player": true,
-              "car_model_id": "gt_toyota_supra_gt4",
+              "car_model_id": "gt_yamato_hayate_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -793,7 +793,7 @@
               "name": "Max Hunter",
               "team": "Manthey Racing",
               "is_player": false,
-              "car_model_id": "gt_porsche_718_gt4",
+              "car_model_id": "gt_vandorn_stratus_t1",
               "country": "NED",
               "ai_style": null,
               "ai_tier": null
@@ -803,7 +803,7 @@
               "name": "Charles Laurent",
               "team": "BMW Team RMG",
               "is_player": false,
-              "car_model_id": "gt_bmw_m4_gt4",
+              "car_model_id": "gt_bmr_bavaria_t1",
               "country": "MCO",
               "ai_style": null,
               "ai_tier": null
@@ -813,7 +813,7 @@
               "name": "Fernando Toro",
               "team": "Aston Martin Racing",
               "is_player": false,
-              "car_model_id": "gt_aston_vantage_gt4",
+              "car_model_id": "gt_albion_victor_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -823,7 +823,7 @@
               "name": "Sophia Becker",
               "team": "Manthey Racing",
               "is_player": false,
-              "car_model_id": "gt_porsche_718_gt4",
+              "car_model_id": "gt_vandorn_stratus_t1",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -833,7 +833,7 @@
               "name": "Liam Vance",
               "team": "BMW Team RMG",
               "is_player": false,
-              "car_model_id": "gt_bmw_m4_gt4",
+              "car_model_id": "gt_bmr_bavaria_t1",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -843,7 +843,7 @@
               "name": "George Speed",
               "team": "Aston Martin Racing",
               "is_player": false,
-              "car_model_id": "gt_aston_vantage_gt4",
+              "car_model_id": "gt_albion_victor_t1",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -853,7 +853,7 @@
               "name": "Takumi Sato",
               "team": "Apex GT Racing",
               "is_player": false,
-              "car_model_id": "gt_toyota_supra_gt4",
+              "car_model_id": "gt_yamato_hayate_t1",
               "country": "JPN",
               "ai_style": null,
               "ai_tier": null
@@ -922,7 +922,7 @@
               "name": "Player",
               "team": "Manthey EMA",
               "is_player": true,
-              "car_model_id": "gt_porsche_911_gt3r",
+              "car_model_id": "gt_vandorn_arrowhead_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -932,7 +932,7 @@
               "name": "Alessandro Rossi",
               "team": "Scuderia AF Corse",
               "is_player": false,
-              "car_model_id": "gt_ferrari_296_gt3",
+              "car_model_id": "gt_valente_corsa_t2",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -942,7 +942,7 @@
               "name": "Lucas Auer",
               "team": "Akkodis ASP Team",
               "is_player": false,
-              "car_model_id": "gt_amg_gt3_evo",
+              "car_model_id": "gt_silberstern_sturmvogel_t2",
               "country": "AUT",
               "ai_style": null,
               "ai_tier": null
@@ -952,7 +952,7 @@
               "name": "Dries Vanthoor",
               "team": "Team WRT",
               "is_player": false,
-              "car_model_id": "gt_audi_r8_gt3_evo2",
+              "car_model_id": "gt_vortek_quattro_t2",
               "country": "BEL",
               "ai_style": null,
               "ai_tier": null
@@ -962,7 +962,7 @@
               "name": "Kévin Estre",
               "team": "Manthey EMA",
               "is_player": false,
-              "car_model_id": "gt_porsche_911_gt3r",
+              "car_model_id": "gt_vandorn_arrowhead_t2",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -972,7 +972,7 @@
               "name": "Antonio Fuoco",
               "team": "Scuderia AF Corse",
               "is_player": false,
-              "car_model_id": "gt_ferrari_296_gt3",
+              "car_model_id": "gt_valente_corsa_t2",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -982,7 +982,7 @@
               "name": "Maro Engel",
               "team": "Akkodis ASP Team",
               "is_player": false,
-              "car_model_id": "gt_amg_gt3_evo",
+              "car_model_id": "gt_silberstern_sturmvogel_t2",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -992,7 +992,7 @@
               "name": "Charles Weerts",
               "team": "Team WRT",
               "is_player": false,
-              "car_model_id": "gt_audi_r8_gt3_evo2",
+              "car_model_id": "gt_vortek_quattro_t2",
               "country": "BEL",
               "ai_style": null,
               "ai_tier": null
@@ -1073,7 +1073,7 @@
               "name": "Player",
               "team": "Porsche Motorsport GT",
               "is_player": true,
-              "car_model_id": "gt_porsche_911_gt2_rs",
+              "car_model_id": "gt_vandorn_arrowhead_t3",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -1083,7 +1083,7 @@
               "name": "David Brabham",
               "team": "Brabham Motorsport",
               "is_player": false,
-              "car_model_id": "gt_brabham_bt62_gt2",
+              "car_model_id": "gt_southern_cross_62_t3",
               "country": "AUS",
               "ai_style": null,
               "ai_tier": null
@@ -1093,7 +1093,7 @@
               "name": "Matteo Bobbi",
               "team": "Maserati Corse",
               "is_player": false,
-              "car_model_id": "gt_maserati_mc20_gt2",
+              "car_model_id": "gt_aquila_strale_t3",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -1103,7 +1103,7 @@
               "name": "Markus Winkelhock",
               "team": "Audi Sport Customer Racing",
               "is_player": false,
-              "car_model_id": "gt_audi_r8_gt2",
+              "car_model_id": "gt_vortek_clubsport_t3",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1113,7 +1113,7 @@
               "name": "Jörg Bergmeister",
               "team": "Porsche Motorsport GT",
               "is_player": false,
-              "car_model_id": "gt_porsche_911_gt2_rs",
+              "car_model_id": "gt_vandorn_arrowhead_t3",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1123,7 +1123,7 @@
               "name": "Luke Youlden",
               "team": "Brabham Motorsport",
               "is_player": false,
-              "car_model_id": "gt_brabham_bt62_gt2",
+              "car_model_id": "gt_southern_cross_62_t3",
               "country": "AUS",
               "ai_style": null,
               "ai_tier": null
@@ -1133,7 +1133,7 @@
               "name": "Andrea Bertolini",
               "team": "Maserati Corse",
               "is_player": false,
-              "car_model_id": "gt_maserati_mc20_gt2",
+              "car_model_id": "gt_aquila_strale_t3",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -1143,7 +1143,7 @@
               "name": "Frank Stippler",
               "team": "Audi Sport Customer Racing",
               "is_player": false,
-              "car_model_id": "gt_audi_r8_gt2",
+              "car_model_id": "gt_vortek_clubsport_t3",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1230,7 +1230,7 @@
               "name": "Player",
               "team": "Porsche AG Le Mans Team",
               "is_player": true,
-              "car_model_id": "gt_porsche_911_gt1_98",
+              "car_model_id": "gt_vandorn_aeromax_t4",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -1240,7 +1240,7 @@
               "name": "JJ Lehto",
               "team": "Gulf Team Davidoff McLaren",
               "is_player": false,
-              "car_model_id": "gt_mclaren_f1_gtr_lt",
+              "car_model_id": "gt_hyperion_velocity_t4",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -1250,7 +1250,7 @@
               "name": "Bernd Schneider",
               "team": "AMG-Mercedes Warsteiner",
               "is_player": false,
-              "car_model_id": "gt_mercedes_clk_gtr",
+              "car_model_id": "gt_silberstern_silberpfeil_t4",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1260,7 +1260,7 @@
               "name": "Aguri Suzuki",
               "team": "Nissan Motorsport NISMO",
               "is_player": false,
-              "car_model_id": "gt_nissan_r390_gt1",
+              "car_model_id": "gt_katana_shogun_t4",
               "country": "JPN",
               "ai_style": null,
               "ai_tier": null
@@ -1270,7 +1270,7 @@
               "name": "Allan McNish",
               "team": "Porsche AG Le Mans Team",
               "is_player": false,
-              "car_model_id": "gt_porsche_911_gt1_98",
+              "car_model_id": "gt_vandorn_aeromax_t4",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -1280,7 +1280,7 @@
               "name": "Steve Soper",
               "team": "Gulf Team Davidoff McLaren",
               "is_player": false,
-              "car_model_id": "gt_mclaren_f1_gtr_lt",
+              "car_model_id": "gt_hyperion_velocity_t4",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -1290,7 +1290,7 @@
               "name": "Klaus Ludwig",
               "team": "AMG-Mercedes Warsteiner",
               "is_player": false,
-              "car_model_id": "gt_mercedes_clk_gtr",
+              "car_model_id": "gt_silberstern_silberpfeil_t4",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1300,7 +1300,7 @@
               "name": "Kazuyoshi Hoshino",
               "team": "Nissan Motorsport NISMO",
               "is_player": false,
-              "car_model_id": "gt_nissan_r390_gt1",
+              "car_model_id": "gt_katana_shogun_t4",
               "country": "JPN",
               "ai_style": null,
               "ai_tier": null
@@ -1399,7 +1399,7 @@
               "name": "Player",
               "team": "Ferrari AF Corse",
               "is_player": true,
-              "car_model_id": "gt_ferrari_499p",
+              "car_model_id": "gt_valente_imperatore_t5",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -1409,7 +1409,7 @@
               "name": "Kévin Estre",
               "team": "Porsche Penske Motorsport",
               "is_player": false,
-              "car_model_id": "gt_porsche_963",
+              "car_model_id": "gt_vandorn_kronos_t5",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -1419,7 +1419,7 @@
               "name": "Kamui Kobayashi",
               "team": "Toyota Gazoo Racing WEC",
               "is_player": false,
-              "car_model_id": "gt_toyota_gr010",
+              "car_model_id": "gt_yamato_ronin_t5",
               "country": "JPN",
               "ai_style": null,
               "ai_tier": null
@@ -1429,7 +1429,7 @@
               "name": "Sébastien Bourdais",
               "team": "Cadillac Racing Chip Ganassi",
               "is_player": false,
-              "car_model_id": "gt_cadillac_v_series_r",
+              "car_model_id": "gt_crestline_sovereign_t5",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -1439,7 +1439,7 @@
               "name": "Alessandro Pier Guidi",
               "team": "Ferrari AF Corse",
               "is_player": false,
-              "car_model_id": "gt_ferrari_499p",
+              "car_model_id": "gt_valente_imperatore_t5",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -1449,7 +1449,7 @@
               "name": "André Lotterer",
               "team": "Porsche Penske Motorsport",
               "is_player": false,
-              "car_model_id": "gt_porsche_963",
+              "car_model_id": "gt_vandorn_kronos_t5",
               "country": "GER",
               "ai_style": null,
               "ai_tier": null
@@ -1459,7 +1459,7 @@
               "name": "Brendon Hartley",
               "team": "Toyota Gazoo Racing WEC",
               "is_player": false,
-              "car_model_id": "gt_toyota_gr010",
+              "car_model_id": "gt_yamato_ronin_t5",
               "country": "NZL",
               "ai_style": null,
               "ai_tier": null
@@ -1469,7 +1469,7 @@
               "name": "Earl Bamber",
               "team": "Cadillac Racing Chip Ganassi",
               "is_player": false,
-              "car_model_id": "gt_cadillac_v_series_r",
+              "car_model_id": "gt_crestline_sovereign_t5",
               "country": "NZL",
               "ai_style": null,
               "ai_tier": null
@@ -1526,7 +1526,7 @@
               "name": "Player",
               "team": "Apex Stock Car",
               "is_player": true,
-              "car_model_id": "nascar_monte_carlo_ss",
+              "car_model_id": "nascar_crossbow_montego_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1536,7 +1536,7 @@
               "name": "Dale 'The Intimidator' Vance",
               "team": "Richard Childress Racing",
               "is_player": false,
-              "car_model_id": "nascar_monte_carlo_ss",
+              "car_model_id": "nascar_crossbow_montego_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1546,7 +1546,7 @@
               "name": "Chase 'Rainbow' Gordon",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_street_stock",
+              "car_model_id": "nascar_forge_stallion_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1556,7 +1556,7 @@
               "name": "Richard 'The King' Pettyfield",
               "team": "Petty Enterprises",
               "is_player": false,
-              "car_model_id": "nascar_dodge_dart_street_stock",
+              "car_model_id": "nascar_rampart_arrow_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1566,7 +1566,7 @@
               "name": "Rowdy 'Wild Thing' Busch",
               "team": "Joe Gibbs Racing",
               "is_player": false,
-              "car_model_id": "nascar_monte_carlo_ss",
+              "car_model_id": "nascar_crossbow_montego_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1576,7 +1576,7 @@
               "name": "Jimmie 'Seven-Time' Johnson",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_street_stock",
+              "car_model_id": "nascar_forge_stallion_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1586,7 +1586,7 @@
               "name": "Tony 'Smoke' Stewart",
               "team": "Stewart-Haas Racing",
               "is_player": false,
-              "car_model_id": "nascar_dodge_dart_street_stock",
+              "car_model_id": "nascar_rampart_arrow_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1596,7 +1596,7 @@
               "name": "Bobby 'Alabama' Allison",
               "team": "Alabama Gang",
               "is_player": false,
-              "car_model_id": "nascar_mustang_street_stock",
+              "car_model_id": "nascar_forge_stallion_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1665,7 +1665,7 @@
               "name": "Player",
               "team": "Apex Stock Car",
               "is_player": true,
-              "car_model_id": "nascar_super_late_model",
+              "car_model_id": "nascar_crossbow_saber_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1675,7 +1675,7 @@
               "name": "Dale 'The Intimidator' Vance",
               "team": "Richard Childress Racing",
               "is_player": false,
-              "car_model_id": "nascar_super_late_model",
+              "car_model_id": "nascar_crossbow_saber_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1685,7 +1685,7 @@
               "name": "Chase 'Rainbow' Gordon",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_super_late_model",
+              "car_model_id": "nascar_forge_stallion_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1695,7 +1695,7 @@
               "name": "Richard 'The King' Pettyfield",
               "team": "Petty Enterprises",
               "is_player": false,
-              "car_model_id": "nascar_late_model_stock_car",
+              "car_model_id": "nascar_heartland_spec_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1705,7 +1705,7 @@
               "name": "Rowdy 'Wild Thing' Busch",
               "team": "Joe Gibbs Racing",
               "is_player": false,
-              "car_model_id": "nascar_super_late_model",
+              "car_model_id": "nascar_crossbow_saber_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1715,7 +1715,7 @@
               "name": "Jimmie 'Seven-Time' Johnson",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_super_late_model",
+              "car_model_id": "nascar_forge_stallion_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1725,7 +1725,7 @@
               "name": "Tony 'Smoke' Stewart",
               "team": "Stewart-Haas Racing",
               "is_player": false,
-              "car_model_id": "nascar_late_model_stock_car",
+              "car_model_id": "nascar_heartland_spec_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1735,7 +1735,7 @@
               "name": "Bobby 'Alabama' Allison",
               "team": "Alabama Gang",
               "is_player": false,
-              "car_model_id": "nascar_mustang_super_late_model",
+              "car_model_id": "nascar_forge_stallion_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1816,7 +1816,7 @@
               "name": "Player",
               "team": "Apex Stock Car",
               "is_player": true,
-              "car_model_id": "nascar_arca_chevy_ss",
+              "car_model_id": "nascar_crossbow_predator_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1826,7 +1826,7 @@
               "name": "Dale 'The Intimidator' Vance",
               "team": "Richard Childress Racing",
               "is_player": false,
-              "car_model_id": "nascar_arca_chevy_ss",
+              "car_model_id": "nascar_crossbow_predator_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1836,7 +1836,7 @@
               "name": "Chase 'Rainbow' Gordon",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_ford_fusion_arca",
+              "car_model_id": "nascar_forge_reactor_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1846,7 +1846,7 @@
               "name": "Richard 'The King' Pettyfield",
               "team": "Petty Enterprises",
               "is_player": false,
-              "car_model_id": "nascar_toyota_camry_arca",
+              "car_model_id": "nascar_yamato_century_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1856,7 +1856,7 @@
               "name": "Rowdy 'Wild Thing' Busch",
               "team": "Joe Gibbs Racing",
               "is_player": false,
-              "car_model_id": "nascar_toyota_camry_arca",
+              "car_model_id": "nascar_yamato_century_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1866,7 +1866,7 @@
               "name": "Jimmie 'Seven-Time' Johnson",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_arca_chevy_ss",
+              "car_model_id": "nascar_crossbow_predator_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1876,7 +1876,7 @@
               "name": "Tony 'Smoke' Stewart",
               "team": "Stewart-Haas Racing",
               "is_player": false,
-              "car_model_id": "nascar_ford_fusion_arca",
+              "car_model_id": "nascar_forge_reactor_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1886,7 +1886,7 @@
               "name": "Bobby 'Alabama' Allison",
               "team": "Alabama Gang",
               "is_player": false,
-              "car_model_id": "nascar_ford_fusion_arca",
+              "car_model_id": "nascar_forge_reactor_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1973,7 +1973,7 @@
               "name": "Player",
               "team": "Apex Stock Car",
               "is_player": true,
-              "car_model_id": "nascar_silverado_truck",
+              "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1983,7 +1983,7 @@
               "name": "Dale 'The Intimidator' Vance",
               "team": "Richard Childress Racing",
               "is_player": false,
-              "car_model_id": "nascar_silverado_truck",
+              "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -1993,7 +1993,7 @@
               "name": "Chase 'Rainbow' Gordon",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_silverado_truck",
+              "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2003,7 +2003,7 @@
               "name": "Richard 'The King' Pettyfield",
               "team": "Petty Enterprises",
               "is_player": false,
-              "car_model_id": "nascar_f150_truck",
+              "car_model_id": "nascar_forge_ironclad_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2013,7 +2013,7 @@
               "name": "Rowdy 'Wild Thing' Busch",
               "team": "Joe Gibbs Racing",
               "is_player": false,
-              "car_model_id": "nascar_tundra_truck",
+              "car_model_id": "nascar_yamato_taiga_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2023,7 +2023,7 @@
               "name": "Jimmie 'Seven-Time' Johnson",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_silverado_truck",
+              "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2033,7 +2033,7 @@
               "name": "Tony 'Smoke' Stewart",
               "team": "Stewart-Haas Racing",
               "is_player": false,
-              "car_model_id": "nascar_f150_truck",
+              "car_model_id": "nascar_forge_ironclad_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2043,7 +2043,7 @@
               "name": "Bobby 'Alabama' Allison",
               "team": "Alabama Gang",
               "is_player": false,
-              "car_model_id": "nascar_f150_truck",
+              "car_model_id": "nascar_forge_ironclad_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2142,7 +2142,7 @@
               "name": "Player",
               "team": "Apex Stock Car",
               "is_player": true,
-              "car_model_id": "nascar_corvette_ta1",
+              "car_model_id": "nascar_crossbow_manta_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2152,7 +2152,7 @@
               "name": "Dale 'The Intimidator' Vance",
               "team": "Richard Childress Racing",
               "is_player": false,
-              "car_model_id": "nascar_corvette_ta1",
+              "car_model_id": "nascar_crossbow_manta_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2162,7 +2162,7 @@
               "name": "Chase 'Rainbow' Gordon",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_ta1",
+              "car_model_id": "nascar_forge_stallion_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2172,7 +2172,7 @@
               "name": "Richard 'The King' Pettyfield",
               "team": "Petty Enterprises",
               "is_player": false,
-              "car_model_id": "nascar_challenger_ta1",
+              "car_model_id": "nascar_rampart_enforcer_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2182,7 +2182,7 @@
               "name": "Rowdy 'Wild Thing' Busch",
               "team": "Joe Gibbs Racing",
               "is_player": false,
-              "car_model_id": "nascar_corvette_ta1",
+              "car_model_id": "nascar_crossbow_manta_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2192,7 +2192,7 @@
               "name": "Jimmie 'Seven-Time' Johnson",
               "team": "Hendrick Motorsports",
               "is_player": false,
-              "car_model_id": "nascar_mustang_ta1",
+              "car_model_id": "nascar_forge_stallion_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2202,7 +2202,7 @@
               "name": "Tony 'Smoke' Stewart",
               "team": "Stewart-Haas Racing",
               "is_player": false,
-              "car_model_id": "nascar_challenger_ta1",
+              "car_model_id": "nascar_rampart_enforcer_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2212,7 +2212,7 @@
               "name": "Bobby 'Alabama' Allison",
               "team": "Alabama Gang",
               "is_player": false,
-              "car_model_id": "nascar_mustang_ta1",
+              "car_model_id": "nascar_forge_stallion_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2269,7 +2269,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_peugeot_208_rally4",
+              "car_model_id": "rally_gallia_200_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -2279,7 +2279,7 @@
               "name": "Johan Kristoffersson",
               "team": "KMS Volkswagen",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_rally4",
+              "car_model_id": "rally_gallia_200_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2289,7 +2289,7 @@
               "name": "Mattias Ekström",
               "team": "EKS Audi Sport",
               "is_player": false,
-              "car_model_id": "rally_fiesta_rally4",
+              "car_model_id": "rally_forge_spark_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2299,7 +2299,7 @@
               "name": "Timmy Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_clio_rally4",
+              "car_model_id": "rally_rouen_dauphine_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2309,7 +2309,7 @@
               "name": "Petter Solberg",
               "team": "PSRX Volkswagen Sweden",
               "is_player": false,
-              "car_model_id": "rally_fiesta_rally4",
+              "car_model_id": "rally_forge_spark_t1",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2319,7 +2319,7 @@
               "name": "Kevin Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_clio_rally4",
+              "car_model_id": "rally_rouen_dauphine_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2329,7 +2329,7 @@
               "name": "Niclas Grönholm",
               "team": "GRX Taneco",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_rally4",
+              "car_model_id": "rally_gallia_200_t1",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -2339,7 +2339,7 @@
               "name": "Andreas Bakkerud",
               "team": "Monster Energy RX",
               "is_player": false,
-              "car_model_id": "rally_fiesta_rally4",
+              "car_model_id": "rally_forge_spark_t1",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2402,7 +2402,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_omse_supercar_lites",
+              "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -2412,7 +2412,7 @@
               "name": "Johan Vance",
               "team": "Vance RX Team",
               "is_player": false,
-              "car_model_id": "rally_omse_supercar_lites",
+              "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2422,7 +2422,7 @@
               "name": "Mattias Storm",
               "team": "Storm EKS",
               "is_player": false,
-              "car_model_id": "rally_avitas_supercar_lites",
+              "car_model_id": "rally_aerotech_rx_lites_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2432,7 +2432,7 @@
               "name": "Timmy Hansenfield",
               "team": "Hansenfield RX",
               "is_player": false,
-              "car_model_id": "rally_qev_rx2e",
+              "car_model_id": "rally_volttech_electrocross_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2442,7 +2442,7 @@
               "name": "Kevin Hansenfield",
               "team": "Hansenfield Junior",
               "is_player": false,
-              "car_model_id": "rally_omse_supercar_lites",
+              "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2452,7 +2452,7 @@
               "name": "Niclas Gron",
               "team": "Gron Motorsport",
               "is_player": false,
-              "car_model_id": "rally_avitas_supercar_lites",
+              "car_model_id": "rally_aerotech_rx_lites_t2",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -2462,7 +2462,7 @@
               "name": "Anton Mark",
               "team": "Mark RX",
               "is_player": false,
-              "car_model_id": "rally_qev_rx2e",
+              "car_model_id": "rally_volttech_electrocross_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2472,7 +2472,7 @@
               "name": "Andreas Bakkerud",
               "team": "Bakkerud Blue RX",
               "is_player": false,
-              "car_model_id": "rally_omse_supercar_lites",
+              "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2541,7 +2541,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_polo_rx",
+              "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -2551,7 +2551,7 @@
               "name": "Johan Kristoffersson",
               "team": "KMS Volkswagen",
               "is_player": false,
-              "car_model_id": "rally_polo_rx",
+              "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2561,7 +2561,7 @@
               "name": "Mattias Ekström",
               "team": "EKS Audi Sport",
               "is_player": false,
-              "car_model_id": "rally_audi_s1_rx",
+              "car_model_id": "rally_vortek_quattro_rx_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2571,7 +2571,7 @@
               "name": "Timmy Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_hyundai_i20_rx",
+              "car_model_id": "rally_hanguk_apex_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2581,7 +2581,7 @@
               "name": "Petter Solberg",
               "team": "PSRX Volkswagen Sweden",
               "is_player": false,
-              "car_model_id": "rally_polo_rx",
+              "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2591,7 +2591,7 @@
               "name": "Kevin Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_hyundai_i20_rx",
+              "car_model_id": "rally_hanguk_apex_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2601,7 +2601,7 @@
               "name": "Niclas Grönholm",
               "team": "GRX Taneco",
               "is_player": false,
-              "car_model_id": "rally_hyundai_i20_rx",
+              "car_model_id": "rally_hanguk_apex_t3",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -2611,7 +2611,7 @@
               "name": "Anton Marklund",
               "team": "Marklund Motorsport",
               "is_player": false,
-              "car_model_id": "rally_polo_rx",
+              "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2686,7 +2686,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_peugeot_208_wrx",
+              "car_model_id": "rally_gallia_lyon_t4",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -2696,7 +2696,7 @@
               "name": "Timmy Hansenfield",
               "team": "Hansenfield RX",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_wrx",
+              "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2706,7 +2706,7 @@
               "name": "Ken Blaster",
               "team": "Hoonigan Racing Division",
               "is_player": false,
-              "car_model_id": "rally_ford_focus_rs_rx",
+              "car_model_id": "rally_forge_comet_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -2716,7 +2716,7 @@
               "name": "Petter Solbergfield",
               "team": "Subaru Motorsports USA",
               "is_player": false,
-              "car_model_id": "rally_subaru_wrx_rx",
+              "car_model_id": "rally_sixstar_vortex_t4",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2726,7 +2726,7 @@
               "name": "Johan Vance",
               "team": "Vance RX Team",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_wrx",
+              "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2736,7 +2736,7 @@
               "name": "Andreas Bakkerud",
               "team": "Hoonigan Racing Division",
               "is_player": false,
-              "car_model_id": "rally_ford_focus_rs_rx",
+              "car_model_id": "rally_forge_comet_t4",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2746,7 +2746,7 @@
               "name": "Kevin Hansenfield",
               "team": "Hansenfield RX",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_wrx",
+              "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2756,7 +2756,7 @@
               "name": "Mattias Storm",
               "team": "Storm EKS",
               "is_player": false,
-              "car_model_id": "rally_subaru_wrx_rx",
+              "car_model_id": "rally_sixstar_vortex_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2843,7 +2843,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_peugeot_208_rx1e",
+              "car_model_id": "rally_gallia_volt_t5",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -2853,7 +2853,7 @@
               "name": "Johan Kristoffersson",
               "team": "KMS Volkswagen",
               "is_player": false,
-              "car_model_id": "rally_polo_rx1e",
+              "car_model_id": "rally_volkskraft_electro_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2863,7 +2863,7 @@
               "name": "Mattias Ekström",
               "team": "EKS Audi Sport",
               "is_player": false,
-              "car_model_id": "rally_lancia_delta_evo_e_rx",
+              "car_model_id": "rally_torino_integrale_e_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2873,7 +2873,7 @@
               "name": "Timmy Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_rx1e",
+              "car_model_id": "rally_gallia_volt_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2883,7 +2883,7 @@
               "name": "Petter Solberg",
               "team": "PSRX Volkswagen Sweden",
               "is_player": false,
-              "car_model_id": "rally_polo_rx1e",
+              "car_model_id": "rally_volkskraft_electro_t5",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -2893,7 +2893,7 @@
               "name": "Kevin Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_peugeot_208_rx1e",
+              "car_model_id": "rally_gallia_volt_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -2903,7 +2903,7 @@
               "name": "Niclas Grönholm",
               "team": "GRX Taneco",
               "is_player": false,
-              "car_model_id": "rally_lancia_delta_evo_e_rx",
+              "car_model_id": "rally_torino_integrale_e_t5",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -2913,7 +2913,7 @@
               "name": "Andreas Bakkerud",
               "team": "Monster Energy RX",
               "is_player": false,
-              "car_model_id": "rally_lancia_delta_evo_e_rx",
+              "car_model_id": "rally_torino_integrale_e_t5",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -3012,7 +3012,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_omse_fc1x",
+              "car_model_id": "rally_nordic_valkyrie_t6",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3022,7 +3022,7 @@
               "name": "Johan Kristoffersson",
               "team": "KMS Volkswagen",
               "is_player": false,
-              "car_model_id": "rally_omse_fc1x",
+              "car_model_id": "rally_nordic_valkyrie_t6",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3032,7 +3032,7 @@
               "name": "Mattias Ekström",
               "team": "EKS Audi Sport",
               "is_player": false,
-              "car_model_id": "rally_dodge_hornet_fc1x",
+              "car_model_id": "rally_rampart_wasp_t6",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3042,7 +3042,7 @@
               "name": "Timmy Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_vsc_fc1x",
+              "car_model_id": "rally_green_mountain_titan_t6",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3052,7 +3052,7 @@
               "name": "Petter Solberg",
               "team": "PSRX Volkswagen Sweden",
               "is_player": false,
-              "car_model_id": "rally_dodge_hornet_fc1x",
+              "car_model_id": "rally_rampart_wasp_t6",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -3062,7 +3062,7 @@
               "name": "Kevin Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_vsc_fc1x",
+              "car_model_id": "rally_green_mountain_titan_t6",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3072,7 +3072,7 @@
               "name": "Niclas Grönholm",
               "team": "GRX Taneco",
               "is_player": false,
-              "car_model_id": "rally_omse_fc1x",
+              "car_model_id": "rally_nordic_valkyrie_t6",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3082,7 +3082,7 @@
               "name": "Andreas Bakkerud",
               "team": "Monster Energy RX",
               "is_player": false,
-              "car_model_id": "rally_vsc_fc1x",
+              "car_model_id": "rally_green_mountain_titan_t6",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -3163,7 +3163,7 @@
               "name": "Player",
               "team": "Apex Rally Team",
               "is_player": true,
-              "car_model_id": "rally_audi_sport_quattro_s1",
+              "car_model_id": "rally_vortek_turbo_quattro_t7",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3173,7 +3173,7 @@
               "name": "Johan Kristoffersson",
               "team": "KMS Volkswagen",
               "is_player": false,
-              "car_model_id": "rally_audi_sport_quattro_s1",
+              "car_model_id": "rally_vortek_turbo_quattro_t7",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3183,7 +3183,7 @@
               "name": "Mattias Ekström",
               "team": "EKS Audi Sport",
               "is_player": false,
-              "car_model_id": "rally_peugeot_205_t16",
+              "car_model_id": "rally_gallia_corsica_t7",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3193,7 +3193,7 @@
               "name": "Timmy Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_lancia_delta_s4",
+              "car_model_id": "rally_torino_stradale_t7",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3203,7 +3203,7 @@
               "name": "Petter Solberg",
               "team": "PSRX Volkswagen Sweden",
               "is_player": false,
-              "car_model_id": "rally_audi_sport_quattro_s1",
+              "car_model_id": "rally_vortek_turbo_quattro_t7",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -3213,7 +3213,7 @@
               "name": "Kevin Hansen",
               "team": "Hansen Motorsport",
               "is_player": false,
-              "car_model_id": "rally_lancia_delta_s4",
+              "car_model_id": "rally_torino_stradale_t7",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3223,7 +3223,7 @@
               "name": "Niclas Grönholm",
               "team": "GRX Taneco",
               "is_player": false,
-              "car_model_id": "rally_peugeot_205_t16",
+              "car_model_id": "rally_gallia_corsica_t7",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3233,7 +3233,7 @@
               "name": "Andreas Bakkerud",
               "team": "Monster Energy RX",
               "is_player": false,
-              "car_model_id": "rally_peugeot_205_t16",
+              "car_model_id": "rally_gallia_corsica_t7",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -3290,7 +3290,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_crg_hero_60",
+              "car_model_id": "kart_blackline_cadet_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3300,7 +3300,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_neos",
+              "car_model_id": "kart_verde_sprout_t1",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3310,7 +3310,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_crg_hero_60",
+              "car_model_id": "kart_blackline_cadet_t1",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -3320,7 +3320,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_birel_c28",
+              "car_model_id": "kart_rosso_junior_t1",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3330,7 +3330,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_neos",
+              "car_model_id": "kart_verde_sprout_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3340,7 +3340,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_birel_c28",
+              "car_model_id": "kart_rosso_junior_t1",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3350,7 +3350,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_crg_hero_60",
+              "car_model_id": "kart_blackline_cadet_t1",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -3360,7 +3360,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_neos",
+              "car_model_id": "kart_verde_sprout_t1",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -3423,7 +3423,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_tony_kart_rookie_okj",
+              "car_model_id": "kart_verde_sprint_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3433,7 +3433,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_rookie_okj",
+              "car_model_id": "kart_verde_sprint_t2",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3443,7 +3443,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_crg_black_mirror_okj",
+              "car_model_id": "kart_blackline_obsidian_t2",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -3453,7 +3453,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_birel_ry29_okj",
+              "car_model_id": "kart_rosso_veloce_t2",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3463,7 +3463,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_rookie_okj",
+              "car_model_id": "kart_verde_sprint_t2",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3473,7 +3473,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_crg_black_mirror_okj",
+              "car_model_id": "kart_blackline_obsidian_t2",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3483,7 +3483,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_birel_ry29_okj",
+              "car_model_id": "kart_rosso_veloce_t2",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -3493,7 +3493,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_rookie_okj",
+              "car_model_id": "kart_verde_sprint_t2",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -3562,7 +3562,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_tony_kart_racer_ok",
+              "car_model_id": "kart_verde_apex_t3",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3572,7 +3572,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_ok",
+              "car_model_id": "kart_verde_apex_t3",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3582,7 +3582,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_crg_kt2_ok",
+              "car_model_id": "kart_blackline_phantom_t3",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -3592,7 +3592,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_birel_ry30_ok",
+              "car_model_id": "kart_rosso_modena_t3",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3602,7 +3602,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_ok",
+              "car_model_id": "kart_verde_apex_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3612,7 +3612,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_birel_ry30_ok",
+              "car_model_id": "kart_rosso_modena_t3",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3622,7 +3622,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_crg_kt2_ok",
+              "car_model_id": "kart_blackline_phantom_t3",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -3632,7 +3632,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_ok",
+              "car_model_id": "kart_verde_apex_t3",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -3707,7 +3707,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_birel_art_kz2",
+              "car_model_id": "kart_rosso_corsa_t4",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3717,7 +3717,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_kz",
+              "car_model_id": "kart_verde_pro_t4",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3727,7 +3727,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_crg_road_rebel_kz",
+              "car_model_id": "kart_blackline_renegade_t4",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -3737,7 +3737,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_birel_art_kz2",
+              "car_model_id": "kart_rosso_corsa_t4",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3747,7 +3747,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_kz",
+              "car_model_id": "kart_verde_pro_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3757,7 +3757,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_crg_road_rebel_kz",
+              "car_model_id": "kart_blackline_renegade_t4",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3767,7 +3767,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_birel_art_kz2",
+              "car_model_id": "kart_rosso_corsa_t4",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -3777,7 +3777,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_tony_kart_racer_kz",
+              "car_model_id": "kart_verde_pro_t4",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -3858,7 +3858,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_anderson_maverick_mono",
+              "car_model_id": "kart_highland_hawk_t5",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -3868,7 +3868,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_anderson_maverick_mono",
+              "car_model_id": "kart_highland_hawk_t5",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3878,7 +3878,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_ms_superkart_mono",
+              "car_model_id": "kart_moravia_arrow_t5",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -3888,7 +3888,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_pvt_single_250",
+              "car_model_id": "kart_vanguard_spyder_t5",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -3898,7 +3898,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_anderson_maverick_mono",
+              "car_model_id": "kart_highland_hawk_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -3908,7 +3908,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_ms_superkart_mono",
+              "car_model_id": "kart_moravia_arrow_t5",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -3918,7 +3918,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_pvt_single_250",
+              "car_model_id": "kart_vanguard_spyder_t5",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -3928,7 +3928,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_anderson_maverick_mono",
+              "car_model_id": "kart_highland_hawk_t5",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -4015,7 +4015,7 @@
               "name": "Player",
               "team": "Apex Kart Racing",
               "is_player": true,
-              "car_model_id": "kart_anderson_cs250",
+              "car_model_id": "kart_highland_eagle_t6",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -4025,7 +4025,7 @@
               "name": "Marco Armani",
               "team": "Tony Kart Racing",
               "is_player": false,
-              "car_model_id": "kart_anderson_cs250",
+              "car_model_id": "kart_highland_eagle_t6",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -4035,7 +4035,7 @@
               "name": "Lucas Vance",
               "team": "CRG Factory Team",
               "is_player": false,
-              "car_model_id": "kart_ms_superkart_250",
+              "car_model_id": "kart_moravia_falcon_t6",
               "country": "GBR",
               "ai_style": null,
               "ai_tier": null
@@ -4045,7 +4045,7 @@
               "name": "Alex Rossi",
               "team": "Birel ART",
               "is_player": false,
-              "car_model_id": "kart_viper_250_twin",
+              "car_model_id": "kart_venom_cobra_t6",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -4055,7 +4055,7 @@
               "name": "Sofia Lind",
               "team": "Kosmic Racing",
               "is_player": false,
-              "car_model_id": "kart_anderson_cs250",
+              "car_model_id": "kart_highland_eagle_t6",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4065,7 +4065,7 @@
               "name": "Finn Korhonen",
               "team": "Sodi Kart",
               "is_player": false,
-              "car_model_id": "kart_ms_superkart_250",
+              "car_model_id": "kart_moravia_falcon_t6",
               "country": "FIN",
               "ai_style": null,
               "ai_tier": null
@@ -4075,7 +4075,7 @@
               "name": "Leo Dupont",
               "team": "Energy Corse",
               "is_player": false,
-              "car_model_id": "kart_viper_250_twin",
+              "car_model_id": "kart_venom_cobra_t6",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -4085,7 +4085,7 @@
               "name": "Mateo Silva",
               "team": "Parolin Motorsport",
               "is_player": false,
-              "car_model_id": "kart_anderson_cs250",
+              "car_model_id": "kart_highland_eagle_t6",
               "country": "BRA",
               "ai_style": null,
               "ai_tier": null
@@ -4142,7 +4142,7 @@
               "name": "Player",
               "team": "Sand Rail Dynamics",
               "is_player": true,
-              "car_model_id": "offroad_sand_rail_buggy",
+              "car_model_id": "offroad_laurentian_nomad_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4152,7 +4152,7 @@
               "name": "Wyatt 'Dust Devil' Cole",
               "team": "Mojave Sandworks",
               "is_player": false,
-              "car_model_id": "offroad_sand_rail_buggy",
+              "car_model_id": "offroad_laurentian_nomad_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4162,7 +4162,7 @@
               "name": "Jaxson 'Baja King' Rivera",
               "team": "Baja Trophy Racing",
               "is_player": false,
-              "car_model_id": "offroad_polaris_rzr_pro_r",
+              "car_model_id": "offroad_northstar_razor_t1",
               "country": "MEX",
               "ai_style": null,
               "ai_tier": null
@@ -4172,7 +4172,7 @@
               "name": "Astrid 'Ice Queen' Lindholm",
               "team": "Nordic Glacier Works",
               "is_player": false,
-              "car_model_id": "offroad_vw_sand_rail",
+              "car_model_id": "offroad_volkskraft_dune_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4182,7 +4182,7 @@
               "name": "Bubba 'Mud Slinger' Beauregard",
               "team": "Bayou Heavy Traction",
               "is_player": false,
-              "car_model_id": "offroad_sand_rail_buggy",
+              "car_model_id": "offroad_laurentian_nomad_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4192,7 +4192,7 @@
               "name": "Travis 'Nitro' McGrath",
               "team": "Redline Freestyle",
               "is_player": false,
-              "car_model_id": "offroad_polaris_rzr_pro_r",
+              "car_model_id": "offroad_northstar_razor_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4202,7 +4202,7 @@
               "name": "Roxie 'Rock Hound' Vance",
               "team": "Canyon Crawler Team",
               "is_player": false,
-              "car_model_id": "offroad_vw_sand_rail",
+              "car_model_id": "offroad_volkskraft_dune_t1",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4212,7 +4212,7 @@
               "name": "Sven 'Blizzard' Lindqvist",
               "team": "Arctic Circle Rally",
               "is_player": false,
-              "car_model_id": "offroad_polaris_rzr_pro_r",
+              "car_model_id": "offroad_northstar_razor_t1",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -4281,7 +4281,7 @@
               "name": "Player",
               "team": "Sand Rail Dynamics",
               "is_player": true,
-              "car_model_id": "offroad_baja_trophy_truck",
+              "car_model_id": "offroad_desert_forge_truck_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4291,7 +4291,7 @@
               "name": "Wyatt 'Dust Devil' Cole",
               "team": "Mojave Sandworks",
               "is_player": false,
-              "car_model_id": "offroad_baja_trophy_truck",
+              "car_model_id": "offroad_desert_forge_truck_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4301,7 +4301,7 @@
               "name": "Jaxson 'Baja King' Rivera",
               "team": "Baja Trophy Racing",
               "is_player": false,
-              "car_model_id": "offroad_mason_awd_truck",
+              "car_model_id": "offroad_sonora_desert_king_t2",
               "country": "MEX",
               "ai_style": null,
               "ai_tier": null
@@ -4321,7 +4321,7 @@
               "name": "Bubba 'Mud Slinger' Beauregard",
               "team": "Bayou Heavy Traction",
               "is_player": false,
-              "car_model_id": "offroad_baja_trophy_truck",
+              "car_model_id": "offroad_desert_forge_truck_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4331,7 +4331,7 @@
               "name": "Travis 'Nitro' McGrath",
               "team": "Redline Freestyle",
               "is_player": false,
-              "car_model_id": "offroad_mason_awd_truck",
+              "car_model_id": "offroad_sonora_desert_king_t2",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4351,7 +4351,7 @@
               "name": "Sven 'Blizzard' Lindqvist",
               "team": "Arctic Circle Rally",
               "is_player": false,
-              "car_model_id": "offroad_mason_awd_truck",
+              "car_model_id": "offroad_sonora_desert_king_t2",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -4432,7 +4432,7 @@
               "name": "Player",
               "team": "Sand Rail Dynamics",
               "is_player": true,
-              "car_model_id": "offroad_subaru_ice_racer",
+              "car_model_id": "offroad_sixstar_blizzard_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4442,7 +4442,7 @@
               "name": "Wyatt 'Dust Devil' Cole",
               "team": "Mojave Sandworks",
               "is_player": false,
-              "car_model_id": "offroad_subaru_ice_racer",
+              "car_model_id": "offroad_sixstar_blizzard_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4452,7 +4452,7 @@
               "name": "Jaxson 'Baja King' Rivera",
               "team": "Baja Trophy Racing",
               "is_player": false,
-              "car_model_id": "offroad_audi_quattro_ice",
+              "car_model_id": "offroad_vortek_glacier_t3",
               "country": "MEX",
               "ai_style": null,
               "ai_tier": null
@@ -4462,7 +4462,7 @@
               "name": "Astrid 'Ice Queen' Lindholm",
               "team": "Nordic Glacier Works",
               "is_player": false,
-              "car_model_id": "offroad_lancer_evo_ice",
+              "car_model_id": "offroad_shinano_frost_t3",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4472,7 +4472,7 @@
               "name": "Bubba 'Mud Slinger' Beauregard",
               "team": "Bayou Heavy Traction",
               "is_player": false,
-              "car_model_id": "offroad_subaru_ice_racer",
+              "car_model_id": "offroad_sixstar_blizzard_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4482,7 +4482,7 @@
               "name": "Travis 'Nitro' McGrath",
               "team": "Redline Freestyle",
               "is_player": false,
-              "car_model_id": "offroad_audi_quattro_ice",
+              "car_model_id": "offroad_vortek_glacier_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4492,7 +4492,7 @@
               "name": "Roxie 'Rock Hound' Vance",
               "team": "Canyon Crawler Team",
               "is_player": false,
-              "car_model_id": "offroad_lancer_evo_ice",
+              "car_model_id": "offroad_shinano_frost_t3",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4502,7 +4502,7 @@
               "name": "Sven 'Blizzard' Lindqvist",
               "team": "Arctic Circle Rally",
               "is_player": false,
-              "car_model_id": "offroad_audi_quattro_ice",
+              "car_model_id": "offroad_vortek_glacier_t3",
               "country": "NOR",
               "ai_style": null,
               "ai_tier": null
@@ -4589,7 +4589,7 @@
               "name": "Player",
               "team": "Bayou Mud Slinger Racing",
               "is_player": true,
-              "car_model_id": "offroad_mega_mud_truck",
+              "car_model_id": "offroad_titan_mud_slinger_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4599,7 +4599,7 @@
               "name": "Bubba 'Mud Slinger' Beauregard",
               "team": "Bayou Heavy Traction",
               "is_player": false,
-              "car_model_id": "offroad_chevy_k30_mud_bogger",
+              "car_model_id": "offroad_crossbow_ridge_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4609,7 +4609,7 @@
               "name": "Travis 'Nitro' McGrath",
               "team": "Redline Freestyle",
               "is_player": false,
-              "car_model_id": "offroad_ford_f250_high_riser",
+              "car_model_id": "offroad_forge_mammoth_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4619,7 +4619,7 @@
               "name": "Cruz 'Chasm Jumper' Morales",
               "team": "Quarry Stunt Squad",
               "is_player": false,
-              "car_model_id": "offroad_mega_mud_truck",
+              "car_model_id": "offroad_titan_mud_slinger_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4629,7 +4629,7 @@
               "name": "Wyatt 'Dust Devil' Cole",
               "team": "Mojave Sandworks",
               "is_player": false,
-              "car_model_id": "offroad_chevy_k30_mud_bogger",
+              "car_model_id": "offroad_crossbow_ridge_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4639,7 +4639,7 @@
               "name": "Jaxson 'Baja King' Rivera",
               "team": "Baja Trophy Racing",
               "is_player": false,
-              "car_model_id": "offroad_ford_f250_high_riser",
+              "car_model_id": "offroad_forge_mammoth_t4",
               "country": "MEX",
               "ai_style": null,
               "ai_tier": null
@@ -4649,7 +4649,7 @@
               "name": "Roxie 'Rock Hound' Vance",
               "team": "Canyon Crawler Team",
               "is_player": false,
-              "car_model_id": "offroad_mega_mud_truck",
+              "car_model_id": "offroad_titan_mud_slinger_t4",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4659,7 +4659,7 @@
               "name": "Astrid 'Ice Queen' Lindholm",
               "team": "Nordic Glacier Works",
               "is_player": false,
-              "car_model_id": "offroad_chevy_k30_mud_bogger",
+              "car_model_id": "offroad_crossbow_ridge_t4",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4758,7 +4758,7 @@
               "name": "Player",
               "team": "Apex Monster Jam",
               "is_player": true,
-              "car_model_id": "offroad_grave_crusher",
+              "car_model_id": "offroad_havoc_tomb_raider_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4768,7 +4768,7 @@
               "name": "Travis 'Nitro' McGrath",
               "team": "Redline Freestyle",
               "is_player": false,
-              "car_model_id": "offroad_max_d_monster",
+              "car_model_id": "offroad_havoc_overkill_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4778,7 +4778,7 @@
               "name": "Bubba 'Mud Slinger' Beauregard",
               "team": "Bayou Heavy Traction",
               "is_player": false,
-              "car_model_id": "offroad_bigfoot_crusher",
+              "car_model_id": "offroad_colossus_titan_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4788,7 +4788,7 @@
               "name": "Cruz 'Chasm Jumper' Morales",
               "team": "Quarry Stunt Squad",
               "is_player": false,
-              "car_model_id": "offroad_grave_crusher",
+              "car_model_id": "offroad_havoc_tomb_raider_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4798,7 +4798,7 @@
               "name": "Wyatt 'Dust Devil' Cole",
               "team": "Mojave Sandworks",
               "is_player": false,
-              "car_model_id": "offroad_max_d_monster",
+              "car_model_id": "offroad_havoc_overkill_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4808,7 +4808,7 @@
               "name": "Jaxson 'Baja King' Rivera",
               "team": "Baja Trophy Racing",
               "is_player": false,
-              "car_model_id": "offroad_bigfoot_crusher",
+              "car_model_id": "offroad_colossus_titan_t5",
               "country": "MEX",
               "ai_style": null,
               "ai_tier": null
@@ -4818,7 +4818,7 @@
               "name": "Roxie 'Rock Hound' Vance",
               "team": "Canyon Crawler Team",
               "is_player": false,
-              "car_model_id": "offroad_grave_crusher",
+              "car_model_id": "offroad_havoc_tomb_raider_t5",
               "country": "USA",
               "ai_style": null,
               "ai_tier": null
@@ -4828,7 +4828,7 @@
               "name": "Astrid 'Ice Queen' Lindholm",
               "team": "Nordic Glacier Works",
               "is_player": false,
-              "car_model_id": "offroad_max_d_monster",
+              "car_model_id": "offroad_havoc_overkill_t5",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4873,7 +4873,7 @@
               "name": "Player",
               "team": "Apex Junior Racing",
               "is_player": true,
-              "car_model_id": "autocross_lifelive_tn5_junior",
+              "car_model_id": "autocross_ardennes_junior_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -4883,7 +4883,7 @@
               "name": "Miguel Gayoso",
               "team": "LifeLive Academy",
               "is_player": false,
-              "car_model_id": "autocross_lifelive_tn5_junior",
+              "car_model_id": "autocross_ardennes_junior_t1",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -4893,7 +4893,7 @@
               "name": "Stanislav Brousek",
               "team": "Czech Junior Team",
               "is_player": false,
-              "car_model_id": "autocross_speedcar_xtrem_junior",
+              "car_model_id": "autocross_iberian_furia_t1",
               "country": "CZ",
               "ai_style": null,
               "ai_tier": null
@@ -4903,7 +4903,7 @@
               "name": "Etienne Rambault",
               "team": "Planet Kart Cross France",
               "is_player": false,
-              "car_model_id": "autocross_planet_k3_junior",
+              "car_model_id": "autocross_cosmo_nova_t1",
               "country": "FR",
               "ai_style": null,
               "ai_tier": null
@@ -4913,7 +4913,7 @@
               "name": "Valentino Ledda",
               "team": "Team Italy XC",
               "is_player": false,
-              "car_model_id": "autocross_speedcar_xtrem_junior",
+              "car_model_id": "autocross_iberian_furia_t1",
               "country": "IT",
               "ai_style": null,
               "ai_tier": null
@@ -4923,7 +4923,7 @@
               "name": "Elias Svensson",
               "team": "Nordic Cross Racing",
               "is_player": false,
-              "car_model_id": "autocross_lifelive_tn5_junior",
+              "car_model_id": "autocross_ardennes_junior_t1",
               "country": "SWE",
               "ai_style": null,
               "ai_tier": null
@@ -4933,7 +4933,7 @@
               "name": "Lucas Cartelle",
               "team": "RACB National Team",
               "is_player": false,
-              "car_model_id": "autocross_planet_k3_junior",
+              "car_model_id": "autocross_cosmo_nova_t1",
               "country": "BEL",
               "ai_style": null,
               "ai_tier": null
@@ -4943,7 +4943,7 @@
               "name": "Tomás Martins",
               "team": "FPAK Junior XC",
               "is_player": false,
-              "car_model_id": "autocross_speedcar_xtrem_junior",
+              "car_model_id": "autocross_iberian_furia_t1",
               "country": "PT",
               "ai_style": null,
               "ai_tier": null
@@ -4994,7 +4994,7 @@
               "name": "Player",
               "team": "Apex Senior Racing",
               "is_player": true,
-              "car_model_id": "autocross_lifelive_tn11_senior",
+              "car_model_id": "autocross_ardennes_pro_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5004,7 +5004,7 @@
               "name": "David Méndez",
               "team": "Speedcar Factory Team",
               "is_player": false,
-              "car_model_id": "autocross_speedcar_wonder",
+              "car_model_id": "autocross_iberian_relampago_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5014,7 +5014,7 @@
               "name": "Iván Piña",
               "team": "Semog Racing Team",
               "is_player": false,
-              "car_model_id": "autocross_semog_bravo_sport",
+              "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5024,7 +5024,7 @@
               "name": "Kobe Pauwels",
               "team": "LifeLive Senior Team",
               "is_player": false,
-              "car_model_id": "autocross_lifelive_tn11_senior",
+              "car_model_id": "autocross_ardennes_pro_t2",
               "country": "BEL",
               "ai_style": null,
               "ai_tier": null
@@ -5034,7 +5034,7 @@
               "name": "Simone Firenze",
               "team": "Semog Italia",
               "is_player": false,
-              "car_model_id": "autocross_semog_bravo_sport",
+              "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "IT",
               "ai_style": null,
               "ai_tier": null
@@ -5044,7 +5044,7 @@
               "name": "Arūnas Gibieža",
               "team": "Baltic XC Works",
               "is_player": false,
-              "car_model_id": "autocross_speedcar_wonder",
+              "car_model_id": "autocross_iberian_relampago_t2",
               "country": "LT",
               "ai_style": null,
               "ai_tier": null
@@ -5054,7 +5054,7 @@
               "name": "Alexandre Calvet",
               "team": "Calvet Cross Car",
               "is_player": false,
-              "car_model_id": "autocross_lifelive_tn11_senior",
+              "car_model_id": "autocross_ardennes_pro_t2",
               "country": "FR",
               "ai_style": null,
               "ai_tier": null
@@ -5064,7 +5064,7 @@
               "name": "Rui Nunes",
               "team": "Semog Portugal",
               "is_player": false,
-              "car_model_id": "autocross_semog_bravo_sport",
+              "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "PT",
               "ai_style": null,
               "ai_tier": null
@@ -5115,7 +5115,7 @@
               "name": "Player",
               "team": "Apex Buggy Racing",
               "is_player": true,
-              "car_model_id": "autocross_peters_buggy1600",
+              "car_model_id": "autocross_petersen_buggy1600_t3",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5125,7 +5125,7 @@
               "name": "Kevin Peters",
               "team": "Peters Autosport",
               "is_player": false,
-              "car_model_id": "autocross_peters_buggy1600",
+              "car_model_id": "autocross_petersen_buggy1600_t3",
               "country": "LUX",
               "ai_style": null,
               "ai_tier": null
@@ -5135,7 +5135,7 @@
               "name": "Jakub Novotný",
               "team": "Alfa Racing Team",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_buggy1600",
+              "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5145,7 +5145,7 @@
               "name": "Styn Jaspers",
               "team": "Fast & Speed Racing",
               "is_player": false,
-              "car_model_id": "autocross_fast_speed_buggy1600",
+              "car_model_id": "autocross_rapid_buggy1600_t3",
               "country": "NLD",
               "ai_style": null,
               "ai_tier": null
@@ -5155,7 +5155,7 @@
               "name": "Thomas Christol",
               "team": "Christol Motorsport",
               "is_player": false,
-              "car_model_id": "autocross_peters_buggy1600",
+              "car_model_id": "autocross_petersen_buggy1600_t3",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -5165,7 +5165,7 @@
               "name": "Filip Hartman",
               "team": "Hartman Offroad",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_buggy1600",
+              "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5175,7 +5175,7 @@
               "name": "Markus Wibbeler",
               "team": "Wibbeler Racing",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_buggy1600",
+              "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "DEU",
               "ai_style": null,
               "ai_tier": null
@@ -5185,7 +5185,7 @@
               "name": "Kenny Reding",
               "team": "Reding Autosport",
               "is_player": false,
-              "car_model_id": "autocross_fast_speed_buggy1600",
+              "car_model_id": "autocross_rapid_buggy1600_t3",
               "country": "LUX",
               "ai_style": null,
               "ai_tier": null
@@ -5236,7 +5236,7 @@
               "name": "Player",
               "team": "Apex Touring Racing",
               "is_player": true,
-              "car_model_id": "autocross_skoda_fabia_tax",
+              "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5246,7 +5246,7 @@
               "name": "Václav Fejfar",
               "team": "Fejfar Motorsport",
               "is_player": false,
-              "car_model_id": "autocross_skoda_fabia_tax",
+              "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5256,7 +5256,7 @@
               "name": "Erwin Frieszl",
               "team": "Frieszl Racing",
               "is_player": false,
-              "car_model_id": "autocross_mitsubishi_evo_tax",
+              "car_model_id": "autocross_shinano_tsunami_t4",
               "country": "AUT",
               "ai_style": null,
               "ai_tier": null
@@ -5266,7 +5266,7 @@
               "name": "Adriaan Boele",
               "team": "Boele Autosport",
               "is_player": false,
-              "car_model_id": "autocross_skoda_fabia_tax",
+              "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "NLD",
               "ai_style": null,
               "ai_tier": null
@@ -5276,7 +5276,7 @@
               "name": "Marcel Egg",
               "team": "Egg Racing Team",
               "is_player": false,
-              "car_model_id": "autocross_audi_a4_tax",
+              "car_model_id": "autocross_vortek_quattro_t4",
               "country": "CHE",
               "ai_style": null,
               "ai_tier": null
@@ -5286,7 +5286,7 @@
               "name": "Pavel Výborný",
               "team": "Výborný Motorsport",
               "is_player": false,
-              "car_model_id": "autocross_mitsubishi_evo_tax",
+              "car_model_id": "autocross_shinano_tsunami_t4",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5296,7 +5296,7 @@
               "name": "Grit Hennersdorf",
               "team": "Hennersdorf Offroad",
               "is_player": false,
-              "car_model_id": "autocross_skoda_fabia_tax",
+              "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "DEU",
               "ai_style": null,
               "ai_tier": null
@@ -5306,7 +5306,7 @@
               "name": "Werner Gurschler",
               "team": "Gurschler Quattro",
               "is_player": false,
-              "car_model_id": "autocross_audi_a4_tax",
+              "car_model_id": "autocross_vortek_quattro_t4",
               "country": "ITA",
               "ai_style": null,
               "ai_tier": null
@@ -5363,7 +5363,7 @@
               "name": "Player",
               "team": "Apex SuperBuggy Racing",
               "is_player": true,
-              "car_model_id": "autocross_peters_superbuggy",
+              "car_model_id": "autocross_petersen_superbuggy_t5",
               "country": "ESP",
               "ai_style": null,
               "ai_tier": null
@@ -5373,7 +5373,7 @@
               "name": "Bernd Stubbe",
               "team": "Stubbe SuperBuggy",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_superbuggy",
+              "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "DEU",
               "ai_style": null,
               "ai_tier": null
@@ -5383,7 +5383,7 @@
               "name": "Petr Nikodém",
               "team": "Caravan Metropol",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_superbuggy",
+              "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5393,7 +5393,7 @@
               "name": "Vincent Mercier",
               "team": "Mercier Competition",
               "is_player": false,
-              "car_model_id": "autocross_peters_superbuggy",
+              "car_model_id": "autocross_petersen_superbuggy_t5",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -5403,7 +5403,7 @@
               "name": "Mike Bartelen",
               "team": "Bartelen Motorsport",
               "is_player": false,
-              "car_model_id": "autocross_fast_speed_superbuggy",
+              "car_model_id": "autocross_rapid_superbuggy_t5",
               "country": "NLD",
               "ai_style": null,
               "ai_tier": null
@@ -5413,7 +5413,7 @@
               "name": "Radek Jordák",
               "team": "Jordák Motorsport",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_superbuggy",
+              "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "CZE",
               "ai_style": null,
               "ai_tier": null
@@ -5423,7 +5423,7 @@
               "name": "Johnny Feuillade",
               "team": "Feuillade Racing",
               "is_player": false,
-              "car_model_id": "autocross_alfa_racing_superbuggy",
+              "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "FRA",
               "ai_style": null,
               "ai_tier": null
@@ -5433,7 +5433,7 @@
               "name": "Terry Callaghan",
               "team": "Fast & Speed Holland",
               "is_player": false,
-              "car_model_id": "autocross_fast_speed_superbuggy",
+              "car_model_id": "autocross_rapid_superbuggy_t5",
               "country": "NLD",
               "ai_style": null,
               "ai_tier": null
@@ -5451,8 +5451,8 @@
                 "tier": 1,
                 "name": "Tier 1: GT4 Clubman Sprint",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "gt_toyota_supra_gt4",
-                "starter_car_name": "Toyota GR Supra GT4",
+                "starter_car_id": "gt_yamato_hayate_t1",
+                "starter_car_name": "Yamato Hayate GT T1",
                 "car_cost_xp": 1000,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
@@ -5468,8 +5468,8 @@
                 "tier": 2,
                 "name": "Tier 2: GT3 European Challenge",
                 "promotion_criteria": "Finish top 3 in GT4 championship + 2,000 XP in wallet.",
-                "starter_car_id": "gt_porsche_911_gt3r",
-                "starter_car_name": "Porsche 911 GT3.R (992)",
+                "starter_car_id": "gt_vandorn_arrowhead_t2",
+                "starter_car_name": "Vandorn Arrowhead R T2",
                 "car_cost_xp": 2000,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
@@ -5483,8 +5483,8 @@
                 "tier": 3,
                 "name": "Tier 3: GT2 Power Masters",
                 "promotion_criteria": "Finish top 3 in GT3 championship + 3,000 XP in wallet.",
-                "starter_car_id": "gt_maserati_mc20_gt2",
-                "starter_car_name": "Maserati MC20 GT2",
+                "starter_car_id": "gt_aquila_strale_t3",
+                "starter_car_name": "Aquila Strale GT2 T3",
                 "car_cost_xp": 3000,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
@@ -5498,8 +5498,8 @@
                 "tier": 4,
                 "name": "Tier 4: GT1 Heritage Trophy",
                 "promotion_criteria": "Finish top 3 in GT2 championship + 4,000 XP in wallet.",
-                "starter_car_id": "gt_porsche_911_gt1_98",
-                "starter_car_name": "Porsche 911 GT1-98",
+                "starter_car_id": "gt_vandorn_aeromax_t4",
+                "starter_car_name": "Vandorn Aeromax GT1 T4",
                 "car_cost_xp": 4000,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
@@ -5513,8 +5513,8 @@
                 "tier": 5,
                 "name": "Tier 5: Hypercar World GP",
                 "promotion_criteria": "Finish top 3 in GT1 championship + 5,000 XP in wallet.",
-                "starter_car_id": "gt_porsche_963",
-                "starter_car_name": "Porsche 963 LMDh",
+                "starter_car_id": "gt_vandorn_kronos_t5",
+                "starter_car_name": "Vandorn Kronos Hypercar T5",
                 "car_cost_xp": 5000,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
@@ -5534,8 +5534,8 @@
                 "tier": 1,
                 "name": "Tier 1: Street Stock Bullring",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "nascar_monte_carlo_ss",
-                "starter_car_name": "Chevrolet Monte Carlo SS",
+                "starter_car_id": "nascar_crossbow_montego_t1",
+                "starter_car_name": "Crossbow Montego Street Stock T1",
                 "car_cost_xp": 1000,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
@@ -5551,8 +5551,8 @@
                 "tier": 2,
                 "name": "Tier 2: Late Model Challenge",
                 "promotion_criteria": "Finish top 3 in Street Stock championship + 2,000 XP in wallet.",
-                "starter_car_id": "nascar_super_late_model",
-                "starter_car_name": "Super Late Model Stock Car",
+                "starter_car_id": "nascar_crossbow_saber_t2",
+                "starter_car_name": "Crossbow Saber Late Model T2",
                 "car_cost_xp": 2000,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
@@ -5566,8 +5566,8 @@
                 "tier": 3,
                 "name": "Tier 3: ARCA National Tour",
                 "promotion_criteria": "Finish top 3 in Late Model championship + 3,000 XP in wallet.",
-                "starter_car_id": "nascar_arca_chevy_ss",
-                "starter_car_name": "ARCA Menards Chevrolet SS",
+                "starter_car_id": "nascar_crossbow_predator_t3",
+                "starter_car_name": "Crossbow Predator Stock T3",
                 "car_cost_xp": 3000,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
@@ -5581,8 +5581,8 @@
                 "tier": 4,
                 "name": "Tier 4: Craftsman Truck Series",
                 "promotion_criteria": "Finish top 3 in ARCA championship + 4,000 XP in wallet.",
-                "starter_car_id": "nascar_silverado_truck",
-                "starter_car_name": "Chevrolet Silverado Truck",
+                "starter_car_id": "nascar_crossbow_sierra_t4",
+                "starter_car_name": "Crossbow Sierra Super Truck T4",
                 "car_cost_xp": 4000,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
@@ -5596,8 +5596,8 @@
                 "tier": 5,
                 "name": "Tier 5: NASCAR Cup Series",
                 "promotion_criteria": "Finish top 3 in Truck championship + 5,000 XP in wallet.",
-                "starter_car_id": "nascar_corvette_ta1",
-                "starter_car_name": "Corvette C8 Trans-Am TA1",
+                "starter_car_id": "nascar_crossbow_manta_t5",
+                "starter_car_name": "Crossbow Manta Silhouette T5",
                 "car_cost_xp": 5000,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
@@ -5617,8 +5617,8 @@
                 "tier": 1,
                 "name": "Tier 1: Rally4 Grassroots Cup",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "rally_peugeot_208_rally4",
-                "starter_car_name": "Peugeot 208 Rally4",
+                "starter_car_id": "rally_gallia_200_t1",
+                "starter_car_name": "Gallia 200 Rally4 T1",
                 "car_cost_xp": 1000,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
@@ -5634,8 +5634,8 @@
                 "tier": 2,
                 "name": "Tier 2: Supercar Lites Trophy",
                 "promotion_criteria": "Finish top 3 in Rally4 championship + 2,000 XP in wallet.",
-                "starter_car_id": "rally_audi_s1_wrx",
-                "starter_car_name": "Audi S1 EKS RX Quattro",
+                "starter_car_id": "rally_nordic_rx_lites_t2",
+                "starter_car_name": "Nordic RX Supercar Lites T2",
                 "car_cost_xp": 2000,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
@@ -5649,8 +5649,8 @@
                 "tier": 3,
                 "name": "Tier 3: Euro RX Supercars",
                 "promotion_criteria": "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.",
-                "starter_car_id": "rally_audi_sport_quattro_s1",
-                "starter_car_name": "Audi Sport Quattro S1 E2",
+                "starter_car_id": "rally_vortek_turbo_quattro_t7",
+                "starter_car_name": "Vortek Turbo Quattro Legend T7",
                 "car_cost_xp": 3000,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
@@ -5664,8 +5664,8 @@
                 "tier": 4,
                 "name": "Tier 4: World RX Supercars",
                 "promotion_criteria": "Finish top 3 in Euro RX championship + 4,000 XP in wallet.",
-                "starter_car_id": "rally_toyota_hilux_dakar",
-                "starter_car_name": "Toyota GR DKR Hilux T1+",
+                "starter_car_id": "rally_gallia_lyon_t4",
+                "starter_car_name": "Gallia Lyon WRX Supercar T4",
                 "car_cost_xp": 4000,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
@@ -5679,8 +5679,8 @@
                 "tier": 5,
                 "name": "Tier 5: RX1e / Group E / Heritage",
                 "promotion_criteria": "Finish top 3 in World RX championship + 5,000 XP in wallet.",
-                "starter_car_id": "rally_robby_gordon_sst",
-                "starter_car_name": "Stadium Super Truck (Speed Energy)",
+                "starter_car_id": "rally_gallia_volt_t5",
+                "starter_car_name": "Gallia Volt RX1e Supercar T5",
                 "car_cost_xp": 5000,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
@@ -5700,8 +5700,8 @@
                 "tier": 1,
                 "name": "Tier 1: Cadet 60cc Trophy",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "kart_crg_hero_60",
-                "starter_car_name": "CRG Hero 60cc Cadet",
+                "starter_car_id": "kart_blackline_cadet_t1",
+                "starter_car_name": "Blackline Cadet 60 T1",
                 "car_cost_xp": 1000,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
@@ -5717,8 +5717,8 @@
                 "tier": 2,
                 "name": "Tier 2: Junior OK-J National",
                 "promotion_criteria": "Finish top 3 in Cadet championship + 2,000 XP in wallet.",
-                "starter_car_id": "kart_tony_kart_racer_ok",
-                "starter_car_name": "Tony Kart Racer 401R OK",
+                "starter_car_id": "kart_verde_apex_t3",
+                "starter_car_name": "Verde Kart Apex 125 OK T3",
                 "car_cost_xp": 2000,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
@@ -5732,8 +5732,8 @@
                 "tier": 3,
                 "name": "Tier 3: KZ2 Shifter Pro",
                 "promotion_criteria": "Finish top 3 in Junior OK championship + 3,000 XP in wallet.",
-                "starter_car_id": "kart_birel_art_kz2",
-                "starter_car_name": "Birel ART CRY30 KZ2",
+                "starter_car_id": "kart_rosso_corsa_t4",
+                "starter_car_name": "Rosso Kart Corsa 125 KZ2 T4",
                 "car_cost_xp": 3000,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
@@ -5747,8 +5747,8 @@
                 "tier": 4,
                 "name": "Tier 4: Superkart Division 2",
                 "promotion_criteria": "Finish top 3 in KZ2 championship + 4,000 XP in wallet.",
-                "starter_car_id": "kart_honda_mean_mower",
-                "starter_car_name": "Honda Mean Mower V2",
+                "starter_car_id": "vault_asahi_blade_runner",
+                "starter_car_name": "Asahi Blade Runner Mower",
                 "car_cost_xp": 4000,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
@@ -5762,8 +5762,8 @@
                 "tier": 5,
                 "name": "Tier 5: Superkart World Series",
                 "promotion_criteria": "Finish top 3 in Superkart Div 2 championship + 5,000 XP in wallet.",
-                "starter_car_id": "kart_anderson_cs250",
-                "starter_car_name": "Anderson CS250 Superkart",
+                "starter_car_id": "kart_highland_eagle_t6",
+                "starter_car_name": "Highland Eagle Superkart T6",
                 "car_cost_xp": 5000,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
@@ -5783,8 +5783,8 @@
                 "tier": 1,
                 "name": "Tier 1: Desert Sand Sprint",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "offroad_sand_rail_buggy",
-                "starter_car_name": "Buckshot Racing Sand Rail",
+                "starter_car_id": "offroad_laurentian_nomad_t1",
+                "starter_car_name": "Laurentian Nomad Trophy Buggy T1",
                 "car_cost_xp": 1000,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
@@ -5800,8 +5800,8 @@
                 "tier": 2,
                 "name": "Tier 2: Canyon Raid",
                 "promotion_criteria": "Finish top 3 in Sand Sprint championship + 2,000 XP in wallet.",
-                "starter_car_id": "offroad_ford_bronco_dr",
-                "starter_car_name": "Ford Bronco Desert Racer",
+                "starter_car_id": "offroad_desert_forge_truck_t2",
+                "starter_car_name": "Desert Forge AWD Trophy Truck T2",
                 "car_cost_xp": 2000,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
@@ -5815,8 +5815,8 @@
                 "tier": 3,
                 "name": "Tier 3: Arctic Ice Challenge",
                 "promotion_criteria": "Finish top 3 in Canyon Raid championship + 3,000 XP in wallet.",
-                "starter_car_id": "offroad_arctic_hilux_at44",
-                "starter_car_name": "Arctic Trucks Hilux AT44",
+                "starter_car_id": "offroad_sixstar_blizzard_t3",
+                "starter_car_name": "Sixstar Blizzard Ice Racer T3",
                 "car_cost_xp": 3000,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
@@ -5830,8 +5830,8 @@
                 "tier": 4,
                 "name": "Tier 4: Pro4 Mud Masters",
                 "promotion_criteria": "Finish top 3 in Arctic Challenge championship + 4,000 XP in wallet.",
-                "starter_car_id": "offroad_pro4_unlimited_chevy",
-                "starter_car_name": "Chevy Pro4 Unlimited Trophy Truck",
+                "starter_car_id": "offroad_crossbow_ridge_t4",
+                "starter_car_name": "Crossbow Ridge Heavy Mud Bogger T4",
                 "car_cost_xp": 4000,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
@@ -5845,8 +5845,8 @@
                 "tier": 5,
                 "name": "Tier 5: Monster Colosseum",
                 "promotion_criteria": "Finish top 3 in Mud Masters championship + 5,000 XP in wallet.",
-                "starter_car_id": "offroad_bigfoot_monster_truck",
-                "starter_car_name": "Bigfoot 4x4 Monster Truck",
+                "starter_car_id": "offroad_havoc_tomb_raider_t5",
+                "starter_car_name": "Havoc Tomb Raider Monster Crusher T5",
                 "car_cost_xp": 5000,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,

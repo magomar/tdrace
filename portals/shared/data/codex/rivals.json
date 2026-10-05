@@ -45,127 +45,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_sport_quattro_s1"
+              "model_id": "rally_vortek_turbo_quattro_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_honda_mean_mower"
+              "model_id": "vault_asahi_blade_runner"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -209,127 +209,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_peugeot_205_t16"
+              "model_id": "rally_gallia_corsica_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_john_deere_racing_mower"
+              "model_id": "vault_greenfield_prairie_racer"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -373,107 +373,107 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_nissan_r390_gt1"
+              "model_id": "gt_katana_shogun_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_lancia_delta_s4"
+              "model_id": "rally_torino_stradale_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_viking_t6_tractor"
+              "model_id": "vault_nordic_valhalla_tractor"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -483,17 +483,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -537,127 +537,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_audi_r8_gt2"
+              "model_id": "gt_vortek_clubsport_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_mustang_super_late_model"
+              "model_id": "nascar_forge_stallion_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_sport_quattro_s1"
+              "model_id": "rally_vortek_turbo_quattro_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_honda_mean_mower"
+              "model_id": "vault_asahi_blade_runner"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -701,127 +701,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_peugeot_205_t16"
+              "model_id": "rally_gallia_corsica_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_john_deere_racing_mower"
+              "model_id": "vault_greenfield_prairie_racer"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -865,107 +865,107 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_lancia_delta_s4"
+              "model_id": "rally_torino_stradale_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_viking_t6_tractor"
+              "model_id": "vault_nordic_valhalla_tractor"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -975,17 +975,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -1029,127 +1029,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_sport_quattro_s1"
+              "model_id": "rally_vortek_turbo_quattro_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_honda_mean_mower"
+              "model_id": "vault_asahi_blade_runner"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -1193,107 +1193,107 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_nissan_r390_gt1"
+              "model_id": "gt_katana_shogun_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_peugeot_205_t16"
+              "model_id": "rally_gallia_corsica_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_john_deere_racing_mower"
+              "model_id": "vault_greenfield_prairie_racer"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -1303,17 +1303,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -1357,127 +1357,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_mustang_super_late_model"
+              "model_id": "nascar_forge_stallion_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_lancia_delta_s4"
+              "model_id": "rally_torino_stradale_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_viking_t6_tractor"
+              "model_id": "vault_nordic_valhalla_tractor"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -1521,127 +1521,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_sport_quattro_s1"
+              "model_id": "rally_vortek_turbo_quattro_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_honda_mean_mower"
+              "model_id": "vault_asahi_blade_runner"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -1685,107 +1685,107 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_nissan_r390_gt1"
+              "model_id": "gt_katana_shogun_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_peugeot_205_t16"
+              "model_id": "rally_gallia_corsica_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_john_deere_racing_mower"
+              "model_id": "vault_greenfield_prairie_racer"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -1795,17 +1795,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -1849,127 +1849,127 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_audi_r8_gt2"
+              "model_id": "gt_vortek_clubsport_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             },
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             },
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_lancia_delta_s4"
+              "model_id": "rally_torino_stradale_t7"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             },
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_viking_t6_tractor"
+              "model_id": "vault_nordic_valhalla_tractor"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -2008,27 +2008,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             }
           ]
         },
@@ -2067,27 +2067,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             }
           ]
         },
@@ -2126,27 +2126,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             }
           ]
         },
@@ -2185,27 +2185,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_audi_r8_gt2"
+              "model_id": "gt_vortek_clubsport_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_nissan_r390_gt1"
+              "model_id": "gt_katana_shogun_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             }
           ]
         },
@@ -2244,27 +2244,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             }
           ]
         },
@@ -2303,27 +2303,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             }
           ]
         },
@@ -2362,27 +2362,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_audi_r8_gt2"
+              "model_id": "gt_vortek_clubsport_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             }
           ]
         },
@@ -2421,27 +2421,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_ferrari_296_gt3"
+              "model_id": "gt_valente_corsa_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_maserati_mc20_gt2"
+              "model_id": "gt_aquila_strale_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mclaren_f1_gtr_lt"
+              "model_id": "gt_hyperion_velocity_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_ferrari_499p"
+              "model_id": "gt_valente_imperatore_t5"
             }
           ]
         },
@@ -2480,27 +2480,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_porsche_718_gt4"
+              "model_id": "gt_vandorn_stratus_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_audi_r8_gt2"
+              "model_id": "gt_vortek_clubsport_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_nissan_r390_gt1"
+              "model_id": "gt_katana_shogun_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             }
           ]
         },
@@ -2539,27 +2539,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_bmw_m4_gt4"
+              "model_id": "gt_bmr_bavaria_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_amg_gt3_evo"
+              "model_id": "gt_silberstern_sturmvogel_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_porsche_963"
+              "model_id": "gt_vandorn_kronos_t5"
             }
           ]
         },
@@ -2598,27 +2598,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_toyota_supra_gt4"
+              "model_id": "gt_yamato_hayate_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_porsche_911_gt3r"
+              "model_id": "gt_vandorn_arrowhead_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_brabham_bt62_gt2"
+              "model_id": "gt_southern_cross_62_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_porsche_911_gt1_98"
+              "model_id": "gt_vandorn_aeromax_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_toyota_gr010"
+              "model_id": "gt_yamato_ronin_t5"
             }
           ]
         },
@@ -2657,27 +2657,27 @@
             {
               "discipline": "gt",
               "tier": 1,
-              "model_id": "gt_aston_vantage_gt4"
+              "model_id": "gt_albion_victor_t1"
             },
             {
               "discipline": "gt",
               "tier": 2,
-              "model_id": "gt_audi_r8_gt3_evo2"
+              "model_id": "gt_vortek_quattro_t2"
             },
             {
               "discipline": "gt",
               "tier": 3,
-              "model_id": "gt_porsche_911_gt2_rs"
+              "model_id": "gt_vandorn_arrowhead_t3"
             },
             {
               "discipline": "gt",
               "tier": 4,
-              "model_id": "gt_mercedes_clk_gtr"
+              "model_id": "gt_silberstern_silberpfeil_t4"
             },
             {
               "discipline": "gt",
               "tier": 5,
-              "model_id": "gt_cadillac_v_series_r"
+              "model_id": "gt_crestline_sovereign_t5"
             }
           ]
         },
@@ -2716,27 +2716,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             }
           ]
         },
@@ -2775,27 +2775,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             }
           ]
         },
@@ -2834,27 +2834,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             }
           ]
         },
@@ -2893,27 +2893,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_mustang_super_late_model"
+              "model_id": "nascar_forge_stallion_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             }
           ]
         },
@@ -2952,27 +2952,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             }
           ]
         },
@@ -3011,27 +3011,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             }
           ]
         },
@@ -3070,27 +3070,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_monte_carlo_ss"
+              "model_id": "nascar_crossbow_montego_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             }
           ]
         },
@@ -3129,27 +3129,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_toyota_camry_arca"
+              "model_id": "nascar_yamato_century_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_tundra_truck"
+              "model_id": "nascar_yamato_taiga_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             }
           ]
         },
@@ -3188,27 +3188,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_mustang_super_late_model"
+              "model_id": "nascar_forge_stallion_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             }
           ]
         },
@@ -3247,27 +3247,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_mustang_street_stock"
+              "model_id": "nascar_forge_stallion_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_mustang_super_late_model"
+              "model_id": "nascar_forge_stallion_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_corvette_ta1"
+              "model_id": "nascar_crossbow_manta_t5"
             }
           ]
         },
@@ -3306,27 +3306,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_late_model_stock_car"
+              "model_id": "nascar_heartland_spec_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_arca_chevy_ss"
+              "model_id": "nascar_crossbow_predator_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_silverado_truck"
+              "model_id": "nascar_crossbow_sierra_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_challenger_ta1"
+              "model_id": "nascar_rampart_enforcer_t5"
             }
           ]
         },
@@ -3365,27 +3365,27 @@
             {
               "discipline": "nascar",
               "tier": 1,
-              "model_id": "nascar_dodge_dart_street_stock"
+              "model_id": "nascar_rampart_arrow_t1"
             },
             {
               "discipline": "nascar",
               "tier": 2,
-              "model_id": "nascar_super_late_model"
+              "model_id": "nascar_crossbow_saber_t2"
             },
             {
               "discipline": "nascar",
               "tier": 3,
-              "model_id": "nascar_ford_fusion_arca"
+              "model_id": "nascar_forge_reactor_t3"
             },
             {
               "discipline": "nascar",
               "tier": 4,
-              "model_id": "nascar_f150_truck"
+              "model_id": "nascar_forge_ironclad_t4"
             },
             {
               "discipline": "nascar",
               "tier": 5,
-              "model_id": "nascar_mustang_ta1"
+              "model_id": "nascar_forge_stallion_t5"
             }
           ]
         },
@@ -3424,32 +3424,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_subaru_wrx_rx"
+              "model_id": "rally_sixstar_vortex_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             }
           ]
         },
@@ -3488,32 +3488,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_avitas_supercar_lites"
+              "model_id": "rally_aerotech_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_subaru_wrx_rx"
+              "model_id": "rally_sixstar_vortex_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             }
           ]
         },
@@ -3552,32 +3552,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_wrx"
+              "model_id": "rally_gallia_lyon_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             }
           ]
         },
@@ -3616,32 +3616,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_qev_rx2e"
+              "model_id": "rally_volttech_electrocross_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_wrx"
+              "model_id": "rally_gallia_lyon_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             }
           ]
         },
@@ -3680,32 +3680,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_avitas_supercar_lites"
+              "model_id": "rally_aerotech_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_wrx"
+              "model_id": "rally_gallia_lyon_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             }
           ]
         },
@@ -3744,32 +3744,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_subaru_wrx_rx"
+              "model_id": "rally_sixstar_vortex_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             }
           ]
         },
@@ -3808,32 +3808,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_qev_rx2e"
+              "model_id": "rally_volttech_electrocross_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_wrx"
+              "model_id": "rally_gallia_lyon_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             }
           ]
         },
@@ -3872,32 +3872,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_peugeot_208_rally4"
+              "model_id": "rally_gallia_200_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_peugeot_208_wrx"
+              "model_id": "rally_gallia_lyon_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             }
           ]
         },
@@ -3936,32 +3936,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_avitas_supercar_lites"
+              "model_id": "rally_aerotech_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_subaru_wrx_rx"
+              "model_id": "rally_sixstar_vortex_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             }
           ]
         },
@@ -4000,32 +4000,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_fiesta_rally4"
+              "model_id": "rally_forge_spark_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_polo_rx"
+              "model_id": "rally_volkskraft_strassen_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_ford_focus_rs_rx"
+              "model_id": "rally_forge_comet_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_polo_rx1e"
+              "model_id": "rally_volkskraft_electro_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_omse_fc1x"
+              "model_id": "rally_nordic_valkyrie_t6"
             }
           ]
         },
@@ -4064,32 +4064,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_avitas_supercar_lites"
+              "model_id": "rally_aerotech_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_audi_s1_rx"
+              "model_id": "rally_vortek_quattro_rx_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_ford_focus_rs_rx"
+              "model_id": "rally_forge_comet_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_peugeot_208_rx1e"
+              "model_id": "rally_gallia_volt_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_vsc_fc1x"
+              "model_id": "rally_green_mountain_titan_t6"
             }
           ]
         },
@@ -4128,32 +4128,32 @@
             {
               "discipline": "rally",
               "tier": 1,
-              "model_id": "rally_clio_rally4"
+              "model_id": "rally_rouen_dauphine_t1"
             },
             {
               "discipline": "rally",
               "tier": 2,
-              "model_id": "rally_omse_supercar_lites"
+              "model_id": "rally_nordic_rx_lites_t2"
             },
             {
               "discipline": "rally",
               "tier": 3,
-              "model_id": "rally_hyundai_i20_rx"
+              "model_id": "rally_hanguk_apex_t3"
             },
             {
               "discipline": "rally",
               "tier": 4,
-              "model_id": "rally_ford_focus_rs_rx"
+              "model_id": "rally_forge_comet_t4"
             },
             {
               "discipline": "rally",
               "tier": 5,
-              "model_id": "rally_lancia_delta_evo_e_rx"
+              "model_id": "rally_torino_integrale_e_t5"
             },
             {
               "discipline": "rally",
               "tier": 6,
-              "model_id": "rally_dodge_hornet_fc1x"
+              "model_id": "rally_rampart_wasp_t6"
             }
           ]
         },
@@ -4192,32 +4192,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_rookie_okj"
+              "model_id": "kart_verde_sprint_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_maverick_mono"
+              "model_id": "kart_highland_hawk_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             }
           ]
         },
@@ -4256,32 +4256,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_black_mirror_okj"
+              "model_id": "kart_blackline_obsidian_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_mono"
+              "model_id": "kart_moravia_arrow_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             }
           ]
         },
@@ -4320,32 +4320,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry29_okj"
+              "model_id": "kart_rosso_veloce_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_pvt_single_250"
+              "model_id": "kart_vanguard_spyder_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             }
           ]
         },
@@ -4384,32 +4384,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_rookie_okj"
+              "model_id": "kart_verde_sprint_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_maverick_mono"
+              "model_id": "kart_highland_hawk_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             }
           ]
         },
@@ -4448,32 +4448,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_black_mirror_okj"
+              "model_id": "kart_blackline_obsidian_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_mono"
+              "model_id": "kart_moravia_arrow_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             }
           ]
         },
@@ -4512,32 +4512,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry29_okj"
+              "model_id": "kart_rosso_veloce_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_pvt_single_250"
+              "model_id": "kart_vanguard_spyder_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             }
           ]
         },
@@ -4576,32 +4576,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_rookie_okj"
+              "model_id": "kart_verde_sprint_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_maverick_mono"
+              "model_id": "kart_highland_hawk_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             }
           ]
         },
@@ -4640,32 +4640,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry29_okj"
+              "model_id": "kart_rosso_veloce_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_pvt_single_250"
+              "model_id": "kart_vanguard_spyder_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             }
           ]
         },
@@ -4704,32 +4704,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_black_mirror_okj"
+              "model_id": "kart_blackline_obsidian_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_mono"
+              "model_id": "kart_moravia_arrow_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             }
           ]
         },
@@ -4768,32 +4768,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_tony_kart_neos"
+              "model_id": "kart_verde_sprout_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_tony_kart_rookie_okj"
+              "model_id": "kart_verde_sprint_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_tony_kart_racer_ok"
+              "model_id": "kart_verde_apex_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_tony_kart_racer_kz"
+              "model_id": "kart_verde_pro_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_anderson_maverick_mono"
+              "model_id": "kart_highland_hawk_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_anderson_cs250"
+              "model_id": "kart_highland_eagle_t6"
             }
           ]
         },
@@ -4832,32 +4832,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_birel_c28"
+              "model_id": "kart_rosso_junior_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_birel_ry29_okj"
+              "model_id": "kart_rosso_veloce_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_crg_kt2_ok"
+              "model_id": "kart_blackline_phantom_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_birel_art_kz2"
+              "model_id": "kart_rosso_corsa_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_pvt_single_250"
+              "model_id": "kart_vanguard_spyder_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_viper_250_twin"
+              "model_id": "kart_venom_cobra_t6"
             }
           ]
         },
@@ -4896,32 +4896,32 @@
             {
               "discipline": "kart",
               "tier": 1,
-              "model_id": "kart_crg_hero_60"
+              "model_id": "kart_blackline_cadet_t1"
             },
             {
               "discipline": "kart",
               "tier": 2,
-              "model_id": "kart_crg_black_mirror_okj"
+              "model_id": "kart_blackline_obsidian_t2"
             },
             {
               "discipline": "kart",
               "tier": 3,
-              "model_id": "kart_birel_ry30_ok"
+              "model_id": "kart_rosso_modena_t3"
             },
             {
               "discipline": "kart",
               "tier": 4,
-              "model_id": "kart_crg_road_rebel_kz"
+              "model_id": "kart_blackline_renegade_t4"
             },
             {
               "discipline": "kart",
               "tier": 5,
-              "model_id": "kart_ms_superkart_mono"
+              "model_id": "kart_moravia_arrow_t5"
             },
             {
               "discipline": "kart",
               "tier": 6,
-              "model_id": "kart_ms_superkart_250"
+              "model_id": "kart_moravia_falcon_t6"
             }
           ]
         },
@@ -4960,27 +4960,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -5019,7 +5019,7 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -5029,17 +5029,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -5078,27 +5078,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -5137,27 +5137,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -5196,7 +5196,7 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -5206,17 +5206,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -5255,27 +5255,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -5314,27 +5314,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -5373,7 +5373,7 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -5383,17 +5383,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -5432,27 +5432,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         },
@@ -5491,27 +5491,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_sand_rail_buggy"
+              "model_id": "offroad_laurentian_nomad_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_baja_trophy_truck"
+              "model_id": "offroad_desert_forge_truck_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_lancer_evo_ice"
+              "model_id": "offroad_shinano_frost_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_chevy_k30_mud_bogger"
+              "model_id": "offroad_crossbow_ridge_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_grave_crusher"
+              "model_id": "offroad_havoc_tomb_raider_t5"
             }
           ]
         },
@@ -5550,27 +5550,27 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_polaris_rzr_pro_r"
+              "model_id": "offroad_northstar_razor_t1"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 2,
-              "model_id": "offroad_mason_awd_truck"
+              "model_id": "offroad_sonora_desert_king_t2"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_audi_quattro_ice"
+              "model_id": "offroad_vortek_glacier_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_ford_f250_high_riser"
+              "model_id": "offroad_forge_mammoth_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_max_d_monster"
+              "model_id": "offroad_havoc_overkill_t5"
             }
           ]
         },
@@ -5609,7 +5609,7 @@
             {
               "discipline": "extreme_offroad",
               "tier": 1,
-              "model_id": "offroad_vw_sand_rail"
+              "model_id": "offroad_volkskraft_dune_t1"
             },
             {
               "discipline": "extreme_offroad",
@@ -5619,17 +5619,17 @@
             {
               "discipline": "extreme_offroad",
               "tier": 3,
-              "model_id": "offroad_subaru_ice_racer"
+              "model_id": "offroad_sixstar_blizzard_t3"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 4,
-              "model_id": "offroad_mega_mud_truck"
+              "model_id": "offroad_titan_mud_slinger_t4"
             },
             {
               "discipline": "extreme_offroad",
               "tier": 5,
-              "model_id": "offroad_bigfoot_crusher"
+              "model_id": "offroad_colossus_titan_t5"
             }
           ]
         }

@@ -336,97 +336,97 @@ impl GameModule for NascarGameModule {
 
 
 const DALE_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
 const CHASE_GORDON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
 const RICHARD_PETTYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
 const ROWDY_BUSCH_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
 const JIMMIE_JOHNSON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
 const TONY_STEWART_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
 const BOBBY_ALLISON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
 const BUBBA_WALLACE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
 const JOEY_LOGANO_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
 const BILL_ELLIOTT_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
 const CALE_YARBOROUGH_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
 const RUSTY_WALLACE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];

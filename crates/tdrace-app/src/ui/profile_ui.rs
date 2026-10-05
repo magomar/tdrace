@@ -839,27 +839,27 @@ pub fn find_car_model_by_identifier(ident: &str) -> Option<&'static crate::catal
     // 4. Match against CarChoice titles / common naming patterns
     let lower = trimmed.to_lowercase();
     if lower.contains("gt4") {
-        crate::catalog::find_model_by_id("gt_toyota_supra_gt4")
-            .or_else(|| crate::catalog::find_model_by_id("gt_porsche_718_gt4"))
+        crate::catalog::find_model_by_id("gt_yamato_hayate_t1")
+            .or_else(|| crate::catalog::find_model_by_id("gt_vandorn_stratus_t1"))
     } else if lower.contains("gt3") {
-        crate::catalog::find_model_by_id("gt_porsche_911_gt3r")
+        crate::catalog::find_model_by_id("gt_vandorn_arrowhead_t2")
     } else if lower.contains("gt2") {
-        crate::catalog::find_model_by_id("gt_porsche_911_gt2_rs")
+        crate::catalog::find_model_by_id("gt_vandorn_arrowhead_t3")
     } else if lower.contains("gt1") {
-        crate::catalog::find_model_by_id("gt_porsche_911_gt1_98")
+        crate::catalog::find_model_by_id("gt_vandorn_aeromax_t4")
     } else if lower.contains("hypercar") || lower.contains("lmh") || lower.contains("prototype") {
-        crate::catalog::find_model_by_id("gt_ferrari_499p")
+        crate::catalog::find_model_by_id("gt_valente_imperatore_t5")
     } else if lower.contains("nascar") || lower.contains("stock car") {
-        crate::catalog::find_model_by_id("nascar_monte_carlo_ss")
+        crate::catalog::find_model_by_id("nascar_crossbow_montego_t1")
     } else if lower.contains("rally") {
-        crate::catalog::find_model_by_id("rally_polo_rx")
-            .or_else(|| crate::catalog::find_model_by_id("rally_peugeot_208_rally4"))
+        crate::catalog::find_model_by_id("rally_volkskraft_strassen_t3")
+            .or_else(|| crate::catalog::find_model_by_id("rally_gallia_200_t1"))
     } else if lower.contains("kart") {
-        crate::catalog::find_model_by_id("kart_birel_art_kz2")
-            .or_else(|| crate::catalog::find_model_by_id("kart_crg_hero_60"))
+        crate::catalog::find_model_by_id("kart_rosso_corsa_t4")
+            .or_else(|| crate::catalog::find_model_by_id("kart_blackline_cadet_t1"))
     } else if lower.contains("offroad") || lower.contains("sand rail") || lower.contains("buggy") {
-        crate::catalog::find_model_by_id("offroad_sand_rail_buggy")
-            .or_else(|| crate::catalog::find_model_by_id("offroad_baja_trophy_truck"))
+        crate::catalog::find_model_by_id("offroad_laurentian_nomad_t1")
+            .or_else(|| crate::catalog::find_model_by_id("offroad_desert_forge_truck_t2"))
     } else if lower.contains("drift") || lower.contains("sports coupe") {
         crate::catalog::find_model_by_id("classic_gt")
     } else {
@@ -917,7 +917,7 @@ pub fn resolve_championship_car_model_id(
     }
 
     // Final fallback
-    ("gt_porsche_718_gt4", "Porsche 718 Cayman GT4 RS".to_string(), false)
+    ("gt_vandorn_stratus_t1", "Stratus GT4".to_string(), false)
 }
 
 /// Returns championships filtered by optional module_id and sorted strictly by tier ascending (1..=5),

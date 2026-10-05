@@ -33,9 +33,9 @@ fn test_vault_game_module_identity_and_traits() {
     assert!(ids.contains(&"vault_test_mule"));
     assert!(ids.contains(&"vault_prototype_mower"));
     assert!(ids.contains(&"vault_drift_trike"));
-    assert!(ids.contains(&"kart_honda_mean_mower"));
-    assert!(ids.contains(&"kart_john_deere_racing_mower"));
-    assert!(ids.contains(&"kart_viking_t6_tractor"));
+    assert!(ids.contains(&"vault_asahi_blade_runner"));
+    assert!(ids.contains(&"vault_greenfield_prairie_racer"));
+    assert!(ids.contains(&"vault_nordic_valhalla_tractor"));
 
     assert_eq!(vault.default_vehicle_id(), "vault_test_mule");
     assert!(vault.drivers().is_empty(), "Vault must not register drivers in official championship grids");

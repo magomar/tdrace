@@ -436,7 +436,7 @@ id = "player"
 name = "Player One"
 team = "Apex Racing"
 is_player = true
-car_model_id = "gt_toyota_supra_gt4"
+car_model_id = "gt_yamato_hayate_t1"
 
 [[drivers]]
 id = "max"

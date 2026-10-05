@@ -514,97 +514,97 @@ impl GameModule for GtWorldChallengeModule {
 
 
 const MAX_HUNTER_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
-    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
-    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
-    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_vandorn_aeromax_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
 const CHARLES_LAURENT_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
-    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
-    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_hyperion_velocity_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
 const LEWIS_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
-    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
-    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_silberstern_silberpfeil_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_crestline_sovereign_t5"),
 ];
 
 const FERNANDO_TORO_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
-    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
-    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_katana_shogun_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
 const GEORGE_SPEED_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
-    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
-    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_silberstern_silberpfeil_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
 const LANDO_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
-    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
-    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_hyperion_velocity_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
 const OSCAR_ROCKET_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
-    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
-    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_vandorn_aeromax_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
 const CARLOS_SAINZFIELD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_ferrari_296_gt3"),
-    DriverFavoriteCar::new("gt", 3, "gt_maserati_mc20_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_mclaren_f1_gtr_lt"),
-    DriverFavoriteCar::new("gt", 5, "gt_ferrari_499p"),
+    DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_valente_corsa_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_aquila_strale_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_hyperion_velocity_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_valente_imperatore_t5"),
 ];
 
 const PIERRE_GASLYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_porsche_718_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
-    DriverFavoriteCar::new("gt", 3, "gt_audi_r8_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_nissan_r390_gt1"),
-    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("gt", 1, "gt_vandorn_stratus_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vortek_clubsport_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_katana_shogun_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_crestline_sovereign_t5"),
 ];
 
 const ESTEBAN_CONNOR_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_bmw_m4_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_amg_gt3_evo"),
-    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
-    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
-    DriverFavoriteCar::new("gt", 5, "gt_porsche_963"),
+    DriverFavoriteCar::new("gt", 1, "gt_bmr_bavaria_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_silberstern_sturmvogel_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_silberstern_silberpfeil_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_vandorn_kronos_t5"),
 ];
 
 const ALEXANDER_ALBONFIELD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_toyota_supra_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_porsche_911_gt3r"),
-    DriverFavoriteCar::new("gt", 3, "gt_brabham_bt62_gt2"),
-    DriverFavoriteCar::new("gt", 4, "gt_porsche_911_gt1_98"),
-    DriverFavoriteCar::new("gt", 5, "gt_toyota_gr010"),
+    DriverFavoriteCar::new("gt", 1, "gt_yamato_hayate_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vandorn_arrowhead_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_southern_cross_62_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_vandorn_aeromax_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_yamato_ronin_t5"),
 ];
 
 const NICO_HULKENSTORM_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("gt", 1, "gt_aston_vantage_gt4"),
-    DriverFavoriteCar::new("gt", 2, "gt_audi_r8_gt3_evo2"),
-    DriverFavoriteCar::new("gt", 3, "gt_porsche_911_gt2_rs"),
-    DriverFavoriteCar::new("gt", 4, "gt_mercedes_clk_gtr"),
-    DriverFavoriteCar::new("gt", 5, "gt_cadillac_v_series_r"),
+    DriverFavoriteCar::new("gt", 1, "gt_albion_victor_t1"),
+    DriverFavoriteCar::new("gt", 2, "gt_vortek_quattro_t2"),
+    DriverFavoriteCar::new("gt", 3, "gt_vandorn_arrowhead_t3"),
+    DriverFavoriteCar::new("gt", 4, "gt_silberstern_silberpfeil_t4"),
+    DriverFavoriteCar::new("gt", 5, "gt_crestline_sovereign_t5"),
 ];

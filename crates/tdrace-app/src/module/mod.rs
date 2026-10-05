@@ -848,7 +848,7 @@ mod tests {
         let ax = AutocrossGameModule::new();
         assert_eq!(ax.id(), "autocross");
         assert_eq!(ax.title(), "FIA AUTOCROSS");
-        assert_eq!(ax.default_vehicle_id(), "autocross_lifelive_tn5_junior");
+        assert_eq!(ax.default_vehicle_id(), "autocross_ardennes_junior_t1");
         assert_eq!(ax.default_track_id(), "nova_paka_ax");
         assert_eq!(ax.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
         assert_eq!(ax.tracks().len(), 17);

@@ -85,7 +85,7 @@ fn test_lan_launch_session_and_nameplates() {
         "Grand Prix Test Room",
         "HostDriver",
         "ESP",
-        "gt_ferrari_296_gt3",
+        "gt_valente_corsa_t2",
         "corsa_red",
         0, // ephemeral port
         4,
@@ -104,7 +104,7 @@ fn test_lan_launch_session_and_nameplates() {
     assert_eq!(session.world.vehicles.len(), 1);
     assert_eq!(session.world.trackers.len(), 1);
     assert_eq!(session.grid_participants.len(), 1);
-    assert_eq!(session.car_model_ids[0], Some("gt_ferrari_296_gt3"));
+    assert_eq!(session.car_model_ids[0], Some("gt_valente_corsa_t2"));
     assert!(matches!(session.state, GameState::Countdown(_)));
 
     // Verify nameplates contain LAN indicator for remote peers
@@ -117,7 +117,7 @@ fn test_lan_launch_session_and_nameplates() {
         car_title: "GT3 Car".to_string(),
         car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
         color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
-        model_id: Some("gt_ferrari_296_gt3"),
+        model_id: Some("gt_valente_corsa_t2"),
         best_lap: None,
         best_circuit_time: None,
         random_seed: 99,
@@ -147,9 +147,9 @@ fn test_lan_client_perspective_targeting_and_helpers() {
     use tdrace_core::physics::config::AssistProfile;
 
     // Verify canonical model ID resolver
-    assert_eq!(RaceSession::canonicalize_car_model_id("scuderia_gt"), "gt_ferrari_296_gt3");
-    assert_eq!(RaceSession::canonicalize_car_model_id("stuttgart_gt"), "gt_porsche_911_gt3r");
-    assert_eq!(RaceSession::canonicalize_car_model_id("gt_amg_gt3_evo"), "gt_amg_gt3_evo");
+    assert_eq!(RaceSession::canonicalize_car_model_id("scuderia_gt"), "gt_valente_corsa_t2");
+    assert_eq!(RaceSession::canonicalize_car_model_id("stuttgart_gt"), "gt_vandorn_arrowhead_t2");
+    assert_eq!(RaceSession::canonicalize_car_model_id("gt_silberstern_sturmvogel_t2"), "gt_silberstern_sturmvogel_t2");
 
     // Configure session as LAN client in slot 1
     session.is_lan_multiplayer = true;
@@ -175,10 +175,10 @@ fn test_lan_client_perspective_targeting_and_helpers() {
             name: "HostPlayer".to_string(),
             alias: "HostPlayer".to_string(),
             country: Some("ESP".to_string()),
-            car_title: "Ferrari 296 GT3".to_string(),
+            car_title: "Valente Corsa V6 T2".to_string(),
             car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
             color_scheme: tdrace_app::render::color::CarColorScheme::from_index(0),
-            model_id: Some("gt_ferrari_296_gt3"),
+            model_id: Some("gt_valente_corsa_t2"),
             best_lap: None,
             best_circuit_time: None,
             random_seed: 1,
@@ -193,7 +193,7 @@ fn test_lan_client_perspective_targeting_and_helpers() {
             car_title: "Porsche 911 GT3 R".to_string(),
             car_choice: tdrace_app::ui::menu::CarChoice::SportsCar,
             color_scheme: tdrace_app::render::color::CarColorScheme::from_index(1),
-            model_id: Some("gt_porsche_911_gt3r"),
+            model_id: Some("gt_vandorn_arrowhead_t2"),
             best_lap: None,
             best_circuit_time: None,
             random_seed: 2,
@@ -272,7 +272,7 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
     let net = lan_support::quiet_net(5);
     let mut host = LanHost::with_transport(Box::new(net.endpoint()), "Livery Sync GP", "RedHost")
         .expect("failed to create test host");
-    host.update_host_slot("gt_ferrari_296_gt3", "corsa_red");
+    host.update_host_slot("gt_valente_corsa_t2", "corsa_red");
     host.set_track_and_rules("classic_grand_prix", 3, cabinet::net::LanCollisionMode::FullSatSolid);
     let host_addr = host.local_addr().expect("local addr");
 
@@ -282,7 +282,7 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
         host_addr,
         "GreenRacer",
         "FRA",
-        "gt_porsche_911_gt3r",
+        "gt_vandorn_arrowhead_t2",
         "viper_green",
     ).expect("failed to connect");
 
@@ -294,12 +294,12 @@ fn test_lan_livery_synchronization_and_countdown_handshake() {
 
     assert!(client.is_connected());
     assert_eq!(client.color_scheme_id(), "viper_green");
-    assert_eq!(client.car_model_id(), "gt_porsche_911_gt3r");
+    assert_eq!(client.car_model_id(), "gt_vandorn_arrowhead_t2");
 
     // 3. Client lobby screen initialized from connected client
     let mut client_lobby = CabinetLanClientLobbyScreen::new(client);
     assert_eq!(client_lobby.selected_livery_idx, 2, "Viper Green must be selected (index 2)");
-    assert_eq!(client_lobby.car_model_id, "gt_porsche_911_gt3r", "Porsche 911 GT3 R must be selected");
+    assert_eq!(client_lobby.car_model_id, "gt_vandorn_arrowhead_t2", "Porsche 911 GT3 R must be selected");
     assert!(!client_lobby.is_in_race(), "Lobby must not be in race before launch");
 
     // 4. Host launches the race
@@ -466,7 +466,7 @@ fn test_lan_garage_round_trip_keep_alive_and_disconnect() {
     assert_eq!(host_slot.car_model_id, host_pick);
 
     // A client joins with a kart: the lobby replaces it with a car of the host discipline.
-    let client = LanClient::connect(host_addr, "Guest", "FRA", "kart_birel_art_kz2", "viper_green").expect("connect");
+    let client = LanClient::connect(host_addr, "Guest", "FRA", "kart_rosso_corsa_t4", "viper_green").expect("connect");
     let mut client_s = RaceSession::new();
     client_s.config.gameplay.dev_mode = true;
     client_s.lan_client_lobby_screen = Some(CabinetLanClientLobbyScreen::new(client));

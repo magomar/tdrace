@@ -1466,7 +1466,7 @@
     {
       "id": "classic_rally",
       "name": "Trailfire Turbo 4WD",
-      "manufacturer": "Apex Dynamics",
+      "manufacturer": "Firebolt Competition",
       "year": 2026,
       "module": "classic",
       "category": "rally",
@@ -1842,7 +1842,7 @@
     {
       "id": "classic_ax_mudlark",
       "name": "Mudlark Cross Car",
-      "manufacturer": "Apex Dynamics",
+      "manufacturer": "Stonecairn Works",
       "year": 2026,
       "module": "classic",
       "category": "autocross",
@@ -2206,7 +2206,7 @@
     {
       "id": "classic_ax_brawler",
       "name": "Brawler Touring AX",
-      "manufacturer": "Stonecairn Works",
+      "manufacturer": "Cyclone Motor Division",
       "year": 1988,
       "module": "classic",
       "category": "autocross",
@@ -4071,7 +4071,7 @@
       "engine_desc": "4.0L High-Torque Straight-6",
       "aero_downforce": "Cl 0.50 / Cd 0.68",
       "brakes_desc": "Heavy-Duty All-Terrain Ventilated Rotors",
-      "history_bio": "Rugged 1980s Paris-Dakar expedition rig. Unstoppable 4WD traction, deep wading snorkel, and high-ground clearance conquer bottomless mud and icy ruts.",
+      "history_bio": "Rugged 1980s Trans-Sahara expedition rig. Unstoppable 4WD traction, deep wading snorkel, and high-ground clearance conquer bottomless mud and icy ruts.",
       "stats": {
         "speed": 0.72,
         "acceleration": 0.82,
@@ -4417,9 +4417,9 @@
       }
     },
     {
-      "id": "kart_crg_hero_60",
-      "name": "CRG Hero 60cc Cadet",
-      "manufacturer": "CRG",
+      "id": "kart_blackline_cadet_t1",
+      "name": "Blackline Cadet 60cc T1",
+      "manufacturer": "Blackline Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -4453,10 +4453,10 @@
       "base_car": "Kart",
       "sound": "KartCadet60",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_crg_hero_60.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_crg_hero_60.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_crg_hero_60_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_crg_hero_60.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_blackline_cadet_t1.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_blackline_cadet_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_blackline_cadet_t1.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -4780,9 +4780,9 @@
       }
     },
     {
-      "id": "kart_birel_c28",
-      "name": "Birel ART C28 Cadet",
-      "manufacturer": "Birel ART",
+      "id": "kart_rosso_junior_t1",
+      "name": "Rosso Kart Junior 60cc T1",
+      "manufacturer": "Rosso Kart Works",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -4816,10 +4816,10 @@
       "base_car": "Kart",
       "sound": "KartCadet60",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_birel_c28.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_birel_c28.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_birel_c28_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_birel_c28.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_rosso_junior_t1.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_rosso_junior_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_rosso_junior_t1.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -5143,9 +5143,9 @@
       }
     },
     {
-      "id": "kart_tony_kart_neos",
-      "name": "Tony Kart Neos 60cc",
-      "manufacturer": "Tony Kart",
+      "id": "kart_verde_sprout_t1",
+      "name": "Verde Kart Sprout 60cc T1",
+      "manufacturer": "Verde Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -5161,7 +5161,7 @@
       "engine_desc": "60cc 2-Stroke Air-Cooled Vortex",
       "aero_downforce": "Cl 0.10 / Cd 0.49",
       "brakes_desc": "OTK BSM Hydraulic Rear Disc",
-      "history_bio": "The emerald green weapon from Prevalle. Renowned for its supple frame flex that generates instant grip in wet and dry conditions.",
+      "history_bio": "The emerald green weapon from Verde Racing. Renowned for its supple frame flex that generates instant grip in wet and dry conditions.",
       "stats": {
         "speed": 0.51,
         "acceleration": 0.66,
@@ -5179,10 +5179,10 @@
       "base_car": "Kart",
       "sound": "KartCadet60",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_tony_kart_neos.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_neos.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_neos_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_neos.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_verde_sprout_t1.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_verde_sprout_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_verde_sprout_t1.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -5506,9 +5506,9 @@
       }
     },
     {
-      "id": "kart_tony_kart_rookie_okj",
-      "name": "Tony Kart Rookie OK-J",
-      "manufacturer": "Tony Kart",
+      "id": "kart_verde_sprint_t2",
+      "name": "Verde Kart Sprint 125 Junior T2",
+      "manufacturer": "Verde Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -5543,8 +5543,8 @@
       "sound": "Kart125cc",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_rookie_okj.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_rookie_okj_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_verde_sprint_t2.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_verde_sprint_t2_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -5869,9 +5869,9 @@
       }
     },
     {
-      "id": "kart_crg_black_mirror_okj",
-      "name": "CRG Black Mirror OK-J",
-      "manufacturer": "CRG",
+      "id": "kart_blackline_obsidian_t2",
+      "name": "Blackline Obsidian 125 Junior T2",
+      "manufacturer": "Blackline Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -5886,7 +5886,7 @@
       "drivetrain": "RWD",
       "engine_desc": "125cc 2-Stroke Water-Cooled TM Junior",
       "aero_downforce": "Cl 0.12 / Cd 0.51",
-      "brakes_desc": "CRG GLM Hydraulic Self-Adjusting Disc",
+      "brakes_desc": "Blackline GLM Hydraulic Self-Adjusting Disc",
       "history_bio": "Aggressive Italian junior chassis with 28mm frame geometry. Designed to teach drivers the fine line between sliding and rolling speed through fast chicanes.",
       "stats": {
         "speed": 0.6,
@@ -5906,8 +5906,8 @@
       "sound": "Kart125cc",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_crg_black_mirror_okj.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_crg_black_mirror_okj_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -6232,9 +6232,9 @@
       }
     },
     {
-      "id": "kart_birel_ry29_okj",
-      "name": "Birel ART RY29 Junior",
-      "manufacturer": "Birel ART",
+      "id": "kart_rosso_veloce_t2",
+      "name": "Rosso Kart Veloce 125 Junior T2",
+      "manufacturer": "Rosso Kart Works",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -6269,8 +6269,8 @@
       "sound": "Kart125cc",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_birel_ry29_okj.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_birel_ry29_okj_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_rosso_veloce_t2.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_rosso_veloce_t2_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -6595,9 +6595,9 @@
       }
     },
     {
-      "id": "kart_tony_kart_racer_ok",
-      "name": "Tony Kart Racer 401 RR OK",
-      "manufacturer": "Tony Kart",
+      "id": "kart_verde_apex_t3",
+      "name": "Verde Kart Apex 125 Senior T3",
+      "manufacturer": "Verde Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -6631,10 +6631,10 @@
       "base_car": "Kart",
       "sound": "Kart125cc",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_tony_kart_racer_ok.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_ok.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_ok_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_verde_apex_t3.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_verde_apex_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_verde_apex_t3.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -6958,9 +6958,9 @@
       }
     },
     {
-      "id": "kart_crg_kt2_ok",
-      "name": "CRG KT2 OK 125cc",
-      "manufacturer": "CRG",
+      "id": "kart_blackline_phantom_t3",
+      "name": "Blackline Phantom 125 Senior T3",
+      "manufacturer": "Blackline Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -6975,7 +6975,7 @@
       "drivetrain": "RWD",
       "engine_desc": "125cc Direct Drive 2-Stroke (16,000 RPM)",
       "aero_downforce": "Cl 0.15 / Cd 0.52",
-      "brakes_desc": "CRG V11 Hydraulic Self-Adjusting Disc",
+      "brakes_desc": "Blackline V11 Hydraulic Self-Adjusting Disc",
       "history_bio": "Black and gold racing livery with 30mm chrome-moly tubing. Demands aggressive steering inputs and rewards high apex commitment.",
       "stats": {
         "speed": 0.68,
@@ -6994,10 +6994,10 @@
       "base_car": "Kart",
       "sound": "Kart125cc",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_crg_kt2_ok.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_crg_kt2_ok.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_crg_kt2_ok_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_crg_kt2_ok.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_blackline_phantom_t3.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_blackline_phantom_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_blackline_phantom_t3.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -7321,9 +7321,9 @@
       }
     },
     {
-      "id": "kart_birel_ry30_ok",
-      "name": "Birel ART RY30 OK",
-      "manufacturer": "Birel ART",
+      "id": "kart_rosso_modena_t3",
+      "name": "Rosso Kart Modena 125 Senior T3",
+      "manufacturer": "Rosso Kart Works",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -7339,7 +7339,7 @@
       "engine_desc": "125cc Direct Drive 2-Stroke IAME Reedster",
       "aero_downforce": "Cl 0.15 / Cd 0.51",
       "brakes_desc": "Freeline RR I25x10 Hydraulic Disc",
-      "history_bio": "Red aerodynamic bodywork designed in collaboration with ART Grand Prix. Stable high-speed chassis for fast sweeping corners.",
+      "history_bio": "Red aerodynamic bodywork designed in collaboration with Rosso Works. Stable high-speed chassis for fast sweeping corners.",
       "stats": {
         "speed": 0.69,
         "acceleration": 0.86,
@@ -7357,10 +7357,10 @@
       "base_car": "Kart",
       "sound": "Kart125cc",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_birel_ry30_ok.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_birel_ry30_ok.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_birel_ry30_ok_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_birel_ry30_ok.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_rosso_modena_t3.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_rosso_modena_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_rosso_modena_t3.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -7684,9 +7684,9 @@
       }
     },
     {
-      "id": "kart_birel_art_kz2",
-      "name": "Birel ART KZ2 125cc Shifter",
-      "manufacturer": "Birel ART",
+      "id": "kart_rosso_corsa_t4",
+      "name": "Rosso Kart Corsa 125 Shifter T4",
+      "manufacturer": "Rosso Kart Works",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -7720,10 +7720,10 @@
       "base_car": "Kart",
       "sound": "KartShifterKZ",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_birel_art_kz2.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_birel_art_kz2.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_birel_art_kz2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_birel_art_kz2.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_rosso_corsa_t4.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_rosso_corsa_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_rosso_corsa_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -8047,9 +8047,9 @@
       }
     },
     {
-      "id": "kart_crg_road_rebel_kz",
-      "name": "CRG Road Rebel KZ",
-      "manufacturer": "CRG",
+      "id": "kart_blackline_renegade_t4",
+      "name": "Blackline Renegade 125 Shifter T4",
+      "manufacturer": "Blackline Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -8064,7 +8064,7 @@
       "drivetrain": "RWD",
       "engine_desc": "125cc 6-Speed Sequential TM Racing",
       "aero_downforce": "Cl 0.20 / Cd 0.55",
-      "brakes_desc": "CRG Front & Rear Ventilated Discs",
+      "brakes_desc": "Blackline Front & Rear Ventilated Discs",
       "history_bio": "Most successful shifter kart chassis in World Championship history. 32mm heavy tubular frame handles brutal torque without flexing out of line.",
       "stats": {
         "speed": 0.8,
@@ -8083,10 +8083,10 @@
       "base_car": "Kart",
       "sound": "KartShifterKZ",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_crg_road_rebel_kz.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_crg_road_rebel_kz.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_crg_road_rebel_kz_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_crg_road_rebel_kz.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_blackline_renegade_t4.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_blackline_renegade_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_blackline_renegade_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -8410,9 +8410,9 @@
       }
     },
     {
-      "id": "kart_tony_kart_racer_kz",
-      "name": "Tony Kart Racer 401 KZ",
-      "manufacturer": "Tony Kart",
+      "id": "kart_verde_pro_t4",
+      "name": "Verde Kart Pro 125 Shifter T4",
+      "manufacturer": "Verde Karting",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -8446,10 +8446,10 @@
       "base_car": "Kart",
       "sound": "KartShifterKZ",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_tony_kart_racer_kz.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_kz.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_tony_kart_racer_kz_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_tony_kart_racer_kz.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_verde_pro_t4.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_verde_pro_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_verde_pro_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -8773,9 +8773,9 @@
       }
     },
     {
-      "id": "kart_anderson_maverick_mono",
-      "name": "Anderson Maverick 250 Mono",
-      "manufacturer": "Anderson",
+      "id": "kart_highland_hawk_t5",
+      "name": "Highland Hawk 250 Single T5",
+      "manufacturer": "Highland Superkarts",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -8790,7 +8790,7 @@
       "drivetrain": "RWD",
       "engine_desc": "250cc Single-Cylinder 2-Stroke / 450cc Mono",
       "aero_downforce": "Cl 1.15 / Cd 0.50",
-      "brakes_desc": "Anderson Dual Hydraulic Discs",
+      "brakes_desc": "Highland Dual Hydraulic Discs",
       "history_bio": "Division 2 road-racing single. Full aerodynamic fairings provide high-speed stability while single-cylinder powerplant rewards flowing, high-momentum driving.",
       "stats": {
         "speed": 0.86,
@@ -8811,8 +8811,8 @@
       "sound": "Superkart250Twin",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_anderson_maverick_mono.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_anderson_maverick_mono_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_highland_hawk_t5.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_highland_hawk_t5_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -9137,9 +9137,9 @@
       }
     },
     {
-      "id": "kart_ms_superkart_mono",
-      "name": "MS Kart Superkart Mono",
-      "manufacturer": "MS Kart",
+      "id": "kart_moravia_arrow_t5",
+      "name": "Moravia Arrow 250 Single T5",
+      "manufacturer": "Moravia Superkarts",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -9154,7 +9154,7 @@
       "drivetrain": "RWD",
       "engine_desc": "250cc Single 2-Stroke GasGas / KTM Mono",
       "aero_downforce": "Cl 1.18 / Cd 0.50",
-      "brakes_desc": "MS Kart 4-Piston Single-Front Calipers",
+      "brakes_desc": "Moravia 4-Piston Single-Front Calipers",
       "history_bio": "Czech lightweight single-cylinder superkart. Aerodynamic bubble cockpit and rear wing provide intermediate downforce bridge into full GP racing.",
       "stats": {
         "speed": 0.86,
@@ -9175,8 +9175,8 @@
       "sound": "Superkart250Twin",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_ms_superkart_mono.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_ms_superkart_mono_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_moravia_arrow_t5.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_moravia_arrow_t5_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -9501,9 +9501,9 @@
       }
     },
     {
-      "id": "kart_pvt_single_250",
-      "name": "PVT Spyder 250 Single",
-      "manufacturer": "PVT Racing",
+      "id": "kart_vanguard_spyder_t5",
+      "name": "Vanguard Spyder 250 Single T5",
+      "manufacturer": "Vanguard Single",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -9539,8 +9539,8 @@
       "sound": "Superkart250Twin",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/kart/kart_pvt_single_250.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_pvt_single_250_thumb.png",
+        "lateral": "/textures/vehicles/laterals/kart/kart_vanguard_spyder_t5.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_vanguard_spyder_t5_thumb.png",
         "topdown": null
       },
       "physics": {
@@ -9865,9 +9865,9 @@
       }
     },
     {
-      "id": "kart_anderson_cs250",
-      "name": "Anderson CS250 Twin GP",
-      "manufacturer": "Anderson",
+      "id": "kart_highland_eagle_t6",
+      "name": "Highland Eagle 250 Twin GP T6",
+      "manufacturer": "Highland Superkarts",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -9902,10 +9902,10 @@
       "base_car": "Kart",
       "sound": "Superkart250Twin",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_anderson_cs250.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_anderson_cs250.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_anderson_cs250_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_anderson_cs250.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_highland_eagle_t6.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_highland_eagle_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_highland_eagle_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -10229,9 +10229,9 @@
       }
     },
     {
-      "id": "kart_ms_superkart_250",
-      "name": "MS Kart Superkart 250",
-      "manufacturer": "MS Kart",
+      "id": "kart_moravia_falcon_t6",
+      "name": "Moravia Falcon 250 Twin GP T6",
+      "manufacturer": "Moravia Superkarts",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -10246,7 +10246,7 @@
       "drivetrain": "RWD",
       "engine_desc": "250cc Twin-Cylinder 2-Stroke VM",
       "aero_downforce": "Cl 1.62 / Cd 0.48",
-      "brakes_desc": "MS Kart 4-Piston Carbon Ventilated",
+      "brakes_desc": "Moravia 4-Piston Carbon Ventilated",
       "history_bio": "Czech engineering marvel with wind-tunnel developed fiberglass fairings and rear bi-plane wing. Glues the chassis to GP circuits.",
       "stats": {
         "speed": 0.92,
@@ -10266,10 +10266,10 @@
       "base_car": "Kart",
       "sound": "Superkart250Twin",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_ms_superkart_250.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_ms_superkart_250.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_ms_superkart_250_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_ms_superkart_250.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_moravia_falcon_t6.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_moravia_falcon_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_moravia_falcon_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -10593,9 +10593,9 @@
       }
     },
     {
-      "id": "kart_viper_250_twin",
-      "name": "VIPER 250 Twin Superkart",
-      "manufacturer": "VIPER Racing",
+      "id": "kart_venom_cobra_t6",
+      "name": "Venom Cobra 250 Twin GP T6",
+      "manufacturer": "Venom Racing",
       "year": 2023,
       "module": "kart",
       "category": "kart",
@@ -10630,10 +10630,10 @@
       "base_car": "Kart",
       "sound": "Superkart250Twin",
       "images": {
-        "reference": "/textures/vehicles/references/kart/kart_viper_250_twin.jpg",
-        "lateral": "/textures/vehicles/laterals/kart/kart_viper_250_twin.png",
-        "thumb": "/textures/vehicles/laterals/kart/kart_viper_250_twin_thumb.png",
-        "topdown": "/textures/vehicles/topdown/kart/kart_viper_250_twin.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/kart/kart_venom_cobra_t6.png",
+        "thumb": "/textures/vehicles/laterals/kart/kart_venom_cobra_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/kart/kart_venom_cobra_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -10957,9 +10957,9 @@
       }
     },
     {
-      "id": "autocross_lifelive_tn5_junior",
-      "name": "LifeLive TN5 Junior",
-      "manufacturer": "LifeLive",
+      "id": "autocross_ardennes_junior_t1",
+      "name": "Ardennes Junior Cross 600 T1",
+      "manufacturer": "Ardennes Cross",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -10975,7 +10975,7 @@
       "engine_desc": "690cc Yamaha MT-07 Restricted I2",
       "aero_downforce": "Cl 0.20 / Cd 0.65",
       "brakes_desc": "Hydraulic 2-Piston Rear Axle Disc",
-      "history_bio": "FIA Cross Car Academy Trophy official spec machine engineered by Neuville's LifeLive. Compact, responsive, and momentum-focused.",
+      "history_bio": "FIA Cross Car Academy Trophy official spec machine engineered by Ardennes Cross. Compact, responsive, and momentum-focused.",
       "stats": {
         "speed": 0.55,
         "acceleration": 0.88,
@@ -11321,9 +11321,9 @@
       }
     },
     {
-      "id": "autocross_speedcar_xtrem_junior",
-      "name": "Speedcar Xtrem Junior",
-      "manufacturer": "Speedcar",
+      "id": "autocross_iberian_furia_t1",
+      "name": "Iberian Furia Junior Cross T1",
+      "manufacturer": "Iberian Cross",
       "year": 2022,
       "module": "autocross",
       "category": "autocross",
@@ -11685,9 +11685,9 @@
       }
     },
     {
-      "id": "autocross_planet_k3_junior",
-      "name": "Planet Kart Cross K3 Junior",
-      "manufacturer": "Planet Kart Cross",
+      "id": "autocross_cosmo_nova_t1",
+      "name": "Cosmo Nova Junior Cross T1",
+      "manufacturer": "Cosmo Kartcross",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -12049,9 +12049,9 @@
       }
     },
     {
-      "id": "autocross_lifelive_tn11_senior",
-      "name": "LifeLive TN11 Senior",
-      "manufacturer": "LifeLive",
+      "id": "autocross_ardennes_pro_t2",
+      "name": "Ardennes Pro Cross 850 T2",
+      "manufacturer": "Ardennes Cross",
       "year": 2024,
       "module": "autocross",
       "category": "autocross",
@@ -12067,7 +12067,7 @@
       "engine_desc": "847cc Yamaha MT-09 Triple",
       "aero_downforce": "Cl 0.35 / Cd 0.62",
       "brakes_desc": "AP Racing 4-Wheel Hydraulic Discs",
-      "history_bio": "The pinnacle of modern FIA European Cross Car engineering. Explosive triple-cylinder power-to-weight and surgical throttle steering.",
+      "history_bio": "The pinnacle of modern Continental Cross Car engineering. Explosive triple-cylinder power-to-weight and surgical throttle steering.",
       "stats": {
         "speed": 0.72,
         "acceleration": 0.94,
@@ -12413,9 +12413,9 @@
       }
     },
     {
-      "id": "autocross_speedcar_wonder",
-      "name": "Speedcar Wonder",
-      "manufacturer": "Speedcar",
+      "id": "autocross_iberian_relampago_t2",
+      "name": "Iberian Relampago Cross T2",
+      "manufacturer": "Iberian Cross",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -12777,9 +12777,9 @@
       }
     },
     {
-      "id": "autocross_semog_bravo_sport",
-      "name": "Semog Bravo Sport",
-      "manufacturer": "Semog",
+      "id": "autocross_lusitania_bravo_t2",
+      "name": "Lusitania Bravo Sport Cross T2",
+      "manufacturer": "Lusitania Cross",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -12794,7 +12794,7 @@
       "drivetrain": "RWD",
       "engine_desc": "847cc Yamaha MT-09 Triple",
       "aero_downforce": "Cl 0.34 / Cd 0.63",
-      "brakes_desc": "Semog Competition Ventilated Discs",
+      "brakes_desc": "Lusitania Competition Ventilated Discs",
       "history_bio": "Portuguese cross car benchmark famed for robust suspension geometry over severe bumps and high rear-end mechanical grip.",
       "stats": {
         "speed": 0.71,
@@ -13141,9 +13141,9 @@
       }
     },
     {
-      "id": "autocross_peters_buggy1600",
-      "name": "Peters Autosport Buggy1600",
-      "manufacturer": "Peters Autosport",
+      "id": "autocross_petersen_buggy1600_t3",
+      "name": "Petersen Buggy 1600 T3",
+      "manufacturer": "Petersen Autosport",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -13159,7 +13159,7 @@
       "engine_desc": "1.6L Suzuki Hayabusa Stroker I4",
       "aero_downforce": "Cl 0.75 / Cd 0.55",
       "brakes_desc": "AP Racing 4WD Dual Master Discs",
-      "history_bio": "Dominant Dutch chassis in FIA Buggy1600. Screaming motorcycle-derived engine with 50/50 locked 4WD launch traction.",
+      "history_bio": "Dominant Dutch chassis in Continental Buggy1600. Screaming motorcycle-derived engine with 50/50 locked 4WD launch traction.",
       "stats": {
         "speed": 0.84,
         "acceleration": 0.96,
@@ -13505,9 +13505,9 @@
       }
     },
     {
-      "id": "autocross_alfa_racing_buggy1600",
-      "name": "Alfa Racing Buggy1600",
-      "manufacturer": "Alfa Racing",
+      "id": "autocross_bologna_buggy1600_t3",
+      "name": "Bologna Buggy 1600 T3",
+      "manufacturer": "Bologna Buggy Works",
       "year": 2022,
       "module": "autocross",
       "category": "autocross",
@@ -13869,9 +13869,9 @@
       }
     },
     {
-      "id": "autocross_fast_speed_buggy1600",
-      "name": "Fast & Speed Buggy1600",
-      "manufacturer": "Fast & Speed",
+      "id": "autocross_rapid_buggy1600_t3",
+      "name": "Rapid Dynamics Buggy 1600 T3",
+      "manufacturer": "Rapid Dynamics",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -13884,10 +13884,10 @@
       "top_speed_kmh": 200,
       "accel_0_100": 2.8,
       "drivetrain": "4WD",
-      "engine_desc": "1.6L VW Spiess 16V Race I4",
+      "engine_desc": "1.6L Volkskraft Spiess 16V Race I4",
       "aero_downforce": "Cl 0.70 / Cd 0.57",
       "brakes_desc": "Alcon 4-Wheel Hydraulic Discs",
-      "history_bio": "Traditional automotive race powerplant from VW Spiess providing relentless mid-range grunt and high chassis durability.",
+      "history_bio": "Traditional automotive race powerplant from Volkskraft Spiess providing relentless mid-range grunt and high chassis durability.",
       "stats": {
         "speed": 0.82,
         "acceleration": 0.94,
@@ -14233,9 +14233,9 @@
       }
     },
     {
-      "id": "autocross_skoda_fabia_tax",
-      "name": "Škoda Fabia TAX",
-      "manufacturer": "Škoda Motorsport",
+      "id": "autocross_bohemia_veloce_t4",
+      "name": "Bohemia Veloce Touring AX T4",
+      "manufacturer": "Bohemia Motorsport",
       "year": 2022,
       "module": "autocross",
       "category": "autocross",
@@ -14251,7 +14251,7 @@
       "engine_desc": "2.0L Turbocharged 20V I4 (720 Nm)",
       "aero_downforce": "Cl 1.15 / Cd 0.46",
       "brakes_desc": "AP Racing 355mm Ventilated Gravel Discs",
-      "history_bio": "Czech national icon and European TAX title winner. Massive 4WD torque, flared composite widebody, and aggressive anti-lag.",
+      "history_bio": "Czech national icon and European Touring AX title winner. Massive 4WD torque, flared composite widebody, and aggressive anti-lag.",
       "stats": {
         "speed": 0.89,
         "acceleration": 0.92,
@@ -14609,9 +14609,9 @@
       }
     },
     {
-      "id": "autocross_mitsubishi_evo_tax",
-      "name": "Mitsubishi Lancer Evo IX TAX",
-      "manufacturer": "Mitsubishi Ralliart",
+      "id": "autocross_shinano_tsunami_t4",
+      "name": "Shinano Tsunami Touring AX T4",
+      "manufacturer": "Shinano Performance",
       "year": 2021,
       "module": "autocross",
       "category": "autocross",
@@ -14627,7 +14627,7 @@
       "engine_desc": "2.0L 4G63 Turbo with ALS (740 Nm)",
       "aero_downforce": "Cl 1.10 / Cd 0.48",
       "brakes_desc": "Brembo Racing Dual Bias Gravel System",
-      "history_bio": "Legendary 4G63 powertrain pushed to nearly 600 BHP. Tremendous longitudinal traction and controllable 4-wheel drift yaw.",
+      "history_bio": "Legendary rally-bred turbo powertrain pushed to nearly 600 BHP. Tremendous longitudinal traction and controllable 4-wheel drift yaw.",
       "stats": {
         "speed": 0.9,
         "acceleration": 0.91,
@@ -14985,9 +14985,9 @@
       }
     },
     {
-      "id": "autocross_audi_a4_tax",
-      "name": "Audi A4 Quattro TAX",
-      "manufacturer": "Audi Sport Custom",
+      "id": "autocross_vortek_quattro_t4",
+      "name": "Vortek Quattro Touring AX T4",
+      "manufacturer": "Vortek Automobil",
       "year": 2022,
       "module": "autocross",
       "category": "autocross",
@@ -15003,7 +15003,7 @@
       "engine_desc": "2.0L TFSI Turbocharged I4 (700 Nm)",
       "aero_downforce": "Cl 1.12 / Cd 0.45",
       "brakes_desc": "AP Racing 4-Piston Gravel Discs",
-      "history_bio": "Bespoke Quattro touring weapon with longitudinally mounted turbo four and high-speed stability across bumpy dirt straightaways.",
+      "history_bio": "Bespoke Vortek touring weapon with longitudinally mounted turbo four and high-speed stability across bumpy dirt straightaways.",
       "stats": {
         "speed": 0.88,
         "acceleration": 0.9,
@@ -15361,9 +15361,9 @@
       }
     },
     {
-      "id": "autocross_peters_superbuggy",
-      "name": "Peters Autosport SuperBuggy V8",
-      "manufacturer": "Peters Autosport",
+      "id": "autocross_petersen_superbuggy_t5",
+      "name": "Petersen SuperBuggy V8 T5",
+      "manufacturer": "Petersen Autosport",
       "year": 2024,
       "module": "autocross",
       "category": "autocross",
@@ -15376,10 +15376,10 @@
       "top_speed_kmh": 225,
       "accel_0_100": 2.1,
       "drivetrain": "4WD",
-      "engine_desc": "4.0L BMW M62 Tuned Racing V8",
+      "engine_desc": "4.0L BMR Tuned Racing V8",
       "aero_downforce": "Cl 1.45 / Cd 0.52",
       "brakes_desc": "Carbon-Metallic 4WD Quad Calipers",
-      "history_bio": "The screaming European SuperBuggy benchmark. 1:1 power-to-weight ratio powered by an unrestricted 680 BHP BMW V8.",
+      "history_bio": "The screaming European SuperBuggy benchmark. 1:1 power-to-weight ratio powered by an unrestricted 680 BHP BMR V8.",
       "stats": {
         "speed": 0.95,
         "acceleration": 0.97,
@@ -15725,9 +15725,9 @@
       }
     },
     {
-      "id": "autocross_alfa_racing_superbuggy",
-      "name": "Alfa Racing SuperBuggy Twin-Turbo",
-      "manufacturer": "Alfa Racing",
+      "id": "autocross_bologna_superbuggy_t5",
+      "name": "Bologna SuperBuggy Twin-Turbo T5",
+      "manufacturer": "Bologna Buggy Works",
       "year": 2024,
       "module": "autocross",
       "category": "autocross",
@@ -15740,7 +15740,7 @@
       "top_speed_kmh": 230,
       "accel_0_100": 2.0,
       "drivetrain": "4WD",
-      "engine_desc": "3.6L Porsche Flat-6 Twin-Turbo",
+      "engine_desc": "3.6L Vandorn Flat-6 Twin-Turbo",
       "aero_downforce": "Cl 1.50 / Cd 0.50",
       "brakes_desc": "AP Racing Radial Ventilated Quad Discs",
       "history_bio": "Unrestricted twin-turbocharged flat-6 apex predator capable of reaching 100 km/h in 2.0 seconds flat on natural dirt.",
@@ -16089,9 +16089,9 @@
       }
     },
     {
-      "id": "autocross_fast_speed_superbuggy",
-      "name": "Fast & Speed SuperBuggy Biturbo",
-      "manufacturer": "Fast & Speed",
+      "id": "autocross_rapid_superbuggy_t5",
+      "name": "Rapid Dynamics SuperBuggy Biturbo T5",
+      "manufacturer": "Rapid Dynamics",
       "year": 2023,
       "module": "autocross",
       "category": "autocross",
@@ -16104,7 +16104,7 @@
       "top_speed_kmh": 222,
       "accel_0_100": 2.2,
       "drivetrain": "4WD",
-      "engine_desc": "3.5L Ford V6 Biturbo Race Engine",
+      "engine_desc": "3.5L Forge V6 Biturbo Race Engine",
       "aero_downforce": "Cl 1.40 / Cd 0.53",
       "brakes_desc": "Alcon Dual Balance Bar Off-Road Discs",
       "history_bio": "Proven Dutch championship powerhouse with crushing twin-turbo mid-range and 350mm long-travel Reiger bypass dampers.",
@@ -16453,9 +16453,9 @@
       }
     },
     {
-      "id": "rally_peugeot_208_rally4",
-      "name": "Peugeot 208 Rally4",
-      "manufacturer": "Peugeot",
+      "id": "rally_gallia_200_t1",
+      "name": "Gallia 200 Rally Junior T1",
+      "manufacturer": "Gallia Sport",
       "year": 2021,
       "module": "rally",
       "category": "rally",
@@ -16490,10 +16490,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_peugeot_208_rally4.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_peugeot_208_rally4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_peugeot_208_rally4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_200_t1.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_200_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_200_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -16829,9 +16829,9 @@
       }
     },
     {
-      "id": "rally_fiesta_rally4",
-      "name": "Ford Fiesta Rally4",
-      "manufacturer": "Ford",
+      "id": "rally_forge_spark_t1",
+      "name": "Forge Spark Rally Junior T1",
+      "manufacturer": "Forge Motor Co",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -16866,10 +16866,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_fiesta_rally4.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_fiesta_rally4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_fiesta_rally4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_fiesta_rally4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_forge_spark_t1.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_forge_spark_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_forge_spark_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17205,9 +17205,9 @@
       }
     },
     {
-      "id": "rally_clio_rally4",
-      "name": "Renault Clio Rally4",
-      "manufacturer": "Renault",
+      "id": "rally_rouen_dauphine_t1",
+      "name": "Rouen Dauphine Rally Junior T1",
+      "manufacturer": "Rouen Motorsport",
       "year": 2021,
       "module": "rally",
       "category": "rally",
@@ -17242,10 +17242,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_clio_rally4.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_clio_rally4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_clio_rally4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_clio_rally4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_rouen_dauphine_t1.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_rouen_dauphine_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_rouen_dauphine_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17581,9 +17581,9 @@
       }
     },
     {
-      "id": "rally_omse_supercar_lites",
-      "name": "Olsbergs MSE Supercar Lites",
-      "manufacturer": "Olsbergs MSE",
+      "id": "rally_nordic_rx_lites_t2",
+      "name": "Nordic RX Lites AWD T2",
+      "manufacturer": "Nordic RX Engineering",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -17599,7 +17599,7 @@
       "engine_desc": "2.4L Naturally Aspirated Duratec I4 Mid-Engine",
       "aero_downforce": "Cl 0.65 / Cd 0.48",
       "brakes_desc": "Alcon 4-Piston Gravel",
-      "history_bio": "Spec tubular spaceframe chassis developed by Olsbergs MSE and Avitas. Mid-engine 310 bhp AWD platform serving as the global feeder to World RX.",
+      "history_bio": "Spec tubular spaceframe chassis developed by Nordic RX Engineering and AeroTech RX. Mid-engine 310 bhp AWD platform serving as the global feeder to World Rallycross.",
       "stats": {
         "speed": 0.74,
         "acceleration": 0.88,
@@ -17618,10 +17618,10 @@
       "base_car": "RallyCar",
       "sound": "Super1600Atmo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_omse_supercar_lites.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_omse_supercar_lites.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_omse_supercar_lites_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_omse_supercar_lites.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_nordic_rx_lites_t2.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_nordic_rx_lites_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_nordic_rx_lites_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17957,9 +17957,9 @@
       }
     },
     {
-      "id": "rally_avitas_supercar_lites",
-      "name": "Avitas Supercar Lites",
-      "manufacturer": "Avitas Motorsport",
+      "id": "rally_aerotech_rx_lites_t2",
+      "name": "AeroTech RX Lite Chassis T2",
+      "manufacturer": "AeroTech RX",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -17994,10 +17994,10 @@
       "base_car": "RallyCar",
       "sound": "Super1600Atmo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_avitas_supercar_lites.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_avitas_supercar_lites.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_avitas_supercar_lites_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_avitas_supercar_lites.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_aerotech_rx_lites_t2.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_aerotech_rx_lites_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_aerotech_rx_lites_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18333,9 +18333,9 @@
       }
     },
     {
-      "id": "rally_qev_rx2e",
-      "name": "QEV RX2e Electric",
-      "manufacturer": "QEV Technologies",
+      "id": "rally_volttech_electrocross_t2",
+      "name": "VoltTech Electrocross T2",
+      "manufacturer": "VoltTech Racing",
       "year": 2023,
       "module": "rally",
       "category": "rally",
@@ -18351,7 +18351,7 @@
       "engine_desc": "Dual Electric Motors (250 kW, 30 kWh Battery)",
       "aero_downforce": "Cl 0.70 / Cd 0.50",
       "brakes_desc": "Alcon 4-Piston + Regeneration",
-      "history_bio": "Official FIA RX2e electric spec machine. Dual electric motors with 510 Nm of instantaneous torque delivering electrifying close-quarters racing.",
+      "history_bio": "Official Electric RX spec machine. Dual electric motors with 510 Nm of instantaneous torque delivering electrifying close-quarters racing.",
       "stats": {
         "speed": 0.76,
         "acceleration": 0.91,
@@ -18370,10 +18370,10 @@
       "base_car": "RallyCar",
       "sound": "Super1600Atmo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_qev_rx2e.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_qev_rx2e.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_qev_rx2e_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_qev_rx2e.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_volttech_electrocross_t2.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_volttech_electrocross_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_volttech_electrocross_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18709,9 +18709,9 @@
       }
     },
     {
-      "id": "rally_hyundai_i20_rx",
-      "name": "Hyundai i20 RX Supercar",
-      "manufacturer": "Hyundai",
+      "id": "rally_hanguk_apex_t3",
+      "name": "Hanguk Apex RX Supercar T3",
+      "manufacturer": "Hanguk Motorsport",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -18746,10 +18746,10 @@
       "base_car": "RallyCar",
       "sound": "Rally2Turbo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_hyundai_i20_rx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_hyundai_i20_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_hyundai_i20_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_hyundai_i20_rx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_hanguk_apex_t3.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_hanguk_apex_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_hanguk_apex_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19085,9 +19085,9 @@
       }
     },
     {
-      "id": "rally_polo_rx",
-      "name": "Volkswagen Polo RX Supercar",
-      "manufacturer": "Volkswagen",
+      "id": "rally_volkskraft_strassen_t3",
+      "name": "Volkskraft Strassen RX Supercar T3",
+      "manufacturer": "Volkskraft",
       "year": 2021,
       "module": "rally",
       "category": "rally",
@@ -19103,7 +19103,7 @@
       "engine_desc": "2.0L Turbocharged 16V + ALS",
       "aero_downforce": "Cl 1.12 / Cd 0.51",
       "brakes_desc": "Alcon Water-Cooled 4-Piston",
-      "history_bio": "Dominant World RX machine developed with PSRX. Incredible traction off the standing launch grid with neutral 50:50 AWD split.",
+      "history_bio": "Dominant World Rallycross machine. Incredible traction off the standing launch grid with neutral 50:50 AWD split.",
       "stats": {
         "speed": 0.81,
         "acceleration": 0.97,
@@ -19122,10 +19122,10 @@
       "base_car": "RallyCar",
       "sound": "Rally2Turbo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_polo_rx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_polo_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_polo_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_polo_rx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_volkskraft_strassen_t3.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_volkskraft_strassen_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_volkskraft_strassen_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19461,9 +19461,9 @@
       }
     },
     {
-      "id": "rally_audi_s1_rx",
-      "name": "Audi S1 EKS RX Supercar",
-      "manufacturer": "Audi",
+      "id": "rally_vortek_quattro_rx_t3",
+      "name": "Vortek Quattro RX Supercar T3",
+      "manufacturer": "Vortek Automobil",
       "year": 2020,
       "module": "rally",
       "category": "rally",
@@ -19479,7 +19479,7 @@
       "engine_desc": "2.0L TFSI Turbo + Anti-Lag",
       "aero_downforce": "Cl 1.15 / Cd 0.52",
       "brakes_desc": "Brembo Racing RX 4-Piston",
-      "history_bio": "Mattias Ekström's championship-winning pocket rocket. Aggressive widebody aero kit and quick steering rack for hairpin agility.",
+      "history_bio": "Championship-winning pocket rocket. Aggressive widebody aero kit and quick steering rack for hairpin agility.",
       "stats": {
         "speed": 0.81,
         "acceleration": 0.96,
@@ -19498,10 +19498,10 @@
       "base_car": "RallyCar",
       "sound": "Rally2Turbo",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_audi_s1_rx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_audi_s1_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_audi_s1_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_audi_s1_rx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_vortek_quattro_rx_t3.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_vortek_quattro_rx_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_vortek_quattro_rx_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19837,9 +19837,9 @@
       }
     },
     {
-      "id": "rally_peugeot_208_wrx",
-      "name": "Peugeot 208 WRX Supercar",
-      "manufacturer": "Peugeot",
+      "id": "rally_gallia_lyon_t4",
+      "name": "Gallia Lyon WRX Supercar T4",
+      "manufacturer": "Gallia Sport",
       "year": 2021,
       "module": "rally",
       "category": "rally",
@@ -19855,7 +19855,7 @@
       "engine_desc": "2.0L Turbocharged 16V + Custom ALS",
       "aero_downforce": "Cl 1.25 / Cd 0.52",
       "brakes_desc": "Brembo Racing RX 6-Piston",
-      "history_bio": "Hansen Motorsport championship-winning 600 bhp beast. The most victorious modern World RX chassis with violent launch control and 0-100 in 1.9 seconds.",
+      "history_bio": "Hansson Motorsport championship-winning 600 bhp beast. The most victorious modern World Rallycross chassis with violent launch control and 0-100 in 1.9 seconds.",
       "stats": {
         "speed": 0.85,
         "acceleration": 0.98,
@@ -19874,10 +19874,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_peugeot_208_wrx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_peugeot_208_wrx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_peugeot_208_wrx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_peugeot_208_wrx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_lyon_t4.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_lyon_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_lyon_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20213,9 +20213,9 @@
       }
     },
     {
-      "id": "rally_ford_focus_rs_rx",
-      "name": "Ford Focus RS RX Supercar",
-      "manufacturer": "Ford",
+      "id": "rally_forge_comet_t4",
+      "name": "Forge Comet WRX Supercar T4",
+      "manufacturer": "Forge Motor Co",
       "year": 2020,
       "module": "rally",
       "category": "rally",
@@ -20250,10 +20250,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_ford_focus_rs_rx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_ford_focus_rs_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_ford_focus_rs_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_ford_focus_rs_rx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_forge_comet_t4.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_forge_comet_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_forge_comet_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20589,9 +20589,9 @@
       }
     },
     {
-      "id": "rally_subaru_wrx_rx",
-      "name": "Subaru WRX STI RX Supercar",
-      "manufacturer": "Subaru",
+      "id": "rally_sixstar_vortex_t4",
+      "name": "Sixstar Vortex WRX Supercar T4",
+      "manufacturer": "Sixstar Rally",
       "year": 2021,
       "module": "rally",
       "category": "rally",
@@ -20607,7 +20607,7 @@
       "engine_desc": "2.0L Boxer Turbocharged 16V",
       "aero_downforce": "Cl 1.22 / Cd 0.52",
       "brakes_desc": "Brembo Racing RX 4-Piston",
-      "history_bio": "Vermont SportsCar and Subaru Motorsports USA championship dominator. Low-center-of-gravity boxer turbo rumble and bulletproof mechanical AWD.",
+      "history_bio": "Green Mountain Motorsport and Sixstar championship dominator. Low-center-of-gravity boxer turbo rumble and bulletproof mechanical AWD.",
       "stats": {
         "speed": 0.85,
         "acceleration": 0.98,
@@ -20626,10 +20626,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_subaru_wrx_rx.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_subaru_wrx_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_subaru_wrx_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_subaru_wrx_rx.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_sixstar_vortex_t4.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_sixstar_vortex_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_sixstar_vortex_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20965,9 +20965,9 @@
       }
     },
     {
-      "id": "rally_peugeot_208_rx1e",
-      "name": "Peugeot 208 RX1e",
-      "manufacturer": "Peugeot",
+      "id": "rally_gallia_volt_t5",
+      "name": "Gallia Volt RX1e Supercar T5",
+      "manufacturer": "Gallia Sport",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -20983,7 +20983,7 @@
       "engine_desc": "Kreisel 2 x 250 kW Electric Motors, 52.65 kWh Battery",
       "aero_downforce": "Cl 1.15 / Cd 0.53",
       "brakes_desc": "Alcon Water-Cooled 6-Piston + Regeneration",
-      "history_bio": "Hansen World RX Team entry for the all-electric World RX era. One motor on each axle gives instant 880 Nm torque out of every hairpin.",
+      "history_bio": "Hansson Rallycross Team entry for the all-electric Rallycross era. One motor on each axle gives instant 880 Nm torque out of every hairpin.",
       "stats": {
         "speed": 0.86,
         "acceleration": 0.99,
@@ -21003,9 +21003,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_peugeot_208_rx1e.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_peugeot_208_rx1e_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_peugeot_208_rx1e.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_volt_t5.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_volt_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_volt_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -21341,9 +21341,9 @@
       }
     },
     {
-      "id": "rally_polo_rx1e",
-      "name": "Volkswagen Polo RX1e",
-      "manufacturer": "Volkswagen",
+      "id": "rally_volkskraft_electro_t5",
+      "name": "Volkskraft Electro RX1e T5",
+      "manufacturer": "Volkskraft",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -21379,9 +21379,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_polo_rx1e.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_polo_rx1e_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_polo_rx1e.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_volkskraft_electro_t5.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_volkskraft_electro_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_volkskraft_electro_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -21717,9 +21717,9 @@
       }
     },
     {
-      "id": "rally_lancia_delta_evo_e_rx",
-      "name": "Lancia Delta Evo-e RX",
-      "manufacturer": "Lancia",
+      "id": "rally_torino_integrale_e_t5",
+      "name": "Torino Integrale Evo-e RX T5",
+      "manufacturer": "Torino Corse",
       "year": 2023,
       "module": "rally",
       "category": "rally",
@@ -21735,7 +21735,7 @@
       "engine_desc": "Kreisel 2 x 250 kW Electric Motors, 52.65 kWh Battery",
       "aero_downforce": "Cl 1.12 / Cd 0.55",
       "brakes_desc": "Alcon Water-Cooled 6-Piston + Regeneration",
-      "history_bio": "Electric restomod of the legendary Delta Integrale. Special One Racing brought it to World RX in 2023 with Sebastien Loeb at the wheel.",
+      "history_bio": "Electric restomod of the legendary Torino Integrale. Brought to World Rallycross in 2023 as an electrifying retro-silhouette machine.",
       "stats": {
         "speed": 0.85,
         "acceleration": 0.99,
@@ -21755,9 +21755,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_lancia_delta_evo_e_rx.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_lancia_delta_evo_e_rx_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_lancia_delta_evo_e_rx.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_torino_integrale_e_t5.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_torino_integrale_e_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_torino_integrale_e_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -22093,9 +22093,9 @@
       }
     },
     {
-      "id": "rally_omse_fc1x",
-      "name": "Olsbergs MSE FC1-X",
-      "manufacturer": "Olsbergs MSE",
+      "id": "rally_nordic_valkyrie_t6",
+      "name": "Nordic RX Valkyrie Group E T6",
+      "manufacturer": "Nordic RX Engineering",
       "year": 2022,
       "module": "rally",
       "category": "rally",
@@ -22111,7 +22111,7 @@
       "engine_desc": "800 kW All-Electric AWD Powertrain",
       "aero_downforce": "Cl 1.25 / Cd 0.58",
       "brakes_desc": "Water-Cooled 6-Piston + Regeneration",
-      "history_bio": "The most powerful rallycross car ever raced. The spec Nitrocross Group E machine: 1,070 hp, 1,100 Nm and 0-60 mph in 1.4 seconds over gap jumps.",
+      "history_bio": "The most powerful rallycross car ever raced. The spec Apex Group E machine: 1,070 hp, 1,100 Nm and 0-60 mph in 1.4 seconds over gap jumps.",
       "stats": {
         "speed": 0.92,
         "acceleration": 1.0,
@@ -22131,9 +22131,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_omse_fc1x.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_omse_fc1x_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_omse_fc1x.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_nordic_valkyrie_t6.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_nordic_valkyrie_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_nordic_valkyrie_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -22469,9 +22469,9 @@
       }
     },
     {
-      "id": "rally_vsc_fc1x",
-      "name": "Vermont SportsCar FC1-X",
-      "manufacturer": "Vermont SportsCar",
+      "id": "rally_green_mountain_titan_t6",
+      "name": "Green Mountain Titan Group E T6",
+      "manufacturer": "Green Mountain Motorsport",
       "year": 2023,
       "module": "rally",
       "category": "rally",
@@ -22487,7 +22487,7 @@
       "engine_desc": "800 kW All-Electric AWD Powertrain",
       "aero_downforce": "Cl 1.25 / Cd 0.58",
       "brakes_desc": "Water-Cooled 6-Piston + Regeneration",
-      "history_bio": "American-built FC1-X from the Vermont SportsCar workshop. Tuned for the big Nitrocross dirt gap jumps and the wide Group E launch starts.",
+      "history_bio": "American-built FC1-X from the Green Mountain workshop. Tuned for big stadium dirt gap jumps and the wide Group E launch starts.",
       "stats": {
         "speed": 0.92,
         "acceleration": 1.0,
@@ -22507,9 +22507,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_vsc_fc1x.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_vsc_fc1x_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_vsc_fc1x.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_green_mountain_titan_t6.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_green_mountain_titan_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_green_mountain_titan_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -22845,9 +22845,9 @@
       }
     },
     {
-      "id": "rally_dodge_hornet_fc1x",
-      "name": "Dodge Hornet R/T FC1-X",
-      "manufacturer": "Dodge",
+      "id": "rally_rampart_wasp_t6",
+      "name": "Rampart Wasp Group E T6",
+      "manufacturer": "Rampart Performance",
       "year": 2024,
       "module": "rally",
       "category": "rally",
@@ -22863,7 +22863,7 @@
       "engine_desc": "800 kW All-Electric AWD Powertrain",
       "aero_downforce": "Cl 1.24 / Cd 0.59",
       "brakes_desc": "Water-Cooled 6-Piston + Regeneration",
-      "history_bio": "Dreyer & Reinbold Racing brought Dodge to Nitrocross with this Hornet-bodied FC1-X. Over 1,000 hp of electric fury on dirt and asphalt.",
+      "history_bio": "Apex Dynamics brought Rampart to the electric series with this aggressive silhouette FC1-X. Over 1,000 hp of electric fury on dirt and asphalt.",
       "stats": {
         "speed": 0.92,
         "acceleration": 1.0,
@@ -22883,9 +22883,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_dodge_hornet_fc1x.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_dodge_hornet_fc1x_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_dodge_hornet_fc1x.png"
+        "lateral": "/textures/vehicles/laterals/rally/rally_rampart_wasp_t6.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_rampart_wasp_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_rampart_wasp_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -23221,9 +23221,9 @@
       }
     },
     {
-      "id": "rally_audi_sport_quattro_s1",
-      "name": "Audi Sport Quattro S1 E2",
-      "manufacturer": "Audi",
+      "id": "rally_vortek_turbo_quattro_t7",
+      "name": "Vortek Turbo Quattro Legend T7",
+      "manufacturer": "Vortek Automobil",
       "year": 1985,
       "module": "rally",
       "category": "rally",
@@ -23258,10 +23258,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_audi_sport_quattro_s1.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_audi_sport_quattro_s1.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_audi_sport_quattro_s1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_audi_sport_quattro_s1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_vortek_turbo_quattro_t7.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_vortek_turbo_quattro_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_vortek_turbo_quattro_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -23597,9 +23597,9 @@
       }
     },
     {
-      "id": "rally_peugeot_205_t16",
-      "name": "Peugeot 205 T16 EVO 2",
-      "manufacturer": "Peugeot",
+      "id": "rally_gallia_corsica_t7",
+      "name": "Gallia Corsica Turbo Legend T7",
+      "manufacturer": "Gallia Sport",
       "year": 1985,
       "module": "rally",
       "category": "rally",
@@ -23634,10 +23634,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_peugeot_205_t16.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_peugeot_205_t16.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_peugeot_205_t16_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_peugeot_205_t16.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_corsica_t7.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_corsica_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_corsica_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -23973,9 +23973,9 @@
       }
     },
     {
-      "id": "rally_lancia_delta_s4",
-      "name": "Lancia Delta S4",
-      "manufacturer": "Lancia",
+      "id": "rally_torino_stradale_t7",
+      "name": "Torino Stradale S4 Legend T7",
+      "manufacturer": "Torino Corse",
       "year": 1986,
       "module": "rally",
       "category": "rally",
@@ -24010,10 +24010,10 @@
       "base_car": "RallyCar",
       "sound": "CrossCarMotorcycle",
       "images": {
-        "reference": "/textures/vehicles/references/rally/rally_lancia_delta_s4.jpg",
-        "lateral": "/textures/vehicles/laterals/rally/rally_lancia_delta_s4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_lancia_delta_s4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_lancia_delta_s4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/rally/rally_torino_stradale_t7.png",
+        "thumb": "/textures/vehicles/laterals/rally/rally_torino_stradale_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rally/rally_torino_stradale_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -24349,9 +24349,9 @@
       }
     },
     {
-      "id": "gt_porsche_718_gt4",
-      "name": "Porsche 718 Cayman GT4 RS Clubsport",
-      "manufacturer": "Porsche",
+      "id": "gt_vandorn_stratus_t1",
+      "name": "Vandorn Stratus Clubsport T1",
+      "manufacturer": "Vandorn Automobil",
       "year": 2022,
       "module": "gt",
       "category": "gt",
@@ -24367,7 +24367,7 @@
       "engine_desc": "4.0L NA Flat-6 @ 9,000 RPM",
       "aero_downforce": "Cl 0.85 / Cd 0.42",
       "brakes_desc": "Steel 380mm 6-Piston Monobloc",
-      "history_bio": "Mid-engine benchmark of customer racing. Introduced in 2022 featuring the screaming 911 GT3 engine, delivering surgical balance and razor-sharp apex turn-in.",
+      "history_bio": "Mid-engine benchmark of customer racing. Introduced in 2022 featuring the screaming 4.0L flat-6 engine, delivering surgical balance and razor-sharp apex turn-in.",
       "stats": {
         "speed": 0.78,
         "acceleration": 0.82,
@@ -24386,10 +24386,10 @@
       "base_car": "GT4Clubsport",
       "sound": "Gt4Clubsport",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_porsche_718_gt4.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_porsche_718_gt4.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_porsche_718_gt4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_porsche_718_gt4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vandorn_stratus_t1.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vandorn_stratus_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vandorn_stratus_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -24719,9 +24719,9 @@
       }
     },
     {
-      "id": "gt_bmw_m4_gt4",
-      "name": "BMW M4 GT4 (G82)",
-      "manufacturer": "BMW",
+      "id": "gt_bmr_bavaria_t1",
+      "name": "BMR Bavaria Sprint T1",
+      "manufacturer": "BMR Speedworks",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -24736,7 +24736,7 @@
       "drivetrain": "RWD",
       "engine_desc": "3.0L M TwinPower Turbo I6",
       "aero_downforce": "Cl 0.82 / Cd 0.44",
-      "brakes_desc": "Steel 390mm 6-Piston AP Racing",
+      "brakes_desc": "Steel 390mm 6-Piston Competition",
       "history_bio": "Customer racing workhorse built on the G82 chassis. Renowned for its curb compliance, high mechanical grip, and massive twin-turbo mid-range punch.",
       "stats": {
         "speed": 0.76,
@@ -24756,10 +24756,10 @@
       "base_car": "GT4Clubsport",
       "sound": "Gt4Clubsport",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_bmw_m4_gt4.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_bmw_m4_gt4.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_bmw_m4_gt4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_bmw_m4_gt4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_bmr_bavaria_t1.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_bmr_bavaria_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_bmr_bavaria_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -25089,9 +25089,9 @@
       }
     },
     {
-      "id": "gt_aston_vantage_gt4",
-      "name": "Aston Martin Vantage AMR GT4",
-      "manufacturer": "Aston Martin",
+      "id": "gt_albion_victor_t1",
+      "name": "Albion Victor GT T1",
+      "manufacturer": "Albion Motors",
       "year": 2021,
       "module": "gt",
       "category": "gt",
@@ -25107,7 +25107,7 @@
       "engine_desc": "4.0L Twin-Turbo V8",
       "aero_downforce": "Cl 0.84 / Cd 0.43",
       "brakes_desc": "Steel 380mm 6-Piston",
-      "history_bio": "Built at Prodrive in Banbury. Features perfect 50:50 weight distribution and a progressive V8 torque curve that forgivingly absorbs aggressive trail-braking.",
+      "history_bio": "Built at Proline Dynamics. Features perfect 50:50 weight distribution and a progressive V8 torque curve that forgivingly absorbs aggressive trail-braking.",
       "stats": {
         "speed": 0.77,
         "acceleration": 0.83,
@@ -25126,10 +25126,10 @@
       "base_car": "GT4Clubsport",
       "sound": "Gt4Clubsport",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_aston_vantage_gt4.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_aston_vantage_gt4.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_aston_vantage_gt4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_aston_vantage_gt4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_albion_victor_t1.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_albion_victor_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_albion_victor_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -25459,9 +25459,9 @@
       }
     },
     {
-      "id": "gt_toyota_supra_gt4",
-      "name": "Toyota GR Supra GT4 EVO",
-      "manufacturer": "Toyota",
+      "id": "gt_yamato_hayate_t1",
+      "name": "Yamato Hayate GT T1",
+      "manufacturer": "Yamato Racing",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -25476,7 +25476,7 @@
       "drivetrain": "RWD",
       "engine_desc": "3.0L Twin-Scroll Turbo I6",
       "aero_downforce": "Cl 0.80 / Cd 0.41",
-      "brakes_desc": "Brembo Racing 6-Piston",
+      "brakes_desc": "Competition Racing 6-Piston",
       "history_bio": "Lightest car in the GT4 field with upgraded EVO braking and revised damper curves, providing lightning deceleration into tight chicanes.",
       "stats": {
         "speed": 0.75,
@@ -25496,10 +25496,10 @@
       "base_car": "GT4Clubsport",
       "sound": "Gt4Clubsport",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_toyota_supra_gt4.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_toyota_supra_gt4.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_toyota_supra_gt4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_toyota_supra_gt4.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_yamato_hayate_t1.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_yamato_hayate_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_yamato_hayate_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -25829,9 +25829,9 @@
       }
     },
     {
-      "id": "gt_porsche_911_gt3r",
-      "name": "Porsche 911 GT3 R (992)",
-      "manufacturer": "Porsche",
+      "id": "gt_vandorn_arrowhead_t2",
+      "name": "Vandorn Arrowhead R T2",
+      "manufacturer": "Vandorn Automobil",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -25866,10 +25866,10 @@
       "base_car": "GT3Car",
       "sound": "Gt3HighRev",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_porsche_911_gt3r.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -26199,9 +26199,9 @@
       }
     },
     {
-      "id": "gt_ferrari_296_gt3",
-      "name": "Ferrari 296 GT3",
-      "manufacturer": "Ferrari",
+      "id": "gt_valente_corsa_t2",
+      "name": "Valente Corsa V6 T2",
+      "manufacturer": "Valente Automobili",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -26236,10 +26236,10 @@
       "base_car": "GT3Car",
       "sound": "Gt3HighRev",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_ferrari_296_gt3.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_ferrari_296_gt3.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_ferrari_296_gt3_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_ferrari_296_gt3.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_valente_corsa_t2.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_valente_corsa_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_valente_corsa_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -26569,9 +26569,9 @@
       }
     },
     {
-      "id": "gt_amg_gt3_evo",
-      "name": "Mercedes-AMG GT3 Evo",
-      "manufacturer": "Mercedes-AMG",
+      "id": "gt_silberstern_sturmvogel_t2",
+      "name": "Silberstern Sturmvogel T2",
+      "manufacturer": "Silberstern Automobil",
       "year": 2020,
       "module": "gt",
       "category": "gt",
@@ -26606,10 +26606,10 @@
       "base_car": "GT3Car",
       "sound": "Gt3HighRev",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_amg_gt3_evo.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_amg_gt3_evo.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_amg_gt3_evo_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_amg_gt3_evo.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_silberstern_sturmvogel_t2.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_silberstern_sturmvogel_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_silberstern_sturmvogel_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -26939,9 +26939,9 @@
       }
     },
     {
-      "id": "gt_audi_r8_gt3_evo2",
-      "name": "Audi R8 LMS GT3 Evo II",
-      "manufacturer": "Audi Sport",
+      "id": "gt_vortek_quattro_t2",
+      "name": "Vortek Quattro LMS T2",
+      "manufacturer": "Vortek Automobil",
       "year": 2022,
       "module": "gt",
       "category": "gt",
@@ -26976,10 +26976,10 @@
       "base_car": "GT3Car",
       "sound": "Gt3HighRev",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_audi_r8_gt3_evo2.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_audi_r8_gt3_evo2.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_audi_r8_gt3_evo2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_audi_r8_gt3_evo2.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vortek_quattro_t2.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vortek_quattro_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vortek_quattro_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -27309,9 +27309,9 @@
       }
     },
     {
-      "id": "gt_porsche_911_gt2_rs",
-      "name": "Porsche 911 GT2 RS Clubsport",
-      "manufacturer": "Porsche",
+      "id": "gt_vandorn_arrowhead_t3",
+      "name": "Vandorn Arrowhead Biturbo T3",
+      "manufacturer": "Vandorn Automobil",
       "year": 2019,
       "module": "gt",
       "category": "gt",
@@ -27346,10 +27346,10 @@
       "base_car": "GT2Biturbo",
       "sound": "Gt2Biturbo",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_porsche_911_gt2_rs.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt2_rs.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt2_rs_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt2_rs.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t3.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -27679,9 +27679,9 @@
       }
     },
     {
-      "id": "gt_brabham_bt62_gt2",
-      "name": "Brabham BT62 GT2",
-      "manufacturer": "Brabham",
+      "id": "gt_southern_cross_62_t3",
+      "name": "Southern Cross Apex 62 T3",
+      "manufacturer": "Southern Cross Performance",
       "year": 2020,
       "module": "gt",
       "category": "gt",
@@ -27716,10 +27716,10 @@
       "base_car": "GT2Biturbo",
       "sound": "Gt2Biturbo",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_brabham_bt62_gt2.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_brabham_bt62_gt2.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_brabham_bt62_gt2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_brabham_bt62_gt2.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_southern_cross_62_t3.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_southern_cross_62_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_southern_cross_62_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -28049,9 +28049,9 @@
       }
     },
     {
-      "id": "gt_maserati_mc20_gt2",
-      "name": "Maserati MC20 GT2",
-      "manufacturer": "Maserati",
+      "id": "gt_aquila_strale_t3",
+      "name": "Aquila Strale Biturbo T3",
+      "manufacturer": "Aquila Corse",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -28067,7 +28067,7 @@
       "engine_desc": "3.0L Nettuno Twin-Turbo V6",
       "aero_downforce": "Cl 1.55 / Cd 0.53",
       "brakes_desc": "Brembo Monobloc 6-Piston",
-      "history_bio": "Marked Maserati's triumphant return to GT racing, utilizing the patented pre-chamber twin-spark Nettuno V6 in a full carbon monocoque.",
+      "history_bio": "Marked Aquila's triumphant return to GT racing, utilizing the patented pre-chamber twin-spark V6 in a full carbon monocoque.",
       "stats": {
         "speed": 0.94,
         "acceleration": 0.95,
@@ -28086,10 +28086,10 @@
       "base_car": "GT2Biturbo",
       "sound": "Gt2Biturbo",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_maserati_mc20_gt2.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_maserati_mc20_gt2.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_maserati_mc20_gt2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_maserati_mc20_gt2.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_aquila_strale_t3.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_aquila_strale_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_aquila_strale_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -28419,9 +28419,9 @@
       }
     },
     {
-      "id": "gt_audi_r8_gt2",
-      "name": "Audi R8 LMS GT2",
-      "manufacturer": "Audi Sport",
+      "id": "gt_vortek_clubsport_t3",
+      "name": "Vortek V10 Clubsport T3",
+      "manufacturer": "Vortek Automobil",
       "year": 2020,
       "module": "gt",
       "category": "gt",
@@ -28437,7 +28437,7 @@
       "engine_desc": "5.2L NA V10",
       "aero_downforce": "Cl 1.40 / Cd 0.50",
       "brakes_desc": "Steel 380mm 6-Piston",
-      "history_bio": "Most powerful customer car ever produced by Audi Sport, crowned with a dramatic roof-mounted ram-air intake snorkel for high-speed cylinder filling.",
+      "history_bio": "Most powerful customer car ever produced by Vortek Automobil, crowned with a dramatic roof-mounted ram-air intake snorkel for high-speed cylinder filling.",
       "stats": {
         "speed": 0.96,
         "acceleration": 0.96,
@@ -28456,10 +28456,10 @@
       "base_car": "GT2Biturbo",
       "sound": "Gt2Biturbo",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_audi_r8_gt2.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_audi_r8_gt2.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_audi_r8_gt2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_audi_r8_gt2.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vortek_clubsport_t3.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vortek_clubsport_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vortek_clubsport_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -28789,9 +28789,9 @@
       }
     },
     {
-      "id": "gt_porsche_911_gt1_98",
-      "name": "Porsche 911 GT1-98",
-      "manufacturer": "Porsche",
+      "id": "gt_vandorn_aeromax_t4",
+      "name": "Vandorn Aeromax Endurance T4",
+      "manufacturer": "Vandorn Automobil",
       "year": 1998,
       "module": "gt",
       "category": "gt",
@@ -28807,7 +28807,7 @@
       "engine_desc": "3.2L Twin-Turbo Flat-6",
       "aero_downforce": "Cl 2.60 / Cd 0.55",
       "brakes_desc": "Carbon-Carbon 380mm",
-      "history_bio": "Overall victor of the 1998 24 Hours of Le Mans. Crafted with a full carbon monocoque and analog unassisted steering, mastering the Mulsanne Straight.",
+      "history_bio": "Overall victor of the 1998 Endurance 24h. Crafted with a full carbon monocoque and analog unassisted steering, mastering the Mulsanne Straight.",
       "stats": {
         "speed": 0.98,
         "acceleration": 0.98,
@@ -28826,10 +28826,10 @@
       "base_car": "GT1Legend",
       "sound": "Gt1V12Analogue",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_porsche_911_gt1_98.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_porsche_911_gt1_98.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_porsche_911_gt1_98_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_porsche_911_gt1_98.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vandorn_aeromax_t4.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vandorn_aeromax_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vandorn_aeromax_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -29159,9 +29159,9 @@
       }
     },
     {
-      "id": "gt_mclaren_f1_gtr_lt",
-      "name": "McLaren F1 GTR Longtail",
-      "manufacturer": "McLaren",
+      "id": "gt_hyperion_velocity_t4",
+      "name": "Hyperion Velocity Longtail T4",
+      "manufacturer": "Hyperion Automotive",
       "year": 1997,
       "module": "gt",
       "category": "gt",
@@ -29174,10 +29174,10 @@
       "top_speed_kmh": 338,
       "accel_0_100": 2.5,
       "drivetrain": "RWD",
-      "engine_desc": "6.0L BMW Motorsport V12 NA",
+      "engine_desc": "6.0L BMR Speedworks V12 NA",
       "aero_downforce": "Cl 2.50 / Cd 0.52",
       "brakes_desc": "Carbon-Carbon 4-Piston",
-      "history_bio": "Legendary central cockpit layout with an elongated rear deck designed to minimize aerodynamic drag, powered by Paul Rosche's atmospheric BMW V12.",
+      "history_bio": "Legendary central cockpit layout with an elongated rear deck designed to minimize aerodynamic drag, powered by BMR Speedworks' atmospheric V12.",
       "stats": {
         "speed": 0.98,
         "acceleration": 0.99,
@@ -29196,10 +29196,10 @@
       "base_car": "GT1Legend",
       "sound": "Gt1V12Analogue",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_mclaren_f1_gtr_lt.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_mclaren_f1_gtr_lt.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_mclaren_f1_gtr_lt_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_mclaren_f1_gtr_lt.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_hyperion_velocity_t4.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_hyperion_velocity_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_hyperion_velocity_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -29529,9 +29529,9 @@
       }
     },
     {
-      "id": "gt_mercedes_clk_gtr",
-      "name": "Mercedes-Benz CLK GTR",
-      "manufacturer": "Mercedes-AMG",
+      "id": "gt_silberstern_silberpfeil_t4",
+      "name": "Silberstern Silberpfeil T4",
+      "manufacturer": "Silberstern Automobil",
       "year": 1997,
       "module": "gt",
       "category": "gt",
@@ -29547,7 +29547,7 @@
       "engine_desc": "6.0L AMG V12 Atmospheric",
       "aero_downforce": "Cl 2.55 / Cd 0.54",
       "brakes_desc": "Carbon Discs 6-Piston",
-      "history_bio": "Dominant 1997 FIA GT World Champion designed, fabricated, and winning on track in just 128 days from project initiation.",
+      "history_bio": "Dominant 1997 GT World Champion designed, fabricated, and winning on track in just 128 days from project initiation.",
       "stats": {
         "speed": 0.97,
         "acceleration": 0.97,
@@ -29566,10 +29566,10 @@
       "base_car": "GT1Legend",
       "sound": "Gt1V12Analogue",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_mercedes_clk_gtr.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_mercedes_clk_gtr.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_mercedes_clk_gtr_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_mercedes_clk_gtr.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_silberstern_silberpfeil_t4.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_silberstern_silberpfeil_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_silberstern_silberpfeil_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -29899,9 +29899,9 @@
       }
     },
     {
-      "id": "gt_nissan_r390_gt1",
-      "name": "Nissan R390 GT1",
-      "manufacturer": "Nissan NISMO",
+      "id": "gt_katana_shogun_t4",
+      "name": "Katana Shogun Legend T4",
+      "manufacturer": "Katana Racing",
       "year": 1998,
       "module": "gt",
       "category": "gt",
@@ -29917,7 +29917,7 @@
       "engine_desc": "3.5L VRH35L Twin-Turbo V8",
       "aero_downforce": "Cl 2.48 / Cd 0.53",
       "brakes_desc": "AP Racing Carbon",
-      "history_bio": "Built with TWR for the 1998 24 Hours of Le Mans, securing 3rd overall through relentless powertrain reliability and aerodynamic balance.",
+      "history_bio": "Built with TWR for the 1998 Endurance 24h, securing 3rd overall through relentless powertrain reliability and aerodynamic balance.",
       "stats": {
         "speed": 0.98,
         "acceleration": 0.97,
@@ -29936,10 +29936,10 @@
       "base_car": "GT1Legend",
       "sound": "Gt1V12Analogue",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_nissan_r390_gt1.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_nissan_r390_gt1.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_nissan_r390_gt1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_nissan_r390_gt1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_katana_shogun_t4.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_katana_shogun_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_katana_shogun_t4.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -30269,9 +30269,9 @@
       }
     },
     {
-      "id": "gt_ferrari_499p",
-      "name": "Ferrari 499P LMH",
-      "manufacturer": "Ferrari",
+      "id": "gt_valente_imperatore_t5",
+      "name": "Valente Imperatore Prototype T5",
+      "manufacturer": "Valente Automobili",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -30287,7 +30287,7 @@
       "engine_desc": "3.0L Twin-Turbo V6 + Front MGU",
       "aero_downforce": "Cl 3.15 / Cd 0.58",
       "brakes_desc": "Brembo Carbon-Carbon",
-      "history_bio": "Back-to-back 24 Hours of Le Mans winner (2023, 2024). Full ground effect underbody tunnels with intelligent front-axle electric deployment.",
+      "history_bio": "Back-to-back Endurance 24h winner (2023, 2024). Full ground effect underbody tunnels with intelligent front-axle electric deployment.",
       "stats": {
         "speed": 0.99,
         "acceleration": 0.99,
@@ -30306,10 +30306,10 @@
       "base_car": "HypercarPrototype",
       "sound": "HypercarV6Hybrid",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_ferrari_499p.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_ferrari_499p.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_ferrari_499p_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_ferrari_499p.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_valente_imperatore_t5.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_valente_imperatore_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_valente_imperatore_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -30639,9 +30639,9 @@
       }
     },
     {
-      "id": "gt_porsche_963",
-      "name": "Porsche 963 LMDh",
-      "manufacturer": "Porsche Penske",
+      "id": "gt_vandorn_kronos_t5",
+      "name": "Vandorn Kronos Prototype T5",
+      "manufacturer": "Vandorn Automobil",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -30657,7 +30657,7 @@
       "engine_desc": "4.6L Twin-Turbo V8 + Bosch Hybrid",
       "aero_downforce": "Cl 3.05 / Cd 0.57",
       "brakes_desc": "Brembo Carbon Spec",
-      "history_bio": "IMSA and WEC endurance title contender built on the Multimatic monocoque with a twin-turbo V8 derived from the 918 Spyder.",
+      "history_bio": "World Endurance title contender built on a carbon monocoque with an electrified twin-turbo V8.",
       "stats": {
         "speed": 0.99,
         "acceleration": 0.98,
@@ -30676,10 +30676,10 @@
       "base_car": "HypercarPrototype",
       "sound": "HypercarV6Hybrid",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_porsche_963.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_porsche_963.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_porsche_963_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_porsche_963.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_vandorn_kronos_t5.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_vandorn_kronos_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_vandorn_kronos_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -31009,9 +31009,9 @@
       }
     },
     {
-      "id": "gt_toyota_gr010",
-      "name": "Toyota GR010 Hybrid",
-      "manufacturer": "Toyota Gazoo Racing",
+      "id": "gt_yamato_ronin_t5",
+      "name": "Yamato Ronin Hybrid T5",
+      "manufacturer": "Yamato Racing",
       "year": 2021,
       "module": "gt",
       "category": "gt",
@@ -31046,10 +31046,10 @@
       "base_car": "HypercarPrototype",
       "sound": "HypercarV6Hybrid",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_toyota_gr010.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_toyota_gr010.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_toyota_gr010_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_toyota_gr010.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_yamato_ronin_t5.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_yamato_ronin_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_yamato_ronin_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -31379,9 +31379,9 @@
       }
     },
     {
-      "id": "gt_cadillac_v_series_r",
-      "name": "Cadillac V-Series.R",
-      "manufacturer": "Cadillac Racing",
+      "id": "gt_crestline_sovereign_t5",
+      "name": "Crestline Sovereign Prototype T5",
+      "manufacturer": "Crestline Motor Division",
       "year": 2023,
       "module": "gt",
       "category": "gt",
@@ -31416,10 +31416,10 @@
       "base_car": "HypercarPrototype",
       "sound": "HypercarV6Hybrid",
       "images": {
-        "reference": "/textures/vehicles/references/gt/gt_cadillac_v_series_r.jpg",
-        "lateral": "/textures/vehicles/laterals/gt/gt_cadillac_v_series_r.png",
-        "thumb": "/textures/vehicles/laterals/gt/gt_cadillac_v_series_r_thumb.png",
-        "topdown": "/textures/vehicles/topdown/gt/gt_cadillac_v_series_r.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/gt/gt_crestline_sovereign_t5.png",
+        "thumb": "/textures/vehicles/laterals/gt/gt_crestline_sovereign_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/gt/gt_crestline_sovereign_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -31749,9 +31749,9 @@
       }
     },
     {
-      "id": "nascar_monte_carlo_ss",
-      "name": "Chevrolet Monte Carlo Street Stock",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_crossbow_montego_t1",
+      "name": "Crossbow Montego Street Stock T1",
+      "manufacturer": "Crossbow Performance",
       "year": 1988,
       "module": "nascar",
       "category": "nascar",
@@ -31786,10 +31786,10 @@
       "base_car": "StockCar",
       "sound": "LateModelV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_monte_carlo_ss.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_monte_carlo_ss.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_monte_carlo_ss_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_monte_carlo_ss.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_crossbow_montego_t1.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_crossbow_montego_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_crossbow_montego_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -32113,9 +32113,9 @@
       }
     },
     {
-      "id": "nascar_mustang_street_stock",
-      "name": "Ford Mustang Street Stock",
-      "manufacturer": "Ford",
+      "id": "nascar_forge_stallion_t1",
+      "name": "Forge Stallion Street Stock T1",
+      "manufacturer": "Forge Motor Co",
       "year": 1993,
       "module": "nascar",
       "category": "nascar",
@@ -32150,10 +32150,10 @@
       "base_car": "StockCar",
       "sound": "LateModelV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_mustang_street_stock.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_street_stock.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_street_stock_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_street_stock.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t1.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_forge_stallion_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -32477,9 +32477,9 @@
       }
     },
     {
-      "id": "nascar_dodge_dart_street_stock",
-      "name": "Dodge Dart Street Stock",
-      "manufacturer": "Dodge",
+      "id": "nascar_rampart_arrow_t1",
+      "name": "Rampart Arrow Street Stock T1",
+      "manufacturer": "Rampart Performance",
       "year": 1973,
       "module": "nascar",
       "category": "nascar",
@@ -32514,10 +32514,10 @@
       "base_car": "StockCar",
       "sound": "LateModelV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_dodge_dart_street_stock.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_dodge_dart_street_stock.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_dodge_dart_street_stock_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_dodge_dart_street_stock.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_rampart_arrow_t1.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_rampart_arrow_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_rampart_arrow_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -32841,9 +32841,9 @@
       }
     },
     {
-      "id": "nascar_super_late_model",
-      "name": "Super Late Model Camaro",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_crossbow_saber_t2",
+      "name": "Crossbow Saber Late Model T2",
+      "manufacturer": "Crossbow Performance",
       "year": 2022,
       "module": "nascar",
       "category": "nascar",
@@ -32878,10 +32878,10 @@
       "base_car": "StockCar",
       "sound": "ArcaSpecV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_super_late_model.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_super_late_model.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_super_late_model_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_super_late_model.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_crossbow_saber_t2.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_crossbow_saber_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_crossbow_saber_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -33205,9 +33205,9 @@
       }
     },
     {
-      "id": "nascar_mustang_super_late_model",
-      "name": "Super Late Model Mustang",
-      "manufacturer": "Ford",
+      "id": "nascar_forge_stallion_t2",
+      "name": "Forge Stallion Late Model T2",
+      "manufacturer": "Forge Motor Co",
       "year": 2022,
       "module": "nascar",
       "category": "nascar",
@@ -33220,7 +33220,7 @@
       "top_speed_kmh": 276,
       "accel_0_100": 3.4,
       "drivetrain": "RWD",
-      "engine_desc": "Custom 358ci Ford C3 Racing V8",
+      "engine_desc": "Custom 358ci Forge Racing V8",
       "aero_downforce": "Cl 0.66 / Cd 0.51",
       "brakes_desc": "Wilwood Dynapro 4-Piston",
       "history_bio": "Perimeter chassis with Mustang composite front clip. Agile mid-corner roll rate and sharp turn-in on asphalt ovals.",
@@ -33242,10 +33242,10 @@
       "base_car": "StockCar",
       "sound": "ArcaSpecV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_mustang_super_late_model.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_super_late_model.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_super_late_model_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_super_late_model.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t2.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_forge_stallion_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -33569,9 +33569,9 @@
       }
     },
     {
-      "id": "nascar_late_model_stock_car",
-      "name": "Late Model Stock Car LMSC",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_heartland_spec_t2",
+      "name": "Heartland Spec Stock Car T2",
+      "manufacturer": "Crossbow Performance",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -33606,10 +33606,10 @@
       "base_car": "StockCar",
       "sound": "ArcaSpecV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_late_model_stock_car.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_late_model_stock_car.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_late_model_stock_car_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_late_model_stock_car.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_heartland_spec_t2.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_heartland_spec_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_heartland_spec_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -33933,9 +33933,9 @@
       }
     },
     {
-      "id": "nascar_arca_chevy_ss",
-      "name": "Chevrolet SS ARCA Spec",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_crossbow_predator_t3",
+      "name": "Crossbow Predator Premier Stock T3",
+      "manufacturer": "Crossbow Performance",
       "year": 2020,
       "module": "nascar",
       "category": "nascar",
@@ -33970,10 +33970,10 @@
       "base_car": "StockCar",
       "sound": "SuperTruckV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_arca_chevy_ss.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_arca_chevy_ss.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_arca_chevy_ss_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_arca_chevy_ss.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_crossbow_predator_t3.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_crossbow_predator_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_crossbow_predator_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -34297,9 +34297,9 @@
       }
     },
     {
-      "id": "nascar_toyota_camry_arca",
-      "name": "Toyota Camry ARCA Spec",
-      "manufacturer": "Toyota",
+      "id": "nascar_yamato_century_t3",
+      "name": "Yamato Century Premier Stock T3",
+      "manufacturer": "Yamato Racing",
       "year": 2021,
       "module": "nascar",
       "category": "nascar",
@@ -34334,10 +34334,10 @@
       "base_car": "StockCar",
       "sound": "SuperTruckV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_toyota_camry_arca.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_toyota_camry_arca.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_toyota_camry_arca_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_toyota_camry_arca.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_yamato_century_t3.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_yamato_century_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_yamato_century_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -34661,9 +34661,9 @@
       }
     },
     {
-      "id": "nascar_ford_fusion_arca",
-      "name": "Ford Fusion ARCA Spec",
-      "manufacturer": "Ford",
+      "id": "nascar_forge_reactor_t3",
+      "name": "Forge Reactor Premier Stock T3",
+      "manufacturer": "Forge Motor Co",
       "year": 2020,
       "module": "nascar",
       "category": "nascar",
@@ -34698,10 +34698,10 @@
       "base_car": "StockCar",
       "sound": "SuperTruckV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_ford_fusion_arca.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_ford_fusion_arca.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_ford_fusion_arca_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_ford_fusion_arca.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_forge_reactor_t3.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_forge_reactor_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_forge_reactor_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -35025,9 +35025,9 @@
       }
     },
     {
-      "id": "nascar_silverado_truck",
-      "name": "Chevrolet Silverado RST Truck",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_crossbow_sierra_t4",
+      "name": "Crossbow Sierra V8 Truck T4",
+      "manufacturer": "Crossbow Performance",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -35040,7 +35040,7 @@
       "top_speed_kmh": 310,
       "accel_0_100": 3.1,
       "drivetrain": "RWD",
-      "engine_desc": "358ci NASCAR Spec V8",
+      "engine_desc": "358ci Stock Spec V8",
       "aero_downforce": "Cl 0.82 / Cd 0.55",
       "brakes_desc": "Heavy-Duty Superspeedway Spec 6-Piston",
       "history_bio": "Massive bluff aerodynamic drag creates immense drafting pull, leading to breathtaking 3-wide pack racing and bump drafting.",
@@ -35062,10 +35062,10 @@
       "base_car": "StockCar",
       "sound": "XfinityV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_silverado_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_silverado_truck.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_silverado_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_silverado_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_crossbow_sierra_t4.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_crossbow_sierra_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_crossbow_sierra_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -35389,9 +35389,9 @@
       }
     },
     {
-      "id": "nascar_f150_truck",
-      "name": "Ford F-150 Craftsman Truck",
-      "manufacturer": "Ford",
+      "id": "nascar_forge_ironclad_t4",
+      "name": "Forge Ironclad V8 Truck T4",
+      "manufacturer": "Forge Motor Co",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -35404,7 +35404,7 @@
       "top_speed_kmh": 310,
       "accel_0_100": 3.1,
       "drivetrain": "RWD",
-      "engine_desc": "358ci Ford Racing Spec V8",
+      "engine_desc": "358ci Forge Racing Spec V8",
       "aero_downforce": "Cl 0.83 / Cd 0.54",
       "brakes_desc": "Heavy-Duty Superspeedway Spec 6-Piston",
       "history_bio": "Aerodynamically tuned F-150 silhouette. Excels in pack drafting and high-speed bump drafting down superspeedway backstraights.",
@@ -35426,10 +35426,10 @@
       "base_car": "StockCar",
       "sound": "XfinityV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_f150_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_f150_truck.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_f150_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_f150_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_forge_ironclad_t4.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_forge_ironclad_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_forge_ironclad_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -35753,9 +35753,9 @@
       }
     },
     {
-      "id": "nascar_tundra_truck",
-      "name": "Toyota Tundra TRD Pro Truck",
-      "manufacturer": "Toyota",
+      "id": "nascar_yamato_taiga_t4",
+      "name": "Yamato Taiga V8 Truck T4",
+      "manufacturer": "Yamato Racing",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -35790,10 +35790,10 @@
       "base_car": "StockCar",
       "sound": "XfinityV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_tundra_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_tundra_truck.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_tundra_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_tundra_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_yamato_taiga_t4.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_yamato_taiga_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_yamato_taiga_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -36117,9 +36117,9 @@
       }
     },
     {
-      "id": "nascar_corvette_ta1",
-      "name": "Chevrolet Corvette C7 TA1",
-      "manufacturer": "Chevrolet",
+      "id": "nascar_crossbow_manta_t5",
+      "name": "Crossbow Manta Silhouette T5",
+      "manufacturer": "Crossbow Performance",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -36154,10 +36154,10 @@
       "base_car": "StockCar",
       "sound": "NascarV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_corvette_ta1.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_corvette_ta1.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_corvette_ta1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_corvette_ta1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_crossbow_manta_t5.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_crossbow_manta_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_crossbow_manta_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -36481,9 +36481,9 @@
       }
     },
     {
-      "id": "nascar_mustang_ta1",
-      "name": "Ford Mustang TA1",
-      "manufacturer": "Ford",
+      "id": "nascar_forge_stallion_t5",
+      "name": "Forge Stallion Silhouette T5",
+      "manufacturer": "Forge Motor Co",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -36496,7 +36496,7 @@
       "top_speed_kmh": 322,
       "accel_0_100": 2.8,
       "drivetrain": "RWD",
-      "engine_desc": "358ci Ford Roush Yates V8 (850 BHP)",
+      "engine_desc": "358ci Forge Silhouette V8 (850 BHP)",
       "aero_downforce": "Cl 1.22 / Cd 0.49",
       "brakes_desc": "AP Racing 6-Piston 380mm Carbon-Metallic",
       "history_bio": "Iconic American road racing weapon. Unrestricted 850 BHP V8 paired with lightweight spaceframe and massive high-mount rear wing.",
@@ -36518,10 +36518,10 @@
       "base_car": "StockCar",
       "sound": "NascarV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_mustang_ta1.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_mustang_ta1.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_mustang_ta1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_mustang_ta1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t5.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_forge_stallion_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_forge_stallion_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -36845,9 +36845,9 @@
       }
     },
     {
-      "id": "nascar_challenger_ta1",
-      "name": "Dodge Challenger TA1",
-      "manufacturer": "Dodge",
+      "id": "nascar_rampart_enforcer_t5",
+      "name": "Rampart Enforcer Silhouette T5",
+      "manufacturer": "Rampart Performance",
       "year": 2023,
       "module": "nascar",
       "category": "nascar",
@@ -36882,10 +36882,10 @@
       "base_car": "StockCar",
       "sound": "NascarV8",
       "images": {
-        "reference": "/textures/vehicles/references/nascar/nascar_challenger_ta1.jpg",
-        "lateral": "/textures/vehicles/laterals/nascar/nascar_challenger_ta1.png",
-        "thumb": "/textures/vehicles/laterals/nascar/nascar_challenger_ta1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/nascar/nascar_challenger_ta1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/nascar/nascar_rampart_enforcer_t5.png",
+        "thumb": "/textures/vehicles/laterals/nascar/nascar_rampart_enforcer_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/nascar/nascar_rampart_enforcer_t5.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -37209,9 +37209,9 @@
       }
     },
     {
-      "id": "offroad_sand_rail_buggy",
-      "name": "Can-Am Maverick R Trophy Spec",
-      "manufacturer": "Can-Am",
+      "id": "offroad_laurentian_nomad_t1",
+      "name": "Laurentian Nomad Trophy Buggy T1",
+      "manufacturer": "Laurentian Off-Road",
       "year": 2024,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -37224,7 +37224,7 @@
       "top_speed_kmh": 215,
       "accel_0_100": 3.5,
       "drivetrain": "RWD",
-      "engine_desc": "Rotax 999T Triple-Cylinder Turbo",
+      "engine_desc": "AeroTech 999T Triple-Cylinder Turbo",
       "aero_downforce": "Cl 0.25 / Cd 0.60",
       "brakes_desc": "Wilwood Off-Road 4-Piston",
       "history_bio": "Ultralight chromoly tube chassis, rear paddle tires, and long-travel Fox live-valve shocks creating massive sand roosts over desert dunes.",
@@ -37246,10 +37246,10 @@
       "base_car": "SandRail",
       "sound": "SandRailBoxer",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_sand_rail_buggy.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_sand_rail_buggy.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_sand_rail_buggy_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_sand_rail_buggy.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_laurentian_nomad_t1.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_laurentian_nomad_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_laurentian_nomad_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -37573,9 +37573,9 @@
       }
     },
     {
-      "id": "offroad_polaris_rzr_pro_r",
-      "name": "Polaris RZR Pro R Tubular",
-      "manufacturer": "Polaris",
+      "id": "offroad_northstar_razor_t1",
+      "name": "Northstar Razor Pro Buggy T1",
+      "manufacturer": "Northstar Off-Road",
       "year": 2024,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -37610,10 +37610,10 @@
       "base_car": "SandRail",
       "sound": "SandRailBoxer",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_polaris_rzr_pro_r.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_polaris_rzr_pro_r.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_polaris_rzr_pro_r_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_polaris_rzr_pro_r.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_northstar_razor_t1.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_northstar_razor_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_northstar_razor_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -37937,8 +37937,8 @@
       }
     },
     {
-      "id": "offroad_vw_sand_rail",
-      "name": "Custom VW Sand Rail Buggy",
+      "id": "offroad_volkskraft_dune_t1",
+      "name": "Volkskraft Dune Buggy T1",
       "manufacturer": "Custom",
       "year": 2022,
       "module": "extreme_offroad",
@@ -37974,10 +37974,10 @@
       "base_car": "SandRail",
       "sound": "SandRailBoxer",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_vw_sand_rail.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_vw_sand_rail.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_vw_sand_rail_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_vw_sand_rail.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_volkskraft_dune_t1.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_volkskraft_dune_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_volkskraft_dune_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -38301,9 +38301,9 @@
       }
     },
     {
-      "id": "offroad_baja_trophy_truck",
-      "name": "Geiser Bros AWD Trophy Truck",
-      "manufacturer": "Geiser Bros",
+      "id": "offroad_desert_forge_truck_t2",
+      "name": "Desert Forge AWD Trophy Truck T2",
+      "manufacturer": "Desert Forge Trucks",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -38319,7 +38319,7 @@
       "engine_desc": "Custom 442ci Dougans Big Block V8",
       "aero_downforce": "Cl 0.30 / Cd 0.72",
       "brakes_desc": "Alcon 6-Piston 355mm Heavy-Duty",
-      "history_bio": "The king of Baja. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of King bypass suspension travel.",
+      "history_bio": "The king of Sonora. Skims across 3-foot desert whoops at over 200 km/h with 30 inches of bypass suspension travel.",
       "stats": {
         "speed": 0.85,
         "acceleration": 0.91,
@@ -38338,10 +38338,10 @@
       "base_car": "SandRail",
       "sound": "ProLiteV6",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_baja_trophy_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_baja_trophy_truck.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_baja_trophy_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_baja_trophy_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_desert_forge_truck_t2.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_desert_forge_truck_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_desert_forge_truck_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -38666,7 +38666,7 @@
     },
     {
       "id": "offroad_bettantown_trophy_truck",
-      "name": "Bettantown Unlimited Trophy Truck",
+      "name": "Bettantown Unlimited Trophy Truck T2",
       "manufacturer": "Bettantown",
       "year": 2023,
       "module": "extreme_offroad",
@@ -38702,7 +38702,7 @@
       "base_car": "SandRail",
       "sound": "ProLiteV6",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_bettantown_trophy_truck.jpg",
+        "reference": null,
         "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck.png",
         "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck_thumb.png",
         "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_bettantown_trophy_truck.png"
@@ -39029,9 +39029,9 @@
       }
     },
     {
-      "id": "offroad_mason_awd_truck",
-      "name": "Mason Motorsport AWD Truck",
-      "manufacturer": "Mason Motorsport",
+      "id": "offroad_sonora_desert_king_t2",
+      "name": "Sonora Desert King AWD Truck T2",
+      "manufacturer": "Sonora AWD Racing",
       "year": 2024,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -39066,10 +39066,10 @@
       "base_car": "SandRail",
       "sound": "ProLiteV6",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_mason_awd_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_mason_awd_truck.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_mason_awd_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_mason_awd_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_sonora_desert_king_t2.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_sonora_desert_king_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_sonora_desert_king_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -39393,9 +39393,9 @@
       }
     },
     {
-      "id": "offroad_subaru_ice_racer",
-      "name": "Subaru WRX STI Ice Racer",
-      "manufacturer": "Subaru",
+      "id": "offroad_sixstar_blizzard_t3",
+      "name": "Sixstar Blizzard Ice Racer T3",
+      "manufacturer": "Sixstar Rally",
       "year": 2021,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -39430,10 +39430,10 @@
       "base_car": "RallyCar",
       "sound": "Ultra4V8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_subaru_ice_racer.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_subaru_ice_racer.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_subaru_ice_racer_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_subaru_ice_racer.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_sixstar_blizzard_t3.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_sixstar_blizzard_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_sixstar_blizzard_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -39769,9 +39769,9 @@
       }
     },
     {
-      "id": "offroad_audi_quattro_ice",
-      "name": "Audi Sport Quattro Ice Edition",
-      "manufacturer": "Audi",
+      "id": "offroad_vortek_glacier_t3",
+      "name": "Vortek Glacier Quattro Ice Spec T3",
+      "manufacturer": "Vortek Automobil",
       "year": 2022,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -39806,10 +39806,10 @@
       "base_car": "RallyCar",
       "sound": "Ultra4V8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_audi_quattro_ice.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_audi_quattro_ice.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_audi_quattro_ice_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_audi_quattro_ice.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_vortek_glacier_t3.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_vortek_glacier_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_vortek_glacier_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -40145,9 +40145,9 @@
       }
     },
     {
-      "id": "offroad_lancer_evo_ice",
-      "name": "Mitsubishi Lancer Evo Ice Spec",
-      "manufacturer": "Mitsubishi",
+      "id": "offroad_shinano_frost_t3",
+      "name": "Shinano Frost AWD Ice Spec T3",
+      "manufacturer": "Shinano Performance",
       "year": 2021,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -40182,10 +40182,10 @@
       "base_car": "RallyCar",
       "sound": "Ultra4V8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_lancer_evo_ice.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_lancer_evo_ice.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_lancer_evo_ice_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_lancer_evo_ice.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_shinano_frost_t3.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_shinano_frost_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_shinano_frost_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -40521,8 +40521,8 @@
       }
     },
     {
-      "id": "offroad_mega_mud_truck",
-      "name": "Mega Truck V8 Mud Slinger",
+      "id": "offroad_titan_mud_slinger_t4",
+      "name": "Titan Mud Slinger V8 T4",
       "manufacturer": "Custom",
       "year": 2022,
       "module": "extreme_offroad",
@@ -40558,10 +40558,10 @@
       "base_car": "SandRail",
       "sound": "Pro4UnlimitedV8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_mega_mud_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_mega_mud_truck.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_mega_mud_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_mega_mud_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_titan_mud_slinger_t4.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_titan_mud_slinger_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_titan_mud_slinger_t4.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -40885,9 +40885,9 @@
       }
     },
     {
-      "id": "offroad_chevy_k30_mud_bogger",
-      "name": "Chevrolet K30 Custom Mud Bogger",
-      "manufacturer": "Chevrolet",
+      "id": "offroad_crossbow_ridge_t4",
+      "name": "Crossbow Ridge Heavy Mud Bogger T4",
+      "manufacturer": "Crossbow Performance",
       "year": 2021,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -40922,10 +40922,10 @@
       "base_car": "SandRail",
       "sound": "Pro4UnlimitedV8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_chevy_k30_mud_bogger.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_chevy_k30_mud_bogger.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_chevy_k30_mud_bogger_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_chevy_k30_mud_bogger.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_crossbow_ridge_t4.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_crossbow_ridge_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_crossbow_ridge_t4.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -41249,9 +41249,9 @@
       }
     },
     {
-      "id": "offroad_ford_f250_high_riser",
-      "name": "Ford F-250 High Riser 4x4",
-      "manufacturer": "Ford",
+      "id": "offroad_forge_mammoth_t4",
+      "name": "Forge Mammoth High Riser 4x4 T4",
+      "manufacturer": "Forge Motor Co",
       "year": 2022,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -41264,7 +41264,7 @@
       "top_speed_kmh": 162,
       "accel_0_100": 4.2,
       "drivetrain": "4WD",
-      "engine_desc": "521ci Ford Big Block Blower V8",
+      "engine_desc": "521ci Forge Big Block Blower V8",
       "aero_downforce": "Cl 0.10 / Cd 0.87",
       "brakes_desc": "Wilwood 4-Wheel Pinion Disc",
       "history_bio": "Supercharged high-riser with 18 inches of suspension lift and massive tractor tires throwing 50-foot rooster tails of thick mud.",
@@ -41286,10 +41286,10 @@
       "base_car": "SandRail",
       "sound": "Pro4UnlimitedV8",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_ford_f250_high_riser.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_ford_f250_high_riser.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_ford_f250_high_riser_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_ford_f250_high_riser.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_forge_mammoth_t4.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_forge_mammoth_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_forge_mammoth_t4.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -41613,9 +41613,9 @@
       }
     },
     {
-      "id": "offroad_grave_crusher",
-      "name": "Grave Digger Spec Monster Jam",
-      "manufacturer": "Monster Jam",
+      "id": "offroad_havoc_tomb_raider_t5",
+      "name": "Havoc Tomb Raider Monster Crusher T5",
+      "manufacturer": "Havoc Monster Trucks",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -41650,10 +41650,10 @@
       "base_car": "SandRail",
       "sound": "MonsterTruckBlower",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_grave_crusher.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_grave_crusher.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_grave_crusher_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_grave_crusher.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_havoc_tomb_raider_t5.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_havoc_tomb_raider_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_havoc_tomb_raider_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -41977,9 +41977,9 @@
       }
     },
     {
-      "id": "offroad_max_d_monster",
-      "name": "Max-D Monster Jam Truck",
-      "manufacturer": "Monster Jam",
+      "id": "offroad_havoc_overkill_t5",
+      "name": "Havoc Overkill Monster Truck T5",
+      "manufacturer": "Havoc Monster Trucks",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -42014,10 +42014,10 @@
       "base_car": "SandRail",
       "sound": "MonsterTruckBlower",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_max_d_monster.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_max_d_monster.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_max_d_monster_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_max_d_monster.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_havoc_overkill_t5.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_havoc_overkill_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_havoc_overkill_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -42341,9 +42341,9 @@
       }
     },
     {
-      "id": "offroad_bigfoot_crusher",
-      "name": "Bigfoot 1500 BHP Crusher",
-      "manufacturer": "Bigfoot",
+      "id": "offroad_colossus_titan_t5",
+      "name": "Colossus Titan 1500 BHP Crusher T5",
+      "manufacturer": "Colossus Monster Trucks",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -42356,10 +42356,10 @@
       "top_speed_kmh": 166,
       "accel_0_100": 3.0,
       "drivetrain": "4WD 4WS",
-      "engine_desc": "572ci Supercharged Ford V8 (Methanol)",
+      "engine_desc": "572ci Supercharged Forge V8 (Methanol)",
       "aero_downforce": "Cl 0.05 / Cd 0.95",
       "brakes_desc": "Severe Duty Pinion Disc System",
-      "history_bio": "The original monster truck that started the worldwide phenomenon. Classic blue Ford pickup body riding on massive 66-inch flotation tires.",
+      "history_bio": "The original monster truck that started the worldwide phenomenon. Classic blue pickup body riding on massive 66-inch flotation tires.",
       "stats": {
         "speed": 0.8,
         "acceleration": 0.98,
@@ -42378,10 +42378,10 @@
       "base_car": "SandRail",
       "sound": "MonsterTruckBlower",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/offroad_bigfoot_crusher.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_bigfoot_crusher.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_bigfoot_crusher_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_bigfoot_crusher.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_colossus_titan_t5.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_colossus_titan_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_colossus_titan_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -42705,9 +42705,9 @@
       }
     },
     {
-      "id": "rally_toyota_hilux_t1_plus",
-      "name": "Toyota GR DKR Hilux T1+",
-      "manufacturer": "Toyota",
+      "id": "offroad_yamato_sahara_t6",
+      "name": "Yamato Sahara Raid T1 T6",
+      "manufacturer": "Yamato Racing",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -42742,10 +42742,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_toyota_hilux_t1_plus.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_toyota_hilux_t1_plus.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_toyota_hilux_t1_plus_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_toyota_hilux_t1_plus.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_yamato_sahara_t6.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_yamato_sahara_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_yamato_sahara_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -43081,9 +43081,9 @@
       }
     },
     {
-      "id": "rally_audi_rs_q_etron",
-      "name": "Audi RS Q e-tron Dakar",
-      "manufacturer": "Audi",
+      "id": "offroad_vortek_electro_raid_t6",
+      "name": "Vortek Electro Raid Quattro T6",
+      "manufacturer": "Vortek Automobil",
       "year": 2024,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -43118,10 +43118,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_audi_rs_q_etron.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_audi_rs_q_etron.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_audi_rs_q_etron_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_audi_rs_q_etron.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_vortek_electro_raid_t6.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_vortek_electro_raid_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_vortek_electro_raid_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -43457,9 +43457,9 @@
       }
     },
     {
-      "id": "rally_prodrive_hunter_t1",
-      "name": "Prodrive Hunter T1+",
-      "manufacturer": "Prodrive",
+      "id": "offroad_proline_predator_t6",
+      "name": "Proline Predator Raid T1 T6",
+      "manufacturer": "Proline Dynamics",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -43472,7 +43472,7 @@
       "top_speed_kmh": 175,
       "accel_0_100": 4.7,
       "drivetrain": "4WD",
-      "engine_desc": "3.5L Ford Twin-Turbo V6 EcoBoost",
+      "engine_desc": "3.5L Forge Twin-Turbo V6 EcoBoost",
       "aero_downforce": "Cl 0.42 / Cd 0.64",
       "brakes_desc": "AP Racing 6-Piston Water-Cooled",
       "history_bio": "Ian Callum designed aerodynamic silhouette housing long-travel dampers. Engineered for extreme reliability over thousands of desert kilometers.",
@@ -43494,10 +43494,10 @@
       "base_car": "RallyCar",
       "sound": "SupercarRx1",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_prodrive_hunter_t1.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_prodrive_hunter_t1.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_prodrive_hunter_t1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_prodrive_hunter_t1.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_proline_predator_t6.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_proline_predator_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_proline_predator_t6.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -43833,9 +43833,9 @@
       }
     },
     {
-      "id": "rally_sst_super_truck",
-      "name": "Stadium Super Truck V8",
-      "manufacturer": "SST",
+      "id": "offroad_stadium_thunder_v8_t7",
+      "name": "Stadium Thunder V8 Jumper T7",
+      "manufacturer": "Stadium Thunder V8",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -43848,7 +43848,7 @@
       "top_speed_kmh": 235,
       "accel_0_100": 3.4,
       "drivetrain": "RWD",
-      "engine_desc": "6.2L Chevrolet LS3 V8",
+      "engine_desc": "6.2L Crossbow Spec V8",
       "aero_downforce": "Cl 0.20 / Cd 0.68",
       "brakes_desc": "Wilwood 4-Wheel Disc",
       "history_bio": "Spectacle on wheels created by Robby Gordon. Huge body roll, 3-wheel apex cornering, and soaring 60-meter launches off steel ramps.",
@@ -43870,10 +43870,10 @@
       "base_car": "RallyCar",
       "sound": "GroupBInline5",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_sst_super_truck.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_sst_super_truck.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_sst_super_truck_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_sst_super_truck.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_v8_t7.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_v8_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_v8_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -44209,9 +44209,9 @@
       }
     },
     {
-      "id": "rally_sst_robby_gordon",
-      "name": "Robby Gordon SST Spec",
-      "manufacturer": "SST",
+      "id": "offroad_stadium_thunder_pro_t7",
+      "name": "Stadium Thunder Pro Arena Spec T7",
+      "manufacturer": "Stadium Thunder V8",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -44224,7 +44224,7 @@
       "top_speed_kmh": 236,
       "accel_0_100": 3.4,
       "drivetrain": "RWD",
-      "engine_desc": "6.2L Chevrolet LS3 V8 Tuned",
+      "engine_desc": "6.2L Crossbow Spec V8 Tuned",
       "aero_downforce": "Cl 0.20 / Cd 0.68",
       "brakes_desc": "Wilwood 4-Wheel Heavy Disc",
       "history_bio": "Signature orange racing livery of founder Robby Gordon. Soft sway bars allow dramatic 3-wheel apex cornering and smooth flight off steel jump ramps.",
@@ -44246,10 +44246,10 @@
       "base_car": "RallyCar",
       "sound": "GroupBInline5",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_sst_robby_gordon.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_sst_robby_gordon.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_sst_robby_gordon_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_sst_robby_gordon.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_pro_t7.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_pro_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_pro_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -44585,9 +44585,9 @@
       }
     },
     {
-      "id": "rally_sst_traxxas_edition",
-      "name": "Traxxas Edition SST Spec",
-      "manufacturer": "SST",
+      "id": "offroad_stadium_thunder_apex_t7",
+      "name": "Stadium Thunder Apex Edition T7",
+      "manufacturer": "Stadium Thunder V8",
       "year": 2023,
       "module": "extreme_offroad",
       "category": "off_road",
@@ -44600,7 +44600,7 @@
       "top_speed_kmh": 235,
       "accel_0_100": 3.4,
       "drivetrain": "RWD",
-      "engine_desc": "6.2L Chevrolet LS3 V8",
+      "engine_desc": "6.2L Crossbow Spec V8",
       "aero_downforce": "Cl 0.21 / Cd 0.67",
       "brakes_desc": "Wilwood 4-Wheel Heavy Disc",
       "history_bio": "Iconic high-contrast RC-inspired Traxxas livery. King shocks soak up violent landings from 20-foot jumps with zero rebound bouncing.",
@@ -44622,10 +44622,10 @@
       "base_car": "RallyCar",
       "sound": "GroupBInline5",
       "images": {
-        "reference": "/textures/vehicles/references/extreme_offroad/rally_sst_traxxas_edition.jpg",
-        "lateral": "/textures/vehicles/laterals/extreme_offroad/rally_sst_traxxas_edition.png",
-        "thumb": "/textures/vehicles/laterals/extreme_offroad/rally_sst_traxxas_edition_thumb.png",
-        "topdown": "/textures/vehicles/topdown/extreme_offroad/rally_sst_traxxas_edition.png"
+        "reference": null,
+        "lateral": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_apex_t7.png",
+        "thumb": "/textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_apex_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_apex_t7.png"
       },
       "physics": {
         "engine_placement": "front_engine",

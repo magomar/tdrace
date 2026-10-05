@@ -53,10 +53,10 @@ impl GameModule for AutocrossGameModule {
     fn vehicles(&self) -> Vec<VehicleModelDefinition> {
         vec![
             VehicleModelDefinition {
-                id: "autocross_lifelive_tn5_junior",
-                name: "LifeLive TN5 Junior",
+                id: "autocross_ardennes_junior_t1",
+                name: "Ardennes Cross Junior T1",
                 tag: "80 BHP RWD RESTRICTED",
-                description: "FIA Cross Car Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.",
+                description: "Cross Car Junior Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.",
                 config: CarConfig::sand_rail(),
                 visual_type: VehicleVisualType::SandRail {
                     lightbar: false,
@@ -72,8 +72,8 @@ impl GameModule for AutocrossGameModule {
                 audio_profile: Some(EngineAudioProfile::cross_car_motorcycle()),
             },
             VehicleModelDefinition {
-                id: "autocross_peters_superbuggy",
-                name: "Peters Autosport SuperBuggy V8",
+                id: "autocross_petersen_superbuggy_t5",
+                name: "Petersen SuperBuggy V8 T5",
                 tag: "680 BHP 4WD UNLIMITED",
                 description: "Premier unlimited dirt racing machine with 1:1 power-to-weight ratio and massive downforce.",
                 config: CarConfig::sand_rail(),
@@ -94,7 +94,7 @@ impl GameModule for AutocrossGameModule {
     }
 
     fn default_vehicle_id(&self) -> &'static str {
-        "autocross_lifelive_tn5_junior"
+        "autocross_ardennes_junior_t1"
     }
 
     fn default_off_track_surface(&self) -> SurfaceType {
@@ -231,40 +231,40 @@ impl GameModule for AutocrossGameModule {
 }
 
 const PETR_NIKODEM_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 5, "autocross_alfa_racing_superbuggy"),
-    DriverFavoriteCar::new("autocross", 3, "autocross_alfa_racing_buggy1600"),
+    DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
 ];
 
 const BERND_STUBBE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 5, "autocross_alfa_racing_superbuggy"),
-    DriverFavoriteCar::new("autocross", 3, "autocross_alfa_racing_buggy1600"),
+    DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
 ];
 
 const KEVIN_PETERS_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 3, "autocross_peters_buggy1600"),
-    DriverFavoriteCar::new("autocross", 5, "autocross_peters_superbuggy"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_petersen_buggy1600_t3"),
+    DriverFavoriteCar::new("autocross", 5, "autocross_petersen_superbuggy_t5"),
 ];
 
 const DAVID_MENDEZ_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 2, "autocross_speedcar_wonder"),
-    DriverFavoriteCar::new("autocross", 1, "autocross_speedcar_xtrem_junior"),
+    DriverFavoriteCar::new("autocross", 2, "autocross_iberian_relampago_t2"),
+    DriverFavoriteCar::new("autocross", 1, "autocross_iberian_furia_t1"),
 ];
 
 const MIGUEL_GAYOSO_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 1, "autocross_lifelive_tn5_junior"),
-    DriverFavoriteCar::new("autocross", 2, "autocross_lifelive_tn11_senior"),
+    DriverFavoriteCar::new("autocross", 1, "autocross_ardennes_junior_t1"),
+    DriverFavoriteCar::new("autocross", 2, "autocross_ardennes_pro_t2"),
 ];
 
 const VACLAV_FEJFAR_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 4, "autocross_skoda_fabia_tax"),
+    DriverFavoriteCar::new("autocross", 4, "autocross_bohemia_veloce_t4"),
 ];
 
 const VINCENT_MERCIER_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 5, "autocross_peters_superbuggy"),
-    DriverFavoriteCar::new("autocross", 3, "autocross_peters_buggy1600"),
+    DriverFavoriteCar::new("autocross", 5, "autocross_petersen_superbuggy_t5"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_petersen_buggy1600_t3"),
 ];
 
 const JAKUB_NOVOTNY_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("autocross", 3, "autocross_alfa_racing_buggy1600"),
-    DriverFavoriteCar::new("autocross", 5, "autocross_alfa_racing_superbuggy"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
+    DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
 ];

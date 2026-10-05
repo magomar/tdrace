@@ -113,7 +113,7 @@ fn test_bot_ai_on_kart_grid_positions() {
     let track_mgr = tdrace_app::track_manager::TrackManager::default();
     for track_slug in &["lonato", "sarno", "genk", "pfi"] {
         let track = track_mgr.load_track_by_slug(track_slug).expect("Load track");
-        let model = tdrace_app::catalog::find_model_by_id("kart_crg_hero_60").expect("model");
+        let model = tdrace_app::catalog::find_model_by_id("kart_blackline_cadet_t1").expect("model");
         let car_config = model.to_car_config();
         let mut cars = Vec::new();
         for grid_pose in &track.grid_positions {
