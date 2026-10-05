@@ -19,8 +19,8 @@ def remove_magenta_bg(img: Image.Image, is_topdown: bool = False) -> Image.Image
     g = arr[:, :, 1].astype(float)
     b = arr[:, :, 2].astype(float)
 
-    is_pink = (r > 160) & (b > 160) & (g < 100)
-    is_fringe = (r > 120) & (b > 120) & ((r + b) > 2.2 * np.maximum(g, 1.0))
+    is_pink = (r > 140) & (b > 140) & (g < 110)
+    is_fringe = (r > 105) & (b > 105) & ((r + b) > 2.0 * np.maximum(g, 1.0))
     arr[is_pink | is_fringe, 3] = 0
 
     alpha = arr[:, :, 3]
