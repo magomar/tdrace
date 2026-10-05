@@ -1623,14 +1623,14 @@ QUARRY_SPRINT = Circuit(
     segments=[
         S(120, surface="Asphalt", wall_type="Steel"),               # 0: Main straight (East, 0 deg)
         A(25, -90, surface="Asphalt", wall_type="TireWall"),        # 1: Turn 1 (to South, -90 deg)
-        S(70, surface="Gravel", wall_type="TireWall"),              # 2: South (-90 deg)
-        A(30, -60, surface="Gravel", wall_type="TireWall"),         # 3: Sweeper (to -150 deg)
+        S(70, surface="PackedGravel", wall_type="TireWall"),              # 2: South (-90 deg)
+        A(30, -60, surface="PackedGravel", wall_type="TireWall"),         # 3: Sweeper (to -150 deg)
         S(60, surface="Dirt", wall_type="Steel"),                   # 4: -150 deg
         A(25, 45, surface="Dirt", wall_type="TireWall"),            # 5: Kink (to -105 deg)
         S(50, surface="Dirt", wall_type="Steel"),                   # 6: -105 deg
         A(20, -75, surface="Dirt", wall_type="TireWall"),           # 7: Hairpin turn (to -180 deg, West)
-        S(80, surface="Gravel", wall_type="Steel"),                 # 8: West (-180 deg)
-        A(25, -90, surface="Gravel", wall_type="TireWall"),         # 9: Turn 4 (to North, +90 deg / -270 deg)
+        S(80, surface="PackedGravel", wall_type="Steel"),                 # 8: West (-180 deg)
+        A(25, -90, surface="PackedGravel", wall_type="TireWall"),         # 9: Turn 4 (to North, +90 deg / -270 deg)
         S(60, surface="Asphalt", wall_type="Steel"),                # 10: North (+90 deg)
         A(25, -45, surface="Asphalt", wall_type="TireWall"),        # 11: (to +45 deg)
         S(40, surface="Asphalt", wall_type="Steel"),                # 12: +45 deg
@@ -1639,8 +1639,8 @@ QUARRY_SPRINT = Circuit(
     close_with=(0, 10),
     finish_at=(0, 0.85),
     features=[
-        Ramp(at=90.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 1"),
-        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Quarry Dirt Jump 2"),
+        Ramp(at=90.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedGravel", name="Quarry Dirt Jump 1"),
+        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedGravel", name="Quarry Dirt Jump 2"),
         Ramp(at=500.0, length=14.0, height=2.2, launch_speed=4.2, surface="Asphalt", name="Quarry Asphalt Jump"),
         # Grandstands: hillside bleachers
         GrandstandProp(at=30.0, side="left", offset=6.0, length=28.0, depth=6.0, style="hillside_bleachers", tiers=5),
@@ -1673,14 +1673,14 @@ HILLTOP_LEAP = Circuit(
     segments=[
         S(160, surface="Asphalt", wall_type="Steel"),               # 0: Start straight (East, 0 deg)
         A(28, -90, surface="Asphalt", wall_type="TireWall"),        # 1: Turn 1 (to -90 deg / South)
-        S(75, surface="Gravel", wall_type="Steel"),                 # 2: Downhill straight (-90 deg)
-        A(25, -45, surface="Gravel", wall_type="TireWall"),         # 3: (to -135 deg)
+        S(75, surface="PackedGravel", wall_type="Steel"),                 # 2: Downhill straight (-90 deg)
+        A(25, -45, surface="PackedGravel", wall_type="TireWall"),         # 3: (to -135 deg)
         S(80, surface="Dirt", wall_type="Steel"),                   # 4: Dirt straight (-135 deg)
         A(25, 45, surface="Dirt", wall_type="TireWall"),            # 5: (to -90 deg)
         S(50, surface="Dirt", wall_type="TireWall"),                # 6: (-90 deg)
-        A(20, -180, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 7: Gravel Hairpin! (to +90 deg)
-        S(95, surface="Gravel", wall_type="Steel"),                 # 8: (+90 deg)
-        A(25, 45, surface="Gravel", wall_type="TireWall"),          # 9: (to +135 deg / NW)
+        A(20, -180, surface="PackedGravel", wall_type="TireWall", wall_distance=3.0), # 7: Gravel Hairpin! (to +90 deg)
+        S(95, surface="PackedGravel", wall_type="Steel"),                 # 8: (+90 deg)
+        A(25, 45, surface="PackedGravel", wall_type="TireWall"),          # 9: (to +135 deg / NW)
         S(135, surface="Dirt", wall_type="Steel"),                  # 10: Dirt straight (+135 deg)
         A(25, -45, surface="Asphalt", wall_type="TireWall"),        # 11: (to +90 deg)
         S(70, surface="Asphalt", wall_type="Steel"),                # 12: North (+90 deg)
@@ -1703,9 +1703,9 @@ HILLTOP_LEAP = Circuit(
         ((15, 0.0), 0.0),
     ],
     features=[
-        Ramp(at=60.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Hilltop Downhill Leap"),
+        Ramp(at=60.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedGravel", name="Hilltop Downhill Leap"),
         Ramp(at=190.0, length=14.0, height=2.0, launch_speed=4.0, surface="Dirt", name="Hilltop Infield Jump"),
-        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="Gravel", name="Hilltop Hairpin Exit Jump"),
+        Ramp(at=350.0, length=14.0, height=2.0, launch_speed=4.0, surface="PackedGravel", name="Hilltop Hairpin Exit Jump"),
         Ramp(at=510.0, length=14.0, height=2.2, launch_speed=4.2, surface="Dirt", name="Hilltop Crest Jump"),
         # Grandstands: hillside bleachers
         GrandstandProp(at=40.0, side="left", offset=6.0, length=30.0, depth=6.0, style="hillside_bleachers", tiers=5),
@@ -1743,12 +1743,12 @@ CANYON_FLYER = Circuit(
         S(90, surface="Dirt", wall_type="Steel"),                   # 4: SW (-135 deg)
         A(25, -45, surface="Dirt", wall_type="TireWall"),           # 5: (to -180 deg / West)
         S(110, surface="Dirt", wall_type="Steel"),                  # 6: Gap Jump straight (-180 deg / West)
-        A(25, 45, surface="Gravel", wall_type="TireWall"),          # 7: (to -135 deg)
-        S(45, surface="Gravel", wall_type="TireWall"),              # 8: (-135 deg)
-        A(25, -45, surface="Gravel", wall_type="TireWall"),         # 9: (to -180 deg)
-        S(95, surface="Gravel", wall_type="Steel"),                 # 10: Whoops straight (-180 deg)
-        A(20, -90, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 11: Turn North (-270 deg / +90 deg)
-        S(80, surface="Gravel", wall_type="Steel"),                 # 12: (+90 deg / North)
+        A(25, 45, surface="PackedGravel", wall_type="TireWall"),          # 7: (to -135 deg)
+        S(45, surface="PackedGravel", wall_type="TireWall"),              # 8: (-135 deg)
+        A(25, -45, surface="PackedGravel", wall_type="TireWall"),         # 9: (to -180 deg)
+        S(95, surface="PackedGravel", wall_type="Steel"),                 # 10: Whoops straight (-180 deg)
+        A(20, -90, surface="PackedGravel", wall_type="TireWall", wall_distance=3.0), # 11: Turn North (-270 deg / +90 deg)
+        S(80, surface="PackedGravel", wall_type="Steel"),                 # 12: (+90 deg / North)
         A(25, -45, surface="Dirt", wall_type="TireWall"),           # 13: (to +45 deg)
         S(60, surface="Dirt", wall_type="Steel"),                   # 14: (+45 deg)
         A(25, 45, surface="Asphalt", wall_type="TireWall"),         # 15: (to +90 deg / North)
@@ -1810,9 +1810,9 @@ MEADOW_SPRINT = Circuit(
         A(30, 45, surface="PackedSand", wall_type="TireWall"),      # 3: (to +135 deg / NW)
         S(180, surface="PackedSand", wall_type="Steel"),            # 4: (+135 deg)
         A(25, -45, surface="PackedSand", wall_type="TireWall"),     # 5: (to +90 deg)
-        S(40, surface="Gravel", wall_type="Steel"),                 # 6: (+90 deg)
-        A(20, 180, surface="Gravel", wall_type="TireWall", wall_distance=3.0), # 7: Hairpin! (to -90 deg / South)
-        S(70, surface="Gravel", wall_type="Steel"),                 # 8: (-90 deg)
+        S(40, surface="PackedGravel", wall_type="Steel"),                 # 6: (+90 deg)
+        A(20, 180, surface="PackedGravel", wall_type="TireWall", wall_distance=3.0), # 7: Hairpin! (to -90 deg / South)
+        S(70, surface="PackedGravel", wall_type="Steel"),                 # 8: (-90 deg)
         A(30, 45, surface="Dirt", wall_type="TireWall"),            # 9: (to -45 deg / SE)
         S(40, surface="Dirt", wall_type="Steel"),                   # 10: (-45 deg)
         A(30, 45, surface="Dirt", wall_type="TireWall"),            # 11: (to 0 deg / East)
@@ -1870,9 +1870,9 @@ CLAY_BOWL = Circuit(
         A(30, 45, surface="Dirt", wall_type="TireWall"),            # 8: (to -135 deg)
         S(90, surface="Dirt", wall_type="Steel"),                   # 9: Ridge straight at 6.0 m (Crest!)
         A(22, -180, surface="Dirt", bank=-9.0, wall_type="TireWall", wall_distance=3.0), # 10: Berm 3 & Downhill Hairpin! (to +45 deg / NE)
-        S(80, surface="Gravel", wall_type="Steel"),                 # 11: Downhill gravel straight (+45 deg)
-        A(30, -45, surface="Gravel", wall_type="TireWall"),         # 12: (to 0 deg / East)
-        S(40, surface="Gravel", wall_type="Steel"),                 # 13: East (0 deg)
+        S(80, surface="PackedGravel", wall_type="Steel"),                 # 11: Downhill gravel straight (+45 deg)
+        A(30, -45, surface="PackedGravel", wall_type="TireWall"),         # 12: (to 0 deg / East)
+        S(40, surface="PackedGravel", wall_type="Steel"),                 # 13: East (0 deg)
         A(30, 90, surface="Dirt", wall_type="TireWall"),            # 14: (to +90 deg / North)
         S(105, surface="Dirt", wall_type="Steel"),                  # 15: North (+90 deg)
         A(30, -90, surface="Dirt", wall_type="TireWall"),           # 16: (to 0 deg / East)
@@ -1923,17 +1923,17 @@ HILLSIDE_HAMMER = Circuit(
     road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
     segments=[
         S(160, surface="Dirt", wall_type="TireWall"),               # 0: Start straight (East, 0 deg)
-        A(35, -90, surface="Gravel", wall_type="TireWall"),         # 1: Turn 1 (to -90 deg / South)
-        S(90, surface="Gravel", wall_type="Steel"),                 # 2: South (-90 deg), climbing
-        A(30, -45, surface="Gravel", bank=6.0, wall_type="TireWall"), # 3: Off-camber 1! (Right turn with bank > 0, to -135 deg)
+        A(35, -90, surface="PackedGravel", wall_type="TireWall"),         # 1: Turn 1 (to -90 deg / South)
+        S(90, surface="PackedGravel", wall_type="Steel"),                 # 2: South (-90 deg), climbing
+        A(30, -45, surface="PackedGravel", bank=6.0, wall_type="TireWall"), # 3: Off-camber 1! (Right turn with bank > 0, to -135 deg)
         S(160, surface="PackedSand", wall_type="Steel"),            # 4: Climbing straight on PackedSand (-135 deg)
         A(30, 45, surface="PackedSand", wall_type="TireWall"),      # 5: (to -90 deg)
         S(140, surface="Dirt", wall_type="Steel"),                  # 6: Summit climb straight (to 8.5 m)
         A(20, -180, surface="Dirt", wall_type="TireWall", wall_distance=3.0), # 7: Summit Hairpin at 8.5 m! (to +90 deg / North)
         S(140, surface="Dirt", wall_type="Steel"),                  # 8: Downhill ridge straight (+90 deg)
-        A(30, 60, surface="Gravel", bank=-6.0, wall_type="TireWall"), # 9: Off-camber 2! (Left turn with bank < 0, to +150 deg)
-        S(140, surface="Gravel", wall_type="Steel"),                # 10: Downhill gravel straight (+150 deg)
-        A(30, -60, surface="Gravel", wall_type="TireWall"),         # 11: (to +90 deg / North)
+        A(30, 60, surface="PackedGravel", bank=-6.0, wall_type="TireWall"), # 9: Off-camber 2! (Left turn with bank < 0, to +150 deg)
+        S(140, surface="PackedGravel", wall_type="Steel"),                # 10: Downhill gravel straight (+150 deg)
+        A(30, -60, surface="PackedGravel", wall_type="TireWall"),         # 11: (to +90 deg / North)
         S(120, surface="Dirt", wall_type="Steel"),                  # 12: Dirt straight (+90 deg)
         A(35, -90, surface="Dirt", wall_type="TireWall"),           # 13: (to 0 deg / East)
         S(60, surface="Dirt", wall_type="Steel"),                   # 14: East (0 deg)
@@ -1977,7 +1977,8 @@ HILLSIDE_HAMMER = Circuit(
 
 # GT: high speed, braking and runoff (spec 055, User Flow section 3).
 # Surface Asphalt, kerbs on apexes and chicanes, walls Steel with TireWall at the end of fast straights.
-# Variable runoff 3-30 m per side; uses at least 3 of Gravel, DeepSand, PackedSand, Grass, Asphalt.
+# Variable runoff 3-30 m per side (spec 089): straights Grass <= 8 m, corner traps DeepGravel <= 12 m,
+# chicanes DeepGravel <= 6 m, no Asphalt run-off.
 
 GT_ROAD = Road(
     width=13.0,
@@ -1992,7 +1993,7 @@ GT_ROAD = Road(
 VELOCITY_PARK = Circuit(
     id="gt_velocity_park",
     name="Velocity Park",
-    description="High-speed GT circuit featuring two long straights ending in heavy braking chicanes with vast asphalt runoffs.",
+    description="High-speed GT circuit featuring two long straights ending in heavy braking chicanes lined with deep gravel traps.",
     tag="POWER CIRCUIT",
     category_label="GT Circuit",
     car_category="gt",
@@ -2003,30 +2004,30 @@ VELOCITY_PARK = Circuit(
     segments=[
         # Main Straight (>= 300 m)
         S(240, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                       # 0
-        S(80, wall_type="TireWall", wall_distance=22.0, runoff="Asphalt"),                                  # 1: Braking zone
-        # Chicane 1 (Right-Left) - wide 22m asphalt runoff throughout
-        A(50, -35, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),          # 2
-        S(25, left_curb=True, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),# 3
-        A(50, 35, left_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),            # 4
-        S(30, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),                                  # 5
+        S(80, wall_type="TireWall", wall_distance=8.0, runoff="Grass"),                                  # 1: Braking zone
+        # Chicane 1 (Right-Left) - narrow DeepGravel traps on both sides
+        A(50, -35, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),          # 2
+        S(25, left_curb=True, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),# 3
+        A(50, 35, left_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),            # 4
+        S(30, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),                             # 5: chicane exit
         # Turn 1: Sweeper to South (-90 deg)
-        A(70, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=15.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 6
+        A(70, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", right_runoff="Grass", wall_type="TireWall"), # 6
         S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 7
         # Turn 2: To West (-180 deg)
-        A(60, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=10.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 8
+        A(60, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", right_runoff="Grass", wall_type="TireWall"), # 8
         # Back Straight (>= 300 m)
         S(260, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                       # 9
-        S(80, wall_type="TireWall", wall_distance=22.0, runoff="Asphalt"),                                  # 10: Braking zone
+        S(80, wall_type="TireWall", wall_distance=8.0, runoff="Grass"),                                  # 10: Braking zone
         # Chicane 2 (Left-Right)
-        A(50, 35, left_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),             # 11
-        S(25, left_curb=True, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),# 12
-        A(50, -35, right_curb=True, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),          # 13
-        S(30, wall_distance=22.0, runoff="Asphalt", wall_type="TireWall"),                                  # 14
+        A(50, 35, left_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),             # 11
+        S(25, left_curb=True, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),# 12
+        A(50, -35, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),          # 13
+        S(30, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),                             # 14: chicane exit
         # Turn 3: To North (+90 deg)
-        A(60, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=10.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 15
+        A(60, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", right_runoff="Grass", wall_type="TireWall"), # 15
         S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 16
         # Turn 4: Final corner to East (0 deg)
-        A(70, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=15.0, left_runoff="Gravel", right_runoff="Grass", wall_type="TireWall"), # 17
+        A(70, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", right_runoff="Grass", wall_type="TireWall"), # 17
     ],
     close_with=(0, 16),
     finish_at=(0, 0.5),
@@ -2063,30 +2064,30 @@ RIDGE_RING = Circuit(
         # 0: Main Straight (>= 300 m) East (0 deg)
         S(305, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
         # Turn 1: Right turn to South (-90 deg)
-        A(40, -90, right_curb=True, left_wall_distance=22.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 1
+        A(40, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="DeepGravel", wall_type="TireWall"), # 1
         # Ridge climb straight (climbing towards crest)
         S(65, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 2
         # Esses on the ridge (climbing to 8 m)
         A(45, 45, left_curb=True, wall_distance=8.0, runoff="Grass", wall_type="TireWall"),                 # 3
         S(35, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 4
-        A(45, -45, right_curb=True, left_wall_distance=10.0, right_wall_distance=8.0, runoff="Grass", wall_type="TireWall"), # 5: Crest
+        A(45, -45, right_curb=True, left_runoff="DeepGravel", left_wall_distance=10.0, right_wall_distance=8.0, runoff="Grass", wall_type="TireWall"), # 5: Crest
         # Downhill corner immediately after crest
-        A(45, -45, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),# 6: Downhill
-        S(40, wall_type="TireWall", left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="Grass"), # 7
+        A(45, -45, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"),# 6: Downhill
+        S(40, wall_type="TireWall", left_wall_distance=8.0, right_wall_distance=8.0, left_runoff="Grass"), # 7
         # Chicane
-        A(40, 45, left_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),             # 8
-        S(20, left_curb=True, right_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),# 9
-        A(40, -45, right_curb=True, wall_distance=15.0, runoff="Asphalt", wall_type="TireWall"),          # 10
+        A(40, 45, left_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),             # 8
+        S(20, left_curb=True, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),# 9
+        A(40, -45, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),          # 10
         S(20, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 11
         # Turn to West (-180 deg)
-        A(45, -45, right_curb=True, left_wall_distance=10.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),# 12
+        A(45, -45, right_curb=True, left_wall_distance=10.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"),# 12
         # Westward run along the southern edge
         S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 13
         # Hairpin at South-West corner (180 deg right turn to North) - radius 40m
-        A(40, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="Grass", wall_type="TireWall"), # 14: Hairpin
+        A(40, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="DeepGravel", wall_type="TireWall"), # 14: Hairpin
         S(60, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 15
         # Final turn to East (0 deg)
-        A(40, -90, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 16
+        A(40, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="DeepGravel", wall_type="TireWall"), # 16
     ],
     close_with=(13, 15),
     finish_at=(0, 0.4),
@@ -2111,8 +2112,8 @@ RIDGE_RING = Circuit(
         ((13, 0.5), 0.0),
     ],
     features=[
-        Zone(start=420.0, end=495.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Downhill Sand Trap"),
-        Zone(start=925.0, end=985.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Sand Trap"),
+        Zone(start=420.0, end=495.0, surface="DeepGravel", lateral=(2.5, 8.5), from_edge="left", name="Downhill Gravel Trap"),
+        Zone(start=925.0, end=985.0, surface="DeepGravel", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Gravel Trap"),
         # Grandstands: main straight covered stadium stands
         GrandstandProp(at=40.0, side="left", offset=9.0, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
         GrandstandProp(at=95.0, side="left", offset=9.0, length=40.0, depth=8.0, style="open_bleachers", tiers=7),
@@ -2144,9 +2145,9 @@ COASTAL_GRAND_PRIX = Circuit(
     segments=[
         # Main Straight (>= 400 m) East (0 deg)
         S(330, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
-        S(80, wall_type="TireWall", wall_distance=20.0, runoff="Asphalt"),                                  # 1: Braking zone (total straight = 410 m)
+        S(80, wall_type="TireWall", wall_distance=8.0, runoff="Grass"),                                  # 1: Braking zone (total straight = 410 m)
         # Turn 1: Right kink to South-East (-30 deg)
-        A(60, -30, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="Asphalt", wall_type="TireWall"), # 2
+        A(60, -30, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"), # 2
         # Climb to plateau
         S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 3
         # Curve on plateau to East (0 deg)
@@ -2154,28 +2155,28 @@ COASTAL_GRAND_PRIX = Circuit(
         # Plateau straight (~5 m)
         S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 5
         # The Carousel: long 165-degree sweeping turn (to -165 deg / West-South-West)
-        A(50, -165, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="PackedSand", wall_type="TireWall"), # 6: Carousel (165 deg >= 150 deg!)
+        A(50, -165, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"), # 6: Carousel (165 deg >= 150 deg!)
         # Fast sweeper bend along the coast (left kink then right kink)
-        S(40, wall_type="TireWall", left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="PackedSand"),                    # 7
-        A(70, 45, left_curb=True, right_wall_distance=18.0, left_wall_distance=8.0, right_runoff="PackedSand", wall_type="TireWall"), # 8: Fast sweeper (to -120 deg)
+        S(40, wall_type="TireWall", left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel"),                    # 7
+        A(70, 45, left_curb=True, right_wall_distance=12.0, left_wall_distance=8.0, right_runoff="DeepGravel", wall_type="TireWall"), # 8: Fast sweeper (to -120 deg)
         S(80, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 9
-        A(70, -45, right_curb=True, left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),   # 10: (to -165 deg)
+        A(70, -45, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"),   # 10: (to -165 deg)
         # Coastal straight into Bus-Stop Chicane
         S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 11
-        S(40, wall_type="TireWall", wall_distance=20.0, runoff="Asphalt"),                                  # 12: Braking zone
+        S(40, wall_type="TireWall", wall_distance=8.0, runoff="Grass"),                                  # 12: Braking zone
         # Bus-Stop Chicane
-        A(40, -45, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),          # 13
-        S(15, left_curb=True, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),# 14
-        A(40, 90, left_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),            # 15
-        S(15, left_curb=True, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),# 16
-        A(40, -45, right_curb=True, wall_distance=18.0, runoff="Asphalt", wall_type="TireWall"),          # 17
+        A(40, -45, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),          # 13
+        S(15, left_curb=True, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),# 14
+        A(40, 90, left_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),            # 15
+        S(15, left_curb=True, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),# 16
+        A(40, -45, right_curb=True, wall_distance=6.0, runoff="DeepGravel", wall_type="TireWall"),          # 17
         S(30, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 18
         # Final turns back to Main Straight
-        A(50, -45, right_curb=True, left_wall_distance=16.0, right_wall_distance=8.0, left_runoff="Gravel", wall_type="TireWall"), # 19 (to -210 / +150 deg)
+        A(50, -45, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"), # 19 (to -210 / +150 deg)
         S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 20 (West-North)
-        A(50, -90, right_curb=True, left_wall_distance=16.0, right_wall_distance=8.0, left_runoff="Gravel", wall_type="TireWall"), # 21 (to +60 deg)
+        A(50, -90, right_curb=True, left_wall_distance=12.0, right_wall_distance=8.0, left_runoff="DeepGravel", wall_type="TireWall"), # 21 (to +60 deg)
         S(60, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 22 (solved)
-        A(50, -60, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 23 (to 0 deg / East)
+        A(50, -60, right_curb=True, left_wall_distance=12.0, right_wall_distance=7.0, left_runoff="DeepGravel", wall_type="TireWall"), # 23 (to 0 deg / East)
     ],
     close_with=(20, 22),
     finish_at=(0, 0.4),

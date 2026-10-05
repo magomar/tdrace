@@ -56,8 +56,8 @@ def compute_curbs_and_widths(points, default_w=13.0, straight_w=14.0):
             "right_wall": True,
             "left_wall_distance": None,
             "right_wall_distance": None,
-            "left_runoff_surface": "Gravel",
-            "right_runoff_surface": "Gravel",
+            "left_runoff_surface": "DeepGravel",
+            "right_runoff_surface": "DeepGravel",
         })
     return waypoints
 
