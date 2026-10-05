@@ -106,6 +106,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [083](083_evorl_bot_driving_style_and_performance_optimization.md) | EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization | Architecture Spec | `draft` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [065](065_vehiclegeneric_bot_ai_and_effects.md) | Comprehensive computational architecture and evolutionary optimization pipeline leveraging the EvoRL framework to algorithmically calibrate TDRace bot control laws, amplify authentic driving style uniqueness, enforce monotonic tier progression, and evolve tactical Behavior Trees via high-throughput headless simulation. |
 | [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation | Architecture Spec | `implemented` | - | Resolves simulation, raycasting, and rallycross rendering bottlenecks, bringing wheelbase physics above 1.5M steps/s floor, LIDAR above 14M rays/s floor, Höljes RX frame times from 15.3ms down to <5.0ms, and equips bot AI with robust pit lane recognition and tactical entry gating. |
 | [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions | Feature Spec | `approved` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries. |
+| [087](087_tdrace_codex_unified_game_encyclopedia_and_technical_reference_portal.md) | TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal | Feature Spec | `implemented` | [011](011_game_asset_catalogue_and_physics_reference_portals.md) | Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files. |
 | [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md) | Rallycross Jokers Built From OpenStreetMap Joker Ways | Feature Spec | `implemented` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it. |
 
 ### 🗺️ Specification Dependency Graph
@@ -113,6 +114,7 @@ Table of contents providing progressive disclosure of project constitution and t
 ```mermaid
 flowchart LR
     006["006: Road Split Segments, Branching Splines & Alternative Circuit Layouts"]
+    011["011: Game Asset Catalogue & Technical Reference Portals"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
@@ -137,6 +139,7 @@ flowchart LR
     082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
     083["083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"]
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
+    087["087: TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"]
     088["088: Rallycross Jokers Built From OpenStreetMap Joker Ways"]
     055 --> 047
     062 --> 063
@@ -163,5 +166,6 @@ flowchart LR
     046 --> 083
     065 --> 083
     081 --> 085
+    011 --> 087
     081 --> 088
 ```

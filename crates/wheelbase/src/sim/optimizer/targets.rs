@@ -22,7 +22,7 @@ impl CalibrationTarget {
     /// Sprint Kart (100cc/125cc) calibration benchmark: tight 2.5m circle, high lateral G, minimal sideslip.
     pub fn sprint_kart() -> Self {
         Self {
-            name: "FIA Karting Sprint Regulation".to_string(),
+            name: "International Karting Sprint Regulation".to_string(),
             modality: "kart".to_string(),
             tier: 2,
             target_turning_diameter_m: Some(2.54),
@@ -36,7 +36,7 @@ impl CalibrationTarget {
     /// GT3 World Challenge calibration benchmark: 11m turning circle, 2.8g lateral grip with downforce.
     pub fn gt3_homologation() -> Self {
         Self {
-            name: "SRO GT3 Homologation Window".to_string(),
+            name: "GT Tier 2 Pro Sprint Homologation Window".to_string(),
             modality: "gt".to_string(),
             tier: 2,
             target_turning_diameter_m: Some(10.95),
@@ -50,7 +50,7 @@ impl CalibrationTarget {
     /// NASCAR TA1 Stock Car: heavy V8, solid spool axle, 11m turning circle, high-speed banked oval grip.
     pub fn stock_car_ta1() -> Self {
         Self {
-            name: "Trans-Am TA1 Homologation Spec".to_string(),
+            name: "Trans-National TA1 Homologation Spec".to_string(),
             modality: "nascar".to_string(),
             tier: 5,
             target_turning_diameter_m: Some(11.05),
@@ -64,7 +64,7 @@ impl CalibrationTarget {
     /// Rallycross Supercar AWD: dual mechanical LSDs, tight 6.5m hairpin rotation, explosive launch.
     pub fn rallycross_supercar() -> Self {
         Self {
-            name: "World RX Supercar Technical Regulations".to_string(),
+            name: "World Rallycross Supercar Technical Regulations".to_string(),
             modality: "rally".to_string(),
             tier: 2,
             target_turning_diameter_m: Some(6.55),

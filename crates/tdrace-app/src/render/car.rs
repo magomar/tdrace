@@ -9,8 +9,8 @@ use super::lighting::{resolve_vehicle_lighting, VehicleLightingConfig};
 use super::track::draw_quad;
 use crate::module::VehicleVisualType;
 
-static PORSCHE_GT3R_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
-static PORSCHE_TOPDOWN_CACHE: std::sync::Mutex<Option<std::collections::HashMap<(u32, u32), Texture2D>>> = std::sync::Mutex::new(None);
+static VANDORN_ARROWHEAD_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png");
+static VANDORN_ARROWHEAD_TOPDOWN_CACHE: std::sync::Mutex<Option<std::collections::HashMap<(u32, u32), Texture2D>>> = std::sync::Mutex::new(None);
 
 #[inline]
 fn color_to_u32(c: Color) -> u32 {
@@ -20,19 +20,19 @@ fn color_to_u32(c: Color) -> u32 {
     (r << 16) | (g << 8) | b
 }
 
-/// Retrieves or dynamically generates a colorway-tinted top-down texture for the Porsche 911 GT3 R.
-pub fn get_tinted_porsche_topdown(primary: Color, secondary: Color) -> Texture2D {
+/// Retrieves or dynamically generates a colorway-tinted top-down texture for the Vandorn Arrowhead R T2.
+pub fn get_tinted_vandorn_arrowhead_topdown(primary: Color, secondary: Color) -> Texture2D {
     let k1 = color_to_u32(primary);
     let k2 = color_to_u32(secondary);
 
-    let mut guard = PORSCHE_TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let mut guard = VANDORN_ARROWHEAD_TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let map = guard.get_or_insert_with(std::collections::HashMap::new);
     if let Some(tex) = map.get(&(k1, k2)) {
         return tex.clone();
     }
 
-    let base_img = macroquad::texture::Image::from_file_with_format(PORSCHE_GT3R_PNG, None)
-        .expect("failed to load porsche topdown PNG");
+    let base_img = macroquad::texture::Image::from_file_with_format(VANDORN_ARROWHEAD_PNG, None)
+        .expect("failed to load vandorn arrowhead topdown PNG");
     let mut tinted = base_img.clone();
     for pixel in tinted.bytes.chunks_exact_mut(4) {
         let a = pixel[3];
@@ -64,8 +64,8 @@ pub fn get_tinted_porsche_topdown(primary: Color, secondary: Color) -> Texture2D
     texture
 }
 
-pub fn porsche_gt3r_texture() -> Texture2D {
-    get_tinted_porsche_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
+pub fn vandorn_arrowhead_texture() -> Texture2D {
+    get_tinted_vandorn_arrowhead_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
 }
 
 /// Renders vehicle lighting based on the resolved modality lighting profile.
@@ -254,7 +254,7 @@ pub fn render_steered_wheels(
     draw_steered_wheel(ctx.wheel_texture, p_fr, ang_fr, ctx.config.wheel_size);
 }
 
-/// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
+/// Renders a high-detail top-down sprite for the Vandorn Arrowhead R T2.
 pub fn render_porsche_gt3r_sprite(
     chassis_center: Vec2,
     angle: f32,
@@ -266,7 +266,7 @@ pub fn render_porsche_gt3r_sprite(
     secondary: Color,
     is_braking: bool,
 ) {
-    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_porsche_911_gt3r", primary, secondary) {
+    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_vandorn_arrowhead_t2", primary, secondary) {
         let lighting_cfg = VehicleLightingConfig::gt_touring();
         render_vehicle_topdown_sprite(
             &texture,

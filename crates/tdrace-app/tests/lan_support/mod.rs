@@ -33,7 +33,7 @@ pub fn build_lobby_with(
             host_addr,
             *name,
             "ESP",
-            "gt_porsche_911_gt3r",
+            "gt_vandorn_arrowhead_t2",
             "viper_green",
         )
         .unwrap();

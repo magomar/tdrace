@@ -15,7 +15,7 @@ ai_difficulty = "expert"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -49,51 +49,51 @@ id = "player"
 name = "Player"
 team = "Apex Touring Racing"
 is_player = true
-car_model_id = "autocross_skoda_fabia_tax"
+car_model_id = "autocross_bohemia_veloce_t4"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "vaclav_fejfar"
-name = "Václav Fejfar"
-team = "Fejfar Motorsport"
-car_model_id = "autocross_skoda_fabia_tax"
+id = "viktor_fiala"
+name = "Viktor Fiala"
+team = "Bohemia Rallycross Team"
+car_model_id = "autocross_bohemia_veloce_t4"
 country = "CZE"
 ai_character = "fast"
 livery_idx = 1
 
 [[drivers]]
-id = "erwin_frieszl"
-name = "Erwin Frieszl"
-team = "Frieszl Racing"
-car_model_id = "autocross_mitsubishi_evo_tax"
+id = "erich_frieszl"
+name = "Erich Frieszl"
+team = "Styrian Buggy Racing"
+car_model_id = "autocross_shinano_tsunami_t4"
 country = "AUT"
 ai_character = "aggressive"
 livery_idx = 2
 
 [[drivers]]
-id = "adriaan_boele"
-name = "Adriaan Boele"
-team = "Boele Autosport"
-car_model_id = "autocross_skoda_fabia_tax"
+id = "arjen_boele"
+name = "Arjen Boele"
+team = "Boele Offroad Works"
+car_model_id = "autocross_bohemia_veloce_t4"
 country = "NLD"
 ai_character = "fast"
 livery_idx = 3
 
 [[drivers]]
-id = "marcel_egg"
-name = "Marcel Egg"
-team = "Egg Racing Team"
-car_model_id = "autocross_audi_a4_tax"
+id = "martin_egg"
+name = "Martin Egg"
+team = "Alpine Cross Racing"
+car_model_id = "autocross_vortek_quattro_t4"
 country = "CHE"
 ai_character = "balanced"
 livery_idx = 4
 
 [[drivers]]
-id = "pavel_vyborny"
-name = "Pavel Výborný"
-team = "Výborný Motorsport"
-car_model_id = "autocross_mitsubishi_evo_tax"
+id = "patrik_vyborny"
+name = "Patrik Výborný"
+team = "Bohemia Buggy Team"
+car_model_id = "autocross_shinano_tsunami_t4"
 country = "CZE"
 ai_character = "aggressive"
 livery_idx = 5
@@ -101,8 +101,8 @@ livery_idx = 5
 [[drivers]]
 id = "grit_hennersdorf"
 name = "Grit Hennersdorf"
-team = "Hennersdorf Offroad"
-car_model_id = "autocross_skoda_fabia_tax"
+team = "Saxony Offroad Works"
+car_model_id = "autocross_bohemia_veloce_t4"
 country = "DEU"
 ai_character = "balanced"
 livery_idx = 6
@@ -110,8 +110,8 @@ livery_idx = 6
 [[drivers]]
 id = "werner_gurschler"
 name = "Werner Gurschler"
-team = "Gurschler Quattro"
-car_model_id = "autocross_audi_a4_tax"
+team = "Alpine Quattro Racing"
+car_model_id = "autocross_vortek_quattro_t4"
 country = "ITA"
 ai_character = "cautious"
 livery_idx = 7

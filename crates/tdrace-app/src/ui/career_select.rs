@@ -138,8 +138,8 @@ pub struct CareerSelectCard {
 /// Returns display title and signature neon accent color for a motorsport module.
 pub fn module_meta_for(module_id: &str) -> (&'static str, Color) {
     match module_id {
-        "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", Palette::RED),
-        "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
+        "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", Palette::RED),
+        "nascar" => ("STOCK CAR CUP SERIES", Palette::YELLOW),
         "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
         "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
         "extreme_offroad" | "offroad" => ("EXTREME OFF-ROAD", Color::new(1.0, 0.40, 0.05, 1.0)),
@@ -391,22 +391,22 @@ struct ModalityMeta {
 const MODALITY_CATALOG: &[ModalityMeta] = &[
     ModalityMeta {
         id: "gt",
-        title: "GT WORLD CHALLENGE",
-        subtitle: "FIA GT3 & SRO GT2 Multiclass Touring & Endurance",
+        title: "GRAND TOURING CHALLENGE",
+        subtitle: "Pro Sprint & Biturbo Multiclass Touring & Endurance",
         accent: Palette::RED,
-        default_series_name: "GT World Challenge Championship 2026",
+        default_series_name: "Grand Touring Challenge Championship 2026",
     },
     ModalityMeta {
         id: "nascar",
-        title: "NASCAR CUP SERIES",
+        title: "STOCK CAR CUP SERIES",
         subtitle: "850 BHP Pushrod V8 High-Banked Superspeedways",
         accent: Palette::YELLOW,
-        default_series_name: "NASCAR Cup Series 2026",
+        default_series_name: "Premier Stock Car Cup Championship 2026",
     },
     ModalityMeta {
         id: "rally",
         title: "RALLYCROSS WORLD CUP",
-        subtitle: "World RX & Euro RX Mixed Surface Stages & Jump Arenas",
+        subtitle: "World & Continental Rallycross Mixed Surface Stages & Jump Arenas",
         accent: Palette::NEON_GOLD,
         default_series_name: "Rallycross World Cup 2026",
     },
@@ -420,16 +420,16 @@ const MODALITY_CATALOG: &[ModalityMeta] = &[
     ModalityMeta {
         id: "extreme_offroad",
         title: "EXTREME OFF-ROAD",
-        subtitle: "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
+        subtitle: "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
         accent: Color::new(1.0, 0.40, 0.05, 1.0),
         default_series_name: "Extreme Off-Road Cup 2026",
     },
     ModalityMeta {
         id: "autocross",
-        title: "FIA AUTOCROSS",
+        title: "CONTINENTAL AUTOCROSS",
         subtitle: "Natural Unpaved Dirt & Buggy Racing",
         accent: Color::new(1.0, 0.45, 0.05, 1.0),
-        default_series_name: "FIA Autocross World Series 2026",
+        default_series_name: "World SuperBuggy Series 2026",
     },
 ];
 

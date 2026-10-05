@@ -1,12 +1,12 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Autocross Career Mode: FIA Cross Car Academy Trophy (Tier 1)
+# Autocross Career Mode: Cross Car Junior Academy Trophy (Tier 1)
 # ==============================================================================
 
 [championship]
 id = "autocross_crosscar_junior_trophy"
-name = "FIA Cross Car Academy Trophy"
-description = "Official FIA grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks."
+name = "Cross Car Junior Academy Trophy"
+description = "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks."
 module_id = "autocross"
 tier = 1
 laps_per_round = 4
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -43,15 +43,15 @@ id = "player"
 name = "Player"
 team = "Apex Junior Racing"
 is_player = true
-car_model_id = "autocross_lifelive_tn5_junior"
+car_model_id = "autocross_ardennes_junior_t1"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "miguel_gayoso"
-name = "Miguel Gayoso"
-team = "LifeLive Academy"
-car_model_id = "autocross_lifelive_tn5_junior"
+id = "mateo_garrido"
+name = "Mateo Garrido"
+team = "Ardennes Cross Academy"
+car_model_id = "autocross_ardennes_junior_t1"
 country = "ESP"
 ai_character = "fast"
 livery_idx = 1
@@ -60,7 +60,7 @@ livery_idx = 1
 id = "stanislav_brousek"
 name = "Stanislav Brousek"
 team = "Czech Junior Team"
-car_model_id = "autocross_speedcar_xtrem_junior"
+car_model_id = "autocross_iberian_furia_t1"
 country = "CZ"
 ai_character = "aggressive"
 livery_idx = 2
@@ -68,26 +68,26 @@ livery_idx = 2
 [[drivers]]
 id = "etienne_rambault"
 name = "Etienne Rambault"
-team = "Planet Kart Cross France"
-car_model_id = "autocross_planet_k3_junior"
+team = "Cosmo Cross France"
+car_model_id = "autocross_cosmo_nova_t1"
 country = "FR"
 ai_character = "balanced"
 livery_idx = 3
 
 [[drivers]]
-id = "valentino_ledda"
-name = "Valentino Ledda"
-team = "Team Italy XC"
-car_model_id = "autocross_speedcar_xtrem_junior"
+id = "valerio_ledda"
+name = "Valerio Ledda"
+team = "Italo Cross Squadra"
+car_model_id = "autocross_iberian_furia_t1"
 country = "IT"
 ai_character = "fast"
 livery_idx = 4
 
 [[drivers]]
-id = "elias_svensson"
-name = "Elias Svensson"
+id = "emil_svensson"
+name = "Emil Svensson"
 team = "Nordic Cross Racing"
-car_model_id = "autocross_lifelive_tn5_junior"
+car_model_id = "autocross_ardennes_junior_t1"
 country = "SWE"
 ai_character = "defensive"
 livery_idx = 5
@@ -95,8 +95,8 @@ livery_idx = 5
 [[drivers]]
 id = "lucas_cartelle"
 name = "Lucas Cartelle"
-team = "RACB National Team"
-car_model_id = "autocross_planet_k3_junior"
+team = "Wallonia Junior Team"
+car_model_id = "autocross_cosmo_nova_t1"
 country = "BEL"
 ai_character = "balanced"
 livery_idx = 6
@@ -104,8 +104,8 @@ livery_idx = 6
 [[drivers]]
 id = "tomas_martins"
 name = "Tomás Martins"
-team = "FPAK Junior XC"
-car_model_id = "autocross_speedcar_xtrem_junior"
+team = "Lusitania Junior XC"
+car_model_id = "autocross_iberian_furia_t1"
 country = "PT"
 ai_character = "cautious"
 livery_idx = 7

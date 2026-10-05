@@ -39,6 +39,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 ### Phase 3: Physics Simulation Harness & Technical Asset Portals (Priority: High)
 - `[x]` **[Systematic Computational Simulation of Surface-Car Dynamics](../010_surface_car_interaction_simulation.md)**: Headless computational simulation harness and benchmarking suite to measure vehicle acceleration, braking, and cornering dynamics across all surface types without graphics.
 - `[x]` **[Game Asset Catalogue & Technical Reference Portals](../011_game_asset_catalogue_and_physics_reference_portals.md)**: Dual-site Astro architecture cataloguing 25 car categories, 90 circuits, and simulation physics under a unified Google OKF v0.2 knowledge graph.
+- `[ ]` **[TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal](../087_tdrace_codex_unified_game_encyclopedia_and_technical_reference_portal.md)**: Grows the Motorsport Showroom into the TDRace Codex with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter of the real game data.
 
 ### Phase 4: Track Scenery, Surface Dynamics & Terrain Physics (Priority: High)
 - `[x]` **[Track Scenery and Decorative Elements](../012_track_scenery_and_decorative_elements.md)**: Tiered concrete grandstands and multi-species trees with cenital recognition and physical car interactions.

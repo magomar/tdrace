@@ -75,12 +75,12 @@ pub fn render_garage_screen(
 
     // Module branding
     let (mod_title, mod_accent) = match active_module_id {
-        "gt" | "gt_challenge" | "f1" => ("GT WORLD CHALLENGE", Palette::NEON_CYAN),
+        "gt" | "gt_challenge" | "f1" => ("GRAND TOURING CHALLENGE", Palette::NEON_CYAN),
         "rally" => ("RALLYCROSS", Palette::NEON_GOLD),
         "kart" => ("KARTING & MICRO-RACERS", Palette::NEON_GREEN),
-        "nascar" => ("NASCAR STOCK CAR RACING", Palette::YELLOW),
+        "nascar" => ("STOCK CAR RACING", Palette::YELLOW),
         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Palette::NEON_ORANGE),
-        "autocross" => ("FIA AUTOCROSS", Palette::NEON_ORANGE),
+        "autocross" => ("CONTINENTAL AUTOCROSS", Palette::NEON_ORANGE),
         _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_GOLD),
     };
 
@@ -690,7 +690,7 @@ pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("gt", "GT"),
     ("rally", "RALLYCROSS"),
     ("kart", "KART"),
-    ("nascar", "NASCAR"),
+    ("nascar", "STOCK CAR"),
     ("extreme_offroad", "OFF-ROAD"),
     ("autocross", "AUTOCROSS"),
 ];

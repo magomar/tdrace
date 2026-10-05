@@ -1,0 +1,2591 @@
+# IP Rename Registry - Single Source of Truth
+# Spec: 047 (Fictional Branding and Real-World IP Removal for Steam Release)
+# Purpose: Mapping table for automated rename passes and denylist testing.
+# This file lives in docs/legal/ and is never shipped.
+
+[meta]
+version = "1.0.0"
+spec = "047"
+created = "2026-10-05"
+description = "Single source of truth for real -> fictional assets and denylist verification."
+
+[sprite_rules]
+max_bodywork_colors = 3
+strip_badges = true
+strip_sponsor_decals = true
+repair_mirrored_text_on_shifted = true
+palette_excluded_components = ["tyres", "wheels", "suspension", "visible_motor_parts", "exhaust", "glass", "windshield"]
+
+# =============================================================================
+# 1:1 MANUFACTURER BRAND MAPPING
+# Every real manufacturer maps uniquely to one fictional marque across all models.
+# =============================================================================
+[brands]
+"Alfa Racing" = "Bologna Buggy Works"
+"Anderson" = "Highland Superkarts"
+"Aston Martin" = "Albion Motors"
+"Audi" = "Vortek Automobil"
+"Audi Sport" = "Vortek Automobil"
+"Audi Sport Custom" = "Vortek Automobil"
+"Avitas Motorsport" = "AeroTech RX"
+"BMW" = "BMR Speedworks"
+"Bigfoot" = "Colossus Monster Trucks"
+"Birel ART" = "Rosso Kart Works"
+"Brabham" = "Southern Cross Performance"
+"CRG" = "Blackline Karting"
+"Cadillac" = "Crestline Motor Division"
+"Cadillac Racing" = "Crestline Motor Division"
+"Can-Am" = "Laurentian Off-Road"
+"Chevrolet" = "Crossbow Performance"
+"Dodge" = "Rampart Performance"
+"Fast & Speed" = "Rapid Dynamics"
+"Ferrari" = "Valente Automobili"
+"Ford" = "Forge Motor Co"
+"Geiser Bros" = "Desert Forge Trucks"
+"Honda" = "Asahi Speedworks"
+"Honda Racing" = "Asahi Speedworks"
+"Hyundai" = "Hanguk Motorsport"
+"John Deere" = "Greenfield Agricultural Racing"
+"John Deere Custom" = "Greenfield Agricultural Racing"
+"Lancia" = "Torino Corse"
+"LifeLive" = "Ardennes Cross"
+"MS Kart" = "Moravia Superkarts"
+"Maserati" = "Aquila Corse"
+"Mason Motorsport" = "Sonora AWD Racing"
+"McLaren" = "Hyperion Automotive"
+"Mercedes-AMG" = "Silberstern Automobil"
+"Mercedes-Benz" = "Silberstern Automobil"
+"Mitsubishi" = "Shinano Performance"
+"Mitsubishi Ralliart" = "Shinano Performance"
+"Monster Jam" = "Havoc Monster Trucks"
+"Nissan" = "Katana Racing"
+"Nissan NISMO" = "Katana Racing"
+"Olsbergs MSE" = "Nordic RX Engineering"
+"PVT Racing" = "Vanguard Single"
+"Peters Autosport" = "Petersen Autosport"
+"Peugeot" = "Gallia Sport"
+"Planet Kart Cross" = "Cosmo Kartcross"
+"Polaris" = "Northstar Off-Road"
+"Porsche" = "Vandorn Automobil"
+"Porsche Penske" = "Vandorn Automobil"
+"Prodrive" = "Proline Dynamics"
+"QEV Technologies" = "VoltTech Racing"
+"Renault" = "Rouen Motorsport"
+"SST" = "Stadium Thunder V8"
+"Semog" = "Lusitania Cross"
+"Speedcar" = "Iberian Cross"
+"Subaru" = "Sixstar Rally"
+"Tony Kart" = "Verde Karting"
+"Toyota" = "Yamato Racing"
+"Toyota Gazoo Racing" = "Yamato Racing"
+"VIPER Racing" = "Venom Racing"
+"Vermont SportsCar" = "Green Mountain Motorsport"
+"Viking" = "Nordic Power Mower"
+"Viking Racing" = "Nordic Power Mower"
+"Volkswagen" = "Volkskraft"
+"Škoda" = "Bohemia Motorsport"
+"Škoda Motorsport" = "Bohemia Motorsport"
+
+# =============================================================================
+# VEHICLE MODELS (129 Total: 113 Renamed Real Models + 16 Fictional/Prototypes)
+# =============================================================================
+
+# --- Module: GT ---
+
+[cars."gt_porsche_718_gt4"]
+new_id = "gt_vandorn_stratus_t1"
+real_name = "Porsche 718 Cayman GT4 RS Clubsport"
+new_name = "Vandorn Stratus Clubsport T1"
+real_manufacturer = "Porsche"
+new_manufacturer = "Vandorn Automobil"
+module = "gt"
+tier = 1
+category = "GT4 Clubsport"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_porsche_718_gt4.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vandorn_stratus_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_porsche_718_gt4.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vandorn_stratus_t1.png"
+
+[cars."gt_bmw_m4_gt4"]
+new_id = "gt_bmr_bavaria_t1"
+real_name = "BMW M4 GT4 (G82)"
+new_name = "BMR Bavaria Sprint T1"
+real_manufacturer = "BMW"
+new_manufacturer = "BMR Speedworks"
+module = "gt"
+tier = 1
+category = "GT4 Clubsport"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_bmw_m4_gt4.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_bmr_bavaria_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_bmw_m4_gt4.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_bmr_bavaria_t1.png"
+
+[cars."gt_aston_vantage_gt4"]
+new_id = "gt_albion_victor_t1"
+real_name = "Aston Martin Vantage AMR GT4"
+new_name = "Albion Victor GT T1"
+real_manufacturer = "Aston Martin"
+new_manufacturer = "Albion Motors"
+module = "gt"
+tier = 1
+category = "GT4 Clubsport"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_aston_vantage_gt4.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_albion_victor_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_aston_vantage_gt4.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_albion_victor_t1.png"
+
+[cars."gt_toyota_supra_gt4"]
+new_id = "gt_yamato_hayate_t1"
+real_name = "Toyota GR Supra GT4 EVO"
+new_name = "Yamato Hayate GT T1"
+real_manufacturer = "Toyota"
+new_manufacturer = "Yamato Racing"
+module = "gt"
+tier = 1
+category = "GT4 Clubsport"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_toyota_supra_gt4.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_yamato_hayate_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_toyota_supra_gt4.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_yamato_hayate_t1.png"
+
+[cars."gt_porsche_911_gt3r"]
+new_id = "gt_vandorn_arrowhead_t2"
+real_name = "Porsche 911 GT3 R (992)"
+new_name = "Vandorn Arrowhead R T2"
+real_manufacturer = "Porsche"
+new_manufacturer = "Vandorn Automobil"
+module = "gt"
+tier = 2
+category = "GT3 Evo / FIA GT3"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png"
+
+[cars."gt_ferrari_296_gt3"]
+new_id = "gt_valente_corsa_t2"
+real_name = "Ferrari 296 GT3"
+new_name = "Valente Corsa V6 T2"
+real_manufacturer = "Ferrari"
+new_manufacturer = "Valente Automobili"
+module = "gt"
+tier = 2
+category = "GT3 Evo / FIA GT3"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_ferrari_296_gt3.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_valente_corsa_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_ferrari_296_gt3.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_valente_corsa_t2.png"
+
+[cars."gt_amg_gt3_evo"]
+new_id = "gt_silberstern_sturmvogel_t2"
+real_name = "Mercedes-AMG GT3 Evo"
+new_name = "Silberstern Sturmvogel T2"
+real_manufacturer = "Mercedes-AMG"
+new_manufacturer = "Silberstern Automobil"
+module = "gt"
+tier = 2
+category = "GT3 Evo / FIA GT3"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_amg_gt3_evo.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_silberstern_sturmvogel_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_amg_gt3_evo.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_silberstern_sturmvogel_t2.png"
+
+[cars."gt_audi_r8_gt3_evo2"]
+new_id = "gt_vortek_quattro_t2"
+real_name = "Audi R8 LMS GT3 Evo II"
+new_name = "Vortek Quattro LMS T2"
+real_manufacturer = "Audi Sport"
+new_manufacturer = "Vortek Automobil"
+module = "gt"
+tier = 2
+category = "GT3 Evo / FIA GT3"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_audi_r8_gt3_evo2.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vortek_quattro_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_audi_r8_gt3_evo2.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vortek_quattro_t2.png"
+
+[cars."gt_porsche_911_gt2_rs"]
+new_id = "gt_vandorn_arrowhead_t3"
+real_name = "Porsche 911 GT2 RS Clubsport"
+new_name = "Vandorn Arrowhead Biturbo T3"
+real_manufacturer = "Porsche"
+new_manufacturer = "Vandorn Automobil"
+module = "gt"
+tier = 3
+category = "GT2 Biturbo"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_porsche_911_gt2_rs.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_porsche_911_gt2_rs.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t3.png"
+
+[cars."gt_brabham_bt62_gt2"]
+new_id = "gt_southern_cross_62_t3"
+real_name = "Brabham BT62 GT2"
+new_name = "Southern Cross Apex 62 T3"
+real_manufacturer = "Brabham"
+new_manufacturer = "Southern Cross Performance"
+module = "gt"
+tier = 3
+category = "GT2 Biturbo"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_brabham_bt62_gt2.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_southern_cross_62_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_brabham_bt62_gt2.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_southern_cross_62_t3.png"
+
+[cars."gt_maserati_mc20_gt2"]
+new_id = "gt_aquila_strale_t3"
+real_name = "Maserati MC20 GT2"
+new_name = "Aquila Strale Biturbo T3"
+real_manufacturer = "Maserati"
+new_manufacturer = "Aquila Corse"
+module = "gt"
+tier = 3
+category = "GT2 Biturbo"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_maserati_mc20_gt2.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_aquila_strale_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_maserati_mc20_gt2.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_aquila_strale_t3.png"
+
+[cars."gt_audi_r8_gt2"]
+new_id = "gt_vortek_clubsport_t3"
+real_name = "Audi R8 LMS GT2"
+new_name = "Vortek V10 Clubsport T3"
+real_manufacturer = "Audi Sport"
+new_manufacturer = "Vortek Automobil"
+module = "gt"
+tier = 3
+category = "GT2 Biturbo"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_audi_r8_gt2.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vortek_clubsport_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_audi_r8_gt2.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vortek_clubsport_t3.png"
+
+[cars."gt_porsche_911_gt1_98"]
+new_id = "gt_vandorn_aeromax_t4"
+real_name = "Porsche 911 GT1-98"
+new_name = "Vandorn Aeromax Endurance T4"
+real_manufacturer = "Porsche"
+new_manufacturer = "Vandorn Automobil"
+module = "gt"
+tier = 4
+category = "GT1 Legend"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_porsche_911_gt1_98.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vandorn_aeromax_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_porsche_911_gt1_98.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vandorn_aeromax_t4.png"
+
+[cars."gt_mclaren_f1_gtr_lt"]
+new_id = "gt_hyperion_velocity_t4"
+real_name = "McLaren F1 GTR Longtail"
+new_name = "Hyperion Velocity Longtail T4"
+real_manufacturer = "McLaren"
+new_manufacturer = "Hyperion Automotive"
+module = "gt"
+tier = 4
+category = "GT1 Legend"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_mclaren_f1_gtr_lt.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_hyperion_velocity_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_mclaren_f1_gtr_lt.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_hyperion_velocity_t4.png"
+
+[cars."gt_mercedes_clk_gtr"]
+new_id = "gt_silberstern_silberpfeil_t4"
+real_name = "Mercedes-Benz CLK GTR"
+new_name = "Silberstern Silberpfeil T4"
+real_manufacturer = "Mercedes-AMG"
+new_manufacturer = "Silberstern Automobil"
+module = "gt"
+tier = 4
+category = "GT1 Legend"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_mercedes_clk_gtr.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_silberstern_silberpfeil_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_mercedes_clk_gtr.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_silberstern_silberpfeil_t4.png"
+
+[cars."gt_nissan_r390_gt1"]
+new_id = "gt_katana_shogun_t4"
+real_name = "Nissan R390 GT1"
+new_name = "Katana Shogun Legend T4"
+real_manufacturer = "Nissan NISMO"
+new_manufacturer = "Katana Racing"
+module = "gt"
+tier = 4
+category = "GT1 Legend"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_nissan_r390_gt1.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_katana_shogun_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_nissan_r390_gt1.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_katana_shogun_t4.png"
+
+[cars."gt_ferrari_499p"]
+new_id = "gt_valente_imperatore_t5"
+real_name = "Ferrari 499P LMH"
+new_name = "Valente Imperatore Prototype T5"
+real_manufacturer = "Ferrari"
+new_manufacturer = "Valente Automobili"
+module = "gt"
+tier = 5
+category = "Hypercar Prototype"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_ferrari_499p.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_valente_imperatore_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_ferrari_499p.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_valente_imperatore_t5.png"
+
+[cars."gt_porsche_963"]
+new_id = "gt_vandorn_kronos_t5"
+real_name = "Porsche 963 LMDh"
+new_name = "Vandorn Kronos Prototype T5"
+real_manufacturer = "Porsche Penske"
+new_manufacturer = "Vandorn Automobil"
+module = "gt"
+tier = 5
+category = "Hypercar Prototype"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_porsche_963.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_vandorn_kronos_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_porsche_963.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_vandorn_kronos_t5.png"
+
+[cars."gt_toyota_gr010"]
+new_id = "gt_yamato_ronin_t5"
+real_name = "Toyota GR010 Hybrid"
+new_name = "Yamato Ronin Hybrid T5"
+real_manufacturer = "Toyota Gazoo Racing"
+new_manufacturer = "Yamato Racing"
+module = "gt"
+tier = 5
+category = "Hypercar Prototype"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_toyota_gr010.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_yamato_ronin_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_toyota_gr010.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_yamato_ronin_t5.png"
+
+[cars."gt_cadillac_v_series_r"]
+new_id = "gt_crestline_sovereign_t5"
+real_name = "Cadillac V-Series.R"
+new_name = "Crestline Sovereign Prototype T5"
+real_manufacturer = "Cadillac Racing"
+new_manufacturer = "Crestline Motor Division"
+module = "gt"
+tier = 5
+category = "Hypercar Prototype"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/gt/gt_cadillac_v_series_r.png"
+lateral_sprite_new = "textures/vehicles/laterals/gt/gt_crestline_sovereign_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/gt/gt_cadillac_v_series_r.png"
+topdown_sprite_new = "textures/vehicles/topdown/gt/gt_crestline_sovereign_t5.png"
+
+# --- Module: NASCAR ---
+
+[cars."nascar_monte_carlo_ss"]
+new_id = "nascar_crossbow_montego_t1"
+real_name = "Chevrolet Monte Carlo Street Stock"
+new_name = "Crossbow Montego Street Stock T1"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 1
+category = "Street Stock V8"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_monte_carlo_ss.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_crossbow_montego_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_monte_carlo_ss.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_crossbow_montego_t1.png"
+
+[cars."nascar_mustang_street_stock"]
+new_id = "nascar_forge_stallion_t1"
+real_name = "Ford Mustang Street Stock"
+new_name = "Forge Stallion Street Stock T1"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "nascar"
+tier = 1
+category = "Street Stock V8"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_mustang_street_stock.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_forge_stallion_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_mustang_street_stock.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_forge_stallion_t1.png"
+
+[cars."nascar_dodge_dart_street_stock"]
+new_id = "nascar_rampart_arrow_t1"
+real_name = "Dodge Dart Street Stock"
+new_name = "Rampart Arrow Street Stock T1"
+real_manufacturer = "Dodge"
+new_manufacturer = "Rampart Performance"
+module = "nascar"
+tier = 1
+category = "Street Stock V8"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_dodge_dart_street_stock.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_rampart_arrow_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_dodge_dart_street_stock.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_rampart_arrow_t1.png"
+
+[cars."nascar_super_late_model"]
+new_id = "nascar_crossbow_saber_t2"
+real_name = "Super Late Model Camaro"
+new_name = "Crossbow Saber Late Model T2"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 2
+category = "Late Model Stock"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_super_late_model.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_crossbow_saber_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_super_late_model.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_crossbow_saber_t2.png"
+
+[cars."nascar_mustang_super_late_model"]
+new_id = "nascar_forge_stallion_t2"
+real_name = "Super Late Model Mustang"
+new_name = "Forge Stallion Late Model T2"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "nascar"
+tier = 2
+category = "Late Model Stock"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_mustang_super_late_model.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_forge_stallion_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_mustang_super_late_model.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_forge_stallion_t2.png"
+
+[cars."nascar_late_model_stock_car"]
+new_id = "nascar_heartland_spec_t2"
+real_name = "Late Model Stock Car LMSC"
+new_name = "Heartland Spec Stock Car T2"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 2
+category = "Late Model Stock"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_late_model_stock_car.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_heartland_spec_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_late_model_stock_car.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_heartland_spec_t2.png"
+
+[cars."nascar_arca_chevy_ss"]
+new_id = "nascar_crossbow_predator_t3"
+real_name = "Chevrolet SS ARCA Spec"
+new_name = "Crossbow Predator Premier Stock T3"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 3
+category = "ARCA Menards Series"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_arca_chevy_ss.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_crossbow_predator_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_arca_chevy_ss.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_crossbow_predator_t3.png"
+
+[cars."nascar_toyota_camry_arca"]
+new_id = "nascar_yamato_century_t3"
+real_name = "Toyota Camry ARCA Spec"
+new_name = "Yamato Century Premier Stock T3"
+real_manufacturer = "Toyota"
+new_manufacturer = "Yamato Racing"
+module = "nascar"
+tier = 3
+category = "ARCA Menards Series"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_toyota_camry_arca.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_yamato_century_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_toyota_camry_arca.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_yamato_century_t3.png"
+
+[cars."nascar_ford_fusion_arca"]
+new_id = "nascar_forge_reactor_t3"
+real_name = "Ford Fusion ARCA Spec"
+new_name = "Forge Reactor Premier Stock T3"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "nascar"
+tier = 3
+category = "ARCA Menards Series"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_ford_fusion_arca.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_forge_reactor_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_ford_fusion_arca.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_forge_reactor_t3.png"
+
+[cars."nascar_silverado_truck"]
+new_id = "nascar_crossbow_sierra_t4"
+real_name = "Chevrolet Silverado RST Truck"
+new_name = "Crossbow Sierra V8 Truck T4"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 4
+category = "Craftsman Truck Series"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_silverado_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_crossbow_sierra_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_silverado_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_crossbow_sierra_t4.png"
+
+[cars."nascar_f150_truck"]
+new_id = "nascar_forge_ironclad_t4"
+real_name = "Ford F-150 Craftsman Truck"
+new_name = "Forge Ironclad V8 Truck T4"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "nascar"
+tier = 4
+category = "Craftsman Truck Series"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_f150_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_forge_ironclad_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_f150_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_forge_ironclad_t4.png"
+
+[cars."nascar_tundra_truck"]
+new_id = "nascar_yamato_taiga_t4"
+real_name = "Toyota Tundra TRD Pro Truck"
+new_name = "Yamato Taiga V8 Truck T4"
+real_manufacturer = "Toyota"
+new_manufacturer = "Yamato Racing"
+module = "nascar"
+tier = 4
+category = "Craftsman Truck Series"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_tundra_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_yamato_taiga_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_tundra_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_yamato_taiga_t4.png"
+
+[cars."nascar_corvette_ta1"]
+new_id = "nascar_crossbow_manta_t5"
+real_name = "Chevrolet Corvette C7 TA1"
+new_name = "Crossbow Manta Silhouette T5"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "nascar"
+tier = 5
+category = "Trans-Am TA1"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_corvette_ta1.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_crossbow_manta_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_corvette_ta1.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_crossbow_manta_t5.png"
+
+[cars."nascar_mustang_ta1"]
+new_id = "nascar_forge_stallion_t5"
+real_name = "Ford Mustang TA1"
+new_name = "Forge Stallion Silhouette T5"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "nascar"
+tier = 5
+category = "Trans-Am TA1"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_mustang_ta1.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_forge_stallion_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_mustang_ta1.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_forge_stallion_t5.png"
+
+[cars."nascar_challenger_ta1"]
+new_id = "nascar_rampart_enforcer_t5"
+real_name = "Dodge Challenger TA1"
+new_name = "Rampart Enforcer Silhouette T5"
+real_manufacturer = "Dodge"
+new_manufacturer = "Rampart Performance"
+module = "nascar"
+tier = 5
+category = "Trans-Am TA1"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/nascar/nascar_challenger_ta1.png"
+lateral_sprite_new = "textures/vehicles/laterals/nascar/nascar_rampart_enforcer_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/nascar/nascar_challenger_ta1.png"
+topdown_sprite_new = "textures/vehicles/topdown/nascar/nascar_rampart_enforcer_t5.png"
+
+# --- Module: RALLY ---
+
+[cars."rally_peugeot_208_rally4"]
+new_id = "rally_gallia_200_t1"
+real_name = "Peugeot 208 Rally4"
+new_name = "Gallia 200 Rally Junior T1"
+real_manufacturer = "Peugeot"
+new_manufacturer = "Gallia Sport"
+module = "rally"
+tier = 1
+category = "Rally Junior FWD"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_peugeot_208_rally4.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_gallia_200_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_gallia_200_t1.png"
+
+[cars."rally_fiesta_rally4"]
+new_id = "rally_forge_spark_t1"
+real_name = "Ford Fiesta Rally4"
+new_name = "Forge Spark Rally Junior T1"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "rally"
+tier = 1
+category = "Rally Junior FWD"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_fiesta_rally4.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_forge_spark_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_fiesta_rally4.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_forge_spark_t1.png"
+
+[cars."rally_clio_rally4"]
+new_id = "rally_rouen_dauphine_t1"
+real_name = "Renault Clio Rally4"
+new_name = "Rouen Dauphine Rally Junior T1"
+real_manufacturer = "Renault"
+new_manufacturer = "Rouen Motorsport"
+module = "rally"
+tier = 1
+category = "Rally Junior FWD"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_clio_rally4.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_rouen_dauphine_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_clio_rally4.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_rouen_dauphine_t1.png"
+
+[cars."rally_omse_supercar_lites"]
+new_id = "rally_nordic_rx_lites_t2"
+real_name = "Olsbergs MSE Supercar Lites"
+new_name = "Nordic RX Lites AWD T2"
+real_manufacturer = "Olsbergs MSE"
+new_manufacturer = "Nordic RX Engineering"
+module = "rally"
+tier = 2
+category = "Supercar Lites / RX2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_omse_supercar_lites.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_nordic_rx_lites_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_omse_supercar_lites.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_nordic_rx_lites_t2.png"
+
+[cars."rally_avitas_supercar_lites"]
+new_id = "rally_aerotech_rx_lites_t2"
+real_name = "Avitas Supercar Lites"
+new_name = "AeroTech RX Lite Chassis T2"
+real_manufacturer = "Avitas Motorsport"
+new_manufacturer = "AeroTech RX"
+module = "rally"
+tier = 2
+category = "Supercar Lites / RX2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_avitas_supercar_lites.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_aerotech_rx_lites_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_avitas_supercar_lites.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_aerotech_rx_lites_t2.png"
+
+[cars."rally_qev_rx2e"]
+new_id = "rally_volttech_electrocross_t2"
+real_name = "QEV RX2e Electric"
+new_name = "VoltTech Electrocross T2"
+real_manufacturer = "QEV Technologies"
+new_manufacturer = "VoltTech Racing"
+module = "rally"
+tier = 2
+category = "Supercar Lites / RX2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_qev_rx2e.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_volttech_electrocross_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_qev_rx2e.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_volttech_electrocross_t2.png"
+
+[cars."rally_hyundai_i20_rx"]
+new_id = "rally_hanguk_apex_t3"
+real_name = "Hyundai i20 RX Supercar"
+new_name = "Hanguk Apex RX Supercar T3"
+real_manufacturer = "Hyundai"
+new_manufacturer = "Hanguk Motorsport"
+module = "rally"
+tier = 3
+category = "Euro RX Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_hyundai_i20_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_hanguk_apex_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_hyundai_i20_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_hanguk_apex_t3.png"
+
+[cars."rally_polo_rx"]
+new_id = "rally_volkskraft_strassen_t3"
+real_name = "Volkswagen Polo RX Supercar"
+new_name = "Volkskraft Strassen RX Supercar T3"
+real_manufacturer = "Volkswagen"
+new_manufacturer = "Volkskraft"
+module = "rally"
+tier = 3
+category = "Euro RX Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_polo_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_volkskraft_strassen_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_polo_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_volkskraft_strassen_t3.png"
+
+[cars."rally_audi_s1_rx"]
+new_id = "rally_vortek_quattro_rx_t3"
+real_name = "Audi S1 EKS RX Supercar"
+new_name = "Vortek Quattro RX Supercar T3"
+real_manufacturer = "Audi"
+new_manufacturer = "Vortek Automobil"
+module = "rally"
+tier = 3
+category = "Euro RX Supercar"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_audi_s1_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_vortek_quattro_rx_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_audi_s1_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_vortek_quattro_rx_t3.png"
+
+[cars."rally_peugeot_208_wrx"]
+new_id = "rally_gallia_lyon_t4"
+real_name = "Peugeot 208 WRX Supercar"
+new_name = "Gallia Lyon WRX Supercar T4"
+real_manufacturer = "Peugeot"
+new_manufacturer = "Gallia Sport"
+module = "rally"
+tier = 4
+category = "FIA World RX Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_peugeot_208_wrx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_gallia_lyon_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_peugeot_208_wrx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_gallia_lyon_t4.png"
+
+[cars."rally_ford_focus_rs_rx"]
+new_id = "rally_forge_comet_t4"
+real_name = "Ford Focus RS RX Supercar"
+new_name = "Forge Comet WRX Supercar T4"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "rally"
+tier = 4
+category = "FIA World RX Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_ford_focus_rs_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_forge_comet_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_ford_focus_rs_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_forge_comet_t4.png"
+
+[cars."rally_subaru_wrx_rx"]
+new_id = "rally_sixstar_vortex_t4"
+real_name = "Subaru WRX STI RX Supercar"
+new_name = "Sixstar Vortex WRX Supercar T4"
+real_manufacturer = "Subaru"
+new_manufacturer = "Sixstar Rally"
+module = "rally"
+tier = 4
+category = "FIA World RX Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_subaru_wrx_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_sixstar_vortex_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_subaru_wrx_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_sixstar_vortex_t4.png"
+
+[cars."rally_peugeot_208_rx1e"]
+new_id = "rally_gallia_volt_t5"
+real_name = "Peugeot 208 RX1e"
+new_name = "Gallia Volt RX1e Supercar T5"
+real_manufacturer = "Peugeot"
+new_manufacturer = "Gallia Sport"
+module = "rally"
+tier = 5
+category = "RX1e Electric Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_peugeot_208_rx1e.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_gallia_volt_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_peugeot_208_rx1e.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_gallia_volt_t5.png"
+
+[cars."rally_polo_rx1e"]
+new_id = "rally_volkskraft_electro_t5"
+real_name = "Volkswagen Polo RX1e"
+new_name = "Volkskraft Electro RX1e T5"
+real_manufacturer = "Volkswagen"
+new_manufacturer = "Volkskraft"
+module = "rally"
+tier = 5
+category = "RX1e Electric Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_polo_rx1e.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_volkskraft_electro_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_polo_rx1e.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_volkskraft_electro_t5.png"
+
+[cars."rally_lancia_delta_evo_e_rx"]
+new_id = "rally_torino_integrale_e_t5"
+real_name = "Lancia Delta Evo-e RX"
+new_name = "Torino Integrale Evo-e RX T5"
+real_manufacturer = "Lancia"
+new_manufacturer = "Torino Corse"
+module = "rally"
+tier = 5
+category = "RX1e Electric Supercar"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_lancia_delta_evo_e_rx.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_torino_integrale_e_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_lancia_delta_evo_e_rx.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_torino_integrale_e_t5.png"
+
+[cars."rally_omse_fc1x"]
+new_id = "rally_nordic_valkyrie_t6"
+real_name = "Olsbergs MSE FC1-X"
+new_name = "Nordic RX Valkyrie Group E T6"
+real_manufacturer = "Olsbergs MSE"
+new_manufacturer = "Nordic RX Engineering"
+module = "rally"
+tier = 6
+category = "Nitrocross Group E"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_omse_fc1x.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_nordic_valkyrie_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_omse_fc1x.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_nordic_valkyrie_t6.png"
+
+[cars."rally_vsc_fc1x"]
+new_id = "rally_green_mountain_titan_t6"
+real_name = "Vermont SportsCar FC1-X"
+new_name = "Green Mountain Titan Group E T6"
+real_manufacturer = "Vermont SportsCar"
+new_manufacturer = "Green Mountain Motorsport"
+module = "rally"
+tier = 6
+category = "Nitrocross Group E"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_vsc_fc1x.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_green_mountain_titan_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_vsc_fc1x.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_green_mountain_titan_t6.png"
+
+[cars."rally_dodge_hornet_fc1x"]
+new_id = "rally_rampart_wasp_t6"
+real_name = "Dodge Hornet R/T FC1-X"
+new_name = "Rampart Wasp Group E T6"
+real_manufacturer = "Dodge"
+new_manufacturer = "Rampart Performance"
+module = "rally"
+tier = 6
+category = "Nitrocross Group E"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_dodge_hornet_fc1x.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_rampart_wasp_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_dodge_hornet_fc1x.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_rampart_wasp_t6.png"
+
+[cars."rally_audi_sport_quattro_s1"]
+new_id = "rally_vortek_turbo_quattro_t7"
+real_name = "Audi Sport Quattro S1 E2"
+new_name = "Vortek Turbo Quattro Legend T7"
+real_manufacturer = "Audi"
+new_manufacturer = "Vortek Automobil"
+module = "rally"
+tier = 7
+category = "Heritage Group B"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_audi_sport_quattro_s1.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_vortek_turbo_quattro_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_audi_sport_quattro_s1.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_vortek_turbo_quattro_t7.png"
+
+[cars."rally_peugeot_205_t16"]
+new_id = "rally_gallia_corsica_t7"
+real_name = "Peugeot 205 T16 EVO 2"
+new_name = "Gallia Corsica Turbo Legend T7"
+real_manufacturer = "Peugeot"
+new_manufacturer = "Gallia Sport"
+module = "rally"
+tier = 7
+category = "Heritage Group B"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_peugeot_205_t16.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_gallia_corsica_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_peugeot_205_t16.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_gallia_corsica_t7.png"
+
+[cars."rally_lancia_delta_s4"]
+new_id = "rally_torino_stradale_t7"
+real_name = "Lancia Delta S4"
+new_name = "Torino Stradale S4 Legend T7"
+real_manufacturer = "Lancia"
+new_manufacturer = "Torino Corse"
+module = "rally"
+tier = 7
+category = "Heritage Group B"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/rally/rally_lancia_delta_s4.png"
+lateral_sprite_new = "textures/vehicles/laterals/rally/rally_torino_stradale_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/rally/rally_lancia_delta_s4.png"
+topdown_sprite_new = "textures/vehicles/topdown/rally/rally_torino_stradale_t7.png"
+
+# --- Module: EXTREME_OFFROAD ---
+
+[cars."offroad_sand_rail_buggy"]
+new_id = "offroad_laurentian_nomad_t1"
+real_name = "Can-Am Maverick R Trophy Spec"
+new_name = "Laurentian Nomad Trophy Buggy T1"
+real_manufacturer = "Can-Am"
+new_manufacturer = "Laurentian Off-Road"
+module = "extreme_offroad"
+tier = 1
+category = "Sand Rail Buggy"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_sand_rail_buggy.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_laurentian_nomad_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_sand_rail_buggy.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_laurentian_nomad_t1.png"
+
+[cars."offroad_polaris_rzr_pro_r"]
+new_id = "offroad_northstar_razor_t1"
+real_name = "Polaris RZR Pro R Tubular"
+new_name = "Northstar Razor Pro Buggy T1"
+real_manufacturer = "Polaris"
+new_manufacturer = "Northstar Off-Road"
+module = "extreme_offroad"
+tier = 1
+category = "Sand Rail Buggy"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_polaris_rzr_pro_r.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_northstar_razor_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_polaris_rzr_pro_r.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_northstar_razor_t1.png"
+
+[cars."offroad_vw_sand_rail"]
+new_id = "offroad_volkskraft_dune_t1"
+real_name = "Custom VW Sand Rail Buggy"
+new_name = "Volkskraft Dune Buggy T1"
+real_manufacturer = "Custom"
+new_manufacturer = "Custom"
+module = "extreme_offroad"
+tier = 1
+category = "Sand Rail Buggy"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_vw_sand_rail.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_volkskraft_dune_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_vw_sand_rail.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_volkskraft_dune_t1.png"
+
+[cars."offroad_baja_trophy_truck"]
+new_id = "offroad_desert_forge_truck_t2"
+real_name = "Geiser Bros AWD Trophy Truck"
+new_name = "Desert Forge AWD Trophy Truck T2"
+real_manufacturer = "Geiser Bros"
+new_manufacturer = "Desert Forge Trucks"
+module = "extreme_offroad"
+tier = 2
+category = "Trophy Truck 4x4"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_baja_trophy_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_desert_forge_truck_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_baja_trophy_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_desert_forge_truck_t2.png"
+
+[cars."offroad_bettantown_trophy_truck"]
+new_id = "offroad_bettantown_trophy_truck"
+real_name = "Bettantown Unlimited Trophy Truck"
+new_name = "Bettantown Unlimited Trophy Truck T2"
+real_manufacturer = "Bettantown"
+new_manufacturer = "Bettantown"
+module = "extreme_offroad"
+tier = 2
+category = "Trophy Truck 4x4"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_bettantown_trophy_truck.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_bettantown_trophy_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_bettantown_trophy_truck.png"
+
+[cars."offroad_mason_awd_truck"]
+new_id = "offroad_sonora_desert_king_t2"
+real_name = "Mason Motorsport AWD Truck"
+new_name = "Sonora Desert King AWD Truck T2"
+real_manufacturer = "Mason Motorsport"
+new_manufacturer = "Sonora AWD Racing"
+module = "extreme_offroad"
+tier = 2
+category = "Trophy Truck 4x4"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_mason_awd_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_sonora_desert_king_t2.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_mason_awd_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_sonora_desert_king_t2.png"
+
+[cars."offroad_subaru_ice_racer"]
+new_id = "offroad_sixstar_blizzard_t3"
+real_name = "Subaru WRX STI Ice Racer"
+new_name = "Sixstar Blizzard Ice Racer T3"
+real_manufacturer = "Subaru"
+new_manufacturer = "Sixstar Rally"
+module = "extreme_offroad"
+tier = 3
+category = "Arctic Ice Racer"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_subaru_ice_racer.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_sixstar_blizzard_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_subaru_ice_racer.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_sixstar_blizzard_t3.png"
+
+[cars."offroad_audi_quattro_ice"]
+new_id = "offroad_vortek_glacier_t3"
+real_name = "Audi Sport Quattro Ice Edition"
+new_name = "Vortek Glacier Quattro Ice Spec T3"
+real_manufacturer = "Audi"
+new_manufacturer = "Vortek Automobil"
+module = "extreme_offroad"
+tier = 3
+category = "Arctic Ice Racer"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_audi_quattro_ice.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_vortek_glacier_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_audi_quattro_ice.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_vortek_glacier_t3.png"
+
+[cars."offroad_lancer_evo_ice"]
+new_id = "offroad_shinano_frost_t3"
+real_name = "Mitsubishi Lancer Evo Ice Spec"
+new_name = "Shinano Frost AWD Ice Spec T3"
+real_manufacturer = "Mitsubishi"
+new_manufacturer = "Shinano Performance"
+module = "extreme_offroad"
+tier = 3
+category = "Arctic Ice Racer"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_lancer_evo_ice.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_shinano_frost_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_lancer_evo_ice.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_shinano_frost_t3.png"
+
+[cars."offroad_mega_mud_truck"]
+new_id = "offroad_titan_mud_slinger_t4"
+real_name = "Mega Truck V8 Mud Slinger"
+new_name = "Titan Mud Slinger V8 T4"
+real_manufacturer = "Custom"
+new_manufacturer = "Custom"
+module = "extreme_offroad"
+tier = 4
+category = "Mud Bogger V8"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_mega_mud_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_titan_mud_slinger_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_mega_mud_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_titan_mud_slinger_t4.png"
+
+[cars."offroad_chevy_k30_mud_bogger"]
+new_id = "offroad_crossbow_ridge_t4"
+real_name = "Chevrolet K30 Custom Mud Bogger"
+new_name = "Crossbow Ridge Heavy Mud Bogger T4"
+real_manufacturer = "Chevrolet"
+new_manufacturer = "Crossbow Performance"
+module = "extreme_offroad"
+tier = 4
+category = "Mud Bogger V8"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_chevy_k30_mud_bogger.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_crossbow_ridge_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_chevy_k30_mud_bogger.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_crossbow_ridge_t4.png"
+
+[cars."offroad_ford_f250_high_riser"]
+new_id = "offroad_forge_mammoth_t4"
+real_name = "Ford F-250 High Riser 4x4"
+new_name = "Forge Mammoth High Riser 4x4 T4"
+real_manufacturer = "Ford"
+new_manufacturer = "Forge Motor Co"
+module = "extreme_offroad"
+tier = 4
+category = "Mud Bogger V8"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_ford_f250_high_riser.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_forge_mammoth_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_ford_f250_high_riser.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_forge_mammoth_t4.png"
+
+[cars."offroad_grave_crusher"]
+new_id = "offroad_havoc_tomb_raider_t5"
+real_name = "Grave Digger Spec Monster Jam"
+new_name = "Havoc Tomb Raider Monster Crusher T5"
+real_manufacturer = "Monster Jam"
+new_manufacturer = "Havoc Monster Trucks"
+module = "extreme_offroad"
+tier = 5
+category = "Crusher Monster Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_grave_crusher.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_havoc_tomb_raider_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_grave_crusher.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_havoc_tomb_raider_t5.png"
+
+[cars."offroad_max_d_monster"]
+new_id = "offroad_havoc_overkill_t5"
+real_name = "Max-D Monster Jam Truck"
+new_name = "Havoc Overkill Monster Truck T5"
+real_manufacturer = "Monster Jam"
+new_manufacturer = "Havoc Monster Trucks"
+module = "extreme_offroad"
+tier = 5
+category = "Crusher Monster Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_max_d_monster.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_havoc_overkill_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_max_d_monster.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_havoc_overkill_t5.png"
+
+[cars."offroad_bigfoot_crusher"]
+new_id = "offroad_colossus_titan_t5"
+real_name = "Bigfoot 1500 BHP Crusher"
+new_name = "Colossus Titan 1500 BHP Crusher T5"
+real_manufacturer = "Bigfoot"
+new_manufacturer = "Colossus Monster Trucks"
+module = "extreme_offroad"
+tier = 5
+category = "Crusher Monster Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/offroad_bigfoot_crusher.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_colossus_titan_t5.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/offroad_bigfoot_crusher.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_colossus_titan_t5.png"
+
+[cars."rally_toyota_hilux_t1_plus"]
+new_id = "offroad_yamato_sahara_t6"
+real_name = "Toyota GR DKR Hilux T1+"
+new_name = "Yamato Sahara Raid T1 T6"
+real_manufacturer = "Toyota"
+new_manufacturer = "Yamato Racing"
+module = "extreme_offroad"
+tier = 6
+category = "Rally Raid T1+"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_toyota_hilux_t1_plus.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_yamato_sahara_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_toyota_hilux_t1_plus.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_yamato_sahara_t6.png"
+
+[cars."rally_audi_rs_q_etron"]
+new_id = "offroad_vortek_electro_raid_t6"
+real_name = "Audi RS Q e-tron Dakar"
+new_name = "Vortek Electro Raid Quattro T6"
+real_manufacturer = "Audi"
+new_manufacturer = "Vortek Automobil"
+module = "extreme_offroad"
+tier = 6
+category = "Rally Raid T1+"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_audi_rs_q_etron.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_vortek_electro_raid_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_audi_rs_q_etron.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_vortek_electro_raid_t6.png"
+
+[cars."rally_prodrive_hunter_t1"]
+new_id = "offroad_proline_predator_t6"
+real_name = "Prodrive Hunter T1+"
+new_name = "Proline Predator Raid T1 T6"
+real_manufacturer = "Prodrive"
+new_manufacturer = "Proline Dynamics"
+module = "extreme_offroad"
+tier = 6
+category = "Rally Raid T1+"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_prodrive_hunter_t1.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_proline_predator_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_prodrive_hunter_t1.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_proline_predator_t6.png"
+
+[cars."rally_sst_super_truck"]
+new_id = "offroad_stadium_thunder_v8_t7"
+real_name = "Stadium Super Truck V8"
+new_name = "Stadium Thunder V8 Jumper T7"
+real_manufacturer = "SST"
+new_manufacturer = "Stadium Thunder V8"
+module = "extreme_offroad"
+tier = 7
+category = "Stadium Super Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_sst_super_truck.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_v8_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_sst_super_truck.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_v8_t7.png"
+
+[cars."rally_sst_robby_gordon"]
+new_id = "offroad_stadium_thunder_pro_t7"
+real_name = "Robby Gordon SST Spec"
+new_name = "Stadium Thunder Pro Arena Spec T7"
+real_manufacturer = "SST"
+new_manufacturer = "Stadium Thunder V8"
+module = "extreme_offroad"
+tier = 7
+category = "Stadium Super Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_sst_robby_gordon.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_pro_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_sst_robby_gordon.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_pro_t7.png"
+
+[cars."rally_sst_traxxas_edition"]
+new_id = "offroad_stadium_thunder_apex_t7"
+real_name = "Traxxas Edition SST Spec"
+new_name = "Stadium Thunder Apex Edition T7"
+real_manufacturer = "SST"
+new_manufacturer = "Stadium Thunder V8"
+module = "extreme_offroad"
+tier = 7
+category = "Stadium Super Truck"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/extreme_offroad/rally_sst_traxxas_edition.png"
+lateral_sprite_new = "textures/vehicles/laterals/extreme_offroad/offroad_stadium_thunder_apex_t7.png"
+topdown_sprite_current = "textures/vehicles/topdown/extreme_offroad/rally_sst_traxxas_edition.png"
+topdown_sprite_new = "textures/vehicles/topdown/extreme_offroad/offroad_stadium_thunder_apex_t7.png"
+
+# --- Module: KART ---
+
+[cars."kart_crg_hero_60"]
+new_id = "kart_blackline_cadet_t1"
+real_name = "CRG Hero 60cc Cadet"
+new_name = "Blackline Cadet 60cc T1"
+real_manufacturer = "CRG"
+new_manufacturer = "Blackline Karting"
+module = "kart"
+tier = 1
+category = "Cadet Kart 60cc"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_crg_hero_60.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_blackline_cadet_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_crg_hero_60.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_blackline_cadet_t1.png"
+
+[cars."kart_birel_c28"]
+new_id = "kart_rosso_junior_t1"
+real_name = "Birel ART C28 Cadet"
+new_name = "Rosso Kart Junior 60cc T1"
+real_manufacturer = "Birel ART"
+new_manufacturer = "Rosso Kart Works"
+module = "kart"
+tier = 1
+category = "Cadet Kart 60cc"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_birel_c28.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_rosso_junior_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_birel_c28.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_rosso_junior_t1.png"
+
+[cars."kart_tony_kart_neos"]
+new_id = "kart_verde_sprout_t1"
+real_name = "Tony Kart Neos 60cc"
+new_name = "Verde Kart Sprout 60cc T1"
+real_manufacturer = "Tony Kart"
+new_manufacturer = "Verde Karting"
+module = "kart"
+tier = 1
+category = "Cadet Kart 60cc"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_tony_kart_neos.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_verde_sprout_t1.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_tony_kart_neos.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_verde_sprout_t1.png"
+
+[cars."kart_tony_kart_rookie_okj"]
+new_id = "kart_verde_sprint_t2"
+real_name = "Tony Kart Rookie OK-J"
+new_name = "Verde Kart Sprint 125 Junior T2"
+real_manufacturer = "Tony Kart"
+new_manufacturer = "Verde Karting"
+module = "kart"
+tier = 2
+category = "OK-Junior 125cc"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_tony_kart_rookie_okj.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_verde_sprint_t2.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_crg_black_mirror_okj"]
+new_id = "kart_blackline_obsidian_t2"
+real_name = "CRG Black Mirror OK-J"
+new_name = "Blackline Obsidian 125 Junior T2"
+real_manufacturer = "CRG"
+new_manufacturer = "Blackline Karting"
+module = "kart"
+tier = 2
+category = "OK-Junior 125cc"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_crg_black_mirror_okj.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_blackline_obsidian_t2.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_birel_ry29_okj"]
+new_id = "kart_rosso_veloce_t2"
+real_name = "Birel ART RY29 Junior"
+new_name = "Rosso Kart Veloce 125 Junior T2"
+real_manufacturer = "Birel ART"
+new_manufacturer = "Rosso Kart Works"
+module = "kart"
+tier = 2
+category = "OK-Junior 125cc"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_birel_ry29_okj.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_rosso_veloce_t2.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_tony_kart_racer_ok"]
+new_id = "kart_verde_apex_t3"
+real_name = "Tony Kart Racer 401 RR OK"
+new_name = "Verde Kart Apex 125 Senior T3"
+real_manufacturer = "Tony Kart"
+new_manufacturer = "Verde Karting"
+module = "kart"
+tier = 3
+category = "Senior Kart 125cc OK"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_tony_kart_racer_ok.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_verde_apex_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_verde_apex_t3.png"
+
+[cars."kart_crg_kt2_ok"]
+new_id = "kart_blackline_phantom_t3"
+real_name = "CRG KT2 OK 125cc"
+new_name = "Blackline Phantom 125 Senior T3"
+real_manufacturer = "CRG"
+new_manufacturer = "Blackline Karting"
+module = "kart"
+tier = 3
+category = "Senior Kart 125cc OK"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_crg_kt2_ok.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_blackline_phantom_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_crg_kt2_ok.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_blackline_phantom_t3.png"
+
+[cars."kart_birel_ry30_ok"]
+new_id = "kart_rosso_modena_t3"
+real_name = "Birel ART RY30 OK"
+new_name = "Rosso Kart Modena 125 Senior T3"
+real_manufacturer = "Birel ART"
+new_manufacturer = "Rosso Kart Works"
+module = "kart"
+tier = 3
+category = "Senior Kart 125cc OK"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_birel_ry30_ok.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_rosso_modena_t3.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_birel_ry30_ok.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_rosso_modena_t3.png"
+
+[cars."kart_birel_art_kz2"]
+new_id = "kart_rosso_corsa_t4"
+real_name = "Birel ART KZ2 125cc Shifter"
+new_name = "Rosso Kart Corsa 125 Shifter T4"
+real_manufacturer = "Birel ART"
+new_manufacturer = "Rosso Kart Works"
+module = "kart"
+tier = 4
+category = "Shifter Kart 125cc KZ2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_birel_art_kz2.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_rosso_corsa_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_birel_art_kz2.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_rosso_corsa_t4.png"
+
+[cars."kart_crg_road_rebel_kz"]
+new_id = "kart_blackline_renegade_t4"
+real_name = "CRG Road Rebel KZ"
+new_name = "Blackline Renegade 125 Shifter T4"
+real_manufacturer = "CRG"
+new_manufacturer = "Blackline Karting"
+module = "kart"
+tier = 4
+category = "Shifter Kart 125cc KZ2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_crg_road_rebel_kz.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_blackline_renegade_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_crg_road_rebel_kz.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_blackline_renegade_t4.png"
+
+[cars."kart_tony_kart_racer_kz"]
+new_id = "kart_verde_pro_t4"
+real_name = "Tony Kart Racer 401 KZ"
+new_name = "Verde Kart Pro 125 Shifter T4"
+real_manufacturer = "Tony Kart"
+new_manufacturer = "Verde Karting"
+module = "kart"
+tier = 4
+category = "Shifter Kart 125cc KZ2"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_tony_kart_racer_kz.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_verde_pro_t4.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_tony_kart_racer_kz.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_verde_pro_t4.png"
+
+[cars."kart_anderson_maverick_mono"]
+new_id = "kart_highland_hawk_t5"
+real_name = "Anderson Maverick 250 Mono"
+new_name = "Highland Hawk 250 Single T5"
+real_manufacturer = "Anderson"
+new_manufacturer = "Highland Superkarts"
+module = "kart"
+tier = 5
+category = "Superkart Div 2 Mono"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_anderson_maverick_mono.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_highland_hawk_t5.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_ms_superkart_mono"]
+new_id = "kart_moravia_arrow_t5"
+real_name = "MS Kart Superkart Mono"
+new_name = "Moravia Arrow 250 Single T5"
+real_manufacturer = "MS Kart"
+new_manufacturer = "Moravia Superkarts"
+module = "kart"
+tier = 5
+category = "Superkart Div 2 Mono"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_ms_superkart_mono.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_moravia_arrow_t5.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_pvt_single_250"]
+new_id = "kart_vanguard_spyder_t5"
+real_name = "PVT Spyder 250 Single"
+new_name = "Vanguard Spyder 250 Single T5"
+real_manufacturer = "PVT Racing"
+new_manufacturer = "Vanguard Single"
+module = "kart"
+tier = 5
+category = "Superkart Div 2 Mono"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_pvt_single_250.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_vanguard_spyder_t5.png"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_anderson_cs250"]
+new_id = "kart_highland_eagle_t6"
+real_name = "Anderson CS250 Twin GP"
+new_name = "Highland Eagle 250 Twin GP T6"
+real_manufacturer = "Anderson"
+new_manufacturer = "Highland Superkarts"
+module = "kart"
+tier = 6
+category = "Superkart 250cc Twin GP"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_anderson_cs250.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_highland_eagle_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_anderson_cs250.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_highland_eagle_t6.png"
+
+[cars."kart_ms_superkart_250"]
+new_id = "kart_moravia_falcon_t6"
+real_name = "MS Kart Superkart 250"
+new_name = "Moravia Falcon 250 Twin GP T6"
+real_manufacturer = "MS Kart"
+new_manufacturer = "Moravia Superkarts"
+module = "kart"
+tier = 6
+category = "Superkart 250cc Twin GP"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_ms_superkart_250.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_moravia_falcon_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_ms_superkart_250.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_moravia_falcon_t6.png"
+
+[cars."kart_viper_250_twin"]
+new_id = "kart_venom_cobra_t6"
+real_name = "VIPER 250 Twin Superkart"
+new_name = "Venom Cobra 250 Twin GP T6"
+real_manufacturer = "VIPER Racing"
+new_manufacturer = "Venom Racing"
+module = "kart"
+tier = 6
+category = "Superkart 250cc Twin GP"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_viper_250_twin.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/kart_venom_cobra_t6.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_viper_250_twin.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/kart_venom_cobra_t6.png"
+
+# --- Module: AUTOCROSS ---
+
+[cars."autocross_lifelive_tn5_junior"]
+new_id = "autocross_ardennes_junior_t1"
+real_name = "LifeLive TN5 Junior"
+new_name = "Ardennes Junior Cross 600 T1"
+real_manufacturer = "LifeLive"
+new_manufacturer = "Ardennes Cross"
+module = "autocross"
+tier = 1
+category = "Cross Car Junior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_speedcar_xtrem_junior"]
+new_id = "autocross_iberian_furia_t1"
+real_name = "Speedcar Xtrem Junior"
+new_name = "Iberian Furia Junior Cross T1"
+real_manufacturer = "Speedcar"
+new_manufacturer = "Iberian Cross"
+module = "autocross"
+tier = 1
+category = "Cross Car Junior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_planet_k3_junior"]
+new_id = "autocross_cosmo_nova_t1"
+real_name = "Planet Kart Cross K3 Junior"
+new_name = "Cosmo Nova Junior Cross T1"
+real_manufacturer = "Planet Kart Cross"
+new_manufacturer = "Cosmo Kartcross"
+module = "autocross"
+tier = 1
+category = "Cross Car Junior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_lifelive_tn11_senior"]
+new_id = "autocross_ardennes_pro_t2"
+real_name = "LifeLive TN11 Senior"
+new_name = "Ardennes Pro Cross 850 T2"
+real_manufacturer = "LifeLive"
+new_manufacturer = "Ardennes Cross"
+module = "autocross"
+tier = 2
+category = "Cross Car Senior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_speedcar_wonder"]
+new_id = "autocross_iberian_relampago_t2"
+real_name = "Speedcar Wonder"
+new_name = "Iberian Relampago Cross T2"
+real_manufacturer = "Speedcar"
+new_manufacturer = "Iberian Cross"
+module = "autocross"
+tier = 2
+category = "Cross Car Senior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_semog_bravo_sport"]
+new_id = "autocross_lusitania_bravo_t2"
+real_name = "Semog Bravo Sport"
+new_name = "Lusitania Bravo Sport Cross T2"
+real_manufacturer = "Semog"
+new_manufacturer = "Lusitania Cross"
+module = "autocross"
+tier = 2
+category = "Cross Car Senior"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_peters_buggy1600"]
+new_id = "autocross_petersen_buggy1600_t3"
+real_name = "Peters Autosport Buggy1600"
+new_name = "Petersen Buggy 1600 T3"
+real_manufacturer = "Peters Autosport"
+new_manufacturer = "Petersen Autosport"
+module = "autocross"
+tier = 3
+category = "Buggy1600"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_alfa_racing_buggy1600"]
+new_id = "autocross_bologna_buggy1600_t3"
+real_name = "Alfa Racing Buggy1600"
+new_name = "Bologna Buggy 1600 T3"
+real_manufacturer = "Alfa Racing"
+new_manufacturer = "Bologna Buggy Works"
+module = "autocross"
+tier = 3
+category = "Buggy1600"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_fast_speed_buggy1600"]
+new_id = "autocross_rapid_buggy1600_t3"
+real_name = "Fast & Speed Buggy1600"
+new_name = "Rapid Dynamics Buggy 1600 T3"
+real_manufacturer = "Fast & Speed"
+new_manufacturer = "Rapid Dynamics"
+module = "autocross"
+tier = 3
+category = "Buggy1600"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_skoda_fabia_tax"]
+new_id = "autocross_bohemia_veloce_t4"
+real_name = "Škoda Fabia TAX"
+new_name = "Bohemia Veloce Touring AX T4"
+real_manufacturer = "Škoda Motorsport"
+new_manufacturer = "Bohemia Motorsport"
+module = "autocross"
+tier = 4
+category = "TouringAutocross"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_mitsubishi_evo_tax"]
+new_id = "autocross_shinano_tsunami_t4"
+real_name = "Mitsubishi Lancer Evo IX TAX"
+new_name = "Shinano Tsunami Touring AX T4"
+real_manufacturer = "Mitsubishi Ralliart"
+new_manufacturer = "Shinano Performance"
+module = "autocross"
+tier = 4
+category = "TouringAutocross"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_audi_a4_tax"]
+new_id = "autocross_vortek_quattro_t4"
+real_name = "Audi A4 Quattro TAX"
+new_name = "Vortek Quattro Touring AX T4"
+real_manufacturer = "Audi Sport Custom"
+new_manufacturer = "Vortek Automobil"
+module = "autocross"
+tier = 4
+category = "TouringAutocross"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_peters_superbuggy"]
+new_id = "autocross_petersen_superbuggy_t5"
+real_name = "Peters Autosport SuperBuggy V8"
+new_name = "Petersen SuperBuggy V8 T5"
+real_manufacturer = "Peters Autosport"
+new_manufacturer = "Petersen Autosport"
+module = "autocross"
+tier = 5
+category = "SuperBuggy"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_alfa_racing_superbuggy"]
+new_id = "autocross_bologna_superbuggy_t5"
+real_name = "Alfa Racing SuperBuggy Twin-Turbo"
+new_name = "Bologna SuperBuggy Twin-Turbo T5"
+real_manufacturer = "Alfa Racing"
+new_manufacturer = "Bologna Buggy Works"
+module = "autocross"
+tier = 5
+category = "SuperBuggy"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."autocross_fast_speed_superbuggy"]
+new_id = "autocross_rapid_superbuggy_t5"
+real_name = "Fast & Speed SuperBuggy Biturbo"
+new_name = "Rapid Dynamics SuperBuggy Biturbo T5"
+real_manufacturer = "Fast & Speed"
+new_manufacturer = "Rapid Dynamics"
+module = "autocross"
+tier = 5
+category = "SuperBuggy"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+# --- Module: CLASSIC ---
+
+[cars."classic_gt"]
+new_id = "classic_gt"
+real_name = "Apex Phantom GT"
+new_name = "Apex Phantom GT"
+real_manufacturer = "Apex Dynamics"
+new_manufacturer = "Apex Dynamics"
+module = "classic"
+tier = 1
+category = "Arcade GT Coupe"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_gt.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_gt.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_gt.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_gt.png"
+
+[cars."classic_nascar"]
+new_id = "classic_nascar"
+real_name = "Thunderbolt Stock V8"
+new_name = "Thunderbolt Stock V8"
+real_manufacturer = "Thunder Alley Racing"
+new_manufacturer = "Thunder Alley Racing"
+module = "classic"
+tier = 1
+category = "Arcade Speedway Stock"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_nascar.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_nascar.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_nascar.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_nascar.png"
+
+[cars."classic_offroad"]
+new_id = "classic_offroad"
+real_name = "Vortex Dune Crusher"
+new_name = "Vortex Dune Crusher"
+real_manufacturer = "Titan Terrain Systems"
+new_manufacturer = "Titan Terrain Systems"
+module = "classic"
+tier = 1
+category = "Extreme Off-Road Buggy"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_offroad.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_offroad.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_offroad.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_offroad.png"
+
+[cars."classic_kart"]
+new_id = "classic_kart"
+real_name = "Turbo Dart 200cc"
+new_name = "Turbo Dart 200cc"
+real_manufacturer = "RocketKart Works"
+new_manufacturer = "RocketKart Works"
+module = "classic"
+tier = 1
+category = "Arcade Sprint Kart"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_kart.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_kart.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_kart.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_kart.png"
+
+[cars."classic_rally"]
+new_id = "classic_rally"
+real_name = "Trailfire Turbo 4WD"
+new_name = "Trailfire Turbo 4WD"
+real_manufacturer = "Firebolt Competition"
+new_manufacturer = "Firebolt Competition"
+module = "classic"
+tier = 1
+category = "Arcade Group B Rally"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_rally.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_rally.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_rally.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_rally.png"
+
+[cars."classic_ax_mudlark"]
+new_id = "classic_ax_mudlark"
+real_name = "Mudlark Cross Car"
+new_name = "Mudlark Cross Car"
+real_manufacturer = "Stonecairn Works"
+new_manufacturer = "Stonecairn Works"
+module = "classic"
+tier = 1
+category = "Arcade Cross Car"
+shifted = true
+needs_lettering_fix = true
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_ax_mudlark.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_ax_mudlark.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_ax_mudlark.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_ax_mudlark.png"
+
+[cars."classic_ax_brawler"]
+new_id = "classic_ax_brawler"
+real_name = "Brawler Touring AX"
+new_name = "Brawler Touring AX"
+real_manufacturer = "Cyclone Motor Division"
+new_manufacturer = "Cyclone Motor Division"
+module = "classic"
+tier = 1
+category = "Arcade Touring AX"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_ax_brawler.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_ax_brawler.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_ax_brawler.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_ax_brawler.png"
+
+[cars."classic_ax_talon"]
+new_id = "classic_ax_talon"
+real_name = "Talon Super Buggy"
+new_name = "Talon Super Buggy"
+real_manufacturer = "Ironclad Heavy Industries"
+new_manufacturer = "Ironclad Heavy Industries"
+module = "classic"
+tier = 1
+category = "Arcade Super Buggy"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_ax_talon.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_ax_talon.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_ax_talon.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_ax_talon.png"
+
+[cars."classic_kart_vintage"]
+new_id = "classic_kart_vintage"
+real_name = "Comet 100 Classic"
+new_name = "Comet 100 Classic"
+real_manufacturer = "Comet Engineering"
+new_manufacturer = "Comet Engineering"
+module = "classic"
+tier = 1
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_kart_vintage.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_kart_vintage.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_kart_vintage.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_kart_vintage.png"
+
+[cars."classic_rx_vintage"]
+new_id = "classic_rx_vintage"
+real_name = "Firebolt RS 2000"
+new_name = "Firebolt RS 2000"
+real_manufacturer = "Firebolt Competition"
+new_manufacturer = "Firebolt Competition"
+module = "classic"
+tier = 1
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_rx_vintage.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_rx_vintage.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_rx_vintage.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_rx_vintage.png"
+
+[cars."classic_gt_vintage"]
+new_id = "classic_gt_vintage"
+real_name = "Corsica '73 RS"
+new_name = "Corsica '73 RS"
+real_manufacturer = "Corsica Automobili"
+new_manufacturer = "Corsica Automobili"
+module = "classic"
+tier = 1
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_gt_vintage.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_gt_vintage.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_gt_vintage.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_gt_vintage.png"
+
+[cars."classic_at_safari"]
+new_id = "classic_at_safari"
+real_name = "Ironclad 4x4 Safari"
+new_name = "Ironclad 4x4 Safari"
+real_manufacturer = "Ironclad Heavy Industries"
+new_manufacturer = "Ironclad Heavy Industries"
+module = "classic"
+tier = 1
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_at_safari.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_at_safari.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_at_safari.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_at_safari.png"
+
+[cars."classic_stock_vintage"]
+new_id = "classic_stock_vintage"
+real_name = "Cyclone '69 Fastback"
+new_name = "Cyclone '69 Fastback"
+real_manufacturer = "Cyclone Motor Division"
+new_manufacturer = "Cyclone Motor Division"
+module = "classic"
+tier = 1
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/classic/classic_stock_vintage.png"
+lateral_sprite_new = "textures/vehicles/laterals/classic/classic_stock_vintage.png"
+topdown_sprite_current = "textures/vehicles/topdown/classic/classic_stock_vintage.png"
+topdown_sprite_new = "textures/vehicles/topdown/classic/classic_stock_vintage.png"
+
+# --- Module: VAULT ---
+
+[cars."vault_test_mule"]
+new_id = "vault_test_mule"
+real_name = "Modular Development Mule"
+new_name = "Modular Development Mule"
+real_manufacturer = "Apex R&D"
+new_manufacturer = "Apex R&D"
+module = "vault"
+tier = 1
+category = "Engineering Test Chassis"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."vault_prototype_mower"]
+new_id = "vault_prototype_mower"
+real_name = "Prototype Racing Lawnmower V1"
+new_name = "Prototype Racing Lawnmower V1"
+real_manufacturer = "Apex Grassworks"
+new_manufacturer = "Apex Grassworks"
+module = "vault"
+tier = 1
+category = "Decommissioned Novelty"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."vault_drift_trike"]
+new_id = "vault_drift_trike"
+real_name = "Slick Drift Trike 150cc"
+new_name = "Slick Drift Trike 150cc"
+real_manufacturer = "Apex Slide Lab"
+new_manufacturer = "Apex Slide Lab"
+module = "vault"
+tier = 1
+category = "Prototype Slide Vehicle"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "N/A"
+lateral_sprite_new = "N/A"
+topdown_sprite_current = "N/A"
+topdown_sprite_new = "N/A"
+
+[cars."kart_honda_mean_mower"]
+new_id = "vault_asahi_blade_runner"
+real_name = "Honda Mean Mower V2 Tuned"
+new_name = "Asahi Blade Runner V2 Mower"
+real_manufacturer = "Honda Racing"
+new_manufacturer = "Asahi Speedworks"
+module = "vault"
+tier = 1
+category = "Decommissioned Mower"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_honda_mean_mower.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/vault_asahi_blade_runner.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_honda_mean_mower.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/vault_asahi_blade_runner.png"
+
+[cars."kart_john_deere_racing_mower"]
+new_id = "vault_greenfield_prairie_racer"
+real_name = "John Deere Spec Racing Mower"
+new_name = "Greenfield Prairie Racer Mower"
+real_manufacturer = "John Deere Custom"
+new_manufacturer = "Greenfield Agricultural Racing"
+module = "vault"
+tier = 1
+category = "Decommissioned Mower"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_john_deere_racing_mower.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/vault_greenfield_prairie_racer.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_john_deere_racing_mower.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/vault_greenfield_prairie_racer.png"
+
+[cars."kart_viking_t6_tractor"]
+new_id = "vault_nordic_valhalla_tractor"
+real_name = "Viking T6 Racing Tractor"
+new_name = "Nordic Valhalla Racing Tractor"
+real_manufacturer = "Viking Racing"
+new_manufacturer = "Nordic Power Mower"
+module = "vault"
+tier = 1
+category = "Decommissioned Mower"
+shifted = false
+needs_lettering_fix = false
+lateral_sprite_current = "textures/vehicles/laterals/kart/kart_viking_t6_tractor.png"
+lateral_sprite_new = "textures/vehicles/laterals/kart/vault_nordic_valhalla_tractor.png"
+topdown_sprite_current = "textures/vehicles/topdown/kart/kart_viking_t6_tractor.png"
+topdown_sprite_new = "textures/vehicles/topdown/kart/vault_nordic_valhalla_tractor.png"
+
+# =============================================================================
+# SERIES, SANCTIONING BODIES & TIER LABELS
+# =============================================================================
+[series_and_bodies]
+"ARCA Menards Series" = "National Stock Car Challenge"
+"Baja 1000" = "Sonora 1000"
+"Baja 500" = "Sonora 500"
+"Craftsman Truck Series" = "Pro Super Truck V8 Series"
+"Dakar" = "Desert Raid"
+"Euro RX" = "Continental Rallycross"
+"FIA" = "International Motorsport Commission"
+"FIA Buggy1600 European Championship" = "Continental Buggy 1600 Championship"
+"FIA Cross Car Academy Trophy" = "Cross Car Junior Academy Trophy"
+"FIA GT3 European Challenge" = "Continental GT3 Sprint Challenge"
+"FIA Karting Academy Trophy" = "International Karting Academy Trophy"
+"FIA SuperBuggy World Series" = "World SuperBuggy Series"
+"FIA World RX Supercar Trophy" = "World Rallycross Supercar Trophy"
+"GT World Challenge" = "Grand Touring Challenge"
+"GT1 Legend" = "GT Tier 4 Legend"
+"GT2 Biturbo" = "GT Tier 3 Biturbo"
+"GT3 Evo / FIA GT3" = "GT Tier 2 Pro Sprint"
+"GT4 Clubsport" = "GT Tier 1 Clubsport"
+"Le Mans" = "Endurance 24h"
+"Le Mans 90s Heritage Trophy" = "Endurance 90s Heritage Trophy"
+"Mint 400" = "Silver State 400"
+"Monster Jam" = "Monster Havoc Arena"
+"NASCAR" = "American Stock Car Association"
+"NASCAR Cup Series Championship" = "Premier Stock Car Cup Championship"
+"NASCAR Intermediate Oval Challenge" = "National Intermediate Oval Challenge"
+"NASCAR National Road & Oval Tour" = "National Road & Oval Tour"
+"NASCAR Premier Speedway Trophy" = "Premier Speedway Trophy"
+"NASCAR Weekly Short Track Series" = "Weekly Short Track Series"
+"Nitrocross" = "Apex Electric Rallycross"
+"Nitrocross Group E Series" = "Apex Group E Electric Trophy"
+"Official GP Circuit" = "Grand Prix Circuit"
+"Rotax" = "Junior Competition"
+"Rotax Junior Karting Academy" = "Junior Karting Academy"
+"SRO" = "Grand Touring Organization"
+"SRO GT2 Power Masters" = "Grand Touring Biturbo Masters"
+"Stadium Super Trucks" = "Super Stadium Trucks"
+"Trans-Am" = "Trans-National Silhouette"
+"Trans-Am TA1" = "Trans-National TA1 Silhouette"
+"WEC" = "World Endurance Championship"
+"World RX" = "World Rallycross"
+
+# =============================================================================
+# TEAMS
+# =============================================================================
+[teams]
+"23XI" = "Flightline Motorsport"
+"23XI Racing" = "Flightline Motorsport"
+"AMG-Mercedes Warsteiner" = "Silberstern Classic Racing"
+"Akkodis ASP Team" = "Provence GT Works"
+"Alabama Gang" = "Dixie Heritage Motorsport"
+"Alfa Racing Team" = "Bologna Buggy Works Team"
+"All-Inkl Racing" = "Saxon Speedworks"
+"Alpine GT" = "Gallia GT"
+"Aston GT" = "Albion GT"
+"Aston Martin Racing" = "Albion Works Racing"
+"Audi Sport Customer Racing" = "Vortek Customer Racing"
+"BMW Team RMG" = "BMR Eifel Racing"
+"Bakkerud Blue RX" = "Fjord Blue RX Team"
+"Bartelen Motorsport" = "Dutch Cross Dynamics"
+"Birel ART" = "Rosso Factory Karting"
+"Boele Autosport" = "Boele Offroad Works"
+"Brabham Motorsport" = "Southern Cross Works"
+"CRG Factory Team" = "Blackline Factory Team"
+"Cadillac Racing Chip Ganassi" = "Crestline Endurance Team"
+"Christol Motorsport" = "Occitanie Buggy Racing"
+"EKS" = "Vortek Factory RX"
+"EKS Audi Sport" = "Vortek Factory RX"
+"EKS RX" = "Vortek Factory RX"
+"Egg Racing Team" = "Alpine Cross Racing"
+"Energy Corse" = "Veloce Karting"
+"FPAK Junior XC" = "Lusitania Junior XC"
+"Fast & Speed Holland" = "Rapid Dynamics Racing"
+"Fast & Speed Racing" = "Rapid Dynamics Racing"
+"Fejfar Motorsport" = "Bohemia Rallycross Team"
+"Ferrari AF Corse" = "Valente Corse Team"
+"Feuillade Racing" = "Picardy Cross Team"
+"Frieszl Racing" = "Styrian Buggy Racing"
+"GCK Motorsport" = "Alpine Green RX"
+"GRX Taneco" = "Taiga RX Performance"
+"Gulf Team Davidoff McLaren" = "Hyperion Heritage Team"
+"Gurschler Quattro" = "Alpine Quattro Racing"
+"Haas GT" = "Summit GT"
+"Hansen Motorsport" = "Nordic Storm Motorsport"
+"Hansenfield Junior" = "Nordic Storm Junior"
+"Hansenfield RX" = "Nordic Storm Motorsport"
+"Hartman Offroad" = "Hartman Cross Works"
+"Hendrick Motorsports" = "Apex Vanguard Racing"
+"Hennersdorf Offroad" = "Saxony Offroad Works"
+"Hoonigan Racing Division" = "Outlaw Gymkhana Squad"
+"Joe Gibbs Racing" = "Crestline Speedworks"
+"Jordák Motorsport" = "Moravia Cross Team"
+"Junior Johnson Racing" = "Brushy Mountain Racing"
+"KMS Motorsport" = "Volkskraft Customer Rally"
+"KMS Volkswagen" = "Volkskraft Customer Rally"
+"Kosmic Racing" = "Starlight Kart Team"
+"LifeLive Academy" = "Ardennes Cross Academy"
+"LifeLive Senior Team" = "Ardennes Cross Senior"
+"Manthey EMA" = "Eifel Performance Team"
+"Manthey Racing" = "Eifel Performance Team"
+"Mark RX" = "Baltic Cross Works"
+"Marklund Motorsport" = "Baltic Cross Works"
+"Maserati Corse" = "Aquila Factory Team"
+"McLaren GT" = "Hyperion GT"
+"Melling Racing" = "Apex Stock Car"
+"Mercedes-AMG GT" = "Silberstern GT"
+"Mercier Competition" = "Rhone Cross Team"
+"Monster Energy RX" = "Apex Volt RX Team"
+"Nissan Motorsport NISMO" = "Katana Works NISMO"
+"PSRX Volkswagen Sweden" = "Volkskraft Scandinavian Rally"
+"Parolin Motorsport" = "Veneto Kart Racing"
+"Penske Racing South" = "Keystone Racing South"
+"Peters Autosport" = "Petersen Works Team"
+"Petty Enterprises" = "Highland Blue Racing"
+"Planet Kart Cross France" = "Cosmo Cross France"
+"Porsche AG Le Mans Team" = "Vandorn Factory Team"
+"Porsche Motorsport GT" = "Vandorn Motorsport GT"
+"Porsche Penske Motorsport" = "Vandorn Works Racing"
+"RACB National Team" = "Wallonia Junior Team"
+"Red Bull GT" = "Bullseye GT"
+"Reding Autosport" = "Moselle Cross Works"
+"Richard Childress Racing" = "Heartland Competition"
+"Scuderia AF Corse" = "Valente Corse Team"
+"Scuderia GT" = "Valente GT"
+"Semog Italia" = "Lusitania Cross Team"
+"Semog Portugal" = "Lusitania Cross Team"
+"Semog Racing Team" = "Lusitania Cross Team"
+"Sodi Kart" = "Gallic Kart Racing"
+"Speedcar Factory Team" = "Iberian Cross Factory Team"
+"Stewart-Haas Racing" = "Summit Ridge Motorsport"
+"Storm EKS" = "Vortek Factory RX"
+"Stubbe SuperBuggy" = "Rhine Buggy Team"
+"Subaru Motorsports USA" = "Sixstar American Rally"
+"Team Italy XC" = "Italo Cross Squadra"
+"Team Penske" = "Keystone Racing Team"
+"Team WRT" = "Belgian Sprint Challenge"
+"Tony Kart Racing" = "Verde Factory Karting"
+"Toyota Gazoo Racing" = "Yamato Factory Racing"
+"Toyota Gazoo Racing WEC" = "Yamato Factory Racing"
+"Vance RX Team" = "Highland RX Team"
+"Výborný Motorsport" = "Bohemia Buggy Team"
+"Wibbeler Racing" = "Westphalia Buggy Racing"
+"Williams GT" = "Grove GT"
+
+# =============================================================================
+# DRIVERS & NICKNAMES
+# =============================================================================
+[drivers]
+"Adriaan Boele" = "Arjen Boele"
+"Alabama" = "Heartland"
+"Alexander Albonfield" = "Aron Somchai"
+"Alexandre Calvet" = "Antoine Calvet"
+"Andreas Bakkerud" = "Anders Brekke"
+"Anton Mark" = "Axel Markus"
+"Anton Marklund" = "Axel Markus"
+"Awesome Bill" = "Wildcard"
+"Bernd Stubbe" = "Bodo Richter"
+"Bill 'Awesome Bill' Elliott" = "Brayden 'Wildcard' Ellis"
+"Bobby 'Alabama' Allison" = "Bo 'Heartland' Mercer"
+"Bubba 'The Rocket' Wallace" = "Beau 'The Comet' Chambers"
+"Cale 'The Iron Man' Yarborough" = "Curtis 'The Wall' Yancey"
+"Carlos Sainzfield" = "Cristian Soler"
+"Charles Laurent" = "Cédric Laval"
+"Chase 'Rainbow' Gordon" = "Clayton 'Viper' Reed"
+"Dale 'The Intimidator' Vance" = "Colt 'The Ironclad' Reynolds"
+"David Méndez" = "Diego Morales"
+"Elias Svensson" = "Emil Svensson"
+"Erwin Frieszl" = "Erich Frieszl"
+"Esteban Connor" = "Eloi Constantin"
+"Fernando Toro" = "Félix Navarro"
+"George Speed" = "Gideon Palmer"
+"Jakub Novotný" = "Jiří Němec"
+"Jimmie 'Seven-Time' Johnson" = "Judson 'Gold Rush' Vance"
+"Joey 'Sliced Bread' Logano" = "Jasper 'Ace' Lowe"
+"Johan Kristoffersson" = "Jonas Lindqvist"
+"Johan Vance" = "Jonas Lindqvist"
+"Johnny Feuillade" = "Jerome Feuillade"
+"Ken Blaster" = "Kyle Blaze"
+"Kenny Reding" = "Kurt Reding"
+"Kevin Hansen" = "Kasper Holmgren"
+"Kevin Hansenfield" = "Kasper Holmgren"
+"Kevin Peters" = "Klaus Petersen"
+"Lando Vance" = "Lucian Wells"
+"Lewis Vance" = "Lawrence Sterling"
+"Marcel Egg" = "Martin Egg"
+"Markus Wibbeler" = "Maximilian Wibbeler"
+"Mattias Ekström" = "Mikael Stenmark"
+"Mattias Storm" = "Mikael Stenmark"
+"Max Hunter" = "Magnus Wolff"
+"Miguel Gayoso" = "Mateo Garrido"
+"Mike Bartelen" = "Marten Bartelen"
+"Niclas Gron" = "Niko Salminen"
+"Niclas Grönholm" = "Niko Salminen"
+"Nico Hulkenstorm" = "Niklas Herrmann"
+"Oscar Rocket" = "Owen Prescott"
+"Pavel Výborný" = "Patrik Výborný"
+"Petr Nikodém" = "Pavel Urban"
+"Petter Solberg" = "Per Sundberg"
+"Petter Solbergfield" = "Per Sundberg"
+"Pierre Gaslyfield" = "Patrice Garnier"
+"Radek Jordák" = "Radim Jordák"
+"Rainbow" = "Viper"
+"Reinis Nitissfield" = "Roberts Kalnins"
+"Richard 'The King' Pettyfield" = "Rex 'The Crown' Montgomery"
+"Rowdy 'Wild Thing' Busch" = "Brant 'Thunder' Harlan"
+"Rusty 'Thunder' Wallace" = "Russ 'Hammer' Warnock"
+"Sebastien Loebfield" = "Stéphane Lambert"
+"Seven-Time" = "Gold Rush"
+"Sliced Bread" = "Ace"
+"Smoke" = "Hot Lap"
+"Styn Jaspers" = "Sander Jaspers"
+"The Intimidator" = "The Ironclad"
+"The Iron Man" = "The Wall"
+"The King" = "The Crown"
+"The Rocket" = "The Comet"
+"Thomas Christol" = "Thierry Christol"
+"Timmy Hansen" = "Torsten Holmgren"
+"Timmy Hansenfield" = "Torsten Holmgren"
+"Timo Scheider" = "Tobias Schmidt"
+"Tony 'Smoke' Stewart" = "Tanner 'Hot Lap' Cobb"
+"Valentino Ledda" = "Valerio Ledda"
+"Vincent Mercier" = "Valentin Moreau"
+"Václav Fejfar" = "Viktor Fiala"
+"Wild Thing" = "Thunder"
+"Aguri Suzuki" = "Aoi Suzuki"
+"Alessandro Pier Guidi" = "Adriano Ponte"
+"Allan McNish" = "Alastair McIntyre"
+"André Lotterer" = "Andreas Lorentzen"
+"Andrea Bertolini" = "Alberto Bellini"
+"Antonio Fuoco" = "Alberto Fabbri"
+"Baby Blue" = "Cobalt"
+"Bernd Schneider" = "Bernhard Schneider"
+"Brendon Hartley" = "Braden Holt"
+"Charles Weerts" = "Cédric Willems"
+"David Brabham" = "Daniel Bennett"
+"Dries Vanthoor" = "Dieter Van Damme"
+"Earl Bamber" = "Ethan Brooks"
+"Frank Stippler" = "Franz Strauss"
+"Hollywood" = "Showman"
+"JJ Lehto" = "Jari Lehtinen"
+"Jörg Bergmeister" = "Jürgen Bergmann"
+"Kamui Kobayashi" = "Kenji Takahashi"
+"Kazuyoshi Hoshino" = "Keisuke Hoshino"
+"Kévin Estre" = "Klaus Eicher"
+"Klaus Ludwig" = "Kurt Lindner"
+"Lucas Auer" = "Lukas Adler"
+"Luke Youlden" = "Liam York"
+"Markus Winkelhock" = "Maximilian Winter"
+"Maro Engel" = "Marc Eichmann"
+"Matteo Bobbi" = "Matteo Boni"
+"Papaya Prodigy" = "Orange Prodigy"
+"Smooth Operator" = "Precision Specialist"
+"Steve Soper" = "Sean Somerset"
+"Sébastien Bourdais" = "Sylvain Boucher"
+"The Hulk" = "The Rock"
+
+# =============================================================================
+# CIRCUITS (Display Names & File IDs)
+# =============================================================================
+[circuits]
+"Adria Karting Raceway" = "Veneto Delta Kartway"
+"Autodromo Internacional do Algarve" = "Portimao Coastal Rollercoaster"
+"Autodromo Jose Carlos Pace" = "Interlagos Basin Grand Prix"
+"Bahrain International Circuit" = "Sakhir Desert Oasis Grand Prix"
+"Baja 500 Desert Scrub" = "Sonora 500 Desert Scrub"
+"Barcelona-Catalunya RX" = "Montmelo Stadium RX"
+"Biķernieku Trase / Riga RX" = "Baltic Pine Forest RX"
+"Bowman Gray Stadium" = "Piedmont Stadium Quarter-Mile"
+"Bristol Motor Speedway" = "Appalachian Thunder Colosseum"
+"Charlotte Motor Speedway" = "Carolina Quad-Oval Speedway"
+"Chicago Street Course" = "Lakeshore Park Street Course"
+"Circuit Gilles Villeneuve" = "Ile Notre-Dame Island Circuit"
+"Circuit International d'Aunay-les-Bois" = "Orne Valley Karting"
+"Circuit Jules Tacheny Mettet" = "Wallonia Sprint RX"
+"Circuit Zandvoort" = "North Sea Coastal Dunes Circuit"
+"Circuit de Barcelona-Catalunya" = "Montmelo Iberian Circuit"
+"Circuit de Lavaré" = "Sarthe Sand & Gravel RX"
+"Circuit de Lessay" = "Cotentin Coast RX"
+"Circuit de Lohéac" = "Brittany Rallycross Arena"
+"Circuit de Monaco" = "Principality Harbor Grand Prix"
+"Circuit de Spa-Francorchamps" = "Ardennes Forest Circuit"
+"Circuit de la Sarthe (Le Mans)" = "Circuit de la Loire Grand Prix"
+"Circuit des Ducs / Essay RX" = "Normandy Ducal RX"
+"Circuit of the Americas" = "Austin Lone Star Circuit"
+"Circuito Internacional de Zuera" = "Aragon Plains Karting"
+"Circuito Internazionale 7 Laghi" = "Seven Lakes International Karting"
+"Circuito Internazionale Napoli (Sarno)" = "Vesuvius Foothills Karting"
+"Crandon International Off-Road" = "Highwoods Brush Run Off-Road"
+"Croft Rallycross Circuit" = "Yorkshire Aerodrome RX"
+"Darlington Raceway" = "Palmetto Egg-Shaped Raceway"
+"Daytona International Speedway" = "Florida Atlantic Superspeedway"
+"Dreux Circuit de l'Ouest Parisien" = "West Paris Rallycross Ring"
+"ERX Motor Park RX" = "Northwoods All-Terrain Park"
+"Eldora Speedway" = "Darke County High-Banked Dirt Oval"
+"Estering Buxtehude" = "Lower Saxony Sand Ring"
+"Franciacorta Karting Track" = "Franciacorta Hillside Kart Track"
+"Glamis Imperial Sand Dunes" = "Imperial Dune Sea"
+"Höljes Motorstadion" = "Varmland Rallycross Arena"
+"Indianapolis Motor Speedway" = "Hoosier Brickyard Speedway"
+"Iowa Speedway" = "Heartland Rustbelt Oval"
+"Kartcenter Campillos" = "Andalucian Sunshine Kartway"
+"Karting Genk (Home of Champions)" = "Limburg Arena of Champions"
+"Kartodromo Internacional do Algarve" = "Algarve Hills Kartway"
+"Kartodromo Lucas Guerrero (Valencia)" = "Levante Coast Karting"
+"Killarney International Raceway RX" = "Table Mountain Coastal RX"
+"Kristianstad Karting Klubb (Åsum Ring)" = "Scania Lakeside Kart Ring"
+"Laval - Circuit Louis Beuvron" = "Mayenne International Karting"
+"Le Mans Karting International" = "Sarthe 24h Karting Arena"
+"Lucas Oil Indianapolis Raceway Park" = "Clermont Short Track"
+"Lydden Hill Race Circuit" = "Kentish Chalk Downs RX"
+"Lånkebanen / Hell RX" = "Trondheim Fjord RX"
+"MadRing Circuito de Madrid" = "Jarama Capital Ring"
+"Marina Bay Street Circuit" = "Straits Harbor Night Circuit"
+"Martinsville Speedway" = "Blue Ridge Paperclip Oval"
+"Mint 400 Grand Loop" = "Silver State Grand Loop"
+"Mint 400 Qualifying Loop" = "Silver State Qualifying Loop"
+"Mint 400 Short Course" = "Silver State Short Course"
+"Monza Autodromo Nazionale" = "Lombardy Speed Autodrome"
+"Motorsport Arena Mülsen (Arena E)" = "Saxony Arena E Karting"
+"Mount Panorama Circuit (Bathurst)" = "Waluwin Mountain Circuit"
+"North Wilkesboro Speedway" = "Brushy Mountain Short Track"
+"Nurburgring Grand Prix-Strecke" = "Eifel Grand Prix Ring"
+"Nyirád Racing Center" = "Red Cauldron Bauxite RX"
+"PF International Kart Circuit" = "Trent Valley Premier Karting"
+"Phoenix Raceway" = "Sonoran Dogleg Mile"
+"Pista de Montalegre" = "Vila Real Highland RX"
+"Pocono Raceway" = "Pocono Tricky Triangle"
+"Prokart Raceland Wackersdorf" = "Upper Palatinate Kart Arena"
+"Red Bull Ring" = "Styrian Panorama Ring"
+"Richmond Raceway" = "Old Dominion D-Oval"
+"Road America" = "Elkhart Lake Road Course"
+"Schweppermannring Ampfing" = "Bavarian Forest Kart Ring"
+"Silverstone Circuit RX" = "Northampton Arena RX"
+"Silverstone Grand Prix Circuit" = "Northampton Grand Prix Circuit"
+"Silverstone National Karting Circuit" = "Woodcote Sprint Karting"
+"South Garda Karting (Lonato)" = "Garda Basin International Karting"
+"Spa-Francorchamps RX" = "Ardennes Stadium RX"
+"Suzuka International Racing Course" = "Ise Bay Figure-Eight Circuit"
+"Talladega Superspeedway" = "Sweet Home Superspeedway"
+"Tykkimäen Moottorirata" = "Kymi Forest Rally Stadium"
+"Watkins Glen International" = "Seneca Lake Road Course"
+"Whilton Mill Kart Circuit" = "Northampton Mill Kart Circuit"
+
+[circuit_id_renames]
+"baja_500_desert_scrub" = "sonora_desert_scrub"
+"lucas_oil_irp" = "indianapolis_short_oval"
+"mint400_grand_loop" = "silver_state_grand_loop"
+"mint400_qualifying_loop" = "silver_state_qualifying_loop"
+"mint400_short_course" = "silver_state_short_course"
+"red_bull_ring" = "styrian_hills"
+
+# =============================================================================
+# CORNER NAMES & VENUE BRAND WORDS
+# =============================================================================
+[corners_and_venue_text]
+"130R" = "Fast Arc Curve"
+"Baja 500" = "Sonora 500"
+"Becketts" = "Aerofoil Esses 2"
+"Campsa" = "Hillside Sweep"
+"Castrol-S" = "Valley Esses"
+"Chapel" = "Hangar Bend"
+"Copse" = "Aerofoil Corner"
+"Curva Alboreto" = "Grand Arc Corner"
+"Curva Grande" = "High-Speed Arc"
+"Curva Renault" = "Iberian Curve"
+"Degner" = "Twin Curves"
+"Dunlop Chicane" = "Arch Chicane"
+"Dunlop Curve" = "Bridge Curve"
+"Eau Rouge" = "Valley Crest"
+"Grand Hotel Hairpin" = "Fairmont Hairpin"
+"Loews Hairpin" = "Fairmont Hairpin"
+"Lucas Oil" = "Clermont"
+"Maggotts" = "Aerofoil Esses 1"
+"Mercedes Arena" = "Stadium Amphitheater"
+"Mint 400" = "Silver State 400"
+"Oldsmobile Hill Leap" = "Gravel Hill Leap"
+"Parabolica" = "Grand Arc Corner"
+"Porsche Curves" = "High-Speed S-Curves"
+"Potawatomi Tabletop" = "Highwoods Tabletop"
+"Raidillon" = "The Ridge Apex"
+"Rascasse" = "Harbor Sweep"
+"Red Bull" = "Styrian Panorama"
+"Spoon Curve" = "Double Apex Sweep"
+"Ste Devote" = "Chapel Bend"
+"Stowe" = "Hangar Turn"
+"Variante Ascari" = "Forest Chicane"
+"Variante del Rettifilo" = "First Chicane"
+
+# =============================================================================
+# SPONSORS & DECAL BRANDS
+# =============================================================================
+[sponsors]
+"ARP" = "Apex Fasteners"
+"B&M" = "ProShift Transmissions"
+"Bilstein" = "StrutPro Dampers"
+"Brembo" = "StopTech Calipers"
+"Castrol" = "AeroLube Systems"
+"Cometic" = "Apex Gaskets"
+"Crane Cams" = "PowerCam Valvetrain"
+"DENSO" = "VoltTech Electronics"
+"Firestone" = "Keystone Tyres"
+"Goodyear" = "IronTread Tyres"
+"Haas" = "Summit Precision"
+"Hays" = "Apex Clutches"
+"Holley" = "FlowTech Induction"
+"MSD" = "SparkMax Ignition"
+"Michelin" = "GripTech Competition"
+"Mobil 1" = "SynthMax Lubricants"
+"Monster Energy" = "NitroSurge Energy"
+"Moroso" = "Veloce Racing Parts"
+"Pirelli" = "Apex Tyres"
+"Recaro" = "Apex Bucket Seats"
+"Red Bull" = "Bullseye Energy"
+"Rolex" = "Crown Chronograph"
+"STP" = "Apex Performance Fluid"
+"Shell" = "Veloce Fuel"
+"Sparco" = "RaceFit Safety"
+"Tag Heuer" = "Precision Chrono"
+"Traxxas" = "HyperCharge RC"
+"Warsteiner" = "Bavarian Hops"
+"Öhlins" = "Nordic Dampers"

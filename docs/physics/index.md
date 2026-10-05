@@ -18,8 +18,8 @@ The simulation physics in **TdRace** are engineered within the zero-dependency [
 | Subsystem | Document Reference | Key Mathematical Levers |
 | :--- | :--- | :--- |
 | **Vehicle Dynamics** | [vehicle_dynamics.md](vehicle_dynamics.md) | Center of gravity (CG), wheelbase, track width, pitch/roll weight transfer, aerodynamic downforce ($C_l \cdot A \cdot v^2$), air drag ($C_d \cdot A \cdot v^2$). |
-| **Tire & Slip Curves** | [tire_pacejka.md](tire_pacejka.md) | Pacejka '96 Magic Formula ($B, C, D, E$), slip angle ($\alpha$), longitudinal slip ratio ($\kappa$), progressive drift breakaway, handbrake friction reduction. |
-| **Surface Interactions** | [surfaces.md](surfaces.md) | 12 surface types ($\mu = 0.08 \dots 1.00$), rolling resistance multipliers ($1.0\times \dots 30.0\times$), aerodynamic/viscous surface drag, particle emitters. |
+| **Tire & Slip Curves** | [Codex Tyres Reference](http://localhost:4322/technical/tyres) | Pacejka '96 Magic Formula ($B, C, D, E$), slip angle ($\alpha$), longitudinal slip ratio ($\kappa$), progressive drift breakaway, handbrake friction reduction. |
+| **Surface Interactions** | [Codex Surfaces Matrix](http://localhost:4322/technical/surfaces) | 15 surface types ($\mu = 0.08 \dots 1.00$), rolling resistance multipliers ($1.0\times \dots 30.0\times$), aerodynamic/viscous surface drag, particle emitters. |
 | **Walls & Barriers** | [walls_barriers.md](walls_barriers.md) | 4 barrier collision models: Concrete, Steel Armco, Tire Wall, Curb Wall with restitution coefficients ($e = 0.10 \dots 0.45$) and friction damping. |
 | **Powertrain & Drivetrain** | [powertrain.md](powertrain.md) | Engine force output, drive bias ($0.0$ pure RWD, $0.5$ 50/50 AWD, $1.0$ pure FWD), top speed terminal limiter, and future multi-speed transmissions. |
 | **Empirical Benchmarks** | [../experiments/surface_simulation_technical_report.md](../experiments/surface_simulation_technical_report.md) | 1,800-run computational simulation benchmark, surface degradation indices, and vehicle balance assessment. |

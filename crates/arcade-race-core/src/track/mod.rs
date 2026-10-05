@@ -159,10 +159,10 @@ pub struct Track {
     pub max_width: Option<f32>,
     #[serde(default)]
     pub is_inspired: bool,
-    /// Short uppercase catalog badge, e.g. "WORLD RX SWEDEN".
+    /// Short uppercase catalog badge, e.g. "WORLD RALLYCROSS SWEDEN".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub tag: String,
-    /// Catalog class shown in circuit lists, e.g. "World RX" or "Superspeedway".
+    /// Catalog class shown in circuit lists, e.g. "World Rallycross" or "Superspeedway".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub category_label: String,
 }
@@ -860,7 +860,6 @@ impl Track {
             || name_lower.contains(" rx")
             || name_lower.contains("rallycross")
             || name_lower.contains("grand prix")
-            || name_lower.contains("world rx")
         {
             return Some(SurfaceType::Gravel);
         }

@@ -705,7 +705,7 @@ fn main() {
         .unwrap_or_else(|e| panic!("failed to parse {:?}: {}", jokers_path, e));
 
     println!(
-        "Baking authentic Joker Lap TrackNetworks for 20 World RX tracks in {:?}...",
+        "Baking authentic Joker Lap TrackNetworks for 20 World Rallycross tracks in {:?}...",
         tracks_dir
     );
 
@@ -713,5 +713,5 @@ fn main() {
         build_track_joker(cfg, &tracks_dir, &osm_jokers);
     }
 
-    println!("All 20 World RX tracks successfully baked with authentic TrackNetworks!");
+    println!("All 20 World Rallycross tracks successfully baked with authentic TrackNetworks!");
 }

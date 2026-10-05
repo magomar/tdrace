@@ -1,0 +1,162 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import KeyboardDiagram from '../../components/KeyboardDiagram.astro';
+import { getControlsModel } from '../../lib/codex';
+
+const controls = await getControlsModel();
+---
+
+<Layout title="Controls" description="Keyboard and gamepad control presets, in-race hotkeys, and analog calibration.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/driving" class="hover:underline">Driving</a> / Controls</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Controls & Input Mapping</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      TDRace supports digital keyboards, dual-analog gamepads, and virtual on-screen touch interfaces.
+      The game engine separates abstract gameplay actions (<code class="text-racing-cyan">ArcadeAction</code>) from
+      physical hardware inputs, allowing four distinct racing presets, extensive in-race utility shortcuts,
+      and calibrated analog deadzones.
+    </p>
+  </div>
+
+  <!-- Interactive Keyboard & Gamepad Diagram -->
+  <div class="py-8">
+    <KeyboardDiagram presets={controls.presets} initialPresetId="hybrid" />
+  </div>
+
+  <!-- Four Presets Breakdown -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">The Four Racing Presets</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Players can cycle presets on the fly in the pause menu using the <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-racing-cyan font-mono text-xs">C</kbd> key
+        or in the settings screen.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {controls.presets.map((preset) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 border-b border-racing-border/60 pb-3">
+              <h3 class="text-base font-bold text-white">{preset.name}</h3>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400">
+                {preset.id}
+              </span>
+            </div>
+            <p class="text-xs text-racing-muted mt-2 leading-relaxed">{preset.description}</p>
+
+            <table class="w-full text-left text-xs font-mono mt-4">
+              <thead>
+                <tr class="text-[10px] text-racing-muted uppercase border-b border-racing-border/40">
+                  <th class="py-1.5 font-medium">Action</th>
+                  <th class="py-1.5 font-medium">Keyboard</th>
+                  <th class="py-1.5 font-medium">Gamepad</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-racing-border/30">
+                {preset.bindings.map((b) => (
+                  <tr>
+                    <td class="py-1.5 text-racing-white font-medium">{b.label}</td>
+                    <td class="py-1.5 text-cyan-300">
+                      {b.keys.length > 0 ? b.keys.join(', ') : <span class="text-racing-muted">—</span>}
+                    </td>
+                    <td class="py-1.5 text-amber-300">
+                      {b.gamepad.length > 0 ? b.gamepad.join(', ') : <span class="text-racing-muted">—</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- In-Race Hotkeys Table -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">In-Race Hotkeys & Overlays</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Quick-access utility commands for camera zoom, driving aids, debug overlays, and race management.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase font-mono border-b border-racing-border">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Key / Shortcut</th>
+            <th class="py-3 px-4 font-semibold">Action</th>
+            <th class="py-3 px-4 font-semibold">Context</th>
+            <th class="py-3 px-4 font-semibold">Description</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/40 font-mono">
+          {controls.hotkeys.map((h) => (
+            <tr class="hover:bg-racing-card/40 transition-colors">
+              <td class="py-2.5 px-4 font-bold text-cyan-400">
+                <kbd class="px-2 py-1 rounded bg-racing-card border border-racing-border shadow-xs">{h.key}</kbd>
+              </td>
+              <td class="py-2.5 px-4 font-semibold text-white">{h.action}</td>
+              <td class="py-2.5 px-4 text-racing-muted">
+                <span class="inline-block px-2 py-0.5 rounded text-[10px] bg-racing-card border border-racing-border">
+                  {h.context}
+                </span>
+              </td>
+              <td class="py-2.5 px-4 text-racing-muted font-sans text-xs">{h.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Gamepad Deadzone & Calibration -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Gamepad Calibration & Deadzones</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        {controls.gamepad.description}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+        <dt class="text-[10px] font-mono uppercase text-racing-muted">Left Stick Deadzone</dt>
+        <dd class="text-2xl font-mono font-bold text-cyan-400 mt-1">{(controls.gamepad.stick_deadzone * 100).toFixed(0)}%</dd>
+        <p class="text-xs text-racing-muted mt-2">Inner threshold ({controls.gamepad.stick_deadzone}). Signals inside are discarded to prevent potentiometer drift.</p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+        <dt class="text-[10px] font-mono uppercase text-racing-muted">Trigger Deadzone</dt>
+        <dd class="text-2xl font-mono font-bold text-green-400 mt-1">{(controls.gamepad.trigger_deadzone * 100).toFixed(0)}%</dd>
+        <p class="text-xs text-racing-muted mt-2">Applies to LT/RT analog triggers ({controls.gamepad.trigger_deadzone}) for crisp throttle initiation.</p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+        <dt class="text-[10px] font-mono uppercase text-racing-muted">Steering Exponent</dt>
+        <dd class="text-2xl font-mono font-bold text-purple-400 mt-1">{controls.gamepad.steer_exponent.toFixed(2)}</dd>
+        <p class="text-xs text-racing-muted mt-2">Non-linear power curve. Values &gt; 1.0 soften center stick sensitivity for high-speed straight-line tracking.</p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+        <dt class="text-[10px] font-mono uppercase text-racing-muted">Steering Sensitivity Scale</dt>
+        <dd class="text-2xl font-mono font-bold text-amber-400 mt-1">{controls.gamepad.steer_scale.toFixed(1)}×</dd>
+        <p class="text-xs text-racing-muted mt-2">Global gain multiplier mapping controller range to rack deflection.</p>
+      </div>
+    </div>
+
+    <!-- Deadzone Formula Explainer Box -->
+    <div class="mt-6 rounded-xl border border-racing-border bg-racing-card/60 p-5 text-xs text-racing-muted leading-relaxed font-mono">
+      <p class="font-bold text-white mb-2">Deadzone Transfer Function:</p>
+      <p class="text-cyan-300">
+        rescaled = clamp((|raw| - deadzone) / (1.0 - deadzone), 0.0, 1.0)<br />
+        steer = sign(raw) × (rescaled ^ steer_exponent) × steer_scale
+      </p>
+      <p class="mt-2 text-racing-muted">
+        Linear re-mapping preserves the full 0% to 100% deflection range after the deadzone boundary is crossed, preventing abrupt threshold stepping.
+      </p>
+    </div>
+  </section>
+</Layout>

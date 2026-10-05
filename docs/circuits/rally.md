@@ -64,4 +64,4 @@ Every official rallycross circuit incorporates a **Joker Lap detour** modeled vi
 
 ---
 
-For vehicle profiles suited for mixed-surface competition, see [Rallycross & All-Terrain Roster](../vehicles/rally_allterrain.md).
+For vehicle profiles suited for mixed-surface competition, see [Rallycross & All-Terrain Roster](http://localhost:4322/showroom/cars?module=rally).

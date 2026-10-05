@@ -54,14 +54,14 @@ fn main() {
         VehicleTarget {
             id: "hypercar_prototype".to_string(),
             name: "800 BHP LMH Hypercar Prototype".to_string(),
-            category: "GT / Le Mans Hypercar".to_string(),
+            category: "GT / Endurance Hypercar".to_string(),
             v0_kmh: 180.0,
             config: GtWorldChallengeModule::car_hypercar_prototype(),
         },
         VehicleTarget {
             id: "nascar_cup_v8".to_string(),
-            name: "NASCAR Cup V8 Stock Car".to_string(),
-            category: "NASCAR / TA1 Cup".to_string(),
+            name: "850 BHP Premier Stock Car V8".to_string(),
+            category: "Stock Car / TA1 Cup".to_string(),
             v0_kmh: 140.0,
             config: NascarGameModule::car_stock_car(),
         },

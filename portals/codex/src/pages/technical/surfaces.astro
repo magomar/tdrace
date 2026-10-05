@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SurfaceMatrix from '../../components/SurfaceMatrix.astro';
+import { getCompounds, getSurfaces, rgba } from '../../lib/codex';
+
+const surfaces = await getSurfaces();
+const compounds = await getCompounds();
+const friction = new Map(surfaces.map((s) => [s.id, s.friction]));
+const surfaceName = new Map(surfaces.map((s) => [s.id, s.name]));
+// Column order comes from the affinity rows themselves, so headers and cells always line up.
+const columns = compounds[0].affinity.map((a) => surfaceName.get(a.surface) ?? a.surface);
+
+// Colour scale for grip: red (none) through amber to green (full) and cyan (above asphalt).
+const heat = (v: number) => {
+  const t = Math.max(0, Math.min(1.35, v)) / 1.35;
+  const hue = Math.round(t * 190);
+  return `hsla(${hue}, 75%, 45%, ${0.25 + 0.6 * t})`;
+};
+---
+
+<Layout title="Surfaces" description="Fifteen surfaces and how each tyre compound grips on them.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Surfaces</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Surfaces</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      The game checks the ground under each of the four wheels on every physics step, so one wheel can be on grass while
+      the others are on asphalt. Each of the {surfaces.length} surfaces has a <strong class="text-white">friction</strong>
+      value (how much grip it allows), a <strong class="text-white">rolling resistance</strong> (how much it holds the car
+      back) and a <strong class="text-white">drag</strong> (extra slowing on soft ground such as sand or mud).
+    </p>
+  </div>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Surface properties</h2>
+    <div class="mt-4"><SurfaceMatrix /></div>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Compound affinity</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      The tyre compound multiplies the surface friction. A slick is made for asphalt and slides on dirt; an all-terrain
+      tyre gives up a little on asphalt and gains on gravel. Values above 1.00 grip better than the surface baseline.
+    </p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted text-[10px]">
+          <tr>
+            <th class="py-2 px-3 text-left uppercase sticky left-0 bg-racing-surface2">Compound</th>
+            {columns.map((name) => <th class="py-2 px-2 font-normal whitespace-nowrap">{name}</th>)}
+          </tr>
+        </thead>
+        <tbody class="bg-racing-surface">
+          {compounds.map((c) => (
+            <tr class="border-t border-racing-border/40">
+              <td class="py-2 px-3 text-white font-bold whitespace-nowrap sticky left-0 bg-racing-surface">
+                <span class="inline-block w-2 h-2 rounded-full mr-2" style={`background:${rgba(c.accent_rgba)}`}></span>{c.name}
+              </td>
+              {c.affinity.map((a) => (
+                <td class="py-2 px-2 text-center text-white" style={`background:${heat(a.multiplier)}`}>{a.multiplier.toFixed(2)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="py-8">
+    <h2 class="text-xl font-bold text-white">Grip you actually get</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      Surface friction × compound affinity. This is the friction the tyre model starts from, before temperature, wear,
+      camber, dirt on the tread and the car's own grip level. On sheet ice the car's ice grip multiplier (studded tyres
+      and similar) also applies, capped at 1.20.
+    </p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted text-[10px]">
+          <tr>
+            <th class="py-2 px-3 text-left uppercase sticky left-0 bg-racing-surface2">Compound</th>
+            {columns.map((name) => <th class="py-2 px-2 font-normal whitespace-nowrap">{name}</th>)}
+          </tr>
+        </thead>
+        <tbody class="bg-racing-surface">
+          {compounds.map((c) => (
+            <tr class="border-t border-racing-border/40">
+              <td class="py-2 px-3 text-white font-bold whitespace-nowrap sticky left-0 bg-racing-surface">{c.name}</td>
+              {c.affinity.map((a) => {
+                const mu = (friction.get(a.surface) ?? 0) * a.multiplier;
+                return <td class="py-2 px-2 text-center text-white" style={`background:${heat(mu)}`}>{mu.toFixed(2)}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Layout>

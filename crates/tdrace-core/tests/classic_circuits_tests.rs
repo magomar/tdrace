@@ -500,7 +500,7 @@ const GT: [(&str, f32, u32); 3] = [
 /// And they do not cross themselves in 2D
 /// And they use kerbs on apexes, Steel walls with TireWall at braking zones
 /// And each circuit uses at least 3 runoff/trap surfaces with variable runoff width (3-30 m)
-/// And together the 3 GT circuits use Gravel, DeepSand, PackedSand, Grass and Asphalt
+/// And together the 3 GT circuits use Gravel, Grass and Asphalt, and no sand (a GT car cannot drive out of it, tdrace-le75)
 #[test]
 fn test_gt_circuits_have_speed_braking_and_runoff() {
     let mut all_surfaces = std::collections::HashSet::new();
@@ -565,18 +565,15 @@ fn test_gt_circuits_have_speed_braking_and_runoff() {
         );
     }
 
-    for expected in [
-        SurfaceType::Gravel,
-        SurfaceType::DeepSand,
-        SurfaceType::PackedSand,
-        SurfaceType::Grass,
-        SurfaceType::Asphalt,
-    ] {
+    for expected in [SurfaceType::Gravel, SurfaceType::Grass, SurfaceType::Asphalt] {
         assert!(
             all_surfaces.contains(&expected),
-            "GT circuits together must use all 5 runoff surfaces (missing {:?})",
+            "GT circuits together must use Gravel, Grass and Asphalt runoff (missing {:?})",
             expected
         );
+    }
+    for sand in [SurfaceType::DeepSand, SurfaceType::PackedSand] {
+        assert!(!all_surfaces.contains(&sand), "GT circuits must not use {:?}: a GT car cannot drive out of it", sand);
     }
 }
 
@@ -620,9 +617,9 @@ fn test_velocity_park_has_two_long_straights_and_chicanes() {
     assert!(has_wide_asphalt, "Velocity Park must have wide Asphalt runoff >= 20 m at braking zones");
 }
 
-/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has DeepSand traps and a straight >= 300 m
+/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has Gravel traps and a straight >= 300 m
 #[test]
-fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
+fn test_ridge_ring_has_ridge_climb_and_gravel_traps() {
     let t = catalog::official_track("classic", "gt_ridge_ring");
     let min_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MAX, f32::min);
     let max_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MIN, f32::max);
@@ -640,10 +637,8 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
         max_grade * 100.0
     );
 
-    let has_deepsand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::DeepSand) || s.right_runoff_surface == Some(SurfaceType::DeepSand)
-    }) || t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::DeepSand);
-    assert!(has_deepsand, "Ridge Ring must have narrow DeepSand traps");
+    let has_gravel_traps = t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Gravel);
+    assert!(has_gravel_traps, "Ridge Ring must have narrow Gravel traps");
 
     // Has a straight >= 300 m (handling wrap-around)
     let s = &t.spline.samples;
@@ -669,7 +664,7 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
     );
 }
 
-/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and PackedSand runoff
+/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and Gravel runoff
 #[test]
 fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
     let t = catalog::official_track("classic", "gt_coastal_grand_prix");
@@ -704,11 +699,11 @@ fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
         max_elev
     );
 
-    // Has PackedSand runoff
-    let has_packed_sand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::PackedSand) || s.right_runoff_surface == Some(SurfaceType::PackedSand)
+    // Has Gravel runoff
+    let has_gravel = t.spline.samples.iter().any(|s| {
+        s.left_runoff_surface == Some(SurfaceType::Gravel) || s.right_runoff_surface == Some(SurfaceType::Gravel)
     });
-    assert!(has_packed_sand, "Coastal Grand Prix must have PackedSand runoff");
+    assert!(has_gravel, "Coastal Grand Prix must have Gravel runoff");
 
     // Has bus-stop chicane and carousel: total turn of carousel is >= 150 deg
     // In our definition, segment 6 has turn_deg = -165 deg (>= 150 deg)

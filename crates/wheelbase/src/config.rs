@@ -787,6 +787,15 @@ impl Default for SuspensionArchetype {
 }
 
 impl SuspensionArchetype {
+    pub const ALL: [Self; 6] = [
+        Self::RigidKart,
+        Self::SolidLiveAxle,
+        Self::MacPhersonStrut,
+        Self::DoubleWishbone,
+        Self::PushrodInboard,
+        Self::LongTravelOffRoad,
+    ];
+
     /// Structural resilience factor governing resistance to collision, kerb, and landing damage (Spec 078).
     /// Higher values indicate greater robustness against failure.
     pub fn robustness_factor(&self) -> f32 {
@@ -1079,6 +1088,8 @@ impl Default for EnginePlacement {
 }
 
 impl EnginePlacement {
+    pub const ALL: [Self; 3] = [Self::FrontEngine, Self::MidEngine, Self::RearEngine];
+
     /// Powertrain overhaul labor and complexity cost multiplier for garage repairs (Spec 078).
     pub fn repair_cost_multiplier(&self) -> f32 {
         match self {
@@ -1709,6 +1720,9 @@ impl CarConfig {
             w.tire_width = 0.22;
             w.rotational_inertia = 1.30;
         }
+        // Gravel and dirt tyres. Spec 074 gave every car MediumSlick, so rally and autocross cars ran
+        // slicks on gravel (affinity 0.32) and bots stalled on Classic RX/AX circuits (tdrace-lxkv).
+        cfg.set_compound(CompoundId::AllTerrain);
         cfg.finalized()
     }
 

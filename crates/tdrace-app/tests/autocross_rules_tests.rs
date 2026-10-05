@@ -9,14 +9,14 @@ use tdrace_core::CarCategory;
 fn test_autocross_game_module_identity_and_properties() {
     let ax = AutocrossGameModule::new();
     assert_eq!(ax.id(), "autocross");
-    assert_eq!(ax.title(), "FIA AUTOCROSS");
+    assert_eq!(ax.title(), "CONTINENTAL AUTOCROSS");
     assert_eq!(ax.subtitle(), "Natural Unpaved Dirt & Buggy Racing");
     assert_eq!(ax.default_off_track_surface(), SurfaceType::Dirt);
     assert_eq!(ax.default_track_id(), "nova_paka_ax");
-    assert_eq!(ax.default_vehicle_id(), "autocross_lifelive_tn5_junior");
+    assert_eq!(ax.default_vehicle_id(), "autocross_ardennes_junior_t1");
 
     let theme = ax.theme();
-    assert_eq!(theme.header_badge, "FIA AUTOCROSS CHAMPIONSHIP");
+    assert_eq!(theme.header_badge, "CONTINENTAL AUTOCROSS CHAMPIONSHIP");
 
     let audio = ax.audio_profile();
     assert_eq!(audio.sound_type, tdrace_app::audio::EngineSoundType::CrossCarMotorcycle);
@@ -91,14 +91,14 @@ fn test_autocross_driver_roster() {
     assert_eq!(drivers.len(), 8, "Expected 8 Autocross driver characters");
 
     let driver_names: Vec<&str> = drivers.iter().map(|d| d.name).collect();
-    assert!(driver_names.contains(&"Petr Nikodém"));
-    assert!(driver_names.contains(&"Bernd Stubbe"));
-    assert!(driver_names.contains(&"Kevin Peters"));
-    assert!(driver_names.contains(&"David Méndez"));
-    assert!(driver_names.contains(&"Miguel Gayoso"));
-    assert!(driver_names.contains(&"Václav Fejfar"));
-    assert!(driver_names.contains(&"Vincent Mercier"));
-    assert!(driver_names.contains(&"Jakub Novotný"));
+    assert!(driver_names.contains(&"Pavel Urban"));
+    assert!(driver_names.contains(&"Bodo Richter"));
+    assert!(driver_names.contains(&"Klaus Petersen"));
+    assert!(driver_names.contains(&"Diego Morales"));
+    assert!(driver_names.contains(&"Mateo Garrido"));
+    assert!(driver_names.contains(&"Viktor Fiala"));
+    assert!(driver_names.contains(&"Valentin Moreau"));
+    assert!(driver_names.contains(&"Jiří Němec"));
 
     for driver in &drivers {
         assert!(!driver.alias.is_empty());

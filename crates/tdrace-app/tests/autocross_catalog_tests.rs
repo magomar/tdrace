@@ -62,25 +62,25 @@ fn test_autocross_catalog_has_three_vehicles_per_tier() {
 fn test_autocross_specific_vehicle_identities() {
     let expected_ids = [
         // Tier 1
-        "autocross_lifelive_tn5_junior",
-        "autocross_speedcar_xtrem_junior",
-        "autocross_planet_k3_junior",
+        "autocross_ardennes_junior_t1",
+        "autocross_iberian_furia_t1",
+        "autocross_cosmo_nova_t1",
         // Tier 2
-        "autocross_lifelive_tn11_senior",
-        "autocross_speedcar_wonder",
-        "autocross_semog_bravo_sport",
+        "autocross_ardennes_pro_t2",
+        "autocross_iberian_relampago_t2",
+        "autocross_lusitania_bravo_t2",
         // Tier 3
-        "autocross_peters_buggy1600",
-        "autocross_alfa_racing_buggy1600",
-        "autocross_fast_speed_buggy1600",
+        "autocross_petersen_buggy1600_t3",
+        "autocross_bologna_buggy1600_t3",
+        "autocross_rapid_buggy1600_t3",
         // Tier 4
-        "autocross_skoda_fabia_tax",
-        "autocross_mitsubishi_evo_tax",
-        "autocross_audi_a4_tax",
+        "autocross_bohemia_veloce_t4",
+        "autocross_shinano_tsunami_t4",
+        "autocross_vortek_quattro_t4",
         // Tier 5
-        "autocross_peters_superbuggy",
-        "autocross_alfa_racing_superbuggy",
-        "autocross_fast_speed_superbuggy",
+        "autocross_petersen_superbuggy_t5",
+        "autocross_bologna_superbuggy_t5",
+        "autocross_rapid_superbuggy_t5",
     ];
 
     for id in expected_ids {

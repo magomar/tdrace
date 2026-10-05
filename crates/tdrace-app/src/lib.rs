@@ -2,6 +2,7 @@ pub mod ai;
 pub mod audio;
 pub use race_ui::camera;
 pub mod catalog;
+pub mod codex;
 pub mod config;
 pub mod db;
 pub mod dev_tools;

@@ -212,7 +212,7 @@ impl LobbySlot {
             slot_id,
             player_name: sanitize_string(&player_name, MAX_NAME_LENGTH),
             country_code,
-            car_model_id: "gt_ferrari_296_gt3".to_string(),
+            car_model_id: "gt_valente_corsa_t2".to_string(),
             color_scheme_id: "red".to_string(),
             is_ready: is_host,
             is_host,
