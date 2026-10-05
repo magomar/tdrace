@@ -1,0 +1,121 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LineChart from '../../components/LineChart.astro';
+import { getCompounds, getDamageModel, getPlatforms, rgba } from '../../lib/codex';
+
+const platforms = await getPlatforms();
+const compounds = await getCompounds();
+const damage = await getDamageModel();
+const titles = new Map(platforms.map((p) => [p.id, p.title]));
+
+const PALETTE = ['#22d3ee', '#f59e0b', '#a855f7', '#10b981', '#ef4444', '#3b82f6', '#eab308', '#f472b6', '#94a3b8', '#84cc16', '#fb923c'];
+
+// One curve per distinct tyre shape, labelled with the platforms that share it.
+const shapes = new Map<string, { label: string[]; points: [number, number][]; peak: number }>();
+for (const p of platforms) {
+  const key = JSON.stringify(p.tire.curve);
+  const entry = shapes.get(key) ?? { label: [], points: p.tire.curve as [number, number][], peak: p.tire.peak_slip_angle_deg };
+  entry.label.push(p.title);
+  shapes.set(key, entry);
+}
+const shapeSeries = [...shapes.values()].map((s, i) => ({ label: s.label.join(', '), color: PALETTE[i % PALETTE.length], points: s.points }));
+const thermalSeries = compounds.map((c) => ({ label: c.name, color: rgba(c.accent_rgba), points: c.thermal_curve as [number, number][] }));
+const used = compounds.filter((c) => c.platforms.length > 0);
+const unused = compounds.filter((c) => c.platforms.length === 0);
+---
+
+<Layout title="Tyres" description="The tyre model: grip curve, slip, compounds, temperature and wear.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Tyres</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Tyres</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      A tyre grips by slipping a little. In a corner the tyre points in a slightly different direction from where it
+      travels; that difference is the <strong class="text-white">slip angle</strong>. Under power or braking the tyre
+      turns slightly faster or slower than the road; that is the <strong class="text-white">slip ratio</strong>. Grip
+      rises with slip up to a peak, then falls away into a slide. The game uses one curve for both: it combines the two
+      slips into one number, so a spinning or locked wheel also loses cornering grip.
+    </p>
+  </div>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">The grip curve</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      The x-axis is slip divided by the peak slip, so 1.0 is the peak for every tyre. After the peak, grip falls to the
+      <em>slide grip</em> level over the <em>falloff</em> width. A high slide grip makes a car easy to drift; a low one makes
+      it snap. Each car scales the whole curve by its own grip level.
+    </p>
+    <div class="mt-4">
+      <LineChart series={shapeSeries} xLabel="Slip ÷ peak slip" yLabel="Share of peak grip" yDomain={[0, 1.05]} markers={[{ x: 1, label: 'peak' }]} />
+    </div>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono whitespace-nowrap">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Platform</th><th class="py-2 px-3">Peak angle F / R</th><th class="py-2 px-3">Peak slip ratio</th><th class="py-2 px-3">Slide grip</th><th class="py-2 px-3">Falloff</th><th class="py-2 px-3">Load sensitivity</th><th class="py-2 px-3">Power slide</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {platforms.map((p) => (
+            <tr>
+              <td class="py-2 px-3 text-white font-bold">{p.title}</td>
+              <td class="py-2 px-3">{p.tire.peak_slip_angle_deg.toFixed(1)}° / {p.tire.rear_peak_slip_angle_deg.toFixed(1)}°</td>
+              <td class="py-2 px-3">{p.tire.peak_slip_ratio.toFixed(2)}</td>
+              <td class="py-2 px-3">{Math.round(p.tire.slide_grip * 100)}%</td>
+              <td class="py-2 px-3">{p.tire.falloff.toFixed(1)}×</td>
+              <td class="py-2 px-3">{p.tire.load_sensitivity.toFixed(2)}</td>
+              <td class="py-2 px-3">{p.tire.power_slide.toFixed(2)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-racing-muted mt-2">Peak angle: a small angle gives sharp turn-in. The rear tyre peaks earlier than the front, which keeps the car stable. Load sensitivity: a heavily loaded tyre grips less per kilo, so weight transfer in a corner costs grip. Power slide: how much wheelspin steals cornering grip (1.0 = all of it).</p>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Compounds</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      The compound is the rubber. It decides how well the tyre grips on each surface (see
+      <a class="text-racing-cyan hover:underline" href="/technical/surfaces">Surfaces</a>), the temperature it likes and
+      how fast it wears. The grip curve above comes from the car, not from the compound.
+    </p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono whitespace-nowrap">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Compound</th><th class="py-2 px-3">Best temperature</th><th class="py-2 px-3">Overheats at</th><th class="py-2 px-3">Wear rate</th><th class="py-2 px-3">Fitted to</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {[...used, ...unused].map((c) => (
+            <tr>
+              <td class="py-2 px-3 text-white font-bold">
+                <span class="inline-block min-w-[2.5rem] text-center px-1.5 py-0.5 mr-2 rounded text-[10px] text-black font-bold" style={`background:${rgba(c.accent_rgba)}`}>{c.badge}</span>{c.name}
+              </td>
+              <td class="py-2 px-3">{c.optimal_temp_c[0]}–{c.optimal_temp_c[1]} °C</td>
+              <td class="py-2 px-3">{c.overheat_temp_c} °C</td>
+              <td class="py-2 px-3">{(c.wear_rate * 1e7).toFixed(1)} ×10⁻⁷ /J</td>
+              <td class="py-2 px-3">{c.platforms.length ? c.platforms.map((id) => titles.get(id)).join(', ') : <span class="text-racing-amber">no car yet</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {unused.length > 0 && (
+      <p class="text-xs text-racing-amber mt-2">{unused.map((c) => c.name).join(', ')}: defined in the tyre model, but no car uses them yet.</p>
+    )}
+  </section>
+
+  <section class="py-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div>
+      <h2 class="text-xl font-bold text-white">Temperature</h2>
+      <p class="text-xs text-racing-muted mt-2 leading-relaxed">Sliding heats the tread. A cold tyre gives a little less grip; inside its window it gives a bonus; past the window grip drops, and it drops further when the tyre overheats.</p>
+      <div class="mt-3">
+        <LineChart series={thermalSeries} xLabel="Tread temperature (°C)" yLabel="Grip multiplier" yDomain={[0.8, 1.1]} xFormat={(x) => `${Math.round(x)}`} />
+      </div>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold text-white">Wear</h2>
+      <p class="text-xs text-racing-muted mt-2 leading-relaxed">Every joule of sliding wears the tread by the compound's wear rate. A fully worn tyre keeps {Math.round(damage.tire_wear_curve.at(-1)![1] * 100)}% of its grip. A pit stop fits new tyres.</p>
+      <div class="mt-3">
+        <LineChart series={[{ label: 'Grip', color: '#22d3ee', points: damage.tire_wear_curve as [number, number][] }]} xLabel="Tread wear (0 = new, 1 = worn out)" yLabel="Grip multiplier" yDomain={[0, 1.05]} />
+      </div>
+    </div>
+  </section>
+</Layout>

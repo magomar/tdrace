@@ -197,8 +197,6 @@ pub struct CodexWheel {
     pub width_m: f32,
     pub inertia_kgm2: f32,
     pub compound: CompoundId,
-    pub brake_share: f32,
-    pub drive_share: f32,
 }
 
 #[derive(Serialize)]
@@ -518,8 +516,6 @@ fn platform(id: CarChoice, models: &[&'static RealCarModel]) -> CodexPlatform {
                 width_m: w.tire_width,
                 inertia_kgm2: w.rotational_inertia,
                 compound: w.compound.id,
-                brake_share: w.brake_bias_factor,
-                drive_share: w.drive_torque_factor,
             })
             .collect(),
         suspension: cfg.suspension,

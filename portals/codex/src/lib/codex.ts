@@ -5,12 +5,21 @@ export type Car = CollectionEntry<'cars'>['data'];
 export type Circuit = CollectionEntry<'circuits'>['data'];
 export type Surface = CollectionEntry<'surfaces'>['data'];
 export type Module = CollectionEntry<'modules'>['data'];
+export type Platform = CollectionEntry<'chassis'>['data'];
+export type SuspensionArchetype = CollectionEntry<'suspension'>['data'];
+export type Compound = CollectionEntry<'tyres'>['data'];
+export type DamageModel = CollectionEntry<'damage'>['data'];
 
 // Collections keep the export order (modules grouped in Codex order), so no sorting here.
 export const getCars = async () => (await getCollection('cars')).map((e) => e.data);
 export const getCircuits = async () => (await getCollection('circuits')).map((e) => e.data);
 export const getSurfaces = async () => (await getCollection('surfaces')).map((e) => e.data);
 export const getModules = async () => (await getCollection('modules')).map((e) => e.data);
+export const getPlatforms = async () => (await getCollection('chassis')).map((e) => e.data);
+export const getSuspensionArchetypes = async () => (await getCollection('suspension')).map((e) => e.data);
+export const getCompounds = async () => (await getCollection('tyres')).map((e) => e.data);
+export const getEnginePlacements = async () => (await getCollection('drivetrain')).map((e) => e.data);
+export const getDamageModel = async () => (await getCollection('damage'))[0].data;
 
 // Presentation only: a short label and a badge colour per module id. Titles come from the export.
 const MODULE_STYLE: Record<string, { label: string; badge: string }> = {
@@ -40,6 +49,43 @@ export const moduleBadge = (id: string) => MODULE_STYLE[id]?.badge ?? NEUTRAL_BA
 export const categoryLabel = (id: string) => CATEGORY_LABEL[id] ?? id;
 
 export const pct = (x: number) => Math.round(x * 100);
+
+// Display names for Rust enum ids. Presentation only.
+export const ARCHETYPE_LABEL: Record<string, string> = {
+  rigid_kart: 'Rigid kart',
+  solid_live_axle: 'Solid live axle',
+  mac_pherson_strut: 'MacPherson strut',
+  double_wishbone: 'Double wishbone',
+  pushrod_inboard: 'Pushrod inboard',
+  long_travel_off_road: 'Long-travel off-road',
+};
+export const PLACEMENT_LABEL: Record<string, string> = {
+  front_engine: 'Front engine',
+  mid_engine: 'Mid engine',
+  rear_engine: 'Rear engine',
+};
+export const ZONE_LABEL: Record<string, string> = {
+  front_nose: 'Front nose',
+  rear_tail: 'Rear tail',
+  flank_left: 'Left flank',
+  flank_right: 'Right flank',
+  corner_f_l: 'Front-left corner',
+  corner_f_r: 'Front-right corner',
+  corner_r_l: 'Rear-left corner',
+  corner_r_r: 'Rear-right corner',
+};
+
+export type Differential = Platform['front_differential'];
+export const differentialLabel = (d: Differential) =>
+  typeof d === 'string'
+    ? d === 'Open'
+      ? 'Open'
+      : 'Spool (locked)'
+    : `LSD ${pct(d.LimitedSlip.power_lock)}% / ${pct(d.LimitedSlip.coast_lock)}% · ${d.LimitedSlip.preload_nm} N·m`;
+
+export const rgba = (c: number[]) =>
+  `rgba(${Math.round(c[0] * 255)}, ${Math.round(c[1] * 255)}, ${Math.round(c[2] * 255)}, ${c[3]})`;
+export const deg = (rad: number) => (rad * 180) / Math.PI;
 
 // Site map. `ready: false` pages belong to later phases of spec 087 and are listed but not linked.
 export interface CodexPage {
@@ -76,12 +122,12 @@ export const SECTIONS: CodexSection[] = [
     blurb: 'How the simulation models a car: chassis, suspension, tyres, surfaces, drivetrain and damage.',
     pages: [
       { label: 'Physics lab', href: '/technical/physics-lab', blurb: 'Tyre curve, surface table and the main formulas.', ready: true },
-      { label: 'Chassis', href: '/technical/chassis', blurb: 'Chassis skeletons, body types and collision hulls.', ready: false },
-      { label: 'Suspension', href: '/technical/suspension', blurb: 'Six suspension types, their settings and how they fail.', ready: false },
-      { label: 'Tyres', href: '/technical/tyres', blurb: 'Grip curve, compounds, heat and wear, wheel geometry.', ready: false },
-      { label: 'Surfaces', href: '/technical/surfaces', blurb: 'Fifteen surfaces and how each compound grips on them.', ready: false },
-      { label: 'Drivetrain', href: '/technical/drivetrain', blurb: 'Engine force, drive split, differentials, engine placement.', ready: false },
-      { label: 'Damage & repair', href: '/technical/damage', blurb: 'Impact zones, power loss, field and garage repairs.', ready: false },
+      { label: 'Chassis', href: '/technical/chassis', blurb: 'Chassis skeletons, body types and collision hulls.', ready: true },
+      { label: 'Suspension', href: '/technical/suspension', blurb: 'Six suspension types, their settings and how they fail.', ready: true },
+      { label: 'Tyres', href: '/technical/tyres', blurb: 'Grip curve, compounds, heat and wear, wheel geometry.', ready: true },
+      { label: 'Surfaces', href: '/technical/surfaces', blurb: 'Fifteen surfaces and how each compound grips on them.', ready: true },
+      { label: 'Drivetrain', href: '/technical/drivetrain', blurb: 'Engine force, drive split, differentials, engine placement.', ready: true },
+      { label: 'Damage & repair', href: '/technical/damage', blurb: 'Impact zones, power loss, field and garage repairs.', ready: true },
     ],
   },
   {

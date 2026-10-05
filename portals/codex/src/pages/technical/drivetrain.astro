@@ -1,0 +1,157 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { PLACEMENT_LABEL, differentialLabel, getCars, getEnginePlacements, getPlatforms, moduleLabel } from '../../lib/codex';
+
+const cars = await getCars();
+const platforms = await getPlatforms();
+const placements = await getEnginePlacements();
+const titles = new Map(platforms.map((p) => [p.id, p.title]));
+
+// drive_bias is the share of drive torque sent to the front axle.
+const layout = (bias: number) => (bias >= 0.99 ? 'FWD' : bias <= 0.01 ? 'RWD' : `AWD ${Math.round(bias * 100)}% front`);
+const rows = new Map<string, { catalogue: string; sim: string; cars: string[] }>();
+for (const c of cars) {
+  const sim = layout(c.physics.drive_bias);
+  const key = `${c.drivetrain}|${sim}`;
+  const row = rows.get(key) ?? { catalogue: c.drivetrain, sim, cars: [] };
+  row.cars.push(c.name);
+  rows.set(key, row);
+}
+const mismatch = (r: { catalogue: string; sim: string }) =>
+  /AWD|4WD/.test(r.catalogue) ? !r.sim.startsWith('AWD') : r.catalogue.startsWith('FWD') ? r.sim !== 'FWD' : r.sim !== 'RWD';
+
+// Engine force per bhp, as the game sets it per module and tier.
+const force = new Map<string, { ratio: number; modules: Set<string>; count: number }>();
+for (const c of cars) {
+  const ratio = Math.round((c.physics.max_engine_force / c.bhp) * 10) / 10;
+  const f = force.get(String(ratio)) ?? { ratio, modules: new Set<string>(), count: 0 };
+  f.modules.add(c.module);
+  f.count += 1;
+  force.set(String(ratio), f);
+}
+// Drive layouts in the export: front share of drive torque -> how many cars use it.
+const layouts = [...new Set(cars.map((c) => c.physics.drive_bias))]
+  .sort((a, b) => b - a)
+  .map((bias) => ({ bias, label: layout(bias), count: cars.filter((c) => c.physics.drive_bias === bias).length }));
+
+const ABOUT: Record<string, string> = {
+  front_engine: 'Engine ahead of the cabin. A hit to the nose reaches the engine first.',
+  mid_engine: 'Engine behind the driver, ahead of the rear axle. Hits to the flanks and tail reach it.',
+  rear_engine: 'Engine at the back. A hit to the tail reaches the engine first; repairs cost the most.',
+};
+---
+
+<Layout title="Drivetrain" description="How engine power reaches the road: engine force, drive layout, differentials and engine placement.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Drivetrain</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Drivetrain</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      The engine gives a driving force. The drive layout splits it between the front and rear axle. On each axle a
+      differential splits it again between the left and right wheel. Where the engine sits does not change the handling
+      in the game, but it decides which crashes hurt the engine and how much a repair costs.
+    </p>
+  </div>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Engine force</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      The game turns the catalogue horsepower into a maximum driving force: force = bhp × a factor. Light karts get a
+      higher factor so their small engines still pull hard.
+    </p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border max-w-2xl">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Newtons per bhp</th><th class="py-2 px-3">Cars</th><th class="py-2 px-3">Modules</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {[...force.values()].sort((a, b) => a.ratio - b.ratio).map((f) => (
+            <tr><td class="py-2 px-3 text-white font-bold">{f.ratio}</td><td class="py-2 px-3">{f.count}</td><td class="py-2 px-3">{[...f.modules].map(moduleLabel).join(', ')}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Drive layout</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      The catalogue lists each car's drivetrain. The game turns that into a drive split. Rows in amber are cars whose
+      catalogue drivetrain and simulated drive split disagree.
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 max-w-3xl">
+      {layouts.map((l) => (
+        <figure class="rounded-xl border border-racing-border bg-racing-surface p-4">
+          <svg viewBox="0 0 160 90" class="w-full h-auto" role="img" aria-label={`${l.label}: driven wheels`}>
+            <rect x="20" y="25" width="120" height="40" rx="8" fill="#1a1f2c" stroke="#475569" />
+            {[[118, 12], [118, 64], [26, 12], [26, 64]].map(([x, y], i) => {
+              const share = i < 2 ? l.bias : 1 - l.bias;
+              return <rect x={x} y={y} width="18" height="14" rx="2" fill={share > 0 ? '#22d3ee' : '#0b0f19'} fill-opacity={share > 0 ? 0.35 + share * 0.65 : 1} stroke="#e2e8f0" />;
+            })}
+            <text x="127" y="50" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="JetBrains Mono, monospace">{Math.round(l.bias * 100)}%</text>
+            <text x="35" y="50" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="JetBrains Mono, monospace">{Math.round((1 - l.bias) * 100)}%</text>
+            <text x="80" y="50" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono, monospace">front ▶</text>
+          </svg>
+          <figcaption class="text-xs font-mono text-white mt-2">{l.label} <span class="text-racing-muted">· {l.count} cars</span></figcaption>
+        </figure>
+      ))}
+    </div>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Catalogue</th><th class="py-2 px-3">Simulated</th><th class="py-2 px-3">Cars</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {[...rows.values()].map((r) => (
+            <tr class={mismatch(r) ? 'bg-amber-500/10' : ''}>
+              <td class={`py-2 px-3 font-bold ${mismatch(r) ? 'text-racing-amber' : 'text-white'}`}>{r.catalogue}</td>
+              <td class="py-2 px-3">{r.sim}</td>
+              <td class="py-2 px-3 font-sans text-racing-muted">{r.cars.length > 6 ? `${r.cars.length} cars` : r.cars.join(', ')}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Differentials</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      An <strong class="text-white">open</strong> differential lets the wheels turn at different speeds and splits the
+      torque evenly; the unloaded wheel can spin. A <strong class="text-white">spool</strong> locks both wheels together:
+      great traction, but the car pushes wide in slow corners. A <strong class="text-white">limited-slip</strong>
+      differential (LSD) sits in between: it locks partly under power and partly when you lift off, plus a fixed preload.
+    </p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Platform</th><th class="py-2 px-3">Front differential</th><th class="py-2 px-3">Rear differential</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {platforms.map((p) => (
+            <tr>
+              <td class="py-2 px-3 text-white font-bold"><a class="hover:text-racing-cyan" href={`/technical/chassis#${p.id}`}>{p.title}</a></td>
+              <td class="py-2 px-3">{differentialLabel(p.front_differential)}</td>
+              <td class="py-2 px-3">{differentialLabel(p.rear_differential)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-racing-muted mt-2">LSD values: lock under power / lock on lift-off · preload. A front differential only matters when the car drives the front wheels.</p>
+  </section>
+
+  <section class="py-8">
+    <h2 class="text-xl font-bold text-white">Engine placement</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      {placements.map((pl) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+          <h3 class="font-bold text-white">{PLACEMENT_LABEL[pl.id]}</h3>
+          <p class="text-xs text-racing-muted mt-1 leading-relaxed">{ABOUT[pl.id]}</p>
+          <p class="text-xs font-mono text-white mt-3">Engine repair cost ×{pl.repair_cost_multiplier.toFixed(2)}</p>
+          <p class="text-[11px] font-mono text-racing-cyan mt-2">{pl.platforms.map((id) => titles.get(id)).join(', ') || 'No platform'}</p>
+        </div>
+      ))}
+    </div>
+    <p class="text-xs text-racing-muted mt-3">See <a class="text-racing-cyan hover:underline" href="/technical/damage">Damage &amp; repair</a> for how each placement shares out crash damage.</p>
+  </section>
+</Layout>

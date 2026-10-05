@@ -1,0 +1,62 @@
+---
+// Top-down plan of a platform drawn from its ChassisSkeleton and wheel geometry (Spec 075).
+// Rear bumper on the left, front bumper on the right. One scale for every platform, so sizes compare.
+import type { Platform } from '../lib/codex';
+
+interface Props {
+  platform: Platform;
+}
+
+const { platform: p } = Astro.props;
+const k = p.skeleton;
+
+const PX_PER_M = 62;
+const W = 380;
+const H = 190;
+const len = p.total_length_m;
+const ox = (W - len * PX_PER_M) / 2; // rear bumper x
+const cy = H / 2 - 6;
+const X = (m: number) => ox + m * PX_PER_M; // metres from the rear bumper
+const Y = (m: number) => cy + m * PX_PER_M; // metres from the centre line (+ = right)
+
+const rearAxle = k.rear_overhang;
+const frontAxle = k.rear_overhang + p.wheelbase_m;
+const cg = rearAxle + p.cg_to_rear_m;
+const cabinRear = rearAxle + k.cabin_end_offset;
+const cabinFront = frontAxle + k.cabin_start_offset;
+const halfBody = k.body_width / 2;
+const halfTrack = p.track_width_m / 2;
+const wheel = (axleX: number, side: number, w: Platform['wheels'][number]) => ({
+  x: X(axleX - w.radius_m),
+  y: Y(side * halfTrack - w.width_m / 2),
+  w: 2 * w.radius_m * PX_PER_M,
+  h: w.width_m * PX_PER_M,
+});
+const [fl, fr, rl, rr] = p.wheels;
+const wheels = [wheel(frontAxle, -1, fl), wheel(frontAxle, 1, fr), wheel(rearAxle, -1, rl), wheel(rearAxle, 1, rr)];
+const dimY = Y(halfBody) + 22;
+// Overhang labels need about 34 px; on short cars (karts) they would overlap, so the table shows them instead.
+const roomy = (m: number) => m * PX_PER_M >= 34;
+---
+
+<svg viewBox={`0 0 ${W} ${H}`} class="w-full h-auto" role="img" aria-label={`Top-down plan of the ${p.title} platform`}>
+  <rect x={X(0)} y={Y(-halfBody)} width={len * PX_PER_M} height={k.body_width * PX_PER_M} rx="10" fill="#1a1f2c" stroke="#3b82f6" stroke-width="1.5" />
+  {cabinFront > cabinRear && (
+    <rect x={X(cabinRear)} y={Y(-halfBody * 0.7)} width={(cabinFront - cabinRear) * PX_PER_M} height={halfBody * 1.4 * PX_PER_M} rx="6" fill="#0f172a" stroke="#475569" stroke-dasharray="3 2" />
+  )}
+  <line x1={X(rearAxle)} x2={X(rearAxle)} y1={Y(-halfTrack)} y2={Y(halfTrack)} stroke="#64748b" />
+  <line x1={X(frontAxle)} x2={X(frontAxle)} y1={Y(-halfTrack)} y2={Y(halfTrack)} stroke="#64748b" />
+  {wheels.map((w) => <rect x={w.x} y={w.y} width={w.w} height={w.h} rx="2" fill="#0b0f19" stroke="#e2e8f0" />)}
+  <circle cx={X(cg)} cy={cy} r="4" fill="#f59e0b" />
+  <text x={X(cg) + 6} y={cy - 6} font-size="10" fill="#f59e0b" font-family="JetBrains Mono, monospace">CG</text>
+  <text x={X(len) - 4} y={cy + 4} text-anchor="end" font-size="10" fill="#22d3ee" font-family="JetBrains Mono, monospace">▶</text>
+
+  <g font-size="10" fill="#94a3b8" font-family="JetBrains Mono, monospace" text-anchor="middle">
+    <line x1={X(0)} x2={X(len)} y1={dimY} y2={dimY} stroke="#475569" />
+    <line x1={X(rearAxle)} x2={X(rearAxle)} y1={dimY - 4} y2={dimY + 4} stroke="#475569" />
+    <line x1={X(frontAxle)} x2={X(frontAxle)} y1={dimY - 4} y2={dimY + 4} stroke="#475569" />
+    {roomy(k.rear_overhang) && <text x={X(rearAxle / 2)} y={dimY + 14}>{k.rear_overhang.toFixed(2)}</text>}
+    <text x={X((rearAxle + frontAxle) / 2)} y={dimY + 14} fill="#e2e8f0">wheelbase {p.wheelbase_m.toFixed(2)} m</text>
+    {roomy(k.front_overhang) && <text x={X((frontAxle + len) / 2)} y={dimY + 14}>{k.front_overhang.toFixed(2)}</text>}
+  </g>
+</svg>

@@ -141,4 +141,179 @@ const surfaces = defineCollection({
   }),
 });
 
-export const collections = { modules, cars, circuits, surfaces };
+const curve = z.array(z.tuple([z.number(), z.number()]));
+const archetypeId = z.string();
+const placementId = z.enum(['front_engine', 'mid_engine', 'rear_engine']);
+// DifferentialType: "Open", "Spool" or { LimitedSlip: { power_lock, coast_lock, preload_nm } }.
+const differential = z.union([
+  z.enum(['Open', 'Spool']),
+  z.object({
+    LimitedSlip: z.object({ power_lock: z.number(), coast_lock: z.number(), preload_nm: z.number() }),
+  }),
+]);
+const suspensionCorner = z.object({
+  archetype: archetypeId,
+  spring_rate: z.number(),
+  bump_damping_ratio: z.number(),
+  rebound_damping_ratio: z.number(),
+  max_bump_travel: z.number(),
+  max_rebound_travel: z.number(),
+  static_camber: z.number(),
+  camber_recovery: z.number(),
+});
+const suspensionSetup = z.object({
+  front: suspensionCorner,
+  rear: suspensionCorner,
+  front_arb_rate: z.number(),
+  rear_arb_rate: z.number(),
+  front_roll_center_height: z.number(),
+  rear_roll_center_height: z.number(),
+  response_frequency_hz: z.number(),
+});
+
+const chassis = defineCollection({
+  loader: codexFile('chassis.json'),
+  schema: z.object({
+    id: z.string(),
+    title: z.string(),
+    tag: z.string(),
+    description: z.string(),
+    modules: z.array(z.string()),
+    cars: z.array(z.string()),
+    wheelbase_m: z.number(),
+    track_width_m: z.number(),
+    cg_to_front_m: z.number(),
+    cg_to_rear_m: z.number(),
+    cg_height_m: z.number(),
+    total_length_m: z.number(),
+    skeleton: z.object({
+      front_overhang: z.number(),
+      rear_overhang: z.number(),
+      body_width: z.number(),
+      cabin_start_offset: z.number(),
+      cabin_end_offset: z.number(),
+      headlight_spread: z.number(),
+      taillight_spread: z.number(),
+      light_inset: z.number(),
+    }),
+    hull: z.object({ front_extent_m: z.number(), rear_extent_m: z.number(), half_width_m: z.number() }),
+    wheels: z.array(
+      z.object({
+        position: z.enum(['FL', 'FR', 'RL', 'RR']),
+        radius_m: z.number(),
+        width_m: z.number(),
+        inertia_kgm2: z.number(),
+        compound: z.string(),
+      }),
+    ),
+    suspension: suspensionSetup,
+    front_differential: differential,
+    rear_differential: differential,
+    engine_placement: placementId,
+    tire: z.object({
+      peak_slip_angle_deg: z.number(),
+      rear_peak_slip_angle_deg: z.number(),
+      peak_slip_ratio: z.number(),
+      slide_grip: z.number(),
+      falloff: z.number(),
+      load_sensitivity: z.number(),
+      power_slide: z.number(),
+      curve,
+    }),
+  }),
+});
+
+const suspension = defineCollection({
+  loader: codexFile('suspension.json'),
+  schema: z.object({
+    id: archetypeId,
+    robustness_factor: z.number(),
+    part_cost_multiplier: z.number(),
+    factory: suspensionSetup,
+    platforms_front: z.array(z.string()),
+    platforms_rear: z.array(z.string()),
+  }),
+});
+
+const tyres = defineCollection({
+  loader: codexFile('tyres.json'),
+  schema: z.object({
+    id: z.string(),
+    name: z.string(),
+    badge: z.string(),
+    accent_rgba: z.array(z.number()).length(4),
+    wear_rate: z.number(),
+    optimal_temp_c: z.tuple([z.number(), z.number()]),
+    overheat_temp_c: z.number(),
+    affinity: z.array(z.object({ surface: surfaceId, multiplier: z.number() })),
+    thermal_curve: curve,
+    platforms: z.array(z.string()),
+  }),
+});
+
+const drivetrain = defineCollection({
+  loader: codexFile('drivetrain.json'),
+  schema: z.object({
+    id: placementId,
+    repair_cost_multiplier: z.number(),
+    platforms: z.array(z.string()),
+  }),
+});
+
+const damage = defineCollection({
+  loader: codexFile('damage.json'),
+  schema: z.object({
+    id: z.literal('damage'),
+    energy_deadzone_j: z.number(),
+    chassis_capacity_j: z.number(),
+    engine_capacity_j: z.number(),
+    suspension_capacity_j: z.number(),
+    kerb_bottom_out_speed_mps: z.number(),
+    kerb_bottom_out_capacity_j: z.number(),
+    landing_speed_limit_mps: z.number(),
+    landing_capacity_j: z.number(),
+    pushrod_collapse_health: z.number(),
+    pushrod_collapse_drag_multiplier: z.number(),
+    zones: z.array(
+      z.object({
+        id: z.string(),
+        weights: z.array(
+          z.object({
+            placement: placementId,
+            chassis: z.number(),
+            engine: z.number(),
+            suspension: z.array(z.number()).length(4),
+          }),
+        ),
+      }),
+    ),
+    engine_power_curve: curve,
+    steering_pull_curve: curve,
+    tire_wear_curve: curve,
+    field_repair_caps: z.object({ chassis: z.number(), engine: z.number(), suspension: z.number() }),
+    pit_stop_repair_amount: z.number(),
+    purse_cap_share: z.number(),
+    safety_net_credit_limit: z.number(),
+    safety_net_health: z.number(),
+    invoice_examples: z.array(
+      z.object({
+        tier: z.number(),
+        base_purse: z.number(),
+        health: z.number(),
+        placement: placementId,
+        archetype: archetypeId,
+        invoice: z.object({
+          chassis_cost: z.number(),
+          engine_cost: z.number(),
+          suspension_costs: z.array(z.number()).length(4),
+          total_raw_damage_cost: z.number(),
+          sponsor_subsidy: z.number(),
+          net_deduction: z.number(),
+          sponsor_safety_net_applied: z.boolean(),
+        }),
+      }),
+    ),
+  }),
+});
+
+export const collections = { modules, cars, circuits, surfaces, chassis, suspension, tyres, drivetrain, damage };

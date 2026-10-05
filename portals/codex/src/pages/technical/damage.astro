@@ -1,0 +1,151 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LineChart from '../../components/LineChart.astro';
+import { ARCHETYPE_LABEL, PLACEMENT_LABEL, ZONE_LABEL, getDamageModel, pct } from '../../lib/codex';
+
+const d = await getDamageModel();
+const placements = d.zones[0].weights.map((w) => w.placement);
+const cr = (n: number) => `${n.toLocaleString('en-US')} Cr`;
+const fullPowerFrom = d.engine_power_curve.find(([, r]) => r >= 1)![0];
+const powerFloor = d.engine_power_curve[0][1];
+const maxPull = Math.max(...d.steering_pull_curve.map(([, b]) => Math.abs(b)));
+const pullStart = Math.max(...d.steering_pull_curve.filter(([x, b]) => x >= 0 && b === 0).map(([x]) => x));
+
+// Zone shapes on a 300 x 150 car outline, nose to the right.
+const ZONES: Record<string, { x: number; y: number; w: number; h: number }> = {
+  rear_tail: { x: 10, y: 45, w: 50, h: 60 },
+  front_nose: { x: 240, y: 45, w: 50, h: 60 },
+  corner_r_l: { x: 10, y: 10, w: 60, h: 35 },
+  corner_r_r: { x: 10, y: 105, w: 60, h: 35 },
+  corner_f_l: { x: 230, y: 10, w: 60, h: 35 },
+  corner_f_r: { x: 230, y: 105, w: 60, h: 35 },
+  flank_left: { x: 70, y: 10, w: 160, h: 35 },
+  flank_right: { x: 70, y: 105, w: 160, h: 35 },
+};
+const SHORT: Record<string, string> = {
+  front_nose: 'Nose', rear_tail: 'Tail', flank_left: 'Left flank', flank_right: 'Right flank',
+  corner_f_l: 'FL', corner_f_r: 'FR', corner_r_l: 'RL', corner_r_r: 'RR',
+};
+---
+
+<Layout title="Damage & repair" description="Impact zones, how damage is shared out, what it does to the car, and what repairs cost.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Damage &amp; repair</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Damage &amp; repair</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      A car has six health values: the chassis, the engine and one for each suspension corner. All start at 100%. A crash
+      turns its energy into damage, shared out by where the car was hit and where its engine sits. Damage stays for the
+      rest of the race unless you stop in the pits. In a career you pay for full repairs in the garage after the race.
+    </p>
+  </div>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">From crash to damage</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 items-start">
+      <div class="text-sm text-racing-muted leading-relaxed space-y-3">
+        <p>1. The bumpers soak up the first <strong class="text-white">{d.energy_deadzone_j} J</strong> of every hit. Taps and light contact do no damage.</p>
+        <p>2. The game finds the <strong class="text-white">impact zone</strong>: nose, tail, a flank or one of the four corners.</p>
+        <p>3. The rest of the energy is shared out between chassis, engine and suspension using the table below.</p>
+        <p>4. Each part has a capacity: <strong class="text-white">{d.chassis_capacity_j.toLocaleString('en-US')} J</strong> wrecks the chassis, <strong class="text-white">{d.engine_capacity_j.toLocaleString('en-US')} J</strong> wrecks the engine and <strong class="text-white">{d.suspension_capacity_j.toLocaleString('en-US')} J</strong> breaks a suspension corner (divided by its <a class="text-racing-cyan hover:underline" href="/technical/suspension">robustness factor</a>).</p>
+      </div>
+      <svg viewBox="0 0 300 150" class="w-full h-auto rounded-xl border border-racing-border bg-racing-bg/60" role="img" aria-label="The eight impact zones of a car seen from above, nose to the right">
+        {Object.entries(ZONES).map(([id, z]) => (
+          <g>
+            <rect x={z.x} y={z.y} width={z.w} height={z.h} rx="6" fill="#1a1f2c" stroke="#3b82f6" />
+            <text x={z.x + z.w / 2} y={z.y + z.h / 2 + 4} text-anchor="middle" font-size="11" fill="#e2e8f0" font-family="JetBrains Mono, monospace">{SHORT[id]}</text>
+          </g>
+        ))}
+        <rect x="70" y="45" width="160" height="60" rx="8" fill="#0f172a" stroke="#475569" stroke-dasharray="3 2" />
+        <text x="150" y="80" text-anchor="middle" font-size="11" fill="#94a3b8" font-family="Inter, sans-serif">cabin ▶</text>
+      </svg>
+    </div>
+
+    <div class="overflow-x-auto mt-6 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr>
+            <th class="py-2 px-3">Zone</th>
+            {placements.map((p) => <th class="py-2 px-3">{PLACEMENT_LABEL[p]}</th>)}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {d.zones.map((z) => (
+            <tr>
+              <td class="py-2 px-3 text-white font-bold">{ZONE_LABEL[z.id]}</td>
+              {z.weights.map((w) => (
+                <td class="py-2 px-3">
+                  chassis {pct(w.chassis)}% · <span class={w.engine >= 0.4 ? 'text-racing-red' : ''}>engine {pct(w.engine)}%</span> · suspension {Math.round(w.suspension.reduce((a, b) => a + b, 0) * 1000) / 10}%
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-racing-muted mt-2">Shares of the energy above the dead zone. Suspension damage goes to the corners nearest the hit. Red: hits that send 40% or more to the engine.</p>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">What damage does</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+      <div>
+        <h3 class="font-bold text-white">Engine power</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">The engine keeps full power down to {pct(fullPowerFrom)}% health. Below that, power falls off; a dead engine still gives {pct(powerFloor)}% so you can limp home.</p>
+        <div class="mt-3"><LineChart series={[{ label: 'Power', color: '#ef4444', points: d.engine_power_curve as [number, number][] }]} xLabel="Engine health" yLabel="Share of full power" yDomain={[0, 1.05]} xFormat={(x) => `${pct(x)}%`} yFormat={(y) => `${pct(y)}%`} /></div>
+      </div>
+      <div>
+        <h3 class="font-bold text-white">Steering pull</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">When one front corner is more damaged than the other, the car pulls towards the damaged side. Differences up to {pct(pullStart)}% are ignored; at most the pull is {maxPull.toFixed(3)} of full steering.</p>
+        <div class="mt-3"><LineChart series={[{ label: 'Pull', color: '#a855f7', points: d.steering_pull_curve as [number, number][] }]} xLabel="Front-left health − front-right health" yLabel="Steering bias" xFormat={(x) => `${pct(x)}%`} yFormat={(y) => y.toFixed(3)} /></div>
+      </div>
+    </div>
+    <p class="text-sm text-racing-muted mt-4 max-w-4xl">A damaged corner also leans its tyre and loses grip; a collapsed pushrod adds ×{d.pushrod_collapse_drag_multiplier} drag. See <a class="text-racing-cyan hover:underline" href="/technical/suspension">Suspension</a>.</p>
+  </section>
+
+  <section class="py-8">
+    <h2 class="text-xl font-bold text-white">Repairs</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">In the pits</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">
+          A pit stop fits new tyres and adds {pct(d.pit_stop_repair_amount)}% health to every part. It cannot take a part
+          above a field repair cap: chassis {pct(d.field_repair_caps.chassis)}%, engine {pct(d.field_repair_caps.engine)}%,
+          suspension {pct(d.field_repair_caps.suspension)}%. Parts already above the cap stay as they are.
+        </p>
+      </div>
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">In the garage</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">
+          After the race every part goes back to 100%, and you pay the bill. The bill grows with the tier's prize purse and
+          with the damage. A sponsor pays anything above {pct(d.purse_cap_share)}% of what you won. If you have less than
+          {cr(d.safety_net_credit_limit)}, the sponsor also repairs every part up to {pct(d.safety_net_health)}% for free.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-white mt-6">Example bills</h3>
+    <p class="text-xs text-racing-muted mt-1">Computed by the game for a race win with a front-engine car on {ARCHETYPE_LABEL[d.invoice_examples[0].archetype].toLowerCase()} suspension.</p>
+    <div class="overflow-x-auto mt-3 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr><th class="py-2 px-3">Tier</th><th class="py-2 px-3">Purse</th><th class="py-2 px-3">Health left</th><th class="py-2 px-3">Chassis</th><th class="py-2 px-3">Engine</th><th class="py-2 px-3">Suspension</th><th class="py-2 px-3">Full bill</th><th class="py-2 px-3">Sponsor pays</th><th class="py-2 px-3">You pay</th></tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {d.invoice_examples.map((e) => (
+            <tr>
+              <td class="py-2 px-3 text-white font-bold">{e.tier}</td>
+              <td class="py-2 px-3">{cr(e.base_purse)}</td>
+              <td class="py-2 px-3">{pct(e.health)}%</td>
+              <td class="py-2 px-3">{cr(e.invoice.chassis_cost)}</td>
+              <td class="py-2 px-3">{cr(e.invoice.engine_cost)}</td>
+              <td class="py-2 px-3">{cr(e.invoice.suspension_costs.reduce((a, b) => a + b, 0))}</td>
+              <td class="py-2 px-3">{cr(e.invoice.total_raw_damage_cost)}</td>
+              <td class="py-2 px-3 text-racing-green">{cr(e.invoice.sponsor_subsidy)}</td>
+              <td class="py-2 px-3 text-white font-bold">{cr(e.invoice.net_deduction)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Layout>
