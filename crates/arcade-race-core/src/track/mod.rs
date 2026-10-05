@@ -670,8 +670,9 @@ impl Track {
                 s.is_bridge = false;
             }
             let (left, right, _, _) = generate_walls_from_spline_raw(&spline, barrier_offset, barrier_type);
-            // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept.
-            let main_gap = (barrier_offset - 0.5).max(0.3);
+            // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept, and at most
+            // 3.5 m: riga_rx's main walls stand ~10 m off on its run-off, and its side-by-side joker lost its walls.
+            let main_gap = (barrier_offset - 0.5).clamp(0.3, 3.5);
             for side in [left, right] {
                 let kept: Vec<WallBarrier> = side
                     .into_iter()

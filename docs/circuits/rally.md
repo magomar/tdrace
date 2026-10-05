@@ -17,8 +17,8 @@ The **Rallycross & All-Terrain** catalog in [`tracks/rally/`](../../tracks/rally
 
 Every official rallycross circuit incorporates a **Joker Lap detour** modeled via the Directed Ribbon Graph (`TrackNetwork`) in [`crates/arcade-race-core/src/track/network.rs`](../../crates/arcade-race-core/src/track/network.rs):
 * **Format Rule**: Every driver must take the Joker Lap detour exactly once per race heat.
-* **Real or synthetic**: 10 World RX jokers follow the joker mapped in OpenStreetMap (`holjes_rx`, `hell_rx`, `loheac_rx`, `estering_rx`, `montalegre_rx`, `catalunya_rx`, `essay_rx`, `dreux_rx`, `lavare_rx`, `lessay_rx`), with their real length. The other circuits have a synthetic joker, 42 m longer than the main branch. The "Joker Lap Layout" column below was not checked against the venues. See spec 081, amendment tdrace-3z9u.
-* **Delta Penalty**: Detour adds approximately $+1.3 \dots +6.0\text{ s}$ to standard lap time (shape only, from `test_rx_joker_costs_lap_time`).
+* **Real or synthetic**: 13 World RX jokers follow OpenStreetMap, with their real length: the 10 tagged as a joker (`holjes_rx`, `hell_rx`, `loheac_rx`, `estering_rx`, `montalegre_rx`, `catalunya_rx`, `essay_rx`, `dreux_rx`, `lavare_rx`, `lessay_rx`) and 3 untagged roads that match the published joker description (`killarney_rx`, `mettet_rx`, and `riga_rx`, where the lap ran on the joker road). `lydden_hill` and `kouvola_rx` have a synthetic joker placed and sized from the venue description; the others have a synthetic joker 42 m longer than the main branch. The "Joker Lap Layout" column below was not checked against the venues. See spec 088.
+* **Delta Penalty**: Detour adds approximately $+1.3 \dots +7.0\text{ s}$ to standard lap time (shape only, from `test_rx_joker_costs_lap_time`).
 * **Re-join Hazard**: Exit merges back into the main circuit right before the start/finish straight, demanding strategic timing to avoid traffic merges.
 
 ---

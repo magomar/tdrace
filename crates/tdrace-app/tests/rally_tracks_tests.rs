@@ -931,19 +931,20 @@ const RX_JOKER_TRACKS: [(&str, &str); 23] = [
 #[test]
 fn test_rx_joker_costs_lap_time() {
     // Every joker must cost time, mapped or synthetic, but not more than a slow corner. The model sees only the
-    // shape. On 2026-10-05 the costs were 1.3-6.0 s; the mapped jokers cost 1.7-6.0 s, also the three that are
-    // shorter than the main branch they bypass (loheac_rx, estering_rx, dreux_rx).
+    // shape. On 2026-10-05 the costs were 1.3-7.0 s; the mapped jokers cost 1.7-7.0 s, also the three that are
+    // shorter than the main branch they bypass (loheac_rx, estering_rx, dreux_rx). The most is mettet_rx, whose
+    // mapped joker is a tight asphalt loop (the official one is "slow").
     let mut failures = Vec::new();
     for (module, id) in RX_JOKER_TRACKS {
         let track = tdrace_core::catalog::official_track(module, id);
         let network = track.network.as_ref().expect("network");
         let main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").expect("main spline"));
         let joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").expect("joker spline"));
-        if !(1.0..=6.5).contains(&(joker - main)) {
+        if !(1.0..=7.5).contains(&(joker - main)) {
             failures.push(format!("{}: joker lap {:.2} s vs main {:.2} s ({:+.2} s)", id, joker, main, joker - main));
         }
     }
-    assert!(failures.is_empty(), "joker lap cost outside 1.0-6.5 s:\n{}", failures.join("\n"));
+    assert!(failures.is_empty(), "joker lap cost outside 1.0-7.5 s:\n{}", failures.join("\n"));
 }
 
 #[test]
@@ -1130,11 +1131,12 @@ fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
         let roads = network.segments.iter().map(|s| s.to_spline()).chain(std::iter::once(track.spline.clone())).collect::<Vec<_>>();
 
         // On each side, wherever no other road (with its 3.5 m barrier gap) lies beside the joker, a wall
-        // stands within 5 m of the joker's edge.
+        // stands within 6 m of the joker's edge. Joker walls keep the gap of the main walls around them, which is
+        // 5.4 m on riga_rx.
         for (side, sign) in [("left", 1.0f32), ("right", -1.0)] {
             let (mut open, mut walled) = (0, 0);
             for s in &seg.samples {
-                let end = s.point + s.normal * sign * (s.width * 0.5 + 5.0);
+                let end = s.point + s.normal * sign * (s.width * 0.5 + 6.0);
                 let beside_road = roads.iter().any(|r| {
                     let proj = r.project_point(end);
                     proj.distance_to_spline < proj.track_width * 0.5 + 4.0

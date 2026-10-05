@@ -32,13 +32,15 @@ struct TrackJokerConfig {
 enum JokerSource {
     /// The joker ways mapped in OpenStreetMap, from the file `osm_importer.py rally --jokers` writes.
     Osm,
-    /// OSM maps no joker: the main line between two waypoints, bulged sideways until it is 42 m longer.
+    /// OSM maps no joker: the main line between two waypoints, bulged sideways until it is `target_delta` metres
+    /// longer (42 m where nothing describes the real joker).
     Synthetic {
         split_idx: usize,
         merge_idx: usize,
         side: f32, // +1.0 for left normal, -1.0 for right normal
         surface: SurfaceType,
         bank_angle: f32,
+        target_delta: f32,
     },
 }
 
@@ -68,12 +70,16 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
     TrackJokerConfig {
         slug: "lydden_hill",
         name: "Chessons Drift Joker Detour",
+        // "Between Pilgrims and Chessons Drift" (waypoints 9-14 and 14-18), 1420 m vs the 1335 m lap: +85 m,
+        // +73 m on this 1150 m lap. OSM maps no joker. From waypoint 12 to 16 the bulge left a main wall stub in the
+        // split throat that stopped bots on both routes; to 18 it is gentler.
         source: JokerSource::Synthetic {
             split_idx: 12,
-            merge_idx: 16,
+            merge_idx: 18,
             side: 1.0,
             surface: SurfaceType::Gravel,
             bank_angle: 6.0,
+            target_delta: 73.0,
         },
     },
     TrackJokerConfig {
@@ -99,23 +105,33 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
     TrackJokerConfig {
         slug: "nyirad_rx",
         name: "Nyirád Red Cauldron Joker Detour",
+        // The joker leaves "on the inside of a turn ... where drivers turn left" (the left at waypoint 45) and
+        // rejoins "at a very sharp left hander" (waypoint 49) before the right-hand climb to the finish: 1290 m vs
+        // the 1220 m lap, +70 m, +62 m on this 1075 m lap. OSM maps no joker. This section wiggles: on the inside
+        // (left) the bulge folds for every split and merge tried, and longer bulges on the right fold, reach the
+        // return road, or overlap the asphalt where the main road turns to dirt (wheel surface mismatches). So it
+        // stays as it was: waypoints 44-52, +42 m (the fold check puts it on the right).
         source: JokerSource::Synthetic {
             split_idx: 44,
             merge_idx: 52,
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 6.0,
+            target_delta: 42.0,
         },
     },
     TrackJokerConfig {
         slug: "kouvola_rx",
         name: "Tykkimäki Velodrome Joker Detour",
+        // "A joker section towards the end of the lap", 1120 m vs the 1060 m lap: +60 m, +54 m on this 951 m lap.
+        // Round the outside of the last hairpin (waypoints 26-28). OSM maps no joker.
         source: JokerSource::Synthetic {
-            split_idx: 20,
-            merge_idx: 26,
+            split_idx: 25,
+            merge_idx: 28,
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 7.0,
+            target_delta: 54.0,
         },
     },
     TrackJokerConfig {
@@ -126,13 +142,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
     TrackJokerConfig {
         slug: "mettet_rx",
         name: "Mettet Arena Joker Detour",
-        source: JokerSource::Synthetic {
-            split_idx: 14,
-            merge_idx: 19,
-            side: 1.0,
-            surface: SurfaceType::Dirt,
-            bank_angle: 6.0,
-        },
+        source: JokerSource::Osm,
     },
     TrackJokerConfig {
         slug: "lavare_rx",
@@ -142,24 +152,12 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
     TrackJokerConfig {
         slug: "riga_rx",
         name: "Biķernieki Forest Joker Detour",
-        source: JokerSource::Synthetic {
-            split_idx: 19,
-            merge_idx: 24,
-            side: 1.0,
-            surface: SurfaceType::Dirt,
-            bank_angle: 6.0,
-        },
+        source: JokerSource::Osm,
     },
     TrackJokerConfig {
         slug: "killarney_rx",
         name: "Table Mountain Sweep Joker Detour",
-        source: JokerSource::Synthetic {
-            split_idx: 17,
-            merge_idx: 22,
-            side: 1.0,
-            surface: SurfaceType::Gravel,
-            bank_angle: 6.0,
-        },
+        source: JokerSource::Osm,
     },
     TrackJokerConfig {
         slug: "lessay_rx",
@@ -185,6 +183,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
             side: 1.0,
             surface: SurfaceType::Gravel,
             bank_angle: 6.0,
+            target_delta: 42.0,
         },
     },
     TrackJokerConfig {
@@ -196,6 +195,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
             side: 1.0,
             surface: SurfaceType::Gravel,
             bank_angle: 7.0,
+            target_delta: 42.0,
         },
     },
     TrackJokerConfig {
@@ -207,6 +207,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 6.0,
+            target_delta: 42.0,
         },
     },
     TrackJokerConfig {
@@ -218,6 +219,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 8.0,
+            target_delta: 42.0,
         },
     },
 ];
@@ -263,6 +265,7 @@ fn synthetic_cut(
     side: f32,
     surface: SurfaceType,
     bank_angle: f32,
+    target_delta: f32,
 ) -> JokerCut {
     let wps = &track.spline.waypoints;
     let (s_idx, m_idx) = (split_idx, merge_idx);
@@ -286,7 +289,6 @@ fn synthetic_cut(
 
     // Number of waypoints along Joker detour
     let num_joker_steps = 8usize;
-    let target_delta = 42.0f32;
 
     // Binary search for peak lateral offset D_peak such that seg2.length - seg1.length == target_delta
     let build_joker_wps = |side_sign: f32| -> Vec<TrackWaypoint> {
@@ -497,8 +499,8 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers:
             let joker = osm_jokers.get(cfg.slug).unwrap_or_else(|| panic!("{}: no mapped joker", cfg.slug));
             osm_cut(cfg, &track, joker)
         }
-        JokerSource::Synthetic { split_idx, merge_idx, side, surface, bank_angle } => {
-            synthetic_cut(cfg, &track, split_idx, merge_idx, side, surface, bank_angle)
+        JokerSource::Synthetic { split_idx, merge_idx, side, surface, bank_angle, target_delta } => {
+            synthetic_cut(cfg, &track, split_idx, merge_idx, side, surface, bank_angle, target_delta)
         }
     };
     let JokerCut { start: seg0_wps, main: seg1_wps, joker: seg2_wps, finish: seg3_wps, t_split, t_merge, joker_surfaces } = cut;
@@ -574,12 +576,13 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers:
         cfg.slug, seg1.length, seg2.length, delta
     );
     // A mapped joker keeps its real length; only the synthetic one is built to a length.
-    if let JokerSource::Synthetic { .. } = cfg.source {
+    if let JokerSource::Synthetic { target_delta, .. } = cfg.source {
         assert!(
-            delta >= 30.0 && delta <= 70.0,
-            "{}: delta {:.1}m outside [30, 70]m",
+            (delta - target_delta).abs() <= 3.0,
+            "{}: delta {:.1}m, target {:.1}m",
             cfg.slug,
-            delta
+            delta,
+            target_delta
         );
     }
 

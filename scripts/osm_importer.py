@@ -1979,6 +1979,14 @@ RALLY_TRACKS = {
         # Loose as in the old lap (Mettet RX is ~60/40 tarmac/gravel); OSM tags 178240082 asphalt.
         "loose_ways": [178240082, 178240080],
         "start_offset_m": 68.0,  # where the old lap started, so its scenery stays in place
+        # The start/finish line, 3 waypoints (123.1 m) back from there on the start straight: the joker loop below
+        # leaves the straight 68 m before the old line and rejoins it just after, and a hairpin follows 20 m later.
+        # A whole number of waypoints, so the waypoints (and the walls built on them) stay where they were.
+        "finish_shift_m": -3 * 1149.0 / 28,
+        # The official joker is "at the end of the lap before the flying finish", +72 m and "slow". Of the asphalt
+        # loop off the start straight, the cut through 178240078 is +43 m in game; 178240077 then the second half of
+        # 178240074 is +95 m but turns at 2.7 m and costs 10 s; the whole of 178240074 is +139 m.
+        "joker_ways": [(178240077, 1886090191, 1886090070), (178240078, 1886090070, 1886090102), (178240074, 1886090102, 1886090150)],
         "query": '[out:json][timeout:25];(way["highway"="raceway"](50.295,4.640,50.310,4.665););out body;>;out skel qt;',
         # The raceway loop that matches the old lap best (1050 m in OSM, 0.91x the official 1149 m).
         "segments": [
@@ -2004,18 +2012,28 @@ RALLY_TRACKS = {
     "riga_rx": {
         "name": "Biķernieku Trase (World RX Latvia)",
         "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
-        "start_offset_m": 659.0,  # where the old lap started, so its scenery stays in place
+        # Where the old lap started, so its scenery stays in place (659 m before the joker swap made the lap 8.6 m
+        # shorter before this point).
+        "start_offset_m": 650.4,
+        # The start/finish line, one waypoint (35.4 m) on from there, in the same frame: the joker rejoins 17 m
+        # before the old line, and the joker branch needs a main waypoint between its merge and the line.
+        "finish_shift_m": 1062.4 / 30,
         "query": '[out:json][timeout:25];(way["highway"="raceway"](56.955,24.215,56.975,24.245););out body;>;out skel qt;',
-        # The raceway loop that matches the old lap best (1071 m in OSM; the official 1294 m is 17% longer,
-        # so the lap stays at the mapped length). The three "gravel" ways are the loose sections.
+        # The raceway loop that matches the old lap best (1063 m in OSM; the official 1294 m is 22% longer,
+        # so the lap stays at the mapped length). The "gravel" ways are the loose sections.
+        # The joker runs "completely side by side" with the main track, each with a jump. Two parallel roads
+        # leave node 5098959004 and rejoin way 1435177485; the main lap takes the southern one (588947713 ...),
+        # the joker the northern one, which is 8.6 m longer (the official joker is +60 m).
         "segments": [
-            (588947722, 5098958979, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
-            (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212), (1435177485, 1080703212, 1080702484),
-            (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
+            (588947722, 5098958979, 5098959004), (588947713, 5098959004, 5624243843), (588947721, 5624243843, 5624243873),
+            (588947716, 5624243873, 5624243877), (588947718, 5624243877, 5624243874), (1435177480, 5624243874, 1080703373),
+            (1435177485, 1080703373, 1080702484), (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
             (945640986, 5363424528, 1080377982), (1120160990, 1080377982, 277946516), (523849729, 277946516, 5098958979),
         ],
-        "loose_ways": [588947722, 588947717, 588947719],
-        "fia_length": 1071.0,  # mapped length (the official 1294 m is 17% longer)
+        "loose_ways": [588947722],
+        "fia_length": 1062.4,  # mapped length (the official 1294 m is 22% longer)
+        "joker_ways": [(588947722, 5098959004, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
+                       (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212)],
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 30,
@@ -2030,6 +2048,10 @@ RALLY_TRACKS = {
         },
     },
     "killarney_rx": {
+        # The official joker "split[s] left, running around the outside initially on tarmac before tightening into
+        # a right-hander, back onto an unsealed surface", and merges before the finish: the oneway ways
+        # 1214903815 and 1214903819 and the piece of the old circuit 42125321 between them.
+        "joker_ways": [1214903815, (42125321, 801399815, 11256127284), 1214903819],
         "name": "Killarney International Raceway (World RX South Africa)",
         "description": "Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.",
         "query": '[out:json][timeout:25];(way["highway"="raceway"](-33.840,18.520,-33.825,18.535););out body;>;out skel qt;',
@@ -2141,12 +2163,17 @@ JOKER_SPACING_M = 10.0
 
 def rally_joker_path(track_id, spec, ways, nodes, lap_node_ids, to_track):
     """The mapped joker: spec["joker_ways"] chained in race order from the node where it leaves the lap to the
-    node where it rejoins it. Returns its points in track coordinates, resampled about every JOKER_SPACING_M
-    metres, with the surface of the way under each point."""
+    node where it rejoins it. An entry is a way id, or (way id, first node, last node) for part of a way.
+    Returns its points in track coordinates, resampled about every JOKER_SPACING_M metres, with the surface
+    of the way under each point."""
     on_lap = {nid: i for i, nid in enumerate(lap_node_ids)}
     chain = []  # (node id, way id)
-    for wid in spec["joker_ways"]:
+    for entry in spec["joker_ways"]:
+        wid, *ends = entry if isinstance(entry, tuple) else (entry,)
         nds = ways[wid]["nodes"]
+        if ends:
+            i, j = nds.index(ends[0]), nds.index(ends[1])
+            nds = nds[i:j + 1] if i <= j else nds[j:i + 1][::-1]
         if not chain:
             if nds[-1] in on_lap and nds[0] not in on_lap:
                 nds = nds[::-1]
@@ -2311,6 +2338,9 @@ def process_rally_track(track_id, cache_dir):
     # Translate so start line is at x=0, y=0
     x_offset, y_offset = scaled_pts[0]
     aligned_pts = [((x - x_offset), (y - y_offset)) for x, y in scaled_pts]
+    if spec.get("finish_shift_m"):
+        # Moves the start/finish line along the lap in the same frame, so the scenery stays in place.
+        aligned_pts, surfaces = shift_start(aligned_pts, spec["finish_shift_m"] % polyline_length(aligned_pts), surfaces)
 
     def to_track(latlon):
         """An OSM (lat, lon) in the same track coordinates as the lap."""
