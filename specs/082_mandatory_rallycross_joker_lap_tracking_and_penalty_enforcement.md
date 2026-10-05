@@ -5,7 +5,7 @@ title: "Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"
 description: "Makes Rallycross joker laps work end to end in the live race (correct route data, surfaces, lap counting and bot route choice) and enforces one mandatory joker per race with a HUD badge, a final-lap warning and a +30 s results penalty."
 status: implemented
 receipt: "docs/receipts/spec-082-receipt.md"
-verified: { by: human:mario, at: 2026-10-04T14:50:25Z }
+verified: { by: human:mario, at: 2026-10-04T14:50:25Z, hash: "cc2832a4a29a" }
 created: 2026-10-03
 generated: { by: agent/antigravity, at: 2026-10-03T15:12:25Z }
 depends_on:
