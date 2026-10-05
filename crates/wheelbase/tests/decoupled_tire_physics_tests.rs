@@ -561,3 +561,29 @@ fn test_rally_car_runs_all_terrain_tyres() {
     let slicks = speed_on_gravel(CarConfig::rally_car().with_compound(CompoundId::MediumSlick));
     assert!(all_terrain > slicks * 1.2, "all-terrain {all_terrain:.1} m/s, slicks {slicks:.1} m/s after 3 s on gravel");
 }
+
+/// Scenario: A curb does not add weight (tdrace-le75)
+///
+/// Given a kart (rigid suspension, 8 mm of travel) and a GT car
+/// When each one accelerates from a stop with every wheel on a curb
+/// Then the wheel loads add up to the car's weight, and the car is no faster than on asphalt
+/// (the fixed 4 cm curb height used to hit the kart's bump stops: 16 times its weight, and it could not move)
+#[test]
+fn test_curbs_move_load_but_add_none() {
+    for cfg in [CarConfig::kart(), CarConfig::sports_car()] {
+        let weight = cfg.mass * 9.81;
+        let speed_after_3_s = |surface: SurfaceType| {
+            let mut car = Car::new(cfg.clone());
+            let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+            for _ in 0..180 {
+                car.step(&ctrl, surface, 1.0 / 60.0);
+            }
+            let load: f32 = car.state().wheels.iter().map(|w| w.normal_load).sum();
+            (car.state().speed, load)
+        };
+        let (on_curb, load) = speed_after_3_s(SurfaceType::Curb);
+        let (on_asphalt, _) = speed_after_3_s(SurfaceType::Asphalt);
+        assert!(load < weight * 1.5, "wheel loads {load:.0} N on a curb, weight {weight:.0} N");
+        assert!(on_curb > on_asphalt * 0.8 && on_curb <= on_asphalt * 1.01, "{on_curb:.1} m/s on curbs, {on_asphalt:.1} m/s on asphalt");
+    }
+}
