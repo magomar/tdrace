@@ -164,13 +164,13 @@ walls 2.0 m out and cars drive on the kerb; a wall that steps in there stopped t
   (20–30 m) at the braking zones, Gravel elsewhere.
 - Ridge Ring: a raised section that climbs to about 8 m and comes back down, **without crossing
   another part of the lap**. Grade 8 % or less. A crest, a downhill corner after it, esses and a
-  hairpin. Narrow DeepSand traps (5–8 m) and Grass.
+  hairpin. Narrow Gravel traps (5–8 m) and Grass.
 - Coastal Grand Prix: a 400 m straight, a bus-stop chicane, a carousel (one long turn of 150° or
   more), a fast sweeper and a raised plateau of about 5 m.
 - Runoff width changes along each lap (3–30 m per side, set with `left/right_wall_distance`).
-  Each circuit uses at least 3 of these runoff and trap surfaces: Gravel, DeepSand, PackedSand,
-  Grass, Asphalt. Together the 3 circuits use all 5. Traps are `SurfaceZone`s with
-  `layer: below_track` or runoff surfaces per waypoint.
+  Each circuit uses Gravel, Grass and Asphalt as runoff and trap surfaces. No DeepSand or
+  PackedSand: a GT car that stops on them cannot drive out (tdrace-le75). Traps are `SurfaceZone`s
+  with `layer: below_track` or runoff surfaces per waypoint.
 
 **Stock Cars — banked ovals**
 - Races run anticlockwise (left turns), so the outer side is the right side and `bank_angle` is
