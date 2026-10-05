@@ -133,61 +133,61 @@ Reference cars: Classic GT, Classic kart, Classic rally, and the first car of ti
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: PackedGravel drives like Dirt, a bit more slippery**
-  - [ ] **Given** each reference car
-  - [ ] **When** its grip (friction × tyre affinity) on PackedGravel is compared with its grip on Dirt
-  - [ ] **Then** the PackedGravel grip is 85–95 % of the Dirt grip for every car
+  - [x] **Given** each reference car
+  - [x] **When** its grip (friction × tyre affinity) on PackedGravel is compared with its grip on Dirt
+  - [x] **Then** the PackedGravel grip is 85–95 % of the Dirt grip for every car
 
 - **Scenario: DeepGravel slows a car that leaves the road**
-  - [ ] **Given** each reference car at 100 km/h
-  - [ ] **When** it coasts with no throttle and no brake on DeepGravel until it stops
-  - [ ] **Then** it stops in 60 % or less of the distance it needs to coast to a stop on Asphalt
+  - [x] **Given** each reference car at 100 km/h
+  - [x] **When** it coasts with no throttle and no brake on DeepGravel until it stops
+  - [x] **Then** it stops in 60 % or less of the distance it needs to coast to a stop on Asphalt
 
 - **Scenario: DeepGravel never traps a car**
-  - [ ] **Given** each reference car stopped on DeepGravel
-  - [ ] **When** it drives with the best fixed throttle for 15 s
-  - [ ] **Then** it covers 10 m or more
+  - [x] **Given** each reference car stopped on DeepGravel
+  - [x] **When** it drives with the best fixed throttle for 15 s
+  - [x] **Then** it covers 10 m or more
 
 - **Scenario: Old circuits still load**
-  - [ ] **Given** a circuit JSON with a surface `"Gravel"`
-  - [ ] **When** it is loaded and saved again
-  - [ ] **Then** the surface is `PackedGravel` and the saved file says `"PackedGravel"`
+  - [x] **Given** a circuit JSON with a surface `"Gravel"`
+  - [x] **When** it is loaded and saved again
+  - [x] **Then** the surface is `PackedGravel` and the saved file says `"PackedGravel"`
 
 - **Scenario: Official circuits use the new surfaces**
-  - [ ] **Given** the official circuits in `tracks/`
-  - [ ] **When** their surfaces are listed
-  - [ ] **Then** no file uses `"Gravel"`, every GT, World RX and Classic GT gravel run-off is `DeepGravel`, and no GT, World RX, kart or Classic GT / RX / kart circuit uses `DeepSand`
-  - [ ] **And** the off-road circuits still use `DeepSand`
+  - [x] **Given** the official circuits in `tracks/`
+  - [x] **When** their surfaces are listed
+  - [x] **Then** no file uses `"Gravel"`, every GT, World RX and Classic GT gravel run-off is `DeepGravel`, and no GT, World RX, kart or Classic GT / RX / kart circuit uses `DeepSand`
+  - [x] **And** the off-road circuits still use `DeepSand`
 
 - **Scenario: Classic GT circuits have no shortcut run-off**
-  - [ ] **Given** Coastal Grand Prix, Ridge Ring and Velocity Park
-  - [ ] **When** their run-off is listed per waypoint
-  - [ ] **Then** none is Asphalt, chicane run-off is DeepGravel with the wall at 6 m or less, corner traps are DeepGravel with the wall at 12 m or less, and straight run-off is Grass with the wall at 8 m or less
+  - [x] **Given** Coastal Grand Prix, Ridge Ring and Velocity Park
+  - [x] **When** their run-off is listed per waypoint
+  - [x] **Then** none is Asphalt, chicane run-off is DeepGravel with the wall at 6 m or less, corner traps are DeepGravel with the wall at 12 m or less, and straight run-off is Grass with the wall at 8 m or less
 
 - **Scenario: Bots still race**
-  - [ ] **Given** the Classic bot harness
-  - [ ] **When** it races every Classic circuit
-  - [ ] **Then** every circuit that passed before this spec still passes
+  - [x] **Given** the Classic bot harness
+  - [x] **When** it races every Classic circuit
+  - [x] **Then** every circuit that passed before this spec still passes
 
 - **Scenario: DeepGravel looks different from PackedGravel**
-  - [ ] **Given** a circuit with PackedGravel road and DeepGravel run-off
-  - [ ] **When** it is drawn in the game and in the track editor
-  - [ ] **Then** the two surfaces have different textures and colours, and the editor surface list offers both
+  - [x] **Given** a circuit with PackedGravel road and DeepGravel run-off
+  - [x] **When** it is drawn in the game and in the track editor
+  - [x] **Then** the two surfaces have different textures and colours, and the editor surface list offers both
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/wheelbase/src/surface.rs` -> `PackedGravel` rename, `DeepGravel` variant, physics values, tyre affinities, surface lists.
-- `[ ]` `crates/wheelbase/src/car.rs` -> bed drag for `DeepGravel`, only if friction, rolling resistance and drag cannot meet the targets.
-- `[ ]` `crates/race-ui/src/render/{surface_material,track,color}.rs`, `crates/race-ui/src/fx/{particles,skidmarks}.rs` -> DeepGravel look.
-- `[ ]` `crates/tdrace-app/src/bin/generate_surface_textures.rs`, `assets/textures/surfaces/gravel_deep.png` -> DeepGravel texture.
-- `[ ]` `crates/tdrace-app/src/editor/`, `crates/tdrace-app/src/ui/track_preview.rs`, `crates/tdrace-py/src/rasterizer.rs` -> both gravels in tools and previews.
-- `[ ]` Every other `SurfaceType::Gravel` use in `crates/` -> renamed.
-- `[ ]` `scripts/*.py` -> write the new names.
-- `[ ]` `tracks/**/*.json` (submodule `tdrace-tracks`) -> new surfaces; Classic GT run-off widths.
-- `[ ]` `crates/tdrace-app/tests/gravel_surfaces_tests.rs` -> surface target tests (new).
-- `[ ]` `crates/tdrace-core/tests/classic_circuits_tests.rs` -> Spec 055 rules changed by §2.4.
+- `[x]` `crates/wheelbase/src/surface.rs` -> `PackedGravel` rename, `DeepGravel` variant, physics values, tyre affinities, surface lists.
+- `[x]` `crates/wheelbase/src/car.rs` -> bed drag for `DeepGravel` (used because the measured surfaces show the conflict: DeepSand's rolling resistance slows a car but traps GT cars, Grass's does not trap them but does not slow them either). Rate 0.38 /s above 2 m/s, capped at 9 m/s².
+- `[x]` `crates/race-ui/src/render/{surface_material,track,color}.rs`, `crates/race-ui/src/fx/{particles,skidmarks}.rs` -> DeepGravel look.
+- `[x]` `crates/tdrace-app/src/bin/generate_surface_textures.rs`, `assets/textures/surfaces/gravel_deep.png` -> DeepGravel texture.
+- `[x]` `crates/tdrace-app/src/editor/`, `crates/tdrace-app/src/ui/track_preview.rs`, `crates/tdrace-py/src/rasterizer.rs` -> both gravels in tools and previews.
+- `[x]` Every other `SurfaceType::Gravel` use in `crates/` -> renamed.
+- `[x]` `scripts/*.py` -> write the new names.
+- `[x]` `tracks/**/*.json` (submodule `tdrace-tracks`) -> new surfaces; Classic GT run-off widths.
+- `[x]` `crates/tdrace-app/tests/gravel_surfaces_tests.rs` -> surface target tests (new).
+- `[x]` `crates/tdrace-core/tests/classic_circuits_tests.rs` -> Spec 055 rules changed by §2.4.
 
 ### Verification Assertions
 - `crates/tdrace-app/tests/gravel_surfaces_tests.rs` references `specs/089_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md` in its header comment.
