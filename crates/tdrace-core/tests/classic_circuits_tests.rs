@@ -330,7 +330,7 @@ fn test_hilltop_leap_has_crest_and_gravel_hairpin() {
     assert!(has_crest, "Hilltop Leap should have a crest on the start straight");
 
     let has_gravel_turn = t.spline.waypoints.iter().any(|w| {
-        w.surface == Some(SurfaceType::Gravel) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
+        w.surface == Some(SurfaceType::PackedGravel) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
     });
     assert!(has_gravel_turn, "Hilltop Leap should have a gravel hairpin");
 }
@@ -445,7 +445,7 @@ fn test_autocross_circuits_are_unpaved_without_ramps() {
         );
         for s in &t.spline.samples {
             assert!(
-                matches!(s.surface, SurfaceType::Dirt | SurfaceType::Gravel | SurfaceType::PackedSand | SurfaceType::Concrete),
+                matches!(s.surface, SurfaceType::Dirt | SurfaceType::PackedGravel | SurfaceType::PackedSand | SurfaceType::Concrete),
                 "{}: unexpected surface {:?}",
                 id,
                 s.surface
@@ -499,11 +499,10 @@ const GT: [(&str, f32, u32); 3] = [
 /// Then the road surface is 100% Asphalt
 /// And they do not cross themselves in 2D
 /// And they use kerbs on apexes, Steel walls with TireWall at braking zones
-/// And each circuit uses at least 3 runoff/trap surfaces with variable runoff width (3-30 m)
-/// And together the 3 GT circuits use Gravel, DeepSand, PackedSand, Grass and Asphalt
+/// And each circuit uses Grass and DeepGravel run-off, no Asphalt run-off, and variable runoff width (3-30 m)
+/// (spec 089 §2.4: straights Grass <= 8 m, corner traps DeepGravel <= 12 m, chicanes DeepGravel <= 6 m)
 #[test]
 fn test_gt_circuits_have_speed_braking_and_runoff() {
-    let mut all_surfaces = std::collections::HashSet::new();
     for (id, design_len, laps) in GT {
         let t = catalog::official_track("classic", id);
         let len = t.spline.total_length();
@@ -528,25 +527,38 @@ fn test_gt_circuits_have_speed_braking_and_runoff() {
         let has_curbs = t.spline.waypoints.iter().any(|w| w.left_curb || w.right_curb);
         assert!(has_curbs, "{}: GT circuits must have kerbs on apexes", id);
 
-        // Collect runoff surfaces
+        // Run-off per waypoint (spec 089 §2.4)
         let mut surfaces = std::collections::HashSet::new();
-        for w in &t.spline.waypoints {
-            if let Some(r) = w.left_runoff_surface {
-                surfaces.insert(r);
-                all_surfaces.insert(r);
-            }
-            if let Some(r) = w.right_runoff_surface {
-                surfaces.insert(r);
-                all_surfaces.insert(r);
+        for (i, w) in t.spline.waypoints.iter().enumerate() {
+            let chicane = w.left_curb && w.right_curb;
+            for (surface, wall) in [
+                (w.left_runoff_surface, w.left_wall_distance),
+                (w.right_runoff_surface, w.right_wall_distance),
+            ] {
+                let surface = surface.unwrap_or_else(|| panic!("{} waypoint {}: no run-off surface", id, i));
+                let wall = wall.unwrap_or_else(|| panic!("{} waypoint {}: no wall distance", id, i));
+                surfaces.insert(surface);
+                let limit = match surface {
+                    SurfaceType::DeepGravel if chicane => 6.0,
+                    SurfaceType::DeepGravel => 12.0,
+                    SurfaceType::Grass if !chicane => 8.0,
+                    other => panic!("{} waypoint {}: run-off {:?} is not allowed here", id, i, other),
+                };
+                assert!(wall <= limit, "{} waypoint {}: {:?} wall at {:.1} m (limit {:.1} m)", id, i, surface, wall, limit);
             }
         }
         for z in &t.geometry.surface_zones {
-            surfaces.insert(z.surface);
-            all_surfaces.insert(z.surface);
+            assert!(
+                matches!(z.surface, SurfaceType::DeepGravel | SurfaceType::Water),
+                "{}: trap zone '{}' is {:?}, expected DeepGravel",
+                id,
+                z.name,
+                z.surface
+            );
         }
         assert!(
-            surfaces.len() >= 3,
-            "{}: expected at least 3 runoff/trap surfaces, found {:?}",
+            surfaces.contains(&SurfaceType::Grass) && surfaces.contains(&SurfaceType::DeepGravel),
+            "{}: expected Grass and DeepGravel run-off, found {:?}",
             id,
             surfaces
         );
@@ -559,28 +571,14 @@ fn test_gt_circuits_have_speed_braking_and_runoff() {
             .flat_map(|s| [s.left_wall_distance, s.right_wall_distance])
             .flatten()
             .fold(f32::MIN, f32::max);
-        assert!(min_wall_dist <= 8.0 && max_wall_dist >= 20.0,
+        assert!(min_wall_dist >= 3.0 && max_wall_dist <= 30.0 && max_wall_dist - min_wall_dist >= 4.0,
             "{}: runoff width must vary between 3 and 30 m (min: {:.1}, max: {:.1})",
             id, min_wall_dist, max_wall_dist
         );
     }
-
-    for expected in [
-        SurfaceType::Gravel,
-        SurfaceType::DeepSand,
-        SurfaceType::PackedSand,
-        SurfaceType::Grass,
-        SurfaceType::Asphalt,
-    ] {
-        assert!(
-            all_surfaces.contains(&expected),
-            "GT circuits together must use all 5 runoff surfaces (missing {:?})",
-            expected
-        );
-    }
 }
 
-/// Scenario: Velocity Park has 2 straights >= 300 m each ending in a chicane and wide Asphalt runoff
+/// Scenario: Velocity Park has 2 straights >= 300 m each ending in a chicane and DeepGravel traps
 #[test]
 fn test_velocity_park_has_two_long_straights_and_chicanes() {
     let t = catalog::official_track("classic", "gt_velocity_park");
@@ -612,15 +610,14 @@ fn test_velocity_park_has_two_long_straights_and_chicanes() {
         straight_runs
     );
 
-    // Wide asphalt runoff >= 20 m
-    let has_wide_asphalt = t.spline.samples.iter().any(|s| {
-        (s.left_runoff_surface == Some(SurfaceType::Asphalt) && s.left_wall_distance.unwrap_or(0.0) >= 20.0)
-            || (s.right_runoff_surface == Some(SurfaceType::Asphalt) && s.right_wall_distance.unwrap_or(0.0) >= 20.0)
+    // DeepGravel traps at the braking zones (spec 089)
+    let has_deep_gravel = t.spline.samples.iter().any(|s| {
+        s.left_runoff_surface == Some(SurfaceType::DeepGravel) || s.right_runoff_surface == Some(SurfaceType::DeepGravel)
     });
-    assert!(has_wide_asphalt, "Velocity Park must have wide Asphalt runoff >= 20 m at braking zones");
+    assert!(has_deep_gravel, "Velocity Park must have DeepGravel traps at the braking zones");
 }
 
-/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has DeepSand traps and a straight >= 300 m
+/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has DeepGravel traps and a straight >= 300 m
 #[test]
 fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
     let t = catalog::official_track("classic", "gt_ridge_ring");
@@ -640,10 +637,10 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
         max_grade * 100.0
     );
 
-    let has_deepsand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::DeepSand) || s.right_runoff_surface == Some(SurfaceType::DeepSand)
-    }) || t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::DeepSand);
-    assert!(has_deepsand, "Ridge Ring must have narrow DeepSand traps");
+    let has_deep_gravel = t.spline.samples.iter().any(|s| {
+        s.left_runoff_surface == Some(SurfaceType::DeepGravel) || s.right_runoff_surface == Some(SurfaceType::DeepGravel)
+    }) || t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::DeepGravel);
+    assert!(has_deep_gravel, "Ridge Ring must have narrow DeepGravel traps");
 
     // Has a straight >= 300 m (handling wrap-around)
     let s = &t.spline.samples;
@@ -669,7 +666,7 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
     );
 }
 
-/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and PackedSand runoff
+/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and DeepGravel traps
 #[test]
 fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
     let t = catalog::official_track("classic", "gt_coastal_grand_prix");
@@ -704,11 +701,11 @@ fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
         max_elev
     );
 
-    // Has PackedSand runoff
-    let has_packed_sand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::PackedSand) || s.right_runoff_surface == Some(SurfaceType::PackedSand)
+    // Has DeepGravel traps (spec 089)
+    let has_deep_gravel = t.spline.samples.iter().any(|s| {
+        s.left_runoff_surface == Some(SurfaceType::DeepGravel) || s.right_runoff_surface == Some(SurfaceType::DeepGravel)
     });
-    assert!(has_packed_sand, "Coastal Grand Prix must have PackedSand runoff");
+    assert!(has_deep_gravel, "Coastal Grand Prix must have DeepGravel traps");
 
     // Has bus-stop chicane and carousel: total turn of carousel is >= 150 deg
     // In our definition, segment 6 has turn_deg = -165 deg (>= 150 deg)
