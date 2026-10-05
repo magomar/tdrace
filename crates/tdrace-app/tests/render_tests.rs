@@ -1437,6 +1437,70 @@ fn test_classic_kart_topdown_sprite_orientation() {
 }
 
 #[test]
+fn test_classic_at_safari_topdown_cenital_symmetry() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_at_safari.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_at_safari topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_at_safari image");
+
+    assert_eq!(img.width, 512);
+    assert_eq!(img.height, 512);
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut top_pixels = 0;
+    let mut bot_pixels = 0;
+    let mut min_y = height;
+    let mut max_y = 0;
+    let mut sum_y = 0;
+    let mut total_pixels = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let a = img.bytes[idx + 3];
+            if a > 50 {
+                total_pixels += 1;
+                sum_y += y;
+                min_y = min_y.min(y);
+                max_y = max_y.max(y);
+                if y < 256 {
+                    top_pixels += 1;
+                } else {
+                    bot_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(total_pixels > 50000, "Must have substantial car body pixels");
+    let y_center = sum_y as f64 / total_pixels as f64;
+    assert!(
+        (y_center - 256.0).abs() < 2.0,
+        "Vehicle must be vertically centered at y=256 (cenital/zenithal). Found y_center: {:.2}",
+        y_center
+    );
+
+    let symmetry_ratio = top_pixels as f64 / bot_pixels as f64;
+    assert!(
+        (symmetry_ratio - 1.0).abs() < 0.05,
+        "Top and bottom halves must be symmetrical (cenital/zenithal). Ratio: {:.4}",
+        symmetry_ratio
+    );
+
+    // Height must be tight (orthographic top-down, ~200px, not tilted showing sides >250px)
+    let sprite_height = max_y - min_y;
+    assert!(
+        sprite_height < 220,
+        "Orthographic top-down sprite height must be < 220px to avoid showing side panels. Found: {}",
+        sprite_height
+    );
+}
+
+#[test]
 fn test_classic_cars_dual_sprites_showroom_and_chassis() {
     use macroquad::texture::Image;
     use std::path::Path;

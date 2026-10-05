@@ -616,6 +616,29 @@ fn render_specific_body(
         "kart_moravia_falcon_t6" => render_kart_moravia_falcon_t6(cx, cy, gy, hl, s, primary, secondary, helmet),
         "kart_venom_cobra_t6" => render_kart_venom_cobra_t6(cx, cy, gy, hl, s, primary, secondary, helmet),
 
+        // --- Continental Autocross Procedural Fallbacks ---
+        "autocross_ardennes_junior_t1"
+        | "autocross_iberian_furia_t1"
+        | "autocross_cosmo_nova_t1"
+        | "autocross_ardennes_pro_t2"
+        | "autocross_iberian_relampago_t2"
+        | "autocross_lusitania_bravo_t2" => {
+            render_offroad_laurentian_nomad_t1(cx, cy, gy, hl, s, primary, secondary, helmet)
+        }
+        "autocross_petersen_buggy1600_t3"
+        | "autocross_bologna_buggy1600_t3"
+        | "autocross_rapid_buggy1600_t3"
+        | "autocross_petersen_superbuggy_t5"
+        | "autocross_bologna_superbuggy_t5"
+        | "autocross_rapid_superbuggy_t5" => {
+            render_offroad_volkskraft_dune_t1(cx, cy, gy, hl, s, primary, secondary, helmet)
+        }
+        "autocross_bohemia_veloce_t4"
+        | "autocross_shinano_tsunami_t4"
+        | "autocross_vortek_quattro_t4" => {
+            render_rally_vortek_turbo_quattro_t7(cx, cy, gy, hl, s, primary, secondary, helmet)
+        }
+
         // Fallback GT Sports Car
         _ => render_gt_vandorn_stratus_t1(cx, cy, gy, hl, s, primary, secondary, helmet),
     }
