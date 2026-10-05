@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Rallycross Jokers Built From OpenStreetMap Joker Ways"
 description: "Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-088-receipt.md"
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-04T22:08:08Z }
