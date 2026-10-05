@@ -112,7 +112,7 @@ export const SECTIONS: CodexSection[] = [
     pages: [
       { label: 'Cars', href: '/showroom/cars', blurb: 'The car catalogue by discipline and tier.', ready: true },
       { label: 'Circuits', href: '/showroom/circuits', blurb: 'Every official circuit with length, width and surfaces.', ready: true },
-      { label: 'Compare', href: '/showroom/compare', blurb: 'Two to four cars side by side.', ready: false },
+      { label: 'Compare', href: '/showroom/compare', blurb: 'Two to four cars side by side.', ready: true },
     ],
   },
   {

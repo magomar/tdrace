@@ -70,7 +70,7 @@ const unused = compounds.filter((c) => c.platforms.length === 0);
     <p class="text-xs text-racing-muted mt-2">Peak angle: a small angle gives sharp turn-in. The rear tyre peaks earlier than the front, which keeps the car stable. Load sensitivity: a heavily loaded tyre grips less per kilo, so weight transfer in a corner costs grip. Power slide: how much wheelspin steals cornering grip (1.0 = all of it).</p>
   </section>
 
-  <section class="py-8 border-b border-racing-border">
+  <section id="compounds" class="py-8 border-b border-racing-border">
     <h2 class="text-xl font-bold text-white">Compounds</h2>
     <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
       The compound is the rubber. It decides how well the tyre grips on each surface (see
@@ -84,7 +84,7 @@ const unused = compounds.filter((c) => c.platforms.length === 0);
         </thead>
         <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
           {[...used, ...unused].map((c) => (
-            <tr>
+            <tr id={c.id}>
               <td class="py-2 px-3 text-white font-bold">
                 <span class="inline-block min-w-[2.5rem] text-center px-1.5 py-0.5 mr-2 rounded text-[10px] text-black font-bold" style={`background:${rgba(c.accent_rgba)}`}>{c.badge}</span>{c.name}
               </td>

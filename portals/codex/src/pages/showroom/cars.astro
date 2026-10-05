@@ -2,20 +2,50 @@
 import Layout from '../../layouts/Layout.astro';
 import CarCard from '../../components/CarCard.astro';
 import GlobalViewSwitcher from '../../components/GlobalViewSwitcher.astro';
-import { categoryLabel, getCars, getModules, moduleLabel } from '../../lib/codex';
+import {
+  categoryLabel,
+  getCars,
+  getCompounds,
+  getModules,
+  getPlatforms,
+  getSuspensionArchetypes,
+  moduleLabel,
+  ARCHETYPE_LABEL,
+} from '../../lib/codex';
 
-const cars = await getCars();
+const [cars, modulesData, platformsData, archetypesData, compoundsData] = await Promise.all([
+  getCars(),
+  getModules(),
+  getPlatforms(),
+  getSuspensionArchetypes(),
+  getCompounds(),
+]);
+
 const modules = [
   { label: 'All modules', value: 'all' },
-  ...(await getModules()).map((m) => ({ label: moduleLabel(m.id), value: m.id })),
+  ...modulesData.map((m) => ({ label: moduleLabel(m.id), value: m.id })),
 ];
+
+const tiers = [1, 2, 3, 4, 5, 6, 7];
+const drivetrains = [...new Set(cars.map((c) => c.drivetrain))].sort();
+const platforms = platformsData.map((p) => ({ id: p.id, title: p.title }));
+const archetypes = archetypesData.map((a) => ({ id: a.id, label: ARCHETYPE_LABEL[a.id] ?? a.id }));
+const compounds = compoundsData.map((c) => ({ id: c.id, name: c.name, badge: c.badge }));
 ---
 
-<Layout title="Car Catalogue" description={`Explore ${cars.length} cars across ${modules.length - 1} motorsport modules with full specifications and telemetry radar.`}>
+<Layout title="Car Catalogue — TDRace Codex" description={`Explore ${cars.length} cars across ${modules.length - 1} motorsport modules with full specifications and telemetry radar.`}>
   <div class="py-6 border-b border-racing-border">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">Car Catalogue</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-3xl font-extrabold text-white tracking-tight">Car Catalogue</h1>
+          <a
+            href="/showroom/compare"
+            class="text-xs font-mono px-2.5 py-1 rounded bg-racing-blue/20 hover:bg-racing-blue/30 text-racing-cyan border border-racing-blue/40 transition-colors flex items-center gap-1"
+          >
+            <span>⚖️</span> Compare Cars
+          </a>
+        </div>
         <p class="text-sm text-racing-muted font-mono mt-1">
           {cars.length} cars across {modules.length - 1} modules, with the physics values the game uses.
         </p>
@@ -29,14 +59,14 @@ const modules = [
           <input
             type="text"
             id="car-search"
-            placeholder="Search by car name, brand, class..."
+            placeholder="Search by name, brand, class..."
             class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
           />
         </div>
       </div>
     </div>
 
-    <!-- Filter Buttons -->
+    <!-- Quick Module Filters -->
     <div class="flex flex-wrap gap-2 mt-6">
       {modules.map((m, idx) => (
         <button
@@ -52,19 +82,77 @@ const modules = [
         </button>
       ))}
     </div>
+
+    <!-- Secondary Rich Filters: Tier, Drivetrain, Chassis, Suspension, Compound -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4 pt-4 border-t border-racing-border/40 text-xs font-mono">
+      <div>
+        <label for="filter-tier" class="text-[10px] text-racing-muted uppercase block mb-1">Tier</label>
+        <select id="filter-tier" class="rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Tiers</option>
+          {tiers.map((t) => <option value={String(t)}>Tier {t}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-drivetrain" class="text-[10px] text-racing-muted uppercase block mb-1">Drivetrain</label>
+        <select id="filter-drivetrain" class="rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Drivetrains</option>
+          {drivetrains.map((d) => <option value={d}>{d}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-chassis" class="text-[10px] text-racing-muted uppercase block mb-1">Chassis</label>
+        <select id="filter-chassis" class="rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Platforms</option>
+          {platforms.map((p) => <option value={p.id}>{p.title}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-suspension" class="text-[10px] text-racing-muted uppercase block mb-1">Suspension</label>
+        <select id="filter-suspension" class="rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Types</option>
+          {archetypes.map((a) => <option value={a.id}>{a.label}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-compound" class="text-[10px] text-racing-muted uppercase block mb-1">Tyre Compound</label>
+        <select id="filter-compound" class="rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Compounds</option>
+          {compounds.map((c) => <option value={c.id}>[{c.badge}] {c.name}</option>)}
+        </select>
+      </div>
+    </div>
   </div>
 
   <!-- Car Cards Grid -->
   <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-8">
-    {cars.map((car) => (
-      <div
-        class="car-item"
-        data-module={car.module}
-        data-search={`${car.name} ${car.manufacturer} ${car.category_name} ${car.tier_name} ${car.drivetrain} ${car.id} ${moduleLabel(car.module)} ${categoryLabel(car.category)}`.toLowerCase()}
-      >
-        <CarCard car={car} />
-      </div>
-    ))}
+    {cars.map((car) => {
+      const p = (car.physics as any) || {};
+      const plat = platformsData.find((pl) => pl.id === car.base_car) ?? platformsData[0];
+      const frontSusp = p.suspension?.front?.archetype ?? plat.suspension.front.archetype;
+      const rearSusp = p.suspension?.rear?.archetype ?? plat.suspension.rear.archetype;
+      const compoundObj = p.wheels?.[0]?.compound;
+      const compound = typeof compoundObj === 'object' ? compoundObj.id : (plat.wheels[0]?.compound ?? 'HardSlick');
+
+      return (
+        <div
+          class="car-item"
+          data-module={car.module}
+          data-tier={String(car.tier)}
+          data-drivetrain={car.drivetrain}
+          data-chassis={car.base_car}
+          data-suspension-front={frontSusp}
+          data-suspension-rear={rearSusp}
+          data-compound={String(compound).toLowerCase()}
+          data-search={`${car.name} ${car.manufacturer} ${car.category_name} ${car.tier_name} ${car.drivetrain} ${car.id} ${moduleLabel(car.module)} ${categoryLabel(car.category)}`.toLowerCase()}
+        >
+          <CarCard car={car} />
+        </div>
+      );
+    })}
 
     <div id="no-cars-notice" class="hidden col-span-full py-16 text-center">
       <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-racing-surface border border-racing-border text-2xl mb-3">
@@ -72,7 +160,7 @@ const modules = [
       </div>
       <h3 class="text-lg font-bold text-white font-mono">No Vehicles Found</h3>
       <p class="text-xs text-racing-muted font-mono mt-1" id="no-cars-msg">
-        No vehicles currently match the selected module or search query.
+        No vehicles currently match the selected filters or search query.
       </p>
     </div>
   </div>
@@ -80,26 +168,59 @@ const modules = [
 
 <script>
   function initVehicleFilters() {
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
     const searchInput = document.getElementById('car-search') as HTMLInputElement;
-    const items = document.querySelectorAll('.car-item');
+    const tierSelect = document.getElementById('filter-tier') as HTMLSelectElement;
+    const drivetrainSelect = document.getElementById('filter-drivetrain') as HTMLSelectElement;
+    const chassisSelect = document.getElementById('filter-chassis') as HTMLSelectElement;
+    const suspensionSelect = document.getElementById('filter-suspension') as HTMLSelectElement;
+    const compoundSelect = document.getElementById('filter-compound') as HTMLSelectElement;
+
+    const items = document.querySelectorAll<HTMLElement>('.car-item');
     const noCarsNotice = document.getElementById('no-cars-notice');
     const noCarsMsg = document.getElementById('no-cars-msg');
 
     let currentModule = 'all';
     let searchQuery = '';
+    let currentTier = 'all';
+    let currentDrivetrain = 'all';
+    let currentChassis = 'all';
+    let currentSuspension = 'all';
+    let currentCompound = 'all';
 
     function applyFilter() {
       let visibleCount = 0;
-      items.forEach((el) => {
-        const item = el as HTMLElement;
+      items.forEach((item) => {
         const itemModule = item.dataset.module || '';
+        const itemTier = item.dataset.tier || '';
+        const itemDrivetrain = item.dataset.drivetrain || '';
+        const itemChassis = item.dataset.chassis || '';
+        const itemSuspFront = item.dataset.suspensionFront || '';
+        const itemSuspRear = item.dataset.suspensionRear || '';
+        const itemCompound = (item.dataset.compound || '').toLowerCase();
         const itemSearch = item.dataset.search || '';
 
         const matchesModule = currentModule === 'all' || itemModule === currentModule;
+        const matchesTier = currentTier === 'all' || itemTier === currentTier;
+        const matchesDrivetrain = currentDrivetrain === 'all' || itemDrivetrain === currentDrivetrain;
+        const matchesChassis = currentChassis === 'all' || itemChassis === currentChassis;
+        const matchesSuspension =
+          currentSuspension === 'all' ||
+          itemSuspFront === currentSuspension ||
+          itemSuspRear === currentSuspension;
+        const matchesCompound =
+          currentCompound === 'all' || itemCompound === currentCompound.toLowerCase();
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
-        if (matchesModule && matchesSearch) {
+        if (
+          matchesModule &&
+          matchesTier &&
+          matchesDrivetrain &&
+          matchesChassis &&
+          matchesSuspension &&
+          matchesCompound &&
+          matchesSearch
+        ) {
           item.style.display = '';
           visibleCount++;
         } else {
@@ -110,7 +231,7 @@ const modules = [
       if (noCarsNotice) {
         if (visibleCount === 0) {
           noCarsNotice.classList.remove('hidden');
-          if (noCarsMsg) noCarsMsg.textContent = 'No vehicles currently match the selected filter or search query.';
+          if (noCarsMsg) noCarsMsg.textContent = 'No vehicles currently match the selected filters or search query.';
         } else {
           noCarsNotice.classList.add('hidden');
         }
@@ -135,6 +256,41 @@ const modules = [
     if (searchInput) {
       searchInput.addEventListener('input', () => {
         searchQuery = searchInput.value.trim();
+        applyFilter();
+      });
+    }
+
+    if (tierSelect) {
+      tierSelect.addEventListener('change', () => {
+        currentTier = tierSelect.value;
+        applyFilter();
+      });
+    }
+
+    if (drivetrainSelect) {
+      drivetrainSelect.addEventListener('change', () => {
+        currentDrivetrain = drivetrainSelect.value;
+        applyFilter();
+      });
+    }
+
+    if (chassisSelect) {
+      chassisSelect.addEventListener('change', () => {
+        currentChassis = chassisSelect.value;
+        applyFilter();
+      });
+    }
+
+    if (suspensionSelect) {
+      suspensionSelect.addEventListener('change', () => {
+        currentSuspension = suspensionSelect.value;
+        applyFilter();
+      });
+    }
+
+    if (compoundSelect) {
+      compoundSelect.addEventListener('change', () => {
+        currentCompound = compoundSelect.value;
         applyFilter();
       });
     }

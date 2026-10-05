@@ -113,7 +113,7 @@ const ABOUT: Record<string, string> = {
     </div>
   </section>
 
-  <section class="py-8 border-b border-racing-border">
+  <section id="differentials" class="py-8 border-b border-racing-border">
     <h2 class="text-xl font-bold text-white">Differentials</h2>
     <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
       An <strong class="text-white">open</strong> differential lets the wheels turn at different speeds and splits the
@@ -140,11 +140,11 @@ const ABOUT: Record<string, string> = {
     <p class="text-xs text-racing-muted mt-2">LSD values: lock under power / lock on lift-off · preload. A front differential only matters when the car drives the front wheels.</p>
   </section>
 
-  <section class="py-8">
+  <section id="engine-placement" class="py-8">
     <h2 class="text-xl font-bold text-white">Engine placement</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
       {placements.map((pl) => (
-        <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div id={pl.id} class="rounded-xl border border-racing-border bg-racing-surface p-5">
           <h3 class="font-bold text-white">{PLACEMENT_LABEL[pl.id]}</h3>
           <p class="text-xs text-racing-muted mt-1 leading-relaxed">{ABOUT[pl.id]}</p>
           <p class="text-xs font-mono text-white mt-3">Engine repair cost ×{pl.repair_cost_multiplier.toFixed(2)}</p>

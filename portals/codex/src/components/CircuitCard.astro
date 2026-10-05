@@ -88,7 +88,7 @@ const badgeColor = moduleBadge(circuit.module);
     </div>
 
     <h3 class="text-base font-bold text-white group-hover:text-racing-cyan transition-colors tracking-tight">
-      {circuit.name}
+      <a href={`/showroom/circuits/${circuit.id}`} class="hover:underline">{circuit.name}</a>
     </h3>
 
     <p class="text-xs text-racing-muted mt-2 line-clamp-2">
@@ -147,12 +147,17 @@ const badgeColor = moduleBadge(circuit.module);
     )}
   </div>
 
-  <div class="px-5 py-3 bg-racing-surface2/60 border-t border-racing-border flex flex-wrap gap-1.5 items-center">
-    <span class="text-[10px] uppercase font-mono text-racing-muted mr-1">Surfaces:</span>
-    {circuit.surfaces.map((s) => (
-      <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-surface border border-racing-border text-racing-text">
-        {s.surface} {s.share_pct}%
-      </span>
-    ))}
+  <div class="px-5 py-3 bg-racing-surface2/60 border-t border-racing-border flex flex-wrap gap-1.5 items-center justify-between">
+    <div class="flex flex-wrap gap-1.5 items-center">
+      <span class="text-[10px] uppercase font-mono text-racing-muted mr-1">Surfaces:</span>
+      {circuit.surfaces.map((s) => (
+        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-surface border border-racing-border text-racing-text">
+          {s.surface} {s.share_pct}%
+        </span>
+      ))}
+    </div>
+    <a href={`/showroom/circuits/${circuit.id}`} class="text-[11px] font-mono text-racing-cyan hover:underline ml-auto flex items-center gap-1 font-semibold">
+      <span>Details</span> <span>→</span>
+    </a>
   </div>
 </div>

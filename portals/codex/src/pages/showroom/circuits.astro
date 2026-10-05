@@ -1,16 +1,46 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import CircuitCard from '../../components/CircuitCard.astro';
-import { categoryLabel, getCircuits, getModules, moduleLabel } from '../../lib/codex';
+import {
+  categoryLabel,
+  getCircuits,
+  getModules,
+  getSurfaces,
+  moduleLabel,
+} from '../../lib/codex';
 
-const circuitsData = await getCircuits();
+const [circuitsData, modulesData, surfacesData] = await Promise.all([
+  getCircuits(),
+  getModules(),
+  getSurfaces(),
+]);
+
 const modules = [
   { id: 'all', label: 'All modules' },
-  ...(await getModules()).map((m) => ({ id: m.id, label: moduleLabel(m.id) })),
+  ...modulesData.map((m) => ({ id: m.id, label: moduleLabel(m.id) })),
 ];
+
+// Extract distinct countries
+const countriesMap = new Map<string, string>();
+circuitsData.forEach((c) => {
+  if (c.country_name && c.country_code) {
+    countriesMap.set(c.country_name, c.country_code);
+  }
+});
+const countries = [...countriesMap.entries()]
+  .map(([name, code]) => ({ name, code }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const getFlagEmoji = (code?: string | null) => {
+  if (!code || code === 'INT' || code.length !== 2) return '🌐';
+  const offset = 127397;
+  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => c.charCodeAt(0) + offset));
+};
+
+const surfaces = surfacesData.map((s) => s.id);
 ---
 
-<Layout title="Circuit Directory" description={`Explore ${circuitsData.length} official circuits with length, width, surfaces, joker laps and pit lanes.`}>
+<Layout title="Circuit Directory — TDRace Codex" description={`Explore ${circuitsData.length} official circuits with length, width, surfaces, joker laps and pit lanes.`}>
   <div class="py-6 border-b border-racing-border">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -25,13 +55,13 @@ const modules = [
         <input
           type="text"
           id="circuit-search"
-          placeholder="Search by circuit category (e.g. offroad, gt, rally)..."
+          placeholder="Search by name, country, venue..."
           class="w-full px-4 py-2 bg-racing-surface border border-racing-border rounded-lg text-xs font-mono text-white placeholder-racing-muted focus:outline-none focus:border-racing-blue"
         />
       </div>
     </div>
 
-    <!-- Module Filters -->
+    <!-- Quick Module Filters -->
     <div class="flex flex-wrap gap-2 mt-6">
       {modules.map((m, idx) => (
         <button
@@ -47,6 +77,51 @@ const modules = [
         </button>
       ))}
     </div>
+
+    <!-- Secondary Rich Filters: Country, Surface, Tactical Features -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-racing-border/40 text-xs font-mono">
+      <div>
+        <label for="filter-country" class="text-[10px] text-racing-muted uppercase block mb-1">Country</label>
+        <select id="filter-country" class="circuit-rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Countries</option>
+          {countries.map((c) => (
+            <option value={c.name}>{getFlagEmoji(c.code)} {c.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-surface" class="text-[10px] text-racing-muted uppercase block mb-1">Primary Surface</label>
+        <select id="filter-surface" class="circuit-rich-filter w-full px-2.5 py-1.5 bg-racing-surface border border-racing-border rounded text-white focus:outline-none focus:border-racing-blue">
+          <option value="all">All Surfaces</option>
+          {surfaces.map((s) => (
+            <option value={s}>{s}</option>
+          ))}
+        </select>
+      </div>
+
+      <div class="col-span-1 md:col-span-2 flex flex-col justify-end">
+        <span class="text-[10px] text-racing-muted uppercase block mb-1">Tactical Features</span>
+        <div class="flex items-center gap-3 flex-wrap bg-racing-surface px-3 py-1.5 rounded border border-racing-border">
+          <label class="flex items-center gap-1.5 cursor-pointer text-racing-text hover:text-white">
+            <input type="checkbox" id="feat-joker" class="feature-checkbox rounded border-racing-border bg-racing-surface2 text-racing-blue focus:ring-0" />
+            <span>🃏 Joker Lap</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer text-racing-text hover:text-white">
+            <input type="checkbox" id="feat-pit" class="feature-checkbox rounded border-racing-border bg-racing-surface2 text-racing-blue focus:ring-0" />
+            <span>🔧 Pit Lane</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer text-racing-text hover:text-white">
+            <input type="checkbox" id="feat-jumps" class="feature-checkbox rounded border-racing-border bg-racing-surface2 text-racing-blue focus:ring-0" />
+            <span>🚀 Jumps</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer text-racing-text hover:text-white">
+            <input type="checkbox" id="feat-junctions" class="feature-checkbox rounded border-racing-border bg-racing-surface2 text-racing-blue focus:ring-0" />
+            <span>🔀 Junctions</span>
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Circuits Grid -->
@@ -55,6 +130,12 @@ const modules = [
       <div
         class="circuit-item"
         data-module={c.module}
+        data-country={c.country_name ?? ''}
+        data-surfaces={c.surfaces.map((s) => s.surface).join(',')}
+        data-jumps={c.has_jumps ? 'true' : 'false'}
+        data-joker={c.has_joker ? 'true' : 'false'}
+        data-pit={c.has_pit_lane ? 'true' : 'false'}
+        data-junctions={c.has_junctions ? 'true' : 'false'}
         data-search={`${c.name} ${c.tag} ${c.category_label} ${c.country_name ?? ''} ${c.surfaces.map((s) => s.surface).join(' ')} ${moduleLabel(c.module)} ${categoryLabel(c.category)}`.toLowerCase()}
       >
         <CircuitCard circuit={c} />
@@ -67,7 +148,7 @@ const modules = [
       </div>
       <h3 class="text-lg font-bold text-white font-mono">No Circuits Found</h3>
       <p class="text-xs text-racing-muted font-mono mt-1" id="no-circuits-msg">
-        No circuits currently match the selected module or search query.
+        No circuits currently match the selected filters or search query.
       </p>
     </div>
   </div>
@@ -75,26 +156,60 @@ const modules = [
 
 <script>
   function initCircuitFilters() {
-    const filterBtns = document.querySelectorAll('.module-btn');
+    const filterBtns = document.querySelectorAll<HTMLButtonElement>('.module-btn');
     const searchInput = document.getElementById('circuit-search') as HTMLInputElement;
-    const items = document.querySelectorAll('.circuit-item');
+    const countrySelect = document.getElementById('filter-country') as HTMLSelectElement;
+    const surfaceSelect = document.getElementById('filter-surface') as HTMLSelectElement;
+    const featJoker = document.getElementById('feat-joker') as HTMLInputElement;
+    const featPit = document.getElementById('feat-pit') as HTMLInputElement;
+    const featJumps = document.getElementById('feat-jumps') as HTMLInputElement;
+    const featJunctions = document.getElementById('feat-junctions') as HTMLInputElement;
+
+    const items = document.querySelectorAll<HTMLElement>('.circuit-item');
     const noCircuitsNotice = document.getElementById('no-circuits-notice');
     const noCircuitsMsg = document.getElementById('no-circuits-msg');
 
     let currentModule = 'all';
     let searchQuery = '';
+    let currentCountry = 'all';
+    let currentSurface = 'all';
 
     function applyFilter() {
       let visibleCount = 0;
-      items.forEach((el) => {
-        const item = el as HTMLElement;
+      const requireJoker = featJoker?.checked ?? false;
+      const requirePit = featPit?.checked ?? false;
+      const requireJumps = featJumps?.checked ?? false;
+      const requireJunctions = featJunctions?.checked ?? false;
+
+      items.forEach((item) => {
         const itemModule = item.dataset.module || '';
+        const itemCountry = item.dataset.country || '';
+        const itemSurfaces = (item.dataset.surfaces || '').split(',');
+        const itemJoker = item.dataset.joker === 'true';
+        const itemPit = item.dataset.pit === 'true';
+        const itemJumps = item.dataset.jumps === 'true';
+        const itemJunctions = item.dataset.junctions === 'true';
         const itemSearch = item.dataset.search || '';
 
         const matchesModule = currentModule === 'all' || itemModule === currentModule;
+        const matchesCountry = currentCountry === 'all' || itemCountry === currentCountry;
+        const matchesSurface = currentSurface === 'all' || itemSurfaces.includes(currentSurface);
+        const matchesJoker = !requireJoker || itemJoker;
+        const matchesPit = !requirePit || itemPit;
+        const matchesJumps = !requireJumps || itemJumps;
+        const matchesJunctions = !requireJunctions || itemJunctions;
         const matchesSearch = searchQuery === '' || itemSearch.includes(searchQuery.toLowerCase());
 
-        if (matchesModule && matchesSearch) {
+        if (
+          matchesModule &&
+          matchesCountry &&
+          matchesSurface &&
+          matchesJoker &&
+          matchesPit &&
+          matchesJumps &&
+          matchesJunctions &&
+          matchesSearch
+        ) {
           item.style.display = '';
           visibleCount++;
         } else {
@@ -105,7 +220,7 @@ const modules = [
       if (noCircuitsNotice) {
         if (visibleCount === 0) {
           noCircuitsNotice.classList.remove('hidden');
-          if (noCircuitsMsg) noCircuitsMsg.textContent = 'No circuits currently match the selected module or search query.';
+          if (noCircuitsMsg) noCircuitsMsg.textContent = 'No circuits currently match the selected filters or search query.';
         } else {
           noCircuitsNotice.classList.add('hidden');
         }
@@ -133,6 +248,24 @@ const modules = [
         applyFilter();
       });
     }
+
+    if (countrySelect) {
+      countrySelect.addEventListener('change', () => {
+        currentCountry = countrySelect.value;
+        applyFilter();
+      });
+    }
+
+    if (surfaceSelect) {
+      surfaceSelect.addEventListener('change', () => {
+        currentSurface = surfaceSelect.value;
+        applyFilter();
+      });
+    }
+
+    [featJoker, featPit, featJumps, featJunctions].forEach((checkbox) => {
+      checkbox?.addEventListener('change', applyFilter);
+    });
   }
 
   if (document.readyState === 'loading') {

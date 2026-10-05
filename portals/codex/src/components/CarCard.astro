@@ -50,7 +50,7 @@ const stats = {
       </span>
     </div>
     <h3 class="text-lg font-bold text-white group-hover:text-racing-cyan transition-colors tracking-tight">
-      {car.name}
+      <a href={`/showroom/cars/${car.id}`} class="hover:underline">{car.name}</a>
     </h3>
     <p class="text-xs text-racing-muted mt-1 font-mono">
       {car.manufacturer} • {car.year}
@@ -309,6 +309,16 @@ const stats = {
   <!-- Summary Footer -->
   <div class="px-5 py-3 bg-racing-surface2/60 border-t border-racing-border text-xs text-racing-muted italic">
     "{car.history_bio}"
+  </div>
+
+  <!-- Detail & Compare Actions -->
+  <div class="px-5 py-2.5 bg-racing-surface2/80 border-t border-racing-border/50 flex items-center justify-between text-xs font-mono">
+    <a href={`/showroom/compare?car1=${car.id}`} class="text-racing-muted hover:text-white transition-colors flex items-center gap-1">
+      <span>⚖️</span> Compare
+    </a>
+    <a href={`/showroom/cars/${car.id}`} class="text-racing-cyan hover:underline font-semibold flex items-center gap-1">
+      <span>Details</span> <span>→</span>
+    </a>
   </div>
 </div>
 
