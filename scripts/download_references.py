@@ -8,7 +8,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-VEHICLES_JSON = ROOT / "portals" / "shared" / "data" / "vehicles.json"
+VEHICLES_JSON = ROOT / "portals" / "shared" / "data" / "codex" / "cars.json"
+if not VEHICLES_JSON.exists():
+    VEHICLES_JSON = ROOT / "portals" / "shared" / "data" / "vehicles.json"
 REFS_DIR = ROOT / "assets" / "textures" / "vehicles" / "references"
 
 HEADERS = {
@@ -207,7 +209,8 @@ def download_and_process(url, dest_path):
         return False
 
 def main():
-    vehicles = json.loads(VEHICLES_JSON.read_text(encoding="utf-8"))
+    raw = json.loads(VEHICLES_JSON.read_text(encoding="utf-8"))
+    vehicles = raw.get("items", raw)
     print(f"🏎️ Processing references for {len(vehicles)} vehicles...\n")
 
     success_count = 0
@@ -217,7 +220,7 @@ def main():
     for idx, v in enumerate(vehicles, 1):
         car_id = v["id"]
         mod_name = v["module"]
-        mod_id = MODULE_MAP.get(mod_name, "gt")
+        mod_id = MODULE_MAP.get(mod_name, mod_name)
         dest_file = REFS_DIR / mod_id / f"{car_id}.jpg"
 
         if dest_file.exists() and dest_file.stat().st_size > 10000:

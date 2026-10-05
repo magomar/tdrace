@@ -1,0 +1,1733 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "SoftSlick",
+      "name": "Soft Slick",
+      "badge": "S",
+      "accent_rgba": [
+        0.95,
+        0.15,
+        0.15,
+        1.0
+      ],
+      "wear_rate": 4.5e-7,
+      "optimal_temp_c": [
+        85.0,
+        110.0
+      ],
+      "overheat_temp_c": 120.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 1.2
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 1.18
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 1.1
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.45
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.35
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.3
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.15
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.25
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.1
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.15
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.1
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.05
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.1
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.964
+        ],
+        [
+          10.0,
+          0.968
+        ],
+        [
+          15.0,
+          0.972
+        ],
+        [
+          20.0,
+          0.976
+        ],
+        [
+          25.0,
+          0.98
+        ],
+        [
+          30.0,
+          0.984
+        ],
+        [
+          35.0,
+          0.988
+        ],
+        [
+          40.0,
+          0.992
+        ],
+        [
+          45.0,
+          0.996
+        ],
+        [
+          50.0,
+          1.0
+        ],
+        [
+          55.0,
+          1.0086
+        ],
+        [
+          60.0,
+          1.0171
+        ],
+        [
+          65.0,
+          1.0257
+        ],
+        [
+          70.0,
+          1.0343
+        ],
+        [
+          75.0,
+          1.0429
+        ],
+        [
+          80.0,
+          1.0514
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.06
+        ],
+        [
+          100.0,
+          1.06
+        ],
+        [
+          105.0,
+          1.06
+        ],
+        [
+          110.0,
+          1.06
+        ],
+        [
+          115.0,
+          0.97
+        ],
+        [
+          120.0,
+          0.88
+        ],
+        [
+          125.0,
+          0.8763
+        ],
+        [
+          130.0,
+          0.8725
+        ],
+        [
+          135.0,
+          0.8688
+        ],
+        [
+          140.0,
+          0.865
+        ],
+        [
+          145.0,
+          0.8613
+        ],
+        [
+          150.0,
+          0.8575
+        ],
+        [
+          155.0,
+          0.8538
+        ],
+        [
+          160.0,
+          0.85
+        ]
+      ],
+      "platforms": [
+        "Kart"
+      ]
+    },
+    {
+      "id": "MediumSlick",
+      "name": "Medium Slick",
+      "badge": "M",
+      "accent_rgba": [
+        0.95,
+        0.85,
+        0.1,
+        1.0
+      ],
+      "wear_rate": 2.5e-7,
+      "optimal_temp_c": [
+        80.0,
+        105.0
+      ],
+      "overheat_temp_c": 125.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 1.0
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.98
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.95
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.85
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.32
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.28
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.15
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.22
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.1
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.13
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.09
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.05
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.22
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.1
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.9644
+        ],
+        [
+          10.0,
+          0.9689
+        ],
+        [
+          15.0,
+          0.9733
+        ],
+        [
+          20.0,
+          0.9778
+        ],
+        [
+          25.0,
+          0.9822
+        ],
+        [
+          30.0,
+          0.9867
+        ],
+        [
+          35.0,
+          0.9911
+        ],
+        [
+          40.0,
+          0.9956
+        ],
+        [
+          45.0,
+          1.0
+        ],
+        [
+          50.0,
+          1.0086
+        ],
+        [
+          55.0,
+          1.0171
+        ],
+        [
+          60.0,
+          1.0257
+        ],
+        [
+          65.0,
+          1.0343
+        ],
+        [
+          70.0,
+          1.0429
+        ],
+        [
+          75.0,
+          1.0514
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.06
+        ],
+        [
+          100.0,
+          1.06
+        ],
+        [
+          105.0,
+          1.06
+        ],
+        [
+          110.0,
+          1.015
+        ],
+        [
+          115.0,
+          0.97
+        ],
+        [
+          120.0,
+          0.925
+        ],
+        [
+          125.0,
+          0.88
+        ],
+        [
+          130.0,
+          0.8763
+        ],
+        [
+          135.0,
+          0.8725
+        ],
+        [
+          140.0,
+          0.8688
+        ],
+        [
+          145.0,
+          0.865
+        ],
+        [
+          150.0,
+          0.8613
+        ],
+        [
+          155.0,
+          0.8575
+        ],
+        [
+          160.0,
+          0.8538
+        ]
+      ],
+      "platforms": [
+        "SportsCar",
+        "GT4Clubsport",
+        "GT3Car",
+        "GT2Biturbo",
+        "GT1Legend",
+        "HypercarPrototype"
+      ]
+    },
+    {
+      "id": "HardSlick",
+      "name": "Hard Slick",
+      "badge": "H",
+      "accent_rgba": [
+        0.9,
+        0.9,
+        0.9,
+        1.0
+      ],
+      "wear_rate": 1.2e-7,
+      "optimal_temp_c": [
+        75.0,
+        100.0
+      ],
+      "overheat_temp_c": 130.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 1.0
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.98
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.95
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.3
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.25
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.15
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.1
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.12
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.08
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.05
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.25
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.1
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.965
+        ],
+        [
+          10.0,
+          0.97
+        ],
+        [
+          15.0,
+          0.975
+        ],
+        [
+          20.0,
+          0.98
+        ],
+        [
+          25.0,
+          0.985
+        ],
+        [
+          30.0,
+          0.99
+        ],
+        [
+          35.0,
+          0.995
+        ],
+        [
+          40.0,
+          1.0
+        ],
+        [
+          45.0,
+          1.0086
+        ],
+        [
+          50.0,
+          1.0171
+        ],
+        [
+          55.0,
+          1.0257
+        ],
+        [
+          60.0,
+          1.0343
+        ],
+        [
+          65.0,
+          1.0429
+        ],
+        [
+          70.0,
+          1.0514
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.06
+        ],
+        [
+          100.0,
+          1.06
+        ],
+        [
+          105.0,
+          1.03
+        ],
+        [
+          110.0,
+          1.0
+        ],
+        [
+          115.0,
+          0.97
+        ],
+        [
+          120.0,
+          0.94
+        ],
+        [
+          125.0,
+          0.91
+        ],
+        [
+          130.0,
+          0.88
+        ],
+        [
+          135.0,
+          0.8763
+        ],
+        [
+          140.0,
+          0.8725
+        ],
+        [
+          145.0,
+          0.8688
+        ],
+        [
+          150.0,
+          0.865
+        ],
+        [
+          155.0,
+          0.8613
+        ],
+        [
+          160.0,
+          0.8575
+        ]
+      ],
+      "platforms": [
+        "StockCar"
+      ]
+    },
+    {
+      "id": "IntermediateWet",
+      "name": "Intermediate Wet",
+      "badge": "INT",
+      "accent_rgba": [
+        0.15,
+        0.8,
+        0.2,
+        1.0
+      ],
+      "wear_rate": 3e-7,
+      "optimal_temp_c": [
+        60.0,
+        85.0
+      ],
+      "overheat_temp_c": 105.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.88
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.86
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.85
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.65
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.55
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.25
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.25
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.3
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.15
+        },
+        {
+          "surface": "Water",
+          "multiplier": 1.1
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.15
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.968
+        ],
+        [
+          10.0,
+          0.976
+        ],
+        [
+          15.0,
+          0.984
+        ],
+        [
+          20.0,
+          0.992
+        ],
+        [
+          25.0,
+          1.0
+        ],
+        [
+          30.0,
+          1.0086
+        ],
+        [
+          35.0,
+          1.0171
+        ],
+        [
+          40.0,
+          1.0257
+        ],
+        [
+          45.0,
+          1.0343
+        ],
+        [
+          50.0,
+          1.0429
+        ],
+        [
+          55.0,
+          1.0514
+        ],
+        [
+          60.0,
+          1.06
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.015
+        ],
+        [
+          95.0,
+          0.97
+        ],
+        [
+          100.0,
+          0.925
+        ],
+        [
+          105.0,
+          0.88
+        ],
+        [
+          110.0,
+          0.8763
+        ],
+        [
+          115.0,
+          0.8725
+        ],
+        [
+          120.0,
+          0.8688
+        ],
+        [
+          125.0,
+          0.865
+        ],
+        [
+          130.0,
+          0.8613
+        ],
+        [
+          135.0,
+          0.8575
+        ],
+        [
+          140.0,
+          0.8538
+        ],
+        [
+          145.0,
+          0.85
+        ],
+        [
+          150.0,
+          0.8463
+        ],
+        [
+          155.0,
+          0.8425
+        ],
+        [
+          160.0,
+          0.8388
+        ]
+      ],
+      "platforms": []
+    },
+    {
+      "id": "MonsoonWet",
+      "name": "Monsoon Wet",
+      "badge": "W",
+      "accent_rgba": [
+        0.1,
+        0.5,
+        0.95,
+        1.0
+      ],
+      "wear_rate": 4e-7,
+      "optimal_temp_c": [
+        50.0,
+        75.0
+      ],
+      "overheat_temp_c": 95.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.72
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.7
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.75
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.7
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.6
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.6
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.45
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.3
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.65
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.3
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "Water",
+          "multiplier": 1.35
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.2
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.9733
+        ],
+        [
+          10.0,
+          0.9867
+        ],
+        [
+          15.0,
+          1.0
+        ],
+        [
+          20.0,
+          1.0086
+        ],
+        [
+          25.0,
+          1.0171
+        ],
+        [
+          30.0,
+          1.0257
+        ],
+        [
+          35.0,
+          1.0343
+        ],
+        [
+          40.0,
+          1.0429
+        ],
+        [
+          45.0,
+          1.0514
+        ],
+        [
+          50.0,
+          1.06
+        ],
+        [
+          55.0,
+          1.06
+        ],
+        [
+          60.0,
+          1.06
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.015
+        ],
+        [
+          85.0,
+          0.97
+        ],
+        [
+          90.0,
+          0.925
+        ],
+        [
+          95.0,
+          0.88
+        ],
+        [
+          100.0,
+          0.8763
+        ],
+        [
+          105.0,
+          0.8725
+        ],
+        [
+          110.0,
+          0.8688
+        ],
+        [
+          115.0,
+          0.865
+        ],
+        [
+          120.0,
+          0.8613
+        ],
+        [
+          125.0,
+          0.8575
+        ],
+        [
+          130.0,
+          0.8538
+        ],
+        [
+          135.0,
+          0.85
+        ],
+        [
+          140.0,
+          0.8463
+        ],
+        [
+          145.0,
+          0.8425
+        ],
+        [
+          150.0,
+          0.8388
+        ],
+        [
+          155.0,
+          0.835
+        ],
+        [
+          160.0,
+          0.8313
+        ]
+      ],
+      "platforms": []
+    },
+    {
+      "id": "AllTerrain",
+      "name": "All-Terrain",
+      "badge": "AT",
+      "accent_rgba": [
+        0.95,
+        0.55,
+        0.1,
+        1.0
+      ],
+      "wear_rate": 2e-7,
+      "optimal_temp_c": [
+        65.0,
+        95.0
+      ],
+      "overheat_temp_c": 115.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.85
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.83
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.88
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 1.15
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 1.2
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.95
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 1.1
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 1.2
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 1.05
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.75
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.8
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 1.3
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.9
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.9
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.25
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.9667
+        ],
+        [
+          10.0,
+          0.9733
+        ],
+        [
+          15.0,
+          0.98
+        ],
+        [
+          20.0,
+          0.9867
+        ],
+        [
+          25.0,
+          0.9933
+        ],
+        [
+          30.0,
+          1.0
+        ],
+        [
+          35.0,
+          1.0086
+        ],
+        [
+          40.0,
+          1.0171
+        ],
+        [
+          45.0,
+          1.0257
+        ],
+        [
+          50.0,
+          1.0343
+        ],
+        [
+          55.0,
+          1.0429
+        ],
+        [
+          60.0,
+          1.0514
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.06
+        ],
+        [
+          100.0,
+          1.015
+        ],
+        [
+          105.0,
+          0.97
+        ],
+        [
+          110.0,
+          0.925
+        ],
+        [
+          115.0,
+          0.88
+        ],
+        [
+          120.0,
+          0.8763
+        ],
+        [
+          125.0,
+          0.8725
+        ],
+        [
+          130.0,
+          0.8688
+        ],
+        [
+          135.0,
+          0.865
+        ],
+        [
+          140.0,
+          0.8613
+        ],
+        [
+          145.0,
+          0.8575
+        ],
+        [
+          150.0,
+          0.8538
+        ],
+        [
+          155.0,
+          0.85
+        ],
+        [
+          160.0,
+          0.8463
+        ]
+      ],
+      "platforms": [
+        "RallyCar",
+        "SandRail",
+        "CrossCar"
+      ]
+    },
+    {
+      "id": "ExtremeMud",
+      "name": "Extreme Mud",
+      "badge": "MUD",
+      "accent_rgba": [
+        0.55,
+        0.35,
+        0.15,
+        1.0
+      ],
+      "wear_rate": 2.5e-7,
+      "optimal_temp_c": [
+        60.0,
+        90.0
+      ],
+      "overheat_temp_c": 110.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.65
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.62
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.7
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 1.1
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 1.05
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 1.0
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 1.25
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 1.35
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 1.3
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 1.4
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.9
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 1.1
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.8
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.25
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.968
+        ],
+        [
+          10.0,
+          0.976
+        ],
+        [
+          15.0,
+          0.984
+        ],
+        [
+          20.0,
+          0.992
+        ],
+        [
+          25.0,
+          1.0
+        ],
+        [
+          30.0,
+          1.0086
+        ],
+        [
+          35.0,
+          1.0171
+        ],
+        [
+          40.0,
+          1.0257
+        ],
+        [
+          45.0,
+          1.0343
+        ],
+        [
+          50.0,
+          1.0429
+        ],
+        [
+          55.0,
+          1.0514
+        ],
+        [
+          60.0,
+          1.06
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.015
+        ],
+        [
+          100.0,
+          0.97
+        ],
+        [
+          105.0,
+          0.925
+        ],
+        [
+          110.0,
+          0.88
+        ],
+        [
+          115.0,
+          0.8763
+        ],
+        [
+          120.0,
+          0.8725
+        ],
+        [
+          125.0,
+          0.8688
+        ],
+        [
+          130.0,
+          0.865
+        ],
+        [
+          135.0,
+          0.8613
+        ],
+        [
+          140.0,
+          0.8575
+        ],
+        [
+          145.0,
+          0.8538
+        ],
+        [
+          150.0,
+          0.85
+        ],
+        [
+          155.0,
+          0.8463
+        ],
+        [
+          160.0,
+          0.8425
+        ]
+      ],
+      "platforms": []
+    },
+    {
+      "id": "StuddedIce",
+      "name": "Studded Ice",
+      "badge": "ICE",
+      "accent_rgba": [
+        0.6,
+        0.9,
+        1.0,
+        1.0
+      ],
+      "wear_rate": 3.5e-7,
+      "optimal_temp_c": [
+        40.0,
+        75.0
+      ],
+      "overheat_temp_c": 90.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.48
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.55
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 0.8
+        },
+        {
+          "surface": "Gravel",
+          "multiplier": 0.75
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.6
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 0.6
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 1.35
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 1.3
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 1.45
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.6
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.2
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          1.0
+        ],
+        [
+          10.0,
+          1.0086
+        ],
+        [
+          15.0,
+          1.0171
+        ],
+        [
+          20.0,
+          1.0257
+        ],
+        [
+          25.0,
+          1.0343
+        ],
+        [
+          30.0,
+          1.0429
+        ],
+        [
+          35.0,
+          1.0514
+        ],
+        [
+          40.0,
+          1.06
+        ],
+        [
+          45.0,
+          1.06
+        ],
+        [
+          50.0,
+          1.06
+        ],
+        [
+          55.0,
+          1.06
+        ],
+        [
+          60.0,
+          1.06
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.0
+        ],
+        [
+          85.0,
+          0.94
+        ],
+        [
+          90.0,
+          0.88
+        ],
+        [
+          95.0,
+          0.8763
+        ],
+        [
+          100.0,
+          0.8725
+        ],
+        [
+          105.0,
+          0.8688
+        ],
+        [
+          110.0,
+          0.865
+        ],
+        [
+          115.0,
+          0.8613
+        ],
+        [
+          120.0,
+          0.8575
+        ],
+        [
+          125.0,
+          0.8538
+        ],
+        [
+          130.0,
+          0.85
+        ],
+        [
+          135.0,
+          0.8463
+        ],
+        [
+          140.0,
+          0.8425
+        ],
+        [
+          145.0,
+          0.8388
+        ],
+        [
+          150.0,
+          0.835
+        ],
+        [
+          155.0,
+          0.8313
+        ],
+        [
+          160.0,
+          0.8275
+        ]
+      ],
+      "platforms": []
+    }
+  ]
+}

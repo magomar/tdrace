@@ -60,4 +60,4 @@ In game, laps under 3 km are 1:1, Road America is 0.5× and every other circuit 
 * **Pack Drafting & Slipstream**: Trailing vehicles inside the drafting cone gain a $+8\%$ aerodynamic drag reduction ($C_{\text{air\_drag}} \times 0.92$), creating slingshot passing opportunities.
 * **Banked Corner Dynamics**: Centripetal force vectoring perpendicular to banking reduces lateral tire shear load, enabling cornering velocities over $310\text{ km/h}$.
 
-For stock car specifications, view the [NASCAR & Trans-Am Roster](../vehicles/stock_car.md).
+For stock car specifications, view the [NASCAR & Trans-Am Roster](http://localhost:4322/showroom/cars?module=nascar).

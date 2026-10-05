@@ -1,0 +1,287 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRacingModel, moduleBadge, moduleLabel } from '../../lib/codex';
+
+const racing = await getRacingModel();
+const career = racing.career;
+const ladders = career.ladders;
+const xp = career.xp_economy;
+const repair = career.repair_economy;
+---
+
+<Layout
+  title="Career Progression & Economy — TDRace Codex"
+  description="Comprehensive reference for TDRace career architecture: decoupled disciplines, 5-tier ladders, promotion gates, XP formulas, and repair economy."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Career</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Career Progression &amp; Economy</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      TDRace features an authentic, decoupled career progression engine backed by SQLite local persistence. Each motorsport
+      discipline operates as an independent sandbox with five distinct tier levels, stringent promotion gates, mathematical
+      XP lap rewards, and an anti-bankruptcy garage repair economy.
+    </p>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Career Disciplines</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{ladders.length}</div>
+        <div class="text-[11px] text-racing-cyan font-mono mt-0.5">Independent sandboxes</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Ladder Depth</div>
+        <div class="text-2xl font-bold text-white mt-0.5">5 Tiers</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Grassroots to Apex</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Max Repair Deduct</div>
+        <div class="text-2xl font-bold text-emerald-400 mt-0.5">{(repair.purse_cap_share * 100).toFixed(0)}%</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Of earned race purse</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Safety Net</div>
+        <div class="text-2xl font-bold text-amber-400 mt-0.5">{(repair.safety_net_health * 100).toFixed(0)}% HP</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Under {repair.safety_net_credit_limit} Cr</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Architecture & Promotion Gates -->
+  <section class="py-8 max-w-5xl">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">Career Architecture &amp; The Dual Promotion Gate</h2>
+      <p class="text-xs text-racing-muted mt-1 font-mono">Modality decoupling and the mathematical requirements to advance tiers.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div class="space-y-4 text-xs leading-relaxed text-slate-300">
+        <div class="p-4 rounded-xl border border-racing-border bg-racing-surface">
+          <h3 class="text-sm font-bold text-white mb-2">Decoupled Module Progression</h3>
+          <p>
+            Career progression is tracked independently for each discipline in <code class="text-racing-cyan font-mono text-[11px]">ModuleCareerProgress</code>.
+            Advancing your level, earning trophies, or buying cars in <strong class="text-white">Karting</strong> or <strong class="text-white">Rallycross</strong>
+            never alters vehicle availability, circuit access, or wallet balances in <strong class="text-white">GT Challenge</strong> or <strong class="text-white">NASCAR</strong>.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
+          <h3 class="text-sm font-bold text-amber-300 mb-2">The Dual Promotion Gate Criteria</h3>
+          <p>
+            Advancing from <code class="text-white font-mono">Tier N</code> to <code class="text-white font-mono">Tier N+1</code> requires fulfilling
+            <strong>both</strong> conditions simultaneously:
+          </p>
+          <ol class="mt-2 space-y-2 pl-4 list-decimal text-slate-200">
+            <li>
+              <strong class="text-white">Championship Podium:</strong> The driver must finish in the top 3 (Gold, Silver, or Bronze trophy)
+              of at least one official series championship in that discipline.
+            </li>
+            <li>
+              <strong class="text-white">Spendable Wallet XP Target:</strong> The driver must possess sufficient spendable XP balance
+              to afford the entry car of the next tier:
+              <code class="text-amber-400 font-mono block mt-1">Wallet XP &ge; (Tier + 1) &times; 1,000 XP</code>
+            </li>
+          </ol>
+          <div class="mt-3 pt-2 border-t border-amber-500/20 text-[11px] text-amber-200/80">
+            <strong>Important:</strong> Advancing tier verifies financial capability but <em>does not deduct</em> XP! You keep your wallet XP to spend in the garage.
+          </div>
+        </div>
+      </div>
+
+      <!-- Promotion Ladder Table -->
+      <div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
+            <tr>
+              <th class="py-3 px-3 font-semibold">Tier Advancement</th>
+              <th class="py-3 px-3 font-semibold">Podium Trophy</th>
+              <th class="py-3 px-3 font-semibold text-right">Required XP</th>
+              <th class="py-3 px-3 font-semibold">Content Unlocked</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-racing-border/40">
+            <tr>
+              <td class="py-3 px-3 font-bold text-white">Tier 1 &rarr; Tier 2</td>
+              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">2,000 XP</td>
+              <td class="py-3 px-3 text-slate-300">+3 Tracks, T2 Car, T2 AI</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-bold text-white">Tier 2 &rarr; Tier 3</td>
+              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">3,000 XP</td>
+              <td class="py-3 px-3 text-slate-300">+3 Tracks, T3 Car, T3 AI</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-bold text-white">Tier 3 &rarr; Tier 4</td>
+              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">4,000 XP</td>
+              <td class="py-3 px-3 text-slate-300">+3 Tracks, T4 Car, T4 AI</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-bold text-white">Tier 4 &rarr; Tier 5</td>
+              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">5,000 XP</td>
+              <td class="py-3 px-3 text-slate-300">+3 Tracks, T5 Car, T5 AI</td>
+            </tr>
+            <tr class="bg-racing-card/40">
+              <td class="py-3 px-3 font-bold text-emerald-400">Tier 5 (Apex)</td>
+              <td class="py-3 px-3 text-slate-400">Pinnacle</td>
+              <td class="py-3 px-3 text-right text-slate-400">—</td>
+              <td class="py-3 px-3 text-emerald-300">World Grand Prix Status</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: XP & Repair Economies -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- XP Economy -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h2 class="text-lg font-bold text-white tracking-tight">Experience Points (XP) Economy</h2>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card text-racing-cyan border border-racing-border">
+            Progression &amp; Wallet
+          </span>
+        </div>
+        <p class="text-xs text-racing-muted mt-3 leading-relaxed">
+          XP measures cumulative driver prestige (<code class="text-slate-300">lifetime_xp</code>) and serves as spendable currency (<code class="text-slate-300">xp</code>) in the garage.
+        </p>
+
+        <div class="mt-4 space-y-2">
+          {xp.formulas.map((form) => (
+            <div class="p-2.5 rounded-lg bg-racing-card/60 border border-racing-border/40 font-mono text-[11px] text-cyan-300">
+              {form}
+            </div>
+          ))}
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-racing-border/40 text-xs text-slate-300 leading-relaxed space-y-2">
+          <p>
+            <strong class="text-white">Exploration Incentive:</strong> The first time a driver finishes any circuit in a discipline, an instant bonus is credited:
+            <code class="text-amber-400 font-mono">tier &times; {xp.first_time_bonus_per_tier} XP</code> (e.g. +750 XP at Tier 3).
+          </p>
+          <p>
+            <strong class="text-white">Car Purchase Formula:</strong> Vehicles in the Garage cost strictly <code class="text-amber-400 font-mono">tier &times; {xp.car_cost_per_tier} XP</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Repair Economy -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h2 class="text-lg font-bold text-white tracking-tight">Garage Repair Economy</h2>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card text-emerald-400 border border-racing-border">
+            Sponsor Protection
+          </span>
+        </div>
+        <p class="text-xs text-racing-muted mt-3 leading-relaxed">
+          Between championship rounds, vehicle damage to chassis, engine, and suspension is restored in the garage using prize credits.
+        </p>
+
+        <div class="mt-4 space-y-2">
+          {repair.formulas.map((form) => (
+            <div class="p-2.5 rounded-lg bg-racing-card/60 border border-racing-border/40 font-mono text-[11px] text-emerald-300">
+              {form}
+            </div>
+          ))}
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-racing-border/40 text-xs text-slate-300 leading-relaxed space-y-2">
+          <p>
+            <strong class="text-white">40% Purse Deduction Cap:</strong> Regardless of damage severity, your team never pays more than
+            <strong class="text-emerald-400">40% of the earned purse</strong>. Team sponsors absorb all damage costs exceeding this threshold.
+          </p>
+          <p>
+            <strong class="text-white">Anti-Bankruptcy Safety Net:</strong> If a driver's purse and savings fall below
+            <strong class="text-amber-400">{repair.safety_net_credit_limit.toLocaleString('en-US')} Credits</strong>, the garage emergency fund provides free repairs up to
+            <strong class="text-amber-400">{(repair.safety_net_health * 100).toFixed(0)}% vehicle health</strong> to guarantee competition continuity.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Tier Ladders Directory -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Discipline Tier Ladders &amp; Unlocks</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">Five-tier career ladders, starter vehicles, and circuit unlock schedules.</p>
+    </div>
+
+    <div class="space-y-8">
+      {ladders.map((ladder) => {
+        const badgeStyle = moduleBadge(ladder.module_id);
+        return (
+          <div id={ladder.module_id} class="rounded-xl border border-racing-border bg-racing-surface p-5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-racing-border/60 pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <span class={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${badgeStyle}`}>
+                  {moduleLabel(ladder.module_id)}
+                </span>
+                <h3 class="text-lg font-bold text-white tracking-tight">{ladder.module_name}</h3>
+              </div>
+              <span class="text-xs font-mono text-racing-muted">5 Career Tiers</span>
+            </div>
+
+            <!-- Tiers Table -->
+            <div class="overflow-x-auto rounded-lg border border-racing-border/60">
+              <table class="w-full text-left text-xs font-mono">
+                <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
+                  <tr>
+                    <th class="py-2.5 px-3 font-semibold">Tier</th>
+                    <th class="py-2.5 px-3 font-semibold">Tier Name &amp; Promotion Criteria</th>
+                    <th class="py-2.5 px-3 font-semibold">Starter Vehicle</th>
+                    <th class="py-2.5 px-3 font-semibold text-right">Car XP</th>
+                    <th class="py-2.5 px-3 font-semibold text-right">Round Purse</th>
+                    <th class="py-2.5 px-3 font-semibold">Track Unlocks</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-racing-border/40">
+                  {ladder.tiers.map((t) => (
+                    <tr class="hover:bg-racing-card/40 transition-colors">
+                      <td class="py-3 px-3 font-bold text-cyan-300">T{t.tier}</td>
+                      <td class="py-3 px-3">
+                        <div class="font-bold text-white">{t.name}</div>
+                        <div class="text-[11px] text-racing-muted mt-0.5">{t.promotion_criteria}</div>
+                      </td>
+                      <td class="py-3 px-3">
+                        {t.starter_car_name ? (
+                          <a
+                            href={`/showroom/cars#${t.starter_car_id}`}
+                            class="text-amber-300 hover:text-amber-200 transition-colors font-medium"
+                          >
+                            {t.starter_car_name}
+                          </a>
+                        ) : (
+                          <span class="text-racing-muted italic">Purchase via Garage</span>
+                        )}
+                      </td>
+                      <td class="py-3 px-3 text-right text-amber-400 font-bold">{t.car_cost_xp.toLocaleString('en-US')} XP</td>
+                      <td class="py-3 px-3 text-right text-emerald-400 font-bold">{t.round_base_purse.toLocaleString('en-US')} Cr</td>
+                      <td class="py-3 px-3">
+                        <div class="flex flex-wrap gap-1">
+                          {t.unlocked_tracks.map((slug) => (
+                            <a
+                              href={`/showroom/circuits#${slug}`}
+                              class="text-[10px] px-1.5 py-0.5 rounded bg-racing-card text-slate-300 hover:text-racing-cyan border border-racing-border/60 transition-colors"
+                            >
+                              {slug.replace(/_/g, ' ')}
+                            </a>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+</Layout>

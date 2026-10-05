@@ -1,0 +1,286 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getHudModel } from '../../lib/codex';
+
+const hud = await getHudModel();
+---
+
+<Layout title="HUD & Displays" description="Interactive HUD directory, tactical cockpit hologram modes, curve helper, and locator aids.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/driving" class="hover:underline">Driving</a> / HUD</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Heads-Up Display & Instrumentation</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      TDRace's heads-up display is designed with modern arcade clarity: vector typography, responsive glassmorphism bezels,
+      zero microscopic text inside instruments, and dynamic tactical alerts.
+      The cockpit hologram projects real-time vehicle kinematics and suspension stroke directly onto the lower instrument panel.
+    </p>
+  </div>
+
+  <!-- Interactive Annotated HUD Layout Mockup -->
+  <section class="py-8">
+    <div class="max-w-3xl mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">HUD Screen Layout & Zones</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Key instruments arranged around the 16:9 viewport perimeter, keeping the center racing corridor clear.
+      </p>
+    </div>
+
+    <!-- Scaled 16:9 HUD Mockup Visualizer -->
+    <div class="rounded-2xl border border-racing-border bg-[#0a0d14] p-4 relative overflow-hidden shadow-2xl">
+      <div class="aspect-video w-full relative rounded-xl border border-racing-border/40 bg-gradient-to-b from-[#0e131f] to-[#080b12] flex flex-col justify-between p-4 sm:p-6 overflow-hidden">
+        <!-- Grid lines simulating the racetrack viewport -->
+        <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-30"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none opacity-20">
+          <span class="text-7xl font-mono font-black text-white/10 tracking-widest">TDRACE</span>
+        </div>
+
+        <!-- Top Row -->
+        <div class="flex items-start justify-between relative z-10">
+          <!-- Top Left: Position & Lap Badge + Joker -->
+          <div class="flex flex-col gap-2">
+            <div class="rounded-xl border border-racing-border bg-racing-surface/90 backdrop-blur-md p-3 w-40 sm:w-48 shadow-lg">
+              <span class="text-[10px] font-mono text-racing-muted uppercase">Position</span>
+              <div class="flex items-baseline gap-2 mt-0.5">
+                <span class="text-2xl sm:text-3xl font-mono font-black text-amber-400">P1</span>
+                <span class="text-xs font-mono text-racing-muted">/ 8</span>
+              </div>
+              <div class="mt-1 pt-1 border-t border-racing-border/40 flex items-center justify-between text-[11px] font-mono">
+                <span class="text-racing-muted">LAP</span>
+                <span class="text-white font-bold">2 / 3</span>
+              </div>
+            </div>
+            <!-- Joker Badge -->
+            <div class="rounded-lg border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 w-fit shadow-xs">
+              <span class="text-[10px] font-mono font-bold text-amber-400">JOKER REQUIRED</span>
+            </div>
+          </div>
+
+          <!-- Top Center: Lap Timer & Splits -->
+          <div class="flex flex-col items-center">
+            <div class="rounded-xl border border-racing-border bg-racing-surface/90 backdrop-blur-md px-5 py-2.5 shadow-lg text-center">
+              <span class="text-[10px] font-mono text-racing-muted uppercase tracking-wider">CURRENT LAP</span>
+              <div class="text-xl sm:text-2xl font-mono font-black text-white mt-0.5 tracking-tight">00:48.32</div>
+              <div class="flex items-center justify-center gap-3 text-[10px] font-mono mt-1">
+                <span class="text-racing-muted">BEST: <span class="text-white">00:46.12</span></span>
+                <span class="text-green-400 font-bold">-0.34s ▼</span>
+              </div>
+            </div>
+
+            <!-- Approaching Curve Helper Ribbon -->
+            <div class="mt-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-racing-surface/90 border border-green-500/40 text-green-400 shadow-md">
+              <span class="text-xs font-mono font-black">R3 ↗</span>
+              <span class="text-[11px] font-mono">Medium Right</span>
+            </div>
+          </div>
+
+          <!-- Top Right: Minimap & Pit Alert -->
+          <div class="flex flex-col items-end gap-2">
+            <div class="rounded-xl border border-racing-border bg-racing-surface/90 backdrop-blur-md p-2 w-36 sm:w-44 h-32 relative shadow-lg flex flex-col justify-between">
+              <div class="flex items-center justify-between text-[9px] font-mono text-racing-muted">
+                <span>RADAR</span>
+                <span class="text-cyan-400 font-bold">LIVE</span>
+              </div>
+              <!-- Track Spline Mockup -->
+              <svg viewBox="0 0 100 80" class="w-full h-20">
+                <path d="M 20 20 C 50 10, 80 15, 80 40 C 80 65, 50 70, 30 65 C 10 60, 10 30, 20 20 Z" fill="none" stroke="#272d3e" stroke-width="6" stroke-linejoin="round" />
+                <path d="M 20 20 C 50 10, 80 15, 80 40 C 80 65, 50 70, 30 65 C 10 60, 10 30, 20 20 Z" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="2 2" />
+                <!-- Player Pip -->
+                <circle cx="50" cy="13" r="3" fill="#22c55e" stroke="#ffffff" stroke-width="1" />
+                <!-- Opponent Pips -->
+                <circle cx="68" cy="22" r="2.5" fill="#f43f5e" />
+                <circle cx="35" cy="16" r="2.5" fill="#f59e0b" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center In-Race Alerts / Banner -->
+        <div class="flex justify-center relative z-10">
+          <!-- Optional toast / notification -->
+          <div class="px-4 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-mono backdrop-blur-sm shadow-md">
+            ASSISTS: SPORT MODE
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="flex items-end justify-between relative z-10">
+          <!-- Bottom Left: Cockpit Hologram HUD -->
+          <div class="rounded-xl border border-racing-border bg-racing-surface/90 backdrop-blur-md p-3 w-48 sm:w-56 shadow-lg">
+            <div class="flex items-center justify-between text-[10px] font-mono border-b border-racing-border/40 pb-1.5 mb-2">
+              <span class="text-cyan-400 font-bold">KINEMATICS</span>
+              <span class="text-racing-muted">Ctrl+1</span>
+            </div>
+            <!-- Car skeleton wireframe -->
+            <div class="h-24 flex items-center justify-center">
+              <svg viewBox="0 0 120 70" class="w-full h-full">
+                <!-- Chassis boundary -->
+                <rect x="25" y="15" width="70" height="40" rx="10" fill="none" stroke="#272d3e" stroke-width="1.5" />
+                <!-- Centerline -->
+                <line x1="25" y1="35" x2="95" y2="35" stroke="#334155" stroke-dasharray="2 2" />
+                <!-- 4 Wheels -->
+                <rect x="18" y="10" width="14" height="8" rx="2" fill="#22c55e" />
+                <rect x="18" y="52" width="14" height="8" rx="2" fill="#22c55e" />
+                <rect x="88" y="10" width="14" height="8" rx="2" fill="#22c55e" />
+                <rect x="88" y="52" width="14" height="8" rx="2" fill="#22c55e" />
+                <!-- Engine -->
+                <rect x="62" y="27" width="16" height="16" rx="3" fill="rgba(6, 182, 212, 0.25)" stroke="#06b6d4" stroke-width="1" />
+                <text x="70" y="38" text-anchor="middle" font-size="7" font-family="JetBrains Mono" fill="#38bdf8">MID</text>
+              </svg>
+            </div>
+            <div class="flex items-center justify-between text-[10px] font-mono text-racing-muted pt-1 border-t border-racing-border/40">
+              <span>HEALTH: <strong class="text-green-400">100%</strong></span>
+              <span class="text-cyan-300">SOFT SLICK</span>
+            </div>
+          </div>
+
+          <!-- Bottom Right: Speedometer Cluster -->
+          <div class="rounded-xl border border-racing-border bg-racing-surface/90 backdrop-blur-md p-3 w-40 sm:w-48 shadow-lg flex flex-col items-center">
+            <span class="text-[10px] font-mono text-racing-muted uppercase">SPEEDOMETER</span>
+            <!-- Speed Gauge -->
+            <div class="relative w-24 h-24 flex items-center justify-center my-1">
+              <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#1e293b" stroke-width="8" stroke-dasharray="210" stroke-dashoffset="50" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#06b6d4" stroke-width="8" stroke-dasharray="210" stroke-dashoffset="110" stroke-linecap="round" />
+              </svg>
+              <div class="absolute text-center">
+                <span class="text-2xl font-mono font-black text-white">164</span>
+                <span class="block text-[8px] font-mono text-racing-muted uppercase">km/h</span>
+              </div>
+            </div>
+            <!-- Gear & RPM Bar -->
+            <div class="flex items-center justify-between w-full text-[10px] font-mono pt-1 border-t border-racing-border/40">
+              <span class="text-racing-muted">GEAR: <strong class="text-amber-400 text-xs">4</strong></span>
+              <span class="text-green-400 font-bold">TCS · ESC</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Complete HUD Elements Directory -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">HUD Element Directory</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Comprehensive overview of all screen instruments, their screen anchor positions, and associated shortcuts.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {hud.elements.map((elem) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-start justify-between gap-2 border-b border-racing-border/60 pb-2.5">
+              <h3 class="text-sm font-bold text-white">{elem.name}</h3>
+              {elem.hotkey && (
+                <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-[10px] font-mono text-cyan-400">
+                  {elem.hotkey}
+                </kbd>
+              )}
+            </div>
+            <p class="text-xs text-racing-muted mt-2.5 leading-relaxed">{elem.description}</p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-racing-border/30 text-[10px] font-mono text-cyan-400/80">
+            Anchor: {elem.screen_position}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Tactical Hologram Deep Dive (Spec 079) -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Tactical Cockpit Hologram (Spec 079)</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        The cockpit telemetry HUD provides a pure graphical vector instrument depicting vehicle mechanical state.
+        Zero microscopic text labels or percentages inside the HUD glass bezel. Switch modes dynamically using hotkeys.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {hud.hologram_modes.map((mode) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+          <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+            <div class="flex items-center gap-2">
+              <span class={`w-2.5 h-2.5 rounded-full ${mode.id === 'kinematics' ? 'bg-cyan-400' : 'bg-green-400'}`}></span>
+              <h3 class="text-lg font-bold text-white font-mono">{mode.name}</h3>
+            </div>
+            <kbd class="px-2 py-0.5 rounded bg-racing-card border border-racing-border text-xs font-mono text-cyan-300">
+              {mode.hotkey}
+            </kbd>
+          </div>
+          <p class="text-xs text-racing-muted mt-3 leading-relaxed">{mode.description}</p>
+
+          <h4 class="text-[11px] font-mono uppercase text-racing-cyan font-semibold mt-4 mb-2">Monitored Systems:</h4>
+          <ul class="space-y-1.5 text-xs text-racing-muted">
+            {mode.features.map((feat) => (
+              <li class="flex items-center gap-2">
+                <span class="text-cyan-400">▹</span>
+                {feat}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Curve Helper & Color Schemes -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Approaching Curve Advisory Helper</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Anticipatory cornering ribbon that alerts the driver to corner direction, radius, and braking markers.
+        Cycle indicator style with key <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-xs font-mono text-cyan-400">5</kbd>,
+        and cycle color scheme with key <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-xs font-mono text-cyan-400">6</kbd>.
+      </p>
+    </div>
+
+    <!-- Styles -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {hud.curve_helper.styles.map((style) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+          <h4 class="text-sm font-bold text-white">{style.name}</h4>
+          <p class="text-xs text-racing-muted mt-1 leading-relaxed">{style.description}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Color Schemes Palette -->
+    <h3 class="text-sm font-mono uppercase text-racing-muted mb-3 font-semibold">Available Color Schemes (Key 6)</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {hud.curve_helper.color_schemes.map((scheme) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+          <h4 class="text-sm font-bold text-white">{scheme.name}</h4>
+          <div class="flex items-center gap-2 my-2.5">
+            {scheme.palette.map((color) => (
+              <span class="w-6 h-5 rounded" style={`background-color: ${color}`}></span>
+            ))}
+          </div>
+          <p class="text-[11px] text-racing-muted leading-relaxed">{scheme.description}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Player Locator Aids -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Player Locator & Pack Clarity Aids</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Designed for dense multi-car packs, night events, and heavy tire smoke / dust roost.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {hud.locator_aids.map((aid) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-4">
+          <h3 class="text-sm font-bold text-white">{aid.name}</h3>
+          <p class="text-xs text-racing-muted mt-1 leading-relaxed">{aid.description}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,137 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CarCard from '../components/CarCard.astro';
+import CircuitCard from '../components/CircuitCard.astro';
+import PacejkaGraph from '../components/PacejkaGraph.astro';
+import GlobalViewSwitcher from '../components/GlobalViewSwitcher.astro';
+import { getCars, getCircuits, getModules, getSurfaces, SECTIONS } from '../lib/codex';
+
+const [vehiclesData, circuitsData, surfacesData, modules] = await Promise.all([
+  getCars(),
+  getCircuits(),
+  getSurfaces(),
+  getModules(),
+]);
+
+const featuredCars = vehiclesData.filter((c) =>
+  ['gt_ferrari_296_gt3', 'nascar_corvette_ta1', 'rally_audi_sport_quattro_s1', 'offroad_sand_rail_buggy', 'kart_anderson_cs250', 'autocross_peters_superbuggy'].includes(c.id)
+);
+
+const featuredCircuits = circuitsData.filter((c) =>
+  ['spa', 'daytona', 'holjes_rx', 'lonato', 'gt_coastal_grand_prix', 'sahara_dune_crossing', 'nova_paka_ax'].includes(c.id)
+);
+---
+
+<Layout title="The Encyclopedia of TDRace">
+  <!-- Hero Section -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-racing-blue/10 border border-racing-blue/30 text-racing-cyan text-xs font-mono mb-4">
+        <span>🏎️</span>
+        <span>TDRace Codex</span>
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
+        Every car, circuit and rule of <span class="bg-gradient-to-r from-racing-blue via-racing-cyan to-racing-green bg-clip-text text-transparent">TDRace</span>, explained.
+      </h1>
+      <p class="mt-4 text-base sm:text-lg text-racing-muted leading-relaxed">
+        Explore {vehiclesData.length} cars and {circuitsData.length} circuits across {modules.length} modules, and learn how the simulation, the controls and the race rules work. Every number on these pages is exported from the game itself.
+      </p>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{vehiclesData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Car Models</div>
+          <div class="text-[11px] text-racing-cyan mt-0.5">{modules.length} modules</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{circuitsData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Circuits Mapped</div>
+          <div class="text-[11px] text-racing-amber mt-0.5">Gran Turismo, Stock cars, Rallycross, Autocross, All terrain & Karting</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">{surfacesData.length}</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Surface Models</div>
+          <div class="text-[11px] text-racing-green mt-0.5">Split-μ per-wheel sampling</div>
+        </div>
+        <div class="p-4 rounded-xl bg-racing-surface border border-racing-border">
+          <div class="text-3xl font-extrabold text-white font-mono">60 Hz</div>
+          <div class="text-xs text-racing-muted uppercase font-mono mt-1">Physics Tick</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Tyre model + weight transfer</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Codex Sections -->
+  <section class="py-12 border-b border-racing-border">
+    <h2 class="text-2xl font-bold text-white tracking-tight mb-6">Explore the Codex</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {SECTIONS.map((section) => (
+        <a href={section.href} class="p-5 rounded-xl bg-racing-surface border border-racing-border hover:border-racing-cyan/50 transition-colors group">
+          <div class="text-lg font-bold text-white group-hover:text-racing-cyan transition-colors">{section.label}</div>
+          <p class="text-xs text-racing-muted mt-2">{section.blurb}</p>
+          <div class="text-[11px] font-mono text-racing-cyan mt-3">
+            {section.pages.filter((p) => p.ready).length} of {section.pages.length} pages ready
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Interactive Pacejka Laboratory Preview -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Interactive Simulation Physics Lab</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Live client-side tyre curve tuning and lateral slip angle computation.</p>
+      </div>
+      <a href="/technical/physics-lab" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        Full Physics Reference <span>→</span>
+      </a>
+    </div>
+
+    <PacejkaGraph />
+  </section>
+
+  <!-- Featured Vehicles Section -->
+  <section class="py-12 border-b border-racing-border">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Featured Motorsport Machinery</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Hero benchmarks from Gran Turismo, Stock cars, Rallycross, Autocross, All terrain, and Karting.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <GlobalViewSwitcher />
+        <a href="/showroom/cars" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+          View All Categories <span>→</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {featuredCars.slice(0, 3).map((car) => (
+        <CarCard car={car} />
+      ))}
+    </div>
+  </section>
+
+  <!-- Featured Circuits Section -->
+  <section class="py-12">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-white tracking-tight">Homologated World Circuits</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Vector splines, surface zones, barrier perimeters, and Joker Laps.</p>
+      </div>
+      <a href="/showroom/circuits" class="text-xs font-mono text-racing-cyan hover:underline flex items-center gap-1">
+        View All {circuitsData.length} Tracks <span>→</span>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {featuredCircuits.slice(0, 3).map((circuit) => (
+        <CircuitCard circuit={circuit} />
+      ))}
+    </div>
+  </section>
+</Layout>

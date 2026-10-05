@@ -1,0 +1,204 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRacingModel, moduleBadge, moduleLabel } from '../../lib/codex';
+
+const racing = await getRacingModel();
+const disciplines = racing.disciplines;
+
+const totalCars = disciplines.reduce((acc, d) => acc + d.car_count, 0);
+const totalCircuits = disciplines.reduce((acc, d) => acc + d.circuit_count, 0);
+const totalSeries = disciplines.reduce((acc, d) => acc + d.series_count, 0);
+---
+
+<Layout
+  title="Motorsport Disciplines — TDRace Codex"
+  description="Explore the motorsport disciplines in TDRace: identity, homologated machinery, circuits, tier ladders, and regulations."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Disciplines</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Motorsport Disciplines</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      TDRace organizes motorsport into seven distinct disciplines spanning pure arcade nostalgia, grassroots karting,
+      unpaved FIA autocross, mixed-surface rallycross, multi-class GT endurance, 850 bhp NASCAR stock cars, and extreme
+      off-road arenas. Each discipline features dedicated physics tuning, homologated vehicles, authentic circuit calendars,
+      and independent career progression ladders.
+    </p>
+
+    <!-- Global Discipline Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Disciplines</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{disciplines.length}</div>
+        <div class="text-[11px] text-racing-cyan font-mono mt-0.5">{disciplines.filter(d => d.launch).length} Launch Scope</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Homologated Cars</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{totalCars}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Across all classes</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Curated Circuits</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{totalCircuits}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Road, dirt, ovals & ice</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Official Series</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{totalSeries}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Preset championships</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disciplines Showcase -->
+  <section class="py-8 space-y-8 max-w-5xl">
+    {disciplines.map((d) => {
+      const badgeStyle = moduleBadge(d.id);
+      return (
+        <article id={d.id} class="rounded-xl border border-racing-border bg-racing-surface p-6 shadow-sm">
+          <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 border-b border-racing-border/60 pb-5">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class={`text-[11px] font-mono px-2.5 py-0.5 rounded-full border ${badgeStyle}`}>
+                  {moduleLabel(d.id)}
+                </span>
+                {d.launch ? (
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                    Launch Scope
+                  </span>
+                ) : (
+                  <span class="text-[11px] font-mono px-2 py-0.5 rounded-full border bg-slate-500/10 text-slate-400 border-slate-500/30">
+                    Expansion
+                  </span>
+                )}
+                <span class="text-xs font-mono text-racing-muted">ID: {d.id}</span>
+              </div>
+              <h2 class="text-2xl font-bold text-white tracking-tight mt-2">{d.title}</h2>
+              <p class="text-xs font-mono text-racing-cyan mt-0.5">{d.subtitle}</p>
+            </div>
+
+            <!-- Quick Telemetry Numbers -->
+            <div class="flex items-center gap-3">
+              <div class="text-center px-3 py-2 rounded-lg bg-racing-card border border-racing-border/60 min-w-[70px]">
+                <div class="text-base font-bold text-white font-mono">{d.car_count}</div>
+                <div class="text-[10px] text-racing-muted uppercase font-mono">Cars</div>
+              </div>
+              <div class="text-center px-3 py-2 rounded-lg bg-racing-card border border-racing-border/60 min-w-[70px]">
+                <div class="text-base font-bold text-white font-mono">{d.circuit_count}</div>
+                <div class="text-[10px] text-racing-muted uppercase font-mono">Circuits</div>
+              </div>
+              <div class="text-center px-3 py-2 rounded-lg bg-racing-card border border-racing-border/60 min-w-[70px]">
+                <div class="text-base font-bold text-white font-mono">{d.series_count}</div>
+                <div class="text-[10px] text-racing-muted uppercase font-mono">Series</div>
+              </div>
+              <div class="text-center px-3 py-2 rounded-lg bg-racing-card border border-racing-border/60 min-w-[70px]">
+                <div class="text-base font-bold text-white font-mono">{d.tiers.length}</div>
+                <div class="text-[10px] text-racing-muted uppercase font-mono">Tiers</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-sm text-racing-muted mt-4 leading-relaxed">
+            {d.description}
+          </p>
+
+          <!-- Tiers & Ladder Progression -->
+          <div class="mt-6">
+            <h3 class="text-xs font-mono text-white uppercase tracking-wider mb-3">Tier Progression Ladder</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {d.tiers.map((t) => (
+                <div class="rounded-lg border border-racing-border/60 bg-racing-card/60 p-3 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs font-bold text-white">Tier {t.tier}: {t.name}</span>
+                      <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-racing-bg text-racing-cyan border border-racing-border/40">
+                        T{t.tier}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-racing-muted mt-1.5 leading-normal">
+                      Required: <span class="text-slate-300 font-mono">{t.required_licence}</span>
+                    </p>
+                  </div>
+                  <div class="mt-3 pt-2 border-t border-racing-border/40 flex items-center justify-between text-[11px] font-mono text-racing-muted">
+                    <span>Entry: <strong class="text-amber-400">{t.car_cost_xp.toLocaleString('en-US')} XP</strong></span>
+                    <span>Purse: <strong class="text-emerald-400">{t.base_purse.toLocaleString('en-US')} Cr</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Navigation Links -->
+          <div class="mt-6 pt-4 border-t border-racing-border/60 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+            <div class="flex items-center gap-2">
+              <a
+                href={`/showroom/cars?module=${d.id}`}
+                class="px-3 py-1.5 rounded bg-racing-card hover:bg-racing-card/80 text-racing-cyan border border-racing-border transition-colors"
+              >
+                Inspect {d.car_count} Cars &rarr;
+              </a>
+              <a
+                href={`/showroom/circuits?module=${d.id}`}
+                class="px-3 py-1.5 rounded bg-racing-card hover:bg-racing-card/80 text-white border border-racing-border transition-colors"
+              >
+                View {d.circuit_count} Circuits &rarr;
+              </a>
+            </div>
+            <a
+              href={`/racing/career#${d.id}`}
+              class="text-racing-muted hover:text-white transition-colors"
+            >
+              Career Calendar & Unlocks &rarr;
+            </a>
+          </div>
+        </article>
+      );
+    })}
+  </section>
+
+  <!-- Summary Table -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">Disciplines Homologation Summary</h2>
+      <p class="text-xs text-racing-muted mt-1 font-mono">Cross-discipline scope, content counts, and entry criteria.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Discipline</th>
+            <th class="py-3 px-4 font-semibold">Scope</th>
+            <th class="py-3 px-4 font-semibold text-right">Cars</th>
+            <th class="py-3 px-4 font-semibold text-right">Circuits</th>
+            <th class="py-3 px-4 font-semibold text-right">Series</th>
+            <th class="py-3 px-4 font-semibold text-right">Ladder Tiers</th>
+            <th class="py-3 px-4 font-semibold">Licencing Authority</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/40">
+          {disciplines.map((d) => (
+            <tr class="hover:bg-racing-card/40 transition-colors">
+              <td class="py-3 px-4 font-bold text-white">
+                <a href={`#${d.id}`} class="hover:text-racing-cyan transition-colors">
+                  {moduleLabel(d.id)}
+                </a>
+              </td>
+              <td class="py-3 px-4">
+                {d.launch ? (
+                  <span class="text-emerald-400 font-medium">Launch Scope</span>
+                ) : (
+                  <span class="text-slate-400">Expansion</span>
+                )}
+              </td>
+              <td class="py-3 px-4 text-right text-racing-cyan">{d.car_count}</td>
+              <td class="py-3 px-4 text-right text-racing-cyan">{d.circuit_count}</td>
+              <td class="py-3 px-4 text-right text-slate-300">{d.series_count}</td>
+              <td class="py-3 px-4 text-right text-slate-300">{d.tiers.length}</td>
+              <td class="py-3 px-4 text-racing-muted">{d.tiers[0]?.required_licence.split(' ')[0] ?? 'Class D'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Layout>

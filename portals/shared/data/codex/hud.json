@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "hud",
+      "elements": [
+        {
+          "id": "speedometer",
+          "name": "Speedometer & Cluster",
+          "screen_position": "Bottom Right",
+          "hotkey": null,
+          "description": "Hybrid digital/analog speed gauge with speed in km/h, gear indicator, rpm bar, electronic assist active indicators (TCS/ESC/ABS), and drift meter."
+        },
+        {
+          "id": "position_and_lap",
+          "name": "Position & Lap Counter",
+          "screen_position": "Top Left",
+          "hotkey": null,
+          "description": "Displays current race position with podium accent colors (Gold, Silver, Bronze), total field count, current lap, and total laps."
+        },
+        {
+          "id": "lap_timer",
+          "name": "Lap Timer & Sector Splits",
+          "screen_position": "Top Center",
+          "hotkey": null,
+          "description": "High-precision timer displaying current lap time, last lap, personal best, and dynamic sector split time deltas (green = faster, red = slower)."
+        },
+        {
+          "id": "minimap",
+          "name": "Mini-Map Radar",
+          "screen_position": "Top Right",
+          "hotkey": null,
+          "description": "Track overview with player and AI position pips, orientation vectors, pit lane route, and sector boundary markers."
+        },
+        {
+          "id": "compound_badge",
+          "name": "Compound Badge",
+          "screen_position": "Inside Cockpit Hologram",
+          "hotkey": null,
+          "description": "Displays current tire compound (e.g. Spliced Slick, Hard Compound, Wet Tread, Gravel Rally) and thermal state."
+        },
+        {
+          "id": "joker_badge",
+          "name": "Joker Lap Badge",
+          "screen_position": "Top Left (below Position)",
+          "hotkey": null,
+          "description": "Rallycross tactical badge indicating required vs completed Joker laps (e.g. 'JOKER REQUIRED' in amber, 'JOKER DONE' in green)."
+        },
+        {
+          "id": "pit_messages",
+          "name": "Pit Lane Alerts & Overlays",
+          "screen_position": "Center / Top",
+          "hotkey": null,
+          "description": "Tactical 'BOX THIS LAP' warning when tire wear exceeds 60% or car health drops below 50%; speed limiter banner (60 km/h) in pit lane; service countdown overlay."
+        },
+        {
+          "id": "cockpit_hologram",
+          "name": "Tactical Cockpit Hologram",
+          "screen_position": "Bottom Left",
+          "hotkey": "Ctrl + 1 / Ctrl + 2",
+          "description": "Vector chassis projection showing proportional geometry, engine placement, 4-corner wheel assemblies with thermal/wear status, and switchable kinematics/dynamics modes."
+        },
+        {
+          "id": "curve_helper",
+          "name": "Approaching Curve Helper",
+          "screen_position": "In-World / HUD Ribbon",
+          "hotkey": "5 / 6",
+          "description": "Anticipatory curve advisory indicating corner radius, apex direction, braking zones, and rally pacenote severity (1 to 6)."
+        },
+        {
+          "id": "nameplates",
+          "name": "Opponent Nameplates",
+          "screen_position": "In-World above Vehicles",
+          "hotkey": null,
+          "description": "Floating racer badges showing driver name, position, and gap time delta."
+        },
+        {
+          "id": "locator_aids",
+          "name": "Player Locator Aids",
+          "screen_position": "In-World around Player Vehicle",
+          "hotkey": null,
+          "description": "Overhead chevron pointer, ground proximity aura, roof strobe beacon, and radar sonar ping for high-density pack clarity."
+        },
+        {
+          "id": "debug_overlays",
+          "name": "Developer & Telemetry Overlays",
+          "screen_position": "Full Screen",
+          "hotkey": "F1 - F5",
+          "description": "LIDAR raycasts (F1), checkpoint gates (F2), collision OBBs (F3), AI paths (F4), and real-time telemetry panel (F5)."
+        }
+      ],
+      "hologram_modes": [
+        {
+          "id": "kinematics",
+          "name": "KINEMATICS",
+          "hotkey": "Ctrl + 1",
+          "description": "Structural linkage mode. Depicts suspension wishbone / pushrod geometry, buckled fracture deformation lines, dynamic camber skew, and perimeter impact zone damage meters.",
+          "features": [
+            "Mechanical linkage geometry matching SuspensionArchetype",
+            "Buckled fracture line rendering upon severe impact",
+            "Wheel camber skew visualization under cornering load",
+            "Perimeter impact zone wear bars (Nose, Tail, Flanks, Corners)"
+          ]
+        },
+        {
+          "id": "dynamics",
+          "name": "DYNAMICS",
+          "hotkey": "Ctrl + 2",
+          "description": "Telemetry & suspension stroke mode. Displays 4-corner damper stroke capsules with real-time compression travel and dynamic Fz normal load transfer glow.",
+          "features": [
+            "4-corner damper stroke compression travel bars",
+            "Dynamic Fz normal load transfer intensity glow",
+            "Tire surface temperature gradient indicators",
+            "Tire tread wear depletion gauges"
+          ]
+        }
+      ],
+      "curve_helper": {
+        "cycle_hotkey": "5",
+        "color_cycle_hotkey": "6",
+        "styles": [
+          {
+            "id": "pacenote",
+            "name": "Rally Pacenote",
+            "description": "Displays rally-style corner severity numbers (1 = hairpin to 6 = slight bend) with turn direction arrow."
+          },
+          {
+            "id": "chevrons",
+            "name": "Severity Chevrons",
+            "description": "Projects sequential directional chevron arrows along the approaching corner trajectory."
+          },
+          {
+            "id": "off",
+            "name": "Disabled",
+            "description": "Hides all curve approach indicators for purist simulation driving."
+          }
+        ],
+        "color_schemes": [
+          {
+            "id": "traffic",
+            "name": "Traffic Light",
+            "description": "Green (flat out) -> Yellow (lift/caution) -> Orange (heavy braking) -> Red (hairpin emergency).",
+            "palette": [
+              "#22c55e",
+              "#eab308",
+              "#f97316",
+              "#ef4444"
+            ]
+          },
+          {
+            "id": "synthwave",
+            "name": "Synthwave Neon",
+            "description": "Cyan -> Electric Purple -> Neon Magenta -> Hot Pink.",
+            "palette": [
+              "#06b6d4",
+              "#a855f7",
+              "#ec4899",
+              "#f43f5e"
+            ]
+          },
+          {
+            "id": "contrast",
+            "name": "High Contrast",
+            "description": "Pure White -> Bright Amber -> High-vis Yellow -> Stark Crimson.",
+            "palette": [
+              "#ffffff",
+              "#f59e0b",
+              "#eab308",
+              "#dc2626"
+            ]
+          },
+          {
+            "id": "rally",
+            "name": "Rally Stage",
+            "description": "Fluorescent Blue -> Chartreuse Green -> Vivid Yellow -> Blaze Orange.",
+            "palette": [
+              "#3b82f6",
+              "#84cc16",
+              "#eab308",
+              "#ea580c"
+            ]
+          }
+        ]
+      },
+      "locator_aids": [
+        {
+          "id": "overhead_chevron",
+          "name": "Overhead Floating Chevron",
+          "description": "High-visibility floating arrow directly above the player's car, scaling dynamically with camera zoom."
+        },
+        {
+          "id": "ground_aura",
+          "name": "Ground Proximity Aura",
+          "description": "Soft pulsing circular ground glow underneath the vehicle chassis, highlighting position in pack battles and dust clouds."
+        },
+        {
+          "id": "roof_beacon",
+          "name": "Roof Strobe Beacon",
+          "description": "High-contrast roof strobe light designed for extreme off-road mud and night racing visibility."
+        },
+        {
+          "id": "adaptive_visibility",
+          "name": "Adaptive Contrast Scaling",
+          "description": "Automatically increases aura and chevron luminance when obscured by smoke, tire spray, or off-track foliage."
+        },
+        {
+          "id": "sonar_ping",
+          "name": "Radar Sonar Ping",
+          "description": "Periodic concentric sonar pulse on the minimap radiating from the player's vehicle."
+        }
+      ],
+      "cameras": [
+        {
+          "id": "close",
+          "name": "Close",
+          "mode": "follow",
+          "min_zoom": 13.5,
+          "max_zoom": 22.0,
+          "description": "Intimate follow camera with prominent car detail and intense motion sense. Best for precision karting and autocross."
+        },
+        {
+          "id": "medium",
+          "name": "Medium (Default)",
+          "mode": "follow",
+          "min_zoom": 10.0,
+          "max_zoom": 16.5,
+          "description": "Balanced follow perspective giving adequate forward vision into braking zones while preserving vehicle presence."
+        },
+        {
+          "id": "far",
+          "name": "Far",
+          "mode": "follow",
+          "min_zoom": 7.5,
+          "max_zoom": 12.0,
+          "description": "Wide follow camera offering expansive tactical view of upcoming corners and competitor overtakes. Great for GT and high-speed circuits."
+        },
+        {
+          "id": "overview",
+          "name": "Overview",
+          "mode": "overview",
+          "min_zoom": 1.0,
+          "max_zoom": 1.0,
+          "description": "Static full-track overview camera fitting the entire circuit within the viewport in classic GeneRally style."
+        }
+      ],
+      "camera_config": {
+        "position_smoothing": 8.5,
+        "zoom_smoothing": 4.0,
+        "velocity_lookahead_time": 0.4,
+        "trauma_decay": 2.2,
+        "max_shake_offset": 1.5,
+        "max_car_screen_offset_frac": 0.25
+      }
+    }
+  ]
+}
