@@ -507,6 +507,96 @@ fn test_tony_kart_topdown_sprite_orientation() {
 }
 
 #[test]
+fn test_classic_ax_mudlark_lateral_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/classic/classic_ax_mudlark.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_ax_mudlark lateral sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_ax_mudlark lateral image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut front_nose_pixels = 0;
+    let mut rear_nose_pixels = 0;
+
+    // Cyan nosecone bodywork: y in [250..380], vibrant cyan (b > 120, g > 100, r < 80, a > 128)
+    for y in 250..380.min(height) {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            if a > 128 && b > 120 && g > 100 && r < 80 {
+                if x >= 700 {
+                    front_nose_pixels += 1;
+                } else if x < 300 {
+                    rear_nose_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        front_nose_pixels > 3000,
+        "Mudlark Cross Car front nosecone must face forward (+X, right side). Found {} pixels",
+        front_nose_pixels
+    );
+    assert_eq!(
+        rear_nose_pixels, 0,
+        "Mudlark Cross Car must not have nosecone pixels in the rear (-X, left side)"
+    );
+}
+
+#[test]
+fn test_crg_black_mirror_okj_lateral_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/kart/kart_crg_black_mirror_okj.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_crg_black_mirror_okj lateral sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart_crg_black_mirror_okj lateral image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut front_orange_pixels = 0;
+    let mut rear_orange_pixels = 0;
+
+    // Orange front bumper/fairing: vibrant orange (r > 200, g in 80..200, b < 60, a > 128)
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            if a > 128 && r > 200 && (80..200).contains(&g) && b < 60 {
+                if x >= 750 {
+                    front_orange_pixels += 1;
+                } else if x < 250 {
+                    rear_orange_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        front_orange_pixels > 1000,
+        "CRG Black Mirror OK-J front bumper/fairing must face forward (+X, right side). Found {} pixels",
+        front_orange_pixels
+    );
+    assert_eq!(
+        rear_orange_pixels, 0,
+        "CRG Black Mirror OK-J must not have front bumper/fairing pixels in the rear (-X, left side)"
+    );
+}
+
+#[test]
 fn test_classic_mask_tinting_transforms_bodywork_pixels() {
     use macroquad::color::Color;
     use macroquad::texture::Image;

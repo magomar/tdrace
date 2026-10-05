@@ -1,0 +1,4880 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "SportsCar",
+      "title": "GT Sports Coupe",
+      "tag": "BALANCED RWD",
+      "description": "Balanced RWD arcade dynamics, responsive rack, 208 km/h top speed.",
+      "modules": [
+        "classic"
+      ],
+      "cars": [
+        "classic_gt",
+        "classic_gt_vintage"
+      ],
+      "wheelbase_m": 2.4,
+      "track_width_m": 1.4,
+      "cg_to_front_m": 1.1,
+      "cg_to_rear_m": 1.3,
+      "cg_height_m": 0.35,
+      "total_length_m": 4.1,
+      "skeleton": {
+        "front_overhang": 0.8,
+        "rear_overhang": 0.9,
+        "body_width": 1.7,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 1.9000001,
+        "rear_extent_m": 2.1999998,
+        "half_width_m": 0.85
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 85000.0,
+          "bump_damping_ratio": 0.68,
+          "rebound_damping_ratio": 0.82,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.052,
+          "camber_recovery": 0.9
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 95000.0,
+          "bump_damping_ratio": 0.7,
+          "rebound_damping_ratio": 0.85,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.035,
+          "camber_recovery": 0.9
+        },
+        "front_arb_rate": 4500.0,
+        "rear_arb_rate": 3200.0,
+        "front_roll_center_height": 0.08,
+        "rear_roll_center_height": 0.1,
+        "response_frequency_hz": 4.2
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.56,
+          "coast_lock": 0.33,
+          "preload_nm": 65.0
+        }
+      },
+      "engine_placement": "front_engine",
+      "tire": {
+        "peak_slip_angle_deg": 10.5,
+        "rear_peak_slip_angle_deg": 8.505,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.88,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9996
+          ],
+          [
+            1.1,
+            0.9985
+          ],
+          [
+            1.15,
+            0.9966
+          ],
+          [
+            1.2,
+            0.9942
+          ],
+          [
+            1.25,
+            0.9911
+          ],
+          [
+            1.3,
+            0.9875
+          ],
+          [
+            1.35,
+            0.9834
+          ],
+          [
+            1.4,
+            0.979
+          ],
+          [
+            1.45,
+            0.9741
+          ],
+          [
+            1.5,
+            0.9689
+          ],
+          [
+            1.55,
+            0.9634
+          ],
+          [
+            1.6,
+            0.9578
+          ],
+          [
+            1.65,
+            0.9519
+          ],
+          [
+            1.7,
+            0.946
+          ],
+          [
+            1.75,
+            0.94
+          ],
+          [
+            1.8,
+            0.934
+          ],
+          [
+            1.85,
+            0.9281
+          ],
+          [
+            1.9,
+            0.9222
+          ],
+          [
+            1.95,
+            0.9166
+          ],
+          [
+            2.0,
+            0.9111
+          ],
+          [
+            2.05,
+            0.9059
+          ],
+          [
+            2.1,
+            0.901
+          ],
+          [
+            2.15,
+            0.8966
+          ],
+          [
+            2.2,
+            0.8925
+          ],
+          [
+            2.25,
+            0.8889
+          ],
+          [
+            2.3,
+            0.8858
+          ],
+          [
+            2.35,
+            0.8834
+          ],
+          [
+            2.4,
+            0.8815
+          ],
+          [
+            2.45,
+            0.8804
+          ],
+          [
+            2.5,
+            0.88
+          ],
+          [
+            2.55,
+            0.88
+          ],
+          [
+            2.6,
+            0.88
+          ],
+          [
+            2.65,
+            0.88
+          ],
+          [
+            2.7,
+            0.88
+          ],
+          [
+            2.75,
+            0.88
+          ],
+          [
+            2.8,
+            0.88
+          ],
+          [
+            2.85,
+            0.88
+          ],
+          [
+            2.9,
+            0.88
+          ],
+          [
+            2.95,
+            0.88
+          ],
+          [
+            3.0,
+            0.88
+          ],
+          [
+            3.05,
+            0.88
+          ],
+          [
+            3.1,
+            0.88
+          ],
+          [
+            3.15,
+            0.88
+          ],
+          [
+            3.2,
+            0.88
+          ],
+          [
+            3.25,
+            0.88
+          ],
+          [
+            3.3,
+            0.88
+          ],
+          [
+            3.35,
+            0.88
+          ],
+          [
+            3.4,
+            0.88
+          ],
+          [
+            3.45,
+            0.88
+          ],
+          [
+            3.5,
+            0.88
+          ],
+          [
+            3.55,
+            0.88
+          ],
+          [
+            3.6,
+            0.88
+          ],
+          [
+            3.65,
+            0.88
+          ],
+          [
+            3.7,
+            0.88
+          ],
+          [
+            3.75,
+            0.88
+          ],
+          [
+            3.8,
+            0.88
+          ],
+          [
+            3.85,
+            0.88
+          ],
+          [
+            3.9,
+            0.88
+          ],
+          [
+            3.95,
+            0.88
+          ],
+          [
+            4.0,
+            0.88
+          ]
+        ]
+      }
+    },
+    {
+      "id": "Kart",
+      "title": "125cc Shifter Kart",
+      "tag": "APEX GRIP",
+      "description": "Ultra-lightweight direct steering with extreme apex cornering grip.",
+      "modules": [
+        "classic",
+        "kart"
+      ],
+      "cars": [
+        "classic_kart",
+        "classic_kart_vintage",
+        "kart_crg_hero_60",
+        "kart_birel_c28",
+        "kart_tony_kart_neos",
+        "kart_tony_kart_rookie_okj",
+        "kart_crg_black_mirror_okj",
+        "kart_birel_ry29_okj",
+        "kart_tony_kart_racer_ok",
+        "kart_crg_kt2_ok",
+        "kart_birel_ry30_ok",
+        "kart_birel_art_kz2",
+        "kart_crg_road_rebel_kz",
+        "kart_tony_kart_racer_kz",
+        "kart_anderson_maverick_mono",
+        "kart_ms_superkart_mono",
+        "kart_pvt_single_250",
+        "kart_anderson_cs250",
+        "kart_ms_superkart_250",
+        "kart_viper_250_twin"
+      ],
+      "wheelbase_m": 1.05,
+      "track_width_m": 0.85,
+      "cg_to_front_m": 0.6,
+      "cg_to_rear_m": 0.45,
+      "cg_height_m": 0.18,
+      "total_length_m": 1.3299999,
+      "skeleton": {
+        "front_overhang": 0.16,
+        "rear_overhang": 0.12,
+        "body_width": 1.1,
+        "cabin_start_offset": -0.15,
+        "cabin_end_offset": 0.1,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 0.76,
+        "rear_extent_m": 0.57,
+        "half_width_m": 0.55
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.18,
+          "width_m": 0.12,
+          "inertia_kgm2": 0.15,
+          "compound": "SoftSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.18,
+          "width_m": 0.12,
+          "inertia_kgm2": 0.15,
+          "compound": "SoftSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.2,
+          "width_m": 0.21,
+          "inertia_kgm2": 0.24,
+          "compound": "SoftSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.2,
+          "width_m": 0.21,
+          "inertia_kgm2": 0.24,
+          "compound": "SoftSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "rigid_kart",
+          "spring_rate": 450000.0,
+          "bump_damping_ratio": 0.1,
+          "rebound_damping_ratio": 0.15,
+          "max_bump_travel": 0.008,
+          "max_rebound_travel": 0.005,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "rear": {
+          "archetype": "rigid_kart",
+          "spring_rate": 450000.0,
+          "bump_damping_ratio": 0.1,
+          "rebound_damping_ratio": 0.15,
+          "max_bump_travel": 0.008,
+          "max_rebound_travel": 0.005,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "front_arb_rate": 0.0,
+        "rear_arb_rate": 0.0,
+        "front_roll_center_height": 0.02,
+        "rear_roll_center_height": 0.02,
+        "response_frequency_hz": 8.0
+      },
+      "front_differential": "Open",
+      "rear_differential": "Spool",
+      "engine_placement": "mid_engine",
+      "tire": {
+        "peak_slip_angle_deg": 7.0,
+        "rear_peak_slip_angle_deg": 5.9500003,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.88,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9996
+          ],
+          [
+            1.1,
+            0.9985
+          ],
+          [
+            1.15,
+            0.9966
+          ],
+          [
+            1.2,
+            0.9942
+          ],
+          [
+            1.25,
+            0.9911
+          ],
+          [
+            1.3,
+            0.9875
+          ],
+          [
+            1.35,
+            0.9834
+          ],
+          [
+            1.4,
+            0.979
+          ],
+          [
+            1.45,
+            0.9741
+          ],
+          [
+            1.5,
+            0.9689
+          ],
+          [
+            1.55,
+            0.9634
+          ],
+          [
+            1.6,
+            0.9578
+          ],
+          [
+            1.65,
+            0.9519
+          ],
+          [
+            1.7,
+            0.946
+          ],
+          [
+            1.75,
+            0.94
+          ],
+          [
+            1.8,
+            0.934
+          ],
+          [
+            1.85,
+            0.9281
+          ],
+          [
+            1.9,
+            0.9222
+          ],
+          [
+            1.95,
+            0.9166
+          ],
+          [
+            2.0,
+            0.9111
+          ],
+          [
+            2.05,
+            0.9059
+          ],
+          [
+            2.1,
+            0.901
+          ],
+          [
+            2.15,
+            0.8966
+          ],
+          [
+            2.2,
+            0.8925
+          ],
+          [
+            2.25,
+            0.8889
+          ],
+          [
+            2.3,
+            0.8858
+          ],
+          [
+            2.35,
+            0.8834
+          ],
+          [
+            2.4,
+            0.8815
+          ],
+          [
+            2.45,
+            0.8804
+          ],
+          [
+            2.5,
+            0.88
+          ],
+          [
+            2.55,
+            0.88
+          ],
+          [
+            2.6,
+            0.88
+          ],
+          [
+            2.65,
+            0.88
+          ],
+          [
+            2.7,
+            0.88
+          ],
+          [
+            2.75,
+            0.88
+          ],
+          [
+            2.8,
+            0.88
+          ],
+          [
+            2.85,
+            0.88
+          ],
+          [
+            2.9,
+            0.88
+          ],
+          [
+            2.95,
+            0.88
+          ],
+          [
+            3.0,
+            0.88
+          ],
+          [
+            3.05,
+            0.88
+          ],
+          [
+            3.1,
+            0.88
+          ],
+          [
+            3.15,
+            0.88
+          ],
+          [
+            3.2,
+            0.88
+          ],
+          [
+            3.25,
+            0.88
+          ],
+          [
+            3.3,
+            0.88
+          ],
+          [
+            3.35,
+            0.88
+          ],
+          [
+            3.4,
+            0.88
+          ],
+          [
+            3.45,
+            0.88
+          ],
+          [
+            3.5,
+            0.88
+          ],
+          [
+            3.55,
+            0.88
+          ],
+          [
+            3.6,
+            0.88
+          ],
+          [
+            3.65,
+            0.88
+          ],
+          [
+            3.7,
+            0.88
+          ],
+          [
+            3.75,
+            0.88
+          ],
+          [
+            3.8,
+            0.88
+          ],
+          [
+            3.85,
+            0.88
+          ],
+          [
+            3.9,
+            0.88
+          ],
+          [
+            3.95,
+            0.88
+          ],
+          [
+            4.0,
+            0.88
+          ]
+        ]
+      }
+    },
+    {
+      "id": "RallyCar",
+      "title": "AWD Turbo Rally",
+      "tag": "AWD ALL-TERRAIN",
+      "description": "All-wheel-drive traction with compliant suspension for mixed surfaces.",
+      "modules": [
+        "classic",
+        "autocross",
+        "rally",
+        "extreme_offroad"
+      ],
+      "cars": [
+        "classic_rally",
+        "classic_ax_brawler",
+        "classic_rx_vintage",
+        "autocross_skoda_fabia_tax",
+        "autocross_mitsubishi_evo_tax",
+        "autocross_audi_a4_tax",
+        "rally_peugeot_208_rally4",
+        "rally_fiesta_rally4",
+        "rally_clio_rally4",
+        "rally_omse_supercar_lites",
+        "rally_avitas_supercar_lites",
+        "rally_qev_rx2e",
+        "rally_hyundai_i20_rx",
+        "rally_polo_rx",
+        "rally_audi_s1_rx",
+        "rally_peugeot_208_wrx",
+        "rally_ford_focus_rs_rx",
+        "rally_subaru_wrx_rx",
+        "rally_peugeot_208_rx1e",
+        "rally_polo_rx1e",
+        "rally_lancia_delta_evo_e_rx",
+        "rally_omse_fc1x",
+        "rally_vsc_fc1x",
+        "rally_dodge_hornet_fc1x",
+        "rally_audi_sport_quattro_s1",
+        "rally_peugeot_205_t16",
+        "rally_lancia_delta_s4",
+        "offroad_subaru_ice_racer",
+        "offroad_audi_quattro_ice",
+        "offroad_lancer_evo_ice",
+        "rally_toyota_hilux_t1_plus",
+        "rally_audi_rs_q_etron",
+        "rally_prodrive_hunter_t1",
+        "rally_sst_super_truck",
+        "rally_sst_robby_gordon",
+        "rally_sst_traxxas_edition"
+      ],
+      "wheelbase_m": 2.4,
+      "track_width_m": 1.4,
+      "cg_to_front_m": 1.1,
+      "cg_to_rear_m": 1.3,
+      "cg_height_m": 0.42,
+      "total_length_m": 3.8400002,
+      "skeleton": {
+        "front_overhang": 0.76,
+        "rear_overhang": 0.68,
+        "body_width": 1.82,
+        "cabin_start_offset": -0.35,
+        "cabin_end_offset": 0.25,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 1.86,
+        "rear_extent_m": 1.98,
+        "half_width_m": 0.91
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.33,
+          "width_m": 0.22,
+          "inertia_kgm2": 1.3,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.33,
+          "width_m": 0.22,
+          "inertia_kgm2": 1.3,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.33,
+          "width_m": 0.22,
+          "inertia_kgm2": 1.3,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.33,
+          "width_m": 0.22,
+          "inertia_kgm2": 1.3,
+          "compound": "AllTerrain"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "rear": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "front_arb_rate": 1200.0,
+        "rear_arb_rate": 800.0,
+        "front_roll_center_height": 0.16,
+        "rear_roll_center_height": 0.18,
+        "response_frequency_hz": 2.8
+      },
+      "front_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.6,
+          "coast_lock": 0.4,
+          "preload_nm": 70.0
+        }
+      },
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 85.0
+        }
+      },
+      "engine_placement": "front_engine",
+      "tire": {
+        "peak_slip_angle_deg": 12.7,
+        "rear_peak_slip_angle_deg": 10.287,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.9,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9997
+          ],
+          [
+            1.1,
+            0.9987
+          ],
+          [
+            1.15,
+            0.9972
+          ],
+          [
+            1.2,
+            0.9951
+          ],
+          [
+            1.25,
+            0.9926
+          ],
+          [
+            1.3,
+            0.9896
+          ],
+          [
+            1.35,
+            0.9862
+          ],
+          [
+            1.4,
+            0.9825
+          ],
+          [
+            1.45,
+            0.9784
+          ],
+          [
+            1.5,
+            0.9741
+          ],
+          [
+            1.55,
+            0.9695
+          ],
+          [
+            1.6,
+            0.9648
+          ],
+          [
+            1.65,
+            0.9599
+          ],
+          [
+            1.7,
+            0.955
+          ],
+          [
+            1.75,
+            0.95
+          ],
+          [
+            1.8,
+            0.945
+          ],
+          [
+            1.85,
+            0.9401
+          ],
+          [
+            1.9,
+            0.9352
+          ],
+          [
+            1.95,
+            0.9305
+          ],
+          [
+            2.0,
+            0.9259
+          ],
+          [
+            2.05,
+            0.9216
+          ],
+          [
+            2.1,
+            0.9175
+          ],
+          [
+            2.15,
+            0.9138
+          ],
+          [
+            2.2,
+            0.9104
+          ],
+          [
+            2.25,
+            0.9074
+          ],
+          [
+            2.3,
+            0.9049
+          ],
+          [
+            2.35,
+            0.9028
+          ],
+          [
+            2.4,
+            0.9013
+          ],
+          [
+            2.45,
+            0.9003
+          ],
+          [
+            2.5,
+            0.9
+          ],
+          [
+            2.55,
+            0.9
+          ],
+          [
+            2.6,
+            0.9
+          ],
+          [
+            2.65,
+            0.9
+          ],
+          [
+            2.7,
+            0.9
+          ],
+          [
+            2.75,
+            0.9
+          ],
+          [
+            2.8,
+            0.9
+          ],
+          [
+            2.85,
+            0.9
+          ],
+          [
+            2.9,
+            0.9
+          ],
+          [
+            2.95,
+            0.9
+          ],
+          [
+            3.0,
+            0.9
+          ],
+          [
+            3.05,
+            0.9
+          ],
+          [
+            3.1,
+            0.9
+          ],
+          [
+            3.15,
+            0.9
+          ],
+          [
+            3.2,
+            0.9
+          ],
+          [
+            3.25,
+            0.9
+          ],
+          [
+            3.3,
+            0.9
+          ],
+          [
+            3.35,
+            0.9
+          ],
+          [
+            3.4,
+            0.9
+          ],
+          [
+            3.45,
+            0.9
+          ],
+          [
+            3.5,
+            0.9
+          ],
+          [
+            3.55,
+            0.9
+          ],
+          [
+            3.6,
+            0.9
+          ],
+          [
+            3.65,
+            0.9
+          ],
+          [
+            3.7,
+            0.9
+          ],
+          [
+            3.75,
+            0.9
+          ],
+          [
+            3.8,
+            0.9
+          ],
+          [
+            3.85,
+            0.9
+          ],
+          [
+            3.9,
+            0.9
+          ],
+          [
+            3.95,
+            0.9
+          ],
+          [
+            4.0,
+            0.9
+          ]
+        ]
+      }
+    },
+    {
+      "id": "GT4Clubsport",
+      "title": "420 BHP GT4 Clubsport",
+      "tag": "GT4 ENTRY SPEC",
+      "description": "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
+      "modules": [
+        "gt"
+      ],
+      "cars": [
+        "gt_porsche_718_gt4",
+        "gt_bmw_m4_gt4",
+        "gt_aston_vantage_gt4",
+        "gt_toyota_supra_gt4"
+      ],
+      "wheelbase_m": 2.7,
+      "track_width_m": 1.95,
+      "cg_to_front_m": 1.3,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.28,
+      "total_length_m": 4.7599998,
+      "skeleton": {
+        "front_overhang": 0.88,
+        "rear_overhang": 1.18,
+        "body_width": 2.04,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 2.1799998,
+        "rear_extent_m": 2.58,
+        "half_width_m": 1.02
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "mac_pherson_strut",
+          "spring_rate": 38000.0,
+          "bump_damping_ratio": 0.58,
+          "rebound_damping_ratio": 0.7,
+          "max_bump_travel": 0.075,
+          "max_rebound_travel": 0.06,
+          "static_camber": -0.035,
+          "camber_recovery": 0.4
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 42000.0,
+          "bump_damping_ratio": 0.6,
+          "rebound_damping_ratio": 0.72,
+          "max_bump_travel": 0.07,
+          "max_rebound_travel": 0.055,
+          "static_camber": -0.026,
+          "camber_recovery": 0.75
+        },
+        "front_arb_rate": 1800.0,
+        "rear_arb_rate": 1400.0,
+        "front_roll_center_height": 0.06,
+        "rear_roll_center_height": 0.09,
+        "response_frequency_hz": 3.5
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 100.0
+        }
+      },
+      "engine_placement": "front_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.0,
+        "rear_peak_slip_angle_deg": 6.8,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.82,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9994
+          ],
+          [
+            1.1,
+            0.9977
+          ],
+          [
+            1.15,
+            0.995
+          ],
+          [
+            1.2,
+            0.9913
+          ],
+          [
+            1.25,
+            0.9867
+          ],
+          [
+            1.3,
+            0.9813
+          ],
+          [
+            1.35,
+            0.9752
+          ],
+          [
+            1.4,
+            0.9684
+          ],
+          [
+            1.45,
+            0.9611
+          ],
+          [
+            1.5,
+            0.9533
+          ],
+          [
+            1.55,
+            0.9451
+          ],
+          [
+            1.6,
+            0.9366
+          ],
+          [
+            1.65,
+            0.9279
+          ],
+          [
+            1.7,
+            0.919
+          ],
+          [
+            1.75,
+            0.91
+          ],
+          [
+            1.8,
+            0.901
+          ],
+          [
+            1.85,
+            0.8921
+          ],
+          [
+            1.9,
+            0.8834
+          ],
+          [
+            1.95,
+            0.8749
+          ],
+          [
+            2.0,
+            0.8667
+          ],
+          [
+            2.05,
+            0.8589
+          ],
+          [
+            2.1,
+            0.8516
+          ],
+          [
+            2.15,
+            0.8448
+          ],
+          [
+            2.2,
+            0.8387
+          ],
+          [
+            2.25,
+            0.8333
+          ],
+          [
+            2.3,
+            0.8287
+          ],
+          [
+            2.35,
+            0.825
+          ],
+          [
+            2.4,
+            0.8223
+          ],
+          [
+            2.45,
+            0.8206
+          ],
+          [
+            2.5,
+            0.82
+          ],
+          [
+            2.55,
+            0.82
+          ],
+          [
+            2.6,
+            0.82
+          ],
+          [
+            2.65,
+            0.82
+          ],
+          [
+            2.7,
+            0.82
+          ],
+          [
+            2.75,
+            0.82
+          ],
+          [
+            2.8,
+            0.82
+          ],
+          [
+            2.85,
+            0.82
+          ],
+          [
+            2.9,
+            0.82
+          ],
+          [
+            2.95,
+            0.82
+          ],
+          [
+            3.0,
+            0.82
+          ],
+          [
+            3.05,
+            0.82
+          ],
+          [
+            3.1,
+            0.82
+          ],
+          [
+            3.15,
+            0.82
+          ],
+          [
+            3.2,
+            0.82
+          ],
+          [
+            3.25,
+            0.82
+          ],
+          [
+            3.3,
+            0.82
+          ],
+          [
+            3.35,
+            0.82
+          ],
+          [
+            3.4,
+            0.82
+          ],
+          [
+            3.45,
+            0.82
+          ],
+          [
+            3.5,
+            0.82
+          ],
+          [
+            3.55,
+            0.82
+          ],
+          [
+            3.6,
+            0.82
+          ],
+          [
+            3.65,
+            0.82
+          ],
+          [
+            3.7,
+            0.82
+          ],
+          [
+            3.75,
+            0.82
+          ],
+          [
+            3.8,
+            0.82
+          ],
+          [
+            3.85,
+            0.82
+          ],
+          [
+            3.9,
+            0.82
+          ],
+          [
+            3.95,
+            0.82
+          ],
+          [
+            4.0,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "GT3Car",
+      "title": "600 BHP GT3 Evo Racer",
+      "tag": "FIA GT3 SPEC",
+      "description": "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
+      "modules": [
+        "gt"
+      ],
+      "cars": [
+        "gt_porsche_911_gt3r",
+        "gt_ferrari_296_gt3",
+        "gt_amg_gt3_evo",
+        "gt_audi_r8_gt3_evo2"
+      ],
+      "wheelbase_m": 2.7,
+      "track_width_m": 1.95,
+      "cg_to_front_m": 1.3,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.28,
+      "total_length_m": 4.7599998,
+      "skeleton": {
+        "front_overhang": 0.88,
+        "rear_overhang": 1.18,
+        "body_width": 2.04,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 2.1799998,
+        "rear_extent_m": 2.58,
+        "half_width_m": 1.02
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 85000.0,
+          "bump_damping_ratio": 0.68,
+          "rebound_damping_ratio": 0.82,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.052,
+          "camber_recovery": 0.9
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 95000.0,
+          "bump_damping_ratio": 0.7,
+          "rebound_damping_ratio": 0.85,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.035,
+          "camber_recovery": 0.9
+        },
+        "front_arb_rate": 4500.0,
+        "rear_arb_rate": 3200.0,
+        "front_roll_center_height": 0.08,
+        "rear_roll_center_height": 0.1,
+        "response_frequency_hz": 4.2
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 100.0
+        }
+      },
+      "engine_placement": "rear_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.0,
+        "rear_peak_slip_angle_deg": 6.8,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.82,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9994
+          ],
+          [
+            1.1,
+            0.9977
+          ],
+          [
+            1.15,
+            0.995
+          ],
+          [
+            1.2,
+            0.9913
+          ],
+          [
+            1.25,
+            0.9867
+          ],
+          [
+            1.3,
+            0.9813
+          ],
+          [
+            1.35,
+            0.9752
+          ],
+          [
+            1.4,
+            0.9684
+          ],
+          [
+            1.45,
+            0.9611
+          ],
+          [
+            1.5,
+            0.9533
+          ],
+          [
+            1.55,
+            0.9451
+          ],
+          [
+            1.6,
+            0.9366
+          ],
+          [
+            1.65,
+            0.9279
+          ],
+          [
+            1.7,
+            0.919
+          ],
+          [
+            1.75,
+            0.91
+          ],
+          [
+            1.8,
+            0.901
+          ],
+          [
+            1.85,
+            0.8921
+          ],
+          [
+            1.9,
+            0.8834
+          ],
+          [
+            1.95,
+            0.8749
+          ],
+          [
+            2.0,
+            0.8667
+          ],
+          [
+            2.05,
+            0.8589
+          ],
+          [
+            2.1,
+            0.8516
+          ],
+          [
+            2.15,
+            0.8448
+          ],
+          [
+            2.2,
+            0.8387
+          ],
+          [
+            2.25,
+            0.8333
+          ],
+          [
+            2.3,
+            0.8287
+          ],
+          [
+            2.35,
+            0.825
+          ],
+          [
+            2.4,
+            0.8223
+          ],
+          [
+            2.45,
+            0.8206
+          ],
+          [
+            2.5,
+            0.82
+          ],
+          [
+            2.55,
+            0.82
+          ],
+          [
+            2.6,
+            0.82
+          ],
+          [
+            2.65,
+            0.82
+          ],
+          [
+            2.7,
+            0.82
+          ],
+          [
+            2.75,
+            0.82
+          ],
+          [
+            2.8,
+            0.82
+          ],
+          [
+            2.85,
+            0.82
+          ],
+          [
+            2.9,
+            0.82
+          ],
+          [
+            2.95,
+            0.82
+          ],
+          [
+            3.0,
+            0.82
+          ],
+          [
+            3.05,
+            0.82
+          ],
+          [
+            3.1,
+            0.82
+          ],
+          [
+            3.15,
+            0.82
+          ],
+          [
+            3.2,
+            0.82
+          ],
+          [
+            3.25,
+            0.82
+          ],
+          [
+            3.3,
+            0.82
+          ],
+          [
+            3.35,
+            0.82
+          ],
+          [
+            3.4,
+            0.82
+          ],
+          [
+            3.45,
+            0.82
+          ],
+          [
+            3.5,
+            0.82
+          ],
+          [
+            3.55,
+            0.82
+          ],
+          [
+            3.6,
+            0.82
+          ],
+          [
+            3.65,
+            0.82
+          ],
+          [
+            3.7,
+            0.82
+          ],
+          [
+            3.75,
+            0.82
+          ],
+          [
+            3.8,
+            0.82
+          ],
+          [
+            3.85,
+            0.82
+          ],
+          [
+            3.9,
+            0.82
+          ],
+          [
+            3.95,
+            0.82
+          ],
+          [
+            4.0,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "GT2Biturbo",
+      "title": "707 BHP GT2 Biturbo Sprint",
+      "tag": "SRO GT2 SPRINT",
+      "description": "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
+      "modules": [
+        "gt"
+      ],
+      "cars": [
+        "gt_porsche_911_gt2_rs",
+        "gt_brabham_bt62_gt2",
+        "gt_maserati_mc20_gt2",
+        "gt_audi_r8_gt2"
+      ],
+      "wheelbase_m": 2.7,
+      "track_width_m": 1.95,
+      "cg_to_front_m": 1.3,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.28,
+      "total_length_m": 4.7599998,
+      "skeleton": {
+        "front_overhang": 0.88,
+        "rear_overhang": 1.18,
+        "body_width": 2.04,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 2.1799998,
+        "rear_extent_m": 2.58,
+        "half_width_m": 1.02
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 85000.0,
+          "bump_damping_ratio": 0.68,
+          "rebound_damping_ratio": 0.82,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.052,
+          "camber_recovery": 0.9
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 95000.0,
+          "bump_damping_ratio": 0.7,
+          "rebound_damping_ratio": 0.85,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.035,
+          "camber_recovery": 0.9
+        },
+        "front_arb_rate": 4500.0,
+        "rear_arb_rate": 3200.0,
+        "front_roll_center_height": 0.08,
+        "rear_roll_center_height": 0.1,
+        "response_frequency_hz": 4.2
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 100.0
+        }
+      },
+      "engine_placement": "rear_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.0,
+        "rear_peak_slip_angle_deg": 6.8,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.82,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9994
+          ],
+          [
+            1.1,
+            0.9977
+          ],
+          [
+            1.15,
+            0.995
+          ],
+          [
+            1.2,
+            0.9913
+          ],
+          [
+            1.25,
+            0.9867
+          ],
+          [
+            1.3,
+            0.9813
+          ],
+          [
+            1.35,
+            0.9752
+          ],
+          [
+            1.4,
+            0.9684
+          ],
+          [
+            1.45,
+            0.9611
+          ],
+          [
+            1.5,
+            0.9533
+          ],
+          [
+            1.55,
+            0.9451
+          ],
+          [
+            1.6,
+            0.9366
+          ],
+          [
+            1.65,
+            0.9279
+          ],
+          [
+            1.7,
+            0.919
+          ],
+          [
+            1.75,
+            0.91
+          ],
+          [
+            1.8,
+            0.901
+          ],
+          [
+            1.85,
+            0.8921
+          ],
+          [
+            1.9,
+            0.8834
+          ],
+          [
+            1.95,
+            0.8749
+          ],
+          [
+            2.0,
+            0.8667
+          ],
+          [
+            2.05,
+            0.8589
+          ],
+          [
+            2.1,
+            0.8516
+          ],
+          [
+            2.15,
+            0.8448
+          ],
+          [
+            2.2,
+            0.8387
+          ],
+          [
+            2.25,
+            0.8333
+          ],
+          [
+            2.3,
+            0.8287
+          ],
+          [
+            2.35,
+            0.825
+          ],
+          [
+            2.4,
+            0.8223
+          ],
+          [
+            2.45,
+            0.8206
+          ],
+          [
+            2.5,
+            0.82
+          ],
+          [
+            2.55,
+            0.82
+          ],
+          [
+            2.6,
+            0.82
+          ],
+          [
+            2.65,
+            0.82
+          ],
+          [
+            2.7,
+            0.82
+          ],
+          [
+            2.75,
+            0.82
+          ],
+          [
+            2.8,
+            0.82
+          ],
+          [
+            2.85,
+            0.82
+          ],
+          [
+            2.9,
+            0.82
+          ],
+          [
+            2.95,
+            0.82
+          ],
+          [
+            3.0,
+            0.82
+          ],
+          [
+            3.05,
+            0.82
+          ],
+          [
+            3.1,
+            0.82
+          ],
+          [
+            3.15,
+            0.82
+          ],
+          [
+            3.2,
+            0.82
+          ],
+          [
+            3.25,
+            0.82
+          ],
+          [
+            3.3,
+            0.82
+          ],
+          [
+            3.35,
+            0.82
+          ],
+          [
+            3.4,
+            0.82
+          ],
+          [
+            3.45,
+            0.82
+          ],
+          [
+            3.5,
+            0.82
+          ],
+          [
+            3.55,
+            0.82
+          ],
+          [
+            3.6,
+            0.82
+          ],
+          [
+            3.65,
+            0.82
+          ],
+          [
+            3.7,
+            0.82
+          ],
+          [
+            3.75,
+            0.82
+          ],
+          [
+            3.8,
+            0.82
+          ],
+          [
+            3.85,
+            0.82
+          ],
+          [
+            3.9,
+            0.82
+          ],
+          [
+            3.95,
+            0.82
+          ],
+          [
+            4.0,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "GT1Legend",
+      "title": "650 BHP GT1 Le Mans Legend",
+      "tag": "90s GT1 LEGEND",
+      "description": "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
+      "modules": [
+        "gt"
+      ],
+      "cars": [
+        "gt_porsche_911_gt1_98",
+        "gt_mclaren_f1_gtr_lt",
+        "gt_mercedes_clk_gtr",
+        "gt_nissan_r390_gt1"
+      ],
+      "wheelbase_m": 2.7,
+      "track_width_m": 1.95,
+      "cg_to_front_m": 1.3,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.28,
+      "total_length_m": 4.7599998,
+      "skeleton": {
+        "front_overhang": 0.88,
+        "rear_overhang": 1.18,
+        "body_width": 2.04,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 2.1799998,
+        "rear_extent_m": 2.58,
+        "half_width_m": 1.02
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 85000.0,
+          "bump_damping_ratio": 0.68,
+          "rebound_damping_ratio": 0.82,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.052,
+          "camber_recovery": 0.9
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 95000.0,
+          "bump_damping_ratio": 0.7,
+          "rebound_damping_ratio": 0.85,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.035,
+          "camber_recovery": 0.9
+        },
+        "front_arb_rate": 4500.0,
+        "rear_arb_rate": 3200.0,
+        "front_roll_center_height": 0.08,
+        "rear_roll_center_height": 0.1,
+        "response_frequency_hz": 4.2
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 100.0
+        }
+      },
+      "engine_placement": "mid_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.0,
+        "rear_peak_slip_angle_deg": 6.8,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.82,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9994
+          ],
+          [
+            1.1,
+            0.9977
+          ],
+          [
+            1.15,
+            0.995
+          ],
+          [
+            1.2,
+            0.9913
+          ],
+          [
+            1.25,
+            0.9867
+          ],
+          [
+            1.3,
+            0.9813
+          ],
+          [
+            1.35,
+            0.9752
+          ],
+          [
+            1.4,
+            0.9684
+          ],
+          [
+            1.45,
+            0.9611
+          ],
+          [
+            1.5,
+            0.9533
+          ],
+          [
+            1.55,
+            0.9451
+          ],
+          [
+            1.6,
+            0.9366
+          ],
+          [
+            1.65,
+            0.9279
+          ],
+          [
+            1.7,
+            0.919
+          ],
+          [
+            1.75,
+            0.91
+          ],
+          [
+            1.8,
+            0.901
+          ],
+          [
+            1.85,
+            0.8921
+          ],
+          [
+            1.9,
+            0.8834
+          ],
+          [
+            1.95,
+            0.8749
+          ],
+          [
+            2.0,
+            0.8667
+          ],
+          [
+            2.05,
+            0.8589
+          ],
+          [
+            2.1,
+            0.8516
+          ],
+          [
+            2.15,
+            0.8448
+          ],
+          [
+            2.2,
+            0.8387
+          ],
+          [
+            2.25,
+            0.8333
+          ],
+          [
+            2.3,
+            0.8287
+          ],
+          [
+            2.35,
+            0.825
+          ],
+          [
+            2.4,
+            0.8223
+          ],
+          [
+            2.45,
+            0.8206
+          ],
+          [
+            2.5,
+            0.82
+          ],
+          [
+            2.55,
+            0.82
+          ],
+          [
+            2.6,
+            0.82
+          ],
+          [
+            2.65,
+            0.82
+          ],
+          [
+            2.7,
+            0.82
+          ],
+          [
+            2.75,
+            0.82
+          ],
+          [
+            2.8,
+            0.82
+          ],
+          [
+            2.85,
+            0.82
+          ],
+          [
+            2.9,
+            0.82
+          ],
+          [
+            2.95,
+            0.82
+          ],
+          [
+            3.0,
+            0.82
+          ],
+          [
+            3.05,
+            0.82
+          ],
+          [
+            3.1,
+            0.82
+          ],
+          [
+            3.15,
+            0.82
+          ],
+          [
+            3.2,
+            0.82
+          ],
+          [
+            3.25,
+            0.82
+          ],
+          [
+            3.3,
+            0.82
+          ],
+          [
+            3.35,
+            0.82
+          ],
+          [
+            3.4,
+            0.82
+          ],
+          [
+            3.45,
+            0.82
+          ],
+          [
+            3.5,
+            0.82
+          ],
+          [
+            3.55,
+            0.82
+          ],
+          [
+            3.6,
+            0.82
+          ],
+          [
+            3.65,
+            0.82
+          ],
+          [
+            3.7,
+            0.82
+          ],
+          [
+            3.75,
+            0.82
+          ],
+          [
+            3.8,
+            0.82
+          ],
+          [
+            3.85,
+            0.82
+          ],
+          [
+            3.9,
+            0.82
+          ],
+          [
+            3.95,
+            0.82
+          ],
+          [
+            4.0,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "HypercarPrototype",
+      "title": "800 BHP LMH Hypercar Prototype",
+      "tag": "LE MANS HYPERCAR",
+      "description": "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
+      "modules": [
+        "gt"
+      ],
+      "cars": [
+        "gt_ferrari_499p",
+        "gt_porsche_963",
+        "gt_toyota_gr010",
+        "gt_cadillac_v_series_r"
+      ],
+      "wheelbase_m": 3.15,
+      "track_width_m": 2.0,
+      "cg_to_front_m": 1.3,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.28,
+      "total_length_m": 5.21,
+      "skeleton": {
+        "front_overhang": 0.88,
+        "rear_overhang": 1.18,
+        "body_width": 2.04,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.3,
+        "headlight_spread": 0.65,
+        "taillight_spread": 0.7,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 2.1799998,
+        "rear_extent_m": 2.58,
+        "half_width_m": 1.02
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.32,
+          "width_m": 0.24,
+          "inertia_kgm2": 1.25,
+          "compound": "MediumSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "pushrod_inboard",
+          "spring_rate": 140000.0,
+          "bump_damping_ratio": 0.82,
+          "rebound_damping_ratio": 0.95,
+          "max_bump_travel": 0.025,
+          "max_rebound_travel": 0.02,
+          "static_camber": -0.045,
+          "camber_recovery": 0.95
+        },
+        "rear": {
+          "archetype": "pushrod_inboard",
+          "spring_rate": 160000.0,
+          "bump_damping_ratio": 0.85,
+          "rebound_damping_ratio": 0.98,
+          "max_bump_travel": 0.025,
+          "max_rebound_travel": 0.02,
+          "static_camber": -0.03,
+          "camber_recovery": 0.95
+        },
+        "front_arb_rate": 8500.0,
+        "rear_arb_rate": 6500.0,
+        "front_roll_center_height": 0.05,
+        "rear_roll_center_height": 0.06,
+        "response_frequency_hz": 5.5
+      },
+      "front_differential": "Open",
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.7,
+          "coast_lock": 0.5,
+          "preload_nm": 100.0
+        }
+      },
+      "engine_placement": "mid_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.0,
+        "rear_peak_slip_angle_deg": 6.8,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.82,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9994
+          ],
+          [
+            1.1,
+            0.9977
+          ],
+          [
+            1.15,
+            0.995
+          ],
+          [
+            1.2,
+            0.9913
+          ],
+          [
+            1.25,
+            0.9867
+          ],
+          [
+            1.3,
+            0.9813
+          ],
+          [
+            1.35,
+            0.9752
+          ],
+          [
+            1.4,
+            0.9684
+          ],
+          [
+            1.45,
+            0.9611
+          ],
+          [
+            1.5,
+            0.9533
+          ],
+          [
+            1.55,
+            0.9451
+          ],
+          [
+            1.6,
+            0.9366
+          ],
+          [
+            1.65,
+            0.9279
+          ],
+          [
+            1.7,
+            0.919
+          ],
+          [
+            1.75,
+            0.91
+          ],
+          [
+            1.8,
+            0.901
+          ],
+          [
+            1.85,
+            0.8921
+          ],
+          [
+            1.9,
+            0.8834
+          ],
+          [
+            1.95,
+            0.8749
+          ],
+          [
+            2.0,
+            0.8667
+          ],
+          [
+            2.05,
+            0.8589
+          ],
+          [
+            2.1,
+            0.8516
+          ],
+          [
+            2.15,
+            0.8448
+          ],
+          [
+            2.2,
+            0.8387
+          ],
+          [
+            2.25,
+            0.8333
+          ],
+          [
+            2.3,
+            0.8287
+          ],
+          [
+            2.35,
+            0.825
+          ],
+          [
+            2.4,
+            0.8223
+          ],
+          [
+            2.45,
+            0.8206
+          ],
+          [
+            2.5,
+            0.82
+          ],
+          [
+            2.55,
+            0.82
+          ],
+          [
+            2.6,
+            0.82
+          ],
+          [
+            2.65,
+            0.82
+          ],
+          [
+            2.7,
+            0.82
+          ],
+          [
+            2.75,
+            0.82
+          ],
+          [
+            2.8,
+            0.82
+          ],
+          [
+            2.85,
+            0.82
+          ],
+          [
+            2.9,
+            0.82
+          ],
+          [
+            2.95,
+            0.82
+          ],
+          [
+            3.0,
+            0.82
+          ],
+          [
+            3.05,
+            0.82
+          ],
+          [
+            3.1,
+            0.82
+          ],
+          [
+            3.15,
+            0.82
+          ],
+          [
+            3.2,
+            0.82
+          ],
+          [
+            3.25,
+            0.82
+          ],
+          [
+            3.3,
+            0.82
+          ],
+          [
+            3.35,
+            0.82
+          ],
+          [
+            3.4,
+            0.82
+          ],
+          [
+            3.45,
+            0.82
+          ],
+          [
+            3.5,
+            0.82
+          ],
+          [
+            3.55,
+            0.82
+          ],
+          [
+            3.6,
+            0.82
+          ],
+          [
+            3.65,
+            0.82
+          ],
+          [
+            3.7,
+            0.82
+          ],
+          [
+            3.75,
+            0.82
+          ],
+          [
+            3.8,
+            0.82
+          ],
+          [
+            3.85,
+            0.82
+          ],
+          [
+            3.9,
+            0.82
+          ],
+          [
+            3.95,
+            0.82
+          ],
+          [
+            4.0,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "StockCar",
+      "title": "850 BHP NASCAR Cup V8",
+      "tag": "850 BHP SPACEFRAME V8",
+      "description": "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
+      "modules": [
+        "classic",
+        "nascar"
+      ],
+      "cars": [
+        "classic_nascar",
+        "classic_stock_vintage",
+        "nascar_monte_carlo_ss",
+        "nascar_mustang_street_stock",
+        "nascar_dodge_dart_street_stock",
+        "nascar_super_late_model",
+        "nascar_mustang_super_late_model",
+        "nascar_late_model_stock_car",
+        "nascar_arca_chevy_ss",
+        "nascar_toyota_camry_arca",
+        "nascar_ford_fusion_arca",
+        "nascar_silverado_truck",
+        "nascar_f150_truck",
+        "nascar_tundra_truck",
+        "nascar_corvette_ta1",
+        "nascar_mustang_ta1",
+        "nascar_challenger_ta1"
+      ],
+      "wheelbase_m": 2.75,
+      "track_width_m": 1.85,
+      "cg_to_front_m": 1.35,
+      "cg_to_rear_m": 1.4,
+      "cg_height_m": 0.32,
+      "total_length_m": 4.98,
+      "skeleton": {
+        "front_overhang": 0.98,
+        "rear_overhang": 1.25,
+        "body_width": 1.98,
+        "cabin_start_offset": -0.45,
+        "cabin_end_offset": 0.35,
+        "headlight_spread": 0.7,
+        "taillight_spread": 0.75,
+        "light_inset": 0.06
+      },
+      "hull": {
+        "front_extent_m": 2.33,
+        "rear_extent_m": 2.65,
+        "half_width_m": 0.99
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.36,
+          "width_m": 0.3,
+          "inertia_kgm2": 1.65,
+          "compound": "HardSlick"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.36,
+          "width_m": 0.3,
+          "inertia_kgm2": 1.65,
+          "compound": "HardSlick"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.36,
+          "width_m": 0.3,
+          "inertia_kgm2": 1.65,
+          "compound": "HardSlick"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.36,
+          "width_m": 0.3,
+          "inertia_kgm2": 1.65,
+          "compound": "HardSlick"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 65000.0,
+          "bump_damping_ratio": 0.62,
+          "rebound_damping_ratio": 0.75,
+          "max_bump_travel": 0.065,
+          "max_rebound_travel": 0.05,
+          "static_camber": -0.06,
+          "camber_recovery": 0.8
+        },
+        "rear": {
+          "archetype": "solid_live_axle",
+          "spring_rate": 55000.0,
+          "bump_damping_ratio": 0.55,
+          "rebound_damping_ratio": 0.7,
+          "max_bump_travel": 0.065,
+          "max_rebound_travel": 0.05,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "front_arb_rate": 4800.0,
+        "rear_arb_rate": 1800.0,
+        "front_roll_center_height": 0.09,
+        "rear_roll_center_height": 0.22,
+        "response_frequency_hz": 3.8
+      },
+      "front_differential": "Open",
+      "rear_differential": "Spool",
+      "engine_placement": "front_engine",
+      "tire": {
+        "peak_slip_angle_deg": 8.5,
+        "rear_peak_slip_angle_deg": 7.2250004,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.86,
+        "falloff": 1.5,
+        "load_sensitivity": 0.15,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9995
+          ],
+          [
+            1.1,
+            0.9982
+          ],
+          [
+            1.15,
+            0.9961
+          ],
+          [
+            1.2,
+            0.9932
+          ],
+          [
+            1.25,
+            0.9896
+          ],
+          [
+            1.3,
+            0.9854
+          ],
+          [
+            1.35,
+            0.9807
+          ],
+          [
+            1.4,
+            0.9754
+          ],
+          [
+            1.45,
+            0.9698
+          ],
+          [
+            1.5,
+            0.9637
+          ],
+          [
+            1.55,
+            0.9573
+          ],
+          [
+            1.6,
+            0.9507
+          ],
+          [
+            1.65,
+            0.9439
+          ],
+          [
+            1.7,
+            0.937
+          ],
+          [
+            1.75,
+            0.93
+          ],
+          [
+            1.8,
+            0.923
+          ],
+          [
+            1.85,
+            0.9161
+          ],
+          [
+            1.9,
+            0.9093
+          ],
+          [
+            1.95,
+            0.9027
+          ],
+          [
+            2.0,
+            0.8963
+          ],
+          [
+            2.05,
+            0.8902
+          ],
+          [
+            2.1,
+            0.8846
+          ],
+          [
+            2.15,
+            0.8793
+          ],
+          [
+            2.2,
+            0.8746
+          ],
+          [
+            2.25,
+            0.8704
+          ],
+          [
+            2.3,
+            0.8668
+          ],
+          [
+            2.35,
+            0.8639
+          ],
+          [
+            2.4,
+            0.8618
+          ],
+          [
+            2.45,
+            0.8605
+          ],
+          [
+            2.5,
+            0.86
+          ],
+          [
+            2.55,
+            0.86
+          ],
+          [
+            2.6,
+            0.86
+          ],
+          [
+            2.65,
+            0.86
+          ],
+          [
+            2.7,
+            0.86
+          ],
+          [
+            2.75,
+            0.86
+          ],
+          [
+            2.8,
+            0.86
+          ],
+          [
+            2.85,
+            0.86
+          ],
+          [
+            2.9,
+            0.86
+          ],
+          [
+            2.95,
+            0.86
+          ],
+          [
+            3.0,
+            0.86
+          ],
+          [
+            3.05,
+            0.86
+          ],
+          [
+            3.1,
+            0.86
+          ],
+          [
+            3.15,
+            0.86
+          ],
+          [
+            3.2,
+            0.86
+          ],
+          [
+            3.25,
+            0.86
+          ],
+          [
+            3.3,
+            0.86
+          ],
+          [
+            3.35,
+            0.86
+          ],
+          [
+            3.4,
+            0.86
+          ],
+          [
+            3.45,
+            0.86
+          ],
+          [
+            3.5,
+            0.86
+          ],
+          [
+            3.55,
+            0.86
+          ],
+          [
+            3.6,
+            0.86
+          ],
+          [
+            3.65,
+            0.86
+          ],
+          [
+            3.7,
+            0.86
+          ],
+          [
+            3.75,
+            0.86
+          ],
+          [
+            3.8,
+            0.86
+          ],
+          [
+            3.85,
+            0.86
+          ],
+          [
+            3.9,
+            0.86
+          ],
+          [
+            3.95,
+            0.86
+          ],
+          [
+            4.0,
+            0.86
+          ]
+        ]
+      }
+    },
+    {
+      "id": "SandRail",
+      "title": "300 BHP Sand Rail Buggy",
+      "tag": "300 BHP RWD ULTRALIGHT",
+      "description": "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
+      "modules": [
+        "classic",
+        "autocross",
+        "extreme_offroad"
+      ],
+      "cars": [
+        "classic_offroad",
+        "classic_at_safari",
+        "autocross_lifelive_tn5_junior",
+        "autocross_speedcar_xtrem_junior",
+        "autocross_planet_k3_junior",
+        "autocross_lifelive_tn11_senior",
+        "autocross_speedcar_wonder",
+        "autocross_semog_bravo_sport",
+        "autocross_peters_buggy1600",
+        "autocross_alfa_racing_buggy1600",
+        "autocross_fast_speed_buggy1600",
+        "autocross_peters_superbuggy",
+        "autocross_alfa_racing_superbuggy",
+        "autocross_fast_speed_superbuggy",
+        "offroad_sand_rail_buggy",
+        "offroad_polaris_rzr_pro_r",
+        "offroad_vw_sand_rail",
+        "offroad_baja_trophy_truck",
+        "offroad_bettantown_trophy_truck",
+        "offroad_mason_awd_truck",
+        "offroad_mega_mud_truck",
+        "offroad_chevy_k30_mud_bogger",
+        "offroad_ford_f250_high_riser",
+        "offroad_grave_crusher",
+        "offroad_max_d_monster",
+        "offroad_bigfoot_crusher"
+      ],
+      "wheelbase_m": 2.4,
+      "track_width_m": 1.75,
+      "cg_to_front_m": 1.44,
+      "cg_to_rear_m": 0.96,
+      "cg_height_m": 0.46,
+      "total_length_m": 2.9700003,
+      "skeleton": {
+        "front_overhang": 0.15,
+        "rear_overhang": 0.42,
+        "body_width": 1.95,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.25,
+        "headlight_spread": 0.6,
+        "taillight_spread": 0.65,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 1.59,
+        "rear_extent_m": 1.38,
+        "half_width_m": 0.975
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.38,
+          "width_m": 0.18,
+          "inertia_kgm2": 1.1,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.38,
+          "width_m": 0.18,
+          "inertia_kgm2": 1.1,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.42,
+          "width_m": 0.38,
+          "inertia_kgm2": 1.85,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.42,
+          "width_m": 0.38,
+          "inertia_kgm2": 1.85,
+          "compound": "AllTerrain"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "rear": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "front_arb_rate": 1200.0,
+        "rear_arb_rate": 800.0,
+        "front_roll_center_height": 0.16,
+        "rear_roll_center_height": 0.18,
+        "response_frequency_hz": 2.8
+      },
+      "front_differential": "Open",
+      "rear_differential": "Spool",
+      "engine_placement": "rear_engine",
+      "tire": {
+        "peak_slip_angle_deg": 15.0,
+        "rear_peak_slip_angle_deg": 12.75,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.94,
+        "falloff": 1.5,
+        "load_sensitivity": 0.1,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9998
+          ],
+          [
+            1.1,
+            0.9992
+          ],
+          [
+            1.15,
+            0.9983
+          ],
+          [
+            1.2,
+            0.9971
+          ],
+          [
+            1.25,
+            0.9956
+          ],
+          [
+            1.3,
+            0.9938
+          ],
+          [
+            1.35,
+            0.9917
+          ],
+          [
+            1.4,
+            0.9895
+          ],
+          [
+            1.45,
+            0.987
+          ],
+          [
+            1.5,
+            0.9844
+          ],
+          [
+            1.55,
+            0.9817
+          ],
+          [
+            1.6,
+            0.9789
+          ],
+          [
+            1.65,
+            0.976
+          ],
+          [
+            1.7,
+            0.973
+          ],
+          [
+            1.75,
+            0.97
+          ],
+          [
+            1.8,
+            0.967
+          ],
+          [
+            1.85,
+            0.964
+          ],
+          [
+            1.9,
+            0.9611
+          ],
+          [
+            1.95,
+            0.9583
+          ],
+          [
+            2.0,
+            0.9556
+          ],
+          [
+            2.05,
+            0.953
+          ],
+          [
+            2.1,
+            0.9505
+          ],
+          [
+            2.15,
+            0.9483
+          ],
+          [
+            2.2,
+            0.9462
+          ],
+          [
+            2.25,
+            0.9444
+          ],
+          [
+            2.3,
+            0.9429
+          ],
+          [
+            2.35,
+            0.9417
+          ],
+          [
+            2.4,
+            0.9408
+          ],
+          [
+            2.45,
+            0.9402
+          ],
+          [
+            2.5,
+            0.94
+          ],
+          [
+            2.55,
+            0.94
+          ],
+          [
+            2.6,
+            0.94
+          ],
+          [
+            2.65,
+            0.94
+          ],
+          [
+            2.7,
+            0.94
+          ],
+          [
+            2.75,
+            0.94
+          ],
+          [
+            2.8,
+            0.94
+          ],
+          [
+            2.85,
+            0.94
+          ],
+          [
+            2.9,
+            0.94
+          ],
+          [
+            2.95,
+            0.94
+          ],
+          [
+            3.0,
+            0.94
+          ],
+          [
+            3.05,
+            0.94
+          ],
+          [
+            3.1,
+            0.94
+          ],
+          [
+            3.15,
+            0.94
+          ],
+          [
+            3.2,
+            0.94
+          ],
+          [
+            3.25,
+            0.94
+          ],
+          [
+            3.3,
+            0.94
+          ],
+          [
+            3.35,
+            0.94
+          ],
+          [
+            3.4,
+            0.94
+          ],
+          [
+            3.45,
+            0.94
+          ],
+          [
+            3.5,
+            0.94
+          ],
+          [
+            3.55,
+            0.94
+          ],
+          [
+            3.6,
+            0.94
+          ],
+          [
+            3.65,
+            0.94
+          ],
+          [
+            3.7,
+            0.94
+          ],
+          [
+            3.75,
+            0.94
+          ],
+          [
+            3.8,
+            0.94
+          ],
+          [
+            3.85,
+            0.94
+          ],
+          [
+            3.9,
+            0.94
+          ],
+          [
+            3.95,
+            0.94
+          ],
+          [
+            4.0,
+            0.94
+          ]
+        ]
+      }
+    },
+    {
+      "id": "CrossCar",
+      "title": "150 BHP Cross Car",
+      "tag": "150 BHP RWD MOTORCYCLE",
+      "description": "Single-seat cross car with a high-revving motorcycle engine and rapid direction changes.",
+      "modules": [
+        "classic"
+      ],
+      "cars": [
+        "classic_ax_mudlark"
+      ],
+      "wheelbase_m": 2.4,
+      "track_width_m": 1.75,
+      "cg_to_front_m": 1.44,
+      "cg_to_rear_m": 0.96,
+      "cg_height_m": 0.46,
+      "total_length_m": 2.9700003,
+      "skeleton": {
+        "front_overhang": 0.15,
+        "rear_overhang": 0.42,
+        "body_width": 1.95,
+        "cabin_start_offset": -0.4,
+        "cabin_end_offset": 0.25,
+        "headlight_spread": 0.6,
+        "taillight_spread": 0.65,
+        "light_inset": 0.05
+      },
+      "hull": {
+        "front_extent_m": 1.59,
+        "rear_extent_m": 1.38,
+        "half_width_m": 0.975
+      },
+      "wheels": [
+        {
+          "position": "FL",
+          "radius_m": 0.38,
+          "width_m": 0.18,
+          "inertia_kgm2": 1.1,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "FR",
+          "radius_m": 0.38,
+          "width_m": 0.18,
+          "inertia_kgm2": 1.1,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RL",
+          "radius_m": 0.42,
+          "width_m": 0.38,
+          "inertia_kgm2": 1.85,
+          "compound": "AllTerrain"
+        },
+        {
+          "position": "RR",
+          "radius_m": 0.42,
+          "width_m": 0.38,
+          "inertia_kgm2": 1.85,
+          "compound": "AllTerrain"
+        }
+      ],
+      "suspension": {
+        "front": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "rear": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "front_arb_rate": 1200.0,
+        "rear_arb_rate": 800.0,
+        "front_roll_center_height": 0.16,
+        "rear_roll_center_height": 0.18,
+        "response_frequency_hz": 2.8
+      },
+      "front_differential": "Open",
+      "rear_differential": "Spool",
+      "engine_placement": "rear_engine",
+      "tire": {
+        "peak_slip_angle_deg": 15.0,
+        "rear_peak_slip_angle_deg": 12.75,
+        "peak_slip_ratio": 0.1,
+        "slide_grip": 0.94,
+        "falloff": 1.5,
+        "load_sensitivity": 0.1,
+        "power_slide": 0.85,
+        "curve": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.05,
+            0.1273
+          ],
+          [
+            0.1,
+            0.2509
+          ],
+          [
+            0.15,
+            0.3676
+          ],
+          [
+            0.2,
+            0.4747
+          ],
+          [
+            0.25,
+            0.5705
+          ],
+          [
+            0.3,
+            0.6542
+          ],
+          [
+            0.35,
+            0.7259
+          ],
+          [
+            0.4,
+            0.786
+          ],
+          [
+            0.45,
+            0.8357
+          ],
+          [
+            0.5,
+            0.876
+          ],
+          [
+            0.55,
+            0.9083
+          ],
+          [
+            0.6,
+            0.9338
+          ],
+          [
+            0.65,
+            0.9536
+          ],
+          [
+            0.7,
+            0.9687
+          ],
+          [
+            0.75,
+            0.9799
+          ],
+          [
+            0.8,
+            0.9881
+          ],
+          [
+            0.85,
+            0.9937
+          ],
+          [
+            0.9,
+            0.9973
+          ],
+          [
+            0.95,
+            0.9993
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          [
+            1.05,
+            0.9998
+          ],
+          [
+            1.1,
+            0.9992
+          ],
+          [
+            1.15,
+            0.9983
+          ],
+          [
+            1.2,
+            0.9971
+          ],
+          [
+            1.25,
+            0.9956
+          ],
+          [
+            1.3,
+            0.9938
+          ],
+          [
+            1.35,
+            0.9917
+          ],
+          [
+            1.4,
+            0.9895
+          ],
+          [
+            1.45,
+            0.987
+          ],
+          [
+            1.5,
+            0.9844
+          ],
+          [
+            1.55,
+            0.9817
+          ],
+          [
+            1.6,
+            0.9789
+          ],
+          [
+            1.65,
+            0.976
+          ],
+          [
+            1.7,
+            0.973
+          ],
+          [
+            1.75,
+            0.97
+          ],
+          [
+            1.8,
+            0.967
+          ],
+          [
+            1.85,
+            0.964
+          ],
+          [
+            1.9,
+            0.9611
+          ],
+          [
+            1.95,
+            0.9583
+          ],
+          [
+            2.0,
+            0.9556
+          ],
+          [
+            2.05,
+            0.953
+          ],
+          [
+            2.1,
+            0.9505
+          ],
+          [
+            2.15,
+            0.9483
+          ],
+          [
+            2.2,
+            0.9462
+          ],
+          [
+            2.25,
+            0.9444
+          ],
+          [
+            2.3,
+            0.9429
+          ],
+          [
+            2.35,
+            0.9417
+          ],
+          [
+            2.4,
+            0.9408
+          ],
+          [
+            2.45,
+            0.9402
+          ],
+          [
+            2.5,
+            0.94
+          ],
+          [
+            2.55,
+            0.94
+          ],
+          [
+            2.6,
+            0.94
+          ],
+          [
+            2.65,
+            0.94
+          ],
+          [
+            2.7,
+            0.94
+          ],
+          [
+            2.75,
+            0.94
+          ],
+          [
+            2.8,
+            0.94
+          ],
+          [
+            2.85,
+            0.94
+          ],
+          [
+            2.9,
+            0.94
+          ],
+          [
+            2.95,
+            0.94
+          ],
+          [
+            3.0,
+            0.94
+          ],
+          [
+            3.05,
+            0.94
+          ],
+          [
+            3.1,
+            0.94
+          ],
+          [
+            3.15,
+            0.94
+          ],
+          [
+            3.2,
+            0.94
+          ],
+          [
+            3.25,
+            0.94
+          ],
+          [
+            3.3,
+            0.94
+          ],
+          [
+            3.35,
+            0.94
+          ],
+          [
+            3.4,
+            0.94
+          ],
+          [
+            3.45,
+            0.94
+          ],
+          [
+            3.5,
+            0.94
+          ],
+          [
+            3.55,
+            0.94
+          ],
+          [
+            3.6,
+            0.94
+          ],
+          [
+            3.65,
+            0.94
+          ],
+          [
+            3.7,
+            0.94
+          ],
+          [
+            3.75,
+            0.94
+          ],
+          [
+            3.8,
+            0.94
+          ],
+          [
+            3.85,
+            0.94
+          ],
+          [
+            3.9,
+            0.94
+          ],
+          [
+            3.95,
+            0.94
+          ],
+          [
+            4.0,
+            0.94
+          ]
+        ]
+      }
+    }
+  ]
+}

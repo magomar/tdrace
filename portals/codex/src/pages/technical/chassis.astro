@@ -1,0 +1,71 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ChassisPlan from '../../components/ChassisPlan.astro';
+import { ARCHETYPE_LABEL, PLACEMENT_LABEL, getCars, getPlatforms, moduleLabel } from '../../lib/codex';
+
+const platforms = await getPlatforms();
+const carNames = new Map((await getCars()).map((c) => [c.id, c.name]));
+const m = (x: number) => `${x.toFixed(2)} m`;
+---
+
+<Layout title="Chassis" description="Chassis platforms: the skeleton, wheel geometry and centre of gravity that every car is built on.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Chassis</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Chassis platforms</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      Every car in the game is built on one of {platforms.length} platforms. A platform fixes the body shape, the
+      wheel positions, the centre of gravity (CG), the suspension and the drivetrain layout. Each car then sets its own
+      mass, power, grip, brakes and aerodynamics on top. Two cars on one platform have the same size and the same
+      suspension, but they can be very different to drive.
+    </p>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      The <strong class="text-white">skeleton</strong> is measured from the axles: the overhangs reach out to the
+      bumpers, and the cabin sits between them. The game uses the skeleton for three things: the collision hull, the
+      position of the lights, and the size of the car sprite.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 py-8">
+    {platforms.map((p) => (
+      <section id={p.id} class="rounded-xl border border-racing-border bg-racing-surface overflow-hidden">
+        <div class="p-5 border-b border-racing-border/60">
+          <div class="flex items-center justify-between gap-2">
+            <h2 class="text-lg font-bold text-white">{p.title}</h2>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-racing-surface2 border border-racing-border text-racing-amber">{p.tag}</span>
+          </div>
+          <p class="text-xs text-racing-muted mt-1">{p.description}</p>
+          <p class="text-[11px] font-mono text-racing-cyan mt-2">
+            {p.cars.length} {p.cars.length === 1 ? 'car' : 'cars'} · {p.modules.map(moduleLabel).join(', ')}
+          </p>
+        </div>
+        <div class="bg-racing-bg/60 px-4 py-2">
+          <ChassisPlan platform={p} />
+        </div>
+        <dl class="grid grid-cols-3 gap-x-3 gap-y-2 p-5 text-xs font-mono">
+          <div><dt class="text-racing-muted text-[10px] uppercase">Length</dt><dd class="text-white">{m(p.total_length_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Body width</dt><dd class="text-white">{m(p.skeleton.body_width)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Track width</dt><dd class="text-white">{m(p.track_width_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Wheelbase</dt><dd class="text-white">{m(p.wheelbase_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Front overhang</dt><dd class="text-white">{m(p.skeleton.front_overhang)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Rear overhang</dt><dd class="text-white">{m(p.skeleton.rear_overhang)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">CG to front axle</dt><dd class="text-white">{m(p.cg_to_front_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">CG to rear axle</dt><dd class="text-white">{m(p.cg_to_rear_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">CG height</dt><dd class="text-white">{m(p.cg_height_m)}</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Front weight</dt><dd class="text-white">{Math.round((p.cg_to_rear_m / p.wheelbase_m) * 100)}%</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Wheel radius F / R</dt><dd class="text-white">{p.wheels[0].radius_m.toFixed(2)} / {p.wheels[2].radius_m.toFixed(2)} m</dd></div>
+          <div><dt class="text-racing-muted text-[10px] uppercase">Tyre width F / R</dt><dd class="text-white">{p.wheels[0].width_m.toFixed(2)} / {p.wheels[2].width_m.toFixed(2)} m</dd></div>
+          <div class="col-span-3"><dt class="text-racing-muted text-[10px] uppercase">Suspension · engine</dt>
+            <dd class="text-white">
+              <a class="hover:text-racing-cyan" href="/technical/suspension">{ARCHETYPE_LABEL[p.suspension.front.archetype]} front, {ARCHETYPE_LABEL[p.suspension.rear.archetype]} rear</a>
+              · <a class="hover:text-racing-cyan" href="/technical/drivetrain">{PLACEMENT_LABEL[p.engine_placement]}</a>
+            </dd>
+          </div>
+        </dl>
+        <details class="px-5 pb-4 text-xs">
+          <summary class="cursor-pointer font-mono text-racing-muted hover:text-white">Cars on this platform</summary>
+          <p class="mt-2 text-racing-text leading-relaxed">{p.cars.map((id) => carNames.get(id) ?? id).join(' · ')}</p>
+        </details>
+      </section>
+    ))}
+  </div>
+</Layout>

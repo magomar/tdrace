@@ -3,15 +3,15 @@
   "private": true,
   "workspaces": [
     "option-a-starlight",
-    "showroom"
+    "codex"
   ],
   "scripts": {
     "dev:starlight": "cd option-a-starlight && bun run dev -- --port 4321",
-    "dev:showroom": "cd showroom && bun run dev -- --port 4322",
+    "dev:codex": "cd codex && bun run dev -- --port 4322",
     "build:starlight": "cd option-a-starlight && bun run build",
-    "build:showroom": "cd showroom && bun run build",
-    "build:all": "bun run build:starlight && bun run build:showroom",
-    "build": "bun run build:starlight && bun run build:showroom",
+    "build:codex": "cd codex && bun run build",
+    "build:all": "bun run build:starlight && bun run build:codex",
+    "build": "bun run build:starlight && bun run build:codex",
     "ingest": "python3 ../scripts/generate_asset_data.py",
     "verify:okf": "python3 ../scripts/verify_okf.py"
   }

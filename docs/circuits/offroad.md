@@ -68,4 +68,4 @@ cargo run --bin track_bake -- tracks/extreme_offroad/mint400_short_course.json -
 
 ---
 
-For vehicle profiles engineered for these hazards, see [Extreme Off-Road & Stunt Arenas Roster](../vehicles/offroad_stunt.md).
+For vehicle profiles engineered for these hazards, see [Extreme Off-Road & Stunt Arenas Roster](http://localhost:4322/showroom/cars?module=extreme_offroad).

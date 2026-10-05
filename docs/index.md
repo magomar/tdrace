@@ -22,26 +22,22 @@ Comprehensive mathematical modeling of planar and 2.5D motorsport physics implem
 | :--- | :--- | :---: | :--- |
 | [Overview](physics/index.md) | Physics Reference | `active` | Architectural overview of vehicle physics, integration pipelines, and 60 Hz update cycles. |
 | [Vehicle Dynamics](physics/vehicle_dynamics.md) | Physics Reference | `active` | Planar kinematics, center of gravity (CG), longitudinal squat/dive, lateral body roll, downforce, and aerodynamic drag. |
-| [Pacejka '96 Tire Model](physics/tire_pacejka.md) | Physics Reference | `active` | Pacejka Magic Formula coefficients ($B, C, D, E$), slip angle calculation, grip saturation, and drift slide friction. |
-| [Surface Physics Matrix](physics/surfaces.md) | Physics Reference | `active` | 12-surface simulation matrix: friction coefficients ($\mu$), rolling resistance, viscous drag, and per-wheel split-$\mu$ sampling. |
+| [Pacejka '96 & Tyre Dynamics](http://localhost:4322/technical/tyres) | Codex Reference | `active` | Interactive Pacejka slip curves, thermal degradation, optimal temperature windows, and 4-compound telemetry in the TDRace Codex. |
+| [Surface Physics Matrix](http://localhost:4322/technical/surfaces) | Codex Reference | `active` | 15-surface simulation matrix: dynamic friction ($\mu$), rolling resistance, drag, and 8×15 compound affinity heatmap in the TDRace Codex. |
 | [Walls & Barriers](physics/walls_barriers.md) | Physics Reference | `active` | 4 perimeter barrier profiles: Concrete, Steel Armco, Tire Wall, Curb Wall restitution coefficients and impulse resolution. |
 | [Powertrain & Drivetrain](physics/powertrain.md) | Physics Reference | `active` | Engine tractive forces, drivetrain layouts (FWD/AWD/RWD), brake distribution, and roadmap for multi-gear transmissions and thermal tire degradation. |
 
 ---
 
-## 🏎️ Vehicle Roster & Motorsport Modules
+## 🏎️ Vehicle Catalog & Motorsport Disciplines
 
-25 progression categories across 5 motorsport disciplines, balanced using Balance of Performance (BoP) equations.
+Vehicle catalogs, chassis geometry, suspension archetypes, homologated specifications, and telemetry ratings are maintained in the live **[TDRace Codex](http://localhost:4322/showroom/cars)** on port 4322, generated directly from engine source definitions.
 
-| Document | Type | Status | Description |
+| Portal Section | Type | Status | Description |
 | :--- | :--- | :---: | :--- |
-| [Vehicle Catalog Overview](vehicles/index.md) | Asset Catalog | `active` | Master overview of 5 motorsport modules, 25 progression categories, and Balance of Performance calibration. |
-| [Vehicle Specs & Handling Dynamics](vehicles/specs.md) | Reference Guide | `active` | 6-stat telemetry standard, category vs model differentiation, and dynamic engine parameter derivations. |
-| [Gran Turismo & Endurance](vehicles/gt_endurance.md) | Asset Catalog | `active` | GT4, GT3 EVO, GT2, GT1 Legends, and Le Mans LMH/LMDh Hypercars. |
-| [Stock cars (NASCAR)](vehicles/stock_car.md) | Asset Catalog | `active` | Street Stock, Late Model, ARCA Menards, Craftsman Super Truck, and Trans-Am TA1 / Cup. |
-| [Rallycross & All-Terrain](vehicles/rally_allterrain.md) | Asset Catalog | `active` | Rally Jr FWD, World RX Supercars, Group B Legends, Dakar Raid T1+, and Stadium Super Trucks. |
-| [All terrain (Off-Road)](vehicles/offroad_stunt.md) | Asset Catalog | `active` | Sand Rail Buggies, Trophy Trucks, Arctic Ice Drifters, Mud Boggers, and Freestyle Monster Trucks. |
-| [Karting & Micro-Racers](vehicles/karting.md) | Asset Catalog | `active` | 60cc Cadet karts, 100cc OK Junior, 125cc KZ2 Shifters, Racing Lawnmowers, and 240 km/h 250cc Superkarts. |
+| [Codex Car Catalogue](http://localhost:4322/showroom/cars) | Interactive Codex | `active` | Complete 80+ homologated car catalogue across all 7 disciplines with 6-axis telemetry radars, power curves, and 3D specifications. |
+| [Vehicle Compare Tool](http://localhost:4322/showroom/compare) | Interactive Codex | `active` | Side-by-side comparative telemetry analysis for 2 to 4 competitor vehicles. |
+| [Motorsport Disciplines](http://localhost:4322/racing/disciplines) | Interactive Codex | `active` | Overview of all 7 motorsport disciplines, homologation tiers, licence requirements, and series presets. |
 
 ---
 

@@ -1,0 +1,377 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRivalsModel, rgba } from '../../lib/codex';
+
+const rivals = await getRivalsModel();
+const drivers = rivals.drivers;
+const styles = rivals.driving_styles;
+const skillTiers = rivals.skill_tiers;
+const mistakes = rivals.mistake_kinds;
+
+const STYLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  smooth: { bg: 'bg-cyan-500/15', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+  aggressive: { bg: 'bg-rose-500/15', text: 'text-rose-400', border: 'border-rose-500/30' },
+  tenacious: { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
+  calculating: { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' },
+  bold: { bg: 'bg-purple-500/15', text: 'text-purple-400', border: 'border-purple-500/30' },
+  balanced: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+};
+---
+
+<Layout
+  title="AI Rivals & Driver Roster — TDRace Codex"
+  description="Explore the 72-driver AI competitor database: tactical driving styles, skill tier distributions, mistake behaviors, and telemetry stats."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Rivals</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">AI Rivals &amp; Competitor Roster</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      Every competitor in TDRace is powered by the simulation's driver cognitive model. The global roster contains 72 unique
+      characters spanning six tactical driving styles, five progressive skill tiers, and a realistic human mistake system.
+    </p>
+
+    <!-- Global Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Global Competitors</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{drivers.length}</div>
+        <div class="text-[11px] text-racing-cyan font-mono mt-0.5">Named AI drivers</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Tactical Styles</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{styles.length}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Personality traits</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Skill Tiers</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{skillTiers.length}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Rookie to Legend</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Mistake Triggers</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{mistakes.length}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Humanized errors</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Tactical Driving Styles -->
+  <section class="py-8 max-w-5xl">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">Tactical Driving Styles</h2>
+      <p class="text-xs text-racing-muted mt-1 font-mono">Cognitive archetypes governing racecraft, overtake aggression, and defensive posturing.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {styles.map((s) => {
+        const styleTheme = STYLE_COLORS[s.id] ?? STYLE_COLORS.balanced;
+        return (
+          <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between shadow-sm">
+            <div>
+              <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+                <h3 class="text-lg font-bold text-white tracking-tight">{s.name}</h3>
+                <span class={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${styleTheme.bg} ${styleTheme.text} ${styleTheme.border}`}>
+                  {(s.speed_mult * 100).toFixed(0)}% Speed
+                </span>
+              </div>
+
+              <p class="text-xs text-racing-muted mt-3 leading-relaxed min-h-[48px]">
+                {s.description}
+              </p>
+
+              <!-- Stats Bars -->
+              <div class="mt-4 space-y-2 text-xs font-mono">
+                <div>
+                  <div class="flex justify-between text-[11px] text-racing-muted mb-0.5">
+                    <span>Aggression</span>
+                    <span class="text-rose-400 font-bold">{(s.aggression * 100).toFixed(0)}%</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-racing-card overflow-hidden">
+                    <div class="h-full bg-rose-500 rounded-full" style={`width: ${s.aggression * 100}%`}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[11px] text-racing-muted mb-0.5">
+                    <span>Precision</span>
+                    <span class="text-cyan-400 font-bold">{(s.precision * 100).toFixed(0)}%</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-racing-card overflow-hidden">
+                    <div class="h-full bg-cyan-500 rounded-full" style={`width: ${s.precision * 100}%`}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[11px] text-racing-muted mb-0.5">
+                    <span>Defense</span>
+                    <span class="text-amber-400 font-bold">{(s.defense * 100).toFixed(0)}%</span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-racing-card overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style={`width: ${s.defense * 100}%`}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tactical Traits -->
+            <div class="mt-4 pt-3 border-t border-racing-border/40">
+              <div class="flex flex-wrap gap-1">
+                {s.tactical_traits.map((trait) => (
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-racing-card border border-racing-border/60 text-slate-300">
+                    {trait}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- Section 2: AI Skill Tiers & Mistakes -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Skill Tiers -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h2 class="text-lg font-bold text-white tracking-tight mb-2">Driver Skill Tiers (T1&ndash;T5)</h2>
+        <p class="text-xs text-racing-muted mb-4">
+          Competence scaling governs pace potential, apex consistency, and composure under pressure.
+        </p>
+
+        <div class="overflow-x-auto rounded-lg border border-racing-border/60">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
+              <tr>
+                <th class="py-2.5 px-3 font-semibold">Tier</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Pace Limit</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Consistency</th>
+                <th class="py-2.5 px-3 font-semibold text-right">Composure</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-racing-border/40">
+              {skillTiers.map((t) => (
+                <tr class="hover:bg-racing-card/40 transition-colors">
+                  <td class="py-2.5 px-3 font-bold text-white">
+                    <span class="text-racing-cyan mr-1.5">[{t.tag}]</span> {t.name}
+                  </td>
+                  <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">{(t.pace_limit * 100).toFixed(0)}%</td>
+                  <td class="py-2.5 px-3 text-right text-cyan-300 font-bold">{(t.consistency * 100).toFixed(0)}%</td>
+                  <td class="py-2.5 px-3 text-right text-amber-400 font-bold">{(t.composure * 100).toFixed(0)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Humanized Mistake System -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h2 class="text-lg font-bold text-white tracking-tight mb-2">Humanized Mistake System</h2>
+        <p class="text-xs text-racing-muted mb-4">
+          AI drivers are not rail-bound bots. Stress, pressure, and tire degradation trigger authentic racing errors.
+        </p>
+
+        <div class="space-y-3">
+          {mistakes.map((m) => (
+            <div class="p-3 rounded-lg border border-racing-border/60 bg-racing-card/60 text-xs">
+              <div class="flex items-center justify-between border-b border-racing-border/40 pb-1.5">
+                <span class="font-bold text-white">{m.name}</span>
+                <span class="text-[10px] font-mono text-amber-400">{m.id}</span>
+              </div>
+              <p class="text-racing-muted mt-1.5 leading-normal">{m.description}</p>
+              <div class="mt-2 pt-1.5 border-t border-racing-border/30 flex flex-wrap items-center justify-between gap-1 text-[11px] font-mono text-slate-400">
+                <span>Trigger: <strong class="text-slate-300">{m.trigger_condition}</strong></span>
+                <span>Recovery: <strong class="text-cyan-300">{m.recovery_behavior}</strong></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Driver Roster Grid -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">The 72-Driver Competitor Roster</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Full database of AI drivers featuring custom liveries, stats, and favorite machinery.</p>
+      </div>
+
+      <div class="w-full sm:w-64">
+        <input
+          id="driver-search"
+          type="text"
+          placeholder="Search name, alias, car..."
+          class="w-full px-3 py-1.5 rounded-lg bg-racing-surface border border-racing-border text-xs text-white placeholder-racing-muted/60 focus:outline-none focus:border-racing-cyan font-mono"
+        />
+      </div>
+    </div>
+
+    <!-- Style Filter Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6" id="style-filters">
+      <button
+        type="button"
+        data-style="all"
+        class="driver-tab px-3 py-1 rounded-lg text-xs font-mono border transition-colors bg-racing-cyan text-racing-bg border-racing-cyan font-bold"
+      >
+        All Styles ({drivers.length})
+      </button>
+      {styles.map((s) => (
+        <button
+          type="button"
+          data-style={s.id}
+          class="driver-tab px-3 py-1 rounded-lg text-xs font-mono border transition-colors bg-racing-surface text-racing-muted border-racing-border hover:text-white hover:border-racing-border/80"
+        >
+          {s.name} ({drivers.filter(d => d.style === s.id).length})
+        </button>
+      ))}
+    </div>
+
+    <!-- Drivers Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="drivers-grid">
+      {drivers.map((driver) => {
+        const styleTheme = STYLE_COLORS[driver.style] ?? STYLE_COLORS.balanced;
+        const pCol = rgba(driver.primary_color);
+        const sCol = rgba(driver.secondary_color);
+        const aCol = rgba(driver.accent_color);
+
+        return (
+          <article
+            class="driver-card rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between shadow-sm"
+            data-style={driver.style}
+            data-name={driver.name.toLowerCase()}
+            data-alias={driver.alias.toLowerCase()}
+            data-pref={driver.preferred_car.toLowerCase()}
+          >
+            <div>
+              <!-- Header with Livery Palette Swatches -->
+              <div class="flex items-start justify-between gap-3 border-b border-racing-border/60 pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-white tracking-tight">{driver.name}</h3>
+                  <p class="text-xs font-mono text-racing-cyan mt-0.5">&ldquo;{driver.alias}&rdquo;</p>
+                </div>
+
+                <!-- 3-Color Helmet / Livery Palette Swatch -->
+                <div class="flex items-center gap-1.5 p-1 rounded-lg bg-racing-card border border-racing-border shrink-0" title="Team Livery Palette: Primary, Secondary, Accent">
+                  <span class="w-3.5 h-3.5 rounded-full border border-black/40" style={`background-color: ${pCol};`}></span>
+                  <span class="w-3.5 h-3.5 rounded-full border border-black/40" style={`background-color: ${sCol};`}></span>
+                  <span class="w-3.5 h-3.5 rounded-full border border-black/40" style={`background-color: ${aCol};`}></span>
+                </div>
+              </div>
+
+              <!-- Style Badge & Preferred Vehicle -->
+              <div class="flex items-center justify-between gap-2 mt-3 text-xs font-mono">
+                <span class={`text-[10px] px-2 py-0.5 rounded-full border ${styleTheme.bg} ${styleTheme.text} ${styleTheme.border} uppercase`}>
+                  {driver.style}
+                </span>
+                <span class="text-racing-muted truncate max-w-[160px]" title={driver.preferred_car}>
+                  {driver.preferred_car}
+                </span>
+              </div>
+
+              <p class="text-xs text-racing-muted mt-2.5 leading-relaxed min-h-[48px]">
+                {driver.bio}
+              </p>
+
+              <!-- Stats Radar / Bars -->
+              <div class="grid grid-cols-2 gap-2 mt-4 text-xs font-mono p-2.5 rounded-lg bg-racing-card/60 border border-racing-border/40">
+                <div>
+                  <div class="flex justify-between text-[10px] text-racing-muted mb-0.5">
+                    <span>SPD</span>
+                    <span class="text-white font-bold">{Math.round(driver.stats.speed * 100)}%</span>
+                  </div>
+                  <div class="w-full h-1 rounded-full bg-racing-surface overflow-hidden">
+                    <div class="h-full bg-cyan-400" style={`width: ${driver.stats.speed * 100}%`}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[10px] text-racing-muted mb-0.5">
+                    <span>AGG</span>
+                    <span class="text-white font-bold">{Math.round(driver.stats.aggression * 100)}%</span>
+                  </div>
+                  <div class="w-full h-1 rounded-full bg-racing-surface overflow-hidden">
+                    <div class="h-full bg-rose-400" style={`width: ${driver.stats.aggression * 100}%`}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[10px] text-racing-muted mb-0.5">
+                    <span>PRC</span>
+                    <span class="text-white font-bold">{Math.round(driver.stats.precision * 100)}%</span>
+                  </div>
+                  <div class="w-full h-1 rounded-full bg-racing-surface overflow-hidden">
+                    <div class="h-full bg-emerald-400" style={`width: ${driver.stats.precision * 100}%`}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[10px] text-racing-muted mb-0.5">
+                    <span>DEF</span>
+                    <span class="text-white font-bold">{Math.round(driver.stats.defense * 100)}%</span>
+                  </div>
+                  <div class="w-full h-1 rounded-full bg-racing-surface overflow-hidden">
+                    <div class="h-full bg-amber-400" style={`width: ${driver.stats.defense * 100}%`}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Favorite Machines Footnote -->
+            <div class="mt-4 pt-3 border-t border-racing-border/40 flex items-center justify-between text-[10px] font-mono text-racing-muted">
+              <span>{driver.favorite_cars.length} Homologated Rides</span>
+              <span class="text-racing-cyan">AI Telemetry Profile</span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+
+  <script is:inline>
+    // Client-side filtering for 72 drivers
+    const searchInput = document.getElementById('driver-search');
+    const filterTabs = document.querySelectorAll('.driver-tab');
+    const driverCards = document.querySelectorAll('.driver-card');
+
+    let activeStyle = 'all';
+    let searchQuery = '';
+
+    function updateDriverFilter() {
+      driverCards.forEach((card) => {
+        const matchesStyle = activeStyle === 'all' || card.dataset.style === activeStyle;
+        const matchesSearch = !searchQuery || 
+          card.dataset.name.includes(searchQuery) || 
+          card.dataset.alias.includes(searchQuery) ||
+          card.dataset.pref.includes(searchQuery);
+
+        if (matchesStyle && matchesSearch) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    filterTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach((t) => {
+          t.classList.remove('bg-racing-cyan', 'text-racing-bg', 'border-racing-cyan', 'font-bold');
+          t.classList.add('bg-racing-surface', 'text-racing-muted', 'border-racing-border');
+        });
+        tab.classList.remove('bg-racing-surface', 'text-racing-muted', 'border-racing-border');
+        tab.classList.add('bg-racing-cyan', 'text-racing-bg', 'border-racing-cyan', 'font-bold');
+
+        activeStyle = tab.dataset.style;
+        updateDriverFilter();
+      });
+    });
+
+    searchInput?.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      updateDriverFilter();
+    });
+  </script>
+</Layout>

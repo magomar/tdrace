@@ -1,0 +1,189 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getHudModel } from '../../lib/codex';
+
+const hud = await getHudModel();
+const { cameras, camera_config } = hud;
+---
+
+<Layout title="Camera Systems" description="Arcade race camera tracking, dynamic speed zoom, velocity lookahead, and split-screen viewports.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/driving" class="hover:underline">Driving</a> / Cameras</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Camera Dynamics & Perspectives</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      TDRace combines classic top-down racing arcade perspective with modern velocity-projected tracking.
+      The camera system dynamically adapts zoom scale based on current vehicle speed, anticipates braking zones
+      through forward lookahead vectors, and supports seamless split-screen multi-viewports.
+    </p>
+  </div>
+
+  <!-- Four Camera Zoom Levels -->
+  <section class="py-8">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Selectable Zoom Levels</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Players can cycle through camera perspectives on the fly during any race using the <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-xs font-mono text-cyan-400">Tab</kbd> key
+        or gamepad camera toggle button.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {cameras.map((cam, idx) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+              <h3 class="text-base font-bold text-white">{cam.name}</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 uppercase">
+                {cam.mode}
+              </span>
+            </div>
+
+            <p class="text-xs text-racing-muted mt-3 leading-relaxed min-h-[48px]">
+              {cam.description}
+            </p>
+
+            <div class="mt-4 p-3 rounded-lg bg-racing-card/60 border border-racing-border/40 text-xs font-mono">
+              <div class="flex justify-between py-0.5">
+                <span class="text-racing-muted">High-Speed Scale:</span>
+                <span class="text-white font-bold">{cam.min_zoom} px/m</span>
+              </div>
+              <div class="flex justify-between py-0.5">
+                <span class="text-racing-muted">Stationary Scale:</span>
+                <span class="text-cyan-400 font-bold">{cam.max_zoom} px/m</span>
+              </div>
+              <div class="flex justify-between py-0.5 pt-1.5 border-t border-racing-border/40 text-[10px] text-racing-muted">
+                <span>Expansion:</span>
+                <span>{cam.min_zoom === cam.max_zoom ? 'Static' : `${((cam.max_zoom / cam.min_zoom - 1) * 100).toFixed(0)}% zoom range`}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-2 text-[10px] font-mono text-racing-muted flex justify-between items-center">
+            <span>Cycle Index: #{idx + 1}</span>
+            <span class="text-cyan-400">Tab to select</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Follow Dynamics & Calibration Specs -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Follow Dynamics & Calibration</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        The smooth follow camera operates through damped second-order tracking interpolation.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Position Smoothing</span>
+        <div class="text-2xl font-mono font-bold text-cyan-400 mt-1">{camera_config.position_smoothing}</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Exponential tracking rate. High enough to eliminate disorienting lag while maintaining buttery smooth high-speed panning.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Velocity Lookahead Time</span>
+        <div class="text-2xl font-mono font-bold text-green-400 mt-1">{camera_config.velocity_lookahead_time}s</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Forward vector projection: <code class="text-racing-cyan font-mono text-xs">target = car.pos + car.vel * 0.40s</code>.
+          Anticipates upcoming apexes and gives drivers ample braking visibility on high-speed straights.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Screen Offset Cap</span>
+        <div class="text-2xl font-mono font-bold text-amber-400 mt-1">{(camera_config.max_car_screen_offset_frac * 100).toFixed(0)}%</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Hard screen constraint: limits distance from screen center to 25% of viewport height, ensuring the car never clips behind the lap timer or edge HUD widgets.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Zoom Smoothing Rate</span>
+        <div class="text-2xl font-mono font-bold text-purple-400 mt-1">{camera_config.zoom_smoothing}</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Smooth interpolation rate for speed zoom transitions between low-speed hairpins and full-throttle straights.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Impact Shake Trauma Decay</span>
+        <div class="text-2xl font-mono font-bold text-rose-400 mt-1">{camera_config.trauma_decay} / sec</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Non-linear trauma decay (<code class="text-racing-cyan font-mono text-xs">shake = trauma²</code>) following heavy wall contacts or kerb bottom-outs.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <span class="text-[10px] font-mono text-racing-muted uppercase">Max Shake Displacement</span>
+        <div class="text-2xl font-mono font-bold text-white mt-1">±{camera_config.max_shake_offset} px</div>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Clamped maximum pixel displacement preventing disorientation during catastrophic multicar pileups.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2-Player Split Screen Viewports -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">2-Player Split-Screen Layouts</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        TDRace supports local two-player simultaneous racing with independent follow cameras and HUD scaling.
+        Toggle layouts anytime with the <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-xs font-mono text-cyan-400">F8</kbd> key.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Vertical Split -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h3 class="text-base font-bold text-white">Vertical Split (Default)</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-green-500/15 border border-green-500/30 text-green-400">
+            Recommended
+          </span>
+        </div>
+        <p class="text-xs text-racing-muted mt-2.5 leading-relaxed">
+          Side-by-side viewports (Left: Player 1, Right: Player 2).
+          On standard 16:9 widescreen displays, this produces balanced ~8:9 aspect ratio panes, ideal for vertical track visibility.
+        </p>
+        <!-- Mockup Diagram -->
+        <div class="mt-4 rounded-lg border border-racing-border/60 bg-racing-card p-2 flex gap-1 h-28">
+          <div class="flex-1 rounded border border-cyan-500/40 bg-cyan-500/10 flex items-center justify-center text-xs font-mono text-cyan-300 font-bold">
+            P1 Viewport (8:9)
+          </div>
+          <div class="flex-1 rounded border border-amber-500/40 bg-amber-500/10 flex items-center justify-center text-xs font-mono text-amber-300 font-bold">
+            P2 Viewport (8:9)
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal Split -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h3 class="text-base font-bold text-white">Horizontal Split</h3>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-racing-card border border-racing-border text-racing-muted">
+            Alternative
+          </span>
+        </div>
+        <p class="text-xs text-racing-muted mt-2.5 leading-relaxed">
+          Stacked viewports (Top: Player 1, Bottom: Player 2).
+          Produces ultra-wide ~32:9 viewports, preferred by oval and speedway drivers wanting expansive lateral overtaking vision.
+        </p>
+        <!-- Mockup Diagram -->
+        <div class="mt-4 rounded-lg border border-racing-border/60 bg-racing-card p-2 flex flex-col gap-1 h-28">
+          <div class="flex-1 rounded border border-cyan-500/40 bg-cyan-500/10 flex items-center justify-center text-xs font-mono text-cyan-300 font-bold">
+            P1 Viewport (32:9)
+          </div>
+          <div class="flex-1 rounded border border-amber-500/40 bg-amber-500/10 flex items-center justify-center text-xs font-mono text-amber-300 font-bold">
+            P2 Viewport (32:9)
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

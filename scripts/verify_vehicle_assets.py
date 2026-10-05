@@ -4,12 +4,15 @@ from pathlib import Path
 
 def main():
     root = Path(__file__).resolve().parent.parent
-    vehicles_json = root / "portals" / "shared" / "data" / "vehicles.json"
+    vehicles_json = root / "portals" / "shared" / "data" / "codex" / "cars.json"
     if not vehicles_json.exists():
-        print(f"Error: {vehicles_json} not found. Run scripts/generate_asset_data.py first.")
+        vehicles_json = root / "portals" / "shared" / "data" / "vehicles.json"
+    if not vehicles_json.exists():
+        print(f"Error: {vehicles_json} not found. Run cargo run -p tdrace-app --bin export_codex first.")
         return 1
 
-    vehicles = json.loads(vehicles_json.read_text(encoding="utf-8"))
+    raw = json.loads(vehicles_json.read_text(encoding="utf-8"))
+    vehicles = raw.get("items", raw)
     print(f"🔍 Auditing 2D Assets across {len(vehicles)} authentic motorsport vehicles...\n")
 
     stats = {}

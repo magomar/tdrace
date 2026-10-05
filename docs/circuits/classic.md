@@ -50,4 +50,4 @@ The **Classic Heritage** tracks form the foundational proving grounds of **TdRac
   * **Seaside Carousel**: $165^\circ$ parabolic right-hander testing lateral grip and sustained downforce.
   * **Bus-Stop Chicane**: Heavy threshold braking and curb-clipping weight transfer sequence before the pit straight.
 
-For classic vehicle profiles (GT Sports Coupe, Thunderbolt Stock V8, Talon Super Buggy, Mudlark Cross Car, etc.) and motorsport rosters, see the [Vehicles Overview](../vehicles/index.md).
+For classic vehicle profiles (GT Sports Coupe, Thunderbolt Stock V8, Talon Super Buggy, Mudlark Cross Car, etc.) and motorsport rosters, see the [Vehicles Overview](http://localhost:4322/showroom/cars?module=classic).

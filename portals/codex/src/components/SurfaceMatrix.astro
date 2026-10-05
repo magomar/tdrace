@@ -1,0 +1,82 @@
+---
+import { getSurfaces } from '../lib/codex';
+
+const surfacesData = await getSurfaces();
+
+const SWATCH: Record<string, string> = {
+  Asphalt: '#3b82f6',
+  Concrete: '#94a3b8',
+  Curb: '#ef4444',
+  Dirt: '#b45309',
+  Gravel: '#78716c',
+  Grass: '#15803d',
+  PackedSand: '#fbbf24',
+  DeepSand: '#f59e0b',
+  MudTrack: '#854d0e',
+  DeepMud: '#713f12',
+  PackedSnow: '#e2e8f0',
+  DeepSnow: '#cbd5e1',
+  SheetIce: '#a5f3fc',
+  Water: '#06b6d4',
+  Oil: '#64748b',
+};
+---
+
+<div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+  <table class="w-full text-left text-xs">
+    <thead class="bg-racing-surface2 border-b border-racing-border font-mono text-racing-muted uppercase text-[11px]">
+      <tr>
+        <th class="py-3 px-4">Surface</th>
+        <th class="py-3 px-4">Friction ($\mu$)</th>
+        <th class="py-3 px-4">Rolling Resistance</th>
+        <th class="py-3 px-4">Viscous Drag</th>
+        <th class="py-3 px-4">Particle & Dynamic FX</th>
+        <th class="py-3 px-4">Role</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-racing-border/50 font-mono">
+      {surfacesData.map((s) => (
+        <tr class="hover:bg-racing-surface2/40 transition-colors">
+          <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full" style={`background-color: ${SWATCH[s.id] ?? '#38bdf8'}`}></span>
+            {s.name}
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white w-8">{s.friction.toFixed(2)}</span>
+              <div class="w-20 h-1.5 bg-racing-surface2 rounded-full overflow-hidden">
+                <div class="h-full bg-racing-blue rounded-full" style={`width: ${s.friction * 100}%`}></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-4 text-racing-text font-bold">
+            <span class={s.rolling_resistance > 5 ? 'text-racing-red' : s.rolling_resistance > 2 ? 'text-racing-amber' : 'text-racing-muted'}>
+              {s.rolling_resistance.toFixed(1)}×
+            </span>
+          </td>
+          <td class="py-3 px-4 text-racing-text font-bold">
+            <span class={s.drag > 2.0 ? 'text-racing-red' : s.drag > 1.2 ? 'text-racing-amber' : 'text-racing-muted'}>
+              {s.drag.toFixed(2)}×
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex flex-wrap gap-1">
+              {s.tire_smoke && <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-500/20 text-slate-300 border border-slate-500/30">Smoke</span>}
+              {s.debris && <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">Roost</span>}
+              {s.water_splash && <span class="px-1.5 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Splash</span>}
+              {!s.tire_smoke && !s.debris && !s.water_splash && <span class="text-racing-muted text-[10px]">—</span>}
+            </div>
+          </td>
+          <td class="py-3 px-4 font-sans text-xs text-racing-muted">
+            {[
+              s.rigid_pavement && 'Pavement',
+              s.loose && 'Loose',
+              s.on_track_hazard && 'Hazard',
+              s.valid_off_track && 'Run-off',
+            ].filter(Boolean).join(' · ') || '—'}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

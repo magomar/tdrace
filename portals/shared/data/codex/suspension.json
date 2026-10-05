@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "rigid_kart",
+      "robustness_factor": 0.55,
+      "part_cost_multiplier": 0.5,
+      "factory": {
+        "front": {
+          "archetype": "rigid_kart",
+          "spring_rate": 450000.0,
+          "bump_damping_ratio": 0.1,
+          "rebound_damping_ratio": 0.15,
+          "max_bump_travel": 0.008,
+          "max_rebound_travel": 0.005,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "rear": {
+          "archetype": "rigid_kart",
+          "spring_rate": 450000.0,
+          "bump_damping_ratio": 0.1,
+          "rebound_damping_ratio": 0.15,
+          "max_bump_travel": 0.008,
+          "max_rebound_travel": 0.005,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "front_arb_rate": 0.0,
+        "rear_arb_rate": 0.0,
+        "front_roll_center_height": 0.02,
+        "rear_roll_center_height": 0.02,
+        "response_frequency_hz": 8.0
+      },
+      "platforms_front": [
+        "Kart"
+      ],
+      "platforms_rear": [
+        "Kart"
+      ]
+    },
+    {
+      "id": "solid_live_axle",
+      "robustness_factor": 1.45,
+      "part_cost_multiplier": 0.65,
+      "factory": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 65000.0,
+          "bump_damping_ratio": 0.62,
+          "rebound_damping_ratio": 0.75,
+          "max_bump_travel": 0.065,
+          "max_rebound_travel": 0.05,
+          "static_camber": -0.06,
+          "camber_recovery": 0.8
+        },
+        "rear": {
+          "archetype": "solid_live_axle",
+          "spring_rate": 55000.0,
+          "bump_damping_ratio": 0.55,
+          "rebound_damping_ratio": 0.7,
+          "max_bump_travel": 0.065,
+          "max_rebound_travel": 0.05,
+          "static_camber": 0.0,
+          "camber_recovery": 0.0
+        },
+        "front_arb_rate": 4800.0,
+        "rear_arb_rate": 1800.0,
+        "front_roll_center_height": 0.09,
+        "rear_roll_center_height": 0.22,
+        "response_frequency_hz": 3.8
+      },
+      "platforms_front": [],
+      "platforms_rear": [
+        "StockCar"
+      ]
+    },
+    {
+      "id": "mac_pherson_strut",
+      "robustness_factor": 0.75,
+      "part_cost_multiplier": 0.8,
+      "factory": {
+        "front": {
+          "archetype": "mac_pherson_strut",
+          "spring_rate": 38000.0,
+          "bump_damping_ratio": 0.58,
+          "rebound_damping_ratio": 0.7,
+          "max_bump_travel": 0.075,
+          "max_rebound_travel": 0.06,
+          "static_camber": -0.035,
+          "camber_recovery": 0.4
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 42000.0,
+          "bump_damping_ratio": 0.6,
+          "rebound_damping_ratio": 0.72,
+          "max_bump_travel": 0.07,
+          "max_rebound_travel": 0.055,
+          "static_camber": -0.026,
+          "camber_recovery": 0.75
+        },
+        "front_arb_rate": 1800.0,
+        "rear_arb_rate": 1400.0,
+        "front_roll_center_height": 0.06,
+        "rear_roll_center_height": 0.09,
+        "response_frequency_hz": 3.5
+      },
+      "platforms_front": [
+        "GT4Clubsport"
+      ],
+      "platforms_rear": []
+    },
+    {
+      "id": "double_wishbone",
+      "robustness_factor": 1.0,
+      "part_cost_multiplier": 1.2,
+      "factory": {
+        "front": {
+          "archetype": "double_wishbone",
+          "spring_rate": 85000.0,
+          "bump_damping_ratio": 0.68,
+          "rebound_damping_ratio": 0.82,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.052,
+          "camber_recovery": 0.9
+        },
+        "rear": {
+          "archetype": "double_wishbone",
+          "spring_rate": 95000.0,
+          "bump_damping_ratio": 0.7,
+          "rebound_damping_ratio": 0.85,
+          "max_bump_travel": 0.045,
+          "max_rebound_travel": 0.035,
+          "static_camber": -0.035,
+          "camber_recovery": 0.9
+        },
+        "front_arb_rate": 4500.0,
+        "rear_arb_rate": 3200.0,
+        "front_roll_center_height": 0.08,
+        "rear_roll_center_height": 0.1,
+        "response_frequency_hz": 4.2
+      },
+      "platforms_front": [
+        "SportsCar",
+        "GT3Car",
+        "GT2Biturbo",
+        "GT1Legend",
+        "StockCar"
+      ],
+      "platforms_rear": [
+        "SportsCar",
+        "GT4Clubsport",
+        "GT3Car",
+        "GT2Biturbo",
+        "GT1Legend"
+      ]
+    },
+    {
+      "id": "pushrod_inboard",
+      "robustness_factor": 0.45,
+      "part_cost_multiplier": 2.2,
+      "factory": {
+        "front": {
+          "archetype": "pushrod_inboard",
+          "spring_rate": 140000.0,
+          "bump_damping_ratio": 0.82,
+          "rebound_damping_ratio": 0.95,
+          "max_bump_travel": 0.025,
+          "max_rebound_travel": 0.02,
+          "static_camber": -0.045,
+          "camber_recovery": 0.95
+        },
+        "rear": {
+          "archetype": "pushrod_inboard",
+          "spring_rate": 160000.0,
+          "bump_damping_ratio": 0.85,
+          "rebound_damping_ratio": 0.98,
+          "max_bump_travel": 0.025,
+          "max_rebound_travel": 0.02,
+          "static_camber": -0.03,
+          "camber_recovery": 0.95
+        },
+        "front_arb_rate": 8500.0,
+        "rear_arb_rate": 6500.0,
+        "front_roll_center_height": 0.05,
+        "rear_roll_center_height": 0.06,
+        "response_frequency_hz": 5.5
+      },
+      "platforms_front": [
+        "HypercarPrototype"
+      ],
+      "platforms_rear": [
+        "HypercarPrototype"
+      ]
+    },
+    {
+      "id": "long_travel_off_road",
+      "robustness_factor": 2.2,
+      "part_cost_multiplier": 1.1,
+      "factory": {
+        "front": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "rear": {
+          "archetype": "long_travel_off_road",
+          "spring_rate": 22000.0,
+          "bump_damping_ratio": 0.45,
+          "rebound_damping_ratio": 0.65,
+          "max_bump_travel": 0.24,
+          "max_rebound_travel": 0.18,
+          "static_camber": -0.015,
+          "camber_recovery": 0.6
+        },
+        "front_arb_rate": 1200.0,
+        "rear_arb_rate": 800.0,
+        "front_roll_center_height": 0.16,
+        "rear_roll_center_height": 0.18,
+        "response_frequency_hz": 2.8
+      },
+      "platforms_front": [
+        "RallyCar",
+        "SandRail",
+        "CrossCar"
+      ],
+      "platforms_rear": [
+        "RallyCar",
+        "SandRail",
+        "CrossCar"
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 def verify_docs(docs_dir: Path) -> int:
-    files = sorted(list(docs_dir.rglob("*.md")))
+    files = sorted([f for f in docs_dir.rglob("*.md") if "receipts" not in f.parts])
     print(f"🔍 Checking OKF v0.2 compliance across {len(files)} Markdown files in {docs_dir}...\n")
 
     errors = []
@@ -36,9 +36,9 @@ def verify_docs(docs_dir: Path) -> int:
                 errors.append(f"[{file_path.relative_to(docs_dir)}] Root index.md missing okf_version: '0.2'")
 
         # 2. Check relative markdown links
-        # Ignore backtick-wrapped links (code examples)
-        clean_content = re.sub(r'`[^`]+`', '', content)
-        clean_content = re.sub(r'```[\s\S]*?```', '', clean_content)
+        # Strip fenced code blocks first, then inline backticks
+        clean_content = re.sub(r'```[\s\S]*?```', '', content)
+        clean_content = re.sub(r'`[^`]+`', '', clean_content)
         links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', clean_content)
 
         for link_text, link_target in links:

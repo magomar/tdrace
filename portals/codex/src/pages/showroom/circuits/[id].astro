@@ -1,0 +1,310 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import {
+  categoryLabel,
+  getCircuits,
+  getSurfaces,
+  moduleBadge,
+  moduleLabel,
+  type Circuit,
+  type Surface,
+} from '../../../lib/codex';
+
+export async function getStaticPaths() {
+  const circuits = await getCircuits();
+  return circuits.map((circuit) => ({
+    params: { id: circuit.id },
+    props: { circuit },
+  }));
+}
+
+interface Props {
+  circuit: Circuit;
+}
+
+const { circuit } = Astro.props;
+const surfacesData = await getSurfaces();
+const surfacesMap = new Map(surfacesData.map((s) => [s.id, s]));
+
+// Flag emoji
+const getFlagEmoji = (code?: string | null) => {
+  if (!code || code === 'INT' || code.length !== 2) return '🌐';
+  const offset = 127397;
+  return String.fromCodePoint(...[...code.toUpperCase()].map((c) => c.charCodeAt(0) + offset));
+};
+const flagEmoji = getFlagEmoji(circuit.country_code);
+
+const badgeColor = moduleBadge(circuit.module);
+
+// Surface color mapping for the visual bar
+const SURFACE_COLORS: Record<string, string> = {
+  Asphalt: 'bg-slate-300',
+  Concrete: 'bg-zinc-400',
+  Kerb: 'bg-red-500',
+  Dirt: 'bg-amber-700',
+  CompactedDirt: 'bg-amber-600',
+  Gravel: 'bg-stone-500',
+  LooseGravel: 'bg-stone-400',
+  Sand: 'bg-yellow-600',
+  DeepSand: 'bg-yellow-700',
+  Mud: 'bg-stone-800',
+  DeepMud: 'bg-stone-900',
+  Snow: 'bg-blue-100',
+  Ice: 'bg-cyan-200',
+  Grass: 'bg-emerald-600',
+  WaterHazard: 'bg-blue-500',
+};
+---
+
+<Layout title={`${circuit.name} — TDRace Codex`} description={`${circuit.name} (${circuit.category_label}): track layout, length ${circuit.length_m}m, surface composition, and motorsport provenance.`}>
+  <div class="py-6 border-b border-racing-border max-w-6xl">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <p class="text-xs font-mono text-racing-cyan">
+          <a href="/showroom" class="hover:underline">Showroom</a> / <a href="/showroom/circuits" class="hover:underline">Circuits</a> / {circuit.name}
+        </p>
+        <div class="flex items-center gap-3 mt-1 flex-wrap">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">{circuit.name}</h1>
+          <span class={`text-xs px-2.5 py-0.5 rounded-full border font-mono font-semibold ${badgeColor}`}>
+            {categoryLabel(circuit.category)}
+          </span>
+          {circuit.country_name && (
+            <span class="text-xs font-mono text-racing-muted bg-racing-surface2 px-2 py-0.5 rounded border border-racing-border/40 flex items-center gap-1.5">
+              <span>{flagEmoji}</span>
+              <span>{circuit.country_name}</span>
+            </span>
+          )}
+        </div>
+        <p class="text-sm text-racing-muted font-mono mt-1">
+          {circuit.tag} • {moduleLabel(circuit.module)}
+        </p>
+      </div>
+
+      <a
+        href="/showroom/circuits"
+        class="px-4 py-2 rounded-lg bg-racing-surface hover:bg-racing-surface2 border border-racing-border text-racing-muted hover:text-white font-mono text-xs transition-all"
+      >
+        ← All circuits
+      </a>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 py-8 max-w-6xl">
+    <!-- Left Column: Vector Spline Map & Key Specs (7 cols) -->
+    <div class="lg:col-span-7 space-y-6">
+      <!-- Layout Visual Showcase -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-racing-border/60 bg-racing-surface2/30">
+          <span class="text-xs font-mono uppercase text-racing-muted">Vector Track Map</span>
+          <div class="flex items-center gap-2">
+            {circuit.has_joker && (
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Joker Lap Available
+              </span>
+            )}
+            {circuit.has_pit_lane && (
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                Pit Lane Active
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div class="relative h-72 sm:h-96 flex items-center justify-center p-6 bg-racing-bg/90">
+          {circuit.image ? (
+            <div class="relative w-full h-full flex items-center justify-center">
+              <img
+                src={circuit.image}
+                alt={`${circuit.name} Track Layout`}
+                class="w-full h-full object-contain filter drop-shadow-[0_0_24px_rgba(56,189,248,0.3)]"
+              />
+              <div class="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-mono bg-black/70 backdrop-blur-sm px-2 py-1 rounded border border-white/10 text-white/90">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>START / FINISH LINE</span>
+              </div>
+            </div>
+          ) : (
+            <div class="flex flex-col items-center justify-center text-center p-8">
+              <div class="w-20 h-10 border border-dashed border-racing-border rounded-md flex items-center justify-center text-xs font-mono text-racing-muted mb-2">
+                CAD 2D
+              </div>
+              <div class="text-sm font-mono text-white">{circuit.name}</div>
+              <div class="text-xs font-mono text-racing-muted mt-1">Vector Spline Geometry</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- Overview & Description -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-2">Circuit Overview</h2>
+        <p class="text-sm text-racing-text leading-relaxed">{circuit.description}</p>
+
+        <!-- Provenance & External Links -->
+        {(circuit.wikipedia_url || circuit.osm_url || circuit.is_inspired) && (
+          <div class="mt-4 pt-4 border-t border-racing-border/40 flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
+            <span class="text-racing-muted">
+              {circuit.is_inspired ? '🧭 Layout calibrated from official homologated real venue' : '🏁 Original arcade venue design'}
+            </span>
+            <div class="flex items-center gap-2">
+              {circuit.wikipedia_url && (
+                <a
+                  href={circuit.wikipedia_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-2.5 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center gap-1 transition-colors"
+                >
+                  <span>Wikipedia</span>
+                  <span class="text-[9px]">↗</span>
+                </a>
+              )}
+              {circuit.osm_url && (
+                <a
+                  href={circuit.osm_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 transition-colors"
+                >
+                  <span>OpenStreetMap</span>
+                  <span class="text-[9px]">↗</span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Right Column: Dimensions, Surface Matrix & Features (5 cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      <!-- Track Dimensions Grid -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-3">Track Metrics</h2>
+        <div class="grid grid-cols-2 gap-3 font-mono text-xs">
+          <div class="p-3 rounded-lg bg-racing-surface2/60 border border-racing-border/40">
+            <span class="text-racing-muted text-[10px] uppercase block">Lap Distance</span>
+            <span class="text-xl font-bold text-white mt-1 block">
+              {circuit.length_m >= 1000 ? `${(circuit.length_m / 1000).toFixed(2)} km` : `${circuit.length_m.toFixed(0)} m`}
+            </span>
+            <span class="text-[10px] text-racing-cyan font-sans">{circuit.length_m.toFixed(1)} metres centerline</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-racing-surface2/60 border border-racing-border/40">
+            <span class="text-racing-muted text-[10px] uppercase block">Track Width</span>
+            <span class="text-xl font-bold text-racing-cyan mt-1 block">
+              {circuit.min_width_m === circuit.max_width_m
+                ? `${circuit.min_width_m} m`
+                : `${circuit.min_width_m} – ${circuit.max_width_m} m`}
+            </span>
+            <span class="text-[10px] text-racing-muted font-sans">Drivable corridor</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-racing-surface2/60 border border-racing-border/40">
+            <span class="text-racing-muted text-[10px] uppercase block">Default Laps</span>
+            <span class="text-xl font-bold text-amber-400 mt-1 block">{circuit.default_laps} Laps</span>
+            <span class="text-[10px] text-racing-muted font-sans">Championship sprint</span>
+          </div>
+
+          <div class="p-3 rounded-lg bg-racing-surface2/60 border border-racing-border/40">
+            <span class="text-racing-muted text-[10px] uppercase block">Geometry Scale</span>
+            <span class="text-xl font-bold text-white mt-1 block">{circuit.scale}</span>
+            <span class="text-[10px] text-racing-muted font-sans">Homologation scale</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tactical Features -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-3">Tactical Features</h2>
+        <div class="space-y-2 text-xs font-mono">
+          <div class="flex items-center justify-between p-2.5 rounded bg-racing-surface2/40 border border-racing-border/30">
+            <span class="flex items-center gap-2 text-racing-text">
+              <span>🃏</span> Joker Lap Detour
+            </span>
+            <span class={`font-bold ${circuit.has_joker ? 'text-amber-400' : 'text-racing-muted'}`}>
+              {circuit.has_joker ? 'Available' : 'None'}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-2.5 rounded bg-racing-surface2/40 border border-racing-border/30">
+            <span class="flex items-center gap-2 text-racing-text">
+              <span>🔧</span> Pit Lane Service Bay
+            </span>
+            <span class={`font-bold ${circuit.has_pit_lane ? 'text-blue-400' : 'text-racing-muted'}`}>
+              {circuit.has_pit_lane ? 'Equipped' : 'None'}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-2.5 rounded bg-racing-surface2/40 border border-racing-border/30">
+            <span class="flex items-center gap-2 text-racing-text">
+              <span>🚀</span> 2.5D Jump Ramps
+            </span>
+            <span class={`font-bold ${circuit.has_jumps ? 'text-orange-400' : 'text-racing-muted'}`}>
+              {circuit.has_jumps ? 'Yes (Airborne)' : 'Flat'}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-2.5 rounded bg-racing-surface2/40 border border-racing-border/30">
+            <span class="flex items-center gap-2 text-racing-text">
+              <span>🔀</span> Track Junctions / Crossings
+            </span>
+            <span class={`font-bold ${circuit.has_junctions ? 'text-fuchsia-400' : 'text-racing-muted'}`}>
+              {circuit.has_junctions ? 'Active' : 'Standard loop'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Surface Composition Breakdown -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted">Surface Breakdown</h2>
+          <a href="/technical/surfaces" class="text-xs font-mono text-racing-cyan hover:underline">15 Surfaces Guide →</a>
+        </div>
+
+        <!-- Proportional Color Strip -->
+        <div class="h-4 w-full rounded-full overflow-hidden flex bg-racing-surface2 border border-racing-border/60 mb-4">
+          {circuit.surfaces.map((s) => (
+            <div
+              class={`h-full ${SURFACE_COLORS[s.surface] ?? 'bg-slate-500'}`}
+              style={`width: ${s.share_pct}%`}
+              title={`${s.surface}: ${s.share_pct}%`}
+            ></div>
+          ))}
+        </div>
+
+        <!-- Detailed Surface Table -->
+        <div class="overflow-x-auto rounded-lg border border-racing-border/50">
+          <table class="w-full text-left text-xs font-mono whitespace-nowrap">
+            <thead class="bg-racing-surface2/80 text-racing-muted uppercase text-[10px]">
+              <tr>
+                <th class="py-2 px-3">Surface</th>
+                <th class="py-2 px-3 text-right">Share</th>
+                <th class="py-2 px-3 text-right">Friction</th>
+                <th class="py-2 px-3 text-right">Rolling Res</th>
+                <th class="py-2 px-3 text-right">Drag</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-racing-border/40 bg-racing-surface">
+              {circuit.surfaces.map((s) => {
+                const model = surfacesMap.get(s.surface);
+                return (
+                  <tr>
+                    <td class="py-2 px-3 text-white font-bold flex items-center gap-2">
+                      <span class={`w-2.5 h-2.5 rounded-full ${SURFACE_COLORS[s.surface] ?? 'bg-slate-500'}`}></span>
+                      <a href="/technical/surfaces" class="hover:text-racing-cyan transition-colors">{s.surface}</a>
+                    </td>
+                    <td class="py-2 px-3 text-right font-bold text-racing-cyan">{s.share_pct}%</td>
+                    <td class="py-2 px-3 text-right text-racing-muted">{model?.friction.toFixed(2) ?? '—'}</td>
+                    <td class="py-2 px-3 text-right text-racing-muted">{model?.rolling_resistance.toFixed(3) ?? '—'}</td>
+                    <td class="py-2 px-3 text-right text-racing-muted">{model?.drag.toFixed(2) ?? '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
