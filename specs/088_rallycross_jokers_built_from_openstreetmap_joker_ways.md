@@ -94,7 +94,8 @@ Two more kinds of joker wall piece are dropped, on every joker track:
 
 ### 4. Bot on the other branch (`BotAiDriver::compute_controls`, `crates/race-kit/src/ai/mod.rs`) — amends spec 082
 Spec 082 says a bot keeps its route from the split to the merge, and that every finished bot takes exactly one joker. On `holjes_rx` the main route turns left at the split and the joker goes straight on. A main-route bot that ran wide there ended on the joker, kept steering for the main road behind the joker's inside wall, and was stuck for about three minutes. It then drove out through the joker and was credited a second joker.
-- A bot whose car is more than 2 m outside its own road, inside a branch road that its route does not use, **and** stuck (its no-progress watchdog has fired at least once), switches to the route of that branch until its next route choice at the start of the next lap.
+- A bot whose car is more than 2 m outside its own road, on a branch road that its route does not use or up to 8 m past its edge and nearer to it than to its own road, **and** stuck (its no-progress watchdog has fired at least once), switches to the route of that branch until its next route choice at the start of the next lap.
+- The 8 m reach is needed: a `holjes_rx` bot that ran wide ended 17 m from the main road and just outside the joker's edge, where "on the joker road" alone found no branch, and it stayed stuck for 100-160 s (5 of 16 Balanced and Smooth seeds).
 - Without the "stuck" condition, a `killarney_rx` main-route bot that drifts onto the joker every lap took it every lap.
 - A bot that follows the joker this way can finish with more than one joker. That is no penalty; it costs the time of the joker.
 
@@ -151,9 +152,9 @@ No access control is involved. `rally_joker_path` and `osm_cut` fail closed on j
   - [x] **Then** a bot changes its route between the split and the merge only while its car is off the road of the route it leaves
   - [x] **And** every finished bot has no penalty, and `jokers == 1` unless it moved onto the joker that way
 - **Scenario: Bots drive every changed joker**
-  - [ ] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles
-  - [ ] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
-  - [ ] **Then** every bot finishes (on 2026-10-05 the longest stop was 12.5 s, on the `kouvola_rx` joker)
+  - [x] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles, seeds 0-3
+  - [x] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
+  - [x] **Then** every bot finishes (on 2026-10-05 all 360 runs finished; the longest stops were 13-27 s, on the `essay_rx` joker with the Aggressive style)
 
 ---
 
@@ -166,11 +167,12 @@ No access control is involved. `rally_joker_path` and `osm_cut` fail closed on j
 - `[x]` `crates/arcade-race-core/src/track/mod.rs` -> `generate_network_walls`.
 - `[x]` `crates/race-kit/src/ai/mod.rs` -> `layout_of_branch_under`, the off-route branch switch in `compute_controls`.
 - `[x]` `crates/tdrace-app/tests/rally_tracks_tests.rs` -> `speed_limited_lap_time`, `test_rx_joker_costs_lap_time`, the Höljes time-delta test, the 6 m joker wall reach.
-- `[x]` `crates/tdrace-app/tests/ai_tests.rs` -> The bot compliance test allows the off-route switch.
+- `[x]` `crates/tdrace-app/tests/ai_tests.rs` -> The bot compliance test allows the off-route switch; `test_bot_that_ran_wide_at_the_holjes_split_follows_the_joker`.
 - `[x]` `tracks/rally/{holjes_rx,hell_rx,loheac_rx,estering_rx,montalegre_rx,catalunya_rx,essay_rx,dreux_rx,lavare_rx,lessay_rx,killarney_rx,mettet_rx,riga_rx,lydden_hill,kouvola_rx}.json` -> Rebaked.
 - `[x]` `docs/circuits/rally.md` -> Which jokers come from OSM.
 
 ### Known Gaps (not fixed here)
+- `essay_rx` joker route, Aggressive bots: stops of 13-37 s before they finish (3 of 4 seeds).
 - `spa_rx` bots fail 4 of 6 runs, also on the main route (`tdrace-xg1x`); its joker is unchanged.
 - The Mettet and Riga bases are not reproducible from the importer alone: Mettet keeps 4 hand widths of the old file, and Riga's wall and curb switches come from the remediation pass above.
 - Riga's one jump ramp (about (−30, 170)) is outside the swapped section and stays on the main road. Neither parallel road has a ramp, although the official ones each have a jump; the southern road has a crest in OSM (`incline` up then down).

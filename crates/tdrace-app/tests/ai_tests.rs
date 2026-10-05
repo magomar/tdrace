@@ -434,3 +434,24 @@ fn test_bot_ai_strategic_joker_rx_race_compliance() {
         assert!(branch_switches.is_empty(), "{}: bots switched route inside a branch: {:?}", id, branch_switches);
     }
 }
+
+/// Scenario: a bot that ran wide at the Höljes split follows the joker instead of staying stuck (spec 088)
+///
+/// Given a Pro bot on the main route of `holjes_rx`, Balanced and Smooth, seeds 0-3 (seeds 0, 1 and 3 ran wide)
+/// When it drives 3 laps alone in the bot harness
+/// Then it finishes, and never goes 30 s without progress (before the fix: 100-160 s, or not finishing)
+#[test]
+fn test_bot_that_ran_wide_at_the_holjes_split_follows_the_joker() {
+    use tdrace_app::ai::bot_harness::{run_harness_race, sample_bot, HarnessEntry};
+    use tdrace_app::ai::{DriverTier, DrivingStyle};
+
+    let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
+    for style in [DrivingStyle::Balanced, DrivingStyle::Smooth] {
+        for seed in 0..4u64 {
+            let bot = sample_bot(style, DriverTier::Pro, seed).with_route_strategy(BotRouteStrategy::FixedLayout("main".to_string()));
+            let result = &run_harness_race(&track, vec![HarnessEntry::bot(bot, CarConfig::rally_car())], 3, 400.0)[0];
+            assert!(result.finished, "{style:?} seed {seed}: finished only {} laps", result.lap_times.len());
+            assert!(result.longest_no_progress_s < 30.0, "{style:?} seed {seed}: {:.1} s without progress", result.longest_no_progress_s);
+        }
+    }
+}

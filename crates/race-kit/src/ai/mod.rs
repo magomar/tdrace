@@ -496,6 +496,8 @@ const WALL_CLEARANCE_M: f32 = 1.2;
 const CAR_WALL_PUSH: f32 = 3.0;
 /// How far outside its own road a bot's car must be before it follows another branch it is on (m).
 const OFF_ROUTE_MARGIN_M: f32 = 2.0;
+/// How far past the edge of a branch road a bot's car still counts as on that branch (m).
+const BRANCH_REACH_M: f32 = 8.0;
 /// A slow bot pointing farther than this from its target turns round with a three-point turn (rad).
 const TURN_START_RAD: f32 = 1.75;
 /// The turn ends, driving forward, once the nose points this close to the target (rad).
@@ -591,17 +593,20 @@ fn joker_and_main_layout_ids(network: &TrackNetwork) -> (Option<String>, String)
     (joker, main)
 }
 
-/// The layout of a branch that the car at `pos` is on and its own layout `own` does not contain, if any.
-fn layout_of_branch_under(network: &TrackNetwork, own: &TrackLayout, pos: Vec2) -> Option<String> {
+/// The layout of the branch nearest to the car at `pos` that its own layout `own` does not contain: the car is on it
+/// or within `BRANCH_REACH_M` of its edge, and nearer to it than the `own_distance` it is from its own road.
+fn layout_of_branch_under(network: &TrackNetwork, own: &TrackLayout, pos: Vec2, own_distance: f32) -> Option<String> {
     network
         .segments
         .iter()
         .filter(|seg| !own.segment_sequence.contains(&seg.id))
-        .find(|seg| {
+        .filter_map(|seg| {
             let q = seg.project_point(pos);
-            q.distance_to_spline < q.track_width * 0.5
+            (q.distance_to_spline < q.track_width * 0.5 + BRANCH_REACH_M && q.distance_to_spline < own_distance)
+                .then_some((q.distance_to_spline, seg))
         })
-        .and_then(|seg| network.layouts.iter().find(|l| l.segment_sequence.contains(&seg.id)))
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .and_then(|(_, seg)| network.layouts.iter().find(|l| l.segment_sequence.contains(&seg.id)))
         .map(|l| l.id.clone())
 }
 
@@ -908,7 +913,7 @@ impl BotAiDriver {
         if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
             let network = track.network.as_ref();
             let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
-            if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos)) {
+            if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos, proj.distance_to_spline)) {
                 self.active_layout_id = Some(id);
             }
         }
