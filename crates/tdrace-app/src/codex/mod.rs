@@ -9,12 +9,25 @@ use std::path::Path;
 
 use serde::Serialize;
 use tdrace_core::catalog;
-use tdrace_core::physics::config::CarConfig;
-use tdrace_core::physics::surface::SurfaceType;
+use tdrace_core::physics::car::{
+    Car, ImpactZone, CHASSIS_DAMAGE_CAPACITY_J, DAMAGE_ENERGY_DEADZONE_J, ENGINE_DAMAGE_CAPACITY_J,
+    FIELD_REPAIR_CHASSIS_CAP, FIELD_REPAIR_ENGINE_CAP, FIELD_REPAIR_SUSPENSION_CAP, KERB_BOTTOM_OUT_CAPACITY_J,
+    KERB_BOTTOM_OUT_SPEED_MPS, LANDING_CAPACITY_J, LANDING_SPEED_LIMIT_MPS, PUSHROD_COLLAPSE_DRAG_MULTIPLIER,
+    PUSHROD_COLLAPSE_HEALTH, SUSPENSION_DAMAGE_CAPACITY_J,
+};
+use tdrace_core::physics::config::{
+    CarConfig, ChassisSkeleton, DifferentialType, EnginePlacement, SuspensionArchetype, SuspensionConfig,
+};
+use tdrace_core::physics::surface::{CompoundId, SurfaceType};
+use tdrace_core::physics::tire::{normalized_grip_curve, TireCompoundConfig, WheelAssembly};
 use tdrace_core::track::{Track, TrackKind};
 
 use crate::audio::EngineSoundType;
 use crate::catalog::{get_tier_name, RealCarModel, ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+use crate::profile::repair::{
+    ItemizedRepairInvoice, REPAIR_PURSE_CAP_SHARE, SAFETY_NET_CREDIT_LIMIT, SAFETY_NET_HEALTH,
+};
+use crate::profile::ModuleCareerProgress;
 use crate::module::{
     autocross::AutocrossGameModule, classic::ClassicGameModule, extreme_offroad::ExtremeOffRoadModule,
     gt::GtWorldChallengeModule, kart::KartGameModule, nascar::NascarGameModule, rally::RallyGameModule,
@@ -174,6 +187,167 @@ pub struct CodexSurface {
     pub valid_off_track: bool,
 }
 
+/// Sample points `(x, y)` of a curve.
+pub type Curve = Vec<[f32; 2]>;
+
+#[derive(Serialize)]
+pub struct CodexWheel {
+    pub position: &'static str,
+    pub radius_m: f32,
+    pub width_m: f32,
+    pub inertia_kgm2: f32,
+    pub compound: CompoundId,
+    pub brake_share: f32,
+    pub drive_share: f32,
+}
+
+#[derive(Serialize)]
+pub struct CodexHull {
+    pub front_extent_m: f32,
+    pub rear_extent_m: f32,
+    pub half_width_m: f32,
+}
+
+/// Shape of a platform's front tire model (Spec 043). The grip level varies per car.
+#[derive(Serialize)]
+pub struct CodexTireShape {
+    pub peak_slip_angle_deg: f32,
+    pub rear_peak_slip_angle_deg: f32,
+    pub peak_slip_ratio: f32,
+    pub slide_grip: f32,
+    pub falloff: f32,
+    pub load_sensitivity: f32,
+    pub power_slide: f32,
+    /// `normalized_grip_curve` against normalized slip (1.0 = peak slip).
+    pub curve: Curve,
+}
+
+/// A base car preset (`CarChoice`): the chassis, wheels, suspension and drivetrain layout that every
+/// car built on it shares. `to_car_config` changes mass, power, grip and aero per car, not these.
+#[derive(Serialize)]
+pub struct CodexPlatform {
+    pub id: CarChoice,
+    pub title: &'static str,
+    pub tag: &'static str,
+    pub description: &'static str,
+    pub modules: Vec<&'static str>,
+    pub cars: Vec<&'static str>,
+    pub wheelbase_m: f32,
+    pub track_width_m: f32,
+    pub cg_to_front_m: f32,
+    pub cg_to_rear_m: f32,
+    pub cg_height_m: f32,
+    pub total_length_m: f32,
+    pub skeleton: ChassisSkeleton,
+    pub hull: CodexHull,
+    pub wheels: Vec<CodexWheel>,
+    pub suspension: SuspensionConfig,
+    pub front_differential: DifferentialType,
+    pub rear_differential: DifferentialType,
+    pub engine_placement: EnginePlacement,
+    pub tire: CodexTireShape,
+}
+
+#[derive(Serialize)]
+pub struct CodexSuspensionArchetype {
+    pub id: SuspensionArchetype,
+    pub robustness_factor: f32,
+    pub part_cost_multiplier: f32,
+    /// `SuspensionConfig::for_archetype`: the factory reference setup.
+    pub factory: SuspensionConfig,
+    pub platforms_front: Vec<CarChoice>,
+    pub platforms_rear: Vec<CarChoice>,
+}
+
+#[derive(Serialize)]
+pub struct CodexAffinity {
+    pub surface: SurfaceType,
+    pub multiplier: f32,
+}
+
+#[derive(Serialize)]
+pub struct CodexCompound {
+    pub id: CompoundId,
+    pub name: &'static str,
+    pub badge: &'static str,
+    pub accent_rgba: [f32; 4],
+    pub wear_rate: f32,
+    pub optimal_temp_c: [f32; 2],
+    pub overheat_temp_c: f32,
+    pub affinity: Vec<CodexAffinity>,
+    /// `WheelAssembly::thermal_grip_multiplier` against tread temperature (°C).
+    pub thermal_curve: Curve,
+    pub platforms: Vec<CarChoice>,
+}
+
+#[derive(Serialize)]
+pub struct CodexEnginePlacement {
+    pub id: EnginePlacement,
+    pub repair_cost_multiplier: f32,
+    pub platforms: Vec<CarChoice>,
+}
+
+#[derive(Serialize)]
+pub struct CodexDamageWeights {
+    pub placement: EnginePlacement,
+    pub chassis: f32,
+    pub engine: f32,
+    /// [FL, FR, RL, RR]
+    pub suspension: [f32; 4],
+}
+
+#[derive(Serialize)]
+pub struct CodexImpactZone {
+    pub id: ImpactZone,
+    pub weights: Vec<CodexDamageWeights>,
+}
+
+#[derive(Serialize)]
+pub struct CodexInvoiceExample {
+    pub tier: u32,
+    pub base_purse: u64,
+    pub health: f32,
+    pub placement: EnginePlacement,
+    pub archetype: SuspensionArchetype,
+    pub invoice: ItemizedRepairInvoice,
+}
+
+/// The damage and repair model (Spec 078): one item.
+#[derive(Serialize)]
+pub struct CodexDamageModel {
+    pub id: &'static str,
+    pub energy_deadzone_j: f32,
+    pub chassis_capacity_j: f32,
+    pub engine_capacity_j: f32,
+    pub suspension_capacity_j: f32,
+    pub kerb_bottom_out_speed_mps: f32,
+    pub kerb_bottom_out_capacity_j: f32,
+    pub landing_speed_limit_mps: f32,
+    pub landing_capacity_j: f32,
+    pub pushrod_collapse_health: f32,
+    pub pushrod_collapse_drag_multiplier: f32,
+    pub zones: Vec<CodexImpactZone>,
+    /// `Car::available_engine_power_ratio` against engine health.
+    pub engine_power_curve: Curve,
+    /// `Car::steering_pull_bias` against front-left minus front-right suspension health.
+    pub steering_pull_curve: Curve,
+    /// `WheelAssembly::effective_friction` (at optimal temperature, relative) against tread wear.
+    pub tire_wear_curve: Curve,
+    pub field_repair_caps: FieldRepairCaps,
+    pub pit_stop_repair_amount: f32,
+    pub purse_cap_share: f64,
+    pub safety_net_credit_limit: u64,
+    pub safety_net_health: f32,
+    pub invoice_examples: Vec<CodexInvoiceExample>,
+}
+
+#[derive(Serialize)]
+pub struct FieldRepairCaps {
+    pub chassis: f32,
+    pub engine: f32,
+    pub suspension: f32,
+}
+
 /// The playable modules in Codex order: launch modules first.
 fn modules() -> [&'static dyn GameModule; 7] {
     [
@@ -293,6 +467,235 @@ fn surface(s: SurfaceType) -> CodexSurface {
     }
 }
 
+/// Samples `f` at `steps + 1` evenly spaced points from `from` to `to`, rounded to 4 decimals.
+fn sample(from: f32, to: f32, steps: usize, mut f: impl FnMut(f32) -> f32) -> Curve {
+    (0..=steps)
+        .map(|i| {
+            let x = from + (to - from) * i as f32 / steps as f32;
+            [round4(x), round4(f(x))]
+        })
+        .collect()
+}
+
+fn round4(x: f32) -> f32 {
+    (x * 10_000.0).round() / 10_000.0
+}
+
+const WHEEL_POSITIONS: [&str; 4] = ["FL", "FR", "RL", "RR"];
+
+fn platform(id: CarChoice, models: &[&'static RealCarModel]) -> CodexPlatform {
+    let cfg = models[0].to_car_config();
+    let (front, rear, half) = cfg.chassis.to_body_hull(cfg.cg_to_front, cfg.cg_to_rear);
+    let rear_tire = cfg.rear_axle.apply(&cfg.tire);
+    let mut modules: Vec<&'static str> = Vec::new();
+    for m in models {
+        if !modules.contains(&m.module_id) {
+            modules.push(m.module_id);
+        }
+    }
+    CodexPlatform {
+        id,
+        title: id.title(),
+        tag: id.tag(),
+        description: id.description(),
+        modules,
+        cars: models.iter().map(|m| m.id).collect(),
+        wheelbase_m: cfg.wheelbase,
+        track_width_m: cfg.track_width,
+        cg_to_front_m: cfg.cg_to_front,
+        cg_to_rear_m: cfg.cg_to_rear,
+        cg_height_m: cfg.cg_height,
+        total_length_m: cfg.chassis.total_length(cfg.wheelbase),
+        skeleton: cfg.chassis,
+        hull: CodexHull { front_extent_m: front, rear_extent_m: rear, half_width_m: half },
+        wheels: cfg
+            .wheels
+            .iter()
+            .zip(WHEEL_POSITIONS)
+            .map(|(w, position)| CodexWheel {
+                position,
+                radius_m: w.tire_radius,
+                width_m: w.tire_width,
+                inertia_kgm2: w.rotational_inertia,
+                compound: w.compound.id,
+                brake_share: w.brake_bias_factor,
+                drive_share: w.drive_torque_factor,
+            })
+            .collect(),
+        suspension: cfg.suspension,
+        front_differential: cfg.front_differential,
+        rear_differential: cfg.rear_differential,
+        engine_placement: cfg.engine_placement,
+        tire: CodexTireShape {
+            peak_slip_angle_deg: cfg.tire.peak_slip_angle_deg,
+            rear_peak_slip_angle_deg: rear_tire.peak_slip_angle_deg,
+            peak_slip_ratio: cfg.tire.peak_slip_ratio,
+            slide_grip: cfg.tire.slide_grip,
+            falloff: cfg.tire.falloff,
+            load_sensitivity: cfg.tire.load_sensitivity,
+            power_slide: cfg.tire.power_slide,
+            curve: sample(0.0, 4.0, 80, |s| normalized_grip_curve(s, &cfg.tire)),
+        },
+    }
+}
+
+/// Groups the exported cars by base preset, in `CarChoice::ALL` order.
+fn platforms(models: &[&'static RealCarModel]) -> Vec<CodexPlatform> {
+    CarChoice::ALL
+        .into_iter()
+        .filter_map(|id| {
+            let group: Vec<&'static RealCarModel> =
+                models.iter().copied().filter(|m| m.base_car_choice == id).collect();
+            (!group.is_empty()).then(|| platform(id, &group))
+        })
+        .collect()
+}
+
+fn suspension_archetypes(platforms: &[CodexPlatform]) -> Vec<CodexSuspensionArchetype> {
+    SuspensionArchetype::ALL
+        .into_iter()
+        .map(|a| CodexSuspensionArchetype {
+            id: a,
+            robustness_factor: a.robustness_factor(),
+            part_cost_multiplier: a.part_cost_multiplier(),
+            factory: SuspensionConfig::for_archetype(a),
+            platforms_front: platforms.iter().filter(|p| p.suspension.front.archetype == a).map(|p| p.id).collect(),
+            platforms_rear: platforms.iter().filter(|p| p.suspension.rear.archetype == a).map(|p| p.id).collect(),
+        })
+        .collect()
+}
+
+fn compounds(platforms: &[CodexPlatform]) -> Vec<CodexCompound> {
+    CompoundId::ALL
+        .into_iter()
+        .map(|id| {
+            let c = TireCompoundConfig::from_id(id);
+            let mut wheel = WheelAssembly::default();
+            wheel.config.compound = c;
+            CodexCompound {
+                id,
+                name: id.name(),
+                badge: id.badge_code(),
+                accent_rgba: id.accent_rgba(),
+                wear_rate: c.wear_rate,
+                optimal_temp_c: [c.optimal_temp_range.0, c.optimal_temp_range.1],
+                overheat_temp_c: c.overheat_temp,
+                affinity: SurfaceType::ALL
+                    .into_iter()
+                    .map(|surface| CodexAffinity { surface, multiplier: c.surface_affinity.get(surface) })
+                    .collect(),
+                thermal_curve: sample(0.0, 160.0, 32, |t| {
+                    wheel.temperature = t;
+                    wheel.thermal_grip_multiplier()
+                }),
+                platforms: platforms
+                    .iter()
+                    .filter(|p| p.wheels.iter().any(|w| w.compound == id))
+                    .map(|p| p.id)
+                    .collect(),
+            }
+        })
+        .collect()
+}
+
+fn engine_placements(platforms: &[CodexPlatform]) -> Vec<CodexEnginePlacement> {
+    EnginePlacement::ALL
+        .into_iter()
+        .map(|id| CodexEnginePlacement {
+            id,
+            repair_cost_multiplier: id.repair_cost_multiplier(),
+            platforms: platforms.iter().filter(|p| p.engine_placement == id).map(|p| p.id).collect(),
+        })
+        .collect()
+}
+
+fn damage_model() -> CodexDamageModel {
+    let mut car = Car::new(CarConfig::default());
+    let engine_power_curve = sample(0.0, 1.0, 40, |h| {
+        car.state.engine_health = h;
+        car.available_engine_power_ratio()
+    });
+    car.state.engine_health = 1.0;
+    let steering_pull_curve = sample(-1.0, 1.0, 40, |d| {
+        car.state.suspension_health = [(1.0 + d).min(1.0), (1.0 - d).min(1.0), 1.0, 1.0];
+        car.steering_pull_bias()
+    });
+    let mut wheel = WheelAssembly::default();
+    wheel.temperature = wheel.config.compound.optimal_temp_range.0;
+    let fresh = wheel.effective_friction(1.0);
+    let tire_wear_curve = sample(0.0, 1.0, 20, |w| {
+        wheel.wear = w;
+        wheel.effective_friction(1.0) / fresh
+    });
+
+    let mut invoice_examples = Vec::new();
+    for tier in 1..=5u32 {
+        let base_purse = ModuleCareerProgress::round_base_purse(tier);
+        for health in [0.5f32, 0.0] {
+            let (placement, archetype) = (EnginePlacement::FrontEngine, SuspensionArchetype::DoubleWishbone);
+            invoice_examples.push(CodexInvoiceExample {
+                tier,
+                base_purse,
+                health,
+                placement,
+                archetype,
+                // A race win (earned purse = base purse) with credits above the safety net limit.
+                invoice: ItemizedRepairInvoice::calculate(
+                    tier,
+                    base_purse,
+                    SAFETY_NET_CREDIT_LIMIT * 100,
+                    placement,
+                    archetype,
+                    archetype,
+                    health,
+                    health,
+                    [health; 4],
+                ),
+            });
+        }
+    }
+
+    CodexDamageModel {
+        id: "damage",
+        energy_deadzone_j: DAMAGE_ENERGY_DEADZONE_J,
+        chassis_capacity_j: CHASSIS_DAMAGE_CAPACITY_J,
+        engine_capacity_j: ENGINE_DAMAGE_CAPACITY_J,
+        suspension_capacity_j: SUSPENSION_DAMAGE_CAPACITY_J,
+        kerb_bottom_out_speed_mps: KERB_BOTTOM_OUT_SPEED_MPS,
+        kerb_bottom_out_capacity_j: KERB_BOTTOM_OUT_CAPACITY_J,
+        landing_speed_limit_mps: LANDING_SPEED_LIMIT_MPS,
+        landing_capacity_j: LANDING_CAPACITY_J,
+        pushrod_collapse_health: PUSHROD_COLLAPSE_HEALTH,
+        pushrod_collapse_drag_multiplier: PUSHROD_COLLAPSE_DRAG_MULTIPLIER,
+        zones: ImpactZone::ALL
+            .into_iter()
+            .map(|id| CodexImpactZone {
+                id,
+                weights: EnginePlacement::ALL
+                    .into_iter()
+                    .map(|placement| {
+                        let (chassis, engine, suspension) = id.damage_weights(placement);
+                        CodexDamageWeights { placement, chassis, engine, suspension }
+                    })
+                    .collect(),
+            })
+            .collect(),
+        engine_power_curve,
+        steering_pull_curve,
+        tire_wear_curve,
+        field_repair_caps: FieldRepairCaps {
+            chassis: FIELD_REPAIR_CHASSIS_CAP,
+            engine: FIELD_REPAIR_ENGINE_CAP,
+            suspension: FIELD_REPAIR_SUSPENSION_CAP,
+        },
+        pit_stop_repair_amount: race_kit::world::PIT_STOP_REPAIR_AMOUNT,
+        purse_cap_share: REPAIR_PURSE_CAP_SHARE,
+        safety_net_credit_limit: SAFETY_NET_CREDIT_LIMIT,
+        safety_net_health: SAFETY_NET_HEALTH,
+        invoice_examples,
+    }
+}
+
 fn to_json<T: Serialize>(value: &T) -> Result<String, String> {
     serde_json::to_string_pretty(value).map(|s| s + "\n").map_err(|e| e.to_string())
 }
@@ -307,13 +710,14 @@ pub fn export(scope: Scope, repo_root: &Path) -> Result<Vec<(&'static str, Strin
     // Group by module in Codex order; inside a module keep the game's own list order (stable sort).
     let module_rank = |id: &str| modules().iter().position(|m| m.id() == id).unwrap_or(usize::MAX);
 
-    let mut cars: Vec<CodexCar> = CLASSIC_ARCADE_CARS
+    let mut models: Vec<&'static RealCarModel> = CLASSIC_ARCADE_CARS
         .iter()
         .chain(ALL_REAL_CARS.iter())
         .filter(|c| scope.includes_module(c.module_id))
-        .map(|c| car(c, repo_root))
         .collect();
-    cars.sort_by_key(|c| module_rank(c.module));
+    models.sort_by_key(|c| module_rank(c.module_id));
+    let cars: Vec<CodexCar> = models.iter().map(|c| car(c, repo_root)).collect();
+    let platforms = platforms(&models);
 
     let mut circuits = Vec::new();
     for entry in catalog::circuits().iter().filter(|c| scope.includes_module(c.module)) {
@@ -342,5 +746,10 @@ pub fn export(scope: Scope, repo_root: &Path) -> Result<Vec<(&'static str, Strin
         ("cars.json", envelope(scope, cars)?),
         ("circuits.json", envelope(scope, circuits)?),
         ("surfaces.json", envelope(scope, surfaces)?),
+        ("suspension.json", envelope(scope, suspension_archetypes(&platforms))?),
+        ("tyres.json", envelope(scope, compounds(&platforms))?),
+        ("drivetrain.json", envelope(scope, engine_placements(&platforms))?),
+        ("damage.json", envelope(scope, vec![damage_model()])?),
+        ("chassis.json", envelope(scope, platforms)?),
     ])
 }

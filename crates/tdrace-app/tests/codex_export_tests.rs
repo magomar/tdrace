@@ -65,3 +65,63 @@ fn launch_scope_holds_only_launch_modules() {
     let modules = items(&files, "modules.json");
     assert_eq!(modules.len(), LAUNCH_MODULES.len());
 }
+
+/// The Codex shows chassis, wheels, suspension and drivetrain layout per base preset (`chassis.json`),
+/// so every car built on one preset must share them. Only mass, power, grip and aero vary per car.
+#[test]
+fn cars_on_one_base_preset_share_their_platform() {
+    let models: Vec<_> = CLASSIC_ARCADE_CARS.iter().chain(ALL_REAL_CARS.iter()).collect();
+    for first in &models {
+        let a = first.to_car_config();
+        for other in models.iter().filter(|m| m.base_car_choice == first.base_car_choice) {
+            let b = other.to_car_config();
+            let who = format!("{} vs {} ({:?})", first.id, other.id, first.base_car_choice);
+            assert_eq!(a.chassis, b.chassis, "chassis: {who}");
+            assert_eq!(a.suspension, b.suspension, "suspension: {who}");
+            assert_eq!(a.front_differential, b.front_differential, "front differential: {who}");
+            assert_eq!(a.rear_differential, b.rear_differential, "rear differential: {who}");
+            assert_eq!(a.engine_placement, b.engine_placement, "engine placement: {who}");
+            assert_eq!(
+                (a.wheelbase, a.track_width, a.cg_to_front, a.cg_to_rear, a.cg_height),
+                (b.wheelbase, b.track_width, b.cg_to_front, b.cg_to_rear, b.cg_height),
+                "geometry: {who}"
+            );
+            for (wa, wb) in a.wheels.iter().zip(b.wheels.iter()) {
+                assert_eq!(
+                    (wa.tire_radius, wa.tire_width, wa.rotational_inertia, wa.compound.id),
+                    (wb.tire_radius, wb.tire_width, wb.rotational_inertia, wb.compound.id),
+                    "wheels: {who}"
+                );
+            }
+            let (ta, tb) = (a.tire, b.tire);
+            assert_eq!(
+                (ta.peak_slip_angle_deg, ta.peak_slip_ratio, ta.slide_grip, ta.falloff, ta.load_sensitivity, ta.power_slide),
+                (tb.peak_slip_angle_deg, tb.peak_slip_ratio, tb.slide_grip, tb.falloff, tb.load_sensitivity, tb.power_slide),
+                "tire shape: {who}"
+            );
+            assert_eq!(a.rear_axle.peak_slip_scale, b.rear_axle.peak_slip_scale, "rear axle: {who}");
+        }
+    }
+}
+
+#[test]
+fn every_platform_part_points_at_an_exported_table_row() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let ids = |name: &str| -> Vec<Value> { items(&files, name).iter().map(|i| i["id"].clone()).collect() };
+    let (suspension, tyres, placements) = (ids("suspension.json"), ids("tyres.json"), ids("drivetrain.json"));
+    let car_ids = ids("cars.json");
+    let mut covered = 0;
+    for p in items(&files, "chassis.json") {
+        assert!(suspension.contains(&p["suspension"]["front"]["archetype"]), "{}", p["id"]);
+        assert!(suspension.contains(&p["suspension"]["rear"]["archetype"]), "{}", p["id"]);
+        assert!(placements.contains(&p["engine_placement"]), "{}", p["id"]);
+        for w in p["wheels"].as_array().unwrap() {
+            assert!(tyres.contains(&w["compound"]), "{}", p["id"]);
+        }
+        for car in p["cars"].as_array().unwrap() {
+            assert!(car_ids.contains(car), "{} lists unknown car {car}", p["id"]);
+            covered += 1;
+        }
+    }
+    assert_eq!(covered, car_ids.len(), "every car belongs to exactly one platform");
+}
