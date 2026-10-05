@@ -62,7 +62,7 @@ livery_idx = 0
 [[drivers]]
 id = "magnus_wolff"
 name = "Magnus Wolff"
-team = "Manthey Racing"
+team = "Eifel Performance Team"
 car_model_id = "gt_vandorn_stratus_t1"
 country = "NED"
 ai_character = "aggressive"
@@ -71,7 +71,7 @@ livery_idx = 1
 [[drivers]]
 id = "cedric_laval"
 name = "Cédric Laval"
-team = "BMW Team RMG"
+team = "BMR Eifel Racing"
 car_model_id = "gt_bmr_bavaria_t1"
 country = "MCO"
 ai_character = "smooth"
@@ -80,7 +80,7 @@ livery_idx = 2
 [[drivers]]
 id = "felix_navarro"
 name = "Félix Navarro"
-team = "Aston Martin Racing"
+team = "Albion Works Racing"
 car_model_id = "gt_albion_victor_t1"
 country = "ESP"
 ai_character = "tenacious"
@@ -89,7 +89,7 @@ livery_idx = 3
 [[drivers]]
 id = "sophia_becker"
 name = "Sophia Becker"
-team = "Manthey Racing"
+team = "Eifel Performance Team"
 car_model_id = "gt_vandorn_stratus_t1"
 country = "GER"
 ai_character = "calculating"
@@ -98,7 +98,7 @@ livery_idx = 4
 [[drivers]]
 id = "liam_vance"
 name = "Liam Vance"
-team = "BMW Team RMG"
+team = "BMR Eifel Racing"
 car_model_id = "gt_bmr_bavaria_t1"
 country = "GBR"
 ai_character = "strategic"
@@ -107,7 +107,7 @@ livery_idx = 5
 [[drivers]]
 id = "gideon_palmer"
 name = "Gideon Palmer"
-team = "Aston Martin Racing"
+team = "Albion Works Racing"
 car_model_id = "gt_albion_victor_t1"
 country = "GBR"
 ai_character = "balanced"

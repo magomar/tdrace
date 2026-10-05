@@ -56,7 +56,7 @@ livery_idx = 0
 [[drivers]]
 id = "diego_morales"
 name = "Diego Morales"
-team = "Speedcar Factory Team"
+team = "Iberian Cross Factory Team"
 car_model_id = "autocross_iberian_relampago_t2"
 country = "ESP"
 ai_character = "fast"
@@ -65,7 +65,7 @@ livery_idx = 1
 [[drivers]]
 id = "ivan_pina"
 name = "Iván Piña"
-team = "Semog Racing Team"
+team = "Lusitania Cross Team"
 car_model_id = "autocross_lusitania_bravo_t2"
 country = "ESP"
 ai_character = "aggressive"
@@ -74,7 +74,7 @@ livery_idx = 2
 [[drivers]]
 id = "kobe_pauwels"
 name = "Kobe Pauwels"
-team = "LifeLive Senior Team"
+team = "Ardennes Cross Senior"
 car_model_id = "autocross_ardennes_pro_t2"
 country = "BEL"
 ai_character = "fast"
@@ -83,7 +83,7 @@ livery_idx = 3
 [[drivers]]
 id = "simone_firenze"
 name = "Simone Firenze"
-team = "Semog Italia"
+team = "Lusitania Cross Team"
 car_model_id = "autocross_lusitania_bravo_t2"
 country = "IT"
 ai_character = "balanced"
@@ -110,7 +110,7 @@ livery_idx = 6
 [[drivers]]
 id = "rui_nunes"
 name = "Rui Nunes"
-team = "Semog Portugal"
+team = "Lusitania Cross Team"
 car_model_id = "autocross_lusitania_bravo_t2"
 country = "PT"
 ai_character = "cautious"

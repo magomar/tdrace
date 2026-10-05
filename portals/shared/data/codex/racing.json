@@ -791,7 +791,7 @@
             {
               "id": "magnus_wolff",
               "name": "Magnus Wolff",
-              "team": "Manthey Racing",
+              "team": "Eifel Performance Team",
               "is_player": false,
               "car_model_id": "gt_vandorn_stratus_t1",
               "country": "NED",
@@ -801,7 +801,7 @@
             {
               "id": "cedric_laval",
               "name": "Cédric Laval",
-              "team": "BMW Team RMG",
+              "team": "BMR Eifel Racing",
               "is_player": false,
               "car_model_id": "gt_bmr_bavaria_t1",
               "country": "MCO",
@@ -811,7 +811,7 @@
             {
               "id": "felix_navarro",
               "name": "Félix Navarro",
-              "team": "Aston Martin Racing",
+              "team": "Albion Works Racing",
               "is_player": false,
               "car_model_id": "gt_albion_victor_t1",
               "country": "ESP",
@@ -821,7 +821,7 @@
             {
               "id": "sophia_becker",
               "name": "Sophia Becker",
-              "team": "Manthey Racing",
+              "team": "Eifel Performance Team",
               "is_player": false,
               "car_model_id": "gt_vandorn_stratus_t1",
               "country": "GER",
@@ -831,7 +831,7 @@
             {
               "id": "liam_vance",
               "name": "Liam Vance",
-              "team": "BMW Team RMG",
+              "team": "BMR Eifel Racing",
               "is_player": false,
               "car_model_id": "gt_bmr_bavaria_t1",
               "country": "GBR",
@@ -841,7 +841,7 @@
             {
               "id": "gideon_palmer",
               "name": "Gideon Palmer",
-              "team": "Aston Martin Racing",
+              "team": "Albion Works Racing",
               "is_player": false,
               "car_model_id": "gt_albion_victor_t1",
               "country": "GBR",
@@ -920,7 +920,7 @@
             {
               "id": "player",
               "name": "Player",
-              "team": "Manthey EMA",
+              "team": "Eifel Performance Team",
               "is_player": true,
               "car_model_id": "gt_vandorn_arrowhead_t2",
               "country": "ESP",
@@ -930,7 +930,7 @@
             {
               "id": "alessandro_rossi",
               "name": "Alessandro Rossi",
-              "team": "Scuderia AF Corse",
+              "team": "Valente Corse Team",
               "is_player": false,
               "car_model_id": "gt_valente_corsa_t2",
               "country": "ITA",
@@ -940,7 +940,7 @@
             {
               "id": "lukas_adler",
               "name": "Lukas Adler",
-              "team": "Akkodis ASP Team",
+              "team": "Provence GT Works",
               "is_player": false,
               "car_model_id": "gt_silberstern_sturmvogel_t2",
               "country": "AUT",
@@ -950,7 +950,7 @@
             {
               "id": "dieter_van_damme",
               "name": "Dieter Van Damme",
-              "team": "Team WRT",
+              "team": "Belgian Sprint Challenge",
               "is_player": false,
               "car_model_id": "gt_vortek_quattro_t2",
               "country": "BEL",
@@ -960,7 +960,7 @@
             {
               "id": "klaus_eicher",
               "name": "Klaus Eicher",
-              "team": "Manthey EMA",
+              "team": "Eifel Performance Team",
               "is_player": false,
               "car_model_id": "gt_vandorn_arrowhead_t2",
               "country": "FRA",
@@ -970,7 +970,7 @@
             {
               "id": "alberto_fabbri",
               "name": "Alberto Fabbri",
-              "team": "Scuderia AF Corse",
+              "team": "Valente Corse Team",
               "is_player": false,
               "car_model_id": "gt_valente_corsa_t2",
               "country": "ITA",
@@ -980,7 +980,7 @@
             {
               "id": "marc_eichmann",
               "name": "Marc Eichmann",
-              "team": "Akkodis ASP Team",
+              "team": "Provence GT Works",
               "is_player": false,
               "car_model_id": "gt_silberstern_sturmvogel_t2",
               "country": "GER",
@@ -990,7 +990,7 @@
             {
               "id": "cedric_willems",
               "name": "Cédric Willems",
-              "team": "Team WRT",
+              "team": "Belgian Sprint Challenge",
               "is_player": false,
               "car_model_id": "gt_vortek_quattro_t2",
               "country": "BEL",
@@ -1071,7 +1071,7 @@
             {
               "id": "player",
               "name": "Player",
-              "team": "Porsche Motorsport GT",
+              "team": "Vandorn Motorsport GT",
               "is_player": true,
               "car_model_id": "gt_vandorn_arrowhead_t3",
               "country": "ESP",
@@ -1081,7 +1081,7 @@
             {
               "id": "daniel_bennett",
               "name": "Daniel Bennett",
-              "team": "Brabham Motorsport",
+              "team": "Southern Cross Works",
               "is_player": false,
               "car_model_id": "gt_southern_cross_62_t3",
               "country": "AUS",
@@ -1091,7 +1091,7 @@
             {
               "id": "matteo_boni",
               "name": "Matteo Boni",
-              "team": "Maserati Corse",
+              "team": "Aquila Factory Team",
               "is_player": false,
               "car_model_id": "gt_aquila_strale_t3",
               "country": "ITA",
@@ -1101,7 +1101,7 @@
             {
               "id": "maximilian_winter",
               "name": "Maximilian Winter",
-              "team": "Audi Sport Customer Racing",
+              "team": "Vortek Customer Racing",
               "is_player": false,
               "car_model_id": "gt_vortek_clubsport_t3",
               "country": "GER",
@@ -1111,7 +1111,7 @@
             {
               "id": "jurgen_bergmann",
               "name": "Jürgen Bergmann",
-              "team": "Porsche Motorsport GT",
+              "team": "Vandorn Motorsport GT",
               "is_player": false,
               "car_model_id": "gt_vandorn_arrowhead_t3",
               "country": "GER",
@@ -1121,7 +1121,7 @@
             {
               "id": "liam_york",
               "name": "Liam York",
-              "team": "Brabham Motorsport",
+              "team": "Southern Cross Works",
               "is_player": false,
               "car_model_id": "gt_southern_cross_62_t3",
               "country": "AUS",
@@ -1131,7 +1131,7 @@
             {
               "id": "alberto_bellini",
               "name": "Alberto Bellini",
-              "team": "Maserati Corse",
+              "team": "Aquila Factory Team",
               "is_player": false,
               "car_model_id": "gt_aquila_strale_t3",
               "country": "ITA",
@@ -1141,7 +1141,7 @@
             {
               "id": "franz_strauss",
               "name": "Franz Strauss",
-              "team": "Audi Sport Customer Racing",
+              "team": "Vortek Customer Racing",
               "is_player": false,
               "car_model_id": "gt_vortek_clubsport_t3",
               "country": "GER",
@@ -1238,7 +1238,7 @@
             {
               "id": "jari_lehtinen",
               "name": "Jari Lehtinen",
-              "team": "Gulf Team Davidoff McLaren",
+              "team": "Hyperion Heritage Team",
               "is_player": false,
               "car_model_id": "gt_hyperion_velocity_t4",
               "country": "FIN",
@@ -1248,7 +1248,7 @@
             {
               "id": "bernhard_schneider",
               "name": "Bernhard Schneider",
-              "team": "AMG-Mercedes Warsteiner",
+              "team": "Silberstern Classic Racing",
               "is_player": false,
               "car_model_id": "gt_silberstern_silberpfeil_t4",
               "country": "GER",
@@ -1258,7 +1258,7 @@
             {
               "id": "aoi_suzuki",
               "name": "Aoi Suzuki",
-              "team": "Nissan Motorsport NISMO",
+              "team": "Katana Works NISMO",
               "is_player": false,
               "car_model_id": "gt_katana_shogun_t4",
               "country": "JPN",
@@ -1278,7 +1278,7 @@
             {
               "id": "sean_somerset",
               "name": "Sean Somerset",
-              "team": "Gulf Team Davidoff McLaren",
+              "team": "Hyperion Heritage Team",
               "is_player": false,
               "car_model_id": "gt_hyperion_velocity_t4",
               "country": "GBR",
@@ -1288,7 +1288,7 @@
             {
               "id": "kurt_lindner",
               "name": "Kurt Lindner",
-              "team": "AMG-Mercedes Warsteiner",
+              "team": "Silberstern Classic Racing",
               "is_player": false,
               "car_model_id": "gt_silberstern_silberpfeil_t4",
               "country": "GER",
@@ -1298,7 +1298,7 @@
             {
               "id": "keisuke_hoshino",
               "name": "Keisuke Hoshino",
-              "team": "Nissan Motorsport NISMO",
+              "team": "Katana Works NISMO",
               "is_player": false,
               "car_model_id": "gt_katana_shogun_t4",
               "country": "JPN",
@@ -1397,7 +1397,7 @@
             {
               "id": "player",
               "name": "Player",
-              "team": "Ferrari AF Corse",
+              "team": "Valente Corse Team",
               "is_player": true,
               "car_model_id": "gt_valente_imperatore_t5",
               "country": "ESP",
@@ -1407,7 +1407,7 @@
             {
               "id": "klaus_eicher",
               "name": "Klaus Eicher",
-              "team": "Porsche Penske Motorsport",
+              "team": "Vandorn Works Racing",
               "is_player": false,
               "car_model_id": "gt_vandorn_kronos_t5",
               "country": "FRA",
@@ -1427,7 +1427,7 @@
             {
               "id": "sylvain_boucher",
               "name": "Sylvain Boucher",
-              "team": "Cadillac Racing Chip Ganassi",
+              "team": "Crestline Endurance Team",
               "is_player": false,
               "car_model_id": "gt_crestline_sovereign_t5",
               "country": "FRA",
@@ -1437,7 +1437,7 @@
             {
               "id": "adriano_ponte",
               "name": "Adriano Ponte",
-              "team": "Ferrari AF Corse",
+              "team": "Valente Corse Team",
               "is_player": false,
               "car_model_id": "gt_valente_imperatore_t5",
               "country": "ITA",
@@ -1447,7 +1447,7 @@
             {
               "id": "andreas_lorentzen",
               "name": "Andreas Lorentzen",
-              "team": "Porsche Penske Motorsport",
+              "team": "Vandorn Works Racing",
               "is_player": false,
               "car_model_id": "gt_vandorn_kronos_t5",
               "country": "GER",
@@ -1467,7 +1467,7 @@
             {
               "id": "ethan_brooks",
               "name": "Ethan Brooks",
-              "team": "Cadillac Racing Chip Ganassi",
+              "team": "Crestline Endurance Team",
               "is_player": false,
               "car_model_id": "gt_crestline_sovereign_t5",
               "country": "NZL",
@@ -1534,7 +1534,7 @@
             {
               "id": "colt_reynolds",
               "name": "Colt 'The Ironclad' Reynolds",
-              "team": "Richard Childress Racing",
+              "team": "Heartland Competition",
               "is_player": false,
               "car_model_id": "nascar_crossbow_montego_t1",
               "country": "USA",
@@ -1544,7 +1544,7 @@
             {
               "id": "clayton_reed",
               "name": "Clayton 'Viper' Reed",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t1",
               "country": "USA",
@@ -1554,7 +1554,7 @@
             {
               "id": "rex_montgomery",
               "name": "Rex 'The Crown' Montgomery",
-              "team": "Petty Enterprises",
+              "team": "Highland Blue Racing",
               "is_player": false,
               "car_model_id": "nascar_rampart_arrow_t1",
               "country": "USA",
@@ -1564,7 +1564,7 @@
             {
               "id": "brant_harlan",
               "name": "Brant 'Thunder' Harlan",
-              "team": "Joe Gibbs Racing",
+              "team": "Crestline Speedworks",
               "is_player": false,
               "car_model_id": "nascar_crossbow_montego_t1",
               "country": "USA",
@@ -1574,7 +1574,7 @@
             {
               "id": "judson_vance",
               "name": "Judson 'Gold Rush' Vance",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t1",
               "country": "USA",
@@ -1584,7 +1584,7 @@
             {
               "id": "tanner_cobb",
               "name": "Tanner 'Hot Lap' Cobb",
-              "team": "Stewart-Haas Racing",
+              "team": "Summit Ridge Motorsport",
               "is_player": false,
               "car_model_id": "nascar_rampart_arrow_t1",
               "country": "USA",
@@ -1673,7 +1673,7 @@
             {
               "id": "colt_reynolds",
               "name": "Colt 'The Ironclad' Reynolds",
-              "team": "Richard Childress Racing",
+              "team": "Heartland Competition",
               "is_player": false,
               "car_model_id": "nascar_crossbow_saber_t2",
               "country": "USA",
@@ -1683,7 +1683,7 @@
             {
               "id": "clayton_reed",
               "name": "Clayton 'Viper' Reed",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t2",
               "country": "USA",
@@ -1693,7 +1693,7 @@
             {
               "id": "rex_montgomery",
               "name": "Rex 'The Crown' Montgomery",
-              "team": "Petty Enterprises",
+              "team": "Highland Blue Racing",
               "is_player": false,
               "car_model_id": "nascar_heartland_spec_t2",
               "country": "USA",
@@ -1703,7 +1703,7 @@
             {
               "id": "brant_harlan",
               "name": "Brant 'Thunder' Harlan",
-              "team": "Joe Gibbs Racing",
+              "team": "Crestline Speedworks",
               "is_player": false,
               "car_model_id": "nascar_crossbow_saber_t2",
               "country": "USA",
@@ -1713,7 +1713,7 @@
             {
               "id": "judson_vance",
               "name": "Judson 'Gold Rush' Vance",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t2",
               "country": "USA",
@@ -1723,7 +1723,7 @@
             {
               "id": "tanner_cobb",
               "name": "Tanner 'Hot Lap' Cobb",
-              "team": "Stewart-Haas Racing",
+              "team": "Summit Ridge Motorsport",
               "is_player": false,
               "car_model_id": "nascar_heartland_spec_t2",
               "country": "USA",
@@ -1824,7 +1824,7 @@
             {
               "id": "colt_reynolds",
               "name": "Colt 'The Ironclad' Reynolds",
-              "team": "Richard Childress Racing",
+              "team": "Heartland Competition",
               "is_player": false,
               "car_model_id": "nascar_crossbow_predator_t3",
               "country": "USA",
@@ -1834,7 +1834,7 @@
             {
               "id": "clayton_reed",
               "name": "Clayton 'Viper' Reed",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_reactor_t3",
               "country": "USA",
@@ -1844,7 +1844,7 @@
             {
               "id": "rex_montgomery",
               "name": "Rex 'The Crown' Montgomery",
-              "team": "Petty Enterprises",
+              "team": "Highland Blue Racing",
               "is_player": false,
               "car_model_id": "nascar_yamato_century_t3",
               "country": "USA",
@@ -1854,7 +1854,7 @@
             {
               "id": "brant_harlan",
               "name": "Brant 'Thunder' Harlan",
-              "team": "Joe Gibbs Racing",
+              "team": "Crestline Speedworks",
               "is_player": false,
               "car_model_id": "nascar_yamato_century_t3",
               "country": "USA",
@@ -1864,7 +1864,7 @@
             {
               "id": "judson_vance",
               "name": "Judson 'Gold Rush' Vance",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_crossbow_predator_t3",
               "country": "USA",
@@ -1874,7 +1874,7 @@
             {
               "id": "tanner_cobb",
               "name": "Tanner 'Hot Lap' Cobb",
-              "team": "Stewart-Haas Racing",
+              "team": "Summit Ridge Motorsport",
               "is_player": false,
               "car_model_id": "nascar_forge_reactor_t3",
               "country": "USA",
@@ -1981,7 +1981,7 @@
             {
               "id": "colt_reynolds",
               "name": "Colt 'The Ironclad' Reynolds",
-              "team": "Richard Childress Racing",
+              "team": "Heartland Competition",
               "is_player": false,
               "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
@@ -1991,7 +1991,7 @@
             {
               "id": "clayton_reed",
               "name": "Clayton 'Viper' Reed",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
@@ -2001,7 +2001,7 @@
             {
               "id": "rex_montgomery",
               "name": "Rex 'The Crown' Montgomery",
-              "team": "Petty Enterprises",
+              "team": "Highland Blue Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_ironclad_t4",
               "country": "USA",
@@ -2011,7 +2011,7 @@
             {
               "id": "brant_harlan",
               "name": "Brant 'Thunder' Harlan",
-              "team": "Joe Gibbs Racing",
+              "team": "Crestline Speedworks",
               "is_player": false,
               "car_model_id": "nascar_yamato_taiga_t4",
               "country": "USA",
@@ -2021,7 +2021,7 @@
             {
               "id": "judson_vance",
               "name": "Judson 'Gold Rush' Vance",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_crossbow_sierra_t4",
               "country": "USA",
@@ -2031,7 +2031,7 @@
             {
               "id": "tanner_cobb",
               "name": "Tanner 'Hot Lap' Cobb",
-              "team": "Stewart-Haas Racing",
+              "team": "Summit Ridge Motorsport",
               "is_player": false,
               "car_model_id": "nascar_forge_ironclad_t4",
               "country": "USA",
@@ -2150,7 +2150,7 @@
             {
               "id": "colt_reynolds",
               "name": "Colt 'The Ironclad' Reynolds",
-              "team": "Richard Childress Racing",
+              "team": "Heartland Competition",
               "is_player": false,
               "car_model_id": "nascar_crossbow_manta_t5",
               "country": "USA",
@@ -2160,7 +2160,7 @@
             {
               "id": "clayton_reed",
               "name": "Clayton 'Viper' Reed",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t5",
               "country": "USA",
@@ -2170,7 +2170,7 @@
             {
               "id": "rex_montgomery",
               "name": "Rex 'The Crown' Montgomery",
-              "team": "Petty Enterprises",
+              "team": "Highland Blue Racing",
               "is_player": false,
               "car_model_id": "nascar_rampart_enforcer_t5",
               "country": "USA",
@@ -2180,7 +2180,7 @@
             {
               "id": "brant_harlan",
               "name": "Brant 'Thunder' Harlan",
-              "team": "Joe Gibbs Racing",
+              "team": "Crestline Speedworks",
               "is_player": false,
               "car_model_id": "nascar_crossbow_manta_t5",
               "country": "USA",
@@ -2190,7 +2190,7 @@
             {
               "id": "judson_vance",
               "name": "Judson 'Gold Rush' Vance",
-              "team": "Hendrick Motorsports",
+              "team": "Apex Vanguard Racing",
               "is_player": false,
               "car_model_id": "nascar_forge_stallion_t5",
               "country": "USA",
@@ -2200,7 +2200,7 @@
             {
               "id": "tanner_cobb",
               "name": "Tanner 'Hot Lap' Cobb",
-              "team": "Stewart-Haas Racing",
+              "team": "Summit Ridge Motorsport",
               "is_player": false,
               "car_model_id": "nascar_rampart_enforcer_t5",
               "country": "USA",
@@ -2277,7 +2277,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "KMS Volkswagen",
+              "team": "Volkskraft Customer Rally",
               "is_player": false,
               "car_model_id": "rally_gallia_200_t1",
               "country": "SWE",
@@ -2287,7 +2287,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "EKS Audi Sport",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_forge_spark_t1",
               "country": "SWE",
@@ -2297,7 +2297,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_rouen_dauphine_t1",
               "country": "SWE",
@@ -2307,7 +2307,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "PSRX Volkswagen Sweden",
+              "team": "Volkskraft Scandinavian Rally",
               "is_player": false,
               "car_model_id": "rally_forge_spark_t1",
               "country": "NOR",
@@ -2317,7 +2317,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_rouen_dauphine_t1",
               "country": "SWE",
@@ -2327,7 +2327,7 @@
             {
               "id": "niko_salminen",
               "name": "Niko Salminen",
-              "team": "GRX Taneco",
+              "team": "Taiga RX Performance",
               "is_player": false,
               "car_model_id": "rally_gallia_200_t1",
               "country": "FIN",
@@ -2337,7 +2337,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Monster Energy RX",
+              "team": "Apex Volt RX Team",
               "is_player": false,
               "car_model_id": "rally_forge_spark_t1",
               "country": "NOR",
@@ -2410,7 +2410,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "Vance RX Team",
+              "team": "Highland RX Team",
               "is_player": false,
               "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "SWE",
@@ -2420,7 +2420,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "Storm EKS",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_aerotech_rx_lites_t2",
               "country": "SWE",
@@ -2430,7 +2430,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansenfield RX",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_volttech_electrocross_t2",
               "country": "SWE",
@@ -2440,7 +2440,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansenfield Junior",
+              "team": "Nordic Storm Junior",
               "is_player": false,
               "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "SWE",
@@ -2460,7 +2460,7 @@
             {
               "id": "axel_markus",
               "name": "Axel Markus",
-              "team": "Mark RX",
+              "team": "Baltic Cross Works",
               "is_player": false,
               "car_model_id": "rally_volttech_electrocross_t2",
               "country": "SWE",
@@ -2470,7 +2470,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Bakkerud Blue RX",
+              "team": "Fjord Blue RX Team",
               "is_player": false,
               "car_model_id": "rally_nordic_rx_lites_t2",
               "country": "NOR",
@@ -2549,7 +2549,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "KMS Volkswagen",
+              "team": "Volkskraft Customer Rally",
               "is_player": false,
               "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "SWE",
@@ -2559,7 +2559,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "EKS Audi Sport",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_vortek_quattro_rx_t3",
               "country": "SWE",
@@ -2569,7 +2569,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_hanguk_apex_t3",
               "country": "SWE",
@@ -2579,7 +2579,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "PSRX Volkswagen Sweden",
+              "team": "Volkskraft Scandinavian Rally",
               "is_player": false,
               "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "NOR",
@@ -2589,7 +2589,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_hanguk_apex_t3",
               "country": "SWE",
@@ -2599,7 +2599,7 @@
             {
               "id": "niko_salminen",
               "name": "Niko Salminen",
-              "team": "GRX Taneco",
+              "team": "Taiga RX Performance",
               "is_player": false,
               "car_model_id": "rally_hanguk_apex_t3",
               "country": "FIN",
@@ -2609,7 +2609,7 @@
             {
               "id": "axel_markus",
               "name": "Axel Markus",
-              "team": "Marklund Motorsport",
+              "team": "Baltic Cross Works",
               "is_player": false,
               "car_model_id": "rally_volkskraft_strassen_t3",
               "country": "SWE",
@@ -2694,7 +2694,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansenfield RX",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
@@ -2704,7 +2704,7 @@
             {
               "id": "kyle_blaze",
               "name": "Kyle Blaze",
-              "team": "Hoonigan Racing Division",
+              "team": "Outlaw Gymkhana Squad",
               "is_player": false,
               "car_model_id": "rally_forge_comet_t4",
               "country": "USA",
@@ -2714,7 +2714,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "Subaru Motorsports USA",
+              "team": "Sixstar American Rally",
               "is_player": false,
               "car_model_id": "rally_sixstar_vortex_t4",
               "country": "NOR",
@@ -2724,7 +2724,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "Vance RX Team",
+              "team": "Highland RX Team",
               "is_player": false,
               "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
@@ -2734,7 +2734,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Hoonigan Racing Division",
+              "team": "Outlaw Gymkhana Squad",
               "is_player": false,
               "car_model_id": "rally_forge_comet_t4",
               "country": "NOR",
@@ -2744,7 +2744,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansenfield RX",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_gallia_lyon_t4",
               "country": "SWE",
@@ -2754,7 +2754,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "Storm EKS",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_sixstar_vortex_t4",
               "country": "SWE",
@@ -2851,7 +2851,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "KMS Volkswagen",
+              "team": "Volkskraft Customer Rally",
               "is_player": false,
               "car_model_id": "rally_volkskraft_electro_t5",
               "country": "SWE",
@@ -2861,7 +2861,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "EKS Audi Sport",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_torino_integrale_e_t5",
               "country": "SWE",
@@ -2871,7 +2871,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_gallia_volt_t5",
               "country": "SWE",
@@ -2881,7 +2881,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "PSRX Volkswagen Sweden",
+              "team": "Volkskraft Scandinavian Rally",
               "is_player": false,
               "car_model_id": "rally_volkskraft_electro_t5",
               "country": "NOR",
@@ -2891,7 +2891,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_gallia_volt_t5",
               "country": "SWE",
@@ -2901,7 +2901,7 @@
             {
               "id": "niko_salminen",
               "name": "Niko Salminen",
-              "team": "GRX Taneco",
+              "team": "Taiga RX Performance",
               "is_player": false,
               "car_model_id": "rally_torino_integrale_e_t5",
               "country": "FIN",
@@ -2911,7 +2911,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Monster Energy RX",
+              "team": "Apex Volt RX Team",
               "is_player": false,
               "car_model_id": "rally_torino_integrale_e_t5",
               "country": "NOR",
@@ -3020,7 +3020,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "KMS Volkswagen",
+              "team": "Volkskraft Customer Rally",
               "is_player": false,
               "car_model_id": "rally_nordic_valkyrie_t6",
               "country": "SWE",
@@ -3030,7 +3030,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "EKS Audi Sport",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_rampart_wasp_t6",
               "country": "SWE",
@@ -3040,7 +3040,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_green_mountain_titan_t6",
               "country": "SWE",
@@ -3050,7 +3050,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "PSRX Volkswagen Sweden",
+              "team": "Volkskraft Scandinavian Rally",
               "is_player": false,
               "car_model_id": "rally_rampart_wasp_t6",
               "country": "NOR",
@@ -3060,7 +3060,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_green_mountain_titan_t6",
               "country": "SWE",
@@ -3070,7 +3070,7 @@
             {
               "id": "niko_salminen",
               "name": "Niko Salminen",
-              "team": "GRX Taneco",
+              "team": "Taiga RX Performance",
               "is_player": false,
               "car_model_id": "rally_nordic_valkyrie_t6",
               "country": "FIN",
@@ -3080,7 +3080,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Monster Energy RX",
+              "team": "Apex Volt RX Team",
               "is_player": false,
               "car_model_id": "rally_green_mountain_titan_t6",
               "country": "NOR",
@@ -3171,7 +3171,7 @@
             {
               "id": "jonas_lindqvist",
               "name": "Jonas Lindqvist",
-              "team": "KMS Volkswagen",
+              "team": "Volkskraft Customer Rally",
               "is_player": false,
               "car_model_id": "rally_vortek_turbo_quattro_t7",
               "country": "SWE",
@@ -3181,7 +3181,7 @@
             {
               "id": "mikael_stenmark",
               "name": "Mikael Stenmark",
-              "team": "EKS Audi Sport",
+              "team": "Vortek Factory RX",
               "is_player": false,
               "car_model_id": "rally_gallia_corsica_t7",
               "country": "SWE",
@@ -3191,7 +3191,7 @@
             {
               "id": "torsten_holmgren",
               "name": "Torsten Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_torino_stradale_t7",
               "country": "SWE",
@@ -3201,7 +3201,7 @@
             {
               "id": "per_sundberg",
               "name": "Per Sundberg",
-              "team": "PSRX Volkswagen Sweden",
+              "team": "Volkskraft Scandinavian Rally",
               "is_player": false,
               "car_model_id": "rally_vortek_turbo_quattro_t7",
               "country": "NOR",
@@ -3211,7 +3211,7 @@
             {
               "id": "kasper_holmgren",
               "name": "Kasper Holmgren",
-              "team": "Hansen Motorsport",
+              "team": "Nordic Storm Motorsport",
               "is_player": false,
               "car_model_id": "rally_torino_stradale_t7",
               "country": "SWE",
@@ -3221,7 +3221,7 @@
             {
               "id": "niko_salminen",
               "name": "Niko Salminen",
-              "team": "GRX Taneco",
+              "team": "Taiga RX Performance",
               "is_player": false,
               "car_model_id": "rally_gallia_corsica_t7",
               "country": "FIN",
@@ -3231,7 +3231,7 @@
             {
               "id": "anders_brekke",
               "name": "Anders Brekke",
-              "team": "Monster Energy RX",
+              "team": "Apex Volt RX Team",
               "is_player": false,
               "car_model_id": "rally_gallia_corsica_t7",
               "country": "NOR",
@@ -3298,7 +3298,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_verde_sprout_t1",
               "country": "ITA",
@@ -3308,7 +3308,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_blackline_cadet_t1",
               "country": "GBR",
@@ -3318,7 +3318,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_junior_t1",
               "country": "ITA",
@@ -3328,7 +3328,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_verde_sprout_t1",
               "country": "SWE",
@@ -3338,7 +3338,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_rosso_junior_t1",
               "country": "FIN",
@@ -3348,7 +3348,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_blackline_cadet_t1",
               "country": "FRA",
@@ -3358,7 +3358,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_verde_sprout_t1",
               "country": "BRA",
@@ -3431,7 +3431,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_verde_sprint_t2",
               "country": "ITA",
@@ -3441,7 +3441,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_blackline_obsidian_t2",
               "country": "GBR",
@@ -3451,7 +3451,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_veloce_t2",
               "country": "ITA",
@@ -3461,7 +3461,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_verde_sprint_t2",
               "country": "SWE",
@@ -3471,7 +3471,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_blackline_obsidian_t2",
               "country": "FIN",
@@ -3481,7 +3481,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_veloce_t2",
               "country": "FRA",
@@ -3491,7 +3491,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_verde_sprint_t2",
               "country": "BRA",
@@ -3570,7 +3570,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_verde_apex_t3",
               "country": "ITA",
@@ -3580,7 +3580,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_blackline_phantom_t3",
               "country": "GBR",
@@ -3590,7 +3590,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_modena_t3",
               "country": "ITA",
@@ -3600,7 +3600,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_verde_apex_t3",
               "country": "SWE",
@@ -3610,7 +3610,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_rosso_modena_t3",
               "country": "FIN",
@@ -3620,7 +3620,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_blackline_phantom_t3",
               "country": "FRA",
@@ -3630,7 +3630,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_verde_apex_t3",
               "country": "BRA",
@@ -3715,7 +3715,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_verde_pro_t4",
               "country": "ITA",
@@ -3725,7 +3725,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_blackline_renegade_t4",
               "country": "GBR",
@@ -3735,7 +3735,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_corsa_t4",
               "country": "ITA",
@@ -3745,7 +3745,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_verde_pro_t4",
               "country": "SWE",
@@ -3755,7 +3755,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_blackline_renegade_t4",
               "country": "FIN",
@@ -3765,7 +3765,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_rosso_corsa_t4",
               "country": "FRA",
@@ -3775,7 +3775,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_verde_pro_t4",
               "country": "BRA",
@@ -3866,7 +3866,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_highland_hawk_t5",
               "country": "ITA",
@@ -3876,7 +3876,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_moravia_arrow_t5",
               "country": "GBR",
@@ -3886,7 +3886,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_vanguard_spyder_t5",
               "country": "ITA",
@@ -3896,7 +3896,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_highland_hawk_t5",
               "country": "SWE",
@@ -3906,7 +3906,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_moravia_arrow_t5",
               "country": "FIN",
@@ -3916,7 +3916,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_vanguard_spyder_t5",
               "country": "FRA",
@@ -3926,7 +3926,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_highland_hawk_t5",
               "country": "BRA",
@@ -4023,7 +4023,7 @@
             {
               "id": "marco_armani",
               "name": "Marco Armani",
-              "team": "Tony Kart Racing",
+              "team": "Verde Factory Karting",
               "is_player": false,
               "car_model_id": "kart_highland_eagle_t6",
               "country": "ITA",
@@ -4033,7 +4033,7 @@
             {
               "id": "lucas_vance",
               "name": "Lucas Vance",
-              "team": "CRG Factory Team",
+              "team": "Blackline Factory Team",
               "is_player": false,
               "car_model_id": "kart_moravia_falcon_t6",
               "country": "GBR",
@@ -4043,7 +4043,7 @@
             {
               "id": "alex_rossi",
               "name": "Alex Rossi",
-              "team": "Birel ART",
+              "team": "Rosso Factory Karting",
               "is_player": false,
               "car_model_id": "kart_venom_cobra_t6",
               "country": "ITA",
@@ -4053,7 +4053,7 @@
             {
               "id": "sofia_lind",
               "name": "Sofia Lind",
-              "team": "Kosmic Racing",
+              "team": "Starlight Kart Team",
               "is_player": false,
               "car_model_id": "kart_highland_eagle_t6",
               "country": "SWE",
@@ -4063,7 +4063,7 @@
             {
               "id": "finn_korhonen",
               "name": "Finn Korhonen",
-              "team": "Sodi Kart",
+              "team": "Gallic Kart Racing",
               "is_player": false,
               "car_model_id": "kart_moravia_falcon_t6",
               "country": "FIN",
@@ -4073,7 +4073,7 @@
             {
               "id": "leo_dupont",
               "name": "Leo Dupont",
-              "team": "Energy Corse",
+              "team": "Veloce Karting",
               "is_player": false,
               "car_model_id": "kart_venom_cobra_t6",
               "country": "FRA",
@@ -4083,7 +4083,7 @@
             {
               "id": "mateo_silva",
               "name": "Mateo Silva",
-              "team": "Parolin Motorsport",
+              "team": "Veneto Kart Racing",
               "is_player": false,
               "car_model_id": "kart_highland_eagle_t6",
               "country": "BRA",
@@ -4881,7 +4881,7 @@
             {
               "id": "mateo_garrido",
               "name": "Mateo Garrido",
-              "team": "LifeLive Academy",
+              "team": "Ardennes Cross Academy",
               "is_player": false,
               "car_model_id": "autocross_ardennes_junior_t1",
               "country": "ESP",
@@ -4901,7 +4901,7 @@
             {
               "id": "etienne_rambault",
               "name": "Etienne Rambault",
-              "team": "Planet Kart Cross France",
+              "team": "Cosmo Cross France",
               "is_player": false,
               "car_model_id": "autocross_cosmo_nova_t1",
               "country": "FR",
@@ -4911,7 +4911,7 @@
             {
               "id": "valerio_ledda",
               "name": "Valerio Ledda",
-              "team": "Team Italy XC",
+              "team": "Italo Cross Squadra",
               "is_player": false,
               "car_model_id": "autocross_iberian_furia_t1",
               "country": "IT",
@@ -4931,7 +4931,7 @@
             {
               "id": "lucas_cartelle",
               "name": "Lucas Cartelle",
-              "team": "RACB National Team",
+              "team": "Wallonia Junior Team",
               "is_player": false,
               "car_model_id": "autocross_cosmo_nova_t1",
               "country": "BEL",
@@ -4941,7 +4941,7 @@
             {
               "id": "tomas_martins",
               "name": "Tomás Martins",
-              "team": "FPAK Junior XC",
+              "team": "Lusitania Junior XC",
               "is_player": false,
               "car_model_id": "autocross_iberian_furia_t1",
               "country": "PT",
@@ -5002,7 +5002,7 @@
             {
               "id": "diego_morales",
               "name": "Diego Morales",
-              "team": "Speedcar Factory Team",
+              "team": "Iberian Cross Factory Team",
               "is_player": false,
               "car_model_id": "autocross_iberian_relampago_t2",
               "country": "ESP",
@@ -5012,7 +5012,7 @@
             {
               "id": "ivan_pina",
               "name": "Iván Piña",
-              "team": "Semog Racing Team",
+              "team": "Lusitania Cross Team",
               "is_player": false,
               "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "ESP",
@@ -5022,7 +5022,7 @@
             {
               "id": "kobe_pauwels",
               "name": "Kobe Pauwels",
-              "team": "LifeLive Senior Team",
+              "team": "Ardennes Cross Senior",
               "is_player": false,
               "car_model_id": "autocross_ardennes_pro_t2",
               "country": "BEL",
@@ -5032,7 +5032,7 @@
             {
               "id": "simone_firenze",
               "name": "Simone Firenze",
-              "team": "Semog Italia",
+              "team": "Lusitania Cross Team",
               "is_player": false,
               "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "IT",
@@ -5062,7 +5062,7 @@
             {
               "id": "rui_nunes",
               "name": "Rui Nunes",
-              "team": "Semog Portugal",
+              "team": "Lusitania Cross Team",
               "is_player": false,
               "car_model_id": "autocross_lusitania_bravo_t2",
               "country": "PT",
@@ -5123,7 +5123,7 @@
             {
               "id": "klaus_petersen",
               "name": "Klaus Petersen",
-              "team": "Peters Autosport",
+              "team": "Petersen Works Team",
               "is_player": false,
               "car_model_id": "autocross_petersen_buggy1600_t3",
               "country": "LUX",
@@ -5133,7 +5133,7 @@
             {
               "id": "jiri_nemec",
               "name": "Jiří Němec",
-              "team": "Alfa Racing Team",
+              "team": "Bologna Buggy Works Team",
               "is_player": false,
               "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "CZE",
@@ -5143,7 +5143,7 @@
             {
               "id": "sander_jaspers",
               "name": "Sander Jaspers",
-              "team": "Fast & Speed Racing",
+              "team": "Rapid Dynamics Racing",
               "is_player": false,
               "car_model_id": "autocross_rapid_buggy1600_t3",
               "country": "NLD",
@@ -5153,7 +5153,7 @@
             {
               "id": "thierry_christol",
               "name": "Thierry Christol",
-              "team": "Christol Motorsport",
+              "team": "Occitanie Buggy Racing",
               "is_player": false,
               "car_model_id": "autocross_petersen_buggy1600_t3",
               "country": "FRA",
@@ -5163,7 +5163,7 @@
             {
               "id": "filip_hartman",
               "name": "Filip Hartman",
-              "team": "Hartman Offroad",
+              "team": "Hartman Cross Works",
               "is_player": false,
               "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "CZE",
@@ -5173,7 +5173,7 @@
             {
               "id": "maximilian_wibbeler",
               "name": "Maximilian Wibbeler",
-              "team": "Wibbeler Racing",
+              "team": "Westphalia Buggy Racing",
               "is_player": false,
               "car_model_id": "autocross_bologna_buggy1600_t3",
               "country": "DEU",
@@ -5183,7 +5183,7 @@
             {
               "id": "kurt_reding",
               "name": "Kurt Reding",
-              "team": "Reding Autosport",
+              "team": "Moselle Cross Works",
               "is_player": false,
               "car_model_id": "autocross_rapid_buggy1600_t3",
               "country": "LUX",
@@ -5244,7 +5244,7 @@
             {
               "id": "viktor_fiala",
               "name": "Viktor Fiala",
-              "team": "Fejfar Motorsport",
+              "team": "Bohemia Rallycross Team",
               "is_player": false,
               "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "CZE",
@@ -5254,7 +5254,7 @@
             {
               "id": "erich_frieszl",
               "name": "Erich Frieszl",
-              "team": "Frieszl Racing",
+              "team": "Styrian Buggy Racing",
               "is_player": false,
               "car_model_id": "autocross_shinano_tsunami_t4",
               "country": "AUT",
@@ -5264,7 +5264,7 @@
             {
               "id": "arjen_boele",
               "name": "Arjen Boele",
-              "team": "Boele Autosport",
+              "team": "Boele Offroad Works",
               "is_player": false,
               "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "NLD",
@@ -5274,7 +5274,7 @@
             {
               "id": "martin_egg",
               "name": "Martin Egg",
-              "team": "Egg Racing Team",
+              "team": "Alpine Cross Racing",
               "is_player": false,
               "car_model_id": "autocross_vortek_quattro_t4",
               "country": "CHE",
@@ -5284,7 +5284,7 @@
             {
               "id": "patrik_vyborny",
               "name": "Patrik Výborný",
-              "team": "Výborný Motorsport",
+              "team": "Bohemia Buggy Team",
               "is_player": false,
               "car_model_id": "autocross_shinano_tsunami_t4",
               "country": "CZE",
@@ -5294,7 +5294,7 @@
             {
               "id": "grit_hennersdorf",
               "name": "Grit Hennersdorf",
-              "team": "Hennersdorf Offroad",
+              "team": "Saxony Offroad Works",
               "is_player": false,
               "car_model_id": "autocross_bohemia_veloce_t4",
               "country": "DEU",
@@ -5304,7 +5304,7 @@
             {
               "id": "werner_gurschler",
               "name": "Werner Gurschler",
-              "team": "Gurschler Quattro",
+              "team": "Alpine Quattro Racing",
               "is_player": false,
               "car_model_id": "autocross_vortek_quattro_t4",
               "country": "ITA",
@@ -5371,7 +5371,7 @@
             {
               "id": "bodo_richter",
               "name": "Bodo Richter",
-              "team": "Stubbe SuperBuggy",
+              "team": "Rhine Buggy Team",
               "is_player": false,
               "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "DEU",
@@ -5391,7 +5391,7 @@
             {
               "id": "valentin_moreau",
               "name": "Valentin Moreau",
-              "team": "Mercier Competition",
+              "team": "Rhone Cross Team",
               "is_player": false,
               "car_model_id": "autocross_petersen_superbuggy_t5",
               "country": "FRA",
@@ -5401,7 +5401,7 @@
             {
               "id": "marten_bartelen",
               "name": "Marten Bartelen",
-              "team": "Bartelen Motorsport",
+              "team": "Dutch Cross Dynamics",
               "is_player": false,
               "car_model_id": "autocross_rapid_superbuggy_t5",
               "country": "NLD",
@@ -5411,7 +5411,7 @@
             {
               "id": "radim_jordak",
               "name": "Radim Jordák",
-              "team": "Jordák Motorsport",
+              "team": "Moravia Cross Team",
               "is_player": false,
               "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "CZE",
@@ -5421,7 +5421,7 @@
             {
               "id": "jerome_feuillade",
               "name": "Jerome Feuillade",
-              "team": "Feuillade Racing",
+              "team": "Picardy Cross Team",
               "is_player": false,
               "car_model_id": "autocross_bologna_superbuggy_t5",
               "country": "FRA",
@@ -5431,7 +5431,7 @@
             {
               "id": "terry_callaghan",
               "name": "Terry Callaghan",
-              "team": "Fast & Speed Holland",
+              "team": "Rapid Dynamics Racing",
               "is_player": false,
               "car_model_id": "autocross_rapid_superbuggy_t5",
               "country": "NLD",

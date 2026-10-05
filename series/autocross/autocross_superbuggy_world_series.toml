@@ -62,7 +62,7 @@ livery_idx = 0
 [[drivers]]
 id = "bodo_richter"
 name = "Bodo Richter"
-team = "Stubbe SuperBuggy"
+team = "Rhine Buggy Team"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "DEU"
 ai_character = "fast"
@@ -80,7 +80,7 @@ livery_idx = 2
 [[drivers]]
 id = "valentin_moreau"
 name = "Valentin Moreau"
-team = "Mercier Competition"
+team = "Rhone Cross Team"
 car_model_id = "autocross_petersen_superbuggy_t5"
 country = "FRA"
 ai_character = "fast"
@@ -89,7 +89,7 @@ livery_idx = 3
 [[drivers]]
 id = "marten_bartelen"
 name = "Marten Bartelen"
-team = "Bartelen Motorsport"
+team = "Dutch Cross Dynamics"
 car_model_id = "autocross_rapid_superbuggy_t5"
 country = "NLD"
 ai_character = "balanced"
@@ -98,7 +98,7 @@ livery_idx = 4
 [[drivers]]
 id = "radim_jordak"
 name = "Radim Jordák"
-team = "Jordák Motorsport"
+team = "Moravia Cross Team"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "CZE"
 ai_character = "aggressive"
@@ -107,7 +107,7 @@ livery_idx = 5
 [[drivers]]
 id = "jerome_feuillade"
 name = "Jerome Feuillade"
-team = "Feuillade Racing"
+team = "Picardy Cross Team"
 car_model_id = "autocross_bologna_superbuggy_t5"
 country = "FRA"
 ai_character = "balanced"
@@ -116,7 +116,7 @@ livery_idx = 6
 [[drivers]]
 id = "terry_callaghan"
 name = "Terry Callaghan"
-team = "Fast & Speed Holland"
+team = "Rapid Dynamics Racing"
 car_model_id = "autocross_rapid_superbuggy_t5"
 country = "NLD"
 ai_character = "cautious"

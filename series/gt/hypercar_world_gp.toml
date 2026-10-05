@@ -95,7 +95,7 @@ laps = 3
 [[drivers]]
 id = "player"
 name = "Player"
-team = "Ferrari AF Corse"
+team = "Valente Corse Team"
 is_player = true
 car_model_id = "gt_valente_imperatore_t5"
 country = "ESP"
@@ -104,7 +104,7 @@ livery_idx = 0
 [[drivers]]
 id = "klaus_eicher"
 name = "Klaus Eicher"
-team = "Porsche Penske Motorsport"
+team = "Vandorn Works Racing"
 car_model_id = "gt_vandorn_kronos_t5"
 country = "FRA"
 ai_character = "aggressive"
@@ -122,7 +122,7 @@ livery_idx = 2
 [[drivers]]
 id = "sylvain_boucher"
 name = "Sylvain Boucher"
-team = "Cadillac Racing Chip Ganassi"
+team = "Crestline Endurance Team"
 car_model_id = "gt_crestline_sovereign_t5"
 country = "FRA"
 ai_character = "strategic"
@@ -131,7 +131,7 @@ livery_idx = 3
 [[drivers]]
 id = "adriano_ponte"
 name = "Adriano Ponte"
-team = "Ferrari AF Corse"
+team = "Valente Corse Team"
 car_model_id = "gt_valente_imperatore_t5"
 country = "ITA"
 ai_character = "smooth"
@@ -140,7 +140,7 @@ livery_idx = 4
 [[drivers]]
 id = "andreas_lorentzen"
 name = "Andreas Lorentzen"
-team = "Porsche Penske Motorsport"
+team = "Vandorn Works Racing"
 car_model_id = "gt_vandorn_kronos_t5"
 country = "GER"
 ai_character = "tenacious"
@@ -158,7 +158,7 @@ livery_idx = 6
 [[drivers]]
 id = "ethan_brooks"
 name = "Ethan Brooks"
-team = "Cadillac Racing Chip Ganassi"
+team = "Crestline Endurance Team"
 car_model_id = "gt_crestline_sovereign_t5"
 country = "NZL"
 ai_character = "balanced"

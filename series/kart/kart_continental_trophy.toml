@@ -80,7 +80,7 @@ livery_idx = 0
 [[drivers]]
 id = "marco_armani"
 name = "Marco Armani"
-team = "Tony Kart Racing"
+team = "Verde Factory Karting"
 car_model_id = "kart_verde_pro_t4"
 country = "ITA"
 ai_character = "smooth"
@@ -89,7 +89,7 @@ livery_idx = 1
 [[drivers]]
 id = "lucas_vance"
 name = "Lucas Vance"
-team = "CRG Factory Team"
+team = "Blackline Factory Team"
 car_model_id = "kart_blackline_renegade_t4"
 country = "GBR"
 ai_character = "aggressive"
@@ -98,7 +98,7 @@ livery_idx = 2
 [[drivers]]
 id = "alex_rossi"
 name = "Alex Rossi"
-team = "Birel ART"
+team = "Rosso Factory Karting"
 car_model_id = "kart_rosso_corsa_t4"
 country = "ITA"
 ai_character = "tenacious"
@@ -107,7 +107,7 @@ livery_idx = 3
 [[drivers]]
 id = "sofia_lind"
 name = "Sofia Lind"
-team = "Kosmic Racing"
+team = "Starlight Kart Team"
 car_model_id = "kart_verde_pro_t4"
 country = "SWE"
 ai_character = "calculating"
@@ -116,7 +116,7 @@ livery_idx = 4
 [[drivers]]
 id = "finn_korhonen"
 name = "Finn Korhonen"
-team = "Sodi Kart"
+team = "Gallic Kart Racing"
 car_model_id = "kart_blackline_renegade_t4"
 country = "FIN"
 ai_character = "fast"
@@ -125,7 +125,7 @@ livery_idx = 5
 [[drivers]]
 id = "leo_dupont"
 name = "Leo Dupont"
-team = "Energy Corse"
+team = "Veloce Karting"
 car_model_id = "kart_rosso_corsa_t4"
 country = "FRA"
 ai_character = "balanced"
@@ -134,7 +134,7 @@ livery_idx = 6
 [[drivers]]
 id = "mateo_silva"
 name = "Mateo Silva"
-team = "Parolin Motorsport"
+team = "Veneto Kart Racing"
 car_model_id = "kart_verde_pro_t4"
 country = "BRA"
 ai_character = "strategic"

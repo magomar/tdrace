@@ -86,7 +86,7 @@ livery_idx = 0
 [[drivers]]
 id = "colt_reynolds"
 name = "Colt 'The Ironclad' Reynolds"
-team = "Richard Childress Racing"
+team = "Heartland Competition"
 car_model_id = "nascar_crossbow_predator_t3"
 country = "USA"
 ai_character = "aggressive"
@@ -95,7 +95,7 @@ livery_idx = 1
 [[drivers]]
 id = "clayton_reed"
 name = "Clayton 'Viper' Reed"
-team = "Hendrick Motorsports"
+team = "Apex Vanguard Racing"
 car_model_id = "nascar_forge_reactor_t3"
 country = "USA"
 ai_character = "smooth"
@@ -104,7 +104,7 @@ livery_idx = 2
 [[drivers]]
 id = "rex_montgomery"
 name = "Rex 'The Crown' Montgomery"
-team = "Petty Enterprises"
+team = "Highland Blue Racing"
 car_model_id = "nascar_yamato_century_t3"
 country = "USA"
 ai_character = "tenacious"
@@ -113,7 +113,7 @@ livery_idx = 3
 [[drivers]]
 id = "brant_harlan"
 name = "Brant 'Thunder' Harlan"
-team = "Joe Gibbs Racing"
+team = "Crestline Speedworks"
 car_model_id = "nascar_yamato_century_t3"
 country = "USA"
 ai_character = "aggressive"
@@ -122,7 +122,7 @@ livery_idx = 4
 [[drivers]]
 id = "judson_vance"
 name = "Judson 'Gold Rush' Vance"
-team = "Hendrick Motorsports"
+team = "Apex Vanguard Racing"
 car_model_id = "nascar_crossbow_predator_t3"
 country = "USA"
 ai_character = "calculating"
@@ -131,7 +131,7 @@ livery_idx = 5
 [[drivers]]
 id = "tanner_cobb"
 name = "Tanner 'Hot Lap' Cobb"
-team = "Stewart-Haas Racing"
+team = "Summit Ridge Motorsport"
 car_model_id = "nascar_forge_reactor_t3"
 country = "USA"
 ai_character = "tenacious"

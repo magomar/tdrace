@@ -441,8 +441,8 @@ car_model_id = "gt_yamato_hayate_t1"
 [[drivers]]
 id = "max"
 name = "Magnus Wolff"
-team = "Red Bull GT"
-car_model_id = "gt_porsche_718_cayman_gt4_rs"
+team = "Bullseye GT"
+car_model_id = "gt_vandorn_stratus_t1"
 "#;
 
         let def = ChampionshipDefinition::from_toml(toml_str).expect("Valid TOML should deserialize");

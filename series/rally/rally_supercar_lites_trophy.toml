@@ -68,7 +68,7 @@ livery_idx = 0
 [[drivers]]
 id = "jonas_lindqvist"
 name = "Jonas Lindqvist"
-team = "Vance RX Team"
+team = "Highland RX Team"
 car_model_id = "rally_nordic_rx_lites_t2"
 country = "SWE"
 ai_character = "fast"
@@ -77,7 +77,7 @@ livery_idx = 1
 [[drivers]]
 id = "mikael_stenmark"
 name = "Mikael Stenmark"
-team = "Storm EKS"
+team = "Vortek Factory RX"
 car_model_id = "rally_aerotech_rx_lites_t2"
 country = "SWE"
 ai_character = "aggressive"
@@ -86,7 +86,7 @@ livery_idx = 2
 [[drivers]]
 id = "torsten_holmgren"
 name = "Torsten Holmgren"
-team = "Hansenfield RX"
+team = "Nordic Storm Motorsport"
 car_model_id = "rally_volttech_electrocross_t2"
 country = "SWE"
 ai_character = "smooth"
@@ -95,7 +95,7 @@ livery_idx = 3
 [[drivers]]
 id = "kasper_holmgren"
 name = "Kasper Holmgren"
-team = "Hansenfield Junior"
+team = "Nordic Storm Junior"
 car_model_id = "rally_nordic_rx_lites_t2"
 country = "SWE"
 ai_character = "strategic"
@@ -113,7 +113,7 @@ livery_idx = 5
 [[drivers]]
 id = "axel_markus"
 name = "Axel Markus"
-team = "Mark RX"
+team = "Baltic Cross Works"
 car_model_id = "rally_volttech_electrocross_t2"
 country = "SWE"
 ai_character = "tenacious"
@@ -122,7 +122,7 @@ livery_idx = 6
 [[drivers]]
 id = "anders_brekke"
 name = "Anders Brekke"
-team = "Bakkerud Blue RX"
+team = "Fjord Blue RX Team"
 car_model_id = "rally_nordic_rx_lites_t2"
 country = "NOR"
 ai_character = "aggressive"

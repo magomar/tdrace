@@ -92,7 +92,7 @@ livery_idx = 0
 [[drivers]]
 id = "jari_lehtinen"
 name = "Jari Lehtinen"
-team = "Gulf Team Davidoff McLaren"
+team = "Hyperion Heritage Team"
 car_model_id = "gt_hyperion_velocity_t4"
 country = "FIN"
 ai_character = "aggressive"
@@ -101,7 +101,7 @@ livery_idx = 1
 [[drivers]]
 id = "bernhard_schneider"
 name = "Bernhard Schneider"
-team = "AMG-Mercedes Warsteiner"
+team = "Silberstern Classic Racing"
 car_model_id = "gt_silberstern_silberpfeil_t4"
 country = "GER"
 ai_character = "strategic"
@@ -110,7 +110,7 @@ livery_idx = 2
 [[drivers]]
 id = "aoi_suzuki"
 name = "Aoi Suzuki"
-team = "Nissan Motorsport NISMO"
+team = "Katana Works NISMO"
 car_model_id = "gt_katana_shogun_t4"
 country = "JPN"
 ai_character = "fast"
@@ -128,7 +128,7 @@ livery_idx = 4
 [[drivers]]
 id = "sean_somerset"
 name = "Sean Somerset"
-team = "Gulf Team Davidoff McLaren"
+team = "Hyperion Heritage Team"
 car_model_id = "gt_hyperion_velocity_t4"
 country = "GBR"
 ai_character = "calculating"
@@ -137,7 +137,7 @@ livery_idx = 5
 [[drivers]]
 id = "kurt_lindner"
 name = "Kurt Lindner"
-team = "AMG-Mercedes Warsteiner"
+team = "Silberstern Classic Racing"
 car_model_id = "gt_silberstern_silberpfeil_t4"
 country = "GER"
 ai_character = "smooth"
@@ -146,7 +146,7 @@ livery_idx = 6
 [[drivers]]
 id = "keisuke_hoshino"
 name = "Keisuke Hoshino"
-team = "Nissan Motorsport NISMO"
+team = "Katana Works NISMO"
 car_model_id = "gt_katana_shogun_t4"
 country = "JPN"
 ai_character = "balanced"

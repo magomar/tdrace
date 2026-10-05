@@ -77,7 +77,7 @@ laps = 3
 [[drivers]]
 id = "player"
 name = "Player"
-team = "Porsche Motorsport GT"
+team = "Vandorn Motorsport GT"
 is_player = true
 car_model_id = "gt_vandorn_arrowhead_t3"
 country = "ESP"
@@ -86,7 +86,7 @@ livery_idx = 0
 [[drivers]]
 id = "daniel_bennett"
 name = "Daniel Bennett"
-team = "Brabham Motorsport"
+team = "Southern Cross Works"
 car_model_id = "gt_southern_cross_62_t3"
 country = "AUS"
 ai_character = "aggressive"
@@ -95,7 +95,7 @@ livery_idx = 1
 [[drivers]]
 id = "matteo_boni"
 name = "Matteo Boni"
-team = "Maserati Corse"
+team = "Aquila Factory Team"
 car_model_id = "gt_aquila_strale_t3"
 country = "ITA"
 ai_character = "smooth"
@@ -104,7 +104,7 @@ livery_idx = 2
 [[drivers]]
 id = "maximilian_winter"
 name = "Maximilian Winter"
-team = "Audi Sport Customer Racing"
+team = "Vortek Customer Racing"
 car_model_id = "gt_vortek_clubsport_t3"
 country = "GER"
 ai_character = "strategic"
@@ -113,7 +113,7 @@ livery_idx = 3
 [[drivers]]
 id = "jurgen_bergmann"
 name = "Jürgen Bergmann"
-team = "Porsche Motorsport GT"
+team = "Vandorn Motorsport GT"
 car_model_id = "gt_vandorn_arrowhead_t3"
 country = "GER"
 ai_character = "tenacious"
@@ -122,7 +122,7 @@ livery_idx = 4
 [[drivers]]
 id = "liam_york"
 name = "Liam York"
-team = "Brabham Motorsport"
+team = "Southern Cross Works"
 car_model_id = "gt_southern_cross_62_t3"
 country = "AUS"
 ai_character = "fast"
@@ -131,7 +131,7 @@ livery_idx = 5
 [[drivers]]
 id = "alberto_bellini"
 name = "Alberto Bellini"
-team = "Maserati Corse"
+team = "Aquila Factory Team"
 car_model_id = "gt_aquila_strale_t3"
 country = "ITA"
 ai_character = "calculating"
@@ -140,7 +140,7 @@ livery_idx = 6
 [[drivers]]
 id = "franz_strauss"
 name = "Franz Strauss"
-team = "Audi Sport Customer Racing"
+team = "Vortek Customer Racing"
 car_model_id = "gt_vortek_clubsport_t3"
 country = "GER"
 ai_character = "balanced"

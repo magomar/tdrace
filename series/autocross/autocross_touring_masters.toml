@@ -56,7 +56,7 @@ livery_idx = 0
 [[drivers]]
 id = "viktor_fiala"
 name = "Viktor Fiala"
-team = "Fejfar Motorsport"
+team = "Bohemia Rallycross Team"
 car_model_id = "autocross_bohemia_veloce_t4"
 country = "CZE"
 ai_character = "fast"
@@ -65,7 +65,7 @@ livery_idx = 1
 [[drivers]]
 id = "erich_frieszl"
 name = "Erich Frieszl"
-team = "Frieszl Racing"
+team = "Styrian Buggy Racing"
 car_model_id = "autocross_shinano_tsunami_t4"
 country = "AUT"
 ai_character = "aggressive"
@@ -74,7 +74,7 @@ livery_idx = 2
 [[drivers]]
 id = "arjen_boele"
 name = "Arjen Boele"
-team = "Boele Autosport"
+team = "Boele Offroad Works"
 car_model_id = "autocross_bohemia_veloce_t4"
 country = "NLD"
 ai_character = "fast"
@@ -83,7 +83,7 @@ livery_idx = 3
 [[drivers]]
 id = "martin_egg"
 name = "Martin Egg"
-team = "Egg Racing Team"
+team = "Alpine Cross Racing"
 car_model_id = "autocross_vortek_quattro_t4"
 country = "CHE"
 ai_character = "balanced"
@@ -92,7 +92,7 @@ livery_idx = 4
 [[drivers]]
 id = "patrik_vyborny"
 name = "Patrik Výborný"
-team = "Výborný Motorsport"
+team = "Bohemia Buggy Team"
 car_model_id = "autocross_shinano_tsunami_t4"
 country = "CZE"
 ai_character = "aggressive"
@@ -101,7 +101,7 @@ livery_idx = 5
 [[drivers]]
 id = "grit_hennersdorf"
 name = "Grit Hennersdorf"
-team = "Hennersdorf Offroad"
+team = "Saxony Offroad Works"
 car_model_id = "autocross_bohemia_veloce_t4"
 country = "DEU"
 ai_character = "balanced"
@@ -110,7 +110,7 @@ livery_idx = 6
 [[drivers]]
 id = "werner_gurschler"
 name = "Werner Gurschler"
-team = "Gurschler Quattro"
+team = "Alpine Quattro Racing"
 car_model_id = "autocross_vortek_quattro_t4"
 country = "ITA"
 ai_character = "cautious"

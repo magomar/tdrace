@@ -50,7 +50,7 @@ livery_idx = 0
 [[drivers]]
 id = "mateo_garrido"
 name = "Mateo Garrido"
-team = "LifeLive Academy"
+team = "Ardennes Cross Academy"
 car_model_id = "autocross_ardennes_junior_t1"
 country = "ESP"
 ai_character = "fast"
@@ -68,7 +68,7 @@ livery_idx = 2
 [[drivers]]
 id = "etienne_rambault"
 name = "Etienne Rambault"
-team = "Planet Kart Cross France"
+team = "Cosmo Cross France"
 car_model_id = "autocross_cosmo_nova_t1"
 country = "FR"
 ai_character = "balanced"
@@ -77,7 +77,7 @@ livery_idx = 3
 [[drivers]]
 id = "valerio_ledda"
 name = "Valerio Ledda"
-team = "Team Italy XC"
+team = "Italo Cross Squadra"
 car_model_id = "autocross_iberian_furia_t1"
 country = "IT"
 ai_character = "fast"
@@ -95,7 +95,7 @@ livery_idx = 5
 [[drivers]]
 id = "lucas_cartelle"
 name = "Lucas Cartelle"
-team = "RACB National Team"
+team = "Wallonia Junior Team"
 car_model_id = "autocross_cosmo_nova_t1"
 country = "BEL"
 ai_character = "balanced"
@@ -104,7 +104,7 @@ livery_idx = 6
 [[drivers]]
 id = "tomas_martins"
 name = "Tomás Martins"
-team = "FPAK Junior XC"
+team = "Lusitania Junior XC"
 car_model_id = "autocross_iberian_furia_t1"
 country = "PT"
 ai_character = "cautious"

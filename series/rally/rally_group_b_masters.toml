@@ -86,7 +86,7 @@ livery_idx = 0
 [[drivers]]
 id = "jonas_lindqvist"
 name = "Jonas Lindqvist"
-team = "KMS Volkswagen"
+team = "Volkskraft Customer Rally"
 car_model_id = "rally_vortek_turbo_quattro_t7"
 country = "SWE"
 ai_character = "fast"
@@ -95,7 +95,7 @@ livery_idx = 1
 [[drivers]]
 id = "mikael_stenmark"
 name = "Mikael Stenmark"
-team = "EKS Audi Sport"
+team = "Vortek Factory RX"
 car_model_id = "rally_gallia_corsica_t7"
 country = "SWE"
 ai_character = "aggressive"
@@ -104,7 +104,7 @@ livery_idx = 2
 [[drivers]]
 id = "torsten_holmgren"
 name = "Torsten Holmgren"
-team = "Hansen Motorsport"
+team = "Nordic Storm Motorsport"
 car_model_id = "rally_torino_stradale_t7"
 country = "SWE"
 ai_character = "smooth"
@@ -113,7 +113,7 @@ livery_idx = 3
 [[drivers]]
 id = "per_sundberg"
 name = "Per Sundberg"
-team = "PSRX Volkswagen Sweden"
+team = "Volkskraft Scandinavian Rally"
 car_model_id = "rally_vortek_turbo_quattro_t7"
 country = "NOR"
 ai_character = "tenacious"
@@ -122,7 +122,7 @@ livery_idx = 4
 [[drivers]]
 id = "kasper_holmgren"
 name = "Kasper Holmgren"
-team = "Hansen Motorsport"
+team = "Nordic Storm Motorsport"
 car_model_id = "rally_torino_stradale_t7"
 country = "SWE"
 ai_character = "strategic"
@@ -131,7 +131,7 @@ livery_idx = 5
 [[drivers]]
 id = "niko_salminen"
 name = "Niko Salminen"
-team = "GRX Taneco"
+team = "Taiga RX Performance"
 car_model_id = "rally_gallia_corsica_t7"
 country = "FIN"
 ai_character = "calculating"
@@ -140,7 +140,7 @@ livery_idx = 6
 [[drivers]]
 id = "anders_brekke"
 name = "Anders Brekke"
-team = "Monster Energy RX"
+team = "Apex Volt RX Team"
 car_model_id = "rally_gallia_corsica_t7"
 country = "NOR"
 ai_character = "aggressive"

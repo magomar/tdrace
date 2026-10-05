@@ -80,7 +80,7 @@ livery_idx = 0
 [[drivers]]
 id = "torsten_holmgren"
 name = "Torsten Holmgren"
-team = "Hansenfield RX"
+team = "Nordic Storm Motorsport"
 car_model_id = "rally_gallia_lyon_t4"
 country = "SWE"
 ai_character = "smooth"
@@ -89,7 +89,7 @@ livery_idx = 1
 [[drivers]]
 id = "kyle_blaze"
 name = "Kyle Blaze"
-team = "Hoonigan Racing Division"
+team = "Outlaw Gymkhana Squad"
 car_model_id = "rally_forge_comet_t4"
 country = "USA"
 ai_character = "aggressive"
@@ -98,7 +98,7 @@ livery_idx = 2
 [[drivers]]
 id = "per_sundberg"
 name = "Per Sundberg"
-team = "Subaru Motorsports USA"
+team = "Sixstar American Rally"
 car_model_id = "rally_sixstar_vortex_t4"
 country = "NOR"
 ai_character = "fast"
@@ -107,7 +107,7 @@ livery_idx = 3
 [[drivers]]
 id = "jonas_lindqvist"
 name = "Jonas Lindqvist"
-team = "Vance RX Team"
+team = "Highland RX Team"
 car_model_id = "rally_gallia_lyon_t4"
 country = "SWE"
 ai_character = "fast"
@@ -116,7 +116,7 @@ livery_idx = 4
 [[drivers]]
 id = "anders_brekke"
 name = "Anders Brekke"
-team = "Hoonigan Racing Division"
+team = "Outlaw Gymkhana Squad"
 car_model_id = "rally_forge_comet_t4"
 country = "NOR"
 ai_character = "aggressive"
@@ -125,7 +125,7 @@ livery_idx = 5
 [[drivers]]
 id = "kasper_holmgren"
 name = "Kasper Holmgren"
-team = "Hansenfield RX"
+team = "Nordic Storm Motorsport"
 car_model_id = "rally_gallia_lyon_t4"
 country = "SWE"
 ai_character = "strategic"
@@ -134,7 +134,7 @@ livery_idx = 6
 [[drivers]]
 id = "mikael_stenmark"
 name = "Mikael Stenmark"
-team = "Storm EKS"
+team = "Vortek Factory RX"
 car_model_id = "rally_sixstar_vortex_t4"
 country = "SWE"
 ai_character = "calculating"
