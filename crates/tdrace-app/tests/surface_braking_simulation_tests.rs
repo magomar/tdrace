@@ -19,7 +19,7 @@ fn test_multi_surface_panic_stopping_distances() {
     for (id, config, v0) in test_vehicles {
         let res_asphalt = run_braking_straight_line(&config, SurfaceType::Asphalt, v0, false, DEFAULT_SIMULATION_DT);
         let res_concrete = run_braking_straight_line(&config, SurfaceType::Concrete, v0, false, DEFAULT_SIMULATION_DT);
-        let res_gravel = run_braking_straight_line(&config, SurfaceType::Gravel, v0, false, DEFAULT_SIMULATION_DT);
+        let res_gravel = run_braking_straight_line(&config, SurfaceType::PackedGravel, v0, false, DEFAULT_SIMULATION_DT);
         let res_grass = run_braking_straight_line(&config, SurfaceType::Grass, v0, false, DEFAULT_SIMULATION_DT);
         let res_ice = run_braking_straight_line(&config, SurfaceType::SheetIce, v0, false, DEFAULT_SIMULATION_DT);
 
@@ -111,7 +111,7 @@ fn test_split_mu_asymmetric_braking_stability() {
     );
 
     // 2. Minor split-mu: Asphalt vs Gravel
-    let res_gravel = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Gravel, 100.0, DEFAULT_SIMULATION_DT);
+    let res_gravel = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::PackedGravel, 100.0, DEFAULT_SIMULATION_DT);
     assert_ne!(
         res_gravel.status,
         SplitMuStatus::SpunOut,
@@ -139,7 +139,7 @@ fn test_split_mu_asymmetric_braking_stability() {
 fn test_cadence_braking_wheel_spinup_recovery() {
     let config = GtWorldChallengeModule::car_gt3_evo();
 
-    for &surface in &[SurfaceType::Asphalt, SurfaceType::Dirt, SurfaceType::Gravel] {
+    for &surface in &[SurfaceType::Asphalt, SurfaceType::Dirt, SurfaceType::PackedGravel] {
         let res = run_braking_cadence(&config, surface, 140.0, DEFAULT_SIMULATION_DT);
 
         assert!(

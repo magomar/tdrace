@@ -56,7 +56,8 @@ impl SurfaceMaterial {
             SurfaceType::Concrete => (5.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.55, false),
             SurfaceType::Curb => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.60, false),
             SurfaceType::Dirt => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
-            SurfaceType::Gravel => (3.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.90, true),
+            SurfaceType::PackedGravel => (3.5, Color::new(1.0, 1.0, 1.0, 1.0), 0.90, true),
+            SurfaceType::DeepGravel => (3.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.95, true),
             SurfaceType::Grass => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.80, true),
             SurfaceType::PackedSand => (5.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.75, true),
             SurfaceType::DeepSand => (6.0, Color::new(1.0, 1.0, 1.0, 1.0), 0.85, true),
@@ -195,7 +196,8 @@ impl SurfaceMaterialRegistry {
             SurfaceType::DeepMud,
             SurfaceType::PackedSnow,
             SurfaceType::DeepSnow,
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
+            SurfaceType::DeepGravel,
             SurfaceType::Concrete,
         ];
 
@@ -292,7 +294,8 @@ impl SurfaceMaterialRegistry {
             SurfaceType::DeepMud => "mud_viscous.png",
             SurfaceType::PackedSnow => "snow_packed.png",
             SurfaceType::DeepSnow => "snow_powder.png",
-            SurfaceType::Gravel => "gravel_crushed.png",
+            SurfaceType::PackedGravel => "gravel_crushed.png",
+            SurfaceType::DeepGravel => "gravel_deep.png",
             SurfaceType::Concrete => "concrete_brushed.png",
         };
 
@@ -504,7 +507,7 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                 }
             }
         }
-        SurfaceType::Gravel => {
+        SurfaceType::PackedGravel => {
             // Crushed angular limestone & slate scree: multi-scale seamless periodic pebbles
             for y in 0..height {
                 for x in 0..width {
@@ -535,6 +538,46 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
                     let r = base.clamp(100.0, 170.0) as u8;
                     let g = (base * 0.98).clamp(98.0, 168.0) as u8;
                     let b = (base * 0.94).clamp(94.0, 165.0) as u8;
+
+                    bytes[idx] = r;
+                    bytes[idx + 1] = g;
+                    bytes[idx + 2] = b;
+                    bytes[idx + 3] = 255;
+                }
+            }
+        }
+        SurfaceType::DeepGravel => {
+            // Spec 089: loose trap bed of small, light limestone pebbles, each with its own shade, and dark gaps
+            for y in 0..height {
+                for x in 0..width {
+                    let idx = (y as usize * width as usize + x as usize) * 4;
+                    let n_coarse = sample_periodic_noise(
+                        x as f32 * (16.0 / width as f32),
+                        y as f32 * (16.0 / height as f32),
+                        16,
+                        16,
+                        1313,
+                    );
+                    let n_pebbles = sample_periodic_noise(
+                        x as f32 * (96.0 / width as f32),
+                        y as f32 * (96.0 / height as f32),
+                        96,
+                        96,
+                        1414,
+                    );
+                    let n_gaps = sample_periodic_noise(
+                        x as f32 * (160.0 / width as f32),
+                        y as f32 * (160.0 / height as f32),
+                        160,
+                        160,
+                        1515,
+                    );
+
+                    let gap = if n_gaps < 0.26 { -38.0 } else { 0.0 };
+                    let base = 184.0 + (n_coarse - 0.5) * 12.0 + (n_pebbles - 0.5) * 46.0 + gap;
+                    let r = base.clamp(120.0, 225.0) as u8;
+                    let g = (base * 0.94).clamp(112.0, 212.0) as u8;
+                    let b = (base * 0.80).clamp(96.0, 182.0) as u8;
 
                     bytes[idx] = r;
                     bytes[idx + 1] = g;

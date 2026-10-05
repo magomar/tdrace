@@ -2216,7 +2216,18 @@ fn couple_axle(
         let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
         let drag_lat =
             -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
-        let drag_world = fwd * drag_fwd + right * drag_lat;
+        let mut drag_world = fwd * drag_fwd + right * drag_lat;
+        // Spec 089: a gravel bed ploughs a fast car to a stop, but not a car that crawls out of it.
+        let speed = self.state.velocity.length();
+        let bed_excess_speed = (speed - SurfaceType::BED_DRAG_FREE_SPEED).max(0.0);
+        let bed_decel: f32 = surfaces
+            .iter()
+            .map(|s| (s.bed_drag_rate() * bed_excess_speed).min(SurfaceType::BED_DRAG_MAX_DECEL))
+            .sum::<f32>()
+            / 4.0;
+        if bed_decel > 0.0 && !self.state.is_airborne {
+            drag_world -= self.state.velocity / speed * bed_decel * self.config.mass;
+        }
 
         let base_yaw_damping = -self.config.angular_damping * omega;
 

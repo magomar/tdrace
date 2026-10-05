@@ -771,7 +771,8 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
             SurfaceType::Concrete => "Poured solid pavement, high grip with low rolling drag for grandstands and stadium bowls",
             SurfaceType::Curb => "Rumble strips with slight vibration, 12% reduced grip",
             SurfaceType::Dirt => "Playable loose surface, progressive controllable drift slides",
-            SurfaceType::Gravel => "Loose crushed stone, 2.5x rolling drag, high debris roost",
+            SurfaceType::PackedGravel => "Packed gravel road, like Dirt but a bit more slippery, stone debris roost",
+            SurfaceType::DeepGravel => "Loose gravel trap bed, ploughs fast cars to a stop, lets a crawling car out",
             SurfaceType::Grass => "Run-off terrain, 2.5x rolling resistance, high understeer",
             SurfaceType::PackedSand => "Compacted dune ribbon, 5.2x rolling drag, high-speed desert drift line",
             SurfaceType::DeepSand => "Runaway arrestor trap, 30x rolling resistance, stops vehicles rapidly",
@@ -1373,7 +1374,7 @@ pub fn generate_braking_simulation_markdown_report(
 
     let split_surfaces = [
         SurfaceType::Concrete,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
         SurfaceType::PackedSand,
         SurfaceType::MudTrack,
         SurfaceType::Grass,

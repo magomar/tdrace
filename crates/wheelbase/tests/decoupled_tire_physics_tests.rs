@@ -553,7 +553,7 @@ fn test_rally_car_runs_all_terrain_tyres() {
         let mut car = Car::new(cfg);
         let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
         for _ in 0..180 {
-            car.step(&ctrl, SurfaceType::Gravel, 1.0 / 60.0);
+            car.step(&ctrl, SurfaceType::PackedGravel, 1.0 / 60.0);
         }
         car.state().speed
     };

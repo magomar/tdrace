@@ -788,7 +788,7 @@ impl Track {
     /// - Sandy circuits -> `SurfaceType::DeepSand`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
-    /// - GT and Rallycross circuits -> `SurfaceType::Gravel`
+    /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 089)
     pub fn default_runoff_surface(&self) -> Option<SurfaceType> {
         let name_lower = self.name.to_lowercase();
 
@@ -853,7 +853,7 @@ impl Track {
             || name_lower.contains("grand prix")
             || name_lower.contains("world rx")
         {
-            return Some(SurfaceType::Gravel);
+            return Some(SurfaceType::DeepGravel);
         }
 
         None
@@ -1726,15 +1726,15 @@ mod tests {
         let wps = vec![
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
             TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
             TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
         ];
 
@@ -1753,12 +1753,12 @@ mod tests {
         // At y = 8.0 (3.0m off track to the left, inside the 6m left runoff corridor):
         assert_eq!(
             track.sample_surface(Vec2::new(50.0, 8.0)),
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
             "Left runoff corridor must resolve to Gravel"
         );
         assert_eq!(
             track.sample_surface_near(Vec2::new(50.0, 8.0), 50.0),
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
             "Left runoff corridor near-sample must resolve to Gravel"
         );
 
@@ -1806,16 +1806,16 @@ mod tests {
 
         // 1. GT Circuit -> Gravel
         let mut gt_track = make_track("Spa GP", CarCategory::Gt, SurfaceType::Grass, "gt");
-        assert_eq!(gt_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        assert_eq!(gt_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
         gt_track.apply_default_runoff_surfaces();
-        assert_eq!(gt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
-        assert_eq!(gt_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(gt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
+        assert_eq!(gt_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::DeepGravel));
 
         // 2. Rallycross Circuit -> Gravel
         let mut rx_track = make_track("Holjes RX", CarCategory::Rally, SurfaceType::Grass, "rally");
-        assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
         rx_track.apply_default_runoff_surfaces();
-        assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
 
         // 3. Kart Circuit -> Concrete
         let mut kart_track = make_track("Lonato Karting", CarCategory::Kart, SurfaceType::Grass, "kart");
@@ -1855,8 +1855,8 @@ mod tests {
         let mut custom_track = make_track("Nurburgring GP", CarCategory::Gt, SurfaceType::Grass, "gt");
         custom_track.spline.waypoints[1].left_runoff_surface = Some(SurfaceType::DeepSand);
         custom_track.apply_default_runoff_surfaces();
-        assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
         assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::DeepSand));
-        assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::DeepGravel));
     }
 }

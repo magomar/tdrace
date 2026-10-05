@@ -27,7 +27,8 @@ pub fn surface_preview_color(surface: SurfaceType) -> Color {
         SurfaceType::DeepMud => Color::new(0.42, 0.28, 0.14, 0.95),  // Viscous Mud Brown
         SurfaceType::PackedSnow => Color::new(0.90, 0.95, 0.98, 0.95), // Groomed Snow
         SurfaceType::DeepSnow => Color::new(0.98, 0.99, 1.00, 0.95),   // Deep Powder White
-        SurfaceType::Gravel => Palette::GRAVEL,
+        SurfaceType::PackedGravel => Palette::GRAVEL,
+        SurfaceType::DeepGravel => Palette::DEEP_GRAVEL,
         SurfaceType::Concrete => Color::new(0.75, 0.78, 0.82, 0.95),
     }
 }
@@ -217,6 +218,7 @@ pub fn render_track_detailed_preview(
                 SurfaceType::Water => Color::new(0.18, 0.48, 0.85, 0.55),
                 SurfaceType::PackedSand | SurfaceType::DeepSand => Color::new(0.85, 0.72, 0.32, 0.50),
                 SurfaceType::Dirt => Color::new(0.70, 0.45, 0.18, 0.50),
+                SurfaceType::DeepGravel => Color::new(0.74, 0.69, 0.58, 0.55),
                 SurfaceType::MudTrack | SurfaceType::DeepMud => Color::new(0.55, 0.38, 0.20, 0.50),
                 SurfaceType::PackedSnow | SurfaceType::DeepSnow => Color::new(0.92, 0.95, 0.98, 0.60),
                 SurfaceType::SheetIce => Color::new(0.85, 0.92, 0.98, 0.65),
