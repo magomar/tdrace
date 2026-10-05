@@ -111,6 +111,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [089](089_tactical_cockpit_hud_tire_compound_borders_and_inrace_wheel_decoupling.md) | Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling | Feature Spec | `implemented` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Removes intrusive procedural color bands from the in-race animated steered wheels, transfers compound visual identification to the outer tire casing borders in the Tactical Hologram Cockpit Telemetry HUD, and introduces a dedicated compound badge and full nameplate legend at the bottom of the cockpit HUD card. |
 | [090](090_autocross_fictional_vehicle_sprites_and_livery_pipeline.md) | Autocross Fictional Vehicle Sprites and Livery Pipeline | Feature Spec | `implemented` | [050](050_fia_autocross_championship_and_vehicle_roster.md) | End-to-end asset generation pipeline delivering 45 2D textures (15 lateral 1024x512, 15 thumb 256x128, 15 top-down 512x512) for all 5 tiers of the Continental Autocross fleet, facing right (+X), inspired by authentic racing liveries with zero IP markings. |
 | [091](091_global_prebaked_vehicle_steered_wheel_articulation.md) | Global Pre-Baked Vehicle Steered Wheel Articulation | Feature Spec | `draft` | [026](026_topdown_wheel_steering_animations.md), [073](073_realistic_vehicle_sprite_harmonization_and_modular_steered_wheel_articulation.md), [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Universal SteeredWheelConfig derivation from CarConfig and ChassisSkeleton, batch wheel-well inpainting pipeline, and dual-layer Ackermann steered wheel animation across all 107+ vehicles across GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road modules. |
+| [092](092_player_racing_number_customization_and_persistent_nonconflicting_bot_rosters.md) | Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids | Feature Spec | `draft` | [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [027](027_championship_trophy_badges_and_player_profile_cabinet.md), [047](047_fictional_branding_and_realworld_ip_removal_for_steam_release.md) | Decouples baked numbers and real-world IP from vehicle sprites, provides player custom number and livery palette selection, and implements persistent non-conflicting random number and color assignment across AI bot rosters. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -120,7 +121,9 @@ flowchart LR
     011["011: Game Asset Catalogue & Technical Reference Portals"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
+    024["024: Cross-Module AI Character Rosters and Dynamic Tier Assignment"]
     026["026: Top-Down Pre-Baked Vehicle Wheel Steering Animations"]
+    027["027: Championship Trophy Badges & Player Profile Trophy Cabinet"]
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
     046["046: Human-Like Bot Driving with Tiered Mistakes and Varied Lines"]
     047["047: Fictional Branding and Real-World IP Removal for Steam Release"]
@@ -150,6 +153,7 @@ flowchart LR
     089["089: Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling"]
     090["090: Autocross Fictional Vehicle Sprites and Livery Pipeline"]
     091["091: Global Pre-Baked Vehicle Steered Wheel Articulation"]
+    092["092: Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -184,4 +188,7 @@ flowchart LR
     073 --> 091
     074 --> 091
     075 --> 091
+    024 --> 092
+    027 --> 092
+    047 --> 092
 ```
