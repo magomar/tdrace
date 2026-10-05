@@ -23,7 +23,7 @@ pub const CABINET_DISCIPLINES: &[(&str, &str)] = &[
     ("gt", "GT Challenge"),
     ("kart", "Karting Cup"),
     ("rally", "Rallycross"),
-    ("nascar", "NASCAR Series"),
+    ("nascar", "Stock Car Series"),
     ("extreme_offroad", "Extreme Off-Road"),
 ];
 
@@ -140,7 +140,7 @@ pub fn render_profile_badge(
 pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
     ("ALL", None),
     ("GT", Some("gt")),
-    ("NASCAR", Some("nascar")),
+    ("STOCK CAR", Some("nascar")),
     ("RALLYCROSS", Some("rally")),
     ("AUTOCROSS", Some("autocross")),
     ("OFF-ROAD", Some("extreme_offroad")),
@@ -726,11 +726,11 @@ fn render_disciplines_tab(
 
     let categories = [
         ("gt", "GT & ENDURANCE RACING", "Grand Touring / Sports Cars", Palette::NEON_CYAN, 5),
-        ("nascar", "NASCAR CUP SERIES", "Stock Cars / Oval & High-Speed Speedway", Palette::NEON_GOLD, 4),
+        ("nascar", "STOCK CAR CUP SERIES", "Stock Cars / Oval & High-Speed Speedway", Palette::NEON_GOLD, 4),
         ("rally", "WORLD RALLYCROSS", "Multi-Surface Asphalt, Gravel & Stage Rally", Palette::NEON_GREEN, 4),
         ("extreme_offroad", "EXTREME OFF-ROAD", "Sand Rail Buggies / Desert Stunt Arena", Color::new(0.95, 0.55, 0.20, 1.0), 4),
-        ("autocross", "FIA AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0), 5),
-        ("kart", "SUPERKART PRO SERIES", "CIK-FIA Benchmark Sprint Kart Circuits", Palette::NEON_MAGENTA, 4),
+        ("autocross", "CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0), 5),
+        ("kart", "SUPERKART PRO SERIES", "Benchmark Sprint Kart Circuits", Palette::NEON_MAGENTA, 4),
         ("classic", "VINTAGE CLASSIC LEGENDS", "Historic Grand Prix & Legendary Roadsters", Color::new(0.80, 0.85, 0.95, 1.0), 3),
     ];
 

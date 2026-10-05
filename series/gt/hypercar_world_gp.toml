@@ -1,6 +1,6 @@
 # ==============================================================================
 # TdRace Championship Specification
-# GT World Challenge: World Endurance Hypercar Grand Prix (Tier 5)
+# Grand Touring Challenge: World Endurance Hypercar Grand Prix (Tier 5)
 # ==============================================================================
 
 [championship]
@@ -15,7 +15,7 @@ ai_difficulty = "legend"
 icon = "trophy"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -113,7 +113,7 @@ livery_idx = 1
 [[drivers]]
 id = "kamui_kobayashi"
 name = "Kamui Kobayashi"
-team = "Toyota Gazoo Racing WEC"
+team = "Yamato Factory Racing"
 car_model_id = "gt_yamato_ronin_t5"
 country = "JPN"
 ai_character = "fast"
@@ -149,7 +149,7 @@ livery_idx = 5
 [[drivers]]
 id = "brendon_hartley"
 name = "Brendon Hartley"
-team = "Toyota Gazoo Racing WEC"
+team = "Yamato Factory Racing"
 car_model_id = "gt_yamato_ronin_t5"
 country = "NZL"
 ai_character = "calculating"

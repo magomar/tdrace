@@ -189,7 +189,7 @@ impl GameModule for GtWorldChallengeModule {
     }
 
     fn title(&self) -> &'static str {
-        "GT WORLD CHALLENGE"
+        "GRAND TOURING CHALLENGE"
     }
 
     fn subtitle(&self) -> &'static str {
@@ -200,7 +200,7 @@ impl GameModule for GtWorldChallengeModule {
         ModuleTheme {
             primary_accent: Color::new(0.95, 0.25, 0.05, 1.0), // GT Championship Red-Orange
             secondary_accent: Color::new(0.95, 0.75, 0.20, 1.0), // GT Gold/Platinum
-            header_badge: "GT WORLD CHALLENGE MOTORSPORT",
+            header_badge: "GRAND TOURING CHALLENGE MOTORSPORT",
             background_tint: Color::new(0.04, 0.05, 0.08, 0.98),
         }
     }
@@ -209,8 +209,8 @@ impl GameModule for GtWorldChallengeModule {
         vec![
             VehicleModelDefinition {
                 id: "gt4_clubsport",
-                name: "420 BHP GT4 Clubsport",
-                tag: "GT4 ENTRY SPEC",
+                name: "420 BHP GT Tier 1 Clubsport",
+                tag: "GT TIER 1 CLUBSPORT",
                 description: "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
                 config: Self::car_gt4_clubsport(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -230,7 +230,7 @@ impl GameModule for GtWorldChallengeModule {
             VehicleModelDefinition {
                 id: "gt3_evo",
                 name: "600 BHP GT3 Evo Racer",
-                tag: "FIA GT3 SPEC",
+                tag: "GT TIER 2 PRO SPRINT",
                 description: "Balanced 600 BHP RWD racer, Cl=2.1 aero downforce, carbon-ceramic brakes, ABS & TC.",
                 config: Self::car_gt3_evo(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -249,8 +249,8 @@ impl GameModule for GtWorldChallengeModule {
             },
             VehicleModelDefinition {
                 id: "gt2_biturbo",
-                name: "707 BHP GT2 Biturbo Sprint",
-                tag: "SRO GT2 SPRINT",
+                name: "707 BHP GT Tier 3 Biturbo Sprint",
+                tag: "GT TIER 3 BITURBO",
                 description: "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
                 config: Self::car_gt2_biturbo(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -268,8 +268,8 @@ impl GameModule for GtWorldChallengeModule {
             },
             VehicleModelDefinition {
                 id: "gt1_legend",
-                name: "650 BHP GT1 Le Mans Legend",
-                tag: "90s GT1 LEGEND",
+                name: "650 BHP GT Tier 4 Endurance Legend",
+                tag: "GT TIER 4 LEGEND",
                 description: "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
                 config: Self::car_gt1_legend(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -288,7 +288,7 @@ impl GameModule for GtWorldChallengeModule {
             VehicleModelDefinition {
                 id: "hypercar_prototype",
                 name: "800 BHP LMH Hypercar Prototype",
-                tag: "LE MANS HYPERCAR",
+                tag: "ENDURANCE HYPERCAR",
                 description: "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
                 config: Self::car_hypercar_prototype(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -475,7 +475,7 @@ impl GameModule for GtWorldChallengeModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::Championship {
-                name: "GT World Challenge Championship 2026".to_string(),
+                name: "Grand Touring Challenge Championship 2026".to_string(),
                 point_system: PointSystem::FiaStandard { fastest_lap_bonus: true },
                 track_ids: vec![
                     "bahrain".to_string(),

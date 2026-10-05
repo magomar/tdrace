@@ -385,7 +385,7 @@ impl GameModule for ClassicGameModule {
                 id: "classic_at_safari",
                 name: "Ironclad 4x4 Safari",
                 tag: "VINTAGE ALL-TERRAIN RIG",
-                description: "1980s Paris-Dakar vintage 4WD trail rig with unstoppable mud flotation, high ground clearance, and snow/ice stability.",
+                description: "1980s Desert Raid vintage 4WD trail rig with unstoppable mud flotation, high ground clearance, and snow/ice stability.",
                 config: Self::car_classic_at_safari(),
                 visual_type: VehicleVisualType::SandRail {
                     lightbar: false,

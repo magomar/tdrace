@@ -1979,7 +1979,7 @@
           "alias": "The Dominator",
           "bio": "4-time World Champion renowned for relentless pace, surgical overtakes, and unwavering consistency in all conditions.",
           "style": "aggressive",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.12,
             0.13,
@@ -2038,7 +2038,7 @@
           "alias": "The Qualifying King",
           "bio": "Scuderia prodigy with unbelievable single-lap hot-lap qualifying pace and unmatched precision on street circuits.",
           "style": "smooth",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.15,
             0.82,
@@ -2097,7 +2097,7 @@
           "alias": "The Master",
           "bio": "7-time World Champion with legendary wet-weather mastery, flawless tire preservation, and icy composure.",
           "style": "smooth",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.96,
             0.97,
@@ -2156,7 +2156,7 @@
           "alias": "El Matador",
           "bio": "Relentless Spanish gladiator who wrestles ill-handling cars to the podium through sheer grit and racecraft.",
           "style": "tenacious",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             1.0,
             0.82,
@@ -2215,7 +2215,7 @@
           "alias": "The Silver Bullet",
           "bio": "Analytical young British ace who capitalizes on strategy and executes millimeter-perfect overtakes into hairpins.",
           "style": "balanced",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.12,
             0.48,
@@ -2274,7 +2274,7 @@
           "alias": "Papaya Prodigy",
           "bio": "Twitch-reflex specialist with lightning high-speed chicane flicks and formidable wet-weather bravery.",
           "style": "bold",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             1.0,
             0.42,
@@ -2333,7 +2333,7 @@
           "alias": "Melbourne Missile",
           "bio": "Ultra-composed Australian sensation known for ice-cold nerve and textbook race craft on high-speed circuits.",
           "style": "calculating",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.65,
             0.18,
@@ -2392,7 +2392,7 @@
           "alias": "Smooth Operator",
           "bio": "Methodical Iberian racer who reads tire degradation with micro-precision, making strategic overtakes look effortless.",
           "style": "calculating",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.9,
             0.15,
@@ -2451,7 +2451,7 @@
           "alias": "The Underdog",
           "bio": "Fiery underdog specialist whose daring late-braking passes through the chicane catch favorites off guard.",
           "style": "bold",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.35,
             0.38,
@@ -2510,7 +2510,7 @@
           "alias": "The Sentinel",
           "bio": "Resolute defender who plants his machine on the apex line and refuses to concede an inch on narrow circuits.",
           "style": "tenacious",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.08,
             0.15,
@@ -2569,7 +2569,7 @@
           "alias": "Apex Hunter",
           "bio": "Dynamic overtaker specializing in aggressive switchback cut-backs and high-speed outside line sweeps.",
           "style": "aggressive",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.1,
             0.38,
@@ -2628,7 +2628,7 @@
           "alias": "The Hulk",
           "bio": "Iron-willed endurance veteran whose rock-solid pace and zero-mistake discipline make him a relentless podium threat.",
           "style": "balanced",
-          "preferred_car": "600 BHP GT3 Evo Racer",
+          "preferred_car": "600 BHP GT Tier 2 Pro Sprint",
           "primary_color": [
             0.98,
             0.98,
@@ -2687,7 +2687,7 @@
           "alias": "The Intimidator",
           "bio": "Feared black #3 stock car legend. Master of the aggressive bumper tap, high-speed drafting lock, and relentless high-line intimidation.",
           "style": "aggressive",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.1,
             0.1,
@@ -2746,7 +2746,7 @@
           "alias": "Rainbow Flash",
           "bio": "Precision road course virtuoso and aerodynamic drafting master. Lethal slingshot overtakes at Watkins Glen and Daytona.",
           "style": "calculating",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.9,
             0.12,
@@ -2805,7 +2805,7 @@
           "alias": "The King",
           "bio": "The 200-win patriarch of American stock car racing. Runs the famous Carolina Petty Blue #43 with unmatched pack drafting defense.",
           "style": "smooth",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.2,
             0.65,
@@ -2864,7 +2864,7 @@
           "alias": "Wild Thing",
           "bio": "Raw aggression and fearless dive-bombs into turn 1. Thrives in chaotic multicar packs and high-banked superspeedway shootouts.",
           "style": "aggressive",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.98,
             0.38,
@@ -2923,7 +2923,7 @@
           "alias": "Seven-Time",
           "bio": "Seven-time Cup champion renowned for surgical consistency, tire management, and late-race charges on superspeedway restarts.",
           "style": "calculating",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.06,
             0.42,
@@ -2982,7 +2982,7 @@
           "alias": "Smoke",
           "bio": "Dirt track and short-track brawler. Fearless high-line slider who thrives under the lights at Bristol Motor Speedway.",
           "style": "bold",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.2,
             0.2,
@@ -3041,7 +3041,7 @@
           "alias": "Alabama Gang",
           "bio": "Legendary leader of the Alabama Gang. Superspeedway high-bank specialist with ice-cold nerves in 3-wide pack racing.",
           "style": "tenacious",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.85,
             0.15,
@@ -3100,7 +3100,7 @@
           "alias": "The Rocket",
           "bio": "Electrifying superspeedway ace and intermediate oval charger who uses draft pushes to catapult into the lead.",
           "style": "balanced",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.55,
             0.15,
@@ -3159,7 +3159,7 @@
           "alias": "Sliced Bread",
           "bio": "Two-time Cup Series Champion famed for ruthless blocking maneuvers, restart mastery, and razor-sharp racecraft.",
           "style": "balanced",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.95,
             0.85,
@@ -3216,9 +3216,9 @@
           "id": "bill_elliott",
           "name": "Bill 'Awesome Bill' Elliott",
           "alias": "Awesome Bill",
-          "bio": "From Dawsonville, Georgia. Holds the all-time NASCAR qualifying speed record at Talladega (212.809 mph).",
+          "bio": "From Dawsonville, Georgia. Holds the all-time stock car qualifying speed record at Talladega (212.809 mph).",
           "style": "smooth",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.92,
             0.92,
@@ -3277,7 +3277,7 @@
           "alias": "The Iron Man",
           "bio": "Tough-as-nails three-time consecutive Cup champion. Tireless high-line charger who battles wheel-to-wheel to the checkered flag.",
           "style": "bold",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.88,
             0.45,
@@ -3336,7 +3336,7 @@
           "alias": "Thunder",
           "bio": "Aggressive short-track and road course warrior. Legendary mastery of high-downforce braking zones and curb hops.",
           "style": "tenacious",
-          "preferred_car": "850 BHP NASCAR Cup V8",
+          "preferred_car": "850 BHP Premier Stock Car V8",
           "primary_color": [
             0.12,
             0.15,
@@ -3521,7 +3521,7 @@
           "id": "timmy_hansenfield",
           "name": "Timmy Hansenfield",
           "alias": "Apex Predator",
-          "bio": "World RX titleholder born into rallycross royalty. Renowned for surgical overtaking and momentum conservation through loose gravel.",
+          "bio": "World Rallycross titleholder born into rallycross royalty. Renowned for surgical overtaking and momentum conservation through loose gravel.",
           "style": "calculating",
           "preferred_car": "AWD Turbo Rally",
           "primary_color": [
@@ -3713,7 +3713,7 @@
           "id": "anton_mark",
           "name": "Anton Mark",
           "alias": "The Hammer",
-          "bio": "Euro RX champion celebrated for ruthless defensive lines, heavy braking into hairpins, and exceptional wet tarmac pace.",
+          "bio": "Continental Rallycross champion celebrated for ruthless defensive lines, heavy braking into hairpins, and exceptional wet tarmac pace.",
           "style": "tenacious",
           "preferred_car": "AWD Turbo Rally",
           "primary_color": [
@@ -4161,7 +4161,7 @@
           "id": "marco_armani",
           "name": "Marco Armani",
           "alias": "Apex Predator",
-          "bio": "Tony Kart factory prodigy whose aggressive turn-in and late-braking moves dominate grassroots cadet and junior karting.",
+          "bio": "Verde Karting factory prodigy whose aggressive turn-in and late-braking moves dominate grassroots cadet and junior karting.",
           "style": "aggressive",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4225,7 +4225,7 @@
           "id": "lucas_vance",
           "name": "Lucas Vance",
           "alias": "The Professor",
-          "bio": "CRG factory master who calculates slipstream drafts and tire scrub angles to maintain momentum through every chicane.",
+          "bio": "Blackline factory master who calculates slipstream drafts and tire scrub angles to maintain momentum through every chicane.",
           "style": "calculating",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4289,7 +4289,7 @@
           "id": "alex_rossi",
           "name": "Alex Rossi",
           "alias": "Rocket Rossi",
-          "bio": "High-octane Birel ART pilot celebrated for explosive launches off the grid and relentless pressure in wheel-to-wheel duels.",
+          "bio": "High-octane Rosso Kart Works pilot celebrated for explosive launches off the grid and relentless pressure in wheel-to-wheel duels.",
           "style": "bold",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4353,7 +4353,7 @@
           "id": "sofia_lind",
           "name": "Sofia Lind",
           "alias": "The Metronome",
-          "bio": "Kosmic Racing prodigy with unmatched qualifying consistency and millimeter-perfect apex clipping.",
+          "bio": "Starlight Kart Team prodigy with unmatched qualifying consistency and millimeter-perfect apex clipping.",
           "style": "smooth",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4417,7 +4417,7 @@
           "id": "finn_korhonen",
           "name": "Finn Korhonen",
           "alias": "Flying Finn",
-          "bio": "Sodi Kart talent who carries unbelievable corner entry speed and thrives in damp and low-grip track conditions.",
+          "bio": "Gallic Kart Racing talent who carries unbelievable corner entry speed and thrives in damp and low-grip track conditions.",
           "style": "tenacious",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4481,7 +4481,7 @@
           "id": "leo_dupont",
           "name": "Leo Dupont",
           "alias": "Le Chasseur",
-          "bio": "Energy Corse tactical racer who stalks rivals through hairpins and pounces on the exit with instant acceleration.",
+          "bio": "Veloce Karting tactical racer who stalks rivals through hairpins and pounces on the exit with instant acceleration.",
           "style": "calculating",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4545,7 +4545,7 @@
           "id": "mateo_silva",
           "name": "Mateo Silva",
           "alias": "El Pistolero",
-          "bio": "Parolin Motorsport racer known for lightning reflexes, daring outside passes, and fearless defensive positioning.",
+          "bio": "Veneto Kart Racing racer known for lightning reflexes, daring outside passes, and fearless defensive positioning.",
           "style": "bold",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4737,7 +4737,7 @@
           "id": "kenzo_yamamoto",
           "name": "Kenzo Yamamoto",
           "alias": "Tarmac Whisperer",
-          "bio": "Suzuka kart circuit specialist with silky smooth steering inputs and microscopic steering scrubbing through fast sweeps.",
+          "bio": "Ise Bay kart circuit specialist with silky smooth steering inputs and microscopic steering scrubbing through fast sweeps.",
           "style": "smooth",
           "preferred_car": "125cc Shifter Kart",
           "primary_color": [
@@ -4929,7 +4929,7 @@
           "id": "wyatt_cole",
           "name": "Wyatt Cole",
           "alias": "Dust Devil",
-          "bio": "Baja 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
+          "bio": "Sonora 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
           "style": "bold",
           "preferred_car": "300 BHP Sand Rail Buggy",
           "primary_color": [
@@ -4987,8 +4987,8 @@
         {
           "id": "jaxson_rivera",
           "name": "Jaxson Rivera",
-          "alias": "Baja King",
-          "bio": "Undisputed King of the Baja scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
+          "alias": "Sonora King",
+          "bio": "Undisputed King of the Sonora scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
           "style": "balanced",
           "preferred_car": "300 BHP Sand Rail Buggy",
           "primary_color": [
@@ -5578,7 +5578,7 @@
           "id": "diego_valdez",
           "name": "Diego Valdez",
           "alias": "Trophy King",
-          "bio": "Mexican SCORE champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
+          "bio": "Mexican desert raid champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
           "style": "calculating",
           "preferred_car": "300 BHP Sand Rail Buggy",
           "primary_color": [

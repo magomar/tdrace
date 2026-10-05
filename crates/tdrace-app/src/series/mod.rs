@@ -9,13 +9,13 @@ pub use manager::*;
 /// Scoring system for championship tournaments.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PointSystem {
-    /// Official FIA standard scoring: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 (plus optional fastest lap bonus)
+    /// International standard scoring: 25, 18, 15, 12, 10, 8, 6, 4, 2, 1 (plus optional fastest lap bonus)
     FiaStandard { fastest_lap_bonus: bool },
     /// MotoGP scoring: 25, 20, 16, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
     MotoGp,
     /// Classic arcade 6-place scoring: 10, 6, 4, 3, 2, 1
     ClassicArcade,
-    /// Official NASCAR Cup Series scoring: 40 pts for 1st, 35 for 2nd, 34 for 3rd... down to 1 pt, plus stage win bonus (10 pts)
+    /// Stock car championship scoring: 40 pts for 1st, 35 for 2nd, 34 for 3rd... down to 1 pt, plus stage win bonus (10 pts)
     NascarCup { stage_win_bonus: bool },
     /// Custom points matrix
     Custom(Vec<u32>),
@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn test_championship_standings() {
         let mut champ = ChampionshipSession::new(
-            "GT World Challenge 2026",
+            "Grand Touring Challenge 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string()],
             5,

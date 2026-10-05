@@ -1,12 +1,12 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: FIA World RX Supercar Trophy (Tier 4)
+# Rallycross Career Mode: World Rallycross Supercar Trophy (Tier 4)
 # ==============================================================================
 
 [championship]
-id = "rally_world_rx_supercars"
-name = "FIA World RX Supercar Trophy"
-description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World RX arenas."
+id = "rally_world_rallycross_supercars"
+name = "World Rallycross Supercar Trophy"
+description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World Rallycross arenas."
 module_id = "rally"
 tier = 4
 laps_per_round = 5
@@ -15,7 +15,7 @@ ai_difficulty = "pro"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# GT World Challenge: Le Mans 90s Heritage Trophy (Tier 4)
+# Grand Touring Challenge: Endurance 90s Heritage Trophy (Tier 4)
 # ==============================================================================
 
 [championship]
 id = "gt1_heritage_trophy"
-name = "Le Mans 90s Heritage Trophy"
+name = "Endurance 90s Heritage Trophy"
 description = "Legendary 1990s GT1 homologation monsters competing across 10 demanding world circuits."
 module_id = "gt"
 tier = 4
@@ -15,7 +15,7 @@ ai_difficulty = "pro"
 icon = "trophy"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -83,7 +83,7 @@ laps = 3
 [[drivers]]
 id = "player"
 name = "Player"
-team = "Porsche AG Le Mans Team"
+team = "Vandorn Factory Team"
 is_player = true
 car_model_id = "gt_vandorn_aeromax_t4"
 country = "ESP"
@@ -119,7 +119,7 @@ livery_idx = 3
 [[drivers]]
 id = "allan_mcnish"
 name = "Allan McNish"
-team = "Porsche AG Le Mans Team"
+team = "Vandorn Factory Team"
 car_model_id = "gt_vandorn_aeromax_t4"
 country = "GBR"
 ai_character = "tenacious"

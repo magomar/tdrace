@@ -6,7 +6,7 @@
 [championship]
 id = "rally_supercar_lites_trophy"
 name = "Supercar Lites Trophy"
-description = "Official stepping stone to World RX featuring ~310–335 BHP spaceframe all-wheel-drive spec machinery across 6 technical European circuits."
+description = "Official stepping stone to World Rallycross featuring ~310–335 BHP spaceframe all-wheel-drive spec machinery across 6 technical European circuits."
 module_id = "rally"
 tier = 2
 laps_per_round = 5
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

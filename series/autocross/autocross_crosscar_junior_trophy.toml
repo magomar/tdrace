@@ -1,12 +1,12 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Autocross Career Mode: FIA Cross Car Academy Trophy (Tier 1)
+# Autocross Career Mode: Cross Car Junior Academy Trophy (Tier 1)
 # ==============================================================================
 
 [championship]
 id = "autocross_crosscar_junior_trophy"
-name = "FIA Cross Car Academy Trophy"
-description = "Official FIA grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks."
+name = "Cross Car Junior Academy Trophy"
+description = "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks."
 module_id = "autocross"
 tier = 1
 laps_per_round = 4
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

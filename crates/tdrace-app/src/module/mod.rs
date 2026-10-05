@@ -581,7 +581,7 @@ mod tests {
     fn test_gt_game_module() {
         let gt = GtWorldChallengeModule::new();
         assert_eq!(gt.id(), "gt");
-        assert_eq!(gt.title(), "GT WORLD CHALLENGE");
+        assert_eq!(gt.title(), "GRAND TOURING CHALLENGE");
         assert!(!gt.vehicles().is_empty());
         assert_eq!(gt.vehicles().len(), 5);
         assert!(!gt.tracks().is_empty());
@@ -847,7 +847,7 @@ mod tests {
     fn test_autocross_game_module() {
         let ax = AutocrossGameModule::new();
         assert_eq!(ax.id(), "autocross");
-        assert_eq!(ax.title(), "FIA AUTOCROSS");
+        assert_eq!(ax.title(), "CONTINENTAL AUTOCROSS");
         assert_eq!(ax.default_vehicle_id(), "autocross_ardennes_junior_t1");
         assert_eq!(ax.default_track_id(), "nova_paka_ax");
         assert_eq!(ax.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);

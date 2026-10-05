@@ -2639,7 +2639,7 @@ fn render_inspector(
 
             let categories = [
                 (CarCategory::Gt, "GT"),
-                (CarCategory::Nascar, "NASCAR"),
+                (CarCategory::Nascar, "Stock Car"),
                 (CarCategory::Rally, "Rallycross"),
                 (CarCategory::Kart, "Kart"),
                 (CarCategory::OffRoad, "Off-Road"),
@@ -2885,7 +2885,7 @@ fn render_template_modal(
 
     let mod_defs: [(&str, &str, SurfaceType, SurfaceType, &str, &str, Color); 4] = [
         ("classic", "CLASSIC", SurfaceType::Asphalt, SurfaceType::Grass, "GT Sports Coupe (RWD)", "14m track ribbon", Palette::NEON_CYAN),
-        ("gt", "GT WORLD CHALLENGE", SurfaceType::Asphalt, SurfaceType::Grass, "GT3 Evo Racer (600 BHP)", "15m track ribbon with curbs", Palette::RED),
+        ("gt", "GRAND TOURING CHALLENGE", SurfaceType::Asphalt, SurfaceType::Grass, "GT3 Evo Racer (600 BHP)", "15m track ribbon with curbs", Palette::RED),
         ("kart", "KARTING", SurfaceType::Asphalt, SurfaceType::Asphalt, "125cc Go-Kart (Direct)", "10m technical track ribbon", Palette::NEON_MAGENTA),
         ("rally", "RALLYCROSS", SurfaceType::Dirt, SurfaceType::Dirt, "WRC Rally Car (AWD)", "12m loose dirt ribbon", Palette::NEON_GOLD),
     ];

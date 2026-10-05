@@ -1792,25 +1792,25 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
                     ],
                 ),
                 "rally" => (
-                    "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Nitrocross Group E beasts.",
+                    "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Apex Group E beasts.",
                     vec![
                         CodexTierInfo { tier: 1, name: "Rally4 Grassroots Cup".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 1_000, base_purse: 5_000 },
                         CodexTierInfo { tier: 2, name: "Supercar Lites Trophy".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 2_000, base_purse: 12_000 },
-                        CodexTierInfo { tier: 3, name: "Euro RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 3_000, base_purse: 25_000 },
-                        CodexTierInfo { tier: 4, name: "World RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 3, name: "Continental RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "World Rallycross Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 4_000, base_purse: 55_000 },
                         CodexTierInfo { tier: 5, name: "RX1e Electric Championship".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 5_000, base_purse: 120_000 },
-                        CodexTierInfo { tier: 6, name: "Nitrocross Group E".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 6_000, base_purse: 150_000 },
+                        CodexTierInfo { tier: 6, name: "Apex Group E Electric Trophy".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 6_000, base_purse: 150_000 },
                         CodexTierInfo { tier: 7, name: "Group B Masters".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 7_000, base_purse: 180_000 },
                     ],
                 ),
                 "gt" => (
-                    "Prestigious sports car and endurance racing spanning production-based GT4, worldwide FIA GT3, high-downforce GT1 classics, and state-of-the-art hybrid Hypercars.",
+                    "Prestigious sports car and endurance racing spanning production-based GT4, worldwide GT3 pro, high-downforce GT1 classics, and state-of-the-art hybrid Hypercars.",
                     vec![
                         CodexTierInfo { tier: 1, name: "GT4 Clubman Sprint".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 1_000, base_purse: 5_000 },
-                        CodexTierInfo { tier: 2, name: "GT3 European Challenge".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 2_000, base_purse: 12_000 },
-                        CodexTierInfo { tier: 3, name: "GT2 Power Masters".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 3_000, base_purse: 25_000 },
-                        CodexTierInfo { tier: 4, name: "GT1 Heritage Trophy".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 4_000, base_purse: 55_000 },
-                        CodexTierInfo { tier: 5, name: "Hypercar World GP".to_string(), required_licence: "Class S (FIA Superlicense)", car_cost_xp: 5_000, base_purse: 120_000 },
+                        CodexTierInfo { tier: 2, name: "Continental GT3 Sprint Challenge".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 2_000, base_purse: 12_000 },
+                        CodexTierInfo { tier: 3, name: "Grand Touring Biturbo Masters".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "Endurance 90s Heritage Trophy".to_string(), required_licence: "Class A (International GT)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "Hypercar World GP".to_string(), required_licence: "Class S (World Superlicense)", car_cost_xp: 5_000, base_purse: 120_000 },
                     ],
                 ),
                 "nascar" => (
@@ -1818,9 +1818,9 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
                     vec![
                         CodexTierInfo { tier: 1, name: "Street Stock Bullring".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 1_000, base_purse: 5_000 },
                         CodexTierInfo { tier: 2, name: "Late Model Challenge".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 2_000, base_purse: 12_000 },
-                        CodexTierInfo { tier: 3, name: "ARCA National Tour".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 3_000, base_purse: 25_000 },
-                        CodexTierInfo { tier: 4, name: "Craftsman Truck Series".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 4_000, base_purse: 55_000 },
-                        CodexTierInfo { tier: 5, name: "NASCAR Cup Series".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 5_000, base_purse: 120_000 },
+                        CodexTierInfo { tier: 3, name: "National Stock Car Tour".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 3_000, base_purse: 25_000 },
+                        CodexTierInfo { tier: 4, name: "Pro Super Truck V8 Series".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 4_000, base_purse: 55_000 },
+                        CodexTierInfo { tier: 5, name: "Premier Stock Car Cup".to_string(), required_licence: "Class B (National Pro-Am)", car_cost_xp: 5_000, base_purse: 120_000 },
                     ],
                 ),
                 "extreme_offroad" => (
@@ -1960,8 +1960,8 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
     let point_systems = vec![
         CodexPointSystemInfo {
             id: "fia_standard",
-            name: "FIA Standard (F1 / GT World Challenge)",
-            description: "Official FIA championship points scale crediting the top 10 finishers. Encourages race-win pursuit with a steep podium gradient and rewards ultimate pace with a fastest-lap bonus point.",
+            name: "International Standard (Grand Touring Challenge)",
+            description: "Official international championship points scale crediting the top 10 finishers. Encourages race-win pursuit with a steep podium gradient and rewards ultimate pace with a fastest-lap bonus point.",
             points_table: (1..=10)
                 .map(|p| CodexPositionPoints {
                     position: p,
@@ -1999,7 +1999,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
         },
         CodexPointSystemInfo {
             id: "nascar_cup",
-            name: "NASCAR Cup Series",
+            name: "Premier Stock Car Cup",
             description: "Authentic 40-driver field progression where every finishing spot yields points. Setting stage_win_bonus awards +10 points to the fastest lap / stage winner.",
             points_table: (1..=36)
                 .map(|p| CodexPositionPoints {
@@ -2056,12 +2056,12 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
     let all_ladders = vec![
         CodexCareerLadder {
             module_id: "gt",
-            module_name: "GT World Challenge & Endurance",
+            module_name: "Grand Touring Challenge & Endurance",
             tiers: vec![
                 CodexCareerTierDetails { tier: 1, name: "Tier 1: GT4 Clubman Sprint", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("gt_yamato_hayate_t1"), starter_car_name: Some("Yamato Hayate GT T1"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["red_bull_ring", "zandvoort", "nurburgring_gp", "portimao_gp", "montreal"] },
-                CodexCareerTierDetails { tier: 2, name: "Tier 2: GT3 European Challenge", promotion_criteria: "Finish top 3 in GT4 championship + 2,000 XP in wallet.", starter_car_id: Some("gt_vandorn_arrowhead_t2"), starter_car_name: Some("Vandorn Arrowhead R T2"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["monza", "silverstone", "catalunya"] },
-                CodexCareerTierDetails { tier: 3, name: "Tier 3: GT2 Power Masters", promotion_criteria: "Finish top 3 in GT3 championship + 3,000 XP in wallet.", starter_car_id: Some("gt_aquila_strale_t3"), starter_car_name: Some("Aquila Strale GT2 T3"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["spa", "cota", "bahrain"] },
-                CodexCareerTierDetails { tier: 4, name: "Tier 4: GT1 Heritage Trophy", promotion_criteria: "Finish top 3 in GT2 championship + 4,000 XP in wallet.", starter_car_id: Some("gt_vandorn_aeromax_t4"), starter_car_name: Some("Vandorn Aeromax GT1 T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["suzuka", "interlagos", "bathurst"] },
+                CodexCareerTierDetails { tier: 2, name: "Tier 2: Continental GT3 Sprint Challenge", promotion_criteria: "Finish top 3 in GT4 championship + 2,000 XP in wallet.", starter_car_id: Some("gt_vandorn_arrowhead_t2"), starter_car_name: Some("Vandorn Arrowhead R T2"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["monza", "silverstone", "catalunya"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: Grand Touring Biturbo Masters", promotion_criteria: "Finish top 3 in GT3 championship + 3,000 XP in wallet.", starter_car_id: Some("gt_aquila_strale_t3"), starter_car_name: Some("Aquila Strale GT2 T3"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["spa", "cota", "bahrain"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Endurance 90s Heritage Trophy", promotion_criteria: "Finish top 3 in GT2 championship + 4,000 XP in wallet.", starter_car_id: Some("gt_vandorn_aeromax_t4"), starter_car_name: Some("Vandorn Aeromax GT1 T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["suzuka", "interlagos", "bathurst"] },
                 CodexCareerTierDetails { tier: 5, name: "Tier 5: Hypercar World GP", promotion_criteria: "Finish top 3 in GT1 championship + 5,000 XP in wallet.", starter_car_id: Some("gt_vandorn_kronos_t5"), starter_car_name: Some("Vandorn Kronos Hypercar T5"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["le_mans_sarthe", "monaco", "marina_bay"] },
             ],
         },
@@ -2071,9 +2071,9 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
             tiers: vec![
                 CodexCareerTierDetails { tier: 1, name: "Tier 1: Street Stock Bullring", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("nascar_crossbow_montego_t1"), starter_car_name: Some("Crossbow Montego Street Stock T1"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["martinsville_speedway", "bristol_motor_speedway", "eldora_speedway", "bowman_gray_stadium", "lucas_oil_irp"] },
                 CodexCareerTierDetails { tier: 2, name: "Tier 2: Late Model Challenge", promotion_criteria: "Finish top 3 in Street Stock championship + 2,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_saber_t2"), starter_car_name: Some("Crossbow Saber Late Model T2"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["charlotte_motor_speedway", "darlington_raceway", "north_wilkesboro_speedway"] },
-                CodexCareerTierDetails { tier: 3, name: "Tier 3: ARCA National Tour", promotion_criteria: "Finish top 3 in Late Model championship + 3,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_predator_t3"), starter_car_name: Some("Crossbow Predator Stock T3"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["iowa_speedway", "watkins_glen_nascar", "road_america"] },
-                CodexCareerTierDetails { tier: 4, name: "Tier 4: Craftsman Truck Series", promotion_criteria: "Finish top 3 in ARCA championship + 4,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_sierra_t4"), starter_car_name: Some("Crossbow Sierra Super Truck T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["indianapolis_motor_speedway", "pocono_raceway", "chicago_street_course"] },
-                CodexCareerTierDetails { tier: 5, name: "Tier 5: NASCAR Cup Series", promotion_criteria: "Finish top 3 in Truck championship + 5,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_manta_t5"), starter_car_name: Some("Crossbow Manta Silhouette T5"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["daytona_superspeedway", "talladega_superspeedway", "phoenix_raceway"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: National Stock Car Tour", promotion_criteria: "Finish top 3 in Late Model championship + 3,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_predator_t3"), starter_car_name: Some("Crossbow Predator Stock T3"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["iowa_speedway", "watkins_glen_nascar", "road_america"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: Pro Super Truck V8 Series", promotion_criteria: "Finish top 3 in National Stock Car championship + 4,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_sierra_t4"), starter_car_name: Some("Crossbow Sierra Super Truck T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["indianapolis_motor_speedway", "pocono_raceway", "chicago_street_course"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: Premier Stock Car Cup", promotion_criteria: "Finish top 3 in Truck championship + 5,000 XP in wallet.", starter_car_id: Some("nascar_crossbow_manta_t5"), starter_car_name: Some("Crossbow Manta Silhouette T5"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["daytona_superspeedway", "talladega_superspeedway", "phoenix_raceway"] },
             ],
         },
         CodexCareerLadder {
@@ -2082,9 +2082,9 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
             tiers: vec![
                 CodexCareerTierDetails { tier: 1, name: "Tier 1: Rally4 Grassroots Cup", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("rally_gallia_200_t1"), starter_car_name: Some("Gallia 200 Rally4 T1"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", "croft_rx"] },
                 CodexCareerTierDetails { tier: 2, name: "Tier 2: Supercar Lites Trophy", promotion_criteria: "Finish top 3 in Rally4 championship + 2,000 XP in wallet.", starter_car_id: Some("rally_nordic_rx_lites_t2"), starter_car_name: Some("Nordic RX Supercar Lites T2"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["hell_rx", "loheac_rx", "lavare_rx"] },
-                CodexCareerTierDetails { tier: 3, name: "Tier 3: Euro RX Supercars", promotion_criteria: "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.", starter_car_id: Some("rally_vortek_turbo_quattro_t7"), starter_car_name: Some("Vortek Turbo Quattro Legend T7"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["estering_rx", "montalegre_rx", "riga_rx"] },
-                CodexCareerTierDetails { tier: 4, name: "Tier 4: World RX Supercars", promotion_criteria: "Finish top 3 in Euro RX championship + 4,000 XP in wallet.", starter_car_id: Some("rally_gallia_lyon_t4"), starter_car_name: Some("Gallia Lyon WRX Supercar T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["nyirad_rx", "kouvola_rx", "killarney_rx"] },
-                CodexCareerTierDetails { tier: 5, name: "Tier 5: RX1e / Group E / Heritage", promotion_criteria: "Finish top 3 in World RX championship + 5,000 XP in wallet.", starter_car_id: Some("rally_gallia_volt_t5"), starter_car_name: Some("Gallia Volt RX1e Supercar T5"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["catalunya_rx", "lessay_rx", "essay_rx"] },
+                CodexCareerTierDetails { tier: 3, name: "Tier 3: Continental RX Supercars", promotion_criteria: "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.", starter_car_id: Some("rally_vortek_turbo_quattro_t7"), starter_car_name: Some("Vortek Turbo Quattro Legend T7"), car_cost_xp: 3_000, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["estering_rx", "montalegre_rx", "riga_rx"] },
+                CodexCareerTierDetails { tier: 4, name: "Tier 4: World Rallycross Supercars", promotion_criteria: "Finish top 3 in Continental RX championship + 4,000 XP in wallet.", starter_car_id: Some("rally_gallia_lyon_t4"), starter_car_name: Some("Gallia Lyon WRX Supercar T4"), car_cost_xp: 4_000, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["nyirad_rx", "kouvola_rx", "killarney_rx"] },
+                CodexCareerTierDetails { tier: 5, name: "Tier 5: RX1e / Group E / Heritage", promotion_criteria: "Finish top 3 in World Rallycross championship + 5,000 XP in wallet.", starter_car_id: Some("rally_gallia_volt_t5"), starter_car_name: Some("Gallia Volt RX1e Supercar T5"), car_cost_xp: 5_000, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["catalunya_rx", "lessay_rx", "essay_rx"] },
             ],
         },
         CodexCareerLadder {
@@ -2111,7 +2111,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
         },
         CodexCareerLadder {
             module_id: "autocross",
-            module_name: "FIA European Autocross",
+            module_name: "Continental Autocross",
             tiers: vec![
                 CodexCareerTierDetails { tier: 1, name: "Tier 1: Cross Car Junior", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["ax_meadow_sprint", "ax_quarry_loop", "ax_forest_dash"] },
                 CodexCareerTierDetails { tier: 2, name: "Tier 2: Cross Car Senior", promotion_criteria: "Finish top 3 in Junior Cross Car championship + 2,000 XP in wallet.", starter_car_id: Some("classic_ax_mudlark"), starter_car_name: Some("Mudlark Cross Car 600"), car_cost_xp: 2_000, first_time_exploration_xp: 500, round_base_purse: 12_000, unlocked_tracks: vec!["ax_nova_paka", "ax_matschenberg"] },
@@ -2212,9 +2212,9 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
         },
         CodexLicenceGrade {
             grade: "ClassS",
-            title: "Class S (FIA Superlicense)",
+            title: "Class S (World Superlicense)",
             badge: "CLASS S",
-            description: "The pinnacle of motorsport accreditation, granting access to state-of-the-art hybrid Le Mans Hypercars and Apex Prototypes.",
+            description: "The pinnacle of motorsport accreditation, granting access to state-of-the-art hybrid Endurance Hypercars and Apex Prototypes.",
             required_for: vec!["gt_hypercar", "apex_prototypes"],
         },
     ];

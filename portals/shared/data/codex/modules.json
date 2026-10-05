@@ -20,7 +20,7 @@
     },
     {
       "id": "autocross",
-      "title": "FIA AUTOCROSS",
+      "title": "CONTINENTAL AUTOCROSS",
       "subtitle": "Natural Unpaved Dirt & Buggy Racing",
       "launch": true,
       "cars": 15,
@@ -29,14 +29,14 @@
     {
       "id": "rally",
       "title": "RALLYCROSS WORLD CUP",
-      "subtitle": "World RX & Euro RX Mixed Surface Stages, Stadium Jumps & Drifts",
+      "subtitle": "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts",
       "launch": true,
       "cars": 21,
       "circuits": 20
     },
     {
       "id": "gt",
-      "title": "GT WORLD CHALLENGE",
+      "title": "GRAND TOURING CHALLENGE",
       "subtitle": "Global Multi-Class GT3 & GT2 Endurance and Sprint Championship",
       "launch": false,
       "cars": 20,
@@ -44,8 +44,8 @@
     },
     {
       "id": "nascar",
-      "title": "NASCAR CUP SERIES & TRANS-AM TA1",
-      "subtitle": "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Trans-Am Road Courses",
+      "title": "STOCK CAR CUP & TA1 SILHOUETTE",
+      "subtitle": "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Silhouette Road Courses",
       "launch": false,
       "cars": 15,
       "circuits": 17
@@ -53,7 +53,7 @@
     {
       "id": "extreme_offroad",
       "title": "EXTREME OFF-ROAD & STUNT ARENAS",
-      "subtitle": "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
+      "subtitle": "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
       "launch": false,
       "cars": 21,
       "circuits": 20

@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Autocross Career Mode: FIA Buggy1600 European Championship (Tier 3)
+# Autocross Career Mode: Continental Buggy 1600 Championship (Tier 3)
 # ==============================================================================
 
 [championship]
 id = "autocross_buggy1600_championship"
-name = "FIA Buggy1600 European Championship"
+name = "Continental Buggy 1600 Championship"
 description = "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across iconic Czech, Italian, and French venues."
 module_id = "autocross"
 tier = 3
@@ -15,7 +15,7 @@ ai_difficulty = "challenging"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

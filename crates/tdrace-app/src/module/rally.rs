@@ -79,7 +79,7 @@ impl GameModule for RallyGameModule {
     }
 
     fn subtitle(&self) -> &'static str {
-        "World RX & Euro RX Mixed Surface Stages, Stadium Jumps & Drifts"
+        "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts"
     }
 
     fn theme(&self) -> ModuleTheme {
@@ -95,9 +95,9 @@ impl GameModule for RallyGameModule {
         vec![
             VehicleModelDefinition {
                 id: "wrc_turbo_rally",
-                name: "Apex WRC Turbo AWD",
+                name: "Apex Turbo AWD",
                 tag: "380 BHP AWD",
-                description: "Modern WRC rally machine with permanent AWD, long-travel suspension, and quick anti-lag response.",
+                description: "Modern rally machine with permanent AWD, long-travel suspension, and quick anti-lag response.",
                 config: Self::car_wrc_rally(),
                 visual_type: VehicleVisualType::RallyHatch {
                     roof_scoop: true,
@@ -177,7 +177,7 @@ impl GameModule for RallyGameModule {
                 id: "timmy_hansenfield",
                 name: "Timmy Hansenfield",
                 alias: "Apex Predator",
-                bio: "World RX titleholder born into rallycross royalty. Renowned for surgical overtaking and momentum conservation through loose gravel.",
+                bio: "World Rallycross titleholder born into rallycross royalty. Renowned for surgical overtaking and momentum conservation through loose gravel.",
                 preferred_car: crate::ui::menu::CarChoice::RallyCar,
                 color_scheme: CarColorScheme::from_index(3),
                 offsets: DriverPersonalityOffsets::new(-0.02, 0.1, 0.00, 0.00, 0.02, -0.2, 0.02),
@@ -210,7 +210,7 @@ impl GameModule for RallyGameModule {
                 id: "anton_mark",
                 name: "Anton Mark",
                 alias: "The Hammer",
-                bio: "Euro RX champion celebrated for ruthless defensive lines, heavy braking into hairpins, and exceptional wet tarmac pace.",
+                bio: "Continental Rallycross champion celebrated for ruthless defensive lines, heavy braking into hairpins, and exceptional wet tarmac pace.",
                 preferred_car: crate::ui::menu::CarChoice::RallyCar,
                 color_scheme: CarColorScheme::from_index(6),
                 offsets: DriverPersonalityOffsets::new(-0.03, 0.1, 0.00, -0.02, 0.05, -0.5, 0.01),
@@ -305,7 +305,7 @@ impl GameModule for RallyGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::StageRally {
-                name: "World RX Tour".to_string(),
+                name: "World Rallycross Tour".to_string(),
                 stage_track_ids: vec![
                     "holjes_rx".to_string(),
                     "lydden_hill".to_string(),

@@ -80,7 +80,7 @@
         },
         {
           "id": "autocross",
-          "title": "FIA AUTOCROSS",
+          "title": "CONTINENTAL AUTOCROSS",
           "subtitle": "Natural Unpaved Dirt & Buggy Racing",
           "description": "High-octane wheel-to-wheel dirt racing featuring screaming 600cc Cross Cars, Buggy 1600 single-seaters, and 600+ bhp SuperBuggy 4WD prototypes.",
           "launch": true,
@@ -128,8 +128,8 @@
         {
           "id": "rally",
           "title": "RALLYCROSS WORLD CUP",
-          "subtitle": "World RX & Euro RX Mixed Surface Stages, Stadium Jumps & Drifts",
-          "description": "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Nitrocross Group E beasts.",
+          "subtitle": "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts",
+          "description": "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Apex Group E beasts.",
           "launch": true,
           "car_count": 21,
           "circuit_count": 20,
@@ -151,14 +151,14 @@
             },
             {
               "tier": 3,
-              "name": "Euro RX Supercars",
+              "name": "Continental RX Supercars",
               "required_licence": "Class C (Junior Competition)",
               "car_cost_xp": 3000,
               "base_purse": 25000
             },
             {
               "tier": 4,
-              "name": "World RX Supercars",
+              "name": "World Rallycross Supercars",
               "required_licence": "Class C (Junior Competition)",
               "car_cost_xp": 4000,
               "base_purse": 55000
@@ -172,7 +172,7 @@
             },
             {
               "tier": 6,
-              "name": "Nitrocross Group E",
+              "name": "Apex Group E Electric Trophy",
               "required_licence": "Class C (Junior Competition)",
               "car_cost_xp": 6000,
               "base_purse": 150000
@@ -188,9 +188,9 @@
         },
         {
           "id": "gt",
-          "title": "GT WORLD CHALLENGE",
+          "title": "GRAND TOURING CHALLENGE",
           "subtitle": "Global Multi-Class GT3 & GT2 Endurance and Sprint Championship",
-          "description": "Prestigious sports car and endurance racing spanning production-based GT4, worldwide FIA GT3, high-downforce GT1 classics, and state-of-the-art hybrid Hypercars.",
+          "description": "Prestigious sports car and endurance racing spanning production-based GT4, worldwide GT3 pro, high-downforce GT1 classics, and state-of-the-art hybrid Hypercars.",
           "launch": false,
           "car_count": 20,
           "circuit_count": 18,
@@ -205,21 +205,21 @@
             },
             {
               "tier": 2,
-              "name": "GT3 European Challenge",
+              "name": "Continental GT3 Sprint Challenge",
               "required_licence": "Class A (International GT)",
               "car_cost_xp": 2000,
               "base_purse": 12000
             },
             {
               "tier": 3,
-              "name": "GT2 Power Masters",
+              "name": "Grand Touring Biturbo Masters",
               "required_licence": "Class A (International GT)",
               "car_cost_xp": 3000,
               "base_purse": 25000
             },
             {
               "tier": 4,
-              "name": "GT1 Heritage Trophy",
+              "name": "Endurance 90s Heritage Trophy",
               "required_licence": "Class A (International GT)",
               "car_cost_xp": 4000,
               "base_purse": 55000
@@ -227,7 +227,7 @@
             {
               "tier": 5,
               "name": "Hypercar World GP",
-              "required_licence": "Class S (FIA Superlicense)",
+              "required_licence": "Class S (World Superlicense)",
               "car_cost_xp": 5000,
               "base_purse": 120000
             }
@@ -235,8 +235,8 @@
         },
         {
           "id": "nascar",
-          "title": "NASCAR CUP SERIES & TRANS-AM TA1",
-          "subtitle": "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Trans-Am Road Courses",
+          "title": "STOCK CAR CUP & TA1 SILHOUETTE",
+          "subtitle": "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Silhouette Road Courses",
           "description": "Heavy V8 pushrod stock car combat from grassroots quarter-mile bullrings and dirt ovals to high-banked intermediate tracks and 200 mph restrictor-plate superspeedways.",
           "launch": false,
           "car_count": 15,
@@ -259,21 +259,21 @@
             },
             {
               "tier": 3,
-              "name": "ARCA National Tour",
+              "name": "National Stock Car Tour",
               "required_licence": "Class B (National Pro-Am)",
               "car_cost_xp": 3000,
               "base_purse": 25000
             },
             {
               "tier": 4,
-              "name": "Craftsman Truck Series",
+              "name": "Pro Super Truck V8 Series",
               "required_licence": "Class B (National Pro-Am)",
               "car_cost_xp": 4000,
               "base_purse": 55000
             },
             {
               "tier": 5,
-              "name": "NASCAR Cup Series",
+              "name": "Premier Stock Car Cup",
               "required_licence": "Class B (National Pro-Am)",
               "car_cost_xp": 5000,
               "base_purse": 120000
@@ -283,7 +283,7 @@
         {
           "id": "extreme_offroad",
           "title": "EXTREME OFF-ROAD & STUNT ARENAS",
-          "subtitle": "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
+          "subtitle": "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
           "description": "Unrestricted terrain action featuring open tubular sand rails, 1000 bhp Trophy Trucks, Arctic ice conquerors, deep mud boggers, and 12-ton monster crushers.",
           "launch": false,
           "car_count": 21,
@@ -429,8 +429,8 @@
       "point_systems": [
         {
           "id": "fia_standard",
-          "name": "FIA Standard (F1 / GT World Challenge)",
-          "description": "Official FIA championship points scale crediting the top 10 finishers. Encourages race-win pursuit with a steep podium gradient and rewards ultimate pace with a fastest-lap bonus point.",
+          "name": "International Standard (Grand Touring Challenge)",
+          "description": "Official international championship points scale crediting the top 10 finishers. Encourages race-win pursuit with a steep podium gradient and rewards ultimate pace with a fastest-lap bonus point.",
           "points_table": [
             {
               "position": 1,
@@ -580,7 +580,7 @@
         },
         {
           "id": "nascar_cup",
-          "name": "NASCAR Cup Series",
+          "name": "Premier Stock Car Cup",
           "description": "Authentic 40-driver field progression where every finishing spot yields points. Setting stage_win_bonus awards +10 points to the fastest lap / stage winner.",
           "points_table": [
             {
@@ -740,7 +740,7 @@
           "module_id": "gt",
           "tier": 1,
           "laps_per_round": 3,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 5,
@@ -862,12 +862,12 @@
         },
         {
           "id": "gt3_european_challenge",
-          "name": "FIA GT3 European Challenge",
+          "name": "Continental GT3 Sprint Challenge",
           "description": "Premier European GT3 championship featuring high-downforce GT3 machinery across 7 historic circuits.",
           "module_id": "gt",
           "tier": 2,
           "laps_per_round": 3,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 7,
@@ -1001,12 +1001,12 @@
         },
         {
           "id": "gt2_power_masters",
-          "name": "SRO GT2 Power Masters",
+          "name": "Grand Touring Biturbo Masters",
           "description": "High-horsepower biturbo GT2 sports cars racing across 9 international circuits.",
           "module_id": "gt",
           "tier": 3,
           "laps_per_round": 3,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 9,
@@ -1152,12 +1152,12 @@
         },
         {
           "id": "gt1_heritage_trophy",
-          "name": "Le Mans 90s Heritage Trophy",
+          "name": "Endurance 90s Heritage Trophy",
           "description": "Legendary 1990s GT1 homologation monsters competing across 10 demanding world circuits.",
           "module_id": "gt",
           "tier": 4,
           "laps_per_round": 3,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 10,
@@ -1228,7 +1228,7 @@
             {
               "id": "player",
               "name": "Player",
-              "team": "Porsche AG Le Mans Team",
+              "team": "Vandorn Factory Team",
               "is_player": true,
               "car_model_id": "gt_vandorn_aeromax_t4",
               "country": "ESP",
@@ -1268,7 +1268,7 @@
             {
               "id": "allan_mcnish",
               "name": "Allan McNish",
-              "team": "Porsche AG Le Mans Team",
+              "team": "Vandorn Factory Team",
               "is_player": false,
               "car_model_id": "gt_vandorn_aeromax_t4",
               "country": "GBR",
@@ -1314,7 +1314,7 @@
           "module_id": "gt",
           "tier": 5,
           "laps_per_round": 3,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 12,
@@ -1417,7 +1417,7 @@
             {
               "id": "kamui_kobayashi",
               "name": "Kamui Kobayashi",
-              "team": "Toyota Gazoo Racing WEC",
+              "team": "Yamato Factory Racing",
               "is_player": false,
               "car_model_id": "gt_yamato_ronin_t5",
               "country": "JPN",
@@ -1457,7 +1457,7 @@
             {
               "id": "brendon_hartley",
               "name": "Brendon Hartley",
-              "team": "Toyota Gazoo Racing WEC",
+              "team": "Yamato Factory Racing",
               "is_player": false,
               "car_model_id": "gt_yamato_ronin_t5",
               "country": "NZL",
@@ -1477,13 +1477,13 @@
           ]
         },
         {
-          "id": "nascar_short_track_series",
-          "name": "NASCAR Weekly Short Track Series",
+          "id": "stockcar_short_track_series",
+          "name": "Weekly Short Track Series",
           "description": "Grassroots American stock car bullring championship featuring heavy Street Stock V8 iron across 5 historic short tracks.",
           "module_id": "nascar",
           "tier": 1,
           "laps_per_round": 4,
-          "scoring_system": "nascar",
+          "scoring_system": "stock_car",
           "fastest_lap_bonus": false,
           "stage_win_bonus": true,
           "round_count": 5,
@@ -1604,13 +1604,13 @@
           ]
         },
         {
-          "id": "nascar_intermediate_oval_challenge",
-          "name": "NASCAR Intermediate Oval Challenge",
+          "id": "stockcar_intermediate_oval_challenge",
+          "name": "National Intermediate Oval Challenge",
           "description": "Purpose-built tubular Late Model Stock cars battling on high-banked intermediate ovals and iconic bullrings.",
           "module_id": "nascar",
           "tier": 2,
           "laps_per_round": 4,
-          "scoring_system": "nascar",
+          "scoring_system": "stock_car",
           "fastest_lap_bonus": false,
           "stage_win_bonus": true,
           "round_count": 7,
@@ -1743,13 +1743,13 @@
           ]
         },
         {
-          "id": "nascar_national_tour",
-          "name": "NASCAR National Road & Oval Tour",
-          "description": "650 BHP ARCA Menards Series composite stock cars crossing intermediate speedways and high-speed natural road courses.",
+          "id": "stockcar_national_tour",
+          "name": "National Road & Oval Tour",
+          "description": "650 BHP National Stock Car Challenge composite stock cars crossing intermediate speedways and high-speed natural road courses.",
           "module_id": "nascar",
           "tier": 3,
           "laps_per_round": 4,
-          "scoring_system": "nascar",
+          "scoring_system": "stock_car",
           "fastest_lap_bonus": false,
           "stage_win_bonus": true,
           "round_count": 9,
@@ -1894,13 +1894,13 @@
           ]
         },
         {
-          "id": "nascar_premier_speedway_trophy",
-          "name": "NASCAR Premier Speedway Trophy",
-          "description": "700 BHP Craftsman Truck Series battle across legendary superspeedways, tricky triangles, and downtown Chicago street circuit.",
+          "id": "stockcar_premier_speedway_trophy",
+          "name": "Premier Speedway Trophy",
+          "description": "700 BHP Pro Super Truck V8 Series battle across legendary superspeedways, tricky triangles, and downtown Chicago street circuit.",
           "module_id": "nascar",
           "tier": 4,
           "laps_per_round": 4,
-          "scoring_system": "nascar",
+          "scoring_system": "stock_car",
           "fastest_lap_bonus": false,
           "stage_win_bonus": true,
           "round_count": 10,
@@ -2051,13 +2051,13 @@
           ]
         },
         {
-          "id": "nascar_cup_tier5",
-          "name": "NASCAR Cup Series Championship",
+          "id": "stockcar_cup_tier5",
+          "name": "Premier Stock Car Cup Championship",
           "description": "The pinnacle of American stock and silhouette racing: 850 BHP monsters battling across 12 iconic superspeedways and road courses.",
           "module_id": "nascar",
           "tier": 5,
           "laps_per_round": 4,
-          "scoring_system": "nascar",
+          "scoring_system": "stock_car",
           "fastest_lap_bonus": false,
           "stage_win_bonus": true,
           "round_count": 12,
@@ -2226,7 +2226,7 @@
           "module_id": "rally",
           "tier": 1,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 5,
@@ -2349,11 +2349,11 @@
         {
           "id": "rally_supercar_lites_trophy",
           "name": "Supercar Lites Trophy",
-          "description": "Official stepping stone to World RX featuring ~310–335 BHP spaceframe all-wheel-drive spec machinery across 6 technical European circuits.",
+          "description": "Official stepping stone to World Rallycross featuring ~310–335 BHP spaceframe all-wheel-drive spec machinery across 6 technical European circuits.",
           "module_id": "rally",
           "tier": 2,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 6,
@@ -2480,13 +2480,13 @@
           ]
         },
         {
-          "id": "rally_euro_rx_challenge",
-          "name": "Euro RX Challenge",
+          "id": "rally_continental_rx_challenge",
+          "name": "Continental RX Challenge",
           "description": "Continental European championship featuring 380–400 BHP touring supercars across 7 technical rallycross tracks.",
           "module_id": "rally",
           "tier": 3,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 7,
@@ -2619,13 +2619,13 @@
           ]
         },
         {
-          "id": "rally_world_rx_supercars",
-          "name": "FIA World RX Supercar Trophy",
-          "description": "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World RX arenas.",
+          "id": "rally_world_rallycross_supercars",
+          "name": "World Rallycross Supercar Trophy",
+          "description": "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World Rallycross arenas.",
           "module_id": "rally",
           "tier": 4,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 8,
@@ -2766,11 +2766,11 @@
         {
           "id": "rally_rx1e_electric_championship",
           "name": "RX1e Electric Championship",
-          "description": "680 BHP all-electric RX1e supercars with instant torque, tackling 10 World RX mixed-surface circuits.",
+          "description": "680 BHP all-electric RX1e supercars with instant torque, tackling 10 World Rallycross mixed-surface circuits.",
           "module_id": "rally",
           "tier": 5,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 10,
@@ -2921,13 +2921,13 @@
           ]
         },
         {
-          "id": "rally_nitrocross_group_e",
-          "name": "Nitrocross Group E Series",
+          "id": "rally_apex_group_e",
+          "name": "Apex Group E Electric Trophy",
           "description": "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits.",
           "module_id": "rally",
           "tier": 6,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 12,
@@ -3096,7 +3096,7 @@
           "module_id": "rally",
           "tier": 0,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 9,
@@ -3242,12 +3242,12 @@
         },
         {
           "id": "kart_world_cup",
-          "name": "Rotax Junior Karting Academy",
+          "name": "Junior Karting Academy",
           "description": "Tight, technical grassroots karting championship testing racecraft and momentum preservation across 5 European circuits.",
           "module_id": "kart",
           "tier": 1,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 5,
@@ -3369,12 +3369,12 @@
         },
         {
           "id": "kart_junior_trophy",
-          "name": "FIA Karting Academy Trophy",
+          "name": "International Karting Academy Trophy",
           "description": "Restricted 125cc OK-Junior feeder championship testing racecraft and clean apex speed across 6 European circuits.",
           "module_id": "kart",
           "tier": 2,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 6,
@@ -3507,7 +3507,7 @@
           "module_id": "kart",
           "tier": 3,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 7,
@@ -3646,7 +3646,7 @@
           "module_id": "kart",
           "tier": 4,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 8,
@@ -3791,7 +3791,7 @@
           "module_id": "kart",
           "tier": 5,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 9,
@@ -3942,7 +3942,7 @@
           "module_id": "kart",
           "tier": 6,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 10,
@@ -4756,7 +4756,7 @@
             {
               "id": "player",
               "name": "Player",
-              "team": "Apex Monster Jam",
+              "team": "Apex Monster Havoc",
               "is_player": true,
               "car_model_id": "offroad_havoc_tomb_raider_t5",
               "country": "USA",
@@ -4837,12 +4837,12 @@
         },
         {
           "id": "autocross_crosscar_junior_trophy",
-          "name": "FIA Cross Car Academy Trophy",
-          "description": "Official FIA grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks.",
+          "name": "Cross Car Junior Academy Trophy",
+          "description": "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks.",
           "module_id": "autocross",
           "tier": 1,
           "laps_per_round": 4,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 3,
@@ -4957,7 +4957,7 @@
           "module_id": "autocross",
           "tier": 2,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 4,
@@ -5073,12 +5073,12 @@
         },
         {
           "id": "autocross_buggy1600_championship",
-          "name": "FIA Buggy1600 European Championship",
+          "name": "Continental Buggy 1600 Championship",
           "description": "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across iconic Czech, Italian, and French venues.",
           "module_id": "autocross",
           "tier": 3,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 4,
@@ -5199,7 +5199,7 @@
           "module_id": "autocross",
           "tier": 4,
           "laps_per_round": 5,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 4,
@@ -5315,12 +5315,12 @@
         },
         {
           "id": "autocross_superbuggy_world_series",
-          "name": "FIA SuperBuggy World Series",
+          "name": "World SuperBuggy Series",
           "description": "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on the most legendary European autocross cathedrals.",
           "module_id": "autocross",
           "tier": 5,
           "laps_per_round": 6,
-          "scoring_system": "fia",
+          "scoring_system": "standard",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
           "round_count": 5,
@@ -5445,7 +5445,7 @@
         "ladders": [
           {
             "module_id": "gt",
-            "module_name": "GT World Challenge & Endurance",
+            "module_name": "Grand Touring Challenge & Endurance",
             "tiers": [
               {
                 "tier": 1,
@@ -5466,7 +5466,7 @@
               },
               {
                 "tier": 2,
-                "name": "Tier 2: GT3 European Challenge",
+                "name": "Tier 2: Continental GT3 Sprint Challenge",
                 "promotion_criteria": "Finish top 3 in GT4 championship + 2,000 XP in wallet.",
                 "starter_car_id": "gt_vandorn_arrowhead_t2",
                 "starter_car_name": "Vandorn Arrowhead R T2",
@@ -5481,7 +5481,7 @@
               },
               {
                 "tier": 3,
-                "name": "Tier 3: GT2 Power Masters",
+                "name": "Tier 3: Grand Touring Biturbo Masters",
                 "promotion_criteria": "Finish top 3 in GT3 championship + 3,000 XP in wallet.",
                 "starter_car_id": "gt_aquila_strale_t3",
                 "starter_car_name": "Aquila Strale GT2 T3",
@@ -5496,7 +5496,7 @@
               },
               {
                 "tier": 4,
-                "name": "Tier 4: GT1 Heritage Trophy",
+                "name": "Tier 4: Endurance 90s Heritage Trophy",
                 "promotion_criteria": "Finish top 3 in GT2 championship + 4,000 XP in wallet.",
                 "starter_car_id": "gt_vandorn_aeromax_t4",
                 "starter_car_name": "Vandorn Aeromax GT1 T4",
@@ -5564,7 +5564,7 @@
               },
               {
                 "tier": 3,
-                "name": "Tier 3: ARCA National Tour",
+                "name": "Tier 3: National Stock Car Tour",
                 "promotion_criteria": "Finish top 3 in Late Model championship + 3,000 XP in wallet.",
                 "starter_car_id": "nascar_crossbow_predator_t3",
                 "starter_car_name": "Crossbow Predator Stock T3",
@@ -5579,8 +5579,8 @@
               },
               {
                 "tier": 4,
-                "name": "Tier 4: Craftsman Truck Series",
-                "promotion_criteria": "Finish top 3 in ARCA championship + 4,000 XP in wallet.",
+                "name": "Tier 4: Pro Super Truck V8 Series",
+                "promotion_criteria": "Finish top 3 in National Stock Car championship + 4,000 XP in wallet.",
                 "starter_car_id": "nascar_crossbow_sierra_t4",
                 "starter_car_name": "Crossbow Sierra Super Truck T4",
                 "car_cost_xp": 4000,
@@ -5594,7 +5594,7 @@
               },
               {
                 "tier": 5,
-                "name": "Tier 5: NASCAR Cup Series",
+                "name": "Tier 5: Premier Stock Car Cup",
                 "promotion_criteria": "Finish top 3 in Truck championship + 5,000 XP in wallet.",
                 "starter_car_id": "nascar_crossbow_manta_t5",
                 "starter_car_name": "Crossbow Manta Silhouette T5",
@@ -5647,7 +5647,7 @@
               },
               {
                 "tier": 3,
-                "name": "Tier 3: Euro RX Supercars",
+                "name": "Tier 3: Continental RX Supercars",
                 "promotion_criteria": "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.",
                 "starter_car_id": "rally_vortek_turbo_quattro_t7",
                 "starter_car_name": "Vortek Turbo Quattro Legend T7",
@@ -5662,8 +5662,8 @@
               },
               {
                 "tier": 4,
-                "name": "Tier 4: World RX Supercars",
-                "promotion_criteria": "Finish top 3 in Euro RX championship + 4,000 XP in wallet.",
+                "name": "Tier 4: World Rallycross Supercars",
+                "promotion_criteria": "Finish top 3 in Continental RX championship + 4,000 XP in wallet.",
                 "starter_car_id": "rally_gallia_lyon_t4",
                 "starter_car_name": "Gallia Lyon WRX Supercar T4",
                 "car_cost_xp": 4000,
@@ -5678,7 +5678,7 @@
               {
                 "tier": 5,
                 "name": "Tier 5: RX1e / Group E / Heritage",
-                "promotion_criteria": "Finish top 3 in World RX championship + 5,000 XP in wallet.",
+                "promotion_criteria": "Finish top 3 in World Rallycross championship + 5,000 XP in wallet.",
                 "starter_car_id": "rally_gallia_volt_t5",
                 "starter_car_name": "Gallia Volt RX1e Supercar T5",
                 "car_cost_xp": 5000,
@@ -5860,7 +5860,7 @@
           },
           {
             "module_id": "autocross",
-            "module_name": "FIA European Autocross",
+            "module_name": "Continental Autocross",
             "tiers": [
               {
                 "tier": 1,
@@ -6092,9 +6092,9 @@
           },
           {
             "grade": "ClassS",
-            "title": "Class S (FIA Superlicense)",
+            "title": "Class S (World Superlicense)",
             "badge": "CLASS S",
-            "description": "The pinnacle of motorsport accreditation, granting access to state-of-the-art hybrid Le Mans Hypercars and Apex Prototypes.",
+            "description": "The pinnacle of motorsport accreditation, granting access to state-of-the-art hybrid Endurance Hypercars and Apex Prototypes.",
             "required_for": [
               "gt_hypercar",
               "apex_prototypes"

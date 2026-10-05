@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: FIA Karting Academy Trophy (Tier 2)
+# Karting Career Mode: International Karting Academy Trophy (Tier 2)
 # ==============================================================================
 
 [championship]
 id = "kart_junior_trophy"
-name = "FIA Karting Academy Trophy"
+name = "International Karting Academy Trophy"
 description = "Restricted 125cc OK-Junior feeder championship testing racecraft and clean apex speed across 6 European circuits."
 module_id = "kart"
 tier = 2
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "kart"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

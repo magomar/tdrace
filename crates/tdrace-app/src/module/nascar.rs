@@ -37,18 +37,18 @@ impl GameModule for NascarGameModule {
     }
 
     fn title(&self) -> &'static str {
-        "NASCAR CUP SERIES & TRANS-AM TA1"
+        "STOCK CAR CUP & TA1 SILHOUETTE"
     }
 
     fn subtitle(&self) -> &'static str {
-        "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Trans-Am Road Courses"
+        "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Silhouette Road Courses"
     }
 
     fn theme(&self) -> ModuleTheme {
         ModuleTheme {
             primary_accent: Color::new(1.0, 0.82, 0.08, 1.0), // Golden Yellow
             secondary_accent: Color::new(0.06, 0.42, 0.92, 1.0), // Daytona Blue
-            header_badge: "NASCAR CUP SERIES",
+            header_badge: "STOCK CAR CUP SERIES",
             background_tint: Color::new(0.08, 0.07, 0.06, 0.98),
         }
     }
@@ -57,9 +57,9 @@ impl GameModule for NascarGameModule {
         vec![
             VehicleModelDefinition {
                 id: "nascar_cup_v8",
-                name: "NASCAR Cup Next-Gen V8",
+                name: "Stock Car Cup Next-Gen V8",
                 tag: "850 BHP PUSHROD V8",
-                description: "Modern NASCAR Cup Series stock car: 850 BHP naturally aspirated 5.9L pushrod V8, 1260 kg, decklid blade ducktail spoiler, roof escape flaps, 320 km/h superspeedway package.",
+                description: "Modern Stock Car Cup Series stock car: 850 BHP naturally aspirated 5.9L pushrod V8, 1260 kg, decklid blade ducktail spoiler, roof escape flaps, 320 km/h superspeedway package.",
                 config: Self::car_stock_car(),
                 visual_type: VehicleVisualType::StockCar {
                     tall_wing: false,
@@ -78,7 +78,7 @@ impl GameModule for NascarGameModule {
             },
             VehicleModelDefinition {
                 id: "trans_am_ta1",
-                name: "Trans-Am TA1 Spaceframe V8",
+                name: "TA1 Silhouette Spaceframe V8",
                 tag: "850 BHP SPACEFRAME",
                 description: "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, lightweight bodywork, quick-ratio steering, side boom tubes.",
                 config: Self::car_trans_am(),
@@ -236,7 +236,7 @@ impl GameModule for NascarGameModule {
                 id: "bill_elliott",
                 name: "Bill 'Awesome Bill' Elliott",
                 alias: "Awesome Bill",
-                bio: "From Dawsonville, Georgia. Holds the all-time NASCAR qualifying speed record at Talladega (212.809 mph).",
+                bio: "From Dawsonville, Georgia. Holds the all-time stock car qualifying speed record at Talladega (212.809 mph).",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
                     Color::new(0.92, 0.92, 0.95, 1.0),
@@ -283,7 +283,7 @@ impl GameModule for NascarGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::Championship {
-                name: "NASCAR Cup Series Championship".to_string(),
+                name: "Premier Stock Car Cup Championship".to_string(),
                 point_system: PointSystem::NascarCup { stage_win_bonus: true },
                 track_ids: vec![
                     "daytona_superspeedway".to_string(),
@@ -305,7 +305,7 @@ impl GameModule for NascarGameModule {
                 elimination_interval: 3,
             },
             TournamentFormat::Championship {
-                name: "Trans-Am TA1 National Challenge".to_string(),
+                name: "Trans-National TA1 National Challenge".to_string(),
                 point_system: PointSystem::NascarCup { stage_win_bonus: false },
                 track_ids: vec![
                     "watkins_glen_nascar".to_string(),

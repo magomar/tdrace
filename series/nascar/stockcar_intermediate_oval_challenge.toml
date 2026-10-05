@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# NASCAR Career Mode: NASCAR Intermediate Oval Challenge (Tier 2)
+# Stock Car Career Mode: National Intermediate Oval Challenge (Tier 2)
 # ==============================================================================
 
 [championship]
-id = "nascar_intermediate_oval_challenge"
-name = "NASCAR Intermediate Oval Challenge"
+id = "stockcar_intermediate_oval_challenge"
+name = "National Intermediate Oval Challenge"
 description = "Purpose-built tubular Late Model Stock cars battling on high-banked intermediate ovals and iconic bullrings."
 module_id = "nascar"
 tier = 2
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "flag_checkered"
 
 [scoring]
-system = "nascar"
+system = "stock_car"
 fastest_lap_bonus = false
 stage_win_bonus = true
 clean_race_bonus = false

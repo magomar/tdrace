@@ -95,7 +95,7 @@ laps = 3
 [[drivers]]
 id = "player"
 name = "Player"
-team = "Apex Monster Jam"
+team = "Apex Monster Havoc"
 is_player = true
 car_model_id = "offroad_havoc_tomb_raider_t5"
 country = "USA"

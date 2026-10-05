@@ -42,12 +42,12 @@ impl GameModule for ExtremeOffRoadModule {
     }
 
     fn subtitle(&self) -> &'static str {
-        "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"
+        "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"
     }
 
     fn theme(&self) -> ModuleTheme {
         ModuleTheme {
-            primary_accent: Color::new(1.0, 0.40, 0.05, 1.0), // Baja Danger Orange
+            primary_accent: Color::new(1.0, 0.40, 0.05, 1.0), // Sonora Danger Orange
             secondary_accent: Color::new(0.15, 0.85, 1.0, 1.0), // Electric Cyan / Ice Blue
             header_badge: "EXTREME OFF-ROAD & STUNT ARENAS",
             background_tint: Color::new(0.08, 0.05, 0.03, 0.98),
@@ -68,7 +68,7 @@ impl GameModule for ExtremeOffRoadModule {
             },
             stats: (0.88, 0.96, 0.82, 0.94),
             default_schemes: vec![
-                CarColorScheme::from_index(3), // Baja Danger Orange
+                CarColorScheme::from_index(3), // Sonora Danger Orange
                 CarColorScheme::from_index(1), // Electric Cyan
                 CarColorScheme::from_index(6), // Matte Black Stealth
                 CarColorScheme::from_index(2), // Racing Red
@@ -99,7 +99,7 @@ impl GameModule for ExtremeOffRoadModule {
                 id: "wyatt_cole",
                 name: "Wyatt Cole",
                 alias: "Dust Devil",
-                bio: "Baja 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
+                bio: "Sonora 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(3),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.01, 0.00, 0.03, -0.2, 0.02),
@@ -109,8 +109,8 @@ impl GameModule for ExtremeOffRoadModule {
             DriverCharacter {
                 id: "jaxson_rivera",
                 name: "Jaxson Rivera",
-                alias: "Baja King",
-                bio: "Undisputed King of the Baja scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
+                alias: "Sonora King",
+                bio: "Undisputed King of the Sonora scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(1),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.00, -0.01, 0.05, -0.3, 0.03),
@@ -232,7 +232,7 @@ impl GameModule for ExtremeOffRoadModule {
                 id: "diego_valdez",
                 name: "Diego Valdez",
                 alias: "Trophy King",
-                bio: "Mexican SCORE champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
+                bio: "Mexican desert raid champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.85, 0.15, 0.30, 1.0),

@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# GT World Challenge: SRO GT2 Power Masters (Tier 3)
+# Grand Touring Challenge: Grand Touring Biturbo Masters (Tier 3)
 # ==============================================================================
 
 [championship]
 id = "gt2_power_masters"
-name = "SRO GT2 Power Masters"
+name = "Grand Touring Biturbo Masters"
 description = "High-horsepower biturbo GT2 sports cars racing across 9 international circuits."
 module_id = "gt"
 tier = 3
@@ -15,7 +15,7 @@ ai_difficulty = "pro"
 icon = "trophy"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

@@ -61,7 +61,7 @@ async fn main() {
             session.garage_car_idx = 3;
         } else if clean_arg == "classic" {
             session.switch_to_classic();
-        } else if clean_arg == "nascar-championship" {
+        } else if clean_arg == "nascar-championship" || clean_arg == "stockcar-championship" {
             session.start_nascar_championship();
         } else if clean_arg == "offroad-championship" || clean_arg == "extreme-offroad-championship" {
             session.start_extreme_offroad_championship();

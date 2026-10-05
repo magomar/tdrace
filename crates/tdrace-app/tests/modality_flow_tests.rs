@@ -1083,7 +1083,7 @@ fn test_career_mode_initial_tier_1_championship_gating() {
         .any(|c| c.series_id == "gt3_european_challenge"));
     assert!(!cards
         .iter()
-        .any(|c| c.series_id == "nascar_intermediate_oval_challenge"));
+        .any(|c| c.series_id == "stockcar_intermediate_oval_challenge"));
     assert!(!cards
         .iter()
         .any(|c| c.series_id == "rally_supercar_lites_trophy"));

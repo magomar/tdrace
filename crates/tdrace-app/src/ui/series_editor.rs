@@ -276,15 +276,15 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
             "niclas_gron" => "GRX Taneco",
             "anton_mark" => "GCK Motorsport",
             "timo_scheider" => "All-Inkl Racing",
-            "marco_armani" => "Tony Kart Racing",
-            "lucas_vance" => "CRG Factory Team",
-            "alex_rossi" => "Birel ART",
-            "sofia_lind" => "Kosmic Racing",
-            "finn_korhonen" => "Sodi Kart",
-            "leo_dupont" => "Energy Corse",
-            "mateo_silva" => "Parolin Motorsport",
+            "marco_armani" => "Verde Factory Karting",
+            "lucas_vance" => "Blackline Factory Team",
+            "alex_rossi" => "Rosso Factory Karting",
+            "sofia_lind" => "Starlight Kart Team",
+            "finn_korhonen" => "Gallic Kart Racing",
+            "leo_dupont" => "Veloce Karting",
+            "mateo_silva" => "Veneto Kart Racing",
             "wyatt_cole" => "Mojave Sandworks",
-            "jaxson_rivera" => "Baja Trophy Racing",
+            "jaxson_rivera" => "Sonora Trophy Racing",
             "astrid_lindholm" => "Nordic Glacier Works",
             "bubba_beauregard" => "Bayou Heavy Traction",
             "travis_mcgrath" => "Redline Freestyle",
@@ -1163,8 +1163,14 @@ pub fn handle_championship_editor_input(
                         state.def.series.laps_per_round = counter.value as u32;
                     }
                     6 => { // Point system
-                        let systems = ["fia", "nascar", "arcade", "motogp"];
-                        let curr = systems.iter().position(|&s| s == state.def.scoring.system).unwrap_or(0);
+                        let systems = ["standard", "stock_car", "arcade", "motogp"];
+                        let curr = match state.def.scoring.system.as_str() {
+                            "fia" | "standard" => 0,
+                            "nascar" | "stock_car" => 1,
+                            "arcade" => 2,
+                            "motogp" => 3,
+                            _ => 0,
+                        };
                         let next = if is_key_pressed(KeyCode::Right) { (curr + 1) % systems.len() } else { (curr + systems.len() - 1) % systems.len() };
                         state.def.scoring.system = systems[next].to_string();
                     }

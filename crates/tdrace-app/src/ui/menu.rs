@@ -161,12 +161,12 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 /// List badge for a module's circuits.
 fn module_label(module: &str) -> &'static str {
     match module {
-        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
+        "gt" | "gt_challenge" => "GRAND TOURING CHALLENGE",
         "rally" => "RALLYCROSS",
         "kart" => "KARTING",
-        "nascar" => "NASCAR CUP",
+        "nascar" => "STOCK CAR",
         "extreme_offroad" => "EXTREME OFF-ROAD",
-        "autocross" => "FIA AUTOCROSS",
+        "autocross" => "CONTINENTAL AUTOCROSS",
         _ => "CLASSIC MOTORSPORT",
     }
 }
@@ -397,12 +397,12 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
-            Self::GT4Clubsport => "420 BHP GT4 Clubsport",
-            Self::GT3Car => "600 BHP GT3 Evo Racer",
-            Self::GT2Biturbo => "707 BHP GT2 Biturbo Sprint",
-            Self::GT1Legend => "650 BHP GT1 Le Mans Legend",
+            Self::GT4Clubsport => "420 BHP GT Tier 1 Clubsport",
+            Self::GT3Car => "600 BHP GT Tier 2 Pro Sprint",
+            Self::GT2Biturbo => "707 BHP GT Tier 3 Biturbo",
+            Self::GT1Legend => "650 BHP GT Tier 4 Legend",
             Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
-            Self::StockCar => "850 BHP NASCAR Cup V8",
+            Self::StockCar => "850 BHP Premier Stock Car V8",
             Self::SandRail => "300 BHP Sand Rail Buggy",
             Self::CrossCar => "150 BHP Cross Car",
         }
@@ -414,11 +414,11 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
-            Self::GT4Clubsport => "GT4 ENTRY SPEC",
-            Self::GT3Car => "FIA GT3 SPEC",
-            Self::GT2Biturbo => "SRO GT2 SPRINT",
-            Self::GT1Legend => "90s GT1 LEGEND",
-            Self::HypercarPrototype => "LE MANS HYPERCAR",
+            Self::GT4Clubsport => "GT TIER 1 CLUBSPORT",
+            Self::GT3Car => "GT TIER 2 PRO SPRINT",
+            Self::GT2Biturbo => "GT TIER 3 BITURBO",
+            Self::GT1Legend => "GT TIER 4 LEGEND",
+            Self::HypercarPrototype => "ENDURANCE HYPERCAR",
             Self::StockCar => "850 BHP SPACEFRAME V8",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
             Self::CrossCar => "150 BHP RWD MOTORCYCLE",
@@ -872,6 +872,17 @@ impl GameMode {
         }
     }
 
+    pub fn allows_laps_customization(&self) -> bool {
+        match self {
+            Self::ExperimentalRace => true,
+            Self::StandardRace
+            | Self::Career
+            | Self::SplitScreen
+            | Self::TimeTrial
+            | Self::FreeRide => false,
+        }
+    }
+
     pub fn has_bots(&self) -> bool {
         match self {
             Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => true,
@@ -1000,7 +1011,7 @@ impl MenuCategoryFilter {
             Self::Rally => "RALLY",
             Self::Kart => "KART",
             Self::Gt => "GT",
-            Self::Nascar => "NASCAR",
+            Self::Nascar => "STOCK CAR",
             Self::ExtremeOffroad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
             Self::Custom => "CUSTOM",
@@ -2329,7 +2340,7 @@ pub fn render_track_select_menu(
             ),
             (
                 "Module Distribution",
-                "Assign custom circuits to Classic, Rally, Kart, GT, Nascar",
+                "Assign custom circuits to Classic, Rally, Kart, GT, Stock Car",
             ),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);

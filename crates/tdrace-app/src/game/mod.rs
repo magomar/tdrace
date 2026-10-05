@@ -2103,7 +2103,7 @@ impl RaceSession {
             ],
             "nascar" => vec![
                 (CarChoice::StockCar.title(), CarChoice::StockCar.tag(), CarChoice::StockCar.description(), CarChoice::StockCar.stats()),
-                ("Trans-Am TA1 Spaceframe V8", "850 BHP SPACEFRAME", "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, side boom tubes.", (0.95, 0.92, 0.91, 0.85)),
+                ("Trans-National TA1 Spaceframe V8", "850 BHP SPACEFRAME", "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, side boom tubes.", (0.95, 0.92, 0.91, 0.85)),
             ],
             "extreme_offroad" => vec![
                 (CarChoice::SandRail.title(), CarChoice::SandRail.tag(), CarChoice::SandRail.description(), CarChoice::SandRail.stats()),
@@ -2701,10 +2701,10 @@ impl RaceSession {
         self.state = GameState::Menu;
     }
 
-    /// Starts a full GT World Challenge Championship Season.
+    /// Starts a full Grand Touring Challenge Championship Season.
     pub fn start_gt_championship(&mut self) {
         let champ = ChampionshipSession::new(
-            "GT World Challenge Championship 2026",
+            "Grand Touring Challenge Championship 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "gt_coastal_grand_prix".to_string()],
             3,
@@ -2852,7 +2852,7 @@ impl RaceSession {
     pub fn start_nascar_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "NASCAR Weekly Short Track Series (Tier 1)",
+                "Weekly Short Track Series (Tier 1)",
                 vec![
                     "martinsville_speedway".to_string(),
                     "bristol_motor_speedway".to_string(),
@@ -2862,7 +2862,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "NASCAR Intermediate Oval Challenge (Tier 2)",
+                "National Intermediate Oval Challenge (Tier 2)",
                 vec![
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
@@ -2874,7 +2874,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "NASCAR National Road & Oval Tour (Tier 3)",
+                "National Road & Oval Tour (Tier 3)",
                 vec![
                     "iowa_speedway".to_string(),
                     "watkins_glen_nascar".to_string(),
@@ -2888,7 +2888,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "NASCAR Premier Speedway Trophy (Tier 4)",
+                "Premier Speedway Trophy (Tier 4)",
                 vec![
                     "indianapolis_motor_speedway".to_string(),
                     "pocono_raceway".to_string(),
@@ -2903,7 +2903,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "NASCAR Cup Series Championship (Tier 5)",
+                "Premier Stock Car Cup Championship (Tier 5)",
                 vec![
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
@@ -3044,7 +3044,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "Euro RX Challenge (Tier 3)",
+                "Continental RX Challenge (Tier 3)",
                 vec![
                     "lavare_rx".to_string(),
                     "riga_rx".to_string(),
@@ -3056,7 +3056,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "FIA World RX Supercar Trophy (Tier 4)",
+                "World Rallycross Supercar Trophy (Tier 4)",
                 vec![
                     "catalunya_rx".to_string(),
                     "spa_rx".to_string(),
@@ -3084,7 +3084,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "Nitrocross Group E Series (Tier 6)",
+                "Apex Group E Electric Trophy (Tier 6)",
                 vec![
                     "catalunya_rx".to_string(),
                     "lessay_rx".to_string(),
@@ -3200,7 +3200,7 @@ impl RaceSession {
     pub fn start_kart_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "Rotax Junior Academy (Tier 1)",
+                "Junior Karting Academy (Tier 1)",
                 vec![
                     "lonato".to_string(),
                     "genk".to_string(),
@@ -3210,7 +3210,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "FIA Karting Academy Trophy (Tier 2)",
+                "International Karting Academy Trophy (Tier 2)",
                 vec![
                     "whilton_mill".to_string(),
                     "laval_kart".to_string(),
@@ -3559,7 +3559,7 @@ impl RaceSession {
     pub fn start_autocross_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids, default_laps, drivers): (&str, Vec<String>, u32, &[(&str, &str, &str)]) = match tier {
             1 => (
-                "FIA Cross Car Academy Trophy (Tier 1)",
+                "Cross Car Junior Academy Trophy (Tier 1)",
                 vec![
                     "seelow_ax".to_string(),
                     "bazaigues_ax".to_string(),
@@ -3598,7 +3598,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "FIA Buggy1600 European Championship (Tier 3)",
+                "Continental Buggy 1600 Championship (Tier 3)",
                 vec![
                     "prerov_ax".to_string(),
                     "humpolec_ax".to_string(),
@@ -3638,7 +3638,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "FIA SuperBuggy World Series (Tier 5)",
+                "World SuperBuggy Series (Tier 5)",
                 vec![
                     "nova_paka_ax".to_string(),
                     "st_georges_ax".to_string(),
@@ -3745,10 +3745,10 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Starts a full NASCAR Cup Series Championship Season.
+    /// Starts a full Premier Stock Car Cup Championship Season.
     pub fn start_nascar_championship(&mut self) {
         let champ = ChampionshipSession::new(
-            "NASCAR Cup Series Championship 2026",
+            "Premier Stock Car Cup Championship 2026",
             PointSystem::NascarCup { stage_win_bonus: true },
             vec![
                 "daytona_superspeedway".to_string(),
@@ -3922,6 +3922,18 @@ impl RaceSession {
             DriverTier::Legend => DriverTier::Rookie,
         };
         self.set_casual_ai_difficulty(next_tier);
+    }
+
+    /// Cycles the casual AI difficulty tier backward.
+    pub fn cycle_casual_ai_difficulty_prev(&mut self) {
+        let prev_tier = match self.casual_ai_difficulty {
+            DriverTier::Rookie => DriverTier::Legend,
+            DriverTier::Amateur => DriverTier::Rookie,
+            DriverTier::Contender => DriverTier::Amateur,
+            DriverTier::Pro => DriverTier::Contender,
+            DriverTier::Legend => DriverTier::Pro,
+        };
+        self.set_casual_ai_difficulty(prev_tier);
     }
 
     /// Sets the target difficulty tier for casual races and rebuilds grid tiers.
@@ -6304,6 +6316,7 @@ impl RaceSession {
         let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
         let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
         let (grid_btn_x, grid_btn_y, grid_btn_w, grid_btn_h) = crate::ui::starting_grid_grid_button_rect(sw, sh);
+        let (t_rect, l_rect, b_rect) = crate::ui::starting_grid_stepper_rects(sw, sh);
         let (p_btn_x, p_btn_y, p_btn_w, p_btn_h) = crate::ui::starting_grid_player_card_rect(sw, sh);
         let (c_btn_x, c_btn_y, c_btn_w, c_btn_h) = crate::ui::starting_grid_circuit_card_rect(sw, sh);
         let (mx, my) = mouse_position_safe();
@@ -6318,6 +6331,21 @@ impl RaceSession {
             && mx <= g_btn_x + g_btn_w
             && my >= g_btn_y
             && my <= g_btn_y + g_btn_h;
+        let tier_clicked = mouse_clicked
+            && mx >= t_rect.0
+            && mx <= t_rect.0 + t_rect.2
+            && my >= t_rect.1
+            && my <= t_rect.1 + t_rect.3;
+        let laps_clicked = mouse_clicked
+            && mx >= l_rect.0
+            && mx <= l_rect.0 + l_rect.2
+            && my >= l_rect.1
+            && my <= l_rect.1 + l_rect.3;
+        let bots_clicked = mouse_clicked
+            && mx >= b_rect.0
+            && mx <= b_rect.0 + b_rect.2
+            && my >= b_rect.1
+            && my <= b_rect.1 + b_rect.3;
         let grid_btn_clicked = mouse_clicked
             && mx >= grid_btn_x
             && mx <= grid_btn_x + grid_btn_w
@@ -6350,6 +6378,59 @@ impl RaceSession {
 
         if garage_btn_clicked {
             self.open_garage_from_starting_grid();
+            return;
+        }
+
+        if tier_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            if self.game_mode.allows_difficulty_customization() {
+                self.audio.play_sfx(SfxType::UiMove);
+                if mx < t_rect.0 + t_rect.2 * 0.35 {
+                    self.cycle_casual_ai_difficulty_prev();
+                } else {
+                    self.cycle_casual_ai_difficulty();
+                }
+            }
+            return;
+        }
+
+        if laps_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            if self.game_mode.allows_laps_customization() {
+                self.audio.play_sfx(SfxType::UiMove);
+                if mx < l_rect.0 + l_rect.2 * 0.35 {
+                    self.total_laps = self.total_laps.saturating_sub(1).max(1);
+                } else {
+                    self.total_laps = (self.total_laps + 1).min(99);
+                }
+            }
+            return;
+        }
+
+        if bots_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                let max_bots = self.max_bots();
+                self.audio.play_sfx(SfxType::UiMove);
+                if mx < b_rect.0 + b_rect.2 * 0.35 {
+                    if self.num_bots > 1 {
+                        self.num_bots -= 1;
+                    } else {
+                        self.num_bots = max_bots;
+                    }
+                } else {
+                    if self.num_bots < max_bots {
+                        self.num_bots += 1;
+                    } else {
+                        self.num_bots = 1;
+                    }
+                }
+                self.rebuild_roster_participants();
+                self.update_active_modality_racer_count();
+            }
             return;
         }
 
@@ -6729,6 +6810,12 @@ impl RaceSession {
         if is_key_pressed(KeyCode::T) && self.game_mode.allows_difficulty_customization() {
             self.audio.play_sfx(SfxType::UiMove);
             self.cycle_casual_ai_difficulty();
+        }
+
+        // Adjust Laps shortcut (L key)
+        if is_key_pressed(KeyCode::L) && self.game_mode.allows_laps_customization() {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.total_laps = if self.total_laps >= 20 { 1 } else { self.total_laps + 1 };
         }
 
         // View Driver Dossiers direct key shortcut (D key or Gamepad Y)
@@ -13717,12 +13804,12 @@ impl RaceSession {
                 ref modal,
             } => {
                 let (mod_title, mod_accent) = match self.active_module_id {
-                    "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", Palette::RED),
+                    "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
-                    "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
+                    "nascar" => ("STOCK CAR RACING", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    "autocross" => ("FIA AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
+                    "autocross" => ("CONTINENTAL AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
                     "vault" => ("THE VAULT", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
@@ -13814,12 +13901,12 @@ impl RaceSession {
                 let (mod_title, mod_sub, mod_accent) = match self.menu_category_filter {
                     MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits", Palette::NEON_MAGENTA),
                     _ => match display_module {
-                        "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
-                        "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
+                        "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", "Continental GT3 & Biturbo World Tour", Palette::RED),
+                        "rally" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages", Palette::NEON_GOLD),
                         "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
-                        "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
-                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                        "autocross" => ("FIA AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
+                        "nascar" => ("STOCK CAR RACING", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
+                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                        "autocross" => ("CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
                         "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
                         _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                     },
@@ -13881,8 +13968,8 @@ impl RaceSession {
                     ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
                     ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
-                    ("gt", "GT World Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
-                    ("nascar", "NASCAR Cup Series & Trans-Am TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
+                    ("gt", "Grand Touring Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
+                    ("nascar", "Stock Car Racing & Trans-National TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
                     ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "Desert dunes, ice lakes, massive stadium jumps & stunt arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
                 if self.is_dev_mode() {

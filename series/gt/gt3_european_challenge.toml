@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# GT World Challenge: FIA GT3 European Challenge (Tier 2)
+# Grand Touring Challenge: Continental GT3 Sprint Challenge (Tier 2)
 # ==============================================================================
 
 [championship]
 id = "gt3_european_challenge"
-name = "FIA GT3 European Challenge"
+name = "Continental GT3 Sprint Challenge"
 description = "Premier European GT3 championship featuring high-downforce GT3 machinery across 7 historic circuits."
 module_id = "gt"
 tier = 2
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "trophy"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

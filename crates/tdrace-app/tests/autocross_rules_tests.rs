@@ -9,14 +9,14 @@ use tdrace_core::CarCategory;
 fn test_autocross_game_module_identity_and_properties() {
     let ax = AutocrossGameModule::new();
     assert_eq!(ax.id(), "autocross");
-    assert_eq!(ax.title(), "FIA AUTOCROSS");
+    assert_eq!(ax.title(), "CONTINENTAL AUTOCROSS");
     assert_eq!(ax.subtitle(), "Natural Unpaved Dirt & Buggy Racing");
     assert_eq!(ax.default_off_track_surface(), SurfaceType::Dirt);
     assert_eq!(ax.default_track_id(), "nova_paka_ax");
     assert_eq!(ax.default_vehicle_id(), "autocross_ardennes_junior_t1");
 
     let theme = ax.theme();
-    assert_eq!(theme.header_badge, "FIA AUTOCROSS CHAMPIONSHIP");
+    assert_eq!(theme.header_badge, "CONTINENTAL AUTOCROSS CHAMPIONSHIP");
 
     let audio = ax.audio_profile();
     assert_eq!(audio.sound_type, tdrace_app::audio::EngineSoundType::CrossCarMotorcycle);

@@ -876,8 +876,8 @@ pub fn generate_html_report(dataset: &ExperimentDataset) -> String {
 
     for v in &dataset.vehicles {
         let mod_badge = match v.module.as_str() {
-            "GT" | "GT World Challenge" => "badge-mod-gt",
-            "NASCAR" => "badge-mod-nascar",
+            "GT" | "Grand Touring Challenge" => "badge-mod-gt",
+            "Stock Car Racing" | "Stock Car" => "badge-mod-nascar",
             "Rally" => "badge-mod-rally",
             "Extreme Off-Road" => "badge-mod-offroad",
             "Kart" => "badge-mod-kart",

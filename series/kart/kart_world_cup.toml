@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: Rotax Junior Karting Academy (Tier 1)
+# Karting Career Mode: Junior Karting Academy (Tier 1)
 # ==============================================================================
 
 [championship]
 id = "kart_world_cup"
-name = "Rotax Junior Karting Academy"
+name = "Junior Karting Academy"
 description = "Tight, technical grassroots karting championship testing racecraft and momentum preservation across 5 European circuits."
 module_id = "kart"
 tier = 1
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "kart"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

@@ -9,7 +9,7 @@ use crate::ai::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, Dr
 use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
-/// FIA Autocross Game Module.
+/// Continental Autocross Game Module.
 ///
 /// Dedicated European dirt racing discipline featuring lightweight spaceframe buggies,
 /// Cross Car sprint weapons, 550+ BHP Touring saloons, and unlimited 700+ BHP SuperBuggies
@@ -34,7 +34,7 @@ impl GameModule for AutocrossGameModule {
     }
 
     fn title(&self) -> &'static str {
-        "FIA AUTOCROSS"
+        "CONTINENTAL AUTOCROSS"
     }
 
     fn subtitle(&self) -> &'static str {
@@ -45,7 +45,7 @@ impl GameModule for AutocrossGameModule {
         ModuleTheme {
             primary_accent: Color::new(1.0, 0.45, 0.05, 1.0), // Vibrant Clay / Dirt Orange
             secondary_accent: Color::new(0.95, 0.80, 0.15, 1.0), // Dust Yellow
-            header_badge: "FIA AUTOCROSS CHAMPIONSHIP",
+            header_badge: "CONTINENTAL AUTOCROSS CHAMPIONSHIP",
             background_tint: Color::new(0.08, 0.05, 0.03, 0.98),
         }
     }
@@ -159,7 +159,7 @@ impl GameModule for AutocrossGameModule {
                 id: "miguel_gayoso",
                 name: "Miguel Gayoso",
                 alias: "Junior Ace",
-                bio: "FIA Cross Car Academy Trophy phenom with rapid reflexes and momentum-focused lines in spec junior buggies.",
+                bio: "Cross Car Junior Academy Trophy phenom with rapid reflexes and momentum-focused lines in spec junior buggies.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(4),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.00, 0.00, 0.03, -0.1, 0.02),
@@ -205,7 +205,7 @@ impl GameModule for AutocrossGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::Championship {
-                name: "FIA Autocross World Series".to_string(),
+                name: "World SuperBuggy Series".to_string(),
                 point_system: PointSystem::FiaStandard { fastest_lap_bonus: true },
                 track_ids: vec![
                     "nova_paka_ax".to_string(),

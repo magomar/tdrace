@@ -10,7 +10,7 @@ use tdrace_core::track::validation::validate_track;
 fn test_nascar_game_module_identity_and_vehicles() {
     let nascar = NascarGameModule::new();
     assert_eq!(nascar.id(), "nascar");
-    assert!(nascar.title().contains("NASCAR"));
+    assert!(nascar.title().contains("STOCK CAR"));
     assert!(nascar.subtitle().contains("Stock Car"));
 
     let vehicles = nascar.vehicles();
@@ -104,13 +104,13 @@ fn test_nascar_tournament_formats_and_points() {
         .iter()
         .find_map(|t| match t {
             TournamentFormat::Championship { name, point_system, track_ids, laps_per_round }
-                if name.contains("NASCAR Cup Series Championship") =>
+                if name.contains("Premier Stock Car Cup Championship") =>
             {
                 Some((name, point_system, track_ids, laps_per_round))
             }
             _ => None,
         })
-        .expect("NASCAR Cup Series Championship must be present");
+        .expect("Premier Stock Car Cup Championship must be present");
 
     assert_eq!(cup_champ.2.len(), 12);
     assert_eq!(*cup_champ.3, 4);
@@ -196,7 +196,7 @@ fn test_nascar_car_choice_and_menu_resolution() {
 
     let choice = CarChoice::StockCar;
     assert_eq!(choice.tag(), "850 BHP SPACEFRAME V8");
-    assert_eq!(choice.title(), "850 BHP NASCAR Cup V8");
+    assert_eq!(choice.title(), "850 BHP Premier Stock Car V8");
     assert_eq!(choice.specs().1, "1,260 kg Mass");
 
     let daytona_choice = TrackChoice::Custom {
@@ -286,7 +286,7 @@ fn test_nascar_phase2_championship_lifecycle() {
 
     {
         let champ = session.championship_session.as_ref().unwrap();
-        assert_eq!(champ.name, "NASCAR Cup Series Championship 2026");
+        assert_eq!(champ.name, "Premier Stock Car Cup Championship 2026");
         assert_eq!(champ.total_rounds(), 12);
         assert_eq!(champ.current_round, 0);
         assert_eq!(champ.current_track_id(), Some("daytona_superspeedway"));

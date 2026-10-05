@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Autocross Career Mode: FIA SuperBuggy World Series (Tier 5)
+# Autocross Career Mode: World SuperBuggy Series (Tier 5)
 # ==============================================================================
 
 [championship]
 id = "autocross_superbuggy_world_series"
-name = "FIA SuperBuggy World Series"
+name = "World SuperBuggy Series"
 description = "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on the most legendary European autocross cathedrals."
 module_id = "autocross"
 tier = 5
@@ -15,7 +15,7 @@ ai_difficulty = "master"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

@@ -1,12 +1,12 @@
 # ==============================================================================
 # TdRace Championship Specification
-# NASCAR Career Mode: NASCAR Premier Speedway Trophy (Tier 4)
+# Stock Car Career Mode: Premier Speedway Trophy (Tier 4)
 # ==============================================================================
 
 [championship]
-id = "nascar_premier_speedway_trophy"
-name = "NASCAR Premier Speedway Trophy"
-description = "700 BHP Craftsman Truck Series battle across legendary superspeedways, tricky triangles, and downtown Chicago street circuit."
+id = "stockcar_premier_speedway_trophy"
+name = "Premier Speedway Trophy"
+description = "700 BHP Pro Super Truck V8 Series battle across legendary superspeedways, tricky triangles, and downtown Chicago street circuit."
 module_id = "nascar"
 tier = 4
 laps_per_round = 4
@@ -15,7 +15,7 @@ ai_difficulty = "pro"
 icon = "flag_checkered"
 
 [scoring]
-system = "nascar"
+system = "stock_car"
 fastest_lap_bonus = false
 stage_win_bonus = true
 clean_race_bonus = false

@@ -1365,8 +1365,8 @@
     },
     {
       "id": "GT4Clubsport",
-      "title": "420 BHP GT4 Clubsport",
-      "tag": "GT4 ENTRY SPEC",
+      "title": "420 BHP GT Tier 1 Clubsport",
+      "tag": "GT TIER 1 CLUBSPORT",
       "description": "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
       "modules": [
         "gt"
@@ -1802,8 +1802,8 @@
     },
     {
       "id": "GT3Car",
-      "title": "600 BHP GT3 Evo Racer",
-      "tag": "FIA GT3 SPEC",
+      "title": "600 BHP GT Tier 2 Pro Sprint",
+      "tag": "GT TIER 2 PRO SPRINT",
       "description": "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
       "modules": [
         "gt"
@@ -2239,8 +2239,8 @@
     },
     {
       "id": "GT2Biturbo",
-      "title": "707 BHP GT2 Biturbo Sprint",
-      "tag": "SRO GT2 SPRINT",
+      "title": "707 BHP GT Tier 3 Biturbo",
+      "tag": "GT TIER 3 BITURBO",
       "description": "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
       "modules": [
         "gt"
@@ -2676,8 +2676,8 @@
     },
     {
       "id": "GT1Legend",
-      "title": "650 BHP GT1 Le Mans Legend",
-      "tag": "90s GT1 LEGEND",
+      "title": "650 BHP GT Tier 4 Legend",
+      "tag": "GT TIER 4 LEGEND",
       "description": "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
       "modules": [
         "gt"
@@ -3114,7 +3114,7 @@
     {
       "id": "HypercarPrototype",
       "title": "800 BHP LMH Hypercar Prototype",
-      "tag": "LE MANS HYPERCAR",
+      "tag": "ENDURANCE HYPERCAR",
       "description": "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
       "modules": [
         "gt"
@@ -3550,7 +3550,7 @@
     },
     {
       "id": "StockCar",
-      "title": "850 BHP NASCAR Cup V8",
+      "title": "850 BHP Premier Stock Car V8",
       "tag": "850 BHP SPACEFRAME V8",
       "description": "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
       "modules": [

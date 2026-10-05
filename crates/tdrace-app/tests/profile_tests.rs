@@ -1232,7 +1232,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Cup Series Championship (Tier 5)",
+            "Premier Stock Car Cup Championship (Tier 5)",
             vec![
                 "daytona_superspeedway",
                 "talladega_superspeedway",

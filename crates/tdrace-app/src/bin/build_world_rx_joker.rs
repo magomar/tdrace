@@ -530,7 +530,7 @@ fn main() {
         .unwrap_or_else(|| std::path::PathBuf::from("tracks/rally"));
 
     println!(
-        "Baking authentic Joker Lap TrackNetworks for 20 World RX tracks in {:?}...",
+        "Baking authentic Joker Lap TrackNetworks for 20 World Rallycross tracks in {:?}...",
         tracks_dir
     );
 
@@ -538,5 +538,5 @@ fn main() {
         build_track_joker(cfg, &tracks_dir);
     }
 
-    println!("All 20 World RX tracks successfully baked with authentic TrackNetworks!");
+    println!("All 20 World Rallycross tracks successfully baked with authentic TrackNetworks!");
 }

@@ -75,7 +75,7 @@ impl RealWorldBenchmark {
             ("gt", 3) => Self {
                 modality: "gt",
                 tier: 3,
-                category_archetype: "GT2 Biturbo Sprint",
+                category_archetype: "GT Tier 3 Biturbo Sprint",
                 representative_real_cars: "Aquila Strale T3, Vandorn Arrowhead T3, Southern Cross 62 T3",
                 real_kinematic_circle_min_m: 10.5,
                 real_kinematic_circle_max_m: 11.8,
@@ -90,7 +90,7 @@ impl RealWorldBenchmark {
             ("gt", 4) => Self {
                 modality: "gt",
                 tier: 4,
-                category_archetype: "GT1 Le Mans Legend",
+                category_archetype: "GT Tier 4 Legend",
                 representative_real_cars: "Hyperion Velocity T4, Vandorn Aeromax T4, Silberstern Silberpfeil T4",
                 real_kinematic_circle_min_m: 10.5,
                 real_kinematic_circle_max_m: 11.8,
@@ -152,7 +152,7 @@ impl RealWorldBenchmark {
             ("nascar", 3) => Self {
                 modality: "nascar",
                 tier: 3,
-                category_archetype: "ARCA Menards Series",
+                category_archetype: "National Stock Car Challenge",
                 representative_real_cars: "Crossbow Predator T3, Yamato Arca T3, Forge Arca T3",
                 real_kinematic_circle_min_m: 10.8,
                 real_kinematic_circle_max_m: 13.5,
@@ -167,7 +167,7 @@ impl RealWorldBenchmark {
             ("nascar", 4) => Self {
                 modality: "nascar",
                 tier: 4,
-                category_archetype: "Craftsman Truck Series",
+                category_archetype: "Pro Super Truck V8 Series",
                 representative_real_cars: "Crossbow Sierra T4, Yamato Taiga T4, Forge Ironclad T4",
                 real_kinematic_circle_min_m: 10.8,
                 real_kinematic_circle_max_m: 13.5,
@@ -182,7 +182,7 @@ impl RealWorldBenchmark {
             ("nascar", 5) => Self {
                 modality: "nascar",
                 tier: 5,
-                category_archetype: "Trans-Am TA1 Spaceframe",
+                category_archetype: "Trans-National TA1 Spaceframe",
                 representative_real_cars: "Crossbow Manta T5, Rampart Enforcer T5, Forge Stallion T5",
                 real_kinematic_circle_min_m: 10.8,
                 real_kinematic_circle_max_m: 12.8,
@@ -214,7 +214,7 @@ impl RealWorldBenchmark {
             ("rally", 2) => Self {
                 modality: "rally",
                 tier: 2,
-                category_archetype: "World RX Supercars",
+                category_archetype: "World Rallycross Supercars",
                 representative_real_cars: "Volkskraft Strassen T3, Vortek Quattro RX T3, Hanguk Apex T3",
                 real_kinematic_circle_min_m: 6.0,
                 real_kinematic_circle_max_m: 8.5,
@@ -259,7 +259,7 @@ impl RealWorldBenchmark {
             ("rally", 5) => Self {
                 modality: "rally",
                 tier: 5,
-                category_archetype: "Nitrocross Group E",
+                category_archetype: "Apex Group E Electric",
                 representative_real_cars: "Nordic Valkyrie T6, Green Mountain Titan T6, Rampart Wasp T6",
                 real_kinematic_circle_min_m: 6.2,
                 real_kinematic_circle_max_m: 9.0,
@@ -431,7 +431,7 @@ impl RealWorldBenchmark {
                 modality: "classic",
                 tier: 1,
                 category_archetype: "Classic Arcade Fantasy",
-                representative_real_cars: "Arcade GT, NASCAR Stock, Dune Crusher, Dart Kart, Rally 4WD",
+                representative_real_cars: "Arcade GT, Stock Car, Dune Crusher, Dart Kart, Rally 4WD",
                 real_kinematic_circle_min_m: 2.2,
                 real_kinematic_circle_max_m: 11.5,
                 real_dynamic_circle_min_m: 8.5,
@@ -698,14 +698,14 @@ fn generate_markdown_report(
 
     out.push_str("### Motorsport Physical Hierarchy Confirmation\n\n");
     out.push_str("The simulated low-speed geometric turning circle diameters strictly honor the physical motorsport hierarchy:\n\n");
-    out.push_str("$$\\text{Kart } (2.5\\text{ m}) < \\text{Extreme Off-Road } (5.5\\text{--}6.5\\text{ m}) < \\text{Rallycross } (6.5\\text{ m}) < \\text{GT / Sports } (10.9\\text{--}11.2\\text{ m}) \\approx \\text{NASCAR Stock } (11.0\\text{ m})$$\n\n");
+    out.push_str("$$\\text{Kart } (2.5\\text{ m}) < \\text{Extreme Off-Road } (5.5\\text{--}6.5\\text{ m}) < \\text{Rallycross } (6.5\\text{ m}) < \\text{GT / Sports } (10.9\\text{--}11.2\\text{ m}) \\approx \\text{Stock Car } (11.0\\text{ m})$$\n\n");
 
     out.push_str("---\n\n");
 
     // Modality Sections
     let modules = [
-        ("gt", "GT World Challenge (Tiers 1–5)", "🏁"),
-        ("nascar", "NASCAR Cup Series & Stock Cars (Tiers 1–5)", "🏁"),
+        ("gt", "Grand Touring Challenge (Tiers 1–5)", "🏁"),
+        ("nascar", "Stock Car Championship & Silhouette (Tiers 1–5)", "🏁"),
         ("rally", "Rallycross (Tiers 1–5)", "⛰️"),
         ("kart", "Karting World Cup (Tiers 1–5)", "🏎️"),
         ("extreme_offroad", "Extreme Off-Road & Arenas (Tiers 1–5)", "🏜️"),
@@ -759,11 +759,11 @@ fn generate_markdown_report(
     out.push_str("* **Mechanism**: Due to the absence of a differential, turning requires the inside rear wheel to unweight dynamically. With `caster_jacking_factor = 1.25`, the inside rear wheel unloads by $79.3\\%$.\n");
     out.push_str("* **Result**: Eliminates solid-axle understeering scrub, reducing the turning circle from $> 40\\text{ m}$ down to $8.8\\text{--}9.6\\text{ m}$ at speed, with lateral grip reaching $2.20\\text{--}2.50\\text{g}$.\n\n");
 
-    out.push_str("### B. GT & Le Mans Hypercars (Aerodynamic High-Speed Cornering)\n");
+    out.push_str("### B. GT & Endurance Hypercars (Aerodynamic High-Speed Cornering)\n");
     out.push_str("* **Mechanism**: Downforce scales with $v^2$ via $F_{\\text{downforce}} = 0.5 \\cdot C_l A \\cdot \\rho \\cdot v^2$.\n");
     out.push_str("* **Result**: In Tier 1 (GT4), mechanical grip dominates ($a_y \\approx 1.55\\text{g}$), whereas Tier 5 (Hypercars with $C_l = 3.10$) achieve $2.60\\text{--}3.15\\text{g}$ in high-speed sweepers without breakaway.\n\n");
 
-    out.push_str("### C. NASCAR & Stock Cars (Heavy Inertia & Spool Axle)\n");
+    out.push_str("### C. Stock Cars (Heavy Inertia & Spool Axle)\n");
     out.push_str("* **Mechanism**: High curb weight ($1260\\text{--}1400\\text{ kg}$) and locked rear differential.\n");
     out.push_str("* **Result**: At low speeds, locked rear wheels resist differential rotation, producing an authentic turning circle of $13.5\\text{--}15.0\\text{ m}$. At high speeds on banked ovals, dynamic weight transfer stabilizes the platform.\n\n");
 
