@@ -379,7 +379,7 @@
       "year": 2026,
       "module": "classic",
       "category": "nascar",
-      "category_name": "Arcade Speedway Stock",
+      "category_name": "Arcade Stock Speedway",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 750,
@@ -743,7 +743,7 @@
       "year": 2026,
       "module": "classic",
       "category": "off_road",
-      "category_name": "Extreme Off-Road Buggy",
+      "category_name": "Arcade Off-Road Buggy",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 350,
@@ -1107,7 +1107,7 @@
       "year": 2026,
       "module": "classic",
       "category": "kart",
-      "category_name": "Arcade Sprint Kart",
+      "category_name": "Arcade Kart Sprint",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 45,
@@ -1470,7 +1470,7 @@
       "year": 2026,
       "module": "classic",
       "category": "rally",
-      "category_name": "Arcade Group B Rally",
+      "category_name": "Arcade Rallycross Group B",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 450,
@@ -1846,7 +1846,7 @@
       "year": 2026,
       "module": "classic",
       "category": "autocross",
-      "category_name": "Arcade Cross Car",
+      "category_name": "Arcade Autocross Cross Car",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 150,
@@ -2210,7 +2210,7 @@
       "year": 1988,
       "module": "classic",
       "category": "autocross",
-      "category_name": "Arcade Touring AX",
+      "category_name": "Vintage Autocross Touring",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 250,
@@ -2586,7 +2586,7 @@
       "year": 1973,
       "module": "classic",
       "category": "gt",
-      "category_name": "Classic GT Sports",
+      "category_name": "Vintage GT Sports",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 210,
@@ -2956,7 +2956,7 @@
       "year": 1969,
       "module": "classic",
       "category": "nascar",
-      "category_name": "Vintage Grand National",
+      "category_name": "Vintage Stock Grand National",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 420,
@@ -3320,7 +3320,7 @@
       "year": 1976,
       "module": "classic",
       "category": "kart",
-      "category_name": "Vintage Sprint Kart",
+      "category_name": "Vintage Kart Direct-Drive",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 28,
@@ -3683,7 +3683,7 @@
       "year": 1975,
       "module": "classic",
       "category": "rally",
-      "category_name": "Classic RWD Rally",
+      "category_name": "Vintage Rallycross RWD",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 160,
@@ -4059,7 +4059,7 @@
       "year": 1984,
       "module": "classic",
       "category": "off_road",
-      "category_name": "Vintage All-Terrain Rig",
+      "category_name": "Vintage Off-Road Safari",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
       "bhp": 240,
@@ -10995,9 +10995,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_ardennes_junior_t1.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_ardennes_junior_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_ardennes_junior_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -11359,9 +11359,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_iberian_furia_t1.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_iberian_furia_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_iberian_furia_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -11723,9 +11723,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_cosmo_nova_t1.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_cosmo_nova_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_cosmo_nova_t1.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -12087,9 +12087,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_ardennes_pro_t2.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_ardennes_pro_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_ardennes_pro_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -12451,9 +12451,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_iberian_relampago_t2.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_iberian_relampago_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_iberian_relampago_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -12815,9 +12815,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_lusitania_bravo_t2.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_lusitania_bravo_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_lusitania_bravo_t2.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -13179,9 +13179,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_petersen_buggy1600_t3.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_petersen_buggy1600_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_petersen_buggy1600_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -13543,9 +13543,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_bologna_buggy1600_t3.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_bologna_buggy1600_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_bologna_buggy1600_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -13907,9 +13907,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_rapid_buggy1600_t3.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_rapid_buggy1600_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_rapid_buggy1600_t3.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -14271,9 +14271,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_bohemia_veloce_t4.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_bohemia_veloce_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_bohemia_veloce_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -14647,9 +14647,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_shinano_tsunami_t4.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_shinano_tsunami_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_shinano_tsunami_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -15023,9 +15023,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_vortek_quattro_t4.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_vortek_quattro_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_vortek_quattro_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -15399,9 +15399,9 @@
       "sound": "Ultra4V8",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_petersen_superbuggy_t5.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_petersen_superbuggy_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_petersen_superbuggy_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -15763,9 +15763,9 @@
       "sound": "Ultra4V8",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_bologna_superbuggy_t5.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_bologna_superbuggy_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_bologna_superbuggy_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
@@ -16127,9 +16127,9 @@
       "sound": "Ultra4V8",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/autocross/autocross_rapid_superbuggy_t5.png",
+        "thumb": "/textures/vehicles/laterals/autocross/autocross_rapid_superbuggy_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/autocross/autocross_rapid_superbuggy_t5.png"
       },
       "physics": {
         "engine_placement": "rear_engine",
