@@ -9,6 +9,9 @@ export type Platform = CollectionEntry<'chassis'>['data'];
 export type SuspensionArchetype = CollectionEntry<'suspension'>['data'];
 export type Compound = CollectionEntry<'tyres'>['data'];
 export type DamageModel = CollectionEntry<'damage'>['data'];
+export type ControlsModel = CollectionEntry<'controls'>['data'];
+export type DrivingModel = CollectionEntry<'driving'>['data'];
+export type HudModel = CollectionEntry<'hud'>['data'];
 
 // Collections keep the export order (modules grouped in Codex order), so no sorting here.
 export const getCars = async () => (await getCollection('cars')).map((e) => e.data);
@@ -20,6 +23,9 @@ export const getSuspensionArchetypes = async () => (await getCollection('suspens
 export const getCompounds = async () => (await getCollection('tyres')).map((e) => e.data);
 export const getEnginePlacements = async () => (await getCollection('drivetrain')).map((e) => e.data);
 export const getDamageModel = async () => (await getCollection('damage'))[0].data;
+export const getControlsModel = async () => (await getCollection('controls'))[0].data;
+export const getDrivingModel = async () => (await getCollection('driving'))[0].data;
+export const getHudModel = async () => (await getCollection('hud'))[0].data;
 
 // Presentation only: a short label and a badge colour per module id. Titles come from the export.
 const MODULE_STYLE: Record<string, { label: string; badge: string }> = {
@@ -136,11 +142,11 @@ export const SECTIONS: CodexSection[] = [
     href: '/driving',
     blurb: 'How you drive: controls, steering profiles, assists, the HUD and cameras.',
     pages: [
-      { label: 'Controls', href: '/driving/controls', blurb: 'Keyboard and gamepad presets and in-race hotkeys.', ready: false },
-      { label: 'Steering', href: '/driving/steering', blurb: 'The five steering profiles and their response.', ready: false },
-      { label: 'Assists', href: '/driving/assists', blurb: 'Arcade, Sport and Pro: TCS, ESC, ABS and counter-steer.', ready: false },
-      { label: 'HUD', href: '/driving/hud', blurb: 'Every HUD element, the cockpit hologram and locator aids.', ready: false },
-      { label: 'Cameras', href: '/driving/cameras', blurb: 'Camera modes, look-ahead and speed zoom.', ready: false },
+      { label: 'Controls', href: '/driving/controls', blurb: 'Keyboard and gamepad presets and in-race hotkeys.', ready: true },
+      { label: 'Steering', href: '/driving/steering', blurb: 'The four steering profiles and their step response.', ready: true },
+      { label: 'Assists', href: '/driving/assists', blurb: 'Arcade, Sport and Pro: TCS, ESC, ABS and counter-steer.', ready: true },
+      { label: 'HUD', href: '/driving/hud', blurb: 'Every HUD element, the cockpit hologram and locator aids.', ready: true },
+      { label: 'Cameras', href: '/driving/cameras', blurb: 'Camera modes, look-ahead and speed zoom.', ready: true },
     ],
   },
   {

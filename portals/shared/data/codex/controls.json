@@ -1,0 +1,552 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "controls",
+      "presets": [
+        {
+          "id": "hybrid",
+          "name": "Hybrid (QAOP + Arrows + Gamepad)",
+          "description": "Default racing layout. Supports two-handed keyboard steering (Q/A throttle/brake, O/P or Arrows steer) alongside full gamepad triggers and stick.",
+          "bindings": [
+            {
+              "action": "throttle",
+              "label": "Throttle / Accelerate",
+              "keys": [
+                "Q",
+                "Up Arrow"
+              ],
+              "gamepad": [
+                "RT / R2+",
+                "D-Pad Up"
+              ]
+            },
+            {
+              "action": "brake",
+              "label": "Brake / Reverse",
+              "keys": [
+                "A",
+                "Down Arrow"
+              ],
+              "gamepad": [
+                "LT / L2+",
+                "D-Pad Down"
+              ]
+            },
+            {
+              "action": "steer_left",
+              "label": "Steer Left",
+              "keys": [
+                "O",
+                "Left Arrow"
+              ],
+              "gamepad": [
+                "Left Stick X-",
+                "D-Pad Left"
+              ]
+            },
+            {
+              "action": "steer_right",
+              "label": "Steer Right",
+              "keys": [
+                "P",
+                "Right Arrow"
+              ],
+              "gamepad": [
+                "Left Stick X+",
+                "D-Pad Right"
+              ]
+            },
+            {
+              "action": "handbrake",
+              "label": "Handbrake / Drift",
+              "keys": [
+                "Space"
+              ],
+              "gamepad": [
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "primary",
+              "label": "Primary / Confirm",
+              "keys": [
+                "Enter",
+                "Space"
+              ],
+              "gamepad": [
+                "Button A / Cross"
+              ]
+            },
+            {
+              "action": "secondary",
+              "label": "Secondary / Boost",
+              "keys": [
+                "LShift",
+                "E"
+              ],
+              "gamepad": [
+                "Button X / Square"
+              ]
+            },
+            {
+              "action": "pause",
+              "label": "Pause Game",
+              "keys": [
+                "Esc"
+              ],
+              "gamepad": [
+                "Start / Options",
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "menu",
+              "label": "In-Game Menu",
+              "keys": [
+                "K",
+                "Tab"
+              ],
+              "gamepad": [
+                "Back / Share"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "wasd",
+          "name": "WASD Racing",
+          "description": "Standard PC driving layout with W/S pedals, A/D steering, and Space handbrake.",
+          "bindings": [
+            {
+              "action": "throttle",
+              "label": "Throttle / Accelerate",
+              "keys": [
+                "W"
+              ],
+              "gamepad": [
+                "RT / R2+"
+              ]
+            },
+            {
+              "action": "brake",
+              "label": "Brake / Reverse",
+              "keys": [
+                "S"
+              ],
+              "gamepad": [
+                "LT / L2+"
+              ]
+            },
+            {
+              "action": "steer_left",
+              "label": "Steer Left",
+              "keys": [
+                "A"
+              ],
+              "gamepad": [
+                "Left Stick X-"
+              ]
+            },
+            {
+              "action": "steer_right",
+              "label": "Steer Right",
+              "keys": [
+                "D"
+              ],
+              "gamepad": [
+                "Left Stick X+"
+              ]
+            },
+            {
+              "action": "handbrake",
+              "label": "Handbrake / Drift",
+              "keys": [
+                "Space"
+              ],
+              "gamepad": [
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "primary",
+              "label": "Primary / Confirm",
+              "keys": [
+                "Enter",
+                "Space"
+              ],
+              "gamepad": [
+                "Button A / Cross"
+              ]
+            },
+            {
+              "action": "secondary",
+              "label": "Secondary / Boost",
+              "keys": [
+                "LShift"
+              ],
+              "gamepad": [
+                "Button X / Square"
+              ]
+            },
+            {
+              "action": "pause",
+              "label": "Pause Game",
+              "keys": [
+                "Esc"
+              ],
+              "gamepad": [
+                "Start / Options",
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "menu",
+              "label": "In-Game Menu",
+              "keys": [
+                "K"
+              ],
+              "gamepad": [
+                "Back / Share"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "arrows",
+          "name": "Arrows Racing",
+          "description": "Dedicated Arrow keys layout with Up/Down pedals, Left/Right steering, and Space handbrake.",
+          "bindings": [
+            {
+              "action": "throttle",
+              "label": "Throttle / Accelerate",
+              "keys": [
+                "Up Arrow"
+              ],
+              "gamepad": [
+                "RT / R2+"
+              ]
+            },
+            {
+              "action": "brake",
+              "label": "Brake / Reverse",
+              "keys": [
+                "Down Arrow"
+              ],
+              "gamepad": [
+                "LT / L2+"
+              ]
+            },
+            {
+              "action": "steer_left",
+              "label": "Steer Left",
+              "keys": [
+                "Left Arrow"
+              ],
+              "gamepad": [
+                "Left Stick X-"
+              ]
+            },
+            {
+              "action": "steer_right",
+              "label": "Steer Right",
+              "keys": [
+                "Right Arrow"
+              ],
+              "gamepad": [
+                "Left Stick X+"
+              ]
+            },
+            {
+              "action": "handbrake",
+              "label": "Handbrake / Drift",
+              "keys": [
+                "Space"
+              ],
+              "gamepad": [
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "primary",
+              "label": "Primary / Confirm",
+              "keys": [
+                "Enter",
+                "Space"
+              ],
+              "gamepad": [
+                "Button A / Cross"
+              ]
+            },
+            {
+              "action": "secondary",
+              "label": "Secondary / Boost",
+              "keys": [
+                "RCtrl"
+              ],
+              "gamepad": [
+                "Button X / Square"
+              ]
+            },
+            {
+              "action": "pause",
+              "label": "Pause Game",
+              "keys": [
+                "Esc"
+              ],
+              "gamepad": [
+                "Start / Options",
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "menu",
+              "label": "In-Game Menu",
+              "keys": [
+                "K"
+              ],
+              "gamepad": [
+                "Back / Share"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "classic",
+          "name": "Classic QAOP",
+          "description": "Authentic 8-bit microcomputer arcade racing layout with Q/A pedals, O/P steering, and Space handbrake.",
+          "bindings": [
+            {
+              "action": "throttle",
+              "label": "Throttle / Accelerate",
+              "keys": [
+                "Q"
+              ],
+              "gamepad": [
+                "RT / R2+"
+              ]
+            },
+            {
+              "action": "brake",
+              "label": "Brake / Reverse",
+              "keys": [
+                "A"
+              ],
+              "gamepad": [
+                "LT / L2+"
+              ]
+            },
+            {
+              "action": "steer_left",
+              "label": "Steer Left",
+              "keys": [
+                "O"
+              ],
+              "gamepad": [
+                "Left Stick X-"
+              ]
+            },
+            {
+              "action": "steer_right",
+              "label": "Steer Right",
+              "keys": [
+                "P"
+              ],
+              "gamepad": [
+                "Left Stick X+"
+              ]
+            },
+            {
+              "action": "handbrake",
+              "label": "Handbrake / Drift",
+              "keys": [
+                "Space"
+              ],
+              "gamepad": [
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "primary",
+              "label": "Primary / Confirm",
+              "keys": [
+                "Enter",
+                "Space"
+              ],
+              "gamepad": [
+                "Button A / Cross"
+              ]
+            },
+            {
+              "action": "secondary",
+              "label": "Secondary / Boost",
+              "keys": [
+                "LShift"
+              ],
+              "gamepad": [
+                "Button X / Square"
+              ]
+            },
+            {
+              "action": "pause",
+              "label": "Pause Game",
+              "keys": [
+                "Esc"
+              ],
+              "gamepad": [
+                "Start / Options",
+                "Button B / Circle"
+              ]
+            },
+            {
+              "action": "menu",
+              "label": "In-Game Menu",
+              "keys": [
+                "K"
+              ],
+              "gamepad": [
+                "Back / Share"
+              ]
+            }
+          ]
+        }
+      ],
+      "hotkeys": [
+        {
+          "key": "H",
+          "action": "Cycle Driver Assists",
+          "context": "In-race",
+          "description": "Cycles assist profile: Arcade (Full) -> Sport (Mild) -> Pro (OFF)."
+        },
+        {
+          "key": "R",
+          "action": "Restart Race",
+          "context": "In-race / Paused",
+          "description": "Instantly reinitialises the current race session (single player)."
+        },
+        {
+          "key": "Tab",
+          "action": "Cycle Camera Zoom",
+          "context": "In-race",
+          "description": "Cycles follow camera zoom levels: Close -> Medium -> Far -> Overview."
+        },
+        {
+          "key": "L",
+          "action": "Toggle Headlights",
+          "context": "In-race",
+          "description": "Toggles vehicle headlights for cars equipped with illumination."
+        },
+        {
+          "key": "C",
+          "action": "Cycle Control Preset",
+          "context": "Pause Menu",
+          "description": "Cycles input control presets (Hybrid, WASD, Arrows, Classic QAOP)."
+        },
+        {
+          "key": "S / P",
+          "action": "Cycle Steering Profile",
+          "context": "Pause Menu",
+          "description": "Cycles keyboard digital steering profiles: Smooth -> Balanced -> Sharp -> Raw."
+        },
+        {
+          "key": "G",
+          "action": "Open Gamepad Mapper",
+          "context": "Pause Menu",
+          "description": "Launches the interactive gamepad calibration and button binding tool."
+        },
+        {
+          "key": "Esc",
+          "action": "Pause / Resume / Back",
+          "context": "In-race / Menus",
+          "description": "Opens pause menu during race, or navigates back in menus."
+        },
+        {
+          "key": "Ctrl + 1",
+          "action": "Cockpit Hologram: Kinematics",
+          "context": "In-race",
+          "description": "Switches cockpit telemetry HUD to Kinematic Linkages & Structural Damage mode."
+        },
+        {
+          "key": "Ctrl + 2",
+          "action": "Cockpit Hologram: Dynamics",
+          "context": "In-race",
+          "description": "Switches cockpit telemetry HUD to Dynamic Telemetry & Damper Travel mode."
+        },
+        {
+          "key": "5",
+          "action": "Cycle Curve Helper Style",
+          "context": "In-race",
+          "description": "Cycles approaching curve helper: Rally Pacenote -> Chevrons -> Off."
+        },
+        {
+          "key": "6",
+          "action": "Cycle Curve Helper Colors",
+          "context": "In-race",
+          "description": "Cycles curve helper color schemes: Traffic -> Synthwave -> Contrast -> Rally."
+        },
+        {
+          "key": "F1",
+          "action": "Toggle LIDAR Beams",
+          "context": "In-race Debug",
+          "description": "Renders distance-sensing LIDAR rays projected from car perimeter."
+        },
+        {
+          "key": "F2",
+          "action": "Toggle Checkpoint Gates",
+          "context": "In-race Debug",
+          "description": "Renders checkpoint gate lines, orientation vectors, and racing line progression."
+        },
+        {
+          "key": "F3",
+          "action": "Toggle Collision OBBs",
+          "context": "In-race Debug",
+          "description": "Visualizes vehicle oriented bounding boxes (OBBs) and wheel contact vectors."
+        },
+        {
+          "key": "F4",
+          "action": "Toggle AI Paths & Waypoints",
+          "context": "In-race Debug",
+          "description": "Displays bot racing line splines, target waypoints, and overtaking corridors."
+        },
+        {
+          "key": "F5",
+          "action": "Toggle Telemetry Panel",
+          "context": "In-race Debug",
+          "description": "Displays comprehensive screen-space real-time vehicle telemetry metrics."
+        },
+        {
+          "key": "F6 / Z",
+          "action": "Toggle Touch Controls",
+          "context": "In-race",
+          "description": "Toggles virtual touch controls overlay on desktop screens."
+        },
+        {
+          "key": "F8",
+          "action": "Toggle Split-Screen Layout",
+          "context": "Split Screen",
+          "description": "Toggles 2-player split screen view between Vertical and Horizontal."
+        },
+        {
+          "key": "F11",
+          "action": "Championship Editor",
+          "context": "Global",
+          "description": "Opens the built-in Championship Editor studio."
+        },
+        {
+          "key": "F12 / Ctrl+D",
+          "action": "Toggle Dev Mode",
+          "context": "Global",
+          "description": "Enables developer debug tools and hot-reloading facilities."
+        }
+      ],
+      "gamepad": {
+        "stick_deadzone": 0.12,
+        "trigger_deadzone": 0.05,
+        "steer_exponent": 1.15,
+        "steer_scale": 1.0,
+        "description": "Analog stick and trigger inputs apply calibrated inner deadzones to prevent drift from resting potentiometer variance. Beyond deadzone, stick input applies a gentle progressive power curve (exponent 1.15) for refined high-speed center precision without sacrificing rapid full-lock agility."
+      }
+    }
+  ]
+}

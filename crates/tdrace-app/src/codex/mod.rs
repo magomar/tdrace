@@ -16,11 +16,17 @@ use tdrace_core::physics::car::{
     PUSHROD_COLLAPSE_HEALTH, SUSPENSION_DAMAGE_CAPACITY_J,
 };
 use tdrace_core::physics::config::{
-    CarConfig, ChassisSkeleton, DifferentialType, EnginePlacement, SuspensionArchetype, SuspensionConfig,
+    AssistProfile, CarConfig, ChassisSkeleton, DifferentialType, EnginePlacement, SuspensionArchetype,
+    SuspensionConfig,
 };
 use tdrace_core::physics::surface::{CompoundId, SurfaceType};
 use tdrace_core::physics::tire::{normalized_grip_curve, TireCompoundConfig, WheelAssembly};
 use tdrace_core::track::{Track, TrackKind};
+
+use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
+use cabinet::input::gamepad::GamepadConfig;
+use cabinet::input::mapping::{ArcadeAction, InputMap, InputSource};
+use race_ui::camera::{CameraConfig, MAX_CAR_SCREEN_OFFSET_FRAC};
 
 use crate::audio::EngineSoundType;
 use crate::catalog::{get_tier_name, RealCarModel, ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
@@ -692,6 +698,757 @@ fn damage_model() -> CodexDamageModel {
     }
 }
 
+// ==============================================================================
+// 🎮 Driving Section DTOs & Builders (Spec 087 P3)
+// ==============================================================================
+
+#[derive(Serialize)]
+pub struct CodexControlsData {
+    pub id: &'static str,
+    pub presets: Vec<CodexControlPreset>,
+    pub hotkeys: Vec<CodexHotkey>,
+    pub gamepad: CodexGamepadSettings,
+}
+
+#[derive(Serialize)]
+pub struct CodexControlPreset {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub bindings: Vec<CodexActionBinding>,
+}
+
+#[derive(Serialize)]
+pub struct CodexActionBinding {
+    pub action: &'static str,
+    pub label: &'static str,
+    pub keys: Vec<String>,
+    pub gamepad: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct CodexHotkey {
+    pub key: &'static str,
+    pub action: &'static str,
+    pub context: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexGamepadSettings {
+    pub stick_deadzone: f32,
+    pub trigger_deadzone: f32,
+    pub steer_exponent: f32,
+    pub steer_scale: f32,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexDrivingData {
+    pub id: &'static str,
+    pub steering_profiles: Vec<CodexSteeringProfile>,
+    pub assist_profiles: Vec<CodexAssistProfile>,
+    pub aids: CodexHandlingAids,
+}
+
+#[derive(Serialize)]
+pub struct CodexSteeringProfile {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub display_name: &'static str,
+    pub description: &'static str,
+    pub steer_time_ms: f32,
+    pub return_time_ms: f32,
+    pub steer_authority: f32,
+    pub center_precision: f32,
+    pub pedal_time_ms: f32,
+    pub traction_help: f32,
+    pub recommended_for: &'static str,
+    pub step_response: Vec<[f32; 2]>,
+}
+
+#[derive(Serialize)]
+pub struct CodexAssistProfile {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub title: &'static str,
+    pub short_name: &'static str,
+    pub description: &'static str,
+    pub tcs_enabled: bool,
+    pub tcs_slip_threshold: f32,
+    pub tcs_strength: f32,
+    pub tcs_slip_angle_deg: f32,
+    pub tcs_drift_bypass: bool,
+    pub esc_enabled: bool,
+    pub esc_yaw_threshold: f32,
+    pub esc_strength: f32,
+    pub esc_sideslip_limit_deg: f32,
+    pub counter_steer_assist_enabled: bool,
+    pub counter_steer_assist_strength: f32,
+    pub abs_enabled: bool,
+    pub abs_slip_threshold: f32,
+    pub abs_strength: f32,
+    pub handbrake_bypass: bool,
+}
+
+#[derive(Serialize)]
+pub struct CodexHandlingAids {
+    pub grip_aware_steering_description: &'static str,
+    pub low_speed_authority_description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexHudData {
+    pub id: &'static str,
+    pub elements: Vec<CodexHudElement>,
+    pub hologram_modes: Vec<CodexHologramMode>,
+    pub curve_helper: CodexCurveHelperInfo,
+    pub locator_aids: Vec<CodexLocatorAid>,
+    pub cameras: Vec<CodexCameraLevel>,
+    pub camera_config: CodexCameraConfigData,
+}
+
+#[derive(Serialize)]
+pub struct CodexHudElement {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub screen_position: &'static str,
+    pub hotkey: Option<&'static str>,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexHologramMode {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub hotkey: &'static str,
+    pub description: &'static str,
+    pub features: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCurveHelperInfo {
+    pub cycle_hotkey: &'static str,
+    pub color_cycle_hotkey: &'static str,
+    pub styles: Vec<CodexCurveHelperStyle>,
+    pub color_schemes: Vec<CodexCurveColorScheme>,
+}
+
+#[derive(Serialize)]
+pub struct CodexCurveHelperStyle {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexCurveColorScheme {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+    pub palette: Vec<&'static str>,
+}
+
+#[derive(Serialize)]
+pub struct CodexLocatorAid {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexCameraLevel {
+    pub id: &'static str,
+    pub name: &'static str,
+    pub mode: &'static str,
+    pub min_zoom: f32,
+    pub max_zoom: f32,
+    pub description: &'static str,
+}
+
+#[derive(Serialize)]
+pub struct CodexCameraConfigData {
+    pub position_smoothing: f32,
+    pub zoom_smoothing: f32,
+    pub velocity_lookahead_time: f32,
+    pub trauma_decay: f32,
+    pub max_shake_offset: f32,
+    pub max_car_screen_offset_frac: f32,
+}
+
+fn controls_data() -> CodexControlsData {
+    let action_specs = [
+        (ArcadeAction::Up, "throttle", "Throttle / Accelerate"),
+        (ArcadeAction::Down, "brake", "Brake / Reverse"),
+        (ArcadeAction::Left, "steer_left", "Steer Left"),
+        (ArcadeAction::Right, "steer_right", "Steer Right"),
+        (ArcadeAction::Action3, "handbrake", "Handbrake / Drift"),
+        (ArcadeAction::Primary, "primary", "Primary / Confirm"),
+        (ArcadeAction::Secondary, "secondary", "Secondary / Boost"),
+        (ArcadeAction::Pause, "pause", "Pause Game"),
+        (ArcadeAction::Menu, "menu", "In-Game Menu"),
+    ];
+
+    let build_preset = |id: &'static str, name: &'static str, desc: &'static str, map: InputMap| -> CodexControlPreset {
+        let mut bindings = Vec::new();
+        for &(action, action_id, label) in &action_specs {
+            let mut keys = Vec::new();
+            let mut gamepad = Vec::new();
+            if let Some(sources) = map.bindings.get(&action) {
+                for src in sources {
+                    match src {
+                        InputSource::Key(k) => keys.push(k.label().to_string()),
+                        InputSource::GamepadBtn(b) => gamepad.push(b.label().to_string()),
+                        InputSource::GamepadAxisPos(a) => gamepad.push(format!("{}+", a.label())),
+                        InputSource::GamepadAxisNeg(a) => gamepad.push(format!("{}-", a.label())),
+                    }
+                }
+            }
+            bindings.push(CodexActionBinding {
+                action: action_id,
+                label,
+                keys,
+                gamepad,
+            });
+        }
+        CodexControlPreset {
+            id,
+            name,
+            description: desc,
+            bindings,
+        }
+    };
+
+    let presets = vec![
+        build_preset(
+            "hybrid",
+            "Hybrid (QAOP + Arrows + Gamepad)",
+            "Default racing layout. Supports two-handed keyboard steering (Q/A throttle/brake, O/P or Arrows steer) alongside full gamepad triggers and stick.",
+            InputMap::default_racing(),
+        ),
+        build_preset(
+            "wasd",
+            "WASD Racing",
+            "Standard PC driving layout with W/S pedals, A/D steering, and Space handbrake.",
+            InputMap::wasd_racing(),
+        ),
+        build_preset(
+            "arrows",
+            "Arrows Racing",
+            "Dedicated Arrow keys layout with Up/Down pedals, Left/Right steering, and Space handbrake.",
+            InputMap::arrows_racing(),
+        ),
+        build_preset(
+            "classic",
+            "Classic QAOP",
+            "Authentic 8-bit microcomputer arcade racing layout with Q/A pedals, O/P steering, and Space handbrake.",
+            InputMap::classic_racing(),
+        ),
+    ];
+
+    let hotkeys = vec![
+        CodexHotkey {
+            key: "H",
+            action: "Cycle Driver Assists",
+            context: "In-race",
+            description: "Cycles assist profile: Arcade (Full) -> Sport (Mild) -> Pro (OFF).",
+        },
+        CodexHotkey {
+            key: "R",
+            action: "Restart Race",
+            context: "In-race / Paused",
+            description: "Instantly reinitialises the current race session (single player).",
+        },
+        CodexHotkey {
+            key: "Tab",
+            action: "Cycle Camera Zoom",
+            context: "In-race",
+            description: "Cycles follow camera zoom levels: Close -> Medium -> Far -> Overview.",
+        },
+        CodexHotkey {
+            key: "L",
+            action: "Toggle Headlights",
+            context: "In-race",
+            description: "Toggles vehicle headlights for cars equipped with illumination.",
+        },
+        CodexHotkey {
+            key: "C",
+            action: "Cycle Control Preset",
+            context: "Pause Menu",
+            description: "Cycles input control presets (Hybrid, WASD, Arrows, Classic QAOP).",
+        },
+        CodexHotkey {
+            key: "S / P",
+            action: "Cycle Steering Profile",
+            context: "Pause Menu",
+            description: "Cycles keyboard digital steering profiles: Smooth -> Balanced -> Sharp -> Raw.",
+        },
+        CodexHotkey {
+            key: "G",
+            action: "Open Gamepad Mapper",
+            context: "Pause Menu",
+            description: "Launches the interactive gamepad calibration and button binding tool.",
+        },
+        CodexHotkey {
+            key: "Esc",
+            action: "Pause / Resume / Back",
+            context: "In-race / Menus",
+            description: "Opens pause menu during race, or navigates back in menus.",
+        },
+        CodexHotkey {
+            key: "Ctrl + 1",
+            action: "Cockpit Hologram: Kinematics",
+            context: "In-race",
+            description: "Switches cockpit telemetry HUD to Kinematic Linkages & Structural Damage mode.",
+        },
+        CodexHotkey {
+            key: "Ctrl + 2",
+            action: "Cockpit Hologram: Dynamics",
+            context: "In-race",
+            description: "Switches cockpit telemetry HUD to Dynamic Telemetry & Damper Travel mode.",
+        },
+        CodexHotkey {
+            key: "5",
+            action: "Cycle Curve Helper Style",
+            context: "In-race",
+            description: "Cycles approaching curve helper: Rally Pacenote -> Chevrons -> Off.",
+        },
+        CodexHotkey {
+            key: "6",
+            action: "Cycle Curve Helper Colors",
+            context: "In-race",
+            description: "Cycles curve helper color schemes: Traffic -> Synthwave -> Contrast -> Rally.",
+        },
+        CodexHotkey {
+            key: "F1",
+            action: "Toggle LIDAR Beams",
+            context: "In-race Debug",
+            description: "Renders distance-sensing LIDAR rays projected from car perimeter.",
+        },
+        CodexHotkey {
+            key: "F2",
+            action: "Toggle Checkpoint Gates",
+            context: "In-race Debug",
+            description: "Renders checkpoint gate lines, orientation vectors, and racing line progression.",
+        },
+        CodexHotkey {
+            key: "F3",
+            action: "Toggle Collision OBBs",
+            context: "In-race Debug",
+            description: "Visualizes vehicle oriented bounding boxes (OBBs) and wheel contact vectors.",
+        },
+        CodexHotkey {
+            key: "F4",
+            action: "Toggle AI Paths & Waypoints",
+            context: "In-race Debug",
+            description: "Displays bot racing line splines, target waypoints, and overtaking corridors.",
+        },
+        CodexHotkey {
+            key: "F5",
+            action: "Toggle Telemetry Panel",
+            context: "In-race Debug",
+            description: "Displays comprehensive screen-space real-time vehicle telemetry metrics.",
+        },
+        CodexHotkey {
+            key: "F6 / Z",
+            action: "Toggle Touch Controls",
+            context: "In-race",
+            description: "Toggles virtual touch controls overlay on desktop screens.",
+        },
+        CodexHotkey {
+            key: "F8",
+            action: "Toggle Split-Screen Layout",
+            context: "Split Screen",
+            description: "Toggles 2-player split screen view between Vertical and Horizontal.",
+        },
+        CodexHotkey {
+            key: "F11",
+            action: "Championship Editor",
+            context: "Global",
+            description: "Opens the built-in Championship Editor studio.",
+        },
+        CodexHotkey {
+            key: "F12 / Ctrl+D",
+            action: "Toggle Dev Mode",
+            context: "Global",
+            description: "Enables developer debug tools and hot-reloading facilities.",
+        },
+    ];
+
+    let gp = GamepadConfig::default();
+    let gamepad = CodexGamepadSettings {
+        stick_deadzone: gp.stick_deadzone,
+        trigger_deadzone: gp.trigger_deadzone,
+        steer_exponent: gp.steer_exponent,
+        steer_scale: gp.steer_scale,
+        description: "Analog stick and trigger inputs apply calibrated inner deadzones to prevent drift from resting potentiometer variance. Beyond deadzone, stick input applies a gentle progressive power curve (exponent 1.15) for refined high-speed center precision without sacrificing rapid full-lock agility.",
+    };
+
+    CodexControlsData {
+        id: "controls",
+        presets,
+        hotkeys,
+        gamepad,
+    }
+}
+
+fn driving_data() -> CodexDrivingData {
+    let steering_profiles = SteeringProfile::PRESETS
+        .into_iter()
+        .map(|profile| {
+            let cfg = DigitalInputConfig::from_profile(profile);
+            let (id, display_name, description, recommended_for) = match profile {
+                SteeringProfile::Smooth => (
+                    "smooth",
+                    "Smooth",
+                    "Relaxed steering rise, short of the front grip limit, and maximum traction help. Ideal for high-speed stability and beginners.",
+                    "Heavy GT cars, stock cars on high-speed ovals, keyboard beginners",
+                ),
+                SteeringProfile::Balanced => (
+                    "balanced",
+                    "Balanced",
+                    "Default calibrated response: right on the front tyre grip limit with moderate steering speed and traction assist.",
+                    "Standard racing across all disciplines, touring cars, sports cars",
+                ),
+                SteeringProfile::Sharp => (
+                    "sharp",
+                    "Sharp",
+                    "Quick steering response pushing slightly past the peak slip angle, with light traction help. Allows snappy weight transfer.",
+                    "Autocross, tight twisty kart circuits, agile hot hatches",
+                ),
+                SteeringProfile::Raw => (
+                    "raw",
+                    "Raw",
+                    "Near-instant digital key response, well past the front grip limit with zero traction help. Maximum drift initiation authority.",
+                    "Rallycross Scandinavian flicks, power sliding, expert keyboard drifters",
+                ),
+                _ => unreachable!(),
+            };
+
+            let mut filter = DigitalInputFilter::new(cfg);
+            let mut step_response = Vec::with_capacity(61);
+            let dt = 0.005; // 5ms steps
+            for i in 0..=60 {
+                let t_ms = i as f32 * 5.0;
+                if i == 0 {
+                    step_response.push([0.0, 0.0]);
+                } else {
+                    let (steer, _, _) = filter.update(1.0, 0.0, 0.0, dt);
+                    step_response.push([t_ms, (steer * 1000.0).round() / 1000.0]);
+                }
+            }
+
+            CodexSteeringProfile {
+                id,
+                name: id,
+                display_name,
+                description,
+                steer_time_ms: cfg.steer_time_ms,
+                return_time_ms: (cfg.steer_time_ms * DigitalInputConfig::RETURN_TIME_FRACTION * 10.0).round() / 10.0,
+                steer_authority: cfg.steer_authority,
+                center_precision: cfg.center_precision,
+                pedal_time_ms: cfg.pedal_time_ms,
+                traction_help: cfg.traction_help,
+                recommended_for,
+                step_response,
+            }
+        })
+        .collect();
+
+    let assist_profiles = AssistProfile::ALL
+        .into_iter()
+        .map(|mode| {
+            let cfg = mode.to_config();
+            let id = match mode {
+                AssistProfile::Arcade => "arcade",
+                AssistProfile::Sport => "sport",
+                AssistProfile::Pro => "pro",
+            };
+            CodexAssistProfile {
+                id,
+                name: mode.short_name(),
+                title: mode.title(),
+                short_name: mode.short_name(),
+                description: mode.description(),
+                tcs_enabled: cfg.tcs_enabled,
+                tcs_slip_threshold: cfg.tcs_slip_threshold,
+                tcs_strength: cfg.tcs_strength,
+                tcs_slip_angle_deg: cfg.tcs_slip_angle_deg,
+                tcs_drift_bypass: cfg.tcs_drift_bypass,
+                esc_enabled: cfg.esc_enabled,
+                esc_yaw_threshold: cfg.esc_yaw_threshold,
+                esc_strength: cfg.esc_strength,
+                esc_sideslip_limit_deg: cfg.esc_sideslip_limit_deg,
+                counter_steer_assist_enabled: cfg.counter_steer_assist_enabled,
+                counter_steer_assist_strength: cfg.counter_steer_assist_strength,
+                abs_enabled: cfg.abs_enabled,
+                abs_slip_threshold: cfg.abs_slip_threshold,
+                abs_strength: cfg.abs_strength,
+                handbrake_bypass: cfg.handbrake_bypass,
+            }
+        })
+        .collect();
+
+    let aids = CodexHandlingAids {
+        grip_aware_steering_description: "Grip-aware steering dynamically maps full controller or keyboard input to the useful slip angle of the front tires at current vehicle speed and normal load. At high speeds, holding full lock would induce catastrophic front tire scrub and terminal understeer; grip-aware steering ensures your input commands maximum available lateral force without front tire plowing.",
+        low_speed_authority_description: "Spec 072 introduces low-speed authority expansion: when vehicle speed drops below 12 m/s (~43 km/h), the steering authority floor progressively expands up to the geometric Ackermann lock angle. This provides tight hairpin turn-in, low-speed parking, and hairpin pivot authority while smoothly tapering back to high-speed grip calibration as speed builds.",
+    };
+
+    CodexDrivingData {
+        id: "driving",
+        steering_profiles,
+        assist_profiles,
+        aids,
+    }
+}
+
+fn hud_data() -> CodexHudData {
+    let elements = vec![
+        CodexHudElement {
+            id: "speedometer",
+            name: "Speedometer & Cluster",
+            screen_position: "Bottom Right",
+            hotkey: None,
+            description: "Hybrid digital/analog speed gauge with speed in km/h, gear indicator, rpm bar, electronic assist active indicators (TCS/ESC/ABS), and drift meter.",
+        },
+        CodexHudElement {
+            id: "position_and_lap",
+            name: "Position & Lap Counter",
+            screen_position: "Top Left",
+            hotkey: None,
+            description: "Displays current race position with podium accent colors (Gold, Silver, Bronze), total field count, current lap, and total laps.",
+        },
+        CodexHudElement {
+            id: "lap_timer",
+            name: "Lap Timer & Sector Splits",
+            screen_position: "Top Center",
+            hotkey: None,
+            description: "High-precision timer displaying current lap time, last lap, personal best, and dynamic sector split time deltas (green = faster, red = slower).",
+        },
+        CodexHudElement {
+            id: "minimap",
+            name: "Mini-Map Radar",
+            screen_position: "Top Right",
+            hotkey: None,
+            description: "Track overview with player and AI position pips, orientation vectors, pit lane route, and sector boundary markers.",
+        },
+        CodexHudElement {
+            id: "compound_badge",
+            name: "Compound Badge",
+            screen_position: "Inside Cockpit Hologram",
+            hotkey: None,
+            description: "Displays current tire compound (e.g. Spliced Slick, Hard Compound, Wet Tread, Gravel Rally) and thermal state.",
+        },
+        CodexHudElement {
+            id: "joker_badge",
+            name: "Joker Lap Badge",
+            screen_position: "Top Left (below Position)",
+            hotkey: None,
+            description: "Rallycross tactical badge indicating required vs completed Joker laps (e.g. 'JOKER REQUIRED' in amber, 'JOKER DONE' in green).",
+        },
+        CodexHudElement {
+            id: "pit_messages",
+            name: "Pit Lane Alerts & Overlays",
+            screen_position: "Center / Top",
+            hotkey: None,
+            description: "Tactical 'BOX THIS LAP' warning when tire wear exceeds 60% or car health drops below 50%; speed limiter banner (60 km/h) in pit lane; service countdown overlay.",
+        },
+        CodexHudElement {
+            id: "cockpit_hologram",
+            name: "Tactical Cockpit Hologram",
+            screen_position: "Bottom Left",
+            hotkey: Some("Ctrl + 1 / Ctrl + 2"),
+            description: "Vector chassis projection showing proportional geometry, engine placement, 4-corner wheel assemblies with thermal/wear status, and switchable kinematics/dynamics modes.",
+        },
+        CodexHudElement {
+            id: "curve_helper",
+            name: "Approaching Curve Helper",
+            screen_position: "In-World / HUD Ribbon",
+            hotkey: Some("5 / 6"),
+            description: "Anticipatory curve advisory indicating corner radius, apex direction, braking zones, and rally pacenote severity (1 to 6).",
+        },
+        CodexHudElement {
+            id: "nameplates",
+            name: "Opponent Nameplates",
+            screen_position: "In-World above Vehicles",
+            hotkey: None,
+            description: "Floating racer badges showing driver name, position, and gap time delta.",
+        },
+        CodexHudElement {
+            id: "locator_aids",
+            name: "Player Locator Aids",
+            screen_position: "In-World around Player Vehicle",
+            hotkey: None,
+            description: "Overhead chevron pointer, ground proximity aura, roof strobe beacon, and radar sonar ping for high-density pack clarity.",
+        },
+        CodexHudElement {
+            id: "debug_overlays",
+            name: "Developer & Telemetry Overlays",
+            screen_position: "Full Screen",
+            hotkey: Some("F1 - F5"),
+            description: "LIDAR raycasts (F1), checkpoint gates (F2), collision OBBs (F3), AI paths (F4), and real-time telemetry panel (F5).",
+        },
+    ];
+
+    let hologram_modes = vec![
+        CodexHologramMode {
+            id: "kinematics",
+            name: "KINEMATICS",
+            hotkey: "Ctrl + 1",
+            description: "Structural linkage mode. Depicts suspension wishbone / pushrod geometry, buckled fracture deformation lines, dynamic camber skew, and perimeter impact zone damage meters.",
+            features: vec![
+                "Mechanical linkage geometry matching SuspensionArchetype",
+                "Buckled fracture line rendering upon severe impact",
+                "Wheel camber skew visualization under cornering load",
+                "Perimeter impact zone wear bars (Nose, Tail, Flanks, Corners)",
+            ],
+        },
+        CodexHologramMode {
+            id: "dynamics",
+            name: "DYNAMICS",
+            hotkey: "Ctrl + 2",
+            description: "Telemetry & suspension stroke mode. Displays 4-corner damper stroke capsules with real-time compression travel and dynamic Fz normal load transfer glow.",
+            features: vec![
+                "4-corner damper stroke compression travel bars",
+                "Dynamic Fz normal load transfer intensity glow",
+                "Tire surface temperature gradient indicators",
+                "Tire tread wear depletion gauges",
+            ],
+        },
+    ];
+
+    let curve_helper = CodexCurveHelperInfo {
+        cycle_hotkey: "5",
+        color_cycle_hotkey: "6",
+        styles: vec![
+            CodexCurveHelperStyle {
+                id: "pacenote",
+                name: "Rally Pacenote",
+                description: "Displays rally-style corner severity numbers (1 = hairpin to 6 = slight bend) with turn direction arrow.",
+            },
+            CodexCurveHelperStyle {
+                id: "chevrons",
+                name: "Severity Chevrons",
+                description: "Projects sequential directional chevron arrows along the approaching corner trajectory.",
+            },
+            CodexCurveHelperStyle {
+                id: "off",
+                name: "Disabled",
+                description: "Hides all curve approach indicators for purist simulation driving.",
+            },
+        ],
+        color_schemes: vec![
+            CodexCurveColorScheme {
+                id: "traffic",
+                name: "Traffic Light",
+                description: "Green (flat out) -> Yellow (lift/caution) -> Orange (heavy braking) -> Red (hairpin emergency).",
+                palette: vec!["#22c55e", "#eab308", "#f97316", "#ef4444"],
+            },
+            CodexCurveColorScheme {
+                id: "synthwave",
+                name: "Synthwave Neon",
+                description: "Cyan -> Electric Purple -> Neon Magenta -> Hot Pink.",
+                palette: vec!["#06b6d4", "#a855f7", "#ec4899", "#f43f5e"],
+            },
+            CodexCurveColorScheme {
+                id: "contrast",
+                name: "High Contrast",
+                description: "Pure White -> Bright Amber -> High-vis Yellow -> Stark Crimson.",
+                palette: vec!["#ffffff", "#f59e0b", "#eab308", "#dc2626"],
+            },
+            CodexCurveColorScheme {
+                id: "rally",
+                name: "Rally Stage",
+                description: "Fluorescent Blue -> Chartreuse Green -> Vivid Yellow -> Blaze Orange.",
+                palette: vec!["#3b82f6", "#84cc16", "#eab308", "#ea580c"],
+            },
+        ],
+    };
+
+    let locator_aids = vec![
+        CodexLocatorAid {
+            id: "overhead_chevron",
+            name: "Overhead Floating Chevron",
+            description: "High-visibility floating arrow directly above the player's car, scaling dynamically with camera zoom.",
+        },
+        CodexLocatorAid {
+            id: "ground_aura",
+            name: "Ground Proximity Aura",
+            description: "Soft pulsing circular ground glow underneath the vehicle chassis, highlighting position in pack battles and dust clouds.",
+        },
+        CodexLocatorAid {
+            id: "roof_beacon",
+            name: "Roof Strobe Beacon",
+            description: "High-contrast roof strobe light designed for extreme off-road mud and night racing visibility.",
+        },
+        CodexLocatorAid {
+            id: "adaptive_visibility",
+            name: "Adaptive Contrast Scaling",
+            description: "Automatically increases aura and chevron luminance when obscured by smoke, tire spray, or off-track foliage.",
+        },
+        CodexLocatorAid {
+            id: "sonar_ping",
+            name: "Radar Sonar Ping",
+            description: "Periodic concentric sonar pulse on the minimap radiating from the player's vehicle.",
+        },
+    ];
+
+    let cameras = vec![
+        CodexCameraLevel {
+            id: "close",
+            name: "Close",
+            mode: "follow",
+            min_zoom: 13.5,
+            max_zoom: 22.0,
+            description: "Intimate follow camera with prominent car detail and intense motion sense. Best for precision karting and autocross.",
+        },
+        CodexCameraLevel {
+            id: "medium",
+            name: "Medium (Default)",
+            mode: "follow",
+            min_zoom: 10.0,
+            max_zoom: 16.5,
+            description: "Balanced follow perspective giving adequate forward vision into braking zones while preserving vehicle presence.",
+        },
+        CodexCameraLevel {
+            id: "far",
+            name: "Far",
+            mode: "follow",
+            min_zoom: 7.5,
+            max_zoom: 12.0,
+            description: "Wide follow camera offering expansive tactical view of upcoming corners and competitor overtakes. Great for GT and high-speed circuits.",
+        },
+        CodexCameraLevel {
+            id: "overview",
+            name: "Overview",
+            mode: "overview",
+            min_zoom: 1.0,
+            max_zoom: 1.0,
+            description: "Static full-track overview camera fitting the entire circuit within the viewport in classic GeneRally style.",
+        },
+    ];
+
+    let cam_cfg = CameraConfig::default();
+    let camera_config = CodexCameraConfigData {
+        position_smoothing: cam_cfg.position_smoothing,
+        zoom_smoothing: cam_cfg.zoom_smoothing,
+        velocity_lookahead_time: cam_cfg.velocity_lookahead_time,
+        trauma_decay: cam_cfg.trauma_decay,
+        max_shake_offset: cam_cfg.max_shake_offset,
+        max_car_screen_offset_frac: MAX_CAR_SCREEN_OFFSET_FRAC,
+    };
+
+    CodexHudData {
+        id: "hud",
+        elements,
+        hologram_modes,
+        curve_helper,
+        locator_aids,
+        cameras,
+        camera_config,
+    }
+}
+
 fn to_json<T: Serialize>(value: &T) -> Result<String, String> {
     serde_json::to_string_pretty(value).map(|s| s + "\n").map_err(|e| e.to_string())
 }
@@ -747,5 +1504,8 @@ pub fn export(scope: Scope, repo_root: &Path) -> Result<Vec<(&'static str, Strin
         ("drivetrain.json", envelope(scope, engine_placements(&platforms))?),
         ("damage.json", envelope(scope, vec![damage_model()])?),
         ("chassis.json", envelope(scope, platforms)?),
+        ("controls.json", envelope(scope, vec![controls_data()])?),
+        ("driving.json", envelope(scope, vec![driving_data()])?),
+        ("hud.json", envelope(scope, vec![hud_data()])?),
     ])
 }

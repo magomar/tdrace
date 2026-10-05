@@ -125,3 +125,100 @@ fn every_platform_part_points_at_an_exported_table_row() {
     }
     assert_eq!(covered, car_ids.len(), "every car belongs to exactly one platform");
 }
+
+#[test]
+fn controls_matches_game_input_presets() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let controls = &items(&files, "controls.json")[0];
+    let presets = controls["presets"].as_array().unwrap();
+    assert_eq!(presets.len(), 4);
+    let preset_ids: Vec<&str> = presets.iter().map(|p| p["id"].as_str().unwrap()).collect();
+    assert_eq!(preset_ids, vec!["hybrid", "wasd", "arrows", "classic"]);
+
+    let hybrid = presets.iter().find(|p| p["id"] == "hybrid").unwrap();
+    let bindings = hybrid["bindings"].as_array().unwrap();
+    let binding_map: std::collections::HashMap<_, _> = bindings
+        .iter()
+        .map(|b| (b["action"].as_str().unwrap(), b["keys"].as_array().unwrap()))
+        .collect();
+
+    let throttle_keys: Vec<&str> = binding_map["throttle"].iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(throttle_keys.contains(&"Q") && throttle_keys.contains(&"Up Arrow"));
+
+    let brake_keys: Vec<&str> = binding_map["brake"].iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(brake_keys.contains(&"A") && brake_keys.contains(&"Down Arrow"));
+
+    let left_keys: Vec<&str> = binding_map["steer_left"].iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(left_keys.contains(&"O") && left_keys.contains(&"Left Arrow"));
+
+    let right_keys: Vec<&str> = binding_map["steer_right"].iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(right_keys.contains(&"P") && right_keys.contains(&"Right Arrow"));
+
+    let handbrake_keys: Vec<&str> = binding_map["handbrake"].iter().map(|v| v.as_str().unwrap()).collect();
+    assert!(handbrake_keys.contains(&"Space"));
+
+    let hotkeys = controls["hotkeys"].as_array().unwrap();
+    assert!(hotkeys.iter().any(|h| h["key"] == "H"));
+    assert!(hotkeys.iter().any(|h| h["key"] == "R"));
+    assert!(hotkeys.iter().any(|h| h["key"] == "Tab"));
+    assert!(hotkeys.iter().any(|h| h["key"] == "F1"));
+
+    let gp = &controls["gamepad"];
+    assert!((gp["stick_deadzone"].as_f64().unwrap() - 0.12).abs() < 1e-4);
+    assert!((gp["trigger_deadzone"].as_f64().unwrap() - 0.05).abs() < 1e-4);
+}
+
+#[test]
+fn driving_matches_game_steering_and_assists() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let driving = &items(&files, "driving.json")[0];
+
+    let steering_profiles = driving["steering_profiles"].as_array().unwrap();
+    assert_eq!(steering_profiles.len(), 4);
+    let profile_ids: Vec<&str> = steering_profiles.iter().map(|p| p["id"].as_str().unwrap()).collect();
+    assert_eq!(profile_ids, vec!["smooth", "balanced", "sharp", "raw"]);
+
+    let balanced = steering_profiles.iter().find(|p| p["id"] == "balanced").unwrap();
+    assert_eq!(balanced["steer_time_ms"].as_f64().unwrap(), 140.0);
+    assert_eq!(balanced["steer_authority"].as_f64().unwrap(), 1.0);
+    assert_eq!(balanced["center_precision"].as_f64().unwrap(), 1.3);
+
+    let assist_profiles = driving["assist_profiles"].as_array().unwrap();
+    assert_eq!(assist_profiles.len(), 3);
+    let assist_ids: Vec<&str> = assist_profiles.iter().map(|a| a["id"].as_str().unwrap()).collect();
+    assert_eq!(assist_ids, vec!["arcade", "sport", "pro"]);
+
+    let arcade = assist_profiles.iter().find(|a| a["id"] == "arcade").unwrap();
+    assert!(arcade["tcs_enabled"].as_bool().unwrap());
+    assert!(arcade["esc_enabled"].as_bool().unwrap());
+    assert!(arcade["abs_enabled"].as_bool().unwrap());
+
+    let pro = assist_profiles.iter().find(|a| a["id"] == "pro").unwrap();
+    assert!(!pro["tcs_enabled"].as_bool().unwrap());
+    assert!(!pro["esc_enabled"].as_bool().unwrap());
+    assert!(!pro["abs_enabled"].as_bool().unwrap());
+}
+
+#[test]
+fn hud_matches_game_elements_and_cameras() {
+    let files = export(Scope::All, &repo_root()).unwrap();
+    let hud = &items(&files, "hud.json")[0];
+
+    let elements = hud["elements"].as_array().unwrap();
+    let element_ids: Vec<&str> = elements.iter().map(|e| e["id"].as_str().unwrap()).collect();
+    assert!(element_ids.contains(&"speedometer"));
+    assert!(element_ids.contains(&"position_and_lap"));
+    assert!(element_ids.contains(&"lap_timer"));
+    assert!(element_ids.contains(&"minimap"));
+    assert!(element_ids.contains(&"cockpit_hologram"));
+
+    let hologram_modes = hud["hologram_modes"].as_array().unwrap();
+    assert_eq!(hologram_modes.len(), 2);
+    assert_eq!(hologram_modes[0]["id"], "kinematics");
+    assert_eq!(hologram_modes[1]["id"], "dynamics");
+
+    let cameras = hud["cameras"].as_array().unwrap();
+    assert_eq!(cameras.len(), 4);
+    assert_eq!(cameras[0]["name"], "Close");
+    assert_eq!(cameras[3]["name"], "Overview");
+}

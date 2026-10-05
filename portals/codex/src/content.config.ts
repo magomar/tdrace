@@ -316,4 +316,174 @@ const damage = defineCollection({
   }),
 });
 
-export const collections = { modules, cars, circuits, surfaces, chassis, suspension, tyres, drivetrain, damage };
+const controls = defineCollection({
+  loader: codexFile('controls.json'),
+  schema: z.object({
+    id: z.literal('controls'),
+    presets: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+        bindings: z.array(
+          z.object({
+            action: z.string(),
+            label: z.string(),
+            keys: z.array(z.string()),
+            gamepad: z.array(z.string()),
+          }),
+        ),
+      }),
+    ),
+    hotkeys: z.array(
+      z.object({
+        key: z.string(),
+        action: z.string(),
+        context: z.string(),
+        description: z.string(),
+      }),
+    ),
+    gamepad: z.object({
+      stick_deadzone: z.number(),
+      trigger_deadzone: z.number(),
+      steer_exponent: z.number(),
+      steer_scale: z.number(),
+      description: z.string(),
+    }),
+  }),
+});
+
+const driving = defineCollection({
+  loader: codexFile('driving.json'),
+  schema: z.object({
+    id: z.literal('driving'),
+    steering_profiles: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        display_name: z.string(),
+        description: z.string(),
+        steer_time_ms: z.number(),
+        return_time_ms: z.number(),
+        steer_authority: z.number(),
+        center_precision: z.number(),
+        pedal_time_ms: z.number(),
+        traction_help: z.number(),
+        recommended_for: z.string(),
+        step_response: z.array(z.tuple([z.number(), z.number()])),
+      }),
+    ),
+    assist_profiles: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        title: z.string(),
+        short_name: z.string(),
+        description: z.string(),
+        tcs_enabled: z.boolean(),
+        tcs_slip_threshold: z.number(),
+        tcs_strength: z.number(),
+        tcs_slip_angle_deg: z.number(),
+        tcs_drift_bypass: z.boolean(),
+        esc_enabled: z.boolean(),
+        esc_yaw_threshold: z.number(),
+        esc_strength: z.number(),
+        esc_sideslip_limit_deg: z.number(),
+        counter_steer_assist_enabled: z.boolean(),
+        counter_steer_assist_strength: z.number(),
+        abs_enabled: z.boolean(),
+        abs_slip_threshold: z.number(),
+        abs_strength: z.number(),
+        handbrake_bypass: z.boolean(),
+      }),
+    ),
+    aids: z.object({
+      grip_aware_steering_description: z.string(),
+      low_speed_authority_description: z.string(),
+    }),
+  }),
+});
+
+const hud = defineCollection({
+  loader: codexFile('hud.json'),
+  schema: z.object({
+    id: z.literal('hud'),
+    elements: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        screen_position: z.string(),
+        hotkey: z.string().nullable().optional(),
+        description: z.string(),
+      }),
+    ),
+    hologram_modes: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        hotkey: z.string(),
+        description: z.string(),
+        features: z.array(z.string()),
+      }),
+    ),
+    curve_helper: z.object({
+      cycle_hotkey: z.string(),
+      color_cycle_hotkey: z.string(),
+      styles: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string(),
+        }),
+      ),
+      color_schemes: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          description: z.string(),
+          palette: z.array(z.string()),
+        }),
+      ),
+    }),
+    locator_aids: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        description: z.string(),
+      }),
+    ),
+    cameras: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        mode: z.string(),
+        min_zoom: z.number(),
+        max_zoom: z.number(),
+        description: z.string(),
+      }),
+    ),
+    camera_config: z.object({
+      position_smoothing: z.number(),
+      zoom_smoothing: z.number(),
+      velocity_lookahead_time: z.number(),
+      trauma_decay: z.number(),
+      max_shake_offset: z.number(),
+      max_car_screen_offset_frac: z.number(),
+    }),
+  }),
+});
+
+export const collections = {
+  modules,
+  cars,
+  circuits,
+  surfaces,
+  chassis,
+  suspension,
+  tyres,
+  drivetrain,
+  damage,
+  controls,
+  driving,
+  hud,
+};
