@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Rallycross Jokers Built From OpenStreetMap Joker Ways"
 description: "Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it."
-status: approved
+status: implemented
 receipt: "docs/receipts/spec-088-receipt.md"
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-04T22:08:08Z }
@@ -122,38 +122,38 @@ No access control is involved. `rally_joker_path` and `osm_cut` fail closed on j
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Jokers follow OSM where OSM shows them**
-  - [ ] **Given** the 13 circuits in the OSM table
-  - [ ] **When** `python3 scripts/osm_importer.py rally --jokers` runs
-  - [ ] **Then** `assets/osm/rx_jokers.json` holds one joker per circuit, each starting and ending within 6.5 m of the main line
+  - [x] **Given** the 13 circuits in the OSM table
+  - [x] **When** `python3 scripts/osm_importer.py rally --jokers` runs
+  - [x] **Then** `assets/osm/rx_jokers.json` holds one joker per circuit, each starting and ending within 6.5 m of the main line
 - **Scenario: Synthetic jokers follow the venue description**
-  - [ ] **Given** `lydden_hill` and `kouvola_rx`
-  - [ ] **When** `cargo run --bin build_world_rx_joker` bakes them
-  - [ ] **Then** each joker lies where the description places it and is within 3 m of its scaled official length (+73 m, +54 m)
+  - [x] **Given** `lydden_hill` and `kouvola_rx`
+  - [x] **When** `cargo run --bin build_world_rx_joker` bakes them
+  - [x] **Then** each joker lies where the description places it and is within 3 m of its scaled official length (+73 m, +54 m)
 - **Scenario: Undescribed circuits keep their joker**
-  - [ ] **Given** the 20 World RX files from `tracks` commit `77a0abe` and the new Mettet and Riga bases
-  - [ ] **When** `cargo run --bin build_world_rx_joker` bakes them
-  - [ ] **Then** the files of `nyirad_rx`, `croft_rx`, `silverstone_rx` and `erx_motor_park` are byte-identical to the committed ones (`spa_rx` excepted: its committed file already differs from a fresh bake)
+  - [x] **Given** the 20 World RX files from `tracks` commit `77a0abe` and the new Mettet and Riga bases
+  - [x] **When** `cargo run --bin build_world_rx_joker` bakes them
+  - [x] **Then** the files of `nyirad_rx`, `croft_rx`, `silverstone_rx` and `erx_motor_park` are byte-identical to the committed ones (`spa_rx` excepted: its committed file already differs from a fresh bake)
 - **Scenario: The main route keeps its shape**
-  - [ ] **Given** a circuit with an OSM joker
-  - [ ] **When** its main layout is built
-  - [ ] **Then** it uses exactly the main spline's waypoints
+  - [x] **Given** a circuit with an OSM joker
+  - [x] **When** its main layout is built
+  - [x] **Then** it uses exactly the main spline's waypoints
 - **Scenario: Every joker costs lap time**
-  - [ ] **Given** the 23 official circuits with a joker layout
-  - [ ] **When** a car limited by top speed (40 m/s), corner grip (10 m/s²), acceleration (8 m/s²) and braking (10 m/s²) drives the main lap and the joker lap
-  - [ ] **Then** the joker lap is between 1.0 and 7.5 seconds slower (`test_rx_joker_costs_lap_time`), and on `holjes_rx` between 2.0 and 4.5 seconds slower
+  - [x] **Given** the 23 official circuits with a joker layout
+  - [x] **When** a car limited by top speed (40 m/s), corner grip (10 m/s²), acceleration (8 m/s²) and braking (10 m/s²) drives the main lap and the joker lap
+  - [x] **Then** the joker lap is between 1.0 and 7.5 seconds slower (`test_rx_joker_costs_lap_time`), and on `holjes_rx` between 2.0 and 4.5 seconds slower
 - **Scenario: Joker walls line the joker and stay out of the main road's wall gap**
-  - [ ] **Given** the 23 joker circuits
-  - [ ] **When** their joker walls are built on load
-  - [ ] **Then** no wall crosses another (`test_rally_module_tracks_integrity_and_validation`), and wherever no other road lies beside the joker a wall stands within 6 m of its edge (`test_rx_joker_branch_has_walls_that_stay_off_every_road`; joker walls keep the gap of the main walls around them, 5.4 m on `riga_rx`)
+  - [x] **Given** the 23 joker circuits
+  - [x] **When** their joker walls are built on load
+  - [x] **Then** no wall crosses another (`test_rally_module_tracks_integrity_and_validation`), and wherever no other road lies beside the joker a wall stands within 6 m of its edge (`test_rx_joker_branch_has_walls_that_stay_off_every_road`; joker walls keep the gap of the main walls around them, 5.4 m on `riga_rx`)
 - **Scenario: Bots take one joker unless stuck on the joker (amends spec 082)**
-  - [ ] **Given** an 8-bot, 5-lap Rallycross race on `holjes_rx` and on `hell_rx`, bots of all tiers
-  - [ ] **When** the race runs (`test_bot_ai_strategic_joker_rx_race_compliance`)
-  - [ ] **Then** a bot changes its route between the split and the merge only while its car is off the road of the route it leaves
-  - [ ] **And** every finished bot has no penalty, and `jokers == 1` unless it moved onto the joker that way
+  - [x] **Given** an 8-bot, 5-lap Rallycross race on `holjes_rx` and on `hell_rx`, bots of all tiers
+  - [x] **When** the race runs (`test_bot_ai_strategic_joker_rx_race_compliance`)
+  - [x] **Then** a bot changes its route between the split and the merge only while its car is off the road of the route it leaves
+  - [x] **And** every finished bot has no penalty, and `jokers == 1` unless it moved onto the joker that way
 - **Scenario: Bots drive every changed joker**
-  - [ ] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles
-  - [ ] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
-  - [ ] **Then** every bot finishes (on 2026-10-05 the longest stop was 12.5 s, on the `kouvola_rx` joker)
+  - [x] **Given** each of the 15 circuits whose joker this spec changes, and a Pro bot of the Balanced, Smooth and Aggressive styles
+  - [x] **When** each bot drives 3 laps on the main route and 3 laps on the joker route in the bot harness
+  - [x] **Then** every bot finishes (on 2026-10-05 the longest stop was 12.5 s, on the `kouvola_rx` joker)
 
 ---
 
