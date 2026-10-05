@@ -1977,7 +1977,8 @@ HILLSIDE_HAMMER = Circuit(
 
 # GT: high speed, braking and runoff (spec 055, User Flow section 3).
 # Surface Asphalt, kerbs on apexes and chicanes, walls Steel with TireWall at the end of fast straights.
-# Variable runoff 3-30 m per side; uses at least 3 of Gravel, DeepSand, PackedSand, Grass, Asphalt.
+# Variable runoff 3-30 m per side; uses Gravel, Grass and Asphalt. No sand: a GT car cannot drive out of it
+# (tdrace-le75), so the traps are Gravel.
 
 GT_ROAD = Road(
     width=13.0,
@@ -2039,7 +2040,7 @@ VELOCITY_PARK = Circuit(
         BuildingProp(at=55.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
         BuildingProp(at=100.0, side="right", offset=11.0, width=32.0, depth=9.0, style="pit_garage"),
         # Lake: infield lake
-        Spot(at=350.0, lateral=40.0, radius=22.0, surface="Water", name="Velocity Park Infield Lake"),
+        Spot(at=350.0, lateral=55.0, radius=22.0, surface="Water", name="Velocity Park Infield Lake"),
         # Trees: cypress, oaks, bushes (48 trees)
         tree_row(20.0, 200.0, 12, side="left", offset=14.0, tree_type="cypress"),
         tree_row(240.0, 440.0, 12, side="right", offset=14.0, tree_type="oak"),
@@ -2111,8 +2112,8 @@ RIDGE_RING = Circuit(
         ((13, 0.5), 0.0),
     ],
     features=[
-        Zone(start=420.0, end=495.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Downhill Sand Trap"),
-        Zone(start=925.0, end=985.0, surface="DeepSand", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Sand Trap"),
+        Zone(start=420.0, end=495.0, surface="Gravel", lateral=(2.5, 8.5), from_edge="left", name="Downhill Gravel Trap"),
+        Zone(start=925.0, end=985.0, surface="Gravel", lateral=(2.5, 8.5), from_edge="left", name="Hairpin Gravel Trap"),
         # Grandstands: main straight covered stadium stands
         GrandstandProp(at=40.0, side="left", offset=9.0, length=45.0, depth=8.0, style="covered_stadium", tiers=8),
         GrandstandProp(at=95.0, side="left", offset=9.0, length=40.0, depth=8.0, style="open_bleachers", tiers=7),
@@ -2142,23 +2143,25 @@ COASTAL_GRAND_PRIX = Circuit(
     start=(0.0, 0.0),
     heading_deg=0.0,
     segments=[
+        # Asphalt run-off where GT bots ran wide and could not get back from grass or gravel (tdrace-le75):
+        # Turn 1 to the plateau (2-5), the carousel (6), after the sweeper (9) and the last turn (23).
         # Main Straight (>= 400 m) East (0 deg)
         S(330, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 0
         S(80, wall_type="TireWall", wall_distance=20.0, runoff="Asphalt"),                                  # 1: Braking zone (total straight = 410 m)
         # Turn 1: Right kink to South-East (-30 deg)
-        A(60, -30, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="Asphalt", wall_type="TireWall"), # 2
+        A(60, -30, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, runoff="Asphalt", wall_type="TireWall"), # 2
         # Climb to plateau
-        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 3
+        S(60, runoff="Asphalt", wall_type="Steel", wall_distance=8.0),                                        # 3
         # Curve on plateau to East (0 deg)
-        A(60, 30, left_curb=True, wall_distance=8.0, left_runoff="Grass", right_runoff="Grass", wall_type="TireWall"),              # 4
+        A(60, 30, left_curb=True, wall_distance=8.0, runoff="Asphalt", wall_type="TireWall"),              # 4
         # Plateau straight (~5 m)
-        S(60, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 5
+        S(60, runoff="Asphalt", wall_type="Steel", wall_distance=8.0),                                        # 5
         # The Carousel: long 165-degree sweeping turn (to -165 deg / West-South-West)
-        A(50, -165, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, left_runoff="PackedSand", wall_type="TireWall"), # 6: Carousel (165 deg >= 150 deg!)
+        A(50, -165, right_curb=True, left_wall_distance=18.0, right_wall_distance=8.0, runoff="Asphalt", wall_type="TireWall"), # 6: Carousel (165 deg >= 150 deg!)
         # Fast sweeper bend along the coast (left kink then right kink)
-        S(40, wall_type="TireWall", left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="PackedSand"),                    # 7
-        A(70, 45, left_curb=True, right_wall_distance=18.0, left_wall_distance=8.0, right_runoff="PackedSand", wall_type="TireWall"), # 8: Fast sweeper (to -120 deg)
-        S(80, wall_type="Steel", wall_distance=8.0, runoff="Grass"),                                        # 9
+        S(40, wall_type="TireWall", left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="Gravel"),                    # 7
+        A(70, 45, left_curb=True, right_wall_distance=18.0, left_wall_distance=8.0, right_runoff="Gravel", wall_type="TireWall"), # 8: Fast sweeper (to -120 deg)
+        S(80, runoff="Asphalt", wall_type="Steel", wall_distance=8.0),                                        # 9
         A(70, -45, right_curb=True, left_wall_distance=15.0, right_wall_distance=8.0, left_runoff="Grass", wall_type="TireWall"),   # 10: (to -165 deg)
         # Coastal straight into Bus-Stop Chicane
         S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 11
@@ -2175,7 +2178,7 @@ COASTAL_GRAND_PRIX = Circuit(
         S(100, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                       # 20 (West-North)
         A(50, -90, right_curb=True, left_wall_distance=16.0, right_wall_distance=8.0, left_runoff="Gravel", wall_type="TireWall"), # 21 (to +60 deg)
         S(60, wall_type="Steel", wall_distance=7.0, runoff="Grass"),                                        # 22 (solved)
-        A(50, -60, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, left_runoff="Gravel", wall_type="TireWall"), # 23 (to 0 deg / East)
+        A(50, -60, right_curb=True, left_wall_distance=20.0, right_wall_distance=7.0, runoff="Asphalt", wall_type="TireWall"), # 23 (to 0 deg / East)
     ],
     close_with=(20, 22),
     finish_at=(0, 0.4),
