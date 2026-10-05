@@ -4,6 +4,7 @@ template: feature
 title: "TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"
 description: "Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files."
 status: implemented
+receipt: "docs/receipts/spec-087-receipt.md"
 verified: { by: "human:mario", at: "2026-10-04T20:30:47Z", hash: "b8b76d5a8826" }
 created: 2026-10-04
 generated: { by: agent/claude-opus-5-5, at: 2026-10-04T18:00:00Z }
