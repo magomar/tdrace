@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Packed and Deep Gravel Surfaces and Asphalt-Circuit Gravel Traps"
 description: "Splits Gravel into PackedGravel (a road surface, like Dirt but a bit more slippery) and DeepGravel (a trap that slows cars but never traps them), moves the official circuits to the new surfaces, and removes Asphalt run-off from the Classic GT circuits."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-089-receipt.md"
 verified: { by: "human:mario", at: "2026-10-05T07:11:54Z", hash: "1e6e8a6da630" }
 created: 2026-10-05
