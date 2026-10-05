@@ -99,4 +99,4 @@ pub struct CarConfig {
 }
 ```
 
-For tire grip details and how $F_z$ determines slip force, see [Pacejka Tire Model](tire_pacejka.md).
+For tire grip details and how $F_z$ determines slip force, see [Pacejka Tyre Model](http://localhost:4322/technical/tyres).

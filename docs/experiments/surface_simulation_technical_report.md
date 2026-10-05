@@ -179,6 +179,6 @@ graph LR
 
 * [Full 1,800-Run Telemetry Dataset (Markdown)](full_surface_simulation_report.md)
 * [Initial Category Benchmark (12 Vehicles)](surface_simulation_benchmark.md)
-* [Surface Physics Matrix Specification](../physics/surfaces.md)
-* [Pacejka '96 Tire Slip Model](../physics/tire_pacejka.md)
+* [Surface Physics Matrix Specification](http://localhost:4322/technical/surfaces)
+* [Pacejka '96 Tire Slip Model](http://localhost:4322/technical/tyres)
 * [Master Knowledge Base Index](../index.md)

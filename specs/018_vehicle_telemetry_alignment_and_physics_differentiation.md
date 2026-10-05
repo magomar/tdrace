@@ -32,7 +32,7 @@ Every vehicle in TdRace is characterized across 6 distinct telemetry vectors, al
 
 ### 2. Web Showroom Single-Row Inline Card Layout
 
-In [`portals/showroom/src/components/CarCard.astro`](../portals/showroom/src/components/CarCard.astro), the previous 2-line layout (label stacked above bar) is refactored into a high-density, horizontal single-row telemetry HUD. This incorporates all 6 performance metrics within the identical vertical envelope (~125px):
+In [`portals/codex/src/components/CarCard.astro`](../portals/codex/src/components/CarCard.astro), the previous 2-line layout (label stacked above bar) is refactored into a high-density, horizontal single-row telemetry HUD. This incorporates all 6 performance metrics within the identical vertical envelope (~125px):
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -159,10 +159,10 @@ Parsed directly from `self.aero_downforce` (format `"Cl X.XX / Cd Y.YY"`):
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[x]` [`portals/showroom/src/components/CarCard.astro`](../portals/showroom/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
+- `[x]` [`portals/codex/src/components/CarCard.astro`](../portals/codex/src/components/CarCard.astro) -> 6-row inline telemetry layout with SVG icons, tooltips, and compact layout.
 - `[x]` [`portals/shared/schemas/okf.ts`](../portals/shared/schemas/okf.ts) -> Optional `braking` schema attribute.
 - `[x]` [`scripts/generate_asset_data.py`](../scripts/generate_asset_data.py) -> Export `braking` stat to `vehicles.json`.
-- `[x]` [`portals/shared/data/vehicles.json`](../portals/shared/data/vehicles.json) -> Synchronized vehicle stats.
+- `[x]` [`portals/shared/data/codex/cars.json`](../portals/shared/data/codex/cars.json) -> Synchronized vehicle stats.
 - `[x]` [`crates/tdrace-app/src/catalog/mod.rs`](../crates/tdrace-app/src/catalog/mod.rs) -> Differentiated `to_car_config()` derivation and unit tests.
 - `[x]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) -> Telemetry HUD alignment.
 - `[x]` [`specs/index.md`](index.md) -> Index registration of Spec 018.
