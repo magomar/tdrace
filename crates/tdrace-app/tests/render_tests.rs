@@ -2262,4 +2262,93 @@ fn test_spec_094_universal_steered_wheel_derivation_across_all_platforms() {
     assert_eq!(monster.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
 }
 
+#[test]
+fn test_spec_091_global_chassis_sprites_integrity_and_dimensions() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_root = manifest_dir.join("../../assets/textures/vehicles/topdown");
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    assert_eq!(
+        all_vehicles.len(),
+        122,
+        "Playable vehicle catalog must contain exactly 122 vehicles (12 classic + 110 motorsport)"
+    );
+
+    let mut verified_count = 0;
+    for v in &all_vehicles {
+        let chassis_path = topdown_root
+            .join(v.module_id)
+            .join(format!("{}_chassis.png", v.id));
+        let full_path = topdown_root
+            .join(v.module_id)
+            .join(format!("{}.png", v.id));
+
+        assert!(
+            full_path.exists(),
+            "Canonical full topdown sprite must exist on disk: {:?}",
+            full_path
+        );
+        assert!(
+            chassis_path.exists(),
+            "Chassis cutout sprite must exist on disk for vehicle {}: {:?}",
+            v.id,
+            chassis_path
+        );
+
+        let chassis_bytes = std::fs::read(&chassis_path)
+            .unwrap_or_else(|e| panic!("Failed to read chassis sprite for {}: {:?}", v.id, e));
+        let chassis_img = Image::from_file_with_format(&chassis_bytes, None)
+            .unwrap_or_else(|e| panic!("Corrupted chassis PNG for {}: {:?}", v.id, e));
+
+        assert_eq!(
+            chassis_img.width, 512,
+            "Chassis sprite width must be 512 for {}",
+            v.id
+        );
+        assert_eq!(
+            chassis_img.height, 512,
+            "Chassis sprite height must be 512 for {}",
+            v.id
+        );
+
+        verified_count += 1;
+    }
+
+    assert_eq!(
+        verified_count, 122,
+        "All 122 playable vehicles must have verified 512x512 chassis sprites"
+    );
+
+    // Also verify vault novelty lawnmowers in kart/ directory
+    let vault_mowers = [
+        "vault_asahi_blade_runner",
+        "vault_greenfield_prairie_racer",
+        "vault_nordic_valhalla_tractor",
+    ];
+    for mower_id in vault_mowers {
+        let chassis_path = topdown_root
+            .join("kart")
+            .join(format!("{}_chassis.png", mower_id));
+        let full_path = topdown_root
+            .join("kart")
+            .join(format!("{}.png", mower_id));
+
+        assert!(full_path.exists(), "Vault mower full sprite must exist: {:?}", full_path);
+        assert!(chassis_path.exists(), "Vault mower chassis sprite must exist: {:?}", chassis_path);
+
+        let bytes = std::fs::read(&chassis_path).unwrap();
+        let img = Image::from_file_with_format(&bytes, None).unwrap();
+        assert_eq!(img.width, 512);
+        assert_eq!(img.height, 512);
+    }
+}
+
 
