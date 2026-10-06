@@ -455,22 +455,100 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
     }
 }
 
-/// Derives default steered wheel dimensions from a vehicle's physical chassis and wheels if modular animation is enabled.
+/// Returns the wheel layering mode (UnderChassis vs OverChassis) for a base platform.
+pub fn platform_wheel_layer_mode(platform: crate::ui::menu::CarChoice) -> WheelLayerMode {
+    match platform {
+        crate::ui::menu::CarChoice::CrossCar
+        | crate::ui::menu::CarChoice::SuperBuggy
+        | crate::ui::menu::CarChoice::DuneBuggyBaja
+        | crate::ui::menu::CarChoice::MonsterTruck
+        | crate::ui::menu::CarChoice::Kart
+        | crate::ui::menu::CarChoice::SuperkartGP
+        | crate::ui::menu::CarChoice::SandRail => WheelLayerMode::OverChassis,
+
+        crate::ui::menu::CarChoice::GT4Clubsport
+        | crate::ui::menu::CarChoice::GT3Car
+        | crate::ui::menu::CarChoice::GT2Biturbo
+        | crate::ui::menu::CarChoice::GT1Legend
+        | crate::ui::menu::CarChoice::HypercarPrototype
+        | crate::ui::menu::CarChoice::TouringAX
+        | crate::ui::menu::CarChoice::TrophyTruckAWD
+        | crate::ui::menu::CarChoice::MudBoggerHeavy
+        | crate::ui::menu::CarChoice::RallyJuniorFWD
+        | crate::ui::menu::CarChoice::RallyCar
+        | crate::ui::menu::CarChoice::RallyGroupB
+        | crate::ui::menu::CarChoice::RallyElectricRX
+        | crate::ui::menu::CarChoice::StockCar
+        | crate::ui::menu::CarChoice::StockCarTruck
+        | crate::ui::menu::CarChoice::SportsCar
+        | crate::ui::menu::CarChoice::DriftCar => WheelLayerMode::UnderChassis,
+    }
+}
+
+/// Returns the top-down wheel texture identifier for a base platform.
+pub fn platform_wheel_texture_id(platform: crate::ui::menu::CarChoice) -> &'static str {
+    match platform {
+        crate::ui::menu::CarChoice::Kart | crate::ui::menu::CarChoice::SuperkartGP => {
+            "kart_slick_front"
+        }
+        crate::ui::menu::CarChoice::GT4Clubsport
+        | crate::ui::menu::CarChoice::GT3Car
+        | crate::ui::menu::CarChoice::GT2Biturbo
+        | crate::ui::menu::CarChoice::GT1Legend
+        | crate::ui::menu::CarChoice::HypercarPrototype
+        | crate::ui::menu::CarChoice::SportsCar
+        | crate::ui::menu::CarChoice::DriftCar => "gt_slick_front",
+        crate::ui::menu::CarChoice::StockCar | crate::ui::menu::CarChoice::StockCarTruck => {
+            "nascar_wheel_front"
+        }
+        crate::ui::menu::CarChoice::RallyJuniorFWD
+        | crate::ui::menu::CarChoice::RallyCar
+        | crate::ui::menu::CarChoice::RallyGroupB
+        | crate::ui::menu::CarChoice::RallyElectricRX
+        | crate::ui::menu::CarChoice::TouringAX => "rally_wheel_front",
+        crate::ui::menu::CarChoice::SandRail
+        | crate::ui::menu::CarChoice::CrossCar
+        | crate::ui::menu::CarChoice::SuperBuggy
+        | crate::ui::menu::CarChoice::DuneBuggyBaja
+        | crate::ui::menu::CarChoice::TrophyTruckAWD
+        | crate::ui::menu::CarChoice::MudBoggerHeavy
+        | crate::ui::menu::CarChoice::MonsterTruck => "offroad_wheel_front",
+    }
+}
+
+/// Derives default steered wheel dimensions from a vehicle's physical chassis and wheels.
+///
+/// Ensures physical front axle offsets and track widths derive directly from the vehicle's
+/// `CarConfig`, with wheel size matching the corner tire dimensions (width and outer diameter)
+/// and layering corresponding to the platform's aerodynamic archetype.
 pub fn derive_steered_wheel_config(
     model_id: &str,
     car_config: &tdrace_core::physics::CarConfig,
 ) -> Option<SteeredWheelConfig> {
-    if let Some(mut cfg) = get_steered_wheel_config(model_id) {
-        if cfg.front_axle_offset <= 0.0 {
-            cfg.front_axle_offset = car_config.cg_to_front;
-        }
-        if cfg.half_track_width <= 0.0 {
-            cfg.half_track_width = car_config.track_width * 0.5;
-        }
-        Some(cfg)
+    let (wheel_texture_id, layering) = if let Some(classic_cfg) = get_steered_wheel_config(model_id) {
+        (classic_cfg.wheel_texture_id, classic_cfg.layering)
+    } else if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+        (
+            platform_wheel_texture_id(model.base_car_choice),
+            platform_wheel_layer_mode(model.base_car_choice),
+        )
     } else {
-        None
-    }
+        ("gt_slick_front", WheelLayerMode::UnderChassis)
+    };
+
+    let wheel_size = if let Some(w) = car_config.wheels.first() {
+        glam::Vec2::new(w.tire_width, w.tire_radius * 2.0)
+    } else {
+        glam::Vec2::new(0.24, 0.48)
+    };
+
+    Some(SteeredWheelConfig {
+        wheel_texture_id,
+        front_axle_offset: car_config.cg_to_front,
+        half_track_width: car_config.track_width * 0.5,
+        wheel_size,
+        layering,
+    })
 }
 
 /// Retrieves or loads a standalone high-resolution top-down wheel texture.

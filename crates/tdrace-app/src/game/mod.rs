@@ -4286,7 +4286,7 @@ impl RaceSession {
                 if self.active_module_id == "classic" {
                     ClassicGameModule::car_classic_ax_mudlark()
                 } else {
-                    tdrace_core::physics::config::CarConfig::sand_rail()
+                    tdrace_core::physics::config::CarConfig::cross_car()
                 }
             }
             CarChoice::DriftCar => {
@@ -4308,6 +4308,10 @@ impl RaceSession {
                 } else {
                     self.config.get_car_config(player_car_choice)
                 }
+            }
+            _ => {
+                self.current_visual_type = player_car_choice.visual_type();
+                player_car_choice.config()
             }
         };
 

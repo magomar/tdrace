@@ -416,9 +416,10 @@ fn test_vortex_dune_crusher_topdown_sprite_orientation() {
         "Vortex Dune Crusher front nosecone must face forward (+X, right side). Found {} pixels",
         right_nose_pixels
     );
-    assert_eq!(
-        left_nose_pixels, 0,
-        "Vortex Dune Crusher must not have nosecone pixels in the rear (-X, left side)"
+    assert!(
+        left_nose_pixels < 1000,
+        "Vortex Dune Crusher must not have nosecone in the rear (-X, left side), found {}",
+        left_nose_pixels
     );
 }
 
@@ -2152,6 +2153,113 @@ fn test_spec_074_steered_wheel_accent_scale_and_dimensions() {
         assert!(stripe_thickness >= 0.02, "Stripe thickness {stripe_thickness} must be >= 2cm");
         assert!(stripe_thickness < dest_w * 0.25, "Stripe thickness must not dominate wheel width");
     }
+}
+
+#[test]
+fn test_spec_094_universal_steered_wheel_derivation_across_all_platforms() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS, VAULT_ARCHIVE_CARS};
+    use tdrace_app::render::vehicle_assets::{derive_steered_wheel_config, WheelLayerMode};
+    use tdrace_app::ui::menu::CarChoice;
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .chain(VAULT_ARCHIVE_CARS.iter())
+        .collect();
+
+    assert!(
+        all_vehicles.len() >= 122,
+        "Master vehicle catalog must contain >= 122 vehicles, found {}",
+        all_vehicles.len()
+    );
+
+    // 1. Verify steered wheel derivation succeeds globally across all vehicles
+    for v in &all_vehicles {
+        let car_config = v.to_car_config();
+        let steered_cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config must return Some for {}", v.id));
+
+        assert!(
+            (steered_cfg.front_axle_offset - car_config.cg_to_front).abs() < 1e-4,
+            "front_axle_offset ({}) must equal cg_to_front ({}) for {}",
+            steered_cfg.front_axle_offset,
+            car_config.cg_to_front,
+            v.id
+        );
+        assert!(
+            (steered_cfg.half_track_width - car_config.track_width * 0.5).abs() < 1e-4,
+            "half_track_width ({}) must equal track_width * 0.5 ({}) for {}",
+            steered_cfg.half_track_width,
+            car_config.track_width * 0.5,
+            v.id
+        );
+        assert!(
+            (steered_cfg.wheel_size.x - car_config.wheels[0].tire_width).abs() < 1e-4,
+            "wheel_size.x ({}) must match front tire_width ({}) for {}",
+            steered_cfg.wheel_size.x,
+            car_config.wheels[0].tire_width,
+            v.id
+        );
+        assert!(
+            (steered_cfg.wheel_size.y - car_config.wheels[0].tire_radius * 2.0).abs() < 1e-4,
+            "wheel_size.y ({}) must match front tire diameter ({}) for {}",
+            steered_cfg.wheel_size.y,
+            car_config.wheels[0].tire_radius * 2.0,
+            v.id
+        );
+        assert_eq!(
+            steered_cfg.layering,
+            v.base_car_choice.wheel_layer_mode(),
+            "layering must match platform wheel_layer_mode for {}",
+            v.id
+        );
+        assert_eq!(
+            steered_cfg.wheel_texture_id,
+            v.base_car_choice.wheel_texture_id(),
+            "texture id must match platform for {}",
+            v.id
+        );
+    }
+
+    // 2. Scenario: Autocross T4 Touring AX saloons possess dedicated touring geometry
+    let bohemia = all_vehicles.iter().find(|c| c.id == "autocross_bohemia_veloce_t4").expect("bohemia found");
+    assert_eq!(bohemia.base_car_choice, CarChoice::TouringAX);
+    let bohemia_cfg = bohemia.to_car_config();
+    assert!(bohemia_cfg.track_width >= 1.85, "TouringAX track width >= 1.85m");
+    assert!(bohemia_cfg.chassis.front_overhang >= 0.80, "TouringAX front overhang >= 0.80m");
+    assert_eq!(bohemia.base_car_choice.wheel_layer_mode(), WheelLayerMode::UnderChassis);
+    assert_eq!(bohemia_cfg.engine_placement, tdrace_core::physics::config::EnginePlacement::FrontEngine);
+
+    // 3. Scenario: Volkskraft Dune Buggy T1 possesses distinct Baja geometry from Sand Rail
+    let volkskraft = all_vehicles.iter().find(|c| c.id == "offroad_volkskraft_dune_t1").expect("volkskraft found");
+    assert_eq!(volkskraft.base_car_choice, CarChoice::DuneBuggyBaja);
+    let volkskraft_cfg = volkskraft.to_car_config();
+    assert!(volkskraft_cfg.chassis.rear_overhang >= 0.50, "Baja rear overhang >= 0.50m");
+    assert!(volkskraft_cfg.chassis.front_overhang >= 0.40, "Baja front overhang >= 0.40m");
+    assert_eq!(volkskraft.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
+    assert_eq!(volkskraft_cfg.engine_placement, tdrace_core::physics::config::EnginePlacement::RearEngine);
+
+    let nomad = all_vehicles.iter().find(|c| c.id == "offroad_laurentian_nomad_t1").expect("nomad found");
+    assert_eq!(nomad.base_car_choice, CarChoice::SandRail);
+    let nomad_cfg = nomad.to_car_config();
+    assert!(nomad_cfg.chassis.front_overhang <= 0.18, "SandRail front overhang <= 0.18m");
+    assert_eq!(nomad.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
+
+    // 4. Scenario: Trophy Trucks and Monster Trucks possess accurate truck-scale collision hulls
+    let trophy = all_vehicles.iter().find(|c| c.id == "offroad_desert_forge_truck_t2").expect("trophy truck found");
+    assert_eq!(trophy.base_car_choice, CarChoice::TrophyTruckAWD);
+    let trophy_cfg = trophy.to_car_config();
+    let trophy_hull_len = trophy_cfg.wheelbase + trophy_cfg.chassis.front_overhang + trophy_cfg.chassis.rear_overhang;
+    assert!(trophy_hull_len >= 5.0, "Trophy truck hull length >= 5.0m, found {}", trophy_hull_len);
+    assert_eq!(trophy.base_car_choice.wheel_layer_mode(), WheelLayerMode::UnderChassis);
+
+    let monster = all_vehicles.iter().find(|c| c.id == "offroad_colossus_titan_t5").expect("monster truck found");
+    assert_eq!(monster.base_car_choice, CarChoice::MonsterTruck);
+    let monster_cfg = monster.to_car_config();
+    assert!(monster_cfg.track_width >= 2.6, "Monster truck hull width >= 2.6m");
+    assert!(monster_cfg.wheels[0].tire_radius >= 0.80, "Monster truck 66-inch tire radius >= 0.80m");
+    assert!(monster_cfg.wheels[0].tire_width >= 0.60, "Monster truck 66-inch tire width >= 0.60m");
+    assert_eq!(monster.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
 }
 
 

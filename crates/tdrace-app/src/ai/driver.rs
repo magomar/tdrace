@@ -904,11 +904,20 @@ impl DriverCharacter {
                 | CarChoice::GT2Biturbo
                 | CarChoice::GT1Legend
                 | CarChoice::HypercarPrototype => Some("classic_gt"),
-                CarChoice::StockCar => Some("classic_nascar"),
-                CarChoice::RallyCar => Some("classic_rally"),
-                CarChoice::Kart => Some("classic_kart"),
-                CarChoice::SandRail => Some("classic_offroad"),
-                CarChoice::CrossCar => Some("classic_ax_mudlark"),
+                CarChoice::StockCar | CarChoice::StockCarTruck => Some("classic_nascar"),
+                CarChoice::RallyCar
+                | CarChoice::RallyJuniorFWD
+                | CarChoice::RallyGroupB
+                | CarChoice::RallyElectricRX => Some("classic_rally"),
+                CarChoice::Kart | CarChoice::SuperkartGP => Some("classic_kart"),
+                CarChoice::SandRail
+                | CarChoice::DuneBuggyBaja
+                | CarChoice::TrophyTruckAWD
+                | CarChoice::MudBoggerHeavy
+                | CarChoice::MonsterTruck => Some("classic_offroad"),
+                CarChoice::CrossCar | CarChoice::TouringAX | CarChoice::SuperBuggy => {
+                    Some("classic_ax_mudlark")
+                }
             };
         }
         None

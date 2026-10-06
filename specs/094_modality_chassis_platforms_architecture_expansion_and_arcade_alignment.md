@@ -3,13 +3,14 @@ type: Architecture Spec
 template: architecture
 title: "Modality Chassis Platforms Architecture Expansion and Arcade Alignment"
 description: "Expands canonical chassis platforms across motorsport modalities, retires standalone arcade-only platforms by mapping Classic Arcade cars to authentic disciplines, and establishes accurate axle-relative skeletons for simulation fidelity, SAT collision hulls, and Spec 091 steered wheel articulation."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-094-receipt.md"
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T09:14:00Z }
+verified: { by: "human:mario", at: "2026-10-06T10:13:50Z", hash: "81e57e12a9b9" }
 depends_on:
   - "075"
   - "076"
-  - "091"
 ---
 
 # Architecture Spec: Modality Chassis Platforms Architecture Expansion and Arcade Alignment 🏎️📐🏗️
@@ -249,49 +250,49 @@ In `CarConfig::finalize()`:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Classic Arcade vehicles inherit authentic modality platforms**
-  - [ ] **Given** the vehicle catalog in `crates/tdrace-app/src/catalog/mod.rs`
-  - [ ] **When** inspecting `classic_gt`, `classic_ax_brawler`, and `classic_at_safari`
-  - [ ] **Then** `classic_gt` uses a GT platform (`GT4Clubsport` or `GT3Car`)
-  - [ ] **And** `classic_ax_brawler` uses `TouringAX`
-  - [ ] **And** `classic_at_safari` uses `TrophyTruckAWD`
-  - [ ] **And** no active production vehicle requires `CarChoice::SportsCar` or `CarChoice::DriftCar`
+  - [x] **Given** the vehicle catalog in `crates/tdrace-app/src/catalog/mod.rs`
+  - [x] **When** inspecting `classic_gt`, `classic_ax_brawler`, and `classic_at_safari`
+  - [x] **Then** `classic_gt` uses a GT platform (`GT4Clubsport` or `GT3Car`)
+  - [x] **And** `classic_ax_brawler` uses `TouringAX`
+  - [x] **And** `classic_at_safari` uses `TrophyTruckAWD`
+  - [x] **And** no active production vehicle requires `CarChoice::SportsCar` or `CarChoice::DriftCar`
 
 - **Scenario: Autocross T4 Touring AX saloons possess dedicated touring geometry**
-  - [ ] **Given** the Autocross vehicle roster
-  - [ ] **When** resolving the physics configuration for `autocross_bohemia_veloce_t4`
-  - [ ] **Then** its base chassis is `TouringAX` with $W_{\text{track}} \ge 1.85\text{ m}$ and front overhang $d_f \ge 0.80\text{ m}$
-  - [ ] **And** its wheel layering mode in Spec 091 resolves to `UnderChassis` (wheels inside fenders)
-  - [ ] **And** its front engine placement causes frontal collisions to route energy into the engine block
+  - [x] **Given** the Autocross vehicle roster
+  - [x] **When** resolving the physics configuration for `autocross_bohemia_veloce_t4`
+  - [x] **Then** its base chassis is `TouringAX` with $W_{\text{track}} \ge 1.85\text{ m}$ and front overhang $d_f \ge 0.80\text{ m}$
+  - [x] **And** its wheel layering mode in Spec 091 resolves to `UnderChassis` (wheels inside fenders)
+  - [x] **And** its front engine placement causes frontal collisions to route energy into the engine block
 
 - **Scenario: Volkskraft Dune Buggy T1 possesses distinct Baja geometry from Sand Rail**
-  - [ ] **Given** `offroad_volkskraft_dune_t1` and `offroad_laurentian_nomad_t1` in Extreme Off-Road
-  - [ ] **When** comparing their resolved `ChassisSkeleton` and `wheelbase`
-  - [ ] **Then** `Volkskraft` uses `DuneBuggyBaja` with rear overhang $d_r \ge 0.50\text{ m}$ and front overhang $d_f \ge 0.40\text{ m}$
-  - [ ] **And** `Laurentian Nomad` uses `SandRail` with needle-nose front overhang $d_f \le 0.18\text{ m}$
-  - [ ] **And** both vehicles correctly position steered wheels at their respective physical front axles without sprite clipping
+  - [x] **Given** `offroad_volkskraft_dune_t1` and `offroad_laurentian_nomad_t1` in Extreme Off-Road
+  - [x] **When** comparing their resolved `ChassisSkeleton` and `wheelbase`
+  - [x] **Then** `Volkskraft` uses `DuneBuggyBaja` with rear overhang $d_r \ge 0.50\text{ m}$ and front overhang $d_f \ge 0.40\text{ m}$
+  - [x] **And** `Laurentian Nomad` uses `SandRail` with needle-nose front overhang $d_f \le 0.18\text{ m}$
+  - [x] **And** both vehicles correctly position steered wheels at their respective physical front axles without sprite clipping
 
 - **Scenario: Trophy Trucks and Monster Trucks possess accurate truck-scale collision hulls**
-  - [ ] **Given** `offroad_desert_forge_truck_t2` and `offroad_colossus_titan_t5`
-  - [ ] **When** constructing the SAT `BodyHull`
-  - [ ] **Then** the Trophy Truck hull length is $\ge 5.0\text{ m}$ (wheelbase $3.20\text{ m} + d_f + d_r$)
-  - [ ] **And** the Monster Truck hull width is $\ge 2.6\text{ m}$ with 66-inch Terra wheel dimensions
-  - [ ] **And** neither vehicle is constrained by the 2.97-meter `SandRail` chassis bounding box
+  - [x] **Given** `offroad_desert_forge_truck_t2` and `offroad_colossus_titan_t5`
+  - [x] **When** constructing the SAT `BodyHull`
+  - [x] **Then** the Trophy Truck hull length is $\ge 5.0\text{ m}$ (wheelbase $3.20\text{ m} + d_f + d_r$)
+  - [x] **And** the Monster Truck hull width is $\ge 2.6\text{ m}$ with 66-inch Terra wheel dimensions
+  - [x] **And** neither vehicle is constrained by the 2.97-meter `SandRail` chassis bounding box
 
 - **Scenario: Spec 091 steered wheel derivation succeeds globally across all expanded platforms**
-  - [ ] **Given** any of the 122+ vehicles across all 8 modules
-  - [ ] **When** calling `derive_steered_wheel_config(model_id, &car_config)`
-  - [ ] **Then** `front_axle_offset` exactly equals `car_config.cg_to_front`
-  - [ ] **And** `half_track_width` exactly equals `car_config.track_width * 0.5`
-  - [ ] **And** `wheel_size` matches the corner tire dimensions of the assigned platform
+  - [x] **Given** any of the 122+ vehicles across all 8 modules
+  - [x] **When** calling `derive_steered_wheel_config(model_id, &car_config)`
+  - [x] **Then** `front_axle_offset` exactly equals `car_config.cg_to_front`
+  - [x] **And** `half_track_width` exactly equals `car_config.track_width * 0.5`
+  - [x] **And** `wheel_size` matches the corner tire dimensions of the assigned platform
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` [`crates/wheelbase/src/config.rs`](../crates/wheelbase/src/config.rs) -> Adds factory constructors for `touring_ax()`, `super_buggy()`, `dune_buggy_baja()`, `trophy_truck()`, `mud_bogger()`, `monster_truck()`, `superkart_gp()`, `stock_car_truck()`, `rally_junior_fwd()`, `rally_group_b()`.
-- `[ ]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) -> Expands `CarChoice` enum variants, titles, descriptions, and `config()` dispatch.
-- `[ ]` [`crates/tdrace-app/src/catalog/mod.rs`](../crates/tdrace-app/src/catalog/mod.rs) -> Re-maps `ALL_REAL_CARS` and `CLASSIC_ARCADE_CARS` to their authentic modality base platforms.
-- `[ ]` [`crates/tdrace-app/src/render/vehicle_assets.rs`](../crates/tdrace-app/src/render/vehicle_assets.rs) -> Updates wheel layering and wheel texture styles for new platforms.
-- `[ ]` [`crates/tdrace-app/src/codex/mod.rs`](../crates/tdrace-app/src/codex/mod.rs) -> Synchronizes Codex export for the expanded platform roster.
-- `[ ]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Tracks Spec 094 in Phase 6 milestones.
+- `[x]` [`crates/wheelbase/src/config.rs`](../crates/wheelbase/src/config.rs) -> Adds factory constructors for `touring_ax()`, `super_buggy()`, `dune_buggy_baja()`, `trophy_truck()`, `mud_bogger()`, `monster_truck()`, `superkart_gp()`, `stock_car_truck()`, `rally_junior_fwd()`, `rally_group_b()`.
+- `[x]` [`crates/tdrace-app/src/ui/menu.rs`](../crates/tdrace-app/src/ui/menu.rs) -> Expands `CarChoice` enum variants, titles, descriptions, and `config()` dispatch.
+- `[x]` [`crates/tdrace-app/src/catalog/mod.rs`](../crates/tdrace-app/src/catalog/mod.rs) -> Re-maps `ALL_REAL_CARS` and `CLASSIC_ARCADE_CARS` to their authentic modality base platforms.
+- `[x]` [`crates/tdrace-app/src/render/vehicle_assets.rs`](../crates/tdrace-app/src/render/vehicle_assets.rs) -> Updates wheel layering and wheel texture styles for new platforms.
+- `[x]` [`crates/tdrace-app/src/codex/mod.rs`](../crates/tdrace-app/src/codex/mod.rs) -> Synchronizes Codex export for the expanded platform roster.
+- `[x]` [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) -> Tracks Spec 094 in Phase 6 milestones.
