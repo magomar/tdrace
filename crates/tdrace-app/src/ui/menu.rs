@@ -965,6 +965,16 @@ impl CarChoice {
             },
         }
     }
+
+    /// Returns the wheel layering mode (UnderChassis vs OverChassis) for this platform archetype.
+    pub fn wheel_layer_mode(&self) -> crate::render::vehicle_assets::WheelLayerMode {
+        crate::render::vehicle_assets::platform_wheel_layer_mode(*self)
+    }
+
+    /// Returns the top-down wheel texture identifier for this platform archetype.
+    pub fn wheel_texture_id(&self) -> &'static str {
+        crate::render::vehicle_assets::platform_wheel_texture_id(*self)
+    }
 }
 
 /// Resolves the authentic predefined car for a specific track and active module context.
