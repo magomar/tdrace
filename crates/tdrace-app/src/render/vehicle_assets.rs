@@ -537,7 +537,9 @@ pub fn derive_steered_wheel_config(
     };
 
     let wheel_size = if let Some(w) = car_config.wheels.first() {
-        glam::Vec2::new(w.tire_width, w.tire_radius * 2.0)
+        let size_x = w.tire_width;
+        let size_y = (size_x * 2.0).clamp(0.24, 1.35);
+        glam::Vec2::new(size_x, size_y)
     } else {
         glam::Vec2::new(0.24, 0.48)
     };

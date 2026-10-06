@@ -2200,11 +2200,12 @@ fn test_spec_094_universal_steered_wheel_derivation_across_all_platforms() {
             car_config.wheels[0].tire_width,
             v.id
         );
+        let expected_size_y = (car_config.wheels[0].tire_width * 2.0).clamp(0.24, 1.35);
         assert!(
-            (steered_cfg.wheel_size.y - car_config.wheels[0].tire_radius * 2.0).abs() < 1e-4,
-            "wheel_size.y ({}) must match front tire diameter ({}) for {}",
+            (steered_cfg.wheel_size.y - expected_size_y).abs() < 1e-4,
+            "wheel_size.y ({}) must preserve 1:2 aspect ratio ({}) for {}",
             steered_cfg.wheel_size.y,
-            car_config.wheels[0].tire_radius * 2.0,
+            expected_size_y,
             v.id
         );
         assert_eq!(
@@ -2348,6 +2349,88 @@ fn test_spec_091_global_chassis_sprites_integrity_and_dimensions() {
         let img = Image::from_file_with_format(&bytes, None).unwrap();
         assert_eq!(img.width, 512);
         assert_eq!(img.height, 512);
+    }
+}
+
+#[test]
+fn test_spec_091_global_steered_wheel_articulation_and_runtime_integration() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+    use tdrace_app::render::vehicle_assets::{derive_steered_wheel_config, WheelLayerMode};
+    use tdrace_app::ui::menu::CarChoice;
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    for v in &all_vehicles {
+        let car_config = v.to_car_config();
+        let car = Car::new(car_config.clone());
+
+        // 1. Verify steered wheel derivation succeeds globally
+        let cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config failed for {}", v.id));
+
+        assert!(cfg.front_axle_offset > 0.0, "front_axle_offset must be positive for {}", v.id);
+        assert!(cfg.half_track_width > 0.0, "half_track_width must be positive for {}", v.id);
+        assert!(cfg.wheel_size.x > 0.0, "wheel_size.x must be positive for {}", v.id);
+        assert!(cfg.wheel_size.y > 0.0, "wheel_size.y must be positive for {}", v.id);
+
+        // 2. Aspect ratio preservation: 1:2 aspect ratio matching 128x256 texture
+        let expected_size_y = (cfg.wheel_size.x * 2.0).clamp(0.24, 1.35);
+        assert!(
+            (cfg.wheel_size.y - expected_size_y).abs() < 1e-4,
+            "wheel_size must maintain 1:2 ratio (expected {}, got {}) for {}",
+            expected_size_y,
+            cfg.wheel_size.y,
+            v.id
+        );
+
+        // 3. Modality Platform Layering Architecture
+        let expected_layering = match v.base_car_choice {
+            CarChoice::CrossCar
+            | CarChoice::SuperBuggy
+            | CarChoice::DuneBuggyBaja
+            | CarChoice::MonsterTruck
+            | CarChoice::Kart
+            | CarChoice::SuperkartGP
+            | CarChoice::SandRail => WheelLayerMode::OverChassis,
+
+            CarChoice::GT4Clubsport
+            | CarChoice::GT3Car
+            | CarChoice::GT2Biturbo
+            | CarChoice::GT1Legend
+            | CarChoice::HypercarPrototype
+            | CarChoice::TouringAX
+            | CarChoice::TrophyTruckAWD
+            | CarChoice::MudBoggerHeavy
+            | CarChoice::RallyJuniorFWD
+            | CarChoice::RallyCar
+            | CarChoice::RallyGroupB
+            | CarChoice::RallyElectricRX
+            | CarChoice::StockCar
+            | CarChoice::StockCarTruck
+            | CarChoice::SportsCar
+            | CarChoice::DriftCar => WheelLayerMode::UnderChassis,
+        };
+        assert_eq!(
+            cfg.layering, expected_layering,
+            "Layering must match platform archetype for {}",
+            v.id
+        );
+
+        // 4. Authentic dynamic Ackermann angle resolution
+        let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
+        assert!(fl_zero.abs() < 1e-5, "Zero steer tracking parallel for {}", v.id);
+        assert!(fr_zero.abs() < 1e-5, "Zero steer tracking parallel for {}", v.id);
+
+        let (fl_left, fr_left) = car.compute_ackermann_angles(0.35);
+        assert!(fl_left > 0.0 && fr_left > 0.0, "Both wheels turn into turn for {}", v.id);
+        assert!(
+            fl_left > fr_left,
+            "Ackermann geometry: inner wheel turns sharper than outer wheel for {}",
+            v.id
+        );
     }
 }
 
