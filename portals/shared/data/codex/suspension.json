@@ -34,10 +34,12 @@
         "response_frequency_hz": 8.0
       },
       "platforms_front": [
-        "Kart"
+        "Kart",
+        "SuperkartGP"
       ],
       "platforms_rear": [
-        "Kart"
+        "Kart",
+        "SuperkartGP"
       ]
     },
     {
@@ -73,7 +75,9 @@
       },
       "platforms_front": [],
       "platforms_rear": [
-        "StockCar"
+        "MudBoggerHeavy",
+        "StockCar",
+        "StockCarTruck"
       ]
     },
     {
@@ -108,7 +112,8 @@
         "response_frequency_hz": 3.5
       },
       "platforms_front": [
-        "GT4Clubsport"
+        "GT4Clubsport",
+        "RallyJuniorFWD"
       ],
       "platforms_rear": []
     },
@@ -144,18 +149,25 @@
         "response_frequency_hz": 4.2
       },
       "platforms_front": [
-        "SportsCar",
         "GT3Car",
         "GT2Biturbo",
         "GT1Legend",
-        "StockCar"
+        "TouringAX",
+        "MudBoggerHeavy",
+        "RallyGroupB",
+        "RallyElectricRX",
+        "StockCar",
+        "StockCarTruck"
       ],
       "platforms_rear": [
-        "SportsCar",
         "GT4Clubsport",
         "GT3Car",
         "GT2Biturbo",
-        "GT1Legend"
+        "GT1Legend",
+        "TouringAX",
+        "RallyJuniorFWD",
+        "RallyGroupB",
+        "RallyElectricRX"
       ]
     },
     {
@@ -228,14 +240,22 @@
         "response_frequency_hz": 2.8
       },
       "platforms_front": [
-        "RallyCar",
+        "CrossCar",
+        "SuperBuggy",
+        "DuneBuggyBaja",
         "SandRail",
-        "CrossCar"
+        "TrophyTruckAWD",
+        "MonsterTruck",
+        "RallyCar"
       ],
       "platforms_rear": [
-        "RallyCar",
+        "CrossCar",
+        "SuperBuggy",
+        "DuneBuggyBaja",
         "SandRail",
-        "CrossCar"
+        "TrophyTruckAWD",
+        "MonsterTruck",
+        "RallyCar"
       ]
     }
   ]
