@@ -456,21 +456,25 @@ def generate_fallback_pit_lane(final_track_pts):
 
 
 PILOT_PIT_BOUNDS = {
-    "catalunya":   (-4.0,     15.0,  65.0,  78.0),
-    "monza":       (-170.0, -130.0, 50.0, 100.0),
-    "spa":         (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
-    "silverstone": (-5.0,    15.0,  75.0,  90.0, -7.0, -14.5),
-    "madring":     (-5.0,    15.0,  70.0,  85.0, -7.0, -14.0),
-    "bahrain":     (12.0,    32.0, 125.0, 150.0, -7.0, -15.0),
-    "cota":        (15.0,    35.0, 150.0, 180.0,  7.35,  14.5),
+    "catalunya":      (-4.0,     15.0,  65.0,  78.0),
+    "monza":          (-170.0, -130.0, 50.0, 100.0),
+    "spa":            (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
+    "silverstone":    (-5.0,    15.0,  75.0,  90.0, -8.1, -15.0),
+    "madring":        (12.0,    32.0, 105.0, 130.0, -8.1, -14.5),
+    "bahrain":        (12.0,    32.0, 125.0, 150.0, -8.1, -15.0),
+    "cota":           (15.0,    35.0, 150.0, 180.0,  8.1,  14.5),
+    "montreal":       (5.0,     20.0,  75.0,  95.0, -8.1, -14.5),
+    "red_bull_ring":  (10.0,    30.0, 130.0, 155.0, -8.1, -14.5),
+    "le_mans_sarthe": (10.0,    30.0, 170.0, 200.0, -8.1, -14.8),
+    "monaco":         (10.0,    25.0,  75.0,  95.0, -6.35, -11.25),
 }
 
 
 def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
     """Builds a complete, geometry-governed PitLane dictionary anchored by OSM metadata (Spec 062/077)."""
     if cid == "zandvoort":
-        # Zandvoort's start straight in source JSON runs from wp 26 (50.0, -143.6) to wp 0 (0.0, 0.0)
-        p_start = (50.0, -143.6)
+        # Zandvoort start straight runs from wp 37 (-5.5, -125.7) to wp 0 (0.0, 0.0)
+        p_start = (-5.5, -125.7)
         p_end = (0.0, 0.0)
         dx = p_end[0] - p_start[0]
         dy = p_end[1] - p_start[1]
@@ -599,7 +603,7 @@ def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
             y_split = bounds[4]
             y_parallel = bounds[5]
             d_parallel = abs(y_parallel)
-            side = 1.0 if y_parallel > 0.0 else -1.0
+            side = 1.0 if y_parallel >= 0.0 else -1.0
     else:
         # Detect straight limits around (0, 0)
         n_pts = len(final_track_pts)
@@ -1034,12 +1038,8 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "JEWEL IN THE CROWN",
         "elevations": {
-            # Beau Rivage uphill
-            2: 2.0, 3: 3.5,
-            # Casino Square crest
-            4: 4.0, 5: 3.0,
-            # Loews Hairpin descent
-            6: 2.0, 7: 1.0,
+            # Beau Rivage uphill & Casino Square crest (>3.5m harbor clearance across wp 6..8)
+            2: 3.5, 3: 5.5, 4: 6.0, 5: 5.5, 6: 4.5, 7: 3.5, 8: 1.5,
         },
     },
     "suzuka": {
@@ -1138,12 +1138,12 @@ GT_CIRCUITS = {
         "tag": "SPANISH GP BENCHMARK",
         "pit_ways": ["33742214", "178416729", "178416733"],
         "elevations": {
-            # Turn 9 Campsa uphill crest
-            15: 2.0, 16: 3.5, 17: 2.0,
+            # Turn 9 Campsa uphill crest & overpass clearance
+            11: 2.5, 12: 5.0, 13: 2.5,
         },
         "bank_angles": {
             3: 3.0, 4: 3.0,  # Curva Renault
-            15: 4.0,         # Campsa
+            11: 4.0,         # Campsa
         },
     },
     "zandvoort": {
@@ -1160,10 +1160,8 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "DUTCH DUNES",
         "elevations": {
-            # Hugenholtz bowl
-            4: 2.0, 5: 3.5, 6: 2.0,
-            # Dunes crest
-            10: 2.5, 11: 3.0, 12: 1.5,
+            # Hugenholtz bowl and overpass bridge (>3.5m clearance past wp 11)
+            4: 2.5, 5: 4.8, 6: 5.5, 7: 5.5, 8: 5.5, 9: 5.5, 10: 5.5, 11: 4.5, 12: 2.0,
             # Arie Luyendyk banked turn
             25: 1.5, 26: 2.0,
         },
@@ -1253,6 +1251,7 @@ GT_CIRCUITS = {
         "barrier_offset": 4.0,
         "default_laps": 3,
         "tag": "AUSTIN SPECTACLE",
+        "start_node": "7909207460",
         "elevations": {
             # Steep Turn 1 uphill crest
             2: 2.0, 3: 4.5, 4: 2.5,
@@ -1548,15 +1547,15 @@ def process_gt_circuit(cid, cache_dir):
         # Suzuka bridge elevation and corridor clearance
         wall_dist = None
         if cfg.get("crossover"):
-            if i in [24, 25, 26]:
-                elev = 5.0
-            elif i in [23, 27]:
+            if i in [25, 26, 27]:
+                elev = 5.5
+            elif i in [24, 28]:
                 elev = 2.5
             else:
                 elev = 0.0
 
-            # Narrow width and wall distance at parallel hairpin corridor 16-17 / 22-23
-            if i in [16, 17, 22, 23]:
+            # Narrow width and wall distance at parallel hairpin corridor
+            if i in [14, 15, 16, 17, 22, 23]:
                 width = 11.5
                 wall_dist = 2.2
 
@@ -1577,8 +1576,9 @@ def process_gt_circuit(cid, cache_dir):
     waypoints = smooth_hairpin_arc_fans(
         waypoints,
         target_radius=max(26.0, road_w * 0.5 + 15.0),
-        min_deflection_deg=75.0,
+        min_deflection_deg=80.0,
         default_width=road_w,
+        min_seg_len=15.0,
     )
 
     # Spec 097 Pillar II: Calibrate spline length to exactly match target_circuit_len (+-0.5%)
@@ -2611,6 +2611,7 @@ def process_rally_track(track_id, cache_dir):
         target_radius=target_radius,
         min_deflection_deg=45.0,
         default_width=spec.get("default_width", 13.0),
+        min_seg_len=8.0,
     )
 
     # Spec 097 Pillar II: Calibrate spline length to exactly match fia_length (+-0.5%)
@@ -3080,7 +3081,7 @@ def compute_spline_length(pts, closed=True):
     return tot
 
 
-def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=75.0, default_width=14.0):
+def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=80.0, default_width=14.0, min_seg_len=15.0):
     """Replace acute single-waypoint 'V' corners with multi-waypoint circular arc fans (Entry, Apex, Exit)
     using centripetal Catmull-Rom spline geometry (Spec 097 Pillar V)."""
     n = len(waypoints)
@@ -3100,7 +3101,7 @@ def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=75
         p_next = pts[(i + 1) % n]
         la = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
         lb = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
-        if la < 6.0 or lb < 6.0:
+        if la < min_seg_len or lb < min_seg_len:
             continue
         u = ((p_curr[0] - p_prev[0]) / la, (p_curr[1] - p_prev[1]) / la)
         v = ((p_next[0] - p_curr[0]) / lb, (p_next[1] - p_curr[1]) / lb)
@@ -3114,146 +3115,56 @@ def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=75
     if not acute_info:
         return list(waypoints)
 
-    # Group adjacent acute waypoints with the same turn sign
-    groups = []
-    visited = set()
-    sorted_indices = sorted(acute_info.keys())
-    for idx in sorted_indices:
-        if idx in visited:
-            continue
-        group = [idx]
-        visited.add(idx)
-        curr = idx
-        while True:
-            nxt = curr + 1
-            if nxt in acute_info and nxt not in visited:
-                if acute_info[nxt][1] == acute_info[curr][1]:
-                    group.append(nxt)
-                    visited.add(nxt)
-                    curr = nxt
-                else:
-                    break
-            else:
-                break
-        groups.append(group)
-
+    min_safe_R = default_width * 0.5 + 3.0
     replacements = {}
-    for grp in groups:
-        is_left = acute_info[grp[0]][1]
-        if len(grp) == 1:
-            idx = grp[0]
-            deg, is_l, u, v, la, lb = acute_info[idx]
-            defl = math.radians(deg)
-            norm_in = (-u[1], u[0]) if is_left else (u[1], -u[0])
+    for idx, (deg, is_left, u, v, la, lb) in acute_info.items():
+        defl = math.radians(deg)
+        norm_in = (-u[1], u[0]) if is_left else (u[1], -u[0])
+        tan_half = max(math.tan(defl / 2.0), 1e-4)
 
-            t_des = target_radius * math.tan(defl / 2.0)
-            t_max = min(max(5.0, la - 5.0), max(5.0, lb - 5.0))
-            T = min(t_des, t_max)
-            R_actual = T / max(math.tan(defl / 2.0), 1e-4)
+        t_des = target_radius * tan_half
+        t_max = min(0.85 * la, 0.85 * lb)
+        T = min(t_des, t_max)
+        if T < 4.0:
+            continue
+        R_actual = T / tan_half
+        if R_actual < min_safe_R:
+            continue
 
-            p_curr = pts[idx]
-            p_entry = (p_curr[0] - T * u[0], p_curr[1] - T * u[1])
-            p_exit = (p_curr[0] + T * v[0], p_curr[1] + T * v[1])
+        p_curr = pts[idx]
+        p_entry = (p_curr[0] - T * u[0], p_curr[1] - T * u[1])
+        p_exit = (p_curr[0] + T * v[0], p_curr[1] + T * v[1])
 
-            center = (p_entry[0] + R_actual * norm_in[0], p_entry[1] + R_actual * norm_in[1])
-            ang_entry = math.atan2(p_entry[1] - center[1], p_entry[0] - center[0])
-            ang_exit = math.atan2(p_exit[1] - center[1], p_exit[0] - center[0])
-            d_ang = ang_exit - ang_entry
-            if is_left and d_ang < 0:
-                d_ang += 2 * math.pi
-            elif not is_left and d_ang > 0:
-                d_ang -= 2 * math.pi
+        center = (p_entry[0] + R_actual * norm_in[0], p_entry[1] + R_actual * norm_in[1])
+        ang_entry = math.atan2(p_entry[1] - center[1], p_entry[0] - center[0])
+        ang_exit = math.atan2(p_exit[1] - center[1], p_exit[0] - center[0])
+        d_ang = ang_exit - ang_entry
+        if is_left and d_ang < 0:
+            d_ang += 2 * math.pi
+        elif not is_left and d_ang > 0:
+            d_ang -= 2 * math.pi
 
-            w_curr = waypoints[idx]
+        w_curr = waypoints[idx]
 
-            def make_wp(pt):
-                wp = dict(w_curr)
-                if "point" in wp:
-                    wp["point"] = [round(pt[0], 1), round(pt[1], 1)]
-                else:
-                    wp["x"] = round(pt[0], 1)
-                    wp["y"] = round(pt[1], 1)
-                wp["left_curb"] = is_left
-                wp["right_curb"] = not is_left
-                return wp
-
-            num_steps = 4 if deg > 90.0 else 2
-            fan = []
-            for s in range(num_steps + 1):
-                frac = s / num_steps
-                ang = ang_entry + frac * d_ang
-                pt = (center[0] + R_actual * math.cos(ang), center[1] + R_actual * math.sin(ang))
-                fan.append(make_wp(pt))
-            replacements[idx] = fan
-        else:
-            first_idx = grp[0]
-            last_idx = grp[-1]
-            p_prev = pts[first_idx - 1]
-            p_first = pts[first_idx]
-            p_last = pts[last_idx]
-            p_next = pts[(last_idx + 1) % n]
-
-            la = math.hypot(p_first[0] - p_prev[0], p_first[1] - p_prev[1])
-            u = ((p_first[0] - p_prev[0]) / la, (p_first[1] - p_prev[1]) / la)
-            lb = math.hypot(p_next[0] - p_last[0], p_next[1] - p_last[1])
-            v = ((p_next[0] - p_last[0]) / lb, (p_next[1] - p_last[1]) / lb)
-
-            dot = max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1]))
-            defl = math.acos(dot)
-            deg = math.degrees(defl)
-
-            det_val = u[0] * v[1] - u[1] * v[0]
-            if abs(det_val) > 1e-4:
-                dx = p_last[0] - p_first[0]
-                dy = p_last[1] - p_first[1]
-                t_inter = (dx * v[1] - dy * v[0]) / det_val
-                v_apex = (p_first[0] + t_inter * u[0], p_first[1] + t_inter * u[1])
+        def make_wp(pt):
+            wp = dict(w_curr)
+            if "point" in wp:
+                wp["point"] = [round(pt[0], 1), round(pt[1], 1)]
             else:
-                v_apex = ((p_first[0] + p_last[0]) * 0.5, (p_first[1] + p_last[1]) * 0.5)
+                wp["x"] = round(pt[0], 1)
+                wp["y"] = round(pt[1], 1)
+            wp["left_curb"] = is_left
+            wp["right_curb"] = not is_left
+            return wp
 
-            norm_in = (-u[1], u[0]) if is_left else (u[1], -u[0])
-            t_des = target_radius * math.tan(defl / 2.0)
-            dist_to_v_in = math.hypot(v_apex[0] - p_prev[0], v_apex[1] - p_prev[1])
-            dist_to_v_out = math.hypot(p_next[0] - v_apex[0], p_next[1] - v_apex[1])
-            T = min(t_des, max(5.0, dist_to_v_in - 5.0), max(5.0, dist_to_v_out - 5.0))
-            R_actual = T / max(math.tan(defl / 2.0), 1e-4)
-
-            p_entry = (v_apex[0] - T * u[0], v_apex[1] - T * u[1])
-            p_exit = (v_apex[0] + T * v[0], v_apex[1] + T * v[1])
-            center = (p_entry[0] + R_actual * norm_in[0], p_entry[1] + R_actual * norm_in[1])
-
-            ang_entry = math.atan2(p_entry[1] - center[1], p_entry[0] - center[0])
-            ang_exit = math.atan2(p_exit[1] - center[1], p_exit[0] - center[0])
-            d_ang = ang_exit - ang_entry
-            if is_left and d_ang < 0:
-                d_ang += 2 * math.pi
-            elif not is_left and d_ang > 0:
-                d_ang -= 2 * math.pi
-
-            w_curr = waypoints[first_idx]
-
-            def make_wp(pt):
-                wp = dict(w_curr)
-                if "point" in wp:
-                    wp["point"] = [round(pt[0], 1), round(pt[1], 1)]
-                else:
-                    wp["x"] = round(pt[0], 1)
-                    wp["y"] = round(pt[1], 1)
-                wp["left_curb"] = is_left
-                wp["right_curb"] = not is_left
-                return wp
-
-            num_steps = 4 if deg > 90.0 else 2
-            fan = []
-            for s in range(num_steps + 1):
-                frac = s / num_steps
-                ang = ang_entry + frac * d_ang
-                pt = (center[0] + R_actual * math.cos(ang), center[1] + R_actual * math.sin(ang))
-                fan.append(make_wp(pt))
-
-            replacements[first_idx] = fan
-            for other_idx in grp[1:]:
-                replacements[other_idx] = []
+        num_steps = 4 if deg > 90.0 else 2
+        fan = []
+        for s in range(num_steps + 1):
+            frac = s / num_steps
+            ang = ang_entry + frac * d_ang
+            pt = (center[0] + R_actual * math.cos(ang), center[1] + R_actual * math.sin(ang))
+            fan.append(make_wp(pt))
+        replacements[idx] = fan
 
     new_wps = []
     for i in range(n):
@@ -3577,6 +3488,10 @@ def source_waypoint(w, discipline):
         wp["bank_angle"] = round(bank, 1)
     if "wall_dist" in w:
         wp["left_wall_distance"] = wp["right_wall_distance"] = round(w["wall_dist"], 1)
+    if "left_wall_distance" in w and w["left_wall_distance"] is not None:
+        wp["left_wall_distance"] = round(w["left_wall_distance"], 1)
+    if "right_wall_distance" in w and w["right_wall_distance"] is not None:
+        wp["right_wall_distance"] = round(w["right_wall_distance"], 1)
     return wp
 
 
@@ -3604,7 +3519,18 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
         if not pit_lane_only:
             track["spline"]["waypoints"] = waypoints
             track["spline"]["closed"] = True
+            track["spline"]["samples"] = []
+            if "geometry" in track:
+                track["geometry"]["inner_walls"] = []
+                track["geometry"]["outer_walls"] = []
+                track["geometry"]["left_boundary_polyline"] = []
+                track["geometry"]["right_boundary_polyline"] = []
+                track["geometry"]["scenery_obstacles"] = []
             bake_args = ["--rebuild"]
+            if "barrier_offset" in data:
+                bake_args += ["--barrier-offset", f"{data['barrier_offset']:.1f}"]
+            if "barrier" in data:
+                bake_args += ["--barrier-type", data["barrier"].split("::")[-1]]
         else:
             bake_args = []
     else:
@@ -3632,7 +3558,7 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
             "car_category": module,
             "module_id": module,
             "modules": [module],
-            "scale": "0.5x" if module == "gt" else "1:1",
+            "scale": "0.75x" if module == "gt" else "1:1",
             "is_inspired": False,
         }
         if data.get("tag"):
