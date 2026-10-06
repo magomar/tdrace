@@ -113,6 +113,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [091](091_global_prebaked_vehicle_steered_wheel_articulation.md) | Global Pre-Baked Vehicle Steered Wheel Articulation | Feature Spec | `draft` | [026](026_topdown_wheel_steering_animations.md), [073](073_realistic_vehicle_sprite_harmonization_and_modular_steered_wheel_articulation.md), [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Universal SteeredWheelConfig derivation from CarConfig and ChassisSkeleton, batch wheel-well inpainting pipeline, and dual-layer Ackermann steered wheel animation across all 107+ vehicles across GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road modules. |
 | [092](092_player_racing_number_customization_and_persistent_nonconflicting_bot_rosters.md) | Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids | Feature Spec | `draft` | [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [027](027_championship_trophy_badges_and_player_profile_cabinet.md), [047](047_fictional_branding_and_realworld_ip_removal_for_steam_release.md) | Decouples baked numbers and real-world IP from vehicle sprites, provides player custom number and livery palette selection, and implements persistent non-conflicting random number and color assignment across AI bot rosters. |
 | [093](093_highquality_autocross_vehicle_sprites.md) | High-Quality Autocross Vehicle Sprites | Feature Spec | `implemented` | [050](050_fia_autocross_championship_and_vehicle_roster.md) | High-fidelity 2D lateral (1024x512), thumbnail (256x128), and top-down (512x512) sprites for all 15 Continental Autocross vehicles, facing right (+X), inspired by original models before rebranding, with strict zero-IP compliance (no words, no numbers, maximum 3 bodywork colors). |
+| [094](094_modality_chassis_platforms_architecture_expansion_and_arcade_alignment.md) | Modality Chassis Platforms Architecture Expansion and Arcade Alignment | Architecture Spec | `draft` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md), [091](091_global_prebaked_vehicle_steered_wheel_articulation.md) | Expands canonical chassis platforms across motorsport modalities, retires standalone arcade-only platforms by mapping Classic Arcade cars to authentic disciplines, and establishes accurate axle-relative skeletons for simulation fidelity, SAT collision hulls, and Spec 091 steered wheel articulation. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -156,6 +157,7 @@ flowchart LR
     091["091: Global Pre-Baked Vehicle Steered Wheel Articulation"]
     092["092: Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids"]
     093["093: High-Quality Autocross Vehicle Sprites"]
+    094["094: Modality Chassis Platforms Architecture Expansion and Arcade Alignment"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -194,4 +196,7 @@ flowchart LR
     027 --> 092
     047 --> 092
     050 --> 093
+    075 --> 094
+    076 --> 094
+    091 --> 094
 ```
