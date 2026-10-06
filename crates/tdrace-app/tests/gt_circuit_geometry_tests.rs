@@ -1,5 +1,5 @@
 //! GT circuit preset geometry checks: apex kerbs follow real corners and the scale label matches
-//! the 0.5x OpenStreetMap import.
+//! the 0.75x OpenStreetMap import.
 
 use tdrace_app::module::{gt::GtWorldChallengeModule, GameModule};
 
@@ -31,9 +31,10 @@ fn test_gt_kerbs_only_on_real_corners() {
 }
 
 #[test]
-fn test_gt_tracks_declare_half_scale() {
+fn test_gt_tracks_declare_three_quarter_scale() {
     for def in GtWorldChallengeModule::new().tracks() {
         let track = tdrace_core::catalog::official_track("gt", def.id);
-        assert_eq!(track.scale(), "0.5x", "{} is imported at 0.5x FIA length", def.id);
+        assert_eq!(track.scale(), "0.75x", "{} is imported at 0.75x FIA length", def.id);
     }
 }
+
