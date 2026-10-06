@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing"
 description: "Systematically upgrades GT modality scaling from 0.5x to 0.75x, introduces curvature-selective non-linear geometric rescaling so straights absorb longitudinal compression while corner radii and arc lengths mirror authentic real-world dimensions, strictly respects official circuit lengths and authentic track widths, integrates 3D elevation rollercoaster profiles, models authentic corner banking, and applies curvature smoothing and multi-waypoint filleting to 1:1 Rallycross circuits and joker lap junctions."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-097-receipt.md"
 verified: { by: "human:mario", at: "2026-10-06T19:01:35Z", hash: "9b97388f1999" }
 created: 2026-10-06
