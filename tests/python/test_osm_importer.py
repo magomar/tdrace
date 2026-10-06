@@ -418,7 +418,7 @@ def test_gt_circuits_scale_elevation_and_banking():
     pd = imp.process_gt_circuit("portimao_gp", imp.DEFAULT_CACHE_DIR)
     max_p_bank = max(w["bank_angle"] for w in pd["waypoints"])
     assert max_p_bank >= 6.5
-    assert pd["waypoints"][6]["bank_angle"] >= 3.5
+    assert any(w["bank_angle"] >= 3.5 for w in pd["waypoints"][5:9]), "Turn 3 arc fan must feature >= 3.5 deg banking"
 
     p_elevs = [w["elevation"] for w in pd["waypoints"]]
     relief = max(p_elevs) - min(p_elevs)
@@ -431,5 +431,58 @@ def test_gt_circuits_scale_elevation_and_banking():
     # Monza: Parabolica +5 deg
     md = imp.process_gt_circuit("monza", imp.DEFAULT_CACHE_DIR)
     assert max(w["bank_angle"] for w in md["waypoints"]) >= 5.0
+
+
+def test_portimao_turn3_hairpin_arc_fan_and_track_width():
+    """Spec 097 Scenario 1: Portimao Turn 3 bottleneck elimination, width restoration, and arc fan."""
+    cfg = imp.GT_CIRCUITS["portimao_gp"]
+    assert cfg["default_width"] == 14.0
+    assert cfg["straight_width"] == 15.0
+
+    pd = imp.process_gt_circuit("portimao_gp", imp.DEFAULT_CACHE_DIR)
+    wps = pd["waypoints"]
+
+    # All waypoints must respect authentic width >= 13.5m (zero artificial pinches)
+    for i, w in enumerate(wps):
+        assert w["width"] >= 13.5, f"Waypoint {i} has pinched width {w['width']} < 13.5m"
+
+    # Strict target length invariant (+-0.5%)
+    target_len = cfg["fia_length"] * 0.75
+    pts = [(w["x"], w["y"]) for w in wps]
+    splen = imp.compute_spline_length(pts)
+    assert abs(splen - target_len) / target_len <= 0.005, f"Spline length {splen} differs from target {target_len}"
+
+    # Measure Turn 3 apex geometry (samples between wp 5 and wp 9)
+    # Turn 3 is where y reaches minimum (y < -200) in the southern portion of the track
+    n = len(pts)
+    t3_pts = []
+    for seg in range(5, 9):
+        p0 = pts[(seg - 1) % n]
+        p1 = pts[seg % n]
+        p2 = pts[(seg + 1) % n]
+        p3 = pts[(seg + 2) % n]
+        for step in range(50):
+            t3_pts.append(imp.catmull_rom_centripetal_2d(p0, p1, p2, p3, step / 50.0))
+
+    radii = []
+    for i in range(1, len(t3_pts) - 1):
+        p_prev, p_curr, p_next = t3_pts[i - 1], t3_pts[i], t3_pts[i + 1]
+        a = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
+        b = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
+        c = math.hypot(p_next[0] - p_prev[0], p_next[1] - p_prev[1])
+        s = (a + b + c) / 2.0
+        val = s * (s - a) * (s - b) * (s - c)
+        if val > 1e-12:
+            radii.append((a * b * c) / (4.0 * math.sqrt(val)))
+
+    min_R = min(radii)
+    # Centerline radius >= 16.0m
+    assert min_R >= 16.0, f"Turn 3 centerline radius {min_R:.2f}m < 16.0m"
+
+    # Inner curb radius R_curb = R - W/2 >= 9.0m
+    road_w = 14.0
+    inner_curb_r = min_R - road_w / 2.0
+    assert inner_curb_r >= 9.0, f"Turn 3 inner curb radius {inner_curb_r:.2f}m < 9.0m"
+
 
 

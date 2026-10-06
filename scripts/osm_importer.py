@@ -1337,7 +1337,7 @@ GT_CIRCUITS = {
         "fia_length": 4653.0,
         "scale": 0.75,
         "num_waypoints": 28,
-        "default_width": 13.5,
+        "default_width": 14.0,
         "straight_width": 15.0,
         "barrier": "BarrierType::Steel",
         "barrier_offset": 4.0,
@@ -1475,9 +1475,9 @@ def process_gt_circuit(cid, cache_dir):
     x0, y0 = scaled_pts[0]
     aligned_pts = [(x - x0, y - y0) for x, y in scaled_pts]
 
-    # Enforce minimum centerline radius R_min >= w/2 + 1.0m (Spec 071)
-    road_w = cfg.get("default_width", cfg.get("width", 12.0))
-    min_radius = road_w * 0.5 + 1.0
+    # Enforce minimum centerline radius R_min >= w/2 + 3.0m (Spec 097 Section 3)
+    road_w = cfg.get("default_width", cfg.get("width", 14.0))
+    min_radius = road_w * 0.5 + 3.0
     filleted_pts, _ = fillet_corners(aligned_pts, [None] * len(aligned_pts), min_radius, min_turn_deg=15.0)
 
     resampled, _, final_len = resample_polyline(filleted_pts, cfg["num_waypoints"])
@@ -1522,8 +1522,6 @@ def process_gt_circuit(cid, cache_dir):
         "fy0": fy0,
         "crossover": crossover_ctx,
     }
-
-    pit_lane = build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_pts)
 
     n = len(final_pts)
     waypoints = []
@@ -1574,6 +1572,29 @@ def process_gt_circuit(cid, cache_dir):
         if wall_dist is not None:
             wp_entry["wall_dist"] = wall_dist
         waypoints.append(wp_entry)
+
+    # Spec 097 Pillar V: Multi-waypoint hairpin arc fans for acute corners
+    waypoints = smooth_hairpin_arc_fans(
+        waypoints,
+        target_radius=max(26.0, road_w * 0.5 + 15.0),
+        min_deflection_deg=75.0,
+        default_width=road_w,
+    )
+
+    # Spec 097 Pillar II: Calibrate spline length to exactly match target_circuit_len (+-0.5%)
+    pts = [(w["x"], w["y"]) for w in waypoints]
+    cur_splen = compute_spline_length(pts)
+    if cur_splen > 0:
+        calib = target_circuit_len / cur_splen
+        for w in waypoints:
+            w["x"] = round(w["x"] * calib, 1)
+            w["y"] = round(w["y"] * calib, 1)
+        final_len = round(target_circuit_len, 1)
+    else:
+        final_len = round(polyline_length(pts, closed=True), 1)
+
+    final_track_pts = [(w["x"], w["y"]) for w in waypoints]
+    pit_lane = build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts)
 
     return {
         "id": cid,
@@ -2998,6 +3019,170 @@ def fillet_corners(points, props, radius, min_turn_deg=20.0, arc_step=2.0):
                 new_props.append(props[q])
                 new_done.append(done[q])
         pts, props, done = new_pts, new_props, new_done
+
+
+def catmull_rom_centripetal_2d(p0, p1, p2, p3, t):
+    """Centripetal Catmull-Rom (alpha = 0.5) evaluation in 2D."""
+    d01 = max(1e-4, math.sqrt(math.hypot(p1[0] - p0[0], p1[1] - p0[1])))
+    d12 = max(1e-4, math.sqrt(math.hypot(p2[0] - p1[0], p2[1] - p1[1])))
+    d23 = max(1e-4, math.sqrt(math.hypot(p3[0] - p2[0], p3[1] - p2[1])))
+    t0 = 0.0
+    t1 = t0 + d01
+    t2 = t1 + d12
+    t3 = t2 + d23
+    t_val = t1 + t * (t2 - t1)
+
+    def interp(a, b, ta, tb):
+        fac = (t_val - ta) / (tb - ta)
+        return (a[0] + fac * (b[0] - a[0]), a[1] + fac * (b[1] - a[1]))
+
+    a1 = interp(p0, p1, t0, t1)
+    a2 = interp(p1, p2, t1, t2)
+    a3 = interp(p2, p3, t2, t3)
+    b1 = interp(a1, a2, t0, t2)
+    b2 = interp(a2, a3, t1, t3)
+    return interp(b1, b2, t1, t2)
+
+
+def compute_spline_length(pts, closed=True):
+    """Computes total arc length of Centripetal Catmull-Rom spline through points."""
+    n = len(pts)
+    if n < 3:
+        return 0.0
+    tot = 0.0
+    for seg in range(n if closed else n - 1):
+        p0 = pts[(seg - 1) % n] if closed else (pts[0] if seg == 0 else pts[seg - 1])
+        p1 = pts[seg % n]
+        p2 = pts[(seg + 1) % n]
+        p3 = pts[(seg + 2) % n] if closed else (pts[-1] if seg + 2 >= n else pts[seg + 2])
+        prev = p1
+        for step in range(1, 41):
+            curr = catmull_rom_centripetal_2d(p0, p1, p2, p3, step / 40.0)
+            tot += math.hypot(curr[0] - prev[0], curr[1] - prev[1])
+            prev = curr
+    return tot
+
+
+def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=75.0, default_width=14.0):
+    """Replace acute single-waypoint 'V' corners with 3-waypoint circular arc fans (Entry, Apex, Exit)
+    using centripetal Catmull-Rom spline geometry (Spec 097 Pillar V)."""
+    n = len(waypoints)
+    pts = [(w["x"], w["y"]) for w in waypoints]
+
+    to_fan = set()
+    for i in range(n):
+        p_prev = pts[(i - 1) % n]
+        p_curr = pts[i]
+        p_next = pts[(i + 1) % n]
+        la = math.hypot(p_prev[0] - p_curr[0], p_prev[1] - p_curr[1])
+        lb = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
+        if la < 25.0 or lb < 25.0:
+            continue
+        u = ((p_prev[0] - p_curr[0]) / la, (p_prev[1] - p_curr[1]) / la)
+        v = ((p_next[0] - p_curr[0]) / lb, (p_next[1] - p_curr[1]) / lb)
+        dot = max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1]))
+        defl = math.pi - math.acos(dot)
+        if math.degrees(defl) >= min_deflection_deg:
+            to_fan.add(i)
+
+    if not to_fan:
+        return list(waypoints)
+
+    new_wps = []
+    for i in range(n):
+        if i not in to_fan:
+            new_wps.append(dict(waypoints[i]))
+            continue
+
+        p_prev = pts[(i - 1) % n]
+        p_curr = pts[i]
+        p_next = pts[(i + 1) % n]
+        la = math.hypot(p_prev[0] - p_curr[0], p_prev[1] - p_curr[1])
+        lb = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
+        u = ((p_prev[0] - p_curr[0]) / la, (p_prev[1] - p_curr[1]) / la)
+        v = ((p_next[0] - p_curr[0]) / lb, (p_next[1] - p_curr[1]) / lb)
+        dot = max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1]))
+        defl = math.pi - math.acos(dot)
+
+        w_curr = waypoints[i]
+        w_prev = waypoints[(i - 1) % n]
+        w_next = waypoints[(i + 1) % n]
+
+        t_des = target_radius * math.tan(defl / 2.0)
+        t_max = min(la * 0.38, lb * 0.38)
+        T = min(t_des, t_max)
+        r_actual = T / math.tan(defl / 2.0)
+
+        entry_pt = (p_curr[0] + T * u[0], p_curr[1] + T * u[1])
+        exit_pt = (p_curr[0] + T * v[0], p_curr[1] + T * v[1])
+
+        bis = (u[0] + v[0], u[1] + v[1])
+        bis_len = math.hypot(bis[0], bis[1])
+        if bis_len > 1e-6:
+            bis_u = (bis[0] / bis_len, bis[1] / bis_len)
+            d_apex = r_actual * (1.0 / math.cos(defl / 2.0) - 1.0)
+            apex_pt = (p_curr[0] + d_apex * bis_u[0], p_curr[1] + d_apex * bis_u[1])
+        else:
+            apex_pt = p_curr
+
+        cur_w = max(default_width, w_curr.get("width", default_width))
+        cur_elev = w_curr.get("elevation", 0.0)
+        cur_bank = w_curr.get("bank_angle", 0.0)
+
+        prev_w = max(default_width, w_prev.get("width", default_width))
+        prev_elev = w_prev.get("elevation", 0.0)
+        prev_bank = w_prev.get("bank_angle", 0.0)
+
+        next_w = max(default_width, w_next.get("width", default_width))
+        next_elev = w_next.get("elevation", 0.0)
+        next_bank = w_next.get("bank_angle", 0.0)
+
+        wp_entry = {
+            "x": round(entry_pt[0], 1),
+            "y": round(entry_pt[1], 1),
+            "width": round(0.5 * (prev_w + cur_w), 1),
+            "elevation": round(0.5 * (prev_elev + cur_elev), 1),
+            "bank_angle": round(0.5 * (prev_bank + cur_bank), 1),
+            "left_curb": False,
+            "right_curb": False,
+        }
+        wp_apex = {
+            "x": round(apex_pt[0], 1),
+            "y": round(apex_pt[1], 1),
+            "width": round(cur_w, 1),
+            "elevation": round(cur_elev, 1),
+            "bank_angle": round(cur_bank, 1),
+            "left_curb": False,
+            "right_curb": False,
+        }
+        wp_exit = {
+            "x": round(exit_pt[0], 1),
+            "y": round(exit_pt[1], 1),
+            "width": round(0.5 * (cur_w + next_w), 1),
+            "elevation": round(0.5 * (cur_elev + next_elev), 1),
+            "bank_angle": round(0.5 * (cur_bank + next_bank), 1),
+            "left_curb": False,
+            "right_curb": False,
+        }
+        if "wall_dist" in w_curr:
+            wp_apex["wall_dist"] = w_curr["wall_dist"]
+        new_wps.extend([wp_entry, wp_apex, wp_exit])
+
+    final_pts = [(w["x"], w["y"]) for w in new_wps]
+    m = len(final_pts)
+    for k in range(m):
+        s = deflection_sine(final_pts, k)
+        if s > 0.35:
+            new_wps[k]["left_curb"] = True
+            new_wps[k]["right_curb"] = False
+        elif s < -0.35:
+            new_wps[k]["right_curb"] = True
+            new_wps[k]["left_curb"] = False
+        else:
+            new_wps[k]["left_curb"] = False
+            new_wps[k]["right_curb"] = False
+
+    return new_wps
 
 
 def curvature_classes(points):
