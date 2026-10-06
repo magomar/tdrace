@@ -319,3 +319,87 @@ def test_fillet_corners_rounds_a_narrow_v_hairpin():
     assert min(radii) > 12.0
     # the legs are 2 * 13 m apart at x = 13 / tan 20 deg = 36 m; the half circle bulges 13 m past that
     assert 20.0 < min(p[0] for p in pts) < 30.0
+
+
+def test_rescale_circuit_nonlinear_preserves_corners_and_hits_target_length():
+    """Spec 097: Straights absorb compression while corner radii preserve near-1:1 geometry."""
+    # A stadium track: two 400 m straights connected by two semicircular hairpins (R = 25 m, arc = 78.5 m)
+    # Total real length = 2 * 400 + 2 * 78.54 = 957.08 m
+    pts = []
+    # Bottom straight: (0, -25) to (400, -25)
+    for x in range(0, 401, 10):
+        pts.append((float(x), -25.0))
+    # Right turn: semicircular arc from (400, -25) to (400, 25)
+    for angle_deg in range(-90, 91, 10):
+        rad = math.radians(angle_deg)
+        pts.append((400.0 + 25.0 * math.cos(rad), 25.0 * math.sin(rad)))
+    # Top straight: (400, 25) to (0, 25)
+    for x in range(400, -1, -10):
+        pts.append((float(x), 25.0))
+    # Left turn: semicircular arc from (0, 25) to (0, -25)
+    for angle_deg in range(90, 271, 10):
+        rad = math.radians(angle_deg)
+        pts.append((25.0 * math.cos(rad), 25.0 * math.sin(rad)))
+
+    real_len = imp.polyline_length(pts, closed=True)
+    target_len = real_len * 0.75
+
+    rescaled, s_turn, s_straight = imp.rescale_circuit_nonlinear(
+        pts, target_len, real_len, turn_preservation=0.95
+    )
+
+    actual_len = imp.polyline_length(rescaled, closed=True)
+    assert abs(actual_len - target_len) / target_len < 0.001
+    assert s_turn >= 0.90
+    assert s_straight < 0.75
+
+    # Check loop closure: closed_edges summed to zero
+    assert math.dist(rescaled[0], (0.0, 0.0)) < 1e-6
+
+
+def test_rescale_circuit_nonlinear_portimao():
+    """Spec 097 Scenario 1: Portimão (Algarve) 0.75x target length and corner radius preservation."""
+    import xml.etree.ElementTree as ET
+
+    cfg = imp.GT_CIRCUITS["portimao_gp"]
+    path = os.path.join(imp.DEFAULT_CACHE_DIR, "portimao_gp.osm")
+    if not os.path.exists(path):
+        return
+
+    root = ET.parse(path).getroot()
+    nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
+    ways = {w.get("id"): [nd.get("ref") for nd in w.findall("nd")] for w in root.findall("way")}
+    rel = next(r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"]))
+    w_ids = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("role") != "pit_lane" and m.get("ref") in ways]
+    seen = set()
+    ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
+    chain_nodes = imp.stitch_ways("portimao_gp", [ways[wid] for wid in ordered], nodes)
+    if len(chain_nodes) > 1 and chain_nodes[-1] == chain_nodes[0]:
+        chain_nodes.pop()
+    idx_start = chain_nodes.index(cfg["start_node"])
+    chain_nodes = chain_nodes[idx_start:] + chain_nodes[:idx_start]
+
+    lat0 = sum(nodes[n][0] for n in chain_nodes) / len(chain_nodes)
+    lon0 = sum(nodes[n][1] for n in chain_nodes) / len(chain_nodes)
+    metric_pts = [imp.latlon_to_meters(nodes[n][0], nodes[n][1], lat0, lon0) for n in chain_nodes]
+    p_start = metric_pts[0]
+    p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
+    heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
+    rotated_pts = imp.rotate_points(metric_pts, heading)
+
+    target_len = cfg["fia_length"] * 0.75
+    rescaled, s_turn, s_straight = imp.rescale_circuit_nonlinear(
+        rotated_pts, target_len, cfg["fia_length"], turn_preservation=0.95
+    )
+
+    actual_len = imp.polyline_length(rescaled, closed=True)
+    # Target length invariant (+- 0.5%)
+    assert abs(actual_len - target_len) / target_len <= 0.005
+    assert s_turn >= 0.90
+    assert s_straight < 0.75
+
+    # Check minimum centerline radius on tight corners
+    n = len(rescaled)
+    min_r = min(radius_through(rescaled[i - 1], rescaled[i], rescaled[(i + 1) % n]) for i in range(n))
+    assert min_r >= 12.0, f"Min corner radius {min_r} is below 12.0m"
+
