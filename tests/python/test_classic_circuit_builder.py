@@ -64,7 +64,8 @@ def test_closed_lap_gives_spaced_waypoints_starting_at_the_start():
     wps = ccb.waypoints(c)
     assert wps[0]["point"] == [0.0, 0.0]
     assert min(gaps(wps)) >= 3.0
-    assert max(gaps(wps)) <= c.step + 0.01
+    # Spec 071: a straight keeps only its end points (and ease anchors), so the longest gap is the 75 m straight.
+    assert max(gaps(wps)) <= 75.0 + 0.01
     assert ccb.closure_gap(c)[0] == pytest.approx(0.0, abs=1e-6)
 
 
@@ -93,7 +94,7 @@ def test_small_closure_gap_is_spread_along_the_lap():
     )
     wps = ccb.waypoints(c)
     assert min(gaps(wps)) >= 3.0
-    assert max(gaps(wps)) <= c.step + 0.05
+    assert max(gaps(wps)) <= 75.3 + 0.05
 
 
 def test_elevation_and_bank_ease_between_segments():
