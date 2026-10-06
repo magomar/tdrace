@@ -103,6 +103,27 @@ pub fn starting_grid_grid_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32) 
     (col2_x, panel_y, col2_w, grid_h)
 }
 
+/// Returns the rectangles `(tier_rect, laps_rect, bots_rect)` for the three steppers in Grid Config:
+/// `((tier_x, y, w, h), (laps_x, y, w, h), (bots_x, y, w, h))`.
+pub fn starting_grid_stepper_rects(sw: f32, sh: f32) -> ((f32, f32, f32, f32), (f32, f32, f32, f32), (f32, f32, f32, f32)) {
+    let scaler = UiScaler::new(sw, sh);
+    let (_, _, col2_x, col2_w) = starting_grid_columns(sw, sh);
+    let grid_y = scaler.s(60.0);
+    let stepper_count = 3.0;
+    let stepper_gap = scaler.s(8.0);
+    let stepper_w = (col2_w - scaler.s(24.0) - stepper_gap * (stepper_count - 1.0)) / stepper_count;
+    let stepper_h = scaler.s(38.0);
+    let stepper_y = grid_y + scaler.s(39.0);
+    let tier_x = col2_x + scaler.s(12.0);
+    let laps_x = tier_x + stepper_w + stepper_gap;
+    let bots_x = laps_x + stepper_w + stepper_gap;
+    (
+        (tier_x, stepper_y, stepper_w, stepper_h),
+        (laps_x, stepper_y, stepper_w, stepper_h),
+        (bots_x, stepper_y, stepper_w, stepper_h),
+    )
+}
+
 /// Renders the 2-panel starting grid and participants showcase screen before race launch.
 #[allow(clippy::too_many_arguments)]
 pub fn render_starting_grid_screen(
@@ -644,28 +665,72 @@ pub fn render_starting_grid_screen(
         );
 
         // Session setup steppers (platform Counter / ValueStepper)
-        let bot_count = num_drivers.saturating_sub(if game_mode == GameMode::SplitScreen { 2 } else { 1 });
-        let laps_stepper = ValueStepper::new("LAPS", 1u32, 99u32, 1u32, total_laps);
-        let bots_counter = Counter::new(1, (max_grid_size.saturating_sub(1) as i64).max(1), 1, bot_count.max(1) as i64);
-        let stepper_y = grid_y + scaler.s(40.0);
-        let stepper_h = scaler.s(40.0);
-        let stepper_gap = scaler.s(8.0);
-        let stepper_w = (col2_w - scaler.s(24.0) - stepper_gap) * 0.5;
-        let stepper_x = col2_x + scaler.s(12.0);
-        draw_stepper(&scaler, fonts, stepper_x, stepper_y, stepper_w, stepper_h, "LAPS", &laps_stepper.value.to_string(), is_grid_active, is_grid_hovered, Palette::NEON_CYAN);
-        let bots_label = if is_roster_locked { "BOTS 🔒" } else { "BOTS" };
+        let is_tier_locked = !game_mode.allows_difficulty_customization();
+        let is_laps_locked = !game_mode.allows_laps_customization();
+        let is_bots_locked = !game_mode.allows_grid_customization();
+
+        let tier_label = if is_tier_locked { "TIER 🔒" } else { "TIER" };
+        let laps_label = if is_laps_locked { "LAPS 🔒" } else { "LAPS" };
+        let bots_label = if is_bots_locked { "BOTS 🔒" } else { "BOTS" };
+
+        let ((tier_x, stepper_y, stepper_w, stepper_h), (laps_x, _, _, _), (bots_x, _, _, _)) =
+            starting_grid_stepper_rects(sw, sh);
+
+        let is_tier_hovered = mx >= tier_x && mx <= tier_x + stepper_w && my >= stepper_y && my <= stepper_y + stepper_h;
+        let is_laps_hovered = mx >= laps_x && mx <= laps_x + stepper_w && my >= stepper_y && my <= stepper_y + stepper_h;
+        let is_bots_hovered = mx >= bots_x && mx <= bots_x + stepper_w && my >= stepper_y && my <= stepper_y + stepper_h;
+
+        // 1. TIER control (Left)
+        let tier_val = if stepper_w < scaler.s(170.0) {
+            casual_ai_difficulty.tag()
+        } else {
+            casual_ai_difficulty.short_name()
+        };
         draw_stepper(
             &scaler,
             fonts,
-            stepper_x + stepper_w + stepper_gap,
+            tier_x,
+            stepper_y,
+            stepper_w,
+            stepper_h,
+            tier_label,
+            tier_val,
+            !is_tier_locked && is_grid_active,
+            !is_tier_locked && (is_tier_hovered || is_grid_hovered),
+            if is_tier_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_CYAN },
+        );
+
+        // 2. LAPS control (Middle)
+        let laps_stepper = ValueStepper::new("LAPS", 1u32, 99u32, 1u32, total_laps);
+        draw_stepper(
+            &scaler,
+            fonts,
+            laps_x,
+            stepper_y,
+            stepper_w,
+            stepper_h,
+            laps_label,
+            &laps_stepper.value.to_string(),
+            !is_laps_locked && is_grid_active,
+            !is_laps_locked && (is_laps_hovered || is_grid_hovered),
+            if is_laps_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_CYAN },
+        );
+
+        // 3. BOTS control (Right)
+        let bot_count = num_drivers.saturating_sub(if game_mode == GameMode::SplitScreen { 2 } else { 1 });
+        let bots_counter = Counter::new(1, (max_grid_size.saturating_sub(1) as i64).max(1), 1, bot_count.max(1) as i64);
+        draw_stepper(
+            &scaler,
+            fonts,
+            bots_x,
             stepper_y,
             stepper_w,
             stepper_h,
             bots_label,
             &bots_counter.value.to_string(),
-            !is_roster_locked && is_grid_active,
-            !is_roster_locked && is_grid_hovered,
-            if is_roster_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_GOLD },
+            !is_bots_locked && is_grid_active,
+            !is_bots_locked && (is_bots_hovered || is_grid_hovered),
+            if is_bots_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_GOLD },
         );
 
         let difficulty_note = if is_roster_locked && game_mode == GameMode::Career {

@@ -566,4 +566,91 @@ fn test_starting_grid_circuit_card_and_selector_flow() {
     assert_eq!(session.track_choice.track_id(), target_choice.track_id());
 }
 
+#[test]
+fn test_starting_grid_steppers_geometry_and_tier_control() {
+    use tdrace_app::ui::{starting_grid_grid_button_rect, starting_grid_stepper_rects};
+
+    let sw = 1280.0;
+    let sh = 720.0;
+
+    let (grid_x, grid_y, grid_w, grid_h) = starting_grid_grid_button_rect(sw, sh);
+    let (tier_rect, laps_rect, bots_rect) = starting_grid_stepper_rects(sw, sh);
+
+    // 1. All 3 steppers reside within the Grid Config card bounds
+    assert!(tier_rect.0 >= grid_x);
+    assert!(tier_rect.1 >= grid_y);
+    assert!(tier_rect.1 + tier_rect.3 <= grid_y + grid_h);
+
+    assert!(laps_rect.0 >= grid_x);
+    assert!(laps_rect.1 >= grid_y);
+    assert!(laps_rect.1 + laps_rect.3 <= grid_y + grid_h);
+
+    assert!(bots_rect.0 + bots_rect.2 <= grid_x + grid_w + 1.0);
+    assert!(bots_rect.1 >= grid_y);
+    assert!(bots_rect.1 + bots_rect.3 <= grid_y + grid_h);
+
+    // 2. Steppers are smaller in width than previous 2-stepper setup (which was ~320px)
+    assert!(tier_rect.2 < 250.0);
+    assert!(laps_rect.2 < 250.0);
+    assert!(bots_rect.2 < 250.0);
+    assert_eq!(tier_rect.2, laps_rect.2);
+    assert_eq!(laps_rect.2, bots_rect.2);
+
+    // 3. Layout is strictly ordered left-to-right: Tier -> Laps -> Bots with positive spacing
+    assert!(tier_rect.0 < laps_rect.0);
+    assert!(laps_rect.0 < bots_rect.0);
+    assert!(tier_rect.0 + tier_rect.2 < laps_rect.0);
+    assert!(laps_rect.0 + laps_rect.2 < bots_rect.0);
+}
+
+#[test]
+fn test_grid_config_controls_lock_states_across_modalities() {
+    use tdrace_app::ui::menu::GameMode;
+
+    // Standard Race: Official Grid and Laps locked; Tier difficulty can be changed
+    assert!(!GameMode::StandardRace.allows_laps_customization());
+    assert!(!GameMode::StandardRace.allows_grid_customization());
+    assert!(GameMode::StandardRace.allows_difficulty_customization());
+
+    // Career Mode: Everything locked (Championship grid, round laps, career tier)
+    assert!(!GameMode::Career.allows_laps_customization());
+    assert!(!GameMode::Career.allows_grid_customization());
+    assert!(!GameMode::Career.allows_difficulty_customization());
+
+    // Experimental / Custom Race: All 3 controls unlocked
+    assert!(GameMode::ExperimentalRace.allows_laps_customization());
+    assert!(GameMode::ExperimentalRace.allows_grid_customization());
+    assert!(GameMode::ExperimentalRace.allows_difficulty_customization());
+
+    // Split Screen: Grid and Tier customizable, Laps locked
+    assert!(!GameMode::SplitScreen.allows_laps_customization());
+    assert!(GameMode::SplitScreen.allows_grid_customization());
+    assert!(GameMode::SplitScreen.allows_difficulty_customization());
+}
+
+#[test]
+fn test_cycle_casual_ai_difficulty_forward_and_backward() {
+    use tdrace_app::ai::DriverTier;
+
+    let mut session = RaceSession::new();
+    session.set_casual_ai_difficulty(DriverTier::Rookie);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
+
+    session.cycle_casual_ai_difficulty();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    session.cycle_casual_ai_difficulty();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Contender);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Legend);
+}
+
+
 

@@ -2164,17 +2164,17 @@
       "osm_url": "https://www.openstreetmap.org/way/588947722",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1053.2,
+      "length_m": 1031.1,
       "min_width_m": 7.5,
-      "max_width_m": 14.5,
+      "max_width_m": 13.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 50.2
+          "share_pct": 51.2
         },
         {
           "surface": "Dirt",
-          "share_pct": 49.8
+          "share_pct": 48.8
         }
       ],
       "has_jumps": true,
