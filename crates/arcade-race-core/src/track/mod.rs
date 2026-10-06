@@ -963,7 +963,19 @@ impl Track {
                     .into_iter()
                     .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
                     .collect();
-                walls.extend(merge_collinear_walls(kept));
+                for w in merge_collinear_walls(kept) {
+                    let shares_endpoint = |a: &WallBarrier, b: &WallBarrier| {
+                        (a.segment.start - b.segment.start).length_squared() < 0.01
+                            || (a.segment.start - b.segment.end).length_squared() < 0.01
+                            || (a.segment.end - b.segment.start).length_squared() < 0.01
+                            || (a.segment.end - b.segment.end).length_squared() < 0.01
+                    };
+                    if !walls.iter().any(|other: &WallBarrier| {
+                        !shares_endpoint(&w, other) && other.segment.intersect_segment(&w.segment).is_some()
+                    }) {
+                        walls.push(w);
+                    }
+                }
             }
         }
         self.geometry.network_walls = walls;

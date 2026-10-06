@@ -14,6 +14,9 @@ import sys
 import time
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(__file__))
+from osm_importer import smooth_hairpin_arc_fans, shift_start, compute_spline_length
+
 TRACKS = [
     {
         "id": "nova_paka_ax",
@@ -105,6 +108,7 @@ TRACKS = [
         "description": "The Temple of French Autocross in Vendée, hosting 20,000 spectators around high-speed banked red clay bowls.",
         "way_id": 674904429,
         "target_length": 940.0,
+        "start_offset_m": 62.0,
         "default_laps": 5,
         "country_code": "FR",
         "country_name": "France",
@@ -141,6 +145,7 @@ TRACKS = [
         "description": "Technical French sprint track in Indre with rolling terrain and wide, multi-line dirt hairpins.",
         "way_id": 803500149,
         "target_length": 1050.0,
+        "start_offset_m": 72.0,
         "default_laps": 4,
         "country_code": "FR",
         "country_name": "France",
@@ -302,7 +307,11 @@ def main():
         # 1. Project to meters around datum (coord[0])
         lat0, lon0 = coords[0]
         pts_m = [latlon_to_meters(lat, lon, lat0, lon0) for lat, lon in coords]
-        
+
+        # Shift start if configured (to move start/finish away from acute hairpins)
+        if tr.get("start_offset_m"):
+            pts_m = shift_start(pts_m, tr["start_offset_m"])
+
         # 2. Heading alignment along +X using first straight segment
         dx = pts_m[1][0] - pts_m[0][0]
         dy = pts_m[1][1] - pts_m[0][1]
@@ -310,18 +319,18 @@ def main():
         cos_h = math.cos(-heading)
         sin_h = math.sin(-heading)
         pts_rot = [(x * cos_h - y * sin_h, x * sin_h + y * cos_h) for x, y in pts_m]
-        
+
         # 3. Scale to official FIA target length (1:1 scale)
         measured_len = 0.0
         for i in range(len(pts_rot) - 1):
             measured_len += math.hypot(pts_rot[i+1][0] - pts_rot[i][0], pts_rot[i+1][1] - pts_rot[i][1])
-        
+
         scale = tr["target_length"] / max(measured_len, 1e-3)
         pts_scaled = [(x * scale, y * scale) for x, y in pts_rot]
-        
+
         # 4. Uniformly resample to 30 points
         resampled = resample_polyline(pts_scaled, 30)
-        
+
         # 5. Detect apex curbs from normalized cross product
         n = len(resampled)
         waypoints = []
@@ -329,7 +338,7 @@ def main():
             prev_p = resampled[(i - 1 + n) % n]
             curr_p = resampled[i]
             next_p = resampled[(i + 1) % n]
-            
+
             v1 = (curr_p[0] - prev_p[0], curr_p[1] - prev_p[1])
             v2 = (next_p[0] - curr_p[0], next_p[1] - curr_p[1])
             l1 = max(math.hypot(v1[0], v1[1]), 1e-6)
@@ -337,10 +346,10 @@ def main():
             nv1 = (v1[0] / l1, v1[1] / l1)
             nv2 = (v2[0] / l2, v2[1] / l2)
             cross = nv1[0] * nv2[1] - nv1[1] * nv2[0]
-            
+
             left_curb = cross > 0.35
             right_curb = cross < -0.35
-            
+
             waypoints.append({
                 "point": [round(curr_p[0], 1), round(curr_p[1], 1)],
                 "width": 13.0,
@@ -356,6 +365,22 @@ def main():
                 "left_runoff_surface": "Grass",
                 "right_runoff_surface": "Grass",
             })
+
+        # Spec 097 Pillar V: Multi-waypoint hairpin arc fans for acute corners
+        waypoints = smooth_hairpin_arc_fans(
+            waypoints,
+            target_radius=13.5,
+            min_deflection_deg=45.0,
+            default_width=13.0,
+        )
+
+        # Spec 097 Pillar II: Calibrate spline length to exactly match target_length (+-0.5%)
+        pts = [w["point"] for w in waypoints]
+        cur_splen = compute_spline_length(pts)
+        if cur_splen > 0:
+            calib = tr["target_length"] / cur_splen
+            for w in waypoints:
+                w["point"] = [round(w["point"][0] * calib, 1), round(w["point"][1] * calib, 1)]
             
         track_json = {
             "name": tr["name"],

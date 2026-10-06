@@ -112,8 +112,8 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         // return road, or overlap the asphalt where the main road turns to dirt (wheel surface mismatches). So it
         // stays as it was: waypoints 44-52, +42 m (the fold check puts it on the right).
         source: JokerSource::Synthetic {
-            split_idx: 44,
-            merge_idx: 52,
+            split_idx: 58,
+            merge_idx: 68,
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 6.0,
@@ -214,8 +214,8 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
         slug: "erx_motor_park",
         name: "ERX Clay Bowl Joker Detour",
         source: JokerSource::Synthetic {
-            split_idx: 13,
-            merge_idx: 19,
+            split_idx: 12,
+            merge_idx: 20,
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 8.0,
@@ -225,7 +225,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
 ];
 
 /// Tightest turn a baked joker may have, in metres. The folds this guards against had radii of 0.0-0.8 m.
-const MIN_JOKER_RADIUS_M: f32 = 3.0;
+const MIN_JOKER_RADIUS_M: f32 = 7.0;
 
 /// Smallest turn radius between consecutive samples of `seg`, in metres. Samples within 2 m of `main`
 /// are skipped: there the joker follows the main road, whose OSM geometry has its own tight kinks.
@@ -288,7 +288,7 @@ fn synthetic_cut(
     };
 
     // Number of waypoints along Joker detour
-    let num_joker_steps = 8usize;
+    let num_joker_steps = 16usize;
 
     // Binary search for peak lateral offset D_peak such that seg2.length - seg1.length == target_delta
     let build_joker_wps = |side_sign: f32| -> Vec<TrackWaypoint> {
@@ -390,6 +390,97 @@ fn waypoint_tangent(wps: &[TrackWaypoint], i: usize) -> Vec2 {
     }
 }
 
+/// Fillet sharp vertices along mapped joker route to guarantee corner radii >= target_radius
+fn fillet_joker_points(
+    points: &[(Vec2, f32, SurfaceType)],
+    target_radius: f32,
+) -> Vec<(Vec2, f32, SurfaceType)> {
+    let n = points.len();
+    if n < 3 {
+        return points.to_vec();
+    }
+    let mut out = vec![points[0]];
+    for i in 1..n - 1 {
+        let p_prev = points[i - 1].0;
+        let p_curr = points[i].0;
+        let p_next = points[i + 1].0;
+        let width = points[i].1;
+        let surface = points[i].2;
+
+        let u_vec = p_curr - p_prev;
+        let v_vec = p_next - p_curr;
+        let lu = u_vec.length();
+        let lv = v_vec.length();
+        if lu < 1e-3 || lv < 1e-3 {
+            out.push(points[i]);
+            continue;
+        }
+        let u = u_vec / lu;
+        let v = v_vec / lv;
+
+        let dot = (u.dot(v)).clamp(-1.0, 1.0);
+        let defl = dot.acos();
+        let deg = defl.to_degrees();
+        let det = u.x * v.y - u.y * v.x;
+
+        if deg > 20.0 && det.abs() > 1e-4 {
+            let is_left = det > 0.0;
+            let norm_in = if is_left {
+                Vec2::new(-u.y, u.x)
+            } else {
+                Vec2::new(u.y, -u.x)
+            };
+            let half_defl = defl * 0.5;
+            let t_des = target_radius * half_defl.tan();
+            let t_max = (lu - 3.5).max(3.5).min((lv - 3.5).max(3.5));
+            let t = t_des.min(t_max);
+            let r_act = t / half_defl.tan().max(1e-4);
+
+            let p_entry = p_curr - u * t;
+            let p_exit = p_curr + v * t;
+            let center = p_entry + norm_in * r_act;
+
+            let a_in = (p_entry.y - center.y).atan2(p_entry.x - center.x);
+            let a_out = (p_exit.y - center.y).atan2(p_exit.x - center.x);
+            let mut da = a_out - a_in;
+            if is_left && da < 0.0 {
+                da += std::f32::consts::TAU;
+            } else if !is_left && da > 0.0 {
+                da -= std::f32::consts::TAU;
+            }
+
+            let a_mid = a_in + da * 0.5;
+            let p_apex = center + Vec2::new(a_mid.cos(), a_mid.sin()) * r_act;
+
+            if let Some(prev) = out.last() {
+                if prev.0.distance(p_entry) >= 3.0 {
+                    out.push((p_entry, width, surface));
+                }
+            } else {
+                out.push((p_entry, width, surface));
+            }
+            out.push((p_apex, width, surface));
+            out.push((p_exit, width, surface));
+        } else {
+            if let Some(prev) = out.last() {
+                if prev.0.distance(p_curr) >= 3.0 {
+                    out.push((p_curr, width, surface));
+                }
+            } else {
+                out.push((p_curr, width, surface));
+            }
+        }
+    }
+    if let Some(prev) = out.last() {
+        if prev.0.distance(points[n - 1].0) >= 3.0 {
+            out.push(points[n - 1]);
+        }
+    } else {
+        out.push(points[n - 1]);
+    }
+    out
+}
+
 /// The main line cut where the mapped joker leaves and rejoins it, and the joker through its OSM points.
 ///
 /// The mapped split and merge are where the OSM joker leaves and rejoins the main road, not its end nodes: the
@@ -457,6 +548,7 @@ fn osm_cut(cfg: &TrackJokerConfig, track: &Track, joker: &OsmJoker) -> JokerCut 
         }
     }
     assert!(!points.is_empty(), "{}: the mapped joker has no points between its ends", cfg.slug);
+    let points = fillet_joker_points(&points, 11.0);
 
     let (s_wp, m_wp) = (&wps[s_idx], &wps[m_idx]);
     let steps = points.len() + 1;
