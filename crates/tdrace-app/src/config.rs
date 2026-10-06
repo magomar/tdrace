@@ -652,39 +652,32 @@ impl GameConfig {
             CarChoice::SportsCar => "sports_car",
             CarChoice::DriftCar => "drift_car",
             CarChoice::Kart => "kart",
+            CarChoice::SuperkartGP => "superkart_gp",
+            CarChoice::RallyJuniorFWD => "rally_junior_fwd",
             CarChoice::RallyCar => "rally_car",
+            CarChoice::RallyGroupB => "rally_group_b",
+            CarChoice::RallyElectricRX => "rally_electric_rx",
             CarChoice::GT4Clubsport => "gt4_clubsport",
             CarChoice::GT3Car => "gt3_car",
             CarChoice::GT2Biturbo => "gt2_biturbo",
             CarChoice::GT1Legend => "gt1_legend",
             CarChoice::HypercarPrototype => "hypercar_prototype",
             CarChoice::StockCar => "stock_car",
+            CarChoice::StockCarTruck => "stock_car_truck",
+            CarChoice::DuneBuggyBaja => "dune_buggy_baja",
             CarChoice::SandRail => "sand_rail_buggy",
+            CarChoice::TrophyTruckAWD => "trophy_truck",
+            CarChoice::MudBoggerHeavy => "mud_bogger",
+            CarChoice::MonsterTruck => "monster_truck",
             CarChoice::CrossCar => "cross_car",
+            CarChoice::TouringAX => "touring_ax",
+            CarChoice::SuperBuggy => "super_buggy",
         };
 
         if let Some(cfg) = self.cars.get(key) {
             *cfg
         } else {
-            match choice {
-                CarChoice::SportsCar => CarConfig::sports_car(),
-                CarChoice::DriftCar => CarConfig::drift_car(),
-                CarChoice::Kart => CarConfig::kart(),
-                CarChoice::RallyCar => CarConfig::rally_car(),
-                CarChoice::GT4Clubsport => {
-                    crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport()
-                }
-                CarChoice::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
-                CarChoice::GT2Biturbo => {
-                    crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo()
-                }
-                CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
-                CarChoice::HypercarPrototype => {
-                    crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype()
-                }
-                CarChoice::StockCar => CarConfig::stock_car_ta1(),
-                CarChoice::SandRail | CarChoice::CrossCar => CarConfig::sand_rail(),
-            }
+            choice.config()
         }
     }
 }
