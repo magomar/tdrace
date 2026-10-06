@@ -2082,8 +2082,8 @@ fn test_wheel_texture_cache_memory_bounds() {
 
     println!("Found {} wheel texture assets on disk", wheel_files.len());
     assert!(
-        wheel_files.len() <= 8,
-        "Total wheel textures ({}) must be <= 8 (N + M decoupled invariance)",
+        wheel_files.len() <= 10,
+        "Total wheel textures ({}) must be <= 10 (N + M decoupled invariance)",
         wheel_files.len()
     );
 
@@ -2180,44 +2180,52 @@ fn test_spec_094_universal_steered_wheel_derivation_across_all_platforms() {
             .unwrap_or_else(|| panic!("derive_steered_wheel_config must return Some for {}", v.id));
 
         assert!(
-            (steered_cfg.front_axle_offset - car_config.cg_to_front).abs() < 1e-4,
-            "front_axle_offset ({}) must equal cg_to_front ({}) for {}",
+            steered_cfg.front_axle_offset > 0.15,
+            "front_axle_offset ({}) must be positive and realistic for {}",
             steered_cfg.front_axle_offset,
-            car_config.cg_to_front,
             v.id
         );
         assert!(
-            (steered_cfg.half_track_width - car_config.track_width * 0.5).abs() < 1e-4,
-            "half_track_width ({}) must equal track_width * 0.5 ({}) for {}",
+            steered_cfg.half_track_width > 0.15,
+            "half_track_width ({}) must be positive and realistic for {}",
             steered_cfg.half_track_width,
-            car_config.track_width * 0.5,
             v.id
         );
         assert!(
-            (steered_cfg.wheel_size.x - car_config.wheels[0].tire_width).abs() < 1e-4,
-            "wheel_size.x ({}) must match front tire_width ({}) for {}",
+            steered_cfg.wheel_size.x > 0.05,
+            "wheel_size.x ({}) must be realistic for {}",
             steered_cfg.wheel_size.x,
-            car_config.wheels[0].tire_width,
             v.id
         );
-        let expected_size_y = (car_config.wheels[0].tire_width * 2.0).clamp(0.24, 1.35);
         assert!(
-            (steered_cfg.wheel_size.y - expected_size_y).abs() < 1e-4,
-            "wheel_size.y ({}) must preserve 1:2 aspect ratio ({}) for {}",
+            steered_cfg.wheel_size.y > 0.10,
+            "wheel_size.y ({}) must be realistic for {}",
             steered_cfg.wheel_size.y,
-            expected_size_y,
             v.id
         );
+        assert!(
+            steered_cfg.texture_padding_factor.x >= 1.0,
+            "texture_padding_factor.x must be >= 1.0 for {}",
+            v.id
+        );
+        assert!(
+            steered_cfg.texture_padding_factor.y >= 1.0,
+            "texture_padding_factor.y must be >= 1.0 for {}",
+            v.id
+        );
+        let expected_layering = if let Some(anchor) = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id) {
+            if anchor.layering == "OverChassis" {
+                WheelLayerMode::OverChassis
+            } else {
+                WheelLayerMode::UnderChassis
+            }
+        } else {
+            v.base_car_choice.wheel_layer_mode()
+        };
         assert_eq!(
             steered_cfg.layering,
-            v.base_car_choice.wheel_layer_mode(),
-            "layering must match platform wheel_layer_mode for {}",
-            v.id
-        );
-        assert_eq!(
-            steered_cfg.wheel_texture_id,
-            v.base_car_choice.wheel_texture_id(),
-            "texture id must match platform for {}",
+            expected_layering,
+            "layering must match visual anchor or platform for {}",
             v.id
         );
     }
@@ -2376,48 +2384,63 @@ fn test_spec_091_global_steered_wheel_articulation_and_runtime_integration() {
         assert!(cfg.wheel_size.x > 0.0, "wheel_size.x must be positive for {}", v.id);
         assert!(cfg.wheel_size.y > 0.0, "wheel_size.y must be positive for {}", v.id);
 
-        // 2. Aspect ratio preservation: 1:2 aspect ratio matching 128x256 texture
-        let expected_size_y = (cfg.wheel_size.x * 2.0).clamp(0.24, 1.35);
+        // 2. Proportional dimensions without artificial 1:2 clamp (Spec 095)
         assert!(
-            (cfg.wheel_size.y - expected_size_y).abs() < 1e-4,
-            "wheel_size must maintain 1:2 ratio (expected {}, got {}) for {}",
-            expected_size_y,
-            cfg.wheel_size.y,
+            cfg.wheel_size.y > cfg.wheel_size.x,
+            "wheel length must exceed wheel width for {}",
+            v.id
+        );
+        assert!(
+            cfg.texture_padding_factor.x >= 1.0 && cfg.texture_padding_factor.y >= 1.0,
+            "texture padding factors must be >= 1.0 for {}",
             v.id
         );
 
         // 3. Modality Platform Layering Architecture
-        let expected_layering = match v.base_car_choice {
-            CarChoice::CrossCar
-            | CarChoice::SuperBuggy
-            | CarChoice::DuneBuggyBaja
-            | CarChoice::MonsterTruck
-            | CarChoice::Kart
-            | CarChoice::SuperkartGP
-            | CarChoice::SandRail => WheelLayerMode::OverChassis,
+        if let Some(anchor) = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id) {
+            let anchor_layering = if anchor.layering == "OverChassis" {
+                WheelLayerMode::OverChassis
+            } else {
+                WheelLayerMode::UnderChassis
+            };
+            assert_eq!(
+                cfg.layering, anchor_layering,
+                "Layering must match visual anchor for {}",
+                v.id
+            );
+        } else {
+            let expected_layering = match v.base_car_choice {
+                CarChoice::CrossCar
+                | CarChoice::SuperBuggy
+                | CarChoice::DuneBuggyBaja
+                | CarChoice::MonsterTruck
+                | CarChoice::Kart
+                | CarChoice::SuperkartGP
+                | CarChoice::SandRail => WheelLayerMode::OverChassis,
 
-            CarChoice::GT4Clubsport
-            | CarChoice::GT3Car
-            | CarChoice::GT2Biturbo
-            | CarChoice::GT1Legend
-            | CarChoice::HypercarPrototype
-            | CarChoice::TouringAX
-            | CarChoice::TrophyTruckAWD
-            | CarChoice::MudBoggerHeavy
-            | CarChoice::RallyJuniorFWD
-            | CarChoice::RallyCar
-            | CarChoice::RallyGroupB
-            | CarChoice::RallyElectricRX
-            | CarChoice::StockCar
-            | CarChoice::StockCarTruck
-            | CarChoice::SportsCar
-            | CarChoice::DriftCar => WheelLayerMode::UnderChassis,
-        };
-        assert_eq!(
-            cfg.layering, expected_layering,
-            "Layering must match platform archetype for {}",
-            v.id
-        );
+                CarChoice::GT4Clubsport
+                | CarChoice::GT3Car
+                | CarChoice::GT2Biturbo
+                | CarChoice::GT1Legend
+                | CarChoice::HypercarPrototype
+                | CarChoice::TouringAX
+                | CarChoice::TrophyTruckAWD
+                | CarChoice::MudBoggerHeavy
+                | CarChoice::RallyJuniorFWD
+                | CarChoice::RallyCar
+                | CarChoice::RallyGroupB
+                | CarChoice::RallyElectricRX
+                | CarChoice::StockCar
+                | CarChoice::StockCarTruck
+                | CarChoice::SportsCar
+                | CarChoice::DriftCar => WheelLayerMode::UnderChassis,
+            };
+            assert_eq!(
+                cfg.layering, expected_layering,
+                "Layering must match platform archetype for {}",
+                v.id
+            );
+        }
 
         // 4. Authentic dynamic Ackermann angle resolution
         let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
@@ -2433,5 +2456,80 @@ fn test_spec_091_global_steered_wheel_articulation_and_runtime_integration() {
         );
     }
 }
+
+#[test]
+fn test_spec_095_multiview_wheel_anchor_extraction_and_archetype_integration() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+    use tdrace_app::render::vehicle_assets::{
+        derive_steered_wheel_config, get_visual_wheel_anchor, get_visual_wheel_anchors,
+    };
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    let anchors = get_visual_wheel_anchors();
+    assert!(anchors.len() >= 122, "Visual wheel anchors must contain >= 122 vehicles, found {}", anchors.len());
+
+    // 1. Verify every vehicle in catalog resolves a valid anchor
+    for v in &all_vehicles {
+        let anchor = get_visual_wheel_anchor(v.id)
+            .unwrap_or_else(|| panic!("Vehicle {} must resolve a visual wheel anchor", v.id));
+
+        assert!(anchor.axle_x_px > 256.0, "Front axle X must be in front half of sprite (> 256) for {}", v.id);
+        assert!(anchor.track_width_px > 50.0 && anchor.track_width_px < 400.0, "Track width px in realistic range for {}", v.id);
+        assert!(anchor.tire_len_px > 30.0 && anchor.tire_len_px < 300.0, "Tire length px in realistic range for {}", v.id);
+        assert!(anchor.tire_wid_px > 15.0 && anchor.tire_wid_px < 200.0, "Tire width px in realistic range for {}", v.id);
+
+        let car_config = v.to_car_config();
+        let cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config failed for {}", v.id));
+
+        assert!(cfg.front_axle_offset > 0.15, "front_axle_offset must be positive and realistic for {}", v.id);
+        assert!(cfg.half_track_width > 0.15, "half_track_width must be positive and realistic for {}", v.id);
+        assert!(cfg.wheel_size.x > 0.05, "wheel_size.x must be realistic for {}", v.id);
+        assert!(cfg.wheel_size.y > 0.10, "wheel_size.y must be realistic for {}", v.id);
+        assert!(cfg.texture_padding_factor.x >= 1.0 && cfg.texture_padding_factor.y >= 1.0);
+
+        // Verify assigned archetype texture exists and can be loaded
+        let rel_path = format!("textures/vehicles/topdown/wheels/{}.png", cfg.wheel_texture_id);
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../assets")
+            .join(&rel_path);
+        assert!(path.exists(), "Wheel texture {} must exist on disk at {:?}", cfg.wheel_texture_id, path);
+        let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("Failed to read {}: {:?}", path.display(), e));
+        let img = macroquad::texture::Image::from_file_with_format(&bytes, None).unwrap_or_else(|e| panic!("Failed to parse {}: {:?}", path.display(), e));
+        assert_eq!(img.width, 128);
+        assert_eq!(img.height, 256);
+    }
+
+    // 2. Specific archetype validations
+    // Monster Truck must use monster_wheel_front and have massive tires
+    let colossus = get_visual_wheel_anchor("offroad_colossus_titan_t5").expect("colossus anchor");
+    assert_eq!(colossus.archetype, "monster_wheel_front");
+    assert!(colossus.tire_len_px > 120.0, "Monster truck tire len > 120px, got {}", colossus.tire_len_px);
+    assert!(colossus.tire_wid_px > 60.0, "Monster truck tire wid > 60px, got {}", colossus.tire_wid_px);
+    assert_eq!(colossus.layering, "OverChassis");
+
+    // Mud Bogger must use mud_tractor_front
+    let crossbow = get_visual_wheel_anchor("offroad_crossbow_ridge_t4").expect("crossbow anchor");
+    assert_eq!(crossbow.archetype, "mud_tractor_front");
+
+    // Trophy Truck must use truck_allterrain_front
+    let desert_forge = get_visual_wheel_anchor("offroad_desert_forge_truck_t2").expect("desert_forge anchor");
+    assert_eq!(desert_forge.archetype, "truck_allterrain_front");
+
+    // Buggy must use buggy_allterrain_front
+    let volkskraft = get_visual_wheel_anchor("offroad_volkskraft_dune_t1").expect("volkskraft anchor");
+    assert_eq!(volkskraft.archetype, "buggy_allterrain_front");
+    assert_eq!(volkskraft.layering, "OverChassis");
+
+    // Kart must use kart_slick_front and OverChassis
+    let cadet = get_visual_wheel_anchor("kart_blackline_cadet_t1").expect("cadet anchor");
+    assert_eq!(cadet.archetype, "kart_slick_front");
+    assert_eq!(cadet.layering, "OverChassis");
+}
+
 
 

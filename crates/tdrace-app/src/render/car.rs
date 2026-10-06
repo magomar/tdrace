@@ -394,11 +394,15 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
                 let lf = cfg.front_axle_offset * air_scale;
                 let half_w = cfg.half_track_width * air_scale;
-                let p_fl = hub_center + fwd * lf - right * half_w;
-                let p_fr = hub_center + fwd * lf + right * half_w;
+                let p_fl = visual_center + fwd * lf - right * half_w;
+                let p_fr = visual_center + fwd * lf + right * half_w;
                 let ang_fl = angle + steer_fl;
                 let ang_fr = angle + steer_fr;
                 let wheel_size = cfg.wheel_size * air_scale;
+                let quad_size = glam::Vec2::new(
+                    wheel_size.x * cfg.texture_padding_factor.x,
+                    wheel_size.y * cfg.texture_padding_factor.y,
+                );
 
                 // 1. Wheel ground shadows
                 if shadows_enabled {
@@ -411,8 +415,8 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
                 // 2. UnderChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
                 }
 
                 // 3. Chassis bodywork
@@ -430,8 +434,8 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
                 // 4. OverChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
                 }
 
                 return;
