@@ -11,6 +11,7 @@ depends_on:
   - "073"
   - "074"
   - "075"
+  - "094"
 ---
 
 # Feature Spec: Global Pre-Baked Vehicle Steered Wheel Articulation 🏎️✨🛞

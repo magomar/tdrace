@@ -3,13 +3,13 @@ type: Architecture Spec
 template: architecture
 title: "Modality Chassis Platforms Architecture Expansion and Arcade Alignment"
 description: "Expands canonical chassis platforms across motorsport modalities, retires standalone arcade-only platforms by mapping Classic Arcade cars to authentic disciplines, and establishes accurate axle-relative skeletons for simulation fidelity, SAT collision hulls, and Spec 091 steered wheel articulation."
-status: draft
+status: in_progress
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T09:14:00Z }
+verified: { by: "human:mario", at: "2026-10-06T10:13:50Z", hash: "81e57e12a9b9" }
 depends_on:
   - "075"
   - "076"
-  - "091"
 ---
 
 # Architecture Spec: Modality Chassis Platforms Architecture Expansion and Arcade Alignment 🏎️📐🏗️
