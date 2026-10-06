@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Global Pre-Baked Vehicle Steered Wheel Articulation"
 description: "Universal SteeredWheelConfig derivation from CarConfig, ChassisSkeleton, and Spec 094 Modality Platforms, batch wheel-well inpainting pipeline, and dual-layer Ackermann steered wheel animation across all 122+ vehicles across GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road modules."
-status: approved
+status: implemented
+receipt: "docs/receipts/spec-091-receipt.md"
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-05T15:52:45Z }
 verified: { by: "human:mario", at: "2026-10-06T11:45:31Z", hash: "90c4f7f9432d" }
@@ -273,36 +274,36 @@ When `_chassis.png` is available, this single hook activates dual-layer Ackerman
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Global SteeredWheelConfig resolution across all 19 platforms**
-  - [ ] **Given** any vehicle model from the master catalog across GT, NASCAR, Rally, Autocross, Kart, or Extreme Off-Road
-  - [ ] **When** `derive_steered_wheel_config` is queried with the car's model ID and physics `CarConfig`
-  - [ ] **Then** it must return a valid `SteeredWheelConfig` with non-zero `front_axle_offset`, `half_track_width`, and `wheel_size`
-  - [ ] **And** `layering` must match the vehicle's `CarChoice` platform archetype (`OverChassis` for buggies, karts, cross cars, monster trucks; `UnderChassis` for saloons, GTs, stock cars, rally hatches, and trucks)
-  - [ ] **And** `wheel_size` must preserve the 1:2 aspect ratio matching the $128 \times 256\,\text{px}$ wheel texture
+  - [x] **Given** any vehicle model from the master catalog across GT, NASCAR, Rally, Autocross, Kart, or Extreme Off-Road
+  - [x] **When** `derive_steered_wheel_config` is queried with the car's model ID and physics `CarConfig`
+  - [x] **Then** it must return a valid `SteeredWheelConfig` with non-zero `front_axle_offset`, `half_track_width`, and `wheel_size`
+  - [x] **And** `layering` must match the vehicle's `CarChoice` platform archetype (`OverChassis` for buggies, karts, cross cars, monster trucks; `UnderChassis` for saloons, GTs, stock cars, rally hatches, and trucks)
+  - [x] **And** `wheel_size` must preserve the 1:2 aspect ratio matching the $128 \times 256\,\text{px}$ wheel texture
 
 - **Scenario: In-race dynamic Ackermann articulation for closed-wheel GT, Rally, and Truck models**
-  - [ ] **Given** an in-race session driving a closed-wheel vehicle (e.g. `gt_vandorn_stratus_t1`, `rally_forge_comet_t4`, or `offroad_desert_forge_truck_t2`)
-  - [ ] **When** the driver applies steering input into a corner under high lateral acceleration
-  - [ ] **Then** the front wheels must visibly rotate inside the hollowed fender wells with authentic Ackermann angles
-  - [ ] **And** the wheels must render under the chassis bodywork (`UnderChassis` layer)
-  - [ ] **And** dark ambient cavity backing on `<model_id>_chassis.png` must prevent track surface see-through artifacts as the chassis rolls laterally relative to the unsprung wheel hubs
+  - [x] **Given** an in-race session driving a closed-wheel vehicle (e.g. `gt_vandorn_stratus_t1`, `rally_forge_comet_t4`, or `offroad_desert_forge_truck_t2`)
+  - [x] **When** the driver applies steering input into a corner under high lateral acceleration
+  - [x] **Then** the front wheels must visibly rotate inside the hollowed fender wells with authentic Ackermann angles
+  - [x] **And** the wheels must render under the chassis bodywork (`UnderChassis` layer)
+  - [x] **And** dark ambient cavity backing on `<model_id>_chassis.png` must prevent track surface see-through artifacts as the chassis rolls laterally relative to the unsprung wheel hubs
 
 - **Scenario: In-race dynamic Ackermann articulation for open-wheel Autocross buggies and Karts**
-  - [ ] **Given** an in-race session driving an open-wheel vehicle (e.g. `autocross_bologna_superbuggy_t5`, `kart_blackline_cadet_t1`, or `offroad_volkskraft_dune_t1`)
-  - [ ] **When** the driver applies steering input into a corner
-  - [ ] **Then** the front wheels must articulate visibly outboard of the chassis with zero double-wheel ghosting artifacts
-  - [ ] **And** front suspension arms / wishbones must remain intact connecting the hub to the chassis
+  - [x] **Given** an in-race session driving an open-wheel vehicle (e.g. `autocross_bologna_superbuggy_t5`, `kart_blackline_cadet_t1`, or `offroad_volkskraft_dune_t1`)
+  - [x] **When** the driver applies steering input into a corner
+  - [x] **Then** the front wheels must articulate visibly outboard of the chassis with zero double-wheel ghosting artifacts
+  - [x] **And** front suspension arms / wishbones must remain intact connecting the hub to the chassis
 
 - **Scenario: Clean black rubber rendering in world space**
-  - [ ] **Given** an in-race session driving any vehicle equipped with any tire compound (Soft, Medium, Hard, Wet, All-Terrain)
-  - [ ] **When** front steered wheels are rendered in top-down view
-  - [ ] **Then** wheels must render clean black rubber textures (`assets/textures/vehicles/topdown/wheels/*.png`)
-  - [ ] **And** zero procedural compound colored borders or sidewall stripes must be drawn in world view (Spec 089 parity)
+  - [x] **Given** an in-race session driving any vehicle equipped with any tire compound (Soft, Medium, Hard, Wet, All-Terrain)
+  - [x] **When** front steered wheels are rendered in top-down view
+  - [x] **Then** wheels must render clean black rubber textures (`assets/textures/vehicles/topdown/wheels/*.png`)
+  - [x] **And** zero procedural compound colored borders or sidewall stripes must be drawn in world view (Spec 089 parity)
 
 - **Scenario: Preserving canonical full sprites in Showroom, Garage, and Menus**
-  - [ ] **Given** the player browsing the Garage, Showroom, or Starting Grid
-  - [ ] **When** top-down or thumbnail vehicle cards are rendered
-  - [ ] **Then** `get_vehicle_topdown_texture` must load the canonical `<model_id>.png` with complete integrated wheels
-  - [ ] **And** no empty or transparent wheel wells must be visible in static UI presentations
+  - [x] **Given** the player browsing the Garage, Showroom, or Starting Grid
+  - [x] **When** top-down or thumbnail vehicle cards are rendered
+  - [x] **Then** `get_vehicle_topdown_texture` must load the canonical `<model_id>.png` with complete integrated wheels
+  - [x] **And** no empty or transparent wheel wells must be visible in static UI presentations
 
 ---
 
