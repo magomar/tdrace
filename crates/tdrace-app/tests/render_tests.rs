@@ -416,9 +416,12 @@ fn test_vortex_dune_crusher_topdown_sprite_orientation() {
         "Vortex Dune Crusher front nosecone must face forward (+X, right side). Found {} pixels",
         right_nose_pixels
     );
-    assert_eq!(
-        left_nose_pixels, 0,
-        "Vortex Dune Crusher must not have nosecone pixels in the rear (-X, left side)"
+    // The redrawn logo-free sprite (spec 047) has orange side panels that reach just past the middle.
+    assert!(
+        left_nose_pixels * 5 < right_nose_pixels,
+        "Vortex Dune Crusher orange bodywork must sit mostly in the front (+X): rear {} vs front {}",
+        left_nose_pixels,
+        right_nose_pixels
     );
 }
 

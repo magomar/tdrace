@@ -176,6 +176,8 @@ default_assist_profile = "sport"
 
     let mut custom_session = RaceSession::new_with_config(loaded);
     assert_eq!(custom_session.config.gameplay.default_num_bots, 3);
+    // Quick Race locks the grid to the track's capacity (36ea12ab); Custom Race keeps the bot count.
+    custom_session.game_mode = tdrace_app::ui::menu::GameMode::ExperimentalRace;
     custom_session.set_num_bots(3);
     custom_session.init_race();
     assert_eq!(custom_session.world.vehicles.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
