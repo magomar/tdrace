@@ -3,9 +3,10 @@ type: Feature Spec
 template: feature
 title: "Global Pre-Baked Vehicle Steered Wheel Articulation"
 description: "Universal SteeredWheelConfig derivation from CarConfig, ChassisSkeleton, and Spec 094 Modality Platforms, batch wheel-well inpainting pipeline, and dual-layer Ackermann steered wheel animation across all 122+ vehicles across GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road modules."
-status: draft
+status: approved
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-05T15:52:45Z }
+verified: { by: "human:mario", at: "2026-10-06T11:45:31Z", hash: "90c4f7f9432d" }
 depends_on:
   - "026"
   - "073"
