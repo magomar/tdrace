@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy"
 description: "Establishes a 0-100% vehicle durability model driven by SAT collision impulse energy, progressive visual and handling degradation, in-race emergency patching, persistent car condition, and a balanced post-race garage repair economy with anti-bankruptcy safeguards."
-status: implemented
+status: superseded
 superseded_by: "078"
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:54:00Z }
