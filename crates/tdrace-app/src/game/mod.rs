@@ -13667,7 +13667,14 @@ impl RaceSession {
     /// Builds the final results standings table.
     fn build_results(&mut self) {
         let my_car_idx = self.player_car_index();
-        let race_results = self.world.results(&self.track);
+        let mut race_results = self.world.results(&self.track);
+        // LAN: every machine shows the host's finish order (spec 044), not the order of its own world.
+        if let Some(order) = self.lan_result_order() {
+            race_results.sort_by_key(|r| order.iter().position(|&c| c == r.car).unwrap_or(usize::MAX));
+            for (i, r) in race_results.iter_mut().enumerate() {
+                r.position = i + 1;
+            }
+        }
         self.results.clear();
         let leader_time = race_results.first().map(|r| r.time + r.penalty).unwrap_or(0.0);
         let joker_race = joker_rule_for(&self.track).mandatory > 0;
