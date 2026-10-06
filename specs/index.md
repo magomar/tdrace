@@ -115,6 +115,8 @@ Table of contents providing progressive disclosure of project constitution and t
 | [093](093_highquality_autocross_vehicle_sprites.md) | High-Quality Autocross Vehicle Sprites | Feature Spec | `implemented` | [050](050_fia_autocross_championship_and_vehicle_roster.md) | High-fidelity 2D lateral (1024x512), thumbnail (256x128), and top-down (512x512) sprites for all 15 Continental Autocross vehicles, facing right (+X), inspired by original models before rebranding, with strict zero-IP compliance (no words, no numbers, maximum 3 bodywork colors). |
 | [094](094_modality_chassis_platforms_architecture_expansion_and_arcade_alignment.md) | Modality Chassis Platforms Architecture Expansion and Arcade Alignment | Architecture Spec | `implemented` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [076](076_pragmatic_multi_tier_suspension_archetypes_and_perceptible_compliance.md) | Expands canonical chassis platforms across motorsport modalities, retires standalone arcade-only platforms by mapping Classic Arcade cars to authentic disciplines, and establishes accurate axle-relative skeletons for simulation fidelity, SAT collision hulls, and Spec 091 steered wheel articulation. |
 | [095](095_multiview_sprite_wheel_anchor_extraction_archetype_clustering_and_precision_articulation.md) | Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation | Feature Spec | `implemented` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [091](091_global_prebaked_vehicle_steered_wheel_articulation.md), [094](094_modality_chassis_platforms_architecture_expansion_and_arcade_alignment.md) | Dual-view (top-down cenital + lateral side profile) computer vision wheel anchor calibration, unsupervised visual archetype clustering, dedicated high-fidelity tire textures, zero-fragment chassis inpainting, and Human-in-the-Loop (HITL) intermediate visual validation gates across all 122+ vehicles. |
+| [096](096_chassisconforming_dynamic_vehicle_ground_shadows.md) | Chassis-Conforming Dynamic Vehicle Ground Shadows | Feature Spec | `draft` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [091](091_global_prebaked_vehicle_steered_wheel_articulation.md), [095](095_multiview_sprite_wheel_anchor_extraction_archetype_clustering_and_precision_articulation.md) | Replaces generic rounded rectangular drop shadows with dynamic ground shadows taking the exact contour of the vehicle chassis, utilizing sprite alpha mask projections for texture-based vehicles and multi-polygon body silhouettes for procedural archetypes. |
+| [097](097_turnpreserving_nonlinear_circuit_rescaling_075x_scale_expansion_and_global_apex_smoothing.md) | Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing | Architecture Spec | `in_progress` | [071](071_centripetal_catmullrom_and_variable_density_track_splines.md), [080](080_curvatureaware_track_boundary_geometry_swallowtail_pinch_elimination_and_global_circuit_validation.md) | Systematically upgrades GT modality scaling from 0.5x to 0.75x, introduces curvature-selective non-linear geometric rescaling so straights absorb longitudinal compression while corner radii and arc lengths mirror authentic real-world dimensions, strictly respects official circuit lengths and authentic track widths, integrates 3D elevation rollercoaster profiles, models authentic corner banking, and applies curvature smoothing and multi-waypoint filleting to 1:1 Rallycross circuits and joker lap junctions. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -160,6 +162,8 @@ flowchart LR
     093["093: High-Quality Autocross Vehicle Sprites"]
     094["094: Modality Chassis Platforms Architecture Expansion and Arcade Alignment"]
     095["095: Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation"]
+    096["096: Chassis-Conforming Dynamic Vehicle Ground Shadows"]
+    097["097: Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -205,4 +209,9 @@ flowchart LR
     075 --> 095
     091 --> 095
     094 --> 095
+    075 --> 096
+    091 --> 096
+    095 --> 096
+    071 --> 097
+    080 --> 097
 ```
