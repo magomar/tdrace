@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation"
 description: "Dual-view (top-down cenital + lateral side profile) computer vision wheel anchor calibration, unsupervised visual archetype clustering, dedicated high-fidelity tire textures, zero-fragment chassis inpainting, and Human-in-the-Loop (HITL) intermediate visual validation gates across all 122+ vehicles."
-status: draft
+status: approved
+verified: { by: "human:mario", at: "2026-10-06T15:57:44Z", hash: "f4f56bae8184" }
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T15:20:19Z }
 depends_on:
