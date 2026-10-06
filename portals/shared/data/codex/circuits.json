@@ -120,12 +120,8 @@
           "share_pct": 52.0
         },
         {
-          "surface": "Gravel",
-          "share_pct": 28.2
-        },
-        {
           "surface": "Dirt",
-          "share_pct": 19.9
+          "share_pct": 48.0
         }
       ],
       "has_jumps": true,
@@ -141,7 +137,7 @@
       "category": "rally",
       "tag": "HILLTOP RX",
       "category_label": "Rallycross",
-      "description": "Rolling rallycross track with a start straight crest, hilltop jumps and a gravel hairpin.",
+      "description": "Rolling rallycross track with a start straight crest, hilltop jumps and a dirt hairpin.",
       "kind": "circuit",
       "country_code": null,
       "country_name": null,
@@ -155,16 +151,12 @@
       "max_width_m": 12.0,
       "surfaces": [
         {
+          "surface": "Dirt",
+          "share_pct": 59.3
+        },
+        {
           "surface": "Asphalt",
           "share_pct": 40.7
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 30.3
-        },
-        {
-          "surface": "Gravel",
-          "share_pct": 29.0
         }
       ],
       "has_jumps": true,
@@ -194,16 +186,12 @@
       "max_width_m": 12.0,
       "surfaces": [
         {
+          "surface": "Dirt",
+          "share_pct": 56.9
+        },
+        {
           "surface": "Asphalt",
           "share_pct": 43.1
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 32.6
-        },
-        {
-          "surface": "Gravel",
-          "share_pct": 24.4
         }
       ],
       "has_jumps": true,
@@ -1805,7 +1793,7 @@
       "category": "rally",
       "tag": "WORLD RX GREAT BRITAIN",
       "category_label": "World RX",
-      "description": "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.",
+      "description": "The historic birthplace of Rallycross featuring Chessons Drift dirt slide, North Bend & Devil's Elbow.",
       "kind": "circuit",
       "country_code": "GB",
       "country_name": "United Kingdom",
@@ -2365,7 +2353,7 @@
       "category": "rally",
       "tag": "WORLD RX SPA RAIDILLON",
       "category_label": "World RX",
-      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
+      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked dirt bowl and high-speed descent.",
       "kind": "circuit",
       "country_code": "BE",
       "country_name": "Belgium",
