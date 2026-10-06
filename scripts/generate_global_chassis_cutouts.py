@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # /// script
-# dependencies = ["pillow", "numpy"]
+# dependencies = ["pillow", "numpy", "scipy"]
 # ///
 """
-Automated Global Vehicle Chassis Cutout and Inpainting Pipeline (Spec 091).
+Automated Global Vehicle Chassis Cutout and Inpainting Pipeline (Spec 095).
 
 Generates `<model_id>_chassis.png` sprites across all motorsport modules in TdRace:
-- GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road.
-- Uses the authentic Canvas-to-Axle Offset Equation based on physical wheelbase,
-  overhangs, and track width from portals/shared/data/codex/cars.json.
+- GT, NASCAR, Rally, Autocross, Karting, Extreme Off-Road, and Classic.
+- Consumes verified Computer Vision anchors from `artifacts/visual_wheel_anchors.json`.
 - Open-Wheel Archetypes (OverChassis):
   Clears outboard front tire rubber while strictly preserving suspension wishbones,
   pushrods, tie rods, and front nosecone/bumper bodywork.
@@ -16,6 +15,7 @@ Generates `<model_id>_chassis.png` sprites across all motorsport modules in TdRa
   Hollows out outer fender apertures for underlying steered wheel visibility,
   and inpaints dark ambient cavity backing (#14181c, 100% opacity) across the inner
   wheel-well liner to prevent track surface see-through during dynamic suspension roll (+-18cm).
+- Generates Gate 3 visual diffs and interactive inspection gallery.
 """
 
 import argparse
@@ -23,98 +23,31 @@ import json
 from pathlib import Path
 import sys
 import numpy as np
-from PIL import Image
-
-# Open-wheel modality platform archetypes (Spec 091 / Spec 094)
-OPEN_WHEEL_PLATFORMS = {
-    "CrossCar",
-    "SuperBuggy",
-    "DuneBuggyBaja",
-    "MonsterTruck",
-    "Kart",
-    "SuperkartGP",
-    "SandRail",
-}
-
-# Fallbacks for bonus / vault archive vehicles not tracked in codex cars.json
-FALLBACK_VEHICLES = {
-    "vault_asahi_blade_runner": {
-        "base_car": "Kart",
-        "module": "kart",
-        "physics": {
-            "wheelbase": 1.30,
-            "track_width": 0.62,
-            "chassis": {"front_overhang": 0.22, "rear_overhang": 0.20},
-            "wheels": [{"tire_radius": 0.20, "tire_width": 0.16}],
-        },
-    },
-    "vault_greenfield_prairie_racer": {
-        "base_car": "Kart",
-        "module": "kart",
-        "physics": {
-            "wheelbase": 1.30,
-            "track_width": 0.62,
-            "chassis": {"front_overhang": 0.22, "rear_overhang": 0.20},
-            "wheels": [{"tire_radius": 0.20, "tire_width": 0.16}],
-        },
-    },
-    "vault_nordic_valhalla_tractor": {
-        "base_car": "Kart",
-        "module": "kart",
-        "physics": {
-            "wheelbase": 1.30,
-            "track_width": 0.62,
-            "chassis": {"front_overhang": 0.22, "rear_overhang": 0.20},
-            "wheels": [{"tire_radius": 0.20, "tire_width": 0.16}],
-        },
-    },
-    "classic_ax_talon": {
-        "base_car": "CrossCar",
-        "module": "classic",
-        "physics": {
-            "wheelbase": 2.15,
-            "track_width": 1.55,
-            "chassis": {"front_overhang": 0.22, "rear_overhang": 0.28},
-            "wheels": [{"tire_radius": 0.28, "tire_width": 0.24}],
-        },
-    },
-}
+from PIL import Image, ImageDraw
+from scipy.ndimage import binary_dilation
 
 DARK_CAVITY_RGB = (20, 24, 28)
 DARK_CAVITY_ALPHA = 255
 
 
-def load_vehicle_catalog(root: Path):
-    """Loads all car definitions from codex cars.json and merges fallback vehicles."""
-    cars_json_path = root / "portals" / "shared" / "data" / "codex" / "cars.json"
-    catalog = {}
-
-    if cars_json_path.exists():
-        with open(cars_json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for item in data.get("items", []):
-                catalog[item["id"]] = item
-
-    for fallback_id, fallback_data in FALLBACK_VEHICLES.items():
-        if fallback_id not in catalog:
-            catalog[fallback_id] = {
-                "id": fallback_id,
-                **fallback_data,
-                "images": {
-                    "topdown": f"/textures/vehicles/topdown/{fallback_data['module']}/{fallback_id}.png"
-                },
-            }
-
-    return catalog
+def load_wheel_anchors(root: Path):
+    """Loads verified visual wheel anchors catalog."""
+    anchors_path = root / "artifacts" / "visual_wheel_anchors.json"
+    if not anchors_path.exists():
+        print(f"Error: {anchors_path} not found. Run extract_multiview_wheel_anchors.py first.")
+        sys.exit(1)
+    with open(anchors_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 def process_vehicle_sprite(
     image_path: Path,
-    car_data: dict,
+    anchor_entry: dict,
     out_path: Path,
+    diff_out_path: Path | None = None,
     dry_run: bool = False,
 ):
-    """Processes a single topdown vehicle sprite into a chassis cutout."""
+    """Processes a single topdown vehicle sprite into a chassis cutout using verified anchors."""
     im = Image.open(image_path).convert("RGBA")
     arr = np.array(im)
 
@@ -124,64 +57,53 @@ def process_vehicle_sprite(
         print(f"  [WARN] {image_path.name} contains no opaque pixels, skipping.")
         return False
 
-    x_min, x_max = xs.min(), xs.max()
-    y_min, y_max = ys.min(), ys.max()
-    w_px = x_max - x_min + 1
-    cy_px = (y_min + y_max) / 2.0
+    cy_px = (ys.min() + ys.max()) / 2.0
 
-    p = car_data.get("physics", {})
-    wb = p.get("wheelbase", 2.6)
-    chassis = p.get("chassis", {})
-    df = chassis.get("front_overhang", 0.8)
-    dr = chassis.get("rear_overhang", 1.0)
-    tw = p.get("track_width", 1.8)
-    ltot = wb + df + dr
-
-    # Uniform scale factor: pixels per physical meter
-    S = w_px / ltot
-
-    # Canonical Canvas-to-Axle Offset Equation (Spec 091 Section 1)
-    axle_x = x_max - df * S
-    y_fl = cy_px - (tw / 2.0) * S
-    y_fr = cy_px + (tw / 2.0) * S
-
-    wheels = p.get("wheels", [])
-    w0 = wheels[0] if wheels else {}
-    tire_r = w0.get("tire_radius", 0.32)
-    tire_w = w0.get("tire_width", 0.24)
-
-    base_car = car_data.get("base_car", "GT4Clubsport")
-    is_open_wheel = base_car in OPEN_WHEEL_PLATFORMS
+    axle_x = anchor_entry["axle_x_px"]
+    track_w = anchor_entry["track_width_px"]
+    tlen = anchor_entry["tire_len_px"]
+    twid = anchor_entry["tire_wid_px"]
+    is_open_wheel = anchor_entry["layering"] == "OverChassis"
 
     out_arr = arr.copy()
 
-    # Bounding box along X
-    half_len = (2.0 * tire_r * S) * 0.5 * 1.25
+    # Bounding box along X with 15% safety margin
+    half_len = tlen * 0.5 * 1.15
     x0 = max(0, int(round(axle_x - half_len)))
     x1 = min(512, int(round(axle_x + half_len)))
 
     r, g, b = arr[:, :, 0].astype(int), arr[:, :, 1].astype(int), arr[:, :, 2].astype(int)
     brightness = np.maximum(r, np.maximum(g, b))
-    color_var = np.maximum(np.abs(r - g), np.maximum(np.abs(r - b), np.abs(g - b)))
-    # Dark rubber detection: low brightness and achromatic
-    is_rubber = (brightness < 80) & (color_var < 35) & (alpha > 20)
+    sat = np.maximum(np.abs(r - g), np.maximum(np.abs(r - b), np.abs(g - b)))
+
+    # Dark rubber detection (achromatic dark OR edge chromatic fringe)
+    is_rubber = (((brightness < 95) & (sat < 50)) | ((g < 35) & (brightness < 95))) & (alpha > 10)
+
+    half_wid = twid * 0.5 * 1.15
+    y_fl = cy_px - track_w * 0.5
+    y_fr = cy_px + track_w * 0.5
 
     if is_open_wheel:
         # Open wheel (OverChassis):
-        # Clear tire rubber in front wheel bounding boxes while preserving wishbones/fairings
-        half_wid = (tire_w * S) * 0.5 * 1.30
+        # Clear tire rubber in front wheel bounding boxes while strictly preserving wishbones/nosecone
         for y_center in [y_fl, y_fr]:
             y0 = max(0, int(round(y_center - half_wid)))
             y1 = min(512, int(round(y_center + half_wid)))
             box = np.zeros((512, 512), dtype=bool)
             box[y0:y1, x0:x1] = True
-            out_arr[box & is_rubber, 3] = 0
+
+            # Dilate rubber mask by 2px to eliminate residual edge fringes
+            rubber_in_box = box & is_rubber
+            dilated = binary_dilation(rubber_in_box, iterations=2) & box
+            out_arr[dilated, 3] = 0
+
+            # Clean residual sub-15 opacity stray dust inside the box
+            out_arr[box & (out_arr[:, :, 3] < 15), 3] = 0
     else:
         # Closed wheel (UnderChassis):
-        # 1. Hollow out outer aperture where the tire is exposed
+        # 1. Hollow out outer aperture where the tire is exposed in the fender
         # 2. Inpaint dark cavity backing across inner liner (+-18cm roll buffer)
-        half_wid = (tire_w * S) * 0.5 * 1.25
-        cavity_depth = int(round(0.18 * S))  # 18cm suspension roll buffer
+        cavity_depth = int(round(0.18 * 115.0))  # ~18cm suspension roll buffer (~20 px)
 
         # Front-Left (top quadrant)
         y_out_fl = max(0, int(round(y_fl - half_wid * 1.25)))
@@ -232,16 +154,150 @@ def process_vehicle_sprite(
         out_img = Image.fromarray(out_arr)
         out_img.save(out_path, format="PNG")
 
+        if diff_out_path:
+            diff_out_path.parent.mkdir(parents=True, exist_ok=True)
+            # Create high-contrast side-by-side diagnostic diff
+            comp_w = 512 * 3 + 20
+            comp_h = 512
+            comp = Image.new("RGBA", (comp_w, comp_h), (14, 18, 24, 255))
+
+            # 1. Original
+            comp.paste(im, (0, 0), im)
+
+            # 2. Chassis Cutout
+            comp.paste(out_img, (512 + 10, 0), out_img)
+
+            # 3. Diff Overlay
+            diff_arr = np.zeros((512, 512, 4), dtype=np.uint8)
+            diff_arr[:, :] = [25, 30, 38, 255]  # Dark background
+            # Show chassis in dim gray
+            chassis_mask = out_arr[:, :, 3] > 20
+            diff_arr[chassis_mask] = [90, 100, 115, 255]
+            # Erased pixels in bright neon green
+            erased_mask = (arr[:, :, 3] > 20) & (out_arr[:, :, 3] == 0)
+            diff_arr[erased_mask] = [0, 255, 120, 255]
+            # Inpainted cavity in bright cyan
+            cavity_mask = (
+                (out_arr[:, :, 0] == DARK_CAVITY_RGB[0])
+                & (out_arr[:, :, 1] == DARK_CAVITY_RGB[1])
+                & (out_arr[:, :, 2] == DARK_CAVITY_RGB[2])
+                & (out_arr[:, :, 3] == DARK_CAVITY_ALPHA)
+            )
+            diff_arr[cavity_mask] = [0, 200, 255, 255]
+
+            diff_img = Image.fromarray(diff_arr)
+            draw_diff = ImageDraw.Draw(diff_img)
+            # Draw axle line and wheel boxes
+            draw_diff.line([(axle_x, 0), (axle_x, 512)], fill=(255, 230, 0, 180), width=1)
+            comp.paste(diff_img, (1024 + 20, 0))
+
+            comp.save(diff_out_path, format="PNG")
+
     mode_label = "OverChassis (open)" if is_open_wheel else "UnderChassis (closed)"
     print(
-        f"  ✓ {car_data['id']:<34} [{mode_label:<20}] Axle: X={axle_x:5.1f} | Erased: {erased_px:4d} px | Cavity: {cavity_px:4d} px"
+        f"  ✓ {anchor_entry['model_id']:<34} [{mode_label:<20}] Axle: X={axle_x:5.1f} | Erased: {erased_px:4d} px | Cavity: {cavity_px:4d} px"
     )
     return True
 
 
+def generate_gate3_html(processed_entries: list, out_html: Path):
+    """Generates Gate 3 HTML inspection report."""
+    modules = sorted(list(set(e["module"] for e in processed_entries)))
+
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TdRace Spec 095 — Gate 3: Cutout Cleanliness & Cavity Inspection</title>
+  <style>
+    body { margin: 0; background: #0c0f14; color: #d0d7de; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    header { background: #161b22; padding: 18px 28px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 20px; color: #58a6ff; font-weight: 600; }
+    .badge { background: #238636; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 28px; background: #12161e; border-bottom: 1px solid #21262d; }
+    .tab-btn { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 8px 16px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+    .tab-btn:hover { background: #30363d; }
+    .tab-btn.active { background: #1f6feb; border-color: #58a6ff; color: #fff; font-weight: bold; }
+    .legend { padding: 10px 28px; background: #161b22; font-size: 12px; display: flex; gap: 24px; border-bottom: 1px solid #21262d; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .dot { width: 12px; height: 12px; border-radius: 2px; }
+    .grid { display: flex; flex-direction: column; gap: 20px; padding: 24px 28px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    .card img { width: 100%; max-width: 1556px; height: auto; display: block; background: #0d1117; }
+    .card-meta { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; background: #161b22; border-top: 1px solid #21262d; font-size: 13px; }
+    .card-title { font-weight: bold; color: #f0f6fc; }
+    .props { color: #8b949e; }
+    .props span { color: #79c0ff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✂️ Spec 095 Gate 3: Cutout Cleanliness & Cavity Inspection</h1>
+    <div>
+      <span class="badge">HITL Gate 3 Ready</span>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#fff"></div> Panel 1: Original Sprite</div>
+    <div class="legend-item"><div class="dot" style="background:#58a6ff"></div> Panel 2: Inpainted Chassis Cutout</div>
+    <div class="legend-item"><div class="dot" style="background:#00ff78"></div> Green: Erased Tire Rubber</div>
+    <div class="legend-item"><div class="dot" style="background:#00c8ff"></div> Cyan: Ambient Cavity Liner (#14181c)</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="filterModule('all')">ALL ({len(processed_entries)})</button>
+"""
+    for m in modules:
+        count = sum(1 for e in processed_entries if e["module"] == m)
+        html += f'    <button class="tab-btn" onclick="filterModule(\'{m}\')">{m.upper()} ({count})</button>\n'
+
+    html += """  </div>
+
+  <div class="grid" id="diff-grid">
+"""
+    for e in processed_entries:
+        mid = e["model_id"]
+        mod = e["module"]
+        html += f"""    <div class="card" data-module="{mod}">
+      <img src="gate3_cutouts/{mid}_diff.png" alt="{mid} cutout diff" loading="lazy" />
+      <div class="card-meta">
+        <div class="card-title">
+          <span>{mid}</span>
+          <span style="color:#f0883e; margin-left:12px; font-weight:normal;">{e['archetype']} &mdash; {e['layering']}</span>
+        </div>
+        <div class="props">
+          Module: <span>{mod}</span> | Axle X: <span>{e['axle_x_px']:.1f} px</span> | Track: <span>{e['track_width_px']:.1f} px</span>
+        </div>
+      </div>
+    </div>
+"""
+
+    html += """  </div>
+
+  <script>
+    function filterModule(mod) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      document.querySelectorAll('.card').forEach(card => {
+        if (mod === 'all' || card.getAttribute('data-module') === mod) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+    with open(out_html, "w", encoding="utf-8") as f:
+        f.write(html)
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Automated Global Vehicle Chassis Cutout and Inpainting Pipeline (Spec 091)"
+        description="Automated Global Vehicle Chassis Cutout and Inpainting Pipeline (Spec 095)"
     )
     parser.add_argument(
         "--all",
@@ -263,34 +319,28 @@ def main():
         action="store_true",
         help="Compute geometry and stats without writing files to disk",
     )
-    parser.add_argument(
-        "--include-classic",
-        action="store_true",
-        help="Also re-generate cutouts for classic fantasy fleet (defaults to skipped)",
-    )
 
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
 
-    catalog = load_vehicle_catalog(root)
+    anchors = load_wheel_anchors(root)
     topdown_dir = root / "assets" / "textures" / "vehicles" / "topdown"
+    diff_dir = root / "artifacts" / "hitl" / "gate3_cutouts"
+    out_html = root / "artifacts" / "hitl" / "gate3_cutout_diff.html"
 
-    modules = ["gt", "nascar", "rally", "autocross", "kart", "extreme_offroad"]
-    if args.include_classic:
-        modules.append("classic")
-
+    modules = ["gt", "nascar", "rally", "autocross", "kart", "extreme_offroad", "classic"]
     if args.module:
         target_mod = args.module.lower()
-        if target_mod not in modules and target_mod != "classic":
-            print(f"Unknown module '{args.module}'. Available: {modules + ['classic']}")
+        if target_mod not in modules:
+            print(f"Unknown module '{args.module}'. Available: {modules}")
             sys.exit(1)
         modules = [target_mod]
 
-    processed_count = 0
+    processed = []
     skipped_count = 0
 
     print("=" * 95)
-    print("🏎️  TdRace Spec 091 Global Chassis Cutout & Inpainting Generator")
+    print("🏎️  TdRace Spec 095 Global Precision Chassis Cutout & Inpainting Generator (Gate 3)")
     print("=" * 95)
 
     for mod in modules:
@@ -308,31 +358,33 @@ def main():
             if args.model and model_id != args.model:
                 continue
 
-            car_data = catalog.get(model_id)
-            if not car_data:
-                print(f"  [WARN] Model '{model_id}' not found in catalog, skipping.")
+            anchor_entry = anchors.get(model_id)
+            if not anchor_entry:
+                print(f"  [WARN] Model '{model_id}' not found in anchors, skipping.")
                 skipped_count += 1
                 continue
 
             out_chassis_p = mod_dir / f"{model_id}_chassis.png"
-
-            if mod == "classic" and not args.include_classic and not args.model:
-                print(f"  [SKIP] Classic fleet vehicle '{model_id}' preserved.")
-                continue
+            diff_p = diff_dir / f"{model_id}_diff.png"
 
             ok = process_vehicle_sprite(
                 image_path=img_p,
-                car_data=car_data,
+                anchor_entry=anchor_entry,
                 out_path=out_chassis_p,
+                diff_out_path=diff_p,
                 dry_run=args.dry_run,
             )
             if ok:
-                processed_count += 1
+                processed.append(anchor_entry)
             else:
                 skipped_count += 1
 
+    if not args.dry_run and processed:
+        generate_gate3_html(processed, out_html)
+        print(f"\n✅ Gate 3 HTML Review Gallery: {out_html}")
+
     print("\n" + "=" * 95)
-    print(f"🏁 Cutout generation complete! Processed: {processed_count}, Skipped: {skipped_count}")
+    print(f"🏁 Cutout generation complete! Processed: {len(processed)}, Skipped: {skipped_count}")
     print("=" * 95)
 
 
