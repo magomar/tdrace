@@ -34,10 +34,10 @@ Every real circuit is built from OpenStreetMap (`scripts/osm_importer.py`, map d
 
 | Modality | Lap length | `scale` label |
 | :--- | :--- | :---: |
-| **GT World Challenge** | 0.5× the official length. Track width stays real. | `0.5x` |
+| **GT World Challenge** | 0.75× the official length. Curvature-selective non-linear rescaling preserves corner radii. | `0.75x` |
 | **Rallycross** | 1:1, the official length. | `1:1` |
 | **Karting** | 1:1, the official length. | `1:1` |
-| **NASCAR** | 1:1 when the real lap is under 3 km (Bowman Gray to Charlotte). Road America 0.5×. Every other circuit 0.75× (Chicago, Watkins Glen, Daytona, Indianapolis, Pocono, Talladega). Decided 2026-09-28. | `1:1` / `0.5x` / `0.75x` |
+| **NASCAR** | 1:1 when the real lap is under 3 km (Bowman Gray to Charlotte). Superspeedways and road courses (including Road America) are 0.75× with banked turns. | `1:1` / `0.75x` |
 | **Extreme Off-Road** | Out of scope for now. Do not re-import. The Mint 400 circuits come from GPX course files, not OSM (spec 048): 1:1, except the 148 km Grand Loop at 0.05x. | as now / `0.05x` |
 | **Classic Heritage** | Fantasy circuits; the rule does not apply. | — |
 

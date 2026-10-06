@@ -947,6 +947,7 @@ GT_CIRCUITS = {
         "rel_id": 284565,
         "start_node": "1828499259",  # Start/finish node in Monza relation 284565 on the main straight
         "fia_length": 5793.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -955,6 +956,10 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "TEMPLE OF SPEED",
         "pit_ways": ["38168747"],
+        "bank_angles": {
+            # Curva Grande & Parabolica banking
+            5: 3.5, 6: 3.5, 23: 5.0, 24: 5.0, 25: 4.0,
+        },
     },
     "spa": {
         "name": "Circuit de Spa-Francorchamps",
@@ -962,6 +967,7 @@ GT_CIRCUITS = {
         "rel_id": 284560,
         "start_node": "258602622",  # Modern F1 start/finish node in Spa relation 284560 on the pit straight
         "fia_length": 7004.0,
+        "scale": 0.75,
         "num_waypoints": 32,
         "default_width": 14.0,
         "straight_width": 15.0,
@@ -974,12 +980,17 @@ GT_CIRCUITS = {
             # Eau Rouge & Raidillon uphill climb
             3: 2.0, 4: 4.5, 5: 3.0,
         },
+        "bank_angles": {
+            # Eau Rouge compression camber & Blanchimont
+            3: 12.0, 4: 12.0, 28: 4.0,
+        },
     },
     "silverstone": {
         "name": "Silverstone Grand Prix Circuit",
         "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
         "rel_id": 51160,
         "fia_length": 5891.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 14.5,
@@ -987,6 +998,9 @@ GT_CIRCUITS = {
         "barrier_offset": 4.0,
         "default_laps": 3,
         "tag": "HOME OF BRITISH MOTORSPORT",
+        "bank_angles": {
+            12: 3.0, 13: 3.0,
+        },
     },
     "monaco": {
         "name": "Circuit de Monaco",
@@ -1011,6 +1025,7 @@ GT_CIRCUITS = {
         ],
         "start_node": "1868404468",  # Boulevard Albert 1er, the start straight
         "fia_length": 3337.0,
+        "scale": 0.75,
         "num_waypoints": 26,
         "default_width": 10.5,
         "straight_width": 11.5,
@@ -1032,6 +1047,7 @@ GT_CIRCUITS = {
         "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
         "rel_id": 284570,
         "fia_length": 5807.0,
+        "scale": 0.75,
         "num_waypoints": 34,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1040,12 +1056,16 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "JAPANESE FIGURE-8",
         "crossover": True,
+        "bank_angles": {
+            30: 4.0, 31: 4.0,  # 130R high-speed banked sweeper
+        },
     },
     "interlagos": {
         "name": "Autodromo Jose Carlos Pace (Interlagos)",
         "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
         "rel_id": 6781071,
         "fia_length": 4309.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1053,12 +1073,17 @@ GT_CIRCUITS = {
         "barrier_offset": 3.5,
         "default_laps": 3,
         "tag": "BRAZILIAN ROLLERCOASTER",
+        "bank_angles": {
+            1: 3.5, 2: 3.5,  # Senna S
+            25: 5.0, 26: 5.0, # Juncao / Arquibancadas ascent
+        },
     },
     "montreal": {
         "name": "Circuit Gilles Villeneuve (Montreal)",
         "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
         "rel_id": 284595,
         "fia_length": 4361.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1072,6 +1097,7 @@ GT_CIRCUITS = {
         "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
         "rel_id": 5309181,
         "fia_length": 4318.0,
+        "scale": 0.75,
         "num_waypoints": 26,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1086,6 +1112,9 @@ GT_CIRCUITS = {
             # Downhill to Schlossgold
             5: 2.0, 6: 1.0,
         },
+        "bank_angles": {
+            1: 3.0, 3: 3.0,
+        },
     },
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
@@ -1099,6 +1128,7 @@ GT_CIRCUITS = {
         ],
         "start_node": "385973430",  # FIA start/finish line node on the front straight
         "fia_length": 4657.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1111,12 +1141,17 @@ GT_CIRCUITS = {
             # Turn 9 Campsa uphill crest
             15: 2.0, 16: 3.5, 17: 2.0,
         },
+        "bank_angles": {
+            3: 3.0, 4: 3.0,  # Curva Renault
+            15: 4.0,         # Campsa
+        },
     },
     "zandvoort": {
         "name": "Circuit Zandvoort",
         "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
         "rel_id": 13545573,
         "fia_length": 4259.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 12.5,
         "straight_width": 14.0,
@@ -1132,12 +1167,17 @@ GT_CIRCUITS = {
             # Arie Luyendyk banked turn
             25: 1.5, 26: 2.0,
         },
+        "bank_angles": {
+            # Turn 3 Hugenholtzbocht parabolic bowl & Turn 14 Arie Luyendykbocht
+            4: 19.0, 22: 18.0, 23: 18.0, 24: 12.0,
+        },
     },
     "bahrain": {
         "name": "Bahrain International Circuit (Sakhir)",
         "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
         "rel_id": 284538,
         "fia_length": 5412.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1187,6 +1227,7 @@ GT_CIRCUITS = {
             (303311924, 634071195, 3076643588), (686335806, 3076643588, 1161613127), (686335807, 1161613127, 5411304502),
         ],
         "fia_length": 4940.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 11.5,
         "straight_width": 13.0,
@@ -1204,6 +1245,7 @@ GT_CIRCUITS = {
         "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
         "rel_id": 6537729,
         "fia_length": 5513.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1215,12 +1257,16 @@ GT_CIRCUITS = {
             # Steep Turn 1 uphill crest
             2: 2.0, 3: 4.5, 4: 2.5,
         },
+        "bank_angles": {
+            2: 5.0, 3: 5.0,  # Turn 1 steep uphill banking
+        },
     },
     "madring": {
         "name": "MadRing Circuito de Madrid",
         "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
         "rel_id": 18813472,
         "fia_length": 5474.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1235,6 +1281,7 @@ GT_CIRCUITS = {
         "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
         "rel_id": 38567,
         "fia_length": 5148.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1252,12 +1299,16 @@ GT_CIRCUITS = {
             # Schumacher-S crest
             11: 1.5, 12: 2.5, 13: 2.0,
         },
+        "bank_angles": {
+            1: 3.0, 12: 3.5,
+        },
     },
     "bathurst": {
         "name": "Mount Panorama (Bathurst)",
         "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
         "rel_id": 6942508,
         "fia_length": 6213.0,
+        "scale": 0.75,
         "num_waypoints": 32,
         "default_width": 12.5,
         "straight_width": 14.5,
@@ -1275,12 +1326,16 @@ GT_CIRCUITS = {
             # The Esses / Dipper steep descent
             12: 2.5, 13: 1.5, 14: 0.5,
         },
+        "bank_angles": {
+            1: 3.0, 20: 3.0,  # Hell Corner, The Chase
+        },
     },
     "portimao_gp": {
         "name": "Autodromo Internacional do Algarve",
         "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
         "rel_id": 7509968,
         "fia_length": 4653.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1293,12 +1348,26 @@ GT_CIRCUITS = {
         "module_id": "gt",
         "modules": ["gt"],
         "elevations": {
-            # Torre VIP hairpin crest & plunge
-            6: 2.0, 7: 4.0, 8: 3.0,
-            # Samsung crest
-            12: 2.0, 13: 3.0, 14: 2.0,
-            # Downhill plunge into Galp
-            24: 2.0, 25: 1.0,
+            # Spec 097: > 18m total vertical relief rollercoaster profile
+            0: 0.0, 1: 0.0, 2: 0.0, 3: 1.5, 4: 2.5,
+            # Turn 1 to 2 downhill plunge
+            5: -4.0,
+            # Turn 3 Lagos hairpin compression zone
+            6: -4.5,
+            # Turn 4 to Torre VIP steep climb
+            7: -3.0, 8: 1.5, 9: 6.5, 10: 10.0, 11: 11.5,
+            # Samsung crest and circuit peak
+            12: 13.0, 13: 14.0, 14: 8.0,
+            # Downhill plunge into Portimao basin
+            15: 3.0, 16: 0.0, 17: -2.0, 18: -2.0, 19: 0.0,
+            # Ascent to Turn 13-14
+            20: 2.0, 21: 3.0, 22: 3.0,
+            # Downhill plunge through Galp curve onto home straight
+            23: 3.0, 24: 2.0, 25: 1.0, 26: 0.5, 27: 0.0,
+        },
+        "bank_angles": {
+            # Turn 3 Lagos camber, Turn 13, and Turn 15 Galp downhill banking
+            6: 3.5, 21: 5.0, 24: 6.5, 25: 6.5, 26: 4.0,
         },
     },
     "le_mans_sarthe": {
@@ -1306,6 +1375,7 @@ GT_CIRCUITS = {
         "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
         "rel_id": 2126739,
         "fia_length": 13626.0,
+        "scale": 0.75,
         "num_waypoints": 36,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1320,6 +1390,9 @@ GT_CIRCUITS = {
         "elevations": {
             # Dunlop curve & bridge uphill crest
             1: 1.5, 2: 3.0, 3: 2.0,
+        },
+        "bank_angles": {
+            28: 4.0, 29: 4.0,  # Indianapolis & Porsche Curves
         },
     },
 }
@@ -1455,6 +1528,7 @@ def process_gt_circuit(cid, cache_dir):
     n = len(final_pts)
     waypoints = []
     custom_elevations = cfg.get("elevations", {})
+    custom_banks = cfg.get("bank_angles", cfg.get("corner_banks", {}))
 
     for i in range(n):
         x, y = final_pts[i]
@@ -1471,6 +1545,7 @@ def process_gt_circuit(cid, cache_dir):
             right_curb = True
 
         elev = custom_elevations.get(i, 0.0)
+        bank = custom_banks.get(i, 0.0) if isinstance(custom_banks, dict) else 0.0
 
         # Suzuka bridge elevation and corridor clearance
         wall_dist = None
@@ -1493,7 +1568,8 @@ def process_gt_circuit(cid, cache_dir):
             "width": round(width, 1),
             "left_curb": left_curb,
             "right_curb": right_curb,
-            "elevation": elev,
+            "elevation": round(elev, 1),
+            "bank_angle": round(bank, 1),
         }
         if wall_dist is not None:
             wp_entry["wall_dist"] = wall_dist
@@ -2766,11 +2842,11 @@ NASCAR_TRACKS = {
         "start_node": 1262000220,
         "start_offset_m": 257.0,  # main straight, level with the middle of the pit lane
         "official_length": 6515.0,
-        "scale": 0.5,
+        "scale": 0.75,
         "num_waypoints": 80,  # ~41 m spacing keeps the lap within ~5 m of the OSM line
         "width": 14.0,
         "straight_bank": 0.0,
-        "corner_banks": [0.0],
+        "corner_banks": [4.0],
         "kerbs": True,
     },
 }
@@ -3212,8 +3288,9 @@ def source_waypoint(w, discipline):
         "surface": surface,
         "elevation": round(w.get("elevation", 0.0), 1),
     }
-    if w.get("bank"):
-        wp["bank_angle"] = round(w["bank"], 1)
+    bank = w.get("bank_angle", w.get("bank", 0.0))
+    if bank:
+        wp["bank_angle"] = round(bank, 1)
     if "wall_dist" in w:
         wp["left_wall_distance"] = wp["right_wall_distance"] = round(w["wall_dist"], 1)
     return wp
@@ -3238,6 +3315,8 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
             track = json.load(f)
         if "pit_lane" in data and data["pit_lane"] is not None:
             track["pit_lane"] = data["pit_lane"]
+        if "scale" in data:
+            track["scale"] = f"{data['scale']:g}x" if data["scale"] != 1.0 else "1:1"
         if not pit_lane_only:
             track["spline"]["waypoints"] = waypoints
             track["spline"]["closed"] = True

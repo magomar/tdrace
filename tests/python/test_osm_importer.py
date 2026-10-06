@@ -403,3 +403,33 @@ def test_rescale_circuit_nonlinear_portimao():
     min_r = min(radius_through(rescaled[i - 1], rescaled[i], rescaled[(i + 1) % n]) for i in range(n))
     assert min_r >= 12.0, f"Min corner radius {min_r} is below 12.0m"
 
+
+def test_gt_circuits_scale_elevation_and_banking():
+    """Spec 097: All 18 GT circuits declare 0.75x, and key venues have authentic elevation and banking."""
+    for cid, cfg in imp.GT_CIRCUITS.items():
+        assert cfg.get("scale") == 0.75, f"{cid} does not declare scale 0.75"
+
+    # Zandvoort: 18-19 degree banking
+    zd = imp.process_gt_circuit("zandvoort", imp.DEFAULT_CACHE_DIR)
+    max_z_bank = max(w["bank_angle"] for w in zd["waypoints"])
+    assert max_z_bank >= 18.0
+
+    # Portimao: Turn 3 +3.5 deg, Galp +6.5 deg, and > 18m total vertical relief
+    pd = imp.process_gt_circuit("portimao_gp", imp.DEFAULT_CACHE_DIR)
+    max_p_bank = max(w["bank_angle"] for w in pd["waypoints"])
+    assert max_p_bank >= 6.5
+    assert pd["waypoints"][6]["bank_angle"] >= 3.5
+
+    p_elevs = [w["elevation"] for w in pd["waypoints"]]
+    relief = max(p_elevs) - min(p_elevs)
+    assert relief >= 18.0, f"Portimao elevation relief {relief} < 18.0m"
+
+    # Spa: Eau Rouge +12 deg
+    sd = imp.process_gt_circuit("spa", imp.DEFAULT_CACHE_DIR)
+    assert max(w["bank_angle"] for w in sd["waypoints"]) >= 12.0
+
+    # Monza: Parabolica +5 deg
+    md = imp.process_gt_circuit("monza", imp.DEFAULT_CACHE_DIR)
+    assert max(w["bank_angle"] for w in md["waypoints"]) >= 5.0
+
+
