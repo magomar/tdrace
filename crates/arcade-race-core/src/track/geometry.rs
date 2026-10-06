@@ -48,6 +48,12 @@ impl LineSegment {
         Vec2::new(-dir.y, dir.x)
     }
 
+    /// Midpoint of the segment.
+    #[inline]
+    pub fn midpoint(&self) -> Vec2 {
+        (self.start + self.end) * 0.5
+    }
+
     /// Finds the closest point on this line segment to an external query point `p`.
     #[inline]
     pub fn closest_point(&self, p: Vec2) -> Vec2 {
@@ -421,6 +427,22 @@ pub fn point_in_polygon(p: Vec2, vertices: &[Vec2]) -> bool {
         j = i;
     }
     inside
+}
+
+/// Standard 2D point-in-triangle containment test using 2D cross products.
+#[inline]
+pub fn point_in_triangle_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool {
+    let cross1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+    let cross2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
+    let cross3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);
+    (cross1 >= -1e-3 && cross2 >= -1e-3 && cross3 >= -1e-3)
+        || (cross1 <= 1e-3 && cross2 <= 1e-3 && cross3 <= 1e-3)
+}
+
+/// Tests whether point `p` lies inside the convex or non-self-intersecting quad ABCD.
+#[inline]
+pub fn point_in_quad_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
+    point_in_triangle_2d(p, a, b, c) || point_in_triangle_2d(p, a, c, d)
 }
 
 /// Layering depth of a surface zone relative to the drivable track ribbon.

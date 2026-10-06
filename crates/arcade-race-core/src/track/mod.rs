@@ -18,8 +18,9 @@ pub use network::{
     RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
 pub use geometry::{
-    point_in_polygon, BarrierType, JumpRamp, JumpRampCarExt, LineSegment, Obstacle, ObstacleShape,
-    PitBox, PitLane, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+    point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
+    JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, SpawnPose, SurfaceLayer,
+    SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
 };
 pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
@@ -380,6 +381,11 @@ impl Track {
             }
         }
 
+        // 3c. Pit lane road ribbon, pit boxes, and paved junction areas
+        if let Some(surf) = self.sample_pit_lane_surface(point) {
+            return surf;
+        }
+
         if let Some(proj) = proj {
             // 4. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
             let half_w = proj.track_width * 0.5;
@@ -493,6 +499,11 @@ impl Track {
             }
         }
 
+        // 3c. Pit lane road ribbon, pit boxes, and paved junction areas
+        if let Some(surf) = self.sample_pit_lane_surface(point) {
+            return surf;
+        }
+
         // 4. Segment runoff corridor check
         let half_w = proj.track_width * 0.5;
         let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
@@ -546,6 +557,124 @@ impl Track {
 
         // 8. Default terrain
         self.default_surface
+    }
+
+    /// Samples surface type for pit lane road ribbon, pit boxes, and paved junction areas.
+    pub fn sample_pit_lane_surface(&self, point: Vec2) -> Option<SurfaceType> {
+        if let Some(ref lane) = self.pit_lane {
+            // 1. Pit lane drivable road ribbon
+            if lane.spline.samples.len() >= 2 {
+                let proj = lane.spline.project_point(point);
+                if proj.is_on_track {
+                    return Some(proj.base_surface);
+                }
+                if proj.is_on_curb {
+                    return Some(SurfaceType::Curb);
+                }
+            }
+
+            // 2. Pit service box stalls
+            for pit_box in &lane.pit_boxes {
+                if pit_box.contains_point(point) {
+                    return Some(SurfaceType::Asphalt);
+                }
+            }
+
+            // 3. Paved entrance throat and exit merge junction areas
+            let n_pit = lane.spline.samples.len();
+            if n_pit >= 4 && self.spline.samples.len() >= 4 {
+                let pit_hw = lane.road_width * 0.5;
+
+                // Determine stable pit_side from midpoint
+                let mid_idx = n_pit / 2;
+                let mid_sample = &lane.spline.samples[mid_idx];
+                let mid_proj = self.spline.project_point(mid_sample.point);
+                let mid_to_pit = mid_sample.point - mid_proj.closest_point;
+                let pit_side = if mid_to_pit.dot(mid_proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
+
+                // A. Entrance throat: between sample 0 and gore apex
+                let mut apex_idx = None;
+                for (i, s) in lane.spline.samples.iter().enumerate().take(n_pit / 2) {
+                    let proj = self.spline.project_point(s.point);
+                    let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
+                    let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
+                    let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
+                    if gap >= 1.2 {
+                        apex_idx = Some(i);
+                        break;
+                    }
+                }
+
+                if let Some(apex_idx) = apex_idx {
+                    for i in 0..apex_idx {
+                        let s0 = &lane.spline.samples[i];
+                        let s1 = &lane.spline.samples[i + 1];
+                        let p0 = self.spline.project_point(s0.point);
+                        let p1 = self.spline.project_point(s1.point);
+                        let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                        let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                        let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                        let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+                        if point_in_quad_2d(point, te0, te1, pe1, pe0) {
+                            return Some(SurfaceType::Asphalt);
+                        }
+                    }
+
+                    // Gore triangle
+                    let s_apex = &lane.spline.samples[apex_idx];
+                    let proj_apex = self.spline.project_point(s_apex.point);
+                    let track_edge_apex = proj_apex.closest_point + proj_apex.normal * (pit_side * proj_apex.track_width * 0.5);
+                    let pit_inner_apex = s_apex.point - proj_apex.normal * (pit_side * pit_hw);
+                    let p_apex = (track_edge_apex + pit_inner_apex) * 0.5;
+                    let s_start = &lane.spline.samples[0];
+                    let p_start = self.spline.project_point(s_start.point);
+                    let te_start = p_start.closest_point + p_start.normal * (pit_side * p_start.track_width * 0.5);
+                    let pe_start = s_start.point - p_start.normal * (pit_side * pit_hw);
+                    if point_in_triangle_2d(point, p_apex, track_edge_apex, pit_inner_apex)
+                        || point_in_quad_2d(point, te_start, track_edge_apex, pit_inner_apex, pe_start)
+                    {
+                        return Some(SurfaceType::Asphalt);
+                    }
+                }
+
+                // B. Exit merge taper
+                let mut merge_start_idx = None;
+                for i in (n_pit / 2..n_pit).rev() {
+                    let s = &lane.spline.samples[i];
+                    let proj = self.spline.project_point(s.point);
+                    let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
+                    let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
+                    let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
+                    if gap >= 1.2 {
+                        merge_start_idx = Some(i);
+                        break;
+                    }
+                }
+                if let Some(merge_idx) = merge_start_idx {
+                    for i in merge_idx..n_pit - 1 {
+                        let s0 = &lane.spline.samples[i];
+                        let s1 = &lane.spline.samples[i + 1];
+                        let p0 = self.spline.project_point(s0.point);
+                        let p1 = self.spline.project_point(s1.point);
+                        let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                        let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                        let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                        let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+                        if point_in_quad_2d(point, te0, te1, pe1, pe0) {
+                            return Some(SurfaceType::Asphalt);
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(ref shape) = self.pit_box_area {
+            if shape.contains(point) {
+                return Some(SurfaceType::Asphalt);
+            }
+        }
+
+        None
     }
 
     /// Projects a 2D world position onto the track centerline or any of its network segments.
@@ -976,9 +1105,16 @@ impl Track {
         if lane.spline.samples.len() < 4 || self.spline.samples.len() < 4 { return; }
 
         let pit_w = lane.road_width;
+        let pit_half_w = pit_w * 0.5;
         let mut dividing_wall_pts: Vec<Vec2> = Vec::new();
         let mut outer_wall_pts: Vec<Vec2> = Vec::new();
-        let mut pit_side = 0.0f32;
+
+        // Determine which side of the track the pit lane is on using the midpoint of the pit spline
+        let mid_idx = lane.spline.samples.len() / 2;
+        let mid_sample = &lane.spline.samples[mid_idx];
+        let mid_proj = self.spline.project_point(mid_sample.point);
+        let mid_to_pit = mid_sample.point - mid_proj.closest_point;
+        let pit_side = if mid_to_pit.dot(mid_proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
 
         for s in &lane.spline.samples {
             let proj = self.spline.project_point(s.point);
@@ -986,40 +1122,39 @@ impl Track {
                 continue;
             }
             let track_half_w = proj.track_width * 0.5;
-            let pit_half_w = pit_w * 0.5;
-
-            // Determine which side of the track the pit lane is on
-            let to_pit = s.point - proj.closest_point;
-            let side_dot = to_pit.dot(proj.normal);
-            let side = if side_dot >= 0.0 { 1.0f32 } else { -1.0f32 };
-            if pit_side == 0.0 {
-                pit_side = side;
-            }
 
             // Coordinates of the two adjacent edges
-            let track_edge = proj.closest_point + proj.normal * (side * track_half_w);
-            let pit_inner_edge = s.point - proj.normal * (side * pit_half_w);
+            let track_edge = proj.closest_point + proj.normal * (pit_side * track_half_w);
+            let pit_inner_edge = s.point - proj.normal * (pit_side * pit_half_w);
 
-            let gap_dist = (pit_inner_edge - track_edge).dot(proj.normal * side);
+            let gap_dist = (pit_inner_edge - track_edge).dot(proj.normal * pit_side);
 
-            // The dividing pit wall sits where there is a valid clearance gap between track edge and pit road
-            if gap_dist >= 1.2 && gap_dist <= 6.0 {
-                let wall_pt = (track_edge + pit_inner_edge) * 0.5;
+            // The dividing pit wall sits where there is clearance between track and pit road
+            if gap_dist >= 1.2 {
+                let buf = (gap_dist * 0.5).min(1.0);
+                let wall_pt = pit_inner_edge - proj.normal * (pit_side * buf);
                 let check_main = self.spline.project_point(wall_pt);
                 let check_pit = lane.spline.project_point(wall_pt);
                 let curb_extra = if check_main.left_curb || check_main.right_curb { 1.4 } else { 0.0 };
                 if check_main.distance_to_spline >= (check_main.track_width * 0.5 + curb_extra + 0.3)
-                    && check_pit.distance_to_spline >= (lane.road_width * 0.5 + 0.3)
+                    && check_pit.lateral_offset.abs() >= (pit_half_w + 0.2)
                 {
                     if dividing_wall_pts.is_empty() || dividing_wall_pts.last().unwrap().distance(wall_pt) >= 1.0 {
                         dividing_wall_pts.push(wall_pt);
                     }
                 }
+            }
 
-                let outer_pt = s.point + proj.normal * (side * (pit_half_w + 2.0));
+            // The outer retaining wall sits on the outer flank along the parallel working lane
+            if gap_dist >= 2.5 {
+                let pit_normal = Vec2::new(-s.tangent.y, s.tangent.x);
+                let outer_pt = s.point + pit_normal * (pit_side * (pit_half_w + 1.5));
                 let check_outer_main = self.spline.project_point(outer_pt);
+                let check_outer_pit = lane.spline.project_point(outer_pt);
                 let outer_curb = if check_outer_main.left_curb || check_outer_main.right_curb { 1.4 } else { 0.0 };
-                if check_outer_main.distance_to_spline >= (check_outer_main.track_width * 0.5 + outer_curb + 0.5) {
+                if check_outer_main.distance_to_spline >= (check_outer_main.track_width * 0.5 + outer_curb + 0.5)
+                    && check_outer_pit.lateral_offset.abs() >= (pit_half_w + 0.5)
+                {
                     if outer_wall_pts.is_empty() || outer_wall_pts.last().unwrap().distance(outer_pt) >= 1.0 {
                         outer_wall_pts.push(outer_pt);
                     }
@@ -1028,51 +1163,67 @@ impl Track {
         }
 
         if dividing_wall_pts.len() >= 2 {
-            // Check if dividing pit wall already exists to prevent duplicate walls
-            let wall_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
-                .any(|w| (w.segment.start.distance(dividing_wall_pts[0]) < 1.0 && w.segment.end.distance(dividing_wall_pts[1]) < 1.0)
-                      || (w.segment.start.distance(dividing_wall_pts[1]) < 1.0 && w.segment.end.distance(dividing_wall_pts[0]) < 1.0));
-
-            if !wall_exists {
-                // Build continuous segments for the dividing pit wall
-                for i in 0..dividing_wall_pts.len() - 1 {
-                    let p0 = dividing_wall_pts[i];
-                    let p1 = dividing_wall_pts[i + 1];
-                    if (p1 - p0).length() < 0.1 { continue; }
-                    let check_m0 = self.spline.project_point(p0);
-                    let check_m1 = self.spline.project_point(p1);
-                    let curb_m0 = if check_m0.left_curb || check_m0.right_curb { 1.4 } else { 0.0 };
-                    let curb_m1 = if check_m1.left_curb || check_m1.right_curb { 1.4 } else { 0.0 };
-                    if check_m0.distance_to_spline < (check_m0.track_width * 0.5 + curb_m0 + 0.25)
-                        || check_m1.distance_to_spline < (check_m1.track_width * 0.5 + curb_m1 + 0.25)
-                    {
-                        continue;
+            // Build continuous segments for the dividing pit wall
+            for i in 0..dividing_wall_pts.len() - 1 {
+                let p0 = dividing_wall_pts[i];
+                let p1 = dividing_wall_pts[i + 1];
+                let len = (p1 - p0).length();
+                if len < 0.1 || len > 4.0 { continue; }
+                let penetrates = [p0, p1, (p0 + p1) * 0.5].iter().any(|pt| {
+                    let check_m = self.spline.project_point(*pt);
+                    let curb_m = if check_m.left_curb || check_m.right_curb { 1.4 } else { 0.0 };
+                    if check_m.distance_to_spline < (check_m.track_width * 0.5 + curb_m + 0.25) {
+                        return true;
                     }
-                    let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
-                    let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
-                        .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
-                    if !intersects_existing {
-                        if pit_side > 0.0 {
-                            self.geometry.inner_walls.push(wall);
-                        } else {
-                            self.geometry.outer_walls.push(wall);
-                        }
+                    let check_p = lane.spline.project_point(*pt);
+                    if check_p.lateral_offset.abs() < (pit_half_w - 0.25) {
+                        return true;
+                    }
+                    false
+                });
+                if penetrates {
+                    continue;
+                }
+                let seg_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                    .any(|w| (w.segment.start.distance(p0) < 0.3 && w.segment.end.distance(p1) < 0.3)
+                          || (w.segment.start.distance(p1) < 0.3 && w.segment.end.distance(p0) < 0.3));
+                if seg_exists {
+                    continue;
+                }
+                let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
+                let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                    .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
+                if !intersects_existing {
+                    if pit_side > 0.0 {
+                        self.geometry.inner_walls.push(wall);
+                    } else {
+                        self.geometry.outer_walls.push(wall);
                     }
                 }
+            }
 
-                // Place an impact attenuator barrier at the entrance gore apex (first station)
-                let p_apex = dividing_wall_pts[0];
-                let dir_fwd = (dividing_wall_pts[1] - dividing_wall_pts[0]).normalize_or_zero();
-                let dir_trans = Vec2::new(-dir_fwd.y, dir_fwd.x);
-                let p_att_0 = p_apex - dir_trans * 0.8;
-                let p_att_1 = p_apex + dir_trans * 0.8;
-                let c_a0 = self.spline.project_point(p_att_0);
-                let c_a1 = self.spline.project_point(p_att_1);
-                let curb_a0 = if c_a0.left_curb || c_a0.right_curb { 1.4 } else { 0.0 };
-                let curb_a1 = if c_a1.left_curb || c_a1.right_curb { 1.4 } else { 0.0 };
-                if c_a0.distance_to_spline >= (c_a0.track_width * 0.5 + curb_a0 + 0.3)
-                    && c_a1.distance_to_spline >= (c_a1.track_width * 0.5 + curb_a1 + 0.3)
-                {
+            // Place an impact attenuator barrier at the entrance gore apex (first station)
+            let p_apex = dividing_wall_pts[0];
+            let dir_fwd = (dividing_wall_pts[1] - dividing_wall_pts[0]).normalize_or_zero();
+            let dir_trans = Vec2::new(-dir_fwd.y, dir_fwd.x);
+            let p_att_0 = p_apex - dir_trans * 0.8;
+            let p_att_1 = p_apex + dir_trans * 0.8;
+            let c_a0 = self.spline.project_point(p_att_0);
+            let c_a1 = self.spline.project_point(p_att_1);
+            let curb_a0 = if c_a0.left_curb || c_a0.right_curb { 1.4 } else { 0.0 };
+            let curb_a1 = if c_a1.left_curb || c_a1.right_curb { 1.4 } else { 0.0 };
+            let p_a0 = lane.spline.project_point(p_att_0);
+            let p_a1 = lane.spline.project_point(p_att_1);
+            let p_amid = lane.spline.project_point((p_att_0 + p_att_1) * 0.5);
+            if c_a0.distance_to_spline >= (c_a0.track_width * 0.5 + curb_a0 + 0.3)
+                && c_a1.distance_to_spline >= (c_a1.track_width * 0.5 + curb_a1 + 0.3)
+                && p_a0.lateral_offset.abs() >= (pit_half_w - 0.25)
+                && p_a1.lateral_offset.abs() >= (pit_half_w - 0.25)
+                && p_amid.lateral_offset.abs() >= (pit_half_w - 0.25)
+            {
+                let att_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                    .any(|w| w.barrier_type == BarrierType::TireWall && (w.segment.start.distance(p_att_0) < 1.0 || w.segment.midpoint().distance(p_apex) < 1.5));
+                if !att_exists {
                     let attenuator = WallBarrier::new(p_att_0, p_att_1, BarrierType::TireWall);
                     let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
                         .any(|w| w.segment.intersect_segment(&attenuator.segment).is_some());
@@ -1088,24 +1239,40 @@ impl Track {
         }
 
         if outer_wall_pts.len() >= 2 {
-            let outer_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
-                .any(|w| (w.segment.start.distance(outer_wall_pts[0]) < 1.0 && w.segment.end.distance(outer_wall_pts[1]) < 1.0)
-                      || (w.segment.start.distance(outer_wall_pts[1]) < 1.0 && w.segment.end.distance(outer_wall_pts[0]) < 1.0));
-
-            if !outer_exists {
-                for i in 0..outer_wall_pts.len() - 1 {
-                    let p0 = outer_wall_pts[i];
-                    let p1 = outer_wall_pts[i + 1];
-                    if (p1 - p0).length() < 0.1 { continue; }
-                    let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
-                    let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
-                        .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
-                    if !intersects_existing {
-                        if pit_side > 0.0 {
-                            self.geometry.inner_walls.push(wall);
-                        } else {
-                            self.geometry.outer_walls.push(wall);
-                        }
+            for i in 0..outer_wall_pts.len() - 1 {
+                let p0 = outer_wall_pts[i];
+                let p1 = outer_wall_pts[i + 1];
+                let len = (p1 - p0).length();
+                if len < 0.1 || len > 4.0 { continue; }
+                let penetrates = [p0, p1, (p0 + p1) * 0.5].iter().any(|pt| {
+                    let check_m = self.spline.project_point(*pt);
+                    let curb_m = if check_m.left_curb || check_m.right_curb { 1.4 } else { 0.0 };
+                    if check_m.distance_to_spline < (check_m.track_width * 0.5 + curb_m + 0.25) {
+                        return true;
+                    }
+                    let check_p = lane.spline.project_point(*pt);
+                    if check_p.lateral_offset.abs() < (pit_half_w - 0.25) {
+                        return true;
+                    }
+                    false
+                });
+                if penetrates {
+                    continue;
+                }
+                let seg_exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                    .any(|w| (w.segment.start.distance(p0) < 0.3 && w.segment.end.distance(p1) < 0.3)
+                          || (w.segment.start.distance(p1) < 0.3 && w.segment.end.distance(p0) < 0.3));
+                if seg_exists {
+                    continue;
+                }
+                let wall = WallBarrier::new(p0, p1, BarrierType::Concrete);
+                let intersects_existing = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls)
+                    .any(|w| w.segment.intersect_segment(&wall.segment).is_some());
+                if !intersects_existing {
+                    if pit_side > 0.0 {
+                        self.geometry.inner_walls.push(wall);
+                    } else {
+                        self.geometry.outer_walls.push(wall);
                     }
                 }
             }
@@ -1866,5 +2033,74 @@ mod tests {
         assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::Gravel));
         assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::DeepSand));
         assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::Gravel));
+    }
+
+    #[test]
+    fn test_pit_lane_surface_sampling_and_walls() {
+        use super::geometry::{PitBox, PitLane};
+        use super::spline::TrackWaypoint;
+
+        // Main track: straight from x = -50 to x = 100 at y = 0
+        let main_waypoints = vec![
+            TrackWaypoint::new(Vec2::new(-50.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 12.0),
+            TrackWaypoint::new(Vec2::new(100.0, 50.0), 12.0),
+            TrackWaypoint::new(Vec2::new(-50.0, 50.0), 12.0),
+        ];
+
+        // Pit lane on driver's right (-y): parallel straight at y = -14.0
+        let pit_waypoints = vec![
+            TrackWaypoint::new(Vec2::new(-30.0, -6.0), 7.0),
+            TrackWaypoint::new(Vec2::new(-10.0, -14.0), 7.0),
+            TrackWaypoint::new(Vec2::new(20.0, -14.0), 7.0),
+            TrackWaypoint::new(Vec2::new(50.0, -14.0), 7.0),
+            TrackWaypoint::new(Vec2::new(70.0, -6.0), 7.0),
+        ];
+
+        let pit_lane = PitLane {
+            spline: TrackSpline::new(pit_waypoints, false),
+            road_width: 7.0,
+            speed_limit: 16.67,
+            pit_boxes: vec![
+                PitBox {
+                    position: Vec2::new(20.0, -15.8),
+                    direction: Vec2::X,
+                    stop_radius: 3.0,
+                    elevation: 0.0,
+                },
+            ],
+            entry_gate: LineSegment::new(Vec2::new(-10.0, -17.5), Vec2::new(-10.0, -10.5)),
+            exit_gate: LineSegment::new(Vec2::new(50.0, -17.5), Vec2::new(50.0, -10.5)),
+        };
+
+        let mut track = Track {
+            name: "Pit Test GP".to_string(),
+            default_surface: SurfaceType::Grass,
+            car_category: CarCategory::Gt,
+            spline: TrackSpline::new(main_waypoints, true),
+            pit_lane: Some(pit_lane),
+            modules: vec!["gt".to_string()],
+            ..Default::default()
+        };
+
+        // 1. Surface sampling tests:
+        // A. On pit road centerline (x = 20, y = -14.0) -> Asphalt
+        assert_eq!(track.sample_surface(Vec2::new(20.0, -14.0)), SurfaceType::Asphalt);
+        // B. Inside pit box (x = 20, y = -15.8) -> Asphalt
+        assert_eq!(track.sample_surface(Vec2::new(20.0, -15.8)), SurfaceType::Asphalt);
+        // C. Off track away from pit and track (x = 20, y = -30.0) -> Grass
+        assert_eq!(track.sample_surface(Vec2::new(20.0, -30.0)), SurfaceType::Grass);
+
+        // 2. Pit wall generation:
+        track.generate_pit_lane_walls();
+        assert!(!track.geometry.outer_walls.is_empty() || !track.geometry.inner_walls.is_empty(),
+            "Pit lane wall generation should produce dividing and outer walls");
+
+        // 3. Validation:
+        let errors = track.validate();
+        let blocking = errors.iter().filter(|e| e.code == "ERR_WALL_BLOCKS_PIT_LANE").count();
+        assert_eq!(blocking, 0, "No walls should block pit lane: {:?}", errors);
     }
 }
