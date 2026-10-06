@@ -84,6 +84,18 @@ fn test_all_presets_have_positive_chassis_bounds() {
         CarConfig::rally_car(),
         CarConfig::stock_car_ta1(),
         CarConfig::sand_rail(),
+        CarConfig::cross_car(),
+        CarConfig::touring_ax(),
+        CarConfig::super_buggy(),
+        CarConfig::dune_buggy_baja(),
+        CarConfig::trophy_truck(),
+        CarConfig::mud_bogger(),
+        CarConfig::monster_truck(),
+        CarConfig::rally_junior_fwd(),
+        CarConfig::rally_group_b(),
+        CarConfig::rally_electric_rx(),
+        CarConfig::superkart_gp(),
+        CarConfig::stock_car_truck(),
     ];
 
     for cfg in presets {
@@ -92,4 +104,52 @@ fn test_all_presets_have_positive_chassis_bounds() {
         assert!(cfg.chassis.body_width > cfg.track_width * 0.5, "body width must be realistic");
         assert!(cfg.chassis.total_length(cfg.wheelbase) > cfg.wheelbase, "total length must exceed wheelbase");
     }
+}
+
+#[test]
+fn test_modality_chassis_platforms_spec_094() {
+    use wheelbase::config::{EnginePlacement, SuspensionArchetype};
+
+    // Scenario 2: Touring AX geometry
+    let touring = CarConfig::touring_ax();
+    assert!(touring.track_width >= 1.85, "Touring AX track width must be >= 1.85m");
+    assert!(touring.chassis.front_overhang >= 0.80, "Touring AX front overhang must be >= 0.80m");
+    assert_eq!(touring.engine_placement, EnginePlacement::FrontEngine);
+
+    // Scenario 3: Volkskraft Dune Buggy vs Sand Rail geometry
+    let dune = CarConfig::dune_buggy_baja();
+    let rail = CarConfig::sand_rail();
+    assert!(dune.chassis.front_overhang >= 0.40, "Dune Buggy Baja front overhang must be >= 0.40m");
+    assert!(dune.chassis.rear_overhang >= 0.50, "Dune Buggy Baja rear overhang must be >= 0.50m");
+    assert_eq!(dune.engine_placement, EnginePlacement::RearEngine);
+    assert!(rail.chassis.front_overhang <= 0.18, "Sand Rail needle nose front overhang must be <= 0.18m");
+
+    // Scenario 4: Trophy Truck and Monster Truck collision hulls
+    let trophy = CarConfig::trophy_truck();
+    let trophy_hull_len = trophy.chassis.total_length(trophy.wheelbase);
+    assert!(trophy_hull_len >= 5.0, "Trophy Truck total length must be >= 5.0m (was {})", trophy_hull_len);
+
+    let monster = CarConfig::monster_truck();
+    assert!(monster.chassis.body_width >= 2.6, "Monster Truck body width must be >= 2.6m");
+    let sand_rail_len = rail.chassis.total_length(rail.wheelbase);
+    assert!(trophy_hull_len > sand_rail_len + 1.5, "Trophy truck must not be constrained by sand rail hull");
+
+    // Other modality archetypes
+    let rally_jr = CarConfig::rally_junior_fwd();
+    assert_eq!(rally_jr.drive_bias, 1.0);
+    assert_eq!(rally_jr.engine_placement, EnginePlacement::FrontEngine);
+    assert_eq!(rally_jr.suspension.front.archetype, SuspensionArchetype::MacPhersonStrut);
+
+    let group_b = CarConfig::rally_group_b();
+    assert_eq!(group_b.drive_bias, 0.5);
+    assert_eq!(group_b.engine_placement, EnginePlacement::MidEngine);
+
+    let superkart = CarConfig::superkart_gp();
+    assert!(superkart.downforce_coefficient >= 0.60);
+    assert_eq!(superkart.suspension.front.archetype, SuspensionArchetype::RigidKart);
+
+    let stock_truck = CarConfig::stock_car_truck();
+    assert!(stock_truck.chassis.front_overhang >= 0.90);
+    assert!(stock_truck.chassis.rear_overhang >= 1.20);
+    assert_eq!(stock_truck.suspension.rear.archetype, SuspensionArchetype::SolidLiveAxle);
 }
