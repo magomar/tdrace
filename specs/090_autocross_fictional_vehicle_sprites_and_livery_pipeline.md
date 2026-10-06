@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Autocross Fictional Vehicle Sprites and Livery Pipeline"
 description: "End-to-end asset generation pipeline delivering 45 2D textures (15 lateral 1024x512, 15 thumb 256x128, 15 top-down 512x512) for all 5 tiers of the Continental Autocross fleet, facing right (+X), inspired by authentic racing liveries with zero IP markings."
-status: superseded
+status: implemented
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-05T12:11:12Z }
 verified: { by: "human:mario", at: "2026-10-05T17:40:00Z", hash: "dfc7bbf7efb3" }
