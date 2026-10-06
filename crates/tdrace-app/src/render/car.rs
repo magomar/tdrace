@@ -9,8 +9,8 @@ use super::lighting::{resolve_vehicle_lighting, VehicleLightingConfig};
 use super::track::draw_quad;
 use crate::module::VehicleVisualType;
 
-static PORSCHE_GT3R_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
-static PORSCHE_TOPDOWN_CACHE: std::sync::Mutex<Option<std::collections::HashMap<(u32, u32), Texture2D>>> = std::sync::Mutex::new(None);
+static VANDORN_ARROWHEAD_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png");
+static VANDORN_ARROWHEAD_TOPDOWN_CACHE: std::sync::Mutex<Option<std::collections::HashMap<(u32, u32), Texture2D>>> = std::sync::Mutex::new(None);
 
 #[inline]
 fn color_to_u32(c: Color) -> u32 {
@@ -20,19 +20,19 @@ fn color_to_u32(c: Color) -> u32 {
     (r << 16) | (g << 8) | b
 }
 
-/// Retrieves or dynamically generates a colorway-tinted top-down texture for the Porsche 911 GT3 R.
-pub fn get_tinted_porsche_topdown(primary: Color, secondary: Color) -> Texture2D {
+/// Retrieves or dynamically generates a colorway-tinted top-down texture for the Vandorn Arrowhead R T2.
+pub fn get_tinted_vandorn_arrowhead_topdown(primary: Color, secondary: Color) -> Texture2D {
     let k1 = color_to_u32(primary);
     let k2 = color_to_u32(secondary);
 
-    let mut guard = PORSCHE_TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    let mut guard = VANDORN_ARROWHEAD_TOPDOWN_CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let map = guard.get_or_insert_with(std::collections::HashMap::new);
     if let Some(tex) = map.get(&(k1, k2)) {
         return tex.clone();
     }
 
-    let base_img = macroquad::texture::Image::from_file_with_format(PORSCHE_GT3R_PNG, None)
-        .expect("failed to load porsche topdown PNG");
+    let base_img = macroquad::texture::Image::from_file_with_format(VANDORN_ARROWHEAD_PNG, None)
+        .expect("failed to load vandorn arrowhead topdown PNG");
     let mut tinted = base_img.clone();
     for pixel in tinted.bytes.chunks_exact_mut(4) {
         let a = pixel[3];
@@ -64,8 +64,8 @@ pub fn get_tinted_porsche_topdown(primary: Color, secondary: Color) -> Texture2D
     texture
 }
 
-pub fn porsche_gt3r_texture() -> Texture2D {
-    get_tinted_porsche_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
+pub fn vandorn_arrowhead_texture() -> Texture2D {
+    get_tinted_vandorn_arrowhead_topdown(Color::new(0.92, 0.92, 0.94, 1.0), Color::new(0.48, 0.85, 0.12, 1.0))
 }
 
 /// Renders vehicle lighting based on the resolved modality lighting profile.
@@ -182,15 +182,12 @@ pub fn render_wheel_shadow(pos: Vec2, angle: f32, size: Vec2, alpha: f32) {
     draw_quad(p0, p1, p2, p3, shadow_color);
 }
 
-/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle,
-/// with procedural compound accent coloring on the outer sidewall rim lip.
-pub fn draw_steered_wheel_with_accent(
+/// Renders an individual standalone steered wheel sprite rotated to its absolute world angle.
+pub fn draw_steered_wheel(
     texture: &Texture2D,
     pos: Vec2,
     angle: f32,
     size: Vec2,
-    accent: Option<Color>,
-    is_left: bool,
 ) {
     let dest_w = size.x;
     let dest_h = size.y;
@@ -206,29 +203,19 @@ pub fn draw_steered_wheel_with_accent(
             ..Default::default()
         },
     );
-
-    if let Some(col) = accent {
-        let tire_fwd = Vec2::new(angle.cos(), angle.sin());
-        let tire_right = Vec2::new(angle.sin(), -angle.cos());
-        let outer_dir = if is_left { -tire_right } else { tire_right };
-
-        // Sidewall outer lip colored highlight stripe (Spec 074)
-        let lip_pos = pos + outer_dir * (dest_w * 0.42);
-        let p_start = lip_pos - tire_fwd * (dest_h * 0.35);
-        let p_end = lip_pos + tire_fwd * (dest_h * 0.35);
-        let stripe_thickness = (dest_w * 0.16).clamp(0.02, 0.05);
-        draw_line(p_start.x, p_start.y, p_end.x, p_end.y, stripe_thickness, col);
-    }
 }
 
 /// Renders an individual standalone steered wheel sprite rotated to its absolute world angle.
-pub fn draw_steered_wheel(
+/// Deprecated in Spec 089: procedural compound accent stripes have been removed from world view.
+pub fn draw_steered_wheel_with_accent(
     texture: &Texture2D,
     pos: Vec2,
     angle: f32,
     size: Vec2,
+    _accent: Option<Color>,
+    _is_left: bool,
 ) {
-    draw_steered_wheel_with_accent(texture, pos, angle, size, None, false);
+    draw_steered_wheel(texture, pos, angle, size);
 }
 
 /// Renders steered front wheels with ground shadows and exact Ackermann geometry.
@@ -254,7 +241,7 @@ pub fn render_steered_wheels(
     draw_steered_wheel(ctx.wheel_texture, p_fr, ang_fr, ctx.config.wheel_size);
 }
 
-/// Renders a high-detail top-down sprite for the Porsche 911 GT3 R (992).
+/// Renders a high-detail top-down sprite for the Vandorn Arrowhead R T2.
 pub fn render_porsche_gt3r_sprite(
     chassis_center: Vec2,
     angle: f32,
@@ -266,7 +253,7 @@ pub fn render_porsche_gt3r_sprite(
     secondary: Color,
     is_braking: bool,
 ) {
-    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_porsche_911_gt3r", primary, secondary) {
+    if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_texture("gt_vandorn_arrowhead_t2", primary, secondary) {
         let lighting_cfg = VehicleLightingConfig::gt_touring();
         render_vehicle_topdown_sprite(
             &texture,
@@ -422,13 +409,10 @@ pub fn render_car_with_visual_type_model_and_shadows(
                     render_wheel_shadow(p_fr + shadow_offset, ang_fr, wheel_size * shadow_scale, shadow_alpha);
                 }
 
-                let accent_rgba = car.config.wheels[0].compound.id.accent_rgba();
-                let accent = Some(Color::new(accent_rgba[0], accent_rgba[1], accent_rgba[2], accent_rgba[3]));
-
                 // 2. UnderChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
-                    draw_steered_wheel_with_accent(w_tex, p_fl, ang_fl, wheel_size, accent, true);
-                    draw_steered_wheel_with_accent(w_tex, p_fr, ang_fr, wheel_size, accent, false);
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
                 }
 
                 // 3. Chassis bodywork
@@ -446,8 +430,8 @@ pub fn render_car_with_visual_type_model_and_shadows(
 
                 // 4. OverChassis wheels
                 if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
-                    draw_steered_wheel_with_accent(w_tex, p_fl, ang_fl, wheel_size, accent, true);
-                    draw_steered_wheel_with_accent(w_tex, p_fr, ang_fr, wheel_size, accent, false);
+                    draw_steered_wheel(w_tex, p_fl, ang_fl, wheel_size);
+                    draw_steered_wheel(w_tex, p_fr, ang_fr, wheel_size);
                 }
 
                 return;

@@ -1,0 +1,4188 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "kart_pine_grove",
+      "name": "Pine Grove",
+      "module": "classic",
+      "category": "kart",
+      "tag": "OUTDOOR SPRINT",
+      "category_label": "Karting",
+      "description": "High-speed outdoor kart sprint through pine woods with flowing sweepers, a sweeping hairpin, and a quick chicane.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 8,
+      "length_m": 392.8,
+      "min_width_m": 8.0,
+      "max_width_m": 8.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/kart_pine_grove.svg"
+    },
+    {
+      "id": "kart_riverbend_circuit",
+      "name": "Riverbend Circuit",
+      "module": "classic",
+      "category": "kart",
+      "tag": "TECHNICAL CLUB",
+      "category_label": "Karting",
+      "description": "Technical outdoor club circuit featuring double-apex sweepers, flowing esses, and wide hairpin complexes.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 7,
+      "length_m": 605.6,
+      "min_width_m": 8.0,
+      "max_width_m": 8.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/kart_riverbend_circuit.svg"
+    },
+    {
+      "id": "kart_summit_international",
+      "name": "Summit International",
+      "module": "classic",
+      "category": "kart",
+      "tag": "GRAND PRIX",
+      "category_label": "Karting",
+      "description": "Championship-grade international outdoor kart circuit featuring long drafting straights, multi-apex carousels, and high-commitment esses.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 6,
+      "length_m": 763.4,
+      "min_width_m": 8.0,
+      "max_width_m": 8.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/kart_summit_international.svg"
+    },
+    {
+      "id": "rx_quarry_sprint",
+      "name": "Quarry Sprint",
+      "module": "classic",
+      "category": "rally",
+      "tag": "QUARRY RX",
+      "category_label": "Rallycross",
+      "description": "Fast mixed-surface quarry circuit with sweeping dirt bends, asphalt straights and three tabletop jumps.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 6,
+      "length_m": 783.2,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 52.0
+        },
+        {
+          "surface": "Gravel",
+          "share_pct": 28.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 19.9
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/classic/rx_quarry_sprint.svg"
+    },
+    {
+      "id": "rx_hilltop_leap",
+      "name": "Hilltop Leap",
+      "module": "classic",
+      "category": "rally",
+      "tag": "HILLTOP RX",
+      "category_label": "Rallycross",
+      "description": "Rolling rallycross track with a start straight crest, hilltop jumps and a gravel hairpin.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 938.6,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 40.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 30.3
+        },
+        {
+          "surface": "Gravel",
+          "share_pct": 29.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/classic/rx_hilltop_leap.svg"
+    },
+    {
+      "id": "rx_canyon_flyer",
+      "name": "Canyon Flyer",
+      "module": "classic",
+      "category": "rally",
+      "tag": "CANYON RX",
+      "category_label": "Rallycross",
+      "description": "Challenging canyon rallycross with a water gap jump, a whoops rhythm section and technical dirt esses.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1193.2,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 43.1
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 32.6
+        },
+        {
+          "surface": "Gravel",
+          "share_pct": 24.4
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/classic/rx_canyon_flyer.svg"
+    },
+    {
+      "id": "ax_meadow_sprint",
+      "name": "Meadow Sprint",
+      "module": "classic",
+      "category": "autocross",
+      "tag": "MEADOW AX",
+      "category_label": "Autocross",
+      "description": "Flowing countryside autocross track with sweeping clay turns, elevation crests and a banked berm.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 6,
+      "length_m": 860.2,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Gravel",
+          "share_pct": 40.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 33.9
+        },
+        {
+          "surface": "PackedSand",
+          "share_pct": 25.9
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/ax_meadow_sprint.svg"
+    },
+    {
+      "id": "ax_clay_bowl",
+      "name": "Clay Bowl",
+      "module": "classic",
+      "category": "autocross",
+      "tag": "CLAY BOWL",
+      "category_label": "Autocross",
+      "description": "Technical autocross amphitheatre with 3 banked berms, a downhill hairpin and a concrete launch pad.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1029.0,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 65.1
+        },
+        {
+          "surface": "PackedSand",
+          "share_pct": 16.6
+        },
+        {
+          "surface": "Gravel",
+          "share_pct": 14.0
+        },
+        {
+          "surface": "Concrete",
+          "share_pct": 4.4
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/ax_clay_bowl.svg"
+    },
+    {
+      "id": "ax_hillside_hammer",
+      "name": "Hillside Hammer",
+      "module": "classic",
+      "category": "autocross",
+      "tag": "HILLSIDE AX",
+      "category_label": "Autocross",
+      "description": "Brutal hillside autocross climb with off-camber turns, a summit hairpin and high-speed crests.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1292.2,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 60.7
+        },
+        {
+          "surface": "Gravel",
+          "share_pct": 25.1
+        },
+        {
+          "surface": "PackedSand",
+          "share_pct": 14.2
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/ax_hillside_hammer.svg"
+    },
+    {
+      "id": "gt_velocity_park",
+      "name": "Velocity Park",
+      "module": "classic",
+      "category": "gt",
+      "tag": "POWER CIRCUIT",
+      "category_label": "GT Circuit",
+      "description": "High-speed GT circuit featuring two long straights ending in heavy braking chicanes with vast asphalt runoffs.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1482.3,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/gt_velocity_park.svg"
+    },
+    {
+      "id": "gt_ridge_ring",
+      "name": "Ridge Ring",
+      "module": "classic",
+      "category": "gt",
+      "tag": "HILL CIRCUIT",
+      "category_label": "GT Circuit",
+      "description": "Undulating GT circuit climbing to an 8-meter ridge crest before plunging down through flowing esses and a technical hairpin.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1437.8,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/gt_ridge_ring.svg"
+    },
+    {
+      "id": "gt_coastal_grand_prix",
+      "name": "Coastal Grand Prix",
+      "module": "classic",
+      "category": "gt",
+      "tag": "GRAND PRIX",
+      "category_label": "GT Circuit",
+      "description": "Premier coastal Grand Prix circuit featuring a 410 m blast, an elevated 5-meter plateau, a sweeping 165-degree seaside carousel, and the notorious bus-stop chicane.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 1873.8,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/gt_coastal_grand_prix.svg"
+    },
+    {
+      "id": "stock_thunder_bowl",
+      "name": "Thunder Bowl",
+      "module": "classic",
+      "category": "nascar",
+      "tag": "SHORT TRACK",
+      "category_label": "Stock Oval",
+      "description": "High-banked short-track colosseum featuring 25-degree banked concrete turns and thunderous pack racing.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 10,
+      "length_m": 498.3,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Concrete",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/stock_thunder_bowl.svg"
+    },
+    {
+      "id": "stock_tri_oval_speedway",
+      "name": "Tri-Oval Speedway",
+      "module": "classic",
+      "category": "nascar",
+      "tag": "TRI-OVAL",
+      "category_label": "Stock Oval",
+      "description": "Superspeedway tri-oval with 20-degree banked turns, an 8-degree front-stretch dogleg and high-speed drafting.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 6,
+      "length_m": 1098.2,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/stock_tri_oval_speedway.svg"
+    },
+    {
+      "id": "stock_roval",
+      "name": "Roval",
+      "module": "classic",
+      "category": "nascar",
+      "tag": "ROVAL",
+      "category_label": "Stock Roval",
+      "description": "Hybrid oval and road course combining high-banked 18-degree oval turns with a technical infield hairpin and chicane.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1388.0,
+      "min_width_m": 14.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/stock_roval.svg"
+    },
+    {
+      "id": "at_dune_sea",
+      "name": "Dune Sea",
+      "module": "classic",
+      "category": "off_road",
+      "tag": "SAND DUNES",
+      "category_label": "All-Terrain",
+      "description": "Rolling desert all-terrain circuit with sweeping sand dunes, dune crest leaps, tabletop ramps, and a desert oasis.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1204.3,
+      "min_width_m": 15.0,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/at_dune_sea.svg"
+    },
+    {
+      "id": "at_mudbath_valley",
+      "name": "Mudbath Valley",
+      "module": "classic",
+      "category": "off_road",
+      "tag": "MUD BATH",
+      "category_label": "All-Terrain",
+      "description": "Treacherous off-road mud arena through sunken river valleys, deep mud bogs, standing water puddles, a whoops section and an 8-meter hill.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 947.0,
+      "min_width_m": 15.0,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "MudTrack",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/at_mudbath_valley.svg"
+    },
+    {
+      "id": "at_frostbite_pass",
+      "name": "Frostbite Pass",
+      "module": "classic",
+      "category": "off_road",
+      "tag": "SNOW PASS",
+      "category_label": "All-Terrain",
+      "description": "Sub-zero mountain circuit climbing over a treacherous 10-meter alpine snow pass before sweeping across a frozen sheet-ice glacial lake.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1158.8,
+      "min_width_m": 15.0,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "PackedSnow",
+          "share_pct": 89.6
+        },
+        {
+          "surface": "SheetIce",
+          "share_pct": 10.4
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/classic/at_frostbite_pass.svg"
+    },
+    {
+      "id": "lonato",
+      "name": "South Garda Karting (Lonato)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "MECCA OF KARTING",
+      "category_label": "World Championship",
+      "description": "The global Mecca of Karting featuring Curva del Paddock, Pettine hairpin, and Variante Nuova.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+      "osm_url": "https://www.openstreetmap.org/way/75490872",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1101.7,
+      "min_width_m": 5.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/lonato.svg"
+    },
+    {
+      "id": "sarno",
+      "name": "Circuito Internazionale Napoli (Sarno)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "TEMPLE OF SPEED",
+      "category_label": "World Championship",
+      "description": "The Temple of Speed under Mount Vesuvius with massive full-throttle straights and technical Esses.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuito_Internazionale_Napoli",
+      "osm_url": "https://www.openstreetmap.org/way/643206090",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1451.6,
+      "min_width_m": 6.0,
+      "max_width_m": 9.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/sarno.svg"
+    },
+    {
+      "id": "genk",
+      "name": "Karting Genk (Home of Champions)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "HOME OF CHAMPIONS",
+      "category_label": "World Championship",
+      "description": "Legendary Belgian proving grounds featuring the high-G G-Curve carousel, Europabocht, and Champions Chicane.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Karting_Genk",
+      "osm_url": "https://www.openstreetmap.org/way/67660672",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1275.7,
+      "min_width_m": 5.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/genk.svg"
+    },
+    {
+      "id": "pfi",
+      "name": "PF International Kart Circuit",
+      "module": "kart",
+      "category": "kart",
+      "tag": "FLYOVER CROSSOVER",
+      "category_label": "World Championship",
+      "description": "Britain's premier FIA kart venue featuring the world-famous elevated flyover crossover bridge and underpass.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/PF_International",
+      "osm_url": "https://www.openstreetmap.org/way/1208588289",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1290.7,
+      "min_width_m": 5.5,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/pfi.svg"
+    },
+    {
+      "id": "zuera",
+      "name": "Circuito Internacional de Zuera",
+      "module": "kart",
+      "category": "kart",
+      "tag": "SPANISH SUPERTRACK",
+      "category_label": "World Championship",
+      "description": "Ultra-fast Spanish supertrack with enormous drafting straights, Curva del Cierzo, and wide passing sweepers.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Zuera",
+      "osm_url": "https://www.openstreetmap.org/way/490212650",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1619.2,
+      "min_width_m": 6.5,
+      "max_width_m": 10.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/zuera.svg"
+    },
+    {
+      "id": "le_mans_kart",
+      "name": "Le Mans Karting International",
+      "module": "kart",
+      "category": "kart",
+      "tag": "24H LE MANS ARENA",
+      "category_label": "World Championship",
+      "description": "Alain Prost circuit at the Le Mans 24 Hours complex with Dunlop chicane, Bugatti Esses, and Courbe des 24H.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Alain_Prost",
+      "osm_url": "https://www.openstreetmap.org/way/482284812",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1325.9,
+      "min_width_m": 7.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/le_mans_kart.svg"
+    },
+    {
+      "id": "portimao_kart",
+      "name": "Kartodromo Internacional do Algarve",
+      "module": "kart",
+      "category": "kart",
+      "tag": "ALGARVE ROLLERCOASTER",
+      "category_label": "World Championship",
+      "description": "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.",
+      "kind": "circuit",
+      "country_code": "PT",
+      "country_name": "Portugal",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Algarve_International_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/363049742",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1506.6,
+      "min_width_m": 8.0,
+      "max_width_m": 9.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/portimao_kart.svg"
+    },
+    {
+      "id": "franciacorta",
+      "name": "Franciacorta Karting Track",
+      "module": "kart",
+      "category": "kart",
+      "tag": "CHAMPIONSHIP BENCHMARK",
+      "category_label": "World Championship",
+      "description": "Modern premier Italian world championship venue with technical switchback chicanes and trail-braking hairpins.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Autodromo_di_Franciacorta",
+      "osm_url": "https://www.openstreetmap.org/way/1474753177",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1231.0,
+      "min_width_m": 8.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/franciacorta.svg"
+    },
+    {
+      "id": "wackersdorf",
+      "name": "Prokart Raceland Wackersdorf",
+      "module": "kart",
+      "category": "kart",
+      "tag": "GERMAN ARENA",
+      "category_label": "World Championship",
+      "description": "Premier German CIK-FIA World Championship kart venue featuring fast chicane sweeps, long drafting straights, and technical hairpins.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Wackersdorf",
+      "osm_url": "https://www.openstreetmap.org/way/156019609",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1103.0,
+      "min_width_m": 6.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/wackersdorf.svg"
+    },
+    {
+      "id": "kristianstad",
+      "name": "Kristianstad Karting Klubb (Åsum Ring)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "SWEDISH WORLD CIRCUIT",
+      "category_label": "World Championship",
+      "description": "Historic Swedish European and World Championship circuit famous for technical rhythm sections, elevation sweeps, and high-G esses.",
+      "kind": "circuit",
+      "country_code": "SE",
+      "country_name": "Sweden",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Kristianstad",
+      "osm_url": "https://www.openstreetmap.org/way/87888593",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1130.3,
+      "min_width_m": 4.5,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/kristianstad.svg"
+    },
+    {
+      "id": "seven_laghi",
+      "name": "Circuito Internazionale 7 Laghi",
+      "module": "kart",
+      "category": "kart",
+      "tag": "PAVIA SWITCHBACKS",
+      "category_label": "World Championship",
+      "description": "Demanding Italian proving ground in Castelletto di Branduzzo featuring technical switchbacks, heavy trail-braking hairpins, and undulating sweepers.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Castelletto_di_Branduzzo",
+      "osm_url": "https://www.openstreetmap.org/way/80905675",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1181.3,
+      "min_width_m": 6.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/seven_laghi.svg"
+    },
+    {
+      "id": "ampfing",
+      "name": "Schweppermannring Ampfing",
+      "module": "kart",
+      "category": "kart",
+      "tag": "BAVARIAN OUTDOOR",
+      "category_label": "World Championship",
+      "description": "Famous Bavarian outdoor kart arena with flowing mid-speed esses, double-apex hairpin turns, and high-speed drafting straights.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Ampfing",
+      "osm_url": "https://www.openstreetmap.org/way/110580562",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 923.1,
+      "min_width_m": 6.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/ampfing.svg"
+    },
+    {
+      "id": "silverstone_national_kart",
+      "name": "Silverstone National Karting Circuit",
+      "module": "kart",
+      "category": "kart",
+      "tag": "NATIONAL SPRINT",
+      "category_label": "Sprint Arena",
+      "description": "The agile National sprint layout at the premier Kart Silverstone complex, featuring snappy switchbacks, Priory hairpin, and tight apex rumble curbs.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/1526452831",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 489.1,
+      "min_width_m": 6.5,
+      "max_width_m": 8.8,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/silverstone_national_kart.svg"
+    },
+    {
+      "id": "valencia_kart",
+      "name": "Kartodromo Lucas Guerrero (Valencia)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "VALENCIAN ARENA",
+      "category_label": "World Championship",
+      "description": "Premier Spanish championship venue in Chiva featuring sweeping esses, technical hairpins, and wide overtaking zones.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Chiva,_Spain",
+      "osm_url": "https://www.openstreetmap.org/way/751513226",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1407.3,
+      "min_width_m": 6.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/valencia_kart.svg"
+    },
+    {
+      "id": "campillos",
+      "name": "Kartcenter Campillos",
+      "module": "kart",
+      "category": "kart",
+      "tag": "ANDALUSIAN SPEEDWAY",
+      "category_label": "World Championship",
+      "description": "FIA Karting World Championship venue in Andalusia featuring fast sweeping curves, undulating esses, and technical braking zones.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Campillos",
+      "osm_url": "https://www.openstreetmap.org/way/639076279",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1550.8,
+      "min_width_m": 6.5,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/campillos.svg"
+    },
+    {
+      "id": "laval_kart",
+      "name": "Laval - Circuit Louis Beuvron",
+      "module": "kart",
+      "category": "kart",
+      "tag": "CADET CRADLE",
+      "category_label": "World Championship",
+      "description": "Historic French CIK-FIA cadet proving ground with undulating esses and heavy braking hairpins.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Laval,_Mayenne",
+      "osm_url": "https://www.openstreetmap.org/way/183330357",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1213.1,
+      "min_width_m": 8.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/laval_kart.svg"
+    },
+    {
+      "id": "whilton_mill",
+      "name": "Whilton Mill Kart Circuit",
+      "module": "kart",
+      "category": "kart",
+      "tag": "CLUB CADET APEX",
+      "category_label": "World Championship",
+      "description": "Northamptonshire premier kart venue featuring technical elevation drops and apex curb hopping.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Whilton",
+      "osm_url": "https://www.openstreetmap.org/relation/16338535",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1031.9,
+      "min_width_m": 5.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/whilton_mill.svg"
+    },
+    {
+      "id": "aunay_kart",
+      "name": "Circuit International d'Aunay-les-Bois",
+      "module": "kart",
+      "category": "kart",
+      "tag": "NORMANDY WORLD KZ ARENA",
+      "category_label": "World Championship",
+      "description": "Prestigious CIK-FIA Grade 1 karting circuit in Normandy featuring downhill Parabolique and fast technical chicanes.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+      "osm_url": "https://www.openstreetmap.org/way/121084004",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1152.7,
+      "min_width_m": 5.0,
+      "max_width_m": 9.2,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/aunay_kart.svg"
+    },
+    {
+      "id": "muelsen_kart",
+      "name": "Motorsport Arena Mülsen (Arena E)",
+      "module": "kart",
+      "category": "kart",
+      "tag": "SAXON HIGH SPEED ARENA",
+      "category_label": "World Championship",
+      "description": "Ultra-modern German CIK-FIA Grade 1 arena with high-speed drafting straights, banked esses, and challenging hairpins.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+      "osm_url": "https://www.openstreetmap.org/way/814876031",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1233.5,
+      "min_width_m": 6.5,
+      "max_width_m": 9.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/muelsen_kart.svg"
+    },
+    {
+      "id": "adria_kart",
+      "name": "Adria Karting Raceway",
+      "module": "kart",
+      "category": "kart",
+      "tag": "VENETO NIGHT RACING TEMPLE",
+      "category_label": "World Championship",
+      "description": "State-of-the-art night-illuminated Italian international kart circuit with elevated paddock bridge and sweeping switchbacks.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Karting",
+      "osm_url": "https://www.openstreetmap.org/way/798432703",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1227.7,
+      "min_width_m": 6.0,
+      "max_width_m": 9.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/kart/adria_kart.svg"
+    },
+    {
+      "id": "nova_paka_ax",
+      "name": "Nová Paka - Štikovská rokle",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX CZECH REPUBLIC",
+      "category_label": "FIA Autocross",
+      "description": "The legendary cathedral of European Autocross. Brutal 25-meter elevation drops, high-speed clay bowls, and unpredictable terrain changes.",
+      "kind": "circuit",
+      "country_code": "CZ",
+      "country_name": "Czech Republic",
+      "scale": "1:1",
+      "wikipedia_url": "https://cs.wikipedia.org/wiki/%C5%A0tikovsk%C3%A1_rokle",
+      "osm_url": "https://www.openstreetmap.org/way/166701854",
+      "is_inspired": false,
+      "default_laps": 6,
+      "length_m": 1045.6,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/nova_paka_ax.svg"
+    },
+    {
+      "id": "prerov_ax",
+      "name": "Přerov - Přerovská rokle",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX CZECH REPUBLIC",
+      "category_label": "FIA Autocross",
+      "description": "Historic Moravian dirt cathedral famed for the terrifying 15-meter 'Mamut' jump drop and deep amphitheatre sweepers.",
+      "kind": "circuit",
+      "country_code": "CZ",
+      "country_name": "Czech Republic",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/P%C5%99erov",
+      "osm_url": "https://www.openstreetmap.org/way/159576897",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 996.1,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/prerov_ax.svg"
+    },
+    {
+      "id": "humpolec_ax",
+      "name": "Humpolec - Pod Vilémovským lomem",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX CZECH REPUBLIC",
+      "category_label": "FIA Autocross",
+      "description": "Quarry-side natural amphitheatre with high-grip loam berms, blind crests, and fast sweeping technical turns.",
+      "kind": "circuit",
+      "country_code": "CZ",
+      "country_name": "Czech Republic",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Humpolec",
+      "osm_url": "https://www.openstreetmap.org/way/100006815",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 977.3,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/humpolec_ax.svg"
+    },
+    {
+      "id": "matschenberg_ax",
+      "name": "Matschenberg Offroad Arena",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX GERMANY",
+      "category_label": "FIA Autocross",
+      "description": "The fastest dirt circuit in Europe, set in Upper Lusatia with a radical 30-meter vertical plunge into a high-speed clay bowl.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://de.wikipedia.org/wiki/Cunewalde",
+      "osm_url": "https://www.openstreetmap.org/way/1363616670",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1129.1,
+      "min_width_m": 6.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/matschenberg_ax.svg"
+    },
+    {
+      "id": "seelow_ax",
+      "name": "Circuit Am Weinberg Seelow",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX GERMANY",
+      "category_label": "FIA Autocross",
+      "description": "Traditional season opener for the FIA European Championship in Brandenburg, featuring wide sandy banked turns.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://de.wikipedia.org/wiki/Seelow",
+      "osm_url": "https://www.openstreetmap.org/way/119083954",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1138.3,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/seelow_ax.svg"
+    },
+    {
+      "id": "schluechtern_ax",
+      "name": "Ewald-Pauli-Ring Schlüchtern",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX GERMANY",
+      "category_label": "FIA Autocross",
+      "description": "Technical Hessian hillside circuit demanding precise throttle control through rutted clay off-camber hairpins.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://de.wikipedia.org/wiki/Schl%C3%BCchtern",
+      "osm_url": "https://www.openstreetmap.org/way/134067270",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1146.7,
+      "min_width_m": 9.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/schluechtern_ax.svg"
+    },
+    {
+      "id": "uelzen_ax",
+      "name": "Uhlenköper-Ring Uelzen",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX GERMANY",
+      "category_label": "FIA Autocross",
+      "description": "Undulating northern German dirt venue in Lower Saxony with technical rhythm sections, jumps, and tight clay corners.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://de.wikipedia.org/wiki/Uelzen",
+      "osm_url": "https://www.openstreetmap.org/way/62020741",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 805.6,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/uelzen_ax.svg"
+    },
+    {
+      "id": "st_georges_ax",
+      "name": "Circuit du Bouvreau Saint-Georges",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX FRANCE",
+      "category_label": "FIA Autocross",
+      "description": "The Temple of French Autocross in Vendée, hosting 20,000 spectators around high-speed banked red clay bowls.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://fr.wikipedia.org/wiki/Saint-Georges-de-Montaigu",
+      "osm_url": "https://www.openstreetmap.org/way/674904429",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 914.4,
+      "min_width_m": 7.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/st_georges_ax.svg"
+    },
+    {
+      "id": "faleyras_ax",
+      "name": "Circuit de Faleyras",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX FRANCE",
+      "category_label": "FIA Autocross",
+      "description": "Prestigious French natural amphitheatre track in Gironde with dramatic elevation plunges and wide dirt bowls.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://fr.wikipedia.org/wiki/Faleyras",
+      "osm_url": "https://www.openstreetmap.org/way/808191053",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1105.5,
+      "min_width_m": 7.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/faleyras_ax.svg"
+    },
+    {
+      "id": "st_junien_ax",
+      "name": "Circuit de Saint-Junien",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX FRANCE",
+      "category_label": "FIA Autocross",
+      "description": "Classic French national autocross venue in Haute-Vienne featuring fast sweeping turns and technical chicanes.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://fr.wikipedia.org/wiki/Saint-Junien",
+      "osm_url": "https://www.openstreetmap.org/way/685441292",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1241.8,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/st_junien_ax.svg"
+    },
+    {
+      "id": "bazaigues_ax",
+      "name": "Circuit de Bazaigues",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX FRANCE",
+      "category_label": "FIA Autocross",
+      "description": "Technical French sprint track in Indre with rolling terrain and wide, multi-line dirt hairpins.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://fr.wikipedia.org/wiki/Bazaiges",
+      "osm_url": "https://www.openstreetmap.org/way/803500149",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1025.3,
+      "min_width_m": 6.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/bazaigues_ax.svg"
+    },
+    {
+      "id": "maggiora_ax",
+      "name": "Autodromo Pragiarolo Maggiora",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX ITALY",
+      "category_label": "FIA Autocross",
+      "description": "Legendary Italian dirt colosseum in Piedmont with dramatic cambers, high-speed esses, and blind crests.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "1:1",
+      "wikipedia_url": "https://it.wikipedia.org/wiki/Maggiora",
+      "osm_url": "https://www.openstreetmap.org/way/152379106",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1350.9,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/maggiora_ax.svg"
+    },
+    {
+      "id": "musa_ax",
+      "name": "Mūsa Raceland Bauska",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX LATVIA",
+      "category_label": "FIA Autocross",
+      "description": "The Baltic autocross capital in Latvia, known for its ultra-wide sandy loam surface in a scenic natural bowl.",
+      "kind": "circuit",
+      "country_code": "LV",
+      "country_name": "Latvia",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bauska",
+      "osm_url": "https://www.openstreetmap.org/way/131117868",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1076.0,
+      "min_width_m": 9.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/musa_ax.svg"
+    },
+    {
+      "id": "vilkyciai_ax",
+      "name": "Vilkyčiai Autosporto Kompleksas",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX LITHUANIA",
+      "category_label": "FIA Autocross",
+      "description": "Demanding Lithuanian circuit with natural gullies, heavy braking zones, and deep wheel ruts.",
+      "kind": "circuit",
+      "country_code": "LT",
+      "country_name": "Lithuania",
+      "scale": "1:1",
+      "wikipedia_url": "https://lt.wikipedia.org/wiki/Vilky%C4%8Diai",
+      "osm_url": "https://www.openstreetmap.org/way/431154657",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1256.4,
+      "min_width_m": 9.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/vilkyciai_ax.svg"
+    },
+    {
+      "id": "arteixo_ax",
+      "name": "Circuito José Ramón Losada Arteixo",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX SPAIN",
+      "category_label": "FIA Autocross",
+      "description": "'La Catedral' of Spanish Autocross in Galicia, featuring high-speed stadium carousels lined with thousands of fans.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://es.wikipedia.org/wiki/Arteijo",
+      "osm_url": "https://www.openstreetmap.org/way/192380335",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1317.9,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/arteixo_ax.svg"
+    },
+    {
+      "id": "carballo_ax",
+      "name": "Circuito Motor Bértoa Carballo",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX SPAIN",
+      "category_label": "FIA Autocross",
+      "description": "Galician technical dirt bowl with sharp switchbacks, elevation changes, and high traction demand.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://es.wikipedia.org/wiki/Carballo_(La_Coru%C3%B1a)",
+      "osm_url": "https://www.openstreetmap.org/way/854048813",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 950.0,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/carballo_ax.svg"
+    },
+    {
+      "id": "castelo_branco_ax",
+      "name": "Parque de Desportos Motorizados Castelo Branco",
+      "module": "autocross",
+      "category": "autocross",
+      "tag": "EURO AX PORTUGAL",
+      "category_label": "FIA Autocross",
+      "description": "Premier Portuguese off-road venue with undulating high-traction clay and loose shale margins.",
+      "kind": "circuit",
+      "country_code": "PT",
+      "country_name": "Portugal",
+      "scale": "1:1",
+      "wikipedia_url": "https://pt.wikipedia.org/wiki/Castelo_Branco",
+      "osm_url": "https://www.openstreetmap.org/way/436180509",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1206.5,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/autocross/castelo_branco_ax.svg"
+    },
+    {
+      "id": "holjes_rx",
+      "name": "Höljes Motorstadion",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX SWEDEN",
+      "category_label": "World RX",
+      "description": "The holy grail of Rallycross featuring the iconic Höljes jump crest, banked Velodrome & mixed gravel sliding.",
+      "kind": "circuit",
+      "country_code": "SE",
+      "country_name": "Sweden",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/H%C3%B6ljes_Motorstadion",
+      "osm_url": "https://www.openstreetmap.org/way/599300791",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1194.6,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 63.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.8
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/holjes_rx.svg"
+    },
+    {
+      "id": "lydden_hill",
+      "name": "Lydden Hill Race Circuit",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX GREAT BRITAIN",
+      "category_label": "World RX",
+      "description": "The historic birthplace of Rallycross featuring Chessons Drift gravel slide, North Bend & Devil's Elbow.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lydden_Hill_Race_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/234347787",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1158.8,
+      "min_width_m": 9.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 64.0
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lydden_hill.svg"
+    },
+    {
+      "id": "hell_rx",
+      "name": "Lånkebanen / Hell RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX NORWAY",
+      "category_label": "World RX",
+      "description": "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
+      "kind": "circuit",
+      "country_code": "NO",
+      "country_name": "Norway",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/L%C3%A5nkebanen",
+      "osm_url": "https://www.openstreetmap.org/way/1069390967",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1004.3,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 67.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 32.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/hell_rx.svg"
+    },
+    {
+      "id": "loheac_rx",
+      "name": "Circuit de Lohéac",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX FRANCE",
+      "category_label": "World RX",
+      "description": "The French Rallycross classic with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Loh%C3%A9ac",
+      "osm_url": "https://www.openstreetmap.org/way/787615501",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1078.9,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 61.0
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 39.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/loheac_rx.svg"
+    },
+    {
+      "id": "estering_rx",
+      "name": "Estering Buxtehude",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX GERMANY",
+      "category_label": "World RX",
+      "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Estering",
+      "osm_url": "https://www.openstreetmap.org/way/267094190",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 936.9,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 69.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 30.8
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/estering_rx.svg"
+    },
+    {
+      "id": "montalegre_rx",
+      "name": "Pista de Montalegre",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX PORTUGAL",
+      "category_label": "World RX",
+      "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
+      "kind": "circuit",
+      "country_code": "PT",
+      "country_name": "Portugal",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Montalegre",
+      "osm_url": "https://www.openstreetmap.org/way/1096210264",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1024.2,
+      "min_width_m": 10.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 64.5
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 35.5
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/montalegre_rx.svg"
+    },
+    {
+      "id": "nyirad_rx",
+      "name": "Nyirád Racing Center",
+      "module": "rally",
+      "category": "rally",
+      "tag": "EURO RX HUNGARY",
+      "category_label": "Euro RX",
+      "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
+      "kind": "circuit",
+      "country_code": "HU",
+      "country_name": "Hungary",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Nyir%C3%A1d",
+      "osm_url": "https://www.openstreetmap.org/way/172413357",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1081.1,
+      "min_width_m": 9.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 60.0
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 40.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/nyirad_rx.svg"
+    },
+    {
+      "id": "kouvola_rx",
+      "name": "Tykkimäen Moottorirata",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX FINLAND",
+      "category_label": "World RX",
+      "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
+      "kind": "circuit",
+      "country_code": "FI",
+      "country_name": "Finland",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Tykkim%C3%A4ki",
+      "osm_url": "https://www.openstreetmap.org/way/149713976",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 965.8,
+      "min_width_m": 7.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 50.4
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 49.6
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/kouvola_rx.svg"
+    },
+    {
+      "id": "catalunya_rx",
+      "name": "Barcelona-Catalunya RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX SPAIN",
+      "category_label": "World RX",
+      "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
+      "osm_url": "https://www.openstreetmap.org/relation/11362868",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1077.8,
+      "min_width_m": 8.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 60.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 39.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/catalunya_rx.svg"
+    },
+    {
+      "id": "mettet_rx",
+      "name": "Circuit Jules Tacheny Mettet",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX BELGIUM",
+      "category_label": "World RX",
+      "description": "Fast technical Belgian rallycross circuit featuring the iconic Mettet dirt jump, rapid asphalt sweeper and tight infield hairpin.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet",
+      "osm_url": "https://www.openstreetmap.org/way/178240082",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1113.4,
+      "min_width_m": 10.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 57.3
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 42.7
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/mettet_rx.svg"
+    },
+    {
+      "id": "lavare_rx",
+      "name": "Circuit de Lavaré",
+      "module": "rally",
+      "category": "rally",
+      "tag": "EURO RX FRANCE",
+      "category_label": "Euro RX",
+      "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lavar%C3%A9",
+      "osm_url": "https://www.openstreetmap.org/relation/11752542",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1063.5,
+      "min_width_m": 10.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 56.6
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 43.4
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lavare_rx.svg"
+    },
+    {
+      "id": "riga_rx",
+      "name": "Biķernieku Trase / Riga RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX LATVIA",
+      "category_label": "World RX",
+      "description": "Historic Riga forest arena featuring high-grip parallel asphalt drags, double jump crests and heavy-braking sandy gravel switchbacks.",
+      "kind": "circuit",
+      "country_code": "LV",
+      "country_name": "Latvia",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bi%C4%B7ernieku_Kompleks%C4%81_Sporta_B%C4%81ze",
+      "osm_url": "https://www.openstreetmap.org/way/588947722",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1031.1,
+      "min_width_m": 7.5,
+      "max_width_m": 13.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 51.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 48.8
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/riga_rx.svg"
+    },
+    {
+      "id": "killarney_rx",
+      "name": "Killarney International Raceway RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX SOUTH AFRICA",
+      "category_label": "World RX",
+      "description": "Cape Town rallycross thriller with Table Mountain backdrop, fast straight, technical infield dirt kickers and sweeping final turn.",
+      "kind": "circuit",
+      "country_code": "ZA",
+      "country_name": "South Africa",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex",
+      "osm_url": "https://www.openstreetmap.org/way/42125321",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1054.2,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 53.5
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 46.5
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/killarney_rx.svg"
+    },
+    {
+      "id": "lessay_rx",
+      "name": "Circuit de Lessay",
+      "module": "rally",
+      "category": "rally",
+      "tag": "FRENCH RX",
+      "category_label": "Euro RX",
+      "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lessay",
+      "osm_url": "https://www.openstreetmap.org/way/788196389",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 883.6,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 57.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 42.2
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lessay_rx.svg"
+    },
+    {
+      "id": "essay_rx",
+      "name": "Circuit des Ducs / Essay RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX FRANCE",
+      "category_label": "World RX",
+      "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, technical sweeping switchbacks, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Essay,_Orne",
+      "osm_url": "https://www.openstreetmap.org/relation/10968337",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 920.4,
+      "min_width_m": 9.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 63.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/essay_rx.svg"
+    },
+    {
+      "id": "dreux_rx",
+      "name": "Dreux Circuit de l'Ouest Parisien",
+      "module": "rally",
+      "category": "rally",
+      "tag": "EURO RX FRANCE",
+      "category_label": "Euro RX",
+      "description": "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Dreux",
+      "osm_url": "https://www.openstreetmap.org/relation/10950539",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1045.4,
+      "min_width_m": 8.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 56.8
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 43.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/dreux_rx.svg"
+    },
+    {
+      "id": "croft_rx",
+      "name": "Croft Rallycross Circuit",
+      "module": "rally",
+      "category": "rally",
+      "tag": "BRITISH RX",
+      "category_label": "Euro RX",
+      "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Croft_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/21228308",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1243.7,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 55.8
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 44.2
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/croft_rx.svg"
+    },
+    {
+      "id": "spa_rx",
+      "name": "Spa-Francorchamps RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX SPA RAIDILLON",
+      "category_label": "World RX",
+      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
+      "osm_url": "https://www.openstreetmap.org/way/234804574",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1028.3,
+      "min_width_m": 13.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 67.5
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 32.5
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/spa_rx.svg"
+    },
+    {
+      "id": "silverstone_rx",
+      "name": "Silverstone Circuit RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "WORLD RX SPEEDMACHINE",
+      "category_label": "World RX",
+      "description": "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/169851260",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 957.4,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 60.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 39.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/silverstone_rx.svg"
+    },
+    {
+      "id": "erx_motor_park",
+      "name": "ERX Motor Park RX",
+      "module": "rally",
+      "category": "rally",
+      "tag": "NITROCROSS ERX GAP JUMP",
+      "category_label": "Nitrocross",
+      "description": "Premier Nitrocross all-dirt amphitheater in Minnesota featuring the iconic 70-foot stadium gap jump, banked clay switchbacks and rolling rhythm rollers.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Nitrocross",
+      "osm_url": "https://www.openstreetmap.org/way/1023648273",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1145.6,
+      "min_width_m": 13.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 85.6
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 14.4
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/erx_motor_park.svg"
+    },
+    {
+      "id": "monza",
+      "name": "Monza Autodromo Nazionale",
+      "module": "gt",
+      "category": "gt",
+      "tag": "TEMPLE OF SPEED",
+      "category_label": "Official GP Circuit",
+      "description": "Iconic high-speed Italian Grand Prix circuit with Variante Rettifilo and Parabolica.",
+      "kind": "circuit",
+      "country_code": "IT",
+      "country_name": "Italy",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Monza_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/284565",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2838.6,
+      "min_width_m": 13.5,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/monza.svg"
+    },
+    {
+      "id": "red_bull_ring",
+      "name": "Red Bull Ring",
+      "module": "gt",
+      "category": "gt",
+      "tag": "AUSTRIAN ALPS",
+      "category_label": "Official GP Circuit",
+      "description": "Undulating Austrian alpine sprint circuit with steep climbs and heavy braking into Remus.",
+      "kind": "circuit",
+      "country_code": "AT",
+      "country_name": "Austria",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Red_Bull_Ring",
+      "osm_url": "https://www.openstreetmap.org/relation/5309181",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2063.3,
+      "min_width_m": 13.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/red_bull_ring.svg"
+    },
+    {
+      "id": "nurburgring_gp",
+      "name": "Nurburgring Grand Prix-Strecke",
+      "module": "gt",
+      "category": "gt",
+      "tag": "EIFEL MOTORSPORT MECCA",
+      "category_label": "Official GP Circuit",
+      "description": "Modern German GP circuit featuring the Castrol-S, Dunlop hairpin, and Schumacher S.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/N%C3%BCrburgring",
+      "osm_url": "https://www.openstreetmap.org/relation/38567",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2389.2,
+      "min_width_m": 9.5,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/nurburgring_gp.svg"
+    },
+    {
+      "id": "silverstone",
+      "name": "Silverstone Grand Prix Circuit",
+      "module": "gt",
+      "category": "gt",
+      "tag": "HOME OF BRITISH MOTORSPORT",
+      "category_label": "Official GP Circuit",
+      "description": "Ultra-fast flowing esses through Maggotts, Becketts, Chapel, and Stowe.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/51160",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2794.1,
+      "min_width_m": 6.5,
+      "max_width_m": 13.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/silverstone.svg"
+    },
+    {
+      "id": "catalunya",
+      "name": "Circuit de Barcelona-Catalunya",
+      "module": "gt",
+      "category": "gt",
+      "tag": "SPANISH GP BENCHMARK",
+      "category_label": "Official GP Circuit",
+      "description": "Premier aerodynamic benchmark testing high-speed downforce and technical precision.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
+      "osm_url": "https://www.openstreetmap.org/way/831804327",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2217.0,
+      "min_width_m": 9.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/catalunya.svg"
+    },
+    {
+      "id": "bathurst",
+      "name": "Mount Panorama Circuit (Bathurst)",
+      "module": "gt",
+      "category": "gt",
+      "tag": "MOUNTAIN ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "Legendary Australian mountain course through the Cutting, Skyline, the Dipper, and Conrod Straight.",
+      "kind": "circuit",
+      "country_code": "AU",
+      "country_name": "Australia",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Mount_Panorama_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/6942508",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2979.6,
+      "min_width_m": 12.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/bathurst.svg"
+    },
+    {
+      "id": "spa",
+      "name": "Circuit de Spa-Francorchamps",
+      "module": "gt",
+      "category": "gt",
+      "tag": "ARDENNES ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "Legendary 7km Belgian circuit featuring Eau Rouge, Kemmel Straight, and Pouhon.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
+      "osm_url": "https://www.openstreetmap.org/relation/284560",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3320.9,
+      "min_width_m": 7.5,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/spa.svg"
+    },
+    {
+      "id": "zandvoort",
+      "name": "Circuit Zandvoort",
+      "module": "gt",
+      "category": "gt",
+      "tag": "DUTCH DUNES",
+      "category_label": "Official GP Circuit",
+      "description": "Seaside rollercoaster featuring high-banked Hugenholtz and Arie Luyendyk curves.",
+      "kind": "circuit",
+      "country_code": "NL",
+      "country_name": "Netherlands",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Zandvoort",
+      "osm_url": "https://www.openstreetmap.org/relation/13545573",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 1991.8,
+      "min_width_m": 9.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/zandvoort.svg"
+    },
+    {
+      "id": "portimao_gp",
+      "name": "Autodromo Internacional do Algarve",
+      "module": "gt",
+      "category": "gt",
+      "tag": "PORTUGUESE ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
+      "kind": "circuit",
+      "country_code": "PT",
+      "country_name": "Portugal",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Algarve_International_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/7509968",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2217.6,
+      "min_width_m": 6.5,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/portimao_gp.svg"
+    },
+    {
+      "id": "suzuka",
+      "name": "Suzuka International Racing Course",
+      "module": "gt",
+      "category": "gt",
+      "tag": "JAPANESE FIGURE-8",
+      "category_label": "Official GP Circuit",
+      "description": "Technical figure-8 circuit with Esses, Degner, crossover bridge, and 130R.",
+      "kind": "circuit",
+      "country_code": "JP",
+      "country_name": "Japan",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Suzuka_International_Racing_Course",
+      "osm_url": "https://www.openstreetmap.org/relation/284570",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2755.6,
+      "min_width_m": 9.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/suzuka.svg"
+    },
+    {
+      "id": "interlagos",
+      "name": "Autodromo Jose Carlos Pace",
+      "module": "gt",
+      "category": "gt",
+      "tag": "BRAZILIAN ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "Anti-clockwise Brazilian thriller featuring Senna 'S', Curva do Sol, and Juncao.",
+      "kind": "circuit",
+      "country_code": "BR",
+      "country_name": "Brazil",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Interlagos_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/6781071",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2083.5,
+      "min_width_m": 8.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/interlagos.svg"
+    },
+    {
+      "id": "le_mans_sarthe",
+      "name": "Circuit de la Sarthe (Le Mans)",
+      "module": "gt",
+      "category": "gt",
+      "tag": "24 HOURS OF LE MANS",
+      "category_label": "Official GP Circuit",
+      "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_la_Sarthe",
+      "osm_url": "https://www.openstreetmap.org/relation/2126739",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 6588.7,
+      "min_width_m": 13.5,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/le_mans_sarthe.svg"
+    },
+    {
+      "id": "monaco",
+      "name": "Circuit de Monaco",
+      "module": "gt",
+      "category": "gt",
+      "tag": "JEWEL IN THE CROWN",
+      "category_label": "Official GP Circuit",
+      "description": "Prestigious Monte Carlo street circuit with Loews Hairpin, the Tunnel, and Swimming Pool.",
+      "kind": "circuit",
+      "country_code": "MC",
+      "country_name": "Monaco",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Monaco",
+      "osm_url": "https://www.openstreetmap.org/relation/148194",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 1492.1,
+      "min_width_m": 7.0,
+      "max_width_m": 11.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/monaco.svg"
+    },
+    {
+      "id": "madring",
+      "name": "MadRing Circuito de Madrid",
+      "module": "gt",
+      "category": "gt",
+      "tag": "SPANISH STREET GP",
+      "category_label": "Official GP Circuit",
+      "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuito_del_Jarama",
+      "osm_url": "https://www.openstreetmap.org/relation/18813472",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2615.8,
+      "min_width_m": 13.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/madring.svg"
+    },
+    {
+      "id": "marina_bay",
+      "name": "Marina Bay Street Circuit",
+      "module": "gt",
+      "category": "gt",
+      "tag": "SINGAPORE NIGHT RACE",
+      "category_label": "Official GP Circuit",
+      "description": "Spectacular floodlit street race navigating tight harbor chicanes and city avenues.",
+      "kind": "circuit",
+      "country_code": "SG",
+      "country_name": "Singapore",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Marina_Bay_Street_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/421263",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2306.9,
+      "min_width_m": 11.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/marina_bay.svg"
+    },
+    {
+      "id": "bahrain",
+      "name": "Bahrain International Circuit",
+      "module": "gt",
+      "category": "gt",
+      "tag": "DESERT ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "High-speed desert raceway in Sakhir featuring sharp braking zones and technical sweeping turns.",
+      "kind": "circuit",
+      "country_code": "BH",
+      "country_name": "Bahrain",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bahrain_International_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/284538",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2530.4,
+      "min_width_m": 5.0,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/bahrain.svg"
+    },
+    {
+      "id": "montreal",
+      "name": "Circuit Gilles Villeneuve",
+      "module": "gt",
+      "category": "gt",
+      "tag": "WALL OF CHAMPIONS",
+      "category_label": "Official GP Circuit",
+      "description": "Semi-permanent parkway circuit on Ile Notre-Dame with heavy chicanes and the notorious Wall of Champions.",
+      "kind": "circuit",
+      "country_code": "CA",
+      "country_name": "Canada",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Gilles_Villeneuve",
+      "osm_url": "https://www.openstreetmap.org/relation/284595",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2062.6,
+      "min_width_m": 9.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/montreal.svg"
+    },
+    {
+      "id": "cota",
+      "name": "Circuit of the Americas",
+      "module": "gt",
+      "category": "gt",
+      "tag": "AUSTIN ROLLERCOASTER",
+      "category_label": "Official GP Circuit",
+      "description": "Premier purpose-built US Grand Prix track with uphill Turn 1, Maggotts-inspired esses, and multi-apex carousel.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_of_the_Americas",
+      "osm_url": "https://www.openstreetmap.org/relation/6537729",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2555.8,
+      "min_width_m": 7.0,
+      "max_width_m": 15.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": true,
+      "has_junctions": false,
+      "image": "/textures/circuits/gt/cota.svg"
+    },
+    {
+      "id": "daytona_superspeedway",
+      "name": "Daytona International Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SUPERSPEEDWAY 31° BANK",
+      "category_label": "Superspeedway",
+      "description": "The World Center of Racing: 4.0 km tri-oval featuring 31° high banks, 18° tri-oval frontstretch, and intense high-speed pack drafting.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Daytona_International_Speedway",
+      "osm_url": "https://www.openstreetmap.org/relation/5254137",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3016.2,
+      "min_width_m": 22.0,
+      "max_width_m": 22.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/daytona_superspeedway.svg"
+    },
+    {
+      "id": "talladega_superspeedway",
+      "name": "Talladega Superspeedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SUPERSPEEDWAY 33° BANK",
+      "category_label": "Superspeedway",
+      "description": "The biggest, fastest superspeedway in motorsport: 4.3 km tri-oval with extreme 33° banking where slipstream draft slingshots decide victory.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Talladega_Superspeedway",
+      "osm_url": "https://www.openstreetmap.org/way/532106116",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3209.4,
+      "min_width_m": 24.0,
+      "max_width_m": 24.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/talladega_superspeedway.svg"
+    },
+    {
+      "id": "watkins_glen_nascar",
+      "name": "Watkins Glen International",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "NASCAR ROAD COURSE",
+      "category_label": "Road Course",
+      "description": "Historic 5.4 km upstate New York road course: the uphill Esses, Inner Loop Bus Stop chicane, high-speed Carousel, and Boot complex.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Watkins_Glen_International",
+      "osm_url": "https://www.openstreetmap.org/relation/4872326",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2951.4,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/watkins_glen_nascar.svg"
+    },
+    {
+      "id": "bristol_motor_speedway",
+      "name": "Bristol Motor Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SHORT TRACK 28° BANK",
+      "category_label": "Short Track",
+      "description": "The Last Great Colosseum: 0.85 km high-banked concrete bowl with 28° turns, brutal bumper-to-bumper contact, and lightning fast 15-second laps.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bristol_Motor_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/116606212",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 856.9,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Concrete",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/bristol_motor_speedway.svg"
+    },
+    {
+      "id": "martinsville_speedway",
+      "name": "Martinsville Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SHORT TRACK 12° BANK",
+      "category_label": "Short Track",
+      "description": "The Paperclip: 0.526-mile flat short track with tight 12° concrete corners, heavy curb-hopping, and brutal paint-trading.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Martinsville_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/448515178",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 844.8,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 58.5
+        },
+        {
+          "surface": "Concrete",
+          "share_pct": 41.5
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/martinsville_speedway.svg"
+    },
+    {
+      "id": "darlington_raceway",
+      "name": "Darlington Raceway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "EGG-SHAPED OVAL 25° BANK",
+      "category_label": "Intermediate Oval",
+      "description": "The Lady in Black: 1.366-mile egg-shaped asymmetrical oval with 25° high banks and the famous wall-scraping 'Darlington Stripe'.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Darlington_Raceway",
+      "osm_url": "https://www.openstreetmap.org/way/104277971",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 2197.6,
+      "min_width_m": 18.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/darlington_raceway.svg"
+    },
+    {
+      "id": "charlotte_motor_speedway",
+      "name": "Charlotte Motor Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "QUAD-OVAL 24° BANK",
+      "category_label": "Intermediate Oval",
+      "description": "The Beast of the Southeast: 1.5-mile quad-oval with 24° banking, frontstretch dogleg, and high-speed pack drafting battles.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Charlotte_Motor_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/402168711",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 2413.0,
+      "min_width_m": 20.0,
+      "max_width_m": 20.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/charlotte_motor_speedway.svg"
+    },
+    {
+      "id": "indianapolis_motor_speedway",
+      "name": "Indianapolis Motor Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "THE BRICKYARD 9° BANK",
+      "category_label": "Superspeedway",
+      "description": "The Brickyard: 2.5-mile historic rectangular speedway with 9.2° banked turns, long drafting straights, and the famous Yard of Bricks start/finish line.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Indianapolis_Motor_Speedway",
+      "osm_url": "https://www.openstreetmap.org/relation/20573682",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 3016.3,
+      "min_width_m": 20.0,
+      "max_width_m": 20.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/indianapolis_motor_speedway.svg"
+    },
+    {
+      "id": "eldora_speedway",
+      "name": "Eldora Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "DIRT TRACK 24° BANK",
+      "category_label": "Short Track (Dirt Oval)",
+      "description": "The Big E: 0.5-mile high-banked clay oval featuring 24° banking, throttle-steered dirt sliding, and bumper-to-bumper racing.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Eldora_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/608397609",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 804.1,
+      "min_width_m": 18.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/eldora_speedway.svg"
+    },
+    {
+      "id": "iowa_speedway",
+      "name": "Iowa Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "D-SHAPED OVAL 14° BANK",
+      "category_label": "Short Track",
+      "description": "The Fastest Short Track on the Planet: 7/8-mile D-shaped oval with progressive 12°-14° banking and intense multi-groove pack racing.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Iowa_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/119238784",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1405.6,
+      "min_width_m": 20.0,
+      "max_width_m": 20.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/iowa_speedway.svg"
+    },
+    {
+      "id": "road_america",
+      "name": "Road America",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "ELKHART LAKE ROAD COURSE",
+      "category_label": "Road Course",
+      "description": "Legendary 4.0-mile natural-terrain road course featuring the sweeping Carousel, The Kink, and heavy braking into Canada Corner.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.5x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Road_America",
+      "osm_url": "https://www.openstreetmap.org/relation/6432758",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3237.6,
+      "min_width_m": 14.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/road_america.svg"
+    },
+    {
+      "id": "chicago_street_course",
+      "name": "Chicago Street Course",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "GRANT PARK STREET COURSE",
+      "category_label": "Street Course",
+      "description": "NASCAR's premier 2.2-mile downtown street circuit through Grant Park navigating 12 tight 90-degree corners between concrete canyon walls.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Chicago_Street_Course",
+      "osm_url": "https://www.openstreetmap.org/relation/16546690",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 2603.6,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/chicago_street_course.svg"
+    },
+    {
+      "id": "bowman_gray_stadium",
+      "name": "Bowman Gray Stadium",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "BULLRING SHORT TRACK",
+      "category_label": "Short Track",
+      "description": "The Madhouse: historic 0.25-mile flat asphalt bullring short track in Winston-Salem, NC.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bowman_Gray_Stadium",
+      "osm_url": "https://www.openstreetmap.org/way/914237156",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 400.6,
+      "min_width_m": 14.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/bowman_gray_stadium.svg"
+    },
+    {
+      "id": "lucas_oil_irp",
+      "name": "Lucas Oil Indianapolis Raceway Park",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SHORT TRACK 12° BANK",
+      "category_label": "Short Track",
+      "description": "Classic 0.686-mile asphalt oval with 12-degree banking in Clermont, Indiana.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lucas_Oil_Indianapolis_Raceway_Park",
+      "osm_url": "https://www.openstreetmap.org/way/123830268",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1102.5,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/lucas_oil_irp.svg"
+    },
+    {
+      "id": "north_wilkesboro_speedway",
+      "name": "North Wilkesboro Speedway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "SHORT TRACK 14° BANK",
+      "category_label": "Short Track",
+      "description": "Historic 0.625-mile short track with an uphill frontstretch and downhill backstretch.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/North_Wilkesboro_Speedway",
+      "osm_url": "https://www.openstreetmap.org/way/18928710",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1003.6,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/north_wilkesboro_speedway.svg"
+    },
+    {
+      "id": "pocono_raceway",
+      "name": "Pocono Raceway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "TRICKY TRIANGLE 14° BANK",
+      "category_label": "Superspeedway",
+      "description": "The Tricky Triangle: 2.5-mile superspeedway with three distinct turns and long flat-out straights.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.75x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Pocono_Raceway",
+      "osm_url": "https://www.openstreetmap.org/way/109767460",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 3015.8,
+      "min_width_m": 18.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/pocono_raceway.svg"
+    },
+    {
+      "id": "phoenix_raceway",
+      "name": "Phoenix Raceway",
+      "module": "nascar",
+      "category": "nascar",
+      "tag": "TRI-OVAL 11° BANK",
+      "category_label": "Intermediate Oval",
+      "description": "1.0-mile low-banked tri-oval in Avondale, Arizona featuring the famous dogleg cut across the apron.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Phoenix_Raceway",
+      "osm_url": "https://www.openstreetmap.org/way/29333335",
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1643.0,
+      "min_width_m": 18.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/nascar/phoenix_raceway.svg"
+    },
+    {
+      "id": "sahara_dune_crossing",
+      "name": "Sahara Dune Crossing",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "DESERT RAID",
+      "category_label": "Desert Raid",
+      "description": "High-speed sweeping desert crossing over cresting sand dunes.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2390.5,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/sahara_dune_crossing.svg"
+    },
+    {
+      "id": "dirt_figure_eight",
+      "name": "Dirt Figure Eight",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "STADIUM FIGURE 8",
+      "category_label": "Stunt Arenas",
+      "description": "High-speed dirt figure-eight crossover with twin jumps and 18-degree banked outer berms.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 806.7,
+      "min_width_m": 13.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/dirt_figure_eight.svg"
+    },
+    {
+      "id": "atacama_sand_basin",
+      "name": "Atacama Sand Basin",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "HIGH-SPEED BASIN",
+      "category_label": "Desert Raid",
+      "description": "Massive high-speed desert basin with sweeping sand curves and cresting jumps.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3057.1,
+      "min_width_m": 18.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 51.3
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 48.7
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/atacama_sand_basin.svg"
+    },
+    {
+      "id": "red_rock_canyon",
+      "name": "Red Rock Canyon",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "CANYON RAID",
+      "category_label": "Desert Raid",
+      "description": "Narrow technical gorge between red sandstone towers with rough dirt trails and hairpin climbs.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1440.8,
+      "min_width_m": 8.5,
+      "max_width_m": 8.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/red_rock_canyon.svg"
+    },
+    {
+      "id": "mud_slough_arena",
+      "name": "Mud Slough Arena",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "MUD BOWL ARENA",
+      "category_label": "Mud & Quarry",
+      "description": "Enclosed stadium mud bowl arena with deep viscous mud ruts, raised dirt berms and tabletop jumps.",
+      "kind": "arena",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 0.0,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "DeepMud",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": null
+    },
+    {
+      "id": "baja_500_desert_scrub",
+      "name": "Baja 500 Desert Scrub",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "BAJA ENDURO",
+      "category_label": "Desert Raid",
+      "description": "Punishing open desert enduro course across arid scrubland, silt flats, washboard whoops, and high-speed jumps.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 3415.3,
+      "min_width_m": 14.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 55.3
+        },
+        {
+          "surface": "PackedSand",
+          "share_pct": 44.7
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/baja_500_desert_scrub.svg"
+    },
+    {
+      "id": "arctic_frozen_lake",
+      "name": "Arctic Frozen Lake",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "ICE ARENA",
+      "category_label": "Arctic Frost",
+      "description": "Wide-open frozen glacial lake arena with slick blue ice, compacted snow banks, and perimeter snow berms.",
+      "kind": "arena",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 438.6,
+      "min_width_m": 14.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "SheetIce",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/arctic_frozen_lake.svg"
+    },
+    {
+      "id": "alpine_snow_ridge",
+      "name": "Alpine Snow Ridge",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "SNOW RIDGE",
+      "category_label": "Arctic Frost",
+      "description": "Sub-zero mountain climb along high snow ridges, icy switchbacks, and sheer cliff edges.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1535.2,
+      "min_width_m": 10.0,
+      "max_width_m": 10.0,
+      "surfaces": [
+        {
+          "surface": "PackedSnow",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/alpine_snow_ridge.svg"
+    },
+    {
+      "id": "rovaniemi_ice_ring",
+      "name": "Rovaniemi Ice Ring",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "FINNISH ICE RING",
+      "category_label": "Arctic Frost",
+      "description": "Finnish high-speed ice racing circuit with packed snow chicanes and high-velocity drift arcs.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1096.4,
+      "min_width_m": 13.0,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "SheetIce",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/rovaniemi_ice_ring.svg"
+    },
+    {
+      "id": "supercross_stadium_arena",
+      "name": "Supercross Stadium Arena",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "SUPERCROSS ARENA",
+      "category_label": "Stunt Arenas",
+      "description": "Indoor supercross colosseum featuring rhythmic triple jumps, whoop sections, and banked bowl turns.",
+      "kind": "arena",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 306.3,
+      "min_width_m": 10.5,
+      "max_width_m": 10.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/supercross_stadium_arena.svg"
+    },
+    {
+      "id": "gravel_quarry_chasm",
+      "name": "Gravel Quarry Chasm",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "QUARRY CHASM",
+      "category_label": "Mud & Quarry",
+      "description": "Multi-tiered industrial quarry chasm with vertical drops, loose gravel slides, and rock walls.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1508.0,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/gravel_quarry_chasm.svg"
+    },
+    {
+      "id": "louisiana_mud_swampland",
+      "name": "Louisiana Mud Swampland",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "SWAMP BASIN",
+      "category_label": "Mud & Quarry",
+      "description": "Treacherous bayou basin featuring deep mud bogs, slippery cypress roots, and submerged dirt roads.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1283.9,
+      "min_width_m": 11.0,
+      "max_width_m": 11.0,
+      "surfaces": [
+        {
+          "surface": "MudTrack",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/louisiana_mud_swampland.svg"
+    },
+    {
+      "id": "monster_colosseum",
+      "name": "Monster Colosseum",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "COLOSSEUM ARENA",
+      "category_label": "Stunt Arenas",
+      "description": "Massive open-floor monster truck arena with multiple crossing ramps, mud pits, and perimeter grandstands.",
+      "kind": "arena",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 0.0,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": null
+    },
+    {
+      "id": "glacier_crest_pass",
+      "name": "Glacier Crest Pass",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "GLACIAL PASS",
+      "category_label": "Arctic Frost",
+      "description": "Treacherous high-altitude circuit over blue glacial ice crevasses, frozen tunnels, and blinding snow ridges.",
+      "kind": "circuit",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 1662.4,
+      "min_width_m": 11.5,
+      "max_width_m": 11.5,
+      "surfaces": [
+        {
+          "surface": "SheetIce",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/glacier_crest_pass.svg"
+    },
+    {
+      "id": "stunt_city_megastructure",
+      "name": "Stunt City Megastructure",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "STUNT MEGASTRUCTURE",
+      "category_label": "Stunt Arenas",
+      "description": "Colossal multi-level concrete and asphalt stunt arena with high-flyer ramps, elevated cross-bridges, and drift bowls.",
+      "kind": "arena",
+      "country_code": null,
+      "country_name": null,
+      "scale": "1:1",
+      "wikipedia_url": null,
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 0.0,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": null
+    },
+    {
+      "id": "glamis_dunes",
+      "name": "Glamis Imperial Sand Dunes",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "DESERT RAID",
+      "category_label": "Desert Raid",
+      "description": "Open California sand bowl with natural razorback dune crests and sweeping high-speed bowls.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Algodones_Dunes",
+      "osm_url": "https://www.openstreetmap.org/relation/6152825",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2416.8,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 74.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 25.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/glamis_dunes.svg"
+    },
+    {
+      "id": "crandon_short_course",
+      "name": "Crandon International Off-Road",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "SHORT COURSE",
+      "category_label": "Mud & Quarry",
+      "description": "The Big House: iconic Wisconsin short-course track with high-speed clay straights and tabletop jumps.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Crandon_International_Off-Road_Raceway",
+      "osm_url": "https://www.openstreetmap.org/way/291856211",
+      "is_inspired": false,
+      "default_laps": 3,
+      "length_m": 2331.4,
+      "min_width_m": 7.0,
+      "max_width_m": 18.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/crandon_short_course.svg"
+    },
+    {
+      "id": "mint400_short_course",
+      "name": "Mint 400 Short Course",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "MINT 400 SHORT COURSE",
+      "category_label": "Desert Race",
+      "description": "The 2.3 km Youth 170/250 loop of the Mint 400 at Primm, Nevada: tight desert sweepers and a hairpin, from the official 2026 course file.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 4,
+      "length_m": 2142.1,
+      "min_width_m": 8.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/mint400_short_course.svg"
+    },
+    {
+      "id": "mint400_qualifying_loop",
+      "name": "Mint 400 Qualifying Loop",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "MINT 400 QUALIFYING",
+      "category_label": "Desert Race",
+      "description": "The 9 km Mint 400 qualifying loop at Primm, Nevada: long desert straights, rocky switchbacks and a wide sweeper, from the official 2026 course file.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 2,
+      "length_m": 9510.6,
+      "min_width_m": 16.0,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/mint400_qualifying_loop.svg"
+    },
+    {
+      "id": "mint400_grand_loop",
+      "name": "Mint 400 Grand Loop",
+      "module": "extreme_offroad",
+      "category": "off_road",
+      "tag": "MINT 400 GRAND LOOP",
+      "category_label": "Desert Race",
+      "description": "The whole 148 km Car/Truck/UTV course of the Mint 400, shrunk to a fast desert lap: the real shape of the Great American Off-Road Race, from the official 2026 course file.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "0.05x",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Mint_400",
+      "osm_url": null,
+      "is_inspired": false,
+      "default_laps": 2,
+      "length_m": 4420.8,
+      "min_width_m": 8.5,
+      "max_width_m": 16.0,
+      "surfaces": [
+        {
+          "surface": "PackedSand",
+          "share_pct": 100.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": false,
+      "has_pit_lane": false,
+      "has_junctions": false,
+      "image": "/textures/circuits/extreme_offroad/mint400_grand_loop.svg"
+    }
+  ]
+}

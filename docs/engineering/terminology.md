@@ -33,7 +33,7 @@ Tier 1: Root Screens & Stacks (CabinetScreen, ScreenStack, GameState)
 | **Screen** | Root Viewport State | A full-screen primary application state that completely owns the viewport and game loop lifecycle. Transitioning between screens typically unloads or swaps the active state context. | [`GameState::Menu`](../../crates/tdrace-app/src/game/mod.rs), [`GameState::Garage`](../../crates/tdrace-app/src/game/mod.rs), [`GameState::StartingGrid`](../../crates/tdrace-app/src/game/mod.rs) |
 | **View (Sub-View)** | Intra-Screen State | A distinct visual presentation or functional mode *within* a single screen that alters displayed panels without triggering a top-level screen transition. | [`FinishedScreenView::Results`](../../crates/tdrace-app/src/game/mod.rs), [`FinishedScreenView::Statistics`](../../crates/tdrace-app/src/game/mod.rs), [`GarageViewMode::SideProfile`](../../crates/tdrace-app/src/ui/garage.rs) |
 | **Modal (Dialog)** | Transient Overlay | A focused window layered on top of an active screen that dims background elements and captures exclusive input until confirmed, dismissed, or canceled. | [`UniversalConfirmModal`](../../crates/cabinet/src/state/confirm.rs), [`ArcadeSettingsModal`](../../crates/cabinet/src/state/settings.rs), `UnsavedSettingsModal` |
-| **Overlay / HUD** | Layered Non-Modal | A non-blocking graphical layer drawn on top of 2D/3D gameplay or editing canvases to display real-time gauges, timers, or curve warnings without stealing keyboard/stick steering. | [`render_hud`](../../crates/tdrace-app/src/ui/hud.rs), [`render_curve_indicator`](../../crates/tdrace-app/src/ui/curve_indicator.rs) |
+| **Overlay / HUD** | Layered Non-Modal | A non-blocking graphical layer drawn on top of 2D/3D gameplay or editing canvases to display real-time gauges, timers, or curve warnings without stealing keyboard/stick steering. | [`render_hud`](../../crates/tdrace-app/src/ui/hud.rs), [`render_curve_pacenote`](../../crates/race-ui/src/hud/curve_indicator.rs) |
 | **Panel (Column)** | Layout Division | A major structural container dividing a screen horizontally or vertically. Multi-panel layouts rely on 2D orthogonal navigation (`NavGrid2D`). | Left Setup Panel & Right Starting Grid Roster in `StartingGrid`; 4 Modality columns in `ModalitySelect`. |
 | **Card (Tile)** | Visual Container | A self-contained rounded glassmorphic card grouping related telemetry, specs, or settings together. | Setup Cards 0–3 in `StartingGrid`; Track Preview Card in `Menu`. |
 | **Menu & Menu Entry** | Navigable List | A navigable sequential list of selectable actions, tracks, or options. A *Menu Entry* is an individual selectable row or button inside the menu. | Circuit list rows in `Menu`; Module entry cards in `ModuleSelect`. |
@@ -103,7 +103,7 @@ The `tdrace-app` crate implements motorsport domain logic and concrete game scre
 
 - The top-level [`GameState`](../../crates/tdrace-app/src/game/mod.rs) enum representing game states.
 - Domain-specific multi-view screen layouts (`StartingGrid`, `Menu`, `Garage`, `TrackManager`, `Finished`).
-- Race presentation from `race-kit` events, and telemetry HUD overlays (`render_hud`, `render_curve_indicator`).
+- Race presentation from `race-kit` events, and telemetry HUD overlays (`render_hud`, `render_curve_pacenote`).
 - Vector track spline preview and rendering (`render_track_detailed_preview`, `render_track_thumbnail`).
 - Track CAD Editor toolbars and Bezier node canvas (`GameState::TrackEditor`).
 

@@ -1,0 +1,196 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LineChart from '../../components/LineChart.astro';
+import { getDrivingModel } from '../../lib/codex';
+
+const driving = await getDrivingModel();
+
+// Chart series from the authentic step-response curves exported from DigitalInputFilter
+const PROFILE_COLORS: Record<string, string> = {
+  smooth: '#3b82f6',    // Blue
+  balanced: '#22c55e',  // Green (default)
+  sharp: '#f59e0b',     // Amber
+  raw: '#f43f5e',       // Red
+};
+
+const series = driving.steering_profiles.map((p) => ({
+  label: `${p.display_name} (${p.steer_time_ms} ms)`,
+  color: PROFILE_COLORS[p.id] ?? '#06b6d4',
+  points: p.step_response as [number, number][],
+}));
+---
+
+<Layout title="Steering Profiles" description="Digital keyboard steering filters, step response curves, and handling authority calibration.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/driving" class="hover:underline">Driving</a> / Steering</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Digital Steering Profiles</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      In arcade top-down racing, digital keyboard keys only transmit binary state: on or off.
+      TDRace bridges digital inputs and realistic Pacejka vehicle dynamics through the <code class="text-racing-cyan">DigitalInputFilter</code>.
+      Four calibrated presets shape rise time, self-centering velocity, front tyre authority, and traction assistance.
+    </p>
+  </div>
+
+  <!-- Step Response Chart -->
+  <section class="py-8">
+    <div class="max-w-3xl mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">Step-Response Transient Curve</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Steering rack output over time when a steer key is pressed and held at <span class="font-mono text-white">t = 0 ms</span>.
+        Raw reaches 100% input in 40 ms; Smooth eases in over 220 ms with a gentle center-precision exponent.
+      </p>
+    </div>
+
+    <div class="max-w-3xl">
+      <LineChart
+        series={series}
+        xLabel="Elapsed Time (ms)"
+        yLabel="Normalized Steer Input [0.0 .. 1.0]"
+        xDomain={[0, 300]}
+        yDomain={[0, 1.0]}
+        xFormat={(x) => `${x.toFixed(0)} ms`}
+        yFormat={(y) => `${(y * 100).toFixed(0)}%`}
+      />
+    </div>
+  </section>
+
+  <!-- Profiles Comparison Table -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Preset Comparison & Parameters</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Values extracted directly from <code class="text-racing-cyan font-mono text-xs">DigitalInputConfig::from_profile</code>.
+        Players can cycle through these in-race using the <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-racing-cyan font-mono text-xs">S</kbd> or <kbd class="px-1.5 py-0.5 rounded bg-racing-card border border-racing-border text-racing-cyan font-mono text-xs">P</kbd> keys in the pause menu.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      {driving.steering_profiles.map((profile) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-2 border-b border-racing-border/60 pb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full" style={`background-color: ${PROFILE_COLORS[profile.id]}`}></span>
+                <h3 class="text-lg font-bold text-white">{profile.display_name}</h3>
+              </div>
+              <span class="text-xs font-mono text-racing-muted">
+                Rise: <strong class="text-white">{profile.steer_time_ms} ms</strong>
+              </span>
+            </div>
+
+            <p class="text-xs text-racing-muted mt-3 leading-relaxed">{profile.description}</p>
+
+            <dl class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-xs font-mono">
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Steer Time</dt>
+                <dd class="text-sm font-bold text-white mt-0.5">{profile.steer_time_ms} ms</dd>
+              </div>
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Return Time</dt>
+                <dd class="text-sm font-bold text-cyan-400 mt-0.5">{profile.return_time_ms} ms</dd>
+              </div>
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Authority</dt>
+                <dd class="text-sm font-bold text-white mt-0.5">{(profile.steer_authority * 100).toFixed(0)}%</dd>
+              </div>
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Center Precision</dt>
+                <dd class="text-sm font-bold text-white mt-0.5">{profile.center_precision.toFixed(1)}</dd>
+              </div>
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Pedal Ramp</dt>
+                <dd class="text-sm font-bold text-white mt-0.5">{profile.pedal_time_ms === 0 ? 'Instant' : `${profile.pedal_time_ms} ms`}</dd>
+              </div>
+              <div class="rounded-lg bg-racing-card/60 p-2.5 border border-racing-border/40">
+                <dt class="text-[10px] text-racing-muted uppercase">Traction Help</dt>
+                <dd class="text-sm font-bold text-amber-400 mt-0.5">{(profile.traction_help * 100).toFixed(0)}%</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-racing-border/40 text-xs text-racing-muted">
+            <span class="text-racing-cyan font-mono text-[11px] font-semibold">Recommended for:</span> {profile.recommended_for}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- The Five Calibration Dimensions Explained -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">The Five Digital Input Dimensions</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        How the physics engine translates keyboard stroke timing into tire slip angle commands.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="text-base font-bold text-white">1. Steering Speed (<code class="text-racing-cyan font-mono text-xs">steer_time_ms</code>)</h3>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          The time in milliseconds for steering to sweep from center (0.0) to full lock (1.0) under a held key.
+          Centering velocity is accelerated to <strong>0.7× this time</strong> (1.43× faster) to allow snappy corrective counter-steers.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="text-base font-bold text-white">2. Steering Authority (<code class="text-racing-cyan font-mono text-xs">steer_authority</code>)</h3>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Defines where full key deflection sits relative to the front tyre's peak grip slip angle:
+          <span class="text-cyan-300">0.90</span> stops just short of peak grip (impossible to induce understeer);
+          <span class="text-green-300">1.00</span> hits exactly peak grip;
+          <span class="text-rose-300">1.15</span> pushes well past peak grip into progressive slide scrub.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="text-base font-bold text-white">3. Center Precision (<code class="text-racing-cyan font-mono text-xs">center_precision</code>)</h3>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          Response curve exponent (<code class="font-mono text-racing-cyan">steer = sign(s) × |s|^precision</code>).
+          Linear at 1.0; at 1.5, minor taps near center make subtle micro-adjustments for high-speed straight-line overtaking without weave.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="text-base font-bold text-white">4. Pedal Speed & Traction Help</h3>
+        <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+          <strong>Pedal Speed:</strong> Ramp time for throttle and brake keys (instant on Raw, 220 ms on Smooth).<br />
+          <strong>Traction Help:</strong> In-engine torque modulation that automatically feathers throttle when the rear axle approaches terminal spin-out slip angles.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- In-Engine Handling Aids -->
+  <section class="py-8 border-t border-racing-border">
+    <div class="max-w-3xl mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Active Handling Architecture</h2>
+      <p class="text-sm text-racing-muted mt-1 leading-relaxed">
+        Deep dive into the underlying vehicle dynamics features supporting digital steering.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+          <h3 class="text-base font-bold text-white">Grip-Aware Steering</h3>
+        </div>
+        <p class="text-xs text-racing-muted leading-relaxed">
+          {driving.aids.grip_aware_steering_description}
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+          <h3 class="text-base font-bold text-white">Low-Speed Authority Floor (Spec 072)</h3>
+        </div>
+        <p class="text-xs text-racing-muted leading-relaxed">
+          {driving.aids.low_speed_authority_description}
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>

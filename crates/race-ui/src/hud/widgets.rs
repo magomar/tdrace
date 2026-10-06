@@ -270,6 +270,40 @@ pub fn render_compound_badge(
     fonts.draw_ui_bold(code, text_x, text_y, scaler.font_s(11.0), col);
 }
 
+/// Draws a full compound indicator with a solid FIA-style badge pill and full name (Spec 089).
+/// Matches the reference design: solid colored pill with dark acronym text, followed by the compound name.
+/// e.g. "[S] Soft Slick", "[AT] All-Terrain", "[M] Medium Slick".
+pub fn render_compound_legend(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    compound: wheelbase::surface::CompoundId,
+) -> f32 {
+    let [r, g, b, a] = compound.accent_rgba();
+    let col = Color::new(r, g, b, a);
+    let code = compound.badge_code();
+    let name = compound.name();
+
+    let pill_h = scaler.s(16.0);
+    let code_w = code.len() as f32 * scaler.s(6.5);
+    let pill_w = (code_w + scaler.s(10.0)).max(scaler.s(20.0));
+
+    // Solid filled pill with dark text matching visual spec
+    draw_rectangle(x, y, pill_w, pill_h, col);
+    draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.0), Color::new(0.0, 0.0, 0.0, 0.35));
+    let text_x = x + (pill_w - code_w) * 0.5;
+    fonts.draw_ui_bold(code, text_x, y + scaler.s(11.5), scaler.font_s(10.0), Color::new(0.08, 0.08, 0.12, 1.0));
+
+    // Full compound name in crisp white
+    let gap = scaler.s(8.0);
+    let text_name_x = x + pill_w + gap;
+    fonts.draw_ui_bold(name, text_name_x, y + scaler.s(12.0), scaler.font_s(11.0), Palette::WHITE);
+
+    let name_w = name.len() as f32 * scaler.s(7.0);
+    pill_w + gap + name_w
+}
+
 /// Joker rule state of one driver, shown as a pill under the position and lap card (spec 082).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JokerBadge {

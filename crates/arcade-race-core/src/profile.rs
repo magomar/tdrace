@@ -208,7 +208,7 @@ impl LicenseGrade {
             Self::ClassC => "Class C (Junior Competition)",
             Self::ClassB => "Class B (National Pro-Am)",
             Self::ClassA => "Class A (International GT)",
-            Self::ClassS => "Class S (FIA Superlicense)",
+            Self::ClassS => "Class S (World Superlicense)",
         }
     }
 

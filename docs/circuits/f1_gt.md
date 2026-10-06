@@ -38,4 +38,4 @@ The **GT World Challenge & Endurance** tracks in [`tracks/gt/`](../../tracks/gt)
 
 ---
 
-For sports cars and endurance hypercars tuned for these venues, explore the [Gran Turismo & Endurance Roster](../vehicles/gt_endurance.md).
+For sports cars and endurance hypercars tuned for these venues, explore the [Gran Turismo & Endurance Roster](http://localhost:4322/showroom/cars?module=gt).

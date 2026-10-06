@@ -161,12 +161,12 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 /// List badge for a module's circuits.
 fn module_label(module: &str) -> &'static str {
     match module {
-        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
+        "gt" | "gt_challenge" => "GRAND TOURING CHALLENGE",
         "rally" => "RALLYCROSS",
         "kart" => "KARTING",
-        "nascar" => "NASCAR CUP",
+        "nascar" => "STOCK CAR",
         "extreme_offroad" => "EXTREME OFF-ROAD",
-        "autocross" => "FIA AUTOCROSS",
+        "autocross" => "CONTINENTAL AUTOCROSS",
         _ => "CLASSIC MOTORSPORT",
     }
 }
@@ -397,12 +397,12 @@ impl CarChoice {
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
             Self::RallyCar => "AWD Turbo Rally",
-            Self::GT4Clubsport => "420 BHP GT4 Clubsport",
-            Self::GT3Car => "600 BHP GT3 Evo Racer",
-            Self::GT2Biturbo => "707 BHP GT2 Biturbo Sprint",
-            Self::GT1Legend => "650 BHP GT1 Le Mans Legend",
+            Self::GT4Clubsport => "420 BHP GT Tier 1 Clubsport",
+            Self::GT3Car => "600 BHP GT Tier 2 Pro Sprint",
+            Self::GT2Biturbo => "707 BHP GT Tier 3 Biturbo",
+            Self::GT1Legend => "650 BHP GT Tier 4 Legend",
             Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
-            Self::StockCar => "850 BHP NASCAR Cup V8",
+            Self::StockCar => "850 BHP Premier Stock Car V8",
             Self::SandRail => "300 BHP Sand Rail Buggy",
             Self::CrossCar => "150 BHP Cross Car",
         }
@@ -414,11 +414,11 @@ impl CarChoice {
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
             Self::RallyCar => "AWD ALL-TERRAIN",
-            Self::GT4Clubsport => "GT4 ENTRY SPEC",
-            Self::GT3Car => "FIA GT3 SPEC",
-            Self::GT2Biturbo => "SRO GT2 SPRINT",
-            Self::GT1Legend => "90s GT1 LEGEND",
-            Self::HypercarPrototype => "LE MANS HYPERCAR",
+            Self::GT4Clubsport => "GT TIER 1 CLUBSPORT",
+            Self::GT3Car => "GT TIER 2 PRO SPRINT",
+            Self::GT2Biturbo => "GT TIER 3 BITURBO",
+            Self::GT1Legend => "GT TIER 4 LEGEND",
+            Self::HypercarPrototype => "ENDURANCE HYPERCAR",
             Self::StockCar => "850 BHP SPACEFRAME V8",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
             Self::CrossCar => "150 BHP RWD MOTORCYCLE",
@@ -872,6 +872,17 @@ impl GameMode {
         }
     }
 
+    pub fn allows_laps_customization(&self) -> bool {
+        match self {
+            Self::ExperimentalRace => true,
+            Self::StandardRace
+            | Self::Career
+            | Self::SplitScreen
+            | Self::TimeTrial
+            | Self::FreeRide => false,
+        }
+    }
+
     pub fn has_bots(&self) -> bool {
         match self {
             Self::StandardRace | Self::Career | Self::ExperimentalRace | Self::SplitScreen => true,
@@ -1000,7 +1011,7 @@ impl MenuCategoryFilter {
             Self::Rally => "RALLY",
             Self::Kart => "KART",
             Self::Gt => "GT",
-            Self::Nascar => "NASCAR",
+            Self::Nascar => "STOCK CAR",
             Self::ExtremeOffroad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
             Self::Custom => "CUSTOM",
@@ -1291,29 +1302,6 @@ pub fn render_track_select_menu(
         scaler.font_s(15.0),
         module_accent,
     );
-
-    // The Circuit Manager is not reachable from the LAN host lobby.
-    if !is_lan_host {
-        let tm_badge_w = scaler.s(165.0);
-        let tm_badge_h = scaler.s(22.0);
-        let tm_badge_x = col1_x + col_w - tm_badge_w;
-        scaler.draw_glass_card(
-            tm_badge_x,
-            curr_y - scaler.s(2.0),
-            tm_badge_w,
-            tm_badge_h,
-            Color::new(0.18, 0.08, 0.30, 0.90),
-            Palette::NEON_MAGENTA,
-            1.2,
-        );
-        fonts.draw_ui_bold_centered(
-            "[T] CIRCUIT MANAGER",
-            tm_badge_x + tm_badge_w * 0.5,
-            curr_y + scaler.s(13.0),
-            scaler.font_s(10.5),
-            Palette::NEON_GOLD,
-        );
-    }
 
     curr_y += scaler.s(20.0);
 
@@ -2352,7 +2340,7 @@ pub fn render_track_select_menu(
             ),
             (
                 "Module Distribution",
-                "Assign custom circuits to Classic, Rally, Kart, GT, Nascar",
+                "Assign custom circuits to Classic, Rally, Kart, GT, Stock Car",
             ),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);
@@ -3551,7 +3539,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "rally_hyundai_i20_rx",
+                    "rally_hanguk_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3567,7 +3555,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "kart_tony_kart_racer_ok",
+                    "kart_verde_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3583,7 +3571,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "gt_porsche_911_gt3r",
+                    "gt_vandorn_arrowhead_t2",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3599,7 +3587,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "nascar_arca_chevy_ss",
+                    "nascar_crossbow_predator_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3615,7 +3603,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "offroad_sand_rail_buggy",
+                    "offroad_laurentian_nomad_t1",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -4057,6 +4045,33 @@ impl ModalityModal {
             Self::VehicleRequired => "[ VISIT SHOWROOM ]",
             _ => "[ OK / CONTINUE ]",
         }
+    }
+
+    /// Formats the modal message into wrapped lines that fit within `max_width`.
+    /// Preserves paragraph spacing (`None` represents an empty separator line).
+    pub fn wrapped_lines(&self, fonts: &Fonts, font_size: f32, max_width: f32) -> Vec<Option<String>> {
+        let mut rendered_lines = Vec::new();
+        for raw_line in self.message().lines() {
+            let trimmed = raw_line.trim();
+            if trimmed.is_empty() {
+                if !rendered_lines.is_empty() && rendered_lines.last() != Some(&None) {
+                    rendered_lines.push(None);
+                }
+            } else {
+                let parts = fonts.wrap_text(trimmed, font_size, max_width);
+                if parts.is_empty() {
+                    rendered_lines.push(Some(trimmed.to_string()));
+                } else {
+                    for part in parts {
+                        rendered_lines.push(Some(part));
+                    }
+                }
+            }
+        }
+        while rendered_lines.last() == Some(&None) {
+            rendered_lines.pop();
+        }
+        rendered_lines
     }
 }
 
@@ -4571,8 +4586,25 @@ pub fn render_modality_select_screen(
     if let Some(m) = modal {
         draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
 
-        let mw = (sw * 0.65).clamp(scaler.s(480.0), scaler.s(660.0));
-        let mh = scaler.s(220.0);
+        let mw = (sw * 0.68).clamp(scaler.s(520.0), scaler.s(700.0));
+        let max_text_w = mw - scaler.s(56.0);
+        let font_size = scaler.font_s(12.5);
+        let line_height = scaler.s(21.0);
+        let empty_line_height = scaler.s(13.0);
+
+        let lines = m.wrapped_lines(fonts, font_size, max_text_w);
+        let mut text_block_h = 0.0;
+        for (idx, item) in lines.iter().enumerate() {
+            if idx > 0 {
+                match item {
+                    Some(_) => text_block_h += line_height,
+                    None => text_block_h += empty_line_height,
+                }
+            }
+        }
+
+        let needed_h = scaler.s(76.0) + text_block_h + scaler.s(54.0);
+        let mh = needed_h.max(scaler.s(220.0));
         let mx = (sw - mw) * 0.5;
         let my = (sh - mh) * 0.5;
 
@@ -4596,16 +4628,23 @@ pub fn render_modality_select_screen(
             scaler.s(2.0),
         );
 
-        let mut line_y = my + scaler.s(76.0);
-        for line in m.message().lines() {
-            fonts.draw_ui_regular_centered(
-                line,
-                sw * 0.5,
-                line_y,
-                scaler.font_s(12.5),
-                Color::new(0.85, 0.90, 0.96, 1.0),
-            );
-            line_y += scaler.s(24.0);
+        let mut line_y = my + scaler.s(74.0);
+        for item in &lines {
+            match item {
+                Some(line) => {
+                    fonts.draw_ui_regular_centered(
+                        line,
+                        sw * 0.5,
+                        line_y,
+                        font_size,
+                        Color::new(0.85, 0.90, 0.96, 1.0),
+                    );
+                    line_y += line_height;
+                }
+                None => {
+                    line_y += empty_line_height;
+                }
+            }
         }
 
         let dismiss_text = match m {
@@ -4615,8 +4654,8 @@ pub fn render_modality_select_screen(
         fonts.draw_ui_bold_centered(
             dismiss_text,
             sw * 0.5,
-            my + mh - scaler.s(24.0),
-            scaler.font_s(12.0),
+            my + mh - scaler.s(22.0),
+            scaler.font_s(11.5),
             match m {
                 ModalityModal::LicenseRequired => Palette::NEON_GOLD,
                 _ => Palette::NEON_CYAN,

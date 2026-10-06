@@ -1,0 +1,141 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Rallycross Career Mode: World Rallycross Supercar Trophy (Tier 4)
+# ==============================================================================
+
+[championship]
+id = "rally_world_rallycross_supercars"
+name = "World Rallycross Supercar Trophy"
+description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World Rallycross arenas."
+module_id = "rally"
+tier = 4
+laps_per_round = 5
+bot_count = 7
+ai_difficulty = "pro"
+icon = "dirt"
+
+[scoring]
+system = "standard"
+fastest_lap_bonus = true
+stage_win_bonus = false
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "catalunya_rx"
+name = "Circuit de Barcelona-Catalunya RX"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "spa_rx"
+name = "Circuit de Spa-Francorchamps RX"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "hell_rx"
+name = "Lånkebanen Hell RX"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "loheac_rx"
+name = "Circuit de Lohéac"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "montalegre_rx"
+name = "Pista Automóvel de Montalegre"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "riga_rx"
+name = "Biķernieki Track Riga"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "holjes_rx"
+name = "Höljes Motorstadion"
+laps = 5
+
+[[rounds]]
+order = 8
+track_id = "silverstone_rx"
+name = "Silverstone Circuit RX"
+laps = 5
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Rally Team"
+is_player = true
+car_model_id = "rally_gallia_lyon_t4"
+country = "ESP"
+livery_idx = 0
+
+[[drivers]]
+id = "torsten_holmgren"
+name = "Torsten Holmgren"
+team = "Nordic Storm Motorsport"
+car_model_id = "rally_gallia_lyon_t4"
+country = "SWE"
+ai_character = "smooth"
+livery_idx = 1
+
+[[drivers]]
+id = "kyle_blaze"
+name = "Kyle Blaze"
+team = "Outlaw Gymkhana Squad"
+car_model_id = "rally_forge_comet_t4"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 2
+
+[[drivers]]
+id = "per_sundberg"
+name = "Per Sundberg"
+team = "Sixstar American Rally"
+car_model_id = "rally_sixstar_vortex_t4"
+country = "NOR"
+ai_character = "fast"
+livery_idx = 3
+
+[[drivers]]
+id = "jonas_lindqvist"
+name = "Jonas Lindqvist"
+team = "Highland RX Team"
+car_model_id = "rally_gallia_lyon_t4"
+country = "SWE"
+ai_character = "fast"
+livery_idx = 4
+
+[[drivers]]
+id = "anders_brekke"
+name = "Anders Brekke"
+team = "Outlaw Gymkhana Squad"
+car_model_id = "rally_forge_comet_t4"
+country = "NOR"
+ai_character = "aggressive"
+livery_idx = 5
+
+[[drivers]]
+id = "kasper_holmgren"
+name = "Kasper Holmgren"
+team = "Nordic Storm Motorsport"
+car_model_id = "rally_gallia_lyon_t4"
+country = "SWE"
+ai_character = "strategic"
+livery_idx = 6
+
+[[drivers]]
+id = "mikael_stenmark"
+name = "Mikael Stenmark"
+team = "Vortek Factory RX"
+car_model_id = "rally_sixstar_vortex_t4"
+country = "SWE"
+ai_character = "calculating"
+livery_idx = 7

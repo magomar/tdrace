@@ -65,10 +65,10 @@ fn test_gt_race_roster_car_assignment_and_display_titles() {
         .expect("Player must exist in grid participants");
     assert_eq!(
         player.car_title,
-        "Toyota GR Supra GT4 EVO",
+        "Yamato Hayate GT T1",
         "Player car title must be 'Toyota GR Supra GT4 EVO'"
     );
-    assert_eq!(player.model_id, Some("gt_toyota_supra_gt4"));
+    assert_eq!(player.model_id, Some("gt_yamato_hayate_t1"));
 
     // All AI opponents on roster screen must be assigned cars from the GT4 category pool
     let gt4_models = tdrace_app::catalog::get_models_for_category("gt", "GT4 Clubsport");
@@ -217,7 +217,7 @@ fn test_player_elected_car_sets_authentic_title_in_roster() {
     session.num_bots = 3;
 
     // Elect BMW M4 GT4
-    session.selected_car_model_id = Some("gt_bmw_m4_gt4");
+    session.selected_car_model_id = Some("gt_bmr_bavaria_t1");
     session.free_car_selection = true;
     session.rebuild_roster_participants();
 
@@ -228,17 +228,17 @@ fn test_player_elected_car_sets_authentic_title_in_roster() {
         .expect("Player participant must exist");
 
     assert_eq!(
-        player.car_title, "BMW M4 GT4 (G82)",
+        player.car_title, "BMR Bavaria Sprint T1",
         "Player car title in roster must display authentic model name"
     );
     assert_eq!(
         player.model_id,
-        Some("gt_bmw_m4_gt4"),
+        Some("gt_bmr_bavaria_t1"),
         "Player participant model_id must match elected vehicle"
     );
     assert_eq!(
         session.car_model_ids[0],
-        Some("gt_bmw_m4_gt4"),
+        Some("gt_bmr_bavaria_t1"),
         "First car in session must have elected model ID"
     );
 }
@@ -252,7 +252,7 @@ fn test_bots_assigned_same_category_when_player_elects_car() {
     session.num_bots = 7;
 
     // Elect Porsche 718 Cayman GT4 (GT4 Clubsport category)
-    session.selected_car_model_id = Some("gt_porsche_718_gt4");
+    session.selected_car_model_id = Some("gt_vandorn_stratus_t1");
     session.free_car_selection = true;
     session.rebuild_roster_participants();
 
@@ -303,12 +303,12 @@ fn test_category_parity_across_multiple_disciplines() {
 
     // 1. Rally WRC
     session.switch_to_rally();
-    session.selected_car_model_id = Some("rally_hyundai_i20_rx");
+    session.selected_car_model_id = Some("rally_hanguk_apex_t3");
     session.free_car_selection = true;
     session.rebuild_roster_participants();
 
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
-    assert_eq!(player.car_title, "Hyundai i20 RX Supercar");
+    assert_eq!(player.car_title, "Hanguk Apex RX Supercar T3");
 
     let rx_models = get_models_for_category("rally", "Euro RX Supercar");
     let rx_ids: Vec<&str> = rx_models.iter().map(|m| m.id).collect();
@@ -324,12 +324,12 @@ fn test_category_parity_across_multiple_disciplines() {
 
     // 2. NASCAR Trans-Am
     session.switch_to_nascar();
-    session.selected_car_model_id = Some("nascar_mustang_ta1");
+    session.selected_car_model_id = Some("nascar_forge_stallion_t5");
     session.free_car_selection = true;
     session.rebuild_roster_participants();
 
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
-    assert_eq!(player.car_title, "Ford Mustang TA1");
+    assert_eq!(player.car_title, "Forge Stallion Silhouette T5");
 
     let ta_models = get_models_for_category("nascar", "Trans-Am TA1");
     let ta_ids: Vec<&str> = ta_models.iter().map(|m| m.id).collect();
@@ -345,12 +345,12 @@ fn test_category_parity_across_multiple_disciplines() {
 
     // 3. Karting KZ2 Shifter
     session.switch_to_kart();
-    session.selected_car_model_id = Some("kart_tony_kart_racer_kz");
+    session.selected_car_model_id = Some("kart_verde_pro_t4");
     session.free_car_selection = true;
     session.rebuild_roster_participants();
 
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
-    assert_eq!(player.car_title, "Tony Kart Racer 401 KZ");
+    assert_eq!(player.car_title, "Verde Kart Pro 125 Shifter T4");
 
     let kz_models = get_models_for_category("kart", "Shifter Kart 125cc KZ2");
     let kz_ids: Vec<&str> = kz_models.iter().map(|m| m.id).collect();
@@ -402,14 +402,14 @@ fn test_gt_career_tier_initializes_unlocked_real_car_and_diverse_roster() {
     session.start_gt_career_tier(1);
 
     assert_eq!(session.game_mode, GameMode::Career);
-    assert_eq!(session.selected_car_model_id, Some("gt_toyota_supra_gt4"));
+    assert_eq!(session.selected_car_model_id, Some("gt_yamato_hayate_t1"));
     assert_eq!(session.car_choice, CarChoice::GT4Clubsport);
     assert_eq!(session.grid_participants.len(), session.max_grid_participants());
 
     let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
-    assert_eq!(player.car_title, "Toyota GR Supra GT4 EVO");
-    assert_eq!(player.model_id, Some("gt_toyota_supra_gt4"));
-    assert_eq!(session.car_model_ids[0], Some("gt_toyota_supra_gt4"));
+    assert_eq!(player.car_title, "Yamato Hayate GT T1");
+    assert_eq!(player.model_id, Some("gt_yamato_hayate_t1"));
+    assert_eq!(session.car_model_ids[0], Some("gt_yamato_hayate_t1"));
 
     let gt4_models = tdrace_app::catalog::get_models_for_category("gt", "GT4 Clubsport");
     let gt4_ids: Vec<&str> = gt4_models.iter().map(|m| m.id).collect();

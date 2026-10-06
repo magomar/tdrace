@@ -1066,10 +1066,10 @@ pub fn create_prototypical_track(
         RaceDirection::Left => "Left",
     };
     let mod_name = match mod_str {
-        "gt" => "GT World Challenge",
+        "gt" => "Grand Touring Challenge",
         "kart" => "Karting",
         "rally" => "Rallycross",
-        "nascar" => "NASCAR Cup",
+        "nascar" => "Stock Car Racing",
         _ => "Classic",
     };
 

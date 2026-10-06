@@ -75,6 +75,42 @@ fn test_bots_finish_three_laps_on_every_new_circuit() {
 }
 
 
+/// Scenario: a car is never trapped on its own category's circuit (tdrace-le75)
+///
+/// Given each new Classic circuit and its Classic car
+/// And every surface a car can reach on it: road, run-off and zones, up to the walls
+/// When the car accelerates from a stop on each of those surfaces for 5 s
+/// Then it reaches 2 m/s and is pulling away (a car stuck on one stays there for the rest of the race, a player too)
+#[test]
+fn test_every_car_can_drive_off_every_surface_of_its_circuits() {
+    use tdrace_core::physics::car::{Car, CarControls};
+    let mut failures = Vec::new();
+    for (id, car) in CIRCUITS {
+        let track = tdrace_core::catalog::official_track("classic", id);
+        let mut surfaces = std::collections::HashSet::new();
+        for s in track.spline.samples.iter().step_by(4) {
+            // The drivable band, wall to wall (3 m of run-off where a side has no wall).
+            let left = s.width * 0.5 + if s.left_wall { s.left_wall_distance.unwrap_or(0.0) } else { 3.0 };
+            let right = s.width * 0.5 + if s.right_wall { s.right_wall_distance.unwrap_or(0.0) } else { 3.0 };
+            let mut lateral = -right + 0.5;
+            while lateral <= left - 0.5 {
+                surfaces.insert(track.sample_surface(s.point + s.normal * lateral));
+                lateral += 1.0;
+            }
+        }
+        for surface in surfaces {
+            let mut c = Car::new(car());
+            for _ in 0..600 {
+                c.step_per_wheel(&CarControls { throttle: 1.0, ..Default::default() }, [surface; 4], 1.0 / 120.0);
+            }
+            if c.state.speed < 2.0 {
+                failures.push(format!("{id}: {surface:?}: {:.1} m/s after 5 s", c.state.speed));
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{:#?}", failures);
+}
+
 /// Scenario: a car under a bridge is hidden, its markers are not
 ///
 /// Given Hangar Sprint and the point where its bridge crosses the lower road

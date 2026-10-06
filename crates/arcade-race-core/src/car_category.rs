@@ -15,7 +15,7 @@ pub enum CarCategory {
     /// Sand rail, dune buggy, and extreme off-road stunt racing.
     #[serde(rename = "off_road", alias = "offroad", alias = "off-road", alias = "extreme_offroad")]
     OffRoad,
-    /// FIA Autocross buggies, cross cars, and touring autocross.
+    /// Continental Autocross buggies, cross cars, and touring autocross.
     #[serde(rename = "autocross", alias = "ax")]
     Autocross,
 }
@@ -42,11 +42,11 @@ impl CarCategory {
         }
     }
 
-    /// Short uppercase title (e.g. "GT", "NASCAR", "RALLYCROSS", "KART", "OFF-ROAD", "AUTOCROSS").
+    /// Short uppercase title (e.g. "GT", "STOCK CAR", "RALLYCROSS", "KART", "OFF-ROAD", "AUTOCROSS").
     pub fn title(&self) -> &'static str {
         match self {
             Self::Gt => "GT",
-            Self::Nascar => "NASCAR",
+            Self::Nascar => "STOCK CAR",
             Self::Rally => "RALLYCROSS",
             Self::Kart => "KART",
             Self::OffRoad => "OFF-ROAD",
@@ -57,12 +57,12 @@ impl CarCategory {
     /// Full display title.
     pub fn display_name(&self) -> &'static str {
         match self {
-            Self::Gt => "GT World Challenge",
-            Self::Nascar => "NASCAR Stock Car",
+            Self::Gt => "Grand Touring Challenge",
+            Self::Nascar => "Stock Car Racing",
             Self::Rally => "Rallycross",
             Self::Kart => "Karting",
             Self::OffRoad => "Extreme Off-Road",
-            Self::Autocross => "FIA Autocross",
+            Self::Autocross => "Continental Autocross",
         }
     }
 

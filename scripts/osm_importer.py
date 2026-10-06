@@ -37,6 +37,7 @@ Map data (c) OpenStreetMap contributors, available under the Open Database Licen
 """
 
 import argparse
+import bisect
 import json
 import math
 import os
@@ -1804,6 +1805,7 @@ RALLY_TRACKS = {
         "query": '[out:json][timeout:25];(way["highway"="raceway"](60.910,12.545,60.925,12.565););out body;>;out skel qt;',
         "way_ids": [599300791, 599300793, 599300794, 599300795, 599300796, 599300798, 599300799, 599300800, 599300802, 599300806],
         "fia_length": 1210.0,
+        "joker_ways": [599300792, 599300808, 599300811, 599300815, 599300817],  # the "Joker" ways and the unnamed way that rejoins the lap
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 30,
@@ -1834,6 +1836,7 @@ RALLY_TRACKS = {
         "query": '[out:json][timeout:25];(way["highway"="raceway"](63.395,10.895,63.42,10.935););out body;>;out skel qt;',
         "custom_ways": "hell_rx",
         "fia_length": 1019.0,
+        "joker_ways": [1069390969],
         "default_width": 13.0,
         "straight_width": 14.0,
         "num_waypoints": 28,
@@ -1853,6 +1856,7 @@ RALLY_TRACKS = {
         "query": '[out:json][timeout:25];(way["highway"="raceway"](47.860,-1.898,47.868,-1.890););out body;>;out skel qt;',
         "way_ids": [787615501, 787615503, 787615504, 787615506, 787615505],
         "fia_length": 1088.0,
+        "joker_ways": [787615502, 787615507],
         "default_width": 13.0,
         "straight_width": 14.5,
         "num_waypoints": 28,
@@ -1871,6 +1875,7 @@ RALLY_TRACKS = {
         "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
         "query": '[out:json][timeout:25];(way["highway"="raceway"](53.444,9.685,53.453,9.700););out body;>;out skel qt;',
         "fia_length": 952.0,
+        "joker_ways": [282853377],
         "default_width": 13.0,
         "straight_width": 14.5,
         "num_waypoints": 26,
@@ -1881,6 +1886,7 @@ RALLY_TRACKS = {
         "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
         "query": '[out:json][timeout:25];(way["highway"="raceway"](41.842,-7.762,41.850,-7.752););out body;>;out skel qt;',
         "fia_length": 1050.0,
+        "joker_ways": [1096210263],
         "default_width": 13.0,
         "straight_width": 14.0,
         "num_waypoints": 28,
@@ -1953,6 +1959,7 @@ RALLY_TRACKS = {
         "start_offset_m": 338.0,  # where the old lap started, so its scenery stays in place
         "query": '[out:json][timeout:25];(way["highway"="raceway"](41.560,2.250,41.575,2.268););out body;>;out skel qt;',
         "fia_length": 1125.0,
+        "joker_ways": [831804325, 921317985, 1560896068],  # the relation's "joker_lap" members
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 28,
@@ -1972,6 +1979,14 @@ RALLY_TRACKS = {
         # Loose as in the old lap (Mettet RX is ~60/40 tarmac/gravel); OSM tags 178240082 asphalt.
         "loose_ways": [178240082, 178240080],
         "start_offset_m": 68.0,  # where the old lap started, so its scenery stays in place
+        # The start/finish line, 3 waypoints (123.1 m) back from there on the start straight: the joker loop below
+        # leaves the straight 68 m before the old line and rejoins it just after, and a hairpin follows 20 m later.
+        # A whole number of waypoints, so the waypoints (and the walls built on them) stay where they were.
+        "finish_shift_m": -3 * 1149.0 / 28,
+        # The official joker is "at the end of the lap before the flying finish", +72 m and "slow". Of the asphalt
+        # loop off the start straight, the cut through 178240078 is +43 m in game; 178240077 then the second half of
+        # 178240074 is +95 m but turns at 2.7 m and costs 10 s; the whole of 178240074 is +139 m.
+        "joker_ways": [(178240077, 1886090191, 1886090070), (178240078, 1886090070, 1886090102), (178240074, 1886090102, 1886090150)],
         "query": '[out:json][timeout:25];(way["highway"="raceway"](50.295,4.640,50.310,4.665););out body;>;out skel qt;',
         # The raceway loop that matches the old lap best (1050 m in OSM, 0.91x the official 1149 m).
         "segments": [
@@ -1997,18 +2012,28 @@ RALLY_TRACKS = {
     "riga_rx": {
         "name": "Biķernieku Trase (World RX Latvia)",
         "description": "The historic Riga cathedral of speed featuring a punishing forest drag, sweeping double parallel dirt jump crests and high-grip technical gravel curves.",
-        "start_offset_m": 659.0,  # where the old lap started, so its scenery stays in place
+        # Where the old lap started, so its scenery stays in place (659 m before the joker swap made the lap 8.6 m
+        # shorter before this point).
+        "start_offset_m": 650.4,
+        # The start/finish line, one waypoint (35.4 m) on from there, in the same frame: the joker rejoins 17 m
+        # before the old line, and the joker branch needs a main waypoint between its merge and the line.
+        "finish_shift_m": 1062.4 / 30,
         "query": '[out:json][timeout:25];(way["highway"="raceway"](56.955,24.215,56.975,24.245););out body;>;out skel qt;',
-        # The raceway loop that matches the old lap best (1071 m in OSM; the official 1294 m is 17% longer,
-        # so the lap stays at the mapped length). The three "gravel" ways are the loose sections.
+        # The raceway loop that matches the old lap best (1063 m in OSM; the official 1294 m is 22% longer,
+        # so the lap stays at the mapped length). The "gravel" ways are the loose sections.
+        # The joker runs "completely side by side" with the main track, each with a jump. Two parallel roads
+        # leave node 5098959004 and rejoin way 1435177485; the main lap takes the southern one (588947713 ...),
+        # the joker the northern one, which is 8.6 m longer (the official joker is +60 m).
         "segments": [
-            (588947722, 5098958979, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
-            (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212), (1435177485, 1080703212, 1080702484),
-            (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
+            (588947722, 5098958979, 5098959004), (588947713, 5098959004, 5624243843), (588947721, 5624243843, 5624243873),
+            (588947716, 5624243873, 5624243877), (588947718, 5624243877, 5624243874), (1435177480, 5624243874, 1080703373),
+            (1435177485, 1080703373, 1080702484), (93229455, 1080702484, 1080702566), (1120162743, 1080702566, 279576058), (1120158806, 279576058, 5363424528),
             (945640986, 5363424528, 1080377982), (1120160990, 1080377982, 277946516), (523849729, 277946516, 5098958979),
         ],
-        "loose_ways": [588947722, 588947717, 588947719],
-        "fia_length": 1071.0,  # mapped length (the official 1294 m is 17% longer)
+        "loose_ways": [588947722],
+        "fia_length": 1062.4,  # mapped length (the official 1294 m is 22% longer)
+        "joker_ways": [(588947722, 5098959004, 5624243846), (588947720, 5624243846, 5624243875), (588947717, 5624243875, 5624243878),
+                       (588947719, 5624243878, 5624243876), (588947714, 5624243876, 1080703212)],
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 30,
@@ -2023,6 +2048,10 @@ RALLY_TRACKS = {
         },
     },
     "killarney_rx": {
+        # The official joker "split[s] left, running around the outside initially on tarmac before tightening into
+        # a right-hander, back onto an unsealed surface", and merges before the finish: the oneway ways
+        # 1214903815 and 1214903819 and the piece of the old circuit 42125321 between them.
+        "joker_ways": [1214903815, (42125321, 801399815, 11256127284), 1214903819],
         "name": "Killarney International Raceway (World RX South Africa)",
         "description": "Scenic Cape Town thriller in the shadow of Table Mountain, featuring a rapid asphalt drag, loose dirt jumps and high-drift hairpin transitions.",
         "query": '[out:json][timeout:25];(way["highway"="raceway"](-33.840,18.520,-33.825,18.535););out body;>;out skel qt;',
@@ -2048,6 +2077,7 @@ RALLY_TRACKS = {
         "segments": [(787532793, 7363261553), (787532796, None), (787532795, None)],
         # The spec lists 1115 m, but the mapped lap is ~925 m (the old preset was 914 m); keep 1:1.
         "fia_length": 925.0,
+        "joker_ways": [787532794],
         "default_width": 13.0,
         "straight_width": 14.0,
         "num_waypoints": 44,  # ~21 m spacing keeps the lap within ~3 m of the OSM line
@@ -2060,6 +2090,7 @@ RALLY_TRACKS = {
         "segments": [(297738880, 3016400386), (1328613408, None), (787140597, None), (1311041712, None),
                      (787140601, None), (1311041713, None), (787140602, None), (787140604, None)],
         "fia_length": 1050.0,
+        "joker_ways": [297738881, 1311041714],
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 44,  # ~24 m spacing keeps the lap within ~2 m of the OSM line
@@ -2078,6 +2109,7 @@ RALLY_TRACKS = {
         ],
         "start_offset_m": 150.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 64 m to the first corner
         "fia_length": 1070.0,
+        "joker_ways": [858729742, 858729748],  # "Tour Jocker" (sic) and "Tour Joker"
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 46,  # ~23 m spacing
@@ -2096,6 +2128,7 @@ RALLY_TRACKS = {
         ],
         "start_offset_m": 110.0,  # on the asphalt start straight: the 12-car grid is on asphalt, 66 m to the first corner
         "fia_length": 886.0,
+        "joker_ways": [788196385, 788196391],
         "default_width": 13.5,
         "straight_width": 14.5,
         "num_waypoints": 38,  # ~23 m spacing
@@ -2123,6 +2156,54 @@ RALLY_TRACKS = {
 def rally_way_surface(tags):
     surf_tag = tags.get("surface", "")
     return "Dirt" if surf_tag in ["gravel", "fine_gravel", "dirt"] else ("Concrete" if surf_tag == "concrete" else "Asphalt")
+
+
+JOKER_SPACING_M = 10.0
+
+
+def rally_joker_path(track_id, spec, ways, nodes, lap_node_ids, to_track):
+    """The mapped joker: spec["joker_ways"] chained in race order from the node where it leaves the lap to the
+    node where it rejoins it. An entry is a way id, or (way id, first node, last node) for part of a way.
+    Returns its points in track coordinates, resampled about every JOKER_SPACING_M metres, with the surface
+    of the way under each point."""
+    on_lap = {nid: i for i, nid in enumerate(lap_node_ids)}
+    chain = []  # (node id, way id)
+    for entry in spec["joker_ways"]:
+        wid, *ends = entry if isinstance(entry, tuple) else (entry,)
+        nds = ways[wid]["nodes"]
+        if ends:
+            i, j = nds.index(ends[0]), nds.index(ends[1])
+            nds = nds[i:j + 1] if i <= j else nds[j:i + 1][::-1]
+        if not chain:
+            if nds[-1] in on_lap and nds[0] not in on_lap:
+                nds = nds[::-1]
+        else:
+            if nds[-1] == chain[-1][0]:
+                nds = nds[::-1]
+            if nds[0] != chain[-1][0]:
+                raise ValueError(f"{track_id}: joker way {wid} does not join the previous joker way")
+            nds = nds[1:]
+        chain.extend((nid, wid) for nid in nds)
+    split, merge = chain[0][0], chain[-1][0]
+    if split not in on_lap or merge not in on_lap:
+        raise ValueError(f"{track_id}: the joker ways do not start and end on the lap")
+    if (on_lap[merge] - on_lap[split]) % len(lap_node_ids) > len(lap_node_ids) // 2:
+        raise ValueError(f"{track_id}: the joker runs against the lap direction")
+
+    pts = [to_track(nodes[nid]) for nid, _ in chain]
+    surfs = [rally_way_surface(ways[wid].get("tags", {})) for _, wid in chain]
+    cum = [0.0]
+    for i in range(1, len(pts)):
+        cum.append(cum[-1] + math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+    resampled, length = resample_open_polyline(pts, max(2, round(cum[-1] / JOKER_SPACING_M) + 1))
+    step = length / (len(resampled) - 1)
+    # Each point takes the surface of the OSM edge it lies on; edge i-1 -> i carries the way of node i.
+    surfaces = [surfs[min(len(surfs) - 1, max(1, bisect.bisect_left(cum, k * step - 1e-6)))] for k in range(len(resampled))]
+    return {
+        "osm_ways": spec["joker_ways"],
+        "points": [[round(x, 1), round(y, 1)] for x, y in resampled],
+        "surfaces": surfaces,
+    }
 
 
 def process_rally_track(track_id, cache_dir):
@@ -2225,13 +2306,14 @@ def process_rally_track(track_id, cache_dir):
     metric_pts = [latlon_to_meters(p[0], p[1], lat0, lon0) for p in raw_pts]
 
     # Start straight heading from the first nodes of the lap (segment laps: first node 60 m ahead)
+    pre_scale = 1.0
     if "segments" in spec:
         if spec.get("min_radius_m"):
             # Scale from the OSM loop itself, then round: the rounding shortens the lap, and scaling
             # after it would stretch the whole circuit back up.
             raw_len = polyline_length(metric_pts, closed=True)
             check_length_ratio(track_id, raw_len, spec["fia_length"])
-            f = spec["fia_length"] / raw_len
+            f = pre_scale = spec["fia_length"] / raw_len
             metric_pts, surfaces = fillet_corners([(x * f, y * f) for x, y in metric_pts], surfaces, spec["min_radius_m"])
         if spec.get("start_offset_m"):
             metric_pts, surfaces = shift_start(metric_pts, spec["start_offset_m"], surfaces)
@@ -2256,6 +2338,17 @@ def process_rally_track(track_id, cache_dir):
     # Translate so start line is at x=0, y=0
     x_offset, y_offset = scaled_pts[0]
     aligned_pts = [((x - x_offset), (y - y_offset)) for x, y in scaled_pts]
+    if spec.get("finish_shift_m"):
+        # Moves the start/finish line along the lap in the same frame, so the scenery stays in place.
+        aligned_pts, surfaces = shift_start(aligned_pts, spec["finish_shift_m"] % polyline_length(aligned_pts), surfaces)
+
+    def to_track(latlon):
+        """An OSM (lat, lon) in the same track coordinates as the lap."""
+        x, y = latlon_to_meters(latlon[0], latlon[1], lat0, lon0)
+        (x, y), = rotate_points([(x * pre_scale, y * pre_scale)], heading)
+        return (x * scale_factor - x_offset, y * scale_factor - y_offset)
+
+    joker = rally_joker_path(track_id, spec, ways, nodes, node_ids, to_track) if "joker_ways" in spec else None
 
     # Resample to target waypoint count
     resampled, resampled_surfaces, final_len = resample_polyline(aligned_pts, spec["num_waypoints"], surfaces)
@@ -2301,6 +2394,7 @@ def process_rally_track(track_id, cache_dir):
         "total_length": round(final_len, 1),
         "fia_length": spec["fia_length"],
         "jump": spec.get("jump"),
+        "joker": joker,
     }
 
 
@@ -2961,6 +3055,10 @@ def download(track_ids, cache_dir, force=False):
 
 TRACKS_DIR = os.path.join(REPO_ROOT, "tracks")
 BAKE_COMMAND = "cargo run --bin track_bake --"
+# Mapped World RX jokers in track coordinates, read by `cargo run --bin build_world_rx_joker`. It lives outside
+# tracks/ because build.rs takes every JSON file there for a circuit.
+RX_JOKERS_PATH = os.path.join(REPO_ROOT, "assets", "osm", "rx_jokers.json")
+JOKER_BAKE_COMMAND = "cargo run --bin build_world_rx_joker"
 
 
 def load_aliases(tracks_dir):
@@ -3073,6 +3171,22 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
     return path, " ".join([BAKE_COMMAND, rel] + bake_args)
 
 
+def write_rx_jokers(results, path=None):
+    """Stores the mapped joker of each result in RX_JOKERS_PATH (keyed by catalog id), keeping the others."""
+    path = path or RX_JOKERS_PATH
+    jokers = {}
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            jokers = json.load(f)
+    for data in results:
+        if data.get("joker"):
+            jokers[catalog_id("rally", data["id"], TRACKS_DIR)] = data["joker"]
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(dict(sorted(jokers.items())), f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return path
+
+
 DISCIPLINES = {
     "gt": (GT_CIRCUITS, process_gt_circuit, print_gt_summary),
     "kart": (KART_TRACKS, process_kart_track, print_kart_summary),
@@ -3094,6 +3208,8 @@ def main():
         p.add_argument(
             "--pit-lane-only", action="store_true", help="Only update pit_lane in existing track JSON without modifying track waypoints or geometry"
         )
+        if name == "rally":
+            p.add_argument("--jokers", action="store_true", help=f"Write the mapped jokers to {os.path.relpath(RX_JOKERS_PATH, REPO_ROOT)}")
     real_ids = list(provenance_osm_urls().keys())
     p = sub.add_parser("download", help="Download OSM map data for the real circuits in tracks/")
     p.add_argument("--track", choices=real_ids, action="append", help="Circuit id (repeatable; default: all)")
@@ -3106,8 +3222,10 @@ def main():
 
     specs, process, print_summary = DISCIPLINES[args.discipline]
     track_ids = [args.track] if args.track else list(specs.keys())
+    results = []
     for tid in track_ids:
         data = process(tid, args.cache_dir)
+        results.append(data)
         print_summary(data)
         if args.json or getattr(args, "pit_lane_only", False):
             path, bake_cmd = write_source_json(
@@ -3115,6 +3233,9 @@ def main():
             )
             print(f"  Wrote {path}")
             print(f"  Next: {bake_cmd}")
+    if getattr(args, "jokers", False):
+        print(f"Wrote {write_rx_jokers(results)}")
+        print(f"Next: {JOKER_BAKE_COMMAND}")
 
 
 if __name__ == "__main__":

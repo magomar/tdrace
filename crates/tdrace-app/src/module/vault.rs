@@ -147,10 +147,10 @@ impl GameModule for VaultGameModule {
                 audio_profile: Some(EngineAudioProfile::kart_cadet_60()),
             },
             VehicleModelDefinition {
-                id: "kart_honda_mean_mower",
-                name: "Honda Mean Mower V2 Tuned",
+                id: "vault_asahi_blade_runner",
+                name: "Asahi Blade Runner Mower",
                 tag: "DECOMMISSIONED MOWER",
-                description: "Guinness World Record 999cc CBR1000RR powered monster transferred from Karting.",
+                description: "Record-setting 999cc motorcycle-powered monster transferred from Karting.",
                 config: Self::car_vault_prototype_mower(),
                 visual_type: VehicleVisualType::GoKart {
                     exposed_driver: true,
@@ -164,10 +164,10 @@ impl GameModule for VaultGameModule {
                 audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
             },
             VehicleModelDefinition {
-                id: "kart_john_deere_racing_mower",
-                name: "John Deere Spec Racing Mower",
+                id: "vault_greenfield_prairie_racer",
+                name: "Greenfield Prairie Racer Mower",
                 tag: "DECOMMISSIONED MOWER",
-                description: "Classic green & yellow 850cc V-Twin racing mower transferred from Karting.",
+                description: "Classic 850cc V-Twin racing mower transferred from Karting.",
                 config: Self::car_vault_prototype_mower(),
                 visual_type: VehicleVisualType::GoKart {
                     exposed_driver: true,
@@ -181,10 +181,10 @@ impl GameModule for VaultGameModule {
                 audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
             },
             VehicleModelDefinition {
-                id: "kart_viking_t6_tractor",
-                name: "Viking T6 Racing Tractor",
+                id: "vault_nordic_valhalla_tractor",
+                name: "Nordic Valhalla Racing Tractor",
                 tag: "DECOMMISSIONED TRACTOR",
-                description: "Austrian modified 1000cc V-Twin racing tractor transferred from Karting.",
+                description: "Modified 1000cc V-Twin racing tractor transferred from Karting.",
                 config: Self::car_vault_prototype_mower(),
                 visual_type: VehicleVisualType::GoKart {
                     exposed_driver: true,

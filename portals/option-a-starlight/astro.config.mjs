@@ -22,10 +22,6 @@ export default defineConfig({
           autogenerate: { directory: 'physics' },
         },
         {
-          label: 'Vehicle Rosters',
-          autogenerate: { directory: 'vehicles' },
-        },
-        {
           label: 'Circuit Directory',
           autogenerate: { directory: 'circuits' },
         },
@@ -36,6 +32,10 @@ export default defineConfig({
         {
           label: 'Engineering Specs',
           autogenerate: { directory: 'engineering' },
+        },
+        {
+          label: 'TDRace Codex (Live Portal ↗)',
+          link: 'http://localhost:4322/',
         },
       ],
     }),

@@ -1,0 +1,400 @@
+---
+// Interactive SVG Keyboard and Gamepad Diagram for Codex driving controls.
+// Highlights active keys and buttons based on the selected preset (Hybrid, WASD, Arrows, Classic).
+import type { ControlsModel } from '../lib/codex';
+
+interface Props {
+  presets: ControlsModel['presets'];
+  initialPresetId?: string;
+}
+
+const { presets, initialPresetId = 'hybrid' } = Astro.props;
+
+// Canonical action colors for visual clarity
+const ACTION_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
+  throttle: { bg: 'rgba(34, 197, 94, 0.25)', border: '#22c55e', text: '#4ade80', label: 'Throttle' },
+  brake: { bg: 'rgba(244, 63, 94, 0.25)', border: '#f43f5e', text: '#fb7185', label: 'Brake / Reverse' },
+  steer_left: { bg: 'rgba(6, 182, 212, 0.25)', border: '#06b6d4', text: '#22d3ee', label: 'Steer Left' },
+  steer_right: { bg: 'rgba(6, 182, 212, 0.25)', border: '#06b6d4', text: '#22d3ee', label: 'Steer Right' },
+  handbrake: { bg: 'rgba(245, 158, 11, 0.25)', border: '#f59e0b', text: '#fbbf24', label: 'Handbrake' },
+  primary: { bg: 'rgba(59, 130, 246, 0.25)', border: '#3b82f6', text: '#60a5fa', label: 'Confirm' },
+  secondary: { bg: 'rgba(168, 85, 247, 0.25)', border: '#a855f7', text: '#c084fc', label: 'Boost' },
+  pause: { bg: 'rgba(148, 163, 184, 0.25)', border: '#94a3b8', text: '#cbd5e1', label: 'Pause' },
+  menu: { bg: 'rgba(148, 163, 184, 0.25)', border: '#94a3b8', text: '#cbd5e1', label: 'Menu' },
+};
+
+// Map each preset to active key bindings for client scripting
+const presetsJson = JSON.stringify(presets);
+---
+
+<div class="keyboard-diagram-container rounded-2xl border border-racing-border bg-racing-surface/80 p-5 backdrop-blur-sm" data-presets={presetsJson}>
+  <!-- Preset Selector Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-racing-border/60">
+    <div>
+      <h3 class="text-base font-bold text-racing-white flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        Interactive Control Surface
+      </h3>
+      <p class="text-xs text-racing-muted mt-0.5" id="preset-description">
+        {presets.find(p => p.id === initialPresetId)?.description}
+      </p>
+    </div>
+
+    <!-- Preset Tabs -->
+    <div class="inline-flex rounded-lg bg-racing-card p-1 border border-racing-border">
+      {presets.map((preset) => (
+        <button
+          type="button"
+          class={`preset-tab-btn px-3 py-1.5 text-xs font-mono font-medium rounded-md transition-all duration-150 ${
+            preset.id === initialPresetId
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+              : 'text-racing-muted hover:text-racing-white hover:bg-racing-surface/50'
+          }`}
+          data-preset-id={preset.id}
+        >
+          {preset.name.split(' (')[0]}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Action Legend -->
+  <div class="flex flex-wrap items-center gap-3 mb-4 text-xs font-mono">
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-racing-card/60 border border-green-500/40 text-green-400">
+      <span class="w-2.5 h-2.5 rounded bg-green-500"></span> Throttle
+    </div>
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-racing-card/60 border border-rose-500/40 text-rose-400">
+      <span class="w-2.5 h-2.5 rounded bg-rose-500"></span> Brake / Rev
+    </div>
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-racing-card/60 border border-cyan-500/40 text-cyan-400">
+      <span class="w-2.5 h-2.5 rounded bg-cyan-500"></span> Steering (L/R)
+    </div>
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-racing-card/60 border border-amber-500/40 text-amber-400">
+      <span class="w-2.5 h-2.5 rounded bg-amber-500"></span> Handbrake
+    </div>
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-racing-card/60 border border-purple-500/40 text-purple-400">
+      <span class="w-2.5 h-2.5 rounded bg-purple-500"></span> Secondary / Boost
+    </div>
+  </div>
+
+  <!-- SVG Keyboard Vector Map -->
+  <div class="w-full overflow-x-auto pb-2">
+    <svg viewBox="0 0 880 300" class="w-full min-w-[760px] h-auto select-none" id="keyboard-svg">
+      <defs>
+        <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-rose" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+
+      <!-- Function Row -->
+      <g class="key-row">
+        <!-- Esc -->
+        <g class="key-cap" data-key="Esc" transform="translate(10, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Esc</text>
+        </g>
+        <!-- F1..F4 -->
+        <g class="key-cap" data-key="F1" transform="translate(74, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F1</text>
+        </g>
+        <g class="key-cap" data-key="F2" transform="translate(124, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F2</text>
+        </g>
+        <g class="key-cap" data-key="F3" transform="translate(174, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F3</text>
+        </g>
+        <g class="key-cap" data-key="F4" transform="translate(224, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F4</text>
+        </g>
+        <!-- F5..F8 -->
+        <g class="key-cap" data-key="F5" transform="translate(288, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F5</text>
+        </g>
+        <g class="key-cap" data-key="F6" transform="translate(338, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F6</text>
+        </g>
+        <g class="key-cap" data-key="F7" transform="translate(388, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F7</text>
+        </g>
+        <g class="key-cap" data-key="F8" transform="translate(438, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F8</text>
+        </g>
+        <!-- F9..F12 -->
+        <g class="key-cap" data-key="F9" transform="translate(502, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F9</text>
+        </g>
+        <g class="key-cap" data-key="F10" transform="translate(552, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F10</text>
+        </g>
+        <g class="key-cap" data-key="F11" transform="translate(602, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F11</text>
+        </g>
+        <g class="key-cap" data-key="F12" transform="translate(652, 10)">
+          <rect width="44" height="32" rx="4" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="22" y="21" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">F12</text>
+        </g>
+      </g>
+
+      <!-- Row 1: Numbers -->
+      <g class="key-row">
+        {['~', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '='].map((k, i) => (
+          <g class="key-cap" data-key={k} transform={`translate(${10 + i * 49}, 52)`}>
+            <rect width="44" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+            <text x="22" y="26" text-anchor="middle" font-size="13" font-family="JetBrains Mono, monospace" fill="#94a3b8">{k}</text>
+          </g>
+        ))}
+        <g class="key-cap" data-key="Backspace" transform="translate(647, 52)">
+          <rect width="83" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="41" y="26" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Backspace</text>
+        </g>
+      </g>
+
+      <!-- Row 2: Tab + QWERTY -->
+      <g class="key-row">
+        <g class="key-cap" data-key="Tab" transform="translate(10, 102)">
+          <rect width="66" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="33" y="26" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Tab</text>
+        </g>
+        {['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']'].map((k, i) => (
+          <g class="key-cap" data-key={k} transform={`translate(${81 + i * 49}, 102)`}>
+            <rect width="44" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+            <text x="22" y="26" text-anchor="middle" font-size="14" font-weight="600" font-family="JetBrains Mono, monospace" fill="#cbd5e1">{k}</text>
+            <text x="22" y="38" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+          </g>
+        ))}
+        <g class="key-cap" data-key="\\" transform="translate(669, 102)">
+          <rect width="61" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="30" y="26" text-anchor="middle" font-size="12" font-family="JetBrains Mono, monospace" fill="#94a3b8">\</text>
+        </g>
+      </g>
+
+      <!-- Row 3: Caps + ASDF -->
+      <g class="key-row">
+        <g class="key-cap" data-key="Caps" transform="translate(10, 152)">
+          <rect width="76" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="38" y="26" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Caps</text>
+        </g>
+        {['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'"].map((k, i) => (
+          <g class="key-cap" data-key={k} transform={`translate(${91 + i * 49}, 152)`}>
+            <rect width="44" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+            <text x="22" y="26" text-anchor="middle" font-size="14" font-weight="600" font-family="JetBrains Mono, monospace" fill="#cbd5e1">{k}</text>
+            <text x="22" y="38" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+          </g>
+        ))}
+        <g class="key-cap" data-key="Enter" transform="translate(630, 152)">
+          <rect width="100" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="50" y="26" text-anchor="middle" font-size="12" font-family="JetBrains Mono, monospace" fill="#94a3b8">Enter</text>
+        </g>
+      </g>
+
+      <!-- Row 4: Shift + ZXCV -->
+      <g class="key-row">
+        <g class="key-cap" data-key="LShift" transform="translate(10, 202)">
+          <rect width="96" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="48" y="26" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Shift</text>
+          <text x="48" y="37" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+        {['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/'].map((k, i) => (
+          <g class="key-cap" data-key={k} transform={`translate(${111 + i * 49}, 202)`}>
+            <rect width="44" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+            <text x="22" y="26" text-anchor="middle" font-size="14" font-weight="600" font-family="JetBrains Mono, monospace" fill="#cbd5e1">{k}</text>
+            <text x="22" y="38" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+          </g>
+        ))}
+        <g class="key-cap" data-key="RShift" transform="translate(601, 202)">
+          <rect width="129" height="42" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="64" y="26" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Shift</text>
+        </g>
+      </g>
+
+      <!-- Row 5: Modifiers & Space -->
+      <g class="key-row">
+        <g class="key-cap" data-key="LCtrl" transform="translate(10, 252)">
+          <rect width="54" height="40" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="27" y="25" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Ctrl</text>
+        </g>
+        <g class="key-cap" data-key="LAlt" transform="translate(69, 252)">
+          <rect width="54" height="40" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="27" y="25" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Alt</text>
+        </g>
+        <g class="key-cap" data-key="Space" transform="translate(128, 252)">
+          <rect width="360" height="40" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="180" y="23" text-anchor="middle" font-size="12" font-family="JetBrains Mono, monospace" fill="#cbd5e1">SPACE</text>
+          <text x="180" y="34" text-anchor="middle" font-size="8" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+        <g class="key-cap" data-key="RAlt" transform="translate(493, 252)">
+          <rect width="54" height="40" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="27" y="25" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">Alt</text>
+        </g>
+        <g class="key-cap" data-key="RCtrl" transform="translate(552, 252)">
+          <rect width="54" height="40" rx="5" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="27" y="25" text-anchor="middle" font-size="11" font-family="JetBrains Mono, monospace" fill="#94a3b8">RCtrl</text>
+          <text x="27" y="35" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+      </g>
+
+      <!-- Arrow Cluster -->
+      <g class="key-cluster" transform="translate(745, 0)">
+        <!-- Cluster background pill -->
+        <rect x="-8" y="194" width="138" height="104" rx="10" fill="rgba(19, 23, 34, 0.4)" stroke="#272d3e" stroke-dasharray="2 2" />
+
+        <!-- Up Arrow -->
+        <g class="key-cap" data-key="Up Arrow" transform="translate(44, 202)">
+          <rect width="42" height="42" rx="6" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="21" y="25" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" fill="#cbd5e1">↑</text>
+          <text x="21" y="37" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+        <!-- Left Arrow -->
+        <g class="key-cap" data-key="Left Arrow" transform="translate(-2, 252)">
+          <rect width="42" height="40" rx="6" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="21" y="25" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" fill="#cbd5e1">←</text>
+          <text x="21" y="36" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+        <!-- Down Arrow -->
+        <g class="key-cap" data-key="Down Arrow" transform="translate(44, 252)">
+          <rect width="42" height="40" rx="6" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="21" y="25" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" fill="#cbd5e1">↓</text>
+          <text x="21" y="36" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+        <!-- Right Arrow -->
+        <g class="key-cap" data-key="Right Arrow" transform="translate(90, 252)">
+          <rect width="42" height="40" rx="6" class="fill-[#131722] stroke-[#272d3e] stroke-[1.5]" />
+          <text x="21" y="25" text-anchor="middle" font-size="16" font-family="JetBrains Mono, monospace" fill="#cbd5e1">→</text>
+          <text x="21" y="36" text-anchor="middle" font-size="7" font-family="Inter, sans-serif" class="key-sublabel" fill="#64748b"></text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<script>
+  // Interactive preset switcher script for the keyboard diagram
+  function setupKeyboardDiagram() {
+    const container = document.querySelector('.keyboard-diagram-container');
+    if (!container) return;
+
+    const presetsData = JSON.parse(container.getAttribute('data-presets') || '[]');
+    const tabBtns = container.querySelectorAll('.preset-tab-btn');
+    const descEl = container.querySelector('#preset-description');
+    const keyCaps = container.querySelectorAll('.key-cap');
+
+    // Color definitions
+    const ACTION_STYLE: Record<string, { fill: string; stroke: string; text: string; label: string; filter: string }> = {
+      throttle: { fill: 'rgba(34, 197, 94, 0.22)', stroke: '#22c55e', text: '#86efac', label: 'THROTTLE', filter: 'url(#glow-green)' },
+      brake: { fill: 'rgba(244, 63, 94, 0.22)', stroke: '#f43f5e', text: '#fda4af', label: 'BRAKE', filter: 'url(#glow-rose)' },
+      steer_left: { fill: 'rgba(6, 182, 212, 0.22)', stroke: '#06b6d4', text: '#67e8f9', label: 'LEFT', filter: 'url(#glow-cyan)' },
+      steer_right: { fill: 'rgba(6, 182, 212, 0.22)', stroke: '#06b6d4', text: '#67e8f9', label: 'RIGHT', filter: 'url(#glow-cyan)' },
+      handbrake: { fill: 'rgba(245, 158, 11, 0.22)', stroke: '#f59e0b', text: '#fde047', label: 'DRIFT', filter: 'url(#glow-amber)' },
+      secondary: { fill: 'rgba(168, 85, 247, 0.22)', stroke: '#a855f7', text: '#d8b4fe', label: 'BOOST', filter: '' },
+      primary: { fill: 'rgba(59, 130, 246, 0.22)', stroke: '#3b82f6', text: '#93c5fd', label: 'CONFIRM', filter: '' },
+      pause: { fill: 'rgba(148, 163, 184, 0.15)', stroke: '#64748b', text: '#cbd5e1', label: 'PAUSE', filter: '' },
+      menu: { fill: 'rgba(148, 163, 184, 0.15)', stroke: '#64748b', text: '#cbd5e1', label: 'MENU', filter: '' },
+    };
+
+    function applyPreset(presetId: string) {
+      const preset = presetsData.find((p: any) => p.id === presetId);
+      if (!preset) return;
+
+      if (descEl) {
+        descEl.textContent = preset.description;
+      }
+
+      // Update tab active classes
+      tabBtns.forEach((btn) => {
+        const isActive = btn.getAttribute('data-preset-id') === presetId;
+        if (isActive) {
+          btn.className = 'preset-tab-btn px-3 py-1.5 text-xs font-mono font-medium rounded-md transition-all duration-150 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10';
+        } else {
+          btn.className = 'preset-tab-btn px-3 py-1.5 text-xs font-mono font-medium rounded-md transition-all duration-150 text-racing-muted hover:text-racing-white hover:bg-racing-surface/50';
+        }
+      });
+
+      // Build key-to-action map for this preset
+      const keyMap: Record<string, string> = {};
+      for (const b of preset.bindings) {
+        for (const k of b.keys) {
+          keyMap[k] = b.action;
+        }
+      }
+
+      // Reset all keys, then highlight active ones
+      keyCaps.forEach((cap) => {
+        const keyName = cap.getAttribute('data-key');
+        const rect = cap.querySelector('rect');
+        const text = cap.querySelector('text:not(.key-sublabel)');
+        const sublabel = cap.querySelector('.key-sublabel');
+
+        if (!rect || !keyName) return;
+
+        const action = keyMap[keyName];
+        if (action && ACTION_STYLE[action]) {
+          const style = ACTION_STYLE[action];
+          rect.setAttribute('fill', style.fill);
+          rect.setAttribute('stroke', style.stroke);
+          rect.setAttribute('stroke-width', '2.5');
+          if (style.filter) rect.setAttribute('filter', style.filter);
+
+          if (text) {
+            text.setAttribute('fill', style.text);
+            text.setAttribute('font-weight', '700');
+          }
+          if (sublabel) {
+            sublabel.textContent = style.label;
+            sublabel.setAttribute('fill', style.stroke);
+          }
+        } else {
+          // Default unlit style
+          rect.setAttribute('fill', '#131722');
+          rect.setAttribute('stroke', '#272d3e');
+          rect.setAttribute('stroke-width', '1.5');
+          rect.removeAttribute('filter');
+
+          if (text) {
+            text.setAttribute('fill', keyName.length > 1 ? '#94a3b8' : '#cbd5e1');
+            text.setAttribute('font-weight', keyName.length === 1 ? '600' : '400');
+          }
+          if (sublabel) {
+            sublabel.textContent = '';
+          }
+        }
+      });
+    }
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-preset-id');
+        if (id) applyPreset(id);
+      });
+    });
+
+    // Initial application (default: Hybrid)
+    applyPreset('hybrid');
+  }
+
+  setupKeyboardDiagram();
+  document.addEventListener('astro:page-load', setupKeyboardDiagram);
+</script>

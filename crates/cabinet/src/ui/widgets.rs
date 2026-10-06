@@ -629,24 +629,26 @@ pub fn draw_stepper(
     let is_active = is_focused || is_hovered;
     scaler.draw_button_card(x, y, w, h, is_focused, is_hovered, accent_color);
 
-    let pad_x = scaler.s(16.0);
+    let pad_x = if w < scaler.s(260.0) { scaler.s(10.0) } else { scaler.s(16.0) };
     let label_y = y + h * 0.62;
 
     // Left label
+    let label_font = if w < scaler.s(260.0) { scaler.font_s(12.0) } else { scaler.font_s(13.5) };
     fonts.draw_ui_bold(
         label,
         x + pad_x,
         label_y,
-        scaler.font_s(13.5),
+        label_font,
         if is_active { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
     );
 
     // Stepper container on the right
-    let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
+    let max_opt_w = (w - pad_x * 2.0 - scaler.s(45.0)).max(scaler.s(60.0));
+    let opt_w = (w * 0.56).clamp(scaler.s(65.0), scaler.s(320.0)).min(max_opt_w);
     let opt_x = x + w - opt_w - pad_x;
-    let opt_h = scaler.s(32.0);
+    let opt_h = (h - scaler.s(8.0)).clamp(scaler.s(24.0), scaler.s(32.0));
     let opt_y = y + (h - opt_h) * 0.5;
-    let arrow_w = scaler.s(28.0);
+    let arrow_w = (opt_w * 0.22).clamp(scaler.s(14.0), scaler.s(28.0));
 
     // Stepper body backdrop
     draw_rectangle(opt_x, opt_y, opt_w, opt_h, Color::new(0.06, 0.08, 0.12, 0.95));
@@ -659,12 +661,14 @@ pub fn draw_stepper(
         if is_active { accent_color } else { Palette::UI_CARD_BORDER },
     );
 
+    let arrow_font = if opt_w < scaler.s(130.0) { scaler.font_s(12.0) } else { scaler.font_s(14.0) };
+
     // Left chevron "<" button
     fonts.draw_ui_bold_centered(
         "<",
         opt_x + arrow_w * 0.5,
         opt_y + opt_h * 0.68,
-        scaler.font_s(14.0),
+        arrow_font,
         if is_active { accent_color } else { Palette::UI_TEXT_MUTED },
     );
 
@@ -673,16 +677,22 @@ pub fn draw_stepper(
         ">",
         opt_x + opt_w - arrow_w * 0.5,
         opt_y + opt_h * 0.68,
-        scaler.font_s(14.0),
+        arrow_font,
         if is_active { accent_color } else { Palette::UI_TEXT_MUTED },
     );
 
-    // Center option label
+    // Center option label (dynamically fits text so it never collides with arrows)
+    let avail_opt_w = (opt_w - arrow_w * 2.0 - scaler.s(4.0)).max(1.0);
+    let mut val_font_s = if opt_w < scaler.s(130.0) { scaler.font_s(11.5) } else { scaler.font_s(12.5) };
+    let val_dim = fonts.measure_ui_bold(current_option, val_font_s);
+    if val_dim.width > avail_opt_w {
+        val_font_s = (val_font_s * (avail_opt_w / val_dim.width)).max(scaler.font_s(8.5));
+    }
     fonts.draw_ui_bold_centered(
         current_option,
         opt_x + opt_w * 0.5,
         opt_y + opt_h * 0.68,
-        scaler.font_s(12.5),
+        val_font_s,
         Palette::WHITE,
     );
 }
@@ -703,8 +713,9 @@ pub fn draw_dropdown_popup(
     if options.is_empty() {
         return;
     }
-    let pad_x = scaler.s(16.0);
-    let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
+    let pad_x = if w < scaler.s(260.0) { scaler.s(10.0) } else { scaler.s(16.0) };
+    let max_opt_w = (w - pad_x * 2.0 - scaler.s(45.0)).max(scaler.s(60.0));
+    let opt_w = (w * 0.56).clamp(scaler.s(65.0), scaler.s(320.0)).min(max_opt_w);
     let opt_x = x + w - opt_w - pad_x;
     let item_h = scaler.s(32.0);
     let total_popup_h = options.len() as f32 * item_h;

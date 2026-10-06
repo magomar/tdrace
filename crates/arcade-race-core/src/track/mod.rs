@@ -159,10 +159,10 @@ pub struct Track {
     pub max_width: Option<f32>,
     #[serde(default)]
     pub is_inspired: bool,
-    /// Short uppercase catalog badge, e.g. "WORLD RX SWEDEN".
+    /// Short uppercase catalog badge, e.g. "WORLD RALLYCROSS SWEDEN".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub tag: String,
-    /// Catalog class shown in circuit lists, e.g. "World RX" or "Superspeedway".
+    /// Catalog class shown in circuit lists, e.g. "World Rallycross" or "Superspeedway".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub category_label: String,
 }
@@ -606,49 +606,159 @@ impl Track {
     }
 
     /// Prunes or removes any wall barriers in `inner_walls` and `outer_walls` that penetrate
-    /// or cross within the drivable road ribbon of any segment in `self.network`.
+    /// or cross within the drivable road ribbon of any segment in `self.network`. Against the
+    /// branch segments (not on the default layout) the check ignores elevation: on Spa RX the
+    /// joker data sits ~4 m below the main road it overlaps, and a main wall blocked the joker.
     pub fn trim_walls_for_network(&mut self) {
         let Some(net) = &self.network else { return; };
         if net.segments.is_empty() { return; }
+        let branches = branch_segments(net);
 
-        let should_keep_wall = |wall: &WallBarrier| -> bool {
-            let p0 = wall.segment.start;
-            let p1 = wall.segment.end;
-            let p_mid = (p0 + p1) * 0.5;
+        let keep = |w: &WallBarrier| {
+            wall_clear_of_roads(&net.segments, w, 2.0, -0.2) && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
+        };
+        self.geometry.inner_walls.retain(keep);
+        self.geometry.outer_walls.retain(keep);
+    }
 
-            for seg in &net.segments {
-                if seg.samples.len() < 2 { continue; }
+    /// Builds `geometry.network_walls` along the network segments that are not on the default
+    /// layout (the Rallycross joker branch). The walls use the gap that the main walls keep
+    /// from the main road around the branch, and the track's most common barrier type.
+    /// Every piece that comes within 0.3 m of a network road, or nearer the main road (with its
+    /// curbs) than the main walls stand, or crosses a network road or a main wall, or runs along
+    /// a main wall, is dropped, so the split and merge throats stay open. The check ignores elevation: some joker data overlaps the main road
+    /// at a different height, and a wall there would block the main road.
+    pub fn generate_network_walls(&mut self) {
+        self.geometry.network_walls.clear();
+        let Some(net) = &self.network else { return; };
+        let barrier_type = self.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
 
-                // Check endpoints and midpoint against this segment
-                for pt in [p0, p1, p_mid] {
-                    let proj = seg.project_point(pt);
-                    if (wall.elevation - proj.elevation).abs() < 2.0 {
-                        let half_w = proj.track_width * 0.5;
-                        if proj.lateral_offset.abs() < (half_w - 0.2) {
-                            return false; // Point inside drivable road surface
-                        }
-                    }
-                }
-
-                // Check centerline intersections
-                for i in 0..seg.samples.len() - 1 {
-                    let s0 = &seg.samples[i];
-                    let s1 = &seg.samples[i + 1];
-                    let seg_elev = (s0.elevation + s1.elevation) * 0.5;
-                    if (wall.elevation - seg_elev).abs() < 2.0 {
-                        let center_seg = LineSegment::new(s0.point, s1.point);
-                        if wall.segment.intersect_segment(&center_seg).is_some() {
-                            return false; // Intersects road centerline
-                        }
-                    }
-                }
-            }
-            true
+        // The main spline is smoothed across the segment seams, so check its ribbon (with curbs)
+        // as well, out to `gap`: where the joker runs on or beside the main road, a joker wall
+        // inside the main road's own wall gap stood ~1 m off its edge, and essay_rx bots on the
+        // main route hit its end. A piece that crosses a main wall is dropped too, so the walls
+        // never pinch. So is a piece within 0.5 m of a main wall along its length: it only doubles
+        // that wall, and once the pieces are joined the line zigzags across it (holjes_rx).
+        let main_walls = || self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+        let clear_of_main = |w: &WallBarrier, gap: f32| {
+            let off_road = [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5].into_iter().all(|p| {
+                let proj = self.spline.project_point(p);
+                let curb_extra = if proj.left_curb || proj.right_curb { 1.35 } else { 0.0 };
+                proj.distance_to_spline >= proj.track_width * 0.5 + curb_extra + gap
+            });
+            let doubles_main_wall = [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5]
+                .into_iter()
+                .all(|p| main_walls().any(|m| m.segment.distance_to_point(p) < 0.5));
+            off_road && !doubles_main_wall && !main_walls().any(|m| m.segment.intersect_segment(&w.segment).is_some())
         };
 
-        self.geometry.inner_walls.retain(should_keep_wall);
-        self.geometry.outer_walls.retain(should_keep_wall);
+        let mut walls = Vec::new();
+        for seg in branch_segments(net) {
+            if seg.samples.len() < 2 { continue; }
+            // The track-wide offset comes from the first main samples, which can sit on a wide
+            // run-off (Riga RX: 14.9 m). Measure the main walls around this branch instead.
+            let (min, max) = seg.samples.iter().fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), s| {
+                (lo.min(s.point), hi.max(s.point))
+            });
+            let barrier_offset = self
+                .local_barrier_offset(min - Vec2::splat(20.0), max + Vec2::splat(20.0))
+                .unwrap_or_else(|| self.effective_barrier_offset());
+            let mut spline = seg.to_spline();
+            // Segment samples flag every point above 0.6 m as a bridge, which would pull the
+            // walls in to the deck edge. A branch is a ground road, so use the normal offset.
+            for s in &mut spline.samples {
+                s.is_bridge = false;
+            }
+            let (left, right, _, _) = generate_walls_from_spline_raw(&spline, barrier_offset, barrier_type);
+            // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept, and at most
+            // 3.5 m: riga_rx's main walls stand ~10 m off on its run-off, and its side-by-side joker lost its walls.
+            let main_gap = (barrier_offset - 0.5).clamp(0.3, 3.5);
+            for side in [left, right] {
+                let kept: Vec<WallBarrier> = side
+                    .into_iter()
+                    .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
+                    .collect();
+                walls.extend(merge_collinear_walls(kept));
+            }
+        }
+        self.geometry.network_walls = walls;
     }
+
+    /// Median gap between the main road edge and the nearest main wall, over the main spline
+    /// samples inside the box `min`..`max`. Gaps of 10 m or more are not walls of that road and
+    /// are skipped. `None` when no sample qualifies.
+    fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
+        let mut dists = Vec::new();
+        for s in self.spline.samples.iter().filter(|s| s.point.cmpge(min).all() && s.point.cmple(max).all()) {
+            let hw = s.width * 0.5;
+            for edge in [s.point + s.normal * hw, s.point - s.normal * hw] {
+                let d = self
+                    .geometry
+                    .inner_walls
+                    .iter()
+                    .chain(&self.geometry.outer_walls)
+                    .map(|w| w.segment.distance_to_point(edge))
+                    .fold(f32::MAX, f32::min);
+                if d < 10.0 {
+                    dists.push(d);
+                }
+            }
+        }
+        if dists.is_empty() {
+            return None;
+        }
+        dists.sort_by(f32::total_cmp);
+        Some(dists[dists.len() / 2])
+    }
+}
+
+/// Network segments that are not on the default layout (the Rallycross joker branch).
+fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
+    let Some(main) = net.active_or_default_layout(None) else { return Vec::new(); };
+    net.segments.iter().filter(|s| !main.segment_sequence.contains(&s.id)).collect()
+}
+
+/// True when `wall` stays more than `edge_margin` outside the drivable ribbon of every segment
+/// in `segments` (a negative margin lets it sit that far inside) and does not cross any segment
+/// centerline. Roads more than `max_elevation_gap` above or below the wall are ignored.
+fn wall_clear_of_roads<'a>(
+    segments: impl IntoIterator<Item = &'a RoadSegment>,
+    wall: &WallBarrier,
+    max_elevation_gap: f32,
+    edge_margin: f32,
+) -> bool {
+    let p0 = wall.segment.start;
+    let p1 = wall.segment.end;
+    let p_mid = (p0 + p1) * 0.5;
+
+    for seg in segments {
+        if seg.samples.len() < 2 { continue; }
+
+        // Check endpoints and midpoint against this segment
+        for pt in [p0, p1, p_mid] {
+            let proj = seg.project_point(pt);
+            if (wall.elevation - proj.elevation).abs() < max_elevation_gap {
+                let half_w = proj.track_width * 0.5;
+                if proj.lateral_offset.abs() < (half_w + edge_margin) {
+                    return false; // Point inside drivable road surface
+                }
+            }
+        }
+
+        // Check centerline intersections
+        for i in 0..seg.samples.len() - 1 {
+            let s0 = &seg.samples[i];
+            let s1 = &seg.samples[i + 1];
+            let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+            if (wall.elevation - seg_elev).abs() < max_elevation_gap {
+                let center_seg = LineSegment::new(s0.point, s1.point);
+                if wall.segment.intersect_segment(&center_seg).is_some() {
+                    return false; // Intersects road centerline
+                }
+            }
+        }
+    }
+    true
 }
 
 impl wheelbase::SurfaceSampler for Track {
@@ -750,7 +860,6 @@ impl Track {
             || name_lower.contains(" rx")
             || name_lower.contains("rallycross")
             || name_lower.contains("grand prix")
-            || name_lower.contains("world rx")
         {
             return Some(SurfaceType::Gravel);
         }
@@ -1078,6 +1187,7 @@ impl Track {
         track.apply_default_runoff_surfaces();
         if track.network.is_some() {
             track.trim_walls_for_network();
+            track.generate_network_walls();
             if let Some(ref mut net) = track.network {
                 net.recompute_composite_splines();
             }
@@ -1144,6 +1254,7 @@ impl Track {
             }
             if self.network.is_some() {
                 self.trim_walls_for_network();
+                self.generate_network_walls();
                 if let Some(ref mut net) = self.network {
                     net.recompute_composite_splines();
                 }

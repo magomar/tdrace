@@ -106,17 +106,29 @@ Table of contents providing progressive disclosure of project constitution and t
 | [083](083_evorl_bot_driving_style_and_performance_optimization.md) | EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization | Architecture Spec | `draft` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [065](065_vehiclegeneric_bot_ai_and_effects.md) | Comprehensive computational architecture and evolutionary optimization pipeline leveraging the EvoRL framework to algorithmically calibrate TDRace bot control laws, amplify authentic driving style uniqueness, enforce monotonic tier progression, and evolve tactical Behavior Trees via high-throughput headless simulation. |
 | [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation | Architecture Spec | `implemented` | - | Resolves simulation, raycasting, and rallycross rendering bottlenecks, bringing wheelbase physics above 1.5M steps/s floor, LIDAR above 14M rays/s floor, Höljes RX frame times from 15.3ms down to <5.0ms, and equips bot AI with robust pit lane recognition and tactical entry gating. |
 | [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions | Feature Spec | `approved` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries. |
+| [087](087_tdrace_codex_unified_game_encyclopedia_and_technical_reference_portal.md) | TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal | Feature Spec | `implemented` | [011](011_game_asset_catalogue_and_physics_reference_portals.md) | Grows the Motorsport Showroom into the TDRace Codex: one Astro site with Showroom, Technical, Driving and Racing sections, fed by a Rust exporter that serialises the real game data (cars, chassis, suspension, tyres, surfaces, drivetrain, damage, assists, controls, HUD, formats, careers, AI rivals) instead of regex-scraping source files. |
+| [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md) | Rallycross Jokers Built From OpenStreetMap Joker Ways | Feature Spec | `implemented` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md) | Builds the World RX joker branch from OpenStreetMap on the 13 circuits where OSM shows it, places and sizes the synthetic joker from the published venue description elsewhere, replaces the 30-70 m joker length rule with a lap-time rule, keeps joker walls out of the main road's wall gap, and lets a bot stuck on the other branch follow it. |
+| [089](089_tactical_cockpit_hud_tire_compound_borders_and_inrace_wheel_decoupling.md) | Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling | Feature Spec | `implemented` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Removes intrusive procedural color bands from the in-race animated steered wheels, transfers compound visual identification to the outer tire casing borders in the Tactical Hologram Cockpit Telemetry HUD, and introduces a dedicated compound badge and full nameplate legend at the bottom of the cockpit HUD card. |
+| [090](090_autocross_fictional_vehicle_sprites_and_livery_pipeline.md) | Autocross Fictional Vehicle Sprites and Livery Pipeline | Feature Spec | `superseded` by [093](093_highquality_autocross_vehicle_sprites.md) | [050](050_fia_autocross_championship_and_vehicle_roster.md) | End-to-end asset generation pipeline delivering 45 2D textures (15 lateral 1024x512, 15 thumb 256x128, 15 top-down 512x512) for all 5 tiers of the Continental Autocross fleet, facing right (+X), inspired by authentic racing liveries with zero IP markings. |
+| [091](091_global_prebaked_vehicle_steered_wheel_articulation.md) | Global Pre-Baked Vehicle Steered Wheel Articulation | Feature Spec | `draft` | [026](026_topdown_wheel_steering_animations.md), [073](073_realistic_vehicle_sprite_harmonization_and_modular_steered_wheel_articulation.md), [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md) | Universal SteeredWheelConfig derivation from CarConfig and ChassisSkeleton, batch wheel-well inpainting pipeline, and dual-layer Ackermann steered wheel animation across all 107+ vehicles across GT, NASCAR, Rally, Autocross, Karting, and Extreme Off-Road modules. |
+| [092](092_player_racing_number_customization_and_persistent_nonconflicting_bot_rosters.md) | Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids | Feature Spec | `draft` | [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [027](027_championship_trophy_badges_and_player_profile_cabinet.md), [047](047_fictional_branding_and_realworld_ip_removal_for_steam_release.md) | Decouples baked numbers and real-world IP from vehicle sprites, provides player custom number and livery palette selection, and implements persistent non-conflicting random number and color assignment across AI bot rosters. |
+| [093](093_highquality_autocross_vehicle_sprites.md) | High-Quality Autocross Vehicle Sprites | Feature Spec | `implemented` | [050](050_fia_autocross_championship_and_vehicle_roster.md) | High-fidelity 2D lateral (1024x512), thumbnail (256x128), and top-down (512x512) sprites for all 15 Continental Autocross vehicles, facing right (+X), inspired by original models before rebranding, with strict zero-IP compliance (no words, no numbers, maximum 3 bodywork colors). |
 
 ### 🗺️ Specification Dependency Graph
 
 ```mermaid
 flowchart LR
     006["006: Road Split Segments, Branching Splines & Alternative Circuit Layouts"]
+    011["011: Game Asset Catalogue & Technical Reference Portals"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
+    024["024: Cross-Module AI Character Rosters and Dynamic Tier Assignment"]
+    026["026: Top-Down Pre-Baked Vehicle Wheel Steering Animations"]
+    027["027: Championship Trophy Badges & Player Profile Trophy Cabinet"]
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
     046["046: Human-Like Bot Driving with Tiered Mistakes and Varied Lines"]
     047["047: Fictional Branding and Real-World IP Removal for Steam Release"]
+    050["050: FIA Autocross Championship and Vehicle Roster"]
     055["055: Classic Circuits Revamp"]
     062["062: Circuit Pit Lanes and Interactive Pit Stop Procedures"]
     063["063: Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy"]
@@ -125,6 +137,7 @@ flowchart LR
     070["070: Global Collinear Wall Optimization and Circuit Rebake"]
     071["071: Centripetal Catmull-Rom and Variable-Density Track Splines"]
     072["072: Progressive Drift Dynamics, Low-Speed Steering Authority, and Assist Differentiation"]
+    073["073: Realistic Vehicle Sprite Harmonization and Modular Steered Wheel Articulation"]
     074["074: Decoupled Wheel Geometry, Dynamic Tire Compound Affinities, and Presentation Articulation"]
     075["075: Physical Chassis Skeleton, Explicit Anchor Points, and Proportional Rendering Harmonization"]
     076["076: Pragmatic Multi-Tier Suspension Archetypes, Compliance Dynamics, and Perceptible Chassis Articulation"]
@@ -136,6 +149,13 @@ flowchart LR
     082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
     083["083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"]
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
+    087["087: TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"]
+    088["088: Rallycross Jokers Built From OpenStreetMap Joker Ways"]
+    089["089: Tactical Cockpit HUD Tire Compound Borders, Bottom Legend, and Animated Wheel Color Decoupling"]
+    090["090: Autocross Fictional Vehicle Sprites and Livery Pipeline"]
+    091["091: Global Pre-Baked Vehicle Steered Wheel Articulation"]
+    092["092: Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids"]
+    093["093: High-Quality Autocross Vehicle Sprites"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -161,4 +181,17 @@ flowchart LR
     046 --> 083
     065 --> 083
     081 --> 085
+    011 --> 087
+    081 --> 088
+    074 --> 089
+    079 --> 089
+    050 --> 090
+    026 --> 091
+    073 --> 091
+    074 --> 091
+    075 --> 091
+    024 --> 092
+    027 --> 092
+    047 --> 092
+    050 --> 093
 ```

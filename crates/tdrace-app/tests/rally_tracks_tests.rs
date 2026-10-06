@@ -757,16 +757,9 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
             panic!("{}: missing joker layout in track network", id);
         });
 
-        // Delta between 30 m and 70 m
-        let delta = joker_layout.total_lap_length - main_layout.total_lap_length;
-        assert!(
-            delta >= 30.0 && delta <= 70.0,
-            "{}: joker delta {:.1} m must be between 30 m and 70 m (main: {:.1} m, joker: {:.1} m)",
-            id,
-            delta,
-            main_layout.total_lap_length,
-            joker_layout.total_lap_length
-        );
+        // A mapped (OSM) joker keeps its real length, which can be shorter than the main branch it bypasses
+        // (dreux_rx: -45 m); test_rx_joker_costs_lap_time checks what it costs instead.
+        assert!(joker_layout.total_lap_length > 0.0 && main_layout.total_lap_length > 0.0, "{}: empty layout", id);
 
         // Verify composite splines can be synthesized for both layouts
         let main_spline = network.build_composite_spline_for_layout("main");
@@ -856,19 +849,46 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
     }
 }
 
+/// Lap time in seconds of a car limited only by top speed, corner grip, acceleration and braking. It ignores the
+/// surface, so it measures what the shape of a route costs.
+fn speed_limited_lap_time(spline: &tdrace_core::track::spline::TrackSpline) -> f32 {
+    const TOP_SPEED: f32 = 40.0; // m/s
+    const CORNER_GRIP: f32 = 10.0; // m/s^2 lateral
+    const ACCELERATION: f32 = 8.0; // m/s^2
+    const BRAKING: f32 = 10.0; // m/s^2
+    const CURVATURE_SPAN_M: f32 = 4.0;
+    let s = &spline.samples;
+    let n = s.len();
+    let ds = |i: usize| if i + 1 < n { s[i + 1].distance - s[i].distance } else { spline.total_length - s[i].distance };
+    let span = ((CURVATURE_SPAN_M * n as f32 / spline.total_length).round() as usize).max(1);
+    let mut v: Vec<f32> = (0..n)
+        .map(|i| {
+            let (a, b) = (&s[(i + n - span) % n], &s[(i + span) % n]);
+            let turn = a.tangent.perp_dot(b.tangent).atan2(a.tangent.dot(b.tangent)).abs();
+            let curvature = turn / (2.0 * span as f32 * spline.total_length / n as f32);
+            (CORNER_GRIP / curvature.max(1e-6)).sqrt().min(TOP_SPEED)
+        })
+        .collect();
+    // Two laps of each pass, so the start line carries the speed of the lap before it.
+    for k in 0..2 * n {
+        let (i, j) = (k % n, (k + 1) % n);
+        v[j] = v[j].min((v[i] * v[i] + 2.0 * ACCELERATION * ds(i)).sqrt());
+    }
+    for k in (0..2 * n).rev() {
+        let (i, j) = (k % n, (k + 1) % n);
+        v[i] = v[i].min((v[j] * v[j] + 2.0 * BRAKING * ds(i)).sqrt());
+    }
+    (0..n).map(|i| ds(i) / ((v[i] + v[(i + 1) % n]) * 0.5)).sum()
+}
+
 #[test]
 fn test_holjes_rx_joker_lap_time_delta_simulation() {
     let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
     let network = track.network.as_ref().expect("holjes_rx must have network");
 
-    let seg1 = network.get_segment(tdrace_core::track::network::SegmentId(1)).unwrap();
-    let seg2 = network.get_segment(tdrace_core::track::network::SegmentId(2)).unwrap();
-
-    // Racing cruise speed (e.g. 15.0 m/s = ~54 km/h typical cornering speed in technical rallycross sections)
-    // Extra distance of 42.0m at 15.0m/s results in ~2.8s delta
-    let cruise_speed = 15.0f32;
-    let time_main = seg1.length / cruise_speed;
-    let time_joker = seg2.length / cruise_speed;
+    // The OSM joker is only 28 m longer, but its tight turns cost the rest.
+    let time_main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").unwrap());
+    let time_joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").unwrap());
     let time_delta = time_joker - time_main;
 
     assert!(
@@ -907,6 +927,25 @@ const RX_JOKER_TRACKS: [(&str, &str); 23] = [
     ("rally", "silverstone_rx"),
     ("rally", "erx_motor_park"),
 ];
+
+#[test]
+fn test_rx_joker_costs_lap_time() {
+    // Every joker must cost time, mapped or synthetic, but not more than a slow corner. The model sees only the
+    // shape. On 2026-10-05 the costs were 1.3-7.0 s; the mapped jokers cost 1.7-7.0 s, also the three that are
+    // shorter than the main branch they bypass (loheac_rx, estering_rx, dreux_rx). The most is mettet_rx, whose
+    // mapped joker is a tight asphalt loop (the official one is "slow").
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().expect("network");
+        let main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").expect("main spline"));
+        let joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").expect("joker spline"));
+        if !(1.0..=7.5).contains(&(joker - main)) {
+            failures.push(format!("{}: joker lap {:.2} s vs main {:.2} s ({:+.2} s)", id, joker, main, joker - main));
+        }
+    }
+    assert!(failures.is_empty(), "joker lap cost outside 1.0-7.5 s:\n{}", failures.join("\n"));
+}
 
 #[test]
 fn test_rx_layout_checkpoints_lie_on_their_route_in_driving_order() {
@@ -995,7 +1034,7 @@ fn test_rx_joker_road_reads_as_its_own_surface_not_runoff() {
 #[test]
 fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
     // End to end through race_kit::RaceWorld::step: lap 1 on the joker route, lap 2 on the main route.
-    use race_kit::{DriveControls, RaceFormat, RaceRules, RaceWorld};
+    use race_kit::{DriveControls, RaceEvent, RaceFormat, RaceRules, RaceWorld};
     use tdrace_core::physics::{Car, CarConfig};
     use tdrace_core::track::TrackProgressTracker;
 
@@ -1019,6 +1058,7 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
         let mut surface_mismatches = 0;
         let mut wrong_way = None;
         let mut first_mismatch = None;
+        let mut first_wall_hit = None;
         'laps: for (spline, from) in route {
             let mut d = from;
             while d < spline.total_length() {
@@ -1028,7 +1068,10 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
                 car.state.angle = s.tangent.y.atan2(s.tangent.x);
                 car.set_velocity(s.tangent * SPEED);
                 let expected = track.sample_car_surfaces(car);
-                world.step(&track, &[DriveControls::default()], DT);
+                let hit_wall = world.step(&track, &[DriveControls::default()], DT).iter().any(|e| matches!(e, RaceEvent::WallImpact { .. }));
+                if hit_wall && first_wall_hit.is_none() {
+                    first_wall_hit = Some(format!("{} lap at {:.0} m", if from > 0.0 { "joker" } else { "main" }, d));
+                }
                 // Where the main curb overlaps branch road near a junction, curb and road are both right.
                 let differs = world.last_surfaces[0]
                     .iter()
@@ -1061,14 +1104,82 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
 
         let tracker = &world.trackers[0];
         let jokers = tracker.multi_route.as_ref().map_or(0, |m| m.joker_laps_completed);
-        if !world.is_finished(0) || tracker.current_lap != 3 || jokers != 1 || surface_mismatches > 0 || wrong_way.is_some() {
+        if !world.is_finished(0) || tracker.current_lap != 3 || jokers != 1 || surface_mismatches > 0 || wrong_way.is_some() || first_wall_hit.is_some() {
             failures.push(format!(
-                "{}: finished {}, lap {}, jokers {}, surface mismatches {} (first {:?}), first wrong way {:?}",
-                id, world.is_finished(0), tracker.current_lap, jokers, surface_mismatches, first_mismatch, wrong_way
+                "{}: finished {}, lap {}, jokers {}, surface mismatches {} (first {:?}), first wrong way {:?}, first wall hit {:?}",
+                id, world.is_finished(0), tracker.current_lap, jokers, surface_mismatches, first_mismatch, wrong_way, first_wall_hit
             ));
         }
     }
     assert!(failures.is_empty(), "{} RX tracks failed:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
+    // The joker branch had no walls of its own: a car could leave it anywhere. Its walls must line the
+    // outside of the branch and never reach into the joker, the main road or the junction throats.
+    use tdrace_core::track::LineSegment;
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let joker = network.get_layout("joker").expect("joker layout");
+        let main = network.get_layout("main").expect("main layout");
+        let joker_seg = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
+        let seg = network.get_segment(*joker_seg).unwrap();
+        let walls = &track.geometry.network_walls;
+        let roads = network.segments.iter().map(|s| s.to_spline()).chain(std::iter::once(track.spline.clone())).collect::<Vec<_>>();
+
+        // On each side, wherever no other road (with its 3.5 m barrier gap) lies beside the joker, a wall
+        // stands within 6 m of the joker's edge. Joker walls keep the gap of the main walls around them, which is
+        // 5.4 m on riga_rx.
+        for (side, sign) in [("left", 1.0f32), ("right", -1.0)] {
+            let (mut open, mut walled) = (0, 0);
+            for s in &seg.samples {
+                let end = s.point + s.normal * sign * (s.width * 0.5 + 6.0);
+                let beside_road = roads.iter().any(|r| {
+                    let proj = r.project_point(end);
+                    proj.distance_to_spline < proj.track_width * 0.5 + 4.0
+                });
+                if beside_road {
+                    continue;
+                }
+                open += 1;
+                let ray = LineSegment::new(s.point, end);
+                if track.geometry.all_walls().any(|w| w.segment.intersect_segment(&ray).is_some()) {
+                    walled += 1;
+                }
+            }
+            if open > 0 && (walled as f32) < 0.9 * open as f32 {
+                failures.push(format!("{}: walls line only {}/{} open joker samples on the {}", id, walled, open, side));
+            }
+        }
+
+        for w in walls {
+            for p in [w.segment.start, w.segment.end, (w.segment.start + w.segment.end) * 0.5] {
+                for road in &roads {
+                    let proj = road.project_point(p);
+                    if proj.distance_to_spline < proj.track_width * 0.5 {
+                        failures.push(format!("{}: joker wall point {:?} is {:.2} m inside a road", id, p, proj.track_width * 0.5 - proj.distance_to_spline));
+                    }
+                }
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
+}
+
+#[test]
+fn test_rx_joker_walls_are_rebuilt_on_load_and_never_saved() {
+    // Saving a track and loading it again must give the same joker walls, not a second copy of them.
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let json = track.to_json().unwrap();
+        assert!(!json.contains("network_walls"), "{}: joker walls are written to the track file", id);
+        let reloaded = tdrace_core::track::Track::from_json(&json).unwrap();
+        assert!(!reloaded.geometry.network_walls.is_empty(), "{}: no joker walls after reload", id);
+        assert_eq!(reloaded.geometry.network_walls, track.geometry.network_walls, "{}: joker walls change after a save and reload", id);
+    }
 }
 
 #[test]

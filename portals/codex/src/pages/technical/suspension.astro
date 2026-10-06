@@ -1,0 +1,134 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ARCHETYPE_LABEL, deg, getDamageModel, getPlatforms, getSuspensionArchetypes } from '../../lib/codex';
+
+const archetypes = await getSuspensionArchetypes();
+const platforms = await getPlatforms();
+const damage = await getDamageModel();
+const titles = new Map(platforms.map((p) => [p.id, p.title]));
+
+// Short explanations of each archetype. Presentation text; the numbers come from the export.
+const ABOUT: Record<string, string> = {
+  rigid_kart: 'No springs or dampers to speak of: the tube frame flexes a few millimetres. Very direct, no camber change.',
+  solid_live_axle: 'One rigid beam joins the two rear wheels, so a bump on one side tilts both. Tough and cheap to fix.',
+  mac_pherson_strut: 'A strut is both spring and steering pivot. Simple and light, but the outside wheel loses camber in hard roll.',
+  double_wishbone: 'Two arms per wheel keep the tyre flat on the road as the body rolls. The reference race suspension.',
+  pushrod_inboard: 'Springs sit inside the body, worked by pushrods. Precise and low drag, but fragile: a broken pushrod drops the corner onto its bump stop.',
+  long_travel_off_road: 'Soft springs and a lot of travel soak up jumps and ruts. The toughest suspension in the game.',
+};
+
+const maxRobust = Math.max(...archetypes.map((a) => a.robustness_factor));
+const kn = (n: number) => `${Math.round(n / 1000)} kN/m`;
+const mm = (m: number) => `${Math.round(m * 1000)} mm`;
+const corner = (c: (typeof platforms)[number]['suspension']['front']) => [
+  ARCHETYPE_LABEL[c.archetype],
+  kn(c.spring_rate),
+  `${c.bump_damping_ratio.toFixed(2)} / ${c.rebound_damping_ratio.toFixed(2)}`,
+  `${mm(c.max_bump_travel)} / ${mm(c.max_rebound_travel)}`,
+  `${deg(c.static_camber).toFixed(1)}°`,
+  `${Math.round(c.camber_recovery * 100)}%`,
+];
+---
+
+<Layout title="Suspension" description="The six suspension types, their settings, and how they break.">
+  <div class="py-6 border-b border-racing-border max-w-4xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/technical" class="hover:underline">Technical</a> / Suspension</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Suspension</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed">
+      Each wheel hangs on a spring and a damper. The spring carries the car's weight. The damper slows the spring down
+      so the car does not bounce. When the car rolls in a corner, the suspension type decides how much the tyre tilts
+      (camber), and a tilted tyre has less grip. The game has six suspension types. Each one also has a
+      <strong class="text-white">robustness factor</strong>: a higher number means the corner takes more abuse before it
+      breaks.
+    </p>
+  </div>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">The six types</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {archetypes.map((a) => (
+        <div id={a.id} class="rounded-xl border border-racing-border bg-racing-surface p-5">
+          <h3 class="text-base font-bold text-white">{ARCHETYPE_LABEL[a.id]}</h3>
+          <p class="text-xs text-racing-muted mt-1 leading-relaxed">{ABOUT[a.id]}</p>
+          <div class="mt-3 space-y-1.5 text-[11px] font-mono">
+            <div class="flex items-center gap-2">
+              <span class="w-28 text-racing-muted">Robustness</span>
+              <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style={`width:${(a.robustness_factor / maxRobust) * 100}%`}></div></div>
+              <span class="w-12 text-right text-white">×{a.robustness_factor.toFixed(2)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-28 text-racing-muted">Part cost</span>
+              <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style={`width:${(a.part_cost_multiplier / 2.5) * 100}%`}></div></div>
+              <span class="w-12 text-right text-white">×{a.part_cost_multiplier.toFixed(2)}</span>
+            </div>
+          </div>
+          <p class="text-[11px] font-mono text-racing-cyan mt-3">
+            {a.platforms_front.length + a.platforms_rear.length === 0
+              ? 'No platform uses it.'
+              : `Front: ${a.platforms_front.map((id) => titles.get(id)).join(', ') || '—'} · Rear: ${a.platforms_rear.map((id) => titles.get(id)).join(', ') || '—'}`}
+          </p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="py-8 border-b border-racing-border">
+    <h2 class="text-xl font-bold text-white">Settings on each platform</h2>
+    <p class="text-xs text-racing-muted mt-1">Spring rate is the wheel rate. Damping is bump / rebound as a share of critical damping. Travel is bump / rebound. Camber recovery is how much camber the geometry keeps as the body rolls.</p>
+    <div class="overflow-x-auto mt-4 rounded-xl border border-racing-border">
+      <table class="w-full text-left text-xs font-mono whitespace-nowrap">
+        <thead class="bg-racing-surface2 text-racing-muted uppercase text-[10px]">
+          <tr>
+            <th class="py-2 px-3">Platform</th><th class="py-2 px-3">Axle</th><th class="py-2 px-3">Type</th><th class="py-2 px-3">Spring</th>
+            <th class="py-2 px-3">Damping</th><th class="py-2 px-3">Travel</th><th class="py-2 px-3">Camber</th><th class="py-2 px-3">Recovery</th>
+            <th class="py-2 px-3">Anti-roll bar</th><th class="py-2 px-3">Roll centre</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/50 bg-racing-surface">
+          {platforms.flatMap((p) => [
+            <tr>
+              <td class="py-2 px-3 text-white font-bold" rowspan="2"><a class="hover:text-racing-cyan" href={`/technical/chassis#${p.id}`}>{p.title}</a></td>
+              <td class="py-2 px-3 text-racing-muted">Front</td>
+              {corner(p.suspension.front).map((v) => <td class="py-2 px-3">{v}</td>)}
+              <td class="py-2 px-3">{Math.round(p.suspension.front_arb_rate / 1000)} kN·m/rad</td>
+              <td class="py-2 px-3">{mm(p.suspension.front_roll_center_height)}</td>
+            </tr>,
+            <tr>
+              <td class="py-2 px-3 text-racing-muted">Rear</td>
+              {corner(p.suspension.rear).map((v) => <td class="py-2 px-3">{v}</td>)}
+              <td class="py-2 px-3">{Math.round(p.suspension.rear_arb_rate / 1000)} kN·m/rad</td>
+              <td class="py-2 px-3">{mm(p.suspension.rear_roll_center_height)}</td>
+            </tr>,
+          ])}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="py-8">
+    <h2 class="text-xl font-bold text-white">How suspension breaks</h2>
+    <p class="text-sm text-racing-muted mt-2 max-w-4xl leading-relaxed">
+      Each corner has its own health, from 100% down to 0%. Every damage below is divided by the robustness factor of
+      that corner's suspension type, so a long-travel corner takes {(maxRobust / Math.min(...archetypes.map((a) => a.robustness_factor))).toFixed(1)}×
+      less damage than a pushrod corner from the same hit.
+    </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">Kerb strikes</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">If the damper hits its bump stop faster than <strong class="text-white">{damage.kerb_bottom_out_speed_mps} m/s</strong>, the extra energy damages the corner. {damage.kerb_bottom_out_capacity_j} J of extra energy breaks a corner with robustness ×1.</p>
+      </div>
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">Hard landings</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">A jump that lands faster than <strong class="text-white">{damage.landing_speed_limit_mps} m/s</strong> vertically damages every corner. {damage.landing_capacity_j} J of extra energy breaks a corner with robustness ×1.</p>
+      </div>
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">Collisions</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">A hit near a wheel sends most of its energy to that corner. {damage.suspension_capacity_j} J breaks a corner with robustness ×1. See <a class="text-racing-cyan hover:underline" href="/technical/damage">Damage &amp; repair</a> for the full table.</p>
+      </div>
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <h3 class="font-bold text-white">What a broken corner does</h3>
+        <p class="text-xs text-racing-muted mt-1 leading-relaxed">A damaged corner leans the tyre (camber) and loses grip. Uneven front damage pulls the steering to one side. A pushrod corner below {Math.round(damage.pushrod_collapse_health * 100)}% health collapses onto its bump stop and adds ×{damage.pushrod_collapse_drag_multiplier} aerodynamic drag.</p>
+      </div>
+    </div>
+  </section>
+</Layout>

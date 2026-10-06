@@ -1056,6 +1056,10 @@ pub struct TrackGeometry {
     pub buildings: Vec<Building>,
     #[serde(default, skip_serializing)]
     pub scenery_obstacles: Vec<Obstacle>,
+    /// Walls along network branch segments (the Rallycross joker), rebuilt on load by
+    /// `Track::generate_network_walls` and never saved.
+    #[serde(default, skip_serializing)]
+    pub network_walls: Vec<WallBarrier>,
 }
 
 impl TrackGeometry {
@@ -1063,9 +1067,9 @@ impl TrackGeometry {
         Self::default()
     }
 
-    /// All barrier segments combined (inner and outer).
+    /// All barrier segments combined (inner, outer and network branch walls).
     pub fn all_walls(&self) -> impl Iterator<Item = &WallBarrier> {
-        self.inner_walls.iter().chain(self.outer_walls.iter())
+        self.inner_walls.iter().chain(self.outer_walls.iter()).chain(self.network_walls.iter())
     }
 
     /// Recomputes and caches aggregated static and scenery obstacles (tree trunks, grandstands, rocks, buildings) (Spec 084).

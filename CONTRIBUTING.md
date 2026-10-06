@@ -6,9 +6,9 @@ Thank you for your interest in contributing to **TDRace**! This guide covers rep
 
 ## 🪟 Cross-Platform Repository Setup: Symlinks on Windows & macOS
 
-TDRace uses relative symlinks (softlinks) between the documentation/asset catalogs and the static web documentation portals (`portals/option-a-starlight` and `portals/showroom`):
+TDRace uses relative symlinks (softlinks) between the documentation/asset catalogs and the static web documentation portals (`portals/option-a-starlight` and `portals/codex`):
 * `portals/option-a-starlight/src/content/docs` $\to$ `docs/`
-* `portals/showroom/public/textures` $\to$ `assets/textures/`
+* `portals/codex/public/textures` $\to$ `assets/textures/`
 
 This architecture ensures zero duplicate files and zero build step overhead while maintaining a single source of truth under Google OKF v0.2.
 
@@ -42,7 +42,7 @@ Windows requires explicit permission or configuration to checkout and create fil
 
 * **Rust (2021 Edition)**: Install via [rustup.rs](https://rustup.rs) (`cargo`, `rustc >= 1.75`).
 * **Python (3.10+)**: For Gymnasium reinforcement learning bindings (`uv` or `pip`).
-* **Bun (>= 1.0)**: For the Astro documentation and showroom portals (`portals/`).
+* **Bun (>= 1.0)**: For the Astro documentation and Codex portals (`portals/`).
 
 ---
 
@@ -70,8 +70,8 @@ bun install
 # Run Starlight Engineering Manual
 bun run dev:starlight
 
-# Run Motorsport Showroom & Physics Lab
-bun run dev:showroom
+# Run the TDRace Codex
+bun run dev:codex
 
 # Build both portals
 bun run build

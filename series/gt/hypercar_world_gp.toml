@@ -1,6 +1,6 @@
 # ==============================================================================
 # TdRace Championship Specification
-# GT World Challenge: World Endurance Hypercar Grand Prix (Tier 5)
+# Grand Touring Challenge: World Endurance Hypercar Grand Prix (Tier 5)
 # ==============================================================================
 
 [championship]
@@ -15,7 +15,7 @@ ai_difficulty = "legend"
 icon = "trophy"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -95,71 +95,71 @@ laps = 3
 [[drivers]]
 id = "player"
 name = "Player"
-team = "Ferrari AF Corse"
+team = "Valente Corse Team"
 is_player = true
-car_model_id = "gt_ferrari_499p"
+car_model_id = "gt_valente_imperatore_t5"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "kevin_estre"
-name = "Kévin Estre"
-team = "Porsche Penske Motorsport"
-car_model_id = "gt_porsche_963"
+id = "klaus_eicher"
+name = "Klaus Eicher"
+team = "Vandorn Works Racing"
+car_model_id = "gt_vandorn_kronos_t5"
 country = "FRA"
 ai_character = "aggressive"
 livery_idx = 1
 
 [[drivers]]
-id = "kamui_kobayashi"
-name = "Kamui Kobayashi"
-team = "Toyota Gazoo Racing WEC"
-car_model_id = "gt_toyota_gr010"
+id = "kenji_takahashi"
+name = "Kenji Takahashi"
+team = "Yamato Factory Racing"
+car_model_id = "gt_yamato_ronin_t5"
 country = "JPN"
 ai_character = "fast"
 livery_idx = 2
 
 [[drivers]]
-id = "sebastien_bourdais"
-name = "Sébastien Bourdais"
-team = "Cadillac Racing Chip Ganassi"
-car_model_id = "gt_cadillac_v_series_r"
+id = "sylvain_boucher"
+name = "Sylvain Boucher"
+team = "Crestline Endurance Team"
+car_model_id = "gt_crestline_sovereign_t5"
 country = "FRA"
 ai_character = "strategic"
 livery_idx = 3
 
 [[drivers]]
-id = "alessandro_pier_guidi"
-name = "Alessandro Pier Guidi"
-team = "Ferrari AF Corse"
-car_model_id = "gt_ferrari_499p"
+id = "adriano_ponte"
+name = "Adriano Ponte"
+team = "Valente Corse Team"
+car_model_id = "gt_valente_imperatore_t5"
 country = "ITA"
 ai_character = "smooth"
 livery_idx = 4
 
 [[drivers]]
-id = "andre_lotterer"
-name = "André Lotterer"
-team = "Porsche Penske Motorsport"
-car_model_id = "gt_porsche_963"
+id = "andreas_lorentzen"
+name = "Andreas Lorentzen"
+team = "Vandorn Works Racing"
+car_model_id = "gt_vandorn_kronos_t5"
 country = "GER"
 ai_character = "tenacious"
 livery_idx = 5
 
 [[drivers]]
-id = "brendon_hartley"
-name = "Brendon Hartley"
-team = "Toyota Gazoo Racing WEC"
-car_model_id = "gt_toyota_gr010"
+id = "braden_holt"
+name = "Braden Holt"
+team = "Yamato Factory Racing"
+car_model_id = "gt_yamato_ronin_t5"
 country = "NZL"
 ai_character = "calculating"
 livery_idx = 6
 
 [[drivers]]
-id = "earl_bamber"
-name = "Earl Bamber"
-team = "Cadillac Racing Chip Ganassi"
-car_model_id = "gt_cadillac_v_series_r"
+id = "ethan_brooks"
+name = "Ethan Brooks"
+team = "Crestline Endurance Team"
+car_model_id = "gt_crestline_sovereign_t5"
 country = "NZL"
 ai_character = "balanced"
 livery_idx = 7

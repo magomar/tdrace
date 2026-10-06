@@ -22,7 +22,7 @@ use cabinet::ui::scaler::UiScaler;
 use wheelbase::car::Car;
 use wheelbase::config::{EnginePlacement, SuspensionArchetype};
 
-use crate::hud::widgets::render_compound_badge;
+use crate::hud::widgets::render_compound_legend;
 use crate::render::color::Palette;
 
 /// Cockpit telemetry HUD display mode (Spec 079).
@@ -78,15 +78,15 @@ impl ChassisHudGeometry {
         scale_factor: f32,
     ) -> Self {
         let cx = origin_x + box_w * 0.5;
-        let cy = origin_y + box_h * 0.54;
+        let cy = origin_y + box_h * 0.48;
 
         let total_len = (car.config.wheelbase
             + car.config.chassis.front_overhang
             + car.config.chassis.rear_overhang)
             .max(0.8);
 
-        // Target occupying ~68% of the box height
-        let scale = (box_h * 0.68) / total_len;
+        // Target occupying ~58% of the box height to accommodate bottom legend
+        let scale = (box_h * 0.58) / total_len;
 
         let front_axle_y = cy - (car.config.wheelbase * 0.5 * scale);
         let rear_axle_y = cy + (car.config.wheelbase * 0.5 * scale);
@@ -213,6 +213,7 @@ fn draw_integrated_tire(
     temp_celsius: f32,
     wear: f32,
     rotation_rad: f32,
+    border_col: Color,
     scaler: &UiScaler,
 ) {
     let hw = wheel_w * 0.5;
@@ -227,7 +228,7 @@ fn draw_integrated_tire(
     let fill_h = inner_h * tread_ratio;
     let empty_h = inner_h - fill_h;
 
-    // 1. Outer casing background & prominent thermal border
+    // 1. Outer casing background & prominent compound-colored border (Spec 089)
     let bg_col = Color::new(0.04, 0.06, 0.10, 0.95);
     draw_oriented_quad(
         center,
@@ -235,7 +236,7 @@ fn draw_integrated_tire(
         hh,
         rotation_rad,
         bg_col,
-        Some((thermal_col, scaler.s(2.2))),
+        Some((border_col, scaler.s(2.2))),
     );
 
     let cos_t = rotation_rad.cos();
@@ -1076,9 +1077,14 @@ pub fn render_cockpit_chassis_telemetry(
     // 1. Modern Glassmorphism Container
     scaler.draw_glass_card(x, y, box_w, box_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.6);
 
-    // 2. Header Bezel: Compound Badge (left) & Mode Pill (right)
-    let compound = car.state.wheel_assemblies[0].config.compound.id;
-    render_compound_badge(fonts, scaler, x + scaler.s(8.0), y + scaler.s(6.0), compound);
+    // 2. Header Bezel: Chassis Label (left) & Mode Pill (right)
+    fonts.draw_ui_bold(
+        "CHASSIS",
+        x + scaler.s(10.0),
+        y + scaler.s(17.0),
+        scaler.font_s(10.5),
+        Palette::UI_TEXT_MUTED,
+    );
 
     let mode_label = mode.label();
     let mode_col = match mode {
@@ -1137,7 +1143,7 @@ pub fn render_cockpit_chassis_telemetry(
     // 7. Render Authentic Powertrain Block
     draw_powertrain_block(&geo, car, scaler);
 
-    // 8. Render Outboard Integrated-Drain Tires
+    // 8. Render Outboard Integrated-Drain Tires with Compound Accent Borders
     // Compute front wheel steering rotation and damage camber skew
     let (base_steer_fl, base_steer_fr) = compute_ackermann_steer_angles(car.state.steer_angle);
 
@@ -1166,6 +1172,11 @@ pub fn render_cockpit_chassis_telemetry(
     let rl_center = Vec2::new(geo.outboard_left_x + geo.wheel_w * 0.5, geo.rear_axle_y);
     let rr_center = Vec2::new(geo.outboard_right_x + geo.wheel_w * 0.5, geo.rear_axle_y);
 
+    let wheel_border_col = |idx: usize| {
+        let [r, g, b, a] = car.state.wheel_assemblies[idx].config.compound.id.accent_rgba();
+        Color::new(r, g, b, a)
+    };
+
     draw_integrated_tire(
         fl_center,
         geo.wheel_w,
@@ -1173,6 +1184,7 @@ pub fn render_cockpit_chassis_telemetry(
         car.state.wheel_assemblies[0].temperature,
         car.state.wheel_assemblies[0].wear,
         fl_rot,
+        wheel_border_col(0),
         scaler,
     );
     draw_integrated_tire(
@@ -1182,6 +1194,7 @@ pub fn render_cockpit_chassis_telemetry(
         car.state.wheel_assemblies[1].temperature,
         car.state.wheel_assemblies[1].wear,
         fr_rot,
+        wheel_border_col(1),
         scaler,
     );
     draw_integrated_tire(
@@ -1191,6 +1204,7 @@ pub fn render_cockpit_chassis_telemetry(
         car.state.wheel_assemblies[2].temperature,
         car.state.wheel_assemblies[2].wear,
         rl_rot,
+        wheel_border_col(2),
         scaler,
     );
     draw_integrated_tire(
@@ -1200,8 +1214,22 @@ pub fn render_cockpit_chassis_telemetry(
         car.state.wheel_assemblies[3].temperature,
         car.state.wheel_assemblies[3].wear,
         rr_rot,
+        wheel_border_col(3),
         scaler,
     );
+
+    // 9. Dedicated Compound Legend at Card Bottom (Spec 089)
+    let compound = car.state.wheel_assemblies[0].config.compound.id;
+    let code = compound.badge_code();
+    let name = compound.name();
+    let code_w = code.len() as f32 * scaler.s(6.5);
+    let pill_w = (code_w + scaler.s(10.0)).max(scaler.s(20.0));
+    let gap = scaler.s(8.0);
+    let name_w = name.len() as f32 * scaler.s(7.0);
+    let total_w = pill_w + gap + name_w;
+    let legend_x = x + (box_w - total_w) * 0.5;
+    let legend_y = y + box_h - scaler.s(20.0);
+    render_compound_legend(fonts, scaler, legend_x, legend_y, compound);
 }
 
 #[cfg(test)]
@@ -1301,6 +1329,80 @@ mod tests {
                 geo.outboard_right_x + geo.wheel_w,
                 box_w
             );
+
+            // Spec 089: Assert that vehicle chassis tail leaves ample clearance before bottom legend (at y = 200)
+            let legend_y = box_h - 20.0;
+            assert!(
+                geo.tail_y < legend_y - 10.0,
+                "{}: tail_y ({:.1}) must be well above bottom legend y ({:.1})",
+                name,
+                geo.tail_y,
+                legend_y
+            );
+        }
+    }
+
+    #[test]
+    fn test_compound_legend_dimensions_and_properties() {
+        use wheelbase::surface::CompoundId;
+
+        let all_compounds = [
+            CompoundId::SoftSlick,
+            CompoundId::MediumSlick,
+            CompoundId::HardSlick,
+            CompoundId::AllTerrain,
+            CompoundId::IntermediateWet,
+            CompoundId::MonsoonWet,
+            CompoundId::ExtremeMud,
+            CompoundId::StuddedIce,
+        ];
+
+        let box_w = 190.0;
+
+        for compound in all_compounds {
+            let code = compound.badge_code();
+            let name = compound.name();
+            assert!(!code.is_empty(), "Compound code must not be empty");
+            assert!(!name.is_empty(), "Compound name must not be empty");
+
+            // Calculate total legend width at scale 1.0
+            let code_w = code.len() as f32 * 6.5;
+            let pill_w = (code_w + 10.0).max(20.0);
+            let gap = 8.0;
+            let name_w = name.len() as f32 * 7.0;
+            let total_w = pill_w + gap + name_w;
+
+            assert!(
+                total_w < box_w - 20.0,
+                "Compound legend for {:?} (w={:.1}) must fit inside HUD box (w={:.1}) with margins",
+                compound,
+                total_w,
+                box_w
+            );
+        }
+    }
+
+    #[test]
+    fn test_compound_accent_colors_for_wheel_borders() {
+        use wheelbase::surface::CompoundId;
+
+        let all_compounds = [
+            CompoundId::SoftSlick,
+            CompoundId::MediumSlick,
+            CompoundId::HardSlick,
+            CompoundId::AllTerrain,
+            CompoundId::IntermediateWet,
+            CompoundId::MonsoonWet,
+            CompoundId::ExtremeMud,
+            CompoundId::StuddedIce,
+        ];
+
+        for compound in all_compounds {
+            let [r, g, b, a] = compound.accent_rgba();
+            assert!(r >= 0.0 && r <= 1.0, "Red channel out of bounds for {:?}", compound);
+            assert!(g >= 0.0 && g <= 1.0, "Green channel out of bounds for {:?}", compound);
+            assert!(b >= 0.0 && b <= 1.0, "Blue channel out of bounds for {:?}", compound);
+            assert_eq!(a, 1.0, "Alpha channel must be fully opaque for tire border on {:?}", compound);
         }
     }
 }
