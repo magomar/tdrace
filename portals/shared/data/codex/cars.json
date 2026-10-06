@@ -5545,7 +5545,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_verde_sprint_t2.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_verde_sprint_t2_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_verde_sprint_t2.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -5908,7 +5908,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_blackline_obsidian_t2.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -6271,7 +6271,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_rosso_veloce_t2.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_rosso_veloce_t2_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_rosso_veloce_t2.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -8813,7 +8813,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_highland_hawk_t5.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_highland_hawk_t5_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_highland_hawk_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -9177,7 +9177,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_moravia_arrow_t5.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_moravia_arrow_t5_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_moravia_arrow_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -9541,7 +9541,7 @@
         "reference": null,
         "lateral": "/textures/vehicles/laterals/kart/kart_vanguard_spyder_t5.png",
         "thumb": "/textures/vehicles/laterals/kart/kart_vanguard_spyder_t5_thumb.png",
-        "topdown": null
+        "topdown": "/textures/vehicles/topdown/kart/kart_vanguard_spyder_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
