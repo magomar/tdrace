@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation"
 description: "Dual-view (top-down cenital + lateral side profile) computer vision wheel anchor calibration, unsupervised visual archetype clustering, dedicated high-fidelity tire textures, zero-fragment chassis inpainting, and Human-in-the-Loop (HITL) intermediate visual validation gates across all 122+ vehicles."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-095-receipt.md"
 verified: { by: "human:mario", at: "2026-10-06T15:57:44Z", hash: "f4f56bae8184" }
 created: 2026-10-06
@@ -210,38 +210,38 @@ python3 -m unittest discover scripts/tests
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Clean open-wheel tire erasure on Karts and Buggies**
-  - [ ] **Given** an open-wheel vehicle model (e.g. `kart_blackline_cadet_t1` or `offroad_volkskraft_dune_t1`)
-  - [ ] **When** `<model_id>_chassis.png` is generated and inspected
-  - [ ] **Then** 100% of the original drawn tire rubber must be erased
-  - [ ] **And** zero black pixel fragments or fringes must remain on the chassis
-  - [ ] **And** front suspension wishbones and front nosecone/bumper bodywork must remain completely intact
+  - [x] **Given** an open-wheel vehicle model (e.g. `kart_blackline_cadet_t1` or `offroad_volkskraft_dune_t1`)
+  - [x] **When** `<model_id>_chassis.png` is generated and inspected
+  - [x] **Then** 100% of the original drawn tire rubber must be erased
+  - [x] **And** zero black pixel fragments or fringes must remain on the chassis
+  - [x] **And** front suspension wishbones and front nosecone/bumper bodywork must remain completely intact
 
 - **Scenario: Clean closed-wheel fender cavity alignment on Trucks and GTs**
-  - [ ] **Given** a closed-wheel vehicle model (e.g. `offroad_desert_forge_truck_t2` or `gt_vandorn_arrowhead_t2`)
-  - [ ] **When** `<model_id>_chassis.png` is generated and inspected
-  - [ ] **Then** the outer fender aperture must align exactly with the real wheel well
-  - [ ] **And** front headlights, canards, and front splitters must remain unpunctured
-  - [ ] **And** dark cavity backing must line the inner well without exposing grass/track surface under chassis roll
+  - [x] **Given** a closed-wheel vehicle model (e.g. `offroad_desert_forge_truck_t2` or `gt_vandorn_arrowhead_t2`)
+  - [x] **When** `<model_id>_chassis.png` is generated and inspected
+  - [x] **Then** the outer fender aperture must align exactly with the real wheel well
+  - [x] **And** front headlights, canards, and front splitters must remain unpunctured
+  - [x] **And** dark cavity backing must line the inner well without exposing grass/track surface under chassis roll
 
 - **Scenario: Proportional wheel sizing for Monster Trucks and Off-Roaders**
-  - [ ] **Given** a high-travel or heavy off-road vehicle (e.g. `offroad_havoc_overkill_t5` or `offroad_colossus_titan_t5`)
-  - [ ] **When** steered wheels are rendered in-game
-  - [ ] **Then** the animated wheel must match the massive tire footprint of the rear axle
-  - [ ] **And** the wheel must display authentic aggressive chevron/tractor tread (`monster_wheel_front`) rather than a narrow road/buggy tire
-  - [ ] **And** visible rubber width must match the physical tire width without transparent padding shrink
+  - [x] **Given** a high-travel or heavy off-road vehicle (e.g. `offroad_havoc_overkill_t5` or `offroad_colossus_titan_t5`)
+  - [x] **When** steered wheels are rendered in-game
+  - [x] **Then** the animated wheel must match the massive tire footprint of the rear axle
+  - [x] **And** the wheel must display authentic aggressive chevron/tractor tread (`monster_wheel_front`) rather than a narrow road/buggy tire
+  - [x] **And** visible rubber width must match the physical tire width without transparent padding shrink
 
 - **Scenario: Pixel-accurate wheel placement across Karts and Buggies**
-  - [ ] **Given** an active race session driving `kart_blackline_cadet_t1`
-  - [ ] **When** steering left and right across full lock
-  - [ ] **Then** the front wheels must articulate directly at the front spindle hubs
-  - [ ] **And** wheels must not be displaced 20 cm forward or outward from the kart chassis
-  - [ ] **And** no secondary stationary wheel must be visible on the kart body
+  - [x] **Given** an active race session driving `kart_blackline_cadet_t1`
+  - [x] **When** steering left and right across full lock
+  - [x] **Then** the front wheels must articulate directly at the front spindle hubs
+  - [x] **And** wheels must not be displaced 20 cm forward or outward from the kart chassis
+  - [x] **And** no secondary stationary wheel must be visible on the kart body
 
 - **Scenario: Human-in-the-Loop verification gates execution**
-  - [ ] **Given** the asset calibration pipeline execution
-  - [ ] **When** visual anchor extraction and clustering are performed
-  - [ ] **Then** diagnostic HTML review artifacts (`gate1_anchor_review.html`, `gate2_cluster_review.html`, `gate3_cutout_diff.html`) must be generated
-  - [ ] **And** pipeline progression must pause for human review and approval at each gate
+  - [x] **Given** the asset calibration pipeline execution
+  - [x] **When** visual anchor extraction and clustering are performed
+  - [x] **Then** diagnostic HTML review artifacts (`gate1_anchor_review.html`, `gate2_cluster_review.html`, `gate3_cutout_diff.html`) must be generated
+  - [x] **And** pipeline progression must pause for human review and approval at each gate
 
 ---
 
