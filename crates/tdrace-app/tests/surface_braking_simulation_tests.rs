@@ -105,18 +105,18 @@ fn test_split_mu_asymmetric_braking_stability() {
     // spins a GT3, as it would a real one (Mario, 2026-10-06: accept). The splits below stay on surfaces
     // slicks are made for. Dirt is 0.85 for Medium Slick (open question tdrace-md1u).
     // 1. Moderate split-mu: Asphalt vs Dirt
-    let res_grass = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Dirt, 100.0, DEFAULT_SIMULATION_DT);
+    let res_dirt = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Dirt, 100.0, DEFAULT_SIMULATION_DT);
     assert_ne!(
-        res_grass.status,
+        res_dirt.status,
         SplitMuStatus::SpunOut,
         "Vehicle spun out on Asphalt vs Dirt split-mu (heading dev = {:.1}°)",
-        res_grass.heading_deviation_deg
+        res_dirt.heading_deviation_deg
     );
 
     // 2. Minor split-mu: Asphalt vs Curb
-    let res_gravel = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Curb, 100.0, DEFAULT_SIMULATION_DT);
+    let res_curb = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Curb, 100.0, DEFAULT_SIMULATION_DT);
     assert_ne!(
-        res_gravel.status,
+        res_curb.status,
         SplitMuStatus::SpunOut,
         "Vehicle spun out on Asphalt vs Curb split-mu"
     );
@@ -125,15 +125,15 @@ fn test_split_mu_asymmetric_braking_stability() {
     let res_asp_pure = run_braking_straight_line(&config, SurfaceType::Asphalt, 100.0, false, DEFAULT_SIMULATION_DT);
     let res_dirt_pure = run_braking_straight_line(&config, SurfaceType::Dirt, 100.0, false, DEFAULT_SIMULATION_DT);
     assert!(
-        res_grass.stopping_distance_m >= res_asp_pure.stopping_distance_m * 0.95,
+        res_dirt.stopping_distance_m >= res_asp_pure.stopping_distance_m * 0.95,
         "Split-mu stop ({:.1}m) should be >= pure asphalt ({:.1}m)",
-        res_grass.stopping_distance_m,
+        res_dirt.stopping_distance_m,
         res_asp_pure.stopping_distance_m
     );
     assert!(
-        res_grass.stopping_distance_m <= res_dirt_pure.stopping_distance_m * 1.05,
+        res_dirt.stopping_distance_m <= res_dirt_pure.stopping_distance_m * 1.05,
         "Split-mu stop ({:.1}m) should be <= pure dirt ({:.1}m)",
-        res_grass.stopping_distance_m,
+        res_dirt.stopping_distance_m,
         res_dirt_pure.stopping_distance_m
     );
 }
