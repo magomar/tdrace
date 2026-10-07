@@ -483,7 +483,28 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
         Selection::Checkpoint(_) => build_checkpoints(state),
         Selection::GridSlot(_) => build_grid_slots(state),
         Selection::PitBox => Some(build_pit(state)),
-        Selection::Multi { .. } => None,
+        Selection::Multi { waypoints, surface_zones, obstacles, jump_ramps, checkpoints, grid_slots, pit_box } => {
+            // Several entities of one kind get that kind's view; mixed kinds wait for HC-3.
+            let kinds = [!waypoints.is_empty(), !surface_zones.is_empty(), !obstacles.is_empty(), !jump_ramps.is_empty(), !checkpoints.is_empty(), !grid_slots.is_empty(), *pit_box];
+            if kinds.iter().filter(|&&k| k).count() != 1 {
+                return None;
+            }
+            if !waypoints.is_empty() {
+                build_waypoints(state)
+            } else if !surface_zones.is_empty() {
+                build_zones(state)
+            } else if !obstacles.is_empty() {
+                build_obstacles(state)
+            } else if !jump_ramps.is_empty() {
+                build_ramps(state)
+            } else if !checkpoints.is_empty() {
+                build_checkpoints(state)
+            } else if !grid_slots.is_empty() {
+                build_grid_slots(state)
+            } else {
+                Some(build_pit(state))
+            }
+        }
     }
 }
 

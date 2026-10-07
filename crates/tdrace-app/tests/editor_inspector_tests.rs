@@ -497,3 +497,53 @@ fn track_level_edits_change_the_circuit() {
     apply_edit(&mut state, &mut tools, Edit::Set(Prop::ToolWidth, 99.0));
     assert_eq!(tools.new_waypoint_width, WIDTH_RANGE.1);
 }
+
+fn multi(zones: Vec<usize>, ramps: Vec<usize>, obstacles: Vec<usize>) -> Selection {
+    Selection::from_multi(vec![], zones, obstacles, ramps, vec![], vec![], false)
+}
+
+#[test]
+fn several_zones_or_ramps_keep_their_controls_and_edit_both() {
+    let tools = ToolSettings::default();
+    for (single, many) in [(Selection::SurfaceZone(0), multi(vec![0, 1], vec![], vec![])), (Selection::JumpRamp(0), multi(vec![], vec![0, 1], vec![])), (Selection::Obstacle(0), multi(vec![], vec![], vec![0, 1, 2]))] {
+        let one = build_inspector(&with_selection(single.clone()), &tools).unwrap();
+        let both = build_inspector(&with_selection(many.clone()), &tools).unwrap_or_else(|| panic!("{many:?} uses the new inspector"));
+        let sections = |m: &InspectorModel| m.sections.iter().map(|s| s.id).collect::<Vec<_>>();
+        assert_eq!(sections(&one), sections(&both), "{single:?} vs {many:?}");
+        assert!(both.count > 1);
+    }
+
+    let mut state = with_selection(multi(vec![0, 1], vec![], vec![]));
+    let mut tools = ToolSettings::default();
+    let model = build_inspector(&state, &tools).unwrap();
+    assert!(matches!(find_row(&model, "Material"), Row::Dropdown { value: Common::Mixed, .. }), "fixture zones are gravel and water");
+    let snow = SURFACES.iter().position(|&s| s == SurfaceType::PackedSnow).unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ZoneSurface, snow));
+    assert!(state.track.geometry.surface_zones.iter().all(|z| z.surface == SurfaceType::PackedSnow));
+
+    let mut state = with_selection(multi(vec![], vec![0, 1], vec![]));
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampHeight, 3.0));
+    apply_edit(&mut state, &mut tools, Edit::Step(Prop::RampWidth, 1.0));
+    for r in &state.track.geometry.jump_ramps {
+        assert_eq!(r.height, 3.0);
+        assert!((r.width() - 9.0).abs() < 1e-3);
+    }
+}
+
+#[test]
+fn mixed_kinds_still_wait_for_hc3() {
+    let selection = Selection::from_multi(vec![0], vec![0], vec![], vec![], vec![], vec![], false);
+    assert!(build_inspector(&with_selection(selection), &ToolSettings::default()).is_none());
+}
+
+#[test]
+fn batch_tools_share_the_inspector_ranges() {
+    let mut state = selected(&[0, 1, 2]);
+    let mut tools = ToolSettings::default();
+    tools.batch_set_width(&mut state, 999.0);
+    assert!(state.track.spline.waypoints[..3].iter().all(|w| w.width == WIDTH_RANGE.1));
+    tools.batch_adjust_width(&mut state, -999.0);
+    assert!(state.track.spline.waypoints[..3].iter().all(|w| w.width == WIDTH_RANGE.0));
+    tools.batch_adjust_wall_distances(&mut state, -999.0);
+    assert!(state.track.spline.waypoints[..3].iter().all(|w| w.left_wall_distance == Some(WALL_DISTANCE_RANGE.0)));
+}
