@@ -49,6 +49,11 @@ pub trait Body2D {
     fn jump_height(&self) -> f32;
     /// Road, ramp and jump height combined, in metres.
     fn total_elevation(&self) -> f32;
+    /// Dynamic vertical elevation above the road surface (ramp elevation + jump height), in metres.
+    #[inline]
+    fn dynamic_elevation(&self) -> f32 {
+        self.jump_height()
+    }
     fn forward_vector(&self) -> Vec2;
     fn hull(&self) -> BodyHull;
     fn translate(&mut self, d: Vec2);
@@ -92,6 +97,10 @@ impl Body2D for Car {
     #[inline]
     fn total_elevation(&self) -> f32 {
         Car::total_elevation(self)
+    }
+    #[inline]
+    fn dynamic_elevation(&self) -> f32 {
+        Car::dynamic_elevation(self)
     }
     #[inline]
     fn forward_vector(&self) -> Vec2 {

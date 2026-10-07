@@ -28,15 +28,20 @@ pub enum StartingGridFocus {
 /// Shared two-column geometry for the Starting Grid, driven by a `SplitPane`
 /// (left setup panel ≈44% vs right roster panel ≈56%).
 /// Returns `(col1_x, col1_w, col2_x, col2_w)`.
-fn starting_grid_columns(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
+pub fn starting_grid_columns(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
-    let col_w = (sw * 0.44).clamp(scaler.s(360.0), scaler.s(540.0));
-    let col1_x = (sw * 0.5 - col_w - scaler.s(12.0)).max(scaler.safe_pad_x);
-    let gap = scaler.s(24.0);
-    let content_w = col_w / 0.44 + gap;
-    let split = SplitPane::new(LayoutRect::new(col1_x, 0.0, content_w, sh), 0.44, gap);
-    let col2_x = split.right_rect().x.min(sw - split.right_rect().w - scaler.safe_pad_x);
-    (col1_x, col_w, col2_x, split.right_rect().w)
+    let gap = scaler.s(20.0);
+    let pad_x = scaler.safe_pad_x;
+    let max_content_w = scaler.s(1244.0);
+    let content_w = (sw - pad_x * 2.0).min(max_content_w);
+    let start_x = (sw - content_w) * 0.5;
+    let split = SplitPane::new(LayoutRect::new(start_x, 0.0, content_w, sh), 0.44, gap);
+    (
+        split.left_rect().x,
+        split.left_rect().w,
+        split.right_rect().x,
+        split.right_rect().w,
+    )
 }
 
 /// A grid roster row, pre-formatted for the `DataTable` roster.
@@ -148,6 +153,7 @@ pub fn render_starting_grid_screen(
     unlock_level: u32,
     selected_model_id: Option<&str>,
     casual_ai_difficulty: DriverTier,
+    active_config_idx: usize,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -652,7 +658,11 @@ pub fn render_starting_grid_screen(
                 "GRID CONFIG: 🔒 LOCKED [Official Roster]"
             }
         } else if is_grid_active {
-            "GRID CONFIG [ACTIVE • ENTER/+/-: Bots • T: AI Difficulty]"
+            match active_config_idx {
+                0 => "GRID CONFIG [ACTIVE • Left/Right: Select • ENTER/+/-: Tier • T: Difficulty]",
+                1 => "GRID CONFIG [ACTIVE • Left/Right: Select • ENTER/+/-: Laps • T: Difficulty]",
+                _ => "GRID CONFIG [ACTIVE • Left/Right: Select • ENTER/+/-: Bots • T: Difficulty]",
+            }
         } else {
             "GRID CONFIG: [Up/Down to select • T to change difficulty]"
         };
@@ -680,6 +690,10 @@ pub fn render_starting_grid_screen(
         let is_laps_hovered = mx >= laps_x && mx <= laps_x + stepper_w && my >= stepper_y && my <= stepper_y + stepper_h;
         let is_bots_hovered = mx >= bots_x && mx <= bots_x + stepper_w && my >= stepper_y && my <= stepper_y + stepper_h;
 
+        let is_tier_selected = is_grid_active && active_config_idx == 0;
+        let is_laps_selected = is_grid_active && active_config_idx == 1;
+        let is_bots_selected = is_grid_active && active_config_idx == 2;
+
         // 1. TIER control (Left)
         let tier_val = if stepper_w < scaler.s(170.0) {
             casual_ai_difficulty.tag()
@@ -695,9 +709,15 @@ pub fn render_starting_grid_screen(
             stepper_h,
             tier_label,
             tier_val,
-            !is_tier_locked && is_grid_active,
-            !is_tier_locked && (is_tier_hovered || is_grid_hovered),
-            if is_tier_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_CYAN },
+            is_tier_selected,
+            !is_tier_locked && is_tier_hovered,
+            if is_tier_locked {
+                Palette::UI_TEXT_MUTED
+            } else if is_tier_selected {
+                Palette::NEON_GOLD
+            } else {
+                Palette::NEON_CYAN
+            },
         );
 
         // 2. LAPS control (Middle)
@@ -711,9 +731,15 @@ pub fn render_starting_grid_screen(
             stepper_h,
             laps_label,
             &laps_stepper.value.to_string(),
-            !is_laps_locked && is_grid_active,
-            !is_laps_locked && (is_laps_hovered || is_grid_hovered),
-            if is_laps_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_CYAN },
+            is_laps_selected,
+            !is_laps_locked && is_laps_hovered,
+            if is_laps_locked {
+                Palette::UI_TEXT_MUTED
+            } else if is_laps_selected {
+                Palette::NEON_GOLD
+            } else {
+                Palette::NEON_CYAN
+            },
         );
 
         // 3. BOTS control (Right)
@@ -728,9 +754,15 @@ pub fn render_starting_grid_screen(
             stepper_h,
             bots_label,
             &bots_counter.value.to_string(),
-            !is_bots_locked && is_grid_active,
-            !is_bots_locked && (is_bots_hovered || is_grid_hovered),
-            if is_bots_locked { Palette::UI_TEXT_MUTED } else { Palette::NEON_GOLD },
+            is_bots_selected,
+            !is_bots_locked && is_bots_hovered,
+            if is_bots_locked {
+                Palette::UI_TEXT_MUTED
+            } else if is_bots_selected {
+                Palette::NEON_GOLD
+            } else {
+                Palette::NEON_CYAN
+            },
         );
 
         let difficulty_note = if is_roster_locked && game_mode == GameMode::Career {
@@ -1061,9 +1093,9 @@ pub fn starting_grid_footer_prompt_with_mode(
             StartingGridFocus::RightRoster => {
                 if active_card_idx == 1 {
                     if is_roster_customizable {
-                        "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/X] Adjust Bots  |  [START] Launch  |  [B] Menu"
+                        "[D-Pad L/R] Select Setting  |  [A / X / LB / RB] Change Value  |  [Up/Down] Roster  |  [START] Launch  |  [B] Menu"
                     } else {
-                        "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [ROSTER LOCKED]  |  [START] Launch  |  [B] Menu"
+                        "[D-Pad L/R] Select Setting  |  [A] Change Difficulty  |  [Up/Down] Roster  |  [START] Launch  |  [B] Menu"
                     }
                 } else {
                     "[D-Pad L/R] Switch Panel  |  [Up/Down] Select Driver  |  [A/Y] View Dossier  |  [START] Launch  |  [B] Menu"
@@ -1086,9 +1118,9 @@ pub fn starting_grid_footer_prompt_with_mode(
             StartingGridFocus::RightRoster => {
                 if active_card_idx == 1 {
                     if is_roster_customizable {
-                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ENTER / + / -] Adjust Bots  |  [T] Difficulty  |  [SPACE] Launch  |  [ESC] Menu"
+                        "[Left/Right] Select Setting  |  [ENTER / + / -] Change Value  |  [Up/Down] Roster  |  [SPACE] Launch  |  [ESC] Menu"
                     } else {
-                        "[Left/Right] Switch Panel  |  [Up/Down] Select Card/Driver  |  [ROSTER LOCKED]  |  [SPACE] Launch  |  [ESC] Menu"
+                        "[Left/Right] Select Setting  |  [ENTER / T] Change Difficulty  |  [Up/Down] Roster  |  [SPACE] Launch  |  [ESC] Menu"
                     }
                 } else if is_roster_customizable {
                     "[Left/Right] Switch Panel  |  [Up/Down] Select Driver  |  [< / >] Change Vehicle  |  [ENTER / D] View Dossier  |  [SPACE] Launch  |  [ESC] Menu"
