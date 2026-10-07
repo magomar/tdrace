@@ -128,6 +128,11 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
     }
     if track.network.is_some() {
         track.trim_walls_for_network();
+        // The joker walls are built around the main walls (and drop pieces that cross them), so when the main
+        // walls are regenerated the joker walls must be too, as in Track::rebuild_geometry.
+        if opts.rebuild || no_walls {
+            track.generate_network_walls();
+        }
     }
     // Network checkpoints carry segment ids and the joker checkpoint; the main spline cannot regenerate them.
     if (opts.rebuild && track.network.is_none()) || track.checkpoints.is_empty() {
