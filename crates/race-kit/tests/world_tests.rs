@@ -2,7 +2,7 @@
 
 use arcade_race_core::track::{
     create_prototypical_track, BarrierType, RaceDirection, SplineProjection, Track, TrackProgressTracker, TrackShape,
-    WallBarrier,
+    Tree, TreeType, WallBarrier,
 };
 use arcade_race_core::{Body2D, BodyHull};
 use glam::Vec2;
@@ -293,3 +293,43 @@ fn test_pit_service_state_machine() {
     assert!(!world.pit_states[0].is_limiter_active(), "Limiter must disengage upon pit exit");
     assert_eq!(world.trackers[0].pit_stops, 1, "Pit stop counter must increment");
 }
+
+#[test]
+fn test_tree_canopy_ground_drag_distinction_bushes_vs_trees() {
+    // 1. Tall tree with trunk (Oak): car driving under canopy on ground should NOT be slowed down
+    let oak = Tree::new(1, Vec2::new(0.0, 0.0), TreeType::Oak).with_scale(1.0);
+    let car_pos = Vec2::new(2.5, 0.0); // Inside oak canopy (r=4.6m), outside trunk (r=0.48m)
+    assert!(oak.contains_canopy(car_pos));
+    assert!(!oak.contains_trunk(car_pos));
+    assert!(oak.has_trunk());
+
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(car_pos, 0.0);
+    car.state.velocity = Vec2::new(25.0, 0.0);
+    car.state.speed = 25.0;
+
+    let mut brushes = Vec::new();
+    let dt = 1.0 / 60.0;
+    car.brush_canopy(&[oak], dt, &mut brushes);
+
+    assert_eq!(car.state.speed, 25.0, "Car passing under tall tree canopy must NOT be decelerated");
+    assert!(brushes.is_empty(), "Car passing under tall tree on ground must not emit roost events");
+
+    // 2. Low-profile shrub without trunk (Bush): car driving through bush on ground MUST be slowed down
+    let bush = Tree::new(2, Vec2::new(0.0, 0.0), TreeType::Bush).with_scale(1.0);
+    let bush_pos = Vec2::new(1.0, 0.0); // Inside bush canopy (r=1.8m), no trunk
+    assert!(bush.contains_canopy(bush_pos));
+    assert!(!bush.has_trunk());
+
+    let mut car2 = Car::new(CarConfig::sports_car()).with_pose(bush_pos, 0.0);
+    car2.state.velocity = Vec2::new(25.0, 0.0);
+    car2.state.speed = 25.0;
+
+    car2.brush_canopy(&[bush], dt, &mut brushes);
+
+    let drag_rate = TreeType::Bush.canopy_drag_deceleration();
+    let expected_speed = 25.0 * (1.0 - drag_rate * dt);
+    assert!((car2.state.speed - expected_speed).abs() < 1e-4, "Bush must decelerate passing car");
+    assert_eq!(brushes.len(), 1, "Bush collision must emit CanopyBrush event");
+    assert_eq!(brushes[0].tree, TreeType::Bush);
+}
+
