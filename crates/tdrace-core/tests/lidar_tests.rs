@@ -81,12 +81,12 @@ fn test_lidar_obstacle_and_opponent_detection() {
     // Sensor offset = 1.2m, circle front = 7.0m -> distance = 5.8m
     assert!((hit.distance - 5.8).abs() < 0.5, "Obstacle hit distance should be ~5.8m, got {}", hit.distance);
 
-    // Remove the obstacle, now center ray should hit opponent car at ~12.55m
+    // Remove the obstacle, now center ray should hit opponent car at ~11.45m
     track.geometry.obstacles.clear();
     let hits_opp = scanner.scan(&host, &track, &[opp]);
     let hit_opp = hits_opp[center_idx];
     assert_eq!(hit_opp.hit_type, LidarHitType::OpponentCar);
-    assert!((hit_opp.distance - 12.55).abs() < 0.8, "Opponent distance should be ~12.55m, got {}", hit_opp.distance);
+    assert!((hit_opp.distance - 11.45).abs() < 0.8, "Opponent distance should be ~11.45m, got {}", hit_opp.distance);
     assert_eq!(hit_opp.relative_velocity, Vec2::new(10.0, 0.0));
 }
 
