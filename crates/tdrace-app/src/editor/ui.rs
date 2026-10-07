@@ -3287,6 +3287,8 @@ fn draw_inspector_row(
         }
         Row::Chips { label, chips } => {
             draw_label(label);
+            // An unlabeled chip row uses the full width.
+            let (ctrl_x, ctrl_w) = if label.is_empty() { (x, w) } else { (ctrl_x, ctrl_w) };
             let gap = scaler.s(3.0);
             let chip_w = (ctrl_w - gap * (chips.len().saturating_sub(1)) as f32) / chips.len().max(1) as f32;
             let mut edit = None;
@@ -3405,7 +3407,7 @@ fn render_inspector_model(
             macroquad::shapes::draw_triangle(macroquad::math::vec2(tri_x - k, tri_y - k * 0.6), macroquad::math::vec2(tri_x + k, tri_y - k * 0.6), macroquad::math::vec2(tri_x, tri_y + k * 0.8), tri_col);
         }
         let title_size = scaler.font_s(10.5);
-        fonts.draw_ui_bold(section.title, x + pad + scaler.s(12.0), tri_y + title_size * 0.35, title_size, if hover { Palette::WHITE } else { Palette::NEON_CYAN });
+        fonts.draw_ui_bold(&section.title, x + pad + scaler.s(12.0), tri_y + title_size * 0.35, title_size, if hover { Palette::WHITE } else { Palette::NEON_CYAN });
         if section.side_columns && !collapsed {
             let side_w = scaler.s(INSP_SIDE_W);
             for (k, t) in ["L", "R"].into_iter().enumerate() {

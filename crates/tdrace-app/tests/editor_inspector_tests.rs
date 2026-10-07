@@ -530,10 +530,44 @@ fn several_zones_or_ramps_keep_their_controls_and_edit_both() {
     }
 }
 
+fn mixed_selection() -> Selection {
+    Selection::from_multi(vec![0, 1], vec![0], vec![], vec![0], vec![], vec![], false)
+}
+
 #[test]
-fn mixed_kinds_still_wait_for_hc3() {
-    let selection = Selection::from_multi(vec![0], vec![0], vec![], vec![], vec![], vec![], false);
-    assert!(build_inspector(&with_selection(selection), &ToolSettings::default()).is_none());
+fn mixed_selection_reaches_every_kind_and_edits_only_that_kind() {
+    use tdrace_app::editor::inspector::{MixedKind, MixedLayout};
+    let state = with_selection(mixed_selection());
+
+    let mut tools = ToolSettings::default();
+    tools.inspector.mixed_layout = MixedLayout::Stacked;
+    let a = build_inspector(&state, &tools).unwrap();
+    let ids: Vec<&str> = a.sections.iter().map(|s| s.id).collect();
+    assert!(ids.contains(&"wp.road") && ids.contains(&"zone.zone") && ids.contains(&"ramp.shape"), "{ids:?}");
+    assert_eq!(a.count, 4);
+
+    tools.inspector.mixed_layout = MixedLayout::KindChips;
+    let b = build_inspector(&state, &tools).unwrap();
+    assert_eq!(b.sections[0].id, "mixed.kinds");
+    assert!(b.sections.iter().any(|s| s.id == "wp.road"), "first kind shown by default");
+    let mut state_b = with_selection(mixed_selection());
+    apply_edit(&mut state_b, &mut tools, Edit::Do(Action::ShowKind(MixedKind::Ramps)));
+    let b = build_inspector(&state_b, &tools).unwrap();
+    assert!(b.sections.iter().any(|s| s.id == "ramp.shape") && !b.sections.iter().any(|s| s.id == "wp.road"));
+
+    // An edit from one kind's control leaves the other kinds alone.
+    let mut state = state;
+    let zone_before = state.track.geometry.surface_zones[0].surface;
+    let ramp_before = state.track.geometry.jump_ramps[0].surface;
+    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::Gravel).unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpSurface, gravel));
+    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::Gravel));
+    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Gravel));
+    assert_eq!(state.track.geometry.surface_zones[0].surface, zone_before);
+    assert_eq!(state.track.geometry.jump_ramps[0].surface, ramp_before);
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampHeight, 2.5));
+    assert_eq!(state.track.geometry.jump_ramps[0].height, 2.5);
+    assert_eq!(state.track.spline.waypoints[2].surface, Some(SurfaceType::Concrete), "unselected waypoint untouched");
 }
 
 #[test]

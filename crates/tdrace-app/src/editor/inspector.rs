@@ -81,6 +81,9 @@ pub struct InspectorView {
     pub stepper_drag: Option<StepperDrag>,
     /// Tooltip key under the pointer and the time it was first hovered.
     pub tooltip_hover: Option<(String, f64)>,
+    pub mixed_layout: MixedLayout,
+    /// Kind shown by [`MixedLayout::KindChips`]; `None` = the first kind.
+    pub mixed_kind: Option<MixedKind>,
 }
 
 impl InspectorView {
@@ -267,6 +270,44 @@ pub enum Action {
     RebuildGeometry,
     Duplicate,
     Delete,
+    /// Option B of HC-3: show this kind's controls for a mixed selection.
+    ShowKind(MixedKind),
+}
+
+/// Entity kinds of a mixed selection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MixedKind {
+    Waypoints,
+    Zones,
+    Obstacles,
+    Ramps,
+    Gates,
+    GridSlots,
+    PitLane,
+}
+
+impl MixedKind {
+    fn name(self) -> &'static str {
+        match self {
+            MixedKind::Waypoints => "Waypoints",
+            MixedKind::Zones => "Zones",
+            MixedKind::Obstacles => "Obstacles",
+            MixedKind::Ramps => "Ramps",
+            MixedKind::Gates => "Gates",
+            MixedKind::GridSlots => "Grid",
+            MixedKind::PitLane => "Pit",
+        }
+    }
+}
+
+/// HC-3 candidates for a selection with several entity kinds (one is removed after the decision).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MixedLayout {
+    /// Option A: every kind's sections stacked, titled with the kind.
+    #[default]
+    Stacked,
+    /// Option B: a kind chip row picks which kind's sections are shown.
+    KindChips,
 }
 
 /// One user edit produced by an inspector control.
@@ -363,7 +404,7 @@ pub enum Row {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Section {
     pub id: &'static str,
-    pub title: &'static str,
+    pub title: String,
     /// Draws "L" and "R" column labels in the section header, above [`Row::Sides`] toggles.
     pub side_columns: bool,
     pub collapsed_by_default: bool,
@@ -372,7 +413,7 @@ pub struct Section {
 
 impl Section {
     fn new(id: &'static str, title: &'static str, rows: Vec<Row>) -> Self {
-        Self { id, title, side_columns: false, collapsed_by_default: false, rows }
+        Self { id, title: title.to_string(), side_columns: false, collapsed_by_default: false, rows }
     }
 
     fn collapsed(mut self) -> Self {
@@ -489,7 +530,7 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
             // Several entities of one kind get that kind's view; mixed kinds wait for HC-3.
             let kinds = [!waypoints.is_empty(), !surface_zones.is_empty(), !obstacles.is_empty(), !jump_ramps.is_empty(), !checkpoints.is_empty(), !grid_slots.is_empty(), *pit_box];
             if kinds.iter().filter(|&&k| k).count() != 1 {
-                return None;
+                return Some(build_mixed(state, tools));
             }
             if !waypoints.is_empty() {
                 build_waypoints(state)
@@ -508,6 +549,45 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
             }
         }
     }
+}
+
+/// Mixed-kind selection: each kind's own view, shown per [`MixedLayout`].
+fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
+    let sel = &state.selection;
+    let parts: Vec<(MixedKind, usize, Option<InspectorModel>)> = [
+        (MixedKind::Waypoints, sel.selected_waypoint_indices().len(), build_waypoints as fn(&EditorState) -> Option<InspectorModel>),
+        (MixedKind::Zones, sel.selected_surface_zone_indices().len(), build_zones),
+        (MixedKind::Obstacles, sel.selected_obstacle_indices().len(), build_obstacles),
+        (MixedKind::Ramps, sel.selected_jump_ramp_indices().len(), build_ramps),
+        (MixedKind::Gates, sel.selected_checkpoint_indices().len(), build_checkpoints),
+        (MixedKind::GridSlots, sel.selected_grid_slot_indices().len(), build_grid_slots),
+        (MixedKind::PitLane, usize::from(sel.is_pit_box_selected()), |s: &EditorState| Some(build_pit(s))),
+    ]
+    .into_iter()
+    .filter(|(_, n, _)| *n > 0)
+    .map(|(kind, n, build)| (kind, n, build(state)))
+    .collect();
+
+    let mut sections = Vec::new();
+    match tools.inspector.mixed_layout {
+        MixedLayout::Stacked => {
+            for (kind, n, model) in &parts {
+                for mut section in model.iter().flat_map(|m| m.sections.clone()) {
+                    section.title = format!("{} ({n}) · {}", kind.name().to_uppercase(), section.title);
+                    sections.push(section);
+                }
+            }
+        }
+        MixedLayout::KindChips => {
+            let shown = tools.inspector.mixed_kind.filter(|k| parts.iter().any(|(p, ..)| p == k)).or(parts.first().map(|(k, ..)| *k));
+            let chips = parts.iter().map(|(kind, n, _)| Chip { label: format!("{} {n}", kind.name()), edit: Edit::Do(Action::ShowKind(*kind)), active: Some(*kind) == shown }).collect();
+            sections.push(Section::new("mixed.kinds", "SHOW", vec![Row::Chips { label: "", chips }]));
+            if let Some((_, _, Some(model))) = parts.iter().find(|(k, ..)| Some(*k) == shown) {
+                sections.extend(model.sections.clone());
+            }
+        }
+    }
+    InspectorModel { title: "Mixed selection".to_string(), count: sel.total_count(), subtitle: None, sections, footer: FOOTER }
 }
 
 fn build_waypoints(state: &EditorState) -> Option<InspectorModel> {
@@ -817,6 +897,7 @@ pub fn apply_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit)
         (_, Edit::Do(Action::Delete)) => {
             tools.delete_selected(state);
         }
+        (_, Edit::Do(Action::ShowKind(kind))) => tools.inspector.mixed_kind = Some(kind),
         (Some(WpWidth | WpBanking | WpLeftCurb | WpRightCurb | WpLeftWall | WpRightWall | WpWallDistL | WpWallDistR | WpWallType | WpSurface), _)
         | (_, Edit::Do(Action::InvertBanking)) => apply_waypoint_edit(state, tools, edit),
         (Some(ZoneSurface | ZoneLayer), _) => apply_zone_edit(state, edit),
