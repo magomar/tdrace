@@ -1,0 +1,147 @@
+# ==============================================================================
+# TdRace Championship Specification
+# Stock Car Career Mode: National Road & Oval Tour (Tier 3)
+# ==============================================================================
+
+[championship]
+id = "stockcar_national_tour"
+name = "National Road & Oval Tour"
+description = "650 BHP National Stock Car Challenge composite stock cars crossing intermediate speedways and high-speed natural road courses."
+module_id = "nascar"
+tier = 3
+laps_per_round = 4
+bot_count = 7
+ai_difficulty = "pro"
+icon = "flag_checkered"
+
+[scoring]
+system = "stock_car"
+fastest_lap_bonus = false
+stage_win_bonus = true
+clean_race_bonus = false
+
+[[rounds]]
+order = 1
+track_id = "iowa_speedway"
+name = "Iowa Speedway"
+laps = 4
+
+[[rounds]]
+order = 2
+track_id = "watkins_glen_nascar"
+name = "Watkins Glen International"
+laps = 4
+
+[[rounds]]
+order = 3
+track_id = "road_america"
+name = "Road America"
+laps = 4
+
+[[rounds]]
+order = 4
+track_id = "charlotte_motor_speedway"
+name = "Charlotte Motor Speedway"
+laps = 4
+
+[[rounds]]
+order = 5
+track_id = "darlington_raceway"
+name = "Darlington Raceway"
+laps = 4
+
+[[rounds]]
+order = 6
+track_id = "north_wilkesboro_speedway"
+name = "North Wilkesboro Speedway"
+laps = 4
+
+[[rounds]]
+order = 7
+track_id = "bristol_motor_speedway"
+name = "Bristol Motor Speedway"
+laps = 4
+
+[[rounds]]
+order = 8
+track_id = "martinsville_speedway"
+name = "Martinsville Speedway"
+laps = 4
+
+[[rounds]]
+order = 9
+track_id = "lucas_oil_irp"
+name = "Lucas Oil Indianapolis Raceway Park"
+laps = 4
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex Stock Car"
+is_player = true
+car_model_id = "nascar_crossbow_predator_t3"
+country = "USA"
+livery_idx = 0
+
+[[drivers]]
+id = "colt_reynolds"
+name = "Colt 'The Ironclad' Reynolds"
+team = "Heartland Competition"
+car_model_id = "nascar_crossbow_predator_t3"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 1
+
+[[drivers]]
+id = "clayton_reed"
+name = "Clayton 'Viper' Reed"
+team = "Apex Vanguard Racing"
+car_model_id = "nascar_forge_reactor_t3"
+country = "USA"
+ai_character = "smooth"
+livery_idx = 2
+
+[[drivers]]
+id = "rex_montgomery"
+name = "Rex 'The Crown' Montgomery"
+team = "Highland Blue Racing"
+car_model_id = "nascar_yamato_century_t3"
+country = "USA"
+ai_character = "tenacious"
+livery_idx = 3
+
+[[drivers]]
+id = "brant_harlan"
+name = "Brant 'Thunder' Harlan"
+team = "Crestline Speedworks"
+car_model_id = "nascar_yamato_century_t3"
+country = "USA"
+ai_character = "aggressive"
+livery_idx = 4
+
+[[drivers]]
+id = "judson_vance"
+name = "Judson 'Gold Rush' Vance"
+team = "Apex Vanguard Racing"
+car_model_id = "nascar_crossbow_predator_t3"
+country = "USA"
+ai_character = "calculating"
+livery_idx = 5
+
+[[drivers]]
+id = "tanner_cobb"
+name = "Tanner 'Hot Lap' Cobb"
+team = "Summit Ridge Motorsport"
+car_model_id = "nascar_forge_reactor_t3"
+country = "USA"
+ai_character = "tenacious"
+livery_idx = 6
+
+[[drivers]]
+id = "bo_mercer"
+name = "Bo 'Heartland' Mercer"
+team = "Dixie Heritage Motorsport"
+car_model_id = "nascar_forge_reactor_t3"
+country = "USA"
+ai_character = "strategic"
+livery_idx = 7

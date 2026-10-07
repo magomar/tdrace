@@ -308,7 +308,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_gt_vintage",
                 name: "Corsica '73 RS",
-                tag: "CLASSIC GT SPORTS",
+                tag: "VINTAGE GT SPORTS",
                 description: "Air-cooled 1973 classic GT sports coupe with light rear-engine agility, ducktail aero, and authentic vintage slide dynamics.",
                 config: Self::car_classic_gt_vintage(),
                 visual_type: VehicleVisualType::TouringGT {
@@ -327,7 +327,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_nascar",
                 name: "Thunderbolt Stock V8",
-                tag: "ARCADE SPEEDWAY STOCK",
+                tag: "ARCADE STOCK SPEEDWAY",
                 description: "Roaring 750 BHP stock car with planted high-speed stability and forgiving drift control.",
                 config: Self::car_classic_nascar(),
                 visual_type: VehicleVisualType::StockCar {
@@ -346,7 +346,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_stock_vintage",
                 name: "Cyclone '69 Fastback",
-                tag: "VINTAGE GRAND NATIONAL",
+                tag: "VINTAGE STOCK GRAND NATIONAL",
                 description: "1969 Grand National muscle fastback packing 420 BHP of naturally-aspirated big-block V8 thunder and heavyweight momentum.",
                 config: Self::car_classic_stock_vintage(),
                 visual_type: VehicleVisualType::StockCar {
@@ -365,7 +365,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_offroad",
                 name: "Vortex Dune Crusher",
-                tag: "EXTREME OFF-ROAD BUGGY",
+                tag: "ARCADE OFF-ROAD BUGGY",
                 description: "Long-travel dune & stunt buggy with all-terrain arcade traction and high jump compliance.",
                 config: Self::car_classic_offroad(),
                 visual_type: VehicleVisualType::SandRail {
@@ -384,8 +384,8 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_at_safari",
                 name: "Ironclad 4x4 Safari",
-                tag: "VINTAGE ALL-TERRAIN RIG",
-                description: "1980s Paris-Dakar vintage 4WD trail rig with unstoppable mud flotation, high ground clearance, and snow/ice stability.",
+                tag: "VINTAGE OFF-ROAD SAFARI",
+                description: "1980s Desert Raid vintage 4WD trail rig with unstoppable mud flotation, high ground clearance, and snow/ice stability.",
                 config: Self::car_classic_at_safari(),
                 visual_type: VehicleVisualType::SandRail {
                     lightbar: false,
@@ -403,7 +403,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_kart",
                 name: "Turbo Dart 200cc",
-                tag: "ARCADE SPRINT KART",
+                tag: "ARCADE KART SPRINT",
                 description: "Ultra-agile fantasy micro-kart with 1:1 direct steering and impossible-to-spin apex grip.",
                 config: Self::car_classic_kart(),
                 visual_type: VehicleVisualType::GoKart {
@@ -420,7 +420,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_kart_vintage",
                 name: "Comet 100 Classic",
-                tag: "VINTAGE SPRINT KART",
+                tag: "VINTAGE KART DIRECT-DRIVE",
                 description: "1970s air-cooled 100cc direct-drive vintage kart with tactile road feel, bare chassis frame, and pure mechanical feedback.",
                 config: Self::car_classic_kart_vintage(),
                 visual_type: VehicleVisualType::GoKart {
@@ -437,7 +437,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_rally",
                 name: "Trailfire Turbo 4WD",
-                tag: "ARCADE GROUP B RALLY",
+                tag: "ARCADE RALLYCROSS GROUP B",
                 description: "Explosive 4WD fantasy rally beast with long-travel suspension, jump composure, and fearless multi-surface slides.",
                 config: Self::car_classic_rally(),
                 visual_type: VehicleVisualType::RallyHatch {
@@ -456,7 +456,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_rx_vintage",
                 name: "Firebolt RS 2000",
-                tag: "CLASSIC RWD RALLY",
+                tag: "VINTAGE RALLYCROSS RWD",
                 description: "1970s lightweight RWD twin-cam rally coupe built for pendulum slides, dirt flick entries, and tarmac precision.",
                 config: Self::car_classic_rx_vintage(),
                 visual_type: VehicleVisualType::RallyHatch {
@@ -475,7 +475,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_ax_mudlark",
                 name: "Mudlark Cross Car",
-                tag: "ARCADE CROSS CAR",
+                tag: "ARCADE AUTOCROSS CROSS CAR",
                 description: "Agile single-seat cross car powered by an 850cc motorcycle engine, engineered for razor-sharp turn-in and high-revving dirt sprints.",
                 config: Self::car_classic_ax_mudlark(),
                 visual_type: VehicleVisualType::SandRail {
@@ -494,7 +494,7 @@ impl GameModule for ClassicGameModule {
             VehicleModelDefinition {
                 id: "classic_ax_brawler",
                 name: "Brawler Touring AX",
-                tag: "ARCADE TOURING AX",
+                tag: "VINTAGE AUTOCROSS TOURING",
                 description: "Robust touring silhouette autocross machine built by Stonecairn Works. Heavy and stable, slides wide through dirt berms while maintaining fierce four-wheel traction.",
                 config: Self::car_classic_ax_brawler(),
                 visual_type: VehicleVisualType::RallyHatch {

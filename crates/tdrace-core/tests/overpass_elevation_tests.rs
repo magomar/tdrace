@@ -147,21 +147,7 @@ fn test_lidar_elevation_filtering() {
         default_surface: SurfaceType::Asphalt,
         pit_box_area: None,
         pit_lane: None,
-        default_laps: 3,
-        car_category: arcade_race_core::CarCategory::Gt,
-        car_model_id: None,
-        module_id: None,
-        modules: Vec::new(),
-        scale: "1:1".to_string(),
-        wikipedia_url: None,
-        osm_url: None,
-        country_code: None,
-        country_name: None,
-        min_width: None,
-        max_width: None,
-        is_inspired: false,
-        tag: String::new(),
-        category_label: String::new(),
+        ..Default::default()
     };
 
     let scanner = LidarScanner::new(LidarConfig::forward_cone_16());
@@ -217,13 +203,14 @@ fn test_silverstone_pass_over_clearance() {
     let (left_walls, right_walls, _, _) = generate_walls_from_spline(&spline, 5.0, BarrierType::Steel);
 
     // Ground position on Abbey/Farm curve under the bridge (waypoint 2)
-    let ground_sample = &spline.samples[2 * 24];
+    // Spec 071 samples are ~1 m apart, not 24 per segment: look samples up by waypoint.
+    let ground_sample = &spline.samples[spline.waypoint_sample_index(2).unwrap()];
     let ground_pos = ground_sample.point;
     let proj_ground = spline.project_point_continuity(ground_pos, ground_sample.distance, 50.0);
     assert_eq!(proj_ground.elevation, 0.0, "Abbey/Farm underpass should be ground level 0.0m");
 
     // Elevated position on Hangar Straight bridge (waypoint 19)
-    let bridge_sample = &spline.samples[19 * 24];
+    let bridge_sample = &spline.samples[spline.waypoint_sample_index(19).unwrap()];
     let bridge_pos = bridge_sample.point;
     assert!(
         bridge_sample.elevation >= 4.5,
@@ -273,7 +260,8 @@ fn test_silverstone_pass_over_clearance() {
     for wall in left_walls.iter().chain(right_walls.iter()) {
         if wall.elevation >= 4.0 {
             let wall_mid = (wall.segment.start + wall.segment.end) * 0.5;
-            let proj = spline.project_point(wall_mid);
+            // Project onto the bridge road itself; a plain projection can snap to the road it crosses.
+            let proj = spline.project_point_continuity(wall_mid, bridge_sample.distance, 200.0);
             let dist_from_centerline = proj.lateral_offset.abs();
             let track_half_w = proj.track_width * 0.5;
             let offset_from_edge = dist_from_centerline - track_half_w;

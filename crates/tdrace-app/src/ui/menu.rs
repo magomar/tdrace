@@ -161,12 +161,12 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 /// List badge for a module's circuits.
 fn module_label(module: &str) -> &'static str {
     match module {
-        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
+        "gt" | "gt_challenge" => "GRAND TOURING CHALLENGE",
         "rally" => "RALLYCROSS",
         "kart" => "KARTING",
-        "nascar" => "NASCAR CUP",
+        "nascar" => "STOCK CAR",
         "extreme_offroad" => "EXTREME OFF-ROAD",
-        "autocross" => "FIA AUTOCROSS",
+        "autocross" => "CONTINENTAL AUTOCROSS",
         _ => "CLASSIC MOTORSPORT",
     }
 }
@@ -361,34 +361,71 @@ fn resolve_track_for_menu_with_dir_uncached(
 /// Available vehicle model options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CarChoice {
-    SportsCar,
-    DriftCar,
-    Kart,
-    RallyCar,
+    // 1. Grand Touring (GT)
     GT4Clubsport,
     GT3Car,
     GT2Biturbo,
     GT1Legend,
     HypercarPrototype,
-    StockCar,
-    SandRail,
+
+    // 2. Continental Autocross (AX)
     CrossCar,
+    TouringAX,
+    SuperBuggy,
+
+    // 3. Extreme Off-Road & Stunt
+    DuneBuggyBaja,
+    SandRail,
+    TrophyTruckAWD,
+    MudBoggerHeavy,
+    MonsterTruck,
+
+    // 4. Rallycross (RX)
+    RallyJuniorFWD,
+    RallyCar,
+    RallyGroupB,
+    RallyElectricRX,
+
+    // 5. Karting
+    Kart,
+    SuperkartGP,
+
+    // 6. Stock Car & NASCAR
+    StockCar,
+    StockCarTruck,
+
+    // Retired / Arcade-only compatibility variants
+    #[serde(alias = "sports_car")]
+    SportsCar,
+    #[serde(alias = "drift_car")]
+    DriftCar,
 }
 
 impl CarChoice {
-    pub const ALL: [Self; 12] = [
-        Self::SportsCar,
-        Self::DriftCar,
-        Self::Kart,
-        Self::RallyCar,
+    pub const ALL: [Self; 23] = [
         Self::GT4Clubsport,
         Self::GT3Car,
         Self::GT2Biturbo,
         Self::GT1Legend,
         Self::HypercarPrototype,
-        Self::StockCar,
-        Self::SandRail,
         Self::CrossCar,
+        Self::TouringAX,
+        Self::SuperBuggy,
+        Self::DuneBuggyBaja,
+        Self::SandRail,
+        Self::TrophyTruckAWD,
+        Self::MudBoggerHeavy,
+        Self::MonsterTruck,
+        Self::RallyJuniorFWD,
+        Self::RallyCar,
+        Self::RallyGroupB,
+        Self::RallyElectricRX,
+        Self::Kart,
+        Self::SuperkartGP,
+        Self::StockCar,
+        Self::StockCarTruck,
+        Self::SportsCar,
+        Self::DriftCar,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -396,15 +433,26 @@ impl CarChoice {
             Self::SportsCar => "GT Sports Coupe",
             Self::DriftCar => "Tuned Drift Spec",
             Self::Kart => "125cc Shifter Kart",
+            Self::SuperkartGP => "250cc Twin Superkart GP",
+            Self::RallyJuniorFWD => "Junior Rally FWD",
             Self::RallyCar => "AWD Turbo Rally",
-            Self::GT4Clubsport => "420 BHP GT4 Clubsport",
-            Self::GT3Car => "600 BHP GT3 Evo Racer",
-            Self::GT2Biturbo => "707 BHP GT2 Biturbo Sprint",
-            Self::GT1Legend => "650 BHP GT1 Le Mans Legend",
+            Self::RallyGroupB => "500 BHP Group B Rally",
+            Self::RallyElectricRX => "RX1e Electric Rallycross",
+            Self::GT4Clubsport => "420 BHP GT Tier 1 Clubsport",
+            Self::GT3Car => "600 BHP GT Tier 2 Pro Sprint",
+            Self::GT2Biturbo => "707 BHP GT Tier 3 Biturbo",
+            Self::GT1Legend => "650 BHP GT Tier 4 Legend",
             Self::HypercarPrototype => "800 BHP LMH Hypercar Prototype",
-            Self::StockCar => "850 BHP NASCAR Cup V8",
+            Self::StockCar => "850 BHP Premier Stock Car V8",
+            Self::StockCarTruck => "V8 Super Truck",
+            Self::DuneBuggyBaja => "Baja Dune Buggy",
             Self::SandRail => "300 BHP Sand Rail Buggy",
+            Self::TrophyTruckAWD => "800 BHP AWD Trophy Truck",
+            Self::MudBoggerHeavy => "Heavy Mud Bogger 4x4",
+            Self::MonsterTruck => "1500 BHP Monster Truck",
             Self::CrossCar => "150 BHP Cross Car",
+            Self::TouringAX => "550 BHP Touring AX",
+            Self::SuperBuggy => "4WD Dirt SuperBuggy",
         }
     }
 
@@ -413,15 +461,26 @@ impl CarChoice {
             Self::SportsCar => "BALANCED RWD",
             Self::DriftCar => "PRO SLIDE",
             Self::Kart => "APEX GRIP",
+            Self::SuperkartGP => "250CC AERO SUPERKART",
+            Self::RallyJuniorFWD => "COMPACT FWD SUPERMINI",
             Self::RallyCar => "AWD ALL-TERRAIN",
-            Self::GT4Clubsport => "GT4 ENTRY SPEC",
-            Self::GT3Car => "FIA GT3 SPEC",
-            Self::GT2Biturbo => "SRO GT2 SPRINT",
-            Self::GT1Legend => "90s GT1 LEGEND",
-            Self::HypercarPrototype => "LE MANS HYPERCAR",
+            Self::RallyGroupB => "MID-ENGINE TURBO BEAST",
+            Self::RallyElectricRX => "RX1E DUAL-MOTOR AWD",
+            Self::GT4Clubsport => "GT TIER 1 CLUBSPORT",
+            Self::GT3Car => "GT TIER 2 PRO SPRINT",
+            Self::GT2Biturbo => "GT TIER 3 BITURBO",
+            Self::GT1Legend => "GT TIER 4 LEGEND",
+            Self::HypercarPrototype => "ENDURANCE HYPERCAR",
             Self::StockCar => "850 BHP SPACEFRAME V8",
+            Self::StockCarTruck => "CRAFTSMAN V8 TRUCK",
+            Self::DuneBuggyBaja => "BAJA REAR BOXER",
             Self::SandRail => "300 BHP RWD ULTRALIGHT",
+            Self::TrophyTruckAWD => "800 BHP FRONT V8 4WD",
+            Self::MudBoggerHeavy => "HIGH-RISER 4X4 SOLID AXLE",
+            Self::MonsterTruck => "66IN TERRA TIRES 4WS",
             Self::CrossCar => "150 BHP RWD MOTORCYCLE",
+            Self::TouringAX => "550 BHP AWD SILHOUETTE",
+            Self::SuperBuggy => "4WD MID-ENGINE DIRT",
         }
     }
 
@@ -430,15 +489,26 @@ impl CarChoice {
             Self::SportsCar => "Balanced RWD arcade dynamics, responsive rack, 208 km/h top speed.",
             Self::DriftCar => "High-power slide machine with loose rear, wide lock & snappy counter-steer.",
             Self::Kart => "Ultra-lightweight direct steering with extreme apex cornering grip.",
+            Self::SuperkartGP => "250cc Superkart with front/rear aerodynamic wings (Cl=0.65) and 235 km/h top speed.",
+            Self::RallyJuniorFWD => "Agile, lightweight front-wheel-drive supermini hatchback with MacPherson strut suspension.",
             Self::RallyCar => "All-wheel-drive traction with compliant suspension for mixed surfaces.",
+            Self::RallyGroupB => "Mid-engine 500+ BHP lightweight turbo monster with 50:50 AWD and hair-trigger dynamics.",
+            Self::RallyElectricRX => "RX1e / Group E low-CG dual-motor battery chassis with instantaneous AWD corner exit torque.",
             Self::GT4Clubsport => "Agile 420 BHP lightweight RWD racer, agile cornering, gentle aero (Cl=0.85).",
             Self::GT3Car => "4.0L V8, 600 BHP, high aerodynamic downforce (Cl=2.1), carbon brakes, ABS & TC.",
             Self::GT2Biturbo => "High-power 707 BHP biturbo straight-line missile, 328 km/h top speed, lower downforce (Cl=1.4).",
             Self::GT1Legend => "Raw 650 BHP twin-turbo beast with high downforce (Cl=2.60) and pure analog handling (zero electronic assists).",
             Self::HypercarPrototype => "Cutting-edge 800 BHP hybrid prototype with ground-effect aero tunnels (Cl=3.10) and hybrid boost.",
             Self::StockCar => "High-compression 5.9L pushrod V8, 850 BHP, 1260 kg, quick-ratio steering, 320 km/h superspeedway pack racer.",
+            Self::StockCarTruck => "Craftsman V8 Super Truck with high greenhouse, solid rear live axle, and pickup bed wake.",
+            Self::DuneBuggyBaja => "Classic air-cooled rear boxer engine, compact Beetle floorpan, and long-travel off-road swing arm suspension.",
             Self::SandRail => "Ultralight chromoly tube chassis, 300 BHP rear turbo boxer, paddle tires, and long-travel off-road suspension.",
+            Self::TrophyTruckAWD => "Full-size off-road spaceframe with front-mounted V8, 30-inch suspension travel, and massive truck hull.",
+            Self::MudBoggerHeavy => "High-riser dual solid live axle 4x4 chassis with extreme clearance and deep chevron tractor tires.",
+            Self::MonsterTruck => "Massive tubular spaceframe with 66-inch Terra tires, supercharged alcohol V8, and 4-wheel steering.",
             Self::CrossCar => "Single-seat cross car with a high-revving motorcycle engine and rapid direction changes.",
+            Self::TouringAX => "550+ BHP closed-cockpit silhouette touring saloon, AWD traction, and front splitter downforce.",
+            Self::SuperBuggy => "4WD mid-engine dirt spaceframe buggy combining long travel with agile all-wheel-drive traction.",
         }
     }
 
@@ -448,15 +518,26 @@ impl CarChoice {
             Self::SportsCar => (0.85, 0.80, 0.75, 0.65),
             Self::DriftCar => (0.80, 0.85, 0.50, 0.98),
             Self::Kart => (0.65, 0.95, 0.95, 0.40),
+            Self::SuperkartGP => (0.92, 0.98, 0.98, 0.45),
+            Self::RallyJuniorFWD => (0.74, 0.82, 0.84, 0.65),
             Self::RallyCar => (0.78, 0.90, 0.85, 0.75),
+            Self::RallyGroupB => (0.94, 0.98, 0.88, 0.85),
+            Self::RallyElectricRX => (0.92, 0.99, 0.92, 0.78),
             Self::GT4Clubsport => (0.78, 0.82, 0.85, 0.70),
             Self::GT3Car => (0.92, 0.94, 0.95, 0.50),
             Self::GT2Biturbo => (0.96, 0.97, 0.89, 0.65),
             Self::GT1Legend => (0.98, 0.98, 0.93, 0.40),
             Self::HypercarPrototype => (0.99, 0.99, 0.98, 0.35),
             Self::StockCar => (0.97, 0.90, 0.86, 0.88),
+            Self::StockCarTruck => (0.95, 0.88, 0.83, 0.85),
+            Self::DuneBuggyBaja => (0.74, 0.88, 0.80, 0.90),
             Self::SandRail => (0.88, 0.96, 0.82, 0.94),
+            Self::TrophyTruckAWD => (0.88, 0.92, 0.84, 0.88),
+            Self::MudBoggerHeavy => (0.70, 0.90, 0.86, 0.75),
+            Self::MonsterTruck => (0.65, 0.88, 0.82, 0.70),
             Self::CrossCar => (0.76, 0.95, 0.92, 0.85),
+            Self::TouringAX => (0.86, 0.94, 0.90, 0.80),
+            Self::SuperBuggy => (0.84, 0.96, 0.91, 0.86),
         }
     }
 
@@ -481,11 +562,35 @@ impl CarChoice {
                 "115 km/h Top Speed",
                 "1:1 Direct Rack",
             ),
+            Self::SuperkartGP => (
+                "RWD 250cc Twin",
+                "215 kg Mass",
+                "235 km/h Top Speed",
+                "Cl 0.65 Wings",
+            ),
+            Self::RallyJuniorFWD => (
+                "FWD Supermini",
+                "1,030 kg Mass",
+                "180 km/h Top Speed",
+                "MacPherson Strut",
+            ),
             Self::RallyCar => (
                 "AWD 50:50 Split",
                 "1,240 kg Mass",
                 "Long-Travel Setup",
                 "Cl 0.70 Downforce",
+            ),
+            Self::RallyGroupB => (
+                "AWD Mid-Engine Turbo",
+                "960 kg Mass",
+                "230 km/h Top Speed",
+                "500+ BHP Monster",
+            ),
+            Self::RallyElectricRX => (
+                "Dual-Motor Electric AWD",
+                "1,300 kg Mass",
+                "225 km/h Top Speed",
+                "Low-CG Chassis",
             ),
             Self::GT4Clubsport => (
                 "RWD GT4 Spec",
@@ -523,17 +628,59 @@ impl CarChoice {
                 "320 km/h Top Speed",
                 "Pack Draft Dynamic",
             ),
+            Self::StockCarTruck => (
+                "RWD Spaceframe V8",
+                "1,520 kg Mass",
+                "280 km/h Top Speed",
+                "Solid Live Axle",
+            ),
+            Self::DuneBuggyBaja => (
+                "RWD Rear Boxer",
+                "650 kg Mass",
+                "175 km/h Top Speed",
+                "Classic Baja Geometry",
+            ),
             Self::SandRail => (
                 "RWD Long-Travel",
                 "680 kg Mass",
                 "215 km/h Top Speed",
                 "Paddle Sand Tires",
             ),
+            Self::TrophyTruckAWD => (
+                "AWD Front V8",
+                "2,200 kg Mass",
+                "215 km/h Top Speed",
+                "30-Inch Travel",
+            ),
+            Self::MudBoggerHeavy => (
+                "4x4 Dual Solid Axle",
+                "2,600 kg Mass",
+                "160 km/h Top Speed",
+                "Tractor Tread Flotation",
+            ),
+            Self::MonsterTruck => (
+                "4WS Mid-V8",
+                "4,200 kg Mass",
+                "150 km/h Top Speed",
+                "66-Inch Terra Tires",
+            ),
             Self::CrossCar => (
                 "RWD Motorcycle",
                 "420 kg Mass",
                 "160 km/h Top Speed",
                 "Quick-Ratio Rack",
+            ),
+            Self::TouringAX => (
+                "AWD 50:50 Split",
+                "1,150 kg Mass",
+                "210 km/h Top Speed",
+                "Double Wishbone",
+            ),
+            Self::SuperBuggy => (
+                "4WD Mid-Engine",
+                "680 kg Mass",
+                "200 km/h Top Speed",
+                "Long-Travel Setup",
             ),
         }
     }
@@ -553,11 +700,33 @@ impl CarChoice {
     /// Returns the motorsport category tier for this vehicle choice (Tier 1..=5).
     pub fn tier(&self) -> u8 {
         match self {
-            Self::GT4Clubsport | Self::SportsCar | Self::SandRail | Self::CrossCar => 1,
-            Self::GT3Car | Self::RallyCar | Self::DriftCar => 2,
-            Self::GT2Biturbo | Self::Kart => 3,
-            Self::GT1Legend => 4,
-            Self::HypercarPrototype | Self::StockCar => 5,
+            Self::GT4Clubsport
+            | Self::SportsCar
+            | Self::SandRail
+            | Self::CrossCar
+            | Self::DuneBuggyBaja
+            | Self::RallyJuniorFWD => 1,
+
+            Self::GT3Car
+            | Self::RallyCar
+            | Self::DriftCar
+            | Self::TrophyTruckAWD => 2,
+
+            Self::GT2Biturbo
+            | Self::Kart
+            | Self::SuperBuggy => 3,
+
+            Self::GT1Legend
+            | Self::TouringAX
+            | Self::MudBoggerHeavy
+            | Self::StockCarTruck
+            | Self::RallyElectricRX => 4,
+
+            Self::HypercarPrototype
+            | Self::StockCar
+            | Self::SuperkartGP
+            | Self::MonsterTruck
+            | Self::RallyGroupB => 5,
         }
     }
 
@@ -571,11 +740,17 @@ impl CarChoice {
             | Self::GT2Biturbo
             | Self::GT1Legend
             | Self::HypercarPrototype => CarCategory::Gt,
-            Self::StockCar => CarCategory::Nascar,
-            Self::RallyCar => CarCategory::Rally,
-            Self::Kart => CarCategory::Kart,
-            Self::SandRail => CarCategory::OffRoad,
-            Self::CrossCar => CarCategory::Autocross,
+            Self::StockCar | Self::StockCarTruck => CarCategory::Nascar,
+            Self::RallyJuniorFWD | Self::RallyCar | Self::RallyGroupB | Self::RallyElectricRX => {
+                CarCategory::Rally
+            }
+            Self::Kart | Self::SuperkartGP => CarCategory::Kart,
+            Self::DuneBuggyBaja
+            | Self::SandRail
+            | Self::TrophyTruckAWD
+            | Self::MudBoggerHeavy
+            | Self::MonsterTruck => CarCategory::OffRoad,
+            Self::CrossCar | Self::TouringAX | Self::SuperBuggy => CarCategory::Autocross,
         }
     }
 
@@ -595,9 +770,20 @@ impl CarChoice {
     pub fn sound_type(&self) -> EngineSoundType {
         match self {
             Self::StockCar => EngineSoundType::LateModelV8,
-            Self::SandRail => EngineSoundType::SandRailBoxer,
+            Self::StockCarTruck => EngineSoundType::SuperTruckV8,
+            Self::SandRail | Self::DuneBuggyBaja => EngineSoundType::SandRailBoxer,
+            Self::TrophyTruckAWD => EngineSoundType::Pro4UnlimitedV8,
+            Self::MudBoggerHeavy => EngineSoundType::Ultra4V8,
+            Self::MonsterTruck => EngineSoundType::MonsterTruckBlower,
             Self::Kart => EngineSoundType::KartCadet60,
-            Self::RallyCar | Self::CrossCar => EngineSoundType::CrossCarMotorcycle,
+            Self::SuperkartGP => EngineSoundType::Superkart250Twin,
+            Self::RallyJuniorFWD => EngineSoundType::Super1600Atmo,
+            Self::RallyCar | Self::CrossCar | Self::SuperBuggy => {
+                EngineSoundType::CrossCarMotorcycle
+            }
+            Self::RallyGroupB => EngineSoundType::GroupBInline5,
+            Self::RallyElectricRX => EngineSoundType::HypercarV6Hybrid,
+            Self::TouringAX => EngineSoundType::SupercarRx1,
             Self::SportsCar | Self::DriftCar | Self::GT4Clubsport => EngineSoundType::Gt4Clubsport,
             Self::GT3Car => EngineSoundType::Gt3HighRev,
             Self::GT2Biturbo => EngineSoundType::Gt2Biturbo,
@@ -654,7 +840,10 @@ impl CarChoice {
                 }
             }
             SurfaceType::DeepMud => {
-                if (self.category() != CarCategory::OffRoad && self.category() != CarCategory::Autocross) || self.tier() < 4 {
+                if (self.category() != CarCategory::OffRoad
+                    && self.category() != CarCategory::Autocross)
+                    || self.tier() < 4
+                {
                     Some("SURFACE WARNING: Deep mud terrain requires heavy off-road flotation.")
                 } else {
                     None
@@ -677,7 +866,11 @@ impl CarChoice {
             Self::SportsCar => CarConfig::sports_car(),
             Self::DriftCar => CarConfig::drift_car(),
             Self::Kart => CarConfig::kart(),
+            Self::SuperkartGP => CarConfig::superkart_gp(),
+            Self::RallyJuniorFWD => CarConfig::rally_junior_fwd(),
             Self::RallyCar => CarConfig::rally_car(),
+            Self::RallyGroupB => CarConfig::rally_group_b(),
+            Self::RallyElectricRX => CarConfig::rally_electric_rx(),
             Self::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
             Self::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
             Self::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
@@ -686,7 +879,15 @@ impl CarChoice {
                 crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype()
             }
             Self::StockCar => CarConfig::stock_car_ta1(),
-            Self::SandRail | Self::CrossCar => CarConfig::sand_rail(),
+            Self::StockCarTruck => CarConfig::stock_car_truck(),
+            Self::DuneBuggyBaja => CarConfig::dune_buggy_baja(),
+            Self::SandRail => CarConfig::sand_rail(),
+            Self::TrophyTruckAWD => CarConfig::trophy_truck(),
+            Self::MudBoggerHeavy => CarConfig::mud_bogger(),
+            Self::MonsterTruck => CarConfig::monster_truck(),
+            Self::CrossCar => CarConfig::cross_car(),
+            Self::TouringAX => CarConfig::touring_ax(),
+            Self::SuperBuggy => CarConfig::super_buggy(),
         }
     }
 
@@ -698,25 +899,44 @@ impl CarChoice {
                 gt_wing: true,
                 diffuser: false,
             },
-            Self::GT3Car | Self::GT2Biturbo | Self::GT1Legend | Self::HypercarPrototype => {
-                crate::module::VehicleVisualType::TouringGT {
-                    widebody: true,
-                    gt_wing: true,
-                    diffuser: true,
+            Self::GT3Car
+            | Self::GT2Biturbo
+            | Self::GT1Legend
+            | Self::HypercarPrototype
+            | Self::TouringAX => crate::module::VehicleVisualType::TouringGT {
+                widebody: true,
+                gt_wing: true,
+                diffuser: true,
+            },
+            Self::RallyCar | Self::RallyGroupB | Self::RallyElectricRX => {
+                crate::module::VehicleVisualType::RallyHatch {
+                    roof_scoop: true,
+                    mudflaps: true,
+                    large_wing: true,
                 }
             }
-            Self::RallyCar => crate::module::VehicleVisualType::RallyHatch {
-                roof_scoop: true,
+            Self::RallyJuniorFWD => crate::module::VehicleVisualType::RallyHatch {
+                roof_scoop: false,
                 mudflaps: true,
-                large_wing: true,
+                large_wing: false,
             },
             Self::Kart => crate::module::VehicleVisualType::GoKart {
                 exposed_driver: true,
                 side_bumpers: true,
             },
+            Self::SuperkartGP => crate::module::VehicleVisualType::OpenWheel {
+                front_wing_span: 1.0,
+                rear_wing_height: 0.8,
+                halo: false,
+            },
             Self::StockCar => crate::module::VehicleVisualType::StockCar {
                 tall_wing: true,
                 roof_fins: true,
+                window_net: true,
+            },
+            Self::StockCarTruck => crate::module::VehicleVisualType::StockCar {
+                tall_wing: false,
+                roof_fins: false,
                 window_net: true,
             },
             Self::SandRail => crate::module::VehicleVisualType::SandRail {
@@ -724,17 +944,36 @@ impl CarChoice {
                 whip_antenna: true,
                 paddle_tires: true,
             },
-            Self::CrossCar => crate::module::VehicleVisualType::SandRail {
-                lightbar: false,
-                whip_antenna: false,
-                paddle_tires: false,
-            },
+            Self::TrophyTruckAWD | Self::MudBoggerHeavy | Self::MonsterTruck => {
+                crate::module::VehicleVisualType::SandRail {
+                    lightbar: true,
+                    whip_antenna: false,
+                    paddle_tires: false,
+                }
+            }
+            Self::CrossCar | Self::SuperBuggy | Self::DuneBuggyBaja => {
+                crate::module::VehicleVisualType::SandRail {
+                    lightbar: false,
+                    whip_antenna: false,
+                    paddle_tires: false,
+                }
+            }
             Self::SportsCar | Self::DriftCar => crate::module::VehicleVisualType::TouringGT {
                 widebody: false,
                 gt_wing: false,
                 diffuser: false,
             },
         }
+    }
+
+    /// Returns the wheel layering mode (UnderChassis vs OverChassis) for this platform archetype.
+    pub fn wheel_layer_mode(&self) -> crate::render::vehicle_assets::WheelLayerMode {
+        crate::render::vehicle_assets::platform_wheel_layer_mode(*self)
+    }
+
+    /// Returns the top-down wheel texture identifier for this platform archetype.
+    pub fn wheel_texture_id(&self) -> &'static str {
+        crate::render::vehicle_assets::platform_wheel_texture_id(*self)
     }
 }
 
@@ -748,7 +987,7 @@ pub fn resolve_predefined_car_for_track(
             if let Some(ref model_id) = tr.car_model_id {
                 match model_id.as_str() {
                     "classic_ax_mudlark" => CarChoice::CrossCar,
-                    "classic_ax_brawler" => CarChoice::RallyCar,
+                    "classic_ax_brawler" => CarChoice::TouringAX,
                     "classic_ax_talon" => CarChoice::SandRail,
                     _ => CarChoice::classic_car_for_category(tr.car_category),
                 }
@@ -869,6 +1108,17 @@ impl GameMode {
         match self {
             Self::StandardRace | Self::ExperimentalRace | Self::SplitScreen => true,
             Self::Career | Self::TimeTrial | Self::FreeRide => false,
+        }
+    }
+
+    pub fn allows_laps_customization(&self) -> bool {
+        match self {
+            Self::ExperimentalRace => true,
+            Self::StandardRace
+            | Self::Career
+            | Self::SplitScreen
+            | Self::TimeTrial
+            | Self::FreeRide => false,
         }
     }
 
@@ -1000,7 +1250,7 @@ impl MenuCategoryFilter {
             Self::Rally => "RALLY",
             Self::Kart => "KART",
             Self::Gt => "GT",
-            Self::Nascar => "NASCAR",
+            Self::Nascar => "STOCK CAR",
             Self::ExtremeOffroad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
             Self::Custom => "CUSTOM",
@@ -2329,7 +2579,7 @@ pub fn render_track_select_menu(
             ),
             (
                 "Module Distribution",
-                "Assign custom circuits to Classic, Rally, Kart, GT, Nascar",
+                "Assign custom circuits to Classic, Rally, Kart, GT, Stock Car",
             ),
         ];
         let mut cl_y = c2_y + scaler.s(70.0);
@@ -3528,7 +3778,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "rally_hyundai_i20_rx",
+                    "rally_hanguk_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3544,7 +3794,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "kart_tony_kart_racer_ok",
+                    "kart_verde_apex_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3560,7 +3810,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "gt_porsche_911_gt3r",
+                    "gt_vandorn_arrowhead_t2",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3576,7 +3826,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "nascar_arca_chevy_ss",
+                    "nascar_crossbow_predator_t3",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -3592,7 +3842,7 @@ pub fn render_module_select_menu(
                     helmet: Palette::WHITE,
                 };
                 crate::render::lateral::render_real_car_lateral_by_id(
-                    "offroad_sand_rail_buggy",
+                    "offroad_laurentian_nomad_t1",
                     &icon_scheme,
                     icon_cx,
                     icon_cy + scaler.s(2.0),
@@ -4034,6 +4284,33 @@ impl ModalityModal {
             Self::VehicleRequired => "[ VISIT SHOWROOM ]",
             _ => "[ OK / CONTINUE ]",
         }
+    }
+
+    /// Formats the modal message into wrapped lines that fit within `max_width`.
+    /// Preserves paragraph spacing (`None` represents an empty separator line).
+    pub fn wrapped_lines(&self, fonts: &Fonts, font_size: f32, max_width: f32) -> Vec<Option<String>> {
+        let mut rendered_lines = Vec::new();
+        for raw_line in self.message().lines() {
+            let trimmed = raw_line.trim();
+            if trimmed.is_empty() {
+                if !rendered_lines.is_empty() && rendered_lines.last() != Some(&None) {
+                    rendered_lines.push(None);
+                }
+            } else {
+                let parts = fonts.wrap_text(trimmed, font_size, max_width);
+                if parts.is_empty() {
+                    rendered_lines.push(Some(trimmed.to_string()));
+                } else {
+                    for part in parts {
+                        rendered_lines.push(Some(part));
+                    }
+                }
+            }
+        }
+        while rendered_lines.last() == Some(&None) {
+            rendered_lines.pop();
+        }
+        rendered_lines
     }
 }
 
@@ -4548,8 +4825,25 @@ pub fn render_modality_select_screen(
     if let Some(m) = modal {
         draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.0, 0.0, 0.0, 0.80));
 
-        let mw = (sw * 0.65).clamp(scaler.s(480.0), scaler.s(660.0));
-        let mh = scaler.s(220.0);
+        let mw = (sw * 0.68).clamp(scaler.s(520.0), scaler.s(700.0));
+        let max_text_w = mw - scaler.s(56.0);
+        let font_size = scaler.font_s(12.5);
+        let line_height = scaler.s(21.0);
+        let empty_line_height = scaler.s(13.0);
+
+        let lines = m.wrapped_lines(fonts, font_size, max_text_w);
+        let mut text_block_h = 0.0;
+        for (idx, item) in lines.iter().enumerate() {
+            if idx > 0 {
+                match item {
+                    Some(_) => text_block_h += line_height,
+                    None => text_block_h += empty_line_height,
+                }
+            }
+        }
+
+        let needed_h = scaler.s(76.0) + text_block_h + scaler.s(54.0);
+        let mh = needed_h.max(scaler.s(220.0));
         let mx = (sw - mw) * 0.5;
         let my = (sh - mh) * 0.5;
 
@@ -4573,16 +4867,23 @@ pub fn render_modality_select_screen(
             scaler.s(2.0),
         );
 
-        let mut line_y = my + scaler.s(76.0);
-        for line in m.message().lines() {
-            fonts.draw_ui_regular_centered(
-                line,
-                sw * 0.5,
-                line_y,
-                scaler.font_s(12.5),
-                Color::new(0.85, 0.90, 0.96, 1.0),
-            );
-            line_y += scaler.s(24.0);
+        let mut line_y = my + scaler.s(74.0);
+        for item in &lines {
+            match item {
+                Some(line) => {
+                    fonts.draw_ui_regular_centered(
+                        line,
+                        sw * 0.5,
+                        line_y,
+                        font_size,
+                        Color::new(0.85, 0.90, 0.96, 1.0),
+                    );
+                    line_y += line_height;
+                }
+                None => {
+                    line_y += empty_line_height;
+                }
+            }
         }
 
         let dismiss_text = match m {
@@ -4592,8 +4893,8 @@ pub fn render_modality_select_screen(
         fonts.draw_ui_bold_centered(
             dismiss_text,
             sw * 0.5,
-            my + mh - scaler.s(24.0),
-            scaler.font_s(12.0),
+            my + mh - scaler.s(22.0),
+            scaler.font_s(11.5),
             match m {
                 ModalityModal::LicenseRequired => Palette::NEON_GOLD,
                 _ => Palette::NEON_CYAN,

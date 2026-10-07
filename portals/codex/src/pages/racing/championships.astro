@@ -1,0 +1,280 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRacingModel, moduleBadge, moduleLabel } from '../../lib/codex';
+
+const racing = await getRacingModel();
+const pointSystems = racing.point_systems;
+const seriesPresets = racing.series;
+
+const positions = Array.from({ length: 15 }, (_, i) => i + 1);
+
+const disciplines = [
+  { id: 'all', label: 'All Disciplines' },
+  ...Array.from(new Set(seriesPresets.map((s) => s.module_id))).map((id) => ({
+    id,
+    label: moduleLabel(id),
+  })),
+];
+---
+
+<Layout
+  title="Championships & Scoring Systems — TDRace Codex"
+  description="Championship points systems, scoring matrices, and directory of the 33 official motorsport series presets in TDRace."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Championships</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Championships &amp; Scoring Systems</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      Championships aggregate race points across multiple sequential rounds. TDRace provides four authentic motorsport scoring
+      presets—FIA Standard, MotoGP, Classic Arcade, and NASCAR Cup—powering 33 officially homologated series presets
+      with curated circuit calendars and realistic driver grids.
+    </p>
+
+    <!-- Quick Telemetry Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Official Series</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{seriesPresets.length}</div>
+        <div class="text-[11px] text-racing-cyan font-mono mt-0.5">Preset tournaments</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Scoring Systems</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{pointSystems.length}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Homologated matrices</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Total Calendar Rounds</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{seriesPresets.reduce((a, s) => a + s.round_count, 0)}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Across all presets</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Competitor Slots</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{seriesPresets.reduce((a, s) => a + s.driver_count, 0)}</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Grid positions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Points Comparison Matrix -->
+  <section class="py-8 max-w-5xl">
+    <div class="mb-4">
+      <h2 class="text-xl font-bold text-white tracking-tight">Points Systems Comparison</h2>
+      <p class="text-xs text-racing-muted mt-1 font-mono">Finishing position points scale and bonus allocation across regulations.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-racing-border bg-racing-surface">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-center w-16">Pos</th>
+            {pointSystems.map((ps) => (
+              <th class="py-3 px-4 font-semibold">{ps.name}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-racing-border/40">
+          {positions.map((pos) => (
+            <tr class="hover:bg-racing-card/40 transition-colors">
+              <td class="py-2 px-4 font-bold text-white text-center bg-racing-card/20">
+                P{pos}
+              </td>
+              {pointSystems.map((ps) => {
+                const pt = ps.points_table.find((p) => p.position === pos);
+                const val = pt ? pt.points : 0;
+                return (
+                  <td class="py-2 px-4">
+                    {val > 0 ? (
+                      <span class={pos === 1 ? 'text-amber-400 font-bold text-sm' : pos <= 3 ? 'text-cyan-300 font-bold' : 'text-slate-200'}>
+                        {val} <span class="text-[10px] text-racing-muted">pts</span>
+                      </span>
+                    ) : (
+                      <span class="text-racing-muted/60">—</span>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+          <tr class="bg-racing-card/60 font-semibold border-t border-racing-border">
+            <td class="py-3 px-4 text-center text-white font-mono text-[11px]">Bonus</td>
+            {pointSystems.map((ps) => (
+              <td class="py-3 px-4 text-[11px] text-racing-cyan">
+                {ps.fastest_lap_bonus || ps.stage_win_bonus || <span class="text-racing-muted">—</span>}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Point System Descriptions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      {pointSystems.map((ps) => (
+        <div class="rounded-lg border border-racing-border bg-racing-surface p-4">
+          <div class="flex items-center justify-between border-b border-racing-border/40 pb-2">
+            <h3 class="text-sm font-bold text-white">{ps.name}</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card border border-racing-border text-racing-cyan">
+              {ps.id}
+            </span>
+          </div>
+          <p class="text-xs text-racing-muted mt-2 leading-relaxed">
+            {ps.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Official Series Presets -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight">Official Series Presets ({seriesPresets.length})</h2>
+        <p class="text-xs text-racing-muted font-mono mt-1">Homologated tournament calendars across all motorsport disciplines.</p>
+      </div>
+
+      <div class="w-full sm:w-64">
+        <input
+          id="series-search"
+          type="text"
+          placeholder="Filter series or circuit..."
+          class="w-full px-3 py-1.5 rounded-lg bg-racing-surface border border-racing-border text-xs text-white placeholder-racing-muted/60 focus:outline-none focus:border-racing-cyan font-mono"
+        />
+      </div>
+    </div>
+
+    <!-- Discipline Filter Tabs -->
+    <div class="flex flex-wrap gap-2 mb-6" id="discipline-filters">
+      {disciplines.map((d) => (
+        <button
+          type="button"
+          data-discipline={d.id}
+          class={`filter-tab px-3 py-1 rounded-lg text-xs font-mono border transition-colors ${
+            d.id === 'all'
+              ? 'bg-racing-cyan text-racing-bg border-racing-cyan font-bold'
+              : 'bg-racing-surface text-racing-muted border-racing-border hover:text-white hover:border-racing-border/80'
+          }`}
+        >
+          {d.label}
+        </button>
+      ))}
+    </div>
+
+    <!-- Series Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="series-grid">
+      {seriesPresets.map((series) => {
+        const badgeStyle = moduleBadge(series.module_id);
+        return (
+          <article
+            class="series-card rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between shadow-sm"
+            data-discipline={series.module_id}
+            data-name={series.name.toLowerCase()}
+            data-tracks={series.rounds.map((r) => r.name.toLowerCase() + ' ' + r.track_id.toLowerCase()).join(' ')}
+          >
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-racing-border/60 pb-3">
+                <div class="flex items-center gap-2">
+                  <span class={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${badgeStyle}`}>
+                    {moduleLabel(series.module_id)}
+                  </span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card text-white border border-racing-border">
+                    Tier {series.tier}
+                  </span>
+                </div>
+                <span class="text-xs font-mono text-racing-muted">
+                  {series.scoring_system.toUpperCase()} SCORING
+                </span>
+              </div>
+
+              <h3 class="text-lg font-bold text-white tracking-tight mt-3">{series.name}</h3>
+              <p class="text-xs text-racing-muted mt-1.5 leading-relaxed min-h-[36px]">
+                {series.description}
+              </p>
+
+              <!-- Series Specs Pills -->
+              <div class="flex items-center gap-2 mt-4 text-[11px] font-mono">
+                <span class="px-2 py-1 rounded bg-racing-card border border-racing-border/60 text-slate-300">
+                  🏁 {series.round_count} Rounds
+                </span>
+                <span class="px-2 py-1 rounded bg-racing-card border border-racing-border/60 text-slate-300">
+                  ⏱️ {series.laps_per_round} Laps/Round
+                </span>
+                <span class="px-2 py-1 rounded bg-racing-card border border-racing-border/60 text-slate-300">
+                  👥 {series.driver_count} Drivers
+                </span>
+              </div>
+
+              <!-- Rounds Calendar -->
+              <div class="mt-4 pt-3 border-t border-racing-border/40">
+                <h4 class="text-[10px] font-mono text-racing-cyan uppercase tracking-wider mb-2">Round Schedule</h4>
+                <div class="space-y-1.5">
+                  {series.rounds.map((rnd) => (
+                    <div class="flex items-center justify-between text-xs font-mono p-1.5 rounded bg-racing-card/40 border border-racing-border/30">
+                      <div class="flex items-center gap-2">
+                        <span class="text-racing-muted text-[10px] w-4">#{rnd.order}</span>
+                        <a href={`/showroom/circuits#${rnd.track_id}`} class="text-white hover:text-racing-cyan transition-colors">
+                          {rnd.name}
+                        </a>
+                      </div>
+                      <span class="text-[11px] text-racing-muted">{rnd.laps} laps</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <!-- Grid Preview -->
+            <div class="mt-4 pt-3 border-t border-racing-border/60 flex items-center justify-between text-[11px] font-mono text-racing-muted">
+              <span>Player: <strong class="text-white">{series.drivers.find(d => d.is_player)?.team ?? 'Apex Racing'}</strong></span>
+              <span>Rivals: <strong class="text-slate-300">{series.driver_count - 1} AI Drivers</strong></span>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+
+  <script is:inline>
+    // Client-side filtering for series presets
+    const searchInput = document.getElementById('series-search');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const seriesCards = document.querySelectorAll('.series-card');
+
+    let activeDiscipline = 'all';
+    let searchQuery = '';
+
+    function updateSeriesFilter() {
+      seriesCards.forEach((card) => {
+        const matchesDiscipline = activeDiscipline === 'all' || card.dataset.discipline === activeDiscipline;
+        const matchesSearch = !searchQuery || 
+          card.dataset.name.includes(searchQuery) || 
+          card.dataset.tracks.includes(searchQuery);
+
+        if (matchesDiscipline && matchesSearch) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    filterTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach((t) => {
+          t.classList.remove('bg-racing-cyan', 'text-racing-bg', 'border-racing-cyan', 'font-bold');
+          t.classList.add('bg-racing-surface', 'text-racing-muted', 'border-racing-border');
+        });
+        tab.classList.remove('bg-racing-surface', 'text-racing-muted', 'border-racing-border');
+        tab.classList.add('bg-racing-cyan', 'text-racing-bg', 'border-racing-cyan', 'font-bold');
+
+        activeDiscipline = tab.dataset.discipline;
+        updateSeriesFilter();
+      });
+    });
+
+    searchInput?.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      updateSeriesFilter();
+    });
+  </script>
+</Layout>

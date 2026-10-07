@@ -507,45 +507,45 @@ impl ModuleCareerProgress {
     /// Returns the authentic starter car model IDs for a given motorsport module and tier (1..=5).
     pub fn starter_cars_for_module_and_tier(module_id: &str, tier: u32) -> Vec<String> {
         match (module_id, tier) {
-            ("gt" | "gt_challenge", 1) => vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()],
+            ("gt" | "gt_challenge", 1) => vec!["gt_yamato_hayate_t1".to_string(), "gt4_clubsport".to_string()],
             ("gt" | "gt_challenge", _) => Vec::new(),
 
-            ("nascar", 1) => vec!["nascar_monte_carlo_ss".to_string()],
-            ("nascar", 2) => vec!["nascar_super_late_model".to_string()],
-            ("nascar", 3) => vec!["nascar_arca_chevy_ss".to_string()],
-            ("nascar", 4) => vec!["nascar_silverado_truck".to_string()],
-            ("nascar", 5) => vec!["nascar_corvette_ta1".to_string()],
+            ("nascar", 1) => vec!["nascar_crossbow_montego_t1".to_string()],
+            ("nascar", 2) => vec!["nascar_crossbow_saber_t2".to_string()],
+            ("nascar", 3) => vec!["nascar_crossbow_predator_t3".to_string()],
+            ("nascar", 4) => vec!["nascar_crossbow_sierra_t4".to_string()],
+            ("nascar", 5) => vec!["nascar_crossbow_manta_t5".to_string()],
 
-            ("rally", 1) => vec!["rally_peugeot_208_rally4".to_string()],
-            ("rally", 2) => vec!["rally_omse_supercar_lites".to_string()],
-            ("rally", 3) => vec!["rally_polo_rx".to_string()],
-            ("rally", 4) => vec!["rally_peugeot_208_wrx".to_string()],
-            ("rally", 5) => vec!["rally_peugeot_208_rx1e".to_string()],
-            ("rally", 6) => vec!["rally_omse_fc1x".to_string()],
-            ("rally", 0 | 7) => vec!["rally_audi_sport_quattro_s1".to_string()],
+            ("rally", 1) => vec!["rally_gallia_200_t1".to_string()],
+            ("rally", 2) => vec!["rally_nordic_rx_lites_t2".to_string()],
+            ("rally", 3) => vec!["rally_volkskraft_strassen_t3".to_string()],
+            ("rally", 4) => vec!["rally_gallia_lyon_t4".to_string()],
+            ("rally", 5) => vec!["rally_gallia_volt_t5".to_string()],
+            ("rally", 6) => vec!["rally_nordic_valkyrie_t6".to_string()],
+            ("rally", 0 | 7) => vec!["rally_vortek_turbo_quattro_t7".to_string()],
 
-            ("kart", 1) => vec!["kart_crg_hero_60".to_string()],
-            ("kart", 2) => vec!["kart_tony_kart_rookie_okj".to_string()],
-            ("kart", 3) => vec!["kart_tony_kart_racer_ok".to_string()],
-            ("kart", 4) => vec!["kart_birel_art_kz2".to_string()],
-            ("kart", 5) => vec!["kart_anderson_maverick_mono".to_string()],
-            ("kart", 6) => vec!["kart_anderson_cs250".to_string()],
+            ("kart", 1) => vec!["kart_blackline_cadet_t1".to_string()],
+            ("kart", 2) => vec!["kart_verde_sprint_t2".to_string()],
+            ("kart", 3) => vec!["kart_verde_apex_t3".to_string()],
+            ("kart", 4) => vec!["kart_rosso_corsa_t4".to_string()],
+            ("kart", 5) => vec!["kart_highland_hawk_t5".to_string()],
+            ("kart", 6) => vec!["kart_highland_eagle_t6".to_string()],
 
-            ("extreme_offroad" | "offroad", 1) => vec!["offroad_sand_rail_buggy".to_string()],
-            ("extreme_offroad" | "offroad", 2) => vec!["offroad_ford_bronco_dr".to_string()],
-            ("extreme_offroad" | "offroad", 3) => vec!["offroad_arctic_hilux_at44".to_string()],
-            ("extreme_offroad" | "offroad", 4) => vec!["offroad_pro4_unlimited_chevy".to_string()],
-            ("extreme_offroad" | "offroad", 5) => vec!["offroad_bigfoot_monster_truck".to_string()],
+            ("extreme_offroad" | "offroad", 1) => vec!["offroad_laurentian_nomad_t1".to_string()],
+            ("extreme_offroad" | "offroad", 2) => vec!["offroad_desert_forge_truck_t2".to_string()],
+            ("extreme_offroad" | "offroad", 3) => vec!["offroad_sixstar_blizzard_t3".to_string()],
+            ("extreme_offroad" | "offroad", 4) => vec!["offroad_crossbow_ridge_t4".to_string()],
+            ("extreme_offroad" | "offroad", 5) => vec!["offroad_havoc_tomb_raider_t5".to_string()],
 
-            ("autocross" | "ax", 1) => vec!["autocross_lifelive_tn5_junior".to_string()],
-            ("autocross" | "ax", 2) => vec!["autocross_lifelive_tn11_senior".to_string()],
-            ("autocross" | "ax", 3) => vec!["autocross_peters_buggy1600".to_string()],
-            ("autocross" | "ax", 4) => vec!["autocross_skoda_fabia_tax".to_string()],
-            ("autocross" | "ax", 5) => vec!["autocross_peters_superbuggy".to_string()],
+            ("autocross" | "ax", 1) => vec!["autocross_ardennes_junior_t1".to_string()],
+            ("autocross" | "ax", 2) => vec!["autocross_ardennes_pro_t2".to_string()],
+            ("autocross" | "ax", 3) => vec!["autocross_petersen_buggy1600_t3".to_string()],
+            ("autocross" | "ax", 4) => vec!["autocross_bohemia_veloce_t4".to_string()],
+            ("autocross" | "ax", 5) => vec!["autocross_petersen_superbuggy_t5".to_string()],
 
             _ => {
                 if tier == 1 {
-                    vec!["gt_toyota_supra_gt4".to_string(), "gt4_clubsport".to_string()]
+                    vec!["gt_yamato_hayate_t1".to_string(), "gt4_clubsport".to_string()]
                 } else {
                     Vec::new()
                 }
@@ -1251,10 +1251,10 @@ impl ModuleCareerProgress {
         if dev_mode {
             return true;
         }
-        if car_id == "gt4_clubsport" && self.unlocked_cars.iter().any(|c| c == "gt_toyota_supra_gt4") {
+        if car_id == "gt4_clubsport" && self.unlocked_cars.iter().any(|c| c == "gt_yamato_hayate_t1") {
             return true;
         }
-        if car_id == "gt_toyota_supra_gt4" && self.unlocked_cars.iter().any(|c| c == "gt4_clubsport") {
+        if car_id == "gt_yamato_hayate_t1" && self.unlocked_cars.iter().any(|c| c == "gt4_clubsport") {
             return true;
         }
         self.unlocked_cars.iter().any(|c| c == car_id)

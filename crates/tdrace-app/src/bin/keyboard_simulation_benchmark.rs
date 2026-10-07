@@ -84,7 +84,7 @@ fn main() {
     let timestamp = Utc::now().to_rfc3339();
     let dt = DEFAULT_SIMULATION_DT;
     let mut cars: Vec<&RealCarModel> = CLASSIC_ARCADE_CARS.iter().collect();
-    cars.extend(ALL_REAL_CARS.iter().filter(|model| matches!(model.id, "rally_peugeot_208_rally4" | "rally_omse_supercar_lites")));
+    cars.extend(ALL_REAL_CARS.iter().filter(|model| matches!(model.id, "rally_gallia_200_t1" | "rally_nordic_rx_lites_t2")));
 
     println!("Mode x key style x preset x car benchmark: {} cars, {} modes, {} presets, {} surfaces", cars.len(), AssistProfile::ALL.len(), SteeringProfile::PRESETS.len(), SURFACES.len());
 

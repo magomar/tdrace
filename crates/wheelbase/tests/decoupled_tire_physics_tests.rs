@@ -136,7 +136,7 @@ fn test_thermal_grip_degradation_under_prolonged_power_drifting() {
     let dt = 1.0 / 60.0;
     let steps = (8.5 / dt) as usize;
     for _ in 0..steps {
-        wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, dt);
+        wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, dt);
     }
 
     // Surface temperature rises above 120°C

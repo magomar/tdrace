@@ -32,8 +32,8 @@ const SEED: u64 = 0x5EED_0490;
 fn recorded() -> Option<u64> {
     let mac_arm = cfg!(all(target_os = "macos", target_arch = "aarch64"));
     match (mac_arm, cfg!(debug_assertions)) {
-        (true, true) => Some(0xc5f493823517ee07),
-        (true, false) => Some(0xd1a2dad203a5500d),
+        (true, true) => Some(0xf749b7e579aa775a),
+        (true, false) => Some(0x6724b29cb789c297),
         _ => None,
     }
 }

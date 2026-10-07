@@ -5,6 +5,13 @@ use tdrace_core::{EnginePlacement, SuspensionArchetype};
 
 use super::ModuleCareerProgress;
 
+/// The net repair bill is capped at this share of the race purse; a sponsor pays the rest (Spec 078).
+pub const REPAIR_PURSE_CAP_SHARE: f64 = 0.40;
+/// Below this credit balance the sponsor safety net repairs every part to `SAFETY_NET_HEALTH` for free.
+pub const SAFETY_NET_CREDIT_LIMIT: u64 = 1_000;
+/// Health the sponsor safety net restores for free (Spec 078).
+pub const SAFETY_NET_HEALTH: f32 = 0.50;
+
 fn round_to_10(val: f64) -> u64 {
     if val <= 0.0 {
         0
@@ -57,19 +64,19 @@ impl ItemizedRepairInvoice {
 
         // Anti-bankruptcy sponsor safety net floor:
         // Free repairs up to 50% for all components if liquid balance is under $1,000 Cr
-        let eligible_for_safety_net = player_credits < 1_000;
+        let eligible_for_safety_net = player_credits < SAFETY_NET_CREDIT_LIMIT;
         let mut sponsor_safety_net_applied = false;
 
-        let effective_chassis_h = if eligible_for_safety_net && chassis_health < 0.50 {
+        let effective_chassis_h = if eligible_for_safety_net && chassis_health < SAFETY_NET_HEALTH {
             sponsor_safety_net_applied = true;
-            0.50
+            SAFETY_NET_HEALTH
         } else {
             chassis_health.clamp(0.0, 1.0)
         };
 
-        let effective_engine_h = if eligible_for_safety_net && engine_health < 0.50 {
+        let effective_engine_h = if eligible_for_safety_net && engine_health < SAFETY_NET_HEALTH {
             sponsor_safety_net_applied = true;
-            0.50
+            SAFETY_NET_HEALTH
         } else {
             engine_health.clamp(0.0, 1.0)
         };
@@ -77,9 +84,9 @@ impl ItemizedRepairInvoice {
         let mut effective_susp_h = [1.0f32; 4];
         for i in 0..4 {
             let h = suspension_health[i];
-            effective_susp_h[i] = if eligible_for_safety_net && h < 0.50 {
+            effective_susp_h[i] = if eligible_for_safety_net && h < SAFETY_NET_HEALTH {
                 sponsor_safety_net_applied = true;
-                0.50
+                SAFETY_NET_HEALTH
             } else {
                 h.clamp(0.0, 1.0)
             };
@@ -103,7 +110,7 @@ impl ItemizedRepairInvoice {
         let total_raw_damage_cost = chassis_cost + engine_cost + suspension_costs.iter().sum::<u64>();
 
         // 4. Anti-Bankruptcy Sponsor Protections (Clamped to <= 40% of earned purse)
-        let max_purse_deduction = ((earned_purse as f64) * 0.40).round() as u64;
+        let max_purse_deduction = ((earned_purse as f64) * REPAIR_PURSE_CAP_SHARE).round() as u64;
 
         let (sponsor_subsidy, net_deduction) = if total_raw_damage_cost > max_purse_deduction {
             (total_raw_damage_cost - max_purse_deduction, max_purse_deduction)

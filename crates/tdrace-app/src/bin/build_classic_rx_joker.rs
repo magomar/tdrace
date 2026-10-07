@@ -33,13 +33,13 @@ fn build_quarry_sprint() {
 
     let seg2_wps = vec![
         TrackWaypoint::new(Vec2::new(-8.3, -229.3), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(-30.0, -230.4), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(-1.2),
         TrackWaypoint::new(Vec2::new(-68.5, -237.4), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(-2.5),
         TrackWaypoint::new(Vec2::new(-72.2, -209.7), 12.0)
             .with_surface(SurfaceType::Concrete)
@@ -48,7 +48,7 @@ fn build_quarry_sprint() {
             .with_surface(SurfaceType::Concrete)
             .with_elevation(1.8),
         TrackWaypoint::new(Vec2::new(-58.7, -140.0), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.5),
         TrackWaypoint::new(Vec2::new(-53.3, -128.8), 12.0)
             .with_surface(SurfaceType::Asphalt)
@@ -67,9 +67,9 @@ fn build_quarry_sprint() {
     let seg3 = RoadSegment::new(SegmentId(3), "Quarry Plateau Return Straight", seg3_wps)
         .with_junctions(Some(SocketId::new(JunctionId(1), 0)), Some(SocketId::new(JunctionId(0), 0)));
 
-    let split_sock_in = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::PackedGravel, 0.0);
-    let split_sock_e0 = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::PackedGravel, 0.0);
-    let split_sock_e1 = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-0.9987, -0.0506), 12.0, SurfaceType::PackedGravel, 0.0);
+    let split_sock_in = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
+    let split_sock_e0 = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
+    let split_sock_e1 = make_socket(Vec2::new(-8.3, -229.3), Vec2::new(-0.9987, -0.0506), 12.0, SurfaceType::Dirt, 0.0);
 
     let split_junction = RoadJunction::split(
         JunctionId(0),
@@ -85,7 +85,7 @@ fn build_quarry_sprint() {
     );
 
     let merge_sock_i0 = make_socket(Vec2::new(-53.3, -128.8), Vec2::new(0.0, 1.0), 12.0, SurfaceType::Asphalt, 0.0);
-    let merge_sock_i1 = make_socket(Vec2::new(-53.3, -128.8), Vec2::new(0.434, 0.901), 12.0, SurfaceType::PackedGravel, 0.0);
+    let merge_sock_i1 = make_socket(Vec2::new(-53.3, -128.8), Vec2::new(0.434, 0.901), 12.0, SurfaceType::Dirt, 0.0);
     let merge_sock_eg = make_socket(Vec2::new(-53.3, -128.8), Vec2::new(0.0, 1.0), 12.0, SurfaceType::Asphalt, 0.0);
 
     let merge_junction = RoadJunction::merge(
@@ -217,11 +217,11 @@ fn build_hilltop_leap() {
             .with_surface(SurfaceType::Dirt)
             .with_elevation(1.5),
         TrackWaypoint::new(Vec2::new(-13.9, -143.2), 12.0)
-            .with_surface(SurfaceType::PackedSand)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(2.5)
             .with_bank_angle(8.0),
         TrackWaypoint::new(Vec2::new(-52.4, -132.8), 12.0)
-            .with_surface(SurfaceType::PackedSand)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(4.5)
             .with_bank_angle(8.0),
         TrackWaypoint::new(Vec2::new(-92.4, -93.2), 12.0)
@@ -254,7 +254,7 @@ fn build_hilltop_leap() {
 
     let split_sock_in = make_socket(Vec2::new(10.8, -132.2), Vec2::new(-0.707, 0.707), 12.0, SurfaceType::Dirt, 1.5);
     let split_sock_e0 = make_socket(Vec2::new(10.8, -132.2), Vec2::new(-0.707, 0.707), 12.0, SurfaceType::Dirt, 1.5);
-    let split_sock_e1 = make_socket(Vec2::new(10.8, -132.2), Vec2::new(-0.914, -0.406), 12.0, SurfaceType::PackedSand, 1.5);
+    let split_sock_e1 = make_socket(Vec2::new(10.8, -132.2), Vec2::new(-0.914, -0.406), 12.0, SurfaceType::Dirt, 1.5);
 
     let split_junction = RoadJunction::split(
         JunctionId(0),
@@ -400,10 +400,10 @@ fn build_canyon_flyer() {
             .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(75.0, -231.8), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(30.0, -276.2), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(-20.0, -303.5), 12.0)
             .with_surface(SurfaceType::Concrete)
@@ -412,10 +412,10 @@ fn build_canyon_flyer() {
             .with_surface(SurfaceType::Concrete)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(-110.0, -284.0), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
         TrackWaypoint::new(Vec2::new(-139.1, -235.1), 12.0)
-            .with_surface(SurfaceType::PackedGravel)
+            .with_surface(SurfaceType::Dirt)
             .with_elevation(0.0),
     ];
 
@@ -433,7 +433,7 @@ fn build_canyon_flyer() {
 
     let split_sock_in = make_socket(Vec2::new(113.1, -188.6), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
     let split_sock_e0 = make_socket(Vec2::new(113.1, -188.6), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
-    let split_sock_e1 = make_socket(Vec2::new(113.1, -188.6), Vec2::new(-0.662, -0.749), 12.0, SurfaceType::PackedGravel, 0.0);
+    let split_sock_e1 = make_socket(Vec2::new(113.1, -188.6), Vec2::new(-0.662, -0.749), 12.0, SurfaceType::Dirt, 0.0);
 
     let split_junction = RoadJunction::split(
         JunctionId(0),
@@ -448,9 +448,9 @@ fn build_canyon_flyer() {
         )),
     );
 
-    let merge_sock_i0 = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::PackedGravel, 0.0);
-    let merge_sock_i1 = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-0.51, 0.86), 12.0, SurfaceType::PackedGravel, 0.0);
-    let merge_sock_eg = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::PackedGravel, 0.0);
+    let merge_sock_i0 = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
+    let merge_sock_i1 = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-0.51, 0.86), 12.0, SurfaceType::Dirt, 0.0);
+    let merge_sock_eg = make_socket(Vec2::new(-139.1, -235.1), Vec2::new(-1.0, 0.0), 12.0, SurfaceType::Dirt, 0.0);
 
     let merge_junction = RoadJunction::merge(
         JunctionId(1),

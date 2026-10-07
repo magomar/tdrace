@@ -13,19 +13,19 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("gt2_power_masters", include_str!("../../../../series/gt/gt2_power_masters.toml")),
     ("gt1_heritage_trophy", include_str!("../../../../series/gt/gt1_heritage_trophy.toml")),
     ("hypercar_world_gp", include_str!("../../../../series/gt/hypercar_world_gp.toml")),
-    // NASCAR Championships (Tiers 1-5)
-    ("nascar_short_track_series", include_str!("../../../../series/nascar/nascar_short_track_series.toml")),
-    ("nascar_intermediate_oval_challenge", include_str!("../../../../series/nascar/nascar_intermediate_oval_challenge.toml")),
-    ("nascar_national_tour", include_str!("../../../../series/nascar/nascar_national_tour.toml")),
-    ("nascar_premier_speedway_trophy", include_str!("../../../../series/nascar/nascar_premier_speedway_trophy.toml")),
-    ("nascar_cup_tier5", include_str!("../../../../series/nascar/nascar_cup_tier5.toml")),
+    // Stock Car Championships (Tiers 1-5)
+    ("stockcar_short_track_series", include_str!("../../../../series/nascar/stockcar_short_track_series.toml")),
+    ("stockcar_intermediate_oval_challenge", include_str!("../../../../series/nascar/stockcar_intermediate_oval_challenge.toml")),
+    ("stockcar_national_tour", include_str!("../../../../series/nascar/stockcar_national_tour.toml")),
+    ("stockcar_premier_speedway_trophy", include_str!("../../../../series/nascar/stockcar_premier_speedway_trophy.toml")),
+    ("stockcar_cup_tier5", include_str!("../../../../series/nascar/stockcar_cup_tier5.toml")),
     // Rallycross Championships (Tiers 1-6 + Heritage)
     ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
     ("rally_supercar_lites_trophy", include_str!("../../../../series/rally/rally_supercar_lites_trophy.toml")),
-    ("rally_euro_rx_challenge", include_str!("../../../../series/rally/rally_euro_rx_challenge.toml")),
-    ("rally_world_rx_supercars", include_str!("../../../../series/rally/rally_world_rx_supercars.toml")),
+    ("rally_continental_rx_challenge", include_str!("../../../../series/rally/rally_continental_rx_challenge.toml")),
+    ("rally_world_rallycross_supercars", include_str!("../../../../series/rally/rally_world_rallycross_supercars.toml")),
     ("rally_rx1e_electric_championship", include_str!("../../../../series/rally/rally_rx1e_electric_championship.toml")),
-    ("rally_nitrocross_group_e", include_str!("../../../../series/rally/rally_nitrocross_group_e.toml")),
+    ("rally_apex_group_e", include_str!("../../../../series/rally/rally_apex_group_e.toml")),
     ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
     // Karting Championships (Tiers 1-6)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
@@ -135,7 +135,7 @@ impl SeriesManager {
     pub fn get(&self, id: &str) -> Option<&SeriesDefinition> {
         self.series.get(id).or_else(|| {
             if id == "rally_world_cup" {
-                self.series.get("rally_euro_rx_challenge")
+                self.series.get("rally_continental_rx_challenge")
             } else {
                 None
             }
@@ -278,7 +278,7 @@ mod tests {
     fn test_manager_loads_embedded_presets() {
         let mgr = SeriesManager::new();
         assert!(mgr.get("gt4_clubman_sprint").is_some());
-        assert!(mgr.get("nascar_cup_tier5").is_some());
+        assert!(mgr.get("stockcar_cup_tier5").is_some());
         assert!(mgr.get("rally_world_cup").is_some());
         assert!(mgr.get("kart_world_cup").is_some());
         assert!(mgr.get("extreme_offroad_cup").is_some());

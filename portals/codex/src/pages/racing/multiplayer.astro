@@ -1,0 +1,168 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRacingModel } from '../../lib/codex';
+
+const racing = await getRacingModel();
+const mp = racing.multiplayer;
+const collisionModes = mp.collision_modes;
+---
+
+<Layout
+  title="LAN Multiplayer — TDRace Codex"
+  description="High-performance LAN multiplayer for 2–8 players: 60 Hz simulation tickrate, 100 ms interpolation buffer, collision modes, and hosting guide."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Multiplayer</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">LAN Multiplayer &amp; Netcode</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      TDRace features zero-latency local area network (LAN) multiplayer engineered for two to eight concurrent racers.
+      Running at a deterministic 60 Hz simulation tick rate with a 100 ms interpolation window and automatic UDP subnet discovery,
+      competitors can battle wheel-to-wheel with full collision physics or non-contact ghosting.
+    </p>
+
+    <!-- Netcode Specs Metrics -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Player Capacity</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{mp.min_players}&ndash;{mp.max_players} Players</div>
+        <div class="text-[11px] text-racing-cyan font-mono mt-0.5">Peer-to-peer / LAN</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Simulation Tickrate</div>
+        <div class="text-2xl font-bold text-white mt-0.5">{mp.simulation_rate_hz} Hz</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Deterministic 16.6ms step</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Interp Delay Buffer</div>
+        <div class="text-2xl font-bold text-cyan-300 mt-0.5">{mp.interpolation_delay_ms} ms</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Jitter-free smoothing</div>
+      </div>
+      <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
+        <div class="text-[11px] font-mono text-racing-muted uppercase">Discovery</div>
+        <div class="text-lg font-bold text-emerald-400 mt-1">Zero-Config</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">UDP Subnet Broadcast</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collision Modes -->
+  <section class="py-8 max-w-5xl">
+    <div class="mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Multiplayer Collision Modes</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">Configurable interaction models tailored for competitive leagues or casual sprint lobbies.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {collisionModes.map((mode, idx) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border bg-racing-card text-racing-cyan border-racing-border">
+                Mode 0{idx + 1}
+              </span>
+              <span class="text-xs font-mono text-racing-muted">{mode.id}</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-white tracking-tight mt-3">{mode.name}</h3>
+            <p class="text-xs text-racing-muted mt-2 leading-relaxed min-h-[60px]">
+              {mode.description}
+            </p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-racing-border/40 text-[11px] font-mono text-slate-300">
+            {mode.id === 'full_sat_solid' && (
+              <span class="text-amber-400">&bull; Recommended for veteran leagues &amp; oval drafting</span>
+            )}
+            {mode.id === 'ghost_passing' && (
+              <span class="text-cyan-400">&bull; Recommended for time attack &amp; public LAN lobbies</span>
+            )}
+            {mode.id === 'verge_only' && (
+              <span class="text-emerald-400">&bull; Recommended for rallycross &amp; narrow kart circuits</span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Network Architecture & Interpolation -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+      <div class="flex items-center gap-2 border-b border-cyan-500/20 pb-3">
+        <span class="text-base">📡</span>
+        <h2 class="text-lg font-bold text-white tracking-tight">Netcode Architecture: 60 Hz Tickrate &amp; 100 ms History Buffer</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 text-xs leading-relaxed text-slate-300">
+        <div>
+          <h3 class="text-xs font-mono text-cyan-300 uppercase tracking-wider mb-1">
+            Client Hermite Spline Interpolation
+          </h3>
+          <p>
+            Network packets arrive over the local subnet as UDP datagrams containing timestamped vehicle transform states
+            (position, velocity vector, heading angle, steering angle, and tire slip). Rather than rendering the latest raw unbuffered packet,
+            the local client renders opponent vehicles exactly <strong class="text-white">100 ms in the past</strong>
+            (<code class="text-racing-cyan font-mono text-[11px]">cabinet::net::interp::INTERP_DELAY_SEC = 0.100</code>).
+            This guarantees a continuous, buttery-smooth Hermite spline interpolation window that completely absorbs LAN packet jitter.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-mono text-cyan-300 uppercase tracking-wider mb-1">
+            Deterministic Collision Resolution
+          </h3>
+          <p>
+            When <strong class="text-white">Solid Body (SAT)</strong> is active, vehicle collision bounding boxes are checked using 2D
+            Separating Axis Theorem against the historical trajectory. When contact occurs, momentum transfer, rotational torque,
+            and spin restitution are computed synchronously across both clients to avoid de-sync rubber-banding.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-cyan-500/20 text-[11px] font-mono text-racing-muted">
+        <span>Discovery Protocol: <strong class="text-white">{mp.discovery}</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Step-by-Step Walkthroughs -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Hosting Guide -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h2 class="text-lg font-bold text-white tracking-tight">How to Host a LAN Lobby</h2>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card text-emerald-400 border border-racing-border">
+            Host Machine
+          </span>
+        </div>
+
+        <ol class="mt-4 space-y-3 pl-4 list-decimal text-xs text-slate-300 leading-relaxed">
+          {mp.host_steps.map((step) => (
+            <li class="pl-1">
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <!-- Joining Guide -->
+      <div class="rounded-xl border border-racing-border bg-racing-surface p-5">
+        <div class="flex items-center justify-between border-b border-racing-border/60 pb-3">
+          <h2 class="text-lg font-bold text-white tracking-tight">How to Join a LAN Lobby</h2>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-racing-card text-cyan-400 border border-racing-border">
+            Client Machine
+          </span>
+        </div>
+
+        <ol class="mt-4 space-y-3 pl-4 list-decimal text-xs text-slate-300 leading-relaxed">
+          {mp.join_steps.map((step) => (
+            <li class="pl-1">
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+</Layout>

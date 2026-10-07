@@ -273,7 +273,7 @@ fn test_lobby_pump_network_keeps_client_connected_and_syncs_car() {
     let host_addr = host.local_addr().expect("local addr");
     let mut host_screen = CabinetLanHostScreen::new(host);
 
-    let client = LanClient::connect(host_addr, "Guest", "FRA", "gt_ferrari_296_gt3", "viper_green").expect("connect");
+    let client = LanClient::connect(host_addr, "Guest", "FRA", "gt_valente_corsa_t2", "viper_green").expect("connect");
     let mut lobby = CabinetLanClientLobbyScreen::new(client);
     for _ in 0..100 {
         host_screen.pump_network(0.016);
@@ -287,7 +287,7 @@ fn test_lobby_pump_network_keeps_client_connected_and_syncs_car() {
 
     // Client picks a car and becomes not ready, as when the game opens its Garage.
     lobby.set_ready(true);
-    lobby.set_local_car("gt_bmw_m4_gt4");
+    lobby.set_local_car("gt_bmr_bavaria_t1");
     lobby.set_ready(false);
 
     // Pump both sides for 6 s of game time: longer than both timeouts (3.5 s / 4.5 s).
@@ -299,7 +299,7 @@ fn test_lobby_pump_network_keeps_client_connected_and_syncs_car() {
     }
 
     let slot = host_screen.host.slots()[1].clone().expect("client slot");
-    assert_eq!(slot.car_model_id, "gt_bmw_m4_gt4");
+    assert_eq!(slot.car_model_id, "gt_bmr_bavaria_t1");
     assert_eq!(slot.color_scheme_id, "viper_green");
     assert!(!slot.is_ready);
 }
@@ -324,13 +324,13 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     assert_eq!(host_screen.track_title, "Autodromo Nazionale Monza");
     assert_eq!(host_screen.host.laps(), 10, "set_track keeps the lap rule");
 
-    host_screen.set_local_car("gt_porsche_911_gt3r");
+    host_screen.set_local_car("gt_vandorn_arrowhead_t2");
     let host_slot = host_screen.host.slots()[0].clone().expect("host slot");
-    assert_eq!(host_slot.car_model_id, "gt_porsche_911_gt3r");
+    assert_eq!(host_slot.car_model_id, "gt_vandorn_arrowhead_t2");
 
     host_screen.cycle_livery();
     let host_slot = host_screen.host.slots()[0].clone().expect("host slot");
-    assert_eq!(host_slot.car_model_id, "gt_porsche_911_gt3r", "livery change keeps the car");
+    assert_eq!(host_slot.car_model_id, "gt_vandorn_arrowhead_t2", "livery change keeps the car");
     assert_eq!(host_slot.color_scheme_id, cabinet::net::LAN_LIVERIES[host_screen.selected_livery_idx].0);
     assert!(host_screen.take_request().is_none());
 
@@ -338,7 +338,7 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     assert!(host_screen.copied_timer > 0.0);
 
     // 2. Join Screen & Keypad setup
-    let mut join_screen = CabinetLanJoinScreen::new("GuestDriver", "ESP", "gt_ferrari_296_gt3", "red");
+    let mut join_screen = CabinetLanJoinScreen::new("GuestDriver", "ESP", "gt_valente_corsa_t2", "red");
     join_screen.keypad.set_text("127.0.0.1:7777");
     join_screen.connect_via_keypad();
     assert!(join_screen.pending_client.is_some());
@@ -351,8 +351,8 @@ fn test_cabinet_lan_host_and_join_screens_lifecycle() {
     client_lobby.toggle_ready();
     assert!(client_lobby.is_ready);
 
-    client_lobby.set_local_car("gt_bmw_m4_gt4");
-    assert_eq!(client_lobby.car_model_id, "gt_bmw_m4_gt4");
+    client_lobby.set_local_car("gt_bmr_bavaria_t1");
+    assert_eq!(client_lobby.car_model_id, "gt_bmr_bavaria_t1");
 
     client_lobby.set_ready(false);
     assert!(!client_lobby.is_ready);
@@ -381,7 +381,7 @@ fn sim_host_with_clients(net: &SimNetwork, names: &[&str]) -> (LanHost, Vec<LanC
     let host_addr = host.local_addr().unwrap();
     let mut clients = Vec::new();
     for name in names {
-        let mut c = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, *name, "ESP", "gt_ferrari_296_gt3", "red").unwrap();
+        let mut c = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, *name, "ESP", "gt_valente_corsa_t2", "red").unwrap();
         for _ in 0..30 {
             net.advance(0.016);
             host.update(0.016);
@@ -459,7 +459,7 @@ fn test_d5_lost_state_sync_does_not_change_the_client_roster() {
     })));
 
     let host_addr = host.local_addr().unwrap();
-    let mut b = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, "B", "ESP", "gt_ferrari_296_gt3", "red").unwrap();
+    let mut b = LanClient::connect_with_transport(Box::new(net.endpoint()), host_addr, "B", "ESP", "gt_valente_corsa_t2", "red").unwrap();
     {
         let mut refs: Vec<&mut LanClient> = clients.iter_mut().collect();
         refs.push(&mut b);

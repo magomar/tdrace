@@ -122,8 +122,9 @@ fn test_proportional_hud_bounds_all_8_chassis() {
 
 #[test]
 fn test_ackermann_hud_steer_differential() {
-    // Right turn (+0.35 rad): front-right (inner) must turn sharper than front-left (outer)
-    let steer_right = 0.35;
+    // Right turn (-0.35 rad in wheelbase coordinates since 3d42d3b1): front-right (inner) must turn
+    // sharper than front-left (outer); both rotate clockwise (+) in the HUD.
+    let steer_right = -0.35;
     let (steer_fl_r, steer_fr_r) = compute_ackermann_steer_angles(steer_right);
     assert!(
         steer_fr_r > steer_fl_r,
@@ -134,8 +135,8 @@ fn test_ackermann_hud_steer_differential() {
     assert!((steer_fr_r - (0.35 * 1.15)).abs() < 1e-4);
     assert!((steer_fl_r - (0.35 * 0.88)).abs() < 1e-4);
 
-    // Left turn (-0.35 rad): front-left (inner) must turn sharper (more negative) than front-right (outer)
-    let steer_left = -0.35;
+    // Left turn (+0.35 rad): front-left (inner) must turn sharper (more negative) than front-right (outer)
+    let steer_left = 0.35;
     let (steer_fl_l, steer_fr_l) = compute_ackermann_steer_angles(steer_left);
     assert!(
         steer_fl_l < steer_fr_l,

@@ -10,7 +10,7 @@ fn test_extreme_offroad_module_identity_and_vehicles() {
     let offroad = ExtremeOffRoadModule::new();
     assert_eq!(offroad.id(), "extreme_offroad");
     assert!(offroad.title().contains("EXTREME OFF-ROAD"));
-    assert!(offroad.subtitle().contains("Baja"));
+    assert!(offroad.subtitle().contains("Sonora"));
 
     let vehicles = offroad.vehicles();
     assert_eq!(vehicles.len(), 1, "Expected 1 vehicle configuration for Sand Rail Buggy");
@@ -139,7 +139,7 @@ fn test_extreme_offroad_roster_integrity() {
     }
 
     assert!(drivers.iter().any(|d| d.name == "Wyatt Cole" && d.alias == "Dust Devil"));
-    assert!(drivers.iter().any(|d| d.name == "Jaxson Rivera" && d.alias == "Baja King"));
+    assert!(drivers.iter().any(|d| d.name == "Jaxson Rivera" && d.alias == "Sonora King"));
     assert!(drivers.iter().any(|d| d.name == "Astrid Lindholm" && d.alias == "Ice Queen"));
     assert!(drivers.iter().any(|d| d.name == "Bubba Beauregard" && d.alias == "Mud Slinger"));
     assert!(drivers.iter().any(|d| d.name == "Travis McGrath" && d.alias == "Nitro"));

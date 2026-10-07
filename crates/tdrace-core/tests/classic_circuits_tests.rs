@@ -269,7 +269,7 @@ const RALLY: [(&str, f32, usize, u32); 3] = [
 /// Given the rallycross circuits
 /// When their waypoints and geometry are measured
 /// Then they have at least 3, 4 and 6 jumps per lap
-/// And 30-60 % of the lap is Asphalt, with the rest Gravel or Dirt
+/// And 30-60 % of the lap is Asphalt, with the rest Dirt or Concrete
 /// And widths are 11-14 m
 #[test]
 fn test_rallycross_circuits_have_jumps_and_mixed_surfaces() {
@@ -318,9 +318,9 @@ fn test_rallycross_circuits_have_jumps_and_mixed_surfaces() {
     }
 }
 
-/// Scenario: Hilltop Leap has a crest on the start straight and a gravel hairpin
+/// Scenario: Hilltop Leap has a crest on the start straight and a dirt hairpin
 #[test]
-fn test_hilltop_leap_has_crest_and_gravel_hairpin() {
+fn test_hilltop_leap_has_crest_and_dirt_hairpin() {
     let t = catalog::official_track("classic", "rx_hilltop_leap");
     let total = t.spline.total_length();
     let has_crest = t.spline.samples.iter().any(|s| {
@@ -329,10 +329,48 @@ fn test_hilltop_leap_has_crest_and_gravel_hairpin() {
     });
     assert!(has_crest, "Hilltop Leap should have a crest on the start straight");
 
-    let has_gravel_turn = t.spline.waypoints.iter().any(|w| {
-        w.surface == Some(SurfaceType::PackedGravel) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
+    let has_dirt_turn = t.spline.waypoints.iter().any(|w| {
+        w.surface == Some(SurfaceType::Dirt) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
     });
-    assert!(has_gravel_turn, "Hilltop Leap should have a gravel hairpin");
+    assert!(has_dirt_turn, "Hilltop Leap should have a dirt hairpin");
+}
+
+/// Scenario: Rallycross roads are packed, never loose gravel or sand
+///
+/// Given the 3 Classic RX circuits and the 20 World RX circuits
+/// When every road waypoint and sample is read, joker detours included
+/// Then the surface is Asphalt, Concrete or Dirt (packed gravel)
+/// And loose Gravel and sand are left to runoff and traps
+#[test]
+fn test_rallycross_roads_use_packed_surfaces_only() {
+    let rx: Vec<(&str, &str)> = RALLY
+        .iter()
+        .map(|(id, ..)| ("classic", *id))
+        .chain(catalog::module_circuits("rally").map(|c| ("rally", c.id)))
+        .collect();
+    assert_eq!(rx.len(), 23, "3 Classic RX + 20 World RX circuits");
+
+    let packed = |s: SurfaceType| matches!(s, SurfaceType::Asphalt | SurfaceType::Concrete | SurfaceType::Dirt);
+    for (module, id) in rx {
+        let t = catalog::official_track(module, id);
+        let segments = t.network.as_ref().map(|n| n.segments.as_slice()).unwrap_or_default();
+        let road = t
+            .spline
+            .samples
+            .iter()
+            .chain(segments.iter().flat_map(|s| s.samples.iter()))
+            .map(|s| s.surface)
+            .chain(
+                t.spline
+                    .waypoints
+                    .iter()
+                    .chain(segments.iter().flat_map(|s| s.waypoints.iter()))
+                    .filter_map(|w| w.surface),
+            );
+        for surface in road {
+            assert!(packed(surface), "{}: road surface {:?} (expected Asphalt, Concrete or Dirt)", id, surface);
+        }
+    }
 }
 
 /// Scenario: Canyon Flyer has a gap jump with an above-track water zone and a whoops section

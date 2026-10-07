@@ -4,6 +4,7 @@
 use std::fs;
 use std::path::Path;
 use tdrace_core::track::Track;
+use wheelbase::SurfaceType;
 
 const ALL_GT_CIRCUITS: &[&str] = &[
     "monza",
@@ -165,4 +166,41 @@ fn test_all_18_gt_circuits_have_valid_baked_pit_lanes() {
             );
         }
     }
+}
+
+#[test]
+fn test_gt_monza_surface_sampling_throughput_bench() {
+    let track = load_track_from_tracks_dir("monza");
+    let lane = track.pit_lane.as_ref().expect("Monza has pit lane");
+
+    // 1. Point on track
+    let p_on_track = track.spline.samples[0].point;
+    assert_eq!(track.sample_surface(p_on_track), SurfaceType::Asphalt);
+
+    // 2. Point on pit lane
+    let p_pit = lane.spline.samples[lane.spline.samples.len() / 2].point;
+    assert_eq!(track.sample_surface(p_pit), SurfaceType::Asphalt);
+
+    // 3. Point in runoff/off-track far away from pit lane
+    let p_far_offtrack = track.spline.samples[track.spline.samples.len() / 2].point + glam::Vec2::new(50.0, 50.0);
+    assert_eq!(track.sample_surface(p_far_offtrack), track.default_surface);
+
+    // 4. Benchmark throughput: 50,000 samples must execute smoothly
+    let start = std::time::Instant::now();
+    let n = 50_000;
+    let hint = track.spline.total_length() * 0.5;
+    for i in 0..n {
+        let frac = i as f32 / n as f32;
+        let pt = p_far_offtrack + glam::Vec2::new(frac * 100.0, frac * -100.0);
+        let _ = track.sample_surface_near(pt, hint);
+    }
+    let elapsed = start.elapsed();
+    // Off-track points fall back to a full spline projection, so the cost grows with the sample count. The
+    // re-baked Monza has 2836 samples (spec 071, was 673): ~7 s debug / ~330 ms release. tdrace-76av tracks the
+    // faster off-track search; tighten these limits again with it.
+    #[cfg(debug_assertions)]
+    let max_millis = 8000;
+    #[cfg(not(debug_assertions))]
+    let max_millis = 400;
+    assert!(elapsed.as_millis() < max_millis, "50k samples took too long: {:?}", elapsed);
 }

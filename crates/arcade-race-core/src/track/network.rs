@@ -2,7 +2,9 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
-use crate::track::geometry::{BarrierType, LineSegment, WallBarrier};
+use crate::track::geometry::{
+    point_in_quad_2d, point_in_triangle_2d, BarrierType, LineSegment, WallBarrier,
+};
 use crate::track::spline::{
     catmull_rom_1d, catmull_rom_2d, SplineProjection, SplineSample, TrackSpline, TrackWaypoint,
 };
@@ -1179,20 +1181,6 @@ impl TrackNetwork {
     }
 }
 
-#[inline]
-fn point_in_triangle_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool {
-    let cross1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
-    let cross2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
-    let cross3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);
-    (cross1 >= -1e-3 && cross2 >= -1e-3 && cross3 >= -1e-3)
-        || (cross1 <= 1e-3 && cross2 <= 1e-3 && cross3 <= 1e-3)
-}
-
-#[inline]
-fn point_in_quad_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
-    point_in_triangle_2d(p, a, b, c) || point_in_triangle_2d(p, a, c, d)
-}
-
 impl Default for TrackNetwork {
     fn default() -> Self {
         Self::new()
@@ -1302,5 +1290,21 @@ mod tests {
             "C1 tangent error at branch socket is too high: {} rad",
             angle_error
         );
+    }
+
+    #[test]
+    fn test_degenerate_junction_triangle_contains_no_point() {
+        let a = Vec2::new(10.0, 5.0);
+        let far = Vec2::new(5000.0, 5000.0);
+        // Coincident corners (a Split junction whose ingress and egress sockets share a point).
+        assert!(!point_in_triangle_2d(far, a, a, a));
+        assert!(!point_in_triangle_2d(a, a, a, a));
+        // Collinear corners.
+        assert!(!point_in_triangle_2d(Vec2::new(15.0, 5.0), a, Vec2::new(20.0, 5.0), Vec2::new(30.0, 5.0)));
+        assert!(!point_in_quad_2d(far, a, a, a, a));
+        // A real triangle still works.
+        let (b, c) = (Vec2::new(20.0, 5.0), Vec2::new(10.0, 15.0));
+        assert!(point_in_triangle_2d(Vec2::new(12.0, 7.0), a, b, c));
+        assert!(!point_in_triangle_2d(far, a, b, c));
     }
 }

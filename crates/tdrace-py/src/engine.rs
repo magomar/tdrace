@@ -39,7 +39,7 @@ fn rand_uniform_f32(state: &mut u64, min_val: f32, max_val: f32) -> f32 {
 }
 
 /// High-performance headless multi-agent racing simulation engine.
-#[pyclass(name = "Engine")]
+#[pyclass(name = "Engine", unsendable)]
 pub struct PyEngine {
     track: Track,
     walls: Vec<WallBarrier>,

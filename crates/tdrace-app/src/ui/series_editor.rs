@@ -175,7 +175,7 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
     let default_model_id = available_models
         .first()
         .map(|m| m.id.to_string())
-        .unwrap_or_else(|| "gt_toyota_supra_gt4".to_string());
+        .unwrap_or_else(|| "gt_yamato_hayate_t1".to_string());
 
     let (team_prefix, module_drivers) = match module.as_str() {
         "nascar" => (
@@ -255,36 +255,51 @@ pub fn autofill_grid_for_module(def: &mut ChampionshipDefinition) {
         let ai_char = character.style.as_str();
 
         let team_name = match character.id {
-            "dale_vance" => "Richard Childress Racing",
-            "chase_gordon" => "Hendrick Motorsports",
-            "richard_pettyfield" => "Petty Enterprises",
-            "rowdy_busch" => "Joe Gibbs Racing",
-            "jimmie_johnson" => "Hendrick Motorsports",
-            "tony_stewart" => "Stewart-Haas Racing",
-            "bobby_allison" => "Alabama Gang",
-            "max_hunter" => "Red Bull GT",
-            "charles_laurent" => "Scuderia GT",
-            "lewis_vance" => "Scuderia GT",
-            "fernando_toro" => "Aston GT",
-            "george_speed" => "Mercedes-AMG GT",
-            "lando_vance" => "McLaren GT",
-            "oscar_rocket" => "McLaren GT",
-            "johan_vance" => "KMS Motorsport",
-            "mattias_storm" => "EKS RX",
-            "timmy_hansenfield" => "Hansen Motorsport",
-            "kevin_hansenfield" => "Hansen Motorsport",
-            "niclas_gron" => "GRX Taneco",
-            "anton_mark" => "GCK Motorsport",
-            "timo_scheider" => "All-Inkl Racing",
-            "marco_armani" => "Tony Kart Racing",
-            "lucas_vance" => "CRG Factory Team",
-            "alex_rossi" => "Birel ART",
-            "sofia_lind" => "Kosmic Racing",
-            "finn_korhonen" => "Sodi Kart",
-            "leo_dupont" => "Energy Corse",
-            "mateo_silva" => "Parolin Motorsport",
+            "colt_reynolds" | "dale_vance" => "Heartland Competition",
+            "clayton_reed" | "chase_gordon" => "Apex Vanguard Racing",
+            "rex_montgomery" | "richard_pettyfield" => "Highland Blue Racing",
+            "brant_harlan" | "rowdy_busch" => "Crestline Speedworks",
+            "judson_vance" | "jimmie_johnson" => "Apex Vanguard Racing",
+            "tanner_cobb" | "tony_stewart" => "Summit Ridge Motorsport",
+            "bo_mercer" | "bobby_allison" => "Dixie Heritage Motorsport",
+            "beau_chambers" | "bubba_wallace" => "Flightline Motorsport",
+            "jasper_lowe" | "joey_logano" => "Keystone Racing Team",
+            "brayden_ellis" | "bill_elliott" => "Apex Stock Car",
+            "curtis_yancey" | "cale_yarborough" => "Brushy Mountain Racing",
+            "russ_warnock" | "rusty_wallace" => "Keystone Racing South",
+            "magnus_wolff" | "max_hunter" => "Bullseye GT",
+            "cedric_laval" | "charles_laurent" => "Valente GT",
+            "lawrence_sterling" | "lewis_vance" => "Valente GT",
+            "felix_navarro" | "fernando_toro" => "Albion GT",
+            "gideon_palmer" | "george_speed" => "Silberstern GT",
+            "lucian_wells" | "lando_vance" => "Hyperion GT",
+            "owen_prescott" | "oscar_rocket" => "Hyperion GT",
+            "cristian_soler" | "carlos_sainzfield" => "Valente GT",
+            "patrice_garnier" | "pierre_gaslyfield" => "Gallia GT",
+            "eloi_constantin" | "esteban_connor" => "Gallia GT",
+            "aron_somchai" | "alexander_albonfield" => "Grove GT",
+            "niklas_herrmann" | "nico_hulkenstorm" => "Summit GT",
+            "jonas_lindqvist" | "johan_vance" => "Volkskraft Customer Rally",
+            "mikael_stenmark" | "mattias_storm" => "Vortek Factory RX",
+            "torsten_holmgren" | "timmy_hansenfield" => "Nordic Storm Motorsport",
+            "kasper_holmgren" | "kevin_hansenfield" => "Nordic Storm Motorsport",
+            "niko_salminen" | "niclas_gron" => "Taiga RX Performance",
+            "axel_markus" | "anton_mark" => "Alpine Green RX",
+            "tobias_schmidt" | "timo_scheider" => "Saxon Speedworks",
+            "stephane_lambert" | "sebastien_loebfield" => "Nordic Storm Motorsport",
+            "per_sundberg" | "petter_solbergfield" => "Volkskraft Scandinavian Rally",
+            "kyle_blaze" | "ken_blaster" => "Outlaw Gymkhana Squad",
+            "anders_brekke" | "andreas_bakkerud" => "Fjord Blue RX Team",
+            "roberts_kalnins" | "reinis_nitissfield" => "Saxon Speedworks",
+            "marco_armani" => "Verde Factory Karting",
+            "lucas_vance" => "Blackline Factory Team",
+            "alex_rossi" => "Rosso Factory Karting",
+            "sofia_lind" => "Starlight Kart Team",
+            "finn_korhonen" => "Gallic Kart Racing",
+            "leo_dupont" => "Veloce Karting",
+            "mateo_silva" => "Veneto Kart Racing",
             "wyatt_cole" => "Mojave Sandworks",
-            "jaxson_rivera" => "Baja Trophy Racing",
+            "jaxson_rivera" => "Sonora Trophy Racing",
             "astrid_lindholm" => "Nordic Glacier Works",
             "bubba_beauregard" => "Bayou Heavy Traction",
             "travis_mcgrath" => "Redline Freestyle",
@@ -1163,8 +1178,14 @@ pub fn handle_championship_editor_input(
                         state.def.series.laps_per_round = counter.value as u32;
                     }
                     6 => { // Point system
-                        let systems = ["fia", "nascar", "arcade", "motogp"];
-                        let curr = systems.iter().position(|&s| s == state.def.scoring.system).unwrap_or(0);
+                        let systems = ["standard", "stock_car", "arcade", "motogp"];
+                        let curr = match state.def.scoring.system.as_str() {
+                            "fia" | "standard" => 0,
+                            "nascar" | "stock_car" => 1,
+                            "arcade" => 2,
+                            "motogp" => 3,
+                            _ => 0,
+                        };
                         let next = if is_key_pressed(KeyCode::Right) { (curr + 1) % systems.len() } else { (curr + systems.len() - 1) % systems.len() };
                         state.def.scoring.system = systems[next].to_string();
                     }

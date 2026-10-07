@@ -82,7 +82,7 @@ impl Default for SettingsSnapshot {
             display_mode_idx: 0,
             ui_scale_idx: 0,
             scanlines_idx: 0,
-            vehicle_shadows_idx: 0,
+            vehicle_shadows_idx: 1,
             theme_idx: 0,
             assist_idx: 0,
             speed_unit_idx: 0,
@@ -619,7 +619,7 @@ impl ArcadeSettingsModal {
             vehicle_shadows_dropdown: DropdownWidget::new(
                 "VEHICLE SHADOWS",
                 vec!["Enabled".to_string(), "Disabled".to_string()],
-                0,
+                1,
             ),
             theme_dropdown: DropdownWidget::new("COLOR THEME", theme_options, 0),
 
@@ -703,7 +703,7 @@ impl ArcadeSettingsModal {
         self.display_mode_dropdown.set_selected(0);
         self.ui_scale_dropdown.set_selected(0);
         self.scanlines_dropdown.set_selected(0);
-        self.vehicle_shadows_dropdown.set_selected(0);
+        self.vehicle_shadows_dropdown.set_selected(1);
         self.theme_dropdown.set_selected(0);
         self.assist_dropdown.set_selected(0);
         self.speed_unit_dropdown.set_selected(0);

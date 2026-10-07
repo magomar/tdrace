@@ -63,10 +63,10 @@ pub enum TrackManagerModal {
 /// Available motorsport modules for circuit promotion.
 pub const PROMOTION_MODULES: [(&str, &str, &str, macroquad::color::Color); PROMOTION_MODULE_COUNT] = [
     ("classic", "Classic Motorsport", "Standard arcade & sports car circuits", Palette::NEON_CYAN),
-    ("rally", "Rallycross Championship", "World RX & Euro RX mixed-surface circuits", Palette::NEON_GOLD),
+    ("rally", "Rallycross Championship", "World & Continental rallycross mixed-surface circuits", Palette::NEON_GOLD),
     ("kart", "Karting Cup", "Tight technical hairpins & indoor arenas", Palette::NEON_MAGENTA),
-    ("gt", "GT World Challenge", "High-speed GT3 & GT2 circuits & chicanes", Palette::RED),
-    ("nascar", "NASCAR Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
+    ("gt", "Grand Touring Challenge", "High-speed GT sprint & biturbo circuits & chicanes", Palette::RED),
+    ("nascar", "Stock Car Cup", "Ovals, superspeedways & street courses", Palette::BLUE),
     ("extreme_offroad", "Extreme Off-Road", "Desert raids, mud bogs, ice & stunt arenas", Palette::NEON_ORANGE),
     ("vault", "The Vault (Archive)", "Decommissioned circuits & cold storage", macroquad::color::Color::new(1.0, 0.65, 0.0, 1.0)),
 ];
@@ -460,12 +460,12 @@ pub fn render_track_manager_screen(
             format!("CATEGORIES: {}", module_filter.label())
         } else {
             format!("CATEGORIES: {}", active_mods.iter().map(|m| match m.as_str() {
-                "gt" | "gt_challenge" | "f1" => "GT WORLD CHALLENGE",
+                "gt" | "gt_challenge" | "f1" => "GRAND TOURING CHALLENGE",
                 "rally" => "RALLYCROSS",
                 "kart" => "KARTING",
-                "nascar" => "NASCAR",
+                "nascar" => "STOCK CAR",
                 "extreme_offroad" => "EXTREME OFF-ROAD",
-                "autocross" => "FIA AUTOCROSS",
+                "autocross" => "CONTINENTAL AUTOCROSS",
                 _ => "CLASSIC",
             }).collect::<Vec<_>>().join(" • "))
         };
@@ -855,8 +855,8 @@ fn render_delete_modal(
             "classic" => "Classic",
             "rally" => "Rallycross",
             "kart" => "Karting",
-            "gt" | "gt_challenge" | "f1" => "GT World Challenge",
-            "nascar" => "NASCAR Cup",
+            "gt" | "gt_challenge" | "f1" => "Grand Touring Challenge",
+            "nascar" => "Stock Car Cup",
             "vault" => "The Vault",
             _ => mod_id,
         };
@@ -1015,7 +1015,7 @@ fn resolve_track_module_badge(
     if is_preset {
         match mod_id {
             "gt" | "gt_challenge" | "f1" => (
-                if is_dossier { "OFFICIAL PRESET • GT WORLD CHALLENGE".to_string() } else { "OFFICIAL PRESET • GT".to_string() },
+                if is_dossier { "OFFICIAL PRESET • GRAND TOURING CHALLENGE".to_string() } else { "OFFICIAL PRESET • GT".to_string() },
                 Palette::RED,
             ),
             "rally" => (
@@ -1027,7 +1027,7 @@ fn resolve_track_module_badge(
                 Palette::NEON_MAGENTA,
             ),
             "nascar" => (
-                if is_dossier { "OFFICIAL PRESET • NASCAR CUP".to_string() } else { "OFFICIAL PRESET • NASCAR".to_string() },
+                if is_dossier { "OFFICIAL PRESET • STOCK CAR CUP".to_string() } else { "OFFICIAL PRESET • STOCK CAR".to_string() },
                 Palette::NEON_GOLD,
             ),
             "extreme_offroad" => (
@@ -1035,7 +1035,7 @@ fn resolve_track_module_badge(
                 Color::new(1.0, 0.40, 0.05, 1.0),
             ),
             "autocross" => (
-                if is_dossier { "OFFICIAL PRESET • FIA AUTOCROSS".to_string() } else { "OFFICIAL PRESET • AUTOCROSS".to_string() },
+                if is_dossier { "OFFICIAL PRESET • CONTINENTAL AUTOCROSS".to_string() } else { "OFFICIAL PRESET • AUTOCROSS".to_string() },
                 Color::new(1.0, 0.45, 0.05, 1.0),
             ),
             _ => (
@@ -1047,7 +1047,7 @@ fn resolve_track_module_badge(
         let green = Color::new(0.35, 0.90, 0.45, 1.0);
         match mod_id {
             "gt" | "gt_challenge" | "f1" => (
-                if is_dossier { "CUSTOM CIRCUIT • GT WORLD CHALLENGE".to_string() } else { "CUSTOM CIRCUIT • GT".to_string() },
+                if is_dossier { "CUSTOM CIRCUIT • GRAND TOURING CHALLENGE".to_string() } else { "CUSTOM CIRCUIT • GT".to_string() },
                 green,
             ),
             "rally" => (
@@ -1059,7 +1059,7 @@ fn resolve_track_module_badge(
                 green,
             ),
             "nascar" => (
-                if is_dossier { "CUSTOM CIRCUIT • NASCAR CUP".to_string() } else { "CUSTOM CIRCUIT • NASCAR".to_string() },
+                if is_dossier { "CUSTOM CIRCUIT • STOCK CAR CUP".to_string() } else { "CUSTOM CIRCUIT • STOCK CAR".to_string() },
                 green,
             ),
             "extreme_offroad" => (
@@ -1067,7 +1067,7 @@ fn resolve_track_module_badge(
                 green,
             ),
             "autocross" => (
-                if is_dossier { "CUSTOM CIRCUIT • FIA AUTOCROSS".to_string() } else { "CUSTOM CIRCUIT • AUTOCROSS".to_string() },
+                if is_dossier { "CUSTOM CIRCUIT • CONTINENTAL AUTOCROSS".to_string() } else { "CUSTOM CIRCUIT • AUTOCROSS".to_string() },
                 green,
             ),
             _ => (

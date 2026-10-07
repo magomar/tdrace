@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Autocross Career Mode: FIA SuperBuggy World Series (Tier 5)
+# Autocross Career Mode: World SuperBuggy Series (Tier 5)
 # ==============================================================================
 
 [championship]
 id = "autocross_superbuggy_world_series"
-name = "FIA SuperBuggy World Series"
+name = "World SuperBuggy Series"
 description = "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on the most legendary European autocross cathedrals."
 module_id = "autocross"
 tier = 5
@@ -15,7 +15,7 @@ ai_difficulty = "master"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -55,60 +55,60 @@ id = "player"
 name = "Player"
 team = "Apex SuperBuggy Racing"
 is_player = true
-car_model_id = "autocross_peters_superbuggy"
+car_model_id = "autocross_petersen_superbuggy_t5"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "bernd_stubbe"
-name = "Bernd Stubbe"
-team = "Stubbe SuperBuggy"
-car_model_id = "autocross_alfa_racing_superbuggy"
+id = "bodo_richter"
+name = "Bodo Richter"
+team = "Rhine Buggy Team"
+car_model_id = "autocross_bologna_superbuggy_t5"
 country = "DEU"
 ai_character = "fast"
 livery_idx = 1
 
 [[drivers]]
-id = "petr_nikodem"
-name = "Petr Nikodém"
+id = "pavel_urban"
+name = "Pavel Urban"
 team = "Caravan Metropol"
-car_model_id = "autocross_alfa_racing_superbuggy"
+car_model_id = "autocross_bologna_superbuggy_t5"
 country = "CZE"
 ai_character = "aggressive"
 livery_idx = 2
 
 [[drivers]]
-id = "vincent_mercier"
-name = "Vincent Mercier"
-team = "Mercier Competition"
-car_model_id = "autocross_peters_superbuggy"
+id = "valentin_moreau"
+name = "Valentin Moreau"
+team = "Rhone Cross Team"
+car_model_id = "autocross_petersen_superbuggy_t5"
 country = "FRA"
 ai_character = "fast"
 livery_idx = 3
 
 [[drivers]]
-id = "mike_bartelen"
-name = "Mike Bartelen"
-team = "Bartelen Motorsport"
-car_model_id = "autocross_fast_speed_superbuggy"
+id = "marten_bartelen"
+name = "Marten Bartelen"
+team = "Dutch Cross Dynamics"
+car_model_id = "autocross_rapid_superbuggy_t5"
 country = "NLD"
 ai_character = "balanced"
 livery_idx = 4
 
 [[drivers]]
-id = "radek_jordak"
-name = "Radek Jordák"
-team = "Jordák Motorsport"
-car_model_id = "autocross_alfa_racing_superbuggy"
+id = "radim_jordak"
+name = "Radim Jordák"
+team = "Moravia Cross Team"
+car_model_id = "autocross_bologna_superbuggy_t5"
 country = "CZE"
 ai_character = "aggressive"
 livery_idx = 5
 
 [[drivers]]
-id = "johnny_feuillade"
-name = "Johnny Feuillade"
-team = "Feuillade Racing"
-car_model_id = "autocross_alfa_racing_superbuggy"
+id = "jerome_feuillade"
+name = "Jerome Feuillade"
+team = "Picardy Cross Team"
+car_model_id = "autocross_bologna_superbuggy_t5"
 country = "FRA"
 ai_character = "balanced"
 livery_idx = 6
@@ -116,8 +116,8 @@ livery_idx = 6
 [[drivers]]
 id = "terry_callaghan"
 name = "Terry Callaghan"
-team = "Fast & Speed Holland"
-car_model_id = "autocross_fast_speed_superbuggy"
+team = "Rapid Dynamics Racing"
+car_model_id = "autocross_rapid_superbuggy_t5"
 country = "NLD"
 ai_character = "cautious"
 livery_idx = 7

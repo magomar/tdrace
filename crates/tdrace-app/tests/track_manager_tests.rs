@@ -1999,17 +1999,18 @@ fn test_all_canonical_track_files_provenance_integrity() {
 
 #[test]
 fn test_portal_circuits_catalog_provenance_integrity() {
-    let portal_json = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../portals/shared/data/circuits.json");
-    assert!(portal_json.exists(), "portals/shared/data/circuits.json must exist");
+    let portal_json = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../portals/shared/data/codex/circuits.json");
+    assert!(portal_json.exists(), "portals/shared/data/codex/circuits.json must exist");
 
     let raw = fs::read_to_string(&portal_json).expect("Read circuits.json");
-    let circuits: Vec<serde_json::Value> = serde_json::from_str(&raw).expect("Parse circuits.json");
+    let val: serde_json::Value = serde_json::from_str(&raw).expect("Parse circuits.json");
+    let circuits = val.get("items").and_then(|v| v.as_array()).expect("items array in codex circuits.json");
 
     assert_eq!(circuits.len(), 130, "Catalog must contain exactly 130 circuits");
 
     let mut osm_count = 0;
     let mut wiki_count = 0;
-    for c in &circuits {
+    for c in circuits {
         let osm = c.get("osm_url").and_then(|v| v.as_str());
         let wiki = c.get("wikipedia_url").and_then(|v| v.as_str());
         let id = c.get("id").and_then(|v| v.as_str()).unwrap_or("");

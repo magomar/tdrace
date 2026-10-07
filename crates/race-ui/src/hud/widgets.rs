@@ -7,7 +7,9 @@ use cabinet::ui::font::Fonts;
 use cabinet::ui::scaler::UiScaler;
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{
+    draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_rectangle_lines, draw_triangle,
+};
 
 use crate::render::color::{CarColorScheme, Palette};
 
@@ -159,9 +161,40 @@ pub fn render_lap_timer(
     );
 }
 
+/// Computes the 10 alternating outer/inner vertices of a 5-pointed star.
+/// Vertex 0 is aligned with `heading_angle` at distance `r_out`.
+pub fn compute_star_vertices(center: Vec2, r_out: f32, r_in: f32, heading_angle: f32) -> [Vec2; 10] {
+    let mut vertices = [Vec2::ZERO; 10];
+    let angle_step = std::f32::consts::PI / 5.0;
+    for (k, v) in vertices.iter_mut().enumerate() {
+        let r = if k % 2 == 0 { r_out } else { r_in };
+        let ang = heading_angle + k as f32 * angle_step;
+        *v = center + Vec2::new(ang.cos(), ang.sin()) * r;
+    }
+    vertices
+}
+
 /// Draws the modern mini-map radar with clean track trace and directional cones.
+/// Defaults to focusing on car index 0 as the player car.
 #[allow(clippy::too_many_arguments)]
 pub fn render_minimap<B: Body2D>(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    track: &Track,
+    cars: &[B],
+    color_schemes: &[CarColorScheme],
+) {
+    render_minimap_with_player(fonts, scaler, x, y, w, h, track, cars, color_schemes, 0);
+}
+
+/// Draws the modern mini-map radar with clean track trace, opponent circular pips,
+/// and a high-visibility oriented star with targeting ring for the specified player car.
+#[allow(clippy::too_many_arguments)]
+pub fn render_minimap_with_player<B: Body2D>(
     _fonts: &Fonts,
     scaler: &UiScaler,
     x: f32,
@@ -171,6 +204,7 @@ pub fn render_minimap<B: Body2D>(
     track: &Track,
     cars: &[B],
     color_schemes: &[CarColorScheme],
+    player_idx: usize,
 ) {
     scaler.draw_glass_card(x, y, w, h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.8);
 
@@ -221,25 +255,67 @@ pub fn render_minimap<B: Body2D>(
         draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(2.0), Color::new(0.5, 0.65, 0.85, 0.95));
     }
 
-    // Draw cars on mini-map
+    // 1. Draw opponent cars as standard circular pips first so they never occlude the player
     for (i, car) in cars.iter().enumerate() {
+        if i == player_idx {
+            continue;
+        }
         let pt = to_map_pt(car.position());
-        let is_player = i == 0;
-        let col = if is_player {
-            Palette::NEON_GOLD
-        } else {
-            color_schemes.get(i).map(|c| c.primary).unwrap_or(Palette::WHITE)
-        };
-
-        let radius = if is_player { scaler.s(5.0) } else { scaler.s(3.5) };
+        let col = color_schemes.get(i).map(|c| c.primary).unwrap_or(Palette::WHITE);
+        let radius = scaler.s(3.5);
         draw_circle(pt.x, pt.y, radius, col);
         draw_circle_lines(pt.x, pt.y, radius, 1.2, Palette::BLACK);
+    }
 
-        // Player heading pointer cone
-        if is_player {
-            let fwd = car.forward_vector();
-            let tip = pt + Vec2::new(fwd.x, -fwd.y) * scaler.s(8.0);
-            draw_line(pt.x, pt.y, tip.x, tip.y, scaler.s(2.0), Palette::WHITE);
+    // 2. Draw focused player car on top with high-visibility star, outer targeting ring, and heading needle
+    if let Some(player_car) = cars.get(player_idx) {
+        let pt = to_map_pt(player_car.position());
+        let fwd = player_car.forward_vector();
+        let dir = Vec2::new(fwd.x, -fwd.y);
+        let heading_angle = if dir.length_squared() > 1e-4 {
+            dir.y.atan2(dir.x)
+        } else {
+            -std::f32::consts::FRAC_PI_2
+        };
+
+        // Outer targeting reticle ring (double circle) with subtle radar pulse
+        let pulse = 0.85 + 0.15 * (macroquad::time::get_time() as f32 * 5.0).sin();
+        let ring_col = Color::new(Palette::NEON_GOLD.r, Palette::NEON_GOLD.g, Palette::NEON_GOLD.b, pulse);
+        let outer_r = scaler.s(8.5);
+        draw_circle_lines(pt.x, pt.y, outer_r, scaler.s(1.4), ring_col);
+
+        // Forward heading pointer needle extending from star tip through outer ring
+        let tip = pt + Vec2::new(heading_angle.cos(), heading_angle.sin()) * scaler.s(12.0);
+        draw_line(pt.x, pt.y, tip.x, tip.y, scaler.s(2.2), Palette::WHITE);
+
+        // Player 5-point star aligned with heading direction
+        let r_out = scaler.s(6.2);
+        let r_in = scaler.s(2.7);
+        let vertices = compute_star_vertices(pt, r_out, r_in, heading_angle);
+
+        // Fill star (10 triangles meeting at center)
+        let mq_pt = macroquad::math::Vec2::new(pt.x, pt.y);
+        for k in 0..10 {
+            let next_k = (k + 1) % 10;
+            draw_triangle(
+                mq_pt,
+                macroquad::math::Vec2::new(vertices[k].x, vertices[k].y),
+                macroquad::math::Vec2::new(vertices[next_k].x, vertices[next_k].y),
+                Palette::NEON_GOLD,
+            );
+        }
+
+        // High-contrast star perimeter outline
+        for k in 0..10 {
+            let next_k = (k + 1) % 10;
+            draw_line(
+                vertices[k].x,
+                vertices[k].y,
+                vertices[next_k].x,
+                vertices[next_k].y,
+                scaler.s(1.2),
+                Palette::BLACK,
+            );
         }
     }
 }
@@ -268,6 +344,40 @@ pub fn render_compound_badge(
     let text_x = x + (pill_w - text_w) * 0.5;
     let text_y = y + scaler.s(13.0);
     fonts.draw_ui_bold(code, text_x, text_y, scaler.font_s(11.0), col);
+}
+
+/// Draws a full compound indicator with a solid FIA-style badge pill and full name (Spec 089).
+/// Matches the reference design: solid colored pill with dark acronym text, followed by the compound name.
+/// e.g. "[S] Soft Slick", "[AT] All-Terrain", "[M] Medium Slick".
+pub fn render_compound_legend(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    compound: wheelbase::surface::CompoundId,
+) -> f32 {
+    let [r, g, b, a] = compound.accent_rgba();
+    let col = Color::new(r, g, b, a);
+    let code = compound.badge_code();
+    let name = compound.name();
+
+    let pill_h = scaler.s(16.0);
+    let code_w = code.len() as f32 * scaler.s(6.5);
+    let pill_w = (code_w + scaler.s(10.0)).max(scaler.s(20.0));
+
+    // Solid filled pill with dark text matching visual spec
+    draw_rectangle(x, y, pill_w, pill_h, col);
+    draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.0), Color::new(0.0, 0.0, 0.0, 0.35));
+    let text_x = x + (pill_w - code_w) * 0.5;
+    fonts.draw_ui_bold(code, text_x, y + scaler.s(11.5), scaler.font_s(10.0), Color::new(0.08, 0.08, 0.12, 1.0));
+
+    // Full compound name in crisp white
+    let gap = scaler.s(8.0);
+    let text_name_x = x + pill_w + gap;
+    fonts.draw_ui_bold(name, text_name_x, y + scaler.s(12.0), scaler.font_s(11.0), Palette::WHITE);
+
+    let name_w = name.len() as f32 * scaler.s(7.0);
+    pill_w + gap + name_w
 }
 
 /// Joker rule state of one driver, shown as a pill under the position and lap card (spec 082).
@@ -391,3 +501,47 @@ pub fn render_cockpit_tire_monitor(
 ) {
     render_cockpit_chassis_telemetry(fonts, scaler, x, y, car, CockpitTelemetryMode::KinematicDamage);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute_star_vertices_orientation_and_radii() {
+        let center = Vec2::new(100.0, 100.0);
+        let r_out = 10.0;
+        let r_in = 4.0;
+        let heading = 0.0; // pointing along +X
+
+        let verts = compute_star_vertices(center, r_out, r_in, heading);
+        assert_eq!(verts.len(), 10);
+
+        // Leading tip (k = 0) is along +X at distance r_out
+        let tip = verts[0];
+        assert!((tip.x - 110.0).abs() < 1e-4);
+        assert!((tip.y - 100.0).abs() < 1e-4);
+
+        // Verify alternating radii for all 10 vertices
+        for (k, v) in verts.iter().enumerate() {
+            let dist = (*v - center).length();
+            let expected = if k % 2 == 0 { r_out } else { r_in };
+            assert!(
+                (dist - expected).abs() < 1e-4,
+                "Vertex {k} radius mismatch: got {dist}, expected {expected}"
+            );
+        }
+
+        // Test with heading straight up (-PI/2)
+        let heading_up = -std::f32::consts::FRAC_PI_2;
+        let verts_up = compute_star_vertices(center, r_out, r_in, heading_up);
+        assert!((verts_up[0].x - 100.0).abs() < 1e-4);
+        assert!((verts_up[0].y - 90.0).abs() < 1e-4);
+
+        // Test lateral symmetry (vertex 2 and vertex 8 should be symmetric across heading axis)
+        let v_right = verts[2] - center;
+        let v_left = verts[8] - center;
+        assert!((v_right.x - v_left.x).abs() < 1e-4);
+        assert!((v_right.y + v_left.y).abs() < 1e-4);
+    }
+}
+

@@ -50,8 +50,8 @@ fn main() {
 
     // 1. Five specific modules, each covering Levels 1 through 5
     let specific_modules = [
-        ("gt", "GT World Challenge"),
-        ("nascar", "NASCAR"),
+        ("gt", "Grand Touring Challenge"),
+        ("nascar", "Stock Car"),
         ("rally", "Rally"),
         ("extreme_offroad", "Extreme Off-Road"),
         ("kart", "Kart"),

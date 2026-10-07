@@ -494,6 +494,10 @@ const MIN_TIGHT_LOOKAHEAD_M: f32 = 3.0;
 const WALL_CLEARANCE_M: f32 = 1.2;
 /// How strongly a car closer than WALL_CLEARANCE_M to a close wall aims away from it (m per m).
 const CAR_WALL_PUSH: f32 = 3.0;
+/// How far outside its own road a bot's car must be before it follows another branch it is on (m).
+const OFF_ROUTE_MARGIN_M: f32 = 2.0;
+/// How far past the edge of a branch road a bot's car still counts as on that branch (m).
+const BRANCH_REACH_M: f32 = 8.0;
 /// A slow bot pointing farther than this from its target turns round with a three-point turn (rad).
 const TURN_START_RAD: f32 = 1.75;
 /// The turn ends, driving forward, once the nose points this close to the target (rad).
@@ -587,6 +591,23 @@ fn joker_and_main_layout_ids(network: &TrackNetwork) -> (Option<String>, String)
         network.default_layout_id.clone()
     };
     (joker, main)
+}
+
+/// The layout of the branch nearest to the car at `pos` that its own layout `own` does not contain: the car is on it
+/// or within `BRANCH_REACH_M` of its edge, and nearer to it than the `own_distance` it is from its own road.
+fn layout_of_branch_under(network: &TrackNetwork, own: &TrackLayout, pos: Vec2, own_distance: f32) -> Option<String> {
+    network
+        .segments
+        .iter()
+        .filter(|seg| !own.segment_sequence.contains(&seg.id))
+        .filter_map(|seg| {
+            let q = seg.project_point(pos);
+            (q.distance_to_spline < q.track_width * 0.5 + BRANCH_REACH_M && q.distance_to_spline < own_distance)
+                .then_some((q.distance_to_spline, seg))
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .and_then(|(_, seg)| network.layouts.iter().find(|l| l.segment_sequence.contains(&seg.id)))
+        .map(|l| l.id.clone())
 }
 
 /// Multi-car Bot Racing AI Controller.
@@ -883,6 +904,19 @@ impl BotAiDriver {
             spline.project_point(car_pos)
         };
         let curr_dist = proj.progress_distance;
+
+        // A car that is stuck off its route on another branch follows that branch until the next route choice (spec
+        // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
+        // joker's inside wall for three minutes. A bot that is still making progress steers back: on killarney_rx
+        // it drifts onto the joker every lap and gets back. Stuck means a no-progress watchdog has fired.
+        // The new route takes over on the next tick.
+        if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
+            let network = track.network.as_ref();
+            let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
+            if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos, proj.distance_to_spline)) {
+                self.active_layout_id = Some(id);
+            }
+        }
         self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
         // Detect lap progression if not explicitly updated
@@ -1040,9 +1074,9 @@ impl BotAiDriver {
         if !self.is_in_pit_lane {
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
-            // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
-            // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
-            // slower than the keyboard reference, spec 046).
+            // from the road edge, so bots scraped the inner wall and stopped. It only acts within WALL_CLEARANCE_M
+            // of a wall, so wide run-off keeps the line. Walls further than WALL_CLEARANCE_M from the road count
+            // too: on kart_pine_grove (wall 1.9 m out) a Legend cut the curb and hit the inner wall every lap.
             let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
             let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
             let (wall_on, wall_dist) = if chord_lat > 0.0 {
@@ -1050,15 +1084,15 @@ impl BotAiDriver {
             } else {
                 (mid.right_wall, mid.right_wall_distance)
             };
-            if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+            if let (true, Some(d)) = (wall_on, wall_dist) {
                 let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
                 if excess > 0.0 {
                     // Moving the target moves the middle of the line by half as much.
                     target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
                 }
             }
-            // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
-            // heading error and slid along the wall.
+            // The same for the car itself, at close walls only: a bot drifting towards a close wall at a shallow
+            // angle kept a small heading error and slid along the wall.
             let here = spline.sample_at_distance(curr_dist);
             let car_lat = (car_pos - here.point).dot(here.normal);
             let (wall_on, wall_dist) = if car_lat > 0.0 {

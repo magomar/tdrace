@@ -71,4 +71,4 @@ $$\frac{dT_{\text{tire}}}{dt} = \dot{Q}_{\text{friction}} + \dot{Q}_{\text{flex}
 
 Peak grip coefficient $D(T)$ optimized within a specific thermal window ($80^\circ\text{C} \dots 105^\circ\text{C}$) with progressive blistering/graining when overheated.
 
-To inspect car categories utilizing these drivetrains, explore the [Vehicle Roster](../vehicles/index.md).
+To inspect car categories utilizing these drivetrains, explore the [Codex Car Catalogue](http://localhost:4322/showroom/cars).

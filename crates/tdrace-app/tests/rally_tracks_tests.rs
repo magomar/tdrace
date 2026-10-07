@@ -757,16 +757,9 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
             panic!("{}: missing joker layout in track network", id);
         });
 
-        // Delta between 30 m and 70 m
-        let delta = joker_layout.total_lap_length - main_layout.total_lap_length;
-        assert!(
-            delta >= 30.0 && delta <= 70.0,
-            "{}: joker delta {:.1} m must be between 30 m and 70 m (main: {:.1} m, joker: {:.1} m)",
-            id,
-            delta,
-            main_layout.total_lap_length,
-            joker_layout.total_lap_length
-        );
+        // A mapped (OSM) joker keeps its real length, which can be shorter than the main branch it bypasses
+        // (dreux_rx: -45 m); test_rx_joker_costs_lap_time checks what it costs instead.
+        assert!(joker_layout.total_lap_length > 0.0 && main_layout.total_lap_length > 0.0, "{}: empty layout", id);
 
         // Verify composite splines can be synthesized for both layouts
         let main_spline = network.build_composite_spline_for_layout("main");
@@ -856,19 +849,46 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
     }
 }
 
+/// Lap time in seconds of a car limited only by top speed, corner grip, acceleration and braking. It ignores the
+/// surface, so it measures what the shape of a route costs.
+fn speed_limited_lap_time(spline: &tdrace_core::track::spline::TrackSpline) -> f32 {
+    const TOP_SPEED: f32 = 40.0; // m/s
+    const CORNER_GRIP: f32 = 10.0; // m/s^2 lateral
+    const ACCELERATION: f32 = 8.0; // m/s^2
+    const BRAKING: f32 = 10.0; // m/s^2
+    const CURVATURE_SPAN_M: f32 = 4.0;
+    let s = &spline.samples;
+    let n = s.len();
+    let ds = |i: usize| if i + 1 < n { s[i + 1].distance - s[i].distance } else { spline.total_length - s[i].distance };
+    let span = ((CURVATURE_SPAN_M * n as f32 / spline.total_length).round() as usize).max(1);
+    let mut v: Vec<f32> = (0..n)
+        .map(|i| {
+            let (a, b) = (&s[(i + n - span) % n], &s[(i + span) % n]);
+            let turn = a.tangent.perp_dot(b.tangent).atan2(a.tangent.dot(b.tangent)).abs();
+            let curvature = turn / (2.0 * span as f32 * spline.total_length / n as f32);
+            (CORNER_GRIP / curvature.max(1e-6)).sqrt().min(TOP_SPEED)
+        })
+        .collect();
+    // Two laps of each pass, so the start line carries the speed of the lap before it.
+    for k in 0..2 * n {
+        let (i, j) = (k % n, (k + 1) % n);
+        v[j] = v[j].min((v[i] * v[i] + 2.0 * ACCELERATION * ds(i)).sqrt());
+    }
+    for k in (0..2 * n).rev() {
+        let (i, j) = (k % n, (k + 1) % n);
+        v[i] = v[i].min((v[j] * v[j] + 2.0 * BRAKING * ds(i)).sqrt());
+    }
+    (0..n).map(|i| ds(i) / ((v[i] + v[(i + 1) % n]) * 0.5)).sum()
+}
+
 #[test]
 fn test_holjes_rx_joker_lap_time_delta_simulation() {
     let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
     let network = track.network.as_ref().expect("holjes_rx must have network");
 
-    let seg1 = network.get_segment(tdrace_core::track::network::SegmentId(1)).unwrap();
-    let seg2 = network.get_segment(tdrace_core::track::network::SegmentId(2)).unwrap();
-
-    // Racing cruise speed (e.g. 15.0 m/s = ~54 km/h typical cornering speed in technical rallycross sections)
-    // Extra distance of 42.0m at 15.0m/s results in ~2.8s delta
-    let cruise_speed = 15.0f32;
-    let time_main = seg1.length / cruise_speed;
-    let time_joker = seg2.length / cruise_speed;
+    // The OSM joker is only 28 m longer, but its tight turns cost the rest.
+    let time_main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").unwrap());
+    let time_joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").unwrap());
     let time_delta = time_joker - time_main;
 
     assert!(
@@ -907,6 +927,25 @@ const RX_JOKER_TRACKS: [(&str, &str); 23] = [
     ("rally", "silverstone_rx"),
     ("rally", "erx_motor_park"),
 ];
+
+#[test]
+fn test_rx_joker_costs_lap_time() {
+    // Every joker must cost time, mapped or synthetic, but not more than a slow corner. The model sees only the
+    // shape. On 2026-10-05 the costs were 1.3-7.0 s; the mapped jokers cost 1.7-7.0 s, also the three that are
+    // shorter than the main branch they bypass (loheac_rx, estering_rx, dreux_rx). The most is mettet_rx, whose
+    // mapped joker is a tight asphalt loop (the official one is "slow").
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().expect("network");
+        let main = speed_limited_lap_time(&network.build_composite_spline_for_layout("main").expect("main spline"));
+        let joker = speed_limited_lap_time(&network.build_composite_spline_for_layout("joker").expect("joker spline"));
+        if !(1.0..=7.5).contains(&(joker - main)) {
+            failures.push(format!("{}: joker lap {:.2} s vs main {:.2} s ({:+.2} s)", id, joker, main, joker - main));
+        }
+    }
+    assert!(failures.is_empty(), "joker lap cost outside 1.0-7.5 s:\n{}", failures.join("\n"));
+}
 
 #[test]
 fn test_rx_layout_checkpoints_lie_on_their_route_in_driving_order() {
@@ -1092,11 +1131,12 @@ fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
         let roads = network.segments.iter().map(|s| s.to_spline()).chain(std::iter::once(track.spline.clone())).collect::<Vec<_>>();
 
         // On each side, wherever no other road (with its 3.5 m barrier gap) lies beside the joker, a wall
-        // stands within 5 m of the joker's edge.
+        // stands within 6 m of the joker's edge. Joker walls keep the gap of the main walls around them, which is
+        // 5.4 m on riga_rx.
         for (side, sign) in [("left", 1.0f32), ("right", -1.0)] {
             let (mut open, mut walled) = (0, 0);
             for s in &seg.samples {
-                let end = s.point + s.normal * sign * (s.width * 0.5 + 5.0);
+                let end = s.point + s.normal * sign * (s.width * 0.5 + 6.0);
                 let beside_road = roads.iter().any(|r| {
                     let proj = r.project_point(end);
                     proj.distance_to_spline < proj.track_width * 0.5 + 4.0

@@ -5,7 +5,7 @@ use macroquad::color::{Color, WHITE};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use wheelbase::surface::SurfaceType;
-use arcade_race_core::track::geometry::{LineSegment, PitLane, SurfaceLayer, SurfaceShape};
+use arcade_race_core::track::geometry::{LineSegment, PitLane, PitLaneJunctionData, SurfaceLayer, SurfaceShape};
 use arcade_race_core::track::network::{JunctionKind, RoadSegment};
 use arcade_race_core::track::spline::{SplineSample, TrackSpline};
 use arcade_race_core::track::Track;
@@ -133,6 +133,7 @@ pub struct TrackRenderCache {
     pub main_boundaries: UntangledBoundaryTuple,
     pub main_suppressions: Vec<EdgeSuppression>,
     pub pit_lane_boundaries: Option<UntangledBoundaryTuple>,
+    pub pit_lane_junctions: Option<PitLaneJunctionData>,
     pub branch_segments: Vec<CachedSegmentRenderData>,
 }
 
@@ -184,6 +185,7 @@ impl TrackRenderCache {
         let pit_lane_boundaries = track.pit_lane.as_ref().map(|lane| {
             lane.spline.untangled_boundaries(1.35)
         });
+        let pit_lane_junctions = track.pit_lane_junctions.clone().or_else(|| track.compute_pit_lane_junctions());
 
         Self {
             track_ptr: track as *const Track as usize,
@@ -195,6 +197,7 @@ impl TrackRenderCache {
             main_boundaries,
             main_suppressions,
             pit_lane_boundaries,
+            pit_lane_junctions,
             branch_segments,
         }
     }
@@ -2216,12 +2219,29 @@ fn render_starting_grid(track: &Track) {
 /// Renders pit lane junctions: paved entrance wedge, gore triangle, chevrons, impact attenuator, and exit merge taper.
 pub fn render_pit_lane_junctions_pass(
     track: &Track,
-    pit_lane: &PitLane,
+    _pit_lane: &PitLane,
     view_bounds: Option<(Vec2, Vec2)>,
 ) {
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        if pit_lane.spline.samples.len() < 4 || track.spline.samples.len() < 4 {
-            return;
+        let fallback_storage;
+        let junctions = match &track.pit_lane_junctions {
+            Some(j) => j,
+            None => {
+                fallback_storage = track.compute_pit_lane_junctions();
+                match &fallback_storage {
+                    Some(j) => j,
+                    None => return,
+                }
+            }
+        };
+
+        // Quick culling if the pit lane is entirely out of view
+        if let Some((min, max)) = view_bounds {
+            if junctions.bounds_max.x < min.x || junctions.bounds_min.x > max.x
+                || junctions.bounds_max.y < min.y || junctions.bounds_min.y > max.y
+            {
+                return;
+            }
         }
 
         let is_in_view = |pos: Vec2, radius: f32| -> bool {
@@ -2232,139 +2252,38 @@ pub fn render_pit_lane_junctions_pass(
             }
         };
 
-        let n_pit = pit_lane.spline.samples.len();
-        let pit_w = pit_lane.road_width;
-        let pit_hw = pit_w * 0.5;
-
-        // 1. Analyze entrance split geometry
-        // Find where the pit lane branches from the main track
-        let mut apex_sample_idx = None;
-        let mut pit_side = -1.0f32;
-
-        for (i, s) in pit_lane.spline.samples.iter().enumerate().take(n_pit / 2) {
-            let proj = track.spline.project_point(s.point);
-            let track_hw = proj.track_width * 0.5;
-            let to_pit = s.point - proj.closest_point;
-            let side = if to_pit.dot(proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
-            pit_side = side;
-
-            let track_edge = proj.closest_point + proj.normal * (side * track_hw);
-            let pit_inner = s.point - proj.normal * (side * pit_hw);
-            let gap = (pit_inner - track_edge).dot(proj.normal * side);
-
-            if gap >= 1.2 {
-                apex_sample_idx = Some(i);
-                break;
+        // 1. Render entrance throat wedge and gore markings
+        if junctions.has_gore && is_in_view(junctions.p_apex, 35.0) {
+            for q in &junctions.entrance_quads {
+                draw_quad(q[0], q[1], q[2], q[3], Palette::ASPHALT);
             }
+
+            draw_triangle(
+                macroquad::prelude::Vec2::new(junctions.p_apex.x, junctions.p_apex.y),
+                macroquad::prelude::Vec2::new(junctions.track_edge_apex.x, junctions.track_edge_apex.y),
+                macroquad::prelude::Vec2::new(junctions.pit_inner_apex.x, junctions.pit_inner_apex.y),
+                Palette::RUNOFF_ASPHALT,
+            );
+
+            draw_line(junctions.p_apex.x, junctions.p_apex.y, junctions.te_start.x, junctions.te_start.y, 0.35, Palette::WHITE_LINE);
+            draw_line(junctions.p_apex.x, junctions.p_apex.y, junctions.pe_start.x, junctions.pe_start.y, 0.35, Palette::WHITE_LINE);
+
+            for c in &junctions.chevrons {
+                draw_line(c.apex.x, c.apex.y, c.pt_track.x, c.pt_track.y, 0.30, Palette::WHITE_LINE);
+                draw_line(c.apex.x, c.apex.y, c.pt_pit.x, c.pt_pit.y, 0.30, Palette::WHITE_LINE);
+            }
+
+            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 1.1, Palette::CURB_RED);
+            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 0.75, Palette::CURB_WHITE);
+            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 0.4, Palette::CURB_RED);
         }
 
-        // 2. Render Entrance Throat Wedge & Gore Triangle
-        if let Some(apex_idx) = apex_sample_idx {
-            let s_apex = &pit_lane.spline.samples[apex_idx];
-            let proj_apex = track.spline.project_point(s_apex.point);
-            let track_hw_apex = proj_apex.track_width * 0.5;
-            let track_edge_apex = proj_apex.closest_point + proj_apex.normal * (pit_side * track_hw_apex);
-            let pit_inner_apex = s_apex.point - proj_apex.normal * (pit_side * pit_hw);
-
-            let p_apex = (track_edge_apex + pit_inner_apex) * 0.5;
-
-            if is_in_view(p_apex, 35.0) {
-                // A. Paved entrance throat wedge between sample 0 and apex
-                for i in 0..apex_idx {
-                    let s0 = &pit_lane.spline.samples[i];
-                    let s1 = &pit_lane.spline.samples[i + 1];
-                    let p0 = track.spline.project_point(s0.point);
-                    let p1 = track.spline.project_point(s1.point);
-
-                    let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
-                    let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
-                    let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
-                    let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
-
-                    draw_quad(te0, te1, pe1, pe0, Palette::ASPHALT);
-                }
-
-                // B. Gore Triangle
-                let s_start = &pit_lane.spline.samples[0];
-                let p_start = track.spline.project_point(s_start.point);
-                let te_start = p_start.closest_point + p_start.normal * (pit_side * p_start.track_width * 0.5);
-                let pe_start = s_start.point - p_start.normal * (pit_side * pit_hw);
-
-                let v_track = (track_edge_apex - te_start).normalize_or_zero();
-                let v_pit = (pit_inner_apex - pe_start).normalize_or_zero();
-
-                // Paved asphalt gore triangle
-                draw_triangle(
-                    macroquad::prelude::Vec2::new(p_apex.x, p_apex.y),
-                    macroquad::prelude::Vec2::new(track_edge_apex.x, track_edge_apex.y),
-                    macroquad::prelude::Vec2::new(pit_inner_apex.x, pit_inner_apex.y),
-                    Palette::RUNOFF_ASPHALT,
-                );
-
-                // White perimeter border lines
-                draw_line(p_apex.x, p_apex.y, te_start.x, te_start.y, 0.35, Palette::WHITE_LINE);
-                draw_line(p_apex.x, p_apex.y, pe_start.x, pe_start.y, 0.35, Palette::WHITE_LINE);
-
-                // Directional Chevron Markings (V-stripes pointing upstream toward traffic)
-                let gore_len = (p_apex - te_start).length();
-                if gore_len > 8.0 {
-                    let num_chevrons = ((gore_len - 4.0) / 3.0).floor() as usize;
-                    let bisect = -(v_track + v_pit).normalize_or_zero();
-                    for step in 1..=num_chevrons {
-                        let d = step as f32 * 3.0;
-                        if d >= gore_len - 2.0 { break; }
-                        let t_frac = d / gore_len;
-                        let pt_t = te_start.lerp(track_edge_apex, t_frac);
-                        let pt_p = pe_start.lerp(pit_inner_apex, t_frac);
-                        let chevron_apex = (pt_t + pt_p) * 0.5 + bisect * 1.2;
-
-                        draw_line(chevron_apex.x, chevron_apex.y, pt_t.x, pt_t.y, 0.30, Palette::WHITE_LINE);
-                        draw_line(chevron_apex.x, chevron_apex.y, pt_p.x, pt_p.y, 0.30, Palette::WHITE_LINE);
-                    }
-                }
-
-                // High-visibility impact attenuator nose cap at apex
-                draw_circle(p_apex.x, p_apex.y, 1.1, Palette::CURB_RED);
-                draw_circle(p_apex.x, p_apex.y, 0.75, Palette::CURB_WHITE);
-                draw_circle(p_apex.x, p_apex.y, 0.4, Palette::CURB_RED);
-            }
-        }
-
-        // 3. Render Exit Merge Taper
-        // Find where the pit lane rejoins the main track (in the second half of samples)
-        let mut merge_start_idx = None;
-        for i in (n_pit / 2..n_pit).rev() {
-            let s = &pit_lane.spline.samples[i];
-            let proj = track.spline.project_point(s.point);
-            let track_hw = proj.track_width * 0.5;
-            let track_edge = proj.closest_point + proj.normal * (pit_side * track_hw);
-            let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
-            let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
-
-            if gap >= 1.2 {
-                merge_start_idx = Some(i);
-                break;
-            }
-        }
-
-        if let Some(merge_idx) = merge_start_idx {
-            for i in merge_idx..n_pit - 1 {
-                let s0 = &pit_lane.spline.samples[i];
-                let s1 = &pit_lane.spline.samples[i + 1];
-                let p0 = track.spline.project_point(s0.point);
-                let p1 = track.spline.project_point(s1.point);
-
-                let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
-                let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
-                let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
-                let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
-
-                if is_in_view(pe0, 20.0) {
-                    draw_quad(te0, te1, pe1, pe0, Palette::ASPHALT);
-                    // Dashed merge guidance line
-                    if i % 2 == 0 {
-                        draw_line(pe0.x, pe0.y, pe1.x, pe1.y, 0.28, Palette::WHITE_LINE);
-                    }
+        // 2. Render exit merge taper
+        for eq in &junctions.exit_quads {
+            if is_in_view(eq.quad[2], 20.0) {
+                draw_quad(eq.quad[0], eq.quad[1], eq.quad[2], eq.quad[3], Palette::ASPHALT);
+                if eq.has_dashed_line {
+                    draw_line(eq.line_start.x, eq.line_start.y, eq.line_end.x, eq.line_end.y, 0.28, Palette::WHITE_LINE);
                 }
             }
         }

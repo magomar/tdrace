@@ -15,7 +15,7 @@ ai_difficulty = "challenging"
 icon = "dirt"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -49,15 +49,15 @@ id = "player"
 name = "Player"
 team = "Apex Senior Racing"
 is_player = true
-car_model_id = "autocross_lifelive_tn11_senior"
+car_model_id = "autocross_ardennes_pro_t2"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
-id = "david_mendez"
-name = "David Méndez"
-team = "Speedcar Factory Team"
-car_model_id = "autocross_speedcar_wonder"
+id = "diego_morales"
+name = "Diego Morales"
+team = "Iberian Cross Factory Team"
+car_model_id = "autocross_iberian_relampago_t2"
 country = "ESP"
 ai_character = "fast"
 livery_idx = 1
@@ -65,8 +65,8 @@ livery_idx = 1
 [[drivers]]
 id = "ivan_pina"
 name = "Iván Piña"
-team = "Semog Racing Team"
-car_model_id = "autocross_semog_bravo_sport"
+team = "Lusitania Cross Team"
+car_model_id = "autocross_lusitania_bravo_t2"
 country = "ESP"
 ai_character = "aggressive"
 livery_idx = 2
@@ -74,8 +74,8 @@ livery_idx = 2
 [[drivers]]
 id = "kobe_pauwels"
 name = "Kobe Pauwels"
-team = "LifeLive Senior Team"
-car_model_id = "autocross_lifelive_tn11_senior"
+team = "Ardennes Cross Senior"
+car_model_id = "autocross_ardennes_pro_t2"
 country = "BEL"
 ai_character = "fast"
 livery_idx = 3
@@ -83,8 +83,8 @@ livery_idx = 3
 [[drivers]]
 id = "simone_firenze"
 name = "Simone Firenze"
-team = "Semog Italia"
-car_model_id = "autocross_semog_bravo_sport"
+team = "Lusitania Cross Team"
+car_model_id = "autocross_lusitania_bravo_t2"
 country = "IT"
 ai_character = "balanced"
 livery_idx = 4
@@ -93,16 +93,16 @@ livery_idx = 4
 id = "arunas_gibieza"
 name = "Arūnas Gibieža"
 team = "Baltic XC Works"
-car_model_id = "autocross_speedcar_wonder"
+car_model_id = "autocross_iberian_relampago_t2"
 country = "LT"
 ai_character = "aggressive"
 livery_idx = 5
 
 [[drivers]]
-id = "alexandre_calvet"
-name = "Alexandre Calvet"
+id = "antoine_calvet"
+name = "Antoine Calvet"
 team = "Calvet Cross Car"
-car_model_id = "autocross_lifelive_tn11_senior"
+car_model_id = "autocross_ardennes_pro_t2"
 country = "FR"
 ai_character = "balanced"
 livery_idx = 6
@@ -110,8 +110,8 @@ livery_idx = 6
 [[drivers]]
 id = "rui_nunes"
 name = "Rui Nunes"
-team = "Semog Portugal"
-car_model_id = "autocross_semog_bravo_sport"
+team = "Lusitania Cross Team"
+car_model_id = "autocross_lusitania_bravo_t2"
 country = "PT"
 ai_character = "cautious"
 livery_idx = 7

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import json
 import math
-import re
-import tomllib
 from pathlib import Path
 
 def generate_circuit_svg(data: dict, cat: str, output_path: Path):
@@ -223,141 +221,8 @@ def generate_assets():
         except Exception as e:
             print(f"  ⚠️ Failed parsing {json_file.name}: {e}")
 
-    print(f"  ✅ Parsed {len(circuits)} circuits with SVG miniatures.")
-    (portals_data / "circuits.json").write_text(json.dumps(circuits, indent=2), encoding="utf-8")
-
-    # 2. Ingest Vehicles from crates/tdrace-app/src/catalog/mod.rs (80 Authentic Real-World Motorsport Cars)
-    catalog_path = root / "crates" / "tdrace-app" / "src" / "catalog" / "mod.rs"
-    catalog_content = catalog_path.read_text(encoding="utf-8")
-    start_pos = catalog_content.find("pub static ALL_REAL_CARS: &[RealCarModel] = &[")
-    end_pos = catalog_content.rfind("];")
-    slice_content = catalog_content[start_pos:end_pos]
-
-    blocks = list(re.finditer(r"RealCarModel\s*\{", slice_content))
-    vehicles = []
-
-    MODULE_NAMES = {
-        "gt": "Gran Turismo & Endurance",
-        "nascar": "NASCAR Stock Car Racing",
-        "rally": "Rallycross",
-        "extreme_offroad": "Extreme Off-Road & Arenas",
-        "kart": "Karting & Micro-Racers",
-    }
-
-    BADGES = {
-        "gt": {1: "GT4", 2: "GT3", 3: "GT2", 4: "GT1", 5: "LMH"},
-        "nascar": {1: "STREET", 2: "LATE", 3: "ARCA", 4: "TRUCK", 5: "TA1"},
-        "rally": {1: "RALLY4", 2: "WRX", 3: "GRPB", 4: "RX1E", 5: "GRP E"},
-        "extreme_offroad": {1: "RAIL", 2: "TROPHY", 3: "ICE", 4: "MUD", 5: "MONSTER", 6: "T1+", 7: "SST"},
-        "kart": {1: "CADET", 2: "OK-J", 3: "KZ2", 4: "MOWER", 5: "SUPER"},
-    }
-
-    for i, b in enumerate(blocks):
-        next_pos = blocks[i + 1].start() if i + 1 < len(blocks) else len(slice_content)
-        sub = slice_content[b.start():next_pos]
-
-        car_id = re.search(r'id:\s*"([^"]+)"', sub).group(1)
-        name = re.search(r'name:\s*"([^"]+)"', sub).group(1)
-        mfr = re.search(r'manufacturer:\s*"([^"]+)"', sub).group(1)
-        year = int(re.search(r'year:\s*(\d+)', sub).group(1))
-        mod_id = re.search(r'module_id:\s*"([^"]+)"', sub).group(1)
-        cat_name = re.search(r'category_name:\s*"([^"]+)"', sub).group(1)
-        tier = int(re.search(r'tier:\s*(\d+)', sub).group(1))
-        bhp = int(re.search(r'bhp:\s*(\d+)', sub).group(1))
-        torque = int(re.search(r'torque_nm:\s*(\d+)', sub).group(1))
-        weight = int(re.search(r'weight_kg:\s*(\d+)', sub).group(1))
-        top_speed = int(re.search(r'top_speed_kmh:\s*(\d+)', sub).group(1))
-        accel = float(re.search(r'accel_0_100:\s*([\d\.]+)', sub).group(1))
-        drivetrain = re.search(r'drivetrain:\s*"([^"]+)"', sub).group(1)
-        engine = re.search(r'engine_desc:\s*"([^"]+)"', sub).group(1)
-        aero = re.search(r'aero_downforce:\s*"([^"]+)"', sub).group(1)
-        brakes = re.search(r'brakes_desc:\s*"([^"]+)"', sub).group(1)
-        bio = re.search(r'history_bio:\s*"([^"]+)"', sub).group(1)
-
-        cl_m = re.search(r'Cl\s*([\d\.]+)', aero)
-        cd_m = re.search(r'Cd\s*([\d\.]+)', aero)
-        downforce = float(cl_m.group(1)) if cl_m else 0.5
-        drag = float(cd_m.group(1)) if cd_m else 0.45
-
-        stats_m = re.search(r'stats:\s*\(([^)]+)\)', sub)
-        raw_s = [float(x.strip()) for x in stats_m.group(1).split(',')]
-        stats = {
-            "speed": int(round(raw_s[0] * 100)),
-            "acceleration": int(round(raw_s[1] * 100)),
-            "grip": int(round(raw_s[2] * 100)),
-            "agility": int(round(raw_s[3] * 100)),
-            "braking": int(round(raw_s[4] * 100)),
-            "downforce": int(round(raw_s[5] * 100)),
-        }
-
-        force_per_bhp = 38.0 if mod_id == 'kart' else (14.0 if mod_id == 'extreme_offroad' and 4 <= tier <= 5 else 17.5)
-        engine_force = int(bhp * force_per_bhp)
-        drive_bias = 1.0 if drivetrain == 'FWD' else (0.5 if drivetrain in ['AWD', '4WD'] else 0.0)
-
-        brake_rating = raw_s[4]
-        brakes_kn = round(5.0 + brake_rating * 25.0, 1)
-
-        ref_file = root / "assets" / "textures" / "vehicles" / "references" / mod_id / f"{car_id}.jpg"
-        lateral_file = root / "assets" / "textures" / "vehicles" / "laterals" / mod_id / f"{car_id}.png"
-        thumb_file = root / "assets" / "textures" / "vehicles" / "laterals" / mod_id / f"{car_id}_thumb.png"
-        topdown_file = root / "assets" / "textures" / "vehicles" / "topdown" / mod_id / f"{car_id}.png"
-
-        image_ref = f"/textures/vehicles/references/{mod_id}/{car_id}.jpg" if ref_file.exists() else None
-        image_lateral = f"/textures/vehicles/laterals/{mod_id}/{car_id}.png" if lateral_file.exists() else None
-        image_thumb = f"/textures/vehicles/laterals/{mod_id}/{car_id}_thumb.png" if thumb_file.exists() else None
-        image_topdown = f"/textures/vehicles/topdown/{mod_id}/{car_id}.png" if topdown_file.exists() else None
-
-        vehicles.append({
-            "id": car_id,
-            "name": name,
-            "manufacturer": mfr,
-            "year": year,
-            "module": MODULE_NAMES.get(mod_id, mod_id),
-            "tier": tier,
-            "category": cat_name,
-            "class_badge": BADGES.get(mod_id, {}).get(tier, f"T{tier}"),
-            "mass": weight,
-            "power_bhp": bhp,
-            "torque_nm": torque,
-            "engine_force": engine_force,
-            "top_speed_kmh": top_speed,
-            "accel_0_100": accel,
-            "drive_bias": drive_bias,
-            "drivetrain": drivetrain,
-            "engine_desc": engine,
-            "downforce": downforce,
-            "drag": drag,
-            "brakes_desc": brakes,
-            "brakes_kn": brakes_kn,
-            "stats": stats,
-            "summary": bio,
-            "image_ref": image_ref,
-            "image_lateral": image_lateral,
-            "image_thumb": image_thumb,
-            "image_topdown": image_topdown,
-        })
-
-    print(f"  ✅ Compiled {len(vehicles)} vehicles across 5 motorsport modules.")
-    (portals_data / "vehicles.json").write_text(json.dumps(vehicles, indent=2), encoding="utf-8")
-
-    # 3. Ingest Surfaces Matrix
-    surfaces = [
-        {"name": "Asphalt", "friction": 1.00, "rolling_resistance": 1.0, "surface_drag": 1.00, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Standard dry tarmac; optimal grip baseline, full tire smoke on heavy slip."},
-        {"name": "Concrete", "friction": 0.95, "rolling_resistance": 1.05, "surface_drag": 1.00, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Poured solid pavement; high grip with low rolling drag for grandstands and stadium bowls."},
-        {"name": "Curb", "friction": 0.88, "rolling_resistance": 1.3, "surface_drag": 1.05, "smoke": True, "roost": False, "splash": False, "layer": "BelowTrack", "description": "Apex kerb / rumble strip; subtle haptic vibration, high grip with mild drag."},
-        {"name": "Dirt", "friction": 0.78, "rolling_resistance": 1.2, "surface_drag": 1.10, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Compacted clay / gravel rally track; predictable sliding and drift control."},
-        {"name": "PackedGravel", "friction": 0.72, "rolling_resistance": 1.3, "surface_drag": 1.15, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Packed gravel road; drives like dirt, a bit more slippery, stone roost."},
-        {"name": "DeepGravel", "friction": 0.55, "rolling_resistance": 3.0, "surface_drag": 2.0, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Loose gravel trap bed; ploughs a fast car to a stop, but a stopped car can drive out."},
-        {"name": "Mud", "friction": 0.52, "rolling_resistance": 6.5, "surface_drag": 3.20, "smoke": False, "roost": True, "splash": False, "layer": "AboveTrack", "description": "Viscous mud bog; heavy deceleration drag, low lateral bite, brown roost plumes."},
-        {"name": "Grass", "friction": 0.45, "rolling_resistance": 18.0, "surface_drag": 2.20, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Standard off-track runoff; heavy rolling resistance penalizing corner cuts."},
-        {"name": "Snow", "friction": 0.34, "rolling_resistance": 3.0, "surface_drag": 1.60, "smoke": False, "roost": True, "splash": False, "layer": "AboveTrack", "description": "Packed/powder snow; slippery winter rallying, white roost plumes."},
-        {"name": "Sand", "friction": 0.30, "rolling_resistance": 30.0, "surface_drag": 4.50, "smoke": False, "roost": True, "splash": False, "layer": "BelowTrack", "description": "Deep gravel / sand trap; severe vehicle deceleration trap, sand rooster tails."},
-        {"name": "Water", "friction": 0.22, "rolling_resistance": 3.5, "surface_drag": 2.00, "smoke": False, "roost": False, "splash": True, "layer": "AboveTrack", "description": "Standing puddle hazard; hydroplaning risk, aqua spray plumes."},
-        {"name": "Oil", "friction": 0.12, "rolling_resistance": 0.8, "surface_drag": 0.95, "smoke": False, "roost": False, "splash": False, "layer": "AboveTrack", "description": "Oil slick hazard; extreme spin hazard, breaks rear traction instantly."},
-        {"name": "Ice", "friction": 0.08, "rolling_resistance": 0.4, "surface_drag": 0.90, "smoke": False, "roost": False, "splash": False, "layer": "AboveTrack", "description": "Frozen lake; near-zero traction, near-frictionless gliding with no braking."}
-    ]
-    (portals_data / "surfaces.json").write_text(json.dumps(surfaces, indent=2), encoding="utf-8")
-    print(f"  ✅ Compiled {len(surfaces)} surfaces physics matrix.")
+    print(f"  ✅ Generated SVG miniatures for {len(circuits)} circuits.")
 
 if __name__ == "__main__":
     generate_assets()
+

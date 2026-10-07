@@ -104,6 +104,29 @@ fn json_close(a: &serde_json::Value, b: &serde_json::Value, path: &str) -> Resul
     }
 }
 
+/// A rebuild must be a fixed point: baking the rebuilt circuit again changes nothing. Guards against bake steps
+/// that read the old geometry back into the new one (869b0b86 re-derived the wall offset from the previous walls
+/// on every bake, so each re-import moved the walls again) and against rebuilds that drop network checkpoints. The
+/// second bake reads the first one back from JSON: a first --rebuild from pre-071 files needed a second pass.
+#[test]
+fn test_rebuild_is_idempotent_on_every_osm_circuit() {
+    use tdrace_core::track::bake::{bake, BakeOptions};
+    let opts = BakeOptions { rebuild: true, ..Default::default() };
+    let mut failures = Vec::new();
+    for c in catalog::circuits().iter().filter(|c| ["gt", "kart", "nascar", "rally", "autocross"].contains(&c.module)) {
+        let mut once = c.load().unwrap();
+        bake(&mut once, &opts).unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
+        // Through JSON, as track_bake writes the file and the next bake reads it back.
+        let mut twice = Track::from_json(&once.to_json_pretty().unwrap()).unwrap();
+        bake(&mut twice, &opts).unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
+        let (a, b) = (serde_json::to_value(&twice).unwrap(), serde_json::to_value(&once).unwrap());
+        if let Err(e) = json_close(&a, &b, "") {
+            failures.push(format!("{}/{}: {}", c.module, c.id, e));
+        }
+    }
+    assert!(failures.is_empty(), "{:#?}", failures);
+}
+
 /// `track_bake --rebuild` must reproduce every OSM-built circuit from its waypoints and current setup, so a
 /// re-import cannot silently move walls, checkpoints or the grid (spec 042 §2.7).
 #[test]

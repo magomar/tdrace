@@ -61,10 +61,10 @@ impl ModuleFilter {
             Self::Classic => "CLASSIC",
             Self::Rally => "RALLYCROSS",
             Self::Kart => "KARTING",
-            Self::Gt => "GT WORLD CHALLENGE",
-            Self::Nascar => "NASCAR",
+            Self::Gt => "GRAND TOURING CHALLENGE",
+            Self::Nascar => "STOCK CAR",
             Self::ExtremeOffRoad => "EXTREME OFF-ROAD",
-            Self::Autocross => "FIA AUTOCROSS",
+            Self::Autocross => "CONTINENTAL AUTOCROSS",
             Self::Vault => "THE VAULT",
             Self::Drafts => "DRAFTS",
         }
@@ -183,26 +183,26 @@ impl CustomTrackInfo {
     pub fn module_name(&self) -> &'static str {
         if let Some(ref m) = self.module_id {
             match m.to_lowercase().as_str() {
-                "gt" | "gt_challenge" => "GT World Challenge",
+                "gt" | "gt_challenge" => "Grand Touring Challenge",
                 "rally" => "Rallycross",
                 "kart" => "Karting",
-                "nascar" => "NASCAR Cup",
+                "nascar" => "Stock Car Racing",
                 "extreme_offroad" | "offroad" => "Extreme Off-Road",
-                "autocross" | "ax" => "FIA Autocross",
+                "autocross" | "ax" => "Continental Autocross",
                 _ => "Classic",
             }
         } else if self.belongs_to_module("gt") {
-            "GT World Challenge"
+            "Grand Touring Challenge"
         } else if self.belongs_to_module("rally") {
             "Rallycross"
         } else if self.belongs_to_module("kart") {
             "Karting"
         } else if self.belongs_to_module("nascar") {
-            "NASCAR Cup"
+            "Stock Car Racing"
         } else if self.belongs_to_module("extreme_offroad") {
             "Extreme Off-Road"
         } else if self.belongs_to_module("autocross") {
-            "FIA Autocross"
+            "Continental Autocross"
         } else {
             "Classic"
         }

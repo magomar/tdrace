@@ -72,29 +72,34 @@ graph TD
 
 ---
 
-## 📐 Naming Rules
+## 📐 Naming & Asset Rules
 
-1. **Cars:** fictional maker plus fictional model. The name must not echo a real maker or model (no "Ferrati", no "911"). The body shape must not copy a distinctive real design (grille, lights, silhouette). The class feel may stay ("front-engine V8 GT").
-2. **Series and bodies:** generic words are allowed ("Stock Car", "Rallycross", "Shifter Kart", "Desert Raid", "Endurance"). No real series, sanctioning body, or event name.
-3. **Drivers:** fully fictional names. No real surnames, no parody spellings, no real nicknames ("The King", "Sliced Bread", "Rowdy", "Papaya Prodigy").
-4. **Teams and sponsors:** fully fictional. No real team, sponsor, energy drink, oil, tyre, or fuel brand.
-5. **Circuits:** a fictional venue name. A plain geographic word is allowed only where it is not the circuit's own brand. For example, "Monaco", "Le Mans", "Silverstone", "Nürburgring", "Daytona", "Indianapolis", "Talladega", and "Spa" are circuit brands, so they are not allowed. Country and region words ("Principality", "Ardennes", "Florida") are allowed.
-6. **Corner and feature names:** replace all real corner names in shipped text (Eau Rouge, Loews, Maggotts, etc.) with fictional or descriptive names ("Hotel Hairpin", "Forest Climb").
-7. **No association claims:** no shipped text or store copy says "inspired by", "based on", "official", or "the real …" about a real venue, car, or series. Track `category_label` values such as "Official GP Circuit" become neutral ("Grand Prix Circuit").
-8. **Internal IDs:** a car id, driver id, series file name, or Rust fn name must not contain a real maker, model, series, sponsor, team, or person name. Circuit ids follow decision D4.
+1. **Cars & Fictional Brands:** Fictional maker plus fictional model. Maintain an **exact 1:1 mapping from real to fictional brands** (e.g., all models from a given real manufacturer map to the same fictional marque). The name must not echo a real maker or model (no "Ferrati", no "911"). The body shape must not copy a distinctive real design (grille, lights, silhouette). The class feel may stay ("front-engine V8 GT").
+2. **Sprite Remediation & Bodywork Paint:**
+   - **Backup & Shift Tracking:** [`backups/car_sprites_backup_20260930/car_models_sprite_shift_status.csv`](../backups/car_sprites_backup_20260930/car_models_sprite_shift_status.csv) provides the baseline model info and tracks whether sprites were horizontally flipped (`shifted = true`).
+   - **Debadging & Decals:** Strip all real maker logos, badges, and real-world sponsor decals.
+   - **Mirrored Text/Digit Repair:** For sprites that were horizontally flipped to face right (`shifted = true`), correct or remove all inverted/mirrored letters and digits resulting from the flip.
+   - **Palette Simplification:** Simplify bodywork paint/livery to a **maximum of 3 colors** (this applies strictly to the painted bodywork panels; tyres, wheels, suspension, visible engine/exhaust mechanical parts, and glass/windshields are excluded).
+3. **Series and bodies:** generic words are allowed ("Stock Car", "Rallycross", "Shifter Kart", "Desert Raid", "Endurance"). No real series, sanctioning body, or event name.
+4. **Drivers:** fully fictional names. No real surnames, no parody spellings, no real nicknames ("The King", "Sliced Bread", "Rowdy", "Papaya Prodigy").
+5. **Teams and sponsors:** fully fictional. No real team, sponsor, energy drink, oil, tyre, or fuel brand.
+6. **Circuits:** a fictional venue name. A plain geographic word is allowed only where it is not the circuit's own brand. For example, "Monaco", "Le Mans", "Silverstone", "Nürburgring", "Daytona", "Indianapolis", "Talladega", and "Spa" are circuit brands, so they are not allowed. Country and region words ("Principality", "Ardennes", "Florida") are allowed.
+7. **Corner and feature names:** replace all real corner names in shipped text (Eau Rouge, Loews, Maggotts, etc.) with fictional or descriptive names ("Hotel Hairpin", "Forest Climb").
+8. **No association claims:** no shipped text or store copy says "inspired by", "based on", "official", or "the real …" about a real venue, car, or series. Track `category_label` values such as "Official GP Circuit" become neutral ("Grand Prix Circuit").
+9. **Internal IDs:** a car id, driver id, series file name, or Rust fn name must not contain a real maker, model, series, sponsor, team, or person name. Circuit ids follow decision D4.
 
 ---
 
 ## 🗄️ Database & Storage Migration Plan
 
-IDs that break rule 8 get renamed (for example `gt_ferrari_296_gt3`, `joey_logano`, `nascar_*.toml`). These IDs are persisted:
+IDs that break rule 9 get renamed (for example `gt_ferrari_296_gt3`, `joey_logano`, `nascar_*.toml`). These IDs are persisted:
 
 - SQLite (`crates/tdrace-app/src/db/mod.rs`): `profile_module_progress.unlocked_cars`, `profile_championship_awards.car_model_id`, `career_rivals` (id + display name), `race_history.car_name` and `hall_of_fame.car_name` (display names), `championship_name`.
 - User copies of series TOMLs in `<userdata>/series` (`series/manager.rs`).
 - LAN protocol `car_model_id` (`cabinet/src/net/protocol.rs`). Both peers run the same build, so no compatibility layer is needed.
 - Circuit ids (track JSON file names) are used by saves, series TOML, and the Hall of Fame. A renamed circuit id gets its old id added to `tracks/.aliases.json`, so references still resolve.
 
-**Decision D1 (proposed): no in-game migration.** The game is not released, so no player saves exist. Developers reset local data once after the rename (delete `tdrace_records.db` and `<userdata>/series`). If the human rejects D1, add a one-shot legacy-ID alias table that rewrites old IDs and display names on first load.
+**Decision D1 (Approved): no in-game migration.** The game is not released, so no player saves exist. Developers reset local data once after the rename (delete `tdrace_records.db` and `<userdata>/series`).
 
 ---
 
@@ -106,12 +111,12 @@ IDs that break rule 8 get renamed (for example `gt_ferrari_296_gt3`, `joey_logan
 - **Portals:** `portals/` is not deployed today. Its data regenerates from the renamed sources, so it becomes safe to publish later.
 - **Human legal review:** a games/IP lawyer reviews the final build and the store page before launch.
 
-### Open Decisions (for approval)
+### Approved Key Decisions
 
-- **D1 — Save migration:** none, reset dev data (recommended). Alternative: legacy-ID alias table.
-- **D2 — Class labels "GT1–GT4":** these are FIA/SRO class names, and "GT3" is also a Porsche model name. Recommended: rename player-visible labels to "GT Tier 1–4" (or fictional class names), keep the generic "GT" word, and keep internal IDs such as `gt3_*`. Alternative: keep "GT3/GT4" as generic class terms.
-- **D3 — Name approval:** the registry (task 1) is reviewed and approved by the human before any rename pass starts (recommended).
-- **D4 — Circuit ids:** ids such as `monza` or `daytona_superspeedway` are real names, but players never see them. Recommended: keep venue ids, and rename only ids that contain a sponsor, series, or event brand (e.g. `red_bull_ring`, `baja_500_desert_scrub`), adding each old id to `tracks/.aliases.json`. Alternative: rename every real circuit id, with aliases.
+- **D1 — Save migration (Approved):** None; reset dev data (`tdrace_records.db` and `<userdata>/series`).
+- **D2 — Class labels "GT1–GT4" (Approved):** Rename player-visible labels to "GT Tier 1–4" (or fictional class names), keep the generic "GT" word, and keep internal IDs such as `gt3_*`.
+- **D3 — Name approval (Approved):** The registry (`docs/legal/ip_rename_registry.toml`) is reviewed and approved by the human before any rename pass starts.
+- **D4 — Circuit ids (Approved):** Keep neutral venue IDs in file names (e.g. `monza`, `daytona_superspeedway`), and rename only IDs that contain a sponsor, series, or event brand (e.g. `red_bull_ring`, `baja_500_desert_scrub`), adding each old ID to `tracks/.aliases.json`.
 
 ---
 
@@ -147,10 +152,10 @@ IDs that break rule 8 get renamed (for example `gt_ferrari_296_gt3`, `joey_logan
   - [ ] **When** the staged `assets/` folder is listed
   - [ ] **Then** `textures/vehicles/references/` and `osm/` do not exist, and no JPG from Wikimedia Commons is present
 
-- **Scenario: Car sprites carry no real logos**
-  - [ ] **Given** every PNG in `assets/textures/vehicles/{laterals,topdown}/`
-  - [ ] **When** a human reviews a contact sheet of all sprites
-  - [ ] **Then** no sprite shows a real maker badge, sponsor decal, tyre brand, or fuel brand, and no body copies a distinctive real design
+- **Scenario: Car sprites carry no real logos, have clean liveries, and correct lettering**
+  - [ ] **Given** every PNG in `assets/textures/vehicles/{laterals,topdown}/` and the tracking in `backups/car_sprites_backup_20260930/car_models_sprite_shift_status.csv`
+  - [ ] **When** a human reviews a contact sheet and asset diffs of all sprites
+  - [ ] **Then** no sprite shows a real maker badge, sponsor decal, tyre brand, or fuel brand; no body copies a distinctive real design; bodywork livery painting has at most 3 colors (excluding tyres, suspension, motor parts, and glass); and horizontally flipped sprites have no mirrored letters or digits
 
 - **Scenario: Player sees only fictional names**
   - [ ] **Given** a fresh profile
