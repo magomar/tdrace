@@ -536,18 +536,15 @@ fn mixed_selection() -> Selection {
 
 #[test]
 fn mixed_selection_reaches_every_kind_and_edits_only_that_kind() {
-    use tdrace_app::editor::inspector::{MixedKind, MixedLayout};
+    use tdrace_app::editor::inspector::MixedKind;
     let state = with_selection(mixed_selection());
-
     let mut tools = ToolSettings::default();
-    tools.inspector.mixed_layout = MixedLayout::Stacked;
-    let a = build_inspector(&state, &tools).unwrap();
-    let ids: Vec<&str> = a.sections.iter().map(|s| s.id).collect();
-    assert!(ids.contains(&"wp.road") && ids.contains(&"zone.zone") && ids.contains(&"ramp.shape"), "{ids:?}");
-    assert_eq!(a.count, 4);
-
-    tools.inspector.mixed_layout = MixedLayout::KindChips;
     let b = build_inspector(&state, &tools).unwrap();
+    assert_eq!(b.count, 4);
+    match &b.sections[0].rows[0] {
+        Row::Chips { chips, .. } => assert_eq!(chips.iter().map(|c| c.label.as_str()).collect::<Vec<_>>(), ["Waypoints 2", "Zones 1", "Ramps 1"]),
+        _ => unreachable!(),
+    }
     assert_eq!(b.sections[0].id, "mixed.kinds");
     assert!(b.sections.iter().any(|s| s.id == "wp.road"), "first kind shown by default");
     let mut state_b = with_selection(mixed_selection());

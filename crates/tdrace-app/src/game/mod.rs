@@ -15349,7 +15349,7 @@ impl RaceSession {
         }
 
         // Drain unconsumed characters when no text modal or inline bar editing is open in the editor
-        if !self.editor_tools.is_editing_text() && !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. } | EditorModal::SetRampProperty { .. }) {
+        if !self.editor_tools.is_editing_text() && !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampProperty { .. }) {
             while get_char_pressed().is_some() {}
         }
 

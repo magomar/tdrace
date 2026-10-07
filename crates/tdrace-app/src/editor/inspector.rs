@@ -81,8 +81,7 @@ pub struct InspectorView {
     pub stepper_drag: Option<StepperDrag>,
     /// Tooltip key under the pointer and the time it was first hovered.
     pub tooltip_hover: Option<(String, f64)>,
-    pub mixed_layout: MixedLayout,
-    /// Kind shown by [`MixedLayout::KindChips`]; `None` = the first kind.
+    /// Kind shown for a mixed-kind selection; `None` = the first kind.
     pub mixed_kind: Option<MixedKind>,
 }
 
@@ -270,7 +269,7 @@ pub enum Action {
     RebuildGeometry,
     Duplicate,
     Delete,
-    /// Option B of HC-3: show this kind's controls for a mixed selection.
+    /// Show this kind's controls for a mixed-kind selection (HC-3 option B).
     ShowKind(MixedKind),
 }
 
@@ -300,15 +299,7 @@ impl MixedKind {
     }
 }
 
-/// HC-3 candidates for a selection with several entity kinds (one is removed after the decision).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum MixedLayout {
-    /// Option A: every kind's sections stacked, titled with the kind.
-    #[default]
-    Stacked,
-    /// Option B: a kind chip row picks which kind's sections are shown.
-    KindChips,
-}
+
 
 /// One user edit produced by an inspector control.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -551,7 +542,7 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
     }
 }
 
-/// Mixed-kind selection: each kind's own view, shown per [`MixedLayout`].
+/// Mixed-kind selection: a chip row per kind and the chosen kind's own view (HC-3 option B).
 fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     let sel = &state.selection;
     let parts: Vec<(MixedKind, usize, Option<InspectorModel>)> = [
@@ -568,24 +559,12 @@ fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     .map(|(kind, n, build)| (kind, n, build(state)))
     .collect();
 
-    let mut sections = Vec::new();
-    match tools.inspector.mixed_layout {
-        MixedLayout::Stacked => {
-            for (kind, n, model) in &parts {
-                for mut section in model.iter().flat_map(|m| m.sections.clone()) {
-                    section.title = format!("{} ({n}) · {}", kind.name().to_uppercase(), section.title);
-                    sections.push(section);
-                }
-            }
-        }
-        MixedLayout::KindChips => {
-            let shown = tools.inspector.mixed_kind.filter(|k| parts.iter().any(|(p, ..)| p == k)).or(parts.first().map(|(k, ..)| *k));
-            let chips = parts.iter().map(|(kind, n, _)| Chip { label: format!("{} {n}", kind.name()), edit: Edit::Do(Action::ShowKind(*kind)), active: Some(*kind) == shown }).collect();
-            sections.push(Section::new("mixed.kinds", "SHOW", vec![Row::Chips { label: "", chips }]));
-            if let Some((_, _, Some(model))) = parts.iter().find(|(k, ..)| Some(*k) == shown) {
-                sections.extend(model.sections.clone());
-            }
-        }
+    // A chip row picks the kind; the panel then shows that kind's own sections.
+    let shown = tools.inspector.mixed_kind.filter(|k| parts.iter().any(|(p, ..)| p == k)).or(parts.first().map(|(k, ..)| *k));
+    let chips = parts.iter().map(|(kind, n, _)| Chip { label: format!("{} {n}", kind.name()), edit: Edit::Do(Action::ShowKind(*kind)), active: Some(*kind) == shown }).collect();
+    let mut sections = vec![Section::new("mixed.kinds", "SHOW", vec![Row::Chips { label: "", chips }])];
+    if let Some((_, _, Some(model))) = parts.iter().find(|(k, ..)| Some(*k) == shown) {
+        sections.extend(model.sections.clone());
     }
     InspectorModel { title: "Mixed selection".to_string(), count: sel.total_count(), subtitle: None, sections, footer: FOOTER }
 }

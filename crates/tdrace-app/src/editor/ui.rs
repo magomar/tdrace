@@ -17,7 +17,7 @@ use crate::editor::inspector::{
     InspectorModel, Options, Prop, Row, StepperDrag, TOOLTIP_DELAY, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
     TITLE_H,
 };
-use crate::editor::state::{EditorState, GridSnapSetting, Selection};
+use crate::editor::state::{EditorState, GridSnapSetting};
 use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
 use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
@@ -66,9 +66,6 @@ pub enum EditorModal {
     Diagnostics,
     Help,
     UnsavedChanges,
-    SetRampAngle {
-        input_angle: String,
-    },
     SetRampProperty {
         property: RampPropertyModal,
         input_val: String,
@@ -212,7 +209,7 @@ pub fn render_editor_ui(
     let bg_mouse_clicked = mouse_clicked && !is_modal_open;
 
     // Drain accumulated characters whenever no text-input modal or inline bar editing is active
-    if !tools.is_editing_text() && !matches!(*active_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampAngle { .. } | EditorModal::SetRampProperty { .. }) {
+    if !tools.is_editing_text() && !matches!(*active_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampProperty { .. }) {
         drain_char_queue();
     }
 
@@ -611,7 +608,7 @@ pub fn render_editor_ui(
         && mouse_pos.y <= insp_y + insp_h;
     begin_inspector_frame(state, tools, over_inspector, bg_mouse_clicked, is_mouse_button_down(MouseButton::Left));
 
-    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked, active_modal);
+    render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked);
 
     // 4. BOTTOM STATUS BAR
     let bot_h = scaler.s(32.0);
@@ -759,21 +756,6 @@ pub fn render_editor_ui(
                     *active_modal = EditorModal::None;
                 }
             }
-            EditorModal::SetRampAngle { input_angle } => {
-                if render_set_ramp_angle_modal(
-                    fonts,
-                    &scaler,
-                    sw,
-                    sh,
-                    state,
-                    tools,
-                    input_angle,
-                    mouse_pos,
-                    mouse_clicked,
-                ) {
-                    *active_modal = EditorModal::None;
-                }
-            }
             EditorModal::SetRampProperty { property, input_val } => {
                 if render_set_ramp_property_modal(
                     fonts,
@@ -822,205 +804,13 @@ pub fn render_editor_ui(
     dispatched_action
 }
 
-/// Renders the property inspector for selected items or circuit settings.
-fn render_inspector(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    state: &mut EditorState,
-    tools: &mut ToolSettings,
-    mouse_pos: Vec2,
-    clicked: bool,
-    active_modal: &mut EditorModal,
-) {
-    if let Some(model) = build_inspector(state, tools) {
-        render_inspector_model(fonts, scaler, (x, y, w, h), &model, state, tools, mouse_pos, clicked);
-        return;
-    }
-
-    fonts.draw_ui_bold(
-        "INSPECTOR",
-        x + scaler.s(12.0),
-        y + scaler.s(22.0),
-        scaler.font_s(14.0),
-        Palette::NEON_GOLD,
-    );
-
-    let mut curr_y = y + scaler.s(36.0);
-
-    match state.selection {
-        Selection::Multi {
-            ref waypoints,
-            ref surface_zones,
-            ref obstacles,
-            ref jump_ramps,
-            ref checkpoints,
-            ref grid_slots,
-            pit_box,
-        } => {
-            let total = waypoints.len()
-                + surface_zones.len()
-                + obstacles.len()
-                + jump_ramps.len()
-                + checkpoints.len()
-                + grid_slots.len()
-                + if pit_box { 1 } else { 0 };
-
-            fonts.draw_ui_bold(
-                &format!("Multi-Selection ({})", total),
-                x + scaler.s(12.0),
-                curr_y + scaler.s(14.0),
-                scaler.font_s(13.0),
-                Palette::WHITE,
-            );
-            curr_y += scaler.s(24.0);
-
-            if !waypoints.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Waypoints: {}", waypoints.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if !surface_zones.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Surface Zones: {}", surface_zones.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if !obstacles.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Obstacles: {}", obstacles.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if !jump_ramps.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Jump Ramps: {}", jump_ramps.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if !checkpoints.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Checkpoints: {}", checkpoints.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if !grid_slots.is_empty() {
-                fonts.draw_ui_regular(
-                    &format!("• Grid Slots: {}", grid_slots.len()),
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            if pit_box {
-                fonts.draw_ui_regular(
-                    "• Pit Lane Area",
-                    x + scaler.s(16.0),
-                    curr_y + scaler.s(12.0),
-                    scaler.font_s(12.0),
-                    Palette::UI_TEXT_MUTED,
-                );
-                curr_y += scaler.s(18.0);
-            }
-            curr_y += scaler.s(6.0);
-
-            if !jump_ramps.is_empty() {
-                fonts.draw_ui_bold("BATCH RAMPS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), "SET EXACT ANGLE [0°–360°]", Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
-                    *active_modal = EditorModal::SetRampAngle {
-                        input_angle: "0.0".to_string(),
-                    };
-                }
-                curr_y += scaler.s(28.0);
-
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                let q_btn_w = (w - scaler.s(42.0)) / 4.0;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, q_btn_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 180.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + q_btn_w, curr_y, q_btn_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 180.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(24.0) + q_btn_w * 2.0, curr_y, q_btn_w, scaler.s(22.0), "-15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, -std::f32::consts::PI / 12.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(30.0) + q_btn_w * 3.0, curr_y, q_btn_w, scaler.s(22.0), "+15°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.rotate_selected_jump_ramp(state, std::f32::consts::PI / 12.0);
-                }
-                curr_y += scaler.s(26.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "-10% Size", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.scale_selected_jump_ramp_size(state, 0.90);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + half_btn_w, curr_y, half_btn_w, scaler.s(22.0), "+10% Size", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.scale_selected_jump_ramp_size(state, 1.10);
-                }
-                curr_y += scaler.s(28.0);
-            }
-
-            if draw_ui_btn(
-                fonts,
-                scaler,
-                x + scaler.s(12.0),
-                curr_y,
-                w - scaler.s(24.0),
-                scaler.s(28.0),
-                "DUPLICATE ALL [Ctrl+D]",
-                Palette::UI_CARD_BG,
-                Palette::NEON_CYAN,
-                mouse_pos,
-                clicked,
-            ) {
-                tools.duplicate_selected(state);
-            }
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(
-                fonts,
-                scaler,
-                x + scaler.s(12.0),
-                curr_y,
-                w - scaler.s(24.0),
-                scaler.s(28.0),
-                "DELETE ALL [Del]",
-                Palette::UI_CARD_BG,
-                Palette::RED,
-                mouse_pos,
-                clicked,
-            ) {
-                tools.delete_selected(state);
-            }
-        }
-        // Every other selection is drawn by the model-based inspector (`build_inspector`) above.
-        _ => {}
+/// Renders the property inspector for the current selection or the circuit (spec 086 model).
+#[allow(clippy::too_many_arguments)]
+fn render_inspector(fonts: &Fonts, scaler: &UiScaler, x: f32, y: f32, w: f32, h: f32, state: &mut EditorState, tools: &mut ToolSettings, mouse_pos: Vec2, clicked: bool) {
+    match build_inspector(state, tools) {
+        Some(model) => render_inspector_model(fonts, scaler, (x, y, w, h), &model, state, tools, mouse_pos, clicked),
+        // A selection that points at a removed entity: show the empty card until the selection changes.
+        None => fonts.draw_ui_bold("INSPECTOR", x + scaler.s(12.0), y + scaler.s(22.0), scaler.font_s(14.0), Palette::NEON_GOLD),
     }
 }
 
@@ -1445,32 +1235,6 @@ fn render_set_ramp_property_modal(
     }
 
     false
-}
-
-/// Backward compatible wrapper for angle modal.
-fn render_set_ramp_angle_modal(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    sw: f32,
-    sh: f32,
-    state: &mut EditorState,
-    tools: &mut ToolSettings,
-    input_angle: &mut String,
-    mouse_pos: Vec2,
-    clicked: bool,
-) -> bool {
-    render_set_ramp_property_modal(
-        fonts,
-        scaler,
-        sw,
-        sh,
-        state,
-        tools,
-        RampPropertyModal::Angle,
-        input_angle,
-        mouse_pos,
-        clicked,
-    )
 }
 
 /// Renders Save As modal overlay with name, filename, and description text inputs and overwrite options.
@@ -2820,15 +2584,6 @@ mod tests {
 
         modal = EditorModal::UnsavedChanges;
         assert_eq!(modal, EditorModal::UnsavedChanges);
-
-        modal = EditorModal::SetRampAngle {
-            input_angle: "135.5".to_string(),
-        };
-        if let EditorModal::SetRampAngle { input_angle } = &modal {
-            assert_eq!(input_angle, "135.5");
-        } else {
-            panic!("Expected SetRampAngle modal");
-        }
 
         modal = EditorModal::Warning {
             title: "FINISH LINE REQUIRED".to_string(),
