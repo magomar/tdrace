@@ -1169,6 +1169,54 @@ fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
     assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
 }
 
+/// Scenario: the main road stays walled up to the joker road (tdrace-0joa)
+///
+/// Given each RX circuit with a joker branch, rebuilt after the main walls were cut at the joker road instead of
+/// dropped
+/// When a line runs from a main road sample within 30 m of the joker split or merge to 3 m past its wall, where no
+/// road lies beside it
+/// Then the line hits a wall
+/// (a straight main wall that ran onto the joker road was dropped whole: rx_canyon_flyer had an 11 m gap beside
+/// the joker split, and a bot slid out through it behind the joker wall and stayed there for 200 s; tdrace-74s5)
+#[test]
+fn test_rx_main_road_is_walled_up_to_the_joker() {
+    use tdrace_core::track::LineSegment;
+    let mut failures = Vec::new();
+    for (module, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(module, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing network", id));
+        let roads = network.segments.iter().map(|s| s.to_spline()).collect::<Vec<_>>();
+        let joker = network.get_layout("joker").expect("joker layout");
+        let main = network.get_layout("main").expect("main layout");
+        let joker_seg = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
+        let joker_samples = &network.get_segment(*joker_seg).unwrap().samples;
+        let throats = [joker_samples[0].point, joker_samples[joker_samples.len() - 1].point];
+        for s in track.spline.samples.iter().filter(|s| throats.iter().any(|t| t.distance(s.point) < 30.0)) {
+            for sign in [1.0f32, -1.0] {
+                let (walled_side, wall_dist) = if sign > 0.0 { (s.left_wall, s.left_wall_distance) } else { (s.right_wall, s.right_wall_distance) };
+                let Some(wall_dist) = wall_dist.filter(|_| walled_side) else { continue };
+                let end = s.point + s.normal * sign * (s.width * 0.5 + wall_dist + 3.0);
+                let beside_road = roads.iter().any(|r| {
+                    let proj = r.project_point(end);
+                    proj.distance_to_spline < proj.track_width * 0.5 + 4.0
+                });
+                if beside_road {
+                    continue;
+                }
+                let ray = LineSegment::new(s.point, end);
+                // A line through the shared end of two wall pieces can miss both.
+                let hits = |w: &tdrace_core::track::geometry::WallBarrier| {
+                    w.segment.intersect_segment(&ray).is_some() || [w.segment.start, w.segment.end].iter().any(|p| ray.distance_to_point(*p) < 0.05)
+                };
+                if !track.geometry.all_walls().any(hits) {
+                    failures.push(format!("{}: no wall {:.1} m past the edge at {:?}", id, wall_dist + 3.0, s.point));
+                }
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{} failures:\n{}", failures.len(), failures.join("\n"));
+}
+
 #[test]
 fn test_rx_joker_walls_are_rebuilt_on_load_and_never_saved() {
     // Saving a track and loading it again must give the same joker walls, not a second copy of them.

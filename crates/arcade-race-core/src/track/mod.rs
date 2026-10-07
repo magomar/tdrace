@@ -902,8 +902,29 @@ impl Track {
         let keep = |w: &WallBarrier| {
             wall_clear_of_roads(&net.segments, w, 2.0, -0.2) && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
         };
-        self.geometry.inner_walls.retain(keep);
-        self.geometry.outer_walls.retain(keep);
+        // A wall that runs onto a road loses only the part on it. A merged straight wall used to go whole: on
+        // rx_canyon_flyer that left an 11 m gap beside the joker split, and a bot slid out through it behind the
+        // joker wall and stayed there (tdrace-0joa, tdrace-74s5).
+        let trim = |walls: &[WallBarrier]| {
+            let mut out = Vec::with_capacity(walls.len());
+            for w in walls {
+                if keep(w) {
+                    out.push(*w);
+                    continue;
+                }
+                let n = (w.segment.length() / WALL_TRIM_STEP_M).ceil().max(1.0) as usize;
+                let points: Vec<Vec2> = (0..=n).map(|k| w.segment.start.lerp(w.segment.end, k as f32 / n as f32)).collect();
+                let pieces = points
+                    .windows(2)
+                    .map(|p| WallBarrier { segment: LineSegment::new(p[0], p[1]), ..*w })
+                    .filter(|piece| keep(piece))
+                    .collect();
+                out.extend(merge_collinear_walls(pieces));
+            }
+            out
+        };
+        self.geometry.inner_walls = trim(&self.geometry.inner_walls);
+        self.geometry.outer_walls = trim(&self.geometry.outer_walls);
     }
 
     /// Builds `geometry.network_walls` along the network segments that are not on the default
@@ -996,6 +1017,9 @@ impl Track {
         Some(dists[dists.len() / 2])
     }
 }
+
+/// Length of the pieces a wall is cut into where it runs onto a network road (m).
+const WALL_TRIM_STEP_M: f32 = 1.0;
 
 /// Network segments that are not on the default layout (the Rallycross joker branch).
 fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {

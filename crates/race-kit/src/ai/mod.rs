@@ -504,6 +504,9 @@ const TURN_START_RAD: f32 = 1.75;
 const TURN_DONE_RAD: f32 = 0.6;
 /// Reversing ends once the nose points this close to the target: full lock forward finishes the turn (rad).
 const TURN_REVERSE_DONE_RAD: f32 = 1.0;
+/// Below this angle from the target a new leg of a turn chooses its lock again (rad). Nearer 180 degrees the
+/// shorter way round flips from tick to tick, so the turn keeps its first lock.
+const TURN_RECHOOSE_RAD: f32 = 2.8;
 /// Below this speed a bot that should be moving is stuck (m/s).
 const STUCK_SPEED: f32 = 0.4;
 /// Slowest speed at which a bot starts a turn by itself (m/s).
@@ -516,6 +519,8 @@ const TURN_RUNOFF_M: f32 = 3.0;
 const TURN_WALL_GAP_M: f32 = 0.3;
 /// Pedal during a turn: full throttle at full lock spins a rear-drive car on the spot.
 const TURN_THROTTLE: f32 = 0.6;
+/// Above this speed along its length a turning car steers by the way it rolls, not by its gear (m/s).
+const TURN_ROLLING_SPEED: f32 = 0.2;
 /// Shortest leg that the edge of the drivable ground can end (s).
 const TURN_MIN_LEG_S: f32 = 0.3;
 /// Longest single forward or reverse leg, and longest whole turn (s).
@@ -909,8 +914,15 @@ impl BotAiDriver {
         // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
         // joker's inside wall for three minutes. A bot that is still making progress steers back: on killarney_rx
         // it drifts onto the joker every lap and gets back. Stuck means a no-progress watchdog has fired.
-        // The new route takes over on the next tick.
-        if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
+        // The new route takes over on the next tick. A bot with a wall between it and its route follows the branch
+        // as well: a hell_rx bot that ran wide at the main hairpin onto the joker drove the whole joker aiming at the
+        // main road beyond its wall, and took a second joker (tdrace-le75).
+        let off_route = proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M;
+        let walled_off = || {
+            let to_route = LineSegment::new(car_pos, proj.closest_point);
+            track.geometry.all_walls().any(|w| w.segment.intersect_segment(&to_route).is_some())
+        };
+        if off_route && (self.recovery_attempts > 0 || walled_off()) {
             let network = track.network.as_ref();
             let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
             if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos, proj.distance_to_spline)) {
@@ -1204,12 +1216,23 @@ impl BotAiDriver {
                     || (turn.reversing && turn.leg_time > 0.5 && heading_error.abs() < TURN_REVERSE_DONE_RAD);
                 if leg_done {
                     turn = ThreePointTurn { reversing: !turn.reversing, leg_time: 0.0, blocked_time: 0.0, ..turn };
+                    // Once the car points clearly to one side of the target, the next leg turns the short way. In deep
+                    // mud a reverse leg turned an at_mudbath_valley bot past 180 degrees, and the next forward leg,
+                    // still on the first lock, turned it back (tdrace-le75).
+                    if heading_error.abs() < TURN_RECHOOSE_RAD {
+                        turn.steer = self.turn_steer(heading_error);
+                    }
                 }
                 self.turn = Some(turn);
                 self.human.reset_recovery_line();
+                // Steer by the way the car rolls, not by the gear: on snow a car takes 2 s to stop, and with the
+                // lock of the new leg it rolled on in the old direction and turned back what the last leg had
+                // turned (tdrace-le75: an at_frostbite_pass bot turned for 100 s and stayed backwards).
+                let rolling = car.velocity().dot(car_fwd);
+                let backwards = if rolling.abs() > TURN_ROLLING_SPEED { rolling < 0.0 } else { turn.reversing };
                 return CarControls {
                     throttle: TURN_THROTTLE,
-                    steer: if turn.reversing { -turn.steer } else { turn.steer },
+                    steer: if backwards { -turn.steer } else { turn.steer },
                     brake: 0.0,
                     handbrake: false,
                     reverse: turn.reversing,
