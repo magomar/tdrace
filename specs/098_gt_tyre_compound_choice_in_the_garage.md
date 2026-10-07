@@ -3,9 +3,10 @@ type: Feature Spec
 template: feature
 title: "GT Tyre Compound Choice in the Garage"
 description: "Lets the player choose Soft, Medium or Hard slicks for a GT module car in the garage, keeps the choice per car in the profile, and shows stock cars' fixed series compound read-only. No other car setup is tunable."
-status: draft
+status: approved
+verified: { by: "human:mario", at: "2026-10-07T11:13:08Z", hash: "9bb37fd9136b" }
 created: 2026-10-07
-generated: { by: agent/claude-code, at: 2026-10-07T12:00:00Z }
+generated: { by: agent/claude-code, at: 2026-10-07T11:04:17Z }
 depends_on:
   - "009"
   - "074"

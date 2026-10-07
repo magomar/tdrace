@@ -117,12 +117,14 @@ Table of contents providing progressive disclosure of project constitution and t
 | [095](095_multiview_sprite_wheel_anchor_extraction_archetype_clustering_and_precision_articulation.md) | Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation | Feature Spec | `implemented` | [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [091](091_global_prebaked_vehicle_steered_wheel_articulation.md), [094](094_modality_chassis_platforms_architecture_expansion_and_arcade_alignment.md) | Dual-view (top-down cenital + lateral side profile) computer vision wheel anchor calibration, unsupervised visual archetype clustering, dedicated high-fidelity tire textures, zero-fragment chassis inpainting, and Human-in-the-Loop (HITL) intermediate visual validation gates across all 122+ vehicles. |
 | [096](096_chassisconforming_dynamic_vehicle_ground_shadows.md) | Chassis-Conforming Dynamic Vehicle Ground Shadows | Feature Spec | `draft` | [075](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md), [091](091_global_prebaked_vehicle_steered_wheel_articulation.md), [095](095_multiview_sprite_wheel_anchor_extraction_archetype_clustering_and_precision_articulation.md) | Replaces generic rounded rectangular drop shadows with dynamic ground shadows taking the exact contour of the vehicle chassis, utilizing sprite alpha mask projections for texture-based vehicles and multi-polygon body silhouettes for procedural archetypes. |
 | [097](097_turnpreserving_nonlinear_circuit_rescaling_075x_scale_expansion_and_global_apex_smoothing.md) | Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing | Architecture Spec | `in_progress` | [071](071_centripetal_catmullrom_and_variable_density_track_splines.md), [080](080_curvatureaware_track_boundary_geometry_swallowtail_pinch_elimination_and_global_circuit_validation.md) | Systematically upgrades GT modality scaling from 0.5x to 0.75x, introduces curvature-selective non-linear geometric rescaling so straights absorb longitudinal compression while corner radii and arc lengths mirror authentic real-world dimensions, strictly respects official circuit lengths and authentic track widths, integrates 3D elevation rollercoaster profiles, models authentic corner banking, and applies curvature smoothing and multi-waypoint filleting to 1:1 Rallycross circuits and joker lap junctions. |
+| [098](098_gt_tyre_compound_choice_in_the_garage.md) | GT Tyre Compound Choice in the Garage | Feature Spec | `approved` | [009](009_real_world_car_models_and_garage.md), [074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md), [089](089_tactical_cockpit_hud_tire_compound_borders_and_inrace_wheel_decoupling.md) | Lets the player choose Soft, Medium or Hard slicks for a GT module car in the garage, keeps the choice per car in the profile, and shows stock cars' fixed series compound read-only. No other car setup is tunable. |
 
 ### 🗺️ Specification Dependency Graph
 
 ```mermaid
 flowchart LR
     006["006: Road Split Segments, Branching Splines & Alternative Circuit Layouts"]
+    009["009: Real-World Vehicle Rosters, Physics Balance & Interactive Garage"]
     011["011: Game Asset Catalogue & Technical Reference Portals"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
@@ -164,6 +166,7 @@ flowchart LR
     095["095: Multi-View Sprite Wheel Anchor Extraction, Archetype Clustering, and Precision Articulation"]
     096["096: Chassis-Conforming Dynamic Vehicle Ground Shadows"]
     097["097: Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing"]
+    098["098: GT Tyre Compound Choice in the Garage"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -214,4 +217,7 @@ flowchart LR
     095 --> 096
     071 --> 097
     080 --> 097
+    009 --> 098
+    074 --> 098
+    089 --> 098
 ```
