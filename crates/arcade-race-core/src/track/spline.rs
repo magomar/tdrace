@@ -2026,7 +2026,8 @@ mod tests {
                 for i in 0..spline.samples.len() - 1 {
                     let d = (spline.samples[i].distance - prev).abs();
                     let delta = if closed { d.min(total - d) } else { d };
-                    if !(delta > max_delta) {
+                    // The projection skips a segment only when `delta > max_delta`; a NaN limit skips none.
+                    if delta.partial_cmp(&max_delta) != Some(std::cmp::Ordering::Greater) {
                         assert!(window.contains(&i), "closed={} prev={} max_delta={}: segment {} missing", closed, prev, max_delta, i);
                     }
                 }
