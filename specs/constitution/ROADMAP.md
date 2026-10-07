@@ -97,6 +97,7 @@ Organize chronological active phases as actionable check-lists. Agents will scan
 
 ### Phase 7: Steam Release Readiness (Priority: High)
 - `[ ]` **[Fictional Branding and Real-World IP Removal for Steam Release](../047_fictional_branding_and_realworld_ip_removal_for_steam_release.md)**: Replaces real car, series, team, driver, sponsor, and circuit names with fictional ones, removes unlicensed photos and logo-bearing sprites, keeps real track layouts, adds OpenStreetMap attribution, and gates the build with a real-world IP denylist test.
+- `[ ]` **[DLC Architecture and Modular Base Game Content Packaging](../100_dlc_architecture_and_modular_base_game_content_packaging.md)**: Defines the initial Steam base game release (Classic + Karting + Autocross + Rallycross) and dynamic entitlement-gated expansions (Stock Cars, Extreme Off-Road, GT), decouples static module hardcoding into an extensible ModuleRegistry, introduces the EntitlementProvider abstraction for Steamworks SDK and dev/offline parity, and provides in-game DLC showcase teasers with Steam store overlay hooks.
 
 ### Phase 8: Reusable Racing Platform for New Games (Priority: High)
 Target layering and order are set in [spec 049](../049_reusable_racing_platform_layers.md). The chariot game comes first. Each item below gets its own spec when it starts.
