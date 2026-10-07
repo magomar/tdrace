@@ -156,6 +156,14 @@ async fn main() {
         }
     }
 
+    // Dev-only: `editor --editor-select <kind>` opens the inspector on a fixed selection (spec 086).
+    if let Some(kind) = args.iter().position(|a| a == "--editor-select").and_then(|i| args.get(i + 1)) {
+        if let Some(state) = session.editor_state.as_mut() {
+            let selection = tdrace_app::editor::state::dev_selection(kind, &state.track);
+            state.select(selection);
+        }
+    }
+
     let screenshot_path = args
         .iter()
         .position(|a| a == "--screenshot")
