@@ -211,15 +211,15 @@ fn test_segment_runoff_corridor_and_virtual_boundary() {
     let waypoints = vec![
         TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
             .with_curbs(false, false)
-            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_runoff_surfaces(Some(SurfaceType::PackedGravel), None)
             .with_wall_distances(Some(8.0), None),
         TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0)
             .with_curbs(false, false)
-            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_runoff_surfaces(Some(SurfaceType::PackedGravel), None)
             .with_wall_distances(Some(8.0), None),
         TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
             .with_curbs(false, false)
-            .with_runoff_surfaces(Some(SurfaceType::Gravel), None)
+            .with_runoff_surfaces(Some(SurfaceType::PackedGravel), None)
             .with_wall_distances(Some(8.0), None),
     ];
 
@@ -234,7 +234,7 @@ fn test_segment_runoff_corridor_and_virtual_boundary() {
     assert_eq!(track.sample_surface(Vec2::new(50.0, 0.0)), SurfaceType::Asphalt);
 
     // 2. Off track left in runoff corridor (y = 9.0 -> 4.0m off track, within 8.0m corridor) -> Gravel
-    assert_eq!(track.sample_surface(Vec2::new(50.0, 9.0)), SurfaceType::Gravel);
+    assert_eq!(track.sample_surface(Vec2::new(50.0, 9.0)), SurfaceType::PackedGravel);
 
     // 3. Beyond corridor (y = 15.0 -> 10.0m off track, beyond 8.0m limit) -> Grass
     assert_eq!(track.sample_surface(Vec2::new(50.0, 15.0)), SurfaceType::Grass);

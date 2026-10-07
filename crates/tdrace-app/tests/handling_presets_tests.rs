@@ -232,7 +232,7 @@ fn test_classic_drift_chassis_behavior_at_hairpin_speed() {
         let mut car = Car::new(config);
         car.set_velocity(Vec2::new(65.0 / 3.6, 0.0));
         let surface = if name == "Rally" {
-            SurfaceType::Gravel
+            SurfaceType::PackedGravel
         } else {
             SurfaceType::Asphalt
         };
@@ -380,7 +380,7 @@ fn test_catalog_random_input_fuzz_is_numerically_stable() {
 
     let surfaces = [
         SurfaceType::Asphalt,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
         SurfaceType::Grass,
         SurfaceType::SheetIce,
         SurfaceType::DeepSand,

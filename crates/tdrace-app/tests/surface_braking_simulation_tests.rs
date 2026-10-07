@@ -19,7 +19,7 @@ fn test_multi_surface_panic_stopping_distances() {
     for (id, config, v0) in test_vehicles {
         let res_asphalt = run_braking_straight_line(&config, SurfaceType::Asphalt, v0, false, DEFAULT_SIMULATION_DT);
         let res_concrete = run_braking_straight_line(&config, SurfaceType::Concrete, v0, false, DEFAULT_SIMULATION_DT);
-        let res_gravel = run_braking_straight_line(&config, SurfaceType::Gravel, v0, false, DEFAULT_SIMULATION_DT);
+        let res_gravel = run_braking_straight_line(&config, SurfaceType::PackedGravel, v0, false, DEFAULT_SIMULATION_DT);
         let res_grass = run_braking_straight_line(&config, SurfaceType::Grass, v0, false, DEFAULT_SIMULATION_DT);
         let res_ice = run_braking_straight_line(&config, SurfaceType::SheetIce, v0, false, DEFAULT_SIMULATION_DT);
 

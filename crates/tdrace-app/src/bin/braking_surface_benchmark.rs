@@ -237,7 +237,7 @@ fn main() {
         );
 
         // 6. Split-mu (Asphalt vs Gravel): must not spin out
-        if let Some(split_gravel) = r.split_mu.iter().find(|sm| sm.low_mu_surface == SurfaceType::Gravel) {
+        if let Some(split_gravel) = r.split_mu.iter().find(|sm| sm.low_mu_surface == SurfaceType::PackedGravel) {
             assert_ne!(
                 split_gravel.status,
                 SplitMuStatus::SpunOut,

@@ -46,6 +46,10 @@ impl Palette {
     pub const GRAVEL: Color = Color::new(0.52, 0.50, 0.46, 1.0);
     pub const GRAVEL_DARK: Color = Color::new(0.40, 0.38, 0.35, 1.0);
     pub const GRAVEL_EDGE: Color = Color::new(0.65, 0.63, 0.58, 0.85);
+    // Spec 099: loose trap gravel is lighter and warmer than packed road gravel.
+    pub const DEEP_GRAVEL: Color = Color::new(0.74, 0.69, 0.58, 1.0);
+    pub const DEEP_GRAVEL_DARK: Color = Color::new(0.60, 0.55, 0.45, 1.0);
+    pub const DEEP_GRAVEL_EDGE: Color = Color::new(0.84, 0.80, 0.70, 0.85);
     pub const CONCRETE: Color = Color::new(0.72, 0.74, 0.76, 1.0);
     pub const CONCRETE_DARK: Color = Color::new(0.55, 0.57, 0.60, 1.0);
 
@@ -55,6 +59,7 @@ impl Palette {
     pub const BACKDROP_SAND: Color = Color::new(0.88, 0.80, 0.58, 1.0);
     pub const BACKDROP_ASPHALT: Color = Color::new(0.26, 0.28, 0.32, 1.0);
     pub const BACKDROP_GRAVEL: Color = Color::new(0.58, 0.56, 0.52, 1.0);
+    pub const BACKDROP_DEEP_GRAVEL: Color = Color::new(0.78, 0.74, 0.64, 1.0);
     pub const BACKDROP_CONCRETE: Color = Color::new(0.68, 0.70, 0.72, 1.0);
 
     // Modern Track Markings & Curbs
