@@ -1240,7 +1240,7 @@
       "osm_url": "https://www.openstreetmap.org/way/166701854",
       "is_inspired": false,
       "default_laps": 6,
-      "length_m": 1045.6,
+      "length_m": 1045.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1519,7 +1519,7 @@
       "osm_url": "https://www.openstreetmap.org/way/685441292",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1241.8,
+      "length_m": 1241.6,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1581,7 +1581,7 @@
       "osm_url": "https://www.openstreetmap.org/way/152379106",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1350.9,
+      "length_m": 1349.1,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1674,7 +1674,7 @@
       "osm_url": "https://www.openstreetmap.org/way/192380335",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1317.9,
+      "length_m": 1317.8,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1736,7 +1736,7 @@
       "osm_url": "https://www.openstreetmap.org/way/436180509",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1206.5,
+      "length_m": 1206.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1767,7 +1767,7 @@
       "osm_url": "https://www.openstreetmap.org/way/599300791",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1194.6,
+      "length_m": 1194.5,
       "min_width_m": 11.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -1837,7 +1837,7 @@
       "osm_url": "https://www.openstreetmap.org/way/1069390967",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1004.3,
+      "length_m": 1004.1,
       "min_width_m": 11.5,
       "max_width_m": 14.0,
       "surfaces": [
@@ -1872,7 +1872,7 @@
       "osm_url": "https://www.openstreetmap.org/way/787615501",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1078.9,
+      "length_m": 1078.8,
       "min_width_m": 11.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -1907,7 +1907,7 @@
       "osm_url": "https://www.openstreetmap.org/way/267094190",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 936.9,
+      "length_m": 936.6,
       "min_width_m": 11.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2187,17 +2187,17 @@
       "osm_url": "https://www.openstreetmap.org/way/42125321",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1054.2,
+      "length_m": 1051.4,
       "min_width_m": 11.5,
       "max_width_m": 14.0,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 53.5
+          "share_pct": 53.6
         },
         {
           "surface": "Asphalt",
-          "share_pct": 46.5
+          "share_pct": 46.4
         }
       ],
       "has_jumps": true,
@@ -2327,7 +2327,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/21228308",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1243.7,
+      "length_m": 1243.6,
       "min_width_m": 11.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2362,17 +2362,17 @@
       "osm_url": "https://www.openstreetmap.org/way/234804574",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1028.3,
+      "length_m": 1023.1,
       "min_width_m": 13.0,
       "max_width_m": 14.0,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 67.5
+          "share_pct": 67.3
         },
         {
           "surface": "Dirt",
-          "share_pct": 32.5
+          "share_pct": 32.7
         }
       ],
       "has_jumps": true,
@@ -2397,7 +2397,7 @@
       "osm_url": "https://www.openstreetmap.org/way/169851260",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 957.4,
+      "length_m": 957.3,
       "min_width_m": 11.5,
       "max_width_m": 14.0,
       "surfaces": [
@@ -2467,7 +2467,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/284565",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2838.6,
+      "length_m": 2838.4,
       "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
@@ -2498,7 +2498,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/5309181",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2063.3,
+      "length_m": 2059.6,
       "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2622,7 +2622,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/6942508",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2979.6,
+      "length_m": 2977.3,
       "min_width_m": 12.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2808,7 +2808,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/2126739",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 6588.7,
+      "length_m": 6587.8,
       "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
@@ -2870,7 +2870,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/18813472",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2615.8,
+      "length_m": 2615.4,
       "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2901,7 +2901,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/421263",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2306.9,
+      "length_m": 2305.4,
       "min_width_m": 11.5,
       "max_width_m": 13.0,
       "surfaces": [
@@ -3025,7 +3025,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/5254137",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 3016.2,
+      "length_m": 3016.3,
       "min_width_m": 22.0,
       "max_width_m": 22.0,
       "surfaces": [
@@ -3339,7 +3339,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/6432758",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 3237.6,
+      "length_m": 3237.4,
       "min_width_m": 14.0,
       "max_width_m": 14.0,
       "surfaces": [
@@ -3370,7 +3370,7 @@
       "osm_url": "https://www.openstreetmap.org/relation/16546690",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 2603.6,
+      "length_m": 2602.8,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
