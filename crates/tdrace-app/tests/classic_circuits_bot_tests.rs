@@ -38,9 +38,8 @@ const STYLES: [DrivingStyle; 4] = [
     DrivingStyle::Calculating,
 ];
 
-/// Longest time a bot may go without progress. 10 s is the goal; bots that end up sideways in a kart
-/// pocket still stall for 10-14 s until their reverse recovery is fixed (tdrace-le75).
-const MAX_NO_PROGRESS_S: f32 = 35.0;
+/// Longest time a bot may go without progress (tdrace-le75).
+const MAX_NO_PROGRESS_S: f32 = 10.0;
 
 /// Scenario: Every new circuit is valid and raceable
 ///
