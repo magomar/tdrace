@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
@@ -237,6 +239,66 @@ pub struct TrackSpline {
     pub sample_segments: Vec<(usize, f32)>,
     #[serde(default, skip_serializing)]
     pub waypoint_sample_indices: Vec<usize>,
+    #[serde(skip)]
+    pub(crate) projection_index: ProjectionIndex,
+}
+
+/// Bounding boxes over runs of consecutive spline segments, so `project_point` can skip runs that cannot hold the
+/// nearest segment. Built on first use and never serialized; a clone starts empty and builds its own. `samples` is a
+/// public field, so the boxes keep a fingerprint of the samples they were built from, and `project_point` scans
+/// every segment when it no longer matches.
+#[derive(Debug, Default)]
+pub struct ProjectionIndex(OnceLock<SegmentBlocks>);
+
+impl Clone for ProjectionIndex {
+    fn clone(&self) -> Self {
+        Self::default()
+    }
+}
+
+impl PartialEq for ProjectionIndex {
+    /// A cache: it never makes two splines differ.
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+#[derive(Debug)]
+struct SegmentBlocks {
+    n_segs: usize,
+    probes: [Vec2; 3],
+    /// `(min, max)` of the points of segments `k * SEGMENTS_PER_BLOCK ..` (one more point than segments).
+    bounds: Vec<(Vec2, Vec2)>,
+}
+
+impl SegmentBlocks {
+    const SEGMENTS_PER_BLOCK: usize = 16;
+    /// Below this many segments a plain scan is as fast.
+    const MIN_SEGMENTS: usize = 64;
+
+    fn build(samples: &[SplineSample]) -> Self {
+        let n_segs = samples.len() - 1;
+        let bounds = (0..n_segs)
+            .step_by(Self::SEGMENTS_PER_BLOCK)
+            .map(|start| {
+                let end = (start + Self::SEGMENTS_PER_BLOCK).min(n_segs);
+                samples[start..=end]
+                    .iter()
+                    .fold((Vec2::splat(f32::INFINITY), Vec2::splat(f32::NEG_INFINITY)), |(lo, hi), s| {
+                        (lo.min(s.point), hi.max(s.point))
+                    })
+            })
+            .collect();
+        Self { n_segs, probes: Self::probes(samples), bounds }
+    }
+
+    fn probes(samples: &[SplineSample]) -> [Vec2; 3] {
+        [samples[0].point, samples[samples.len() / 2].point, samples[samples.len() - 1].point]
+    }
+
+    fn matches(&self, samples: &[SplineSample]) -> bool {
+        samples.len() == self.n_segs + 1 && Self::probes(samples) == self.probes
+    }
 }
 
 impl Default for TrackSpline {
@@ -271,6 +333,7 @@ impl TrackSpline {
             curves: Vec::new(),
             sample_segments: Vec::new(),
             waypoint_sample_indices: Vec::new(),
+            projection_index: ProjectionIndex::default(),
         }
     }
 
@@ -285,6 +348,7 @@ impl TrackSpline {
                 curves: Vec::new(),
                 sample_segments: Vec::new(),
                 waypoint_sample_indices: Vec::new(),
+                projection_index: ProjectionIndex::default(),
             };
         }
 
@@ -630,6 +694,7 @@ impl TrackSpline {
             curves,
             sample_segments,
             waypoint_sample_indices,
+            projection_index: ProjectionIndex::default(),
         }
     }
 
@@ -904,7 +969,8 @@ impl TrackSpline {
         let mut best_sample_idx = 0;
         let mut best_t = 0.0f32;
 
-        for i in 0..self.samples.len() - 1 {
+        // The nearest segment, lowest index on ties: the same answer as a scan in index order with a strict `<`.
+        let mut consider = |i: usize| {
             let p0 = self.samples[i].point;
             let p1 = self.samples[i + 1].point;
             let ab = p1 - p0;
@@ -917,13 +983,55 @@ impl TrackSpline {
             let proj_pt = p0 + ab * t;
             let d_sq = (pos - proj_pt).length_squared();
 
-            if d_sq < best_dist_sq {
+            if d_sq < best_dist_sq || (d_sq == best_dist_sq && i < best_sample_idx) {
                 best_dist_sq = d_sq;
                 best_point = proj_pt;
                 best_sample_idx = i;
                 best_t = t;
                 let seg_dist = (self.samples[i + 1].distance - self.samples[i].distance) * t;
                 best_progress = self.samples[i].distance + seg_dist;
+            }
+            best_dist_sq
+        };
+
+        let n_segs = self.samples.len() - 1;
+        let blocks = (n_segs >= SegmentBlocks::MIN_SEGMENTS && pos.is_finite())
+            .then(|| self.projection_index.0.get_or_init(|| SegmentBlocks::build(&self.samples)))
+            .filter(|b| b.matches(&self.samples));
+        match blocks {
+            None => {
+                for i in 0..n_segs {
+                    consider(i);
+                }
+            }
+            Some(blocks) => {
+                // Squared distance from `pos` to block `k`'s box: no segment of the block is nearer.
+                let lower_bound = |k: usize| {
+                    let (lo, hi) = blocks.bounds[k];
+                    (pos - pos.max(lo).min(hi)).length_squared()
+                };
+                let segments = |k: usize| {
+                    let start = k * SegmentBlocks::SEGMENTS_PER_BLOCK;
+                    start..(start + SegmentBlocks::SEGMENTS_PER_BLOCK).min(n_segs)
+                };
+                let seed = (0..blocks.bounds.len())
+                    .min_by(|&a, &b| lower_bound(a).total_cmp(&lower_bound(b)))
+                    .unwrap_or(0);
+                let mut best = f32::INFINITY;
+                for i in segments(seed) {
+                    best = consider(i);
+                }
+                for k in (0..blocks.bounds.len()).filter(|&k| k != seed) {
+                    // Skip a block only when its box is 1 cm farther than the best segment so far, far more than the
+                    // rounding of the segment distances, so a skipped block cannot hold the nearest segment or a tie.
+                    let reach = best.sqrt() + 0.01;
+                    if lower_bound(k) > reach * reach {
+                        continue;
+                    }
+                    for i in segments(k) {
+                        best = consider(i);
+                    }
+                }
             }
         }
 
@@ -1924,5 +2032,71 @@ mod tests {
                 }
             }
         }
+    }
+
+    /// `project_point` with the block index must return exactly what the plain scan in index order returns, for
+    /// points on, beside and far from the track, and for ties (points on sample vertices).
+    #[test]
+    fn test_project_point_blocks_match_full_scan() {
+        let full_scan = |spline: &TrackSpline, pos: Vec2| -> (Vec2, f32, f32) {
+            let (mut best_d, mut best_pt, mut best_progress) = (f32::INFINITY, Vec2::ZERO, 0.0f32);
+            for i in 0..spline.samples.len() - 1 {
+                let (p0, p1) = (spline.samples[i].point, spline.samples[i + 1].point);
+                let ab = p1 - p0;
+                let len_sq = ab.length_squared();
+                let t = if len_sq > 1e-6 { ((pos - p0).dot(ab) / len_sq).clamp(0.0, 1.0) } else { 0.0 };
+                let proj_pt = p0 + ab * t;
+                let d_sq = (pos - proj_pt).length_squared();
+                if d_sq < best_d {
+                    best_d = d_sq;
+                    best_pt = proj_pt;
+                    best_progress = spline.samples[i].distance + (spline.samples[i + 1].distance - spline.samples[i].distance) * t;
+                }
+            }
+            (best_pt, best_d.sqrt(), best_progress)
+        };
+        let loops: [&[Vec2]; 2] = [
+            &[Vec2::new(0.0, 0.0), Vec2::new(400.0, 30.0), Vec2::new(520.0, 300.0), Vec2::new(100.0, 420.0), Vec2::new(-80.0, 200.0)],
+            // A figure-eight crosses itself, so two far-apart segments tie near the crossing.
+            &[Vec2::new(0.0, 0.0), Vec2::new(200.0, 200.0), Vec2::new(400.0, 0.0), Vec2::new(200.0, -200.0), Vec2::new(0.0, 0.0), Vec2::new(-200.0, 200.0), Vec2::new(-400.0, 0.0), Vec2::new(-200.0, -200.0)],
+        ];
+        for pts in loops {
+            for closed in [true, false] {
+                let spline = TrackSpline::from_points(pts, 12.0, closed);
+                assert!(spline.samples.len() > SegmentBlocks::MIN_SEGMENTS, "test spline too short to use the blocks");
+                let mut queries: Vec<Vec2> = spline.samples.iter().step_by(7).map(|s| s.point).collect();
+                for k in 0..600 {
+                    let f = k as f32 * 0.618_034;
+                    queries.push(Vec2::new(-700.0 + (f * 7.31).fract() * 1500.0, -600.0 + (f * 3.17).fract() * 1200.0));
+                }
+                for pos in queries {
+                    let proj = spline.project_point(pos);
+                    let (pt, dist, progress) = full_scan(&spline, pos);
+                    assert_eq!(
+                        (proj.closest_point, proj.distance_to_spline, proj.progress_distance),
+                        (pt, dist, progress),
+                        "closed={} pos={:?}",
+                        closed,
+                        pos
+                    );
+                }
+                assert!(spline.projection_index.0.get().is_some(), "the block index was not used");
+            }
+        }
+    }
+
+    /// A spline whose samples were replaced after the index was built must not use the stale index.
+    #[test]
+    fn test_project_point_ignores_stale_blocks() {
+        let pts = [Vec2::new(0.0, 0.0), Vec2::new(400.0, 30.0), Vec2::new(520.0, 300.0), Vec2::new(100.0, 420.0)];
+        let mut spline = TrackSpline::from_points(&pts, 12.0, true);
+        let _ = spline.project_point(Vec2::new(10.0, 10.0));
+        assert!(spline.projection_index.0.get().is_some());
+        let shift = Vec2::new(1000.0, 0.0);
+        for s in &mut spline.samples {
+            s.point += shift;
+        }
+        let proj = spline.project_point(Vec2::new(1010.0, 10.0));
+        assert!(proj.distance_to_spline < 20.0, "stale index used: distance {}", proj.distance_to_spline);
     }
 }
