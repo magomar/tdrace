@@ -392,3 +392,38 @@ fn test_render_floating_bot_nameplates_headless_execution() {
         }));
     }
 }
+
+#[test]
+fn test_elevated_road_does_not_separate_nameplates_or_chevrons() {
+    let mut session = RaceSession::new();
+    assert!(session.world.vehicles.len() >= 2);
+
+    // Simulate an elevated bridge overpass section for bot car 1
+    session.world.vehicles[1].state.road_elevation = 5.0; // 5m elevated bridge
+    session.world.vehicles[1].state.elevation = 0.0;      // on the road, not airborne
+    session.world.vehicles[1].state.ramp_elevation = 0.0;
+
+    assert_eq!(session.world.vehicles[1].total_elevation(), 5.0);
+    assert_eq!(session.world.vehicles[1].dynamic_elevation(), 0.0);
+
+    let nameplates = session.collect_bot_nameplates(0);
+    let bot_plate = nameplates.iter().find(|item| item.car_idx == 1).expect("Bot 1 nameplate must exist");
+
+    // The nameplate elevation must match dynamic elevation (0.0), NOT road elevation (5.0)
+    assert_eq!(
+        bot_plate.elevation, 0.0,
+        "Nameplate on elevated road must have elevation = 0.0 to remain anchored to car"
+    );
+
+    // When the car jumps while on the elevated bridge
+    session.world.vehicles[1].state.elevation = 1.2; // 1.2m jump altitude above bridge surface
+    assert_eq!(session.world.vehicles[1].total_elevation(), 6.2);
+    assert_eq!(session.world.vehicles[1].dynamic_elevation(), 1.2);
+
+    let nameplates_jumping = session.collect_bot_nameplates(0);
+    let bot_plate_jumping = nameplates_jumping.iter().find(|item| item.car_idx == 1).expect("Bot 1 nameplate must exist");
+    assert_eq!(
+        bot_plate_jumping.elevation, 1.2,
+        "Nameplate when jumping on elevated bridge must track only jump altitude"
+    );
+}
