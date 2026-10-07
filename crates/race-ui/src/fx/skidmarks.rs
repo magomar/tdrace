@@ -130,7 +130,8 @@ impl SkidmarkBuffer {
                         if (0.20..=3.0).contains(&dist) {
                             let (base_col, alpha, width_mult, jitter_mult) = if is_transferring_dirt {
                                 let dirt_col = match telemetry.dirt_surface {
-                                    SurfaceType::Gravel => Color::new(0.38, 0.36, 0.34, 1.0),
+                                    SurfaceType::PackedGravel => Color::new(0.38, 0.36, 0.34, 1.0),
+                                    SurfaceType::DeepGravel => Color::new(0.58, 0.53, 0.44, 1.0),
                                     SurfaceType::PackedSand | SurfaceType::DeepSand => Color::new(0.68, 0.58, 0.36, 1.0),
                                     SurfaceType::Dirt => {
                                         let mix = skid_noise(curr_pos, 808);
@@ -187,7 +188,7 @@ impl SkidmarkBuffer {
                                         let a = (0.30 + telemetry.skid_intensity * 0.34).clamp(0.26, 0.68);
                                         (Color::new(0.05, 0.05, 0.06, 1.0), a, 0.88, 0.30)
                                     }
-                                    SurfaceType::Gravel => {
+                                    SurfaceType::PackedGravel | SurfaceType::DeepGravel => {
                                         // Dark slate stone furrow bed with jagged edge jitter
                                         let a = if has_slip {
                                             (0.65 + telemetry.skid_intensity * 0.30).clamp(0.60, 0.92)

@@ -81,12 +81,12 @@ fn recorded_pre_046() -> Option<[(&'static str, [u64; 6]); 2]> {
     let mac_arm = cfg!(all(target_os = "macos", target_arch = "aarch64"));
     match (mac_arm, cfg!(debug_assertions)) {
         (true, true) => Some([
-            ("classic_grand_prix", [0x4b935a65475d8463, 0x077a52480c455183, 0x4b2b24e22446c4aa, 0x113323a3fcc58965, 0x57c1458cd1b17683, 0x7b4e0df78a65a13b]),
-            ("kart_arena", [0x200ea9c6cfe8a614, 0x64438507c9dc4aa3, 0x39994a57ac2336d9, 0x5b448cd7dbcf11dd, 0x979604cec2486f5c, 0x6589e2f6c0d71eb4]),
+            ("classic_grand_prix", [0x268beeef094ff7a3, 0x27993b1c5319b0f1, 0x7003f360139a5491, 0x53a0f25b8350d11f, 0x4b41927cba06525d, 0xcbdc02fbcc765a5b]),
+            ("kart_arena", [0x9285f6eb362650fe, 0x4c2bc933e7abbad0, 0x68617b64fb44bf19, 0xaaab8128904c8103, 0xe403034e2617c39d, 0x9563971759994c8f]),
         ]),
         (true, false) => Some([
-            ("classic_grand_prix", [0x9510b5916d71a32e, 0x7add920700a50254, 0x3fc4084e0faf74a9, 0x09315bc82de0d655, 0x89d033332efe20a0, 0xc87f0fbe64bf46c5]),
-            ("kart_arena", [0x5647224f222557fc, 0xdba712c1d4704f4f, 0x4320b440da73653e, 0xc7dbff32b16e8350, 0xbb845c410ba9276a, 0xff38ec2da7e3270f]),
+            ("classic_grand_prix", [0x5166828cbb5043c7, 0x668a5d2be2db3645, 0x48aea442054e62a4, 0x550f534db7bc4312, 0x3a8b2c6d8f991a08, 0x236191389c6cfc62]),
+            ("kart_arena", [0x2843625fb663ebd8, 0xaae4a54da24ad0cf, 0x7a18ad6ca2b85b72, 0xb554cdff346f9cea, 0x963c33a418d0a67e, 0x86f0797322300ec6]),
         ]),
         _ => None,
     }

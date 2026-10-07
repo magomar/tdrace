@@ -36,8 +36,8 @@
           "multiplier": 0.45
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.35
+          "surface": "PackedGravel",
+          "multiplier": 0.45
         },
         {
           "surface": "Grass",
@@ -78,6 +78,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.1
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.35
         }
       ],
       "thermal_curve": [
@@ -253,8 +257,8 @@
           "multiplier": 0.85
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.32
+          "surface": "PackedGravel",
+          "multiplier": 0.85
         },
         {
           "surface": "Grass",
@@ -295,6 +299,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.1
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.35
         }
       ],
       "thermal_curve": [
@@ -473,8 +481,8 @@
           "multiplier": 0.4
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.3
+          "surface": "PackedGravel",
+          "multiplier": 0.4
         },
         {
           "surface": "Grass",
@@ -515,6 +523,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.1
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.33
         }
       ],
       "thermal_curve": [
@@ -690,8 +702,8 @@
           "multiplier": 0.65
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.55
+          "surface": "PackedGravel",
+          "multiplier": 0.65
         },
         {
           "surface": "Grass",
@@ -732,6 +744,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.15
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.5
         }
       ],
       "thermal_curve": [
@@ -904,8 +920,8 @@
           "multiplier": 0.7
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.6
+          "surface": "PackedGravel",
+          "multiplier": 0.7
         },
         {
           "surface": "Grass",
@@ -946,6 +962,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.2
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.55
         }
       ],
       "thermal_curve": [
@@ -1118,8 +1138,8 @@
           "multiplier": 1.15
         },
         {
-          "surface": "Gravel",
-          "multiplier": 1.2
+          "surface": "PackedGravel",
+          "multiplier": 1.15
         },
         {
           "surface": "Grass",
@@ -1160,6 +1180,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.25
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 1.1
         }
       ],
       "thermal_curve": [
@@ -1345,8 +1369,8 @@
           "multiplier": 1.1
         },
         {
-          "surface": "Gravel",
-          "multiplier": 1.05
+          "surface": "PackedGravel",
+          "multiplier": 1.1
         },
         {
           "surface": "Grass",
@@ -1387,6 +1411,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.25
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 1.1
         }
       ],
       "thermal_curve": [
@@ -1559,8 +1587,8 @@
           "multiplier": 0.8
         },
         {
-          "surface": "Gravel",
-          "multiplier": 0.75
+          "surface": "PackedGravel",
+          "multiplier": 0.8
         },
         {
           "surface": "Grass",
@@ -1601,6 +1629,10 @@
         {
           "surface": "Oil",
           "multiplier": 0.2
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.7
         }
       ],
       "thermal_curve": [
