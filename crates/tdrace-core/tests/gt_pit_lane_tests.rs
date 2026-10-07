@@ -195,12 +195,9 @@ fn test_gt_monza_surface_sampling_throughput_bench() {
         let _ = track.sample_surface_near(pt, hint);
     }
     let elapsed = start.elapsed();
-    // Off-track points fall back to a full spline projection, so the cost grows with the sample count. The
-    // re-baked Monza has 2836 samples (spec 071, was 673): ~7 s debug / ~330 ms release. tdrace-76av tracks the
-    // faster off-track search; tighten these limits again with it.
     #[cfg(debug_assertions)]
-    let max_millis = 8000;
+    let max_millis = 3000;
     #[cfg(not(debug_assertions))]
-    let max_millis = 400;
+    let max_millis = 250;
     assert!(elapsed.as_millis() < max_millis, "50k samples took too long: {:?}", elapsed);
 }
