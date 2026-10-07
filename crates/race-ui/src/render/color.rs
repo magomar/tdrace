@@ -46,7 +46,7 @@ impl Palette {
     pub const GRAVEL: Color = Color::new(0.52, 0.50, 0.46, 1.0);
     pub const GRAVEL_DARK: Color = Color::new(0.40, 0.38, 0.35, 1.0);
     pub const GRAVEL_EDGE: Color = Color::new(0.65, 0.63, 0.58, 0.85);
-    // Spec 089: loose trap gravel is lighter and warmer than packed road gravel.
+    // Spec 099: loose trap gravel is lighter and warmer than packed road gravel.
     pub const DEEP_GRAVEL: Color = Color::new(0.74, 0.69, 0.58, 1.0);
     pub const DEEP_GRAVEL_DARK: Color = Color::new(0.60, 0.55, 0.45, 1.0);
     pub const DEEP_GRAVEL_EDGE: Color = Color::new(0.84, 0.80, 0.70, 0.85);

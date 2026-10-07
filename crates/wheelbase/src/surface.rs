@@ -13,7 +13,7 @@ pub enum SurfaceType {
     Curb,
     /// Playable compacted dirt / gravel rally track: good controllable slide grip.
     Dirt,
-    /// Packed gravel road (Spec 089): drives like Dirt, a bit more slippery. Old files call it `Gravel`.
+    /// Packed gravel road (Spec 099): drives like Dirt, a bit more slippery. Old files call it `Gravel`.
     #[serde(alias = "Gravel")]
     PackedGravel,
     /// Grassy run-off area: significantly reduced grip and high rolling resistance.
@@ -36,7 +36,7 @@ pub enum SurfaceType {
     Water,
     /// Oil slick hazard: extremely low friction, vehicle spins easily.
     Oil,
-    /// Loose gravel trap bed (Spec 089): ploughs a fast car to a stop, but a stopped car can drive out.
+    /// Loose gravel trap bed (Spec 099): ploughs a fast car to a stop, but a stopped car can drive out.
     /// Last in the enum so the index of every older surface stays the same.
     DeepGravel,
 }
@@ -113,7 +113,7 @@ impl SurfaceType {
 
     /// Gravel-bed ploughing deceleration (m/s² per m/s of speed above [`Self::BED_DRAG_FREE_SPEED`]).
     ///
-    /// Spec 089: a loose gravel bed slows a fast car hard, but adds nothing at walking speed, so a
+    /// Spec 099: a loose gravel bed slows a fast car hard, but adds nothing at walking speed, so a
     /// car that stopped in it can always drive out. Zero for every surface except `DeepGravel`.
     #[inline]
     pub const fn bed_drag_rate(self) -> f32 {
@@ -500,7 +500,7 @@ impl SurfaceAffinityMap {
                 1.18, // Concrete
                 1.10, // Curb
                 0.45, // Dirt
-                0.45, // PackedGravel (= Dirt, Spec 089)
+                0.45, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.30, // PackedSand
                 0.15, // DeepSand
@@ -518,7 +518,7 @@ impl SurfaceAffinityMap {
                 0.98, // Concrete
                 0.95, // Curb
                 0.85, // Dirt
-                0.85, // PackedGravel (= Dirt, Spec 089)
+                0.85, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.28, // PackedSand
                 0.15, // DeepSand
@@ -536,7 +536,7 @@ impl SurfaceAffinityMap {
                 0.98, // Concrete
                 0.95, // Curb
                 0.40, // Dirt
-                0.40, // PackedGravel (= Dirt, Spec 089)
+                0.40, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.25, // PackedSand
                 0.15, // DeepSand
@@ -554,7 +554,7 @@ impl SurfaceAffinityMap {
                 0.86, // Concrete
                 0.85, // Curb
                 0.65, // Dirt
-                0.65, // PackedGravel (= Dirt, Spec 089)
+                0.65, // PackedGravel (= Dirt, Spec 099)
                 0.50, // Grass
                 0.40, // PackedSand
                 0.25, // DeepSand
@@ -572,7 +572,7 @@ impl SurfaceAffinityMap {
                 0.70, // Concrete
                 0.75, // Curb
                 0.70, // Dirt
-                0.70, // PackedGravel (= Dirt, Spec 089)
+                0.70, // PackedGravel (= Dirt, Spec 099)
                 0.60, // Grass
                 0.45, // PackedSand
                 0.30, // DeepSand
@@ -590,7 +590,7 @@ impl SurfaceAffinityMap {
                 0.83, // Concrete
                 0.88, // Curb
                 1.15, // Dirt
-                1.15, // PackedGravel (= Dirt, Spec 089)
+                1.15, // PackedGravel (= Dirt, Spec 099)
                 0.95, // Grass
                 1.10, // PackedSand
                 1.20, // DeepSand
@@ -608,7 +608,7 @@ impl SurfaceAffinityMap {
                 0.62, // Concrete
                 0.70, // Curb
                 1.10, // Dirt
-                1.10, // PackedGravel (= Dirt, Spec 089)
+                1.10, // PackedGravel (= Dirt, Spec 099)
                 1.00, // Grass
                 1.25, // PackedSand
                 1.35, // DeepSand
@@ -626,7 +626,7 @@ impl SurfaceAffinityMap {
                 0.48, // Concrete
                 0.55, // Curb
                 0.80, // Dirt
-                0.80, // PackedGravel (= Dirt, Spec 089)
+                0.80, // PackedGravel (= Dirt, Spec 099)
                 0.60, // Grass
                 0.50, // PackedSand
                 0.40, // DeepSand

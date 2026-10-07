@@ -500,7 +500,7 @@ const GT: [(&str, f32, u32); 3] = [
 /// And they do not cross themselves in 2D
 /// And they use kerbs on apexes, Steel walls with TireWall at braking zones
 /// And each circuit uses Grass and DeepGravel run-off, no Asphalt run-off, and variable runoff width (3-30 m)
-/// (spec 089 §2.4: straights Grass <= 8 m, corner traps DeepGravel <= 12 m, chicanes DeepGravel <= 6 m)
+/// (spec 099 §2.4: straights Grass <= 8 m, corner traps DeepGravel <= 12 m, chicanes DeepGravel <= 6 m)
 #[test]
 fn test_gt_circuits_have_speed_braking_and_runoff() {
     for (id, design_len, laps) in GT {
@@ -527,7 +527,7 @@ fn test_gt_circuits_have_speed_braking_and_runoff() {
         let has_curbs = t.spline.waypoints.iter().any(|w| w.left_curb || w.right_curb);
         assert!(has_curbs, "{}: GT circuits must have kerbs on apexes", id);
 
-        // Run-off per waypoint (spec 089 §2.4)
+        // Run-off per waypoint (spec 099 §2.4)
         let mut surfaces = std::collections::HashSet::new();
         for (i, w) in t.spline.waypoints.iter().enumerate() {
             let chicane = w.left_curb && w.right_curb;
@@ -610,7 +610,7 @@ fn test_velocity_park_has_two_long_straights_and_chicanes() {
         straight_runs
     );
 
-    // DeepGravel traps at the braking zones (spec 089)
+    // DeepGravel traps at the braking zones (spec 099)
     let has_deep_gravel = t.spline.samples.iter().any(|s| {
         s.left_runoff_surface == Some(SurfaceType::DeepGravel) || s.right_runoff_surface == Some(SurfaceType::DeepGravel)
     });
@@ -701,7 +701,7 @@ fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
         max_elev
     );
 
-    // Has DeepGravel traps (spec 089)
+    // Has DeepGravel traps (spec 099)
     let has_deep_gravel = t.spline.samples.iter().any(|s| {
         s.left_runoff_surface == Some(SurfaceType::DeepGravel) || s.right_runoff_surface == Some(SurfaceType::DeepGravel)
     });

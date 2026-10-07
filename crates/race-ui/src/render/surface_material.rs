@@ -547,7 +547,7 @@ pub fn generate_surface_image(surface: SurfaceType, width: u16, height: u16) -> 
             }
         }
         SurfaceType::DeepGravel => {
-            // Spec 089: loose trap bed of small, light limestone pebbles, each with its own shade, and dark gaps
+            // Spec 099: loose trap bed of small, light limestone pebbles, each with its own shade, and dark gaps
             for y in 0..height {
                 for x in 0..width {
                     let idx = (y as usize * width as usize + x as usize) * 4;

@@ -161,14 +161,14 @@ walls 2.0 m out and cars drive on the kerb; a wall that steps in there stopped t
 - Surface Asphalt, kerbs on apexes and chicanes, walls `Steel` with `TireWall` at the end of fast
   straights.
 - Velocity Park: 2 straights of 300 m or more, each ending in a chicane. DeepGravel traps at
-  the braking zones (changed by Spec 089).
+  the braking zones (changed by Spec 099).
 - Ridge Ring: a raised section that climbs to about 8 m and comes back down, **without crossing
   another part of the lap**. Grade 8 % or less. A crest, a downhill corner after it, esses and a
-  hairpin. Narrow DeepGravel traps (5–8 m) and Grass (changed by Spec 089).
+  hairpin. Narrow DeepGravel traps (5–8 m) and Grass (changed by Spec 099).
 - Coastal Grand Prix: a 400 m straight, a bus-stop chicane, a carousel (one long turn of 150° or
   more), a fast sweeper and a raised plateau of about 5 m.
 - Runoff width changes along each lap (3–30 m per side, set with `left/right_wall_distance`).
-  Each circuit uses Grass and DeepGravel run-off, and no Asphalt run-off (changed by Spec 089). No DeepSand or
+  Each circuit uses Grass and DeepGravel run-off, and no Asphalt run-off (changed by Spec 099). No DeepSand or
   PackedSand: a GT car that stops on them cannot drive out (tdrace-le75). Traps are `SurfaceZone`s with
   `layer: below_track` or runoff surfaces per waypoint.
 

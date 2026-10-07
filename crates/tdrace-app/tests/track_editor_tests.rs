@@ -1687,7 +1687,7 @@ fn test_track_editor_wall_distance_editing_and_batch_operations() {
 
     // 2. Batch adjust wall distance
     state.select(Selection::MultipleWaypoints(vec![0, 1, 2]));
-    // Each wall moves 2 m in from the circuit's own value (Coastal GP grass run-off is 4 m since spec 089).
+    // Each wall moves 2 m in from the circuit's own value (Coastal GP grass run-off is 4 m since spec 099).
     let before: Vec<f32> = (0..3).map(|i| state.track.spline.waypoints[i].left_wall_distance.unwrap()).collect();
     assert!(tools.batch_adjust_wall_distances(&mut state, -2.0));
     for (i, b) in before.iter().enumerate() {

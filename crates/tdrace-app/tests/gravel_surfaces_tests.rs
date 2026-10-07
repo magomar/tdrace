@@ -1,5 +1,5 @@
-//! Spec 089: PackedGravel drives like Dirt, DeepGravel slows a car but never traps it.
-//! See `specs/089_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md`.
+//! Spec 099: PackedGravel drives like Dirt, DeepGravel slows a car but never traps it.
+//! See `specs/099_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md`.
 
 use tdrace_app::catalog::get_models_for_module_and_tier;
 use tdrace_app::module::classic::ClassicGameModule;

@@ -545,7 +545,7 @@ fn test_grass_runoff_mobility_and_acceleration() {
 /// When it accelerates from a stop on gravel, and the same car does it on medium slicks
 /// Then every wheel has the AllTerrain compound and the rally car is faster on gravel than on slicks
 ///
-/// Spec 089: PackedGravel takes the Dirt tyre affinity, and MediumSlick has a high Dirt affinity (0.85),
+/// Spec 099: PackedGravel takes the Dirt tyre affinity, and MediumSlick has a high Dirt affinity (0.85),
 /// so the 20 % margin is measured on loose DeepGravel; on PackedGravel all-terrain tyres must still win.
 #[test]
 fn test_rally_car_runs_all_terrain_tyres() {

@@ -788,7 +788,7 @@ impl Track {
     /// - Sandy circuits -> `SurfaceType::DeepSand`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
-    /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 089)
+    /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 099)
     pub fn default_runoff_surface(&self) -> Option<SurfaceType> {
         let name_lower = self.name.to_lowercase();
 

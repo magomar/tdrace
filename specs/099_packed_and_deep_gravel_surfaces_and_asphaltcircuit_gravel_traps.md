@@ -4,7 +4,6 @@ template: architecture
 title: "Packed and Deep Gravel Surfaces and Asphalt-Circuit Gravel Traps"
 description: "Splits Gravel into PackedGravel (a road surface, like Dirt but a bit more slippery) and DeepGravel (a trap that slows cars but never traps them), moves the official circuits to the new surfaces, and removes Asphalt run-off from the Classic GT circuits."
 status: implemented
-receipt: "docs/receipts/spec-089-receipt.md"
 verified: { by: "human:mario", at: "2026-10-05T07:11:54Z", hash: "1e6e8a6da630" }
 created: 2026-10-05
 generated: { by: agent/claude-opus-5-5, at: 2026-10-05T07:02:51Z }
@@ -191,4 +190,4 @@ Reference cars: Classic GT, Classic kart, Classic rally, and the first car of ti
 - `[x]` `crates/tdrace-core/tests/classic_circuits_tests.rs` -> Spec 055 rules changed by §2.4.
 
 ### Verification Assertions
-- `crates/tdrace-app/tests/gravel_surfaces_tests.rs` references `specs/089_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md` in its header comment.
+- `crates/tdrace-app/tests/gravel_surfaces_tests.rs` references `specs/099_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md` in its header comment.

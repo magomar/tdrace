@@ -1977,7 +1977,7 @@ HILLSIDE_HAMMER = Circuit(
 
 # GT: high speed, braking and runoff (spec 055, User Flow section 3).
 # Surface Asphalt, kerbs on apexes and chicanes, walls Steel with TireWall at the end of fast straights.
-# Variable runoff 3-30 m per side (spec 089): straights Grass <= 8 m, corner traps DeepGravel <= 12 m,
+# Variable runoff 3-30 m per side (spec 099): straights Grass <= 8 m, corner traps DeepGravel <= 12 m,
 # chicanes DeepGravel <= 6 m, no Asphalt run-off.
 
 GT_ROAD = Road(

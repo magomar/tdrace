@@ -2233,7 +2233,7 @@ fn couple_axle(
         let drag_lat =
             -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let mut drag_world = fwd * drag_fwd + right * drag_lat;
-        // Spec 089: a gravel bed ploughs a fast car to a stop, but not a car that crawls out of it.
+        // Spec 099: a gravel bed ploughs a fast car to a stop, but not a car that crawls out of it.
         let speed = self.state.velocity.length();
         let bed_excess_speed = (speed - SurfaceType::BED_DRAG_FREE_SPEED).max(0.0);
         let bed_decel: f32 = surfaces
