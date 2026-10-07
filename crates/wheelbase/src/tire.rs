@@ -822,8 +822,8 @@ impl WheelAssembly {
     /// - Frictional work dissipation: P_diss = (|Fx * s| + |Fy * alpha|) * max(|v_long|, |omega * r|)
     /// - Heating: dT_heat = P_diss * k_heat
     /// - Cooling: dT_cool = k_cool * (1 + 0.035 * v) * (T - T_ambient)
-    /// - Wear: dW = k_wear * P_slide * temp_factor, where P_slide counts only the slip past the tyre's
-    ///   grip peak (tdrace-6dl0): clean driving at or under the peak barely wears the tread, a drift does.
+    /// - Wear: dW = k_wear * P_slide * temp_factor, where P_slide counts only the sideways slip past the
+    ///   tyre's grip peak (tdrace-6dl0): clean driving barely wears the tread, a drift does.
     pub fn step_thermal_and_wear(
         &mut self,
         fx: f32,
@@ -860,13 +860,11 @@ impl WheelAssembly {
         } else {
             1.0
         };
-        // Only slip past the grip peak wears the tread, and sliding on loose ground (rallycross and
-        // autocross drifting) wears it much less than sliding on pavement.
-        let tire = &self.config.tire_model;
-        let slide_long = (slip_ratio.abs() - tire.peak_slip_ratio).max(0.0);
-        let slide_lat = (slip_angle.abs() - tire.peak_slip_angle_deg.to_radians()).max(0.0);
+        // Only a sideways slide past the grip peak (a drift) wears the tread; wheelspin and lock-ups do not.
+        // Sliding on loose ground (rallycross and autocross drifting) wears it much less than on pavement.
+        let slide_lat = (slip_angle.abs() - self.config.tire_model.peak_slip_angle_deg.to_radians()).max(0.0);
         let abrasion = if surface.is_loose_deformable() { LOOSE_GROUND_WEAR } else { 1.0 };
-        let p_slide = ((fx * slide_long).abs() + (fy * slide_lat).abs()) * v_rub * abrasion;
+        let p_slide = (fy * slide_lat).abs() * v_rub * abrasion;
         let k_wear = self.config.compound.wear_rate * DRIFT_WEAR_GAIN;
         let wear_rate = p_slide * k_wear * temp_wear_boost;
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
