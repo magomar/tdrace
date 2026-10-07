@@ -1,0 +1,485 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import {
+  categoryLabel,
+  deg,
+  differentialLabel,
+  getCars,
+  getCompounds,
+  getPlatforms,
+  moduleBadge,
+  moduleLabel,
+  pct,
+  rgba,
+  ARCHETYPE_LABEL,
+  PLACEMENT_LABEL,
+  type Car,
+} from '../../lib/codex';
+
+const [cars, platforms, compounds] = await Promise.all([
+  getCars(),
+  getPlatforms(),
+  getCompounds(),
+]);
+
+const platformsMap = new Map(platforms.map((p) => [p.id, p]));
+const compoundsMap = new Map(compounds.map((c) => [c.id.toLowerCase(), c]));
+
+// Pre-calculate full spec data for all cars for client-side comparison
+const allCarsComparisonData = cars.map((car) => {
+  const p = (car.physics as any) || {};
+  const plat = platformsMap.get(car.base_car) ?? platforms[0];
+
+  const frontSusp = p.suspension?.front ?? plat.suspension.front;
+  const rearSusp = p.suspension?.rear ?? plat.suspension.rear;
+  const wheels = p.wheels ?? plat.wheels;
+  const wheelFront = wheels[0] ?? { tire_radius: 0.33, tire_width: 0.22 };
+  const compoundObj = wheelFront.compound;
+  const compoundId = typeof compoundObj === 'object' ? compoundObj.id : (wheelFront.compound ?? 'HardSlick');
+  const comp = compoundsMap.get(String(compoundId).toLowerCase());
+
+  const enginePlacement = p.engine_placement ?? plat.engine_placement;
+  const frontDiff = p.front_differential ?? plat.front_differential;
+  const rearDiff = p.rear_differential ?? plat.rear_differential;
+
+  const driveBias = p.drive_bias ?? 0;
+  const driveSplit = driveBias >= 0.99
+    ? 'FWD'
+    : driveBias <= 0.01
+      ? 'RWD'
+      : `AWD ${Math.round(driveBias * 100)}% F`;
+
+  const frontWeight = Math.round((plat.cg_to_rear_m / plat.wheelbase_m) * 100);
+  const rearWeight = 100 - frontWeight;
+
+  return {
+    id: car.id,
+    name: car.name,
+    manufacturer: car.manufacturer,
+    year: car.year,
+    module: car.module,
+    moduleLabel: moduleLabel(car.module),
+    moduleBadge: moduleBadge(car.module),
+    categoryName: car.category_name,
+    tier: car.tier,
+    drivetrain: car.drivetrain,
+    imageLateral: car.images.lateral ? `${car.images.lateral}?v=20260922d` : null,
+    bhp: car.bhp,
+    weightKg: car.weight_kg,
+    powerToWeight: Number((car.bhp / (car.weight_kg / 1000)).toFixed(1)),
+    topSpeedKmh: car.top_speed_kmh,
+    accel0100: car.accel_0_100,
+    brakesKn: Number((p.max_brake_force / 1000).toFixed(1)),
+    downforce: Number(p.downforce_coefficient.toFixed(2)),
+    drag: Number(p.air_drag_coefficient.toFixed(2)),
+    stats: {
+      speed: pct(car.stats.speed),
+      acceleration: pct(car.stats.acceleration),
+      grip: pct(car.stats.grip),
+      agility: pct(car.stats.agility),
+      braking: pct(car.stats.braking),
+      aero: pct(car.stats.aero),
+    },
+    platformId: plat.id,
+    platformTitle: plat.title,
+    wheelbaseM: plat.wheelbase_m.toFixed(2),
+    trackWidthM: plat.track_width_m.toFixed(2),
+    bodyWidthM: plat.skeleton.body_width.toFixed(2),
+    totalLengthM: plat.total_length_m.toFixed(2),
+    weightDist: `${frontWeight}% / ${rearWeight}%`,
+    frontSuspArchetype: ARCHETYPE_LABEL[frontSusp.archetype] ?? frontSusp.archetype,
+    frontSuspId: frontSusp.archetype,
+    rearSuspArchetype: ARCHETYPE_LABEL[rearSusp.archetype] ?? rearSusp.archetype,
+    rearSuspId: rearSusp.archetype,
+    compoundName: comp?.name ?? String(compoundId),
+    compoundBadge: comp?.badge ?? 'SLK',
+    compoundColor: comp ? rgba(comp.accent_rgba) : '#94a3b8',
+    enginePlacement: PLACEMENT_LABEL[enginePlacement] ?? enginePlacement,
+    driveSplit,
+    frontDiffLabel: differentialLabel(frontDiff),
+    rearDiffLabel: differentialLabel(rearDiff),
+  };
+});
+---
+
+<Layout title="Vehicle Comparison Lab — TDRace Codex" description="Compare specifications, telemetry ratings, and physics parameters of up to 4 vehicles side by side.">
+  <div class="py-6 border-b border-racing-border max-w-7xl">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <p class="text-xs font-mono text-racing-cyan">
+          <a href="/showroom" class="hover:underline">Showroom</a> / Compare
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mt-1">Vehicle Comparison Lab</h1>
+        <p class="text-sm text-racing-muted font-mono mt-1">
+          Select 2 to 4 cars side by side to compare real in-game physics, telemetry ratings, and chassis dimensions.
+        </p>
+      </div>
+
+      <a
+        href="/showroom/cars"
+        class="px-4 py-2 rounded-lg bg-racing-surface hover:bg-racing-surface2 border border-racing-border text-racing-muted hover:text-white font-mono text-xs transition-all"
+      >
+        ← Car Catalogue
+      </a>
+    </div>
+
+    <!-- Car Selector Controls Bar -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      {[0, 1, 2, 3].map((slotIdx) => (
+        <div class="bg-racing-surface p-3 rounded-xl border border-racing-border flex flex-col gap-1.5">
+          <div class="flex items-center justify-between">
+            <label for={`select-slot-${slotIdx}`} class="text-[10px] font-mono uppercase text-racing-muted">
+              Slot {slotIdx + 1} {slotIdx < 2 && <span class="text-racing-cyan">*</span>}
+            </label>
+            {slotIdx >= 2 && (
+              <button
+                type="button"
+                class="slot-clear-btn text-[10px] font-mono text-racing-muted hover:text-red-400 transition-colors"
+                data-slot={slotIdx}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <select
+            id={`select-slot-${slotIdx}`}
+            class="car-selector w-full px-3 py-1.5 bg-racing-surface2 border border-racing-border rounded-lg text-xs font-mono text-white focus:outline-none focus:border-racing-blue"
+            data-slot={slotIdx}
+          >
+            {slotIdx >= 2 && <option value="">— None / Empty —</option>}
+            {cars.map((car) => (
+              <option value={car.id}>
+                {car.name} ({car.bhp} BHP • {car.category_name})
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Comparison Matrix Table / Cards -->
+  <div class="py-8 max-w-7xl overflow-x-auto">
+    <div id="compare-grid" class="min-w-[700px] space-y-8">
+      <!-- 1. Header Cards Row -->
+      <div id="row-headers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- 2. Performance Telemetry Ratings -->
+      <div class="bg-racing-surface rounded-xl border border-racing-border p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-4 flex items-center justify-between">
+          <span>Telemetry Ratings (0–100%)</span>
+          <span class="text-[10px] text-racing-cyan font-normal">Highlighted = category leader</span>
+        </h2>
+        <div id="row-telemetry" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- 3. Engine & Drivetrain Specs -->
+      <div class="bg-racing-surface rounded-xl border border-racing-border p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-4">
+          Engine, Powertrain &amp; Drivetrain
+        </h2>
+        <div id="row-engine" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- 4. Chassis, Suspension & Wheels -->
+      <div class="bg-racing-surface rounded-xl border border-racing-border p-5">
+        <h2 class="text-sm font-mono uppercase tracking-wider text-racing-muted mb-4">
+          Chassis, Suspension &amp; Geometry
+        </h2>
+        <div id="row-chassis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ allCars: allCarsComparisonData }}>
+  const carsMap = new Map(allCars.map((c) => [c.id, c]));
+
+  // Read URL params or default to classic_gt and classic_ax_brawler
+  const urlParams = new URLSearchParams(window.location.search);
+  let slotCars = [
+    urlParams.get('car1') || 'classic_gt',
+    urlParams.get('car2') || 'classic_ax_brawler',
+    urlParams.get('car3') || '',
+    urlParams.get('car4') || '',
+  ];
+
+  // Verify IDs exist
+  slotCars = slotCars.map((id) => (carsMap.has(id) ? id : ''));
+  if (!slotCars[0] && allCars.length > 0) slotCars[0] = allCars[0].id;
+  if (!slotCars[1] && allCars.length > 1) slotCars[1] = allCars[1].id;
+
+  function syncUrl() {
+    const params = new URLSearchParams();
+    slotCars.forEach((id, idx) => {
+      if (id) params.set(`car${idx + 1}`, id);
+    });
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  function renderComparison() {
+    const activeSlots = slotCars.map((id) => (id ? carsMap.get(id) : null));
+    const validCars = activeSlots.filter(Boolean);
+
+    // Update Select Dropdowns
+    slotCars.forEach((id, idx) => {
+      const select = document.getElementById(`select-slot-${idx}`);
+      if (select) select.value = id;
+    });
+
+    // 1. Header Cards Row
+    const headerContainer = document.getElementById('row-headers');
+    if (headerContainer) {
+      headerContainer.innerHTML = activeSlots
+        .map((car, idx) => {
+          if (!car) {
+            return `
+              <div class="p-6 rounded-xl border border-dashed border-racing-border bg-racing-surface/30 flex flex-col items-center justify-center text-center">
+                <span class="text-xs font-mono text-racing-muted">Slot ${idx + 1} Empty</span>
+                <span class="text-[11px] text-racing-muted/60 mt-1">Select a car above to compare</span>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="bg-racing-surface rounded-xl border border-racing-border overflow-hidden p-4 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-1 mb-2">
+                  <span class="text-[10px] px-2 py-0.5 rounded-full border font-mono font-semibold ${car.moduleBadge}">
+                    T${car.tier} • ${car.categoryName}
+                  </span>
+                  <span class="text-[10px] font-mono text-racing-muted bg-racing-surface2 px-1.5 py-0.5 rounded">
+                    ${car.drivetrain}
+                  </span>
+                </div>
+                <h3 class="text-base font-bold text-white tracking-tight">
+                  <a href="/showroom/cars/${car.id}" class="hover:text-racing-cyan transition-colors">${car.name}</a>
+                </h3>
+                <p class="text-xs text-racing-muted font-mono mt-0.5">${car.manufacturer} • ${car.year}</p>
+              </div>
+
+              <div class="h-28 flex items-center justify-center my-3 bg-racing-bg/70 rounded-lg p-2">
+                ${car.imageLateral ? `<img src="${car.imageLateral}" alt="${car.name}" class="max-h-24 w-auto object-contain drop-shadow-[0_8px_12px_rgba(0,0,0,0.7)]" />` : `<span class="text-xs font-mono text-racing-muted italic">No Image</span>`}
+              </div>
+
+              <a href="/showroom/cars/${car.id}" class="text-center block text-xs font-mono text-racing-cyan hover:underline pt-2 border-t border-racing-border/40">
+                View Full Spec Sheet →
+              </a>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // Leaders for highlighting
+    const maxBhp = Math.max(...validCars.map((c) => c.bhp));
+    const maxPtw = Math.max(...validCars.map((c) => c.powerToWeight));
+    const maxSpeed = Math.max(...validCars.map((c) => c.topSpeedKmh));
+    const minAccel = Math.min(...validCars.map((c) => (c.accel0100 > 0 ? c.accel0100 : 999)));
+    const maxGrip = Math.max(...validCars.map((c) => c.stats.grip));
+    const maxBrake = Math.max(...validCars.map((c) => c.brakesKn));
+
+    // 2. Telemetry Section
+    const telemetryContainer = document.getElementById('row-telemetry');
+    if (telemetryContainer) {
+      telemetryContainer.innerHTML = activeSlots
+        .map((car) => {
+          if (!car) return `<div class="p-4 rounded-lg bg-racing-surface2/20 border border-racing-border/30"></div>`;
+          return `
+            <div class="space-y-3 font-mono text-xs">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Speed</span>
+                  <span class="font-bold ${car.stats.speed === Math.max(...validCars.map((c) => c.stats.speed)) ? 'text-cyan-400' : 'text-slate-300'}">${car.stats.speed}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-cyan-400" style="width:${car.stats.speed}%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Acceleration</span>
+                  <span class="font-bold ${car.stats.acceleration === Math.max(...validCars.map((c) => c.stats.acceleration)) ? 'text-amber-400' : 'text-slate-300'}">${car.stats.acceleration}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-400" style="width:${car.stats.acceleration}%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Grip</span>
+                  <span class="font-bold ${car.stats.grip === maxGrip ? 'text-emerald-400' : 'text-slate-300'}">${car.stats.grip}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500" style="width:${car.stats.grip}%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Agility</span>
+                  <span class="font-bold ${car.stats.agility === Math.max(...validCars.map((c) => c.stats.agility)) ? 'text-fuchsia-400' : 'text-slate-300'}">${car.stats.agility}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-fuchsia-500" style="width:${car.stats.agility}%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Braking</span>
+                  <span class="font-bold ${car.stats.braking === Math.max(...validCars.map((c) => c.stats.braking)) ? 'text-orange-400' : 'text-slate-300'}">${car.stats.braking}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-orange-500" style="width:${car.stats.braking}%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="text-slate-400">Downforce</span>
+                  <span class="font-bold text-white">${car.stats.aero}%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-white" style="width:${car.stats.aero}%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    // 3. Engine & Drivetrain Section
+    const engineContainer = document.getElementById('row-engine');
+    if (engineContainer) {
+      engineContainer.innerHTML = activeSlots
+        .map((car) => {
+          if (!car) return `<div class="p-4 rounded-lg bg-racing-surface2/20 border border-racing-border/30"></div>`;
+          return `
+            <dl class="space-y-2 text-xs font-mono">
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Power</dt>
+                <dd class="font-bold ${car.bhp === maxBhp ? 'text-emerald-400' : 'text-white'}">${car.bhp} BHP</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Weight</dt>
+                <dd class="font-bold text-white">${car.weightKg} kg</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Power / Weight</dt>
+                <dd class="font-bold ${car.powerToWeight === maxPtw ? 'text-emerald-400' : 'text-white'}">${car.powerToWeight} BHP/t</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Top Speed</dt>
+                <dd class="font-bold ${car.topSpeedKmh === maxSpeed ? 'text-cyan-400' : 'text-white'}">${car.topSpeedKmh} km/h</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">0–100 km/h</dt>
+                <dd class="font-bold ${car.accel0100 > 0 && car.accel0100 === minAccel ? 'text-amber-400' : 'text-white'}">${car.accel0100 > 0 ? `${car.accel0100}s` : 'N/A'}</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Max Brakes</dt>
+                <dd class="font-bold ${car.brakesKn === maxBrake ? 'text-orange-400' : 'text-white'}">${car.brakesKn} kN</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Aero (df / drag)</dt>
+                <dd class="font-bold text-white">${car.downforce} / ${car.drag}</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Drive Split</dt>
+                <dd class="font-bold text-racing-cyan">${car.driveSplit}</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Engine Pos</dt>
+                <dd class="font-bold text-white">${car.enginePlacement}</dd>
+              </div>
+            </dl>
+          `;
+        })
+        .join('');
+    }
+
+    // 4. Chassis, Suspension & Wheels Section
+    const chassisContainer = document.getElementById('row-chassis');
+    if (chassisContainer) {
+      chassisContainer.innerHTML = activeSlots
+        .map((car) => {
+          if (!car) return `<div class="p-4 rounded-lg bg-racing-surface2/20 border border-racing-border/30"></div>`;
+          return `
+            <dl class="space-y-2 text-xs font-mono">
+              <div class="p-2 rounded bg-racing-surface2/40">
+                <dt class="text-racing-muted text-[10px]">Platform</dt>
+                <dd class="font-bold text-racing-cyan truncate"><a href="/technical/chassis#${car.platformId}" class="hover:underline">${car.platformTitle}</a></dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Wheelbase</dt>
+                <dd class="font-bold text-white">${car.wheelbaseM} m</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Track Width</dt>
+                <dd class="font-bold text-white">${car.trackWidthM} m</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Body Width</dt>
+                <dd class="font-bold text-white">${car.bodyWidthM} m</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40 flex justify-between">
+                <dt class="text-racing-muted">Weight Dist</dt>
+                <dd class="font-bold text-white">${car.weightDist}</dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40">
+                <dt class="text-racing-muted text-[10px]">Front Suspension</dt>
+                <dd class="font-bold text-white truncate"><a href="/technical/suspension#${car.frontSuspId}" class="hover:underline text-racing-cyan">${car.frontSuspArchetype}</a></dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40">
+                <dt class="text-racing-muted text-[10px]">Rear Suspension</dt>
+                <dd class="font-bold text-white truncate"><a href="/technical/suspension#${car.rearSuspId}" class="hover:underline text-racing-cyan">${car.rearSuspArchetype}</a></dd>
+              </div>
+              <div class="p-2 rounded bg-racing-surface2/40">
+                <dt class="text-racing-muted text-[10px]">Tyre Compound</dt>
+                <dd class="font-bold text-white flex items-center gap-1.5 mt-0.5">
+                  <span class="inline-block px-1 py-0.2 rounded text-[9px] text-black font-bold" style="background:${car.compoundColor}">${car.compoundBadge}</span>
+                  <a href="/technical/tyres#compounds" class="hover:underline">${car.compoundName}</a>
+                </dd>
+              </div>
+            </dl>
+          `;
+        })
+        .join('');
+    }
+  }
+
+  // Hook up event listeners for dropdown changes and clear buttons
+  document.querySelectorAll('.car-selector').forEach((select) => {
+    select.addEventListener('change', (e) => {
+      const target = e.target;
+      const slot = parseInt(target.dataset.slot, 10);
+      slotCars[slot] = target.value;
+      syncUrl();
+      renderComparison();
+    });
+  });
+
+  document.querySelectorAll('.slot-clear-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const slot = parseInt(btn.dataset.slot, 10);
+      slotCars[slot] = '';
+      syncUrl();
+      renderComparison();
+    });
+  });
+
+  renderComparison();
+</script>

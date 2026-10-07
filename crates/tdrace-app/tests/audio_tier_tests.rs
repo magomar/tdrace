@@ -155,7 +155,7 @@ fn test_all_25_tiers_resolve_unique_dedicated_archetypes() {
     }
 
     // Lawnmowers decommissioned to The Vault resolve to RacingMowerV2
-    let vault_mowers = ["kart_honda_mean_mower", "kart_john_deere_racing_mower", "kart_viking_t6_tractor"];
+    let vault_mowers = ["vault_asahi_blade_runner", "vault_greenfield_prairie_racer", "vault_nordic_valhalla_tractor"];
     for mower_id in vault_mowers {
         let mower = tdrace_app::catalog::find_model_by_id(mower_id)
             .unwrap_or_else(|| panic!("Mower {mower_id} must be in catalog"));

@@ -90,6 +90,20 @@ fn test_natural_elevation_tracks_have_zero_bridges() {
     // Thunder Bowl has no bridges
     let bowl = tdrace_core::catalog::official_track("classic", "stock_thunder_bowl");
     assert!(!bowl.spline.samples.iter().any(|s| s.is_bridge));
+
+    // ERX Motor Park has natural banked clay bowls and zero crossover bridges (tdrace-5idb)
+    let erx = tdrace_core::catalog::official_track("rally", "erx_motor_park");
+    assert!(!erx.spline.samples.iter().any(|s| s.is_bridge), "ERX Motor Park spline has zero bridges");
+    if let Some(ref net) = erx.network {
+        for seg in &net.segments {
+            assert!(
+                !seg.samples.iter().any(|s| s.is_bridge),
+                "ERX Motor Park segment {} ({}) must have zero bridge samples",
+                seg.id.0,
+                seg.name
+            );
+        }
+    }
 }
 
 #[test]

@@ -7,7 +7,7 @@ use tdrace_app::module::{
 use tdrace_core::physics::sim::{
     run_protocol_a, run_protocol_b, run_protocol_c, run_protocol_e, DEFAULT_SIMULATION_DT,
 };
-use tdrace_core::physics::SurfaceType;
+use tdrace_core::physics::{SurfaceAffinityMap, SurfaceType};
 
 #[test]
 fn test_all_categories_surface_dynamics_degradation() {
@@ -73,11 +73,18 @@ fn test_all_categories_surface_dynamics_degradation() {
             c_asphalt.peak_lateral_accel_g,
             c_ice.peak_lateral_accel_g
         );
+        // Spec 074: a tyre made for other ground keeps only part of its grip on asphalt
+        // (All-Terrain 0.85), so the 0.85 g floor scales with the compound's asphalt affinity.
+        let asphalt_affinity = SurfaceAffinityMap::for_compound(config.wheels[0].compound.id)
+            .get(SurfaceType::Asphalt)
+            .min(1.0);
+        let min_g = 0.85 * asphalt_affinity;
         assert!(
-            c_asphalt.peak_lateral_accel_g >= 0.85,
-            "{}: Asphalt lateral g ({:.2}g) should be >= 0.85g",
+            c_asphalt.peak_lateral_accel_g >= min_g,
+            "{}: Asphalt lateral g ({:.2}g) should be >= {:.2}g",
             id,
-            c_asphalt.peak_lateral_accel_g
+            c_asphalt.peak_lateral_accel_g,
+            min_g
         );
     }
 }

@@ -281,7 +281,7 @@ fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
     assert_eq!(GALLERY_MODULES.len(), 6);
 
     let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
-    let expected_labels = ["GT", "RALLYCROSS", "KART", "NASCAR", "OFF-ROAD", "AUTOCROSS"];
+    let expected_labels = ["GT", "RALLYCROSS", "KART", "STOCK CAR", "OFF-ROAD", "AUTOCROSS"];
 
     for (i, &(mod_id, label)) in GALLERY_MODULES.iter().enumerate() {
         assert_ne!(label, "ALL", "The 'ALL' tab must be removed from fleet gallery");

@@ -1,0 +1,37 @@
+---
+// Landing page of one Codex section: its pages, linked when ready and listed as planned otherwise.
+import Layout from '../layouts/Layout.astro';
+import { SECTIONS } from '../lib/codex';
+
+interface Props {
+  sectionId: string;
+}
+
+const section = SECTIONS.find((s) => s.id === Astro.props.sectionId)!;
+---
+
+<Layout title={section.label} description={section.blurb}>
+  <div class="py-6 border-b border-racing-border">
+    <h1 class="text-3xl font-extrabold text-white tracking-tight">{section.label}</h1>
+    <p class="text-sm text-racing-muted font-mono mt-1">{section.blurb}</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-8">
+    {section.pages.map((page) =>
+      page.ready ? (
+        <a href={page.href} class="p-5 rounded-xl bg-racing-surface border border-racing-border hover:border-racing-cyan/50 transition-colors group">
+          <div class="text-base font-bold text-white group-hover:text-racing-cyan transition-colors">{page.label} →</div>
+          <p class="text-xs text-racing-muted mt-2">{page.blurb}</p>
+        </a>
+      ) : (
+        <div class="p-5 rounded-xl bg-racing-surface/50 border border-dashed border-racing-border">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-base font-bold text-racing-muted">{page.label}</div>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-racing-surface2 border border-racing-border text-racing-amber">PLANNED</span>
+          </div>
+          <p class="text-xs text-racing-muted/80 mt-2">{page.blurb}</p>
+        </div>
+      )
+    )}
+  </div>
+</Layout>

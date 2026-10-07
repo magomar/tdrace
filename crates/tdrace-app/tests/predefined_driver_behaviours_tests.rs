@@ -30,14 +30,14 @@ fn test_find_global_resolves_all_modules() {
     let classic = DriverCharacter::find_global("silvia_tanaka").expect("silvia_tanaka in classic");
     assert_eq!(classic.name, "Silvia Tanaka");
 
-    let gt = DriverCharacter::find_global("max_hunter").expect("max_hunter in gt");
-    assert_eq!(gt.name, "Max Hunter");
+    let gt = DriverCharacter::find_global("magnus_wolff").expect("magnus_wolff in gt");
+    assert_eq!(gt.name, "Magnus Wolff");
 
-    let nascar = DriverCharacter::find_global("dale_vance").expect("dale_vance in nascar");
-    assert_eq!(nascar.name, "Dale 'The Intimidator' Vance");
+    let nascar = DriverCharacter::find_global("colt_reynolds").expect("colt_reynolds in nascar");
+    assert_eq!(nascar.name, "Colt 'The Ironclad' Reynolds");
 
-    let rally = DriverCharacter::find_global("johan_vance").expect("johan_vance in rally");
-    assert_eq!(rally.name, "Johan Vance");
+    let rally = DriverCharacter::find_global("jonas_lindqvist").expect("jonas_lindqvist in rally");
+    assert_eq!(rally.name, "Jonas Lindqvist");
 
     let kart = DriverCharacter::find_global("marco_armani").expect("marco_armani in kart");
     assert_eq!(kart.name, "Marco Armani");
@@ -151,7 +151,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             name: "Player".into(),
             team: "Player Team".into(),
             is_player: true,
-            car_model_id: Some("gt_toyota_supra_gt4".into()),
+            car_model_id: Some("gt_yamato_hayate_t1".into()),
             country: None,
             ai_character: None,
             ai_style: None,
@@ -163,7 +163,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             name: "Driver One".into(),
             team: "Team Alpha".into(),
             is_player: false,
-            car_model_id: Some("gt_porsche_718_gt4".into()),
+            car_model_id: Some("gt_vandorn_stratus_t1".into()),
             country: None,
             ai_character: Some("aggressive".into()),
             ai_style: None,
@@ -175,7 +175,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             name: "Driver Two".into(),
             team: "Team Beta".into(),
             is_player: false,
-            car_model_id: Some("gt_bmw_m4_gt4".into()),
+            car_model_id: Some("gt_bmr_bavaria_t1".into()),
             country: None,
             ai_character: Some("smooth".into()),
             ai_style: None,
@@ -187,7 +187,7 @@ fn test_series_ai_character_propagation_and_distinct_profiles() {
             name: "Driver Three".into(),
             team: "Team Gamma".into(),
             is_player: false,
-            car_model_id: Some("gt_aston_vantage_gt4".into()),
+            car_model_id: Some("gt_albion_victor_t1".into()),
             country: None,
             ai_character: Some("calculating".into()),
             ai_style: None,

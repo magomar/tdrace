@@ -242,8 +242,9 @@ impl DriverQuality {
         match tier {
             DriverTier::Rookie => Self {
                 tier,
-                // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid.
-                pace_limit: 0.82,
+                // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid. 0.80 since
+                // curbs no longer add grip (tdrace-le75): the keyboard driver lost 1.1 s on Ridge Ring.
+                pace_limit: 0.80,
                 brake_padding: 0.22,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
@@ -485,7 +486,6 @@ impl BotProfile {
     }
 }
 
-/// Longest reverse of a no-progress watchdog recovery (s).
 /// The largest heading change between the road at the bot and at its steering target.
 const MAX_TARGET_TURN_RAD: f32 = 75.0 * std::f32::consts::PI / 180.0;
 /// The shortest look-ahead when a tight turn shortens it (m).
@@ -494,7 +494,52 @@ const MIN_TIGHT_LOOKAHEAD_M: f32 = 3.0;
 const WALL_CLEARANCE_M: f32 = 1.2;
 /// How strongly a car closer than WALL_CLEARANCE_M to a close wall aims away from it (m per m).
 const CAR_WALL_PUSH: f32 = 3.0;
-const WATCHDOG_REVERSE_S: f32 = 3.0;
+/// How far outside its own road a bot's car must be before it follows another branch it is on (m).
+const OFF_ROUTE_MARGIN_M: f32 = 2.0;
+/// How far past the edge of a branch road a bot's car still counts as on that branch (m).
+const BRANCH_REACH_M: f32 = 8.0;
+/// A slow bot pointing farther than this from its target turns round with a three-point turn (rad).
+const TURN_START_RAD: f32 = 1.75;
+/// The turn ends, driving forward, once the nose points this close to the target (rad).
+const TURN_DONE_RAD: f32 = 0.6;
+/// Reversing ends once the nose points this close to the target: full lock forward finishes the turn (rad).
+const TURN_REVERSE_DONE_RAD: f32 = 1.0;
+/// Below this speed a bot that should be moving is stuck (m/s).
+const STUCK_SPEED: f32 = 0.4;
+/// Slowest speed at which a bot starts a turn by itself (m/s).
+const TURN_START_SPEED: f32 = 3.0;
+/// How far past the front (or rear) bumper a turn looks for the edge of the drivable ground (m).
+const TURN_PROBE_M: f32 = 1.0;
+/// Drivable run-off past a road edge without a wall (m).
+const TURN_RUNOFF_M: f32 = 3.0;
+/// Gap a turn keeps from a wall (m).
+const TURN_WALL_GAP_M: f32 = 0.3;
+/// Pedal during a turn: full throttle at full lock spins a rear-drive car on the spot.
+const TURN_THROTTLE: f32 = 0.6;
+/// Shortest leg that the edge of the drivable ground can end (s).
+const TURN_MIN_LEG_S: f32 = 0.3;
+/// Longest single forward or reverse leg, and longest whole turn (s).
+const TURN_LEG_S: f32 = 3.0;
+const TURN_MAX_S: f32 = 12.0;
+
+/// A three-point turn in progress (tdrace-le75): forward at full lock towards the target until the front
+/// nears the edge of the drivable ground, then reverse at the opposite lock until the rear does, and so on.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ThreePointTurn {
+    pub reversing: bool,
+    /// Forward steering of the whole turn. Chosen once: near 180 degrees from the target the shorter way
+    /// round flips from tick to tick, and each leg undid the last one.
+    steer: f32,
+    leg_time: f32,
+    total_time: f32,
+    blocked_time: f32,
+}
+
+impl ThreePointTurn {
+    fn new(reversing: bool, steer: f32) -> Self {
+        Self { reversing, steer, leg_time: 0.0, total_time: 0.0, blocked_time: 0.0 }
+    }
+}
 
 /// Strategic decision mode for AI navigating tracks with multiple branches or Joker laps.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -548,6 +593,23 @@ fn joker_and_main_layout_ids(network: &TrackNetwork) -> (Option<String>, String)
     (joker, main)
 }
 
+/// The layout of the branch nearest to the car at `pos` that its own layout `own` does not contain: the car is on it
+/// or within `BRANCH_REACH_M` of its edge, and nearer to it than the `own_distance` it is from its own road.
+fn layout_of_branch_under(network: &TrackNetwork, own: &TrackLayout, pos: Vec2, own_distance: f32) -> Option<String> {
+    network
+        .segments
+        .iter()
+        .filter(|seg| !own.segment_sequence.contains(&seg.id))
+        .filter_map(|seg| {
+            let q = seg.project_point(pos);
+            (q.distance_to_spline < q.track_width * 0.5 + BRANCH_REACH_M && q.distance_to_spline < own_distance)
+                .then_some((q.distance_to_spline, seg))
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .and_then(|(_, seg)| network.layouts.iter().find(|l| l.segment_sequence.contains(&seg.id)))
+        .map(|l| l.id.clone())
+}
+
 /// Multi-car Bot Racing AI Controller.
 #[derive(Debug, Clone)]
 pub struct BotAiDriver {
@@ -557,11 +619,14 @@ pub struct BotAiDriver {
     pub current_target_dist: f32,
     pub avoidance_lateral_bias: f32,
     pub stuck_timer: f32,
-    pub reverse_recovery_timer: f32,
+    /// The three-point turn the bot is making, if any.
+    pub turn: Option<ThreePointTurn>,
     /// Track distance at the last 5 m of progress, and the time since (spec 046 watchdog).
     pub progress_mark: f32,
     pub no_progress_timer: f32,
-    /// Watchdog recoveries since the last progress. Each one reverses with the other lock.
+    /// Distance from the road centre at the last progress: getting 2 m closer to the road also counts.
+    pub progress_lateral: f32,
+    /// Watchdog recoveries since the last progress. Each one turns the other way round.
     pub recovery_attempts: u32,
     pub last_pos: Option<Vec2>,
     pub total_distance_travelled: f32,
@@ -615,9 +680,10 @@ impl BotAiDriver {
             current_target_dist: 0.0,
             avoidance_lateral_bias: 0.0,
             stuck_timer: 0.0,
-            reverse_recovery_timer: 0.0,
+            turn: None,
             progress_mark: 0.0,
             no_progress_timer: 0.0,
+            progress_lateral: 0.0,
             recovery_attempts: 0,
             last_pos: None,
             total_distance_travelled: 0.0,
@@ -787,6 +853,13 @@ impl BotAiDriver {
 
     /// Computes deterministic driving controls (throttle, steer, brake, handbrake)
     /// for the given bot car navigating the track amidst other cars.
+    /// Forward steering that turns the nose towards the target (negative for a positive heading error).
+    /// After a failed watchdog turn the next one turns the other way round.
+    fn turn_steer(&self, heading_error: f32) -> f32 {
+        let side = if self.recovery_attempts >= 2 && self.recovery_attempts.is_multiple_of(2) { -1.0 } else { 1.0 };
+        -heading_error.signum() * side
+    }
+
     pub fn compute_controls<V: BotVehicle>(
         &mut self,
         car: &V,
@@ -831,6 +904,19 @@ impl BotAiDriver {
             spline.project_point(car_pos)
         };
         let curr_dist = proj.progress_distance;
+
+        // A car that is stuck off its route on another branch follows that branch until the next route choice (spec
+        // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
+        // joker's inside wall for three minutes. A bot that is still making progress steers back: on killarney_rx
+        // it drifts onto the joker every lap and gets back. Stuck means a no-progress watchdog has fired.
+        // The new route takes over on the next tick.
+        if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
+            let network = track.network.as_ref();
+            let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
+            if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos, proj.distance_to_spline)) {
+                self.active_layout_id = Some(id);
+            }
+        }
         self.human.begin_tick(car, spline, &proj, other_cars, dt);
 
         // Detect lap progression if not explicitly updated
@@ -988,9 +1074,9 @@ impl BotAiDriver {
         if !self.is_in_pit_lane {
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
-            // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
-            // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
-            // slower than the keyboard reference, spec 046).
+            // from the road edge, so bots scraped the inner wall and stopped. It only acts within WALL_CLEARANCE_M
+            // of a wall, so wide run-off keeps the line. Walls further than WALL_CLEARANCE_M from the road count
+            // too: on kart_pine_grove (wall 1.9 m out) a Legend cut the curb and hit the inner wall every lap.
             let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
             let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
             let (wall_on, wall_dist) = if chord_lat > 0.0 {
@@ -998,15 +1084,15 @@ impl BotAiDriver {
             } else {
                 (mid.right_wall, mid.right_wall_distance)
             };
-            if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+            if let (true, Some(d)) = (wall_on, wall_dist) {
                 let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
                 if excess > 0.0 {
                     // Moving the target moves the middle of the line by half as much.
                     target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
                 }
             }
-            // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
-            // heading error and slid along the wall.
+            // The same for the car itself, at close walls only: a bot drifting towards a close wall at a shallow
+            // angle kept a small heading error and slid along the wall.
             let here = spline.sample_at_distance(curr_dist);
             let car_lat = (car_pos - here.point).dot(here.normal);
             let (wall_on, wall_dist) = if car_lat > 0.0 {
@@ -1027,67 +1113,107 @@ impl BotAiDriver {
         let desired_heading = to_target.y.atan2(to_target.x);
         let heading_error = normalize_angle(desired_heading - car.angle());
 
-        // Stuck / Wall-pin detection & Reverse recovery state machine
-        // A watchdog recovery reverses until the nose points near the target (after 0.5 s at least).
-        if self.recovery_attempts > 0 && self.reverse_recovery_timer < WATCHDOG_REVERSE_S - 0.5 && heading_error.abs() < 0.6 {
-            self.reverse_recovery_timer = 0.0;
-        }
-        if self.reverse_recovery_timer > 0.0 {
-            self.reverse_recovery_timer -= dt;
-            self.human.reset_recovery_line();
-            // Opposite lock to the forward turn: reversing then keeps turning the nose towards the
-            // target, as in a three-point turn (spec 046; the old sign undid each forward turn).
-            let flip = if self.recovery_attempts.is_multiple_of(2) { 1.0 } else { -1.0 };
-            let steer_rev = heading_error.signum() * flip;
-            return CarControls {
-                throttle: 0.85,
-                steer: steer_rev,
-                brake: 0.0,
-                handbrake: false,
-                reverse: true,
-            };
-        }
-
-        let moved_dist = if let Some(last_p) = self.last_pos {
-            (car_pos - last_p).length()
-        } else {
-            1.0
-        };
+        // Stuck / Wall-pin detection & three-point turn recovery (tdrace-le75)
         self.last_pos = Some(car_pos);
         self.total_distance_travelled += car_speed * dt;
+        let racing = self.total_distance_travelled > 15.0;
+        if !racing {
+            self.stuck_timer = 0.0;
+            self.turn = None;
+        }
 
         let car_alignment = car_fwd.dot(proj.tangent);
         // Spec 046: a spun bot can stop nose-first against a wall while still on the track.
         let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2)
             || (car_alignment < -0.35 && car_speed < 1.5)
             || (car_alignment < 0.5 && car_speed < 1.2);
-        if self.total_distance_travelled > 15.0 && moved_dist < (1.2 * dt) && is_stuck_situation {
+        // Only a car that hardly moves is stuck: a slow car on low-grip run-off is still pulling away.
+        if self.turn.is_none() && racing && car_speed < STUCK_SPEED && is_stuck_situation {
             self.stuck_timer += dt;
             if self.stuck_timer > 0.8 {
                 self.stuck_timer = 0.0;
-                self.reverse_recovery_timer = 1.0;
+                self.turn = Some(ThreePointTurn::new(true, self.turn_steer(heading_error)));
             }
-        } else if self.total_distance_travelled <= 15.0 {
-            self.stuck_timer = 0.0;
-            self.reverse_recovery_timer = 0.0;
         } else {
             self.stuck_timer = (self.stuck_timer - dt * 2.0).max(0.0);
         }
 
-        // Spec 046: a spun bot can also circle slowly against a wall without ever stopping.
+        // Spec 046: a spun bot can also circle slowly against a wall without ever stopping. Driving back
+        // towards the road from the run-off is progress too: reversing then threw the bot off again.
         let lap_len = spline.total_length();
         let gained = (curr_dist - self.progress_mark).rem_euclid(lap_len);
-        if self.total_distance_travelled <= 15.0 || (gained > 5.0 && gained < 0.5 * lap_len) {
+        let lateral = proj.lateral_offset.abs();
+        if !racing || (gained > 5.0 && gained < 0.5 * lap_len) || lateral < self.progress_lateral - 2.0 {
             self.progress_mark = curr_dist;
+            self.progress_lateral = lateral;
             self.no_progress_timer = 0.0;
-            self.recovery_attempts = 0;
-        } else {
+            if gained > 5.0 && gained < 0.5 * lap_len {
+                self.recovery_attempts = 0;
+            }
+        } else if self.turn.is_none() {
             self.no_progress_timer += dt;
             if self.no_progress_timer > 3.0 {
                 self.no_progress_timer = 0.0;
                 self.progress_mark = curr_dist;
-                self.reverse_recovery_timer = WATCHDOG_REVERSE_S;
+                self.progress_lateral = lateral;
                 self.recovery_attempts += 1;
+                self.turn = Some(ThreePointTurn::new(true, self.turn_steer(heading_error)));
+            }
+        }
+
+        // A slow bot pointing away from its target (after a spin, or back on the road the wrong way round)
+        // turns round instead of circling at full lock wider than the road.
+        if self.turn.is_none() && racing && car_speed < TURN_START_SPEED && heading_error.abs() > TURN_START_RAD {
+            self.turn = Some(ThreePointTurn::new(false, self.turn_steer(heading_error)));
+        }
+        if let Some(mut turn) = self.turn {
+            turn.leg_time += dt;
+            turn.total_time += dt;
+            turn.blocked_time = if car_speed < STUCK_SPEED && turn.leg_time > 0.5 { turn.blocked_time + dt } else { 0.0 };
+            if (!turn.reversing && heading_error.abs() < TURN_DONE_RAD) || turn.total_time > TURN_MAX_S {
+                self.turn = None;
+            } else {
+                // How far a point lies past the edge of the drivable ground: the road, plus the run-off up to a
+                // close wall (> 0: past it).
+                let past_edge = |p: Vec2| {
+                    let pp = spline.project_point_continuity(p, curr_dist, 30.0);
+                    let at = spline.sample_at_distance(pp.progress_distance);
+                    let (wall, wall_dist) = if pp.lateral_offset > 0.0 {
+                        (at.left_wall, at.left_wall_distance)
+                    } else {
+                        (at.right_wall, at.right_wall_distance)
+                    };
+                    let room = match (wall, wall_dist) {
+                        (true, Some(d)) => (d - TURN_WALL_GAP_M).max(0.0),
+                        _ => TURN_RUNOFF_M,
+                    };
+                    pp.lateral_offset.abs() - (at.width * 0.5 + room)
+                };
+                let hull = car.hull();
+                let probe = if turn.reversing {
+                    car_pos - car_fwd * (hull.rear + TURN_PROBE_M)
+                } else {
+                    car_pos + car_fwd * (hull.front + TURN_PROBE_M)
+                };
+                // Off the drivable ground, only moving farther out of it counts as reaching the edge. A leg turns the
+                // car a little before it can end there, or a car facing the edge only ever reversed.
+                let at_edge = turn.leg_time > TURN_MIN_LEG_S && past_edge(probe) > past_edge(car_pos).max(0.0);
+                let leg_done = at_edge
+                    || turn.blocked_time > 0.4
+                    || turn.leg_time > TURN_LEG_S
+                    || (turn.reversing && turn.leg_time > 0.5 && heading_error.abs() < TURN_REVERSE_DONE_RAD);
+                if leg_done {
+                    turn = ThreePointTurn { reversing: !turn.reversing, leg_time: 0.0, blocked_time: 0.0, ..turn };
+                }
+                self.turn = Some(turn);
+                self.human.reset_recovery_line();
+                return CarControls {
+                    throttle: TURN_THROTTLE,
+                    steer: if turn.reversing { -turn.steer } else { turn.steer },
+                    brake: 0.0,
+                    handbrake: false,
+                    reverse: turn.reversing,
+                };
             }
         }
 

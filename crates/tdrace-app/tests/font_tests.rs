@@ -2,6 +2,7 @@ use tdrace_app::ui::font::{
     Fonts, FONT_DISPLAY_BYTES, FONT_UI_BOLD_BYTES, FONT_UI_MEDIUM_BYTES,
 };
 use tdrace_app::ui::hud::format_lap_time;
+use tdrace_app::ui::menu::ModalityModal;
 
 #[test]
 fn test_embedded_font_bytes_integrity() {
@@ -84,3 +85,65 @@ fn test_font_text_wrapping_multiline() {
         );
     }
 }
+
+#[test]
+fn test_modality_modal_wrapped_lines_fit_component_space() {
+    let fonts = Fonts::load_embedded();
+    let font_size = 12.5;
+    let max_width = 500.0;
+
+    // Test all modal variants wrap and stay within bounds
+    let modals = [
+        ModalityModal::LicenseRequired,
+        ModalityModal::VehicleRequired,
+        ModalityModal::LanComingSoon,
+        ModalityModal::CloudComingSoon,
+        ModalityModal::CareerComingSoon,
+    ];
+
+    for modal in &modals {
+        let wrapped = modal.wrapped_lines(&fonts, font_size, max_width);
+        assert!(!wrapped.is_empty(), "{:?} wrapped lines should not be empty", modal);
+
+        for item in &wrapped {
+            if let Some(line) = item {
+                let dim = fonts.measure_ui_regular(line, font_size);
+                assert!(
+                    dim.width <= max_width + 5.0,
+                    "In {:?}, line '{}' width {:.1} exceeded max_width {:.1}",
+                    modal,
+                    line,
+                    dim.width,
+                    max_width
+                );
+            }
+        }
+    }
+
+    // Specifically verify LicenseRequired wraps the long paragraph into multiple lines
+    let license_modal = ModalityModal::LicenseRequired;
+    let wrapped = license_modal.wrapped_lines(&fonts, font_size, max_width);
+    let text_lines: Vec<&str> = wrapped.iter().filter_map(|l| l.as_deref()).collect();
+
+    // The raw message has 3 paragraphs, but with wrapping the long sentences it must have > 3 lines
+    assert!(
+        text_lines.len() >= 4,
+        "LicenseRequired should wrap long sentences into at least 4 lines, got {}",
+        text_lines.len()
+    );
+
+    // Verify presence of paragraph separation (None)
+    assert!(
+        wrapped.contains(&None),
+        "LicenseRequired should preserve paragraph breaks as None separators"
+    );
+
+    // Verify all original words are present in wrapped text
+    let original_words: Vec<&str> = license_modal.message().split_whitespace().collect();
+    let wrapped_words: Vec<&str> = text_lines
+        .iter()
+        .flat_map(|l| l.split_whitespace())
+        .collect();
+    assert_eq!(original_words, wrapped_words);
+}
+

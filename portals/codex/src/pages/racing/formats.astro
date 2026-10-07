@@ -1,0 +1,220 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getRacingModel } from '../../lib/codex';
+
+const racing = await getRacingModel();
+const formats = racing.formats;
+const joker = racing.joker_rule;
+const pit = racing.pit_service;
+---
+
+<Layout
+  title="Race Formats & Regulations — TDRace Codex"
+  description="Official race formats in TDRace: laps, time attack, qualifying, stage rally, elimination, joker lap rules, and pit service."
+>
+  <div class="py-6 border-b border-racing-border max-w-5xl">
+    <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Formats</p>
+    <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Race Formats & Regulations</h1>
+    <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
+      TDRace supports five distinct competition formats designed for both rapid arcade action and authentic motorsport
+      regulations. In addition to standard circuit sprints and solo time attack, the simulation enforces tactical rallycross
+      joker lap regulations and interactive pit stop field repairs with pit lane speed limiters.
+    </p>
+  </div>
+
+  <!-- Primary Competition Formats -->
+  <section class="py-8 max-w-5xl">
+    <div class="mb-6">
+      <h2 class="text-xl font-bold text-white tracking-tight">Competition Formats</h2>
+      <p class="text-xs text-racing-muted font-mono mt-1">Five core modalities supported across single races, multiplayer, and career.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {formats.map((fmt) => (
+        <div class="rounded-xl border border-racing-border bg-racing-surface p-5 flex flex-col justify-between shadow-sm">
+          <div>
+            <div class="flex items-center justify-between gap-2 border-b border-racing-border/60 pb-3">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border bg-racing-card text-racing-cyan border-racing-border/60">
+                {fmt.tag}
+              </span>
+              <span class="text-xs font-mono text-racing-muted uppercase">{fmt.id}</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-white tracking-tight mt-3">{fmt.name}</h3>
+            <p class="text-xs text-racing-muted mt-2 leading-relaxed min-h-[48px]">
+              {fmt.description}
+            </p>
+
+            <!-- Rules list -->
+            <div class="mt-4 pt-3 border-t border-racing-border/40">
+              <h4 class="text-[10px] font-mono text-racing-cyan uppercase tracking-wider mb-2">Key Regulations</h4>
+              <ul class="space-y-1.5 text-xs text-slate-300">
+                {fmt.rules.map((rule) => (
+                  <li class="flex items-start gap-1.5 leading-normal">
+                    <span class="text-racing-cyan font-mono text-[11px] mt-0.5">&bull;</span>
+                    <span>{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-racing-border/60 text-[11px] font-mono text-emerald-400 bg-emerald-500/5 -mx-5 -mb-5 p-3 rounded-b-xl border-t border-emerald-500/10">
+            <strong class="text-emerald-300">Scoring:</strong> {fmt.scoring_summary}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Deep Dive 1: Joker Lap Rule -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 lg:p-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-amber-500/20 pb-4">
+        <div>
+          <span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/40 uppercase">
+            Rallycross Regulation
+          </span>
+          <h2 class="text-2xl font-bold text-white tracking-tight mt-2">The Joker Lap Rule</h2>
+          <p class="text-xs font-mono text-amber-200/80 mt-0.5">Mandatory tactical detour route on FIA World RX & Euro RX circuits</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="text-center px-4 py-2 rounded-lg bg-racing-card/80 border border-amber-500/30">
+            <div class="text-xl font-bold text-amber-300 font-mono">{joker.mandatory_laps} Lap</div>
+            <div class="text-[10px] text-racing-muted uppercase font-mono">Mandatory</div>
+          </div>
+          <div class="text-center px-4 py-2 rounded-lg bg-racing-card/80 border border-amber-500/30">
+            <div class="text-xl font-bold text-rose-400 font-mono">+{joker.time_penalty_sec}s</div>
+            <div class="text-[10px] text-racing-muted uppercase font-mono">Missed Penalty</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="space-y-4 text-xs leading-relaxed text-slate-300">
+          <div>
+            <h3 class="text-xs font-mono text-amber-300 uppercase tracking-wider mb-1">Regulation & Enforcement</h3>
+            <p>
+              On designated rallycross circuits, every competitor must take the alternate, longer <em>Joker Lap</em> section
+              exactly <strong class="text-white">once</strong> during the course of the race. The joker track diverges from the
+              standard racing line, adding roughly two to three seconds to the lap time.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-xs font-mono text-amber-300 uppercase tracking-wider mb-1">Penalty for Failure</h3>
+            <p>
+              Failing to take the joker lap before taking the checkered flag results in an automatic, non-negotiable
+              <strong class="text-rose-400">+{joker.time_penalty_sec.toFixed(1)} second post-race time penalty</strong>,
+              virtually guaranteeing relegation to the back of the classification.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-xs font-mono text-amber-300 uppercase tracking-wider mb-1">Cockpit HUD Telemetry</h3>
+            <p class="font-mono bg-racing-card/80 p-2.5 rounded-lg border border-racing-border text-[11px] text-racing-muted">
+              {joker.hud_indicator}
+            </p>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-racing-border bg-racing-card/60 p-5 flex flex-col justify-between">
+          <div>
+            <h3 class="text-xs font-mono text-white uppercase tracking-wider mb-2">Tactical Playbook</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              {joker.strategy_notes}
+            </p>
+
+            <div class="mt-4 space-y-2 text-xs">
+              <div class="p-2.5 rounded-lg border border-racing-border/60 bg-racing-surface/80 flex items-start gap-2">
+                <span class="text-cyan-400 font-bold font-mono">01.</span>
+                <div>
+                  <strong class="text-white">The Lap 1 Undercut:</strong>
+                  <p class="text-[11px] text-racing-muted mt-0.5">Diverge immediately on Lap 1 to break away from first-turn congestion, run in clean air, and leapfrog traffic when lead cars take their joker on later laps.</p>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg border border-racing-border/60 bg-racing-surface/80 flex items-start gap-2">
+                <span class="text-amber-400 font-bold font-mono">02.</span>
+                <div>
+                  <strong class="text-white">The Late Overcut:</strong>
+                  <p class="text-[11px] text-racing-muted mt-0.5">Build a 4+ second lead in clean air at the front of the pack, then dive into the joker on the penultimate lap to emerge ahead at the merge point.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-racing-border/60 text-[11px] font-mono text-racing-muted">
+            <span class="text-white font-semibold">Venue Applicability:</span> {joker.applies_to}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Deep Dive 2: Pit Stop Service -->
+  <section class="py-8 border-t border-racing-border max-w-5xl">
+    <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6 lg:p-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+        <div>
+          <span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full border bg-cyan-500/20 text-cyan-300 border-cyan-500/40 uppercase">
+            In-Race Pit Service
+          </span>
+          <h2 class="text-2xl font-bold text-white tracking-tight mt-2">Pit Lane Transit &amp; Field Repairs</h2>
+          <p class="text-xs font-mono text-cyan-200/80 mt-0.5">Emergency mid-race restoration and pit lane speed limiter regulations</p>
+        </div>
+
+        <!-- Metric Badges -->
+        <div class="flex items-center gap-3">
+          <div class="text-center px-4 py-2 rounded-lg bg-racing-card/80 border border-cyan-500/30">
+            <div class="text-xl font-bold text-cyan-300 font-mono">{pit.speed_limiter_kmh} km/h</div>
+            <div class="text-[10px] text-racing-muted uppercase font-mono">Speed Limiter</div>
+          </div>
+          <div class="text-center px-4 py-2 rounded-lg bg-racing-card/80 border border-cyan-500/30">
+            <div class="text-xl font-bold text-emerald-400 font-mono">+{(pit.repair_amount * 100).toFixed(0)}%</div>
+            <div class="text-[10px] text-racing-muted uppercase font-mono">Field Repair</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regulatory Field Caps -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <div class="p-4 rounded-lg border border-racing-border bg-racing-card/80 text-center">
+          <div class="text-[10px] font-mono text-racing-muted uppercase">Chassis Max Cap</div>
+          <div class="text-2xl font-bold text-white font-mono mt-1">{(pit.field_repair_chassis_cap * 100).toFixed(0)}%</div>
+          <div class="text-[11px] text-racing-muted mt-1">Field crew cannot restore structural monocoque beyond 70%</div>
+        </div>
+        <div class="p-4 rounded-lg border border-racing-border bg-racing-card/80 text-center">
+          <div class="text-[10px] font-mono text-racing-muted uppercase">Engine Max Cap</div>
+          <div class="text-2xl font-bold text-white font-mono mt-1">{(pit.field_repair_engine_cap * 100).toFixed(0)}%</div>
+          <div class="text-[11px] text-racing-muted mt-1">Cooling &amp; valves patched, internal block wear retained</div>
+        </div>
+        <div class="p-4 rounded-lg border border-racing-border bg-racing-card/80 text-center">
+          <div class="text-[10px] font-mono text-racing-muted uppercase">Suspension Max Cap</div>
+          <div class="text-2xl font-bold text-white font-mono mt-1">{(pit.field_repair_suspension_cap * 100).toFixed(0)}%</div>
+          <div class="text-[11px] text-racing-muted mt-1">Bent wishbones aligned; full replacement requires garage</div>
+        </div>
+      </div>
+
+      <!-- Pit Phases Workflow -->
+      <div class="mt-6 pt-4 border-t border-racing-border/40">
+        <h3 class="text-xs font-mono text-white uppercase tracking-wider mb-3">Service Execution Sequence</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {pit.phases.map((ph, idx) => (
+            <div class="rounded-lg border border-racing-border/60 bg-racing-surface/80 p-4">
+              <div class="flex items-center justify-between text-xs font-mono border-b border-racing-border/40 pb-2">
+                <span class="text-cyan-400 font-bold">Phase 0{idx + 1}</span>
+                <span class="text-racing-muted">{ph.id}</span>
+              </div>
+              <h4 class="text-sm font-bold text-white mt-2">{ph.name}</h4>
+              <p class="text-xs text-racing-muted mt-1.5 leading-relaxed">
+                {ph.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

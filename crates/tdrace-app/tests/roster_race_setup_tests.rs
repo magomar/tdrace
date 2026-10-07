@@ -566,4 +566,220 @@ fn test_starting_grid_circuit_card_and_selector_flow() {
     assert_eq!(session.track_choice.track_id(), target_choice.track_id());
 }
 
+#[test]
+fn test_starting_grid_steppers_geometry_and_tier_control() {
+    use tdrace_app::ui::{starting_grid_grid_button_rect, starting_grid_stepper_rects};
+
+    let sw = 1280.0;
+    let sh = 720.0;
+
+    let (grid_x, grid_y, grid_w, grid_h) = starting_grid_grid_button_rect(sw, sh);
+    let (tier_rect, laps_rect, bots_rect) = starting_grid_stepper_rects(sw, sh);
+
+    // 1. All 3 steppers reside within the Grid Config card bounds
+    assert!(tier_rect.0 >= grid_x);
+    assert!(tier_rect.1 >= grid_y);
+    assert!(tier_rect.1 + tier_rect.3 <= grid_y + grid_h);
+
+    assert!(laps_rect.0 >= grid_x);
+    assert!(laps_rect.1 >= grid_y);
+    assert!(laps_rect.1 + laps_rect.3 <= grid_y + grid_h);
+
+    assert!(bots_rect.0 + bots_rect.2 <= grid_x + grid_w + 1.0);
+    assert!(bots_rect.1 >= grid_y);
+    assert!(bots_rect.1 + bots_rect.3 <= grid_y + grid_h);
+
+    // 2. Steppers are smaller in width than previous 2-stepper setup (which was ~320px)
+    assert!(tier_rect.2 < 250.0);
+    assert!(laps_rect.2 < 250.0);
+    assert!(bots_rect.2 < 250.0);
+    assert_eq!(tier_rect.2, laps_rect.2);
+    assert_eq!(laps_rect.2, bots_rect.2);
+
+    // 3. Layout is strictly ordered left-to-right: Tier -> Laps -> Bots with positive spacing
+    assert!(tier_rect.0 < laps_rect.0);
+    assert!(laps_rect.0 < bots_rect.0);
+    assert!(tier_rect.0 + tier_rect.2 < laps_rect.0);
+    assert!(laps_rect.0 + laps_rect.2 < bots_rect.0);
+}
+
+#[test]
+fn test_grid_config_controls_lock_states_across_modalities() {
+    use tdrace_app::ui::menu::GameMode;
+
+    // Standard Race: Official Grid and Laps locked; Tier difficulty can be changed
+    assert!(!GameMode::StandardRace.allows_laps_customization());
+    assert!(!GameMode::StandardRace.allows_grid_customization());
+    assert!(GameMode::StandardRace.allows_difficulty_customization());
+
+    // Career Mode: Everything locked (Championship grid, round laps, career tier)
+    assert!(!GameMode::Career.allows_laps_customization());
+    assert!(!GameMode::Career.allows_grid_customization());
+    assert!(!GameMode::Career.allows_difficulty_customization());
+
+    // Experimental / Custom Race: All 3 controls unlocked
+    assert!(GameMode::ExperimentalRace.allows_laps_customization());
+    assert!(GameMode::ExperimentalRace.allows_grid_customization());
+    assert!(GameMode::ExperimentalRace.allows_difficulty_customization());
+
+    // Split Screen: Grid and Tier customizable, Laps locked
+    assert!(!GameMode::SplitScreen.allows_laps_customization());
+    assert!(GameMode::SplitScreen.allows_grid_customization());
+    assert!(GameMode::SplitScreen.allows_difficulty_customization());
+}
+
+#[test]
+fn test_cycle_casual_ai_difficulty_forward_and_backward() {
+    use tdrace_app::ai::DriverTier;
+
+    let mut session = RaceSession::new();
+    session.set_casual_ai_difficulty(DriverTier::Rookie);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
+
+    session.cycle_casual_ai_difficulty();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    session.cycle_casual_ai_difficulty();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Contender);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
+
+    session.cycle_casual_ai_difficulty_prev();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Legend);
+}
+
+#[test]
+fn test_starting_grid_columns_non_overlapping_across_resolutions() {
+    use tdrace_app::ui::starting_grid_columns;
+
+    let resolutions = [
+        (1280.0, 720.0),   // Standard HD 16:9
+        (1087.0, 605.0),   // User screenshot resolution
+        (960.0, 540.0),    // Compact HD
+        (1920.0, 1080.0),  // Full HD
+        (2560.0, 1080.0),  // Ultrawide
+        (800.0, 600.0),    // 4:3
+    ];
+
+    for &(sw, sh) in &resolutions {
+        let (col1_x, col1_w, col2_x, col2_w) = starting_grid_columns(sw, sh);
+        assert!(col1_w > 0.0, "col1_w must be positive for {}x{}", sw, sh);
+        assert!(col2_w > 0.0, "col2_w must be positive for {}x{}", sw, sh);
+        assert!(
+            col1_x + col1_w < col2_x,
+            "Columns MUST NOT overlap! col1 right edge ({}) >= col2 left edge ({}) at {}x{}",
+            col1_x + col1_w,
+            col2_x,
+            sw,
+            sh
+        );
+        assert!(
+            col2_x + col2_w <= sw + 0.1,
+            "col2 right edge ({}) exceeds screen width ({}) at {}x{}",
+            col2_x + col2_w,
+            sw,
+            sw,
+            sh
+        );
+    }
+}
+
+#[test]
+fn test_starting_grid_config_keyboard_and_gamepad_navigation_and_modification() {
+    use tdrace_app::ai::DriverTier;
+    use tdrace_app::ui::menu::{GameMode, TrackChoice};
+    use tdrace_app::ui::starting_grid::StartingGridFocus;
+
+    let mut session = RaceSession::new();
+    session.track_choice = TrackChoice::ClassicGrandPrix;
+    session.game_mode = GameMode::ExperimentalRace; // all controls unlocked
+    session.init_race();
+
+    // Default: LeftSetup, Card 0 (Garage)
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
+    assert_eq!(session.starting_grid_card_idx, 0);
+
+    // 1. Navigate UP from Garage (0) -> Circuit Card (4)
+    session.input.gamepad.snapshot.nav_up = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_up = false;
+    assert_eq!(session.starting_grid_card_idx, 4);
+
+    // 2. Navigate RIGHT from Circuit Card (4) -> enters Grid Config (card_idx = 1, config_idx = 0 Tier)
+    session.input.gamepad.snapshot.nav_right = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_right = false;
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::RightRoster);
+    assert_eq!(session.starting_grid_card_idx, 1);
+    assert_eq!(session.starting_grid_config_idx, 0); // Tier
+
+    // 3. Cycle Tier difficulty with Confirm (Gamepad A)
+    session.set_casual_ai_difficulty(DriverTier::Rookie);
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    // 4. Cycle Tier difficulty backward with Gamepad X
+    session.input.gamepad.snapshot.btn_x_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_x_pressed = false;
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Rookie);
+
+    // 5. Navigate RIGHT to Laps (config_idx = 1)
+    session.input.gamepad.snapshot.nav_right = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_right = false;
+    assert_eq!(session.starting_grid_config_idx, 1);
+
+    // 6. Modify Laps with Confirm (Gamepad A)
+    let initial_laps = session.total_laps;
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.total_laps, initial_laps + 1);
+
+    // 7. Decrement Laps with Gamepad X
+    session.input.gamepad.snapshot.btn_x_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_x_pressed = false;
+    assert_eq!(session.total_laps, initial_laps);
+
+    // 8. Navigate RIGHT to Bots (config_idx = 2)
+    session.input.gamepad.snapshot.nav_right = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_right = false;
+    assert_eq!(session.starting_grid_config_idx, 2);
+
+    // 9. Modify Bots with Confirm (Gamepad A)
+    let initial_bots = session.num_bots;
+    let expected_bots = if initial_bots < session.max_bots() { initial_bots + 1 } else { 1 };
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert_eq!(session.num_bots, expected_bots);
+
+    // 10. Navigate LEFT back to Laps (1) and Tier (0)
+    session.input.gamepad.snapshot.nav_left = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_left = false;
+    assert_eq!(session.starting_grid_config_idx, 1);
+
+    session.input.gamepad.snapshot.nav_left = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_left = false;
+    assert_eq!(session.starting_grid_config_idx, 0);
+
+    // 11. Navigate LEFT from Tier (0) -> returns to LeftSetup
+    session.input.gamepad.snapshot.nav_left = true;
+    session.update_starting_grid();
+    session.input.gamepad.snapshot.nav_left = false;
+    assert_eq!(session.starting_grid_focus, StartingGridFocus::LeftSetup);
+}
+
+
 

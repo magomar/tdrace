@@ -340,7 +340,7 @@ fn test_in_development_lan_cloud_modals() {
 fn test_career_mode_opens_career_select() {
     let mut session = RaceSession::new();
     session.active_profile.academy_progress.license_granted = true;
-    session.active_profile.owned_cars.push("gt_toyota_supra_gt4".to_string());
+    session.active_profile.owned_cars.push("gt_yamato_hayate_t1".to_string());
 
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::SinglePlayer,
@@ -1083,7 +1083,7 @@ fn test_career_mode_initial_tier_1_championship_gating() {
         .any(|c| c.series_id == "gt3_european_challenge"));
     assert!(!cards
         .iter()
-        .any(|c| c.series_id == "nascar_intermediate_oval_challenge"));
+        .any(|c| c.series_id == "stockcar_intermediate_oval_challenge"));
     assert!(!cards
         .iter()
         .any(|c| c.series_id == "rally_supercar_lites_trophy"));

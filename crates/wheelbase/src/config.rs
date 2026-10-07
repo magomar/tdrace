@@ -787,6 +787,15 @@ impl Default for SuspensionArchetype {
 }
 
 impl SuspensionArchetype {
+    pub const ALL: [Self; 6] = [
+        Self::RigidKart,
+        Self::SolidLiveAxle,
+        Self::MacPhersonStrut,
+        Self::DoubleWishbone,
+        Self::PushrodInboard,
+        Self::LongTravelOffRoad,
+    ];
+
     /// Structural resilience factor governing resistance to collision, kerb, and landing damage (Spec 078).
     /// Higher values indicate greater robustness against failure.
     pub fn robustness_factor(&self) -> f32 {
@@ -1079,6 +1088,8 @@ impl Default for EnginePlacement {
 }
 
 impl EnginePlacement {
+    pub const ALL: [Self; 3] = [Self::FrontEngine, Self::MidEngine, Self::RearEngine];
+
     /// Powertrain overhaul labor and complexity cost multiplier for garage repairs (Spec 078).
     pub fn repair_cost_multiplier(&self) -> f32 {
         match self {
@@ -1421,9 +1432,13 @@ impl CarConfig {
             w.brake_bias_factor = if front { bb * 0.5 } else { (1.0 - bb) * 0.5 };
             w.drive_torque_factor = if front { db * 0.5 } else { (1.0 - db) * 0.5 };
         }
+        self.wheelbase = self.wheelbase.clamp(0.90, 4.50);
+        self.track_width = self.track_width.clamp(0.70, 3.00);
         if self.chassis.body_width <= 0.0 {
             self.chassis = ChassisSkeleton::synthesize_proportional(self.wheelbase, self.track_width);
         }
+        self.chassis.front_overhang = self.chassis.front_overhang.clamp(0.10, 2.00);
+        self.chassis.rear_overhang = self.chassis.rear_overhang.clamp(0.10, 2.00);
     }
 
     /// Builder form of [`CarConfig::finalize`].
@@ -1709,6 +1724,9 @@ impl CarConfig {
             w.tire_width = 0.22;
             w.rotational_inertia = 1.30;
         }
+        // Gravel and dirt tyres. Spec 074 gave every car MediumSlick, so rally and autocross cars ran
+        // slicks on gravel (affinity 0.32) and bots stalled on Classic RX/AX circuits (tdrace-lxkv).
+        cfg.set_compound(CompoundId::AllTerrain);
         cfg.finalized()
     }
 
@@ -1926,6 +1944,340 @@ impl CarConfig {
             damage_enabled: true,
         }
         .finalized()
+    }
+
+    /// 150 BHP Cross Car (Continental Autocross T1/T2).
+    /// Single-seat tubular spaceframe buggy with a 750cc-850cc motorcycle superbike engine,
+    /// ultra-fast rev acceleration, agile steering, and open-wheel long-travel articulation.
+    pub fn cross_car() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 420.0;
+        cfg.inertia = 480.0;
+        cfg.wheelbase = 2.15;
+        cfg.track_width = 1.55;
+        cfg.cg_to_front = 1.10;
+        cfg.cg_to_rear = 1.05;
+        cfg.cg_height = 0.38;
+        cfg.max_engine_force = 5800.0;
+        cfg.top_speed_mps = 50.0; // ~180 km/h
+        cfg.drive_bias = 0.0; // RWD
+        cfg.chassis = ChassisSkeleton::new(0.22, 0.28, 1.65, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.30;
+            w.tire_width = 0.20;
+            w.rotational_inertia = 0.85;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 550+ BHP Touring AX Saloon (Continental Autocross T4).
+    /// High-downforce closed-cockpit silhouette touring saloon with 50:50 AWD traction,
+    /// front splitter, double wishbone geometry, and explosive gravel acceleration.
+    pub fn touring_ax() -> Self {
+        let mut cfg = Self::rally_car();
+        cfg.mass = 1150.0;
+        cfg.inertia = 1550.0;
+        cfg.wheelbase = 2.55;
+        cfg.track_width = 1.85;
+        cfg.cg_to_front = 1.25;
+        cfg.cg_to_rear = 1.30;
+        cfg.cg_height = 0.39;
+        cfg.max_engine_force = 10500.0;
+        cfg.top_speed_mps = 58.0;
+        cfg.drive_bias = 0.5; // AWD
+        cfg.chassis = ChassisSkeleton::new(0.85, 0.78, 1.92, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
+        cfg.engine_placement = EnginePlacement::FrontEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.33;
+            w.tire_width = 0.24;
+            w.rotational_inertia = 1.30;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 4WD Dirt SuperBuggy & Buggy 1600 (Continental Autocross T3/T5).
+    /// Mid-engine 4WD spaceframe dirt buggy combining long suspension travel with
+    /// high power-to-weight and balanced 50:50 all-wheel-drive traction.
+    pub fn super_buggy() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 680.0;
+        cfg.inertia = 780.0;
+        cfg.wheelbase = 2.60;
+        cfg.track_width = 1.82;
+        cfg.cg_to_front = 1.32;
+        cfg.cg_to_rear = 1.28;
+        cfg.cg_height = 0.40;
+        cfg.max_engine_force = 9200.0;
+        cfg.top_speed_mps = 56.0;
+        cfg.drive_bias = 0.5; // 4WD
+        cfg.chassis = ChassisSkeleton::new(0.24, 0.48, 1.90, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.35;
+            w.tire_width = 0.24;
+            w.rotational_inertia = 1.20;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// Classic Baja Dune Buggy (Extreme Off-Road T1 Volkskraft).
+    /// Classic air-cooled rear boxer engine, compact Beetle floorpan with forward curved nose,
+    /// high rear engine overhang, and long-travel off-road swing/trailing arm suspension.
+    pub fn dune_buggy_baja() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 650.0;
+        cfg.inertia = 760.0;
+        cfg.wheelbase = 2.20;
+        cfg.track_width = 1.65;
+        cfg.cg_to_front = 1.28;
+        cfg.cg_to_rear = 0.92; // 58% rear weight bias
+        cfg.cg_height = 0.44;
+        cfg.max_engine_force = 6200.0;
+        cfg.top_speed_mps = 48.0;
+        cfg.drive_bias = 0.0; // RWD
+        cfg.chassis = ChassisSkeleton::new(0.42, 0.52, 1.75, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
+        cfg.engine_placement = EnginePlacement::RearEngine;
+        for (i, w) in cfg.wheels.iter_mut().enumerate() {
+            if i < 2 {
+                w.tire_radius = 0.34;
+                w.tire_width = 0.18;
+                w.rotational_inertia = 1.05;
+            } else {
+                w.tire_radius = 0.38;
+                w.tire_width = 0.26;
+                w.rotational_inertia = 1.45;
+            }
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 800 BHP Unlimited AWD Trophy Truck (Extreme Off-Road T2/T6/T7).
+    /// Full-size off-road truck spaceframe with a front-mounted big-block V8, massive 30-inch
+    /// suspension travel, high high-speed bump absorption, and substantial truck hull bodywork.
+    pub fn trophy_truck() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 2200.0;
+        cfg.inertia = 3200.0;
+        cfg.wheelbase = 3.20;
+        cfg.track_width = 2.10;
+        cfg.cg_to_front = 1.55;
+        cfg.cg_to_rear = 1.65;
+        cfg.cg_height = 0.52;
+        cfg.max_engine_force = 13500.0;
+        cfg.top_speed_mps = 60.0;
+        cfg.drive_bias = 0.5; // AWD
+        cfg.chassis = ChassisSkeleton::new(0.95, 1.20, 2.25, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
+        cfg.engine_placement = EnginePlacement::FrontEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.46; // ~37-inch desert race tire
+            w.tire_width = 0.32;
+            w.rotational_inertia = 2.20;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// Heavy Mud Bogger 4x4 (Extreme Off-Road T4).
+    /// High-riser dual solid live axle chassis with extreme ground clearance, elevated center of
+    /// gravity, deep chevron tractor tires, and high-torque mud churning capability.
+    pub fn mud_bogger() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 2600.0;
+        cfg.inertia = 3900.0;
+        cfg.wheelbase = 3.10;
+        cfg.track_width = 2.25;
+        cfg.cg_to_front = 1.50;
+        cfg.cg_to_rear = 1.60;
+        cfg.cg_height = 0.65; // High-riser center of gravity
+        cfg.max_engine_force = 14000.0;
+        cfg.top_speed_mps = 45.0;
+        cfg.drive_bias = 0.5;
+        cfg.chassis = ChassisSkeleton::new(0.90, 1.15, 2.35, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle);
+        cfg.engine_placement = EnginePlacement::FrontEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.52; // 44-inch chevron tractor tire
+            w.tire_width = 0.40;
+            w.rotational_inertia = 3.10;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 1500 BHP Monster Truck (Extreme Off-Road T5).
+    /// Massive tubular chassis with 66-inch Terra tires, supercharged alcohol V8 mounted
+    /// centrally, immense roll inertia, planetary 4-wheel steer capability, and huge jump compliance.
+    pub fn monster_truck() -> Self {
+        let mut cfg = Self::sand_rail();
+        cfg.mass = 4200.0;
+        cfg.inertia = 6500.0;
+        cfg.wheelbase = 3.60;
+        cfg.track_width = 2.60;
+        cfg.cg_to_front = 1.80;
+        cfg.cg_to_rear = 1.80;
+        cfg.cg_height = 0.80;
+        cfg.max_engine_force = 22000.0;
+        cfg.top_speed_mps = 42.0;
+        cfg.drive_bias = 0.5;
+        cfg.chassis = ChassisSkeleton::new(0.80, 0.80, 2.75, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.84; // 66-inch Terra flotation tire
+            w.tire_width = 0.65;
+            w.rotational_inertia = 5.50;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// Compact FWD Junior Rally Supermini (Rallycross T1).
+    /// Agile, lightweight front-wheel-drive hatchback with MacPherson strut front suspension,
+    /// crisp lift-off oversteer rotation, and responsive naturally-aspirated power delivery.
+    pub fn rally_junior_fwd() -> Self {
+        let mut cfg = Self::rally_car();
+        cfg.mass = 1030.0;
+        cfg.inertia = 1250.0;
+        cfg.wheelbase = 2.35;
+        cfg.track_width = 1.50;
+        cfg.cg_to_front = 1.05;
+        cfg.cg_to_rear = 1.30;
+        cfg.cg_height = 0.40;
+        cfg.max_engine_force = 5800.0;
+        cfg.top_speed_mps = 50.0;
+        cfg.drive_bias = 1.0; // 100% FWD
+        cfg.chassis = ChassisSkeleton::new(0.72, 0.58, 1.72, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::MacPhersonStrut);
+        cfg.engine_placement = EnginePlacement::FrontEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.31;
+            w.tire_width = 0.20;
+            w.rotational_inertia = 1.10;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 500+ BHP Group B Rally Monster (Rallycross T7).
+    /// Ultra-lightweight mid-engine silhouette monster with explosive turbo boost,
+    /// 50:50 AWD mechanical lock, high aerodynamic rear wing, and hair-trigger handling dynamics.
+    pub fn rally_group_b() -> Self {
+        let mut cfg = Self::rally_car();
+        cfg.mass = 960.0;
+        cfg.inertia = 1200.0;
+        cfg.wheelbase = 2.30;
+        cfg.track_width = 1.68;
+        cfg.cg_to_front = 1.15;
+        cfg.cg_to_rear = 1.15;
+        cfg.cg_height = 0.38;
+        cfg.max_engine_force = 11000.0;
+        cfg.top_speed_mps = 64.0;
+        cfg.drive_bias = 0.5;
+        cfg.chassis = ChassisSkeleton::new(0.78, 0.75, 1.85, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.33;
+            w.tire_width = 0.24;
+            w.rotational_inertia = 1.25;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// RX1e / Group E Dual-Motor Electric RX Platform (Rallycross T5/T6).
+    /// Low-center-of-gravity battery chassis with instantaneous dual-motor torque (500 kW / 680 BHP),
+    /// seamless electronic torque distribution, and aggressive AWD corner exit traction.
+    pub fn rally_electric_rx() -> Self {
+        let mut cfg = Self::rally_car();
+        cfg.mass = 1300.0;
+        cfg.inertia = 1650.0;
+        cfg.wheelbase = 2.45;
+        cfg.track_width = 1.75;
+        cfg.cg_to_front = 1.22;
+        cfg.cg_to_rear = 1.23;
+        cfg.cg_height = 0.36; // Lower CG from underfloor battery pack
+        cfg.max_engine_force = 12500.0;
+        cfg.top_speed_mps = 62.0;
+        cfg.drive_bias = 0.5;
+        cfg.chassis = ChassisSkeleton::new(0.74, 0.60, 1.80, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.34;
+            w.tire_width = 0.25;
+            w.rotational_inertia = 1.35;
+        }
+        cfg.set_compound(CompoundId::AllTerrain);
+        cfg.finalized()
+    }
+
+    /// 250cc Twin Superkart GP with Aerodynamic Wings (Karting T5/T6).
+    /// High-downforce aerodynamic racing kart equipped with front nosecone wing and high rear wing
+    /// (Cl = 0.65), achieving speeds over 230 km/h with extreme lateral grip and rigid chassis agility.
+    pub fn superkart_gp() -> Self {
+        let mut cfg = Self::kart();
+        cfg.mass = 215.0;
+        cfg.inertia = 120.0;
+        cfg.wheelbase = 1.25;
+        cfg.track_width = 1.05;
+        cfg.cg_to_front = 0.65;
+        cfg.cg_to_rear = 0.60;
+        cfg.cg_height = 0.20;
+        cfg.max_engine_force = 4200.0;
+        cfg.top_speed_mps = 65.0; // ~235 km/h
+        cfg.downforce_coefficient = 0.65;
+        cfg.chassis = ChassisSkeleton::new(0.32, 0.35, 1.20, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart);
+        cfg.engine_placement = EnginePlacement::MidEngine;
+        for (i, w) in cfg.wheels.iter_mut().enumerate() {
+            if i < 2 {
+                w.tire_radius = 0.16;
+                w.tire_width = 0.14;
+            } else {
+                w.tire_radius = 0.17;
+                w.tire_width = 0.22;
+            }
+        }
+        cfg.set_compound(CompoundId::SoftSlick);
+        cfg.finalized()
+    }
+
+    /// V8 Super Truck (NASCAR T4 Craftsman Truck).
+    /// Tubular spaceframe pickup truck chassis with high greenhouse, upright aerodynamic wake,
+    /// solid live rear axle, and heavy pushrod V8 power delivery.
+    pub fn stock_car_truck() -> Self {
+        let mut cfg = Self::stock_car_ta1();
+        cfg.mass = 1520.0;
+        cfg.inertia = 2350.0;
+        cfg.wheelbase = 2.85;
+        cfg.track_width = 1.86;
+        cfg.cg_to_front = 1.40;
+        cfg.cg_to_rear = 1.45;
+        cfg.cg_height = 0.44;
+        cfg.max_engine_force = 11000.0;
+        cfg.top_speed_mps = 78.0;
+        cfg.air_drag_coefficient = 0.46; // Higher pickup drag
+        cfg.chassis = ChassisSkeleton::new(0.96, 1.35, 2.00, -0.40, 0.30, 0.65, 0.70, 0.05);
+        cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle);
+        cfg.engine_placement = EnginePlacement::FrontEngine;
+        for w in &mut cfg.wheels {
+            w.tire_radius = 0.36;
+            w.tire_width = 0.30;
+            w.rotational_inertia = 1.65;
+        }
+        cfg.set_compound(CompoundId::HardSlick);
+        cfg.finalized()
     }
 }
 

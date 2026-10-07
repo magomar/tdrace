@@ -23,7 +23,7 @@ fn car(id: &str) -> &'static RealCarModel {
 }
 
 fn sweeper_entry_kmh(model: &RealCarModel) -> f32 {
-    if model.id == "classic_kart" {
+    if model.id.starts_with("classic_kart") {
         55.0
     } else {
         70.0

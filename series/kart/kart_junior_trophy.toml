@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Karting Career Mode: FIA Karting Academy Trophy (Tier 2)
+# Karting Career Mode: International Karting Academy Trophy (Tier 2)
 # ==============================================================================
 
 [championship]
 id = "kart_junior_trophy"
-name = "FIA Karting Academy Trophy"
+name = "International Karting Academy Trophy"
 description = "Restricted 125cc OK-Junior feeder championship testing racecraft and clean apex speed across 6 European circuits."
 module_id = "kart"
 tier = 2
@@ -15,7 +15,7 @@ ai_difficulty = "standard"
 icon = "kart"
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false
@@ -61,15 +61,15 @@ id = "player"
 name = "Player"
 team = "Apex Kart Racing"
 is_player = true
-car_model_id = "kart_tony_kart_rookie_okj"
+car_model_id = "kart_verde_sprint_t2"
 country = "ESP"
 livery_idx = 0
 
 [[drivers]]
 id = "marco_armani"
 name = "Marco Armani"
-team = "Tony Kart Racing"
-car_model_id = "kart_tony_kart_rookie_okj"
+team = "Verde Factory Karting"
+car_model_id = "kart_verde_sprint_t2"
 country = "ITA"
 ai_character = "smooth"
 livery_idx = 1
@@ -77,8 +77,8 @@ livery_idx = 1
 [[drivers]]
 id = "lucas_vance"
 name = "Lucas Vance"
-team = "CRG Factory Team"
-car_model_id = "kart_crg_black_mirror_okj"
+team = "Blackline Factory Team"
+car_model_id = "kart_blackline_obsidian_t2"
 country = "GBR"
 ai_character = "aggressive"
 livery_idx = 2
@@ -86,8 +86,8 @@ livery_idx = 2
 [[drivers]]
 id = "alex_rossi"
 name = "Alex Rossi"
-team = "Birel ART"
-car_model_id = "kart_birel_ry29_okj"
+team = "Rosso Factory Karting"
+car_model_id = "kart_rosso_veloce_t2"
 country = "ITA"
 ai_character = "tenacious"
 livery_idx = 3
@@ -95,8 +95,8 @@ livery_idx = 3
 [[drivers]]
 id = "sofia_lind"
 name = "Sofia Lind"
-team = "Kosmic Racing"
-car_model_id = "kart_tony_kart_rookie_okj"
+team = "Starlight Kart Team"
+car_model_id = "kart_verde_sprint_t2"
 country = "SWE"
 ai_character = "calculating"
 livery_idx = 4
@@ -104,8 +104,8 @@ livery_idx = 4
 [[drivers]]
 id = "finn_korhonen"
 name = "Finn Korhonen"
-team = "Sodi Kart"
-car_model_id = "kart_crg_black_mirror_okj"
+team = "Gallic Kart Racing"
+car_model_id = "kart_blackline_obsidian_t2"
 country = "FIN"
 ai_character = "fast"
 livery_idx = 5
@@ -113,8 +113,8 @@ livery_idx = 5
 [[drivers]]
 id = "leo_dupont"
 name = "Leo Dupont"
-team = "Energy Corse"
-car_model_id = "kart_birel_ry29_okj"
+team = "Veloce Karting"
+car_model_id = "kart_rosso_veloce_t2"
 country = "FRA"
 ai_character = "balanced"
 livery_idx = 6
@@ -122,8 +122,8 @@ livery_idx = 6
 [[drivers]]
 id = "mateo_silva"
 name = "Mateo Silva"
-team = "Parolin Motorsport"
-car_model_id = "kart_tony_kart_rookie_okj"
+team = "Veneto Kart Racing"
+car_model_id = "kart_verde_sprint_t2"
 country = "BRA"
 ai_character = "strategic"
 livery_idx = 7

@@ -14,9 +14,9 @@ use cabinet::ui::{
 pub fn gt_tier_title(tier: u32) -> &'static str {
     match tier {
         1 => "GT4 Clubman Sprint Cup",
-        2 => "FIA GT3 European Challenge",
-        3 => "SRO GT2 Power Masters",
-        4 => "Le Mans 90s Heritage Trophy",
+        2 => "Continental GT3 Sprint Challenge",
+        3 => "Grand Touring Biturbo Masters",
+        4 => "Endurance 90s Heritage Trophy",
         _ => "World Endurance Hypercar Grand Prix",
     }
 }
@@ -24,11 +24,11 @@ pub fn gt_tier_title(tier: u32) -> &'static str {
 /// Vehicle class description for a GT tier.
 pub fn gt_tier_class(tier: u32) -> &'static str {
     match tier {
-        1 => "GT4 Clubsport (500 BHP • Mechanical Grip)",
-        2 => "FIA GT3 Pro (565 BHP • High Downforce)",
-        3 => "SRO GT2 Masters (640–700 BHP • High Speed)",
-        4 => "GT1 Heritage (600–650 BHP • Historic Legends)",
-        _ => "Hypercar Prototype (680–1000+ BHP • Le Mans Apex)",
+        1 => "GT Tier 1 Clubsport (500 BHP • Mechanical Grip)",
+        2 => "GT Tier 2 Pro (565 BHP • High Downforce)",
+        3 => "GT Tier 3 Masters (640–700 BHP • High Speed)",
+        4 => "GT Tier 4 Legend (600–650 BHP • Historic Legends)",
+        _ => "Hypercar Prototype (680–1000+ BHP • 24h Apex)",
     }
 }
 
@@ -309,10 +309,10 @@ pub fn render_career_hub_screen(
         .map(|t| {
             let base = match t {
                 1 => "1. GT4 CLUBMAN",
-                2 => "2. FIA GT3",
-                3 => "3. SRO GT2",
-                4 => "4. LE MANS 90s",
-                _ => "5. WEC HYPERCAR",
+                2 => "2. GT PRO SPRINT",
+                3 => "3. GT BITURBO",
+                4 => "4. ENDURANCE 90s",
+                _ => "5. WORLD HYPERCAR",
             };
             if t <= career.level {
                 base.to_string()

@@ -122,9 +122,15 @@ mkdir -p "${STAGE_DIR}"
 # Copy binary
 cp "${EXE_SRC}" "${STAGE_DIR}/tdrace-app.exe"
 
-# Copy assets
+# Copy assets (exclude raw OSM extracts and reference photos)
 if [ -d "${ROOT_DIR}/assets" ]; then
-    cp -r "${ROOT_DIR}/assets" "${STAGE_DIR}/assets"
+    mkdir -p "${STAGE_DIR}/assets"
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --exclude='osm/' --exclude='textures/vehicles/references/' "${ROOT_DIR}/assets/" "${STAGE_DIR}/assets/"
+    else
+        cp -r "${ROOT_DIR}/assets" "${STAGE_DIR}/assets"
+        rm -rf "${STAGE_DIR}/assets/osm" "${STAGE_DIR}/assets/textures/vehicles/references" 2>/dev/null || true
+    fi
 fi
 
 # Copy tracks (excluding any .git files or submodules)

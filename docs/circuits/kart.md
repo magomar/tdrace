@@ -54,4 +54,4 @@ The **Karting Circuits** catalog in [`tracks/kart/`](../../tracks/kart) encompas
 
 ---
 
-For vehicle specs from 60cc Cadets to 240 km/h Superkarts, see the [Karting Roster](../vehicles/karting.md).
+For vehicle specs from 60cc Cadets to 240 km/h Superkarts, see the [Karting Roster](http://localhost:4322/showroom/cars?module=kart).

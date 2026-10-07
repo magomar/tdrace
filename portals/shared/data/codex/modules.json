@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "classic",
+      "title": "TDRACE ARCADE MOTORSPORT",
+      "subtitle": "Modern Cross-Platform 2D/2.5D Arcade Racing & CAD Circuit Studio",
+      "launch": true,
+      "cars": 12,
+      "circuits": 18
+    },
+    {
+      "id": "kart",
+      "title": "KARTING WORLD CUP",
+      "subtitle": "Direct-Drive 125cc Shifter Karts, 3G Apex Cornering & Wheel-to-Wheel Heats",
+      "launch": true,
+      "cars": 18,
+      "circuits": 20
+    },
+    {
+      "id": "autocross",
+      "title": "CONTINENTAL AUTOCROSS",
+      "subtitle": "Natural Unpaved Dirt & Buggy Racing",
+      "launch": true,
+      "cars": 15,
+      "circuits": 17
+    },
+    {
+      "id": "rally",
+      "title": "RALLYCROSS WORLD CUP",
+      "subtitle": "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts",
+      "launch": true,
+      "cars": 21,
+      "circuits": 20
+    },
+    {
+      "id": "gt",
+      "title": "GRAND TOURING CHALLENGE",
+      "subtitle": "Global Multi-Class GT3 & GT2 Endurance and Sprint Championship",
+      "launch": false,
+      "cars": 20,
+      "circuits": 18
+    },
+    {
+      "id": "nascar",
+      "title": "STOCK CAR CUP & TA1 SILHOUETTE",
+      "subtitle": "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Silhouette Road Courses",
+      "launch": false,
+      "cars": 15,
+      "circuits": 17
+    },
+    {
+      "id": "extreme_offroad",
+      "title": "EXTREME OFF-ROAD & STUNT ARENAS",
+      "subtitle": "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas",
+      "launch": false,
+      "cars": 21,
+      "circuits": 20
+    }
+  ]
+}

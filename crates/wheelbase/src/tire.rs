@@ -16,6 +16,13 @@ use super::surface::{CompoundId, SurfaceAffinityMap, SurfaceType};
 /// wheel-chassis contact stays stable down to 0 m/s at 60 Hz and 120 Hz.
 pub const SLIP_REFERENCE_SPEED: f32 = 4.0;
 
+/// Scales the compound wear rate for slide power past the grip peak (tdrace-6dl0): sprint races are
+/// driven on one set of tyres, and only drift abuse should wear them enough to need a pit stop.
+const DRIFT_WEAR_GAIN: f32 = 6.0;
+
+/// Share of the pavement tread wear that a slide on loose ground (dirt, gravel, sand, mud, snow) causes.
+const LOOSE_GROUND_WEAR: f32 = 0.25;
+
 /// Default baseline tire temperature (nominal warm tire in °C).
 pub fn default_tire_temperature() -> f32 {
     65.0
@@ -815,7 +822,8 @@ impl WheelAssembly {
     /// - Frictional work dissipation: P_diss = (|Fx * s| + |Fy * alpha|) * max(|v_long|, |omega * r|)
     /// - Heating: dT_heat = P_diss * k_heat
     /// - Cooling: dT_cool = k_cool * (1 + 0.035 * v) * (T - T_ambient)
-    /// - Wear: dW = k_wear * P_diss * temp_factor
+    /// - Wear: dW = k_wear * P_slide * temp_factor, where P_slide counts only the sideways slip past the
+    ///   tyre's grip peak (tdrace-6dl0): clean driving barely wears the tread, a drift does.
     pub fn step_thermal_and_wear(
         &mut self,
         fx: f32,
@@ -823,6 +831,7 @@ impl WheelAssembly {
         slip_ratio: f32,
         slip_angle: f32,
         wheel_speed: f32,
+        surface: SurfaceType,
         dt: f32,
     ) {
         let r = self.config.tire_radius;
@@ -851,8 +860,13 @@ impl WheelAssembly {
         } else {
             1.0
         };
-        let k_wear = self.config.compound.wear_rate;
-        let wear_rate = p_diss * k_wear * temp_wear_boost;
+        // Only a sideways slide past the grip peak (a drift) wears the tread; wheelspin and lock-ups do not.
+        // Sliding on loose ground (rallycross and autocross drifting) wears it much less than on pavement.
+        let slide_lat = (slip_angle.abs() - self.config.tire_model.peak_slip_angle_deg.to_radians()).max(0.0);
+        let abrasion = if surface.is_loose_deformable() { LOOSE_GROUND_WEAR } else { 1.0 };
+        let p_slide = (fy * slide_lat).abs() * v_rub * abrasion;
+        let k_wear = self.config.compound.wear_rate * DRIFT_WEAR_GAIN;
+        let wear_rate = p_slide * k_wear * temp_wear_boost;
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
     }
 
@@ -1070,7 +1084,7 @@ mod tests {
         let dt = 1.0 / 60.0;
         let steps = (8.5 / dt) as usize;
         for _ in 0..steps {
-            wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, dt);
+            wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, dt);
         }
 
         // Surface temperature must rise above 120°C

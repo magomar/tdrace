@@ -42,12 +42,12 @@ impl GameModule for ExtremeOffRoadModule {
     }
 
     fn subtitle(&self) -> &'static str {
-        "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"
+        "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"
     }
 
     fn theme(&self) -> ModuleTheme {
         ModuleTheme {
-            primary_accent: Color::new(1.0, 0.40, 0.05, 1.0), // Baja Danger Orange
+            primary_accent: Color::new(1.0, 0.40, 0.05, 1.0), // Sonora Danger Orange
             secondary_accent: Color::new(0.15, 0.85, 1.0, 1.0), // Electric Cyan / Ice Blue
             header_badge: "EXTREME OFF-ROAD & STUNT ARENAS",
             background_tint: Color::new(0.08, 0.05, 0.03, 0.98),
@@ -68,7 +68,7 @@ impl GameModule for ExtremeOffRoadModule {
             },
             stats: (0.88, 0.96, 0.82, 0.94),
             default_schemes: vec![
-                CarColorScheme::from_index(3), // Baja Danger Orange
+                CarColorScheme::from_index(3), // Sonora Danger Orange
                 CarColorScheme::from_index(1), // Electric Cyan
                 CarColorScheme::from_index(6), // Matte Black Stealth
                 CarColorScheme::from_index(2), // Racing Red
@@ -99,7 +99,7 @@ impl GameModule for ExtremeOffRoadModule {
                 id: "wyatt_cole",
                 name: "Wyatt Cole",
                 alias: "Dust Devil",
-                bio: "Baja 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
+                bio: "Sonora 1000 desert raid legend who rides dune crests at maximum boost with fearless throttle control.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(3),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.01, 0.00, 0.03, -0.2, 0.02),
@@ -109,8 +109,8 @@ impl GameModule for ExtremeOffRoadModule {
             DriverCharacter {
                 id: "jaxson_rivera",
                 name: "Jaxson Rivera",
-                alias: "Baja King",
-                bio: "Undisputed King of the Baja scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
+                alias: "Sonora King",
+                bio: "Undisputed King of the Sonora scrub. Masters rhythm sections, washboard whoops, and high-speed silt beds.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::from_index(1),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.00, -0.01, 0.05, -0.3, 0.03),
@@ -232,7 +232,7 @@ impl GameModule for ExtremeOffRoadModule {
                 id: "diego_valdez",
                 name: "Diego Valdez",
                 alias: "Trophy King",
-                bio: "Mexican SCORE champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
+                bio: "Mexican desert raid champion who masters high-speed whoops sections, riverbed boulder hops, and dusk-to-dawn desert endurance.",
                 preferred_car: crate::ui::menu::CarChoice::SandRail,
                 color_scheme: CarColorScheme::new(
                     macroquad::color::Color::new(0.85, 0.15, 0.30, 1.0),
@@ -298,97 +298,97 @@ impl GameModule for ExtremeOffRoadModule {
 }
 
 const WYATT_COLE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_laurentian_nomad_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_desert_forge_truck_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_sixstar_blizzard_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_titan_mud_slinger_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_tomb_raider_t5"),
 ];
 
 const JAXSON_RIVERA_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_northstar_razor_t1"),
     DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_shinano_frost_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_crossbow_ridge_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_overkill_t5"),
 ];
 
 const ASTRID_LINDHOLM_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_volkskraft_dune_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_sonora_desert_king_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_vortek_glacier_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_forge_mammoth_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_colossus_titan_t5"),
 ];
 
 const BUBBA_BEAUREGARD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_laurentian_nomad_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_desert_forge_truck_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_sixstar_blizzard_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_titan_mud_slinger_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_tomb_raider_t5"),
 ];
 
 const TRAVIS_MCGRATH_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_northstar_razor_t1"),
     DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_shinano_frost_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_crossbow_ridge_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_overkill_t5"),
 ];
 
 const ROXIE_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_volkskraft_dune_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_sonora_desert_king_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_vortek_glacier_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_forge_mammoth_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_colossus_titan_t5"),
 ];
 
 const SVEN_LINDQVIST_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_laurentian_nomad_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_desert_forge_truck_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_vortek_glacier_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_titan_mud_slinger_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_tomb_raider_t5"),
 ];
 
 const CRUZ_MORALES_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_northstar_razor_t1"),
     DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_shinano_frost_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_crossbow_ridge_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_overkill_t5"),
 ];
 
 const DAKOTA_BLACK_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_volkskraft_dune_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_sonora_desert_king_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_sixstar_blizzard_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_titan_mud_slinger_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_colossus_titan_t5"),
 ];
 
 const COLTON_HAZE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_sand_rail_buggy"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_baja_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_lancer_evo_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_chevy_k30_mud_bogger"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_grave_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_laurentian_nomad_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_desert_forge_truck_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_shinano_frost_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_crossbow_ridge_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_tomb_raider_t5"),
 ];
 
 const ELISE_ROUX_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_polaris_rzr_pro_r"),
-    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_mason_awd_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_audi_quattro_ice"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_ford_f250_high_riser"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_max_d_monster"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_northstar_razor_t1"),
+    DriverFavoriteCar::new("extreme_offroad", 2, "offroad_sonora_desert_king_t2"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_vortek_glacier_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_forge_mammoth_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_havoc_overkill_t5"),
 ];
 
 const DIEGO_VALDEZ_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_vw_sand_rail"),
+    DriverFavoriteCar::new("extreme_offroad", 1, "offroad_volkskraft_dune_t1"),
     DriverFavoriteCar::new("extreme_offroad", 2, "offroad_bettantown_trophy_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_subaru_ice_racer"),
-    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_mega_mud_truck"),
-    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_bigfoot_crusher"),
+    DriverFavoriteCar::new("extreme_offroad", 3, "offroad_sixstar_blizzard_t3"),
+    DriverFavoriteCar::new("extreme_offroad", 4, "offroad_titan_mud_slinger_t4"),
+    DriverFavoriteCar::new("extreme_offroad", 5, "offroad_colossus_titan_t5"),
 ];

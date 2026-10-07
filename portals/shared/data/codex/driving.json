@@ -1,0 +1,1119 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "driving",
+      "steering_profiles": [
+        {
+          "id": "smooth",
+          "name": "smooth",
+          "display_name": "Smooth",
+          "description": "Relaxed steering rise, short of the front grip limit, and maximum traction help. Ideal for high-speed stability and beginners.",
+          "steer_time_ms": 220.0,
+          "return_time_ms": 154.0,
+          "steer_authority": 0.9,
+          "center_precision": 1.5,
+          "pedal_time_ms": 220.0,
+          "traction_help": 0.9,
+          "recommended_for": "Heavy GT cars, stock cars on high-speed ovals, keyboard beginners",
+          "step_response": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              5.0,
+              0.003
+            ],
+            [
+              10.0,
+              0.01
+            ],
+            [
+              15.0,
+              0.018
+            ],
+            [
+              20.0,
+              0.027
+            ],
+            [
+              25.0,
+              0.038
+            ],
+            [
+              30.0,
+              0.05
+            ],
+            [
+              35.0,
+              0.063
+            ],
+            [
+              40.0,
+              0.078
+            ],
+            [
+              45.0,
+              0.093
+            ],
+            [
+              50.0,
+              0.108
+            ],
+            [
+              55.0,
+              0.125
+            ],
+            [
+              60.0,
+              0.142
+            ],
+            [
+              65.0,
+              0.161
+            ],
+            [
+              70.0,
+              0.179
+            ],
+            [
+              75.0,
+              0.199
+            ],
+            [
+              80.0,
+              0.219
+            ],
+            [
+              85.0,
+              0.24
+            ],
+            [
+              90.0,
+              0.262
+            ],
+            [
+              95.0,
+              0.284
+            ],
+            [
+              100.0,
+              0.306
+            ],
+            [
+              105.0,
+              0.33
+            ],
+            [
+              110.0,
+              0.354
+            ],
+            [
+              115.0,
+              0.378
+            ],
+            [
+              120.0,
+              0.403
+            ],
+            [
+              125.0,
+              0.428
+            ],
+            [
+              130.0,
+              0.454
+            ],
+            [
+              135.0,
+              0.481
+            ],
+            [
+              140.0,
+              0.508
+            ],
+            [
+              145.0,
+              0.535
+            ],
+            [
+              150.0,
+              0.563
+            ],
+            [
+              155.0,
+              0.591
+            ],
+            [
+              160.0,
+              0.62
+            ],
+            [
+              165.0,
+              0.65
+            ],
+            [
+              170.0,
+              0.679
+            ],
+            [
+              175.0,
+              0.709
+            ],
+            [
+              180.0,
+              0.74
+            ],
+            [
+              185.0,
+              0.771
+            ],
+            [
+              190.0,
+              0.803
+            ],
+            [
+              195.0,
+              0.834
+            ],
+            [
+              200.0,
+              0.867
+            ],
+            [
+              205.0,
+              0.899
+            ],
+            [
+              210.0,
+              0.933
+            ],
+            [
+              215.0,
+              0.966
+            ],
+            [
+              220.0,
+              1.0
+            ],
+            [
+              225.0,
+              1.0
+            ],
+            [
+              230.0,
+              1.0
+            ],
+            [
+              235.0,
+              1.0
+            ],
+            [
+              240.0,
+              1.0
+            ],
+            [
+              245.0,
+              1.0
+            ],
+            [
+              250.0,
+              1.0
+            ],
+            [
+              255.0,
+              1.0
+            ],
+            [
+              260.0,
+              1.0
+            ],
+            [
+              265.0,
+              1.0
+            ],
+            [
+              270.0,
+              1.0
+            ],
+            [
+              275.0,
+              1.0
+            ],
+            [
+              280.0,
+              1.0
+            ],
+            [
+              285.0,
+              1.0
+            ],
+            [
+              290.0,
+              1.0
+            ],
+            [
+              295.0,
+              1.0
+            ],
+            [
+              300.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": "balanced",
+          "name": "balanced",
+          "display_name": "Balanced",
+          "description": "Default calibrated response: right on the front tyre grip limit with moderate steering speed and traction assist.",
+          "steer_time_ms": 140.0,
+          "return_time_ms": 98.0,
+          "steer_authority": 1.0,
+          "center_precision": 1.3,
+          "pedal_time_ms": 140.0,
+          "traction_help": 0.7,
+          "recommended_for": "Standard racing across all disciplines, touring cars, sports cars",
+          "step_response": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              5.0,
+              0.013
+            ],
+            [
+              10.0,
+              0.032
+            ],
+            [
+              15.0,
+              0.055
+            ],
+            [
+              20.0,
+              0.08
+            ],
+            [
+              25.0,
+              0.107
+            ],
+            [
+              30.0,
+              0.135
+            ],
+            [
+              35.0,
+              0.165
+            ],
+            [
+              40.0,
+              0.196
+            ],
+            [
+              45.0,
+              0.229
+            ],
+            [
+              50.0,
+              0.262
+            ],
+            [
+              55.0,
+              0.297
+            ],
+            [
+              60.0,
+              0.332
+            ],
+            [
+              65.0,
+              0.369
+            ],
+            [
+              70.0,
+              0.406
+            ],
+            [
+              75.0,
+              0.444
+            ],
+            [
+              80.0,
+              0.483
+            ],
+            [
+              85.0,
+              0.523
+            ],
+            [
+              90.0,
+              0.563
+            ],
+            [
+              95.0,
+              0.604
+            ],
+            [
+              100.0,
+              0.646
+            ],
+            [
+              105.0,
+              0.688
+            ],
+            [
+              110.0,
+              0.731
+            ],
+            [
+              115.0,
+              0.774
+            ],
+            [
+              120.0,
+              0.818
+            ],
+            [
+              125.0,
+              0.863
+            ],
+            [
+              130.0,
+              0.908
+            ],
+            [
+              135.0,
+              0.954
+            ],
+            [
+              140.0,
+              1.0
+            ],
+            [
+              145.0,
+              1.0
+            ],
+            [
+              150.0,
+              1.0
+            ],
+            [
+              155.0,
+              1.0
+            ],
+            [
+              160.0,
+              1.0
+            ],
+            [
+              165.0,
+              1.0
+            ],
+            [
+              170.0,
+              1.0
+            ],
+            [
+              175.0,
+              1.0
+            ],
+            [
+              180.0,
+              1.0
+            ],
+            [
+              185.0,
+              1.0
+            ],
+            [
+              190.0,
+              1.0
+            ],
+            [
+              195.0,
+              1.0
+            ],
+            [
+              200.0,
+              1.0
+            ],
+            [
+              205.0,
+              1.0
+            ],
+            [
+              210.0,
+              1.0
+            ],
+            [
+              215.0,
+              1.0
+            ],
+            [
+              220.0,
+              1.0
+            ],
+            [
+              225.0,
+              1.0
+            ],
+            [
+              230.0,
+              1.0
+            ],
+            [
+              235.0,
+              1.0
+            ],
+            [
+              240.0,
+              1.0
+            ],
+            [
+              245.0,
+              1.0
+            ],
+            [
+              250.0,
+              1.0
+            ],
+            [
+              255.0,
+              1.0
+            ],
+            [
+              260.0,
+              1.0
+            ],
+            [
+              265.0,
+              1.0
+            ],
+            [
+              270.0,
+              1.0
+            ],
+            [
+              275.0,
+              1.0
+            ],
+            [
+              280.0,
+              1.0
+            ],
+            [
+              285.0,
+              1.0
+            ],
+            [
+              290.0,
+              1.0
+            ],
+            [
+              295.0,
+              1.0
+            ],
+            [
+              300.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": "sharp",
+          "name": "sharp",
+          "display_name": "Sharp",
+          "description": "Quick steering response pushing slightly past the peak slip angle, with light traction help. Allows snappy weight transfer.",
+          "steer_time_ms": 90.0,
+          "return_time_ms": 63.0,
+          "steer_authority": 1.07,
+          "center_precision": 1.1,
+          "pedal_time_ms": 80.0,
+          "traction_help": 0.35,
+          "recommended_for": "Autocross, tight twisty kart circuits, agile hot hatches",
+          "step_response": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              5.0,
+              0.042
+            ],
+            [
+              10.0,
+              0.089
+            ],
+            [
+              15.0,
+              0.139
+            ],
+            [
+              20.0,
+              0.191
+            ],
+            [
+              25.0,
+              0.244
+            ],
+            [
+              30.0,
+              0.299
+            ],
+            [
+              35.0,
+              0.354
+            ],
+            [
+              40.0,
+              0.41
+            ],
+            [
+              45.0,
+              0.467
+            ],
+            [
+              50.0,
+              0.524
+            ],
+            [
+              55.0,
+              0.582
+            ],
+            [
+              60.0,
+              0.64
+            ],
+            [
+              65.0,
+              0.699
+            ],
+            [
+              70.0,
+              0.758
+            ],
+            [
+              75.0,
+              0.818
+            ],
+            [
+              80.0,
+              0.878
+            ],
+            [
+              85.0,
+              0.939
+            ],
+            [
+              90.0,
+              1.0
+            ],
+            [
+              95.0,
+              1.0
+            ],
+            [
+              100.0,
+              1.0
+            ],
+            [
+              105.0,
+              1.0
+            ],
+            [
+              110.0,
+              1.0
+            ],
+            [
+              115.0,
+              1.0
+            ],
+            [
+              120.0,
+              1.0
+            ],
+            [
+              125.0,
+              1.0
+            ],
+            [
+              130.0,
+              1.0
+            ],
+            [
+              135.0,
+              1.0
+            ],
+            [
+              140.0,
+              1.0
+            ],
+            [
+              145.0,
+              1.0
+            ],
+            [
+              150.0,
+              1.0
+            ],
+            [
+              155.0,
+              1.0
+            ],
+            [
+              160.0,
+              1.0
+            ],
+            [
+              165.0,
+              1.0
+            ],
+            [
+              170.0,
+              1.0
+            ],
+            [
+              175.0,
+              1.0
+            ],
+            [
+              180.0,
+              1.0
+            ],
+            [
+              185.0,
+              1.0
+            ],
+            [
+              190.0,
+              1.0
+            ],
+            [
+              195.0,
+              1.0
+            ],
+            [
+              200.0,
+              1.0
+            ],
+            [
+              205.0,
+              1.0
+            ],
+            [
+              210.0,
+              1.0
+            ],
+            [
+              215.0,
+              1.0
+            ],
+            [
+              220.0,
+              1.0
+            ],
+            [
+              225.0,
+              1.0
+            ],
+            [
+              230.0,
+              1.0
+            ],
+            [
+              235.0,
+              1.0
+            ],
+            [
+              240.0,
+              1.0
+            ],
+            [
+              245.0,
+              1.0
+            ],
+            [
+              250.0,
+              1.0
+            ],
+            [
+              255.0,
+              1.0
+            ],
+            [
+              260.0,
+              1.0
+            ],
+            [
+              265.0,
+              1.0
+            ],
+            [
+              270.0,
+              1.0
+            ],
+            [
+              275.0,
+              1.0
+            ],
+            [
+              280.0,
+              1.0
+            ],
+            [
+              285.0,
+              1.0
+            ],
+            [
+              290.0,
+              1.0
+            ],
+            [
+              295.0,
+              1.0
+            ],
+            [
+              300.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": "raw",
+          "name": "raw",
+          "display_name": "Raw",
+          "description": "Near-instant digital key response, well past the front grip limit with zero traction help. Maximum drift initiation authority.",
+          "steer_time_ms": 40.0,
+          "return_time_ms": 28.0,
+          "steer_authority": 1.15,
+          "center_precision": 1.0,
+          "pedal_time_ms": 0.0,
+          "traction_help": 0.0,
+          "recommended_for": "Rallycross Scandinavian flicks, power sliding, expert keyboard drifters",
+          "step_response": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              5.0,
+              0.125
+            ],
+            [
+              10.0,
+              0.25
+            ],
+            [
+              15.0,
+              0.375
+            ],
+            [
+              20.0,
+              0.5
+            ],
+            [
+              25.0,
+              0.625
+            ],
+            [
+              30.0,
+              0.75
+            ],
+            [
+              35.0,
+              0.875
+            ],
+            [
+              40.0,
+              1.0
+            ],
+            [
+              45.0,
+              1.0
+            ],
+            [
+              50.0,
+              1.0
+            ],
+            [
+              55.0,
+              1.0
+            ],
+            [
+              60.0,
+              1.0
+            ],
+            [
+              65.0,
+              1.0
+            ],
+            [
+              70.0,
+              1.0
+            ],
+            [
+              75.0,
+              1.0
+            ],
+            [
+              80.0,
+              1.0
+            ],
+            [
+              85.0,
+              1.0
+            ],
+            [
+              90.0,
+              1.0
+            ],
+            [
+              95.0,
+              1.0
+            ],
+            [
+              100.0,
+              1.0
+            ],
+            [
+              105.0,
+              1.0
+            ],
+            [
+              110.0,
+              1.0
+            ],
+            [
+              115.0,
+              1.0
+            ],
+            [
+              120.0,
+              1.0
+            ],
+            [
+              125.0,
+              1.0
+            ],
+            [
+              130.0,
+              1.0
+            ],
+            [
+              135.0,
+              1.0
+            ],
+            [
+              140.0,
+              1.0
+            ],
+            [
+              145.0,
+              1.0
+            ],
+            [
+              150.0,
+              1.0
+            ],
+            [
+              155.0,
+              1.0
+            ],
+            [
+              160.0,
+              1.0
+            ],
+            [
+              165.0,
+              1.0
+            ],
+            [
+              170.0,
+              1.0
+            ],
+            [
+              175.0,
+              1.0
+            ],
+            [
+              180.0,
+              1.0
+            ],
+            [
+              185.0,
+              1.0
+            ],
+            [
+              190.0,
+              1.0
+            ],
+            [
+              195.0,
+              1.0
+            ],
+            [
+              200.0,
+              1.0
+            ],
+            [
+              205.0,
+              1.0
+            ],
+            [
+              210.0,
+              1.0
+            ],
+            [
+              215.0,
+              1.0
+            ],
+            [
+              220.0,
+              1.0
+            ],
+            [
+              225.0,
+              1.0
+            ],
+            [
+              230.0,
+              1.0
+            ],
+            [
+              235.0,
+              1.0
+            ],
+            [
+              240.0,
+              1.0
+            ],
+            [
+              245.0,
+              1.0
+            ],
+            [
+              250.0,
+              1.0
+            ],
+            [
+              255.0,
+              1.0
+            ],
+            [
+              260.0,
+              1.0
+            ],
+            [
+              265.0,
+              1.0
+            ],
+            [
+              270.0,
+              1.0
+            ],
+            [
+              275.0,
+              1.0
+            ],
+            [
+              280.0,
+              1.0
+            ],
+            [
+              285.0,
+              1.0
+            ],
+            [
+              290.0,
+              1.0
+            ],
+            [
+              295.0,
+              1.0
+            ],
+            [
+              300.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "assist_profiles": [
+        {
+          "id": "arcade",
+          "name": "ARCADE",
+          "title": "Arcade (Assists: Full)",
+          "short_name": "ARCADE",
+          "description": "Full TCS + ESC + Counter-steer. Highly stable, zero snap spinouts.",
+          "tcs_enabled": true,
+          "tcs_slip_threshold": 0.18,
+          "tcs_strength": 0.75,
+          "tcs_slip_angle_deg": 18.0,
+          "tcs_drift_bypass": false,
+          "esc_enabled": true,
+          "esc_yaw_threshold": 0.1,
+          "esc_strength": 0.7,
+          "esc_sideslip_limit_deg": 22.0,
+          "counter_steer_assist_enabled": true,
+          "counter_steer_assist_strength": 0.75,
+          "abs_enabled": true,
+          "abs_slip_threshold": 0.15,
+          "abs_strength": 0.95,
+          "handbrake_bypass": true
+        },
+        {
+          "id": "sport",
+          "name": "SPORT",
+          "title": "Sport (Assists: Mild)",
+          "short_name": "SPORT",
+          "description": "Mild TCS + Relaxed ESC. Allows responsive power slides & tight turns.",
+          "tcs_enabled": true,
+          "tcs_slip_threshold": 0.45,
+          "tcs_strength": 0.25,
+          "tcs_slip_angle_deg": 32.0,
+          "tcs_drift_bypass": true,
+          "esc_enabled": true,
+          "esc_yaw_threshold": 0.4,
+          "esc_strength": 0.3,
+          "esc_sideslip_limit_deg": 38.0,
+          "counter_steer_assist_enabled": true,
+          "counter_steer_assist_strength": 0.55,
+          "abs_enabled": true,
+          "abs_slip_threshold": 0.2,
+          "abs_strength": 0.75,
+          "handbrake_bypass": true
+        },
+        {
+          "id": "pro",
+          "name": "PRO",
+          "title": "Pro (Assists: OFF)",
+          "short_name": "PRO",
+          "description": "Electronic aids disabled. Pure raw vehicle physics simulation.",
+          "tcs_enabled": false,
+          "tcs_slip_threshold": 0.5,
+          "tcs_strength": 0.0,
+          "tcs_slip_angle_deg": 30.0,
+          "tcs_drift_bypass": false,
+          "esc_enabled": false,
+          "esc_yaw_threshold": 1.0,
+          "esc_strength": 0.0,
+          "esc_sideslip_limit_deg": 180.0,
+          "counter_steer_assist_enabled": false,
+          "counter_steer_assist_strength": 0.0,
+          "abs_enabled": false,
+          "abs_slip_threshold": 0.5,
+          "abs_strength": 0.0,
+          "handbrake_bypass": true
+        }
+      ],
+      "aids": {
+        "grip_aware_steering_description": "Grip-aware steering dynamically maps full controller or keyboard input to the useful slip angle of the front tires at current vehicle speed and normal load. At high speeds, holding full lock would induce catastrophic front tire scrub and terminal understeer; grip-aware steering ensures your input commands maximum available lateral force without front tire plowing.",
+        "low_speed_authority_description": "Spec 072 introduces low-speed authority expansion: when vehicle speed drops below 12 m/s (~43 km/h), the steering authority floor progressively expands up to the geometric Ackermann lock angle. This provides tight hairpin turn-in, low-speed parking, and hairpin pivot authority while smoothly tapering back to high-speed grip calibration as speed builds."
+      }
+    }
+  ]
+}

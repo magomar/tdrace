@@ -37,18 +37,18 @@ impl GameModule for NascarGameModule {
     }
 
     fn title(&self) -> &'static str {
-        "NASCAR CUP SERIES & TRANS-AM TA1"
+        "STOCK CAR CUP & TA1 SILHOUETTE"
     }
 
     fn subtitle(&self) -> &'static str {
-        "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Trans-Am Road Courses"
+        "850 BHP V8 Stock Cars, Pack Drafting, 320 km/h Superspeedways & Silhouette Road Courses"
     }
 
     fn theme(&self) -> ModuleTheme {
         ModuleTheme {
             primary_accent: Color::new(1.0, 0.82, 0.08, 1.0), // Golden Yellow
             secondary_accent: Color::new(0.06, 0.42, 0.92, 1.0), // Daytona Blue
-            header_badge: "NASCAR CUP SERIES",
+            header_badge: "STOCK CAR CUP SERIES",
             background_tint: Color::new(0.08, 0.07, 0.06, 0.98),
         }
     }
@@ -57,9 +57,9 @@ impl GameModule for NascarGameModule {
         vec![
             VehicleModelDefinition {
                 id: "nascar_cup_v8",
-                name: "NASCAR Cup Next-Gen V8",
+                name: "Stock Car Cup Next-Gen V8",
                 tag: "850 BHP PUSHROD V8",
-                description: "Modern NASCAR Cup Series stock car: 850 BHP naturally aspirated 5.9L pushrod V8, 1260 kg, decklid blade ducktail spoiler, roof escape flaps, 320 km/h superspeedway package.",
+                description: "Modern Stock Car Cup Series stock car: 850 BHP naturally aspirated 5.9L pushrod V8, 1260 kg, decklid blade ducktail spoiler, roof escape flaps, 320 km/h superspeedway package.",
                 config: Self::car_stock_car(),
                 visual_type: VehicleVisualType::StockCar {
                     tall_wing: false,
@@ -78,7 +78,7 @@ impl GameModule for NascarGameModule {
             },
             VehicleModelDefinition {
                 id: "trans_am_ta1",
-                name: "Trans-Am TA1 Spaceframe V8",
+                name: "TA1 Silhouette Spaceframe V8",
                 tag: "850 BHP SPACEFRAME",
                 description: "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, lightweight bodywork, quick-ratio steering, side boom tubes.",
                 config: Self::car_trans_am(),
@@ -118,64 +118,64 @@ impl GameModule for NascarGameModule {
     fn drivers(&self) -> Vec<DriverCharacter> {
         vec![
             DriverCharacter {
-                id: "dale_vance",
-                name: "Dale 'The Intimidator' Vance",
-                alias: "The Intimidator",
+                id: "colt_reynolds",
+                name: "Colt 'The Ironclad' Reynolds",
+                alias: "The Ironclad",
                 bio: "Feared black #3 stock car legend. Master of the aggressive bumper tap, high-speed drafting lock, and relentless high-line intimidation.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::stock_car_intimidator_black(),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.2, 0.01, -0.02, 0.03, -0.2, 0.02),
                 style: DrivingStyle::Aggressive,
-                favorite_cars: DALE_VANCE_FAVORITES,
+                favorite_cars: COLT_REYNOLDS_FAVORITES,
             },
             DriverCharacter {
-                id: "chase_gordon",
-                name: "Chase 'Rainbow' Gordon",
-                alias: "Rainbow Flash",
+                id: "clayton_reed",
+                name: "Clayton 'Viper' Reed",
+                alias: "Viper Flash",
                 bio: "Precision road course virtuoso and aerodynamic drafting master. Lethal slingshot overtakes at Watkins Glen and Daytona.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::stock_car_racing_red(),
                 offsets: DriverPersonalityOffsets::new(-0.01, 0.1, 0.01, 0.00, 0.02, -0.3, 0.02),
                 style: DrivingStyle::Calculating,
-                favorite_cars: CHASE_GORDON_FAVORITES,
+                favorite_cars: CLAYTON_REED_FAVORITES,
             },
             DriverCharacter {
-                id: "richard_pettyfield",
-                name: "Richard 'The King' Pettyfield",
-                alias: "The King",
+                id: "rex_montgomery",
+                name: "Rex 'The Crown' Montgomery",
+                alias: "The Crown",
                 bio: "The 200-win patriarch of American stock car racing. Runs the famous Carolina Petty Blue #43 with unmatched pack drafting defense.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::stock_car_carolina_blue(),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.1, 0.00, 0.00, 0.04, -0.3, 0.01),
                 style: DrivingStyle::Smooth,
-                favorite_cars: RICHARD_PETTYFIELD_FAVORITES,
+                favorite_cars: REX_MONTGOMERY_FAVORITES,
             },
             DriverCharacter {
-                id: "rowdy_busch",
-                name: "Rowdy 'Wild Thing' Busch",
-                alias: "Wild Thing",
+                id: "brant_harlan",
+                name: "Brant 'Thunder' Harlan",
+                alias: "Thunder",
                 bio: "Raw aggression and fearless dive-bombs into turn 1. Thrives in chaotic multicar packs and high-banked superspeedway shootouts.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::stock_car_sunset_orange(),
                 offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.01, -0.03, 0.02, -0.4, 0.02),
                 style: DrivingStyle::Aggressive,
-                favorite_cars: ROWDY_BUSCH_FAVORITES,
+                favorite_cars: BRANT_HARLAN_FAVORITES,
             },
             DriverCharacter {
-                id: "jimmie_johnson",
-                name: "Jimmie 'Seven-Time' Johnson",
-                alias: "Seven-Time",
-                bio: "Seven-time Cup champion renowned for surgical consistency, tire management, and late-race charges on superspeedway restarts.",
+                id: "judson_vance",
+                name: "Judson 'Gold Rush' Vance",
+                alias: "Gold Rush",
+                bio: "Multi-time Cup champion renowned for surgical consistency, tire management, and late-race charges on superspeedway restarts.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::stock_car_daytona_blue(),
                 offsets: DriverPersonalityOffsets::new(0.01, 0.1, 0.01, 0.01, 0.00, 0.0, 0.01),
                 style: DrivingStyle::Calculating,
-                favorite_cars: JIMMIE_JOHNSON_FAVORITES,
+                favorite_cars: JUDSON_VANCE_FAVORITES,
             },
             DriverCharacter {
-                id: "tony_stewart",
-                name: "Tony 'Smoke' Stewart",
-                alias: "Smoke",
+                id: "tanner_cobb",
+                name: "Tanner 'Hot Lap' Cobb",
+                alias: "Hot Lap",
                 bio: "Dirt track and short-track brawler. Fearless high-line slider who thrives under the lights at Bristol Motor Speedway.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
@@ -185,13 +185,13 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.01, 0.03, -0.2, 0.02),
                 style: DrivingStyle::Bold,
-                favorite_cars: TONY_STEWART_FAVORITES,
+                favorite_cars: TANNER_COBB_FAVORITES,
             },
             DriverCharacter {
-                id: "bobby_allison",
-                name: "Bobby 'Alabama' Allison",
-                alias: "Alabama Gang",
-                bio: "Legendary leader of the Alabama Gang. Superspeedway high-bank specialist with ice-cold nerves in 3-wide pack racing.",
+                id: "bo_mercer",
+                name: "Bo 'Heartland' Mercer",
+                alias: "Heartland Gang",
+                bio: "Legendary leader of the Heartland Gang. Superspeedway high-bank specialist with ice-cold nerves in 3-wide pack racing.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
                     Color::new(0.85, 0.15, 0.15, 1.0),
@@ -200,12 +200,12 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(-0.02, 0.2, 0.00, -0.02, 0.05, -0.4, 0.01),
                 style: DrivingStyle::Tenacious,
-                favorite_cars: BOBBY_ALLISON_FAVORITES,
+                favorite_cars: BO_MERCER_FAVORITES,
             },
             DriverCharacter {
-                id: "bubba_wallace",
-                name: "Bubba 'The Rocket' Wallace",
-                alias: "The Rocket",
+                id: "beau_chambers",
+                name: "Beau 'The Comet' Chambers",
+                alias: "The Comet",
                 bio: "Electrifying superspeedway ace and intermediate oval charger who uses draft pushes to catapult into the lead.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
@@ -215,12 +215,12 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(-0.01, 0.2, 0.00, -0.02, 0.08, -0.5, 0.01),
                 style: DrivingStyle::Balanced,
-                favorite_cars: BUBBA_WALLACE_FAVORITES,
+                favorite_cars: BEAU_CHAMBERS_FAVORITES,
             },
             DriverCharacter {
-                id: "joey_logano",
-                name: "Joey 'Sliced Bread' Logano",
-                alias: "Sliced Bread",
+                id: "jasper_lowe",
+                name: "Jasper 'Ace' Lowe",
+                alias: "Ace",
                 bio: "Two-time Cup Series Champion famed for ruthless blocking maneuvers, restart mastery, and razor-sharp racecraft.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
@@ -230,13 +230,13 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(-0.02, 0.3, 0.00, -0.04, 0.11, -0.6, 0.02),
                 style: DrivingStyle::Balanced,
-                favorite_cars: JOEY_LOGANO_FAVORITES,
+                favorite_cars: JASPER_LOWE_FAVORITES,
             },
             DriverCharacter {
-                id: "bill_elliott",
-                name: "Bill 'Awesome Bill' Elliott",
-                alias: "Awesome Bill",
-                bio: "From Dawsonville, Georgia. Holds the all-time NASCAR qualifying speed record at Talladega (212.809 mph).",
+                id: "brayden_ellis",
+                name: "Brayden 'Wildcard' Ellis",
+                alias: "Wildcard",
+                bio: "From Dawsonville, Georgia. Holds the all-time stock car qualifying speed record at Talladega (212.809 mph).",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
                     Color::new(0.92, 0.92, 0.95, 1.0),
@@ -245,12 +245,12 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.01, 0.02, 0.0, 0.02),
                 style: DrivingStyle::Smooth,
-                favorite_cars: BILL_ELLIOTT_FAVORITES,
+                favorite_cars: BRAYDEN_ELLIS_FAVORITES,
             },
             DriverCharacter {
-                id: "cale_yarborough",
-                name: "Cale 'The Iron Man' Yarborough",
-                alias: "The Iron Man",
+                id: "curtis_yancey",
+                name: "Curtis 'The Wall' Yancey",
+                alias: "The Wall",
                 bio: "Tough-as-nails three-time consecutive Cup champion. Tireless high-line charger who battles wheel-to-wheel to the checkered flag.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
@@ -260,12 +260,12 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(0.02, 0.1, 0.01, 0.01, 0.03, -0.1, 0.02),
                 style: DrivingStyle::Bold,
-                favorite_cars: CALE_YARBOROUGH_FAVORITES,
+                favorite_cars: CURTIS_YANCEY_FAVORITES,
             },
             DriverCharacter {
-                id: "rusty_wallace",
-                name: "Rusty 'Thunder' Wallace",
-                alias: "Thunder",
+                id: "russ_warnock",
+                name: "Russ 'Hammer' Warnock",
+                alias: "Hammer",
                 bio: "Aggressive short-track and road course warrior. Legendary mastery of high-downforce braking zones and curb hops.",
                 preferred_car: crate::ui::menu::CarChoice::StockCar,
                 color_scheme: CarColorScheme::new(
@@ -275,7 +275,7 @@ impl GameModule for NascarGameModule {
                 ),
                 offsets: DriverPersonalityOffsets::new(-0.02, 0.2, 0.01, -0.02, 0.06, -0.4, 0.01),
                 style: DrivingStyle::Tenacious,
-                favorite_cars: RUSTY_WALLACE_FAVORITES,
+                favorite_cars: RUSS_WARNOCK_FAVORITES,
             },
         ]
     }
@@ -283,7 +283,7 @@ impl GameModule for NascarGameModule {
     fn supported_game_modes(&self) -> Vec<TournamentFormat> {
         vec![
             TournamentFormat::Championship {
-                name: "NASCAR Cup Series Championship".to_string(),
+                name: "Premier Stock Car Cup Championship".to_string(),
                 point_system: PointSystem::NascarCup { stage_win_bonus: true },
                 track_ids: vec![
                     "daytona_superspeedway".to_string(),
@@ -305,7 +305,7 @@ impl GameModule for NascarGameModule {
                 elimination_interval: 3,
             },
             TournamentFormat::Championship {
-                name: "Trans-Am TA1 National Challenge".to_string(),
+                name: "Trans-National TA1 National Challenge".to_string(),
                 point_system: PointSystem::NascarCup { stage_win_bonus: false },
                 track_ids: vec![
                     "watkins_glen_nascar".to_string(),
@@ -335,98 +335,98 @@ impl GameModule for NascarGameModule {
 }
 
 
-const DALE_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+const COLT_REYNOLDS_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
-const CHASE_GORDON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+const CLAYTON_REED_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
-const RICHARD_PETTYFIELD_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+const REX_MONTGOMERY_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
-const ROWDY_BUSCH_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+const BRANT_HARLAN_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
-const JIMMIE_JOHNSON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+const JUDSON_VANCE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
-const TONY_STEWART_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+const TANNER_COBB_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
-const BOBBY_ALLISON_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_monte_carlo_ss"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+const BO_MERCER_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_crossbow_montego_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
-const BUBBA_WALLACE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_toyota_camry_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_tundra_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+const BEAU_CHAMBERS_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_yamato_century_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_yamato_taiga_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
-const JOEY_LOGANO_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+const JASPER_LOWE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];
 
-const BILL_ELLIOTT_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_mustang_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_mustang_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_corvette_ta1"),
+const BRAYDEN_ELLIS_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_forge_stallion_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_forge_stallion_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_crossbow_manta_t5"),
 ];
 
-const CALE_YARBOROUGH_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_late_model_stock_car"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_arca_chevy_ss"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_silverado_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_challenger_ta1"),
+const CURTIS_YANCEY_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_heartland_spec_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_crossbow_predator_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_crossbow_sierra_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_rampart_enforcer_t5"),
 ];
 
-const RUSTY_WALLACE_FAVORITES: &[DriverFavoriteCar] = &[
-    DriverFavoriteCar::new("nascar", 1, "nascar_dodge_dart_street_stock"),
-    DriverFavoriteCar::new("nascar", 2, "nascar_super_late_model"),
-    DriverFavoriteCar::new("nascar", 3, "nascar_ford_fusion_arca"),
-    DriverFavoriteCar::new("nascar", 4, "nascar_f150_truck"),
-    DriverFavoriteCar::new("nascar", 5, "nascar_mustang_ta1"),
+const RUSS_WARNOCK_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("nascar", 1, "nascar_rampart_arrow_t1"),
+    DriverFavoriteCar::new("nascar", 2, "nascar_crossbow_saber_t2"),
+    DriverFavoriteCar::new("nascar", 3, "nascar_forge_reactor_t3"),
+    DriverFavoriteCar::new("nascar", 4, "nascar_forge_ironclad_t4"),
+    DriverFavoriteCar::new("nascar", 5, "nascar_forge_stallion_t5"),
 ];

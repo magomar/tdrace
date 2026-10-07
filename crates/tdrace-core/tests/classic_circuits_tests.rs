@@ -269,7 +269,7 @@ const RALLY: [(&str, f32, usize, u32); 3] = [
 /// Given the rallycross circuits
 /// When their waypoints and geometry are measured
 /// Then they have at least 3, 4 and 6 jumps per lap
-/// And 30-60 % of the lap is Asphalt, with the rest Gravel or Dirt
+/// And 30-60 % of the lap is Asphalt, with the rest Dirt or Concrete
 /// And widths are 11-14 m
 #[test]
 fn test_rallycross_circuits_have_jumps_and_mixed_surfaces() {
@@ -318,9 +318,9 @@ fn test_rallycross_circuits_have_jumps_and_mixed_surfaces() {
     }
 }
 
-/// Scenario: Hilltop Leap has a crest on the start straight and a gravel hairpin
+/// Scenario: Hilltop Leap has a crest on the start straight and a dirt hairpin
 #[test]
-fn test_hilltop_leap_has_crest_and_gravel_hairpin() {
+fn test_hilltop_leap_has_crest_and_dirt_hairpin() {
     let t = catalog::official_track("classic", "rx_hilltop_leap");
     let total = t.spline.total_length();
     let has_crest = t.spline.samples.iter().any(|s| {
@@ -329,10 +329,48 @@ fn test_hilltop_leap_has_crest_and_gravel_hairpin() {
     });
     assert!(has_crest, "Hilltop Leap should have a crest on the start straight");
 
-    let has_gravel_turn = t.spline.waypoints.iter().any(|w| {
-        w.surface == Some(SurfaceType::Gravel) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
+    let has_dirt_turn = t.spline.waypoints.iter().any(|w| {
+        w.surface == Some(SurfaceType::Dirt) && w.wall_type == Some(tdrace_core::BarrierType::TireWall)
     });
-    assert!(has_gravel_turn, "Hilltop Leap should have a gravel hairpin");
+    assert!(has_dirt_turn, "Hilltop Leap should have a dirt hairpin");
+}
+
+/// Scenario: Rallycross roads are packed, never loose gravel or sand
+///
+/// Given the 3 Classic RX circuits and the 20 World RX circuits
+/// When every road waypoint and sample is read, joker detours included
+/// Then the surface is Asphalt, Concrete or Dirt (packed gravel)
+/// And loose Gravel and sand are left to runoff and traps
+#[test]
+fn test_rallycross_roads_use_packed_surfaces_only() {
+    let rx: Vec<(&str, &str)> = RALLY
+        .iter()
+        .map(|(id, ..)| ("classic", *id))
+        .chain(catalog::module_circuits("rally").map(|c| ("rally", c.id)))
+        .collect();
+    assert_eq!(rx.len(), 23, "3 Classic RX + 20 World RX circuits");
+
+    let packed = |s: SurfaceType| matches!(s, SurfaceType::Asphalt | SurfaceType::Concrete | SurfaceType::Dirt);
+    for (module, id) in rx {
+        let t = catalog::official_track(module, id);
+        let segments = t.network.as_ref().map(|n| n.segments.as_slice()).unwrap_or_default();
+        let road = t
+            .spline
+            .samples
+            .iter()
+            .chain(segments.iter().flat_map(|s| s.samples.iter()))
+            .map(|s| s.surface)
+            .chain(
+                t.spline
+                    .waypoints
+                    .iter()
+                    .chain(segments.iter().flat_map(|s| s.waypoints.iter()))
+                    .filter_map(|w| w.surface),
+            );
+        for surface in road {
+            assert!(packed(surface), "{}: road surface {:?} (expected Asphalt, Concrete or Dirt)", id, surface);
+        }
+    }
 }
 
 /// Scenario: Canyon Flyer has a gap jump with an above-track water zone and a whoops section
@@ -500,7 +538,7 @@ const GT: [(&str, f32, u32); 3] = [
 /// And they do not cross themselves in 2D
 /// And they use kerbs on apexes, Steel walls with TireWall at braking zones
 /// And each circuit uses at least 3 runoff/trap surfaces with variable runoff width (3-30 m)
-/// And together the 3 GT circuits use Gravel, DeepSand, PackedSand, Grass and Asphalt
+/// And together the 3 GT circuits use Gravel, Grass and Asphalt, and no sand (a GT car cannot drive out of it, tdrace-le75)
 #[test]
 fn test_gt_circuits_have_speed_braking_and_runoff() {
     let mut all_surfaces = std::collections::HashSet::new();
@@ -565,18 +603,15 @@ fn test_gt_circuits_have_speed_braking_and_runoff() {
         );
     }
 
-    for expected in [
-        SurfaceType::Gravel,
-        SurfaceType::DeepSand,
-        SurfaceType::PackedSand,
-        SurfaceType::Grass,
-        SurfaceType::Asphalt,
-    ] {
+    for expected in [SurfaceType::Gravel, SurfaceType::Grass, SurfaceType::Asphalt] {
         assert!(
             all_surfaces.contains(&expected),
-            "GT circuits together must use all 5 runoff surfaces (missing {:?})",
+            "GT circuits together must use Gravel, Grass and Asphalt runoff (missing {:?})",
             expected
         );
+    }
+    for sand in [SurfaceType::DeepSand, SurfaceType::PackedSand] {
+        assert!(!all_surfaces.contains(&sand), "GT circuits must not use {:?}: a GT car cannot drive out of it", sand);
     }
 }
 
@@ -620,9 +655,9 @@ fn test_velocity_park_has_two_long_straights_and_chicanes() {
     assert!(has_wide_asphalt, "Velocity Park must have wide Asphalt runoff >= 20 m at braking zones");
 }
 
-/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has DeepSand traps and a straight >= 300 m
+/// Scenario: Ridge Ring climbs to ~8 m without crossing itself (grade <= 8%), has Gravel traps and a straight >= 300 m
 #[test]
-fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
+fn test_ridge_ring_has_ridge_climb_and_gravel_traps() {
     let t = catalog::official_track("classic", "gt_ridge_ring");
     let min_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MAX, f32::min);
     let max_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MIN, f32::max);
@@ -640,10 +675,8 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
         max_grade * 100.0
     );
 
-    let has_deepsand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::DeepSand) || s.right_runoff_surface == Some(SurfaceType::DeepSand)
-    }) || t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::DeepSand);
-    assert!(has_deepsand, "Ridge Ring must have narrow DeepSand traps");
+    let has_gravel_traps = t.geometry.surface_zones.iter().any(|z| z.surface == SurfaceType::Gravel);
+    assert!(has_gravel_traps, "Ridge Ring must have narrow Gravel traps");
 
     // Has a straight >= 300 m (handling wrap-around)
     let s = &t.spline.samples;
@@ -669,7 +702,7 @@ fn test_ridge_ring_has_ridge_climb_and_deepsand_traps() {
     );
 }
 
-/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and PackedSand runoff
+/// Scenario: Coastal Grand Prix has a straight >= 400 m, a carousel turn >= 150 deg, a ~5 m plateau and Gravel runoff
 #[test]
 fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
     let t = catalog::official_track("classic", "gt_coastal_grand_prix");
@@ -704,11 +737,11 @@ fn test_coastal_grand_prix_has_400m_straight_carousel_and_plateau() {
         max_elev
     );
 
-    // Has PackedSand runoff
-    let has_packed_sand = t.spline.samples.iter().any(|s| {
-        s.left_runoff_surface == Some(SurfaceType::PackedSand) || s.right_runoff_surface == Some(SurfaceType::PackedSand)
+    // Has Gravel runoff
+    let has_gravel = t.spline.samples.iter().any(|s| {
+        s.left_runoff_surface == Some(SurfaceType::Gravel) || s.right_runoff_surface == Some(SurfaceType::Gravel)
     });
-    assert!(has_packed_sand, "Coastal Grand Prix must have PackedSand runoff");
+    assert!(has_gravel, "Coastal Grand Prix must have Gravel runoff");
 
     // Has bus-stop chicane and carousel: total turn of carousel is >= 150 deg
     // In our definition, segment 6 has turn_deg = -165 deg (>= 150 deg)

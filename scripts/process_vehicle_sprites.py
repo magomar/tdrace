@@ -19,8 +19,8 @@ def remove_magenta_bg(img: Image.Image, is_topdown: bool = False) -> Image.Image
     g = arr[:, :, 1].astype(float)
     b = arr[:, :, 2].astype(float)
 
-    is_pink = (r > 160) & (b > 160) & (g < 100)
-    is_fringe = (r > 120) & (b > 120) & ((r + b) > 2.2 * np.maximum(g, 1.0))
+    is_pink = (r > 140) & (b > 140) & (g < 100)
+    is_fringe = (r > 110) & (b > 110) & (g < 80) & ((r + b) > 3.0 * np.maximum(g, 1.0))
     arr[is_pink | is_fringe, 3] = 0
 
     alpha = arr[:, :, 3]
@@ -59,13 +59,18 @@ def process_topdown(raw_path: Path, out_path: Path):
     cw, ch = cropped.size
 
     canvas = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
-    scale = min(440 / cw, 490 / ch)
-    nw, nh = int(cw * scale), int(ch * scale)
-    scaled = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
-    canvas.paste(scaled, ((512 - nw) // 2, (512 - nh) // 2))
-
-    # Rotate 90 degrees clockwise (ROTATE_270 in PIL) so vehicle nose points to the RIGHT (+X, forward heading)
-    canvas = canvas.transpose(Image.Transpose.ROTATE_270)
+    if cw < ch:
+        scale = min(440 / cw, 490 / ch)
+        nw, nh = int(cw * scale), int(ch * scale)
+        scaled = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
+        canvas.paste(scaled, ((512 - nw) // 2, (512 - nh) // 2))
+        # Rotate 90 degrees clockwise so vehicle nose points to the RIGHT (+X, forward heading)
+        canvas = canvas.transpose(Image.Transpose.ROTATE_270)
+    else:
+        scale = min(490 / cw, 440 / ch)
+        nw, nh = int(cw * scale), int(ch * scale)
+        scaled = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
+        canvas.paste(scaled, ((512 - nw) // 2, (512 - nh) // 2))
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out_path, format="PNG")

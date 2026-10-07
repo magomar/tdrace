@@ -45,9 +45,8 @@ pub use career_hub::{
 };
 
 pub use curve_indicator::{
-    compute_curve_arrow_position, compute_curve_colors, compute_indicator_alpha,
-    compute_smart_curve_arrow_position, curve_indicator_lookahead, render_curve_indicator,
-    render_curve_pacenote, CurveColorScheme, CurveIndicatorStyle,
+    compute_curve_colors, compute_indicator_alpha, curve_indicator_lookahead,
+    render_curve_pacenote, CurveColorScheme,
 };
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
@@ -73,9 +72,10 @@ pub use profile_ui::{
 };
 pub use scaler::UiScaler;
 pub use starting_grid::{
-    render_starting_grid_screen, starting_grid_circuit_card_rect, starting_grid_footer_prompt,
-    starting_grid_footer_prompt_with_mode, starting_grid_garage_button_rect, starting_grid_grid_button_rect,
-    starting_grid_launch_button_rect, starting_grid_player_card_rect, StartingGridFocus,
+    render_starting_grid_screen, starting_grid_circuit_card_rect, starting_grid_columns,
+    starting_grid_footer_prompt, starting_grid_footer_prompt_with_mode, starting_grid_garage_button_rect,
+    starting_grid_grid_button_rect, starting_grid_launch_button_rect, starting_grid_player_card_rect,
+    starting_grid_stepper_rects, StartingGridFocus,
 };
 pub use track_manager_ui::{
     render_track_manager_screen, TrackManagerAction, TrackManagerModal, TrackManagerTab,

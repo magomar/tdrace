@@ -244,12 +244,12 @@ fn render_viewer_hud(
     );
 
     let module_badge = match state.module_id.as_str() {
-        "gt" | "gt_challenge" => "GT WORLD CHALLENGE",
-        "nascar" => "NASCAR CUP SERIES",
+        "gt" | "gt_challenge" => "GRAND TOURING CHALLENGE",
+        "nascar" => "STOCK CAR RACING",
         "rally" => "RALLYCROSS WORLD CUP",
         "kart" => "PRO KART SERIES",
         "extreme_offroad" => "EXTREME OFF-ROAD",
-        "autocross" => "FIA AUTOCROSS",
+        "autocross" => "CONTINENTAL AUTOCROSS",
         _ => "MOTORSPORT CIRCUIT",
     };
     let len_km = state.track.total_length_m() / 1000.0;

@@ -226,7 +226,7 @@ does not follow.
   `width/2 + 4.0` per side (`presets.rs:460`), so the checkerboard extends 4 m into
   the runoff. No gantry, lights or timing tower.
 
-### 2.5 Rendering — [render/track.rs](../../crates/tdrace-app/src/render/track.rs), [render/barrier.rs](../../crates/tdrace-app/src/render/barrier.rs), [render/scenery.rs](../../crates/tdrace-app/src/render/scenery.rs)
+### 2.5 Rendering — [render/track.rs](../../crates/race-ui/src/render/track.rs), [render/barrier.rs](../../crates/race-ui/src/render/barrier.rs), [render/scenery.rs](../../crates/race-ui/src/render/scenery.rs)
 
 **Draw order** (`game/mod.rs:13818-14050`):
 
@@ -377,7 +377,7 @@ cannot provide any of this. They must be fetched again with a wider query.
 
 ### 4.4 Provenance
 
-[provenance.rs](../../crates/arcade-race-core/src/track/provenance.rs) holds 71 records of
+[track/mod.rs](../../crates/arcade-race-core/src/track/mod.rs) holds 71 records of
 `{id, name, aliases, country, osm_url, wikipedia_url}`. It does **not** store the way
 IDs used, the transform (rotation, scale, origin), the raw OSM length, the fetch date,
 or ODbL attribution. Five `osm_url`s point to a different object than the importer used

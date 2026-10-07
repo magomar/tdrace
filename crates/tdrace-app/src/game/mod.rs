@@ -271,7 +271,7 @@ use crate::ui::track_manager_ui::{
 };
 use crate::ui::{
     confirm_modal_layout, curve_indicator_lookahead,
-    render_curve_indicator, render_curve_pacenote, ArcadeSettingsModal, CurveIndicatorStyle, CabinetContext, CabinetScreen, CabinetTheme,
+    render_curve_pacenote, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -727,6 +727,7 @@ pub struct RaceSession {
     pub starting_grid_focus: StartingGridFocus,
     pub starting_grid_card_idx: usize,
     pub starting_grid_roster_idx: usize,
+    pub starting_grid_config_idx: usize,
     pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
     /// Countdown time left when the race was paused before the start, resumed instead of racing.
@@ -1000,6 +1001,7 @@ impl RaceSession {
             starting_grid_focus: StartingGridFocus::LeftSetup,
             starting_grid_card_idx: 0,
             starting_grid_roster_idx: 0,
+            starting_grid_config_idx: 0,
             pause_nav: NavGrid2D::new(vec![5, 5]),
             pause_selected_btn: 0,
             paused_countdown: None,
@@ -1402,8 +1404,6 @@ impl RaceSession {
             aura_ratio: self.config.player_helpers.ground_aura_radius_ratio,
             aura_brightness: self.config.player_helpers.ground_aura_brightness,
             ribbon_enabled: self.config.player_helpers.curve_helper,
-            ribbon_pacenote: CurveIndicatorStyle::from_config_str(&self.config.player_helpers.curve_indicator_style)
-                == CurveIndicatorStyle::Pacenote,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
             chevron_enabled: self.config.player_helpers.overhead_chevron,
@@ -1509,10 +1509,6 @@ impl RaceSession {
                 self.config.player_helpers.ground_aura_radius_ratio = h_state.aura_ratio;
                 self.config.player_helpers.ground_aura_brightness = h_state.aura_brightness;
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
-                if h_state.ribbon_enabled {
-                    let style = if h_state.ribbon_pacenote { CurveIndicatorStyle::Pacenote } else { CurveIndicatorStyle::Chevrons };
-                    self.config.player_helpers.curve_indicator_style = style.as_config_str().to_string();
-                }
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
                 self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
@@ -2109,13 +2105,13 @@ impl RaceSession {
             ],
             "nascar" => vec![
                 (CarChoice::StockCar.title(), CarChoice::StockCar.tag(), CarChoice::StockCar.description(), CarChoice::StockCar.stats()),
-                ("Trans-Am TA1 Spaceframe V8", "850 BHP SPACEFRAME", "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, side boom tubes.", (0.95, 0.92, 0.91, 0.85)),
+                ("Trans-National TA1 Spaceframe V8", "850 BHP SPACEFRAME", "Pure American road racing silhouette monster: tube-frame chassis, high-mount carbon GT wing, side boom tubes.", (0.95, 0.92, 0.91, 0.85)),
             ],
             "extreme_offroad" => vec![
                 (CarChoice::SandRail.title(), CarChoice::SandRail.tag(), CarChoice::SandRail.description(), CarChoice::SandRail.stats()),
             ],
             "autocross" => vec![
-                ("80 BHP LifeLive TN5 Junior", "CROSS CAR JUNIOR", "FIA Cross Car Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.", (0.55, 0.88, 0.90, 0.50)),
+                ("80 BHP Ardennes Junior", "CROSS CAR JUNIOR", "Cross Car Junior Academy Trophy official spec machine. Compact, agile, and momentum-focused on loose dirt.", (0.55, 0.88, 0.90, 0.50)),
                 ("680 BHP SuperBuggy V8", "SUPERBUGGY 4WD", "Premier unlimited dirt racing machine with 1:1 power-to-weight ratio and massive downforce.", (0.98, 1.00, 0.95, 0.96)),
             ],
             _ => vec![
@@ -2250,7 +2246,7 @@ impl RaceSession {
             roof_fins: true,
             window_net: true,
         };
-        self.selected_car_model_id = Some("nascar_monte_carlo_ss");
+        self.selected_car_model_id = Some("nascar_crossbow_montego_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2290,7 +2286,7 @@ impl RaceSession {
             whip_antenna: true,
             paddle_tires: true,
         };
-        self.selected_car_model_id = Some("offroad_sand_rail_buggy");
+        self.selected_car_model_id = Some("offroad_laurentian_nomad_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2330,7 +2326,7 @@ impl RaceSession {
             whip_antenna: false,
             paddle_tires: false,
         };
-        self.selected_car_model_id = Some("autocross_lifelive_tn5_junior");
+        self.selected_car_model_id = Some("autocross_ardennes_junior_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2570,7 +2566,7 @@ impl RaceSession {
             gt_wing: true,
             diffuser: true,
         };
-        self.selected_car_model_id = Some("gt_toyota_supra_gt4");
+        self.selected_car_model_id = Some("gt_yamato_hayate_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2610,7 +2606,7 @@ impl RaceSession {
             mudflaps: true,
             large_wing: true,
         };
-        self.selected_car_model_id = Some("rally_peugeot_208_rally4");
+        self.selected_car_model_id = Some("rally_gallia_200_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2644,7 +2640,7 @@ impl RaceSession {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.selected_car_model_id = Some("kart_crg_hero_60");
+        self.selected_car_model_id = Some("kart_blackline_cadet_t1");
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -2707,22 +2703,22 @@ impl RaceSession {
         self.state = GameState::Menu;
     }
 
-    /// Starts a full GT World Challenge Championship Season.
+    /// Starts a full Grand Touring Challenge Championship Season.
     pub fn start_gt_championship(&mut self) {
         let champ = ChampionshipSession::new(
-            "GT World Challenge Championship 2026",
+            "Grand Touring Challenge Championship 2026",
             PointSystem::FiaStandard { fastest_lap_bonus: true },
             vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string(), "gt_coastal_grand_prix".to_string()],
             3,
             &[
                 ("player", "Player", "Apex GT Racing"),
-                ("max_hunter", "Max Hunter", "Red Bull GT"),
-                ("charles_laurent", "Charles Laurent", "Scuderia GT"),
-                ("lewis_vance", "Lewis Vance", "Scuderia GT"),
-                ("fernando_toro", "Fernando Toro", "Aston GT"),
-                ("george_speed", "George Speed", "Mercedes-AMG GT"),
-                ("lando_vance", "Lando Vance", "McLaren GT"),
-                ("oscar_rocket", "Oscar Rocket", "McLaren GT"),
+                ("magnus_wolff", "Magnus Wolff", "Bullseye GT"),
+                ("cedric_laval", "Cédric Laval", "Valente GT"),
+                ("lawrence_sterling", "Lawrence Sterling", "Valente GT"),
+                ("felix_navarro", "Félix Navarro", "Albion GT"),
+                ("gideon_palmer", "Gideon Palmer", "Silberstern GT"),
+                ("lucian_wells", "Lucian Wells", "Hyperion GT"),
+                ("owen_prescott", "Owen Prescott", "Hyperion GT"),
             ],
         );
         self.switch_to_gt();
@@ -2777,13 +2773,13 @@ impl RaceSession {
                 3,
                 &[
                     ("player", "Player", "Apex GT Racing"),
-                    ("max_hunter", "Max Hunter", "Red Bull GT"),
-                    ("charles_laurent", "Charles Laurent", "Scuderia GT"),
-                    ("lewis_vance", "Lewis Vance", "Scuderia GT"),
-                    ("fernando_toro", "Fernando Toro", "Aston GT"),
-                    ("george_speed", "George Speed", "Mercedes-AMG GT"),
-                    ("lando_vance", "Lando Vance", "McLaren GT"),
-                    ("oscar_rocket", "Oscar Rocket", "McLaren GT"),
+                    ("magnus_wolff", "Magnus Wolff", "Bullseye GT"),
+                    ("cedric_laval", "Cédric Laval", "Valente GT"),
+                    ("lawrence_sterling", "Lawrence Sterling", "Valente GT"),
+                    ("felix_navarro", "Félix Navarro", "Albion GT"),
+                    ("gideon_palmer", "Gideon Palmer", "Silberstern GT"),
+                    ("lucian_wells", "Lucian Wells", "Hyperion GT"),
+                    ("owen_prescott", "Owen Prescott", "Hyperion GT"),
                 ],
             );
             if !self.active_career_progress.career_rivals.is_empty() {
@@ -2858,7 +2854,7 @@ impl RaceSession {
     pub fn start_nascar_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "NASCAR Weekly Short Track Series (Tier 1)",
+                "Weekly Short Track Series (Tier 1)",
                 vec![
                     "martinsville_speedway".to_string(),
                     "bristol_motor_speedway".to_string(),
@@ -2868,7 +2864,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "NASCAR Intermediate Oval Challenge (Tier 2)",
+                "National Intermediate Oval Challenge (Tier 2)",
                 vec![
                     "charlotte_motor_speedway".to_string(),
                     "darlington_raceway".to_string(),
@@ -2880,7 +2876,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "NASCAR National Road & Oval Tour (Tier 3)",
+                "National Road & Oval Tour (Tier 3)",
                 vec![
                     "iowa_speedway".to_string(),
                     "watkins_glen_nascar".to_string(),
@@ -2894,7 +2890,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "NASCAR Premier Speedway Trophy (Tier 4)",
+                "Premier Speedway Trophy (Tier 4)",
                 vec![
                     "indianapolis_motor_speedway".to_string(),
                     "pocono_raceway".to_string(),
@@ -2909,7 +2905,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "NASCAR Cup Series Championship (Tier 5)",
+                "Premier Stock Car Cup Championship (Tier 5)",
                 vec![
                     "daytona_superspeedway".to_string(),
                     "talladega_superspeedway".to_string(),
@@ -2944,17 +2940,17 @@ impl RaceSession {
                 4,
                 &[
                     ("player", "Player", "Apex Stock Car"),
-                    ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),
-                    ("chase_gordon", "Chase 'Rainbow' Gordon", "Hendrick Motorsports"),
-                    ("richard_pettyfield", "Richard 'The King' Pettyfield", "Petty Enterprises"),
-                    ("rowdy_busch", "Rowdy 'Wild Thing' Busch", "Joe Gibbs Racing"),
-                    ("jimmie_johnson", "Jimmie 'Seven-Time' Johnson", "Hendrick Motorsports"),
-                    ("tony_stewart", "Tony 'Smoke' Stewart", "Stewart-Haas Racing"),
-                    ("bobby_allison", "Bobby 'Alabama' Allison", "Alabama Gang"),
-                    ("bubba_wallace", "Bubba 'The Rocket' Wallace", "23XI Racing"),
-                    ("joey_logano", "Joey 'Sliced Bread' Logano", "Team Penske"),
-                    ("bill_elliott", "Bill 'Awesome Bill' Elliott", "Melling Racing"),
-                    ("cale_yarborough", "Cale 'The Iron Man' Yarborough", "Junior Johnson Racing"),
+                    ("colt_reynolds", "Colt 'The Ironclad' Reynolds", "Heartland Competition"),
+                    ("clayton_reed", "Clayton 'Viper' Reed", "Apex Vanguard Racing"),
+                    ("rex_montgomery", "Rex 'The Crown' Montgomery", "Highland Blue Racing"),
+                    ("brant_harlan", "Brant 'Thunder' Harlan", "Crestline Speedworks"),
+                    ("judson_vance", "Judson 'Gold Rush' Vance", "Apex Vanguard Racing"),
+                    ("tanner_cobb", "Tanner 'Hot Lap' Cobb", "Summit Ridge Motorsport"),
+                    ("bo_mercer", "Bo 'Heartland' Mercer", "Dixie Heritage Motorsport"),
+                    ("beau_chambers", "Beau 'The Comet' Chambers", "Flightline Motorsport"),
+                    ("jasper_lowe", "Jasper 'Ace' Lowe", "Keystone Racing Team"),
+                    ("brayden_ellis", "Brayden 'Wildcard' Ellis", "Apex Stock Car"),
+                    ("curtis_yancey", "Curtis 'The Wall' Yancey", "Brushy Mountain Racing"),
                 ],
             );
             if !self.active_career_progress.career_rivals.is_empty() {
@@ -3050,7 +3046,7 @@ impl RaceSession {
                 ],
             ),
             3 => (
-                "Euro RX Challenge (Tier 3)",
+                "Continental RX Challenge (Tier 3)",
                 vec![
                     "lavare_rx".to_string(),
                     "riga_rx".to_string(),
@@ -3062,7 +3058,7 @@ impl RaceSession {
                 ],
             ),
             4 => (
-                "FIA World RX Supercar Trophy (Tier 4)",
+                "World Rallycross Supercar Trophy (Tier 4)",
                 vec![
                     "catalunya_rx".to_string(),
                     "spa_rx".to_string(),
@@ -3090,7 +3086,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "Nitrocross Group E Series (Tier 6)",
+                "Apex Group E Electric Trophy (Tier 6)",
                 vec![
                     "catalunya_rx".to_string(),
                     "lessay_rx".to_string(),
@@ -3125,13 +3121,13 @@ impl RaceSession {
                 5,
                 &[
                     ("player", "Player", "Apex Rally Team"),
-                    ("johan_vance", "Johan Vance", "KMS Motorsport"),
-                    ("mattias_storm", "Mattias Storm", "EKS RX"),
-                    ("timmy_hansenfield", "Timmy Hansenfield", "Hansen Motorsport"),
-                    ("kevin_hansenfield", "Kevin Hansenfield", "Hansen Motorsport"),
-                    ("niclas_gron", "Niclas Gron", "GRX Taneco"),
-                    ("anton_mark", "Anton Mark", "GCK Motorsport"),
-                    ("timo_scheider", "Timo Scheider", "All-Inkl Racing"),
+                    ("jonas_lindqvist", "Jonas Lindqvist", "Volkskraft Customer Rally"),
+                    ("mikael_stenmark", "Mikael Stenmark", "Vortek Factory RX"),
+                    ("torsten_holmgren", "Torsten Holmgren", "Nordic Storm Motorsport"),
+                    ("kasper_holmgren", "Kasper Holmgren", "Nordic Storm Motorsport"),
+                    ("niko_salminen", "Niko Salminen", "Taiga RX Performance"),
+                    ("axel_markus", "Axel Markus", "Alpine Green RX"),
+                    ("tobias_schmidt", "Tobias Schmidt", "Saxon Speedworks"),
                 ],
             );
             if !self.active_career_progress.career_rivals.is_empty() {
@@ -3206,7 +3202,7 @@ impl RaceSession {
     pub fn start_kart_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
-                "Rotax Junior Academy (Tier 1)",
+                "Junior Karting Academy (Tier 1)",
                 vec![
                     "lonato".to_string(),
                     "genk".to_string(),
@@ -3216,7 +3212,7 @@ impl RaceSession {
                 ],
             ),
             2 => (
-                "FIA Karting Academy Trophy (Tier 2)",
+                "International Karting Academy Trophy (Tier 2)",
                 vec![
                     "whilton_mill".to_string(),
                     "laval_kart".to_string(),
@@ -3299,13 +3295,13 @@ impl RaceSession {
                 5,
                 &[
                     ("player", "Player", "Apex Kart Racing"),
-                    ("marco_armani", "Marco Armani", "Tony Kart Racing"),
-                    ("lucas_vance", "Lucas Vance", "CRG Factory Team"),
-                    ("alex_rossi", "Alex Rossi", "Birel ART"),
-                    ("sofia_lind", "Sofia Lind", "Kosmic Racing"),
-                    ("finn_korhonen", "Finn Korhonen", "Sodi Kart"),
-                    ("leo_dupont", "Leo Dupont", "Energy Corse"),
-                    ("mateo_silva", "Mateo Silva", "Parolin Motorsport"),
+                    ("marco_armani", "Marco Armani", "Verde Factory Karting"),
+                    ("lucas_vance", "Lucas Vance", "Blackline Factory Team"),
+                    ("alex_rossi", "Alex Rossi", "Rosso Factory Karting"),
+                    ("sofia_lind", "Sofia Lind", "Starlight Kart Team"),
+                    ("finn_korhonen", "Finn Korhonen", "Gallic Kart Racing"),
+                    ("leo_dupont", "Leo Dupont", "Veloce Karting"),
+                    ("mateo_silva", "Mateo Silva", "Veneto Kart Racing"),
                 ],
             );
             if !self.active_career_progress.career_rivals.is_empty() {
@@ -3565,7 +3561,7 @@ impl RaceSession {
     pub fn start_autocross_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids, default_laps, drivers): (&str, Vec<String>, u32, &[(&str, &str, &str)]) = match tier {
             1 => (
-                "FIA Cross Car Academy Trophy (Tier 1)",
+                "Cross Car Junior Academy Trophy (Tier 1)",
                 vec![
                     "seelow_ax".to_string(),
                     "bazaigues_ax".to_string(),
@@ -3574,7 +3570,7 @@ impl RaceSession {
                 4,
                 &[
                     ("player", "Player", "Apex Junior Racing"),
-                    ("miguel_gayoso", "Miguel Gayoso", "LifeLive Academy"),
+                    ("mateo_garrido", "Mateo Garrido", "Ardennes Cross Academy"),
                     ("stanislav_brousek", "Stanislav Brousek", "Jnr Buggy Team"),
                     ("etienne_cheval", "Étienne Cheval", "Cheval Kart Cross"),
                     ("valentin_comte", "Valentin Comte", "Comte Racing"),
@@ -3594,17 +3590,17 @@ impl RaceSession {
                 5,
                 &[
                     ("player", "Player", "Apex Senior Racing"),
-                    ("david_mendez", "David Méndez", "Speedcar Factory Team"),
-                    ("ivan_pina", "Iván Piña", "Semog Racing Team"),
-                    ("kobe_pauwels", "Kobe Pauwels", "LifeLive Senior Team"),
-                    ("simone_firenze", "Simone Firenze", "Semog Italia"),
+                    ("diego_morales", "Diego Morales", "Iberian Cross Factory Team"),
+                    ("ivan_pina", "Iván Piña", "Lusitania Cross Team"),
+                    ("kobe_pauwels", "Kobe Pauwels", "Ardennes Cross Senior"),
+                    ("simone_firenze", "Simone Firenze", "Lusitania Cross Team"),
                     ("arunas_gibieza", "Arūnas Gibieža", "Baltic XC Works"),
-                    ("alexandre_calvet", "Alexandre Calvet", "Calvet Cross Car"),
-                    ("rui_nunes", "Rui Nunes", "Semog Portugal"),
+                    ("antoine_calvet", "Antoine Calvet", "Calvet Cross Car"),
+                    ("rui_nunes", "Rui Nunes", "Lusitania Cross Team"),
                 ],
             ),
             3 => (
-                "FIA Buggy1600 European Championship (Tier 3)",
+                "Continental Buggy 1600 Championship (Tier 3)",
                 vec![
                     "prerov_ax".to_string(),
                     "humpolec_ax".to_string(),
@@ -3614,13 +3610,13 @@ impl RaceSession {
                 5,
                 &[
                     ("player", "Player", "Apex Buggy Racing"),
-                    ("kevin_peters", "Kevin Peters", "Peters Autosport"),
-                    ("jakub_novotny", "Jakub Novotný", "Alfa Racing Team"),
-                    ("styn_jaspers", "Styn Jaspers", "Fast & Speed Racing"),
-                    ("thomas_christol", "Thomas Christol", "Christol Motorsport"),
-                    ("filip_hartman", "Filip Hartman", "Hartman Offroad"),
-                    ("markus_wibbeler", "Markus Wibbeler", "Wibbeler Racing"),
-                    ("kenny_reding", "Kenny Reding", "Reding Autosport"),
+                    ("klaus_petersen", "Klaus Petersen", "Petersen Works Team"),
+                    ("jiri_nemec", "Jiří Němec", "Bologna Buggy Works Team"),
+                    ("sander_jaspers", "Sander Jaspers", "Rapid Dynamics Racing"),
+                    ("thierry_christol", "Thierry Christol", "Occitanie Buggy Racing"),
+                    ("filip_hartman", "Filip Hartman", "Hartman Cross Works"),
+                    ("maximilian_wibbeler", "Maximilian Wibbeler", "Westphalia Buggy Racing"),
+                    ("kurt_reding", "Kurt Reding", "Moselle Cross Works"),
                 ],
             ),
             4 => (
@@ -3634,17 +3630,17 @@ impl RaceSession {
                 5,
                 &[
                     ("player", "Player", "Apex Touring Racing"),
-                    ("vaclav_fejfar", "Václav Fejfar", "Fejfar Motorsport"),
-                    ("erwin_frieszl", "Erwin Frieszl", "Frieszl Racing"),
-                    ("adriaan_boele", "Adriaan Boele", "Boele Autosport"),
-                    ("marcel_egg", "Marcel Egg", "Egg Racing Team"),
-                    ("pavel_vyborny", "Pavel Výborný", "Výborný Motorsport"),
-                    ("grit_hennersdorf", "Grit Hennersdorf", "Hennersdorf Offroad"),
-                    ("werner_gurschler", "Werner Gurschler", "Gurschler Quattro"),
+                    ("viktor_fiala", "Viktor Fiala", "Bohemia Rallycross Team"),
+                    ("erich_frieszl", "Erich Frieszl", "Styrian Buggy Racing"),
+                    ("arjen_boele", "Arjen Boele", "Boele Offroad Works"),
+                    ("martin_egg", "Martin Egg", "Alpine Cross Racing"),
+                    ("patrik_vyborny", "Patrik Výborný", "Bohemia Buggy Team"),
+                    ("grit_hennersdorf", "Grit Hennersdorf", "Saxony Offroad Works"),
+                    ("werner_gurschler", "Werner Gurschler", "Alpine Quattro Racing"),
                 ],
             ),
             _ => (
-                "FIA SuperBuggy World Series (Tier 5)",
+                "World SuperBuggy Series (Tier 5)",
                 vec![
                     "nova_paka_ax".to_string(),
                     "st_georges_ax".to_string(),
@@ -3655,13 +3651,13 @@ impl RaceSession {
                 6,
                 &[
                     ("player", "Player", "Apex SuperBuggy Racing"),
-                    ("bernd_stubbe", "Bernd Stubbe", "Stubbe SuperBuggy"),
-                    ("petr_nikodem", "Petr Nikodém", "Caravan Metropol"),
-                    ("vincent_mercier", "Vincent Mercier", "Mercier Competition"),
-                    ("mike_bartelen", "Mike Bartelen", "Bartelen Motorsport"),
-                    ("radek_jordak", "Radek Jordák", "Jordák Motorsport"),
-                    ("johnny_feuillade", "Johnny Feuillade", "Feuillade Racing"),
-                    ("terry_callaghan", "Terry Callaghan", "Fast & Speed Holland"),
+                    ("bodo_richter", "Bodo Richter", "Rhine Buggy Team"),
+                    ("pavel_urban", "Pavel Urban", "Caravan Metropol"),
+                    ("valentin_moreau", "Valentin Moreau", "Rhone Cross Team"),
+                    ("marten_bartelen", "Marten Bartelen", "Dutch Cross Dynamics"),
+                    ("radim_jordak", "Radim Jordák", "Moravia Cross Team"),
+                    ("jerome_feuillade", "Jerome Feuillade", "Picardy Cross Team"),
+                    ("terry_callaghan", "Terry Callaghan", "Rapid Dynamics Racing"),
                 ],
             ),
         };
@@ -3751,10 +3747,10 @@ impl RaceSession {
         self.init_race();
     }
 
-    /// Starts a full NASCAR Cup Series Championship Season.
+    /// Starts a full Premier Stock Car Cup Championship Season.
     pub fn start_nascar_championship(&mut self) {
         let champ = ChampionshipSession::new(
-            "NASCAR Cup Series Championship 2026",
+            "Premier Stock Car Cup Championship 2026",
             PointSystem::NascarCup { stage_win_bonus: true },
             vec![
                 "daytona_superspeedway".to_string(),
@@ -3773,23 +3769,23 @@ impl RaceSession {
             4,
             &[
                 ("player", "Player", "Apex Stock Car"),
-                ("dale_vance", "Dale 'The Intimidator' Vance", "Richard Childress Racing"),
-                ("chase_gordon", "Chase 'Rainbow' Gordon", "Hendrick Motorsports"),
-                ("richard_pettyfield", "Richard 'The King' Pettyfield", "Petty Enterprises"),
-                ("rowdy_busch", "Rowdy 'Wild Thing' Busch", "Joe Gibbs Racing"),
-                ("jimmie_johnson", "Jimmie 'Seven-Time' Johnson", "Hendrick Motorsports"),
-                ("tony_stewart", "Tony 'Smoke' Stewart", "Stewart-Haas Racing"),
-                ("bobby_allison", "Bobby 'Alabama' Allison", "Alabama Gang"),
-                ("bubba_wallace", "Bubba 'The Rocket' Wallace", "23XI Racing"),
-                ("joey_logano", "Joey 'Sliced Bread' Logano", "Team Penske"),
-                ("bill_elliott", "Bill 'Awesome Bill' Elliott", "Melling Racing"),
-                ("cale_yarborough", "Cale 'The Iron Man' Yarborough", "Junior Johnson Racing"),
+                ("colt_reynolds", "Colt 'The Ironclad' Reynolds", "Heartland Competition"),
+                ("clayton_reed", "Clayton 'Viper' Reed", "Apex Vanguard Racing"),
+                ("rex_montgomery", "Rex 'The Crown' Montgomery", "Highland Blue Racing"),
+                ("brant_harlan", "Brant 'Thunder' Harlan", "Crestline Speedworks"),
+                ("judson_vance", "Judson 'Gold Rush' Vance", "Apex Vanguard Racing"),
+                ("tanner_cobb", "Tanner 'Hot Lap' Cobb", "Summit Ridge Motorsport"),
+                ("bo_mercer", "Bo 'Heartland' Mercer", "Dixie Heritage Motorsport"),
+                ("beau_chambers", "Beau 'The Comet' Chambers", "Flightline Motorsport"),
+                ("jasper_lowe", "Jasper 'Ace' Lowe", "Keystone Racing Team"),
+                ("brayden_ellis", "Brayden 'Wildcard' Ellis", "Apex Stock Car"),
+                ("curtis_yancey", "Curtis 'The Wall' Yancey", "Brushy Mountain Racing"),
             ],
         );
         self.switch_to_nascar();
         self.championship_session = Some(champ.with_tier(5));
-        self.selected_car_model_id = Some("nascar_corvette_ta1");
-        self.active_career_progress.ensure_car("nascar_corvette_ta1");
+        self.selected_car_model_id = Some("nascar_crossbow_manta_t5");
+        self.active_career_progress.ensure_car("nascar_crossbow_manta_t5");
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
         }
@@ -3928,6 +3924,18 @@ impl RaceSession {
             DriverTier::Legend => DriverTier::Rookie,
         };
         self.set_casual_ai_difficulty(next_tier);
+    }
+
+    /// Cycles the casual AI difficulty tier backward.
+    pub fn cycle_casual_ai_difficulty_prev(&mut self) {
+        let prev_tier = match self.casual_ai_difficulty {
+            DriverTier::Rookie => DriverTier::Legend,
+            DriverTier::Amateur => DriverTier::Rookie,
+            DriverTier::Contender => DriverTier::Amateur,
+            DriverTier::Pro => DriverTier::Contender,
+            DriverTier::Legend => DriverTier::Pro,
+        };
+        self.set_casual_ai_difficulty(prev_tier);
     }
 
     /// Sets the target difficulty tier for casual races and rebuilds grid tiers.
@@ -4280,7 +4288,7 @@ impl RaceSession {
                 if self.active_module_id == "classic" {
                     ClassicGameModule::car_classic_ax_mudlark()
                 } else {
-                    tdrace_core::physics::config::CarConfig::sand_rail()
+                    tdrace_core::physics::config::CarConfig::cross_car()
                 }
             }
             CarChoice::DriftCar => {
@@ -4302,6 +4310,10 @@ impl RaceSession {
                 } else {
                     self.config.get_car_config(player_car_choice)
                 }
+            }
+            _ => {
+                self.current_visual_type = player_car_choice.visual_type();
+                player_car_choice.config()
             }
         };
 
@@ -4980,6 +4992,7 @@ impl RaceSession {
         self.starting_grid_focus = StartingGridFocus::LeftSetup;
         self.starting_grid_card_idx = 0;
         self.starting_grid_roster_idx = 0;
+        self.starting_grid_config_idx = 0;
         self.state = GameState::StartingGrid;
     }
 
@@ -5507,11 +5520,11 @@ impl RaceSession {
                     });
                 }
 
-                // [5] Cycle Approaching Curve Helper: Rally Pacenote -> Chevrons -> Off
+                // [5] Toggle Approaching Curve Helper (rally pacenote)
                 if is_key_pressed(KeyCode::Key5) {
-                    self.visibility_options.cycle_curve_indicator();
+                    self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
                     self.audio.play_sfx(SfxType::UiMove);
-                    let state_str = self.visibility_options.curve_indicator_label();
+                    let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
                     let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                     if let Some(pos) = my_pos {
                         self.fx.drift_popups.spawn_text(pos, &format!("[5] CORNER ASSIST: {}", state_str), col);
@@ -6310,6 +6323,7 @@ impl RaceSession {
         let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
         let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
         let (grid_btn_x, grid_btn_y, grid_btn_w, grid_btn_h) = crate::ui::starting_grid_grid_button_rect(sw, sh);
+        let (t_rect, l_rect, b_rect) = crate::ui::starting_grid_stepper_rects(sw, sh);
         let (p_btn_x, p_btn_y, p_btn_w, p_btn_h) = crate::ui::starting_grid_player_card_rect(sw, sh);
         let (c_btn_x, c_btn_y, c_btn_w, c_btn_h) = crate::ui::starting_grid_circuit_card_rect(sw, sh);
         let (mx, my) = mouse_position_safe();
@@ -6324,6 +6338,21 @@ impl RaceSession {
             && mx <= g_btn_x + g_btn_w
             && my >= g_btn_y
             && my <= g_btn_y + g_btn_h;
+        let tier_clicked = mouse_clicked
+            && mx >= t_rect.0
+            && mx <= t_rect.0 + t_rect.2
+            && my >= t_rect.1
+            && my <= t_rect.1 + t_rect.3;
+        let laps_clicked = mouse_clicked
+            && mx >= l_rect.0
+            && mx <= l_rect.0 + l_rect.2
+            && my >= l_rect.1
+            && my <= l_rect.1 + l_rect.3;
+        let bots_clicked = mouse_clicked
+            && mx >= b_rect.0
+            && mx <= b_rect.0 + b_rect.2
+            && my >= b_rect.1
+            && my <= b_rect.1 + b_rect.3;
         let grid_btn_clicked = mouse_clicked
             && mx >= grid_btn_x
             && mx <= grid_btn_x + grid_btn_w
@@ -6359,48 +6388,118 @@ impl RaceSession {
             return;
         }
 
-        if grid_btn_clicked {
+        if tier_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
-            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
-                let max_bots = self.max_bots();
+            self.starting_grid_config_idx = 0;
+            if self.game_mode.allows_difficulty_customization() {
                 self.audio.play_sfx(SfxType::UiMove);
-                if self.num_bots < max_bots {
-                    self.num_bots += 1;
+                if mx < t_rect.0 + t_rect.2 * 0.35 {
+                    self.cycle_casual_ai_difficulty_prev();
                 } else {
-                    self.num_bots = 1;
+                    self.cycle_casual_ai_difficulty();
                 }
-                self.rebuild_roster_participants();
-                self.update_active_modality_racer_count();
-            } else if self.game_mode.allows_difficulty_customization() {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.cycle_casual_ai_difficulty();
             }
             return;
         }
 
-        // 1. Panel Switching (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
-        if is_key_pressed(KeyCode::Left)
-            || is_key_pressed(KeyCode::A)
-            || self.input.gamepad.snapshot.dpad_left_pressed
-            || self.input.gamepad.snapshot.nav_left
-        {
-            if self.starting_grid_focus != StartingGridFocus::LeftSetup {
+        if laps_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            self.starting_grid_config_idx = 1;
+            if self.game_mode.allows_laps_customization() {
                 self.audio.play_sfx(SfxType::UiMove);
-                self.starting_grid_focus = StartingGridFocus::LeftSetup;
-                if self.starting_grid_card_idx == 1 {
-                    self.starting_grid_card_idx = 0;
+                if mx < l_rect.0 + l_rect.2 * 0.35 {
+                    self.total_laps = self.total_laps.saturating_sub(1).max(1);
+                } else {
+                    self.total_laps = (self.total_laps + 1).min(99);
                 }
             }
+            return;
         }
-        if is_key_pressed(KeyCode::Right)
+
+        if bots_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            self.starting_grid_config_idx = 2;
+            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                let max_bots = self.max_bots();
+                self.audio.play_sfx(SfxType::UiMove);
+                if mx < b_rect.0 + b_rect.2 * 0.35 {
+                    if self.num_bots > 1 {
+                        self.num_bots -= 1;
+                    } else {
+                        self.num_bots = max_bots;
+                    }
+                } else {
+                    if self.num_bots < max_bots {
+                        self.num_bots += 1;
+                    } else {
+                        self.num_bots = 1;
+                    }
+                }
+                self.rebuild_roster_participants();
+                self.update_active_modality_racer_count();
+            }
+            return;
+        }
+
+        if grid_btn_clicked {
+            self.starting_grid_focus = StartingGridFocus::RightRoster;
+            self.starting_grid_card_idx = 1;
+            return;
+        }
+
+        // 1. Horizontal Navigation (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
+        let nav_left = is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.nav_left;
+        let nav_right = is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
             || self.input.gamepad.snapshot.dpad_right_pressed
-            || self.input.gamepad.snapshot.nav_right
-        {
-            if self.starting_grid_focus != StartingGridFocus::RightRoster {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.starting_grid_focus = StartingGridFocus::RightRoster;
+            || self.input.gamepad.snapshot.nav_right;
+
+        if nav_left {
+            match self.starting_grid_focus {
+                StartingGridFocus::RightRoster => {
+                    if self.starting_grid_card_idx == 1 {
+                        // In Grid Config: navigate left between controls: Bots (2) -> Laps (1) -> Tier (0) -> LeftSetup
+                        if self.starting_grid_config_idx > 0 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_config_idx -= 1;
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_focus = StartingGridFocus::LeftSetup;
+                            self.starting_grid_card_idx = 4;
+                        }
+                    } else {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.starting_grid_focus = StartingGridFocus::LeftSetup;
+                        self.starting_grid_card_idx = 0;
+                    }
+                }
+                StartingGridFocus::LeftSetup => {}
+            }
+        }
+        if nav_right {
+            match self.starting_grid_focus {
+                StartingGridFocus::LeftSetup => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.starting_grid_focus = StartingGridFocus::RightRoster;
+                    if self.starting_grid_card_idx == 3 || self.starting_grid_card_idx == 4 {
+                        self.starting_grid_card_idx = 1;
+                        self.starting_grid_config_idx = 0;
+                    } else {
+                        self.starting_grid_card_idx = 0;
+                    }
+                }
+                StartingGridFocus::RightRoster => {
+                    if self.starting_grid_card_idx == 1 && self.starting_grid_config_idx < 2 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.starting_grid_config_idx += 1;
+                    }
+                }
             }
         }
 
@@ -6620,41 +6719,68 @@ impl RaceSession {
                         self.starting_grid_roster_idx = 0;
                     }
 
-                    // Adjust bots on Enter / + / - / [ / ]
-                    if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
-                        let max_bots = self.max_bots();
-                        if is_key_pressed(KeyCode::Enter)
-                            || is_key_pressed(KeyCode::KpEnter)
-                            || is_key_pressed(KeyCode::RightBracket)
-                            || is_key_pressed(KeyCode::Equal)
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            if self.num_bots < max_bots {
-                                self.num_bots += 1;
-                            } else {
-                                self.num_bots = 1;
+                    // Modify selected Grid Config control (0: Tier, 1: Laps, 2: Bots)
+                    let modify_forward = is_key_pressed(KeyCode::Enter)
+                        || is_key_pressed(KeyCode::KpEnter)
+                        || is_key_pressed(KeyCode::Equal)
+                        || is_key_pressed(KeyCode::RightBracket)
+                        || self.input.gamepad.snapshot.btn_confirm_pressed
+                        || self.input.gamepad.snapshot.btn_a_pressed
+                        || self.input.gamepad.snapshot.btn_rb_pressed;
+                    let modify_backward = is_key_pressed(KeyCode::Minus)
+                        || is_key_pressed(KeyCode::LeftBracket)
+                        || self.input.gamepad.snapshot.btn_x_pressed
+                        || self.input.gamepad.snapshot.btn_lb_pressed;
+
+                    match self.starting_grid_config_idx {
+                        0 => {
+                            // TIER control
+                            if self.game_mode.allows_difficulty_customization() {
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.cycle_casual_ai_difficulty();
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.cycle_casual_ai_difficulty_prev();
+                                }
                             }
-                            self.rebuild_roster_participants();
-                            self.update_active_modality_racer_count();
                         }
-                        if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            if self.num_bots > 1 {
-                                self.num_bots -= 1;
-                            } else {
-                                self.num_bots = max_bots;
+                        1 => {
+                            // LAPS control
+                            if self.game_mode.allows_laps_customization() {
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.total_laps = (self.total_laps + 1).min(99);
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.total_laps = self.total_laps.saturating_sub(1).max(1);
+                                }
                             }
-                            self.rebuild_roster_participants();
-                            self.update_active_modality_racer_count();
                         }
-                    } else if self.game_mode.allows_difficulty_customization() {
-                        if is_key_pressed(KeyCode::Enter)
-                            || is_key_pressed(KeyCode::KpEnter)
-                            || is_key_pressed(KeyCode::RightBracket)
-                            || is_key_pressed(KeyCode::Equal)
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            self.cycle_casual_ai_difficulty();
+                        _ => {
+                            // BOTS control
+                            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                                let max_bots = self.max_bots();
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots < max_bots {
+                                        self.num_bots += 1;
+                                    } else {
+                                        self.num_bots = 1;
+                                    }
+                                    self.rebuild_roster_participants();
+                                    self.update_active_modality_racer_count();
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots > 1 {
+                                        self.num_bots -= 1;
+                                    } else {
+                                        self.num_bots = max_bots;
+                                    }
+                                    self.rebuild_roster_participants();
+                                    self.update_active_modality_racer_count();
+                                }
+                            }
                         }
                     }
                 } else {
@@ -6735,6 +6861,12 @@ impl RaceSession {
         if is_key_pressed(KeyCode::T) && self.game_mode.allows_difficulty_customization() {
             self.audio.play_sfx(SfxType::UiMove);
             self.cycle_casual_ai_difficulty();
+        }
+
+        // Adjust Laps shortcut (L key)
+        if is_key_pressed(KeyCode::L) && self.game_mode.allows_laps_customization() {
+            self.audio.play_sfx(SfxType::UiMove);
+            self.total_laps = if self.total_laps >= 20 { 1 } else { self.total_laps + 1 };
         }
 
         // View Driver Dossiers direct key shortcut (D key or Gamepad Y)
@@ -9156,7 +9288,7 @@ impl RaceSession {
             let join_screen = cabinet::net::CabinetLanJoinScreen::new(
                 &self.active_profile.name,
                 self.active_profile.country.as_deref().unwrap_or("ESP"),
-                self.selected_car_model_id.unwrap_or("gt_ferrari_296_gt3"),
+                self.selected_car_model_id.unwrap_or("gt_valente_corsa_t2"),
                 profile_livery,
             );
             self.lan_join_screen = Some(join_screen);
@@ -9184,7 +9316,7 @@ impl RaceSession {
         preferred
             .filter(|id| models.iter().any(|m| m.id == *id))
             .or_else(|| models.iter().find(|m| m.tier == 1).or(models.first()).map(|m| m.id))
-            .unwrap_or("gt_ferrari_296_gt3")
+            .unwrap_or("gt_valente_corsa_t2")
     }
 
     /// Game module of the LAN lobby: the host's module, or the module of the host circuit on a client.
@@ -9462,16 +9594,16 @@ impl RaceSession {
     /// Canonicalizes client lobby / network model IDs to verified catalog IDs.
     pub fn canonicalize_car_model_id(raw_id: &str) -> &'static str {
         match raw_id {
-            "scuderia_gt" => "gt_ferrari_296_gt3",
-            "stuttgart_gt" => "gt_porsche_911_gt3r",
-            "bavarian_m4" => "gt_bmw_m4_gt4",
-            "silverstone_vantage" => "gt_aston_vantage_gt4",
-            "shifter_kart_125" => "kart_birel_art_kz2",
+            "scuderia_gt" => "gt_valente_corsa_t2",
+            "stuttgart_gt" => "gt_vandorn_arrowhead_t2",
+            "bavarian_m4" => "gt_bmr_bavaria_t1",
+            "silverstone_vantage" => "gt_albion_victor_t1",
+            "shifter_kart_125" => "kart_rosso_corsa_t4",
             other => {
                 if let Some(m) = crate::catalog::find_model_by_id(other) {
                     m.id
                 } else {
-                    "gt_ferrari_296_gt3"
+                    "gt_valente_corsa_t2"
                 }
             }
         }
@@ -13586,7 +13718,14 @@ impl RaceSession {
     /// Builds the final results standings table.
     fn build_results(&mut self) {
         let my_car_idx = self.player_car_index();
-        let race_results = self.world.results(&self.track);
+        let mut race_results = self.world.results(&self.track);
+        // LAN: every machine shows the host's finish order (spec 044), not the order of its own world.
+        if let Some(order) = self.lan_result_order() {
+            race_results.sort_by_key(|r| order.iter().position(|&c| c == r.car).unwrap_or(usize::MAX));
+            for (i, r) in race_results.iter_mut().enumerate() {
+                r.position = i + 1;
+            }
+        }
         self.results.clear();
         let leader_time = race_results.first().map(|r| r.time + r.penalty).unwrap_or(0.0);
         let joker_race = joker_rule_for(&self.track).mandatory > 0;
@@ -13723,12 +13862,12 @@ impl RaceSession {
                 ref modal,
             } => {
                 let (mod_title, mod_accent) = match self.active_module_id {
-                    "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", Palette::RED),
+                    "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", Palette::RED),
                     "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
-                    "nascar" => ("NASCAR CUP SERIES", Palette::YELLOW),
+                    "nascar" => ("STOCK CAR RACING", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
-                    "autocross" => ("FIA AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
+                    "autocross" => ("CONTINENTAL AUTOCROSS", Color::new(1.0, 0.45, 0.05, 1.0)),
                     "vault" => ("THE VAULT", Color::new(1.0, 0.65, 0.0, 1.0)),
                     _ => ("CLASSIC ARCADE MOTORSPORT", Palette::NEON_CYAN),
                 };
@@ -13820,12 +13959,12 @@ impl RaceSession {
                 let (mod_title, mod_sub, mod_accent) = match self.menu_category_filter {
                     MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits", Palette::NEON_MAGENTA),
                     _ => match display_module {
-                        "gt" | "gt_challenge" => ("GT WORLD CHALLENGE", "FIA GT3 & SRO GT2 World Tour", Palette::RED),
-                        "rally" => ("RALLYCROSS WORLD CUP", "World RX & Euro RX Mixed Surface Stages", Palette::NEON_GOLD),
+                        "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", "Continental GT3 & Biturbo World Tour", Palette::RED),
+                        "rally" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages", Palette::NEON_GOLD),
                         "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
-                        "nascar" => ("NASCAR CUP SERIES", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
-                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Baja Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                        "autocross" => ("FIA AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
+                        "nascar" => ("STOCK CAR RACING", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
+                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
+                        "autocross" => ("CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
                         "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
                         _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
                     },
@@ -13887,8 +14026,8 @@ impl RaceSession {
                     ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
                     ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
-                    ("gt", "GT World Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
-                    ("nascar", "NASCAR Cup Series & Trans-Am TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
+                    ("gt", "Grand Touring Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
+                    ("nascar", "Stock Car Racing & Trans-National TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
                     ("extreme_offroad", "Extreme Off-Road & Stunt Arenas", "Desert dunes, ice lakes, massive stadium jumps & stunt arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
                 ];
                 if self.is_dev_mode() {
@@ -13981,6 +14120,7 @@ impl RaceSession {
                     unlock_level,
                     self.selected_car_model_id,
                     self.casual_ai_difficulty,
+                    self.starting_grid_config_idx,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -15727,7 +15867,7 @@ impl RaceSession {
             if self.visibility_options.overhead_chevron {
                 render_player_overhead_chevron(
                     focus_car.state.position,
-                    focus_car.total_elevation(),
+                    focus_car.dynamic_elevation(),
                     camera.current_zoom,
                     self.session_time,
                     scheme,
@@ -15744,27 +15884,16 @@ impl RaceSession {
                         focus_car.state.speed,
                         max_lookahead,
                     ) {
-                        match self.visibility_options.curve_indicator_style {
-                            CurveIndicatorStyle::Chevrons => render_curve_indicator(
-                                focus_car,
-                                &status,
-                                self.visibility_options.curve_color_scheme,
-                                camera.current_zoom,
-                                self.session_time,
-                                self.visibility_options.curve_helper_scale,
-                                self.visibility_options.curve_helper_brightness,
-                            ),
-                            CurveIndicatorStyle::Pacenote => render_curve_pacenote(
-                                focus_car,
-                                &status,
-                                &self.track.spline,
-                                self.visibility_options.curve_color_scheme,
-                                camera.current_zoom,
-                                self.session_time,
-                                self.visibility_options.curve_helper_scale,
-                                self.visibility_options.curve_helper_brightness,
-                            ),
-                        }
+                        render_curve_pacenote(
+                            focus_car,
+                            &status,
+                            &self.track.spline,
+                            self.visibility_options.curve_color_scheme,
+                            camera.current_zoom,
+                            self.session_time,
+                            self.visibility_options.curve_helper_scale,
+                            self.visibility_options.curve_helper_brightness,
+                        );
                     }
                 }
             }
@@ -15838,7 +15967,7 @@ impl RaceSession {
                     tier_label: Some("LAN"),
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else if self.is_split_screen() && i == 0 {
@@ -15848,7 +15977,7 @@ impl RaceSession {
                     tier_label: None,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else if self.is_split_screen() && i == 1 {
@@ -15858,7 +15987,7 @@ impl RaceSession {
                     tier_label: None,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else {
@@ -15881,7 +16010,7 @@ impl RaceSession {
                     tier_label,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             }

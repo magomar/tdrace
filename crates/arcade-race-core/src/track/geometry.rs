@@ -48,6 +48,12 @@ impl LineSegment {
         Vec2::new(-dir.y, dir.x)
     }
 
+    /// Midpoint of the segment.
+    #[inline]
+    pub fn midpoint(&self) -> Vec2 {
+        (self.start + self.end) * 0.5
+    }
+
     /// Finds the closest point on this line segment to an external query point `p`.
     #[inline]
     pub fn closest_point(&self, p: Vec2) -> Vec2 {
@@ -421,6 +427,28 @@ pub fn point_in_polygon(p: Vec2, vertices: &[Vec2]) -> bool {
         j = i;
     }
     inside
+}
+
+/// Standard 2D point-in-triangle containment test using 2D cross products.
+#[inline]
+pub fn point_in_triangle_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool {
+    // A zero-area triangle (coincident or collinear corners, e.g. a junction whose ingress and
+    // egress sockets share one point) contains nothing; without this every point tests inside.
+    let area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if area2.abs() < 1e-6 {
+        return false;
+    }
+    let cross1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+    let cross2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
+    let cross3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);
+    (cross1 >= -1e-3 && cross2 >= -1e-3 && cross3 >= -1e-3)
+        || (cross1 <= 1e-3 && cross2 <= 1e-3 && cross3 <= 1e-3)
+}
+
+/// Tests whether point `p` lies inside the convex or non-self-intersecting quad ABCD.
+#[inline]
+pub fn point_in_quad_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2, d: Vec2) -> bool {
+    point_in_triangle_2d(p, a, b, c) || point_in_triangle_2d(p, a, c, d)
 }
 
 /// Layering depth of a surface zone relative to the drivable track ribbon.
@@ -1056,6 +1084,10 @@ pub struct TrackGeometry {
     pub buildings: Vec<Building>,
     #[serde(default, skip_serializing)]
     pub scenery_obstacles: Vec<Obstacle>,
+    /// Walls along network branch segments (the Rallycross joker), rebuilt on load by
+    /// `Track::generate_network_walls` and never saved.
+    #[serde(default, skip_serializing)]
+    pub network_walls: Vec<WallBarrier>,
 }
 
 impl TrackGeometry {
@@ -1063,9 +1095,9 @@ impl TrackGeometry {
         Self::default()
     }
 
-    /// All barrier segments combined (inner and outer).
+    /// All barrier segments combined (inner, outer and network branch walls).
     pub fn all_walls(&self) -> impl Iterator<Item = &WallBarrier> {
-        self.inner_walls.iter().chain(self.outer_walls.iter())
+        self.inner_walls.iter().chain(self.outer_walls.iter()).chain(self.network_walls.iter())
     }
 
     /// Recomputes and caches aggregated static and scenery obstacles (tree trunks, grandstands, rocks, buildings) (Spec 084).
@@ -1167,6 +1199,39 @@ impl PitLane {
             exit_gate,
         }
     }
+}
+
+/// Precomputed chevron stripe line in the pit lane entrance gore.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLaneChevron {
+    pub apex: Vec2,
+    pub pt_track: Vec2,
+    pub pt_pit: Vec2,
+}
+
+/// Precomputed paved exit merge quad.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLaneExitQuad {
+    pub quad: [Vec2; 4],
+    pub has_dashed_line: bool,
+    pub line_start: Vec2,
+    pub line_end: Vec2,
+}
+
+/// Precomputed geometry for pit lane entrance/exit paved junctions and gore markings.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PitLaneJunctionData {
+    pub bounds_min: Vec2,
+    pub bounds_max: Vec2,
+    pub entrance_quads: Vec<[Vec2; 4]>,
+    pub has_gore: bool,
+    pub p_apex: Vec2,
+    pub track_edge_apex: Vec2,
+    pub pit_inner_apex: Vec2,
+    pub te_start: Vec2,
+    pub pe_start: Vec2,
+    pub chevrons: Vec<PitLaneChevron>,
+    pub exit_quads: Vec<PitLaneExitQuad>,
 }
 
 #[cfg(test)]

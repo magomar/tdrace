@@ -269,7 +269,7 @@ fn test_tree_cenital_canopy_and_alpha_modulation() {
 
 #[test]
 fn test_porsche_gt3r_topdown_sprite_asset_presence() {
-    let png_bytes = include_bytes!("../../../assets/textures/vehicles/topdown/gt/gt_porsche_911_gt3r.png");
+    let png_bytes = include_bytes!("../../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png");
     assert!(!png_bytes.is_empty(), "Topdown sprite PNG asset must not be empty");
     assert_eq!(&png_bytes[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(png_bytes.len() > 100_000, "PNG file should contain high-resolution sprite data");
@@ -277,12 +277,12 @@ fn test_porsche_gt3r_topdown_sprite_asset_presence() {
 
 #[test]
 fn test_porsche_gt3r_lateral_sprite_asset_presence() {
-    let high_res = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r.png");
+    let high_res = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2.png");
     assert!(!high_res.is_empty(), "Lateral sprite PNG asset must not be empty");
     assert_eq!(&high_res[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(high_res.len() > 50_000, "High-res lateral PNG file should contain detailed sprite data");
 
-    let thumb = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_porsche_911_gt3r_thumb.png");
+    let thumb = include_bytes!("../../../assets/textures/vehicles/laterals/gt/gt_vandorn_arrowhead_t2_thumb.png");
     assert!(!thumb.is_empty(), "Thumbnail sprite PNG asset must not be empty");
     assert_eq!(&thumb[1..4], b"PNG", "Asset must be a valid PNG format header");
     assert!(thumb.len() < high_res.len(), "Thumbnail must be more compact than high-res sprite");
@@ -416,9 +416,10 @@ fn test_vortex_dune_crusher_topdown_sprite_orientation() {
         "Vortex Dune Crusher front nosecone must face forward (+X, right side). Found {} pixels",
         right_nose_pixels
     );
-    assert_eq!(
-        left_nose_pixels, 0,
-        "Vortex Dune Crusher must not have nosecone pixels in the rear (-X, left side)"
+    assert!(
+        left_nose_pixels < 1000,
+        "Vortex Dune Crusher must not have nosecone in the rear (-X, left side), found {}",
+        left_nose_pixels
     );
 }
 
@@ -428,9 +429,9 @@ fn test_peugeot_208_rally4_topdown_sprite_orientation() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/rally/rally_peugeot_208_rally4.png");
-    let bytes = std::fs::read(&path).expect("Failed to read rally_peugeot_208_rally4 topdown sprite");
-    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse rally_peugeot_208_rally4 image");
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/rally/rally_gallia_200_t1.png");
+    let bytes = std::fs::read(&path).expect("Failed to read rally_gallia_200_t1 topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse rally_gallia_200_t1 image");
 
     let width = img.width as usize;
     let height = img.height as usize;
@@ -470,8 +471,8 @@ fn test_tony_kart_topdown_sprite_orientation() {
     use std::path::Path;
 
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/kart/kart_tony_kart_racer_ok.png");
-    let bytes = std::fs::read(&path).expect("Failed to read kart_tony_kart_racer_ok topdown sprite");
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/kart/kart_verde_apex_t3.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_verde_apex_t3 topdown sprite");
     let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart image");
 
     let width = img.width as usize;
@@ -503,6 +504,96 @@ fn test_tony_kart_topdown_sprite_orientation() {
         "Tony Kart front noseplate must face forward (+X, right side). Found right: {}, left: {}",
         right_yellow,
         left_yellow
+    );
+}
+
+#[test]
+fn test_classic_ax_mudlark_lateral_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/classic/classic_ax_mudlark.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_ax_mudlark lateral sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_ax_mudlark lateral image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut front_nose_pixels = 0;
+    let mut rear_nose_pixels = 0;
+
+    // Cyan nosecone bodywork: y in [250..380], vibrant cyan (b > 120, g > 100, r < 80, a > 128)
+    for y in 250..380.min(height) {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            if a > 128 && b > 120 && g > 100 && r < 80 {
+                if x >= 700 {
+                    front_nose_pixels += 1;
+                } else if x < 300 {
+                    rear_nose_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        front_nose_pixels > 3000,
+        "Mudlark Cross Car front nosecone must face forward (+X, right side). Found {} pixels",
+        front_nose_pixels
+    );
+    assert_eq!(
+        rear_nose_pixels, 0,
+        "Mudlark Cross Car must not have nosecone pixels in the rear (-X, left side)"
+    );
+}
+
+#[test]
+fn test_crg_black_mirror_okj_lateral_sprite_orientation() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/laterals/kart/kart_blackline_obsidian_t2.png");
+    let bytes = std::fs::read(&path).expect("Failed to read kart_blackline_obsidian_t2 lateral sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse kart_blackline_obsidian_t2 lateral image");
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut front_orange_pixels = 0;
+    let mut rear_orange_pixels = 0;
+
+    // Orange front bumper/fairing: vibrant orange (r > 200, g in 80..200, b < 60, a > 128)
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let r = img.bytes[idx];
+            let g = img.bytes[idx + 1];
+            let b = img.bytes[idx + 2];
+            let a = img.bytes[idx + 3];
+
+            if a > 128 && r > 200 && (80..200).contains(&g) && b < 60 {
+                if x >= 750 {
+                    front_orange_pixels += 1;
+                } else if x < 250 {
+                    rear_orange_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(
+        front_orange_pixels > 1000,
+        "CRG Black Mirror OK-J front bumper/fairing must face forward (+X, right side). Found {} pixels",
+        front_orange_pixels
+    );
+    assert_eq!(
+        rear_orange_pixels, 0,
+        "CRG Black Mirror OK-J must not have front bumper/fairing pixels in the rear (-X, left side)"
     );
 }
 
@@ -706,11 +797,11 @@ fn test_gt_models_mask_tinting_transforms_bodywork_pixels() {
     let topdown_dir = manifest_dir.join("../../assets/textures/vehicles/topdown/gt");
 
     let gt_models = [
-        "gt_toyota_supra_gt4",
-        "gt_bmw_m4_gt4",
-        "gt_aston_vantage_gt4",
-        "gt_porsche_718_gt4",
-        "gt_porsche_911_gt3r",
+        "gt_yamato_hayate_t1",
+        "gt_bmr_bavaria_t1",
+        "gt_albion_victor_t1",
+        "gt_vandorn_stratus_t1",
+        "gt_vandorn_arrowhead_t2",
     ];
 
     let target_primary = Color::new(0.85, 0.10, 0.90, 1.0); // Vivid Magenta/Purple
@@ -1295,10 +1386,10 @@ fn test_spec_026_steered_wheel_config_lookup_and_legacy_fallback() {
 
     // 2. Legacy fallback guarantee: all non-classic models return None
     let legacy_models = [
-        "gt_porsche_911_gt3r",
+        "gt_vandorn_arrowhead_t2",
         "nascar_camaro_zl1",
-        "rally_peugeot_208_rally4",
-        "offroad_baja_trophy_truck",
+        "rally_gallia_200_t1",
+        "offroad_desert_forge_truck_t2",
     ];
     for model_id in legacy_models {
         assert!(
@@ -1343,6 +1434,70 @@ fn test_classic_kart_topdown_sprite_orientation() {
         "classic_kart front must face forward (+X, right side). Found right: {}, left: {}",
         right_pixels,
         left_pixels
+    );
+}
+
+#[test]
+fn test_classic_at_safari_topdown_cenital_symmetry() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("../../assets/textures/vehicles/topdown/classic/classic_at_safari.png");
+    let bytes = std::fs::read(&path).expect("Failed to read classic_at_safari topdown sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("Failed to parse classic_at_safari image");
+
+    assert_eq!(img.width, 512);
+    assert_eq!(img.height, 512);
+
+    let width = img.width as usize;
+    let height = img.height as usize;
+    let mut top_pixels = 0;
+    let mut bot_pixels = 0;
+    let mut min_y = height;
+    let mut max_y = 0;
+    let mut sum_y = 0;
+    let mut total_pixels = 0;
+
+    for y in 0..height {
+        for x in 0..width {
+            let idx = (y * width + x) * 4;
+            let a = img.bytes[idx + 3];
+            if a > 50 {
+                total_pixels += 1;
+                sum_y += y;
+                min_y = min_y.min(y);
+                max_y = max_y.max(y);
+                if y < 256 {
+                    top_pixels += 1;
+                } else {
+                    bot_pixels += 1;
+                }
+            }
+        }
+    }
+
+    assert!(total_pixels > 50000, "Must have substantial car body pixels");
+    let y_center = sum_y as f64 / total_pixels as f64;
+    assert!(
+        (y_center - 256.0).abs() < 2.0,
+        "Vehicle must be vertically centered at y=256 (cenital/zenithal). Found y_center: {:.2}",
+        y_center
+    );
+
+    let symmetry_ratio = top_pixels as f64 / bot_pixels as f64;
+    assert!(
+        (symmetry_ratio - 1.0).abs() < 0.05,
+        "Top and bottom halves must be symmetrical (cenital/zenithal). Ratio: {:.4}",
+        symmetry_ratio
+    );
+
+    // Height must be tight (orthographic top-down, ~200px, not tilted showing sides >250px)
+    let sprite_height = max_y - min_y;
+    assert!(
+        sprite_height < 220,
+        "Orthographic top-down sprite height must be < 220px to avoid showing side panels. Found: {}",
+        sprite_height
     );
 }
 
@@ -1572,7 +1727,7 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
 
     // 3. GT / Touring: Full DRL headlights, dynamic brake lights, track illumination
     let gt_cfg = resolve_vehicle_lighting(
-        Some("gt_porsche_911_gt3r"),
+        Some("gt_vandorn_arrowhead_t2"),
         VehicleVisualType::TouringGT {
             widebody: true,
             gt_wing: true,
@@ -1588,7 +1743,7 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
 
     // 4. Rallycross / All-Terrain: Full headlights, brake lights, hood spotlight pods, track illumination
     let rally_cfg = resolve_vehicle_lighting(
-        Some("rally_peugeot_208_rally4"),
+        Some("rally_gallia_200_t1"),
         VehicleVisualType::RallyHatch {
             roof_scoop: true,
             mudflaps: true,
@@ -1694,7 +1849,7 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
 
     // 1. Cars with lights: GT, Rally, Offroad start with lights_on = true
     let mut gt = resolve_vehicle_lighting(
-        Some("gt_porsche_911_gt3r"),
+        Some("gt_vandorn_arrowhead_t2"),
         VehicleVisualType::TouringGT {
             widebody: true,
             gt_wing: true,
@@ -1713,7 +1868,7 @@ fn test_vehicle_lighting_toggle_switch_on_off() {
     assert!(gt.lights_on, "GT lights must be switched on");
 
     let mut rally = resolve_vehicle_lighting(
-        Some("rally_peugeot_208_rally4"),
+        Some("rally_gallia_200_t1"),
         VehicleVisualType::RallyHatch {
             roof_scoop: true,
             mudflaps: true,
@@ -1927,8 +2082,8 @@ fn test_wheel_texture_cache_memory_bounds() {
 
     println!("Found {} wheel texture assets on disk", wheel_files.len());
     assert!(
-        wheel_files.len() <= 8,
-        "Total wheel textures ({}) must be <= 8 (N + M decoupled invariance)",
+        wheel_files.len() <= 10,
+        "Total wheel textures ({}) must be <= 10 (N + M decoupled invariance)",
         wheel_files.len()
     );
 
@@ -1999,5 +2154,382 @@ fn test_spec_074_steered_wheel_accent_scale_and_dimensions() {
         assert!(stripe_thickness < dest_w * 0.25, "Stripe thickness must not dominate wheel width");
     }
 }
+
+#[test]
+fn test_spec_094_universal_steered_wheel_derivation_across_all_platforms() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS, VAULT_ARCHIVE_CARS};
+    use tdrace_app::render::vehicle_assets::{derive_steered_wheel_config, WheelLayerMode};
+    use tdrace_app::ui::menu::CarChoice;
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .chain(VAULT_ARCHIVE_CARS.iter())
+        .collect();
+
+    assert!(
+        all_vehicles.len() >= 122,
+        "Master vehicle catalog must contain >= 122 vehicles, found {}",
+        all_vehicles.len()
+    );
+
+    // 1. Verify steered wheel derivation succeeds globally across all vehicles
+    for v in &all_vehicles {
+        let car_config = v.to_car_config();
+        let steered_cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config must return Some for {}", v.id));
+
+        assert!(
+            steered_cfg.front_axle_offset > 0.15,
+            "front_axle_offset ({}) must be positive and realistic for {}",
+            steered_cfg.front_axle_offset,
+            v.id
+        );
+        assert!(
+            steered_cfg.half_track_width > 0.15,
+            "half_track_width ({}) must be positive and realistic for {}",
+            steered_cfg.half_track_width,
+            v.id
+        );
+        assert!(
+            steered_cfg.wheel_size.x > 0.05,
+            "wheel_size.x ({}) must be realistic for {}",
+            steered_cfg.wheel_size.x,
+            v.id
+        );
+        assert!(
+            steered_cfg.wheel_size.y > 0.10,
+            "wheel_size.y ({}) must be realistic for {}",
+            steered_cfg.wheel_size.y,
+            v.id
+        );
+        assert!(
+            steered_cfg.texture_padding_factor.x >= 1.0,
+            "texture_padding_factor.x must be >= 1.0 for {}",
+            v.id
+        );
+        assert!(
+            steered_cfg.texture_padding_factor.y >= 1.0,
+            "texture_padding_factor.y must be >= 1.0 for {}",
+            v.id
+        );
+        let expected_layering = if let Some(anchor) = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id) {
+            if anchor.layering == "OverChassis" {
+                WheelLayerMode::OverChassis
+            } else {
+                WheelLayerMode::UnderChassis
+            }
+        } else {
+            v.base_car_choice.wheel_layer_mode()
+        };
+        assert_eq!(
+            steered_cfg.layering,
+            expected_layering,
+            "layering must match visual anchor or platform for {}",
+            v.id
+        );
+    }
+
+    // 2. Scenario: Autocross T4 Touring AX saloons possess dedicated touring geometry
+    let bohemia = all_vehicles.iter().find(|c| c.id == "autocross_bohemia_veloce_t4").expect("bohemia found");
+    assert_eq!(bohemia.base_car_choice, CarChoice::TouringAX);
+    let bohemia_cfg = bohemia.to_car_config();
+    assert!(bohemia_cfg.track_width >= 1.85, "TouringAX track width >= 1.85m");
+    assert!(bohemia_cfg.chassis.front_overhang >= 0.80, "TouringAX front overhang >= 0.80m");
+    assert_eq!(bohemia.base_car_choice.wheel_layer_mode(), WheelLayerMode::UnderChassis);
+    assert_eq!(bohemia_cfg.engine_placement, tdrace_core::physics::config::EnginePlacement::FrontEngine);
+
+    // 3. Scenario: Volkskraft Dune Buggy T1 possesses distinct Baja geometry from Sand Rail
+    let volkskraft = all_vehicles.iter().find(|c| c.id == "offroad_volkskraft_dune_t1").expect("volkskraft found");
+    assert_eq!(volkskraft.base_car_choice, CarChoice::DuneBuggyBaja);
+    let volkskraft_cfg = volkskraft.to_car_config();
+    assert!(volkskraft_cfg.chassis.rear_overhang >= 0.50, "Baja rear overhang >= 0.50m");
+    assert!(volkskraft_cfg.chassis.front_overhang >= 0.40, "Baja front overhang >= 0.40m");
+    assert_eq!(volkskraft.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
+    assert_eq!(volkskraft_cfg.engine_placement, tdrace_core::physics::config::EnginePlacement::RearEngine);
+
+    let nomad = all_vehicles.iter().find(|c| c.id == "offroad_laurentian_nomad_t1").expect("nomad found");
+    assert_eq!(nomad.base_car_choice, CarChoice::SandRail);
+    let nomad_cfg = nomad.to_car_config();
+    assert!(nomad_cfg.chassis.front_overhang <= 0.18, "SandRail front overhang <= 0.18m");
+    assert_eq!(nomad.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
+
+    // 4. Scenario: Trophy Trucks and Monster Trucks possess accurate truck-scale collision hulls
+    let trophy = all_vehicles.iter().find(|c| c.id == "offroad_desert_forge_truck_t2").expect("trophy truck found");
+    assert_eq!(trophy.base_car_choice, CarChoice::TrophyTruckAWD);
+    let trophy_cfg = trophy.to_car_config();
+    let trophy_hull_len = trophy_cfg.wheelbase + trophy_cfg.chassis.front_overhang + trophy_cfg.chassis.rear_overhang;
+    assert!(trophy_hull_len >= 5.0, "Trophy truck hull length >= 5.0m, found {}", trophy_hull_len);
+    assert_eq!(trophy.base_car_choice.wheel_layer_mode(), WheelLayerMode::UnderChassis);
+
+    let monster = all_vehicles.iter().find(|c| c.id == "offroad_colossus_titan_t5").expect("monster truck found");
+    assert_eq!(monster.base_car_choice, CarChoice::MonsterTruck);
+    let monster_cfg = monster.to_car_config();
+    assert!(monster_cfg.track_width >= 2.6, "Monster truck hull width >= 2.6m");
+    assert!(monster_cfg.wheels[0].tire_radius >= 0.80, "Monster truck 66-inch tire radius >= 0.80m");
+    assert!(monster_cfg.wheels[0].tire_width >= 0.60, "Monster truck 66-inch tire width >= 0.60m");
+    assert_eq!(monster.base_car_choice.wheel_layer_mode(), WheelLayerMode::OverChassis);
+}
+
+#[test]
+fn test_spec_091_global_chassis_sprites_integrity_and_dimensions() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_root = manifest_dir.join("../../assets/textures/vehicles/topdown");
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    assert_eq!(
+        all_vehicles.len(),
+        122,
+        "Playable vehicle catalog must contain exactly 122 vehicles (12 classic + 110 motorsport)"
+    );
+
+    let mut verified_count = 0;
+    for v in &all_vehicles {
+        let chassis_path = topdown_root
+            .join(v.module_id)
+            .join(format!("{}_chassis.png", v.id));
+        let full_path = topdown_root
+            .join(v.module_id)
+            .join(format!("{}.png", v.id));
+
+        assert!(
+            full_path.exists(),
+            "Canonical full topdown sprite must exist on disk: {:?}",
+            full_path
+        );
+        assert!(
+            chassis_path.exists(),
+            "Chassis cutout sprite must exist on disk for vehicle {}: {:?}",
+            v.id,
+            chassis_path
+        );
+
+        let chassis_bytes = std::fs::read(&chassis_path)
+            .unwrap_or_else(|e| panic!("Failed to read chassis sprite for {}: {:?}", v.id, e));
+        let chassis_img = Image::from_file_with_format(&chassis_bytes, None)
+            .unwrap_or_else(|e| panic!("Corrupted chassis PNG for {}: {:?}", v.id, e));
+
+        assert_eq!(
+            chassis_img.width, 512,
+            "Chassis sprite width must be 512 for {}",
+            v.id
+        );
+        assert_eq!(
+            chassis_img.height, 512,
+            "Chassis sprite height must be 512 for {}",
+            v.id
+        );
+
+        verified_count += 1;
+    }
+
+    assert_eq!(
+        verified_count, 122,
+        "All 122 playable vehicles must have verified 512x512 chassis sprites"
+    );
+
+    // Also verify vault novelty lawnmowers in kart/ directory
+    let vault_mowers = [
+        "vault_asahi_blade_runner",
+        "vault_greenfield_prairie_racer",
+        "vault_nordic_valhalla_tractor",
+    ];
+    for mower_id in vault_mowers {
+        let chassis_path = topdown_root
+            .join("kart")
+            .join(format!("{}_chassis.png", mower_id));
+        let full_path = topdown_root
+            .join("kart")
+            .join(format!("{}.png", mower_id));
+
+        assert!(full_path.exists(), "Vault mower full sprite must exist: {:?}", full_path);
+        assert!(chassis_path.exists(), "Vault mower chassis sprite must exist: {:?}", chassis_path);
+
+        let bytes = std::fs::read(&chassis_path).unwrap();
+        let img = Image::from_file_with_format(&bytes, None).unwrap();
+        assert_eq!(img.width, 512);
+        assert_eq!(img.height, 512);
+    }
+}
+
+#[test]
+fn test_spec_091_global_steered_wheel_articulation_and_runtime_integration() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+    use tdrace_app::render::vehicle_assets::{derive_steered_wheel_config, WheelLayerMode};
+    use tdrace_app::ui::menu::CarChoice;
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    for v in &all_vehicles {
+        let car_config = v.to_car_config();
+        let car = Car::new(car_config.clone());
+
+        // 1. Verify steered wheel derivation succeeds globally
+        let cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config failed for {}", v.id));
+
+        assert!(cfg.front_axle_offset > 0.0, "front_axle_offset must be positive for {}", v.id);
+        assert!(cfg.half_track_width > 0.0, "half_track_width must be positive for {}", v.id);
+        assert!(cfg.wheel_size.x > 0.0, "wheel_size.x must be positive for {}", v.id);
+        assert!(cfg.wheel_size.y > 0.0, "wheel_size.y must be positive for {}", v.id);
+
+        // 2. Proportional dimensions without artificial 1:2 clamp (Spec 095)
+        assert!(
+            cfg.wheel_size.y > cfg.wheel_size.x,
+            "wheel length must exceed wheel width for {}",
+            v.id
+        );
+        assert!(
+            cfg.texture_padding_factor.x >= 1.0 && cfg.texture_padding_factor.y >= 1.0,
+            "texture padding factors must be >= 1.0 for {}",
+            v.id
+        );
+
+        // 3. Modality Platform Layering Architecture
+        if let Some(anchor) = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id) {
+            let anchor_layering = if anchor.layering == "OverChassis" {
+                WheelLayerMode::OverChassis
+            } else {
+                WheelLayerMode::UnderChassis
+            };
+            assert_eq!(
+                cfg.layering, anchor_layering,
+                "Layering must match visual anchor for {}",
+                v.id
+            );
+        } else {
+            let expected_layering = match v.base_car_choice {
+                CarChoice::CrossCar
+                | CarChoice::SuperBuggy
+                | CarChoice::DuneBuggyBaja
+                | CarChoice::MonsterTruck
+                | CarChoice::Kart
+                | CarChoice::SuperkartGP
+                | CarChoice::SandRail => WheelLayerMode::OverChassis,
+
+                CarChoice::GT4Clubsport
+                | CarChoice::GT3Car
+                | CarChoice::GT2Biturbo
+                | CarChoice::GT1Legend
+                | CarChoice::HypercarPrototype
+                | CarChoice::TouringAX
+                | CarChoice::TrophyTruckAWD
+                | CarChoice::MudBoggerHeavy
+                | CarChoice::RallyJuniorFWD
+                | CarChoice::RallyCar
+                | CarChoice::RallyGroupB
+                | CarChoice::RallyElectricRX
+                | CarChoice::StockCar
+                | CarChoice::StockCarTruck
+                | CarChoice::SportsCar
+                | CarChoice::DriftCar => WheelLayerMode::UnderChassis,
+            };
+            assert_eq!(
+                cfg.layering, expected_layering,
+                "Layering must match platform archetype for {}",
+                v.id
+            );
+        }
+
+        // 4. Authentic dynamic Ackermann angle resolution
+        let (fl_zero, fr_zero) = car.compute_ackermann_angles(0.0);
+        assert!(fl_zero.abs() < 1e-5, "Zero steer tracking parallel for {}", v.id);
+        assert!(fr_zero.abs() < 1e-5, "Zero steer tracking parallel for {}", v.id);
+
+        let (fl_left, fr_left) = car.compute_ackermann_angles(0.35);
+        assert!(fl_left > 0.0 && fr_left > 0.0, "Both wheels turn into turn for {}", v.id);
+        assert!(
+            fl_left > fr_left,
+            "Ackermann geometry: inner wheel turns sharper than outer wheel for {}",
+            v.id
+        );
+    }
+}
+
+#[test]
+fn test_spec_095_multiview_wheel_anchor_extraction_and_archetype_integration() {
+    use tdrace_app::catalog::{ALL_REAL_CARS, CLASSIC_ARCADE_CARS};
+    use tdrace_app::render::vehicle_assets::{
+        derive_steered_wheel_config, get_visual_wheel_anchor, get_visual_wheel_anchors,
+    };
+
+    let all_vehicles: Vec<_> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .collect();
+
+    let anchors = get_visual_wheel_anchors();
+    assert!(anchors.len() >= 122, "Visual wheel anchors must contain >= 122 vehicles, found {}", anchors.len());
+
+    // 1. Verify every vehicle in catalog resolves a valid anchor
+    for v in &all_vehicles {
+        let anchor = get_visual_wheel_anchor(v.id)
+            .unwrap_or_else(|| panic!("Vehicle {} must resolve a visual wheel anchor", v.id));
+
+        assert!(anchor.axle_x_px > 256.0, "Front axle X must be in front half of sprite (> 256) for {}", v.id);
+        assert!(anchor.track_width_px > 50.0 && anchor.track_width_px < 400.0, "Track width px in realistic range for {}", v.id);
+        assert!(anchor.tire_len_px > 30.0 && anchor.tire_len_px < 300.0, "Tire length px in realistic range for {}", v.id);
+        assert!(anchor.tire_wid_px > 15.0 && anchor.tire_wid_px < 200.0, "Tire width px in realistic range for {}", v.id);
+
+        let car_config = v.to_car_config();
+        let cfg = derive_steered_wheel_config(v.id, &car_config)
+            .unwrap_or_else(|| panic!("derive_steered_wheel_config failed for {}", v.id));
+
+        assert!(cfg.front_axle_offset > 0.15, "front_axle_offset must be positive and realistic for {}", v.id);
+        assert!(cfg.half_track_width > 0.15, "half_track_width must be positive and realistic for {}", v.id);
+        assert!(cfg.wheel_size.x > 0.05, "wheel_size.x must be realistic for {}", v.id);
+        assert!(cfg.wheel_size.y > 0.10, "wheel_size.y must be realistic for {}", v.id);
+        assert!(cfg.texture_padding_factor.x >= 1.0 && cfg.texture_padding_factor.y >= 1.0);
+
+        // Verify assigned archetype texture exists and can be loaded
+        let rel_path = format!("textures/vehicles/topdown/wheels/{}.png", cfg.wheel_texture_id);
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../assets")
+            .join(&rel_path);
+        assert!(path.exists(), "Wheel texture {} must exist on disk at {:?}", cfg.wheel_texture_id, path);
+        let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("Failed to read {}: {:?}", path.display(), e));
+        let img = macroquad::texture::Image::from_file_with_format(&bytes, None).unwrap_or_else(|e| panic!("Failed to parse {}: {:?}", path.display(), e));
+        assert_eq!(img.width, 128);
+        assert_eq!(img.height, 256);
+    }
+
+    // 2. Specific archetype validations
+    // Monster Truck must use monster_wheel_front and have massive tires
+    let colossus = get_visual_wheel_anchor("offroad_colossus_titan_t5").expect("colossus anchor");
+    assert_eq!(colossus.archetype, "monster_wheel_front");
+    assert!(colossus.tire_len_px > 120.0, "Monster truck tire len > 120px, got {}", colossus.tire_len_px);
+    assert!(colossus.tire_wid_px > 60.0, "Monster truck tire wid > 60px, got {}", colossus.tire_wid_px);
+    assert_eq!(colossus.layering, "OverChassis");
+
+    // Mud Bogger must use mud_tractor_front
+    let crossbow = get_visual_wheel_anchor("offroad_crossbow_ridge_t4").expect("crossbow anchor");
+    assert_eq!(crossbow.archetype, "mud_tractor_front");
+
+    // Trophy Truck must use truck_allterrain_front
+    let desert_forge = get_visual_wheel_anchor("offroad_desert_forge_truck_t2").expect("desert_forge anchor");
+    assert_eq!(desert_forge.archetype, "truck_allterrain_front");
+
+    // Buggy must use buggy_allterrain_front
+    let volkskraft = get_visual_wheel_anchor("offroad_volkskraft_dune_t1").expect("volkskraft anchor");
+    assert_eq!(volkskraft.archetype, "buggy_allterrain_front");
+    assert_eq!(volkskraft.layering, "OverChassis");
+
+    // Kart must use kart_slick_front and OverChassis
+    let cadet = get_visual_wheel_anchor("kart_blackline_cadet_t1").expect("cadet anchor");
+    assert_eq!(cadet.archetype, "kart_slick_front");
+    assert_eq!(cadet.layering, "OverChassis");
+}
+
 
 

@@ -306,17 +306,22 @@ fn test_collision_voids_drift_and_breaks_combo() {
     session.drift_combo_count = 3;
     session.drift_combo_timer = 3.5;
     session.prev_player_drifting = true;
+    // Spec 075 cars are 4-5 m long: start the bumpers 0.2 m apart, closing at 20 m/s, so they meet
+    // nose to nose in this step. Centres 2 m apart made the cars start deep inside each other.
+    let half_len = |c: &tdrace_core::physics::Car| c.config.chassis.half_length(c.config.wheelbase);
+    let gap_a = half_len(&session.world.vehicles[0]) + 0.1;
+    let gap_b = half_len(&session.world.vehicles[1]) + 0.1;
     if let Some(player_car) = session.world.vehicles.first_mut() {
         player_car.state.is_drifting = true;
         player_car.state.drift_score = 160.0;
-        player_car.state.position = Vec2::new(-1.0, 0.0);
+        player_car.state.position = Vec2::new(-gap_a, 0.0);
         player_car.state.velocity = Vec2::new(10.0, 0.0);
         player_car.state.angle = 0.0;
     }
 
     // Place second car approaching head-on
     if let Some(car_b) = session.world.vehicles.get_mut(1) {
-        car_b.state.position = Vec2::new(1.0, 0.0);
+        car_b.state.position = Vec2::new(gap_b, 0.0);
         car_b.state.velocity = Vec2::new(-10.0, 0.0);
         car_b.state.angle = std::f32::consts::PI;
     }

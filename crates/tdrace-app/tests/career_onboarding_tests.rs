@@ -40,7 +40,7 @@ fn test_rookie_profile_database_persistence() {
     rookie.driver_xp = 350;
     rookie.lifetime_driver_xp = 350;
     rookie.license_grade = LicenseGrade::ClassD;
-    rookie.owned_cars.push("kart_crg_hero_60".to_string());
+    rookie.owned_cars.push("kart_blackline_cadet_t1".to_string());
 
     // Record lesson 1 completion
     let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 18.0, true);
@@ -54,7 +54,7 @@ fn test_rookie_profile_database_persistence() {
     assert_eq!(loaded.credits, 12_000);
     assert_eq!(loaded.driver_xp, 350);
     assert_eq!(loaded.license_grade, LicenseGrade::ClassD);
-    assert_eq!(loaded.owned_cars, vec!["kart_crg_hero_60".to_string()]);
+    assert_eq!(loaded.owned_cars, vec!["kart_blackline_cadet_t1".to_string()]);
     assert_eq!(loaded.academy_progress.total_stars(), 3);
     assert_eq!(
         loaded.academy_progress.lessons.get(&AcademyLessonId::Lesson1ApexLine).unwrap().highest_medal,
@@ -68,7 +68,7 @@ fn test_career_mode_access_requires_both_license_and_owned_vehicle() {
     assert!(!rookie.can_access_career());
 
     // 1. Give player a car, but NO license -> still cannot access career
-    rookie.owned_cars.push("kart_crg_hero_60".to_string());
+    rookie.owned_cars.push("kart_blackline_cadet_t1".to_string());
     assert!(!rookie.has_racing_license());
     assert!(!rookie.can_access_career());
 
@@ -80,7 +80,7 @@ fn test_career_mode_access_requires_both_license_and_owned_vehicle() {
     assert!(!rookie.can_access_career());
 
     // 3. Both license granted AND at least one car owned -> career unlocked!
-    rookie.owned_cars.push("kart_crg_hero_60".to_string());
+    rookie.owned_cars.push("kart_blackline_cadet_t1".to_string());
     assert!(rookie.has_racing_license());
     assert!(rookie.can_access_career());
 }
@@ -429,7 +429,7 @@ fn test_grassroots_pricing_calibration_and_affordability() {
 
     // Specific catalog vehicle cost resolutions
     assert_eq!(
-        ModuleCareerProgress::car_credit_cost_for_car("kart_crg_hero_60", "kart", 1),
+        ModuleCareerProgress::car_credit_cost_for_car("kart_blackline_cadet_t1", "kart", 1),
         5_000
     );
     assert_eq!(
@@ -437,11 +437,11 @@ fn test_grassroots_pricing_calibration_and_affordability() {
         12_000
     );
     assert_eq!(
-        ModuleCareerProgress::car_credit_cost_for_car("rally_peugeot_208_rally4", "rally", 1),
+        ModuleCareerProgress::car_credit_cost_for_car("rally_gallia_200_t1", "rally", 1),
         16_000
     );
     assert_eq!(
-        ModuleCareerProgress::car_credit_cost_for_car("gt_porsche_718_gt4", "gt", 1),
+        ModuleCareerProgress::car_credit_cost_for_car("gt_vandorn_stratus_t1", "gt", 1),
         70_000
     );
 
@@ -453,20 +453,20 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     let gt_progress = ModuleCareerProgress::default_for_module(1, "gt");
 
     // Cadet Kart is affordable immediately
-    assert!(kart_progress.can_buy_car("kart_crg_hero_60", 1, bronze_purse));
+    assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, bronze_purse));
     // Cross Car, Rally4, and GT4 are unaffordable with Bronze purse
     assert!(!ax_progress.can_buy_car("autocross_lifelive_tn5", 1, bronze_purse));
-    assert!(!rally_progress.can_buy_car("rally_peugeot_208_rally4", 1, bronze_purse));
-    assert!(!gt_progress.can_buy_car("gt_porsche_718_gt4", 1, bronze_purse));
+    assert!(!rally_progress.can_buy_car("rally_gallia_200_t1", 1, bronze_purse));
+    assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, bronze_purse));
 
     // 3. Affordability with all-Gold purse (14,500 Cr)
     let gold_purse = 14_500u64;
     // Cadet Kart and Cross Car Junior are affordable
-    assert!(kart_progress.can_buy_car("kart_crg_hero_60", 1, gold_purse));
+    assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, gold_purse));
     assert!(ax_progress.can_buy_car("autocross_lifelive_tn5", 1, gold_purse));
     // Rally4 (16,000 Cr) and GT4 (70,000 Cr) are still unaffordable
-    assert!(!rally_progress.can_buy_car("rally_peugeot_208_rally4", 1, gold_purse));
-    assert!(!gt_progress.can_buy_car("gt_porsche_718_gt4", 1, gold_purse));
+    assert!(!rally_progress.can_buy_car("rally_gallia_200_t1", 1, gold_purse));
+    assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, gold_purse));
 }
 
 #[test]
@@ -508,15 +508,15 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
 
     // 3. Purchase Cadet Kart in Kart module (5,000 Cr)
     let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
-    assert!(kart_progress.can_buy_car("kart_crg_hero_60", 1, session.active_profile.credits));
+    assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, session.active_profile.credits));
     kart_progress
-        .buy_car(&mut session.active_profile, "kart_crg_hero_60", 1)
+        .buy_car(&mut session.active_profile, "kart_blackline_cadet_t1", 1)
         .expect("Purchase Cadet Kart");
 
     // Verify credits deducted: 10,000 - 5,000 = 5,000 Cr reserve preserved!
     assert_eq!(session.active_profile.credits, 5_000);
     // Verify car added to owned_cars
-    assert_eq!(session.active_profile.owned_cars, vec!["kart_crg_hero_60".to_string()]);
+    assert_eq!(session.active_profile.owned_cars, vec!["kart_blackline_cadet_t1".to_string()]);
     // Career mode is now fully unlocked!
     assert!(session.active_profile.can_access_career());
 

@@ -1,0 +1,964 @@
+{
+  "schema_version": 1,
+  "scope": "all",
+  "items": [
+    {
+      "id": "damage",
+      "energy_deadzone_j": 500.0,
+      "chassis_capacity_j": 10000.0,
+      "engine_capacity_j": 5000.0,
+      "suspension_capacity_j": 4500.0,
+      "kerb_bottom_out_speed_mps": 1.8,
+      "kerb_bottom_out_capacity_j": 600.0,
+      "landing_speed_limit_mps": 4.2,
+      "landing_capacity_j": 2500.0,
+      "pushrod_collapse_health": 0.3,
+      "pushrod_collapse_drag_multiplier": 1.4,
+      "zones": [
+        {
+          "id": "front_nose",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.2,
+              "engine": 0.7,
+              "suspension": [
+                0.05,
+                0.05,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.65,
+              "engine": 0.05,
+              "suspension": [
+                0.15,
+                0.15,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.7,
+              "engine": 0.0,
+              "suspension": [
+                0.15,
+                0.15,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rear_tail",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.75,
+              "engine": 0.05,
+              "suspension": [
+                0.0,
+                0.0,
+                0.1,
+                0.1
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.45,
+              "engine": 0.4,
+              "suspension": [
+                0.0,
+                0.0,
+                0.075,
+                0.075
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.15,
+              "engine": 0.75,
+              "suspension": [
+                0.0,
+                0.0,
+                0.05,
+                0.05
+              ]
+            }
+          ]
+        },
+        {
+          "id": "flank_left",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.6,
+              "engine": 0.15,
+              "suspension": [
+                0.125,
+                0.0,
+                0.125,
+                0.0
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.4,
+              "engine": 0.45,
+              "suspension": [
+                0.075,
+                0.0,
+                0.075,
+                0.0
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.5,
+              "engine": 0.3,
+              "suspension": [
+                0.1,
+                0.0,
+                0.1,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "id": "flank_right",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.6,
+              "engine": 0.15,
+              "suspension": [
+                0.0,
+                0.125,
+                0.0,
+                0.125
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.4,
+              "engine": 0.45,
+              "suspension": [
+                0.0,
+                0.075,
+                0.0,
+                0.075
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.5,
+              "engine": 0.3,
+              "suspension": [
+                0.0,
+                0.1,
+                0.0,
+                0.1
+              ]
+            }
+          ]
+        },
+        {
+          "id": "corner_f_l",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.25,
+              "engine": 0.15,
+              "suspension": [
+                0.6,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.35,
+              "engine": 0.0,
+              "suspension": [
+                0.65,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.35,
+              "engine": 0.0,
+              "suspension": [
+                0.65,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "id": "corner_f_r",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.25,
+              "engine": 0.15,
+              "suspension": [
+                0.0,
+                0.6,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.35,
+              "engine": 0.0,
+              "suspension": [
+                0.0,
+                0.65,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.35,
+              "engine": 0.0,
+              "suspension": [
+                0.0,
+                0.65,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "id": "corner_r_l",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.4,
+              "engine": 0.05,
+              "suspension": [
+                0.0,
+                0.0,
+                0.55,
+                0.0
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.25,
+              "engine": 0.25,
+              "suspension": [
+                0.0,
+                0.0,
+                0.5,
+                0.0
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.15,
+              "engine": 0.35,
+              "suspension": [
+                0.0,
+                0.0,
+                0.5,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "id": "corner_r_r",
+          "weights": [
+            {
+              "placement": "front_engine",
+              "chassis": 0.4,
+              "engine": 0.05,
+              "suspension": [
+                0.0,
+                0.0,
+                0.0,
+                0.55
+              ]
+            },
+            {
+              "placement": "mid_engine",
+              "chassis": 0.25,
+              "engine": 0.25,
+              "suspension": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            },
+            {
+              "placement": "rear_engine",
+              "chassis": 0.15,
+              "engine": 0.35,
+              "suspension": [
+                0.0,
+                0.0,
+                0.0,
+                0.5
+              ]
+            }
+          ]
+        }
+      ],
+      "engine_power_curve": [
+        [
+          0.0,
+          0.4
+        ],
+        [
+          0.025,
+          0.4066
+        ],
+        [
+          0.05,
+          0.4163
+        ],
+        [
+          0.075,
+          0.4277
+        ],
+        [
+          0.1,
+          0.4402
+        ],
+        [
+          0.125,
+          0.4537
+        ],
+        [
+          0.15,
+          0.4681
+        ],
+        [
+          0.175,
+          0.4832
+        ],
+        [
+          0.2,
+          0.499
+        ],
+        [
+          0.225,
+          0.5153
+        ],
+        [
+          0.25,
+          0.5323
+        ],
+        [
+          0.275,
+          0.5497
+        ],
+        [
+          0.3,
+          0.5676
+        ],
+        [
+          0.325,
+          0.586
+        ],
+        [
+          0.35,
+          0.6048
+        ],
+        [
+          0.375,
+          0.6241
+        ],
+        [
+          0.4,
+          0.6437
+        ],
+        [
+          0.425,
+          0.6637
+        ],
+        [
+          0.45,
+          0.684
+        ],
+        [
+          0.475,
+          0.7047
+        ],
+        [
+          0.5,
+          0.7257
+        ],
+        [
+          0.525,
+          0.747
+        ],
+        [
+          0.55,
+          0.7686
+        ],
+        [
+          0.575,
+          0.7906
+        ],
+        [
+          0.6,
+          0.8128
+        ],
+        [
+          0.625,
+          0.8353
+        ],
+        [
+          0.65,
+          0.8581
+        ],
+        [
+          0.675,
+          0.8811
+        ],
+        [
+          0.7,
+          0.9044
+        ],
+        [
+          0.725,
+          0.9279
+        ],
+        [
+          0.75,
+          0.9517
+        ],
+        [
+          0.775,
+          0.9757
+        ],
+        [
+          0.8,
+          1.0
+        ],
+        [
+          0.825,
+          1.0
+        ],
+        [
+          0.85,
+          1.0
+        ],
+        [
+          0.875,
+          1.0
+        ],
+        [
+          0.9,
+          1.0
+        ],
+        [
+          0.925,
+          1.0
+        ],
+        [
+          0.95,
+          1.0
+        ],
+        [
+          0.975,
+          1.0
+        ],
+        [
+          1.0,
+          1.0
+        ]
+      ],
+      "steering_pull_curve": [
+        [
+          -1.0,
+          -0.087
+        ],
+        [
+          -0.95,
+          -0.0822
+        ],
+        [
+          -0.9,
+          -0.0773
+        ],
+        [
+          -0.85,
+          -0.0725
+        ],
+        [
+          -0.8,
+          -0.0677
+        ],
+        [
+          -0.75,
+          -0.0628
+        ],
+        [
+          -0.7,
+          -0.058
+        ],
+        [
+          -0.65,
+          -0.0532
+        ],
+        [
+          -0.6,
+          -0.0483
+        ],
+        [
+          -0.55,
+          -0.0435
+        ],
+        [
+          -0.5,
+          -0.0387
+        ],
+        [
+          -0.45,
+          -0.0338
+        ],
+        [
+          -0.4,
+          -0.029
+        ],
+        [
+          -0.35,
+          -0.0242
+        ],
+        [
+          -0.3,
+          -0.0193
+        ],
+        [
+          -0.25,
+          -0.0145
+        ],
+        [
+          -0.2,
+          -0.0097
+        ],
+        [
+          -0.15,
+          -0.0048
+        ],
+        [
+          -0.1,
+          -0.0
+        ],
+        [
+          -0.05,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ],
+        [
+          0.05,
+          0.0
+        ],
+        [
+          0.1,
+          0.0
+        ],
+        [
+          0.15,
+          0.0048
+        ],
+        [
+          0.2,
+          0.0097
+        ],
+        [
+          0.25,
+          0.0145
+        ],
+        [
+          0.3,
+          0.0193
+        ],
+        [
+          0.35,
+          0.0242
+        ],
+        [
+          0.4,
+          0.029
+        ],
+        [
+          0.45,
+          0.0338
+        ],
+        [
+          0.5,
+          0.0387
+        ],
+        [
+          0.55,
+          0.0435
+        ],
+        [
+          0.6,
+          0.0483
+        ],
+        [
+          0.65,
+          0.0532
+        ],
+        [
+          0.7,
+          0.058
+        ],
+        [
+          0.75,
+          0.0628
+        ],
+        [
+          0.8,
+          0.0677
+        ],
+        [
+          0.85,
+          0.0725
+        ],
+        [
+          0.9,
+          0.0773
+        ],
+        [
+          0.95,
+          0.0822
+        ],
+        [
+          1.0,
+          0.087
+        ]
+      ],
+      "tire_wear_curve": [
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.05,
+          0.99
+        ],
+        [
+          0.1,
+          0.98
+        ],
+        [
+          0.15,
+          0.97
+        ],
+        [
+          0.2,
+          0.96
+        ],
+        [
+          0.25,
+          0.95
+        ],
+        [
+          0.3,
+          0.94
+        ],
+        [
+          0.35,
+          0.93
+        ],
+        [
+          0.4,
+          0.92
+        ],
+        [
+          0.45,
+          0.91
+        ],
+        [
+          0.5,
+          0.9
+        ],
+        [
+          0.55,
+          0.89
+        ],
+        [
+          0.6,
+          0.88
+        ],
+        [
+          0.65,
+          0.87
+        ],
+        [
+          0.7,
+          0.86
+        ],
+        [
+          0.75,
+          0.85
+        ],
+        [
+          0.8,
+          0.84
+        ],
+        [
+          0.85,
+          0.83
+        ],
+        [
+          0.9,
+          0.82
+        ],
+        [
+          0.95,
+          0.81
+        ],
+        [
+          1.0,
+          0.8
+        ]
+      ],
+      "field_repair_caps": {
+        "chassis": 0.7,
+        "engine": 0.7,
+        "suspension": 0.6
+      },
+      "pit_stop_repair_amount": 0.25,
+      "purse_cap_share": 0.4,
+      "safety_net_credit_limit": 1000,
+      "safety_net_health": 0.5,
+      "invoice_examples": [
+        {
+          "tier": 1,
+          "base_purse": 5000,
+          "health": 0.5,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 330,
+            "engine_cost": 470,
+            "suspension_costs": [
+              210,
+              210,
+              210,
+              210
+            ],
+            "total_raw_damage_cost": 1640,
+            "sponsor_subsidy": 0,
+            "net_deduction": 1640,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 1,
+          "base_purse": 5000,
+          "health": 0.0,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 750,
+            "engine_cost": 1250,
+            "suspension_costs": [
+              480,
+              480,
+              480,
+              480
+            ],
+            "total_raw_damage_cost": 3920,
+            "sponsor_subsidy": 1920,
+            "net_deduction": 2000,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 2,
+          "base_purse": 12000,
+          "health": 0.5,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 780,
+            "engine_cost": 1140,
+            "suspension_costs": [
+              500,
+              500,
+              500,
+              500
+            ],
+            "total_raw_damage_cost": 3920,
+            "sponsor_subsidy": 0,
+            "net_deduction": 3920,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 2,
+          "base_purse": 12000,
+          "health": 0.0,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 1800,
+            "engine_cost": 3000,
+            "suspension_costs": [
+              1150,
+              1150,
+              1150,
+              1150
+            ],
+            "total_raw_damage_cost": 9400,
+            "sponsor_subsidy": 4600,
+            "net_deduction": 4800,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 3,
+          "base_purse": 25000,
+          "health": 0.5,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 1630,
+            "engine_cost": 2370,
+            "suspension_costs": [
+              1040,
+              1040,
+              1040,
+              1040
+            ],
+            "total_raw_damage_cost": 8160,
+            "sponsor_subsidy": 0,
+            "net_deduction": 8160,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 3,
+          "base_purse": 25000,
+          "health": 0.0,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 3750,
+            "engine_cost": 6250,
+            "suspension_costs": [
+              2400,
+              2400,
+              2400,
+              2400
+            ],
+            "total_raw_damage_cost": 19600,
+            "sponsor_subsidy": 9600,
+            "net_deduction": 10000,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 4,
+          "base_purse": 55000,
+          "health": 0.5,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 3590,
+            "engine_cost": 5210,
+            "suspension_costs": [
+              2300,
+              2300,
+              2300,
+              2300
+            ],
+            "total_raw_damage_cost": 18000,
+            "sponsor_subsidy": 0,
+            "net_deduction": 18000,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 4,
+          "base_purse": 55000,
+          "health": 0.0,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 8250,
+            "engine_cost": 13750,
+            "suspension_costs": [
+              5280,
+              5280,
+              5280,
+              5280
+            ],
+            "total_raw_damage_cost": 43120,
+            "sponsor_subsidy": 21120,
+            "net_deduction": 22000,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 5,
+          "base_purse": 120000,
+          "health": 0.5,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 7830,
+            "engine_cost": 11370,
+            "suspension_costs": [
+              5010,
+              5010,
+              5010,
+              5010
+            ],
+            "total_raw_damage_cost": 39240,
+            "sponsor_subsidy": 0,
+            "net_deduction": 39240,
+            "sponsor_safety_net_applied": false
+          }
+        },
+        {
+          "tier": 5,
+          "base_purse": 120000,
+          "health": 0.0,
+          "placement": "front_engine",
+          "archetype": "double_wishbone",
+          "invoice": {
+            "chassis_cost": 18000,
+            "engine_cost": 30000,
+            "suspension_costs": [
+              11520,
+              11520,
+              11520,
+              11520
+            ],
+            "total_raw_damage_cost": 94080,
+            "sponsor_subsidy": 46080,
+            "net_deduction": 48000,
+            "sponsor_safety_net_applied": false
+          }
+        }
+      ]
+    }
+  ]
+}

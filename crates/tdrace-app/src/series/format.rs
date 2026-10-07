@@ -15,7 +15,7 @@ fn default_laps() -> u32 {
 }
 
 fn default_scoring_system() -> String {
-    "fia".to_string()
+    "standard".to_string()
 }
 
 fn default_true() -> bool {
@@ -91,12 +91,12 @@ impl Default for ScoringConfig {
 impl ScoringConfig {
     pub fn to_point_system(&self) -> PointSystem {
         match self.system.to_ascii_lowercase().as_str() {
-            "fia" | "fia_standard" | "f1" => PointSystem::FiaStandard {
+            "standard" | "international" | "fia" | "fia_standard" | "f1" => PointSystem::FiaStandard {
                 fastest_lap_bonus: self.fastest_lap_bonus,
             },
             "motogp" | "moto_gp" => PointSystem::MotoGp,
             "arcade" | "classic_arcade" => PointSystem::ClassicArcade,
-            "nascar" | "nascar_cup" => PointSystem::NascarCup {
+            "stock_car" | "stockcar" | "nascar" | "nascar_cup" => PointSystem::NascarCup {
                 stage_win_bonus: self.stage_win_bonus,
             },
             "custom" if !self.custom_points.is_empty() => {
@@ -111,7 +111,7 @@ impl ScoringConfig {
     pub fn from_point_system(sys: &PointSystem) -> Self {
         match sys {
             PointSystem::FiaStandard { fastest_lap_bonus } => Self {
-                system: "fia".to_string(),
+                system: "standard".to_string(),
                 fastest_lap_bonus: *fastest_lap_bonus,
                 stage_win_bonus: false,
                 clean_race_bonus: false,
@@ -132,7 +132,7 @@ impl ScoringConfig {
                 custom_points: Vec::new(),
             },
             PointSystem::NascarCup { stage_win_bonus } => Self {
-                system: "nascar".to_string(),
+                system: "stock_car".to_string(),
                 fastest_lap_bonus: false,
                 stage_win_bonus: *stage_win_bonus,
                 clean_race_bonus: false,
@@ -418,7 +418,7 @@ tier = 1
 laps_per_round = 4
 
 [scoring]
-system = "fia"
+system = "standard"
 fastest_lap_bonus = true
 
 [[rounds]]
@@ -436,13 +436,13 @@ id = "player"
 name = "Player One"
 team = "Apex Racing"
 is_player = true
-car_model_id = "gt_toyota_supra_gt4"
+car_model_id = "gt_yamato_hayate_t1"
 
 [[drivers]]
 id = "max"
-name = "Max Hunter"
-team = "Red Bull GT"
-car_model_id = "gt_porsche_718_cayman_gt4_rs"
+name = "Magnus Wolff"
+team = "Bullseye GT"
+car_model_id = "gt_vandorn_stratus_t1"
 "#;
 
         let def = ChampionshipDefinition::from_toml(toml_str).expect("Valid TOML should deserialize");
@@ -522,8 +522,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
     fn test_session_conversion() {
         let def = ChampionshipDefinition {
             series: SeriesMeta {
-                id: "nascar_tier1".to_string(),
-                name: "NASCAR Grassroots Cup".to_string(),
+                id: "stockcar_tier1".to_string(),
+                name: "Stock Car Grassroots Cup".to_string(),
                 description: "Oval racing".to_string(),
                 module_id: "nascar".to_string(),
                 tier: 1,
@@ -533,7 +533,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                 icon: None,
             },
             scoring: ScoringConfig {
-                system: "nascar".to_string(),
+                system: "stock_car".to_string(),
                 fastest_lap_bonus: false,
                 stage_win_bonus: true,
                 clean_race_bonus: false,
@@ -563,7 +563,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
                 },
                 DriverConfig {
                     id: "dale".to_string(),
-                    name: "Dale Vance".to_string(),
+                    name: "Colt Reynolds".to_string(),
                     team: "RCR".to_string(),
                     is_player: false,
                     car_model_id: None,
@@ -577,7 +577,7 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
         };
 
         let session = def.to_session();
-        assert_eq!(session.name, "NASCAR Grassroots Cup");
+        assert_eq!(session.name, "Stock Car Grassroots Cup");
         assert_eq!(session.track_ids, vec!["stock_tri_oval_speedway"]);
         assert_eq!(session.laps_per_round, 10);
         assert_eq!(session.standings.len(), 2);
@@ -589,8 +589,8 @@ car_model_id = "gt_porsche_718_cayman_gt4_rs"
         );
 
         let recovered = ChampionshipDefinition::from_session(&session, "nascar", 1);
-        assert_eq!(recovered.series.name, "NASCAR Grassroots Cup");
-        assert_eq!(recovered.scoring.system, "nascar");
+        assert_eq!(recovered.series.name, "Stock Car Grassroots Cup");
+        assert_eq!(recovered.scoring.system, "stock_car");
         assert_eq!(recovered.rounds.len(), 1);
         assert_eq!(recovered.rounds[0].track_id, "stock_tri_oval_speedway");
     }

@@ -525,7 +525,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert_eq!(progress.level, 1);
     assert_eq!(progress.xp, 0);
     assert_eq!(progress.lifetime_xp, 0);
-    assert!(progress.is_car_unlocked("gt_toyota_supra_gt4", false));
+    assert!(progress.is_car_unlocked("gt_yamato_hayate_t1", false));
     assert!(progress.is_car_unlocked("gt4_clubsport", false));
     assert!(!progress.is_car_unlocked("gt3_evo", false));
     assert!(!progress.is_car_unlocked("gt2_biturbo", false));
@@ -1181,7 +1181,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
 
     let expected_nascar_tiers: [(&str, Vec<&str>); 5] = [
         (
-            "NASCAR Weekly Short Track Series (Tier 1)",
+            "Weekly Short Track Series (Tier 1)",
             vec![
                 "martinsville_speedway",
                 "bristol_motor_speedway",
@@ -1191,7 +1191,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Intermediate Oval Challenge (Tier 2)",
+            "National Intermediate Oval Challenge (Tier 2)",
             vec![
                 "charlotte_motor_speedway",
                 "darlington_raceway",
@@ -1203,7 +1203,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR National Road & Oval Tour (Tier 3)",
+            "National Road & Oval Tour (Tier 3)",
             vec![
                 "iowa_speedway",
                 "watkins_glen_nascar",
@@ -1217,7 +1217,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Premier Speedway Trophy (Tier 4)",
+            "Premier Speedway Trophy (Tier 4)",
             vec![
                 "indianapolis_motor_speedway",
                 "pocono_raceway",
@@ -1232,7 +1232,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Cup Series Championship (Tier 5)",
+            "Premier Stock Car Cup Championship (Tier 5)",
             vec![
                 "daytona_superspeedway",
                 "talladega_superspeedway",
@@ -1301,7 +1301,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Euro RX Challenge (Tier 3)",
+            "Continental RX Challenge (Tier 3)",
             vec![
                 "lavare_rx",
                 "riga_rx",
@@ -1313,7 +1313,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "FIA World RX Supercar Trophy (Tier 4)",
+            "World Rallycross Supercar Trophy (Tier 4)",
             vec![
                 "catalunya_rx",
                 "spa_rx",
@@ -1341,7 +1341,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Nitrocross Group E Series (Tier 6)",
+            "Apex Group E Electric Trophy (Tier 6)",
             vec![
                 "catalunya_rx",
                 "lessay_rx",
@@ -1389,11 +1389,11 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
 
     let expected_kart_tiers: [(&str, Vec<&str>); 6] = [
         (
-            "Rotax Junior Academy (Tier 1)",
+            "Junior Karting Academy (Tier 1)",
             vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
         ),
         (
-            "FIA Karting Academy Trophy (Tier 2)",
+            "International Karting Academy Trophy (Tier 2)",
             vec!["whilton_mill", "laval_kart", "genk", "sarno", "kristianstad", "seven_laghi"],
         ),
         (
@@ -1695,7 +1695,7 @@ fn test_resolve_championship_car_model_id_fallback_and_history() {
             profile_id: 1,
             category: "gt".to_string(),
             track_id: "monza".to_string(),
-            car_name: "gt_bmw_m4_gt4".to_string(),
+            car_name: "gt_bmr_bavaria_t1".to_string(),
             position: 1,
             total_time: 120.0,
             best_lap: Some(60.0),
@@ -1706,8 +1706,8 @@ fn test_resolve_championship_car_model_id_fallback_and_history() {
 
     let (model_id, display_name, has_raced) = resolve_championship_car_model_id(gt_champ, &fake_history);
     assert!(has_raced, "With matching history, has_raced must be true");
-    assert_eq!(model_id, "gt_bmw_m4_gt4");
-    assert!(display_name.contains("BMW") || display_name.contains("M4"));
+    assert_eq!(model_id, "gt_bmr_bavaria_t1");
+    assert!(display_name.contains("BMR") || display_name.contains("Bavaria"));
 }
 
 #[test]
@@ -1983,19 +1983,19 @@ fn test_tier_1_starter_cars_single_entry_vehicle() {
 
     // Each discipline in Tier 1 must provide only 1 starter car
     let rally_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("rally", 1);
-    assert_eq!(rally_starters, vec!["rally_peugeot_208_rally4"]);
+    assert_eq!(rally_starters, vec!["rally_gallia_200_t1"]);
 
     let nascar_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("nascar", 1);
-    assert_eq!(nascar_starters, vec!["nascar_monte_carlo_ss"]);
+    assert_eq!(nascar_starters, vec!["nascar_crossbow_montego_t1"]);
 
     let kart_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("kart", 1);
-    assert_eq!(kart_starters, vec!["kart_crg_hero_60"]);
+    assert_eq!(kart_starters, vec!["kart_blackline_cadet_t1"]);
 
     let offroad_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("extreme_offroad", 1);
-    assert_eq!(offroad_starters, vec!["offroad_sand_rail_buggy"]);
+    assert_eq!(offroad_starters, vec!["offroad_laurentian_nomad_t1"]);
 
     let gt_starters = ModuleCareerProgress::starter_cars_for_module_and_tier("gt", 1);
-    assert_eq!(gt_starters, vec!["gt_toyota_supra_gt4", "gt4_clubsport"]);
+    assert_eq!(gt_starters, vec!["gt_yamato_hayate_t1", "gt4_clubsport"]);
 }
 
 #[test]
@@ -2029,7 +2029,7 @@ fn test_race_finish_records_authentic_model_title_in_history() {
     session.refresh_profiles_and_stats();
 
     session.start_rally_career_tier(1);
-    session.selected_car_model_id = Some("rally_fiesta_rally4");
+    session.selected_car_model_id = Some("rally_forge_spark_t1");
 
     session.total_laps = 1;
     session.world.trackers[0].current_lap = 2; // finished 1 lap
@@ -2039,7 +2039,7 @@ fn test_race_finish_records_authentic_model_title_in_history() {
 
     assert!(!session.profile_history.is_empty());
     let entry = &session.profile_history[0];
-    assert_eq!(entry.car_name, "Ford Fiesta Rally4");
+    assert_eq!(entry.car_name, "Forge Spark Rally Junior T1");
     assert_eq!(entry.track_id, "holjes_rx");
 }
 
@@ -2096,7 +2096,7 @@ fn test_championship_award_persistence_and_upgrade() {
         tier: 1,
         position: 2,
         points: 90,
-        car_model_id: "gt_toyota_supra_gt4".to_string(),
+        car_model_id: "gt_yamato_hayate_t1".to_string(),
         achieved_at: "2026-09-24 12:00:00".to_string(),
     };
     let saved = db.save_championship_award(&silver_award).expect("Save silver award");
@@ -2106,7 +2106,7 @@ fn test_championship_award_persistence_and_upgrade() {
     assert_eq!(fetched.position, 2);
     assert_eq!(fetched.metallic_tier(), TrophyMetal::Silver);
     assert_eq!(fetched.points, 90);
-    assert_eq!(fetched.car_model_id, "gt_toyota_supra_gt4");
+    assert_eq!(fetched.car_model_id, "gt_yamato_hayate_t1");
 
     // Verify slot query works with "gt" and alias "gt_challenge"
     let slot_award = db.get_championship_award_for_slot(pid, "gt", 1).expect("Query slot").expect("Must exist");
@@ -2141,7 +2141,7 @@ fn test_championship_award_persistence_and_upgrade() {
         tier: 1,
         position: 1,
         points: 115,
-        car_model_id: "gt_toyota_supra_gt4".to_string(),
+        car_model_id: "gt_yamato_hayate_t1".to_string(),
         achieved_at: "2026-09-24 14:00:00".to_string(),
     };
     let upgraded = db.save_championship_award(&gold_award).expect("Save gold award");
@@ -2161,7 +2161,7 @@ fn test_championship_award_persistence_and_upgrade() {
         tier: 3,
         position: 1,
         points: 120,
-        car_model_id: "rally_audi_sport_quattro_s1".to_string(),
+        car_model_id: "rally_vortek_turbo_quattro_t7".to_string(),
         achieved_at: "2026-09-24 15:00:00".to_string(),
     };
     db.save_championship_award(&rally_award).expect("Save rally award");
@@ -2517,7 +2517,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     let mut progress = ModuleCareerProgress::default_for_module(1, "kart");
     assert_eq!(progress.level, 1);
     assert_eq!(progress.max_tier(), 6);
-    assert_eq!(progress.unlocked_cars, vec!["kart_crg_hero_60"]);
+    assert_eq!(progress.unlocked_cars, vec!["kart_blackline_cadet_t1"]);
     assert_eq!(progress.unlocked_tracks.len(), 5);
     assert_eq!(
         progress.unlocked_tracks,
@@ -2538,7 +2538,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     assert_eq!(progress.advance_tier().unwrap(), 2);
     assert_eq!(progress.level, 2);
     assert_eq!(progress.next_tier_target_xp(), Some(3_500));
-    assert!(progress.is_car_unlocked("kart_tony_kart_rookie_okj", false));
+    assert!(progress.is_car_unlocked("kart_verde_sprint_t2", false));
     assert_eq!(progress.unlocked_tracks.len(), 8);
     assert!(progress.unlocked_tracks.contains(&"sarno".to_string()));
     assert!(progress.unlocked_tracks.contains(&"kristianstad".to_string()));
@@ -2551,7 +2551,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     assert_eq!(progress.advance_tier().unwrap(), 3);
     assert_eq!(progress.level, 3);
     assert_eq!(progress.next_tier_target_xp(), Some(6_000));
-    assert!(progress.is_car_unlocked("kart_tony_kart_racer_ok", false));
+    assert!(progress.is_car_unlocked("kart_verde_apex_t3", false));
     assert_eq!(progress.unlocked_tracks.len(), 11);
     assert!(progress.unlocked_tracks.contains(&"pfi".to_string()));
     assert!(progress.unlocked_tracks.contains(&"franciacorta".to_string()));
@@ -2564,7 +2564,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     assert_eq!(progress.advance_tier().unwrap(), 4);
     assert_eq!(progress.level, 4);
     assert_eq!(progress.next_tier_target_xp(), Some(9_000));
-    assert!(progress.is_car_unlocked("kart_birel_art_kz2", false));
+    assert!(progress.is_car_unlocked("kart_rosso_corsa_t4", false));
     assert_eq!(progress.unlocked_tracks.len(), 14);
     assert!(progress.unlocked_tracks.contains(&"zuera".to_string()));
     assert!(progress.unlocked_tracks.contains(&"silverstone_national_kart".to_string()));
@@ -2577,7 +2577,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     assert_eq!(progress.advance_tier().unwrap(), 5);
     assert_eq!(progress.level, 5);
     assert_eq!(progress.next_tier_target_xp(), Some(13_000));
-    assert!(progress.is_car_unlocked("kart_anderson_maverick_mono", false));
+    assert!(progress.is_car_unlocked("kart_highland_hawk_t5", false));
     assert_eq!(progress.unlocked_tracks.len(), 17);
     assert!(progress.unlocked_tracks.contains(&"le_mans_kart".to_string()));
     assert!(progress.unlocked_tracks.contains(&"campillos".to_string()));
@@ -2591,7 +2591,7 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
     assert_eq!(progress.level, 6);
     assert_eq!(progress.next_tier_target_xp(), None);
     assert_eq!(progress.level_progress_ratio(), 1.0);
-    assert!(progress.is_car_unlocked("kart_anderson_cs250", false));
+    assert!(progress.is_car_unlocked("kart_highland_eagle_t6", false));
     assert_eq!(progress.unlocked_tracks.len(), 20);
     assert!(progress.unlocked_tracks.contains(&"portimao_kart".to_string()));
     assert!(progress.unlocked_tracks.contains(&"valencia_kart".to_string()));

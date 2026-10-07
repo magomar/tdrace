@@ -92,6 +92,9 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     for (i, e) in entries.into_iter().enumerate() {
         let spawn = track.grid_positions[i];
         let mut car = Car::new(e.config).with_pose(spawn.position, spawn.angle);
+        // Like RaceSession::apply_car_damage_setting: the game's default (damage off) reaches every car,
+        // so curb and landing strikes do not wear the suspension either.
+        car.config.damage_enabled = world.rules.damage_enabled;
         if let Some(kb) = e.keyboard {
             car.config.player = PlayerHandling::human(kb.steer_authority, kb.traction_help);
         }

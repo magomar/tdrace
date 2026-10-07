@@ -14,6 +14,10 @@ use wheelbase::{Car, SurfaceType};
 use crate::events::{DnfCause, RaceEvent};
 use crate::vehicle::{CanopyBrush, DriveControls, Vehicle};
 
+/// Health a pit stop restores to the chassis, the engine and each suspension corner, up to the
+/// field repair caps in `wheelbase::car` (Spec 062, Spec 078).
+pub const PIT_STOP_REPAIR_AMOUNT: f32 = 0.25;
+
 /// How a race ends.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RaceFormat {
@@ -353,6 +357,7 @@ impl<V: Vehicle> RaceWorld<V> {
                 let car = &mut self.vehicles[i];
                 let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, scenery_obstacles);
                 events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
+                events.extend(resolve_all_wall_collisions(car, &track.geometry.network_walls, &[]));
                 for ev in &events {
                     let damage_energy = ev.estimated_damage_energy();
                     if self.rules.damage_enabled {
@@ -431,7 +436,7 @@ impl<V: Vehicle> RaceWorld<V> {
                     let new_timer = timer + dt;
                     if new_timer >= target_duration {
                         self.vehicles[i].service_tires();
-                        self.vehicles[i].apply_field_repair(0.25);
+                        self.vehicles[i].apply_field_repair(PIT_STOP_REPAIR_AMOUNT);
                         self.trackers[i].has_stopped_in_pit_box = true;
                         self.pit_states[i] = PitServiceState::ServiceComplete {
                             release_time: self.time,
