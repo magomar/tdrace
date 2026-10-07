@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Compact Track Studio Inspector with Unified Single and Multi-Selection Editing"
 description: "Makes the Track Studio inspector fit on screen by replacing long button lists with compact controls (surface dropdown, segmented toggles, inline steppers) inside collapsible, clipped and scrollable sections; gives multi-selection the same controls as single selection with mixed-value display; fixes the inspector's undo-flood and sticky-slider defects; and gates every alternate layout on a human design review."
-status: approved
+status: in_progress
 verified: { by: "human:mario", at: "2026-10-07T18:23:39Z", hash: "1c3015a696bf" }
 created: 2026-10-04
 generated: { by: agent/claude-opus-5-5, at: 2026-10-04T18:50:50Z }
