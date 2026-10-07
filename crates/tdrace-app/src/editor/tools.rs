@@ -9,6 +9,7 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, TrackKind};
 
 use super::camera::EditorCamera;
+use super::inspector::InspectorView;
 use super::state::{EditorState, Selection};
 use crate::render::color::Palette;
 
@@ -125,6 +126,7 @@ pub struct ToolSettings {
     // Bar control selection and inline manual text editing
     pub selected_bar: Option<String>,
     pub editing_bar: Option<(String, String)>,
+    pub inspector: InspectorView,
 
     // Road split and branching track settings
     pub active_branch_socket: Option<SocketId>,
@@ -194,6 +196,7 @@ impl Default for ToolSettings {
             drag_initial_pit_box: None,
             selected_bar: None,
             editing_bar: None,
+            inspector: InspectorView::default(),
             active_branch_socket: None,
             split_divergence_angle: 30.0,
             split_branch_count: 2,

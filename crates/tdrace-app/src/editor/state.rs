@@ -540,6 +540,9 @@ pub struct EditorState {
     // Generator settings
     pub barrier_offset: f32,
     pub barrier_type: BarrierType,
+
+    /// Open undo gesture: `Some(recorded)` while one press-to-release interaction is in progress.
+    undo_gesture: Option<bool>,
 }
 
 impl EditorState {
@@ -564,13 +567,31 @@ impl EditorState {
             diagnostics,
             barrier_offset,
             barrier_type,
+            undo_gesture: None,
         }
     }
 
     /// Records current state in undo history before making modifications.
+    /// Inside an undo gesture only the first call records, so one gesture is one undo step.
     pub fn record_undo(&mut self) {
-        self.history.push_snapshot(&self.track);
         self.is_dirty = true;
+        if let Some(recorded) = &mut self.undo_gesture {
+            if *recorded {
+                return;
+            }
+            *recorded = true;
+        }
+        self.history.push_snapshot(&self.track);
+    }
+
+    /// Starts grouping edits into one undo step (e.g. a slider drag or a held step button).
+    pub fn begin_undo_gesture(&mut self) {
+        self.undo_gesture = Some(false);
+    }
+
+    /// Ends the current undo gesture; later edits record their own undo steps again.
+    pub fn end_undo_gesture(&mut self) {
+        self.undo_gesture = None;
     }
 
     /// Performs undo operation.

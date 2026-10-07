@@ -13,6 +13,7 @@ use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use tdrace_core::CarCategory;
 
 use crate::editor::camera::EditorCamera;
+use crate::editor::inspector::begin_inspector_frame;
 use crate::editor::state::{EditorState, GridSnapSetting, Selection};
 use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
 use crate::render::color::Palette;
@@ -599,6 +600,13 @@ pub fn render_editor_ui(
     let insp_h = sh - top_h - scaler.s(54.0);
 
     scaler.draw_glass_card(insp_x, insp_y, insp_w, insp_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+
+    let over_inspector = !is_modal_open
+        && mouse_pos.x >= insp_x
+        && mouse_pos.x <= insp_x + insp_w
+        && mouse_pos.y >= insp_y
+        && mouse_pos.y <= insp_y + insp_h;
+    begin_inspector_frame(state, tools, over_inspector, bg_mouse_clicked, is_mouse_button_down(MouseButton::Left));
 
     render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked, active_modal);
 
@@ -2736,7 +2744,7 @@ fn render_inspector(
 
             // Grid count stepper (platform Counter) with hold-to-repeat, then quick presets.
             let mut grid_counter = Counter::new(1, 24, 1, grid_cnt as i64);
-            if draw_counter(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(36.0), "Grid Slots", &mut grid_counter, mouse_pos) {
+            if draw_counter(fonts, scaler, tools, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(36.0), "Grid Slots", &mut grid_counter, mouse_pos, clicked) {
                 if grid_counter.value as usize != grid_cnt {
                     state.set_grid_count(grid_counter.value as usize);
                 }
@@ -2982,7 +2990,7 @@ fn render_template_modal(
 /// Integrates:
 /// 1. A visual and draggable slider bar with custom ranges, limits, and accent color.
 /// 2. Selection tracking: clicking/dragging the bar or its input field selects it with visual glowing border.
-/// 3. Mouse wheel scrolling: when selected (or hovered), mouse scroll adjusts the bar value by `step`.
+/// 3. Mouse wheel scrolling: when focused and the pointer is over the inspector, mouse scroll adjusts the bar value by `step`.
 ///    Holding Shift multiplies the step for faster adjustment.
 /// 4. Direct in-place manual text input: clicking the right-hand value box enters active text editing
 ///    with visible cursor, supporting numbers, decimals, negative signs, Backspace, Enter to commit,
@@ -3029,9 +3037,12 @@ pub fn draw_bar_control(
 
     let mut result_val: Option<f32> = None;
 
-    // 1. Mouse Dragging / Clicking on Slider Bar
+    // 1. Mouse Dragging: a press on the slider captures the drag until release, even off the bar
+    if clicked && mouse_over_slider {
+        tools.inspector.drag_capture = Some(id.to_string());
+    }
     let is_down = is_mouse_button_down(MouseButton::Left);
-    if is_down && mouse_over_slider {
+    if is_down && tools.inspector.drag_capture.as_deref() == Some(id) {
         tools.selected_bar = Some(id.to_string());
         if tools.editing_bar.is_some() {
             tools.editing_bar = None;
@@ -3042,9 +3053,9 @@ pub fn draw_bar_control(
         result_val = Some(new_val);
     }
 
-    // 2. Mouse Scroll Wheel (adjusts when bar is selected or hovered)
+    // 2. Mouse Scroll Wheel: only the focused bar, and only while the pointer is over the inspector
     let wheel_y = std::panic::catch_unwind(macroquad::input::mouse_wheel).unwrap_or((0.0, 0.0)).1;
-    if wheel_y.abs() > 0.01 && (is_selected || mouse_over_slider || mouse_over_input) {
+    if wheel_y.abs() > 0.01 && is_selected && tools.inspector.hovered {
         tools.selected_bar = Some(id.to_string());
         if tools.editing_bar.is_some() {
             tools.editing_bar = None;
@@ -4696,10 +4707,11 @@ fn draw_toggle(
 }
 
 /// Renders an integer [`Counter`] as an inline `[<] value [>]` stepper with hold-to-repeat
-/// mouse chevron control. Returns true when the value changed.
+/// mouse chevron control (one step on press, repeats after a delay). Returns true when the value changed.
 fn draw_counter(
     fonts: &Fonts,
     scaler: &UiScaler,
+    tools: &mut ToolSettings,
     x: f32,
     y: f32,
     w: f32,
@@ -4707,6 +4719,7 @@ fn draw_counter(
     label: &str,
     counter: &mut Counter,
     mouse_pos: Vec2,
+    clicked: bool,
 ) -> bool {
     let is_hover = mouse_pos.x >= x && mouse_pos.x <= x + w && mouse_pos.y >= y && mouse_pos.y <= y + h;
 
@@ -4717,16 +4730,17 @@ fn draw_counter(
     let opt_y = y + (h - opt_h) * 0.5;
     let arrow_w = scaler.s(28.0);
 
+    let in_rect = |rx: f32, rw: f32| {
+        mouse_pos.x >= rx && mouse_pos.x <= rx + rw && mouse_pos.y >= opt_y && mouse_pos.y <= opt_y + opt_h
+    };
+    let down = is_mouse_button_down(MouseButton::Left);
+    let now = macroquad::time::get_time();
     let mut changed = false;
-    if is_mouse_button_down(MouseButton::Left) {
-        let in_rect = |rx: f32, rw: f32| {
-            mouse_pos.x >= rx && mouse_pos.x <= rx + rw && mouse_pos.y >= opt_y && mouse_pos.y <= opt_y + opt_h
-        };
-        if in_rect(opt_x, arrow_w) {
-            changed |= counter.decrement();
-        } else if in_rect(opt_x + opt_w - arrow_w, arrow_w) {
-            changed |= counter.increment();
-        }
+    if tools.inspector.hold.poll(&format!("{label}:dec"), clicked, down, in_rect(opt_x, arrow_w), now) {
+        changed |= counter.decrement();
+    }
+    if tools.inspector.hold.poll(&format!("{label}:inc"), clicked, down, in_rect(opt_x + opt_w - arrow_w, arrow_w), now) {
+        changed |= counter.increment();
     }
 
     draw_stepper(scaler, fonts, x, y, w, h, label, &counter.value.to_string(), false, is_hover, Palette::NEON_CYAN);

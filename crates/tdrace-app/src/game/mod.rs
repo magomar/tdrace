@@ -15149,6 +15149,11 @@ impl RaceSession {
         }
 
         if is_key_pressed(KeyCode::Escape) {
+            // A focused inspector slider takes the Escape first (spec 086); text editing handles its own.
+            if self.editor_tools.selected_bar.is_some() && !self.editor_tools.is_editing_text() {
+                self.editor_tools.clear_bar_selection();
+                self.editor_tools.escape_consumed = true;
+            }
             if self.editor_tools.active_branch_socket.is_some() {
                 self.editor_tools.active_branch_socket = None;
                 self.editor_tools.escape_consumed = true;
