@@ -4,18 +4,18 @@ use macroquad::input::{
     get_char_pressed, is_key_down, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed,
     mouse_position, KeyCode, MouseButton,
 };
-use macroquad::shapes::{draw_circle, draw_circle_lines, draw_rectangle, draw_rectangle_lines};
+use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::geometry::{JumpRamp, SurfaceLayer};
 use tdrace_core::track::presets::{RaceDirection, TrackShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
-use tdrace_core::CarCategory;
 
 use crate::editor::camera::EditorCamera;
 use crate::editor::inspector::{
     apply_edit, begin_inspector_frame, build_inspector, content_height, row_height, Action as InspectorAction, Common, Edit,
-    InspectorModel, Prop, Row, StepperDrag, BODY_PAD, FOOTER_H, HEADER_H, ROW_H, SECTION_GAP, SECTION_HEADER_H, SURFACES, TITLE_H,
+    InspectorModel, Options, Prop, Row, StepperDrag, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
+    TITLE_H,
 };
 use crate::editor::state::{EditorState, GridSnapSetting, Selection};
 use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
@@ -23,8 +23,8 @@ use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
 use cabinet::input::GamepadSnapshot;
 use cabinet::ui::{
-    draw_action_button, draw_field_dropdown, draw_field_dropdown_popup, draw_segmented, draw_stepper, segment_at, Counter,
-    FieldDropdownEvent, FieldDropdownInput, LayoutRect, ModalContainer, PageDots, SliderWidget, TextInputWidget, Toggle,
+    draw_action_button, draw_field_dropdown, draw_field_dropdown_popup, draw_segmented, segment_at, FieldDropdownEvent,
+    FieldDropdownInput, LayoutRect, ModalContainer, PageDots, TextInputWidget, Toggle,
 };
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
@@ -836,7 +836,7 @@ fn render_inspector(
     clicked: bool,
     active_modal: &mut EditorModal,
 ) {
-    if let Some(model) = build_inspector(state) {
+    if let Some(model) = build_inspector(state, tools) {
         render_inspector_model(fonts, scaler, (x, y, w, h), &model, state, tools, mouse_pos, clicked);
         return;
     }
@@ -852,435 +852,6 @@ fn render_inspector(
     let mut curr_y = y + scaler.s(36.0);
 
     match state.selection {
-        // Drawn by the model-based inspector (`build_inspector`) above.
-        Selection::Waypoint(_) | Selection::MultipleWaypoints(_) => {}
-        Selection::SurfaceZone(idx) => {
-            if idx < state.track.geometry.surface_zones.len() {
-                let (_zone_surface, _is_front, shape_name) = {
-                    let zone = &state.track.geometry.surface_zones[idx];
-                    let shape_name = match &zone.shape {
-                        SurfaceShape::Circle { .. } => "Circle",
-                        SurfaceShape::Aabb { .. } => "Square / Box",
-                        SurfaceShape::OrientedBox { .. } => "Oriented Box",
-                        SurfaceShape::Polygon { vertices } => {
-                            if vertices.len() == 3 {
-                                "Triangle"
-                            } else {
-                                "Polygon"
-                            }
-                        }
-                    };
-                    (zone.surface, zone.is_above_track(), shape_name)
-                };
-
-                fonts.draw_ui_bold(&format!("Surface Zone #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(22.0);
-
-                fonts.draw_ui_regular(&format!("Shape: {}", shape_name), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.5), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(18.0);
-
-                fonts.draw_ui_bold("LAYER / DEPTH:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(24.0);
-
-                let is_above = state.track.geometry.surface_zones[idx].is_above_track();
-                let layer_text = if is_above { "Layer: FRONT (Above Track)" } else { "Layer: BACK (Below Track)" };
-                fonts.draw_ui_bold(layer_text, x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(18.0);
-
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0),
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(24.0),
-                    "Bring Front",
-                    if is_above { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_above { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.bring_selected_surface_front(state);
-                }
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(18.0) + half_btn_w,
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(24.0),
-                    "Send Back",
-                    if !is_above { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if !is_above { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.send_selected_surface_back(state);
-                }
-                curr_y += scaler.s(30.0);
-
-                fonts.draw_ui_bold("Zone Material:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
-
-                let surfaces = [
-                    (SurfaceType::Dirt, "Dirt"),
-                    (SurfaceType::Gravel, "Gravel Runoff"),
-                    (SurfaceType::DeepSand, "Deep Sand Trap"),
-                    (SurfaceType::PackedSand, "Packed Sand"),
-                    (SurfaceType::Grass, "Grass Field"),
-                    (SurfaceType::Water, "Water Puddle Hazard"),
-                    (SurfaceType::SheetIce, "Ice Patch Slick"),
-                    (SurfaceType::Oil, "Oil Slick Hazard"),
-                    (SurfaceType::DeepMud, "Deep Mud Bog"),
-                    (SurfaceType::MudTrack, "Mud Track"),
-                    (SurfaceType::DeepSnow, "Deep Snowbank"),
-                    (SurfaceType::PackedSnow, "Packed Snow"),
-                    (SurfaceType::Asphalt, "Tarmac Extension"),
-                    (SurfaceType::Concrete, "Concrete Apron"),
-                ];
-
-                let zone_surface = state.track.geometry.surface_zones[idx].surface;
-                for (st, label) in surfaces {
-                    let is_active = zone_surface == st;
-                    let st_bg = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-                    let st_border = if is_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
-                    if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(22.0), label, st_bg, st_border, mouse_pos, clicked) {
-                        state.record_undo();
-                        state.track.geometry.surface_zones[idx].surface = st;
-                    }
-                    curr_y += scaler.s(25.0);
-                }
-                curr_y += scaler.s(6.0);
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y + scaler.s(6.0), w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE ZONE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                    tools.duplicate_selected(state);
-                }
-                curr_y += scaler.s(36.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE ZONE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                    tools.delete_selected(state);
-                }
-            }
-        }
-        Selection::Obstacle(idx) => {
-            if idx < state.track.geometry.obstacles.len() {
-                fonts.draw_ui_bold(&format!("Obstacle #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
-
-                let obs = &state.track.geometry.obstacles[idx];
-                fonts.draw_ui_regular(&format!("Label: {}", obs.name), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(32.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE OBSTACLE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                    tools.duplicate_selected(state);
-                }
-                curr_y += scaler.s(32.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE OBSTACLE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                    tools.delete_selected(state);
-                }
-            }
-        }
-        Selection::JumpRamp(idx) => {
-            if idx < state.track.geometry.jump_ramps.len() {
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                fonts.draw_ui_bold(&format!("Jump Ramp #{}", idx), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(22.0);
-
-                let row_w = w - scaler.s(24.0);
-                let row_h = scaler.s(20.0);
-
-                // 1. DIRECTION ANGLE (0° – 360°)
-                let heading_deg = ramp.angle_deg();
-                fonts.draw_ui_bold("Direction Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let angle_str = format!("{:.1}°", heading_deg);
-                if let Some(new_a) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_angle",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    heading_deg,
-                    0.0,
-                    360.0,
-                    1.0,
-                    &angle_str,
-                    false,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_angle_deg(state, new_a);
-                }
-                curr_y += row_h + scaler.s(10.0);
-
-                // 2. LENGTH (2.0m – 50.0m)
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let len = ramp.length();
-                fonts.draw_ui_bold("Length:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let len_str = format!("{:.1}m", len);
-                if let Some(new_len) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_length",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    len,
-                    2.0,
-                    50.0,
-                    0.5,
-                    &len_str,
-                    false,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_length(state, new_len);
-                }
-                curr_y += row_h + scaler.s(10.0);
-
-                // 3. WIDTH (1.0m – 30.0m)
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let wid = ramp.width();
-                fonts.draw_ui_bold("Width:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let wid_str = format!("{:.1}m", wid);
-                if let Some(new_wid) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_width",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    wid,
-                    1.0,
-                    30.0,
-                    0.5,
-                    &wid_str,
-                    false,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_width(state, new_wid);
-                }
-                curr_y += row_h + scaler.s(10.0);
-
-                // 4. HEIGHT (0.2m – 10.0m)
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let h = ramp.height;
-                fonts.draw_ui_bold("Height:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(16.0);
-
-                let h_str = format!("{:.1}m", h);
-                if let Some(new_h) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_height",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    h,
-                    0.2,
-                    10.0,
-                    0.1,
-                    &h_str,
-                    true,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_height(state, new_h);
-                }
-                curr_y += row_h + scaler.s(10.0);
-
-                // 5. PITCH (1.0° – 60.0°)
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let pitch = ramp.ramp_angle_deg;
-                fonts.draw_ui_bold("Pitch Angle:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(16.0);
-
-                let pitch_str = format!("{:.1}°", pitch);
-                if let Some(new_p) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "ramp_pitch",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    row_w,
-                    row_h,
-                    pitch,
-                    1.0,
-                    60.0,
-                    1.0,
-                    &pitch_str,
-                    true,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_selected_jump_ramp_pitch_deg(state, new_p);
-                }
-                curr_y += row_h + scaler.s(12.0);
-
-                // 6. AUTO-FIT BUTTONS: FIT PITCH & FIT HEIGHT
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                let fitted_deg = ramp.fitted_pitch_deg();
-                let fitted_h = ramp.fitted_height();
-                let flat_len = ramp.flat_length();
-
-                let fit_pitch_label = format!("FIT PITCH: {:.1}°", fitted_deg);
-                let fit_height_label = format!("FIT HEIGHT: {:.1}m", fitted_h);
-                let fit_border = if flat_len > 0.05 { Palette::NEON_GREEN } else { Palette::UI_CARD_BORDER };
-
-                let fit_btn_w = (row_w - scaler.s(6.0)) * 0.5;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, fit_btn_w, scaler.s(24.0), &fit_pitch_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
-                    tools.remove_selected_jump_ramp_flat_portion(state);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + fit_btn_w, curr_y, fit_btn_w, scaler.s(24.0), &fit_height_label, Palette::UI_CARD_BG, fit_border, mouse_pos, clicked) {
-                    tools.adjust_selected_jump_ramp_height_to_pitch(state);
-                }
-                curr_y += scaler.s(28.0);
-
-                // 7. RAMP SURFACE MATERIAL PALETTE
-                fonts.draw_ui_bold("Ramp Material:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let surfaces = [
-                    (SurfaceType::Asphalt, "Asphalt"),
-                    (SurfaceType::Concrete, "Concrete"),
-                    (SurfaceType::Dirt, "Dirt / Rally"),
-                    (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::PackedSand, "Packed Sand"),
-                    (SurfaceType::DeepSand, "Deep Sand"),
-                    (SurfaceType::MudTrack, "Mud Track"),
-                    (SurfaceType::DeepMud, "Deep Mud"),
-                    (SurfaceType::PackedSnow, "Packed Snow"),
-                    (SurfaceType::DeepSnow, "Deep Snow"),
-                    (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::SheetIce, "Sheet Ice"),
-                    (SurfaceType::Water, "Water Hazard"),
-                    (SurfaceType::Oil, "Oil Hazard"),
-                ];
-
-                let half_btn_w = (row_w - scaler.s(6.0)) * 0.5;
-                for chunk in surfaces.chunks(2) {
-                    let (st1, label1) = chunk[0];
-                    let is_active1 = state.track.geometry.jump_ramps[idx].surface == st1;
-                    if draw_ui_btn(
-                        fonts,
-                        scaler,
-                        x + scaler.s(12.0),
-                        curr_y,
-                        half_btn_w,
-                        scaler.s(22.0),
-                        label1,
-                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                        if is_active1 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-                        mouse_pos,
-                        clicked,
-                    ) {
-                        tools.set_selected_jump_ramp_surface(state, st1);
-                    }
-
-                    if chunk.len() > 1 {
-                        let (st2, label2) = chunk[1];
-                        let is_active2 = state.track.geometry.jump_ramps[idx].surface == st2;
-                        if draw_ui_btn(
-                            fonts,
-                            scaler,
-                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                            curr_y,
-                            half_btn_w,
-                            scaler.s(22.0),
-                            label2,
-                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                            if is_active2 { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER },
-                            mouse_pos,
-                            clicked,
-                        ) {
-                            tools.set_selected_jump_ramp_surface(state, st2);
-                        }
-                    }
-                    curr_y += scaler.s(25.0);
-                }
-                curr_y += scaler.s(6.0);
-
-                // 8. LATERAL VIEW DIAGRAM
-                fonts.draw_ui_bold("Lateral View Profile:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let ramp = &state.track.geometry.jump_ramps[idx];
-                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(80.0), ramp);
-                curr_y += scaler.s(86.0);
-
-                // 9. ACTION BUTTONS
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(26.0), "DUPLICATE RAMP [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                    tools.duplicate_selected(state);
-                }
-                curr_y += scaler.s(30.0);
-
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(26.0), "DELETE RAMP [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                    tools.delete_selected(state);
-                }
-            }
-        }
-        Selection::Checkpoint(id) => {
-            fonts.draw_ui_bold(&format!("Checkpoint Gate #{}", id), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-            curr_y += scaler.s(24.0);
-
-            let cp_pos = state.track.checkpoints.iter().position(|c| c.id == id);
-            if let Some(pos) = cp_pos {
-                let is_finish = state.track.checkpoints[pos].is_finish_line;
-                let mut finish_toggle = Toggle::new("Finish Line", is_finish);
-                if draw_toggle(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), &finish_toggle, mouse_pos, clicked) {
-                    finish_toggle.toggle();
-                    state.record_undo();
-                    state.track.checkpoints[pos].is_finish_line = finish_toggle.is_on;
-                    state.auto_generate_grid();
-                    state.revalidate();
-                }
-            }
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DUPLICATE GATE [Ctrl+D]", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                tools.duplicate_selected(state);
-            }
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "DELETE GATE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                tools.delete_selected(state);
-            }
-        }
-        Selection::GridSlot(_) => {}
-        Selection::PitBox => {
-            fonts.draw_ui_bold("Pit Lane Box", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-            curr_y += scaler.s(24.0);
-
-            let has_pit = state.track.pit_box_area.is_some() || state.track.pit_lane.is_some();
-            let details = if let Some(lane) = &state.track.pit_lane {
-                format!("Spline: {} m | Stalls: {}", lane.spline.total_length as u32, lane.pit_boxes.len())
-            } else {
-                format!("Configured: {}", has_pit)
-            };
-            fonts.draw_ui_regular(&details, x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-            curr_y += scaler.s(32.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(28.0), "CLEAR PIT LANE [Del]", Palette::UI_CARD_BG, Palette::RED, mouse_pos, clicked) {
-                tools.delete_selected(state);
-            }
-        }
         Selection::Multi {
             ref waypoints,
             ref surface_zones,
@@ -1448,731 +1019,8 @@ fn render_inspector(
                 tools.delete_selected(state);
             }
         }
-        Selection::None => {
-            if tools.active_tool == EditorToolType::RoadSpline {
-                fonts.draw_ui_bold("Road Spline Tool", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
-
-                fonts.draw_ui_bold(&format!("Next Surface: {}", tools.active_surface.name()), x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(20.0);
-
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                let surfaces = [
-                    (SurfaceType::Asphalt, "Asphalt"),
-                    (SurfaceType::Concrete, "Concrete"),
-                    (SurfaceType::Dirt, "Dirt"),
-                    (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::PackedSand, "Packed Sand"),
-                    (SurfaceType::DeepSand, "Deep Sand"),
-                    (SurfaceType::MudTrack, "Mud Track"),
-                    (SurfaceType::DeepMud, "Deep Mud"),
-                    (SurfaceType::PackedSnow, "Packed Snow"),
-                    (SurfaceType::DeepSnow, "Deep Snow"),
-                    (SurfaceType::SheetIce, "Sheet Ice"),
-                    (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Water, "Water"),
-                    (SurfaceType::Oil, "Oil"),
-                ];
-
-                for chunk in surfaces.chunks(2) {
-                    let (st1, label1) = chunk[0];
-                    let is_active1 = tools.active_surface == st1;
-                    if draw_ui_btn(
-                        fonts,
-                        scaler,
-                        x + scaler.s(12.0),
-                        curr_y,
-                        half_btn_w,
-                        scaler.s(22.0),
-                        label1,
-                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                        if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                        mouse_pos,
-                        clicked,
-                    ) {
-                        tools.active_surface = st1;
-                    }
-
-                    if chunk.len() > 1 {
-                        let (st2, label2) = chunk[1];
-                        let is_active2 = tools.active_surface == st2;
-                        if draw_ui_btn(
-                            fonts,
-                            scaler,
-                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                            curr_y,
-                            half_btn_w,
-                            scaler.s(22.0),
-                            label2,
-                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                            if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                            mouse_pos,
-                            clicked,
-                        ) {
-                            tools.active_surface = st2;
-                        }
-                    }
-                    curr_y += scaler.s(26.0);
-                }
-                curr_y += scaler.s(6.0);
-
-                // Default Placement Width
-                fonts.draw_ui_bold("Placement Width:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-                if draw_ui_btn(fonts, scaler, x + scaler.s(120.0), curr_y, scaler.s(45.0), scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_width = (tools.new_waypoint_width - 1.0).max(4.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(170.0), curr_y, scaler.s(45.0), scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_width = (tools.new_waypoint_width + 1.0).min(30.0);
-                }
-                curr_y += scaler.s(26.0);
-
-                let wid_str = format!("{:.1}m", tools.new_waypoint_width);
-                if let Some(new_w) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "placement_width",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    w - scaler.s(24.0),
-                    scaler.s(20.0),
-                    tools.new_waypoint_width,
-                    4.0,
-                    30.0,
-                    0.5,
-                    &wid_str,
-                    false,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.new_waypoint_width = new_w;
-                }
-                curr_y += scaler.s(26.0);
-
-                // Default Placement Banking
-                fonts.draw_ui_bold("Placement Banking:", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(12.0), Palette::NEON_GOLD);
-                curr_y += scaler.s(20.0);
-
-                let bank_str = format!("{:+.1}°", tools.new_waypoint_bank_angle);
-                if let Some(new_b) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "placement_banking",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    w - scaler.s(24.0),
-                    scaler.s(20.0),
-                    tools.new_waypoint_bank_angle,
-                    -45.0,
-                    45.0,
-                    1.0,
-                    &bank_str,
-                    true,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.new_waypoint_bank_angle = new_b;
-                }
-                curr_y += scaler.s(24.0);
-
-                let btn_q_w = (w - scaler.s(36.0)) * 0.25;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_q_w, scaler.s(22.0), "-5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle - 5.0).clamp(-45.0, 45.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_q_w, curr_y, btn_q_w, scaler.s(22.0), "-1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle - 1.0).clamp(-45.0, 45.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_q_w * 2.0, curr_y, btn_q_w, scaler.s(22.0), "+1°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle + 1.0).clamp(-45.0, 45.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_q_w * 3.0, curr_y, btn_q_w, scaler.s(22.0), "+5°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = (tools.new_waypoint_bank_angle + 5.0).clamp(-45.0, 45.0);
-                }
-                curr_y += scaler.s(26.0);
-
-                let btn_p_w = (w - scaler.s(36.0)) * 0.20;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_p_w, scaler.s(20.0), "0°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = 0.0;
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_p_w, curr_y, btn_p_w, scaler.s(20.0), "10°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = 10.0;
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_p_w * 2.0, curr_y, btn_p_w, scaler.s(20.0), "18°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = 18.0;
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_p_w * 3.0, curr_y, btn_p_w, scaler.s(20.0), "22°", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = 22.0;
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(20.0) + btn_p_w * 4.0, curr_y, btn_p_w, scaler.s(20.0), "+/-", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
-                    tools.new_waypoint_bank_angle = -tools.new_waypoint_bank_angle;
-                }
-                curr_y += scaler.s(28.0);
-
-                // Default Placement Wall Distance
-                let cur_placement_dist = tools
-                    .new_waypoint_left_wall_distance
-                    .unwrap_or(state.barrier_offset);
-                fonts.draw_ui_bold(
-                    &format!("Placement Wall Dist: {:.1}m", cur_placement_dist),
-                    x + scaler.s(12.0),
-                    curr_y + scaler.s(14.0),
-                    scaler.font_s(12.0),
-                    Palette::NEON_CYAN,
-                );
-                curr_y += scaler.s(20.0);
-
-                let dist_str = format!("{:.1}m", cur_placement_dist);
-                if let Some(new_d) = draw_bar_control(
-                    fonts,
-                    scaler,
-                    tools,
-                    "placement_wall_dist",
-                    x + scaler.s(12.0),
-                    curr_y,
-                    w - scaler.s(24.0),
-                    scaler.s(20.0),
-                    cur_placement_dist,
-                    0.0,
-                    20.0,
-                    0.5,
-                    &dist_str,
-                    false,
-                    mouse_pos,
-                    clicked,
-                ) {
-                    let val = new_d.clamp(0.0, 20.0);
-                    tools.new_waypoint_left_wall_distance = Some(val);
-                    tools.new_waypoint_right_wall_distance = Some(val);
-                }
-                curr_y += scaler.s(24.0);
-
-                let btn_pwd_w = (w - scaler.s(36.0)) * 0.25;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_pwd_w, scaler.s(20.0), "0m Flush", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
-                    tools.new_waypoint_left_wall_distance = Some(0.0);
-                    tools.new_waypoint_right_wall_distance = Some(0.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_pwd_w, curr_y, btn_pwd_w, scaler.s(20.0), "1.5m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_left_wall_distance = Some(1.5);
-                    tools.new_waypoint_right_wall_distance = Some(1.5);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_pwd_w * 2.0, curr_y, btn_pwd_w, scaler.s(20.0), "4.0m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_left_wall_distance = Some(4.0);
-                    tools.new_waypoint_right_wall_distance = Some(4.0);
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_pwd_w * 3.0, curr_y, btn_pwd_w, scaler.s(20.0), "Default", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                    tools.new_waypoint_left_wall_distance = None;
-                    tools.new_waypoint_right_wall_distance = None;
-                }
-                curr_y += scaler.s(28.0);
-
-                // Placement Wall Type
-                let cur_placement_wt = tools.new_waypoint_wall_type.unwrap_or(state.barrier_type);
-                let wt_name = cur_placement_wt.name();
-                fonts.draw_ui_bold(
-                    &format!("Placement Wall Type: {}", wt_name),
-                    x + scaler.s(12.0),
-                    curr_y + scaler.s(14.0),
-                    scaler.font_s(12.0),
-                    Palette::NEON_CYAN,
-                );
-                curr_y += scaler.s(20.0);
-
-                let is_conc = cur_placement_wt == BarrierType::Concrete;
-                let is_steel = cur_placement_wt == BarrierType::Steel;
-                let is_tire = cur_placement_wt == BarrierType::TireWall;
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-
-                // Row 1: Concrete & Steel
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0),
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(22.0),
-                    "Concrete",
-                    if is_conc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_conc { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.new_waypoint_wall_type = Some(BarrierType::Concrete);
-                }
-
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(22.0),
-                    "Steel",
-                    if is_steel { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_steel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.new_waypoint_wall_type = Some(BarrierType::Steel);
-                }
-                curr_y += scaler.s(26.0);
-
-                // Row 2: Rubber Tyres (full width)
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0),
-                    curr_y,
-                    w - scaler.s(24.0),
-                    scaler.s(22.0),
-                    "Rubber Tyres",
-                    if is_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_tire { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.new_waypoint_wall_type = Some(BarrierType::TireWall);
-                }
-                curr_y += scaler.s(26.0);
-            }
-
-            if tools.active_tool == EditorToolType::RoadSplit {
-                fonts.draw_ui_bold("Road Split & Branches", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
-
-                fonts.draw_ui_regular("1. Right-click track to insert split.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(20.0);
-
-                fonts.draw_ui_regular("2. Left-click socket to select branch.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(20.0);
-
-                fonts.draw_ui_regular("3. Right-click space to extend branch.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(20.0);
-
-                fonts.draw_ui_regular("4. Right-click near track to snap merge.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(24.0);
-
-                fonts.draw_ui_bold(&format!("Branch Count: {}", tools.split_branch_count), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
-
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, half_btn_w, scaler.s(22.0), "2 Branches", if tools.split_branch_count == 2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if tools.split_branch_count == 2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
-                    tools.split_branch_count = 2;
-                }
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0) + half_btn_w + scaler.s(6.0), curr_y, half_btn_w, scaler.s(22.0), "3 Branches", if tools.split_branch_count == 3 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG }, if tools.split_branch_count == 3 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, clicked) {
-                    tools.split_branch_count = 3;
-                }
-                curr_y += scaler.s(28.0);
-            }
-
-            if tools.active_tool == EditorToolType::JumpRamp {
-                fonts.draw_ui_bold("Jump Ramp Tool", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-                curr_y += scaler.s(24.0);
-
-                fonts.draw_ui_regular("Click & drag on track to place a launch ramp.", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
-                curr_y += scaler.s(22.0);
-
-                fonts.draw_ui_bold(&format!("Surface: {}", tools.active_surface.name()), x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(12.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(18.0);
-
-                let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-                let surfaces = [
-                    (SurfaceType::Asphalt, "Asphalt"),
-                    (SurfaceType::Concrete, "Concrete"),
-                    (SurfaceType::Dirt, "Dirt"),
-                    (SurfaceType::Gravel, "Gravel"),
-                    (SurfaceType::PackedSand, "Packed Sand"),
-                    (SurfaceType::DeepSand, "Deep Sand"),
-                    (SurfaceType::MudTrack, "Mud Track"),
-                    (SurfaceType::DeepMud, "Deep Mud"),
-                    (SurfaceType::PackedSnow, "Packed Snow"),
-                    (SurfaceType::DeepSnow, "Deep Snow"),
-                    (SurfaceType::SheetIce, "Sheet Ice"),
-                    (SurfaceType::Grass, "Grass"),
-                    (SurfaceType::Water, "Water"),
-                    (SurfaceType::Oil, "Oil"),
-                ];
-
-                for chunk in surfaces.chunks(2) {
-                    let (st1, label1) = chunk[0];
-                    let is_active1 = tools.active_surface == st1;
-                    if draw_ui_btn(
-                        fonts,
-                        scaler,
-                        x + scaler.s(12.0),
-                        curr_y,
-                        half_btn_w,
-                        scaler.s(22.0),
-                        label1,
-                        if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                        if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                        mouse_pos,
-                        clicked,
-                    ) {
-                        tools.active_surface = st1;
-                    }
-
-                    if chunk.len() > 1 {
-                        let (st2, label2) = chunk[1];
-                        let is_active2 = tools.active_surface == st2;
-                        if draw_ui_btn(
-                            fonts,
-                            scaler,
-                            x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                            curr_y,
-                            half_btn_w,
-                            scaler.s(22.0),
-                            label2,
-                            if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                            if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                            mouse_pos,
-                            clicked,
-                        ) {
-                            tools.active_surface = st2;
-                        }
-                    }
-                    curr_y += scaler.s(26.0);
-                }
-                curr_y += scaler.s(8.0);
-
-                let row_w = w - scaler.s(24.0);
-                fonts.draw_ui_bold("Curved Ramp Profile Preview:", x + scaler.s(12.0), curr_y + scaler.s(11.0), scaler.font_s(11.0), Palette::NEON_CYAN);
-                curr_y += scaler.s(16.0);
-
-                let preview_ramp = JumpRamp::new(
-                    0,
-                    SurfaceShape::OrientedBox {
-                        center: Vec2::ZERO,
-                        half_extents: Vec2::new(6.0, 4.0),
-                        angle: 0.0,
-                    },
-                    Vec2::X,
-                    4.0,
-                    15.0,
-                    1.8,
-                    "Preview Ramp",
-                ).with_surface(tools.active_surface);
-                draw_ramp_lateral_view(fonts, scaler, x + scaler.s(12.0), curr_y, row_w, scaler.s(80.0), &preview_ramp);
-                curr_y += scaler.s(88.0);
-            }
-
-            // Global Barrier Offset (Default Wall Distance)
-            fonts.draw_ui_bold(
-                &format!("Global Wall Offset: {:.1}m", state.barrier_offset),
-                x + scaler.s(12.0),
-                curr_y + scaler.s(14.0),
-                scaler.font_s(13.0),
-                Palette::NEON_CYAN,
-            );
-            curr_y += scaler.s(20.0);
-
-            let bo_str = format!("{:.1}m", state.barrier_offset);
-            if let Some(new_bo) = draw_bar_control(
-                fonts,
-                scaler,
-                tools,
-                "global_wall_offset",
-                x + scaler.s(12.0),
-                curr_y,
-                w - scaler.s(24.0),
-                scaler.s(20.0),
-                state.barrier_offset,
-                0.0,
-                20.0,
-                0.5,
-                &bo_str,
-                false,
-                mouse_pos,
-                clicked,
-            ) {
-                tools.set_global_barrier_offset(state, new_bo);
-            }
-            curr_y += scaler.s(24.0);
-
-            let btn_bo_w = (w - scaler.s(36.0)) * 0.25;
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, btn_bo_w, scaler.s(22.0), "-1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                let new_bo = (state.barrier_offset - 1.0).max(0.0);
-                tools.set_global_barrier_offset(state, new_bo);
-            }
-            if draw_ui_btn(fonts, scaler, x + scaler.s(14.0) + btn_bo_w, curr_y, btn_bo_w, scaler.s(22.0), "+1m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                let new_bo = (state.barrier_offset + 1.0).min(20.0);
-                tools.set_global_barrier_offset(state, new_bo);
-            }
-            if draw_ui_btn(fonts, scaler, x + scaler.s(16.0) + btn_bo_w * 2.0, curr_y, btn_bo_w, scaler.s(22.0), "0m", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
-                tools.set_global_barrier_offset(state, 0.0);
-            }
-            if draw_ui_btn(fonts, scaler, x + scaler.s(18.0) + btn_bo_w * 3.0, curr_y, btn_bo_w, scaler.s(22.0), "4m", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, clicked) {
-                tools.set_global_barrier_offset(state, 4.0);
-            }
-            curr_y += scaler.s(28.0);
-
-            // Global Wall Type (Default Circuit Barrier Type)
-            let g_wt_name = state.barrier_type.name();
-            fonts.draw_ui_bold(
-                &format!("Global Wall Type: {}", g_wt_name),
-                x + scaler.s(12.0),
-                curr_y + scaler.s(14.0),
-                scaler.font_s(13.0),
-                Palette::NEON_CYAN,
-            );
-            curr_y += scaler.s(20.0);
-
-            let is_g_conc = state.barrier_type == BarrierType::Concrete;
-            let is_g_steel = state.barrier_type == BarrierType::Steel;
-            let is_g_tire = state.barrier_type == BarrierType::TireWall;
-            let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-
-            // Row 1: Concrete & Steel
-            if draw_ui_btn(
-                fonts,
-                scaler,
-                x + scaler.s(12.0),
-                curr_y,
-                half_btn_w,
-                scaler.s(22.0),
-                "Concrete",
-                if is_g_conc { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                if is_g_conc { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                mouse_pos,
-                clicked,
-            ) {
-                tools.set_global_barrier_type(state, BarrierType::Concrete);
-            }
-
-            if draw_ui_btn(
-                fonts,
-                scaler,
-                x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                curr_y,
-                half_btn_w,
-                scaler.s(22.0),
-                "Steel",
-                if is_g_steel { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                if is_g_steel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                mouse_pos,
-                clicked,
-            ) {
-                tools.set_global_barrier_type(state, BarrierType::Steel);
-            }
-            curr_y += scaler.s(26.0);
-
-            // Row 2: Rubber Tyres (full width)
-            if draw_ui_btn(
-                fonts,
-                scaler,
-                x + scaler.s(12.0),
-                curr_y,
-                w - scaler.s(24.0),
-                scaler.s(22.0),
-                "Rubber Tyres",
-                if is_g_tire { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                if is_g_tire { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                mouse_pos,
-                clicked,
-            ) {
-                tools.set_global_barrier_type(state, BarrierType::TireWall);
-            }
-            curr_y += scaler.s(28.0);
-
-            fonts.draw_ui_bold("Global Off-Track Surface", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
-            curr_y += scaler.s(22.0);
-
-            let offtrack_surfaces = [
-                (SurfaceType::Grass, "Grass"),
-                (SurfaceType::DeepSand, "Deep Sand"),
-                (SurfaceType::PackedSand, "Packed Sand"),
-                (SurfaceType::Dirt, "Dirt"),
-                (SurfaceType::DeepMud, "Deep Mud"),
-                (SurfaceType::MudTrack, "Mud Track"),
-                (SurfaceType::DeepSnow, "Deep Snow"),
-                (SurfaceType::PackedSnow, "Packed Snow"),
-                (SurfaceType::Asphalt, "Asphalt"),
-                (SurfaceType::Concrete, "Concrete"),
-                (SurfaceType::Gravel, "Gravel"),
-            ];
-
-            let half_btn_w = (w - scaler.s(30.0)) * 0.5;
-            for chunk in offtrack_surfaces.chunks(2) {
-                let (st1, label1) = chunk[0];
-                let is_active1 = state.track.default_surface == st1;
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0),
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(22.0),
-                    label1,
-                    if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_track_default_surface(state, st1);
-                }
-
-                if chunk.len() > 1 {
-                    let (st2, label2) = chunk[1];
-                    let is_active2 = state.track.default_surface == st2;
-                    if draw_ui_btn(
-                        fonts,
-                        scaler,
-                        x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                        curr_y,
-                        half_btn_w,
-                        scaler.s(22.0),
-                        label2,
-                        if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                        if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                        mouse_pos,
-                        clicked,
-                    ) {
-                        tools.set_track_default_surface(state, st2);
-                    }
-                }
-                curr_y += scaler.s(26.0);
-            }
-            curr_y += scaler.s(6.0);
-
-            fonts.draw_ui_bold("Car Category", x + scaler.s(12.0), curr_y + scaler.s(14.0), scaler.font_s(13.0), Palette::NEON_CYAN);
-            curr_y += scaler.s(22.0);
-
-            let categories = [
-                (CarCategory::Gt, "GT"),
-                (CarCategory::Nascar, "Stock Car"),
-                (CarCategory::Rally, "Rallycross"),
-                (CarCategory::Kart, "Kart"),
-                (CarCategory::OffRoad, "Off-Road"),
-                (CarCategory::Autocross, "Autocross"),
-            ];
-
-            for chunk in categories.chunks(2) {
-                let (cat1, label1) = chunk[0];
-                let is_active1 = state.track.car_category == cat1;
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    x + scaler.s(12.0),
-                    curr_y,
-                    half_btn_w,
-                    scaler.s(22.0),
-                    label1,
-                    if is_active1 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_active1 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    tools.set_track_car_category(state, cat1);
-                }
-
-                if chunk.len() > 1 {
-                    let (cat2, label2) = chunk[1];
-                    let is_active2 = state.track.car_category == cat2;
-                    if draw_ui_btn(
-                        fonts,
-                        scaler,
-                        x + scaler.s(12.0) + half_btn_w + scaler.s(6.0),
-                        curr_y,
-                        half_btn_w,
-                        scaler.s(22.0),
-                        label2,
-                        if is_active2 { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                        if is_active2 { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                        mouse_pos,
-                        clicked,
-                    ) {
-                        tools.set_track_car_category(state, cat2);
-                    }
-                }
-                curr_y += scaler.s(26.0);
-            }
-            curr_y += scaler.s(6.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Auto Checkpoints", Palette::UI_CARD_BG, Palette::NEON_CYAN, mouse_pos, clicked) {
-                state.record_undo();
-                state.track.auto_generate_checkpoints(8, 3);
-                state.auto_generate_grid();
-                state.revalidate();
-            }
-            curr_y += scaler.s(32.0);
-
-            // Starting Grid Positions Circuit Property
-            let grid_cnt = state.grid_count();
-            fonts.draw_ui_bold(
-                &format!("Grid Positions: {} Slots", grid_cnt),
-                x + scaler.s(12.0),
-                curr_y + scaler.s(14.0),
-                scaler.font_s(13.0),
-                Palette::NEON_CYAN,
-            );
-            curr_y += scaler.s(20.0);
-
-            let cur_count_f = grid_cnt as f32;
-            let count_str = format!("{} Slots", grid_cnt);
-            if let Some(new_val) = draw_bar_control(
-                fonts,
-                scaler,
-                tools,
-                "circuit_grid_positions",
-                x + scaler.s(12.0),
-                curr_y,
-                w - scaler.s(24.0),
-                scaler.s(20.0),
-                cur_count_f,
-                1.0,
-                24.0,
-                1.0,
-                &count_str,
-                false,
-                mouse_pos,
-                clicked,
-            ) {
-                let new_cnt = (new_val.round() as usize).clamp(1, 24);
-                if new_cnt != grid_cnt {
-                    state.set_grid_count(new_cnt);
-                }
-            }
-            curr_y += scaler.s(24.0);
-
-            // Grid count stepper (platform Counter) with hold-to-repeat, then quick presets.
-            let mut grid_counter = Counter::new(1, 24, 1, grid_cnt as i64);
-            if draw_counter(fonts, scaler, tools, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(36.0), "Grid Slots", &mut grid_counter, mouse_pos, clicked) {
-                if grid_counter.value as usize != grid_cnt {
-                    state.set_grid_count(grid_counter.value as usize);
-                }
-            }
-            curr_y += scaler.s(42.0);
-
-            let presets = [8, 10, 12, 14, 16, 18];
-            let avail_w = w - scaler.s(24.0);
-            let chip_w = (avail_w - scaler.s(4.0) * (presets.len() as f32 - 1.0)) / (presets.len() as f32);
-            let mut px = x + scaler.s(12.0);
-            for &cnt in &presets {
-                let is_active = grid_cnt == cnt;
-                if draw_ui_btn(
-                    fonts,
-                    scaler,
-                    px,
-                    curr_y,
-                    chip_w,
-                    scaler.s(22.0),
-                    &format!("{}", cnt),
-                    if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
-                    if is_active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
-                    mouse_pos,
-                    clicked,
-                ) {
-                    state.set_grid_count(cnt);
-                }
-                px += chip_w + scaler.s(4.0);
-            }
-            curr_y += scaler.s(30.0);
-
-            if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(26.0), "Rebuild Geometry", Palette::UI_CARD_BG, Palette::NEON_GOLD, mouse_pos, clicked) {
-                state.record_undo();
-                state.rebuild_geometry();
-            }
-        }
+        // Every other selection is drawn by the model-based inspector (`build_inspector`) above.
+        _ => {}
     }
 }
 
@@ -2376,205 +1224,6 @@ fn render_template_modal(
     }
 
     None
-}
-
-/// Unified, reusable interactive Bar Control component for the Track Editor suite.
-/// Integrates:
-/// 1. A visual and draggable slider bar with custom ranges, limits, and accent color.
-/// 2. Selection tracking: clicking/dragging the bar or its input field selects it with visual glowing border.
-/// 3. Mouse wheel scrolling: when focused and the pointer is over the inspector, mouse scroll adjusts the bar value by `step`.
-///    Holding Shift multiplies the step for faster adjustment.
-/// 4. Direct in-place manual text input: clicking the right-hand value box enters active text editing
-///    with visible cursor, supporting numbers, decimals, negative signs, Backspace, Enter to commit,
-///    and Escape/click-outside to cancel/commit.
-/// Returns `Some(new_val)` whenever the value changes (via drag, mouse scroll, or manual text commit).
-pub fn draw_bar_control(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    tools: &mut ToolSettings,
-    id: &str,
-    x: f32,
-    y: f32,
-    total_w: f32,
-    h: f32,
-    val: f32,
-    min_val: f32,
-    max_val: f32,
-    step: f32,
-    val_display: &str,
-    is_gold: bool,
-    mouse_pos: Vec2,
-    clicked: bool,
-) -> Option<f32> {
-    let input_w = scaler.s(60.0);
-    let gap = scaler.s(6.0);
-    let slider_w = (total_w - input_w - gap).max(20.0);
-    let input_x = x + slider_w + gap;
-
-    let accent_col = if is_gold { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
-    let thumb_col = if is_gold { Palette::NEON_CYAN } else { Palette::NEON_GOLD };
-
-    let is_selected = tools.selected_bar.as_deref() == Some(id);
-    let is_editing = tools.editing_bar.as_ref().map(|(eid, _)| eid.as_str()) == Some(id);
-
-    let mouse_over_slider = mouse_pos.x >= x - scaler.s(2.0)
-        && mouse_pos.x <= x + slider_w + scaler.s(2.0)
-        && mouse_pos.y >= y - scaler.s(2.0)
-        && mouse_pos.y <= y + h + scaler.s(2.0);
-
-    let mouse_over_input = mouse_pos.x >= input_x
-        && mouse_pos.x <= input_x + input_w
-        && mouse_pos.y >= y
-        && mouse_pos.y <= y + h;
-
-    let mut result_val: Option<f32> = None;
-
-    // 1. Mouse Dragging: a press on the slider captures the drag until release, even off the bar
-    if clicked && mouse_over_slider {
-        tools.inspector.drag_capture = Some(id.to_string());
-    }
-    let is_down = is_mouse_button_down(MouseButton::Left);
-    if is_down && tools.inspector.drag_capture.as_deref() == Some(id) {
-        tools.selected_bar = Some(id.to_string());
-        if tools.editing_bar.is_some() {
-            tools.editing_bar = None;
-        }
-        let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
-        let p = ((mouse_pos.x - (x + scaler.s(2.0))) / inner_w).clamp(0.0, 1.0);
-        let new_val = min_val + p * (max_val - min_val);
-        result_val = Some(new_val);
-    }
-
-    // 2. Mouse Scroll Wheel: only the focused bar, and only while the pointer is over the inspector
-    let wheel_y = std::panic::catch_unwind(macroquad::input::mouse_wheel).unwrap_or((0.0, 0.0)).1;
-    if wheel_y.abs() > 0.01 && is_selected && tools.inspector.hovered {
-        tools.selected_bar = Some(id.to_string());
-        if tools.editing_bar.is_some() {
-            tools.editing_bar = None;
-        }
-        let shift = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
-        let mult = if shift { 2.0 } else { 1.0 };
-        let dir = if wheel_y > 0.0 { 1.0 } else { -1.0 };
-        let new_val = (val + dir * step * mult).clamp(min_val, max_val);
-        result_val = Some(new_val);
-    }
-
-    // 3. Manual Input Field Interaction & In-Place Editing
-    if !is_editing {
-        if clicked && mouse_over_input {
-            tools.selected_bar = Some(id.to_string());
-            let init_str = format!("{:.1}", val);
-            tools.editing_bar = Some((id.to_string(), init_str));
-        } else if clicked && mouse_over_slider {
-            tools.selected_bar = Some(id.to_string());
-            if tools.editing_bar.is_some() {
-                tools.editing_bar = None;
-            }
-        }
-    } else {
-        // Active in-place text editing
-        let mut stop_editing = false;
-        if clicked && !mouse_over_input {
-            // Click outside commits current text
-            if let Some((_, ref buf)) = tools.editing_bar {
-                if let Ok(parsed) = buf.trim().parse::<f32>() {
-                    result_val = Some(parsed.clamp(min_val, max_val));
-                }
-            }
-            stop_editing = true;
-        } else {
-            // Keyboard handling for active field
-            while let Some(c) = get_char_pressed() {
-                if let Some((_, ref mut buf)) = tools.editing_bar {
-                    let can_minus = min_val < 0.0 && buf.is_empty() && c == '-';
-                    let can_digit = c.is_ascii_digit();
-                    let can_dot = c == '.' && !buf.contains('.');
-                    if (can_digit || can_dot || can_minus) && buf.len() < 8 {
-                        buf.push(c);
-                    }
-                }
-            }
-
-            if is_key_pressed(KeyCode::Backspace) {
-                if let Some((_, ref mut buf)) = tools.editing_bar {
-                    buf.pop();
-                }
-            }
-
-            if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
-                if let Some((_, ref buf)) = tools.editing_bar {
-                    if let Ok(parsed) = buf.trim().parse::<f32>() {
-                        result_val = Some(parsed.clamp(min_val, max_val));
-                    }
-                }
-                stop_editing = true;
-            }
-
-            if is_key_pressed(KeyCode::Escape) {
-                stop_editing = true;
-            }
-        }
-
-        if stop_editing {
-            tools.editing_bar = None;
-        }
-    }
-
-    // 4. Render Slider Bar (Left)
-    let current_val = result_val.unwrap_or(val);
-    let bar_pct = SliderWidget::new("", min_val, max_val, step, current_val).normalized();
-
-    let slider_bg = if mouse_over_slider { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-    let slider_border = if is_selected {
-        accent_col
-    } else if mouse_over_slider {
-        Palette::WHITE
-    } else {
-        Palette::UI_CARD_BORDER
-    };
-    let slider_border_thick = if is_selected { 1.8 } else { 1.0 };
-    scaler.draw_glass_card(x, y, slider_w, h, slider_bg, slider_border, slider_border_thick);
-
-    let inner_w = (slider_w - scaler.s(4.0)).max(1.0);
-    let inner_h = (h - scaler.s(4.0)).max(1.0);
-    draw_rectangle(x + scaler.s(2.0), y + scaler.s(2.0), inner_w * bar_pct, inner_h, accent_col);
-
-    let thumb_x = x + scaler.s(2.0) + inner_w * bar_pct;
-    let thumb_radius = if is_selected { scaler.s(6.5) } else { scaler.s(5.5) };
-    draw_circle(thumb_x, y + h * 0.5, thumb_radius, thumb_col);
-    if is_selected {
-        draw_circle_lines(thumb_x, y + h * 0.5, thumb_radius + scaler.s(1.5), 1.0, Palette::WHITE);
-    }
-
-    // 5. Render Manual Input Control (Right)
-    let is_still_editing = tools.editing_bar.as_ref().map(|(eid, _)| eid.as_str()) == Some(id);
-    if is_still_editing {
-        let input_bg = Color::new(0.04, 0.08, 0.14, 0.95);
-        scaler.draw_glass_card(input_x, y, input_w, h, input_bg, accent_col, 2.0);
-        let buf = tools.editing_bar.as_ref().map(|(_, b)| b.as_str()).unwrap_or("");
-        let cursor = if (macroquad::time::get_time() * 2.5).fract() < 0.5 { "|" } else { "" };
-        let display_text = format!("{}{}", buf, cursor);
-        fonts.draw_ui_bold_centered(
-            &display_text,
-            input_x + input_w * 0.5,
-            y + h * 0.5 + scaler.s(4.0),
-            scaler.font_s(11.0),
-            Palette::WHITE,
-        );
-    } else {
-        let input_bg = if mouse_over_input { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG };
-        let input_border = if mouse_over_input || is_selected { accent_col } else { Palette::UI_CARD_BORDER };
-        scaler.draw_glass_card(input_x, y, input_w, h, input_bg, input_border, if mouse_over_input || is_selected { 1.5 } else { 1.0 });
-        fonts.draw_ui_bold_centered(
-            val_display,
-            input_x + input_w * 0.5,
-            y + h * 0.5 + scaler.s(4.0),
-            scaler.font_s(11.0),
-            if mouse_over_input { Palette::WHITE } else { Color::new(0.90, 0.94, 1.0, 1.0) },
-        );
-    }
-
-    result_val
 }
 
 /// Renders a 2D lateral cross-section diagram of a jump ramp showing incline slope, tabletop flat, launch lip, and surface material.
@@ -4098,48 +2747,6 @@ fn draw_toggle(
     is_hover && clicked
 }
 
-/// Renders an integer [`Counter`] as an inline `[<] value [>]` stepper with hold-to-repeat
-/// mouse chevron control (one step on press, repeats after a delay). Returns true when the value changed.
-fn draw_counter(
-    fonts: &Fonts,
-    scaler: &UiScaler,
-    tools: &mut ToolSettings,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    label: &str,
-    counter: &mut Counter,
-    mouse_pos: Vec2,
-    clicked: bool,
-) -> bool {
-    let is_hover = mouse_pos.x >= x && mouse_pos.x <= x + w && mouse_pos.y >= y && mouse_pos.y <= y + h;
-
-    // Mouse hold-to-repeat on the stepper chevrons.
-    let opt_w = (w * 0.58).clamp(scaler.s(160.0), scaler.s(320.0));
-    let opt_x = x + w - opt_w - scaler.s(16.0);
-    let opt_h = scaler.s(32.0);
-    let opt_y = y + (h - opt_h) * 0.5;
-    let arrow_w = scaler.s(28.0);
-
-    let in_rect = |rx: f32, rw: f32| {
-        mouse_pos.x >= rx && mouse_pos.x <= rx + rw && mouse_pos.y >= opt_y && mouse_pos.y <= opt_y + opt_h
-    };
-    let down = is_mouse_button_down(MouseButton::Left);
-    let now = macroquad::time::get_time();
-    let mut changed = false;
-    if tools.inspector.hold.poll(&format!("{label}:dec"), clicked, down, in_rect(opt_x, arrow_w), now) {
-        changed |= counter.decrement();
-    }
-    if tools.inspector.hold.poll(&format!("{label}:inc"), clicked, down, in_rect(opt_x + opt_w - arrow_w, arrow_w), now) {
-        changed |= counter.increment();
-    }
-
-    draw_stepper(scaler, fonts, x, y, w, h, label, &counter.value.to_string(), false, is_hover, Palette::NEON_CYAN);
-
-    changed
-}
-
 /// Returns the toggle button label for a checkpoint gate's finish line flag.
 /// Consistently displays "Finish Line" regardless of whether the checkpoint is
 /// currently designated as the finish line or a normal sector gate.
@@ -4370,12 +2977,22 @@ fn surface_swatch(surface: SurfaceType) -> Color {
     race_ui::render::track::get_surface_zone_colors(surface).0
 }
 
-fn format_stepper_value(v: f32, unit: &str, signed: bool) -> String {
+/// Formats a stepper value; whole-number steps show no decimals.
+fn format_stepper_value(v: f32, unit: &str, signed: bool, step: f32) -> String {
+    let decimals = if step.fract() == 0.0 { 0 } else { 1 };
     if signed {
-        format!("{v:+.1}{unit}")
+        format!("{v:+.decimals$}{unit}")
     } else {
-        format!("{v:.1}{unit}")
+        format!("{v:.decimals$}{unit}")
     }
+}
+
+/// Option list and current value of the dropdown row for `prop`, if the model has one.
+fn dropdown_row(model: &InspectorModel, prop: Prop) -> Option<(Options, Common<usize>)> {
+    model.sections.iter().flat_map(|s| &s.rows).find_map(|r| match r {
+        Row::Dropdown { prop: p, options, value, .. } if *p == prop => Some((*options, *value)),
+        _ => None,
+    })
 }
 
 /// Inline text entry for a focused stepper. Returns a committed value, if any.
@@ -4500,7 +3117,7 @@ fn draw_inspector_stepper(
         } else {
             tools.inspector.stepper_drag = None;
             if !drag.moved {
-                let text = value.same().map(|v| format!("{v:.1}")).unwrap_or_default();
+                let text = value.same().map(|v| format_stepper_value(v, "", false, step)).unwrap_or_default();
                 tools.start_editing_bar(&id, &text);
             }
         }
@@ -4527,7 +3144,7 @@ fn draw_inspector_stepper(
         let cursor = if (now * 2.5).fract() < 0.5 { "|" } else { "" };
         fonts.draw_ui_bold_centered(&format!("{buf}{cursor}"), bx + bw * 0.5, text_y, size, Palette::WHITE);
     } else {
-        let label = value.same().map(|v| format_stepper_value(v, unit, signed)).unwrap_or_else(|| "—".to_string());
+        let label = value.same().map(|v| format_stepper_value(v, unit, signed, step)).unwrap_or_else(|| "—".to_string());
         let dim = fonts.measure_ui_bold(&label, size);
         let col = if value.same().is_some() { Palette::WHITE } else { Palette::UI_TEXT_MUTED };
         fonts.draw_ui_bold(&label, bx + bw - dim.width - scaler.s(6.0), text_y, size, col);
@@ -4585,7 +3202,7 @@ fn draw_inspector_row(
             draw_label(label);
             draw_inspector_stepper(fonts, scaler, tools, (ctrl_x, y, ctrl_w, h), *prop, *value, *anchor, (*min, *max, *step), unit, *signed, mouse, raw_mouse, clicked)
         }
-        Row::Surface { prop, label, value } => {
+        Row::Dropdown { prop, label, options, value } => {
             draw_label(label);
             let field = (ctrl_x, y, ctrl_w, h);
             let is_open = tools.inspector.dropdown_open() && tools.inspector.dropdown_prop == Some(*prop);
@@ -4593,13 +3210,51 @@ fn draw_inspector_row(
                 tools.inspector.dropdown_field = field;
             }
             let hovered = point_in(mouse, field);
-            let current = value.same().and_then(|i| SURFACES.get(i).copied());
-            draw_field_dropdown(scaler, fonts, field.0, field.1, field.2, field.3, current.map(|s| s.name()).unwrap_or(""), current.map(surface_swatch), current.is_none(), is_open, hovered, Palette::NEON_CYAN);
+            let current = value.same();
+            let swatch = current.and_then(|i| options.surface(i)).map(surface_swatch);
+            draw_field_dropdown(scaler, fonts, field.0, field.1, field.2, field.3, current.map(|i| options.label(i)).unwrap_or(""), swatch, current.is_none(), is_open, hovered, Palette::NEON_CYAN);
             if clicked && hovered && !is_open {
-                tools.inspector.dropdown.open(value.same(), SURFACES.len(), INSP_DROPDOWN_ROWS);
+                tools.inspector.dropdown.open(current, options.len(), INSP_DROPDOWN_ROWS);
                 tools.inspector.dropdown_prop = Some(*prop);
                 tools.inspector.dropdown_field = field;
             }
+            None
+        }
+        Row::Toggle { prop, label, value } => {
+            draw_label(label);
+            let side_w = scaler.s(INSP_SIDE_W) * 2.0;
+            let rect = (x + w - side_w, y, side_w, h);
+            let hover = point_in(mouse, rect);
+            let on = matches!(value, Common::Same(true));
+            let text = match value {
+                Common::Same(true) => "on",
+                Common::Same(false) => "off",
+                _ => "—",
+            };
+            let bg = if on { Color::new(0.20, 0.90, 1.0, 0.14) } else if hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
+            scaler.draw_glass_card(rect.0, rect.1, rect.2, rect.3, bg, if hover { Palette::WHITE } else if on { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER }, 1.0);
+            fonts.draw_ui_bold_centered(text, rect.0 + side_w * 0.5, baseline, scaler.font_s(11.0), if on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED });
+            (hover && clicked).then(|| Edit::Flag(*prop, !value.same().unwrap_or(false)))
+        }
+        Row::Buttons(buttons) => {
+            let gap = scaler.s(4.0);
+            let bw = (w - gap * (buttons.len().saturating_sub(1)) as f32) / buttons.len().max(1) as f32;
+            let mut edit = None;
+            for (i, button) in buttons.iter().enumerate() {
+                let rect = (x + i as f32 * (bw + gap), y, bw, h);
+                let hover = point_in(mouse, rect);
+                let accent = if button.highlight { Palette::NEON_GREEN } else if hover { Palette::WHITE } else { Palette::UI_CARD_BORDER };
+                scaler.draw_glass_card(rect.0, rect.1, rect.2, rect.3, if hover { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, accent, 1.0);
+                let fitted = fonts.fit_ui_bold(&button.label, scaler.font_s(11.0), bw - scaler.s(6.0));
+                fonts.draw_ui_bold_centered(&fitted, rect.0 + bw * 0.5, baseline, scaler.font_s(11.0), Palette::WHITE);
+                if hover && clicked {
+                    edit = Some(button.edit);
+                }
+            }
+            edit
+        }
+        Row::RampProfile(ramp) => {
+            draw_ramp_lateral_view(fonts, scaler, x, y, w, scaler.s(RAMP_PROFILE_H), ramp);
             None
         }
         Row::Segmented { prop, label, labels, value } => {
@@ -4672,15 +3327,15 @@ fn render_inspector_model(
     fonts.draw_ui_bold("INSPECTOR", x + pad, y + scaler.s(22.0), scaler.font_s(14.0), Palette::NEON_GOLD);
     let header_y = y + scaler.s(TITLE_H);
     fonts.draw_ui_bold(&model.title, x + pad, header_y + scaler.s(14.0), scaler.font_s(13.0), Palette::WHITE);
-    if model.count > 1 {
-        let text = format!("{} selected", model.count);
+    let right_text = if model.count > 1 { Some(format!("{} selected", model.count)) } else { model.subtitle.map(str::to_string) };
+    if let Some(text) = right_text {
         let dim = fonts.measure_ui_bold(&text, scaler.font_s(11.0));
         fonts.draw_ui_bold(&text, x + w - pad - dim.width, header_y + scaler.s(14.0), scaler.font_s(11.0), Palette::NEON_CYAN);
     }
     draw_rectangle(x + pad, header_y + scaler.s(HEADER_H) - 1.0, inner_w, 1.0, Palette::UI_CARD_BORDER);
 
     let body_top = header_y + scaler.s(HEADER_H);
-    let footer_h = if model.footer { scaler.s(FOOTER_H) } else { 0.0 };
+    let footer_h = if model.footer.is_some() { scaler.s(FOOTER_H) } else { 0.0 };
     let body_h = (y + h - footer_h - body_top).max(0.0);
     let body = (x, body_top, w, body_h);
     let popup_bounds = (x + scaler.s(4.0), body_top, w - scaler.s(8.0), y + h - scaler.s(4.0) - body_top);
@@ -4689,9 +3344,9 @@ fn render_inspector_model(
     // The open dropdown takes input first: its list covers the rows below it.
     let mut wheel_used = false;
     if tools.inspector.dropdown_open() {
-        if let Some(prop) = tools.inspector.dropdown_prop {
+        if let Some((prop, (options, selected))) = tools.inspector.dropdown_prop.and_then(|p| dropdown_row(model, p).map(|row| (p, row))) {
             let field = tools.inspector.dropdown_field;
-            let layout = tools.inspector.dropdown.popup_layout(field, SURFACES.len(), INSP_DROPDOWN_ROWS, popup_bounds, item_h);
+            let layout = tools.inspector.dropdown.popup_layout(field, options.len(), INSP_DROPDOWN_ROWS, popup_bounds, item_h);
             wheel_used = layout.contains((mouse.x, mouse.y));
             let input = FieldDropdownInput {
                 mouse: (mouse.x, mouse.y),
@@ -4702,11 +3357,7 @@ fn render_inspector_model(
                 confirm: is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter),
                 cancel: false,
             };
-            let selected = match model.sections.iter().flat_map(|s| &s.rows).find(|r| matches!(r, Row::Surface { prop: p, .. } if *p == prop)) {
-                Some(Row::Surface { value, .. }) => value.same(),
-                _ => None,
-            };
-            match tools.inspector.dropdown.handle_input(field, SURFACES.len(), selected, INSP_DROPDOWN_ROWS, popup_bounds, item_h, input) {
+            match tools.inspector.dropdown.handle_input(field, options.len(), selected.same(), INSP_DROPDOWN_ROWS, popup_bounds, item_h, input) {
                 FieldDropdownEvent::None => {}
                 FieldDropdownEvent::Picked(i) => {
                     edits.push(Edit::Pick(prop, i));
@@ -4717,6 +3368,8 @@ fn render_inspector_model(
             if !tools.inspector.dropdown_open() {
                 tools.inspector.dropdown_prop = None;
             }
+        } else {
+            tools.inspector.close_dropdown();
         }
     }
 
@@ -4781,31 +3434,31 @@ fn render_inspector_model(
         draw_rectangle(x + w - scaler.s(5.0), thumb_y, scaler.s(3.0), thumb_h, Palette::UI_CARD_BORDER);
     }
 
-    if model.footer {
+    if let Some(footer) = model.footer {
         let fy = y + h - footer_h;
         draw_rectangle(x + pad, fy, inner_w, 1.0, Palette::UI_CARD_BORDER);
-        let bw = (inner_w - scaler.s(6.0)) * 0.5;
         let by = fy + scaler.s(7.0);
         let footer_clicked = clicked && !tools.inspector.dropdown_open();
-        if draw_footer_button(fonts, scaler, (x + pad, by, bw, scaler.s(24.0)), "Duplicate", "Ctrl+D", Palette::NEON_CYAN, mouse, footer_clicked) {
-            edits.push(Edit::Do(InspectorAction::Duplicate));
+        let mut delete_x = x + pad;
+        let mut delete_w = inner_w;
+        if footer.duplicate {
+            let bw = (inner_w - scaler.s(6.0)) * 0.5;
+            if draw_footer_button(fonts, scaler, (x + pad, by, bw, scaler.s(24.0)), "Duplicate", "Ctrl+D", Palette::NEON_CYAN, mouse, footer_clicked) {
+                edits.push(Edit::Do(InspectorAction::Duplicate));
+            }
+            delete_x += bw + scaler.s(6.0);
+            delete_w = bw;
         }
-        if draw_footer_button(fonts, scaler, (x + pad + bw + scaler.s(6.0), by, bw, scaler.s(24.0)), "Delete", "Del", Palette::RED, mouse, footer_clicked) {
+        if draw_footer_button(fonts, scaler, (delete_x, by, delete_w, scaler.s(24.0)), footer.delete_label, "Del", Palette::RED, mouse, footer_clicked) {
             edits.push(Edit::Do(InspectorAction::Delete));
         }
     }
 
-    if tools.inspector.dropdown_open() {
-        let layout = tools.inspector.dropdown.popup_layout(tools.inspector.dropdown_field, SURFACES.len(), INSP_DROPDOWN_ROWS, popup_bounds, item_h);
-        let names: Vec<String> = SURFACES.iter().map(|s| s.name().to_string()).collect();
-        let swatches: Vec<Color> = SURFACES.iter().map(|&s| surface_swatch(s)).collect();
-        let selected = tools.inspector.dropdown_prop.and_then(|prop| {
-            model.sections.iter().flat_map(|s| &s.rows).find_map(|r| match r {
-                Row::Surface { prop: p, value, .. } if *p == prop => value.same(),
-                _ => None,
-            })
-        });
-        draw_field_dropdown_popup(scaler, fonts, &layout, &names, &swatches, selected, tools.inspector.dropdown.hovered, Palette::NEON_CYAN);
+    if let Some((options, selected)) = tools.inspector.dropdown_prop.filter(|_| tools.inspector.dropdown_open()).and_then(|p| dropdown_row(model, p)) {
+        let layout = tools.inspector.dropdown.popup_layout(tools.inspector.dropdown_field, options.len(), INSP_DROPDOWN_ROWS, popup_bounds, item_h);
+        let names: Vec<String> = (0..options.len()).map(|i| options.label(i).to_string()).collect();
+        let swatches: Vec<Color> = (0..options.len()).filter_map(|i| options.surface(i)).map(surface_swatch).collect();
+        draw_field_dropdown_popup(scaler, fonts, &layout, &names, &swatches, selected.same(), tools.inspector.dropdown.hovered, Palette::NEON_CYAN);
     }
 
     for edit in edits {

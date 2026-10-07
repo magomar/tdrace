@@ -3,10 +3,11 @@
 use glam::Vec2;
 use tdrace_app::editor::inspector::{
     apply_edit, begin_inspector_frame, body_height, build_inspector, common_value, content_height, Action, Common, Edit, HoldRepeat,
-    InspectorModel, Prop, Row, HOLD_REPEAT_DELAY, HOLD_REPEAT_INTERVAL, SURFACES, WALL_DISTANCE_RANGE, WIDTH_RANGE,
+    InspectorModel, Options, Prop, Row, HOLD_REPEAT_DELAY, HOLD_REPEAT_INTERVAL, RAMP_LENGTH_RANGE, SURFACES, WALL_DISTANCE_RANGE,
+    WIDTH_RANGE,
 };
 use tdrace_app::editor::state::dev_selection;
-use tdrace_app::editor::{EditorState, Selection, ToolSettings};
+use tdrace_app::editor::{EditorState, EditorToolType, Selection, ToolSettings};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceShape, SurfaceZone};
 use tdrace_core::track::spline::TrackSpline;
@@ -237,8 +238,8 @@ fn find_row<'a>(model: &'a InspectorModel, label: &str) -> &'a Row {
         .iter()
         .flat_map(|s| &s.rows)
         .find(|r| match r {
-            Row::Stepper { label: l, .. } | Row::Surface { label: l, .. } | Row::Segmented { label: l, .. } | Row::Sides { label: l, .. } | Row::Chips { label: l, .. } => *l == label,
-            Row::Info(_) => false,
+            Row::Stepper { label: l, .. } | Row::Dropdown { label: l, .. } | Row::Segmented { label: l, .. } | Row::Sides { label: l, .. } | Row::Chips { label: l, .. } => *l == label,
+            _ => false,
         })
         .unwrap_or_else(|| panic!("row {label} not found"))
 }
@@ -253,8 +254,8 @@ fn shape(model: &InspectorModel) -> Vec<(String, Vec<String>)> {
                 .rows
                 .iter()
                 .map(|r| match r {
-                    Row::Stepper { label, .. } | Row::Surface { label, .. } | Row::Segmented { label, .. } | Row::Sides { label, .. } | Row::Chips { label, .. } => label.to_string(),
-                    Row::Info(_) => "info".to_string(),
+                    Row::Stepper { label, .. } | Row::Dropdown { label, .. } | Row::Segmented { label, .. } | Row::Sides { label, .. } | Row::Chips { label, .. } => label.to_string(),
+                    _ => "other".to_string(),
                 })
                 .collect();
             (s.id.to_string(), rows)
@@ -276,18 +277,18 @@ fn common_value_reports_same_mixed_and_empty() {
 #[test]
 fn waypoint_view_fits_the_720p_card_fully_expanded() {
     for indices in [&[0][..], &[0, 1, 2][..]] {
-        let model = build_inspector(&selected(indices)).expect("waypoint selections use the new inspector");
+        let model = build_inspector(&selected(indices), &ToolSettings::default()).expect("waypoint selections use the new inspector");
         let used = content_height(&model, |_| false);
         let room = body_height(&model, CARD_H_720P);
         assert!(used <= room, "{indices:?}: content {used} px > body {room} px");
-        assert!(model.footer, "duplicate and delete stay in the fixed footer");
+        assert!(model.footer.is_some(), "duplicate and delete stay in the fixed footer");
     }
 }
 
 #[test]
 fn several_waypoints_show_the_same_controls_as_one() {
-    let one = build_inspector(&selected(&[0])).unwrap();
-    let many = build_inspector(&selected(&[0, 1, 2])).unwrap();
+    let one = build_inspector(&selected(&[0]), &ToolSettings::default()).unwrap();
+    let many = build_inspector(&selected(&[0, 1, 2]), &ToolSettings::default()).unwrap();
     assert_eq!(shape(&one), shape(&many));
     assert_eq!(one.count, 1);
     assert_eq!(many.count, 3);
@@ -295,12 +296,12 @@ fn several_waypoints_show_the_same_controls_as_one() {
 
 #[test]
 fn equal_values_show_the_value_and_different_values_show_mixed() {
-    let model = build_inspector(&selected(&[0, 1])).unwrap();
+    let model = build_inspector(&selected(&[0, 1]), &ToolSettings::default()).unwrap();
     assert!(matches!(find_row(&model, "Width"), Row::Stepper { value: Common::Same(w), .. } if *w == 12.0));
     assert!(matches!(find_row(&model, "Angle"), Row::Stepper { value: Common::Mixed, .. }));
 
-    let model = build_inspector(&selected(&[0, 1, 2])).unwrap();
-    assert!(matches!(find_row(&model, "Surface"), Row::Surface { value: Common::Mixed, .. }));
+    let model = build_inspector(&selected(&[0, 1, 2]), &ToolSettings::default()).unwrap();
+    assert!(matches!(find_row(&model, "Surface"), Row::Dropdown { value: Common::Mixed, .. }));
     assert!(matches!(find_row(&model, "Curb"), Row::Sides { left: (_, Common::Mixed), right: (_, Common::Same(false)), .. }));
     match find_row(&model, "Presets") {
         Row::Chips { chips, .. } => assert!(chips.iter().all(|c| !c.active), "no preset is lit for mixed banking"),
@@ -380,8 +381,8 @@ fn surface_wall_type_and_side_flags_apply_to_every_selected_waypoint() {
         assert!(wp.left_curb);
     }
     assert_eq!(tools.active_surface, SurfaceType::Gravel);
-    let model = build_inspector(&state).unwrap();
-    assert!(matches!(find_row(&model, "Surface"), Row::Surface { value: Common::Same(i), .. } if *i == gravel));
+    let model = build_inspector(&state, &tools).unwrap();
+    assert!(matches!(find_row(&model, "Surface"), Row::Dropdown { value: Common::Same(i), .. } if *i == gravel));
 }
 
 #[test]
@@ -391,4 +392,108 @@ fn footer_actions_act_on_the_whole_selection() {
     let before = state.track.spline.waypoints.len();
     apply_edit(&mut state, &mut tools, Edit::Do(Action::Delete));
     assert_eq!(state.track.spline.waypoints.len(), before - 2);
+}
+
+fn with_selection(selection: Selection) -> EditorState {
+    let mut state = fixture_state();
+    state.select(selection);
+    state
+}
+
+fn fits_720p(model: &InspectorModel) -> (f32, f32) {
+    (content_height(model, |_| false), body_height(model, CARD_H_720P))
+}
+
+#[test]
+fn every_single_entity_view_fits_the_720p_card_fully_expanded() {
+    let tools = ToolSettings::default();
+    for selection in [
+        Selection::Waypoint(0),
+        Selection::SurfaceZone(0),
+        Selection::Obstacle(0),
+        Selection::JumpRamp(0),
+        Selection::Checkpoint(0),
+        Selection::GridSlot(0),
+        Selection::PitBox,
+    ] {
+        let model = build_inspector(&with_selection(selection.clone()), &tools).unwrap_or_else(|| panic!("{selection:?} uses the new inspector"));
+        let (used, room) = fits_720p(&model);
+        assert!(used <= room, "{selection:?}: content {used} px > body {room} px");
+        assert!(model.footer.is_some(), "{selection:?} has the footer");
+    }
+}
+
+#[test]
+fn track_level_views_fit_for_every_tool_and_list_every_off_track_surface() {
+    let state = with_selection(Selection::None);
+    for tool in [EditorToolType::Select, EditorToolType::RoadSpline, EditorToolType::RoadSplit, EditorToolType::JumpRamp, EditorToolType::Obstacle] {
+        let tools = ToolSettings { active_tool: tool, ..ToolSettings::default() };
+        let model = build_inspector(&state, &tools).unwrap();
+        let (used, room) = fits_720p(&model);
+        assert!(used <= room, "{tool:?}: content {used} px > body {room} px");
+        assert!(model.sections.iter().any(|s| s.id == "circuit"));
+    }
+    let labels: Vec<&str> = (0..Options::OffTrack.len()).map(|i| Options::OffTrack.label(i)).collect();
+    for s in SurfaceType::OFF_TRACK_TYPES {
+        assert!(labels.contains(&s.name()), "off-track list misses {}", s.name());
+    }
+    assert!(labels.contains(&"Sheet Ice"));
+}
+
+#[test]
+fn grid_slot_view_is_not_empty() {
+    let model = build_inspector(&with_selection(Selection::GridSlot(0)), &ToolSettings::default()).unwrap();
+    assert_eq!(model.title, "Grid Slot #0");
+    assert!(model.sections.iter().flat_map(|s| &s.rows).any(|r| matches!(r, Row::Info(t) if t.contains("position"))));
+}
+
+#[test]
+fn zone_material_and_layer_apply_to_every_selected_zone() {
+    let mut state = with_selection(Selection::SurfaceZone(1));
+    let mut tools = ToolSettings::default();
+    let mud = SURFACES.iter().position(|&s| s == SurfaceType::DeepMud).unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ZoneSurface, mud));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ZoneLayer, 1));
+    let zone = &state.track.geometry.surface_zones[1];
+    assert_eq!(zone.surface, SurfaceType::DeepMud);
+    assert!(zone.is_above_track());
+    assert_eq!(state.history.undo_count(), 2);
+}
+
+#[test]
+fn ramp_edits_clamp_wrap_and_fit() {
+    let mut state = with_selection(Selection::JumpRamp(0));
+    let mut tools = ToolSettings::default();
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampLength, 500.0));
+    assert!((state.track.geometry.jump_ramps[0].length() - RAMP_LENGTH_RANGE.1).abs() < 1e-3);
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampAngle, 350.0));
+    apply_edit(&mut state, &mut tools, Edit::Step(Prop::RampAngle, 15.0));
+    assert!((state.track.geometry.jump_ramps[0].angle_deg() - 5.0).abs() < 0.01, "angle wraps past 360");
+    apply_edit(&mut state, &mut tools, Edit::Do(Action::FitPitch));
+    let ramp = &state.track.geometry.jump_ramps[0];
+    assert!((ramp.ramp_angle_deg - ramp.fitted_pitch_deg()).abs() < 1e-3);
+}
+
+#[test]
+fn checkpoint_finish_line_toggle() {
+    let mut state = with_selection(Selection::Checkpoint(3));
+    let mut tools = ToolSettings::default();
+    apply_edit(&mut state, &mut tools, Edit::Flag(Prop::CpFinish, true));
+    let cp = state.track.checkpoints.iter().find(|c| c.id == 3).unwrap();
+    assert!(cp.is_finish_line);
+}
+
+#[test]
+fn track_level_edits_change_the_circuit() {
+    let mut state = with_selection(Selection::None);
+    let mut tools = ToolSettings::default();
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::GridSlots, 12.0));
+    assert_eq!(state.grid_count(), 12);
+    let ice = (0..Options::OffTrack.len()).find(|&i| Options::OffTrack.label(i) == "Sheet Ice").unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::OffTrack, ice));
+    assert_eq!(state.track.default_surface, SurfaceType::SheetIce);
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::Category, 3));
+    assert_eq!(state.track.car_category, tdrace_core::CarCategory::Kart);
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::ToolWidth, 99.0));
+    assert_eq!(tools.new_waypoint_width, WIDTH_RANGE.1);
 }
