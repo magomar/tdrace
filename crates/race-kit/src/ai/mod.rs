@@ -914,8 +914,15 @@ impl BotAiDriver {
         // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
         // joker's inside wall for three minutes. A bot that is still making progress steers back: on killarney_rx
         // it drifts onto the joker every lap and gets back. Stuck means a no-progress watchdog has fired.
-        // The new route takes over on the next tick.
-        if self.recovery_attempts > 0 && proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M {
+        // The new route takes over on the next tick. A bot with a wall between it and its route follows the branch
+        // as well: a hell_rx bot that ran wide at the main hairpin onto the joker drove the whole joker aiming at the
+        // main road beyond its wall, and took a second joker (tdrace-le75).
+        let off_route = proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M;
+        let walled_off = || {
+            let to_route = LineSegment::new(car_pos, proj.closest_point);
+            track.geometry.all_walls().any(|w| w.segment.intersect_segment(&to_route).is_some())
+        };
+        if off_route && (self.recovery_attempts > 0 || walled_off()) {
             let network = track.network.as_ref();
             let own = network.zip(self.active_layout_id.as_deref()).and_then(|(n, id)| n.get_layout(id).map(|l| (n, l)));
             if let Some(id) = own.and_then(|(n, l)| layout_of_branch_under(n, l, car_pos, proj.distance_to_spline)) {
