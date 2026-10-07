@@ -587,3 +587,30 @@ fn test_curbs_move_load_but_add_none() {
         assert!(on_curb > on_asphalt * 0.8 && on_curb <= on_asphalt * 1.01, "{on_curb:.1} m/s on curbs, {on_asphalt:.1} m/s on asphalt");
     }
 }
+
+/// Scenario: A car with one axle or one side on a curb drives off (tdrace-le75)
+///
+/// Given a kart and a GT car standing with both front wheels, both rear wheels or both left wheels on a curb
+/// When each one accelerates from a stop for 3 s
+/// Then every wheel carries at least a quarter of its share of the weight, and the car moves off
+/// (a kart with its front wheels on a curb put all its weight on them: its rear-drive wheels had 3 N and it
+/// stood still for 35 s on kart_summit_international)
+#[test]
+fn test_a_car_with_one_axle_or_side_on_a_curb_drives_off() {
+    use SurfaceType::{Asphalt as A, Curb as C};
+    for cfg in [CarConfig::kart(), CarConfig::sports_car()] {
+        let weight = cfg.mass * 9.81;
+        for surfaces in [[C, C, A, A], [A, A, C, C], [C, A, C, A]] {
+            let mut car = Car::new(cfg.clone());
+            let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+            let mut min_share = f32::MAX;
+            for _ in 0..360 {
+                car.step_per_wheel(&ctrl, surfaces, 1.0 / 120.0);
+                let loads = car.state().wheels.map(|w| w.normal_load);
+                min_share = min_share.min(loads.iter().cloned().fold(f32::MAX, f32::min) / (weight * 0.25));
+            }
+            assert!(min_share > 0.25, "{surfaces:?}: lightest wheel carried {:.0}% of its share", min_share * 100.0);
+            assert!(car.state().speed > 5.0, "{surfaces:?}: {:.1} m/s after 3 s", car.state().speed);
+        }
+    }
+}
