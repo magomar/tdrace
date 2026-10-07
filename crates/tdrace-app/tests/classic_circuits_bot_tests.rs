@@ -111,6 +111,54 @@ fn test_every_car_can_drive_off_every_surface_of_its_circuits() {
     assert!(failures.is_empty(), "{:#?}", failures);
 }
 
+/// Scenario: a car turns the way it steers on every surface of its circuits (tdrace-le75)
+///
+/// Given each new Classic circuit and its Classic car
+/// And every surface a car can reach on it
+/// When the car rolls forward, or backwards, and steers to the left (to the right when it reverses) for 2 s
+/// Then it turns to the left
+/// (rolling drag pushed along a steered wheel: in deep snow and mud the off-road car turned right when it steered
+/// left, and bots on at_frostbite_pass and at_mudbath_valley could not turn round)
+#[test]
+fn test_every_car_turns_the_way_it_steers_on_every_surface_of_its_circuits() {
+    use tdrace_core::physics::car::{Car, CarControls};
+    let mut failures = Vec::new();
+    for (id, car) in CIRCUITS {
+        let track = tdrace_core::catalog::official_track("classic", id);
+        let mut surfaces = std::collections::HashSet::new();
+        for s in track.spline.samples.iter().step_by(4) {
+            let left = s.width * 0.5 + if s.left_wall { s.left_wall_distance.unwrap_or(0.0) } else { 3.0 };
+            let right = s.width * 0.5 + if s.right_wall { s.right_wall_distance.unwrap_or(0.0) } else { 3.0 };
+            let mut lateral = -right + 0.5;
+            while lateral <= left - 0.5 {
+                surfaces.insert(track.sample_surface(s.point + s.normal * lateral));
+                lateral += 1.0;
+            }
+        }
+        for surface in surfaces {
+            for reverse in [false, true] {
+                let mut c = Car::new(car());
+                let mut controls = CarControls { throttle: 0.6, reverse, ..Default::default() };
+                for _ in 0..120 {
+                    c.step_per_wheel(&controls, [surface; 4], 1.0 / 120.0);
+                }
+                // Negative steer turns to the left; reversing, the opposite lock does.
+                controls.steer = if reverse { 1.0 } else { -1.0 };
+                // Summed from the yaw rate: a kart turns more than half a circle, and the angle wraps round.
+                let mut turned = 0.0;
+                for _ in 0..240 {
+                    c.step_per_wheel(&controls, [surface; 4], 1.0 / 120.0);
+                    turned += c.state.angular_velocity / 120.0;
+                }
+                if turned < 0.2 {
+                    failures.push(format!("{id}: {surface:?}, reverse {reverse}: turned {turned:.2} rad in 2 s"));
+                }
+            }
+        }
+    }
+    assert!(failures.is_empty(), "{:#?}", failures);
+}
+
 /// Scenario: a car under a bridge is hidden, its markers are not
 ///
 /// Given Hangar Sprint and the point where its bridge crosses the lower road

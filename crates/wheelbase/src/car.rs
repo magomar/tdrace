@@ -2171,12 +2171,22 @@ fn couple_axle(
                 base_rr_mult
             };
             let rr_coeff = self.config.rolling_resistance_coefficient * effective_rr_mult;
-            let rr_force = -rr_coeff * fz * fast_tanh_clip(w_v_long / 0.5);
+            // Rolling resistance (on deep ground mostly the wheel ploughing through it) opposes the way the
+            // contact patch moves, not the way the wheel points. Along the wheel it pushed a steered front wheel
+            // sideways: in deep snow and mud the classic off-road car turned right when it steered left, and a
+            // bot could not turn round there (tdrace-le75).
+            let patch_speed = wheel_v_world.length();
+            let rr_mag = rr_coeff * fz * fast_tanh_clip(patch_speed / 0.5);
+            let (rr_force, rr_lat) = if patch_speed > 1e-4 {
+                (-rr_mag * w_v_long / patch_speed, -rr_mag * wheel_v_world.dot(wheel_right) / patch_speed)
+            } else {
+                (0.0, 0.0)
+            };
 
             // Low-speed lateral stabilization: below ~3.0 m/s the explicit chassis integration of
             // tire yaw damping violates its stability limit, so lateral force fades out.
             let low_speed_blend = (w_v_long.abs() / 3.0).clamp(0.05, 1.0);
-            let fy = fy_tire * low_speed_blend;
+            let fy = fy_tire * low_speed_blend + rr_lat;
             // Rolling resistance shares the tire's longitudinal budget (braking on grass is still
             // grip-limited), but its own drag is always available so off-track coasting slows the car.
             let fx_room = (envelope * envelope - fy * fy)
