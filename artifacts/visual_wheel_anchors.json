@@ -446,7 +446,7 @@
     "layering": "UnderChassis",
     "archetype": "rally_wheel_front",
     "axle_x_px": 383.9,
-    "track_width_px": 195.2,
+    "track_width_px": 156.2,
     "tire_len_px": 136.2,
     "tire_wid_px": 51.8
   },
