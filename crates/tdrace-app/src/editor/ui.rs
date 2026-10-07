@@ -13,8 +13,8 @@ use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
 use crate::editor::camera::EditorCamera;
 use crate::editor::inspector::{
-    apply_edit, begin_inspector_frame, build_inspector, content_height, row_height, Action as InspectorAction, Common, Edit,
-    InspectorModel, Options, Prop, Row, StepperDrag, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
+    apply_edit, begin_inspector_frame, build_inspector, content_height, row_height, row_tooltip, Action as InspectorAction, Common, Edit,
+    InspectorModel, Options, Prop, Row, StepperDrag, TOOLTIP_DELAY, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
     TITLE_H,
 };
 use crate::editor::state::{EditorState, GridSnapSetting, Selection};
@@ -24,7 +24,7 @@ use crate::track_manager::TrackManager;
 use cabinet::input::GamepadSnapshot;
 use cabinet::ui::{
     draw_action_button, draw_field_dropdown, draw_field_dropdown_popup, draw_segmented, segment_at, FieldDropdownEvent,
-    FieldDropdownInput, LayoutRect, ModalContainer, PageDots, TextInputWidget, Toggle,
+    FieldDropdownInput, LayoutRect, ModalContainer, PageDots, TextInputWidget, Toggle, Tooltip,
 };
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
@@ -954,7 +954,7 @@ fn render_inspector(
                 fonts.draw_ui_bold("BATCH RAMPS:", x + scaler.s(12.0), curr_y + scaler.s(12.0), scaler.font_s(11.0), Palette::NEON_CYAN);
                 curr_y += scaler.s(18.0);
 
-                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), "SET EXACT ANGLE [0°–365°]", Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
+                if draw_ui_btn(fonts, scaler, x + scaler.s(12.0), curr_y, w - scaler.s(24.0), scaler.s(24.0), "SET EXACT ANGLE [0°–360°]", Palette::UI_CARD_BG_HOVER, Palette::NEON_CYAN, mouse_pos, clicked) {
                     *active_modal = EditorModal::SetRampAngle {
                         input_angle: "0.0".to_string(),
                     };
@@ -2670,7 +2670,7 @@ fn render_help_modal(
     ModalContainer::new("EDITOR CONTROLS & SHORTCUTS", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
     let shortcuts = [
-        ("Tools 1-8", "Switch between Select, Spline, Surface, Ramp, Obstacle, Checkpoint, Grid, Pit"),
+        ("Tools 1-0, -", "Select, Spline, Split, Surface, Ramp, Obstacle, Gate, Pit, Arena, Whoops, Stunt"),
         ("Left Click / Drag", "Select entity / Click & drag area to box-select / Drag to move"),
         ("Right Click / Drag", "Place active element (Waypoints, Zones, Ramps, Props, Gates, Grid, Pit)"),
         ("Ctrl + S / C / T / P", "Select surface shape (Square, Circle, Triangle, Polygon)"),
@@ -3387,6 +3387,7 @@ fn render_inspector_model(
     let body_mouse = if in_body { mouse } else { Vec2::new(-1.0e6, -1.0e6) };
     let body_clicked = clicked && in_body;
 
+    let mut tooltip: Option<(String, String, (f32, f32, f32, f32))> = None;
     cabinet::ui::scaler::begin_clip_rect(x, body_top, w, body_h);
     let mut cy = body_top + scaler.s(BODY_PAD) - scaler.s(tools.inspector.scroll);
     for section in &model.sections {
@@ -3418,7 +3419,13 @@ fn render_inspector_model(
         if collapsed {
             continue;
         }
-        for row in &section.rows {
+        for (r, row) in section.rows.iter().enumerate() {
+            let row_rect = (x + pad, cy, inner_w, scaler.s(row_height(row)));
+            if point_in(body_mouse, row_rect) {
+                if let Some(text) = row_tooltip(row) {
+                    tooltip = Some((format!("{}#{r}", section.id), text, row_rect));
+                }
+            }
             if let Some(edit) = draw_inspector_row(fonts, scaler, tools, row, x + pad, cy, inner_w, body_mouse, mouse, body_clicked) {
                 edits.push(edit);
             }
@@ -3443,13 +3450,21 @@ fn render_inspector_model(
         let mut delete_w = inner_w;
         if footer.duplicate {
             let bw = (inner_w - scaler.s(6.0)) * 0.5;
+            let rect = (x + pad, by, bw, scaler.s(24.0));
+            if point_in(mouse, rect) {
+                tooltip = Some(("footer.duplicate".to_string(), "Duplicate the selection (Ctrl+D)".to_string(), rect));
+            }
             if draw_footer_button(fonts, scaler, (x + pad, by, bw, scaler.s(24.0)), "Duplicate", "Ctrl+D", Palette::NEON_CYAN, mouse, footer_clicked) {
                 edits.push(Edit::Do(InspectorAction::Duplicate));
             }
             delete_x += bw + scaler.s(6.0);
             delete_w = bw;
         }
-        if draw_footer_button(fonts, scaler, (delete_x, by, delete_w, scaler.s(24.0)), footer.delete_label, "Del", Palette::RED, mouse, footer_clicked) {
+        let delete_rect = (delete_x, by, delete_w, scaler.s(24.0));
+        if point_in(mouse, delete_rect) {
+            tooltip = Some(("footer.delete".to_string(), format!("{} (Del or Backspace)", footer.delete_label), delete_rect));
+        }
+        if draw_footer_button(fonts, scaler, delete_rect, footer.delete_label, "Del", Palette::RED, mouse, footer_clicked) {
             edits.push(Edit::Do(InspectorAction::Delete));
         }
     }
@@ -3459,6 +3474,25 @@ fn render_inspector_model(
         let names: Vec<String> = (0..options.len()).map(|i| options.label(i).to_string()).collect();
         let swatches: Vec<Color> = (0..options.len()).filter_map(|i| options.surface(i)).map(surface_swatch).collect();
         draw_field_dropdown_popup(scaler, fonts, &layout, &names, &swatches, selected.same(), tools.inspector.dropdown.hovered, Palette::NEON_CYAN);
+    }
+
+    // Tooltip after the pointer rests on one control, kept inside the screen; hidden while a list is open.
+    let now = macroquad::time::get_time();
+    match (&tooltip, &tools.inspector.tooltip_hover) {
+        (Some((key, ..)), Some((hovered, _))) if key == hovered => {}
+        (Some((key, ..)), _) => tools.inspector.tooltip_hover = Some((key.clone(), now)),
+        (None, _) => tools.inspector.tooltip_hover = None,
+    }
+    if let (Some((_, text, rect)), Some((_, since))) = (&tooltip, &tools.inspector.tooltip_hover) {
+        if now - since >= TOOLTIP_DELAY && !tools.inspector.dropdown_open() && !is_mouse_button_down(MouseButton::Left) {
+            let mut anchor = LayoutRect::new(rect.0, rect.1, rect.2, rect.3);
+            let probe = Tooltip::new(text.clone(), anchor).tooltip_rect(scaler, fonts);
+            let overflow = probe.x + probe.w - (screen_width() - scaler.s(8.0));
+            if overflow > 0.0 {
+                anchor.x -= overflow;
+            }
+            Tooltip::new(text.clone(), anchor).draw(scaler, fonts);
+        }
     }
 
     for edit in edits {

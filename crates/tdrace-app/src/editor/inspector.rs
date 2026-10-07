@@ -79,6 +79,8 @@ pub struct InspectorView {
     pub dropdown_prop: Option<Prop>,
     pub dropdown_field: (f32, f32, f32, f32),
     pub stepper_drag: Option<StepperDrag>,
+    /// Tooltip key under the pointer and the time it was first hovered.
+    pub tooltip_hover: Option<(String, f64)>,
 }
 
 impl InspectorView {
@@ -774,6 +776,23 @@ fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     ]));
 
     InspectorModel { title: "Circuit".to_string(), count: 0, subtitle: Some(tools.active_tool.title()), sections, footer: None }
+}
+
+/// Delay before a hovered inspector control shows its tooltip, in seconds.
+pub const TOOLTIP_DELAY: f64 = 0.5;
+
+/// Tooltip text for a row: its name plus keyboard shortcut, or a usage hint for steppers.
+pub fn row_tooltip(row: &Row) -> Option<String> {
+    match row {
+        Row::Stepper { prop: Prop::WpBanking, label, .. } => Some(format!("{label}: [ / ] ±1°, Shift+[ / ] ±5°")),
+        Row::Stepper { prop: Prop::RampAngle, label, .. } => Some(format!("{label}: R / Shift+R rotate 15°, comma / period rotate 5°")),
+        Row::Stepper { label, .. } => Some(format!("{label}: drag, or click to type. Shift+-/+ = 5 steps")),
+        Row::Chips { label, chips } if chips.iter().any(|c| matches!(c.edit, Edit::Set(Prop::WpBanking | Prop::ToolBanking, _))) => {
+            Some(format!("{label}: B cycles 0/10/18/22°, Shift+B inverts"))
+        }
+        Row::Segmented { prop: Prop::ZoneLayer, label, .. } => Some(format!("{label}: Ctrl+F front, Ctrl+B back")),
+        _ => None,
+    }
 }
 
 fn clamp_to(v: f32, (lo, hi): (f32, f32)) -> f32 {

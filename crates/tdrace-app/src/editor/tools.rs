@@ -705,7 +705,7 @@ impl ToolSettings {
         true
     }
 
-    /// Sets the exact 2D orientation angle in degrees for selected jump ramp(s) (e.g. 0 to 365 degrees).
+    /// Sets the exact 2D orientation angle in degrees for selected jump ramp(s) (0 to 360 degrees).
     pub fn set_selected_jump_ramp_angle_deg(&mut self, state: &mut EditorState, angle_deg: f32) -> bool {
         self.set_selected_jump_ramp_angle(state, angle_deg.to_radians())
     }

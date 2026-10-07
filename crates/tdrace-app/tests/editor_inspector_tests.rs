@@ -547,3 +547,16 @@ fn batch_tools_share_the_inspector_ranges() {
     tools.batch_adjust_wall_distances(&mut state, -999.0);
     assert!(state.track.spline.waypoints[..3].iter().all(|w| w.left_wall_distance == Some(WALL_DISTANCE_RANGE.0)));
 }
+
+#[test]
+fn tooltips_name_the_control_and_its_shortcut() {
+    use tdrace_app::editor::inspector::row_tooltip;
+    let wp = build_inspector(&selected(&[0]), &ToolSettings::default()).unwrap();
+    assert!(row_tooltip(find_row(&wp, "Angle")).unwrap().contains("[ / ]"));
+    assert!(row_tooltip(find_row(&wp, "Presets")).unwrap().contains("Shift+B"));
+    assert!(row_tooltip(find_row(&wp, "Width")).unwrap().contains("click to type"));
+    let ramp = build_inspector(&with_selection(Selection::JumpRamp(0)), &ToolSettings::default()).unwrap();
+    assert!(row_tooltip(find_row(&ramp, "Angle")).unwrap().contains("R / Shift+R"));
+    let zone = build_inspector(&with_selection(Selection::SurfaceZone(0)), &ToolSettings::default()).unwrap();
+    assert!(row_tooltip(find_row(&zone, "Layer")).unwrap().contains("Ctrl+F"));
+}
