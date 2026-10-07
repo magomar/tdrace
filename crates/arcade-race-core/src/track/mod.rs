@@ -19,8 +19,9 @@ pub use network::{
 };
 pub use geometry::{
     point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
-    JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, SpawnPose, SurfaceLayer,
-    SurfaceShape, SurfaceZone, TrackGeometry, WallBarrier,
+    JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, PitLaneChevron,
+    PitLaneExitQuad, PitLaneJunctionData, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone,
+    TrackGeometry, WallBarrier,
 };
 pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
@@ -134,6 +135,12 @@ pub struct Track {
     pub pit_box_area: Option<SurfaceShape>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pit_lane: Option<PitLane>,
+    /// Precomputed runtime junction geometry and spatial AABB bounding box for pit lane.
+    #[serde(default, skip_serializing)]
+    pub pit_lane_junctions: Option<PitLaneJunctionData>,
+    /// Precomputed runtime barrier offset in meters to avoid expensive wall geometry sweeps.
+    #[serde(default, skip_serializing)]
+    pub cached_barrier_offset: Option<f32>,
     #[serde(default = "default_laps_fallback")]
     pub default_laps: u32,
     #[serde(default)]
@@ -183,6 +190,8 @@ impl Default for Track {
             default_surface: SurfaceType::Grass,
             pit_box_area: None,
             pit_lane: None,
+            pit_lane_junctions: None,
+            cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
             car_model_id: None,
@@ -389,20 +398,18 @@ impl Track {
         if let Some(proj) = proj {
             // 4. Segment runoff corridor (off-track terrain between track/curb edge and boundary wall):
             let half_w = proj.track_width * 0.5;
-            let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
-            let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
-            let bo = self.effective_barrier_offset();
-
             if proj.lateral_offset < -half_w {
+                let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
                 if let Some(runoff) = left_ro {
-                    let limit = half_w + proj.left_wall_distance.unwrap_or(bo);
+                    let limit = half_w + proj.left_wall_distance.unwrap_or_else(|| self.effective_barrier_offset());
                     if -proj.lateral_offset <= limit {
                         return runoff;
                     }
                 }
             } else if proj.lateral_offset > half_w {
+                let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
                 if let Some(runoff) = right_ro {
-                    let limit = half_w + proj.right_wall_distance.unwrap_or(bo);
+                    let limit = half_w + proj.right_wall_distance.unwrap_or_else(|| self.effective_barrier_offset());
                     if proj.lateral_offset <= limit {
                         return runoff;
                     }
@@ -506,20 +513,18 @@ impl Track {
 
         // 4. Segment runoff corridor check
         let half_w = proj.track_width * 0.5;
-        let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
-        let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
-        let bo = self.effective_barrier_offset();
-
         if proj.lateral_offset < -half_w {
+            let left_ro = proj.left_runoff_surface.or_else(|| self.default_runoff_surface());
             if let Some(runoff) = left_ro {
-                let limit = half_w + proj.left_wall_distance.unwrap_or(bo);
+                let limit = half_w + proj.left_wall_distance.unwrap_or_else(|| self.effective_barrier_offset());
                 if -proj.lateral_offset <= limit {
                     return runoff;
                 }
             }
         } else if proj.lateral_offset > half_w {
+            let right_ro = proj.right_runoff_surface.or_else(|| self.default_runoff_surface());
             if let Some(runoff) = right_ro {
-                let limit = half_w + proj.right_wall_distance.unwrap_or(bo);
+                let limit = half_w + proj.right_wall_distance.unwrap_or_else(|| self.effective_barrier_offset());
                 if proj.lateral_offset <= limit {
                     return runoff;
                 }
@@ -561,110 +566,69 @@ impl Track {
 
     /// Samples surface type for pit lane road ribbon, pit boxes, and paved junction areas.
     pub fn sample_pit_lane_surface(&self, point: Vec2) -> Option<SurfaceType> {
-        if let Some(ref lane) = self.pit_lane {
-            // 1. Pit lane drivable road ribbon
-            if lane.spline.samples.len() >= 2 {
-                let proj = lane.spline.project_point(point);
-                if proj.is_on_track {
-                    return Some(proj.base_surface);
-                }
-                if proj.is_on_curb {
-                    return Some(SurfaceType::Curb);
-                }
-            }
-
-            // 2. Pit service box stalls
-            for pit_box in &lane.pit_boxes {
-                if pit_box.contains_point(point) {
+        let Some(ref lane) = self.pit_lane else {
+            if let Some(ref shape) = self.pit_box_area {
+                if shape.contains(point) {
                     return Some(SurfaceType::Asphalt);
                 }
             }
+            return None;
+        };
 
-            // 3. Paved entrance throat and exit merge junction areas
-            let n_pit = lane.spline.samples.len();
-            if n_pit >= 4 && self.spline.samples.len() >= 4 {
-                let pit_hw = lane.road_width * 0.5;
+        let fallback_storage;
+        let junctions_ref = match &self.pit_lane_junctions {
+            Some(j) => j,
+            None => {
+                fallback_storage = self.compute_pit_lane_junctions();
+                fallback_storage.as_ref()?
+            }
+        };
 
-                // Determine stable pit_side from midpoint
-                let mid_idx = n_pit / 2;
-                let mid_sample = &lane.spline.samples[mid_idx];
-                let mid_proj = self.spline.project_point(mid_sample.point);
-                let mid_to_pit = mid_sample.point - mid_proj.closest_point;
-                let pit_side = if mid_to_pit.dot(mid_proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
-
-                // A. Entrance throat: between sample 0 and gore apex
-                let mut apex_idx = None;
-                for (i, s) in lane.spline.samples.iter().enumerate().take(n_pit / 2) {
-                    let proj = self.spline.project_point(s.point);
-                    let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
-                    let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
-                    let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
-                    if gap >= 1.2 {
-                        apex_idx = Some(i);
-                        break;
-                    }
+        // Quick AABB rejection: if outside the pit lane bounding box, return immediately.
+        if point.x < junctions_ref.bounds_min.x || point.x > junctions_ref.bounds_max.x
+            || point.y < junctions_ref.bounds_min.y || point.y > junctions_ref.bounds_max.y
+        {
+            if let Some(ref shape) = self.pit_box_area {
+                if shape.contains(point) {
+                    return Some(SurfaceType::Asphalt);
                 }
+            }
+            return None;
+        }
 
-                if let Some(apex_idx) = apex_idx {
-                    for i in 0..apex_idx {
-                        let s0 = &lane.spline.samples[i];
-                        let s1 = &lane.spline.samples[i + 1];
-                        let p0 = self.spline.project_point(s0.point);
-                        let p1 = self.spline.project_point(s1.point);
-                        let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
-                        let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
-                        let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
-                        let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
-                        if point_in_quad_2d(point, te0, te1, pe1, pe0) {
-                            return Some(SurfaceType::Asphalt);
-                        }
-                    }
+        // 1. Pit lane drivable road ribbon
+        if lane.spline.samples.len() >= 2 {
+            let proj = lane.spline.project_point(point);
+            if proj.is_on_track {
+                return Some(proj.base_surface);
+            }
+            if proj.is_on_curb {
+                return Some(SurfaceType::Curb);
+            }
+        }
 
-                    // Gore triangle
-                    let s_apex = &lane.spline.samples[apex_idx];
-                    let proj_apex = self.spline.project_point(s_apex.point);
-                    let track_edge_apex = proj_apex.closest_point + proj_apex.normal * (pit_side * proj_apex.track_width * 0.5);
-                    let pit_inner_apex = s_apex.point - proj_apex.normal * (pit_side * pit_hw);
-                    let p_apex = (track_edge_apex + pit_inner_apex) * 0.5;
-                    let s_start = &lane.spline.samples[0];
-                    let p_start = self.spline.project_point(s_start.point);
-                    let te_start = p_start.closest_point + p_start.normal * (pit_side * p_start.track_width * 0.5);
-                    let pe_start = s_start.point - p_start.normal * (pit_side * pit_hw);
-                    if point_in_triangle_2d(point, p_apex, track_edge_apex, pit_inner_apex)
-                        || point_in_quad_2d(point, te_start, track_edge_apex, pit_inner_apex, pe_start)
-                    {
-                        return Some(SurfaceType::Asphalt);
-                    }
-                }
+        // 2. Pit service box stalls
+        for pit_box in &lane.pit_boxes {
+            if pit_box.contains_point(point) {
+                return Some(SurfaceType::Asphalt);
+            }
+        }
 
-                // B. Exit merge taper
-                let mut merge_start_idx = None;
-                for i in (n_pit / 2..n_pit).rev() {
-                    let s = &lane.spline.samples[i];
-                    let proj = self.spline.project_point(s.point);
-                    let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
-                    let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
-                    let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
-                    if gap >= 1.2 {
-                        merge_start_idx = Some(i);
-                        break;
-                    }
-                }
-                if let Some(merge_idx) = merge_start_idx {
-                    for i in merge_idx..n_pit - 1 {
-                        let s0 = &lane.spline.samples[i];
-                        let s1 = &lane.spline.samples[i + 1];
-                        let p0 = self.spline.project_point(s0.point);
-                        let p1 = self.spline.project_point(s1.point);
-                        let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
-                        let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
-                        let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
-                        let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
-                        if point_in_quad_2d(point, te0, te1, pe1, pe0) {
-                            return Some(SurfaceType::Asphalt);
-                        }
-                    }
-                }
+        // 3. Paved entrance throat and exit merge junction areas
+        for q in &junctions_ref.entrance_quads {
+            if point_in_quad_2d(point, q[0], q[1], q[2], q[3]) {
+                return Some(SurfaceType::Asphalt);
+            }
+        }
+        if junctions_ref.has_gore
+            && (point_in_triangle_2d(point, junctions_ref.p_apex, junctions_ref.track_edge_apex, junctions_ref.pit_inner_apex)
+                || point_in_quad_2d(point, junctions_ref.te_start, junctions_ref.track_edge_apex, junctions_ref.pit_inner_apex, junctions_ref.pe_start))
+        {
+            return Some(SurfaceType::Asphalt);
+        }
+        for eq in &junctions_ref.exit_quads {
+            if point_in_quad_2d(point, eq.quad[0], eq.quad[1], eq.quad[2], eq.quad[3]) {
+                return Some(SurfaceType::Asphalt);
             }
         }
 
@@ -675,6 +639,198 @@ impl Track {
         }
 
         None
+    }
+
+    /// Recomputes cached pit lane junction geometry (entrance throat, gore markings, exit merge taper, AABB).
+    pub fn recompute_pit_lane_junctions(&mut self) {
+        self.pit_lane_junctions = self.compute_pit_lane_junctions();
+    }
+
+    /// Computes pit lane entrance throat, gore triangle, exit merge quads, and spatial AABB.
+    pub fn compute_pit_lane_junctions(&self) -> Option<PitLaneJunctionData> {
+        let lane = self.pit_lane.as_ref()?;
+        let n_pit = lane.spline.samples.len();
+        if n_pit < 4 || self.spline.samples.len() < 4 {
+            let mut min = Vec2::splat(f32::INFINITY);
+            let mut max = Vec2::splat(f32::NEG_INFINITY);
+            for s in &lane.spline.samples {
+                let r = lane.road_width * 1.5;
+                min = min.min(s.point - Vec2::splat(r));
+                max = max.max(s.point + Vec2::splat(r));
+            }
+            for b in &lane.pit_boxes {
+                let r = b.stop_radius + 5.0;
+                min = min.min(b.position - Vec2::splat(r));
+                max = max.max(b.position + Vec2::splat(r));
+            }
+            if min.x.is_finite() {
+                return Some(PitLaneJunctionData {
+                    bounds_min: min,
+                    bounds_max: max,
+                    ..Default::default()
+                });
+            }
+            return None;
+        }
+
+        let pit_hw = lane.road_width * 0.5;
+
+        // Determine stable pit_side from midpoint
+        let mid_idx = n_pit / 2;
+        let mid_sample = &lane.spline.samples[mid_idx];
+        let mid_proj = self.spline.project_point(mid_sample.point);
+        let mid_to_pit = mid_sample.point - mid_proj.closest_point;
+        let pit_side = if mid_to_pit.dot(mid_proj.normal) >= 0.0 { 1.0f32 } else { -1.0f32 };
+
+        // 1. Entrance throat: between sample 0 and gore apex
+        let mut apex_idx = None;
+        for (i, s) in lane.spline.samples.iter().enumerate().take(n_pit / 2) {
+            let proj = self.spline.project_point(s.point);
+            let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
+            let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
+            let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
+            if gap >= 1.2 {
+                apex_idx = Some(i);
+                break;
+            }
+        }
+
+        let mut entrance_quads = Vec::new();
+        let mut has_gore = false;
+        let mut p_apex = Vec2::ZERO;
+        let mut track_edge_apex = Vec2::ZERO;
+        let mut pit_inner_apex = Vec2::ZERO;
+        let mut te_start = Vec2::ZERO;
+        let mut pe_start = Vec2::ZERO;
+        let mut chevrons = Vec::new();
+
+        if let Some(apex_idx) = apex_idx {
+            has_gore = true;
+            for i in 0..apex_idx {
+                let s0 = &lane.spline.samples[i];
+                let s1 = &lane.spline.samples[i + 1];
+                let p0 = self.spline.project_point(s0.point);
+                let p1 = self.spline.project_point(s1.point);
+                let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+                entrance_quads.push([te0, te1, pe1, pe0]);
+            }
+
+            let s_apex = &lane.spline.samples[apex_idx];
+            let proj_apex = self.spline.project_point(s_apex.point);
+            track_edge_apex = proj_apex.closest_point + proj_apex.normal * (pit_side * proj_apex.track_width * 0.5);
+            pit_inner_apex = s_apex.point - proj_apex.normal * (pit_side * pit_hw);
+            p_apex = (track_edge_apex + pit_inner_apex) * 0.5;
+
+            let s_start = &lane.spline.samples[0];
+            let p_start = self.spline.project_point(s_start.point);
+            te_start = p_start.closest_point + p_start.normal * (pit_side * p_start.track_width * 0.5);
+            pe_start = s_start.point - p_start.normal * (pit_side * pit_hw);
+
+            let v_track = (track_edge_apex - te_start).normalize_or_zero();
+            let v_pit = (pit_inner_apex - pe_start).normalize_or_zero();
+            let gore_len = (p_apex - te_start).length();
+            if gore_len > 8.0 {
+                let num_chevrons = ((gore_len - 4.0) / 3.0).floor() as usize;
+                let bisect = -(v_track + v_pit).normalize_or_zero();
+                for step in 1..=num_chevrons {
+                    let d = step as f32 * 3.0;
+                    if d >= gore_len - 2.0 { break; }
+                    let t_frac = d / gore_len;
+                    let pt_t = te_start.lerp(track_edge_apex, t_frac);
+                    let pt_p = pe_start.lerp(pit_inner_apex, t_frac);
+                    let chevron_apex = (pt_t + pt_p) * 0.5 + bisect * 1.2;
+                    chevrons.push(PitLaneChevron {
+                        apex: chevron_apex,
+                        pt_track: pt_t,
+                        pt_pit: pt_p,
+                    });
+                }
+            }
+        }
+
+        // 2. Exit merge taper
+        let mut merge_start_idx = None;
+        for i in (n_pit / 2..n_pit).rev() {
+            let s = &lane.spline.samples[i];
+            let proj = self.spline.project_point(s.point);
+            let track_edge = proj.closest_point + proj.normal * (pit_side * proj.track_width * 0.5);
+            let pit_inner = s.point - proj.normal * (pit_side * pit_hw);
+            let gap = (pit_inner - track_edge).dot(proj.normal * pit_side);
+            if gap >= 1.2 {
+                merge_start_idx = Some(i);
+                break;
+            }
+        }
+
+        let mut exit_quads = Vec::new();
+        if let Some(merge_idx) = merge_start_idx {
+            for i in merge_idx..n_pit - 1 {
+                let s0 = &lane.spline.samples[i];
+                let s1 = &lane.spline.samples[i + 1];
+                let p0 = self.spline.project_point(s0.point);
+                let p1 = self.spline.project_point(s1.point);
+                let te0 = p0.closest_point + p0.normal * (pit_side * p0.track_width * 0.5);
+                let te1 = p1.closest_point + p1.normal * (pit_side * p1.track_width * 0.5);
+                let pe0 = s0.point - p0.normal * (pit_side * pit_hw);
+                let pe1 = s1.point - p1.normal * (pit_side * pit_hw);
+                exit_quads.push(PitLaneExitQuad {
+                    quad: [te0, te1, pe1, pe0],
+                    has_dashed_line: i % 2 == 0,
+                    line_start: pe0,
+                    line_end: pe1,
+                });
+            }
+        }
+
+        // 3. Compute AABB bounding box
+        let mut min = Vec2::splat(f32::INFINITY);
+        let mut max = Vec2::splat(f32::NEG_INFINITY);
+
+        let mut expand_point = |p: Vec2, r: f32| {
+            min = min.min(p - Vec2::splat(r));
+            max = max.max(p + Vec2::splat(r));
+        };
+
+        for s in &lane.spline.samples {
+            expand_point(s.point, lane.road_width * 2.0);
+        }
+        for b in &lane.pit_boxes {
+            expand_point(b.position, b.stop_radius + 6.0);
+        }
+        for q in &entrance_quads {
+            for pt in q {
+                expand_point(*pt, 6.0);
+            }
+        }
+        if has_gore {
+            expand_point(p_apex, 6.0);
+            expand_point(track_edge_apex, 6.0);
+            expand_point(pit_inner_apex, 6.0);
+            expand_point(te_start, 6.0);
+            expand_point(pe_start, 6.0);
+        }
+        for eq in &exit_quads {
+            for pt in &eq.quad {
+                expand_point(*pt, 6.0);
+            }
+        }
+
+        Some(PitLaneJunctionData {
+            bounds_min: min,
+            bounds_max: max,
+            entrance_quads,
+            has_gore,
+            p_apex,
+            track_edge_apex,
+            pit_inner_apex,
+            te_start,
+            pe_start,
+            chevrons,
+            exit_quads,
+        })
     }
 
     /// Projects a 2D world position onto the track centerline or any of its network segments.
@@ -1009,7 +1165,16 @@ impl Track {
         counts.into_iter().max_by_key(|(_, n)| *n).map(|(t, _)| t)
     }
 
+    /// Returns the track-level barrier offset in meters, using the cached value if available.
     pub fn effective_barrier_offset(&self) -> f32 {
+        if let Some(cached) = self.cached_barrier_offset {
+            return cached;
+        }
+        self.compute_effective_barrier_offset()
+    }
+
+    /// Computes the track-level barrier offset from wall geometry or category fallback.
+    pub fn compute_effective_barrier_offset(&self) -> f32 {
         // Infer from inner/outer wall geometry if available
         let walls = if !self.geometry.inner_walls.is_empty() {
             &self.geometry.inner_walls
@@ -1053,6 +1218,11 @@ impl Track {
         } else {
             3.5
         }
+    }
+
+    /// Recomputes and caches the effective barrier offset.
+    pub fn recompute_barrier_offset(&mut self) {
+        self.cached_barrier_offset = Some(self.compute_effective_barrier_offset());
     }
 
     /// Prunes or removes any wall barriers in `inner_walls` and `outer_walls` that penetrate
@@ -1277,6 +1447,7 @@ impl Track {
                 }
             }
         }
+        self.recompute_pit_lane_junctions();
     }
 
     /// Populates segment runoff surfaces (`left_runoff_surface` / `right_runoff_surface`)
@@ -1285,6 +1456,7 @@ impl Track {
     pub fn apply_default_runoff_surfaces(&mut self) {
         let default_runoff = self.default_runoff_surface();
         let bo = self.effective_barrier_offset();
+        self.cached_barrier_offset = Some(bo);
 
         for wp in &mut self.spline.waypoints {
             if wp.left_runoff_surface.is_none() {
@@ -1350,6 +1522,7 @@ impl Track {
         if track.pit_lane.is_some() {
             track.trim_walls_for_pit_lane();
             track.generate_pit_lane_walls();
+            track.recompute_pit_lane_junctions();
         }
         track.apply_default_runoff_surfaces();
         if track.network.is_some() {

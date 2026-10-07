@@ -1295,6 +1295,8 @@ mod tests {
             default_surface: wheelbase::SurfaceType::Grass,
             pit_box_area: None,
             pit_lane: None,
+            pit_lane_junctions: None,
+            cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::OffRoad,
             car_model_id: None,

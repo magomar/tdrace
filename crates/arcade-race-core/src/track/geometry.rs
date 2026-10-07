@@ -1195,6 +1195,39 @@ impl PitLane {
     }
 }
 
+/// Precomputed chevron stripe line in the pit lane entrance gore.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLaneChevron {
+    pub apex: Vec2,
+    pub pt_track: Vec2,
+    pub pt_pit: Vec2,
+}
+
+/// Precomputed paved exit merge quad.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLaneExitQuad {
+    pub quad: [Vec2; 4],
+    pub has_dashed_line: bool,
+    pub line_start: Vec2,
+    pub line_end: Vec2,
+}
+
+/// Precomputed geometry for pit lane entrance/exit paved junctions and gore markings.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct PitLaneJunctionData {
+    pub bounds_min: Vec2,
+    pub bounds_max: Vec2,
+    pub entrance_quads: Vec<[Vec2; 4]>,
+    pub has_gore: bool,
+    pub p_apex: Vec2,
+    pub track_edge_apex: Vec2,
+    pub pit_inner_apex: Vec2,
+    pub te_start: Vec2,
+    pub pe_start: Vec2,
+    pub chevrons: Vec<PitLaneChevron>,
+    pub exit_quads: Vec<PitLaneExitQuad>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
