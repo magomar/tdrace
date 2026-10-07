@@ -207,7 +207,7 @@ impl Default for DisplayConfig {
             vignette_intensity: 0.0,
             line_spacing: 3.0,
             custom_opacity: None,
-            vehicle_shadows: true,
+            vehicle_shadows: false,
             surface_texture_quality: SurfaceTextureQuality::High,
             bot_nameplates: true,
         }
