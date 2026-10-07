@@ -432,6 +432,12 @@ pub fn point_in_polygon(p: Vec2, vertices: &[Vec2]) -> bool {
 /// Standard 2D point-in-triangle containment test using 2D cross products.
 #[inline]
 pub fn point_in_triangle_2d(p: Vec2, a: Vec2, b: Vec2, c: Vec2) -> bool {
+    // A zero-area triangle (coincident or collinear corners, e.g. a junction whose ingress and
+    // egress sockets share one point) contains nothing; without this every point tests inside.
+    let area2 = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    if area2.abs() < 1e-6 {
+        return false;
+    }
     let cross1 = (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
     let cross2 = (c.x - b.x) * (p.y - b.y) - (c.y - b.y) * (p.x - b.x);
     let cross3 = (a.x - c.x) * (p.y - c.y) - (a.y - c.y) * (p.x - c.x);

@@ -1291,4 +1291,20 @@ mod tests {
             angle_error
         );
     }
+
+    #[test]
+    fn test_degenerate_junction_triangle_contains_no_point() {
+        let a = Vec2::new(10.0, 5.0);
+        let far = Vec2::new(5000.0, 5000.0);
+        // Coincident corners (a Split junction whose ingress and egress sockets share a point).
+        assert!(!point_in_triangle_2d(far, a, a, a));
+        assert!(!point_in_triangle_2d(a, a, a, a));
+        // Collinear corners.
+        assert!(!point_in_triangle_2d(Vec2::new(15.0, 5.0), a, Vec2::new(20.0, 5.0), Vec2::new(30.0, 5.0)));
+        assert!(!point_in_quad_2d(far, a, a, a, a));
+        // A real triangle still works.
+        let (b, c) = (Vec2::new(20.0, 5.0), Vec2::new(10.0, 15.0));
+        assert!(point_in_triangle_2d(Vec2::new(12.0, 7.0), a, b, c));
+        assert!(!point_in_triangle_2d(far, a, b, c));
+    }
 }
