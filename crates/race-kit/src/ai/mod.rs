@@ -1074,9 +1074,9 @@ impl BotAiDriver {
         if !self.is_in_pit_lane {
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
-            // from the road edge, so bots scraped the inner wall and stopped. Only where the waypoint puts the wall
-            // closer to the road than WALL_CLEARANCE_M: circuits with run-off keep their line (and Tier 1 stays
-            // slower than the keyboard reference, spec 046).
+            // from the road edge, so bots scraped the inner wall and stopped. It only acts within WALL_CLEARANCE_M
+            // of a wall, so wide run-off keeps the line. Walls further than WALL_CLEARANCE_M from the road count
+            // too: on kart_pine_grove (wall 1.9 m out) a Legend cut the curb and hit the inner wall every lap.
             let mid = spline.sample_at_distance((curr_dist + lookahead_dist * 0.5) % spline.total_length());
             let chord_lat = ((car_pos + target_point) * 0.5 - mid.point).dot(mid.normal); // > 0: left of the centre
             let (wall_on, wall_dist) = if chord_lat > 0.0 {
@@ -1084,15 +1084,15 @@ impl BotAiDriver {
             } else {
                 (mid.right_wall, mid.right_wall_distance)
             };
-            if let (true, Some(d)) = (wall_on, wall_dist.filter(|d| *d < WALL_CLEARANCE_M)) {
+            if let (true, Some(d)) = (wall_on, wall_dist) {
                 let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
                 if excess > 0.0 {
                     // Moving the target moves the middle of the line by half as much.
                     target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
                 }
             }
-            // The same for the car itself: a bot drifting towards a close wall at a shallow angle kept a small
-            // heading error and slid along the wall.
+            // The same for the car itself, at close walls only: a bot drifting towards a close wall at a shallow
+            // angle kept a small heading error and slid along the wall.
             let here = spline.sample_at_distance(curr_dist);
             let car_lat = (car_pos - here.point).dot(here.normal);
             let (wall_on, wall_dist) = if car_lat > 0.0 {
