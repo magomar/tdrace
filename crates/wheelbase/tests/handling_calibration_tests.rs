@@ -420,7 +420,7 @@ fn test_random_input_fuzz_is_numerically_stable() {
     ];
     let surfaces = [
         SurfaceType::Asphalt,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
         SurfaceType::Grass,
         SurfaceType::SheetIce,
         SurfaceType::DeepSand,

@@ -117,7 +117,8 @@ impl ParticleSystem {
 
         let (base_col, col_var) = match surface {
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
-            SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
+            SurfaceType::PackedGravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
+            SurfaceType::DeepGravel => (Palette::DEEP_GRAVEL, Palette::DEEP_GRAVEL_DARK),
             SurfaceType::Grass => (Palette::GRASS_DARK, Color::new(0.35, 0.25, 0.12, 0.9)),
             SurfaceType::PackedSand => (Palette::SAND, Palette::SAND_DARK),
             SurfaceType::DeepSand => (Palette::SAND_DARK, Color::new(0.65, 0.52, 0.30, 0.9)),
@@ -129,7 +130,8 @@ impl ParticleSystem {
         };
 
         let (drag, speed_base, size_base) = match surface {
-            SurfaceType::Gravel => (3.2, 4.5, 0.09), // Fast angular stone pellets
+            SurfaceType::PackedGravel => (3.2, 4.5, 0.09), // Fast angular stone pellets
+            SurfaceType::DeepGravel => (3.6, 5.0, 0.11), // Heavier spray of loose trap pebbles
             SurfaceType::MudTrack => (3.8, 3.0, 0.10),
             SurfaceType::DeepMud => (4.5, 2.5, 0.12),    // Heavy viscous muck clods with high drag
             SurfaceType::PackedSnow => (2.5, 3.2, 0.07),
@@ -373,7 +375,8 @@ impl ParticleSystem {
             SurfaceType::PackedSand => (Palette::SAND, Palette::SAND_DARK),
             SurfaceType::DeepSand => (Palette::SAND_DARK, Color::new(0.65, 0.52, 0.30, 0.9)),
             SurfaceType::Dirt => (Palette::DIRT, Palette::DIRT_DARK),
-            SurfaceType::Gravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
+            SurfaceType::PackedGravel => (Palette::GRAVEL, Palette::GRAVEL_DARK),
+            SurfaceType::DeepGravel => (Palette::DEEP_GRAVEL, Palette::DEEP_GRAVEL_DARK),
             SurfaceType::MudTrack => (Palette::MUD, Palette::MUD_DARK),
             SurfaceType::DeepMud => (Palette::MUD_DARK, Color::new(0.25, 0.16, 0.08, 0.95)),
             SurfaceType::PackedSnow => (Palette::SNOW, Palette::SNOW_EDGE),

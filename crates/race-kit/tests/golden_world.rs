@@ -27,8 +27,8 @@ const CARS: usize = 6;
 fn recorded() -> Option<(u64, u64)> {
     let mac_arm = cfg!(all(target_os = "macos", target_arch = "aarch64"));
     match (mac_arm, cfg!(debug_assertions)) {
-        (true, true) => Some((0xdf8e91e0c295b43a, 0x7684c876d077fd50)),
-        (true, false) => Some((0x3fd4dd30f50fe671, 0xc9f955e103cef397)),
+        (true, true) => Some((0x39de651b7f76742e, 0xad9272dcbfc5296e)),
+        (true, false) => Some((0x2e00e6051f9ff961, 0x3afb6d9c33514c4b)),
         _ => None,
     }
 }

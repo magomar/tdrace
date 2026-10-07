@@ -348,7 +348,7 @@ fn test_gravel_rolling_rut_without_slip() {
         car.state.wheels[w].slip_ratio = 0.0;
         car.state.wheels[w].slip_angle = 0.0;
     }
-    let surfaces = vec![[SurfaceType::Gravel; 4]];
+    let surfaces = vec![[SurfaceType::PackedGravel; 4]];
 
     // Step 0: Anchor
     buffer.update_for_cars(&[car.clone()], &surfaces);
@@ -444,7 +444,7 @@ fn test_debris_roost_particle_emission_by_surface() {
     let mut ps = ParticleSystem::new(200);
 
     // Gravel roost
-    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::Gravel, Vec2::new(10.0, 0.0), 1.0);
+    ps.emit_dirt_roost(Vec2::ZERO, SurfaceType::PackedGravel, Vec2::new(10.0, 0.0), 1.0);
     let count_after_gravel = ps.count();
     assert!(count_after_gravel > 0, "Gravel should produce roost particles");
 
