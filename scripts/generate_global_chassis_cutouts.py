@@ -101,43 +101,11 @@ def process_vehicle_sprite(
             out_arr[box & (out_arr[:, :, 3] < 15), 3] = 0
     else:
         # Closed wheel (UnderChassis):
-        # 1. Hollow out outer aperture where the tire is exposed in the fender
-        # 2. Inpaint dark cavity backing across inner liner (+-18cm roll buffer)
-        cavity_depth = int(round(0.18 * 115.0))  # ~18cm suspension roll buffer (~20 px)
-
-        # Front-Left (top quadrant)
-        y_out_fl = max(0, int(round(y_fl - half_wid * 1.25)))
-        y_in_fl = min(int(cy_px - 20), int(round(y_fl + half_wid)))
-        y_cav_fl = min(int(cy_px - 15), y_in_fl + cavity_depth)
-
-        fl_aperture = np.zeros((512, 512), dtype=bool)
-        fl_aperture[y_out_fl:y_in_fl, x0:x1] = True
-        out_arr[fl_aperture & is_rubber, 3] = 0
-
-        fl_cavity = np.zeros((512, 512), dtype=bool)
-        fl_cavity[y_in_fl:y_cav_fl, x0:x1] = True
-        apply_cav_fl = fl_cavity & ((out_arr[:, :, 3] == 0) | is_rubber)
-        out_arr[apply_cav_fl, 0] = DARK_CAVITY_RGB[0]
-        out_arr[apply_cav_fl, 1] = DARK_CAVITY_RGB[1]
-        out_arr[apply_cav_fl, 2] = DARK_CAVITY_RGB[2]
-        out_arr[apply_cav_fl, 3] = DARK_CAVITY_ALPHA
-
-        # Front-Right (bottom quadrant)
-        y_out_fr = min(512, int(round(y_fr + half_wid * 1.25)))
-        y_in_fr = max(int(cy_px + 20), int(round(y_fr - half_wid)))
-        y_cav_fr = max(int(cy_px + 15), y_in_fr - cavity_depth)
-
-        fr_aperture = np.zeros((512, 512), dtype=bool)
-        fr_aperture[y_in_fr:y_out_fr, x0:x1] = True
-        out_arr[fr_aperture & is_rubber, 3] = 0
-
-        fr_cavity = np.zeros((512, 512), dtype=bool)
-        fr_cavity[y_cav_fr:y_in_fr, x0:x1] = True
-        apply_cav_fr = fr_cavity & ((out_arr[:, :, 3] == 0) | is_rubber)
-        out_arr[apply_cav_fr, 0] = DARK_CAVITY_RGB[0]
-        out_arr[apply_cav_fr, 1] = DARK_CAVITY_RGB[1]
-        out_arr[apply_cav_fr, 2] = DARK_CAVITY_RGB[2]
-        out_arr[apply_cav_fr, 3] = DARK_CAVITY_ALPHA
+        # In closed-wheel vehicles (GT, NASCAR, Rally, TouringAX, Trophy Trucks),
+        # wheels are naturally housed inside metal bodywork and fenders.
+        # Chassis bodywork (fenders, hood, windshield, quarter panels) remains 100% intact.
+        # No apertures or rubber cutouts are applied, preserving the canonical sprite bodywork.
+        pass
 
     erased_px = int(np.sum((arr[:, :, 3] > 0) & (out_arr[:, :, 3] == 0)))
     cavity_px = int(

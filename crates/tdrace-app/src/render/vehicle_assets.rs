@@ -275,7 +275,12 @@ fn get_vehicle_topdown_texture_impl(
     let k1 = color_to_u32(primary);
     let k2 = color_to_u32(secondary);
     let base_model_id = model_id.strip_suffix("_chassis").unwrap_or(model_id);
-    let is_chassis = chassis_only || model_id.ends_with("_chassis");
+    let anchor = get_visual_wheel_anchor(base_model_id);
+    let model = crate::catalog::find_model_by_id(base_model_id);
+    let is_open_wheel = anchor.map(|a| a.layering == "OverChassis").unwrap_or_else(|| {
+        model.map(|m| m.base_car_choice.wheel_layer_mode() == WheelLayerMode::OverChassis).unwrap_or(false)
+    });
+    let is_chassis = is_open_wheel && (chassis_only || model_id.ends_with("_chassis"));
     let key_name = if is_chassis {
         format!("{}_chassis", base_model_id)
     } else {
@@ -289,7 +294,6 @@ fn get_vehicle_topdown_texture_impl(
         return Some(tex.clone());
     }
 
-    let model = crate::catalog::find_model_by_id(base_model_id);
     let module_id = model.map(|m| m.module_id).unwrap_or("gt");
 
     let bytes = if is_chassis {

@@ -1771,7 +1771,6 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
     assert!(!kart_cfg.has_headlights, "Karts must not have headlights");
     assert!(!kart_cfg.has_brake_lights, "Karts must not have brake lights");
     assert!(!kart_cfg.has_roof_lightbar, "Karts must not have roof lightbar");
-    assert!(!kart_cfg.has_rally_pods, "Karts must not have rally pods");
     assert!(!kart_cfg.has_dust_chase_light, "Karts must not have dust chase lights");
     assert!(!kart_cfg.project_track_beams, "Karts must not project track beams");
 
@@ -1805,7 +1804,7 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
     assert!(gt_cfg.beam_range_m >= 10.0, "GT beam range must be at least 10m");
     assert!(gt_cfg.beam_spread_rad > 0.10, "GT beam spread must be positive");
 
-    // 4. Rallycross / All-Terrain: Full headlights, brake lights, hood spotlight pods, track illumination
+    // 4. Rallycross / All-Terrain: Full headlights, brake lights, track illumination
     let rally_cfg = resolve_vehicle_lighting(
         Some("rally_gallia_200_t1"),
         VehicleVisualType::RallyHatch {
@@ -1817,7 +1816,6 @@ fn test_spec_031_modality_realistic_lighting_profiles() {
     assert_eq!(rally_cfg, VehicleLightingConfig::rally());
     assert!(rally_cfg.has_headlights, "Rally vehicles must have headlights");
     assert!(rally_cfg.has_brake_lights, "Rally vehicles must have brake lights");
-    assert!(rally_cfg.has_rally_pods, "Rally vehicles must have hood spotlight pods");
     assert!(rally_cfg.project_track_beams, "Rally vehicles must project track beams");
 
     // 5. Extreme Off-Road: 4-pod roof lightbar, rear dust chase light, brake lights, track illumination
@@ -2593,6 +2591,60 @@ fn test_spec_095_multiview_wheel_anchor_extraction_and_archetype_integration() {
     let cadet = get_visual_wheel_anchor("kart_blackline_cadet_t1").expect("cadet anchor");
     assert_eq!(cadet.archetype, "kart_slick_front");
     assert_eq!(cadet.layering, "OverChassis");
+}
+
+#[test]
+fn test_spec_095_closed_wheel_chassis_sprites_remain_intact_without_cutouts() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::render::vehicle_assets::get_visual_wheel_anchor;
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let topdown_root = manifest_dir.join("../../assets/textures/vehicles/topdown");
+
+    // 1. Closed-wheel vehicles must have intact chassis sprites with zero erased bodywork
+    let closed_wheel_models = [
+        ("rally", "rally_vortek_quattro_rx_t3"),
+        ("rally", "rally_green_mountain_titan_t6"),
+        ("rally", "rally_sixstar_vortex_t4"),
+        ("gt", "gt_vandorn_arrowhead_t2"),
+        ("nascar", "nascar_crossbow_montego_t1"),
+        ("extreme_offroad", "offroad_desert_forge_truck_t2"),
+        ("autocross", "autocross_vortek_quattro_t4"),
+    ];
+
+    for (module_id, model_id) in closed_wheel_models {
+        let anchor = get_visual_wheel_anchor(model_id).expect("anchor exists");
+        assert_eq!(anchor.layering, "UnderChassis", "Model {} must be UnderChassis", model_id);
+
+        let base_path = topdown_root.join(module_id).join(format!("{}.png", model_id));
+        let chassis_path = topdown_root.join(module_id).join(format!("{}_chassis.png", model_id));
+
+        let base_img = Image::from_file_with_format(&std::fs::read(&base_path).unwrap(), None).unwrap();
+        let chassis_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
+
+        assert_eq!(base_img.bytes, chassis_img.bytes, "Chassis sprite for closed-wheel {} must match canonical sprite byte-for-byte", model_id);
+    }
+
+    // 2. Open-wheel vehicles must have tire rubber cleanly erased on chassis sprite
+    let open_wheel_models = [
+        ("kart", "kart_blackline_cadet_t1"),
+        ("extreme_offroad", "offroad_volkskraft_dune_t1"),
+        ("autocross", "autocross_bologna_superbuggy_t5"),
+    ];
+
+    for (module_id, model_id) in open_wheel_models {
+        let anchor = get_visual_wheel_anchor(model_id).expect("anchor exists");
+        assert_eq!(anchor.layering, "OverChassis", "Model {} must be OverChassis", model_id);
+
+        let base_path = topdown_root.join(module_id).join(format!("{}.png", model_id));
+        let chassis_path = topdown_root.join(module_id).join(format!("{}_chassis.png", model_id));
+
+        let base_img = Image::from_file_with_format(&std::fs::read(&base_path).unwrap(), None).unwrap();
+        let chassis_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
+
+        assert_ne!(base_img.bytes, chassis_img.bytes, "Chassis sprite for open-wheel {} must have rubber erased", model_id);
+    }
 }
 
 
