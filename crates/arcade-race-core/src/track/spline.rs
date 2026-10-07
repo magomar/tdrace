@@ -1006,6 +1006,36 @@ impl TrackSpline {
         }
     }
 
+    /// Segment indices that `project_point_continuity` must test, in increasing order and without repeats.
+    ///
+    /// Samples are sorted by distance, so the window of segments within `max_dist_delta` of `prev_progress` (and
+    /// its wrap-around on a closed loop) is found by binary search instead of a scan over every sample. The ranges
+    /// are padded supersets, and the caller's exact distance test still decides, so the projection is the same as
+    /// with a full scan.
+    fn continuity_window(&self, prev_progress: f32, max_dist_delta: f32) -> impl Iterator<Item = usize> {
+        let n_segs = self.samples.len().saturating_sub(1);
+        let mut ranges = [(0, n_segs), (0, 0), (0, 0)];
+        if prev_progress.is_finite() && max_dist_delta.is_finite() {
+            const PAD: f32 = 1.0;
+            let total_len = self.total_length.max(1.0);
+            let segs = &self.samples[..n_segs];
+            let first_at_or_above = |d: f32| segs.partition_point(|s| s.distance < d);
+            let first_above = |d: f32| segs.partition_point(|s| s.distance <= d);
+            let (lo, hi) = (prev_progress - max_dist_delta - PAD, prev_progress + max_dist_delta + PAD);
+            ranges[0] = (first_at_or_above(lo), first_above(hi));
+            if self.closed {
+                ranges[1] = (0, first_above(hi - total_len));
+                ranges[2] = (first_at_or_above(lo + total_len), n_segs);
+            }
+            ranges.sort_unstable();
+            for k in 1..ranges.len() {
+                // Start each range after the ones before it end, so no segment is visited twice.
+                ranges[k].0 = ranges[k].0.max(ranges[k - 1].1.max(ranges[k - 1].0));
+            }
+        }
+        ranges.into_iter().flat_map(|(start, end)| start..end.max(start))
+    }
+
     /// Projects a 2D world position onto the spline centerline with continuity constraint around `prev_progress`.
     /// Restricts candidate segments to within `max_dist_delta` of `prev_progress` to avoid snapping
     /// to adjacent opposing track ribbons in close turns/chicanes.
@@ -1027,7 +1057,7 @@ impl TrackSpline {
         let mut best_t = 0.0f32;
         let mut found_candidate = false;
 
-        for i in 0..self.samples.len() - 1 {
+        for i in self.continuity_window(prev_progress, max_dist_delta) {
             let seg_dist = self.samples[i].distance;
             let delta = if self.closed {
                 let d = (seg_dist - prev_progress).abs();
@@ -1870,5 +1900,29 @@ mod tests {
             }
         }
     }
-}
 
+    /// `continuity_window` must yield every segment that passes the exact distance test of
+    /// `project_point_continuity`, in increasing order and once each, so the windowed projection equals a scan
+    /// over every sample. Covers windows that wrap around the start of a closed loop.
+    #[test]
+    fn test_continuity_window_covers_every_candidate_in_order() {
+        let pts = [Vec2::new(0.0, 0.0), Vec2::new(120.0, 10.0), Vec2::new(140.0, 90.0), Vec2::new(30.0, 120.0), Vec2::new(-20.0, 60.0)];
+        for closed in [true, false] {
+            let spline = TrackSpline::from_points(&pts, 12.0, closed);
+            let total = spline.total_length.max(1.0);
+            for k in 0..400 {
+                let prev = ((k as f32 * 0.618_034).fract() * 1.2 - 0.1) * total;
+                let max_delta = [0.0, 5.0, 45.0, 200.0, total, f32::INFINITY, f32::NAN][k % 7];
+                let window: Vec<usize> = spline.continuity_window(prev, max_delta).collect();
+                assert!(window.windows(2).all(|w| w[0] < w[1]), "closed={} prev={} max_delta={}: not increasing", closed, prev, max_delta);
+                for i in 0..spline.samples.len() - 1 {
+                    let d = (spline.samples[i].distance - prev).abs();
+                    let delta = if closed { d.min(total - d) } else { d };
+                    if !(delta > max_delta) {
+                        assert!(window.contains(&i), "closed={} prev={} max_delta={}: segment {} missing", closed, prev, max_delta, i);
+                    }
+                }
+            }
+        }
+    }
+}
