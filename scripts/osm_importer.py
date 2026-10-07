@@ -484,6 +484,7 @@ def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
             y_split = bounds[4]
             y_parallel = bounds[5]
             d_parallel = abs(y_parallel)
+            side = 1.0 if y_parallel > 0.0 else -1.0
     else:
         # Detect straight limits around (0, 0)
         n_pts = len(final_track_pts)

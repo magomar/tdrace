@@ -118,8 +118,8 @@ fn test_high_speed_200kmh_head_on_wall_and_car_collisions() {
     assert!(car.state.angular_velocity.is_finite());
 
     // 2. Head-on car-to-car collision at relative 400 km/h (each at 200 km/h)
-    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.0, 0.0), 0.0);
-    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.0, 0.0), PI);
+    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-2.0, 0.0), 0.0);
+    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(2.0, 0.0), PI);
 
     car_a.state.velocity = Vec2::new(speed_200kmh, 0.0);
     car_b.state.velocity = Vec2::new(-speed_200kmh, 0.0);

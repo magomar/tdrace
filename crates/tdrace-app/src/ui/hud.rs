@@ -14,11 +14,11 @@ use cabinet::ui::{
     CountDown, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
 };
 use race_ui::hud::widgets::{
-    render_cockpit_chassis_telemetry, render_compound_badge, render_lap_timer, render_minimap,
+    render_cockpit_chassis_telemetry, render_compound_badge, render_lap_timer,
     render_joker_badge, render_position_and_lap, CockpitTelemetryMode, JokerBadge,
 };
 
-pub use race_ui::hud::widgets::format_lap_time;
+pub use race_ui::hud::widgets::{format_lap_time, render_minimap, render_minimap_with_player};
 
 /// Active Personal Best lap achievement notification payload for HUD display.
 #[derive(Debug, Clone, PartialEq)]
@@ -131,7 +131,8 @@ pub fn render_hud(
     // 3. Mini-Map Radar (Top Right)
     let map_w = scaler.s(175.0);
     let map_h = scaler.s(145.0);
-    render_minimap(
+    let player_idx = all_cars.iter().position(|c| std::ptr::eq(c, player_car)).unwrap_or(0);
+    render_minimap_with_player(
         fonts,
         &scaler,
         sw - map_w - scaler.safe_pad_x,
@@ -141,6 +142,7 @@ pub fn render_hud(
         track,
         all_cars,
         color_schemes,
+        player_idx,
     );
 
     // 3b. Tactical Pit Recommendation Alert ("BOX THIS LAP") beside Mini-Map (Spec 062)
@@ -768,7 +770,8 @@ fn render_split_player_panel(
     let map_h = scaler.s(105.0).min(ph * 0.28);
     let map_x = px + pad_x;
     let map_y = py + ph - map_h - pad_y;
-    render_minimap(fonts, scaler, map_x, map_y, map_w, map_h, track, all_cars, color_schemes);
+    let player_idx = all_cars.iter().position(|c| std::ptr::eq(c, car)).unwrap_or(0);
+    render_minimap_with_player(fonts, scaler, map_x, map_y, map_w, map_h, track, all_cars, color_schemes, player_idx);
 
     // Bottom-Right: Speedometer Cluster
     let speedo_cx = px + pw - scaler.s(75.0) - pad_x;

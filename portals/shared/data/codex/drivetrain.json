@@ -6,19 +6,29 @@
       "id": "front_engine",
       "repair_cost_multiplier": 1.0,
       "platforms": [
-        "SportsCar",
-        "RallyCar",
         "GT4Clubsport",
-        "StockCar"
+        "TouringAX",
+        "TrophyTruckAWD",
+        "MudBoggerHeavy",
+        "RallyJuniorFWD",
+        "RallyCar",
+        "StockCar",
+        "StockCarTruck"
       ]
     },
     {
       "id": "mid_engine",
       "repair_cost_multiplier": 1.35,
       "platforms": [
-        "Kart",
         "GT1Legend",
-        "HypercarPrototype"
+        "HypercarPrototype",
+        "CrossCar",
+        "SuperBuggy",
+        "MonsterTruck",
+        "RallyGroupB",
+        "RallyElectricRX",
+        "Kart",
+        "SuperkartGP"
       ]
     },
     {
@@ -27,8 +37,8 @@
       "platforms": [
         "GT3Car",
         "GT2Biturbo",
-        "SandRail",
-        "CrossCar"
+        "DuneBuggyBaja",
+        "SandRail"
       ]
     }
   ]

@@ -710,6 +710,12 @@ impl Car {
         self.state.road_elevation + self.state.ramp_elevation + self.state.elevation
     }
 
+    /// Returns dynamic vehicle vertical elevation above the road surface (ramp elevation + jump height).
+    #[inline]
+    pub fn dynamic_elevation(&self) -> f32 {
+        self.state.elevation.max(0.0) + self.state.ramp_elevation.max(0.0)
+    }
+
     /// Gets an immutable reference to the car's current state.
     #[inline]
     pub fn state(&self) -> &CarState {

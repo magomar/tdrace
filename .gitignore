@@ -50,3 +50,6 @@ backups/
 # Local Scratch Directory
 scratch/
 
+# HITL Intermediate Verification Images
+artifacts/hitl/
+

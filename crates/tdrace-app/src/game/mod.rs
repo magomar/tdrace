@@ -727,6 +727,7 @@ pub struct RaceSession {
     pub starting_grid_focus: StartingGridFocus,
     pub starting_grid_card_idx: usize,
     pub starting_grid_roster_idx: usize,
+    pub starting_grid_config_idx: usize,
     pub pause_nav: NavGrid2D,
     pub pause_selected_btn: usize,
     /// Countdown time left when the race was paused before the start, resumed instead of racing.
@@ -1000,6 +1001,7 @@ impl RaceSession {
             starting_grid_focus: StartingGridFocus::LeftSetup,
             starting_grid_card_idx: 0,
             starting_grid_roster_idx: 0,
+            starting_grid_config_idx: 0,
             pause_nav: NavGrid2D::new(vec![5, 5]),
             pause_selected_btn: 0,
             paused_countdown: None,
@@ -4286,7 +4288,7 @@ impl RaceSession {
                 if self.active_module_id == "classic" {
                     ClassicGameModule::car_classic_ax_mudlark()
                 } else {
-                    tdrace_core::physics::config::CarConfig::sand_rail()
+                    tdrace_core::physics::config::CarConfig::cross_car()
                 }
             }
             CarChoice::DriftCar => {
@@ -4308,6 +4310,10 @@ impl RaceSession {
                 } else {
                     self.config.get_car_config(player_car_choice)
                 }
+            }
+            _ => {
+                self.current_visual_type = player_car_choice.visual_type();
+                player_car_choice.config()
             }
         };
 
@@ -4986,6 +4992,7 @@ impl RaceSession {
         self.starting_grid_focus = StartingGridFocus::LeftSetup;
         self.starting_grid_card_idx = 0;
         self.starting_grid_roster_idx = 0;
+        self.starting_grid_config_idx = 0;
         self.state = GameState::StartingGrid;
     }
 
@@ -6384,6 +6391,7 @@ impl RaceSession {
         if tier_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
+            self.starting_grid_config_idx = 0;
             if self.game_mode.allows_difficulty_customization() {
                 self.audio.play_sfx(SfxType::UiMove);
                 if mx < t_rect.0 + t_rect.2 * 0.35 {
@@ -6398,6 +6406,7 @@ impl RaceSession {
         if laps_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
+            self.starting_grid_config_idx = 1;
             if self.game_mode.allows_laps_customization() {
                 self.audio.play_sfx(SfxType::UiMove);
                 if mx < l_rect.0 + l_rect.2 * 0.35 {
@@ -6412,6 +6421,7 @@ impl RaceSession {
         if bots_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
+            self.starting_grid_config_idx = 2;
             if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
                 let max_bots = self.max_bots();
                 self.audio.play_sfx(SfxType::UiMove);
@@ -6437,45 +6447,59 @@ impl RaceSession {
         if grid_btn_clicked {
             self.starting_grid_focus = StartingGridFocus::RightRoster;
             self.starting_grid_card_idx = 1;
-            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
-                let max_bots = self.max_bots();
-                self.audio.play_sfx(SfxType::UiMove);
-                if self.num_bots < max_bots {
-                    self.num_bots += 1;
-                } else {
-                    self.num_bots = 1;
-                }
-                self.rebuild_roster_participants();
-                self.update_active_modality_racer_count();
-            } else if self.game_mode.allows_difficulty_customization() {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.cycle_casual_ai_difficulty();
-            }
             return;
         }
 
-        // 1. Panel Switching (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
-        if is_key_pressed(KeyCode::Left)
+        // 1. Horizontal Navigation (Left / Right / A / D / D-pad Left/Right / Nav Left/Right)
+        let nav_left = is_key_pressed(KeyCode::Left)
             || is_key_pressed(KeyCode::A)
             || self.input.gamepad.snapshot.dpad_left_pressed
-            || self.input.gamepad.snapshot.nav_left
-        {
-            if self.starting_grid_focus != StartingGridFocus::LeftSetup {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.starting_grid_focus = StartingGridFocus::LeftSetup;
-                if self.starting_grid_card_idx == 1 {
-                    self.starting_grid_card_idx = 0;
-                }
-            }
-        }
-        if is_key_pressed(KeyCode::Right)
+            || self.input.gamepad.snapshot.nav_left;
+        let nav_right = is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
             || self.input.gamepad.snapshot.dpad_right_pressed
-            || self.input.gamepad.snapshot.nav_right
-        {
-            if self.starting_grid_focus != StartingGridFocus::RightRoster {
-                self.audio.play_sfx(SfxType::UiMove);
-                self.starting_grid_focus = StartingGridFocus::RightRoster;
+            || self.input.gamepad.snapshot.nav_right;
+
+        if nav_left {
+            match self.starting_grid_focus {
+                StartingGridFocus::RightRoster => {
+                    if self.starting_grid_card_idx == 1 {
+                        // In Grid Config: navigate left between controls: Bots (2) -> Laps (1) -> Tier (0) -> LeftSetup
+                        if self.starting_grid_config_idx > 0 {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_config_idx -= 1;
+                        } else {
+                            self.audio.play_sfx(SfxType::UiMove);
+                            self.starting_grid_focus = StartingGridFocus::LeftSetup;
+                            self.starting_grid_card_idx = 4;
+                        }
+                    } else {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.starting_grid_focus = StartingGridFocus::LeftSetup;
+                        self.starting_grid_card_idx = 0;
+                    }
+                }
+                StartingGridFocus::LeftSetup => {}
+            }
+        }
+        if nav_right {
+            match self.starting_grid_focus {
+                StartingGridFocus::LeftSetup => {
+                    self.audio.play_sfx(SfxType::UiMove);
+                    self.starting_grid_focus = StartingGridFocus::RightRoster;
+                    if self.starting_grid_card_idx == 3 || self.starting_grid_card_idx == 4 {
+                        self.starting_grid_card_idx = 1;
+                        self.starting_grid_config_idx = 0;
+                    } else {
+                        self.starting_grid_card_idx = 0;
+                    }
+                }
+                StartingGridFocus::RightRoster => {
+                    if self.starting_grid_card_idx == 1 && self.starting_grid_config_idx < 2 {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.starting_grid_config_idx += 1;
+                    }
+                }
             }
         }
 
@@ -6695,41 +6719,68 @@ impl RaceSession {
                         self.starting_grid_roster_idx = 0;
                     }
 
-                    // Adjust bots on Enter / + / - / [ / ]
-                    if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
-                        let max_bots = self.max_bots();
-                        if is_key_pressed(KeyCode::Enter)
-                            || is_key_pressed(KeyCode::KpEnter)
-                            || is_key_pressed(KeyCode::RightBracket)
-                            || is_key_pressed(KeyCode::Equal)
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            if self.num_bots < max_bots {
-                                self.num_bots += 1;
-                            } else {
-                                self.num_bots = 1;
+                    // Modify selected Grid Config control (0: Tier, 1: Laps, 2: Bots)
+                    let modify_forward = is_key_pressed(KeyCode::Enter)
+                        || is_key_pressed(KeyCode::KpEnter)
+                        || is_key_pressed(KeyCode::Equal)
+                        || is_key_pressed(KeyCode::RightBracket)
+                        || self.input.gamepad.snapshot.btn_confirm_pressed
+                        || self.input.gamepad.snapshot.btn_a_pressed
+                        || self.input.gamepad.snapshot.btn_rb_pressed;
+                    let modify_backward = is_key_pressed(KeyCode::Minus)
+                        || is_key_pressed(KeyCode::LeftBracket)
+                        || self.input.gamepad.snapshot.btn_x_pressed
+                        || self.input.gamepad.snapshot.btn_lb_pressed;
+
+                    match self.starting_grid_config_idx {
+                        0 => {
+                            // TIER control
+                            if self.game_mode.allows_difficulty_customization() {
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.cycle_casual_ai_difficulty();
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.cycle_casual_ai_difficulty_prev();
+                                }
                             }
-                            self.rebuild_roster_participants();
-                            self.update_active_modality_racer_count();
                         }
-                        if is_key_pressed(KeyCode::LeftBracket) || is_key_pressed(KeyCode::Minus) {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            if self.num_bots > 1 {
-                                self.num_bots -= 1;
-                            } else {
-                                self.num_bots = max_bots;
+                        1 => {
+                            // LAPS control
+                            if self.game_mode.allows_laps_customization() {
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.total_laps = (self.total_laps + 1).min(99);
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    self.total_laps = self.total_laps.saturating_sub(1).max(1);
+                                }
                             }
-                            self.rebuild_roster_participants();
-                            self.update_active_modality_racer_count();
                         }
-                    } else if self.game_mode.allows_difficulty_customization() {
-                        if is_key_pressed(KeyCode::Enter)
-                            || is_key_pressed(KeyCode::KpEnter)
-                            || is_key_pressed(KeyCode::RightBracket)
-                            || is_key_pressed(KeyCode::Equal)
-                        {
-                            self.audio.play_sfx(SfxType::UiMove);
-                            self.cycle_casual_ai_difficulty();
+                        _ => {
+                            // BOTS control
+                            if self.game_mode.has_bots() && self.game_mode.allows_grid_customization() {
+                                let max_bots = self.max_bots();
+                                if modify_forward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots < max_bots {
+                                        self.num_bots += 1;
+                                    } else {
+                                        self.num_bots = 1;
+                                    }
+                                    self.rebuild_roster_participants();
+                                    self.update_active_modality_racer_count();
+                                } else if modify_backward {
+                                    self.audio.play_sfx(SfxType::UiMove);
+                                    if self.num_bots > 1 {
+                                        self.num_bots -= 1;
+                                    } else {
+                                        self.num_bots = max_bots;
+                                    }
+                                    self.rebuild_roster_participants();
+                                    self.update_active_modality_racer_count();
+                                }
+                            }
                         }
                     }
                 } else {
@@ -14069,6 +14120,7 @@ impl RaceSession {
                     unlock_level,
                     self.selected_car_model_id,
                     self.casual_ai_difficulty,
+                    self.starting_grid_config_idx,
                 );
             }
             GameState::Countdown(remaining) => {
@@ -15815,7 +15867,7 @@ impl RaceSession {
             if self.visibility_options.overhead_chevron {
                 render_player_overhead_chevron(
                     focus_car.state.position,
-                    focus_car.total_elevation(),
+                    focus_car.dynamic_elevation(),
                     camera.current_zoom,
                     self.session_time,
                     scheme,
@@ -15915,7 +15967,7 @@ impl RaceSession {
                     tier_label: Some("LAN"),
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else if self.is_split_screen() && i == 0 {
@@ -15925,7 +15977,7 @@ impl RaceSession {
                     tier_label: None,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else if self.is_split_screen() && i == 1 {
@@ -15935,7 +15987,7 @@ impl RaceSession {
                     tier_label: None,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             } else {
@@ -15958,7 +16010,7 @@ impl RaceSession {
                     tier_label,
                     accent_color,
                     position: car.state.position,
-                    elevation: car.total_elevation(),
+                    elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
                 });
             }
