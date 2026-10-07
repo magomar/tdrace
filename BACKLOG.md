@@ -151,6 +151,24 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - Leverages the existing `AcrobaticStats` telemetry pipeline, 4-second combo multiplier state machine, and floating HUD score popups currently preserved in the game engine.
   - Circuit-selective or ruleset-based activation: Enable stunt scoring selectively on dedicated stunt venues or when entering the Stunt / Gymkhana competition mode, while preserving clean timing in realistic motorsport disciplines.
 
+### 2.12 3D Chase & Cockpit View (GT & Stock Car Experience)
+- **Motivation**: Top-down suits Classic, Karting, AX and RX. GT and NASCAR/stock car racing is about high speed, drafting, and close pack racing on long, fast circuits. A third-person chase camera or a first-person cockpit view may sell that feel better than top-down. Candidate presentation for the GT and NASCAR DLCs, not for Steam v1.
+- **What already carries over**:
+  - The simulation (`wheelbase`, `arcade-race-core`, `race-kit`) is renderer-agnostic. Physics, bots, timing and collisions work unchanged under a 3D view.
+  - Circuits are Catmull-Rom splines with width. They extrude directly into a 3D road ribbon; `race-ui` already batches track meshes (`crates/race-ui/src/render/track.rs`).
+  - Ramp and jump elevation (`dynamic_elevation`, `total_elevation`) already gives a vertical car position.
+  - `macroquad 0.4` has a basic `Camera3D` and mesh drawing, so a first prototype stays inside the approved tech stack.
+- **What is missing**:
+  - 3D car models (current vehicles are top-down sprites). Largest art cost.
+  - Scenery for a visible horizon: walls, barriers, grandstands, trees, sky.
+  - Hills and banked turns. The world is flat; banking matters for ovals and needs physics work.
+  - Lighting and shadows. Macroquad 3D has none built in; a polished look may need a different engine, which needs a `TECH_STACK.md` change.
+- **Staged approach**:
+  1. *Feasibility prototype (days)*: chase camera, flat extruded road, box cars, one GT circuit. Goal: decide if 3D feels better than top-down for GT/stock cars.
+  2. *Presentable view (weeks)*: low-poly GT and stock car models, barriers, sky, simple shading, cockpit camera option.
+  3. *Full experience (months)*: elevation and banking in circuits and physics, shadows, possible engine change.
+- **Open questions**: Separate 3D client sharing the core crates, or an optional camera mode inside `tdrace-app`? Does banking require 3D physics, or can it be modelled as a lateral grip/load term in the existing 2.5D model?
+
 ---
 
 
