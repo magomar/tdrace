@@ -277,8 +277,8 @@ fn test_ui_copy_and_error_messages_are_strictly_in_english() {
     assert_eq!(ModuleFilter::Classic.label(), "CLASSIC");
     assert_eq!(ModuleFilter::Rally.label(), "RALLYCROSS");
     assert_eq!(ModuleFilter::Kart.label(), "KARTING");
-    assert_eq!(ModuleFilter::Gt.label(), "GT WORLD CHALLENGE");
-    assert_eq!(ModuleFilter::Nascar.label(), "NASCAR");
+    assert_eq!(ModuleFilter::Gt.label(), "GRAND TOURING CHALLENGE");
+    assert_eq!(ModuleFilter::Nascar.label(), "STOCK CAR");
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

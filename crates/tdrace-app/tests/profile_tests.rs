@@ -1181,7 +1181,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
 
     let expected_nascar_tiers: [(&str, Vec<&str>); 5] = [
         (
-            "NASCAR Weekly Short Track Series (Tier 1)",
+            "Weekly Short Track Series (Tier 1)",
             vec![
                 "martinsville_speedway",
                 "bristol_motor_speedway",
@@ -1191,7 +1191,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Intermediate Oval Challenge (Tier 2)",
+            "National Intermediate Oval Challenge (Tier 2)",
             vec![
                 "charlotte_motor_speedway",
                 "darlington_raceway",
@@ -1203,7 +1203,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR National Road & Oval Tour (Tier 3)",
+            "National Road & Oval Tour (Tier 3)",
             vec![
                 "iowa_speedway",
                 "watkins_glen_nascar",
@@ -1217,7 +1217,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "NASCAR Premier Speedway Trophy (Tier 4)",
+            "Premier Speedway Trophy (Tier 4)",
             vec![
                 "indianapolis_motor_speedway",
                 "pocono_raceway",
@@ -1301,7 +1301,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Euro RX Challenge (Tier 3)",
+            "Continental RX Challenge (Tier 3)",
             vec![
                 "lavare_rx",
                 "riga_rx",
@@ -1313,7 +1313,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "FIA World RX Supercar Trophy (Tier 4)",
+            "World Rallycross Supercar Trophy (Tier 4)",
             vec![
                 "catalunya_rx",
                 "spa_rx",
@@ -1341,7 +1341,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Nitrocross Group E Series (Tier 6)",
+            "Apex Group E Electric Trophy (Tier 6)",
             vec![
                 "catalunya_rx",
                 "lessay_rx",
@@ -1389,11 +1389,11 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
 
     let expected_kart_tiers: [(&str, Vec<&str>); 6] = [
         (
-            "Rotax Junior Academy (Tier 1)",
+            "Junior Karting Academy (Tier 1)",
             vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"],
         ),
         (
-            "FIA Karting Academy Trophy (Tier 2)",
+            "International Karting Academy Trophy (Tier 2)",
             vec!["whilton_mill", "laval_kart", "genk", "sarno", "kristianstad", "seven_laghi"],
         ),
         (

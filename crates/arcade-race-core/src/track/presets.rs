@@ -1110,6 +1110,8 @@ pub fn create_prototypical_track(
         default_surface: offtrack_surface,
         pit_box_area: None,
         pit_lane: None,
+        pit_lane_junctions: None,
+        cached_barrier_offset: None,
         default_laps,
         car_category,
         car_model_id: None,

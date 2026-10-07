@@ -176,6 +176,8 @@ default_assist_profile = "sport"
 
     let mut custom_session = RaceSession::new_with_config(loaded);
     assert_eq!(custom_session.config.gameplay.default_num_bots, 3);
+    // Quick Race locks the grid to the track's capacity (36ea12ab); Custom Race keeps the bot count.
+    custom_session.game_mode = tdrace_app::ui::menu::GameMode::ExperimentalRace;
     custom_session.set_num_bots(3);
     custom_session.init_race();
     assert_eq!(custom_session.world.vehicles.len(), 4, "Must spawn 4 cars (1 player + 3 AI opponents)");
@@ -518,22 +520,22 @@ default_laps = 55
 #[test]
 fn test_display_config_vehicle_shadows_setting() {
     let mut config = GameConfig::default();
-    assert!(config.display.vehicle_shadows);
+    assert!(!config.display.vehicle_shadows);
 
-    // Disable vehicle shadows and verify roundtrip
-    config.display.vehicle_shadows = false;
-    let toml_str = toml::to_string_pretty(&config).expect("Serialize display config with vehicle shadows disabled");
+    // Enable vehicle shadows and verify roundtrip
+    config.display.vehicle_shadows = true;
+    let toml_str = toml::to_string_pretty(&config).expect("Serialize display config with vehicle shadows enabled");
     let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize display config");
-    assert!(!loaded.display.vehicle_shadows);
+    assert!(loaded.display.vehicle_shadows);
 
-    // When omitted from TOML, serde default should restore to true
+    // When omitted from TOML, serde default should restore to false
     let partial_toml = r#"
 [display]
 window_width = 1920
 window_height = 1080
 "#;
     let loaded_partial: GameConfig = toml::from_str(partial_toml).expect("Deserialize partial toml without shadows field");
-    assert!(loaded_partial.display.vehicle_shadows);
+    assert!(!loaded_partial.display.vehicle_shadows);
 }
 
 #[test]

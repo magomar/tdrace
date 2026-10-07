@@ -215,7 +215,8 @@
         ]
       ],
       "platforms": [
-        "Kart"
+        "Kart",
+        "SuperkartGP"
       ]
     },
     {
@@ -431,7 +432,6 @@
         ]
       ],
       "platforms": [
-        "SportsCar",
         "GT4Clubsport",
         "GT3Car",
         "GT2Biturbo",
@@ -652,7 +652,8 @@
         ]
       ],
       "platforms": [
-        "StockCar"
+        "StockCar",
+        "StockCarTruck"
       ]
     },
     {
@@ -1296,9 +1297,18 @@
         ]
       ],
       "platforms": [
-        "RallyCar",
+        "CrossCar",
+        "TouringAX",
+        "SuperBuggy",
+        "DuneBuggyBaja",
         "SandRail",
-        "CrossCar"
+        "TrophyTruckAWD",
+        "MudBoggerHeavy",
+        "MonsterTruck",
+        "RallyJuniorFWD",
+        "RallyCar",
+        "RallyGroupB",
+        "RallyElectricRX"
       ]
     },
     {

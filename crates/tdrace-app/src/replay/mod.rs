@@ -5,7 +5,6 @@ use std::io::{Read, Write};
 use std::path::Path;
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
-use tdrace_core::CarConfig;
 
 use crate::ui::menu::{CarChoice, TrackChoice};
 
@@ -328,19 +327,7 @@ impl ReplayPlayer {
         let track = crate::ui::menu::resolve_track_for_menu(&self.replay.header.track_choice)
             .unwrap_or_else(crate::tracks::official::fallback_track);
 
-        let config = match self.replay.header.car_choice {
-            CarChoice::SportsCar => CarConfig::sports_car(),
-            CarChoice::DriftCar => CarConfig::drift_car(),
-            CarChoice::Kart => CarConfig::kart(),
-            CarChoice::RallyCar => CarConfig::rally_car(),
-            CarChoice::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
-            CarChoice::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
-            CarChoice::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
-            CarChoice::GT1Legend => crate::module::gt::GtWorldChallengeModule::car_gt1_legend(),
-            CarChoice::HypercarPrototype => crate::module::gt::GtWorldChallengeModule::car_hypercar_prototype(),
-            CarChoice::StockCar => CarConfig::stock_car_ta1(),
-            CarChoice::SandRail | CarChoice::CrossCar => CarConfig::sand_rail(),
-        };
+        let config = self.replay.header.car_choice.config();
 
         let initial_pose = track
             .grid_positions

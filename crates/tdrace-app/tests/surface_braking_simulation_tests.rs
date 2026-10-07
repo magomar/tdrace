@@ -101,37 +101,40 @@ fn test_dynamic_ebd_rear_lockup_prevention() {
 fn test_split_mu_asymmetric_braking_stability() {
     let config = GtWorldChallengeModule::car_gt3_evo();
 
-    // 1. Moderate split-mu: Asphalt vs Grass
-    let res_grass = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Grass, 100.0, DEFAULT_SIMULATION_DT);
+    // Spec 074 gives slicks 0.40 grip on grass and 0.32 on gravel: braking hard with two wheels there
+    // spins a GT3, as it would a real one (Mario, 2026-10-06: accept). The splits below stay on surfaces
+    // slicks are made for. Dirt is 0.85 for Medium Slick (open question tdrace-md1u).
+    // 1. Moderate split-mu: Asphalt vs Dirt
+    let res_dirt = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Dirt, 100.0, DEFAULT_SIMULATION_DT);
     assert_ne!(
-        res_grass.status,
+        res_dirt.status,
         SplitMuStatus::SpunOut,
-        "Vehicle spun out on Asphalt vs Grass split-mu (heading dev = {:.1}°)",
-        res_grass.heading_deviation_deg
+        "Vehicle spun out on Asphalt vs Dirt split-mu (heading dev = {:.1}°)",
+        res_dirt.heading_deviation_deg
     );
 
-    // 2. Minor split-mu: Asphalt vs Gravel
-    let res_gravel = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Gravel, 100.0, DEFAULT_SIMULATION_DT);
+    // 2. Minor split-mu: Asphalt vs Curb
+    let res_curb = run_braking_split_mu(&config, SurfaceType::Asphalt, SurfaceType::Curb, 100.0, DEFAULT_SIMULATION_DT);
     assert_ne!(
-        res_gravel.status,
+        res_curb.status,
         SplitMuStatus::SpunOut,
-        "Vehicle spun out on Asphalt vs Gravel split-mu"
+        "Vehicle spun out on Asphalt vs Curb split-mu"
     );
 
-    // 3. Stopping distance on split-mu should be between uniform asphalt and uniform grass
+    // 3. Stopping distance on split-mu should be between uniform asphalt and uniform dirt
     let res_asp_pure = run_braking_straight_line(&config, SurfaceType::Asphalt, 100.0, false, DEFAULT_SIMULATION_DT);
-    let res_grass_pure = run_braking_straight_line(&config, SurfaceType::Grass, 100.0, false, DEFAULT_SIMULATION_DT);
+    let res_dirt_pure = run_braking_straight_line(&config, SurfaceType::Dirt, 100.0, false, DEFAULT_SIMULATION_DT);
     assert!(
-        res_grass.stopping_distance_m >= res_asp_pure.stopping_distance_m * 0.95,
+        res_dirt.stopping_distance_m >= res_asp_pure.stopping_distance_m * 0.95,
         "Split-mu stop ({:.1}m) should be >= pure asphalt ({:.1}m)",
-        res_grass.stopping_distance_m,
+        res_dirt.stopping_distance_m,
         res_asp_pure.stopping_distance_m
     );
     assert!(
-        res_grass.stopping_distance_m <= res_grass_pure.stopping_distance_m * 1.05,
-        "Split-mu stop ({:.1}m) should be <= pure grass ({:.1}m)",
-        res_grass.stopping_distance_m,
-        res_grass_pure.stopping_distance_m
+        res_dirt.stopping_distance_m <= res_dirt_pure.stopping_distance_m * 1.05,
+        "Split-mu stop ({:.1}m) should be <= pure dirt ({:.1}m)",
+        res_dirt.stopping_distance_m,
+        res_dirt_pure.stopping_distance_m
     );
 }
 
@@ -139,7 +142,8 @@ fn test_split_mu_asymmetric_braking_stability() {
 fn test_cadence_braking_wheel_spinup_recovery() {
     let config = GtWorldChallengeModule::car_gt3_evo();
 
-    for &surface in &[SurfaceType::Asphalt, SurfaceType::Dirt, SurfaceType::Gravel] {
+    // Slick surfaces only: on gravel (0.32 grip, spec 074) a locked slick takes ~660 ms to spin up again.
+    for &surface in &[SurfaceType::Asphalt, SurfaceType::Concrete, SurfaceType::Curb, SurfaceType::Dirt] {
         let res = run_braking_cadence(&config, surface, 140.0, DEFAULT_SIMULATION_DT);
 
         assert!(

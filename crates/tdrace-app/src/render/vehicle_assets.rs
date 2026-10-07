@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use macroquad::color::Color;
 use macroquad::texture::{Image, Texture2D};
 use tdrace_core::surface::CompoundId;
@@ -25,6 +25,12 @@ static GT_SLICK_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/v
 static NASCAR_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/nascar_wheel_front.png");
 static OFFROAD_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/offroad_wheel_front.png");
 static RALLY_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/rally_wheel_front.png");
+static BUGGY_ALLTERRAIN_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/buggy_allterrain_front.png");
+static TRUCK_ALLTERRAIN_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/truck_allterrain_front.png");
+static MONSTER_WHEEL_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/monster_wheel_front.png");
+static MUD_TRACTOR_FRONT_PNG: &[u8] = include_bytes!("../../../../assets/textures/vehicles/topdown/wheels/mud_tractor_front.png");
+
+static VISUAL_WHEEL_ANCHORS_JSON: &str = include_str!("../../../../artifacts/visual_wheel_anchors.json");
 
 static LATERAL_CACHE: Mutex<Option<HashMap<(String, u32, u32, bool), Texture2D>>> = Mutex::new(None);
 static TOPDOWN_CACHE: Mutex<Option<HashMap<(String, u32, u32), Texture2D>>> = Mutex::new(None);
@@ -321,17 +327,77 @@ fn get_vehicle_topdown_texture_impl(
     Some(texture)
 }
 
+/// Pre-baked computer-vision visual wheel anchor extracted from vehicle top-down & lateral artwork (Spec 095).
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct VisualWheelAnchor {
+    pub model_id: String,
+    pub module: String,
+    pub base_car: String,
+    pub layering: String,
+    pub archetype: String,
+    pub axle_x_px: f32,
+    pub track_width_px: f32,
+    pub tire_len_px: f32,
+    pub tire_wid_px: f32,
+}
+
+static VISUAL_WHEEL_ANCHORS: OnceLock<HashMap<String, VisualWheelAnchor>> = OnceLock::new();
+
+/// Returns all pre-baked visual wheel anchors keyed by model_id.
+pub fn get_visual_wheel_anchors() -> &'static HashMap<String, VisualWheelAnchor> {
+    VISUAL_WHEEL_ANCHORS.get_or_init(|| {
+        serde_json::from_str(VISUAL_WHEEL_ANCHORS_JSON)
+            .expect("Failed to deserialize visual_wheel_anchors.json")
+    })
+}
+
+/// Retrieves the visual wheel anchor for a given model_id, if present in calibration data.
+pub fn get_visual_wheel_anchor(model_id: &str) -> Option<&'static VisualWheelAnchor> {
+    get_visual_wheel_anchors().get(model_id)
+}
+
+/// Returns texture padding compensation expansion factor [k_w, k_h] for a wheel texture archetype.
+pub fn archetype_padding_factor(archetype: &str) -> glam::Vec2 {
+    match archetype {
+        "monster_wheel_front" => glam::Vec2::new(128.0 / 122.0, 256.0 / 246.0),
+        "mud_tractor_front" => glam::Vec2::new(128.0 / 118.0, 256.0 / 244.0),
+        "truck_allterrain_front" | "nascar_wheel_front" => glam::Vec2::new(128.0 / 116.0, 256.0 / 242.0),
+        "gt_slick_front" => glam::Vec2::new(128.0 / 114.0, 256.0 / 238.0),
+        "buggy_allterrain_front" => glam::Vec2::new(128.0 / 110.0, 256.0 / 238.0),
+        "kart_slick_front" | "rally_wheel_front" => glam::Vec2::new(128.0 / 110.0, 256.0 / 234.0),
+        "offroad_wheel_front" => glam::Vec2::new(128.0 / 90.0, 256.0 / 236.0),
+        _ => glam::Vec2::new(1.0, 1.0),
+    }
+}
+
+/// Normalizes an archetype name string to a static string slice identifier.
+pub fn archetype_to_static_id(archetype: &str) -> &'static str {
+    match archetype {
+        "kart_slick_front" => "kart_slick_front",
+        "gt_slick_front" => "gt_slick_front",
+        "nascar_wheel_front" => "nascar_wheel_front",
+        "rally_wheel_front" => "rally_wheel_front",
+        "buggy_allterrain_front" => "buggy_allterrain_front",
+        "truck_allterrain_front" => "truck_allterrain_front",
+        "monster_wheel_front" => "monster_wheel_front",
+        "mud_tractor_front" => "mud_tractor_front",
+        _ => "offroad_wheel_front",
+    }
+}
+
 /// Configuration for vehicles utilizing modular steered wheel rendering.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SteeredWheelConfig {
     /// Relative path identifier or key for the wheel texture (e.g. "kart_slick_front").
     pub wheel_texture_id: &'static str,
-    /// Distance from vehicle CG to front wheel axle (meters).
+    /// Distance from vehicle visual center to front wheel axle (meters).
     pub front_axle_offset: f32,
     /// Half of the front track width (meters).
     pub half_track_width: f32,
     /// Rendered dimensions of the individual wheel [width (thickness), height (diameter)] (meters).
     pub wheel_size: glam::Vec2,
+    /// Texture padding compensation factor [k_w, k_h].
+    pub texture_padding_factor: glam::Vec2,
     /// Z-layering mode relative to the chassis body.
     pub layering: WheelLayerMode,
 }
@@ -353,6 +419,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.41,
             half_track_width: 0.39,
             wheel_size: glam::Vec2::new(0.20, 0.28),
+            texture_padding_factor: archetype_padding_factor("kart_slick_front"),
             layering: WheelLayerMode::OverChassis,
         }),
         "classic_kart_vintage" => Some(SteeredWheelConfig {
@@ -360,6 +427,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.39,
             half_track_width: 0.36,
             wheel_size: glam::Vec2::new(0.18, 0.26),
+            texture_padding_factor: archetype_padding_factor("kart_slick_front"),
             layering: WheelLayerMode::OverChassis,
         }),
 
@@ -369,6 +437,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.75,
             half_track_width: 0.48,
             wheel_size: glam::Vec2::new(0.24, 0.48),
+            texture_padding_factor: archetype_padding_factor("gt_slick_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
         "classic_gt_vintage" => Some(SteeredWheelConfig {
@@ -376,6 +445,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.71,
             half_track_width: 0.44,
             wheel_size: glam::Vec2::new(0.22, 0.46),
+            texture_padding_factor: archetype_padding_factor("gt_slick_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
 
@@ -385,6 +455,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.66,
             half_track_width: 0.51,
             wheel_size: glam::Vec2::new(0.26, 0.50),
+            texture_padding_factor: archetype_padding_factor("nascar_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
         "classic_stock_vintage" => Some(SteeredWheelConfig {
@@ -392,6 +463,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.72,
             half_track_width: 0.49,
             wheel_size: glam::Vec2::new(0.26, 0.50),
+            texture_padding_factor: archetype_padding_factor("nascar_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
 
@@ -401,6 +473,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.73,
             half_track_width: 0.41,
             wheel_size: glam::Vec2::new(0.24, 0.46),
+            texture_padding_factor: archetype_padding_factor("rally_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
         "classic_rx_vintage" => Some(SteeredWheelConfig {
@@ -408,6 +481,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.69,
             half_track_width: 0.40,
             wheel_size: glam::Vec2::new(0.22, 0.44),
+            texture_padding_factor: archetype_padding_factor("rally_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
 
@@ -417,6 +491,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.85,
             half_track_width: 0.55,
             wheel_size: glam::Vec2::new(0.24, 0.48),
+            texture_padding_factor: archetype_padding_factor("offroad_wheel_front"),
             layering: WheelLayerMode::OverChassis,
         }),
         "classic_ax_brawler" => Some(SteeredWheelConfig {
@@ -424,6 +499,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.75,
             half_track_width: 0.44,
             wheel_size: glam::Vec2::new(0.25, 0.48),
+            texture_padding_factor: archetype_padding_factor("rally_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
 
@@ -433,6 +509,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.98,
             half_track_width: 0.62,
             wheel_size: glam::Vec2::new(0.28, 0.58),
+            texture_padding_factor: archetype_padding_factor("offroad_wheel_front"),
             layering: WheelLayerMode::OverChassis,
         }),
         "classic_at_safari" => Some(SteeredWheelConfig {
@@ -440,6 +517,7 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 0.82,
             half_track_width: 0.48,
             wheel_size: glam::Vec2::new(0.26, 0.54),
+            texture_padding_factor: archetype_padding_factor("offroad_wheel_front"),
             layering: WheelLayerMode::UnderChassis,
         }),
 
@@ -449,28 +527,136 @@ pub fn get_steered_wheel_config(model_id: &str) -> Option<SteeredWheelConfig> {
             front_axle_offset: 1.05,
             half_track_width: 0.65,
             wheel_size: glam::Vec2::new(0.28, 0.58),
+            texture_padding_factor: archetype_padding_factor("offroad_wheel_front"),
             layering: WheelLayerMode::OverChassis,
         }),
         _ => None, // Non-classic vehicles continue using monolithic sprite rendering
     }
 }
 
-/// Derives default steered wheel dimensions from a vehicle's physical chassis and wheels if modular animation is enabled.
+/// Returns the wheel layering mode (UnderChassis vs OverChassis) for a base platform.
+pub fn platform_wheel_layer_mode(platform: crate::ui::menu::CarChoice) -> WheelLayerMode {
+    match platform {
+        crate::ui::menu::CarChoice::CrossCar
+        | crate::ui::menu::CarChoice::SuperBuggy
+        | crate::ui::menu::CarChoice::DuneBuggyBaja
+        | crate::ui::menu::CarChoice::MonsterTruck
+        | crate::ui::menu::CarChoice::Kart
+        | crate::ui::menu::CarChoice::SuperkartGP
+        | crate::ui::menu::CarChoice::SandRail => WheelLayerMode::OverChassis,
+
+        crate::ui::menu::CarChoice::GT4Clubsport
+        | crate::ui::menu::CarChoice::GT3Car
+        | crate::ui::menu::CarChoice::GT2Biturbo
+        | crate::ui::menu::CarChoice::GT1Legend
+        | crate::ui::menu::CarChoice::HypercarPrototype
+        | crate::ui::menu::CarChoice::TouringAX
+        | crate::ui::menu::CarChoice::TrophyTruckAWD
+        | crate::ui::menu::CarChoice::MudBoggerHeavy
+        | crate::ui::menu::CarChoice::RallyJuniorFWD
+        | crate::ui::menu::CarChoice::RallyCar
+        | crate::ui::menu::CarChoice::RallyGroupB
+        | crate::ui::menu::CarChoice::RallyElectricRX
+        | crate::ui::menu::CarChoice::StockCar
+        | crate::ui::menu::CarChoice::StockCarTruck
+        | crate::ui::menu::CarChoice::SportsCar
+        | crate::ui::menu::CarChoice::DriftCar => WheelLayerMode::UnderChassis,
+    }
+}
+
+/// Returns the top-down wheel texture identifier for a base platform.
+pub fn platform_wheel_texture_id(platform: crate::ui::menu::CarChoice) -> &'static str {
+    match platform {
+        crate::ui::menu::CarChoice::Kart | crate::ui::menu::CarChoice::SuperkartGP => {
+            "kart_slick_front"
+        }
+        crate::ui::menu::CarChoice::GT4Clubsport
+        | crate::ui::menu::CarChoice::GT3Car
+        | crate::ui::menu::CarChoice::GT2Biturbo
+        | crate::ui::menu::CarChoice::GT1Legend
+        | crate::ui::menu::CarChoice::HypercarPrototype
+        | crate::ui::menu::CarChoice::SportsCar
+        | crate::ui::menu::CarChoice::DriftCar => "gt_slick_front",
+        crate::ui::menu::CarChoice::StockCar | crate::ui::menu::CarChoice::StockCarTruck => {
+            "nascar_wheel_front"
+        }
+        crate::ui::menu::CarChoice::RallyJuniorFWD
+        | crate::ui::menu::CarChoice::RallyCar
+        | crate::ui::menu::CarChoice::RallyGroupB
+        | crate::ui::menu::CarChoice::RallyElectricRX
+        | crate::ui::menu::CarChoice::TouringAX => "rally_wheel_front",
+        crate::ui::menu::CarChoice::SandRail
+        | crate::ui::menu::CarChoice::CrossCar
+        | crate::ui::menu::CarChoice::SuperBuggy
+        | crate::ui::menu::CarChoice::DuneBuggyBaja => "buggy_allterrain_front",
+        crate::ui::menu::CarChoice::TrophyTruckAWD => "truck_allterrain_front",
+        crate::ui::menu::CarChoice::MonsterTruck => "monster_wheel_front",
+        crate::ui::menu::CarChoice::MudBoggerHeavy => "mud_tractor_front",
+    }
+}
+
+/// Derives default steered wheel dimensions from a vehicle's physical chassis and visual anchors.
+///
+/// When a pre-baked computer-vision anchor exists (Spec 095), front axle offsets, track width,
+/// and wheel dimensions derive directly from the vehicle artwork's visual geometry, with wheel
+/// texture routed to its authentic clustered archetype and padding compensation factor applied.
 pub fn derive_steered_wheel_config(
     model_id: &str,
     car_config: &tdrace_core::physics::CarConfig,
 ) -> Option<SteeredWheelConfig> {
-    if let Some(mut cfg) = get_steered_wheel_config(model_id) {
-        if cfg.front_axle_offset <= 0.0 {
-            cfg.front_axle_offset = car_config.cg_to_front;
-        }
-        if cfg.half_track_width <= 0.0 {
-            cfg.half_track_width = car_config.track_width * 0.5;
-        }
-        Some(cfg)
-    } else {
-        None
+    if let Some(anchor) = get_visual_wheel_anchor(model_id) {
+        let body_half_len = car_config.chassis.half_length(car_config.wheelbase);
+        let m_per_px = (body_half_len * 2.0 * 1.06) / 512.0;
+        let front_axle_offset = (anchor.axle_x_px - 256.0) * m_per_px;
+        let half_track_width = (anchor.track_width_px * 0.5) * m_per_px;
+        let rubber_width = anchor.tire_wid_px * m_per_px;
+        let rubber_diameter = anchor.tire_len_px * m_per_px;
+        let wheel_texture_id = archetype_to_static_id(&anchor.archetype);
+        let texture_padding_factor = archetype_padding_factor(wheel_texture_id);
+        let layering = if anchor.layering == "OverChassis" {
+            WheelLayerMode::OverChassis
+        } else {
+            WheelLayerMode::UnderChassis
+        };
+
+        return Some(SteeredWheelConfig {
+            wheel_texture_id,
+            front_axle_offset,
+            half_track_width,
+            wheel_size: glam::Vec2::new(rubber_width, rubber_diameter),
+            texture_padding_factor,
+            layering,
+        });
     }
+
+    let (wheel_texture_id, layering) = if let Some(classic_cfg) = get_steered_wheel_config(model_id) {
+        (classic_cfg.wheel_texture_id, classic_cfg.layering)
+    } else if let Some(model) = crate::catalog::find_model_by_id(model_id) {
+        (
+            platform_wheel_texture_id(model.base_car_choice),
+            platform_wheel_layer_mode(model.base_car_choice),
+        )
+    } else {
+        ("gt_slick_front", WheelLayerMode::UnderChassis)
+    };
+
+    let texture_padding_factor = archetype_padding_factor(wheel_texture_id);
+    let wheel_size = if let Some(w) = car_config.wheels.first() {
+        let size_x = w.tire_width;
+        let size_y = (size_x * 2.0).clamp(0.24, 1.35);
+        glam::Vec2::new(size_x, size_y)
+    } else {
+        glam::Vec2::new(0.24, 0.48)
+    };
+
+    Some(SteeredWheelConfig {
+        wheel_texture_id,
+        front_axle_offset: car_config.cg_to_front,
+        half_track_width: car_config.track_width * 0.5,
+        wheel_size,
+        texture_padding_factor,
+        layering,
+    })
 }
 
 /// Retrieves or loads a standalone high-resolution top-down wheel texture.
@@ -491,6 +677,10 @@ pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
             "nascar_wheel_front" => NASCAR_WHEEL_FRONT_PNG.to_vec(),
             "offroad_wheel_front" => OFFROAD_WHEEL_FRONT_PNG.to_vec(),
             "rally_wheel_front" => RALLY_WHEEL_FRONT_PNG.to_vec(),
+            "buggy_allterrain_front" => BUGGY_ALLTERRAIN_FRONT_PNG.to_vec(),
+            "truck_allterrain_front" => TRUCK_ALLTERRAIN_FRONT_PNG.to_vec(),
+            "monster_wheel_front" => MONSTER_WHEEL_FRONT_PNG.to_vec(),
+            "mud_tractor_front" => MUD_TRACTOR_FRONT_PNG.to_vec(),
             _ => return None,
         }
     };
@@ -500,4 +690,5 @@ pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
     map.insert(wheel_id.to_string(), texture.clone());
     Some(texture)
 }
+
 

@@ -126,20 +126,30 @@ impl ChassisHudGeometry {
 
 /// Computes inner and outer steered wheel rotation angles using authentic Ackermann differential geometry.
 ///
-/// Under right turn (positive steer), the right wheel is inner (sharper 1.15x)
-/// and the left wheel is outer (shallower 0.88x).
-/// Under left turn (negative steer), the left wheel is inner (sharper 1.15x)
-/// and the right wheel is outer (shallower 0.88x).
+/// In wheelbase simulation coordinates:
+/// - Right turn (clockwise in Cartesian): `steer_angle_rad < 0.0`
+/// - Left turn (counter-clockwise in Cartesian): `steer_angle_rad > 0.0`
+///
+/// In HUD screen space (car faces UP, Y-axis points DOWN):
+/// - Right turn (clockwise): rotation angle is POSITIVE (`> 0.0`).
+/// - Left turn (counter-clockwise): rotation angle is NEGATIVE (`< 0.0`).
+///
+/// Under right turn (`steer_angle_rad < -0.001`), the right wheel (FR) is inner (sharper 1.15x)
+/// and the left wheel (FL) is outer (shallower 0.88x), both rotated clockwise (+).
+/// Under left turn (`steer_angle_rad > 0.001`), the left wheel (FL) is inner (sharper 1.15x)
+/// and the right wheel (FR) is outer (shallower 0.88x), both rotated counter-clockwise (-).
 #[inline]
 pub fn compute_ackermann_steer_angles(steer_angle_rad: f32) -> (f32, f32) {
-    if steer_angle_rad > 0.001 {
-        let outer = steer_angle_rad * 0.88;
-        let inner = steer_angle_rad * 1.15;
-        (outer, inner) // (FL, FR)
-    } else if steer_angle_rad < -0.001 {
-        let inner = steer_angle_rad * 1.15;
-        let outer = steer_angle_rad * 0.88;
-        (inner, outer) // (FL, FR)
+    if steer_angle_rad < -0.001 {
+        let mag = -steer_angle_rad;
+        let outer = mag * 0.88;
+        let inner = mag * 1.15;
+        (outer, inner) // (FL, FR) - both positive (clockwise in HUD)
+    } else if steer_angle_rad > 0.001 {
+        let mag = steer_angle_rad;
+        let inner = -mag * 1.15;
+        let outer = -mag * 0.88;
+        (inner, outer) // (FL, FR) - both negative (counter-clockwise in HUD)
     } else {
         (0.0, 0.0)
     }
@@ -1243,14 +1253,20 @@ mod tests {
         assert_eq!(fl_zero, 0.0);
         assert_eq!(fr_zero, 0.0);
 
-        // Right Turn (+0.30 rad): FR is inner (sharper), FL is outer (shallower)
-        let (fl_right, fr_right) = compute_ackermann_steer_angles(0.30);
+        // Right Turn (-0.30 rad in wheelbase coords): wheels rotate clockwise in HUD (+).
+        // FR is inner (sharper), FL is outer (shallower)
+        let (fl_right, fr_right) = compute_ackermann_steer_angles(-0.30);
+        assert!(fl_right > 0.0, "FL should turn clockwise (+) on right steer");
+        assert!(fr_right > 0.0, "FR should turn clockwise (+) on right steer");
         assert!(fr_right > fl_right, "FR inner must be sharper than FL outer");
         assert!((fr_right - 0.30 * 1.15).abs() < 1e-4);
         assert!((fl_right - 0.30 * 0.88).abs() < 1e-4);
 
-        // Left Turn (-0.30 rad): FL is inner (sharper magnitude), FR is outer (shallower)
-        let (fl_left, fr_left) = compute_ackermann_steer_angles(-0.30);
+        // Left Turn (+0.30 rad in wheelbase coords): wheels rotate counter-clockwise in HUD (-).
+        // FL is inner (sharper magnitude), FR is outer (shallower)
+        let (fl_left, fr_left) = compute_ackermann_steer_angles(0.30);
+        assert!(fl_left < 0.0, "FL should turn counter-clockwise (-) on left steer");
+        assert!(fr_left < 0.0, "FR should turn counter-clockwise (-) on left steer");
         assert!(fl_left.abs() > fr_left.abs(), "FL inner magnitude must be greater than FR outer");
         assert!((fl_left - (-0.30 * 1.15)).abs() < 1e-4);
         assert!((fr_left - (-0.30 * 0.88)).abs() < 1e-4);
