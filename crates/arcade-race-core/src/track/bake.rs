@@ -95,7 +95,6 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
         .unwrap_or(3);
     let grid_layout = current_grid_layout(track);
-    track.apply_default_runoff_surfaces();
     if let Some(lane) = &mut track.pit_lane {
         if opts.rebuild || lane.spline.samples.is_empty() {
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
@@ -127,7 +126,11 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
             track.generate_pit_lane_walls();
         }
     }
-    if opts.rebuild || track.checkpoints.is_empty() {
+    if track.network.is_some() {
+        track.trim_walls_for_network();
+    }
+    // Network checkpoints carry segment ids and the joker checkpoint; the main spline cannot regenerate them.
+    if (opts.rebuild && track.network.is_none()) || track.checkpoints.is_empty() {
         track.checkpoints = generate_checkpoints(&track.spline, checkpoint_count, sector_count);
         report.checkpoints = true;
     }

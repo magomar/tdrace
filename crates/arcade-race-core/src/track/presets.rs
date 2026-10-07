@@ -232,11 +232,13 @@ pub fn trim_corner_intersections(
                 if (elev_a - elev_b).abs() >= 2.5 {
                     continue;
                 }
-                // Skip connected segments sharing endpoints
-                if (seg_a.start - seg_b.start).length_squared() < 0.01
-                    || (seg_a.start - seg_b.end).length_squared() < 0.01
-                    || (seg_a.end - seg_b.start).length_squared() < 0.01
-                    || (seg_a.end - seg_b.end).length_squared() < 0.01
+                // Skip segments sharing an exact endpoint (a pair already trimmed at its hit). Near-coincident
+                // endpoints of non-local walls are not a connection: a figure-eight crossing can sit a few cm
+                // from a vertex on both branches, and skipping it leaves the walls crossed.
+                if (seg_a.start - seg_b.start).length_squared() < 1e-6
+                    || (seg_a.start - seg_b.end).length_squared() < 1e-6
+                    || (seg_a.end - seg_b.start).length_squared() < 1e-6
+                    || (seg_a.end - seg_b.end).length_squared() < 1e-6
                 {
                     continue;
                 }
@@ -431,7 +433,8 @@ pub fn merge_collinear_walls(walls: Vec<WallBarrier>) -> Vec<WallBarrier> {
         let p2 = next.segment.start;
         let p3 = next.segment.end;
 
-        let is_connected = (p1 - p2).length_squared() < 0.0025; // within 5 cm
+        // Shared vertex only: a trimmed crossing leaves a gap of a few cm, and bridging it re-creates the crossing.
+        let is_connected = (p1 - p2).length_squared() < 1e-6; // within 1 mm
         let same_type = current.barrier_type == next.barrier_type;
         let same_bridge = current.is_bridge == next.is_bridge;
         let same_elev = (current.elevation - next.elevation).abs() < 0.05;
@@ -476,7 +479,7 @@ pub fn merge_collinear_walls(walls: Vec<WallBarrier>) -> Vec<WallBarrier> {
         let p2 = first.segment.start;
         let p3 = first.segment.end;
 
-        let is_connected = (p1 - p2).length_squared() < 0.0025;
+        let is_connected = (p1 - p2).length_squared() < 1e-6;
         let same_type = last.barrier_type == first.barrier_type;
         let same_bridge = last.is_bridge == first.is_bridge;
         let same_elev = (last.elevation - first.elevation).abs() < 0.05;

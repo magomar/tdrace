@@ -294,7 +294,8 @@ fn test_dynamically_built_tracks_end_to_end_simulation() {
     println!("Course B: Closed Hypothetical Grand Prix Circuit (Length: {:.1}m)", circuit.total_length);
 
     let res_asphalt_circ = run_path_simulation(&config, SurfaceType::Asphalt, &circuit, 40.0, DEFAULT_SIMULATION_DT);
-    let res_dirt_circ = run_path_simulation(&config, SurfaceType::Dirt, &circuit, 45.0, DEFAULT_SIMULATION_DT);
+    // Spec 074 slick Dirt affinity (0.85) makes the lap ~45.4 s (was 43.7 s).
+    let res_dirt_circ = run_path_simulation(&config, SurfaceType::Dirt, &circuit, 50.0, DEFAULT_SIMULATION_DT);
     let res_sand_circ = run_path_simulation(&config, SurfaceType::DeepSand, &circuit, 20.0, DEFAULT_SIMULATION_DT);
 
     println!(
@@ -364,7 +365,9 @@ fn test_real_game_sand_circuits_end_to_end_behavior() {
         // Run closed-loop car simulation along the spline
         let start_sample = spline.sample_at_distance(0.0);
         let start_angle = start_sample.tangent.y.atan2(start_sample.tangent.x);
-        let mut car = Car::new(CarConfig::sports_car()).with_pose(start_sample.point, start_angle);
+        // The off_road category car (all-terrain tyres). Since spec 074 a slick-shod sports car
+        // keeps only 0.28x grip on PackedSand and cannot launch on these circuits.
+        let mut car = Car::new(CarConfig::sand_rail()).with_pose(start_sample.point, start_angle);
 
         let mut progress_dist = 0.0f32;
         let mut sim_time = 0.0f32;

@@ -118,8 +118,16 @@ fn test_high_speed_200kmh_head_on_wall_and_car_collisions() {
     assert!(car.state.angular_velocity.is_finite());
 
     // 2. Head-on car-to-car collision at relative 400 km/h (each at 200 km/h)
-    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-1.0, 0.0), 0.0);
-    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(1.0, 0.0), PI);
+    // Spec 075 made the hull the full 4.1 m body, so place the cars nose to nose with
+    // 0.1 m overlap (less than one 120 Hz step at 200 km/h). Deeper overlap makes the
+    // lateral axis the shallowest one, and the contact normal is then sideways.
+    let front_reach = {
+        let obb = OrientedBox::from_body(&Car::new(CarConfig::sports_car()));
+        obb.center.x + obb.half_extents.x
+    };
+    let gap = front_reach - 0.05;
+    let mut car_a = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(-gap, 0.0), 0.0);
+    let mut car_b = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(gap, 0.0), PI);
 
     car_a.state.velocity = Vec2::new(speed_200kmh, 0.0);
     car_b.state.velocity = Vec2::new(-speed_200kmh, 0.0);
