@@ -14953,13 +14953,15 @@ impl RaceSession {
         self.editor_tools.drag_current_world = world_mouse;
 
         // Check if cursor is over floating UI palettes or modal
-        let over_ui = is_mouse_over_editor_ui(
-            mouse_pos,
-            sw,
-            sh,
-            self.editor_tools.active_tool,
-            self.editor_modal != EditorModal::None,
-        );
+        // An open inspector dropdown owns the next click, wherever it lands (spec 086).
+        let over_ui = self.editor_tools.inspector.dropdown_open()
+            || is_mouse_over_editor_ui(
+                mouse_pos,
+                sw,
+                sh,
+                self.editor_tools.active_tool,
+                self.editor_modal != EditorModal::None,
+            );
 
         let is_select_tool = self.editor_tools.active_tool == EditorToolType::Select;
 
@@ -15026,7 +15028,15 @@ impl RaceSession {
             }
         }
 
-        // Shortcuts (bypassed while editing text in an inspector input control)
+        // Shortcuts (bypassed while editing text in an inspector input control or while an
+        // inspector dropdown is open; Escape closes the dropdown first)
+        if self.editor_tools.inspector.dropdown_open() {
+            if is_key_pressed(KeyCode::Escape) {
+                self.editor_tools.inspector.close_dropdown();
+                self.editor_tools.escape_consumed = true;
+            }
+            return;
+        }
         if self.editor_tools.is_editing_text() {
             return;
         }
