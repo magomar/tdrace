@@ -2182,6 +2182,7 @@ fn couple_axle(
                 slip_ratio,
                 slip_angle,
                 wheel_v_world.length(),
+                surf,
                 dt,
             );
 
