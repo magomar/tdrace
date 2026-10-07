@@ -545,7 +545,7 @@
     "layering": "UnderChassis",
     "archetype": "rally_wheel_front",
     "axle_x_px": 408.6,
-    "track_width_px": 233.0,
+    "track_width_px": 188.0,
     "tire_len_px": 126.4,
     "tire_wid_px": 48.0
   },
@@ -578,7 +578,7 @@
     "layering": "UnderChassis",
     "archetype": "rally_wheel_front",
     "axle_x_px": 390.3,
-    "track_width_px": 197.1,
+    "track_width_px": 169.1,
     "tire_len_px": 123.5,
     "tire_wid_px": 46.9
   },
@@ -588,10 +588,10 @@
     "base_car": "RallyCar",
     "layering": "UnderChassis",
     "archetype": "rally_wheel_front",
-    "axle_x_px": 371.5,
-    "track_width_px": 192.2,
-    "tire_len_px": 120.4,
-    "tire_wid_px": 45.8
+    "axle_x_px": 372.2,
+    "track_width_px": 170.1,
+    "tire_len_px": 120.7,
+    "tire_wid_px": 45.9
   },
   "rally_vortek_quattro_rx_t3": {
     "model_id": "rally_vortek_quattro_rx_t3",
@@ -874,8 +874,8 @@
     "base_car": "Kart",
     "layering": "OverChassis",
     "archetype": "kart_slick_front",
-    "axle_x_px": 366.0,
-    "track_width_px": 256.6,
+    "axle_x_px": 364.0,
+    "track_width_px": 247.6,
     "tire_len_px": 69.6,
     "tire_wid_px": 33.4
   },
