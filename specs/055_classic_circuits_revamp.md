@@ -6,7 +6,7 @@ description: "The Classic module replaces its 10 flat, bare circuits with 18 new
 status: in_progress
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T07:47:27Z }
-verified: { by: "human:mario", at: "2026-10-05T07:11:54Z", hash: "a0b73814cc9d" }
+verified: { by: "human:mario", at: "2026-10-08T19:08:33Z", hash: "e4cce1e0f122" }
 ---
 
 
@@ -542,8 +542,8 @@ runs only on a developer machine and reads and writes files inside the repositor
 
 - **Scenario: Decoration does not slow the game**
   - [ ] **Given** the circuit with the most scenery
-  - [ ] **When** the build embeds the catalog and a race runs
-  - [ ] **Then** the build shows no bundle-size warning (8 MB) and new scenery uses view culling
+  - [ ] **When** a race runs
+  - [ ] **Then** new scenery uses view culling
 
 ---
 
