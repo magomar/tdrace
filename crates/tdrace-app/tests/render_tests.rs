@@ -1594,23 +1594,30 @@ fn test_classic_cars_dual_sprites_showroom_and_chassis() {
         let chassis_path = topdown_dir.join(format!("{}_chassis.png", model_id));
         let lateral_path = lateral_dir.join(format!("{}.png", model_id));
         let thumb_path = lateral_dir.join(format!("{}_thumb.png", model_id));
+        let anchor = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(model_id);
+        let is_open_wheel = anchor.map(|a| a.layering == "OverChassis").unwrap_or(false);
 
-        // 1. All dual assets must exist on disk
+        // 1. Core assets must exist on disk
         assert!(showroom_path.exists(), "Showroom topdown sprite must exist: {:?}", showroom_path);
-        assert!(chassis_path.exists(), "In-game chassis sprite must exist: {:?}", chassis_path);
         assert!(lateral_path.exists(), "Lateral turntable sprite must exist: {:?}", lateral_path);
         assert!(thumb_path.exists(), "Lateral thumbnail sprite must exist: {:?}", thumb_path);
 
-        // 2. Top-down dimensions must be exactly 512x512
+        if is_open_wheel {
+            assert!(chassis_path.exists(), "Open-wheel chassis sprite must exist: {:?}", chassis_path);
+            let chassis_bytes = std::fs::read(&chassis_path).unwrap();
+            let chassis_img = Image::from_file_with_format(&chassis_bytes, None).unwrap();
+            assert_eq!(chassis_img.width, 512, "Chassis width 512 for {}", model_id);
+            assert_eq!(chassis_img.height, 512, "Chassis height 512 for {}", model_id);
+        } else {
+            assert!(!chassis_path.exists(), "Closed-wheel vehicle {} must not have redundant _chassis.png on disk", model_id);
+        }
+
+        // 2. Top-down showroom dimensions must be exactly 512x512
         let showroom_bytes = std::fs::read(&showroom_path).unwrap();
-        let chassis_bytes = std::fs::read(&chassis_path).unwrap();
         let showroom_img = Image::from_file_with_format(&showroom_bytes, None).unwrap();
-        let chassis_img = Image::from_file_with_format(&chassis_bytes, None).unwrap();
 
         assert_eq!(showroom_img.width, 512, "Showroom width 512 for {}", model_id);
         assert_eq!(showroom_img.height, 512, "Showroom height 512 for {}", model_id);
-        assert_eq!(chassis_img.width, 512, "Chassis width 512 for {}", model_id);
-        assert_eq!(chassis_img.height, 512, "Chassis height 512 for {}", model_id);
 
         // 3. Lateral dimensions must be 1024x512 and thumb 256x128
         let lateral_bytes = std::fs::read(&lateral_path).unwrap();
@@ -2037,14 +2044,21 @@ fn test_spec_073_classic_12_vehicle_harmonization_and_steered_wheels() {
         let topdown_path = topdown_dir.join(format!("{}.png", v.id));
         let chassis_path = topdown_dir.join(format!("{}_chassis.png", v.id));
         assert!(topdown_path.exists(), "Missing topdown sprite for {}", v.id);
-        assert!(chassis_path.exists(), "Missing chassis sprite for {}", v.id);
+
+        let anchor = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id);
+        let is_open_wheel = anchor.map(|a| a.layering == "OverChassis").unwrap_or(false);
+        if is_open_wheel {
+            assert!(chassis_path.exists(), "Missing chassis sprite for open-wheel {}", v.id);
+            let ch_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
+            assert_eq!(ch_img.width, 512);
+            assert_eq!(ch_img.height, 512);
+        } else {
+            assert!(!chassis_path.exists(), "Closed-wheel {} must not have redundant _chassis.png", v.id);
+        }
 
         let td_img = Image::from_file_with_format(&std::fs::read(&topdown_path).unwrap(), None).unwrap();
-        let ch_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
         assert_eq!(td_img.width, 512);
         assert_eq!(td_img.height, 512);
-        assert_eq!(ch_img.width, 512);
-        assert_eq!(ch_img.height, 512);
 
         // C. Lateral turntable and thumbnail sprites
         let lateral_path = lateral_dir.join(format!("{}.png", v.id));
@@ -2353,7 +2367,9 @@ fn test_spec_091_global_chassis_sprites_integrity_and_dimensions() {
         "Playable vehicle catalog must contain exactly 122 vehicles (12 classic + 110 motorsport)"
     );
 
-    let mut verified_count = 0;
+    let mut open_wheel_count = 0;
+    let mut closed_wheel_count = 0;
+
     for v in &all_vehicles {
         let chassis_path = topdown_root
             .join(v.module_id)
@@ -2367,35 +2383,50 @@ fn test_spec_091_global_chassis_sprites_integrity_and_dimensions() {
             "Canonical full topdown sprite must exist on disk: {:?}",
             full_path
         );
-        assert!(
-            chassis_path.exists(),
-            "Chassis cutout sprite must exist on disk for vehicle {}: {:?}",
-            v.id,
-            chassis_path
-        );
 
-        let chassis_bytes = std::fs::read(&chassis_path)
-            .unwrap_or_else(|e| panic!("Failed to read chassis sprite for {}: {:?}", v.id, e));
-        let chassis_img = Image::from_file_with_format(&chassis_bytes, None)
-            .unwrap_or_else(|e| panic!("Corrupted chassis PNG for {}: {:?}", v.id, e));
+        let anchor = tdrace_app::render::vehicle_assets::get_visual_wheel_anchor(v.id);
+        let is_open_wheel = anchor.map(|a| a.layering == "OverChassis").unwrap_or(false);
 
-        assert_eq!(
-            chassis_img.width, 512,
-            "Chassis sprite width must be 512 for {}",
-            v.id
-        );
-        assert_eq!(
-            chassis_img.height, 512,
-            "Chassis sprite height must be 512 for {}",
-            v.id
-        );
+        if is_open_wheel {
+            assert!(
+                chassis_path.exists(),
+                "Open-wheel chassis cutout sprite must exist on disk for vehicle {}: {:?}",
+                v.id,
+                chassis_path
+            );
 
-        verified_count += 1;
+            let chassis_bytes = std::fs::read(&chassis_path)
+                .unwrap_or_else(|e| panic!("Failed to read chassis sprite for {}: {:?}", v.id, e));
+            let chassis_img = Image::from_file_with_format(&chassis_bytes, None)
+                .unwrap_or_else(|e| panic!("Corrupted chassis PNG for {}: {:?}", v.id, e));
+
+            assert_eq!(
+                chassis_img.width, 512,
+                "Chassis sprite width must be 512 for {}",
+                v.id
+            );
+            assert_eq!(
+                chassis_img.height, 512,
+                "Chassis sprite height must be 512 for {}",
+                v.id
+            );
+
+            open_wheel_count += 1;
+        } else {
+            assert!(
+                !chassis_path.exists(),
+                "Closed-wheel vehicle {} must not have redundant _chassis.png on disk: {:?}",
+                v.id,
+                chassis_path
+            );
+            closed_wheel_count += 1;
+        }
     }
 
     assert_eq!(
-        verified_count, 122,
-        "All 122 playable vehicles must have verified 512x512 chassis sprites"
+        open_wheel_count + closed_wheel_count,
+        122,
+        "All 122 playable vehicles must be verified (open-wheel with cutouts, closed-wheel with zero bloat)"
     );
 
     // Also verify vault novelty lawnmowers in kart/ directory
@@ -2602,7 +2633,7 @@ fn test_spec_095_closed_wheel_chassis_sprites_remain_intact_without_cutouts() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let topdown_root = manifest_dir.join("../../assets/textures/vehicles/topdown");
 
-    // 1. Closed-wheel vehicles must have intact chassis sprites with zero erased bodywork
+    // 1. Closed-wheel vehicles must have zero redundant _chassis.png on disk and rely on canonical base sprites
     let closed_wheel_models = [
         ("rally", "rally_vortek_quattro_rx_t3"),
         ("rally", "rally_green_mountain_titan_t6"),
@@ -2620,10 +2651,8 @@ fn test_spec_095_closed_wheel_chassis_sprites_remain_intact_without_cutouts() {
         let base_path = topdown_root.join(module_id).join(format!("{}.png", model_id));
         let chassis_path = topdown_root.join(module_id).join(format!("{}_chassis.png", model_id));
 
-        let base_img = Image::from_file_with_format(&std::fs::read(&base_path).unwrap(), None).unwrap();
-        let chassis_img = Image::from_file_with_format(&std::fs::read(&chassis_path).unwrap(), None).unwrap();
-
-        assert_eq!(base_img.bytes, chassis_img.bytes, "Chassis sprite for closed-wheel {} must match canonical sprite byte-for-byte", model_id);
+        assert!(base_path.exists(), "Base canonical sprite for closed-wheel {} must exist", model_id);
+        assert!(!chassis_path.exists(), "Closed-wheel {} must not have redundant _chassis.png on disk", model_id);
     }
 
     // 2. Open-wheel vehicles must have tire rubber cleanly erased on chassis sprite

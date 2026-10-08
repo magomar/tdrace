@@ -83,29 +83,37 @@ def process_vehicle_sprite(
     y_fl = cy_px - track_w * 0.5
     y_fr = cy_px + track_w * 0.5
 
-    if is_open_wheel:
-        # Open wheel (OverChassis):
-        # Clear tire rubber in front wheel bounding boxes while strictly preserving wishbones/nosecone
-        for y_center in [y_fl, y_fr]:
-            y0 = max(0, int(round(y_center - half_wid)))
-            y1 = min(512, int(round(y_center + half_wid)))
-            box = np.zeros((512, 512), dtype=bool)
-            box[y0:y1, x0:x1] = True
-
-            # Dilate rubber mask by 2px to eliminate residual edge fringes
-            rubber_in_box = box & is_rubber
-            dilated = binary_dilation(rubber_in_box, iterations=2) & box
-            out_arr[dilated, 3] = 0
-
-            # Clean residual sub-15 opacity stray dust inside the box
-            out_arr[box & (out_arr[:, :, 3] < 15), 3] = 0
-    else:
+    if not is_open_wheel:
         # Closed wheel (UnderChassis):
         # In closed-wheel vehicles (GT, NASCAR, Rally, TouringAX, Trophy Trucks),
         # wheels are naturally housed inside metal bodywork and fenders.
-        # Chassis bodywork (fenders, hood, windshield, quarter panels) remains 100% intact.
-        # No apertures or rubber cutouts are applied, preserving the canonical sprite bodywork.
-        pass
+        # Chassis bodywork remains 100% intact and uses canonical topdown sprite directly.
+        # No separate _chassis.png is needed. Prune any redundant/stale chassis file.
+        if not dry_run:
+            if out_path.exists():
+                out_path.unlink()
+            if diff_out_path and diff_out_path.exists():
+                diff_out_path.unlink()
+        print(
+            f"  - {anchor_entry['model_id']:<34} [UnderChassis (closed) ] Preserved intact canonical sprite (pruned _chassis.png)"
+        )
+        return False
+
+    # Open wheel (OverChassis):
+    # Clear tire rubber in front wheel bounding boxes while strictly preserving wishbones/nosecone
+    for y_center in [y_fl, y_fr]:
+        y0 = max(0, int(round(y_center - half_wid)))
+        y1 = min(512, int(round(y_center + half_wid)))
+        box = np.zeros((512, 512), dtype=bool)
+        box[y0:y1, x0:x1] = True
+
+        # Dilate rubber mask by 2px to eliminate residual edge fringes
+        rubber_in_box = box & is_rubber
+        dilated = binary_dilation(rubber_in_box, iterations=2) & box
+        out_arr[dilated, 3] = 0
+
+        # Clean residual sub-15 opacity stray dust inside the box
+        out_arr[box & (out_arr[:, :, 3] < 15), 3] = 0
 
     erased_px = int(np.sum((arr[:, :, 3] > 0) & (out_arr[:, :, 3] == 0)))
     cavity_px = int(
@@ -161,9 +169,8 @@ def process_vehicle_sprite(
 
             comp.save(diff_out_path, format="PNG")
 
-    mode_label = "OverChassis (open)" if is_open_wheel else "UnderChassis (closed)"
     print(
-        f"  ✓ {anchor_entry['model_id']:<34} [{mode_label:<20}] Axle: X={axle_x:5.1f} | Erased: {erased_px:4d} px | Cavity: {cavity_px:4d} px"
+        f"  ✓ {anchor_entry['model_id']:<34} [OverChassis (open)   ] Axle: X={axle_x:5.1f} | Erased: {erased_px:4d} px | Cavity: {cavity_px:4d} px"
     )
     return True
 
