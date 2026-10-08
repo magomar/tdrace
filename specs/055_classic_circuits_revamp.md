@@ -427,15 +427,15 @@ runs only on a developer machine and reads and writes files inside the repositor
 #### Stage 1 — Circuits and cars
 
 - **Scenario: Classic lists the 18 new circuits**
-  - [ ] **Given** the Classic module
-  - [ ] **When** the player opens the circuit selector
-  - [ ] **Then** it lists exactly the 18 circuits of section 2, grouped Karting, Rallycross, Autocross, GT, Stock Cars, All-Terrain, easy → hard
-  - [ ] **And** each circuit starts a race with its Classic car
+  - [x] **Given** the Classic module
+  - [x] **When** the player opens the circuit selector
+  - [x] **Then** it lists exactly the 18 circuits of section 2, grouped Karting, Rallycross, Autocross, GT, Stock Cars, All-Terrain, easy → hard
+  - [x] **And** each circuit starts a race with its Classic car
 
 - **Scenario: Every new circuit is valid and raceable**
-  - [ ] **Given** each of the 18 new circuits
-  - [ ] **When** `validate_track` runs and 4 bots race 2 laps in the bot harness
-  - [ ] **Then** there are 0 validation errors and every bot finishes both laps
+  - [x] **Given** each of the 18 new circuits
+  - [x] **When** `validate_track` runs and 4 bots race 2 laps in the bot harness
+  - [x] **Then** there are 0 validation errors and every bot finishes both laps
 
 - **Scenario: Karting circuits are packed indoor circuits with bridges**
   - [x] **Given** the 3 karting circuits
@@ -444,107 +444,107 @@ runs only on a developer machine and reads and writes files inside the repositor
   - [x] **And** each fits its box of section 3 with the density of section 3
 
 - **Scenario: No turn under a bridge**
-  - [ ] **Given** each new circuit with a bridge
-  - [ ] **When** a car drives on the lower road under a deck
-  - [ ] **Then** the lower road runs straight there (heading change 5° or less)
+  - [x] **Given** each new circuit with a bridge
+  - [x] **When** a car drives on the lower road under a deck
+  - [x] **Then** the lower road runs straight there (heading change 5° or less)
 
 - **Scenario: No turn right after a bridge**
-  - [ ] **Given** each new circuit with a bridge
-  - [ ] **When** a car comes off the end of a bridge
-  - [ ] **Then** the road runs straight for 20 m or more (heading change 5° or less)
+  - [x] **Given** each new circuit with a bridge
+  - [x] **When** a car comes off the end of a bridge
+  - [x] **Then** the road runs straight for 20 m or more (heading change 5° or less)
 
 - **Scenario: Rallycross circuits have many jumps**
-  - [ ] **Given** the 3 rallycross circuits
-  - [ ] **When** the player drives a lap
-  - [ ] **Then** the car leaves the ground at least 3, 4 and 6 times per lap
-  - [ ] **And** each lap has both Asphalt and Gravel or Dirt road
+  - [x] **Given** the 3 rallycross circuits
+  - [x] **When** the player drives a lap
+  - [x] **Then** the car leaves the ground at least 3, 4 and 6 times per lap
+  - [x] **And** each lap has both Asphalt and Gravel or Dirt road
 
 - **Scenario: Autocross circuits are all-dirt sprint circuits**
-  - [ ] **Given** the 3 autocross circuits
-  - [ ] **When** their waypoints are measured
-  - [ ] **Then** the road is unpaved everywhere except a launch pad of 60 m or less on the start straight
-  - [ ] **And** they have no `JumpRamp`, each has at least 1 banked berm, and Hillside Hammer has 2 off-camber corners
+  - [x] **Given** the 3 autocross circuits
+  - [x] **When** their waypoints are measured
+  - [x] **Then** the road is unpaved everywhere except a launch pad of 60 m or less on the start straight
+  - [x] **And** they have no `JumpRamp`, each has at least 1 banked berm, and Hillside Hammer has 2 off-camber corners
 
 - **Scenario: Each Autocross circuit races its own car**
-  - [ ] **Given** Meadow Sprint, Clay Bowl and Hillside Hammer
-  - [ ] **When** the player starts a race on each one
-  - [ ] **Then** the player and all bots drive the Mudlark Cross Car, the Brawler Touring AX and the Talon Super Buggy
-  - [ ] **And** the Classic Garage shows the 3 cars with their images and specs
+  - [x] **Given** Meadow Sprint, Clay Bowl and Hillside Hammer
+  - [x] **When** the player starts a race on each one
+  - [x] **Then** the player and all bots drive the Mudlark Cross Car, the Brawler Touring AX and the Talon Super Buggy
+  - [x] **And** the Classic Garage shows the 3 cars with their images and specs
 
 - **Scenario: GT circuits reward speed and braking**
-  - [ ] **Given** the 3 GT circuits
-  - [ ] **When** their layouts are measured
-  - [ ] **Then** each has a straight of at least 300 m and at least 1 chicane
-  - [ ] **And** Ridge Ring and Coastal Grand Prix have raised ground of 5 m or more with no self-crossing
-  - [ ] **And** each uses Grass and DeepGravel run-off, and no Asphalt run-off, and runoff width changes along the lap
+  - [x] **Given** the 3 GT circuits
+  - [x] **When** their layouts are measured
+  - [x] **Then** each has a straight of at least 300 m and at least 1 chicane
+  - [x] **And** Ridge Ring and Coastal Grand Prix have raised ground of 5 m or more with no self-crossing
+  - [x] **And** each uses Grass and DeepGravel run-off, and no Asphalt run-off, and runoff width changes along the lap
 
 - **Scenario: Stock Car circuits are banked**
-  - [ ] **Given** Thunder Bowl, Tri-Oval Speedway and Roval
-  - [ ] **When** the player drives a lap
-  - [ ] **Then** the main turns are banked at least 18° (24° on Thunder Bowl)
-  - [ ] **And** Roval leaves the oval for an infield part with a chicane and joins it again
+  - [x] **Given** Thunder Bowl, Tri-Oval Speedway and Roval
+  - [x] **When** the player drives a lap
+  - [x] **Then** the main turns are banked at least 18° (24° on Thunder Bowl)
+  - [x] **And** Roval leaves the oval for an infield part with a chicane and joins it again
 
 - **Scenario: All-terrain circuits have themed surfaces and hills**
-  - [ ] **Given** Dune Sea, Mudbath Valley and Frostbite Pass
-  - [ ] **When** the player drives a lap
-  - [ ] **Then** the road is sand, mud and snow, and each lap climbs and drops at least 5 m
-  - [ ] **And** Dune Sea crests and the ramps lift the car
+  - [x] **Given** Dune Sea, Mudbath Valley and Frostbite Pass
+  - [x] **When** the player drives a lap
+  - [x] **Then** the road is sand, mud and snow, and each lap climbs and drops at least 5 m
+  - [x] **And** Dune Sea crests and the ramps lift the car
 
 - **Scenario: Raised ground is visible**
-  - [ ] **Given** Ridge Ring and Dune Sea
-  - [ ] **When** the camera shows a raised part that is not a bridge
-  - [ ] **Then** the road edges show the embankment shade, and flat parts do not
+  - [x] **Given** Ridge Ring and Dune Sea
+  - [x] **When** the camera shows a raised part that is not a bridge
+  - [x] **Then** the road edges show the embankment shade, and flat parts do not
 
 - **Scenario: Old circuits are retired safely**
-  - [ ] **Given** a save, replay or record that names one of the 9 deleted ids
-  - [ ] **When** the game loads it
-  - [ ] **Then** it loads the alias circuit of section 6 and does not crash
-  - [ ] **And** no code, test, config or doc still names a deleted id outside `.aliases.json`, `TrackChoice` and old specs
+  - [x] **Given** a save, replay or record that names one of the 9 deleted ids
+  - [x] **When** the game loads it
+  - [x] **Then** it loads the alias circuit of section 6 and does not crash
+  - [x] **And** no code, test, config or doc still names a deleted id outside `.aliases.json`, `TrackChoice` and old specs
 
 - **Scenario: dirt_figure_eight stays in Extreme Off-Road**
-  - [ ] **Given** the Extreme Off-Road module
-  - [ ] **When** the player starts one of its 3 series that race on `dirt_figure_eight`
-  - [ ] **Then** the round loads as before, and the Classic list does not show it
+  - [x] **Given** the Extreme Off-Road module
+  - [x] **When** the player starts one of its 3 series that race on `dirt_figure_eight`
+  - [x] **Then** the round loads as before, and the Classic list does not show it
 
 - **Scenario: The builder reproduces the circuits**
-  - [ ] **Given** the committed files in `tracks/classic/`
-  - [ ] **When** `python3 scripts/classic_circuit_builder.py --check` runs
-  - [ ] **Then** it exits 0
+  - [x] **Given** the committed files in `tracks/classic/`
+  - [x] **When** `python3 scripts/classic_circuit_builder.py --check` runs
+  - [x] **Then** it exits 0
 
 - **Scenario: Mario signs off Stage 1**
-  - [ ] **Given** Stage 1 is on `main`
-  - [ ] **When** Mario has played the 18 circuits and the 3 Autocross cars, and his fixes are in
-  - [ ] **Then** he closes the play-test gate task, and Stage 2 tasks become ready
+  - [x] **Given** Stage 1 is on `main`
+  - [x] **When** Mario has played the 18 circuits and the 3 Autocross cars, and his fixes are in
+  - [x] **Then** he closes the play-test gate task, and Stage 2 tasks become ready
 
 #### Stage 2 — Decoration
 
 - **Scenario: Rocks and new plants work**
-  - [ ] **Given** a circuit with rocks, bushes, cacti and snow pines
-  - [ ] **When** a car drives into them
-  - [ ] **Then** rocks and cacti stop the car like a tree trunk, and bushes only slow it
-  - [ ] **And** they draw with a shadow in the race and in the circuit viewer
+  - [x] **Given** a circuit with rocks, bushes, cacti and snow pines
+  - [x] **When** a car drives into them
+  - [x] **Then** rocks and cacti stop the car like a tree trunk, and bushes only slow it
+  - [x] **And** they draw with a shadow in the race and in the circuit viewer
 
 - **Scenario: Buildings work**
-  - [ ] **Given** a circuit with each building style
-  - [ ] **When** the race and the circuit viewer show them
-  - [ ] **Then** they draw with a roof and a shadow, and a car cannot drive through them
-  - [ ] **And** no sign shows a real brand
+  - [x] **Given** a circuit with each building style
+  - [x] **When** the race and the circuit viewer show them
+  - [x] **Then** they draw with a roof and a shadow, and a car cannot drive through them
+  - [x] **And** no sign shows a real brand
 
 - **Scenario: Scenery never blocks the road**
-  - [ ] **Given** each decorated circuit
-  - [ ] **When** `validate_track` runs
-  - [ ] **Then** no tree trunk, rock or building overlaps the road, a kerb or the strip inside the walls
+  - [x] **Given** each decorated circuit
+  - [x] **When** `validate_track` runs
+  - [x] **Then** no tree trunk, rock or building overlaps the road, a kerb or the strip inside the walls
 
 - **Scenario: Each group has its theme**
-  - [ ] **Given** the 18 decorated circuits
-  - [ ] **When** Mario looks at each one
-  - [ ] **Then** it matches the theme of section 8 and meets its minimum counts
-  - [ ] **And** the karting circuits look like indoor halls, with no trees
+  - [x] **Given** the 18 decorated circuits
+  - [x] **When** Mario looks at each one
+  - [x] **Then** it matches the theme of section 8 and meets its minimum counts
+  - [x] **And** the karting circuits look like indoor halls, with no trees
 
 - **Scenario: Decoration does not slow the game**
-  - [ ] **Given** the circuit with the most scenery
-  - [ ] **When** a race runs
-  - [ ] **Then** new scenery uses view culling
+  - [x] **Given** the circuit with the most scenery
+  - [x] **When** a race runs
+  - [x] **Then** new scenery uses view culling
 
 ---
 
