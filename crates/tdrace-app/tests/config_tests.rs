@@ -593,5 +593,30 @@ fn test_surface_texture_settings_ui_lifecycle() {
     assert_eq!(next, SurfaceTextureQuality::High);
 }
 
+#[test]
+fn test_legacy_15_element_affinities_in_config_toml() {
+    let toml_snippet = r#"
+affinities = [
+    1.0, 0.98, 0.95, 0.85, 0.32, 0.40, 0.28, 0.15,
+    0.22, 0.10, 0.13, 0.09, 0.05, 0.22, 0.10
+]
+"#;
+    let map: tdrace_core::physics::surface::SurfaceAffinityMap =
+        toml::from_str(toml_snippet).expect("15-element affinities must deserialize from TOML");
+    assert_eq!(map.get(tdrace_core::physics::surface::SurfaceType::Asphalt), 1.0);
+    assert_eq!(map.get(tdrace_core::physics::surface::SurfaceType::PackedGravel), 0.32);
+    assert_eq!(map.get(tdrace_core::physics::surface::SurfaceType::DeepGravel), 0.32);
+
+    let user_path = std::path::Path::new("/home/mario/.config/tdrace/config.toml");
+    if user_path.exists() {
+        let user_config = GameConfig::load_from_path(user_path);
+        assert!(user_config.is_ok(), "User config at {:?} must parse successfully: {:?}", user_path, user_config.err());
+        let cfg = user_config.unwrap();
+        let drift = cfg.cars.get("drift_car").expect("drift_car in user config");
+        let map = drift.wheels[0].compound.surface_affinity;
+        assert_eq!(map.get(tdrace_core::physics::surface::SurfaceType::DeepGravel), map.get(tdrace_core::physics::surface::SurfaceType::PackedGravel));
+    }
+}
+
 
 

@@ -467,7 +467,49 @@ impl CompoundId {
 /// Compact 16-element array mapping each SurfaceType to its compound friction multiplier (Spec 074).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SurfaceAffinityMap {
+    #[serde(deserialize_with = "deserialize_affinities")]
     affinities: [f32; 16],
+}
+
+fn deserialize_affinities<'de, D>(deserializer: D) -> Result<[f32; 16], D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct AffinitiesVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for AffinitiesVisitor {
+        type Value = [f32; 16];
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("an array of 15 or 16 float affinities")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut arr = [1.0f32; 16];
+            let mut count = 0;
+            while let Some(val) = seq.next_element()? {
+                if count < 16 {
+                    arr[count] = val;
+                }
+                count += 1;
+            }
+            if count == 15 {
+                // Backward compatibility (Spec 099): 15-element array from older configs.
+                // Index 4 was Gravel in the 15-element layout; DeepGravel is index 15.
+                arr[15] = arr[4];
+                Ok(arr)
+            } else if count == 16 {
+                Ok(arr)
+            } else {
+                Err(serde::de::Error::invalid_length(count, &self))
+            }
+        }
+    }
+
+    deserializer.deserialize_seq(AffinitiesVisitor)
 }
 
 impl Default for SurfaceAffinityMap {
@@ -759,4 +801,36 @@ mod tests {
         assert!(ice.get(SurfaceType::SheetIce) > at.get(SurfaceType::SheetIce));
         assert!(at.get(SurfaceType::SheetIce) > soft.get(SurfaceType::SheetIce));
     }
+
+    #[test]
+    fn test_surface_affinity_map_deserialization_backward_compatibility() {
+        // Legacy 15-element array from pre-Spec 099
+        let json_15 = r#"{
+            "affinities": [
+                1.0, 0.98, 0.95, 0.85, 0.32, 0.40, 0.28, 0.15,
+                0.22, 0.10, 0.13, 0.09, 0.05, 0.22, 0.10
+            ]
+        }"#;
+        let map_15: SurfaceAffinityMap = serde_json::from_str(json_15).expect("15-element array must deserialize");
+        assert_eq!(map_15.get(SurfaceType::Asphalt), 1.0);
+        assert_eq!(map_15.get(SurfaceType::PackedGravel), 0.32);
+        // DeepGravel (index 15) must inherit the legacy Gravel affinity (index 4)
+        assert_eq!(map_15.get(SurfaceType::DeepGravel), 0.32);
+
+        // Modern 16-element array
+        let json_16 = r#"{
+            "affinities": [
+                1.0, 0.98, 0.95, 0.85, 0.85, 0.40, 0.28, 0.15,
+                0.22, 0.10, 0.13, 0.09, 0.05, 0.22, 0.10, 0.35
+            ]
+        }"#;
+        let map_16: SurfaceAffinityMap = serde_json::from_str(json_16).expect("16-element array must deserialize");
+        assert_eq!(map_16.get(SurfaceType::PackedGravel), 0.85);
+        assert_eq!(map_16.get(SurfaceType::DeepGravel), 0.35);
+
+        // Invalid lengths must fail
+        let json_14 = r#"{"affinities": [1.0, 2.0]}"#;
+        assert!(serde_json::from_str::<SurfaceAffinityMap>(json_14).is_err());
+    }
 }
+
