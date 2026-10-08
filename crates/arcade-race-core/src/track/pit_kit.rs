@@ -8,8 +8,12 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use super::geometry::{LineSegment, PitLaneChevron};
-use super::spline::TrackSpline;
+use wheelbase::SurfaceType;
+
+use super::geometry::{LineSegment, PitBox, PitLane, PitLaneChevron, PitLaneExitQuad, PitLaneJunctionData};
+use super::scenery::{Building, BuildingStyle};
+use super::spline::{catmull_rom_centripetal_2d, TrackSpline, TrackWaypoint};
+use super::Track;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Junction component (shared with spec 102)
@@ -428,4 +432,314 @@ pub struct PitLaneLayout {
     pub road_width: f32,
     pub speed_limit: f32,
     pub box_row: PitBoxRow,
+}
+
+/// Pit lane rule violations (spec 101 Pillar V). Junction rules are wrapped in `Junction`.
+#[derive(Debug, Clone, PartialEq)]
+pub enum PitKitError {
+    Junction(JunctionError),
+    InvalidParameter { name: &'static str },
+    RoadTooTight { s: f32, radius: f32 },
+    RoadOverlapsTrack { s: f32 },
+    BoxRowOffRoad { box_index: u32 },
+    JunctionOrder,
+}
+
+impl From<JunctionError> for PitKitError {
+    fn from(e: JunctionError) -> Self {
+        PitKitError::Junction(e)
+    }
+}
+
+/// Output of [`PitLaneLayout::compile`]: the runtime pit lane, its junction markings, garages and wall anchors.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CompiledPitLane {
+    pub lane: PitLane,
+    pub junctions: PitLaneJunctionData,
+    pub garages: Vec<Building>,
+    /// Pit side of the main track.
+    pub side: Side,
+    /// Where the dividing pit wall starts (entry junction) and ends (exit junction).
+    pub divider_start: Vec2,
+    pub divider_end: Vec2,
+    /// Arc length on the compiled lane where the free road starts and ends.
+    pub road_start_s: f32,
+    pub road_end_s: f32,
+}
+
+/// Distance of the guide points that fix the road heading at both junction joints (m).
+const ROAD_GUIDE_DISTANCE: f32 = 5.0;
+/// Sampling step along the free road (m).
+const ROAD_STEP: f32 = 1.0;
+/// Minimum radius at a stall (m).
+const BOX_MIN_RADIUS: f32 = 50.0;
+/// Upper bound on stalls, so untrusted JSON cannot ask for an unbounded allocation.
+const MAX_PIT_BOXES: u32 = 100;
+/// Default pit box stop radius (spec 062).
+const BOX_STOP_RADIUS: f32 = 3.0;
+/// Garage depth away from the road (m), and its clearance outside the outer pit wall (m).
+const GARAGE_DEPTH: f32 = 10.0;
+const GARAGE_WALL_CLEARANCE: f32 = 1.0;
+/// Offset of the outer pit wall from the pit road edge, as `Track::generate_pit_lane_walls` places it (m).
+const OUTER_WALL_OFFSET: f32 = 1.5;
+/// Tolerance on the road-to-track gap rule (m). The 5 m guide points make the road bulge up to ~0.13 m toward the
+/// track next to a joint when the road then bends away from it.
+const ROAD_GAP_TOLERANCE: f32 = 0.25;
+/// Largest heading jump allowed at a junction/road joint (degrees).
+const MAX_JOINT_KINK_DEG: f32 = 2.0;
+
+impl PitLaneLayout {
+    /// Compiles the layout on `track`'s main spline. Pure: the same layout and main spline give the same lane.
+    pub fn compile(&self, track: &Track) -> Result<CompiledPitLane, PitKitError> {
+        let main = &track.spline;
+        self.check_parameters()?;
+
+        let entry = build_junction(main, &self.entry, JunctionRole::Entry, self.side, self.road_width)?;
+        let exit = build_junction(main, &self.exit, JunctionRole::Exit, self.side, self.road_width)?;
+        self.check_order(main)?;
+
+        // Free road: centripetal Catmull-Rom with guide points that fix the heading at both joints.
+        let h = ROAD_GUIDE_DISTANCE;
+        let mut controls = vec![entry.free_end, entry.free_end + entry.free_heading * h];
+        controls.extend(self.road_waypoints.iter().copied());
+        controls.push(exit.free_end - exit.free_heading * h);
+        controls.push(exit.free_end);
+        let ghost_start = entry.free_end - entry.free_heading * h;
+        let ghost_end = exit.free_end + exit.free_heading * h;
+        let mut road = vec![controls[0]];
+        for i in 0..controls.len() - 1 {
+            let p0 = if i == 0 { ghost_start } else { controls[i - 1] };
+            let p1 = controls[i];
+            let p2 = controls[i + 1];
+            let p3 = if i + 2 < controls.len() { controls[i + 2] } else { ghost_end };
+            let n = (((p2 - p1).length() / ROAD_STEP).ceil() as usize).max(1);
+            for k in 1..=n {
+                road.push(catmull_rom_centripetal_2d(p0, p1, p2, p3, k as f32 / n as f32));
+            }
+        }
+
+        // Guard 6: heading jump at both joints, from the road tangent at the joint itself.
+        let nc = controls.len();
+        const EPS_T: f32 = 1e-3;
+        let road_out = catmull_rom_centripetal_2d(ghost_start, controls[0], controls[1], controls[2], EPS_T) - controls[0];
+        let entry_kink = joint_kink_deg(entry.free_heading, road_out);
+        if entry_kink > MAX_JOINT_KINK_DEG {
+            return Err(JunctionError::JointKink { junction: JunctionRole::Entry, angle_deg: entry_kink }.into());
+        }
+        let road_in = controls[nc - 1]
+            - catmull_rom_centripetal_2d(controls[nc - 3], controls[nc - 2], controls[nc - 1], ghost_end, 1.0 - EPS_T);
+        let last = road.len() - 1;
+        let exit_kink = joint_kink_deg(exit.free_heading, road_in);
+        if exit_kink > MAX_JOINT_KINK_DEG {
+            return Err(JunctionError::JointKink { junction: JunctionRole::Exit, angle_deg: exit_kink }.into());
+        }
+
+        // Guard 7: outside the junctions the road keeps its gap to the main track and does not cross itself.
+        let min_gap = self.entry.divider_gap.min(self.exit.divider_gap) - ROAD_GAP_TOLERANCE;
+        let road_len_at = cumulative_lengths(&road);
+        for (i, &p) in road.iter().enumerate() {
+            let proj = main.project_point(p);
+            let gap = proj.lateral_offset.abs() - proj.track_width * 0.5 - self.road_width * 0.5;
+            if gap < min_gap {
+                return Err(PitKitError::RoadOverlapsTrack { s: road_len_at[i] });
+            }
+        }
+        if let Some(i) = first_self_crossing(&road) {
+            return Err(PitKitError::RoadOverlapsTrack { s: road_len_at[i] });
+        }
+
+        // Compiled lane: entry junction, road, exit junction.
+        let mut points: Vec<Vec2> = entry.centreline[..entry.centreline.len() - 1].to_vec();
+        let road_start_s = cumulative_lengths(&entry.centreline).last().copied().unwrap_or(0.0);
+        points.extend_from_slice(&road);
+        let road_end_s = road_start_s + road_len_at[last];
+        points.extend_from_slice(&exit.centreline[1..]);
+        let waypoints: Vec<TrackWaypoint> = points
+            .iter()
+            .map(|&p| {
+                let mut wp = TrackWaypoint::new(p, self.road_width)
+                    .with_runoff_surface(SurfaceType::Asphalt)
+                    .with_walls(false, false);
+                wp.surface = Some(SurfaceType::Asphalt);
+                wp.elevation = main.project_point(p).elevation;
+                wp
+            })
+            .collect();
+        let spline = TrackSpline::new(waypoints, false);
+
+        // Guard 5: free road minimum radius, measured on the compiled lane.
+        let min_radius = self.road_width * 0.5 + JUNCTION_RADIUS_MARGIN;
+        let mut s = road_start_s;
+        while s <= road_end_s {
+            let radius = 1.0 / signed_curvature(&spline, s).abs().max(1e-6);
+            if radius < min_radius {
+                return Err(PitKitError::RoadTooTight { s, radius });
+            }
+            s += ROAD_STEP;
+        }
+
+        // Guard 8 and Pillar IV: stalls on the road part, on stretches of radius >= 50 m, with a garage each.
+        let sigma = self.side.sign();
+        let mut pit_boxes = Vec::with_capacity(self.box_row.count as usize);
+        let mut garages = Vec::new();
+        for i in 0..self.box_row.count {
+            let s_box = self.box_row.start_s + i as f32 * self.box_row.spacing;
+            let off_road = s_box - BOX_STOP_RADIUS < road_start_s || s_box + BOX_STOP_RADIUS > road_end_s;
+            let tight = [s_box - BOX_STOP_RADIUS, s_box, s_box + BOX_STOP_RADIUS]
+                .iter()
+                .any(|&sp| signed_curvature(&spline, sp).abs() > 1.0 / BOX_MIN_RADIUS);
+            if off_road || tight {
+                return Err(PitKitError::BoxRowOffRoad { box_index: i });
+            }
+            let sample = spline.sample_at_distance(s_box);
+            pit_boxes.push(PitBox::new(sample.point, sample.tangent, BOX_STOP_RADIUS, sample.elevation));
+            if self.box_row.garages {
+                let out = sample.normal * sigma;
+                let reach = self.road_width * 0.5 + OUTER_WALL_OFFSET + GARAGE_WALL_CLEARANCE + GARAGE_DEPTH * 0.5;
+                let heading = sample.tangent.y.atan2(sample.tangent.x);
+                // A building's front faces its right; turn it so the front faces the road.
+                let angle = if sigma > 0.0 { heading } else { heading + std::f32::consts::PI };
+                let size = Vec2::new(self.box_row.spacing * 0.9, GARAGE_DEPTH);
+                let mut garage = Building::new(0, sample.point + out * reach, size, angle, BuildingStyle::PitGarage);
+                garage.elevation = sample.elevation;
+                garages.push(garage);
+            }
+        }
+
+        let lane = PitLane::new(
+            spline,
+            self.road_width,
+            self.speed_limit,
+            pit_boxes,
+            entry.gate,
+            exit.gate,
+        );
+        let junctions = junction_data(&lane, &entry, &exit);
+        Ok(CompiledPitLane {
+            lane,
+            junctions,
+            garages,
+            side: self.side,
+            divider_start: entry.divider_end,
+            divider_end: exit.divider_end,
+            road_start_s,
+            road_end_s,
+        })
+    }
+
+    /// Guard 1 for the pit lane parameters. Written so NaN fails.
+    fn check_parameters(&self) -> Result<(), PitKitError> {
+        let bad = |name| Err(PitKitError::InvalidParameter { name });
+        if !(self.road_width >= 4.0 && self.road_width.is_finite()) {
+            return bad("road_width");
+        }
+        if !(self.speed_limit > 0.0 && self.speed_limit.is_finite()) {
+            return bad("speed_limit");
+        }
+        if !(1..=MAX_PIT_BOXES).contains(&self.box_row.count) {
+            return bad("count");
+        }
+        if !(self.box_row.spacing > 0.0 && self.box_row.spacing.is_finite()) {
+            return bad("spacing");
+        }
+        if !self.box_row.start_s.is_finite() {
+            return bad("start_s");
+        }
+        if self.road_waypoints.iter().any(|p| !p.is_finite()) {
+            return bad("road_waypoints");
+        }
+        Ok(())
+    }
+
+    /// Guard 9: entry span, then exit span, along the driving direction. Wraps across S/F on a closed main spline.
+    fn check_order(&self, main: &TrackSpline) -> Result<(), PitKitError> {
+        let span = |c: &JunctionComponent| match c.kind {
+            JunctionShape::Taper => c.length,
+            JunctionShape::TurnOff { angle_deg } => {
+                let theta = angle_deg.to_radians();
+                c.length / theta * theta.sin()
+            }
+        };
+        let total = main.total_length;
+        let ahead = if main.closed {
+            (self.exit.s - self.entry.s).rem_euclid(total)
+        } else {
+            self.exit.s - self.entry.s
+        };
+        if ahead > span(&self.entry) + span(&self.exit) && ahead < total {
+            Ok(())
+        } else {
+            Err(PitKitError::JunctionOrder)
+        }
+    }
+}
+
+/// Builds the runtime junction markings from the two components (no search).
+fn junction_data(lane: &PitLane, entry: &JunctionGeometry, exit: &JunctionGeometry) -> PitLaneJunctionData {
+    let exit_quads: Vec<PitLaneExitQuad> = exit
+        .quads
+        .iter()
+        .enumerate()
+        .map(|(i, q)| PitLaneExitQuad { quad: *q, has_dashed_line: i % 2 == 0, line_start: q[3], line_end: q[2] })
+        .collect();
+
+    let mut min = Vec2::splat(f32::INFINITY);
+    let mut max = Vec2::splat(f32::NEG_INFINITY);
+    let mut expand = |p: Vec2, r: f32| {
+        min = min.min(p - Vec2::splat(r));
+        max = max.max(p + Vec2::splat(r));
+    };
+    for s in &lane.spline.samples {
+        expand(s.point, lane.road_width * 2.0);
+    }
+    for b in &lane.pit_boxes {
+        expand(b.position, b.stop_radius + 6.0);
+    }
+    for q in entry.quads.iter().chain(exit.quads.iter()) {
+        for p in q {
+            expand(*p, 6.0);
+        }
+    }
+    expand(entry.apex, 6.0);
+    expand(entry.track_edges[0], 6.0);
+    expand(entry.branch_edges[0], 6.0);
+
+    PitLaneJunctionData {
+        bounds_min: min,
+        bounds_max: max,
+        entrance_quads: entry.quads.clone(),
+        has_gore: true,
+        p_apex: entry.apex,
+        track_edge_apex: entry.apex,
+        pit_inner_apex: entry.apex,
+        te_start: entry.track_edges[0],
+        pe_start: entry.branch_edges[0],
+        chevrons: entry.chevrons.clone(),
+        exit_quads,
+    }
+}
+
+fn cumulative_lengths(points: &[Vec2]) -> Vec<f32> {
+    let mut out = Vec::with_capacity(points.len());
+    let mut acc = 0.0;
+    for (i, p) in points.iter().enumerate() {
+        if i > 0 {
+            acc += p.distance(points[i - 1]);
+        }
+        out.push(acc);
+    }
+    out
+}
+
+/// Index of the first polyline segment that crosses a non-adjacent segment.
+fn first_self_crossing(points: &[Vec2]) -> Option<usize> {
+    let segs: Vec<LineSegment> = points.windows(2).map(|w| LineSegment::new(w[0], w[1])).collect();
+    for i in 0..segs.len() {
+        for j in i + 2..segs.len() {
+            if segs[i].intersect_segment(&segs[j]).is_some() {
+                return Some(i);
+            }
+        }
+    }
+    None
 }
