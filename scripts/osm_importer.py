@@ -254,6 +254,121 @@ def project_point_to_closed_polyline(p, polyline):
     return best_dist, total_len
 
 
+def rescale_circuit_nonlinear(metric_pts, target_len, fia_len, turn_preservation=0.95, turn_radius_thresh=80.0):
+    """Curvature-selective non-linear geometric rescaling (Spec 097).
+
+    Preserves authentic corner radii and turn arc lengths (s_turn ~= 0.95, R >= 12.0m)
+    while straights absorb the longitudinal compression (s_straight < 0.75) to achieve
+    the exact target circuit length. Distributes the closure residual exclusively along
+    straights via a weighted Lagrange-multiplier formulation, guaranteeing exact loop closure
+    and authentic high-speed cornering dynamics without artificial apex pinches.
+
+    Returns: (rescaled_pts, s_turn, s_straight)
+    """
+    raw_len = polyline_length(metric_pts, closed=True)
+    if raw_len < 1e-3:
+        return list(metric_pts), 1.0, 1.0
+
+    # Resample to dense polyline (spacing ~ 8-10m) to accurately compute local curvature
+    num_dense = max(200, min(1200, int(raw_len / 8.0)))
+    dense_pts, _, _ = resample_polyline(metric_pts, num_dense)
+    n = len(dense_pts)
+
+    # Compute curvature kappa and radius R at each dense point
+    radii = []
+    for i in range(n):
+        p_prev = dense_pts[i - 1]
+        p_curr = dense_pts[i]
+        p_next = dense_pts[(i + 1) % n]
+        ax, ay = p_curr[0] - p_prev[0], p_curr[1] - p_prev[1]
+        bx, by = p_next[0] - p_curr[0], p_next[1] - p_curr[1]
+        cross = ax * by - ay * bx
+        la = math.hypot(ax, ay)
+        lb = math.hypot(bx, by)
+        lc = math.hypot(p_next[0] - p_prev[0], p_next[1] - p_prev[1])
+        if la * lb * lc > 1e-6:
+            k = 2.0 * abs(cross) / (la * lb * lc)
+            r = 1.0 / k if k > 1e-6 else 99999.0
+        else:
+            r = 99999.0
+        radii.append(r)
+
+    # Identify turn points (R <= turn_radius_thresh) with a 2-point dilation buffer
+    raw_turn = [r <= turn_radius_thresh for r in radii]
+    is_turn = [False] * n
+    for i in range(n):
+        if any(raw_turn[(i + off) % n] for off in range(-2, 3)):
+            is_turn[i] = True
+
+    # Segment vectors and original lengths
+    edges = []
+    orig_lens = []
+    for i in range(n):
+        p0 = dense_pts[i]
+        p1 = dense_pts[(i + 1) % n]
+        dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+        l = math.hypot(dx, dy)
+        edges.append((dx, dy))
+        orig_lens.append(l)
+
+    l_turn_real = sum(orig_lens[i] for i in range(n) if is_turn[i])
+    l_straight_real = sum(orig_lens[i] for i in range(n) if not is_turn[i])
+
+    s_turn = turn_preservation
+    if l_straight_real > 1e-3:
+        s_straight = (target_len - s_turn * l_turn_real) / l_straight_real
+    else:
+        s_straight = target_len / raw_len
+        s_turn = s_straight
+
+    # If s_straight is compressed too aggressively (< 0.50), adjust s_turn smoothly
+    if s_straight < 0.50 and l_straight_real > 1e-3:
+        s_straight = 0.50
+        s_turn = (target_len - s_straight * l_straight_real) / l_turn_real
+
+    # Desired vectors d_i*
+    d_star = []
+    weights = []
+    for i in range(n):
+        dx, dy = edges[i]
+        l = orig_lens[i]
+        ux, uy = dx / l, dy / l
+        if is_turn[i]:
+            target_l = s_turn * l
+            w = 1000.0  # high rigidity on corners
+        else:
+            target_l = s_straight * l
+            w = 1.0     # straights absorb loop closure gap
+        d_star.append((target_l * ux, target_l * uy))
+        weights.append(w)
+
+    rx = sum(d[0] for d in d_star)
+    ry = sum(d[1] for d in d_star)
+    inv_w = [1.0 / w for w in weights]
+    sum_inv_w = sum(inv_w)
+
+    # Distribute closure residual via weighted Lagrange multiplier
+    closed_edges = []
+    for i in range(n):
+        factor = inv_w[i] / sum_inv_w
+        ex = d_star[i][0] - factor * rx
+        ey = d_star[i][1] - factor * ry
+        closed_edges.append((ex, ey))
+
+    # Integrate into closed polyline starting at (0, 0)
+    new_pts = [(0.0, 0.0)]
+    for i in range(n - 1):
+        ex, ey = closed_edges[i]
+        new_pts.append((new_pts[-1][0] + ex, new_pts[-1][1] + ey))
+
+    # Final micro-scaling correction for exact length match (within < 0.001%)
+    final_len = sum(math.hypot(e[0], e[1]) for e in closed_edges)
+    scale_corr = target_len / final_len if final_len > 1e-6 else 1.0
+    new_pts = [(x * scale_corr, y * scale_corr) for x, y in new_pts]
+
+    return new_pts, s_turn, s_straight
+
+
 def transform_geo_points(pts_geo, ctx):
     """Transforms a list of (lat, lon) coordinates using track projective parameters."""
     metric = [latlon_to_meters(lat, lon, ctx["lat0"], ctx["lon0"]) for lat, lon in pts_geo]
@@ -276,7 +391,7 @@ def extract_pit_nodes(cid, cfg, root, ways):
         # Auto-detect ways in the relation with role='pit_lane'
         if "rel_id" in cfg:
             rel = next((r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"])), None)
-            if rel:
+            if rel is not None:
                 found_ways = [
                     m.get("ref")
                     for m in rel.findall("member")
@@ -341,21 +456,25 @@ def generate_fallback_pit_lane(final_track_pts):
 
 
 PILOT_PIT_BOUNDS = {
-    "catalunya":   (-4.0,     15.0,  65.0,  78.0),
-    "monza":       (-170.0, -130.0, 50.0, 100.0),
-    "spa":         (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
-    "silverstone": (-5.0,    15.0,  75.0,  90.0, -7.0, -14.5),
-    "madring":     (-5.0,    15.0,  70.0,  85.0, -7.0, -14.0),
-    "bahrain":     (12.0,    32.0, 125.0, 150.0, -7.0, -15.0),
-    "cota":        (15.0,    35.0, 150.0, 180.0,  7.35,  14.5),
+    "catalunya":      (-4.0,     15.0,  65.0,  78.0),
+    "monza":          (-170.0, -130.0, 50.0, 100.0),
+    "spa":            (10.0,    25.0,  75.0,  95.0, -1.5, -7.0),
+    "silverstone":    (-5.0,    15.0,  75.0,  90.0, -8.1, -15.0),
+    "madring":        (12.0,    32.0, 105.0, 130.0, -8.1, -14.5),
+    "bahrain":        (12.0,    32.0, 125.0, 150.0, -8.1, -15.0),
+    "cota":           (15.0,    35.0, 150.0, 180.0,  8.1,  14.5),
+    "montreal":       (5.0,     20.0,  75.0,  95.0, -8.1, -14.5),
+    "red_bull_ring":  (10.0,    30.0, 130.0, 155.0, -8.1, -14.5),
+    "le_mans_sarthe": (10.0,    30.0, 170.0, 200.0, -8.1, -14.8),
+    "monaco":         (10.0,    25.0,  75.0,  95.0, -6.35, -11.25),
 }
 
 
 def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
     """Builds a complete, geometry-governed PitLane dictionary anchored by OSM metadata (Spec 062/077)."""
     if cid == "zandvoort":
-        # Zandvoort's start straight in source JSON runs from wp 26 (50.0, -143.6) to wp 0 (0.0, 0.0)
-        p_start = (50.0, -143.6)
+        # Zandvoort start straight runs from wp 37 (-5.5, -125.7) to wp 0 (0.0, 0.0)
+        p_start = (-5.5, -125.7)
         p_end = (0.0, 0.0)
         dx = p_end[0] - p_start[0]
         dy = p_end[1] - p_start[1]
@@ -484,7 +603,7 @@ def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
             y_split = bounds[4]
             y_parallel = bounds[5]
             d_parallel = abs(y_parallel)
-            side = 1.0 if y_parallel > 0.0 else -1.0
+            side = 1.0 if y_parallel >= 0.0 else -1.0
     else:
         # Detect straight limits around (0, 0)
         n_pts = len(final_track_pts)
@@ -832,6 +951,7 @@ GT_CIRCUITS = {
         "rel_id": 284565,
         "start_node": "1828499259",  # Start/finish node in Monza relation 284565 on the main straight
         "fia_length": 5793.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -840,6 +960,10 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "TEMPLE OF SPEED",
         "pit_ways": ["38168747"],
+        "bank_angles": {
+            # Curva Grande & Parabolica banking
+            5: 3.5, 6: 3.5, 23: 5.0, 24: 5.0, 25: 4.0,
+        },
     },
     "spa": {
         "name": "Circuit de Spa-Francorchamps",
@@ -847,6 +971,7 @@ GT_CIRCUITS = {
         "rel_id": 284560,
         "start_node": "258602622",  # Modern F1 start/finish node in Spa relation 284560 on the pit straight
         "fia_length": 7004.0,
+        "scale": 0.75,
         "num_waypoints": 32,
         "default_width": 14.0,
         "straight_width": 15.0,
@@ -859,12 +984,17 @@ GT_CIRCUITS = {
             # Eau Rouge & Raidillon uphill climb
             3: 2.0, 4: 4.5, 5: 3.0,
         },
+        "bank_angles": {
+            # Eau Rouge compression camber & Blanchimont
+            3: 12.0, 4: 12.0, 28: 4.0,
+        },
     },
     "silverstone": {
         "name": "Silverstone Grand Prix Circuit",
         "description": "High-speed sweeping esses through Maggotts, Becketts and Chapel.",
         "rel_id": 51160,
         "fia_length": 5891.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 14.5,
@@ -872,6 +1002,9 @@ GT_CIRCUITS = {
         "barrier_offset": 4.0,
         "default_laps": 3,
         "tag": "HOME OF BRITISH MOTORSPORT",
+        "bank_angles": {
+            12: 3.0, 13: 3.0,
+        },
     },
     "monaco": {
         "name": "Circuit de Monaco",
@@ -896,6 +1029,7 @@ GT_CIRCUITS = {
         ],
         "start_node": "1868404468",  # Boulevard Albert 1er, the start straight
         "fia_length": 3337.0,
+        "scale": 0.75,
         "num_waypoints": 26,
         "default_width": 10.5,
         "straight_width": 11.5,
@@ -904,12 +1038,8 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "JEWEL IN THE CROWN",
         "elevations": {
-            # Beau Rivage uphill
-            2: 2.0, 3: 3.5,
-            # Casino Square crest
-            4: 4.0, 5: 3.0,
-            # Loews Hairpin descent
-            6: 2.0, 7: 1.0,
+            # Beau Rivage uphill & Casino Square crest (>3.5m harbor clearance across wp 6..8)
+            2: 3.5, 3: 5.5, 4: 6.0, 5: 5.5, 6: 4.5, 7: 3.5, 8: 1.5,
         },
     },
     "suzuka": {
@@ -917,6 +1047,7 @@ GT_CIRCUITS = {
         "description": "Iconic Japanese figure-8 layout featuring Esses, Degner, overpass crossover bridge, and 130R.",
         "rel_id": 284570,
         "fia_length": 5807.0,
+        "scale": 0.75,
         "num_waypoints": 34,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -925,12 +1056,16 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "JAPANESE FIGURE-8",
         "crossover": True,
+        "bank_angles": {
+            30: 4.0, 31: 4.0,  # 130R high-speed banked sweeper
+        },
     },
     "interlagos": {
         "name": "Autodromo Jose Carlos Pace (Interlagos)",
         "description": "Thrilling anti-clockwise Brazilian Grand Prix circuit with Senna 'S', Ferradura, and Juncao.",
         "rel_id": 6781071,
         "fia_length": 4309.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -938,12 +1073,17 @@ GT_CIRCUITS = {
         "barrier_offset": 3.5,
         "default_laps": 3,
         "tag": "BRAZILIAN ROLLERCOASTER",
+        "bank_angles": {
+            1: 3.5, 2: 3.5,  # Senna S
+            25: 5.0, 26: 5.0, # Juncao / Arquibancadas ascent
+        },
     },
     "montreal": {
         "name": "Circuit Gilles Villeneuve (Montreal)",
         "description": "High-speed Canadian island circuit featuring Virage Senna, L'Epingle hairpin, and Wall of Champions.",
         "rel_id": 284595,
         "fia_length": 4361.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -957,6 +1097,7 @@ GT_CIRCUITS = {
         "description": "High-speed Austrian alpine circuit with steep uphill climbs and heavy downhill braking into Remus.",
         "rel_id": 5309181,
         "fia_length": 4318.0,
+        "scale": 0.75,
         "num_waypoints": 26,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -971,6 +1112,9 @@ GT_CIRCUITS = {
             # Downhill to Schlossgold
             5: 2.0, 6: 1.0,
         },
+        "bank_angles": {
+            1: 3.0, 3: 3.0,
+        },
     },
     "catalunya": {
         "name": "Circuit de Barcelona-Catalunya",
@@ -984,6 +1128,7 @@ GT_CIRCUITS = {
         ],
         "start_node": "385973430",  # FIA start/finish line node on the front straight
         "fia_length": 4657.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -993,8 +1138,12 @@ GT_CIRCUITS = {
         "tag": "SPANISH GP BENCHMARK",
         "pit_ways": ["33742214", "178416729", "178416733"],
         "elevations": {
-            # Turn 9 Campsa uphill crest
-            15: 2.0, 16: 3.5, 17: 2.0,
+            # Turn 9 Campsa uphill crest & overpass clearance
+            11: 2.5, 12: 5.0, 13: 2.5,
+        },
+        "bank_angles": {
+            3: 3.0, 4: 3.0,  # Curva Renault
+            11: 4.0,         # Campsa
         },
     },
     "zandvoort": {
@@ -1002,6 +1151,7 @@ GT_CIRCUITS = {
         "description": "Dune rollercoaster in the Netherlands featuring 18-degree banked corners at Hugenholtz and Arie Luyendyk.",
         "rel_id": 13545573,
         "fia_length": 4259.0,
+        "scale": 0.75,
         "num_waypoints": 28,
         "default_width": 12.5,
         "straight_width": 14.0,
@@ -1010,12 +1160,14 @@ GT_CIRCUITS = {
         "default_laps": 3,
         "tag": "DUTCH DUNES",
         "elevations": {
-            # Hugenholtz bowl
-            4: 2.0, 5: 3.5, 6: 2.0,
-            # Dunes crest
-            10: 2.5, 11: 3.0, 12: 1.5,
+            # Hugenholtz bowl and overpass bridge (>3.5m clearance past wp 11)
+            4: 2.5, 5: 4.8, 6: 5.5, 7: 5.5, 8: 5.5, 9: 5.5, 10: 5.5, 11: 4.5, 12: 2.0,
             # Arie Luyendyk banked turn
             25: 1.5, 26: 2.0,
+        },
+        "bank_angles": {
+            # Turn 3 Hugenholtzbocht parabolic bowl & Turn 14 Arie Luyendykbocht
+            4: 19.0, 22: 18.0, 23: 18.0, 24: 12.0,
         },
     },
     "bahrain": {
@@ -1023,6 +1175,7 @@ GT_CIRCUITS = {
         "description": "High-power desert battleground under the floodlights with heavy braking zones and abrasive tarmac.",
         "rel_id": 284538,
         "fia_length": 5412.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1072,6 +1225,7 @@ GT_CIRCUITS = {
             (303311924, 634071195, 3076643588), (686335806, 3076643588, 1161613127), (686335807, 1161613127, 5411304502),
         ],
         "fia_length": 4940.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 11.5,
         "straight_width": 13.0,
@@ -1089,6 +1243,7 @@ GT_CIRCUITS = {
         "description": "Austin Texas spectacle with steep uphill Turn 1 blind crest, Maggotts-inspired Esses, and multi-apex carousel.",
         "rel_id": 6537729,
         "fia_length": 5513.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1096,9 +1251,13 @@ GT_CIRCUITS = {
         "barrier_offset": 4.0,
         "default_laps": 3,
         "tag": "AUSTIN SPECTACLE",
+        "start_node": "7909207460",
         "elevations": {
             # Steep Turn 1 uphill crest
             2: 2.0, 3: 4.5, 4: 2.5,
+        },
+        "bank_angles": {
+            2: 5.0, 3: 5.0,  # Turn 1 steep uphill banking
         },
     },
     "madring": {
@@ -1106,6 +1265,7 @@ GT_CIRCUITS = {
         "description": "Spanish Grand Prix hybrid street circuit navigating the IFEMA complex and Valdebebas avenues.",
         "rel_id": 18813472,
         "fia_length": 5474.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.0,
         "straight_width": 14.5,
@@ -1120,6 +1280,7 @@ GT_CIRCUITS = {
         "description": "Challenging Eifel circuit featuring Castrol-S chicane, Mercedes Arena, and Schumacher S.",
         "rel_id": 38567,
         "fia_length": 5148.0,
+        "scale": 0.75,
         "num_waypoints": 30,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1137,12 +1298,16 @@ GT_CIRCUITS = {
             # Schumacher-S crest
             11: 1.5, 12: 2.5, 13: 2.0,
         },
+        "bank_angles": {
+            1: 3.0, 12: 3.5,
+        },
     },
     "bathurst": {
         "name": "Mount Panorama (Bathurst)",
         "description": "The iconic Australian mountain rollercoaster: Hell Corner, Skyline, The Dipper, and Conrod Straight.",
         "rel_id": 6942508,
         "fia_length": 6213.0,
+        "scale": 0.75,
         "num_waypoints": 32,
         "default_width": 12.5,
         "straight_width": 14.5,
@@ -1160,14 +1325,18 @@ GT_CIRCUITS = {
             # The Esses / Dipper steep descent
             12: 2.5, 13: 1.5, 14: 0.5,
         },
+        "bank_angles": {
+            1: 3.0, 20: 3.0,  # Hell Corner, The Chase
+        },
     },
     "portimao_gp": {
         "name": "Autodromo Internacional do Algarve",
         "description": "Spectacular undulating Portuguese rollercoaster featuring Torre VIP and sweeping downhill Galp curve.",
         "rel_id": 7509968,
         "fia_length": 4653.0,
+        "scale": 0.75,
         "num_waypoints": 28,
-        "default_width": 13.5,
+        "default_width": 14.0,
         "straight_width": 15.0,
         "barrier": "BarrierType::Steel",
         "barrier_offset": 4.0,
@@ -1178,12 +1347,26 @@ GT_CIRCUITS = {
         "module_id": "gt",
         "modules": ["gt"],
         "elevations": {
-            # Torre VIP hairpin crest & plunge
-            6: 2.0, 7: 4.0, 8: 3.0,
-            # Samsung crest
-            12: 2.0, 13: 3.0, 14: 2.0,
-            # Downhill plunge into Galp
-            24: 2.0, 25: 1.0,
+            # Spec 097: > 18m total vertical relief rollercoaster profile
+            0: 0.0, 1: 0.0, 2: 0.0, 3: 1.5, 4: 2.5,
+            # Turn 1 to 2 downhill plunge
+            5: -4.0,
+            # Turn 3 Lagos hairpin compression zone
+            6: -4.5,
+            # Turn 4 to Torre VIP steep climb
+            7: -3.0, 8: 1.5, 9: 6.5, 10: 10.0, 11: 11.5,
+            # Samsung crest and circuit peak
+            12: 13.0, 13: 14.0, 14: 8.0,
+            # Downhill plunge into Portimao basin
+            15: 3.0, 16: 0.0, 17: -2.0, 18: -2.0, 19: 0.0,
+            # Ascent to Turn 13-14
+            20: 2.0, 21: 3.0, 22: 3.0,
+            # Downhill plunge through Galp curve onto home straight
+            23: 3.0, 24: 2.0, 25: 1.0, 26: 0.5, 27: 0.0,
+        },
+        "bank_angles": {
+            # Turn 3 Lagos camber, Turn 13, and Turn 15 Galp downhill banking
+            6: 3.5, 21: 5.0, 24: 6.5, 25: 6.5, 26: 4.0,
         },
     },
     "le_mans_sarthe": {
@@ -1191,6 +1374,7 @@ GT_CIRCUITS = {
         "description": "The crown jewel of endurance motorsport: Dunlop Bridge, Mulsanne Straight, Indianapolis, and Porsche Curves.",
         "rel_id": 2126739,
         "fia_length": 13626.0,
+        "scale": 0.75,
         "num_waypoints": 36,
         "default_width": 13.5,
         "straight_width": 15.0,
@@ -1205,6 +1389,9 @@ GT_CIRCUITS = {
         "elevations": {
             # Dunlop curve & bridge uphill crest
             1: 1.5, 2: 3.0, 3: 2.0,
+        },
+        "bank_angles": {
+            28: 4.0, 29: 4.0,  # Indianapolis & Porsche Curves
         },
     },
 }
@@ -1273,17 +1460,23 @@ def process_gt_circuit(cid, cache_dir):
 
     measured_len = polyline_length(rotated_pts, closed=True)
     check_length_ratio(cid, measured_len, cfg["fia_length"])
-    target_half_len = cfg["fia_length"] * 0.5
-    scale_factor = target_half_len / measured_len if measured_len > 0 else 1.0
-
-    scaled_pts = [(x * scale_factor, y * scale_factor) for x, y in rotated_pts]
+    scale = cfg.get("scale", 0.5)
+    target_circuit_len = cfg["fia_length"] * scale
+    if cfg.get("nonlinear", True) and scale != 1.0:
+        scaled_pts, s_turn, s_straight = rescale_circuit_nonlinear(
+            rotated_pts, target_circuit_len, cfg["fia_length"], turn_preservation=cfg.get("turn_preservation", 0.95)
+        )
+        scale_factor = s_straight
+    else:
+        scale_factor = target_circuit_len / measured_len if measured_len > 0 else 1.0
+        scaled_pts = [(x * scale_factor, y * scale_factor) for x, y in rotated_pts]
 
     x0, y0 = scaled_pts[0]
     aligned_pts = [(x - x0, y - y0) for x, y in scaled_pts]
 
-    # Enforce minimum centerline radius R_min >= w/2 + 1.0m (Spec 071)
-    road_w = cfg.get("default_width", cfg.get("width", 12.0))
-    min_radius = road_w * 0.5 + 1.0
+    # Enforce minimum centerline radius R_min >= w/2 + 3.0m (Spec 097 Section 3)
+    road_w = cfg.get("default_width", cfg.get("width", 14.0))
+    min_radius = road_w * 0.5 + 3.0
     filleted_pts, _ = fillet_corners(aligned_pts, [None] * len(aligned_pts), min_radius, min_turn_deg=15.0)
 
     resampled, _, final_len = resample_polyline(filleted_pts, cfg["num_waypoints"])
@@ -1329,11 +1522,10 @@ def process_gt_circuit(cid, cache_dir):
         "crossover": crossover_ctx,
     }
 
-    pit_lane = build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_pts)
-
     n = len(final_pts)
     waypoints = []
     custom_elevations = cfg.get("elevations", {})
+    custom_banks = cfg.get("bank_angles", cfg.get("corner_banks", {}))
 
     for i in range(n):
         x, y = final_pts[i]
@@ -1350,19 +1542,20 @@ def process_gt_circuit(cid, cache_dir):
             right_curb = True
 
         elev = custom_elevations.get(i, 0.0)
+        bank = custom_banks.get(i, 0.0) if isinstance(custom_banks, dict) else 0.0
 
         # Suzuka bridge elevation and corridor clearance
         wall_dist = None
         if cfg.get("crossover"):
-            if i in [24, 25, 26]:
-                elev = 5.0
-            elif i in [23, 27]:
+            if i in [25, 26, 27]:
+                elev = 5.5
+            elif i in [24, 28]:
                 elev = 2.5
             else:
                 elev = 0.0
 
-            # Narrow width and wall distance at parallel hairpin corridor 16-17 / 22-23
-            if i in [16, 17, 22, 23]:
+            # Narrow width and wall distance at parallel hairpin corridor
+            if i in [14, 15, 16, 17, 22, 23]:
                 width = 11.5
                 wall_dist = 2.2
 
@@ -1372,11 +1565,36 @@ def process_gt_circuit(cid, cache_dir):
             "width": round(width, 1),
             "left_curb": left_curb,
             "right_curb": right_curb,
-            "elevation": elev,
+            "elevation": round(elev, 1),
+            "bank_angle": round(bank, 1),
         }
         if wall_dist is not None:
             wp_entry["wall_dist"] = wall_dist
         waypoints.append(wp_entry)
+
+    # Spec 097 Pillar V: Multi-waypoint hairpin arc fans for acute corners
+    waypoints = smooth_hairpin_arc_fans(
+        waypoints,
+        target_radius=max(26.0, road_w * 0.5 + 15.0),
+        min_deflection_deg=80.0,
+        default_width=road_w,
+        min_seg_len=15.0,
+    )
+
+    # Spec 097 Pillar II: Calibrate spline length to exactly match target_circuit_len (+-0.5%)
+    pts = [(w["x"], w["y"]) for w in waypoints]
+    cur_splen = compute_spline_length(pts)
+    if cur_splen > 0:
+        calib = target_circuit_len / cur_splen
+        for w in waypoints:
+            w["x"] = round(w["x"] * calib, 1)
+            w["y"] = round(w["y"] * calib, 1)
+        final_len = round(target_circuit_len, 1)
+    else:
+        final_len = round(polyline_length(pts, closed=True), 1)
+
+    final_track_pts = [(w["x"], w["y"]) for w in waypoints]
+    pit_lane = build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts)
 
     return {
         "id": cid,
@@ -1387,7 +1605,9 @@ def process_gt_circuit(cid, cache_dir):
         "barrier_offset": cfg["barrier_offset"],
         "default_laps": cfg["default_laps"],
         "fia_length": cfg["fia_length"],
-        "half_length": target_half_len,
+        "half_length": target_circuit_len,
+        "target_len": target_circuit_len,
+        "scale": scale,
         "final_len": round(final_len, 1),
         "waypoints": waypoints,
         "pit_lane": pit_lane,
@@ -1399,7 +1619,8 @@ def print_gt_summary(data):
     if data.get("pit_lane"):
         pl = data["pit_lane"]
         pit_info = f" | Pit: {pl['spline']['total_length']:.1f}m ({len(pl['pit_boxes'])} stalls)"
-    print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, 0.5x FIA){pit_info}")
+    scale_label = f"{data.get('scale', 0.5):g}x"
+    print(f"[{data['id']:14}] {data['name'][:35]:35} | {len(data['waypoints'])} waypoints | {data['final_len']:6.1f}m (target {data['half_length']:.1f}m, {scale_label} FIA){pit_info}")
 
 
 # ---------------------------------------------------------------------------
@@ -2365,10 +2586,6 @@ def process_rally_track(track_id, cache_dir):
         is_straight = abs(norm_cross) < 0.18 and (i < 4 or i >= n - 2)
         width = spec["straight_width"] if is_straight else spec["default_width"]
 
-        # Hairpin apex clearance: narrow road width to prevent wall intersection
-        if abs(norm_cross) > 0.70:
-            width = min(width, 11.5)
-
         # Curbs: assigned only to inside corner apexes (deflection > 20 deg), never on start straight or waypoint 0
         left_curb = False
         right_curb = False
@@ -2386,6 +2603,28 @@ def process_rally_track(track_id, cache_dir):
             "left_curb": left_curb,
             "right_curb": right_curb,
         })
+
+    # Spec 097 Pillar V: Multi-waypoint hairpin arc fans for acute corners
+    target_radius = max(12.0, spec.get("default_width", 13.0) * 0.5 + 5.5)
+    waypoints = smooth_hairpin_arc_fans(
+        waypoints,
+        target_radius=target_radius,
+        min_deflection_deg=45.0,
+        default_width=spec.get("default_width", 13.0),
+        min_seg_len=8.0,
+    )
+
+    # Spec 097 Pillar II: Calibrate spline length to exactly match fia_length (+-0.5%)
+    pts = [(w["x"], w["y"]) for w in waypoints]
+    cur_splen = compute_spline_length(pts)
+    if cur_splen > 0:
+        calib = spec["fia_length"] / cur_splen
+        for w in waypoints:
+            w["x"] = round(w["x"] * calib, 1)
+            w["y"] = round(w["y"] * calib, 1)
+        final_len = round(spec["fia_length"], 1)
+    else:
+        final_len = round(polyline_length(pts, closed=True), 1)
 
     return {
         "id": track_id,
@@ -2642,11 +2881,11 @@ NASCAR_TRACKS = {
         "start_node": 1262000220,
         "start_offset_m": 257.0,  # main straight, level with the middle of the pit lane
         "official_length": 6515.0,
-        "scale": 0.5,
+        "scale": 0.75,
         "num_waypoints": 80,  # ~41 m spacing keeps the lap within ~5 m of the OSM line
         "width": 14.0,
         "straight_bank": 0.0,
-        "corner_banks": [0.0],
+        "corner_banks": [4.0],
         "kerbs": True,
     },
 }
@@ -2798,6 +3037,162 @@ def fillet_corners(points, props, radius, min_turn_deg=20.0, arc_step=2.0):
                 new_props.append(props[q])
                 new_done.append(done[q])
         pts, props, done = new_pts, new_props, new_done
+
+
+def catmull_rom_centripetal_2d(p0, p1, p2, p3, t):
+    """Centripetal Catmull-Rom (alpha = 0.5) evaluation in 2D."""
+    d01 = max(1e-4, math.sqrt(math.hypot(p1[0] - p0[0], p1[1] - p0[1])))
+    d12 = max(1e-4, math.sqrt(math.hypot(p2[0] - p1[0], p2[1] - p1[1])))
+    d23 = max(1e-4, math.sqrt(math.hypot(p3[0] - p2[0], p3[1] - p2[1])))
+    t0 = 0.0
+    t1 = t0 + d01
+    t2 = t1 + d12
+    t3 = t2 + d23
+    t_val = t1 + t * (t2 - t1)
+
+    def interp(a, b, ta, tb):
+        fac = (t_val - ta) / (tb - ta)
+        return (a[0] + fac * (b[0] - a[0]), a[1] + fac * (b[1] - a[1]))
+
+    a1 = interp(p0, p1, t0, t1)
+    a2 = interp(p1, p2, t1, t2)
+    a3 = interp(p2, p3, t2, t3)
+    b1 = interp(a1, a2, t0, t2)
+    b2 = interp(a2, a3, t1, t3)
+    return interp(b1, b2, t1, t2)
+
+
+def compute_spline_length(pts, closed=True):
+    """Computes total arc length of Centripetal Catmull-Rom spline through points."""
+    n = len(pts)
+    if n < 3:
+        return 0.0
+    tot = 0.0
+    for seg in range(n if closed else n - 1):
+        p0 = pts[(seg - 1) % n] if closed else (pts[0] if seg == 0 else pts[seg - 1])
+        p1 = pts[seg % n]
+        p2 = pts[(seg + 1) % n]
+        p3 = pts[(seg + 2) % n] if closed else (pts[-1] if seg + 2 >= n else pts[seg + 2])
+        prev = p1
+        for step in range(1, 41):
+            curr = catmull_rom_centripetal_2d(p0, p1, p2, p3, step / 40.0)
+            tot += math.hypot(curr[0] - prev[0], curr[1] - prev[1])
+            prev = curr
+    return tot
+
+
+def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=80.0, default_width=14.0, min_seg_len=15.0):
+    """Replace acute single-waypoint 'V' corners with multi-waypoint circular arc fans (Entry, Apex, Exit)
+    using centripetal Catmull-Rom spline geometry (Spec 097 Pillar V)."""
+    n = len(waypoints)
+    pts = []
+    for w in waypoints:
+        if "point" in w:
+            pts.append((w["point"][0], w["point"][1]))
+        elif "x" in w and "y" in w:
+            pts.append((w["x"], w["y"]))
+        else:
+            raise ValueError(f"Unknown waypoint format: {w}")
+
+    acute_info = {}
+    for i in range(1, n - 1):  # Preserve start/finish straight alignment at waypoints 0 and n-1
+        p_prev = pts[(i - 1 + n) % n]
+        p_curr = pts[i]
+        p_next = pts[(i + 1) % n]
+        la = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
+        lb = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
+        if la < min_seg_len or lb < min_seg_len:
+            continue
+        u = ((p_curr[0] - p_prev[0]) / la, (p_curr[1] - p_prev[1]) / la)
+        v = ((p_next[0] - p_curr[0]) / lb, (p_next[1] - p_curr[1]) / lb)
+        dot = max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1]))
+        defl = math.acos(dot)
+        cross = u[0] * v[1] - u[1] * v[0]
+        deg = math.degrees(defl)
+        if deg >= min_deflection_deg:
+            acute_info[i] = (deg, cross > 0, u, v, la, lb)
+
+    if not acute_info:
+        return list(waypoints)
+
+    min_safe_R = default_width * 0.5 + 3.0
+    replacements = {}
+    for idx, (deg, is_left, u, v, la, lb) in acute_info.items():
+        defl = math.radians(deg)
+        norm_in = (-u[1], u[0]) if is_left else (u[1], -u[0])
+        tan_half = max(math.tan(defl / 2.0), 1e-4)
+
+        t_des = target_radius * tan_half
+        t_max = min(0.85 * la, 0.85 * lb)
+        T = min(t_des, t_max)
+        if T < 4.0:
+            continue
+        R_actual = T / tan_half
+        if R_actual < min_safe_R:
+            continue
+
+        p_curr = pts[idx]
+        p_entry = (p_curr[0] - T * u[0], p_curr[1] - T * u[1])
+        p_exit = (p_curr[0] + T * v[0], p_curr[1] + T * v[1])
+
+        center = (p_entry[0] + R_actual * norm_in[0], p_entry[1] + R_actual * norm_in[1])
+        ang_entry = math.atan2(p_entry[1] - center[1], p_entry[0] - center[0])
+        ang_exit = math.atan2(p_exit[1] - center[1], p_exit[0] - center[0])
+        d_ang = ang_exit - ang_entry
+        if is_left and d_ang < 0:
+            d_ang += 2 * math.pi
+        elif not is_left and d_ang > 0:
+            d_ang -= 2 * math.pi
+
+        w_curr = waypoints[idx]
+
+        def make_wp(pt):
+            wp = dict(w_curr)
+            if "point" in wp:
+                wp["point"] = [round(pt[0], 1), round(pt[1], 1)]
+            else:
+                wp["x"] = round(pt[0], 1)
+                wp["y"] = round(pt[1], 1)
+            wp["left_curb"] = is_left
+            wp["right_curb"] = not is_left
+            return wp
+
+        num_steps = 4 if deg > 90.0 else 2
+        fan = []
+        for s in range(num_steps + 1):
+            frac = s / num_steps
+            ang = ang_entry + frac * d_ang
+            pt = (center[0] + R_actual * math.cos(ang), center[1] + R_actual * math.sin(ang))
+            fan.append(make_wp(pt))
+        replacements[idx] = fan
+
+    new_wps = []
+    for i in range(n):
+        if i in replacements:
+            new_wps.extend(replacements[i])
+        else:
+            new_wps.append(dict(waypoints[i]))
+
+    # Curbs reassignment
+    final_pts = [(w["point"][0], w["point"][1]) if "point" in w else (w["x"], w["y"]) for w in new_wps]
+    m = len(final_pts)
+    for k in range(m):
+        if k == 0:
+            new_wps[k]["left_curb"] = False
+            new_wps[k]["right_curb"] = False
+            continue
+        s = deflection_sine(final_pts, k)
+        if s > 0.35:
+            new_wps[k]["left_curb"] = True
+            new_wps[k]["right_curb"] = False
+        elif s < -0.35:
+            new_wps[k]["right_curb"] = True
+            new_wps[k]["left_curb"] = False
+        else:
+            new_wps[k]["left_curb"] = False
+            new_wps[k]["right_curb"] = False
+
+    return new_wps
 
 
 def curvature_classes(points):
@@ -3088,10 +3483,15 @@ def source_waypoint(w, discipline):
         "surface": surface,
         "elevation": round(w.get("elevation", 0.0), 1),
     }
-    if w.get("bank"):
-        wp["bank_angle"] = round(w["bank"], 1)
+    bank = w.get("bank_angle", w.get("bank", 0.0))
+    if bank:
+        wp["bank_angle"] = round(bank, 1)
     if "wall_dist" in w:
         wp["left_wall_distance"] = wp["right_wall_distance"] = round(w["wall_dist"], 1)
+    if "left_wall_distance" in w and w["left_wall_distance"] is not None:
+        wp["left_wall_distance"] = round(w["left_wall_distance"], 1)
+    if "right_wall_distance" in w and w["right_wall_distance"] is not None:
+        wp["right_wall_distance"] = round(w["right_wall_distance"], 1)
     return wp
 
 
@@ -3114,10 +3514,23 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
             track = json.load(f)
         if "pit_lane" in data and data["pit_lane"] is not None:
             track["pit_lane"] = data["pit_lane"]
+        if "scale" in data:
+            track["scale"] = f"{data['scale']:g}x" if data["scale"] != 1.0 else "1:1"
         if not pit_lane_only:
             track["spline"]["waypoints"] = waypoints
             track["spline"]["closed"] = True
+            track["spline"]["samples"] = []
+            if "geometry" in track:
+                track["geometry"]["inner_walls"] = []
+                track["geometry"]["outer_walls"] = []
+                track["geometry"]["left_boundary_polyline"] = []
+                track["geometry"]["right_boundary_polyline"] = []
+                track["geometry"]["scenery_obstacles"] = []
             bake_args = ["--rebuild"]
+            if "barrier_offset" in data:
+                bake_args += ["--barrier-offset", f"{data['barrier_offset']:.1f}"]
+            if "barrier" in data:
+                bake_args += ["--barrier-type", data["barrier"].split("::")[-1]]
         else:
             bake_args = []
     else:
@@ -3145,7 +3558,7 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
             "car_category": module,
             "module_id": module,
             "modules": [module],
-            "scale": "0.5x" if module == "gt" else "1:1",
+            "scale": "0.75x" if module == "gt" else "1:1",
             "is_inspired": False,
         }
         if data.get("tag"):

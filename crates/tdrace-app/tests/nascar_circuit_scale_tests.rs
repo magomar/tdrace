@@ -1,5 +1,5 @@
-//! NASCAR circuit scale rule (docs/circuits/index.md): real laps under 3 km are 1:1, Road America
-//! is 0.5x, every other circuit is 0.75x. The lap length must match the declared scale.
+//! NASCAR circuit scale rule (docs/circuits/index.md): real laps under 3 km are 1:1,
+//! every other circuit is 0.75x. The lap length must match the declared scale.
 
 use tdrace_app::module::{nascar::NascarGameModule, GameModule};
 
@@ -33,7 +33,6 @@ fn test_nascar_tracks_follow_the_scale_rule() {
             .unwrap_or_else(|| panic!("{} has no official lap length in this test", def.id))
             .1;
         let (label, factor) = match def.id {
-            "road_america" => ("0.5x", 0.5),
             _ if official < 3000.0 => ("1:1", 1.0),
             _ => ("0.75x", 0.75),
         };

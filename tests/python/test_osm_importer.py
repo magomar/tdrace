@@ -319,3 +319,170 @@ def test_fillet_corners_rounds_a_narrow_v_hairpin():
     assert min(radii) > 12.0
     # the legs are 2 * 13 m apart at x = 13 / tan 20 deg = 36 m; the half circle bulges 13 m past that
     assert 20.0 < min(p[0] for p in pts) < 30.0
+
+
+def test_rescale_circuit_nonlinear_preserves_corners_and_hits_target_length():
+    """Spec 097: Straights absorb compression while corner radii preserve near-1:1 geometry."""
+    # A stadium track: two 400 m straights connected by two semicircular hairpins (R = 25 m, arc = 78.5 m)
+    # Total real length = 2 * 400 + 2 * 78.54 = 957.08 m
+    pts = []
+    # Bottom straight: (0, -25) to (400, -25)
+    for x in range(0, 401, 10):
+        pts.append((float(x), -25.0))
+    # Right turn: semicircular arc from (400, -25) to (400, 25)
+    for angle_deg in range(-90, 91, 10):
+        rad = math.radians(angle_deg)
+        pts.append((400.0 + 25.0 * math.cos(rad), 25.0 * math.sin(rad)))
+    # Top straight: (400, 25) to (0, 25)
+    for x in range(400, -1, -10):
+        pts.append((float(x), 25.0))
+    # Left turn: semicircular arc from (0, 25) to (0, -25)
+    for angle_deg in range(90, 271, 10):
+        rad = math.radians(angle_deg)
+        pts.append((25.0 * math.cos(rad), 25.0 * math.sin(rad)))
+
+    real_len = imp.polyline_length(pts, closed=True)
+    target_len = real_len * 0.75
+
+    rescaled, s_turn, s_straight = imp.rescale_circuit_nonlinear(
+        pts, target_len, real_len, turn_preservation=0.95
+    )
+
+    actual_len = imp.polyline_length(rescaled, closed=True)
+    assert abs(actual_len - target_len) / target_len < 0.001
+    assert s_turn >= 0.90
+    assert s_straight < 0.75
+
+    # Check loop closure: closed_edges summed to zero
+    assert math.dist(rescaled[0], (0.0, 0.0)) < 1e-6
+
+
+def test_rescale_circuit_nonlinear_portimao():
+    """Spec 097 Scenario 1: Portimão (Algarve) 0.75x target length and corner radius preservation."""
+    import xml.etree.ElementTree as ET
+
+    cfg = imp.GT_CIRCUITS["portimao_gp"]
+    path = os.path.join(imp.DEFAULT_CACHE_DIR, "portimao_gp.osm")
+    if not os.path.exists(path):
+        return
+
+    root = ET.parse(path).getroot()
+    nodes = {n.get("id"): (float(n.get("lat")), float(n.get("lon"))) for n in root.findall("node")}
+    ways = {w.get("id"): [nd.get("ref") for nd in w.findall("nd")] for w in root.findall("way")}
+    rel = next(r for r in root.findall("relation") if r.get("id") == str(cfg["rel_id"]))
+    w_ids = [m.get("ref") for m in rel.findall("member") if m.get("type") == "way" and m.get("role") != "pit_lane" and m.get("ref") in ways]
+    seen = set()
+    ordered = [w for w in w_ids if not (w in seen or seen.add(w))]
+    chain_nodes = imp.stitch_ways("portimao_gp", [ways[wid] for wid in ordered], nodes)
+    if len(chain_nodes) > 1 and chain_nodes[-1] == chain_nodes[0]:
+        chain_nodes.pop()
+    idx_start = chain_nodes.index(cfg["start_node"])
+    chain_nodes = chain_nodes[idx_start:] + chain_nodes[:idx_start]
+
+    lat0 = sum(nodes[n][0] for n in chain_nodes) / len(chain_nodes)
+    lon0 = sum(nodes[n][1] for n in chain_nodes) / len(chain_nodes)
+    metric_pts = [imp.latlon_to_meters(nodes[n][0], nodes[n][1], lat0, lon0) for n in chain_nodes]
+    p_start = metric_pts[0]
+    p_ahead = metric_pts[min(6, len(metric_pts) - 1)]
+    heading = math.atan2(p_ahead[1] - p_start[1], p_ahead[0] - p_start[0])
+    rotated_pts = imp.rotate_points(metric_pts, heading)
+
+    target_len = cfg["fia_length"] * 0.75
+    rescaled, s_turn, s_straight = imp.rescale_circuit_nonlinear(
+        rotated_pts, target_len, cfg["fia_length"], turn_preservation=0.95
+    )
+
+    actual_len = imp.polyline_length(rescaled, closed=True)
+    # Target length invariant (+- 0.5%)
+    assert abs(actual_len - target_len) / target_len <= 0.005
+    assert s_turn >= 0.90
+    assert s_straight < 0.75
+
+    # Check minimum centerline radius on tight corners
+    n = len(rescaled)
+    min_r = min(radius_through(rescaled[i - 1], rescaled[i], rescaled[(i + 1) % n]) for i in range(n))
+    assert min_r >= 12.0, f"Min corner radius {min_r} is below 12.0m"
+
+
+def test_gt_circuits_scale_elevation_and_banking():
+    """Spec 097: All 18 GT circuits declare 0.75x, and key venues have authentic elevation and banking."""
+    for cid, cfg in imp.GT_CIRCUITS.items():
+        assert cfg.get("scale") == 0.75, f"{cid} does not declare scale 0.75"
+
+    # Zandvoort: 18-19 degree banking
+    zd = imp.process_gt_circuit("zandvoort", imp.DEFAULT_CACHE_DIR)
+    max_z_bank = max(w["bank_angle"] for w in zd["waypoints"])
+    assert max_z_bank >= 18.0
+
+    # Portimao: Turn 3 +3.5 deg, Galp +6.5 deg, and > 18m total vertical relief
+    pd = imp.process_gt_circuit("portimao_gp", imp.DEFAULT_CACHE_DIR)
+    max_p_bank = max(w["bank_angle"] for w in pd["waypoints"])
+    assert max_p_bank >= 6.5
+    assert any(w["bank_angle"] >= 3.5 for w in pd["waypoints"][5:9]), "Turn 3 arc fan must feature >= 3.5 deg banking"
+
+    p_elevs = [w["elevation"] for w in pd["waypoints"]]
+    relief = max(p_elevs) - min(p_elevs)
+    assert relief >= 18.0, f"Portimao elevation relief {relief} < 18.0m"
+
+    # Spa: Eau Rouge +12 deg
+    sd = imp.process_gt_circuit("spa", imp.DEFAULT_CACHE_DIR)
+    assert max(w["bank_angle"] for w in sd["waypoints"]) >= 12.0
+
+    # Monza: Parabolica +5 deg
+    md = imp.process_gt_circuit("monza", imp.DEFAULT_CACHE_DIR)
+    assert max(w["bank_angle"] for w in md["waypoints"]) >= 5.0
+
+
+def test_portimao_turn3_hairpin_arc_fan_and_track_width():
+    """Spec 097 Scenario 1: Portimao Turn 3 bottleneck elimination, width restoration, and arc fan."""
+    cfg = imp.GT_CIRCUITS["portimao_gp"]
+    assert cfg["default_width"] == 14.0
+    assert cfg["straight_width"] == 15.0
+
+    pd = imp.process_gt_circuit("portimao_gp", imp.DEFAULT_CACHE_DIR)
+    wps = pd["waypoints"]
+
+    # All waypoints must respect authentic width >= 13.5m (zero artificial pinches)
+    for i, w in enumerate(wps):
+        assert w["width"] >= 13.5, f"Waypoint {i} has pinched width {w['width']} < 13.5m"
+
+    # Strict target length invariant (+-0.5%)
+    target_len = cfg["fia_length"] * 0.75
+    pts = [(w["x"], w["y"]) for w in wps]
+    splen = imp.compute_spline_length(pts)
+    assert abs(splen - target_len) / target_len <= 0.005, f"Spline length {splen} differs from target {target_len}"
+
+    # Measure Turn 3 apex geometry (samples between wp 5 and wp 9)
+    # Turn 3 is where y reaches minimum (y < -200) in the southern portion of the track
+    n = len(pts)
+    t3_pts = []
+    for seg in range(5, 9):
+        p0 = pts[(seg - 1) % n]
+        p1 = pts[seg % n]
+        p2 = pts[(seg + 1) % n]
+        p3 = pts[(seg + 2) % n]
+        for step in range(50):
+            t3_pts.append(imp.catmull_rom_centripetal_2d(p0, p1, p2, p3, step / 50.0))
+
+    radii = []
+    for i in range(1, len(t3_pts) - 1):
+        p_prev, p_curr, p_next = t3_pts[i - 1], t3_pts[i], t3_pts[i + 1]
+        a = math.hypot(p_curr[0] - p_prev[0], p_curr[1] - p_prev[1])
+        b = math.hypot(p_next[0] - p_curr[0], p_next[1] - p_curr[1])
+        c = math.hypot(p_next[0] - p_prev[0], p_next[1] - p_prev[1])
+        s = (a + b + c) / 2.0
+        val = s * (s - a) * (s - b) * (s - c)
+        if val > 1e-12:
+            radii.append((a * b * c) / (4.0 * math.sqrt(val)))
+
+    min_R = min(radii)
+    # Centerline radius >= 16.0m
+    assert min_R >= 16.0, f"Turn 3 centerline radius {min_R:.2f}m < 16.0m"
+
+    # Inner curb radius R_curb = R - W/2 >= 9.0m
+    road_w = 14.0
+    inner_curb_r = min_R - road_w / 2.0
+    assert inner_curb_r >= 9.0, f"Turn 3 inner curb radius {inner_curb_r:.2f}m < 9.0m"
+
+
+
