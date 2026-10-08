@@ -38,8 +38,8 @@ Design & IP Removal Rules:
 
 import argparse
 import math
-import sys
 from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent

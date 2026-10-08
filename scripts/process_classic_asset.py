@@ -9,8 +9,10 @@ Process raw photorealistic generated images into game-ready assets:
 
 import sys
 from pathlib import Path
+
 import numpy as np
 from PIL import Image
+
 
 def remove_magenta_bg(img: Image.Image, is_lateral: bool = False) -> Image.Image:
     arr = np.array(img.convert("RGBA"))

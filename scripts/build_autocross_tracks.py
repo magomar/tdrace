@@ -9,13 +9,12 @@ resamples to 30 uniform waypoints, detects apex curbs, and outputs tracks/autocr
 import json
 import math
 import os
-import subprocess
 import sys
 import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(__file__))
-from osm_importer import smooth_hairpin_arc_fans, shift_start, compute_spline_length
+from osm_importer import compute_spline_length, shift_start, smooth_hairpin_arc_fans
 
 TRACKS = [
     {

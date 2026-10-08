@@ -3,10 +3,11 @@ Gymnasium Environment implementations for TDRace.
 Compliant with Gymnasium 1.0+ standards.
 """
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
+
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
+from gymnasium import spaces
 
 from ._tdrace import Engine, RewardConfig
 from .render import HumanViewer
@@ -37,11 +38,11 @@ class TDRaceEnv(gym.Env):
         num_lidar_rays: int = 19,
         max_episode_steps: int = 1000,
         dt: float = 1.0 / 60.0,
-        reward_config: Optional[RewardConfig] = None,
+        reward_config: RewardConfig | None = None,
         lap_limit: int = 1,
         terminate_on_off_track: bool = False,
         terminate_on_wall_crash: bool = False,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
         render_width: int = 96,
         render_height: int = 96,
         randomize_pose_on_reset: bool = False,
@@ -113,14 +114,14 @@ class TDRaceEnv(gym.Env):
                 dtype=np.float32,
             )
 
-        self._viewer: Optional[HumanViewer] = None
+        self._viewer: HumanViewer | None = None
 
     def reset(
         self,
         *,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
 
         randomize_pose = self.randomize_pose_on_reset
@@ -141,8 +142,8 @@ class TDRaceEnv(gym.Env):
         return obs, info
 
     def step(
-        self, action: Union[int, np.ndarray, list]
-    ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+        self, action: int | np.ndarray | list
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         if self.action_type == "discrete":
             action_idx = int(action)
             throttle, steer, brake, handbrake, reverse = self._discrete_actions[action_idx]
@@ -196,7 +197,7 @@ class TDRaceEnv(gym.Env):
 
         return obs, float(reward), bool(terminated), bool(truncated), info
 
-    def render(self) -> Optional[np.ndarray]:
+    def render(self) -> np.ndarray | None:
         if self.render_mode is None:
             return None
 
@@ -222,7 +223,7 @@ class TDRaceEnv(gym.Env):
             self._viewer.close()
             self._viewer = None
 
-    def get_telemetry(self) -> Dict[str, Any]:
+    def get_telemetry(self) -> dict[str, Any]:
         """Returns deep real-time vehicle telemetry."""
         return self.engine.get_telemetry(0)
 
@@ -238,7 +239,7 @@ class TDRaceEnv(gym.Env):
         """Sets vehicle pose and velocity."""
         self.engine.set_state(0, x, y, vx, vy, angle, angular_velocity)
 
-    def get_state(self) -> Tuple[float, float, float, float, float, float, float]:
+    def get_state(self) -> tuple[float, float, float, float, float, float, float]:
         """Returns (x, y, vx, vy, angle, angular_velocity, steer_angle)."""
         return self.engine.get_state(0)
 

@@ -10,8 +10,10 @@ Process raw generated lateral and top-down vehicle images:
 
 import argparse
 from pathlib import Path
+
 import numpy as np
 from PIL import Image
+
 
 def remove_magenta_bg(img: Image.Image, is_topdown: bool = False) -> Image.Image:
     arr = np.array(img.convert("RGBA"))

@@ -4,8 +4,6 @@ Multi-agent environment tests for collision resolution and simultaneous stepping
 
 import gymnasium as gym
 import numpy as np
-import pytest
-import tdrace
 
 
 def test_multi_agent_init_and_shapes():

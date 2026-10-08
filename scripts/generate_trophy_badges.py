@@ -5,7 +5,6 @@ for championship podium trophies across 5 motorsport disciplines, 5 tiers, and 3
 plus the locked trophy silhouette, adhering to Spec 027.
 """
 
-import os
 import subprocess
 from pathlib import Path
 
@@ -625,7 +624,7 @@ def main():
         subprocess.run(["rsvg-convert", "-w", "128", "-h", "128", "-o", str(png_128), str(svg_path)], check=True)
         subprocess.run(["rsvg-convert", "-w", "256", "-h", "256", "-o", str(png_256), str(svg_path)], check=True)
 
-    print(f"Successfully generated all 75 bespoke trophy badges + locked trophy in 128px and 256px PNG!")
+    print("Successfully generated all 75 bespoke trophy badges + locked trophy in 128px and 256px PNG!")
 
 if __name__ == "__main__":
     main()

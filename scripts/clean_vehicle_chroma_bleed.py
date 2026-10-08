@@ -21,6 +21,7 @@ Mechanics:
 import argparse
 import sys
 from pathlib import Path
+
 import numpy as np
 from PIL import Image
 
@@ -97,7 +98,7 @@ def process_directory(target_dir: Path, dry_run: bool = False, verbose: bool = F
             print(f"❌ Error processing {p}: {e}", file=sys.stderr)
 
     print("\n" + "=" * 60)
-    print(f"Summary:")
+    print("Summary:")
     print(f"  Total sprites scanned:    {total_files:,}")
     print(f"  Sprites modified:         {modified_files:,}")
     print(f"  Total pixels despilled:   {total_despilled:,}")

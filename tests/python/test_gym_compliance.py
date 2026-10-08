@@ -3,10 +3,9 @@ Gymnasium API compliance tests using gymnasium.utils.env_checker.check_env.
 """
 
 import gymnasium as gym
-from gymnasium.utils.env_checker import check_env
-import pytest
 import numpy as np
-import tdrace
+import pytest
+from gymnasium.utils.env_checker import check_env
 
 
 @pytest.mark.parametrize(

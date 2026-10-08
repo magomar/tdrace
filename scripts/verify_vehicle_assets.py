@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 
+
 def main():
     root = Path(__file__).resolve().parent.parent
     vehicles_json = root / "portals" / "shared" / "data" / "codex" / "cars.json"

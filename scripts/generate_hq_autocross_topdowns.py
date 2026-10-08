@@ -13,8 +13,8 @@ matching the 3-color liveries and geometries of the lateral sprites with:
 - Strict 3-color bodywork palette
 """
 
-import math
 from pathlib import Path
+
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent

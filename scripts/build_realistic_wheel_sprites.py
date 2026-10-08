@@ -16,6 +16,7 @@ indicators, rims, or hub graphics:
 
 import math
 from pathlib import Path
+
 import numpy as np
 from PIL import Image
 from scipy.ndimage import gaussian_filter

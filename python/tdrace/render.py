@@ -3,7 +3,6 @@ Rendering and human display visualizer for TDRace.
 Provides high-performance Pygame display when render_mode='human'.
 """
 
-from typing import Optional
 import numpy as np
 
 

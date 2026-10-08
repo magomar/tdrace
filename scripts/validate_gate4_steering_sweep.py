@@ -5,11 +5,11 @@ Renders multi-angle steering sweeps (-30°, -15°, 0°, +15°, +30°) for repres
 across all motorsport archetypes using exact visual anchor math, layering, and padding factors.
 """
 
-import os
-import sys
 import json
 import math
+import os
 from pathlib import Path
+
 from PIL import Image
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -205,18 +205,18 @@ def main():
 
     for item in results:
         badge_cls = "badge-open" if item["layering"] == "OverChassis" else "badge-closed"
-        html.append(f"  <div class='card'>")
+        html.append("  <div class='card'>")
         html.append(f"    <h2>{item['title']} <span class='badge {badge_cls}'>{item['layering']}</span></h2>")
-        html.append(f"    <div class='legend'><span>-30° (Full Left)</span><span>-15°</span><span>0° (Straight)</span><span>+15°</span><span>+30° (Full Right)</span></div>")
+        html.append("    <div class='legend'><span>-30° (Full Left)</span><span>-15°</span><span>0° (Straight)</span><span>+15°</span><span>+30° (Full Right)</span></div>")
         html.append(f"    <div class='strip-container'><img class='strip-img' src='gate4_sweeps/{item['strip_filename']}' alt='{item['model_id']} sweep'></div>")
-        html.append(f"    <div class='meta'>")
+        html.append("    <div class='meta'>")
         html.append(f"      <div>Model: <span class='meta-val'>{item['model_id']}</span></div>")
         html.append(f"      <div>Archetype: <span class='meta-val'>{item['archetype']}</span></div>")
         html.append(f"      <div>Axle X: <span class='meta-val'>{item['axle_x_px']} px</span></div>")
         html.append(f"      <div>Track Width: <span class='meta-val'>{item['track_width_px']} px</span></div>")
         html.append(f"      <div>Tire Size: <span class='meta-val'>{item['tire_wid_px']} × {item['tire_len_px']} px</span></div>")
-        html.append(f"    </div>")
-        html.append(f"  </div>")
+        html.append("    </div>")
+        html.append("  </div>")
 
     html.append("</body></html>")
     with open(HTML_OUTPUT, "w") as f:

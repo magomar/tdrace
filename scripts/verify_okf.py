@@ -3,6 +3,7 @@ import re
 import sys
 from pathlib import Path
 
+
 def verify_docs(docs_dir: Path) -> int:
     files = sorted([f for f in docs_dir.rglob("*.md") if "receipts" not in f.parts])
     print(f"🔍 Checking OKF v0.2 compliance across {len(files)} Markdown files in {docs_dir}...\n")
@@ -57,7 +58,7 @@ def verify_docs(docs_dir: Path) -> int:
             if not target_resolved.exists():
                 errors.append(f"[{file_path.relative_to(docs_dir)}] Broken relative link: '{link_target}' -> '{target_resolved}' not found")
 
-    print(f"📊 Summary:")
+    print("📊 Summary:")
     print(f"  - Total OKF Documents: {doc_count}")
     print(f"  - Verified Relative Links: {link_count}")
 

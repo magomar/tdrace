@@ -10,11 +10,12 @@ High-fidelity generator for the new and upgraded Classic Arcade fantasy vehicles
 7. classic_at_safari: Ironclad 4x4 Safari (1980s Paris-Dakar Vintage 4WD Trail Rig)
 """
 
-import sys
 import math
+import sys
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter
+
 import numpy as np
+from PIL import Image, ImageDraw
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 LATERAL_DIR = ROOT / "assets" / "textures" / "vehicles" / "laterals" / "classic"

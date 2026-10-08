@@ -11,6 +11,7 @@ Generates missing high-fidelity 128x256 top-down steered wheel assets for:
 
 import math
 from pathlib import Path
+
 import numpy as np
 from PIL import Image, ImageDraw
 

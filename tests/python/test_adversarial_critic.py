@@ -3,13 +3,11 @@ Adversarial stress test suite for TDRace Headless Engine & Gymnasium API Binding
 """
 
 import math
+
+import gymnasium as gym
 import numpy as np
 import pytest
-import gymnasium as gym
 from gymnasium.utils.env_checker import check_env
-import tdrace
-from tdrace import Engine, RewardConfig
-
 
 # ==============================================================================
 # 1. Strict Gymnasium API Compliance on all registered environments

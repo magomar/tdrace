@@ -2,10 +2,11 @@
 Multi-agent racing environment supporting N simultaneous cars with full physics collision resolution.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
+from gymnasium import spaces
 
 from ._tdrace import Engine, RewardConfig
 from .render import HumanViewer
@@ -35,11 +36,11 @@ class TDRaceMultiAgentEnv(gym.Env):
         num_lidar_rays: int = 19,
         max_episode_steps: int = 1000,
         dt: float = 1.0 / 60.0,
-        reward_config: Optional[RewardConfig] = None,
+        reward_config: RewardConfig | None = None,
         lap_limit: int = 1,
         terminate_on_off_track: bool = False,
         terminate_on_wall_crash: bool = False,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
         render_width: int = 96,
         render_height: int = 96,
         randomize_pose_on_reset: bool = False,
@@ -101,14 +102,14 @@ class TDRaceMultiAgentEnv(gym.Env):
             dtype=np.float32,
         )
 
-        self._viewer: Optional[HumanViewer] = None
+        self._viewer: HumanViewer | None = None
 
     def reset(
         self,
         *,
-        seed: Optional[int] = None,
-        options: Optional[Dict[str, Any]] = None,
-    ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[np.ndarray, dict[str, Any]]:
         super().reset(seed=seed)
 
         randomize_pose = self.randomize_pose_on_reset
@@ -126,8 +127,8 @@ class TDRaceMultiAgentEnv(gym.Env):
         return obs, info
 
     def step(
-        self, actions: Union[np.ndarray, List[Any], Dict[int, Any]]
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]]:
+        self, actions: np.ndarray | list[Any] | dict[int, Any]
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, dict[str, Any]]:
         # Format actions into list of (throttle, steer, brake, handbrake, reverse) tuples
         rust_actions = []
 
@@ -173,7 +174,7 @@ class TDRaceMultiAgentEnv(gym.Env):
         return obs, rewards, terminateds, truncateds, infos
 
     @staticmethod
-    def _parse_single_action(action: Any) -> Tuple[float, float, float, bool, bool]:
+    def _parse_single_action(action: Any) -> tuple[float, float, float, bool, bool]:
         act = np.nan_to_num(
             np.asarray(action, dtype=np.float32).flatten(),
             nan=0.0,
@@ -199,7 +200,7 @@ class TDRaceMultiAgentEnv(gym.Env):
             return throttle, steer, brake, handbrake, reverse
         return 0.0, 0.0, 0.0, False, False
 
-    def render(self) -> Optional[np.ndarray]:
+    def render(self) -> np.ndarray | None:
         if self.render_mode is None:
             return None
 

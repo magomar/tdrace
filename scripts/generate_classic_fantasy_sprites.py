@@ -13,10 +13,11 @@ Outputs:
 - assets/textures/vehicles/topdown/classic/{id}.png (512x512)
 """
 
+import math
 import sys
 from pathlib import Path
+
 from PIL import Image, ImageDraw
-import math
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 LATERAL_DIR = ROOT / "assets" / "textures" / "vehicles" / "laterals" / "classic"

@@ -3,6 +3,7 @@ import json
 import math
 from pathlib import Path
 
+
 def generate_circuit_svg(data: dict, cat: str, output_path: Path):
     samples = data.get("spline", {}).get("samples", [])
     if not samples:

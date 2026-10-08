@@ -6,10 +6,10 @@ from gymnasium.envs.registration import register
 
 from ._tdrace import Engine, RewardConfig
 from .env import (
-    TDRaceEnv,
     TDRaceContinuousEnv,
     TDRaceDiscreteEnv,
     TDRaceDriftEnv,
+    TDRaceEnv,
     TDRacePixelsEnv,
 )
 from .multi_agent import TDRaceMultiAgentEnv
@@ -59,12 +59,12 @@ register(
 
 __all__ = [
     "Engine",
+    "HumanViewer",
     "RewardConfig",
-    "TDRaceEnv",
     "TDRaceContinuousEnv",
     "TDRaceDiscreteEnv",
     "TDRaceDriftEnv",
-    "TDRacePixelsEnv",
+    "TDRaceEnv",
     "TDRaceMultiAgentEnv",
-    "HumanViewer",
+    "TDRacePixelsEnv",
 ]

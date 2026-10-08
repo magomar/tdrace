@@ -16,11 +16,11 @@ from __future__ import annotations
 import json
 import os
 import re
-import tomllib
 from pathlib import Path
 from typing import NamedTuple
 
 import pytest
+import tomllib
 
 # -----------------------------------------------------------------------------
 # Configuration & Paths

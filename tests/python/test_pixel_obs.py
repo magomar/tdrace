@@ -5,7 +5,6 @@ Pixel observation and software rasterizer tests.
 import gymnasium as gym
 import numpy as np
 import pytest
-import tdrace
 
 
 def test_pixel_obs_shape_and_channels():

@@ -12,22 +12,22 @@ Measures stepping throughput (steps/sec / FPS) and per-step latency across:
 - CarRacing-v3 (Standard Gymnasium Box2D reference baseline)
 """
 
-import time
 import sys
-from typing import Dict, Any, List
-import numpy as np
+import time
+from typing import Any
+
 import gymnasium as gym
-import tdrace
+import numpy as np
 
 
 def benchmark_env(
     env_id: str,
     num_steps: int = 100_000,
     warmup_steps: int = 2_000,
-    env_kwargs: Dict[str, Any] = None,
+    env_kwargs: dict[str, Any] = None,
     is_multi_agent: bool = False,
     num_agents: int = 1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Measures steady-state stepping throughput in steps per second."""
     env_kwargs = env_kwargs or {}
     env = gym.make(env_id, **env_kwargs)
@@ -74,7 +74,7 @@ def benchmark_env(
     }
 
 
-def benchmark_carracing(num_steps: int = 10_000, warmup_steps: int = 500) -> Dict[str, Any]:
+def benchmark_carracing(num_steps: int = 10_000, warmup_steps: int = 500) -> dict[str, Any]:
     """Measures CarRacing-v3 baseline throughput."""
     try:
         env = gym.make("CarRacing-v3")
@@ -125,7 +125,7 @@ def benchmark_carracing(num_steps: int = 10_000, warmup_steps: int = 500) -> Dic
         }
 
 
-def print_results_table(results: List[Dict[str, Any]], baseline_fps: float):
+def print_results_table(results: list[dict[str, Any]], baseline_fps: float):
     print("\n" + "=" * 88)
     print("                    TDRACE vs GYMNASIUM CARRACING-V3 BENCHMARK")
     print("=" * 88)

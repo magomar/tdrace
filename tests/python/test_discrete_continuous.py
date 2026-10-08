@@ -4,8 +4,6 @@ Action space tests for continuous and discrete modes.
 
 import gymnasium as gym
 import numpy as np
-import pytest
-import tdrace
 
 
 def test_discrete_action_space():

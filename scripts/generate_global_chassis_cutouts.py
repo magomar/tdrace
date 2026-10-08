@@ -20,8 +20,9 @@ Generates `<model_id>_chassis.png` sprites across all motorsport modules in TdRa
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy.ndimage import binary_dilation

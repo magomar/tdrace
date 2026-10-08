@@ -16,9 +16,9 @@ Fuses Cenital Top-Down (512x512) and Lateral Side-Profile (1024x512) computer vi
 import argparse
 import json
 from pathlib import Path
-import sys
+
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 # Fallbacks for bonus / vault archive vehicles not tracked in codex cars.json
 FALLBACK_VEHICLES = {

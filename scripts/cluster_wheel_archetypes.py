@@ -10,15 +10,12 @@ into 8 motorsport tyre archetypes, and renders an interactive HITL review galler
 import argparse
 import json
 from pathlib import Path
-import numpy as np
-from PIL import Image
 
+import numpy as np
 from extract_multiview_wheel_anchors import (
-    load_catalog,
     analyze_lateral_sprite,
-    determine_archetype,
-    OPEN_WHEEL_BASE_CARS,
 )
+from PIL import Image
 
 ARCHETYPES = [
     {
