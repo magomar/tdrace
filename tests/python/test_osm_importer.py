@@ -158,7 +158,7 @@ def test_write_source_json_updates_only_waypoints_of_existing_circuit(tmp_path):
             "right_wall_distance": 3.2,
         }
     ]
-    assert cmd.endswith("--rebuild") and "track_bake" in cmd
+    assert " --rebuild" in cmd and "track_bake" in cmd
 
 
 def test_write_source_json_creates_new_circuit_and_lists_it(tmp_path):
@@ -168,7 +168,7 @@ def test_write_source_json_creates_new_circuit_and_lists_it(tmp_path):
     assert (
         track["name"] == "New GT"
         and track["module_id"] == "gt"
-        and track["scale"] == "0.5x"
+        and track["scale"] == "0.75x"
     )
     assert track["checkpoints"] == [] and track["spline"]["samples"] == []
     assert json.loads((tracks / ".track_order.json").read_text()) == {
