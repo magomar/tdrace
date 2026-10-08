@@ -111,10 +111,9 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         track.pit_lane = Some(compiled.lane);
         let buildings = &mut track.geometry.buildings;
         buildings.retain(|b| b.style != BuildingStyle::PitGarage);
-        let mut next_id = buildings.iter().map(|b| b.id + 1).max().unwrap_or(0);
-        for mut garage in compiled.garages {
-            garage.id = next_id;
-            next_id += 1;
+        let first_id = buildings.iter().map(|b| b.id + 1).max().unwrap_or(0);
+        for (i, mut garage) in compiled.garages.into_iter().enumerate() {
+            garage.id = first_id + i;
             buildings.push(garage);
         }
     } else if let Some(lane) = &mut track.pit_lane {
