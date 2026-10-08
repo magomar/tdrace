@@ -25,7 +25,7 @@ This specification establishes a **modular DLC architecture** that:
 2. Isolates future disciplines (**Stock Cars**, **Extreme Off-Road**, and **GT World Challenge**) as **Expansion DLCs**.
 3. Decouples hardcoded module dispatch into an extensible, metadata-driven `ModuleManager` and `ContentRegistry`.
 4. Introduces the `EntitlementProvider` abstraction for clean Steamworks SDK integration (`steamworks-rs`) with headless/offline development parity.
-5. Implements in-game **Showcase Teasers** for unowned DLCs with direct Steam Overlay store hooks.
+5. Enforces a **Strict Zero-Clutter Base Game UI**: Unconfirmed or unreleased DLCs (GT, Stock Cars, Extreme Off-Road) do NOT appear in the UI at base release, presenting a cohesive, complete, and self-contained 4-discipline game without locked placeholders or premature teasers.
 
 ---
 
@@ -125,10 +125,12 @@ The initial base game focuses on the **tactical sweet spot of top-down arcade ra
 * **Tier 1 (License D - Grassroots)**: Grassroots Karting teaches racing lines, late braking, and weight transfer.
 * **Tier 2 (License C - Clubman Dirt)**: FIA Autocross challenges players to master low-grip dirt steering and slide recovery.
 * **Tier 3 (License B - Pro-Am All-Terrain)**: Rallycross combines high horsepower with hybrid asphalt/dirt tracks and mandatory Joker Lap tactical decisions.
-* **Tier 4 (License A - Apex Superlicense)**: GT World Challenge is reserved for master drivers, introducing tactical depth:
-  * **Tyre Compound Strategy (Spec 098)**: Selecting Soft, Medium, or Hard slicks in the garage based on circuit wear and race length.
-  * **Pit Stop Procedures (Spec 062 & 077)**: Speed-limited pit lane entries, pit box stops, and fresh tire service.
-  * **Aerodynamic High-Downforce Dynamics**: Cornering at extreme speeds with high downforce and engine durability/damage risks (Spec 078).
+* **Tier 4 (License A - Apex Superlicense)**: GT World Challenge is reserved for master drivers, introducing realistic tactical and endurance constraints:
+  * **Mandatory Damage Model Active (Spec 078)**: Full mechanical durability, directional impact masking, suspension failure, and engine placement vulnerability are strictly active; unlike lower grassroots tiers, collisions inflict cumulative physical and handling degradation.
+  * **Mandatory Pit Lane & Pit Stall Stops (Specs 062 & 077)**: Races require navigating speed-limited pit entry/exit corridors to execute active 2–3s pit stops for:
+    * **In-Race Vehicle Repairs**: Repairing front/side collision damage and suspension misalignment.
+    * **Tyre Changing & Compound Strategy (Spec 098)**: Changing worn tyres and adapting compound selection (Soft, Medium, or Hard slicks) to offset thermal degradation and grip loss.
+  * **Aerodynamic High-Downforce Dynamics**: High top speeds and sensitive aerodynamic balance where body damage drastically diminishes downforce and cornering authority.
 
 ---
 
@@ -140,7 +142,34 @@ Future DLCs act as **Lateral Career Specializations** or **Prestige Superlicense
 | :--- | :--- | :--- | :--- | :--- |
 | **Stock Car Cup** | `nascar` | Lateral Specialization | Oval License | 5 tiers of high-speed oval drafting, aerodynamic slingshotting, stage racing, and superspeedways (Daytona, Talladega). |
 | **Extreme Off-Road** | `extreme_offroad` | Lateral Specialization | Off-Road License | Desert sand dunes, rock crawls, mud bogs, and stadium stunt arenas with massive jump ramps. |
-| **GT World Challenge** | `gt` | Prestige Expansion | **License A** (Superlicense) | High-downforce endurance GT3/GT1/Hypercar racing requiring tire compound selection, pit box stops, and top-down high-speed precision. |
+| **GT World Challenge** | `gt` | Prestige Expansion | **License A** (Superlicense) | High-downforce endurance GT3/GT1/Hypercar racing with mandatory damage modeling, speed-limited pit lanes, and pit stall stops for in-race repairs and tyre changes. |
+
+---
+
+### 3. Cross-Module DLC Content Injection (GT World Challenge & Classic Academy)
+
+DLC expansions are not restricted to isolated silos. When an expansion is installed, it can inject specialized content into the base game to enrich the core experience:
+
+#### A. Bonus Extended Classic Endurance Circuits (with Pit Lanes)
+Base game Classic circuits ([Spec 055](055_classic_circuits_revamp.md)) focus on short, intense sprint racing without pit stops (`pit_box_area: null`). Installing the **GT World Challenge DLC** injects **two extended endurance layouts** directly into the Classic module:
+1. `classic_velocity_endurance`: An extended 2.4 km configuration of Velocity Park featuring high-speed sweeping curves, a long pit straight, speed-limited pit entry/exit corridors, and a fully functional 12-stall pit box lane.
+2. `classic_grand_prix_24h`: A 2.8 km premier endurance ribbon combining high-downforce technical complexes with an authentic multi-stall pit lane.
+
+These tracks allow players to experience endurance racing and pit stop strategy using the free Classic fantasy cars (e.g. `classic_apex_phantom_gt`) before entering career championships.
+
+#### B. Classic Academy Tier 4 "Superlicense Masterclass" Injection (Spec 064 Harmonization)
+In the Base Game, the Classic Driving Academy ([Spec 060](060_classic_academy_and_grassroots_career_onboarding.md), [Spec 064](064_classic_module_multitier_academy_missions_and_degradation_curriculum.md)) covers Tiers 1–3, awarding National Racing Licenses up to License B:
+* **Tier 1 (License D - Grassroots)**: Apex precision and threshold braking.
+* **Tier 2 (License C - Clubman Dirt)**: Dirt drifts and loose surface weight transfer.
+* **Tier 3 (License B - Pro-Am All-Terrain)**: Tire thermal discipline and throttle modulation.
+
+When the **GT World Challenge DLC** is installed, it dynamically registers and unlocks **Tier 4: Superlicense Masterclass** in the Classic Academy:
+* **Lesson 4.1 (`acad_4_1`) - Pit Lane Entry & Speed Limiter**: Practice approaching the pit lane at high speed, engaging the pit limiter, and executing a clean 2.5s pit box stop on `classic_velocity_endurance`.
+* **Lesson 4.2 (`acad_4_2`) - Mechanical Preservation in Heavy Traffic**: Multi-lap race in traffic teaching clean overtaking to avoid body contact and suspension failure ([Spec 078](078_directional_impact_masking_engine_placement_damage_and_archetype_suspension_failure.md)).
+* **Lesson 4.3 (`acad_4_3`) - The Tactical Undercut & Tire Compound Swap**: Executing an early pit stop on Lap 3 to switch from worn rubber to fresh Soft slicks ([Spec 098](098_gt_tyre_compound_choice_in_the_garage.md)) and setting an aggressive out-lap to jump the leader.
+* **Lesson 4.4 (`acad_4_4`) - Superlicense Graduation Endurance**: An 8-lap endurance championship on `classic_grand_prix_24h` with mandatory mechanical damage, accelerated tire wear, and mandatory pit stop strategy.
+
+Completing Tier 4 awards the **Class A Apex Superlicense**, formally unlocking the professional GT World Challenge career series.
 
 ---
 
@@ -190,7 +219,18 @@ pub enum ModuleAvailability {
     Dlc {
         steam_app_id: u32,
         store_slug: &'static str,
+        /// If false, this planned DLC is completely hidden from the base game UI unless installed.
+        is_announced: bool,
     },
+}
+
+pub struct CrossModuleInjection {
+    /// Target module receiving the content (e.g. "classic")
+    pub target_module: &'static str,
+    /// Track IDs injected into the target module catalog (e.g. ["classic_velocity_endurance", "classic_grand_prix_24h"])
+    pub bonus_circuit_ids: &'static [&'static str],
+    /// Academy tier unlocked in the target module (e.g. Some(4) for Superlicense Masterclass)
+    pub unlocked_academy_tier: Option<u8>,
 }
 
 pub struct ModuleDescriptor {
@@ -199,6 +239,7 @@ pub struct ModuleDescriptor {
     pub subtitle: &'static str,
     pub availability: ModuleAvailability,
     pub license_requirement: Option<LicenseTier>,
+    pub cross_module_injections: Vec<CrossModuleInjection>,
     pub factory: Box<dyn Fn() -> Box<dyn GameModule> + Send + Sync>,
 }
 
@@ -208,9 +249,22 @@ pub struct ModuleManager {
 }
 
 impl ModuleManager {
-    /// Returns all registered modules.
+    /// Returns all registered modules (including internal/unannounced).
     pub fn all_modules(&self) -> &[ModuleDescriptor] {
         &self.descriptors
+    }
+
+    /// Returns modules that should be presented in the user interface.
+    /// Unannounced/unconfirmed DLCs that are not installed are strictly omitted.
+    pub fn visible_modules(&self) -> Vec<&ModuleDescriptor> {
+        self.descriptors.iter().filter(|d| {
+            match d.availability {
+                ModuleAvailability::Core => true,
+                ModuleAvailability::Dlc { steam_app_id, is_announced, .. } => {
+                    self.entitlement.is_dlc_installed(steam_app_id) || is_announced
+                }
+            }
+        }).collect()
     }
 
     /// Checks if a module is currently unlocked and playable.
@@ -226,6 +280,34 @@ impl ModuleManager {
         }
     }
 
+    /// Returns active bonus circuits injected into `target_module` by entitled DLCs.
+    pub fn active_bonus_circuits(&self, target_module: &str) -> Vec<&'static str> {
+        let mut circuits = Vec::new();
+        for desc in &self.descriptors {
+            if self.is_unlocked(desc.id) {
+                for inj in &desc.cross_module_injections {
+                    if inj.target_module == target_module {
+                        circuits.extend_from_slice(inj.bonus_circuit_ids);
+                    }
+                }
+            }
+        }
+        circuits
+    }
+
+    /// Checks whether an advanced academy tier (e.g. Tier 4 Superlicense) is unlocked.
+    pub fn is_academy_tier_unlocked(&self, target_module: &str, tier: u8) -> bool {
+        if tier <= 3 {
+            return true; // Base Game Academy Tiers 1-3 always unlocked
+        }
+        self.descriptors.iter().any(|desc| {
+            self.is_unlocked(desc.id)
+                && desc.cross_module_injections.iter().any(|inj| {
+                    inj.target_module == target_module && inj.unlocked_academy_tier == Some(tier)
+                })
+        })
+    }
+
     /// Triggers the store overlay for an unowned module.
     pub fn request_purchase(&self, module_id: &str) {
         if let Some(desc) = self.descriptors.iter().find(|d| d.id == module_id) {
@@ -239,19 +321,22 @@ impl ModuleManager {
 
 ---
 
-### 3. In-Game Showcase Teaser for Unowned DLCs
+### 3. UI Visibility and Showcase Policy for Expansion DLCs
 
-Unowned DLC modules are not hidden; they appear in the UI as premium expansions to drive player awareness and conversion:
+To guarantee that the Base Game launches as an uncompromised, complete motorsport game, the UI strictly enforces a **Zero-Clutter Policy for Unconfirmed DLCs**:
 
-1. **Modality Selector Badge**:
-   * Core modules display standard career/racing options.
-   * Unowned DLC modules display a gold **"DLC EXPANSION"** ribbon or subtle padlock icon.
-2. **Interactive Showcase Screen**:
-   * Selecting an unowned DLC opens a dedicated **Showcase Screen**:
-     * **3D/2D Car Turntable**: The player can freely rotate the signature vehicle model and view telemetry ratings.
-     * **Circuit Tour**: Interactive previews of the included tracks.
-     * **Sound Preview**: Ability to rev the engine and hear the custom physical audio profile.
-     * **Action Call**: Prominent **[ View on Steam Store ]** button, which invokes `open_store_page()`.
+1. **Unannounced / Doubtful DLCs are Completely Hidden**:
+   * Planned disciplines undergoing technical or gameplay evaluation (such as **GT World Challenge**, **Stock Cars**, or **Extreme Off-Road**) initialize with `is_announced: false`.
+   * **They do NOT appear in the base game UI at all**—they are completely absent from the Modality Selector, Career Hub, interactive garage, and track manager. The player sees only the 4 authentic core disciplines (**Classic Arcade**, **Grassroots Karting**, **FIA Autocross**, and **Rallycross**).
+   * No "Coming Soon", locked greyed-out silhouettes, or placeholder badges clutter the release build.
+2. **Confirmed Commercial Launch & Showcase View**:
+   * Only when a DLC is officially confirmed, tested, and approved for commercial release on Steam is its flag set to `is_announced: true` (or loaded via its Steam depot).
+   * Once announced/confirmed, the discipline card appears in the Modality Hub with an elegant **"DLC EXPANSION"** ribbon.
+   * Clicking an announced but unowned DLC card opens the interactive **Showcase Screen**:
+     * **3D/2D Car Turntable**: Inspect vehicle dimensions, horsepower, and telemetry ratings.
+     * **Circuit Tour**: Previews of the included tracks.
+     * **Sound Preview**: Engine audio acoustics.
+     * **Store Action**: Prominent **[ View on Steam Store ]** action invoking `open_store_page()`.
 3. **Graceful LAN Multiplayer Handling**:
    * If a LAN host selects a DLC track, clients who do not own the DLC are informed via a clear dialog:
      * *Policy*: Guests without the DLC are permitted to join as guest racers with default liveries (community-friendly design) or spectator mode.
@@ -314,15 +399,16 @@ The embedded catalog in `crates/tdrace-core/src/catalog.rs` is updated to tag ci
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-#### Scenario 1: Base Game Content Availability Out of the Box
+#### Scenario 1: Base Game Content Availability and Zero-Clutter Out of the Box
 - [ ] **Given** a fresh installation of the base game without any purchased DLCs
-- [ ] **When** the player launches the game and opens the Modality Hub
+- [ ] **When** the player launches the game and opens the Modality Hub, Career Hub, or Garage
 - [ ] **Then** Classic Arcade, Grassroots Karting, FIA Autocross, and Rallycross should all be active and selectable
-- [ ] **And** no DLC ownership warnings should be shown for these four modalities.
+- [ ] **And** unannounced planned DLCs (GT, Stock Cars, Extreme Off-Road) must not appear in menus, career progression trees, or car selectors
+- [ ] **And** no DLC ownership warnings or locked placeholder cards should be shown.
 
-#### Scenario 2: Unowned DLC Showcase and Store Hook
-- [ ] **Given** the player does not own the Stock Car Cup DLC
-- [ ] **When** the player highlights the Stock Car modality in the Modality Hub
+#### Scenario 2: Visibility Policy for Confirmed DLCs
+- [ ] **Given** a DLC expansion is officially confirmed and marked with `is_announced: true`
+- [ ] **When** a player who does not own the DLC views the Modality Hub
 - [ ] **Then** the card should display a "DLC EXPANSION" badge
 - [ ] **And** selecting the card should open the interactive Showcase View showing car telemetry and track previews
 - [ ] **And** clicking "View on Steam Store" should open the Steam Overlay to the designated DLC store page.
@@ -339,7 +425,9 @@ The embedded catalog in `crates/tdrace-core/src/catalog.rs` is updated to tag ci
 - [ ] **Then** Grassroots Karting must be available at License D
 - [ ] **And** FIA Autocross must require License C
 - [ ] **And** Rallycross must require License B
-- [ ] **And** the GT World Challenge DLC (when installed) must require License A (Apex Superlicense) due to tactical tire compound choices and pit stop mechanics
+- [ ] **And** the GT World Challenge DLC (when installed) must require License A (Apex Superlicense)
+- [ ] **And** License A races must strictly enforce the mechanical vehicle damage model (Spec 078)
+- [ ] **And** License A races must mandate pit lane navigation and pit stall stops to perform in-race repairs and tyre compound changing (Specs 062, 077, 098)
 - [ ] **And** other DLC careers (Stock Cars, Extreme Off-Road) must plug in as lateral specializations without blocking base license advancement.
 
 #### Scenario 5: Dev Mode and Offline Parity
@@ -347,6 +435,15 @@ The embedded catalog in `crates/tdrace-core/src/catalog.rs` is updated to tag ci
 - [ ] **When** `DevEntitlementProvider` is active
 - [ ] **Then** all modalities (Base and DLC) should be unlocked for testing and development
 - [ ] **And** `cargo test` must pass completely without requiring the Steam client process.
+
+#### Scenario 6: GT DLC Cross-Module Injection into Classic Module
+- [ ] **Given** the player has installed the GT World Challenge DLC
+- [ ] **When** accessing the Classic Module circuit selector
+- [ ] **Then** `classic_velocity_endurance` and `classic_grand_prix_24h` must appear as selectable layouts with functional pit lanes
+- [ ] **And** when opening the Classic Driving Academy (Spec 064)
+- [ ] **Then** Tier 4 (Superlicense Masterclass) must be unlocked and selectable
+- [ ] **And** challenges `acad_4_1` through `acad_4_4` must be playable, teaching pit box stops, damage care, and undercut strategy
+- [ ] **And** completing Tier 4 must award the Class A Apex Superlicense.
 
 ---
 
@@ -360,6 +457,8 @@ The embedded catalog in `crates/tdrace-core/src/catalog.rs` is updated to tag ci
 - `[ ]` `crates/tdrace-app/src/module/manager.rs` -> Central `ModuleManager` and `ModuleDescriptor` registry.
 - `[ ]` `crates/tdrace-app/src/ui/dlc_showcase.rs` -> Interactive 2D car turntable and DLC teaser screen.
 - `[ ]` `crates/tdrace-app/tests/dlc_entitlement_tests.rs` -> Comprehensive automated tests for DLC gating and discovery.
+- `[ ]` `tracks/classic/classic_velocity_endurance.json` -> Extended Classic GT endurance circuit with 12-stall pit lane.
+- `[ ]` `tracks/classic/classic_grand_prix_24h.json` -> Premier Classic 24h grand prix layout with authentic pit lane and speed limiter.
 
 ### Modified Files
 - `[ ]` `Cargo.toml` -> Adds optional `steamworks` dependency under `[features] steam = ["dep:steamworks"]`.
