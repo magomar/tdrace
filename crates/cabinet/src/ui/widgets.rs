@@ -1,6 +1,7 @@
 use macroquad::color::Color;
 use macroquad::input::{is_key_down, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton};
-use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
+use macroquad::math::vec2;
+use macroquad::shapes::{draw_line, draw_rectangle, draw_rectangle_lines, draw_triangle};
 use serde::{Deserialize, Serialize};
 use crate::ui::font::Fonts;
 use crate::ui::layout::NavBoundaryExit;
@@ -1719,3 +1720,326 @@ mod tests {
     }
 }
 
+
+/// One frame of input for a [`FieldDropdown`]. Passed in by the caller, so the logic runs headless.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct FieldDropdownInput {
+    pub mouse: (f32, f32),
+    pub clicked: bool,
+    /// Mouse wheel delta; positive scrolls the list up.
+    pub wheel: f32,
+    pub up: bool,
+    pub down: bool,
+    pub confirm: bool,
+    pub cancel: bool,
+}
+
+/// What a [`FieldDropdown`] did this frame. Any event other than `None` consumed the click or key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FieldDropdownEvent {
+    None,
+    Opened,
+    Closed,
+    Picked(usize),
+}
+
+/// Screen placement of an open [`FieldDropdown`] list.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FieldPopupLayout {
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub item_h: f32,
+    pub first_row: usize,
+    pub visible_rows: usize,
+}
+
+impl FieldPopupLayout {
+    pub fn h(&self) -> f32 {
+        self.visible_rows as f32 * self.item_h
+    }
+
+    pub fn contains(&self, (mx, my): (f32, f32)) -> bool {
+        mx >= self.x && mx <= self.x + self.w && my >= self.y && my < self.y + self.h()
+    }
+
+    /// Option index under the pointer, if any.
+    pub fn row_at(&self, (mx, my): (f32, f32)) -> Option<usize> {
+        if !self.contains((mx, my)) {
+            return None;
+        }
+        Some(self.first_row + ((my - self.y) / self.item_h) as usize)
+    }
+}
+
+/// Compact one-row dropdown for dense panels such as editor inspectors.
+/// The caller owns the options and the selection; `None` selection means a mixed value.
+/// The open list shows at most `max_rows` rows, scrolls with the wheel and arrow keys,
+/// and stays inside the given bounds rectangle.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct FieldDropdown {
+    pub is_open: bool,
+    pub hovered: Option<usize>,
+    pub first_row: usize,
+}
+
+impl FieldDropdown {
+    /// Opens the list with the selected option (or the first one) highlighted and in view.
+    pub fn open(&mut self, selected: Option<usize>, option_count: usize, max_rows: usize) {
+        let anchor = selected.unwrap_or(0).min(option_count.saturating_sub(1));
+        self.is_open = true;
+        self.hovered = Some(anchor);
+        let visible = max_rows.min(option_count).max(1);
+        self.first_row = anchor.saturating_sub(visible / 2).min(option_count.saturating_sub(visible));
+    }
+
+    pub fn close(&mut self) {
+        self.is_open = false;
+        self.hovered = None;
+    }
+
+    /// Places the list below the field, or above it when there is no room below,
+    /// with at most `max_rows` rows and never outside `bounds` (x, y, w, h).
+    pub fn popup_layout(
+        &self,
+        field: (f32, f32, f32, f32),
+        option_count: usize,
+        max_rows: usize,
+        bounds: (f32, f32, f32, f32),
+        item_h: f32,
+    ) -> FieldPopupLayout {
+        let (fx, fy, fw, fh) = field;
+        let (bx, by, bw, bh) = bounds;
+        let fit_rows = ((bh / item_h).floor() as usize).max(1);
+        let visible_rows = option_count.min(max_rows).min(fit_rows).max(1);
+        let h = visible_rows as f32 * item_h;
+        let below = fy + fh;
+        let y = if below + h <= by + bh {
+            below
+        } else if fy - h >= by {
+            fy - h
+        } else {
+            (by + bh - h).max(by)
+        };
+        let w = fw.min(bw);
+        let x = fx.clamp(bx, (bx + bw - w).max(bx));
+        let first_row = self.first_row.min(option_count.saturating_sub(visible_rows));
+        FieldPopupLayout { x, y, w, item_h, first_row, visible_rows }
+    }
+
+    /// Runs one frame of mouse, wheel and key input.
+    #[allow(clippy::too_many_arguments)]
+    pub fn handle_input(
+        &mut self,
+        field: (f32, f32, f32, f32),
+        option_count: usize,
+        selected: Option<usize>,
+        max_rows: usize,
+        bounds: (f32, f32, f32, f32),
+        item_h: f32,
+        input: FieldDropdownInput,
+    ) -> FieldDropdownEvent {
+        let (fx, fy, fw, fh) = field;
+        let (mx, my) = input.mouse;
+        let in_field = mx >= fx && mx <= fx + fw && my >= fy && my <= fy + fh;
+
+        if !self.is_open {
+            if input.clicked && in_field && option_count > 0 {
+                self.open(selected, option_count, max_rows);
+                return FieldDropdownEvent::Opened;
+            }
+            return FieldDropdownEvent::None;
+        }
+
+        let layout = self.popup_layout(field, option_count, max_rows, bounds, item_h);
+        let last = option_count.saturating_sub(1);
+        let max_first = option_count.saturating_sub(layout.visible_rows);
+        self.first_row = layout.first_row;
+
+        if input.cancel {
+            self.close();
+            return FieldDropdownEvent::Closed;
+        }
+        if input.up || input.down {
+            let curr = self.hovered.unwrap_or(0);
+            let next = if input.up { curr.saturating_sub(1) } else { (curr + 1).min(last) };
+            self.hovered = Some(next);
+            if next < self.first_row {
+                self.first_row = next;
+            } else if next >= self.first_row + layout.visible_rows {
+                self.first_row = next + 1 - layout.visible_rows;
+            }
+        }
+        if input.wheel.abs() > 0.01 && layout.contains(input.mouse) {
+            self.first_row = if input.wheel > 0.0 {
+                self.first_row.saturating_sub(1)
+            } else {
+                (self.first_row + 1).min(max_first)
+            };
+        }
+        let layout = FieldPopupLayout { first_row: self.first_row, ..layout };
+        if let Some(row) = layout.row_at(input.mouse) {
+            if row < option_count {
+                self.hovered = Some(row);
+            }
+        }
+        if input.confirm {
+            let picked = self.hovered;
+            self.close();
+            return picked.map_or(FieldDropdownEvent::Closed, FieldDropdownEvent::Picked);
+        }
+        if input.clicked {
+            let picked = layout.row_at(input.mouse).filter(|&r| r < option_count);
+            self.close();
+            return picked.map_or(FieldDropdownEvent::Closed, FieldDropdownEvent::Picked);
+        }
+        FieldDropdownEvent::None
+    }
+}
+
+/// Draws the closed one-row field of a [`FieldDropdown`]: optional colour swatch, value text, caret.
+/// A mixed value shows a hatched swatch and muted "Mixed" text.
+#[allow(clippy::too_many_arguments)]
+pub fn draw_field_dropdown(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    text: &str,
+    swatch: Option<Color>,
+    mixed: bool,
+    is_open: bool,
+    is_hovered: bool,
+    accent_color: Color,
+) {
+    let border = if is_open || is_hovered { accent_color } else { Palette::UI_CARD_BORDER };
+    let bg = if is_hovered { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
+    scaler.draw_glass_card(x, y, w, h, bg, border, if is_open { 1.6 } else { 1.0 });
+
+    let pad = scaler.s(6.0);
+    let sw = scaler.s(11.0);
+    let mut text_x = x + pad;
+    if mixed || swatch.is_some() {
+        draw_swatch(scaler, text_x, y + (h - sw) * 0.5, sw, if mixed { None } else { swatch });
+        text_x += sw + scaler.s(6.0);
+    }
+    let caret_w = scaler.s(12.0);
+    let size = scaler.font_s(11.5);
+    let label = if mixed { "Mixed" } else { text };
+    let fitted = fonts.fit_ui_bold(label, size, (x + w - caret_w - pad - text_x).max(1.0));
+    fonts.draw_ui_bold(&fitted, text_x, y + h * 0.5 + size * 0.35, size, if mixed { Palette::UI_TEXT_MUTED } else { Palette::WHITE });
+
+    let cx = x + w - pad - caret_w * 0.5;
+    let cy = y + h * 0.5;
+    let k = scaler.s(3.5);
+    let caret_col = if is_open || is_hovered { accent_color } else { Palette::UI_TEXT_MUTED };
+    if is_open {
+        draw_triangle(vec2(cx - k, cy + k * 0.6), vec2(cx + k, cy + k * 0.6), vec2(cx, cy - k * 0.6), caret_col);
+    } else {
+        draw_triangle(vec2(cx - k, cy - k * 0.6), vec2(cx + k, cy - k * 0.6), vec2(cx, cy + k * 0.6), caret_col);
+    }
+}
+
+/// Draws the open list of a [`FieldDropdown`]. `swatches` is either empty or one colour per option.
+#[allow(clippy::too_many_arguments)]
+pub fn draw_field_dropdown_popup(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    layout: &FieldPopupLayout,
+    options: &[String],
+    swatches: &[Color],
+    selected: Option<usize>,
+    hovered: Option<usize>,
+    accent_color: Color,
+) {
+    let h = layout.h();
+    draw_rectangle(layout.x + scaler.s(3.0), layout.y + scaler.s(4.0), layout.w, h, Palette::SHADOW);
+    scaler.draw_glass_card(layout.x, layout.y, layout.w, h, Color::new(0.05, 0.07, 0.11, 0.99), accent_color, 1.4);
+
+    let pad = scaler.s(6.0);
+    let sw = scaler.s(11.0);
+    let size = scaler.font_s(11.5);
+    let end = (layout.first_row + layout.visible_rows).min(options.len());
+    for (row, idx) in (layout.first_row..end).enumerate() {
+        let iy = layout.y + row as f32 * layout.item_h;
+        if hovered == Some(idx) {
+            draw_rectangle(layout.x + scaler.s(1.0), iy, layout.w - scaler.s(2.0), layout.item_h, Color::new(accent_color.r * 0.22, accent_color.g * 0.22, accent_color.b * 0.22, 0.95));
+        }
+        let mut tx = layout.x + pad;
+        if let Some(col) = swatches.get(idx) {
+            draw_swatch(scaler, tx, iy + (layout.item_h - sw) * 0.5, sw, Some(*col));
+            tx += sw + scaler.s(6.0);
+        }
+        let is_sel = selected == Some(idx);
+        let col = if is_sel { accent_color } else if hovered == Some(idx) { Palette::WHITE } else { Palette::UI_TEXT_MUTED };
+        fonts.draw_ui_bold(&options[idx], tx, iy + layout.item_h * 0.5 + size * 0.35, size, col);
+    }
+
+    // Scroll indicator when not every option is visible.
+    if options.len() > layout.visible_rows {
+        let track_h = h - scaler.s(4.0);
+        let thumb_h = (track_h * layout.visible_rows as f32 / options.len() as f32).max(scaler.s(8.0));
+        let max_first = (options.len() - layout.visible_rows) as f32;
+        let thumb_y = layout.y + scaler.s(2.0) + (track_h - thumb_h) * (layout.first_row as f32 / max_first);
+        draw_rectangle(layout.x + layout.w - scaler.s(4.0), thumb_y, scaler.s(2.0), thumb_h, Palette::UI_CARD_BORDER);
+    }
+}
+
+/// Colour swatch square; `None` draws the hatched "mixed" swatch.
+fn draw_swatch(scaler: &UiScaler, x: f32, y: f32, size: f32, color: Option<Color>) {
+    match color {
+        Some(c) => draw_rectangle(x, y, size, size, c),
+        None => {
+            draw_rectangle(x, y, size, size, Palette::UI_PILL_BG);
+            draw_line(x, y + size, x + size, y, scaler.s(1.2), Palette::UI_TEXT_MUTED);
+        }
+    }
+    draw_rectangle_lines(x, y, size, size, 1.0, Color::new(1.0, 1.0, 1.0, 0.3));
+}
+
+/// Index of the segment under `mouse` in an equal-width segmented control.
+pub fn segment_at(x: f32, y: f32, w: f32, h: f32, count: usize, (mx, my): (f32, f32)) -> Option<usize> {
+    if count == 0 || mx < x || mx > x + w || my < y || my > y + h {
+        return None;
+    }
+    Some((((mx - x) / (w / count as f32)) as usize).min(count - 1))
+}
+
+/// Draws an equal-width segmented control. `active` is `None` for a mixed value (no segment lit).
+#[allow(clippy::too_many_arguments)]
+pub fn draw_segmented(
+    scaler: &UiScaler,
+    fonts: &Fonts,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    labels: &[&str],
+    active: Option<usize>,
+    hovered: Option<usize>,
+    accent_color: Color,
+) {
+    if labels.is_empty() {
+        return;
+    }
+    scaler.draw_glass_card(x, y, w, h, Palette::UI_PILL_BG, Palette::UI_CARD_BORDER, 1.0);
+    let seg_w = w / labels.len() as f32;
+    let size = scaler.font_s(11.0);
+    for (i, label) in labels.iter().enumerate() {
+        let sx = x + i as f32 * seg_w;
+        if active == Some(i) {
+            draw_rectangle(sx + 1.0, y + 1.0, seg_w - 2.0, h - 2.0, Color::new(accent_color.r * 0.18, accent_color.g * 0.18, accent_color.b * 0.18, 0.95));
+            draw_rectangle_lines(sx + 1.0, y + 1.0, seg_w - 2.0, h - 2.0, 1.0, accent_color);
+        } else if hovered == Some(i) {
+            draw_rectangle(sx + 1.0, y + 1.0, seg_w - 2.0, h - 2.0, Palette::UI_CARD_BG_HOVER);
+        }
+        if i > 0 {
+            draw_rectangle(sx, y + scaler.s(3.0), 1.0, h - scaler.s(6.0), Palette::UI_CARD_BORDER);
+        }
+        let col = if active == Some(i) { accent_color } else if hovered == Some(i) { Palette::WHITE } else { Palette::UI_TEXT_MUTED };
+        let fitted = fonts.fit_ui_bold(label, size, seg_w - scaler.s(4.0));
+        fonts.draw_ui_bold_centered(&fitted, sx + seg_w * 0.5, y + h * 0.5 + size * 0.35, size, col);
+    }
+}

@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspector Layout Mockups</title>
+<!-- Spec 086, human checkpoint HC-1 (tdrace-wsin.1). Static mockups only: no engine code. -->
+<style>
+@font-face { font-family: Barlow; font-weight: 500; src: url("../../../crates/tdrace-app/assets/fonts/Barlow-Medium.ttf"); }
+@font-face { font-family: Barlow; font-weight: 600; src: url("../../../crates/tdrace-app/assets/fonts/Barlow-SemiBold.ttf"); }
+:root {
+  --page: #0b0e15; --ink: #e8eef7; --muted: #a6b8d1; --line: #2a3650;
+  --card: rgba(18, 23, 36, 0.94); --card-border: rgba(64, 89, 128, 0.85);
+  --pill: rgba(26, 33, 51, 0.95); --pill-hover: rgba(31, 41, 61, 0.98);
+  --cyan: #33e6ff; --gold: #ffd126; --red: #ff3840; --green: #33f273;
+  --z: 1.4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 500 15px/1.45 Barlow, system-ui, sans-serif; }
+main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-weight: 600; font-size: 26px; margin: 0 0 4px; }
+h2 { font-weight: 600; font-size: 20px; margin: 40px 0 6px; color: var(--gold); }
+h3 { font-weight: 600; font-size: 16px; margin: 18px 0 8px; }
+p, li { color: var(--muted); max-width: 900px; }
+strong { color: var(--ink); }
+.ask { border: 1px solid var(--cyan); border-radius: 8px; padding: 12px 16px; background: rgba(51,230,255,.06); max-width: 900px; }
+.ask code { color: var(--cyan); font-weight: 600; }
+.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.toolbar button { font: inherit; color: var(--ink); background: var(--pill); border: 1px solid var(--card-border); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.toolbar button[aria-pressed="true"] { border-color: var(--cyan); color: var(--cyan); }
+.row { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 8px; }
+.cell { flex: none; }
+.cell .cap { font-size: 13px; color: var(--muted); margin: 6px 0 0; text-align: center; }
+.cell .fit { font-size: 12px; text-align: center; }
+.fit.ok { color: var(--green); } .fit.over { color: var(--red); }
+.pros { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 24px; max-width: 1100px; }
+.pros ul { margin: 4px 0; padding-left: 18px; }
+img.before { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+.rec { border-left: 3px solid var(--gold); padding: 6px 14px; max-width: 900px; }
+
+/* ---------- Inspector card, in 720p reference pixels, scaled by --z ---------- */
+.stage { zoom: var(--z); }
+.insp { position: relative; width: 240px; height: 620px; background: var(--card); border: 1px solid var(--card-border);
+  border-radius: 8px; display: flex; flex-direction: column; font-size: 12px; overflow: hidden; }
+.insp .ttl { height: 30px; flex: none; padding: 8px 12px 0; color: var(--gold); font-weight: 600; font-size: 14px; letter-spacing: .3px; }
+.insp .hdr { flex: none; padding: 0 12px 6px; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); }
+.insp .hdr b { font-weight: 600; font-size: 14px; }
+.insp .hdr .count { color: var(--cyan); font-size: 11px; }
+.insp .tabs { flex: none; display: flex; gap: 2px; padding: 6px 12px 0; border-bottom: 1px solid var(--line); }
+.insp .tabs span { flex: 1; text-align: center; padding: 3px 0 4px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; font-size: 11.5px; }
+.insp .tabs span.on { color: var(--cyan); border-bottom-color: var(--cyan); }
+.insp .body { flex: 1; overflow-y: auto; padding: 4px 12px 8px; scrollbar-width: thin; scrollbar-color: var(--card-border) transparent; }
+.insp .foot { flex: none; display: flex; gap: 6px; padding: 7px 12px 8px; border-top: 1px solid var(--line); background: rgba(10,13,21,.6); }
+.sec { margin-top: 6px; }
+.sec > .sh { height: 20px; display: flex; align-items: center; gap: 5px; color: var(--cyan); font-size: 10.5px; font-weight: 600; letter-spacing: .8px; cursor: pointer; user-select: none; }
+.sec > .sh .lr { margin-left: auto; display: flex; gap: 0; color: var(--muted); font-weight: 500; }
+.sec > .sh .lr i { font-style: normal; width: 37px; text-align: center; }
+.sec > .sh::before { content: "▾"; color: var(--muted); width: 8px; }
+.sec.closed > .sh::before { content: "▸"; }
+.sec.closed > .rows { display: none; }
+.r { height: 22px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; position: relative; }
+.r .lb { width: 56px; flex: none; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn { height: 22px; background: var(--pill); border: 1px solid var(--card-border); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; white-space: nowrap; color: var(--ink); }
+.btn:hover { background: var(--pill-hover); }
+.btn.sq { width: 18px; flex: none; color: var(--muted); }
+.btn.on { border-color: var(--cyan); color: var(--cyan); background: rgba(51,230,255,.10); }
+.btn.mixed { background: repeating-linear-gradient(135deg, var(--pill) 0 4px, rgba(64,89,128,.35) 4px 6px); color: var(--muted); }
+.btn.act { flex: 1; font-weight: 600; font-size: 11.5px; }
+.btn.danger { border-color: rgba(255,56,64,.75); color: #ff8a8f; }
+.btn.full { flex: 1; }
+.bar { flex: 1; height: 22px; background: var(--pill); border: 1px solid var(--card-border); border-radius: 4px; position: relative; overflow: hidden; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(51,230,255,.55), rgba(51,230,255,.25)); }
+.bar .val { position: absolute; right: 6px; top: 0; line-height: 20px; font-weight: 600; }
+.bar.mixed .val { color: var(--muted); }
+.seg { flex: 1; display: flex; height: 22px; border: 1px solid var(--card-border); border-radius: 4px; overflow: hidden; }
+.seg span { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--pill); border-left: 1px solid var(--card-border); cursor: pointer; font-size: 11.5px; }
+.seg span:first-child { border-left: 0; }
+.seg span.on { background: rgba(51,230,255,.14); color: var(--cyan); }
+.seg.mixed span { color: var(--muted); }
+.lrs { display: flex; gap: 0; margin-left: auto; }
+.lrs .btn { width: 37px; border-radius: 0; font-size: 11px; }
+.lrs .btn:first-child { border-radius: 4px 0 0 4px; } .lrs .btn:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
+.chips { flex: 1; display: flex; gap: 3px; }
+.chips .btn { flex: 1; font-size: 11px; }
+.dd { flex: 1; height: 22px; background: var(--pill); border: 1px solid var(--card-border); border-radius: 4px; display: flex; align-items: center; gap: 6px; padding: 0 6px; cursor: pointer; }
+.dd .sw, .opt .sw, .tile .sw { width: 12px; height: 12px; border-radius: 2px; flex: none; border: 1px solid rgba(255,255,255,.25); }
+.dd .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd .car { color: var(--muted); }
+.dd.mixed .nm { color: var(--muted); font-style: italic; }
+.info { color: var(--muted); height: 18px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.diagram { height: 70px; margin-bottom: 4px; border: 1px solid var(--line); border-radius: 4px; }
+/* popups */
+.pop { position: absolute; left: 60px; right: 0; top: 24px; z-index: 5; background: #0f1420; border: 1px solid var(--cyan); border-radius: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.6); }
+.pop.list { max-height: 182px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--card-border) transparent; }
+.opt { height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px; cursor: pointer; }
+.opt:hover, .opt.hl { background: rgba(51,230,255,.12); }
+.opt .ck { margin-left: auto; color: var(--cyan); }
+.pop.grid { left: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 4px; }
+.tile { height: 22px; display: flex; align-items: center; gap: 5px; padding: 0 5px; background: var(--pill); border: 1px solid var(--card-border); border-radius: 3px; cursor: pointer; font-size: 11px; white-space: nowrap; overflow: hidden; }
+.tile.on { border-color: var(--cyan); color: var(--cyan); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Track Studio inspector: layout mockups</h1>
+  <p>Spec 086, checkpoint HC-1. These are drawings, not game code. Each card has the real size of the game inspector at 1280×720 (240 × 620 px), shown larger. The controls work: open the dropdowns, open and close sections, change tabs.</p>
+  <div class="ask"><strong>Please answer 3 questions in chat</strong>, for example <code>A, P1, W1</code>:
+    <br>Q1: layout <code>A</code> or <code>B</code>. &nbsp; Q2: surface picker <code>P1</code> or <code>P2</code>. &nbsp; Q3: mouse wheel <code>W1</code> or <code>W2</code>.</div>
+
+  <h2>Today</h2>
+  <p>The current inspector for 8 kinds of selection (Waypoint, 3 Waypoints, Jump Ramp, 2 Ramps, 2 Zones, Mixed, Grid Slot, nothing selected). Content runs off the bottom. Multi-selection loses most controls. The Grid Slot panel is empty.</p>
+  <img class="before" src="before_inspector.png" alt="Current inspector screenshots for eight selection kinds">
+
+  <div class="toolbar">Zoom:
+    <button data-z="1">1× (real size)</button><button data-z="1.4" aria-pressed="true">1.4×</button><button data-z="1.8">1.8×</button>
+    <span style="margin-left:16px">Surface picker in the mockups:</span>
+    <button data-picker="list" aria-pressed="true">P1 list</button><button data-picker="grid">P2 grid</button>
+  </div>
+
+  <h2>Q1 · Layout A: sections + scroll + fixed footer</h2>
+  <p>All controls of the selection in one column. Sections open and close. The body scrolls only when it is too tall. Duplicate and Delete are always at the bottom.</p>
+  <div class="row" id="rowA"></div>
+  <div class="pros">
+    <div><h3>Good</h3><ul><li>You see all values at once. No hidden controls.</li><li>Every single selection fits with no scroll (see the green numbers).</li><li>Same order for one item or many items.</li></ul></div>
+    <div><h3>Not so good</h3><ul><li>Long track-level views can still need a scroll.</li><li>Many sections open at once can look busy.</li></ul></div>
+  </div>
+
+  <h2>Q1 · Layout B: tabs, no scroll</h2>
+  <p>The same controls, split into tabs. Only one tab is shown at a time. Click the tabs.</p>
+  <div class="row" id="rowB"></div>
+  <div class="pros">
+    <div><h3>Good</h3><ul><li>Each tab is short and calm.</li><li>Never scrolls.</li></ul></div>
+    <div><h3>Not so good</h3><ul><li>You must click a tab to see or change some values.</li><li>You cannot compare values from 2 tabs at the same time.</li><li>Kinds with few controls (Obstacle, Checkpoint) get near-empty tabs.</li></ul></div>
+  </div>
+
+  <h2>Q2 · Surface picker</h2>
+  <p>Both pickers replace all 7 surface button lists. Same 14 surfaces, same order and names everywhere, each with its colour.</p>
+  <div class="row" id="rowP"></div>
+  <div class="pros">
+    <div><h3>P1 · List dropdown</h3><ul><li>One surface per line, 8 lines visible, then scroll.</li><li>Arrow keys and Enter work.</li><li>Looks like a normal dropdown.</li></ul></div>
+    <div><h3>P2 · Grid popover</h3><ul><li>All 14 surfaces at once in 2 columns. No scroll.</li><li>Closest to today's buttons, but only while open.</li><li>Wider: it covers the labels column.</li></ul></div>
+  </div>
+
+  <h2>Q3 · Mouse wheel</h2>
+  <div class="pros">
+    <div><h3>W1 · Wheel scrolls the panel (spec default)</h3><ul><li>The wheel over the inspector scrolls it.</li><li>The wheel changes a slider only after you click that slider. A click anywhere else, Esc, or a new selection removes this focus.</li><li>No value changes by accident.</li></ul></div>
+    <div><h3>W2 · Wheel over a slider changes it</h3><ul><li>Like today: put the mouse on a slider and turn the wheel.</li><li>Fast, but when the panel scrolls, a slider can pass under the mouse and change by accident.</li><li>Both options fix today's bug: the wheel over the map never changes a slider.</li></ul></div>
+  </div>
+
+  <h2>My recommendation</h2>
+  <p class="rec"><strong>A, P1, W1.</strong> With compact controls, every single selection fits in Layout A without a scroll, so tabs give no real gain and hide values. P1 is the most usual control and works with the keyboard. W1 stops accidental value changes.</p>
+</main>
+
+<script>
+const SURF = [
+  ["Asphalt", "#292b33"], ["Concrete", "#b8bdc2"], ["Dirt", "#7a5938"], ["Gravel", "#857f75"],
+  ["Packed Sand", "#d9bd7a"], ["Deep Sand", "#c9a35a"], ["Mud Track", "#52381f"], ["Deep Mud", "#3a2612"],
+  ["Packed Snow", "#e6edf5"], ["Deep Snow", "#ffffff"], ["Sheet Ice", "#a8d8f0"], ["Grass", "#2e7a3d"],
+  ["Water", "#2e94e0"], ["Oil", "#15151a"],
+];
+let picker = "list";
+
+// ---- row builders: each returns an HTML string in 720p reference px ----
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const lb = t => `<span class="lb">${esc(t)}</span>`;
+const stepper = (label, value, frac, mixed) =>
+  `<div class="r">${lb(label)}<span class="btn sq">−</span><span class="bar${mixed ? " mixed" : ""}">${mixed ? "" : `<span class="fill" style="width:${frac * 100}%"></span>`}<span class="val">${mixed ? "—" : esc(value)}</span></span><span class="btn sq">+</span></div>`;
+const dd = (label, surf, mixed, open) => {
+  const s = SURF.find(x => x[0] === surf);
+  return `<div class="r" data-dd="${esc(surf || "")}">${lb(label)}<span class="dd${mixed ? " mixed" : ""}">${mixed ? `<span class="sw" style="background:repeating-linear-gradient(135deg,#556 0 2px,#223 2px 4px)"></span><span class="nm">Mixed</span>` : s ? `<span class="sw" style="background:${s[1]}"></span><span class="nm">${esc(surf)}</span>` : `<span class="nm">${esc(surf)}</span>`}<span class="car">▾</span></span>${open ? popup(surf) : ""}</div>`;
+};
+const textdd = (label, text) => `<div class="r">${lb(label)}<span class="dd"><span class="nm">${esc(text)}</span><span class="car">▾</span></span></div>`;
+const popup = surf => picker === "list"
+  ? `<div class="pop list">${SURF.map(s => `<div class="opt${s[0] === surf ? " hl" : ""}" data-pick="${s[0]}"><span class="sw" style="background:${s[1]}"></span>${s[0]}${s[0] === surf ? '<span class="ck">✓</span>' : ""}</div>`).join("")}</div>`
+  : `<div class="pop grid">${SURF.map(s => `<div class="tile${s[0] === surf ? " on" : ""}" data-pick="${s[0]}"><span class="sw" style="background:${s[1]}"></span>${s[0]}</div>`).join("")}</div>`;
+const chips = (label, items, on) => `<div class="r">${lb(label)}<span class="chips">${items.map((t, i) => `<span class="btn${i === on ? " on" : ""}">${esc(t)}</span>`).join("")}</span></div>`;
+const seg = (label, items, on, mixed) => `<div class="r">${lb(label)}<span class="seg${mixed ? " mixed" : ""}">${items.map((t, i) => `<span class="${i === on ? "on" : ""}">${esc(t)}</span>`).join("")}</span></div>`;
+const lr = (label, l, r) => {
+  const b = v => `<span class="btn${v === true ? " on" : v === null ? " mixed" : ""}">${v === null ? "—" : v ? "on" : "off"}</span>`;
+  return `<div class="r">${lb(label)}<span class="lrs">${b(l)}${b(r)}</span></div>`;
+};
+const btn = (t, extra) => `<div class="r"><span class="btn full${extra ? " " + extra : ""}">${esc(t)}</span></div>`;
+const info = t => `<div class="info">${esc(t)}</div>`;
+const diagram = () => `<svg class="diagram" viewBox="0 0 216 70" width="100%"><path d="M10 60 Q 70 60 110 22 L 170 22 L 170 60" fill="rgba(51,230,255,.12)" stroke="#33e6ff"/><text x="120" y="16" fill="#a6b8d1" font-size="9">flat 5.3 m</text><text x="176" y="44" fill="#ffd126" font-size="9">H 1.8</text><text x="20" y="54" fill="#ffd126" font-size="9">15°</text></svg>`;
+const sec = (title, rows, opts = {}) => `<div class="sec${opts.closed ? " closed" : ""}"><div class="sh">${esc(title)}${opts.lr ? '<span class="lr"><i>L</i><i>R</i></span>' : ""}</div><div class="rows">${rows.join("")}</div></div>`;
+
+// ---- the views: section lists shared by both layouts ----
+const VIEWS = {
+  waypoint: { title: "Waypoint #12", count: "", tabs: ["Road", "Edges", "Info"], secs: m => [
+    ["Road", "ROAD", [stepper("Width", "13.0 m", .38), dd("Surface", m ? null : "Asphalt", m)]],
+    ["Road", "BANKING", [stepper("Angle", m ? "" : "+0.0°", .5, m), chips("Presets", ["0°", "10°", "18°", "22°", "±"], m ? -1 : 0)]],
+    ["Edges", "EDGES", [lr("Curb", m ? null : false, false), lr("Wall", true, true), stepper("Dist L", "1.5 m", .08), stepper("Dist R", m ? "" : "1.5 m", .08, m), seg("Wall type", ["Concrete", "Steel", "Tyres"], 1)], { lr: true }],
+    ["Info", "INFO", [info(m ? "Positions: 3 waypoints" : "Position (132.0, −0.0)"), info(m ? "Segment length: 18–42 m" : "Segment length: 24.6 m")], { closed: true }],
+  ] },
+  ramp: { title: "Jump Ramp #1", count: "", tabs: ["Shape", "Profile", "Surface"], secs: () => [
+    ["Shape", "SHAPE", [stepper("Angle", "180°", .5), stepper("Length", "12.0 m", .21), stepper("Width", "8.0 m", .24)]],
+    ["Profile", "PROFILE", [stepper("Height", "1.8 m", .16), stepper("Pitch", "15.0°", .24), `<div class="r"><span class="btn act">Fit pitch 8.5°</span><span class="btn act">Fit height 3.2 m</span></div>`, diagram()]],
+    ["Surface", "SURFACE", [dd("Material", "Dirt")]],
+  ] },
+  track: { title: "Circuit", count: "Road Spline tool", tabs: ["Tool", "Walls", "Circuit"], secs: () => [
+    ["Tool", "ROAD SPLINE DEFAULTS", [dd("Surface", "Asphalt"), stepper("Width", "12.0 m", .32), stepper("Banking", "+0.0°", .5), stepper("Wall dist", "8.0 m", .4), seg("Wall type", ["Concrete", "Steel", "Tyres"], 1)]],
+    ["Walls", "CIRCUIT WALLS", [stepper("Offset", "8.2 m", .41), chips("Presets", ["0 m", "1.5", "4 m", "8 m"], 3), seg("Type", ["Concrete", "Steel", "Tyres"], 1)]],
+    ["Circuit", "CIRCUIT", [dd("Off-track", "Grass"), textdd("Category", "GT"), stepper("Grid", "10 slots", .42), chips("Presets", ["8", "10", "12", "14", "16", "18"], 1), `<div class="r"><span class="btn act">Auto checkpoints</span><span class="btn act">Rebuild</span></div>`]],
+  ] },
+};
+const CARDS = [
+  { key: "waypoint", cap: "Waypoint" },
+  { key: "ramp", cap: "Jump Ramp" },
+  { key: "waypoint", mixed: true, cap: "3 Waypoints (mixed values)" },
+  { key: "track", cap: "Nothing selected (track level)" },
+];
+
+function card(layout, c, openDd) {
+  const v = VIEWS[c.key];
+  const secs = v.secs(!!c.mixed);
+  const count = c.mixed ? "3 selected" : v.count;
+  const title = c.mixed ? "Waypoints" : v.title;
+  let body;
+  if (layout === "A") {
+    body = secs.map(([, t, rows, o]) => sec(t, rows.map(r => openDd && r.includes('data-dd="Asphalt"') ? r.replace("</span></div>", "</span>" + popup("Asphalt") + "</div>") : r), o)).join("");
+  } else {
+    const tab = c.tab || v.tabs[0];
+    body = secs.filter(s => s[0] === tab).map(([, t, rows]) => sec(t, rows)).join("");
+  }
+  const tabs = layout === "B" ? `<div class="tabs">${v.tabs.map(t => `<span class="${t === (c.tab || v.tabs[0]) ? "on" : ""}" data-tab="${t}">${t}</span>`).join("")}</div>` : "";
+  const foot = c.key === "track" ? "" : `<div class="foot"><span class="btn act" title="Ctrl+D">Duplicate <span style="color:var(--muted);margin-left:4px">Ctrl+D</span></span><span class="btn act danger">Delete <span style="color:var(--muted);margin-left:4px">Del</span></span></div>`;
+  return `<div class="insp"><div class="ttl">INSPECTOR</div><div class="hdr"><b>${esc(title)}</b><span class="count">${esc(count)}</span></div>${tabs}<div class="body"><div class="inner">${body}</div></div>${foot}</div>`;
+}
+
+const state = { A: CARDS.map(c => ({ ...c })), B: CARDS.map(c => ({ ...c })) };
+function render() {
+  for (const L of ["A", "B"]) {
+    const row = document.getElementById("row" + L);
+    row.innerHTML = state[L].map((c, i) => `<div class="cell" data-l="${L}" data-i="${i}"><div class="stage">${card(L, c)}</div><div class="cap">${c.cap}</div><div class="fit"></div></div>`).join("");
+  }
+  document.getElementById("rowP").innerHTML = ["list", "grid"].map(p => {
+    const keep = picker; picker = p;
+    const html = `<div class="cell"><div class="stage">${card("A", { key: "waypoint" }, true)}</div><div class="cap">${p === "list" ? "P1 · list dropdown, open" : "P2 · grid popover, open"}</div></div>`;
+    picker = keep; return html;
+  }).join("");
+  measure();
+}
+function measure() {
+  document.querySelectorAll("#rowA .cell, #rowB .cell").forEach(cell => {
+    const body = cell.querySelector(".body");
+    const used = Math.round(body.querySelector(".inner").offsetHeight + 12), room = Math.round(body.clientHeight);
+    const f = cell.querySelector(".fit");
+    f.textContent = `content ${used} / ${room} px · ${used <= room ? "fits, no scroll" : "scrolls"}`;
+    f.className = "fit " + (used <= room ? "ok" : "over");
+  });
+}
+document.addEventListener("click", e => {
+  const z = e.target.closest("[data-z]");
+  if (z) { document.documentElement.style.setProperty("--z", z.dataset.z); document.querySelectorAll("[data-z]").forEach(b => b.setAttribute("aria-pressed", b === z)); return; }
+  const p = e.target.closest("[data-picker]");
+  if (p) { picker = p.dataset.picker; document.querySelectorAll("[data-picker]").forEach(b => b.setAttribute("aria-pressed", b === p)); render(); return; }
+  const cell = e.target.closest(".cell[data-l]");
+  const tab = e.target.closest("[data-tab]");
+  if (tab && cell) { state[cell.dataset.l][cell.dataset.i].tab = tab.dataset.tab; render(); return; }
+  const sh = e.target.closest(".sh");
+  if (sh) { sh.parentElement.classList.toggle("closed"); measure(); return; }
+  const pick = e.target.closest("[data-pick]");
+  if (pick) { const r = pick.closest(".r"); r.querySelector(".pop").remove(); const s = SURF.find(x => x[0] === pick.dataset.pick); r.querySelector(".dd").innerHTML = `<span class="sw" style="background:${s[1]}"></span><span class="nm">${s[0]}</span><span class="car">▾</span>`; r.dataset.dd = s[0]; return; }
+  const ddEl = e.target.closest(".dd");
+  document.querySelectorAll(".cell[data-l] .pop").forEach(x => x.remove());
+  if (ddEl && cell && ddEl.closest(".r").dataset.dd !== undefined) {
+    const r = ddEl.closest(".r"); r.insertAdjacentHTML("beforeend", popup(r.dataset.dd || ""));
+  }
+});
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>

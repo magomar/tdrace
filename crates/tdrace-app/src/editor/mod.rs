@@ -1,4 +1,5 @@
 pub mod camera;
+pub mod inspector;
 pub mod state;
 pub mod tools;
 pub mod ui;
