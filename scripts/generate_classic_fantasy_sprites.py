@@ -536,7 +536,6 @@ def generate_classic_offroad():
     cx = 256 * ss
     cy = 256 * ss
     w_half = int(105 * ss)
-    h_half = int(210 * ss)
 
     # Exposed wide paddle sand tires
     # Rear paddle tires (extra wide)

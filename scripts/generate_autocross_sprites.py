@@ -312,7 +312,7 @@ def generate_crosscar(model_id, primary_col, accent_col, cage_col, beadlock_col,
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = int(256 * ss), int(256 * ss)
+    cy = int(256 * ss)
 
     # Suspension Wishbones & Steering Links (Front X: 360..400, Rear X: 110..150)
     # Front FL (upper) & FR (lower)
@@ -465,7 +465,7 @@ def generate_buggy1600(model_id, primary_col, accent_col, cage_col, beadlock_col
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = int(256 * ss), int(256 * ss)
+    cy = int(256 * ss)
 
     # Suspension Wishbones
     draw_td.line([int(330 * ss), cy - int(40 * ss), int(390 * ss), cy - int(115 * ss)], fill=(170, 175, 185), width=int(5 * ss))
@@ -655,7 +655,7 @@ def generate_touring_ax(model_id, primary_col, accent_col, secondary_col, body_s
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = int(256 * ss), int(256 * ss)
+    cy = int(256 * ss)
 
     # Four Wide Touring Wheels
     draw_wheel_topdown(draw_td, int(370 * ss), cy - int(100 * ss), int(80 * ss), int(42 * ss), rim_col=accent_col, ss=ss)
@@ -803,7 +803,7 @@ def generate_superbuggy(model_id, primary_col, accent_col, secondary_col, beadlo
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = int(256 * ss), int(256 * ss)
+    cy = int(256 * ss)
 
     # Wide Track Wishbones
     draw_td.line([int(320 * ss), cy - int(45 * ss), int(400 * ss), cy - int(125 * ss)], fill=(180, 185, 195), width=int(6 * ss))

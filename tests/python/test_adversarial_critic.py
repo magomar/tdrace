@@ -200,7 +200,7 @@ def test_teleport_car_far_off_world():
     assert info["is_off_track"] == True
 
     # Render rgb at 10,000m
-    rgb = env.unwrapped.render()
+    env.unwrapped.render()
     # If render_mode is None it returns None, so test with rgb_array
     env.close()
 

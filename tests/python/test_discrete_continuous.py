@@ -28,7 +28,6 @@ def test_discrete_action_space():
     assert info["speed_mps"] < speed_fast
 
     # 1: steer left
-    angle_before = info["normalized_progress"]
     for _ in range(20):
         _obs, _r, term, _trunc, info = env.step(1)
 

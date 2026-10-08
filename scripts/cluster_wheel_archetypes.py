@@ -280,7 +280,7 @@ def generate_gate2_html(clustered_data: dict, out_html: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Visual Archetype Feature Clustering & Gate 2 Review")
-    args = parser.parse_args()
+    parser.parse_args()
 
     root = Path(__file__).resolve().parent.parent
     anchors_path = root / "artifacts" / "visual_wheel_anchors.json"

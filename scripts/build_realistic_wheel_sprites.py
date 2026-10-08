@@ -129,7 +129,7 @@ def create_rubber_image(lighting, mask, base_rgb=(38.0, 42.0, 48.0)):
 def build_gt_slick(ss=4):
     """GT Motorsport Slick: pure vulcanized racing rubber with subtle directional heat grain and twin rain sipes."""
     W, H = 128 * ss, 256 * ss
-    cx, cy = W // 2, H // 2
+    cx = W // 2
     tw_half, th_half = int(57 * ss), int(119 * ss)
     corner_r = int(22 * ss)
     

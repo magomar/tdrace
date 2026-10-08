@@ -269,7 +269,6 @@ def resample_polyline(points, num_points):
     step = total_len / num_points
     resampled = []
     curr_seg = 0
-    curr_dist = 0.0
     accum_dist = 0.0
     
     for i in range(num_points):

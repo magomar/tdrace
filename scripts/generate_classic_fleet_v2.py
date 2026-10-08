@@ -142,7 +142,6 @@ def generate_classic_ax_mudlark():
     draw_soft_shadow(draw, int(512 * ss), ground_y, int(370 * ss), int(18 * ss), 160)
 
     frame_col = (45, 175, 235)  # Cyan
-    shadow_col = (20, 24, 30)
 
     # Tubular Spaceframe Lower Rails
     draw.line([int(210 * ss), ground_y - int(45 * ss), int(730 * ss), ground_y - int(45 * ss)], fill=frame_col, width=int(8 * ss))
@@ -201,7 +200,7 @@ def generate_classic_ax_mudlark():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Facing RIGHT (+X): nose at right (+X), rear at left (-X)
     # Suspension Wishbones & Tie Rods
@@ -322,7 +321,7 @@ def generate_classic_ax_brawler():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom
     # Front FL & FR (X: 340..420)
@@ -423,7 +422,7 @@ def generate_classic_kart_vintage():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom (+X is forward)
     # Front FL & FR (X: 320..385, Y: 155..205 and Y: 307..357)
@@ -516,7 +515,7 @@ def generate_classic_gt_vintage():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom (+X forward)
     # Front FL & FR (X: 335..415)
@@ -616,7 +615,7 @@ def generate_classic_stock_vintage():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom (+X forward)
     # Front FL & FR (X: 340..425)
@@ -721,7 +720,7 @@ def generate_classic_rx_vintage():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom (+X forward)
     # Front FL & FR (X: 335..415)
@@ -827,7 +826,7 @@ def generate_classic_at_safari():
     W_TD, H_TD = 512 * ss, 512 * ss
     im_td = Image.new("RGBA", (W_TD, H_TD), (0, 0, 0, 0))
     draw_td = ImageDraw.Draw(im_td)
-    cx, cy = 256 * ss, 256 * ss
+    cy = 256 * ss
 
     # Static wheels for showroom (+X forward)
     # Front FL & FR (X: 335..425)
