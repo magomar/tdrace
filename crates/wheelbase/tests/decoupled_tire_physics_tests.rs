@@ -544,22 +544,29 @@ fn test_grass_runoff_mobility_and_acceleration() {
 /// Given CarConfig::rally_car(), the base of the rally and autocross cars
 /// When it accelerates from a stop on gravel, and the same car does it on medium slicks
 /// Then every wheel has the AllTerrain compound and the rally car is faster on gravel than on slicks
+///
+/// Spec 099: PackedGravel takes the Dirt tyre affinity, and MediumSlick has a high Dirt affinity (0.85),
+/// so the 20 % margin is measured on loose DeepGravel; on PackedGravel all-terrain tyres must still win.
 #[test]
 fn test_rally_car_runs_all_terrain_tyres() {
     use wheelbase::CompoundId;
     let rally = CarConfig::rally_car();
     assert!(rally.wheels.iter().all(|w| w.compound.id == CompoundId::AllTerrain));
-    let speed_on_gravel = |cfg: CarConfig| {
+    let speed_on = |cfg: CarConfig, surface: SurfaceType| {
         let mut car = Car::new(cfg);
         let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
         for _ in 0..180 {
-            car.step(&ctrl, SurfaceType::Gravel, 1.0 / 60.0);
+            car.step(&ctrl, surface, 1.0 / 60.0);
         }
         car.state().speed
     };
-    let all_terrain = speed_on_gravel(CarConfig::rally_car());
-    let slicks = speed_on_gravel(CarConfig::rally_car().with_compound(CompoundId::MediumSlick));
-    assert!(all_terrain > slicks * 1.2, "all-terrain {all_terrain:.1} m/s, slicks {slicks:.1} m/s after 3 s on gravel");
+    let slick_car = || CarConfig::rally_car().with_compound(CompoundId::MediumSlick);
+    let all_terrain = speed_on(CarConfig::rally_car(), SurfaceType::DeepGravel);
+    let slicks = speed_on(slick_car(), SurfaceType::DeepGravel);
+    assert!(all_terrain > slicks * 1.2, "all-terrain {all_terrain:.1} m/s, slicks {slicks:.1} m/s after 3 s on deep gravel");
+    let all_terrain = speed_on(CarConfig::rally_car(), SurfaceType::PackedGravel);
+    let slicks = speed_on(slick_car(), SurfaceType::PackedGravel);
+    assert!(all_terrain > slicks, "all-terrain {all_terrain:.1} m/s, slicks {slicks:.1} m/s after 3 s on packed gravel");
 }
 
 /// Scenario: A curb does not add weight (tdrace-le75)
@@ -585,5 +592,32 @@ fn test_curbs_move_load_but_add_none() {
         let (on_asphalt, _) = speed_after_3_s(SurfaceType::Asphalt);
         assert!(load < weight * 1.5, "wheel loads {load:.0} N on a curb, weight {weight:.0} N");
         assert!(on_curb > on_asphalt * 0.8 && on_curb <= on_asphalt * 1.01, "{on_curb:.1} m/s on curbs, {on_asphalt:.1} m/s on asphalt");
+    }
+}
+
+/// Scenario: A car with one axle or one side on a curb drives off (tdrace-le75)
+///
+/// Given a kart and a GT car standing with both front wheels, both rear wheels or both left wheels on a curb
+/// When each one accelerates from a stop for 3 s
+/// Then every wheel carries at least a quarter of its share of the weight, and the car moves off
+/// (a kart with its front wheels on a curb put all its weight on them: its rear-drive wheels had 3 N and it
+/// stood still for 35 s on kart_summit_international)
+#[test]
+fn test_a_car_with_one_axle_or_side_on_a_curb_drives_off() {
+    use SurfaceType::{Asphalt as A, Curb as C};
+    for cfg in [CarConfig::kart(), CarConfig::sports_car()] {
+        let weight = cfg.mass * 9.81;
+        for surfaces in [[C, C, A, A], [A, A, C, C], [C, A, C, A]] {
+            let mut car = Car::new(cfg.clone());
+            let ctrl = CarControls::new(1.0, 0.0, 0.0, false);
+            let mut min_share = f32::MAX;
+            for _ in 0..360 {
+                car.step_per_wheel(&ctrl, surfaces, 1.0 / 120.0);
+                let loads = car.state().wheels.map(|w| w.normal_load);
+                min_share = min_share.min(loads.iter().cloned().fold(f32::MAX, f32::min) / (weight * 0.25));
+            }
+            assert!(min_share > 0.25, "{surfaces:?}: lightest wheel carried {:.0}% of its share", min_share * 100.0);
+            assert!(car.state().speed > 5.0, "{surfaces:?}: {:.1} m/s after 3 s", car.state().speed);
+        }
     }
 }

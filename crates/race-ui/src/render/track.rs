@@ -614,7 +614,8 @@ pub fn get_surface_zone_colors(surface: SurfaceType) -> (Color, Option<Color>) {
         SurfaceType::DeepMud => (Palette::MUD_DARK, Some(Color::new(0.25, 0.16, 0.08, 1.0))),
         SurfaceType::PackedSnow => (Palette::SNOW, Some(Palette::SNOW_EDGE)),
         SurfaceType::DeepSnow => (Color::new(0.92, 0.94, 0.98, 1.0), Some(Palette::SNOW_EDGE)),
-        SurfaceType::Gravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
+        SurfaceType::PackedGravel => (Palette::GRAVEL, Some(Palette::GRAVEL_DARK)),
+        SurfaceType::DeepGravel => (Palette::DEEP_GRAVEL, Some(Palette::DEEP_GRAVEL_DARK)),
         SurfaceType::Concrete => (Palette::CONCRETE, Some(Palette::CONCRETE_DARK)),
     }
 }
@@ -628,7 +629,8 @@ pub fn get_track_backdrop_color(surface: SurfaceType) -> Color {
         SurfaceType::Asphalt => Palette::BACKDROP_ASPHALT,
         SurfaceType::MudTrack | SurfaceType::DeepMud => Palette::BACKDROP_MUD,
         SurfaceType::PackedSnow | SurfaceType::DeepSnow => Palette::BACKDROP_SNOW,
-        SurfaceType::Gravel => Palette::BACKDROP_GRAVEL,
+        SurfaceType::PackedGravel => Palette::BACKDROP_GRAVEL,
+        SurfaceType::DeepGravel => Palette::BACKDROP_DEEP_GRAVEL,
         SurfaceType::Concrete => Palette::BACKDROP_CONCRETE,
         _ => Palette::BACKDROP_GRASS,
     }
@@ -719,10 +721,15 @@ pub fn get_ramp_surface_colors(surface: SurfaceType) -> (Color, Option<Color>, C
             Some(Palette::SNOW_EDGE),
             Color::new(0.75, 0.80, 0.88, 0.85),
         ),
-        SurfaceType::Gravel => (
+        SurfaceType::PackedGravel => (
             Palette::GRAVEL,
             Some(Palette::GRAVEL_EDGE),
             Color::new(0.70, 0.68, 0.64, 0.85),
+        ),
+        SurfaceType::DeepGravel => (
+            Palette::DEEP_GRAVEL,
+            Some(Palette::DEEP_GRAVEL_EDGE),
+            Color::new(0.86, 0.82, 0.72, 0.85),
         ),
         SurfaceType::Concrete => (
             Color::new(0.70, 0.72, 0.74, 1.0),
@@ -1773,7 +1780,12 @@ fn render_surface_pass_filtered(
                 lines_to_draw.push((track_l0, track_l1, 0.20, Color::new(0.85, 0.90, 0.96, 0.90)));
                 lines_to_draw.push((track_r0, track_r1, 0.20, Color::new(0.85, 0.90, 0.96, 0.90)));
             }
-            SurfaceType::Gravel => {
+            SurfaceType::PackedGravel | SurfaceType::DeepGravel => {
+                let (gravel, gravel_dark, gravel_edge) = if surf == SurfaceType::DeepGravel {
+                    (Palette::DEEP_GRAVEL, Palette::DEEP_GRAVEL_DARK, Palette::DEEP_GRAVEL_EDGE)
+                } else {
+                    (Palette::GRAVEL, Palette::GRAVEL_DARK, Palette::GRAVEL_EDGE)
+                };
                 let uv0 = macroquad::prelude::Vec2::new(0.0, v0);
                 let uv1 = macroquad::prelude::Vec2::new(0.0, v1);
                 let uv2 = macroquad::prelude::Vec2::new(1.0, v1);
@@ -1789,22 +1801,22 @@ fn render_surface_pass_filtered(
                         (WHITE, WHITE, WHITE, WHITE)
                     }
                 } else {
-                    (Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL, Palette::GRAVEL)
+                    (gravel, gravel, gravel, gravel)
                 };
                 builder.push_quad(left0, uv0, c0, left1, uv1, c1, right1, uv2, c2, right0, uv3, c3);
                 if !supp_l {
-                    lines_to_draw.push((left0, left1, 0.32, Palette::GRAVEL_EDGE));
+                    lines_to_draw.push((left0, left1, 0.32, gravel_edge));
                 }
                 if !supp_r {
-                    lines_to_draw.push((right0, right1, 0.32, Palette::GRAVEL_EDGE));
+                    lines_to_draw.push((right0, right1, 0.32, gravel_edge));
                 }
 
                 let track_l0 = s0.point + s0.normal * (hw0 * 0.44);
                 let track_l1 = s1.point + s1.normal * (hw1 * 0.44);
                 let track_r0 = s0.point - s0.normal * (hw0 * 0.44);
                 let track_r1 = s1.point - s1.normal * (hw1 * 0.44);
-                lines_to_draw.push((track_l0, track_l1, 0.22, Palette::GRAVEL_DARK));
-                lines_to_draw.push((track_r0, track_r1, 0.22, Palette::GRAVEL_DARK));
+                lines_to_draw.push((track_l0, track_l1, 0.22, gravel_dark));
+                lines_to_draw.push((track_r0, track_r1, 0.22, gravel_dark));
             }
             SurfaceType::Asphalt => {
                 let mid_l0 = s0.point + s0.normal * (hw0 * 0.33);
@@ -2394,7 +2406,7 @@ mod tests {
             left_wall_distance: None,
             right_wall_distance: None,
             wall_type: None,
-            left_runoff_surface: Some(SurfaceType::Gravel),
+            left_runoff_surface: Some(SurfaceType::PackedGravel),
             right_runoff_surface: Some(SurfaceType::DeepSand),
         });
         render_runoff_pass(&single_spline, false, None);
@@ -2486,7 +2498,7 @@ mod tests {
             SurfaceType::Asphalt,
             SurfaceType::Dirt,
             SurfaceType::Grass,
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
             SurfaceType::PackedSand,
             SurfaceType::DeepSand,
         ];

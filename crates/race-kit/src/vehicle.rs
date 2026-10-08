@@ -99,12 +99,18 @@ impl Vehicle for Car {
             for tree in trees {
                 let car_pos = self.state.position;
                 if tree.contains_canopy(car_pos) && !tree.contains_trunk(car_pos) {
-                    let drag_rate = tree.tree_type.canopy_drag_deceleration();
-                    self.state.velocity *= (1.0 - drag_rate * dt).max(0.0);
-                    self.state.speed = self.state.velocity.length();
+                    // Only ground-level shrubs (TreeType::Bush, which have no solid trunk)
+                    // apply physical drag deceleration and roost particles at ground level.
+                    // Tall trees with trunks (Oak, Pine, Palm, etc.) have elevated canopies
+                    // that vehicles pass under without ground-level resistance.
+                    if !tree.has_trunk() {
+                        let drag_rate = tree.tree_type.canopy_drag_deceleration();
+                        self.state.velocity *= (1.0 - drag_rate * dt).max(0.0);
+                        self.state.speed = self.state.velocity.length();
 
-                    if self.state.speed > 3.0 {
-                        out.push(CanopyBrush { tree: tree.tree_type, position: car_pos, velocity: self.state.velocity });
+                        if self.state.speed > 3.0 {
+                            out.push(CanopyBrush { tree: tree.tree_type, position: car_pos, velocity: self.state.velocity });
+                        }
                     }
                 }
             }

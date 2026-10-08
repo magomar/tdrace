@@ -6,7 +6,7 @@ description: "The Classic module replaces its 10 flat, bare circuits with 18 new
 status: in_progress
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T07:47:27Z }
-verified: { by: "human:mario", at: "2026-10-05T07:14:24Z", hash: "62b710f98d35" }
+verified: { by: "human:mario", at: "2026-10-05T07:11:54Z", hash: "a0b73814cc9d" }
 ---
 
 
@@ -160,17 +160,17 @@ walls 2.0 m out and cars drive on the kerb; a wall that steps in there stopped t
 **GT — speed, braking and runoff**
 - Surface Asphalt, kerbs on apexes and chicanes, walls `Steel` with `TireWall` at the end of fast
   straights.
-- Velocity Park: 2 straights of 300 m or more, each ending in a chicane. Wide Asphalt runoff
-  (20–30 m) at the braking zones, Gravel elsewhere.
+- Velocity Park: 2 straights of 300 m or more, each ending in a chicane. DeepGravel traps at
+  the braking zones (changed by Spec 099).
 - Ridge Ring: a raised section that climbs to about 8 m and comes back down, **without crossing
   another part of the lap**. Grade 8 % or less. A crest, a downhill corner after it, esses and a
-  hairpin. Narrow Gravel traps (5–8 m) and Grass.
+  hairpin. Narrow DeepGravel traps (5–8 m) and Grass (changed by Spec 099).
 - Coastal Grand Prix: a 400 m straight, a bus-stop chicane, a carousel (one long turn of 150° or
   more), a fast sweeper and a raised plateau of about 5 m.
 - Runoff width changes along each lap (3–30 m per side, set with `left/right_wall_distance`).
-  Each circuit uses Gravel, Grass and Asphalt as runoff and trap surfaces. No DeepSand or
-  PackedSand: a GT car that stops on them cannot drive out (tdrace-le75). Traps are `SurfaceZone`s
-  with `layer: below_track` or runoff surfaces per waypoint.
+  Each circuit uses Grass and DeepGravel run-off, and no Asphalt run-off (changed by Spec 099). No DeepSand or
+  PackedSand: a GT car that stops on them cannot drive out (tdrace-le75). Traps are `SurfaceZone`s with
+  `layer: below_track` or runoff surfaces per waypoint.
 
 **Stock Cars — banked ovals**
 - Races run anticlockwise (left turns), so the outer side is the right side and `bank_angle` is
@@ -475,7 +475,7 @@ runs only on a developer machine and reads and writes files inside the repositor
   - [ ] **When** their layouts are measured
   - [ ] **Then** each has a straight of at least 300 m and at least 1 chicane
   - [ ] **And** Ridge Ring and Coastal Grand Prix have raised ground of 5 m or more with no self-crossing
-  - [ ] **And** each uses at least 3 runoff or trap surfaces, and runoff width changes along the lap
+  - [ ] **And** each uses Grass and DeepGravel run-off, and no Asphalt run-off, and runoff width changes along the lap
 
 - **Scenario: Stock Car circuits are banked**
   - [ ] **Given** Thunder Bowl, Tri-Oval Speedway and Roval

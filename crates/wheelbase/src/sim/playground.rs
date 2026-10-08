@@ -288,7 +288,7 @@ impl SimPlayground {
                 name: "Sector 3: S-Chicane".to_string(),
                 start_dist: s_len * 2.0,
                 end_dist: s_len * 3.0,
-                surface: SurfaceType::Gravel,
+                surface: SurfaceType::PackedGravel,
                 banking_rad: 0.0,
                 left_wall: None,
                 right_wall: None,

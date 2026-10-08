@@ -42,7 +42,7 @@ fn all_scope_exports_every_playable_car_and_no_vault_content() {
         assert!(car["physics"]["mass"].as_f64().unwrap() > 0.0, "{} has no physics", car["id"]);
     }
     assert!(items(&files, "circuits.json").iter().all(|c| c["module"] != "vault"));
-    assert_eq!(items(&files, "surfaces.json").len(), 15);
+    assert_eq!(items(&files, "surfaces.json").len(), 16);
 }
 
 #[test]

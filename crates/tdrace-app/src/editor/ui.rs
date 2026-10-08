@@ -488,7 +488,8 @@ pub fn render_editor_ui(
 
         let surfaces = [
             (SurfaceType::Dirt, "Dirt"),
-            (SurfaceType::Gravel, "Gravel"),
+            (SurfaceType::PackedGravel, "Packed Gravel"),
+            (SurfaceType::DeepGravel, "Deep Gravel"),
             (SurfaceType::MudTrack, "Mud Track"),
             (SurfaceType::DeepMud, "Deep Mud"),
             (SurfaceType::PackedSand, "Packed Sand"),

@@ -971,7 +971,7 @@ pub fn run_braking_surface_battery(
     // Split-mu configurations (Asphalt vs each reduced-mu surface)
     let split_targets = [
         SurfaceType::Concrete,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
         SurfaceType::PackedSand,
         SurfaceType::MudTrack,
         SurfaceType::Grass,

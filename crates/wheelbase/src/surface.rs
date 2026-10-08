@@ -13,8 +13,9 @@ pub enum SurfaceType {
     Curb,
     /// Playable compacted dirt / gravel rally track: good controllable slide grip.
     Dirt,
-    /// Loose stone gravel track / rally runoff: moderate grip, high stone debris roost.
-    Gravel,
+    /// Packed gravel road (Spec 099): drives like Dirt, a bit more slippery. Old files call it `Gravel`.
+    #[serde(alias = "Gravel")]
+    PackedGravel,
     /// Grassy run-off area: significantly reduced grip and high rolling resistance.
     Grass,
     /// Compacted desert sand/dune ribbon: drivable racing line for desert circuits.
@@ -35,6 +36,9 @@ pub enum SurfaceType {
     Water,
     /// Oil slick hazard: extremely low friction, vehicle spins easily.
     Oil,
+    /// Loose gravel trap bed (Spec 099): ploughs a fast car to a stop, but a stopped car can drive out.
+    /// Last in the enum so the index of every older surface stays the same.
+    DeepGravel,
 }
 
 impl SurfaceType {
@@ -46,7 +50,8 @@ impl SurfaceType {
             Self::Concrete => 0.95,
             Self::Curb => 0.88,
             Self::Dirt => 0.78,
-            Self::Gravel => 0.70,
+            Self::PackedGravel => 0.72,
+            Self::DeepGravel => 0.55,
             Self::PackedSand => 0.62,
             Self::MudTrack => 0.58,
             Self::PackedSnow => 0.48,
@@ -71,7 +76,8 @@ impl SurfaceType {
             Self::Dirt => 1.2,
             Self::Curb => 1.3,
             Self::PackedSnow => 2.2,
-            Self::Gravel => 2.5,
+            Self::PackedGravel => 1.3,
+            Self::DeepGravel => 3.0,
             Self::Grass => 2.5,
             Self::Water => 3.5,
             Self::MudTrack => 5.0,
@@ -92,7 +98,8 @@ impl SurfaceType {
             Self::Concrete => 1.00,
             Self::Curb => 1.05,
             Self::Dirt => 1.10,
-            Self::Gravel => 1.25,
+            Self::PackedGravel => 1.15,
+            Self::DeepGravel => 2.0,
             Self::PackedSnow => 1.40,
             Self::Water => 2.0,
             Self::PackedSand => 2.10,
@@ -103,6 +110,24 @@ impl SurfaceType {
             Self::DeepMud => 5.00,
         }
     }
+
+    /// Gravel-bed ploughing deceleration (m/s² per m/s of speed above [`Self::BED_DRAG_FREE_SPEED`]).
+    ///
+    /// Spec 099: a loose gravel bed slows a fast car hard, but adds nothing at walking speed, so a
+    /// car that stopped in it can always drive out. Zero for every surface except `DeepGravel`.
+    #[inline]
+    pub const fn bed_drag_rate(self) -> f32 {
+        match self {
+            Self::DeepGravel => 0.38,
+            _ => 0.0,
+        }
+    }
+
+    /// Speed (m/s) below which a gravel bed does not plough (see [`Self::bed_drag_rate`]).
+    pub const BED_DRAG_FREE_SPEED: f32 = 2.0;
+
+    /// Upper limit (m/s², about 0.9 g) of the gravel-bed deceleration, so a fast car is not jolted.
+    pub const BED_DRAG_MAX_DECEL: f32 = 9.0;
 
     /// Whether this surface produces standard rubber skid marks and tire smoke.
     #[inline]
@@ -123,7 +148,8 @@ impl SurfaceType {
                 | Self::DeepMud
                 | Self::PackedSnow
                 | Self::DeepSnow
-                | Self::Gravel
+                | Self::PackedGravel
+                | Self::DeepGravel
         )
     }
 
@@ -133,7 +159,8 @@ impl SurfaceType {
     pub const fn is_loose_deformable(self) -> bool {
         matches!(
             self,
-            Self::Gravel
+            Self::PackedGravel
+                | Self::DeepGravel
                 | Self::PackedSand
                 | Self::DeepSand
                 | Self::Dirt
@@ -156,7 +183,8 @@ impl SurfaceType {
     pub const fn leaves_rolling_rut(self) -> bool {
         matches!(
             self,
-            Self::Gravel
+            Self::PackedGravel
+                | Self::DeepGravel
                 | Self::PackedSand
                 | Self::DeepSand
                 | Self::Dirt
@@ -205,13 +233,13 @@ impl SurfaceType {
         matches!(self, Self::SheetIce)
     }
 
-    /// All 15 supported surface types.
-    pub const ALL: [SurfaceType; 15] = [
+    /// All 16 supported surface types, in enum order.
+    pub const ALL: [SurfaceType; 16] = [
         SurfaceType::Asphalt,
         SurfaceType::Concrete,
         SurfaceType::Curb,
         SurfaceType::Dirt,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
         SurfaceType::Grass,
         SurfaceType::PackedSand,
         SurfaceType::DeepSand,
@@ -222,10 +250,11 @@ impl SurfaceType {
         SurfaceType::SheetIce,
         SurfaceType::Water,
         SurfaceType::Oil,
+        SurfaceType::DeepGravel,
     ];
 
     /// All valid global off-track terrain types that can be selected as a track's default surface.
-    pub const OFF_TRACK_TYPES: [SurfaceType; 12] = [
+    pub const OFF_TRACK_TYPES: [SurfaceType; 13] = [
         SurfaceType::Grass,
         SurfaceType::DeepSand,
         SurfaceType::PackedSand,
@@ -236,7 +265,8 @@ impl SurfaceType {
         SurfaceType::MudTrack,
         SurfaceType::DeepSnow,
         SurfaceType::PackedSnow,
-        SurfaceType::Gravel,
+        SurfaceType::PackedGravel,
+        SurfaceType::DeepGravel,
         SurfaceType::SheetIce,
     ];
 
@@ -255,7 +285,8 @@ impl SurfaceType {
                 | Self::MudTrack
                 | Self::DeepSnow
                 | Self::PackedSnow
-                | Self::Gravel
+                | Self::PackedGravel
+                | Self::DeepGravel
                 | Self::SheetIce
         )
     }
@@ -277,7 +308,8 @@ impl SurfaceType {
             Self::SheetIce => "Sheet Ice",
             Self::Water => "Water",
             Self::Oil => "Oil",
-            Self::Gravel => "Gravel",
+            Self::PackedGravel => "Packed Gravel",
+            Self::DeepGravel => "Deep Gravel",
         }
     }
 }
@@ -432,10 +464,10 @@ impl CompoundId {
     }
 }
 
-/// Compact 15-element array mapping each SurfaceType to its compound friction multiplier (Spec 074).
+/// Compact 16-element array mapping each SurfaceType to its compound friction multiplier (Spec 074).
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SurfaceAffinityMap {
-    affinities: [f32; 15],
+    affinities: [f32; 16],
 }
 
 impl Default for SurfaceAffinityMap {
@@ -446,7 +478,7 @@ impl Default for SurfaceAffinityMap {
 
 impl SurfaceAffinityMap {
     #[inline]
-    pub const fn new(affinities: [f32; 15]) -> Self {
+    pub const fn new(affinities: [f32; 16]) -> Self {
         Self { affinities }
     }
 
@@ -460,7 +492,7 @@ impl SurfaceAffinityMap {
         self.affinities[surface as usize] = val;
     }
 
-    /// Returns calibrated affinity multipliers for a standard compound across all 15 SurfaceTypes.
+    /// Returns calibrated affinity multipliers for a standard compound across all 16 SurfaceTypes.
     pub const fn for_compound(id: CompoundId) -> Self {
         match id {
             CompoundId::SoftSlick => Self::new([
@@ -468,7 +500,7 @@ impl SurfaceAffinityMap {
                 1.18, // Concrete
                 1.10, // Curb
                 0.45, // Dirt
-                0.35, // Gravel
+                0.45, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.30, // PackedSand
                 0.15, // DeepSand
@@ -479,13 +511,14 @@ impl SurfaceAffinityMap {
                 0.05, // SheetIce
                 0.20, // Water
                 0.10, // Oil
+                0.35, // DeepGravel
             ]),
             CompoundId::MediumSlick => Self::new([
                 1.00, // Asphalt
                 0.98, // Concrete
                 0.95, // Curb
                 0.85, // Dirt
-                0.32, // Gravel
+                0.85, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.28, // PackedSand
                 0.15, // DeepSand
@@ -496,13 +529,14 @@ impl SurfaceAffinityMap {
                 0.05, // SheetIce
                 0.22, // Water
                 0.10, // Oil
+                0.35, // DeepGravel
             ]),
             CompoundId::HardSlick => Self::new([
                 1.00, // Asphalt
                 0.98, // Concrete
                 0.95, // Curb
                 0.40, // Dirt
-                0.30, // Gravel
+                0.40, // PackedGravel (= Dirt, Spec 099)
                 0.40, // Grass
                 0.25, // PackedSand
                 0.15, // DeepSand
@@ -513,13 +547,14 @@ impl SurfaceAffinityMap {
                 0.05, // SheetIce
                 0.25, // Water
                 0.10, // Oil
+                0.33, // DeepGravel
             ]),
             CompoundId::IntermediateWet => Self::new([
                 0.88, // Asphalt
                 0.86, // Concrete
                 0.85, // Curb
                 0.65, // Dirt
-                0.55, // Gravel
+                0.65, // PackedGravel (= Dirt, Spec 099)
                 0.50, // Grass
                 0.40, // PackedSand
                 0.25, // DeepSand
@@ -530,13 +565,14 @@ impl SurfaceAffinityMap {
                 0.15, // SheetIce
                 1.10, // Water
                 0.15, // Oil
+                0.50, // DeepGravel
             ]),
             CompoundId::MonsoonWet => Self::new([
                 0.72, // Asphalt
                 0.70, // Concrete
                 0.75, // Curb
                 0.70, // Dirt
-                0.60, // Gravel
+                0.70, // PackedGravel (= Dirt, Spec 099)
                 0.60, // Grass
                 0.45, // PackedSand
                 0.30, // DeepSand
@@ -547,13 +583,14 @@ impl SurfaceAffinityMap {
                 0.20, // SheetIce
                 1.35, // Water
                 0.20, // Oil
+                0.55, // DeepGravel
             ]),
             CompoundId::AllTerrain => Self::new([
                 0.85, // Asphalt
                 0.83, // Concrete
                 0.88, // Curb
                 1.15, // Dirt
-                1.20, // Gravel
+                1.15, // PackedGravel (= Dirt, Spec 099)
                 0.95, // Grass
                 1.10, // PackedSand
                 1.20, // DeepSand
@@ -564,13 +601,14 @@ impl SurfaceAffinityMap {
                 0.90, // SheetIce
                 0.90, // Water
                 0.25, // Oil
+                1.10, // DeepGravel
             ]),
             CompoundId::ExtremeMud => Self::new([
                 0.65, // Asphalt
                 0.62, // Concrete
                 0.70, // Curb
                 1.10, // Dirt
-                1.05, // Gravel
+                1.10, // PackedGravel (= Dirt, Spec 099)
                 1.00, // Grass
                 1.25, // PackedSand
                 1.35, // DeepSand
@@ -581,13 +619,14 @@ impl SurfaceAffinityMap {
                 0.50, // SheetIce
                 0.80, // Water
                 0.25, // Oil
+                1.10, // DeepGravel
             ]),
             CompoundId::StuddedIce => Self::new([
                 0.50, // Asphalt
                 0.48, // Concrete
                 0.55, // Curb
                 0.80, // Dirt
-                0.75, // Gravel
+                0.80, // PackedGravel (= Dirt, Spec 099)
                 0.60, // Grass
                 0.50, // PackedSand
                 0.40, // DeepSand
@@ -598,6 +637,7 @@ impl SurfaceAffinityMap {
                 1.45, // SheetIce
                 0.60, // Water
                 0.20, // Oil
+                0.70, // DeepGravel
             ]),
         }
     }
@@ -610,10 +650,10 @@ mod tests {
     #[test]
     fn test_surface_properties() {
         assert!(SurfaceType::Asphalt.friction_coefficient() > SurfaceType::Dirt.friction_coefficient());
-        assert!(SurfaceType::Dirt.friction_coefficient() > SurfaceType::Gravel.friction_coefficient());
-        assert!(SurfaceType::Gravel.friction_coefficient() > SurfaceType::Grass.friction_coefficient());
-        assert!(SurfaceType::Gravel.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
-        assert!(SurfaceType::Gravel.produces_debris_particles());
+        assert!(SurfaceType::Dirt.friction_coefficient() > SurfaceType::PackedGravel.friction_coefficient());
+        assert!(SurfaceType::PackedGravel.friction_coefficient() > SurfaceType::Grass.friction_coefficient());
+        assert!(SurfaceType::PackedGravel.rolling_resistance_multiplier() > SurfaceType::Dirt.rolling_resistance_multiplier());
+        assert!(SurfaceType::PackedGravel.produces_debris_particles());
         assert!(SurfaceType::Grass.friction_coefficient() > SurfaceType::Water.friction_coefficient());
         assert!(SurfaceType::Water.friction_coefficient() > SurfaceType::SheetIce.friction_coefficient());
         assert!(SurfaceType::PackedSand.friction_coefficient() > SurfaceType::DeepSand.friction_coefficient());
@@ -645,7 +685,7 @@ mod tests {
 
     #[test]
     fn test_surface_taxonomy_and_properties() {
-        assert!(SurfaceType::Gravel.is_loose_deformable());
+        assert!(SurfaceType::PackedGravel.is_loose_deformable());
         assert!(SurfaceType::PackedSand.is_loose_deformable());
         assert!(SurfaceType::DeepSand.is_loose_deformable());
         assert!(SurfaceType::Dirt.is_loose_deformable());
@@ -659,10 +699,10 @@ mod tests {
         assert!(SurfaceType::Asphalt.is_rigid_pavement());
         assert!(SurfaceType::Concrete.is_rigid_pavement());
         assert!(SurfaceType::Curb.is_rigid_pavement());
-        assert!(!SurfaceType::Gravel.is_rigid_pavement());
+        assert!(!SurfaceType::PackedGravel.is_rigid_pavement());
         assert!(!SurfaceType::Grass.is_rigid_pavement());
 
-        assert!(SurfaceType::Gravel.leaves_rolling_rut());
+        assert!(SurfaceType::PackedGravel.leaves_rolling_rut());
         assert!(SurfaceType::PackedSand.leaves_rolling_rut());
         assert!(SurfaceType::DeepSand.leaves_rolling_rut());
         assert!(SurfaceType::Dirt.leaves_rolling_rut());

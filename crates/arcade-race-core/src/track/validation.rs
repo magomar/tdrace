@@ -777,38 +777,22 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
     // 7b. Scenery Clearance Checks (Trees, Rocks, Buildings)
     for (i, tree) in track.geometry.trees.iter().enumerate() {
-        if !tree.has_trunk() {
-            continue;
-        }
-        let r = tree.trunk_radius();
         let proj = track.spline.project_point(tree.position);
         let elev_diff = (tree.elevation - proj.elevation).abs();
         if !matches!(track.kind, TrackKind::Arena { .. }) && elev_diff < 2.5 {
             let half_w = proj.track_width * 0.5;
             let lat_abs = proj.lateral_offset.abs();
-            let clearance = lat_abs - r;
 
-            if clearance < half_w - 0.1 {
-                diagnostics.push(
-                    TrackValidationError::error(
-                        "ERR_SCENERY_ON_TRACK",
-                        format!(
-                            "Tree trunk #{} ({}) at ({:.1}, {:.1}) intrudes into the drivable track surface.",
-                            tree.id,
-                            tree.tree_type.name(),
-                            tree.position.x,
-                            tree.position.y
-                        ),
-                    )
-                    .with_index(i),
-                );
-            } else if proj.lateral_offset < 0.0 {
-                if proj.left_curb && clearance < half_w + 1.4 - 0.1 {
+            if tree.has_trunk() {
+                let r = tree.trunk_radius();
+                let clearance = lat_abs - r;
+
+                if clearance < half_w - 0.1 {
                     diagnostics.push(
                         TrackValidationError::error(
-                            "ERR_SCENERY_ON_KERB",
+                            "ERR_SCENERY_ON_TRACK",
                             format!(
-                                "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                "Tree trunk #{} ({}) at ({:.1}, {:.1}) intrudes into the drivable track surface.",
                                 tree.id,
                                 tree.tree_type.name(),
                                 tree.position.x,
@@ -817,13 +801,13 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                         )
                         .with_index(i),
                     );
-                } else if let Some(d) = proj.left_wall_distance {
-                    if clearance < half_w + d - 0.05 {
+                } else if proj.lateral_offset < 0.0 {
+                    if proj.left_curb && clearance < half_w + 1.4 - 0.1 {
                         diagnostics.push(
                             TrackValidationError::error(
-                                "ERR_SCENERY_INSIDE_WALL",
+                                "ERR_SCENERY_ON_KERB",
                                 format!(
-                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
                                     tree.id,
                                     tree.tree_type.name(),
                                     tree.position.x,
@@ -832,38 +816,153 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                             )
                             .with_index(i),
                         );
+                    } else if let Some(d) = proj.left_wall_distance {
+                        if clearance < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        tree.id,
+                                        tree.tree_type.name(),
+                                        tree.position.x,
+                                        tree.position.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                        }
+                    }
+                } else {
+                    if proj.right_curb && clearance < half_w + 1.4 - 0.1 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_ON_KERB",
+                                format!(
+                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                    tree.id,
+                                    tree.tree_type.name(),
+                                    tree.position.x,
+                                    tree.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    } else if let Some(d) = proj.right_wall_distance {
+                        if clearance < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        tree.id,
+                                        tree.tree_type.name(),
+                                        tree.position.x,
+                                        tree.position.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                        }
                     }
                 }
-            } else {
-                if proj.right_curb && clearance < half_w + 1.4 - 0.1 {
+
+                // Check tall tree canopy overhang into drivable road surface
+                let canopy_r = tree.canopy_radius();
+                let canopy_clearance = lat_abs - canopy_r;
+                if canopy_clearance < half_w - 0.1 {
                     diagnostics.push(
-                        TrackValidationError::error(
-                            "ERR_SCENERY_ON_KERB",
+                        TrackValidationError::warning(
+                            "WARN_CANOPY_OVERHANG",
                             format!(
-                                "Tree trunk #{} ({}) at ({:.1}, {:.1}) overlaps the track kerb.",
+                                "Tree #{} ({}) at ({:.1}, {:.1}) canopy overhangs the drivable track surface (canopy radius {:.1}m).",
                                 tree.id,
                                 tree.tree_type.name(),
+                                tree.position.x,
+                                tree.position.y,
+                                canopy_r
+                            ),
+                        )
+                        .with_index(i),
+                    );
+                }
+            } else {
+                // Low-profile shrubs (Bush) without trunks: the canopy sits directly on the ground
+                let r = tree.canopy_radius();
+                let clearance = lat_abs - r;
+
+                if clearance < half_w - 0.1 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_SCENERY_ON_TRACK",
+                            format!(
+                                "Bush foliage #{} at ({:.1}, {:.1}) intrudes into the drivable track surface.",
+                                tree.id,
                                 tree.position.x,
                                 tree.position.y
                             ),
                         )
                         .with_index(i),
                     );
-                } else if let Some(d) = proj.right_wall_distance {
-                    if clearance < half_w + d - 0.05 {
+                } else if proj.lateral_offset < 0.0 {
+                    if proj.left_curb && clearance < half_w + 1.4 - 0.1 {
                         diagnostics.push(
                             TrackValidationError::error(
-                                "ERR_SCENERY_INSIDE_WALL",
+                                "ERR_SCENERY_ON_KERB",
                                 format!(
-                                    "Tree trunk #{} ({}) at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                    "Bush foliage #{} at ({:.1}, {:.1}) overlaps the track kerb.",
                                     tree.id,
-                                    tree.tree_type.name(),
                                     tree.position.x,
                                     tree.position.y
                                 ),
                             )
                             .with_index(i),
                         );
+                    } else if let Some(d) = proj.left_wall_distance {
+                        if clearance < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Bush foliage #{} at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        tree.id,
+                                        tree.position.x,
+                                        tree.position.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                        }
+                    }
+                } else {
+                    if proj.right_curb && clearance < half_w + 1.4 - 0.1 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_SCENERY_ON_KERB",
+                                format!(
+                                    "Bush foliage #{} at ({:.1}, {:.1}) overlaps the track kerb.",
+                                    tree.id,
+                                    tree.position.x,
+                                    tree.position.y
+                                ),
+                            )
+                            .with_index(i),
+                        );
+                    } else if let Some(d) = proj.right_wall_distance {
+                        if clearance < half_w + d - 0.05 {
+                            diagnostics.push(
+                                TrackValidationError::error(
+                                    "ERR_SCENERY_INSIDE_WALL",
+                                    format!(
+                                        "Bush foliage #{} at ({:.1}, {:.1}) sits in the strip between road and wall.",
+                                        tree.id,
+                                        tree.position.x,
+                                        tree.position.y
+                                    ),
+                                )
+                                .with_index(i),
+                            );
+                        }
                     }
                 }
             }
@@ -1510,6 +1609,37 @@ mod tests {
             d3.iter().any(|d| d.code == "ERR_SCENERY_INSIDE_WALL" || d.code == "ERR_SCENERY_ON_KERB"),
             "Must detect rock inside wall strip or on kerb: {:?}",
             d3
+        );
+
+        // 4. Bush on track
+        let mut t4 = track.clone();
+        t4.geometry.trees.push(crate::track::scenery::Tree::new(
+            3,
+            p0,
+            crate::track::scenery::TreeType::Bush,
+        ));
+        let d4 = validate_track(&t4);
+        assert!(
+            d4.iter().any(|d| d.code == "ERR_SCENERY_ON_TRACK"),
+            "Must detect bush on track: {:?}",
+            d4
+        );
+
+        // 5. Tree outside wall whose canopy overhangs into the track
+        let mut t5 = track.clone();
+        // Place tree at lateral distance 8.0m on a track with half-width 6.0m:
+        // Oak canopy radius is 4.6m, reaching down to lateral 3.4m (intrusive into road by 2.6m)
+        let pos_overhang = sample.point + normal * (sample.width * 0.5 + 2.0);
+        t5.geometry.trees.push(crate::track::scenery::Tree::new(
+            4,
+            pos_overhang,
+            crate::track::scenery::TreeType::Oak,
+        ));
+        let d5 = validate_track(&t5);
+        assert!(
+            d5.iter().any(|d| d.code == "WARN_CANOPY_OVERHANG"),
+            "Must warn when tree canopy overhangs track: {:?}",
+            d5
         );
     }
 

@@ -338,6 +338,7 @@ impl RoadSegment {
             curves: Vec::new(),
             sample_segments: Vec::new(),
             waypoint_sample_indices: Vec::new(),
+            projection_index: Default::default(),
         }
     }
 

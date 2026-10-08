@@ -902,8 +902,29 @@ impl Track {
         let keep = |w: &WallBarrier| {
             wall_clear_of_roads(&net.segments, w, 2.0, -0.2) && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
         };
-        self.geometry.inner_walls.retain(keep);
-        self.geometry.outer_walls.retain(keep);
+        // A wall that runs onto a road loses only the part on it. A merged straight wall used to go whole: on
+        // rx_canyon_flyer that left an 11 m gap beside the joker split, and a bot slid out through it behind the
+        // joker wall and stayed there (tdrace-0joa, tdrace-74s5).
+        let trim = |walls: &[WallBarrier]| {
+            let mut out = Vec::with_capacity(walls.len());
+            for w in walls {
+                if keep(w) {
+                    out.push(*w);
+                    continue;
+                }
+                let n = (w.segment.length() / WALL_TRIM_STEP_M).ceil().max(1.0) as usize;
+                let points: Vec<Vec2> = (0..=n).map(|k| w.segment.start.lerp(w.segment.end, k as f32 / n as f32)).collect();
+                let pieces = points
+                    .windows(2)
+                    .map(|p| WallBarrier { segment: LineSegment::new(p[0], p[1]), ..*w })
+                    .filter(|piece| keep(piece))
+                    .collect();
+                out.extend(merge_collinear_walls(pieces));
+            }
+            out
+        };
+        self.geometry.inner_walls = trim(&self.geometry.inner_walls);
+        self.geometry.outer_walls = trim(&self.geometry.outer_walls);
     }
 
     /// Builds `geometry.network_walls` along the network segments that are not on the default
@@ -963,7 +984,19 @@ impl Track {
                     .into_iter()
                     .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
                     .collect();
-                walls.extend(merge_collinear_walls(kept));
+                for w in merge_collinear_walls(kept) {
+                    let shares_endpoint = |a: &WallBarrier, b: &WallBarrier| {
+                        (a.segment.start - b.segment.start).length_squared() < 0.01
+                            || (a.segment.start - b.segment.end).length_squared() < 0.01
+                            || (a.segment.end - b.segment.start).length_squared() < 0.01
+                            || (a.segment.end - b.segment.end).length_squared() < 0.01
+                    };
+                    if !walls.iter().any(|other: &WallBarrier| {
+                        !shares_endpoint(&w, other) && other.segment.intersect_segment(&w.segment).is_some()
+                    }) {
+                        walls.push(w);
+                    }
+                }
             }
         }
         self.geometry.network_walls = walls;
@@ -996,6 +1029,9 @@ impl Track {
         Some(dists[dists.len() / 2])
     }
 }
+
+/// Length of the pieces a wall is cut into where it runs onto a network road (m).
+const WALL_TRIM_STEP_M: f32 = 1.0;
 
 /// Network segments that are not on the default layout (the Rallycross joker branch).
 fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
@@ -1082,7 +1118,7 @@ impl Track {
     /// - Sandy circuits -> `SurfaceType::DeepSand`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
-    /// - GT and Rallycross circuits -> `SurfaceType::Gravel`
+    /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 099)
     pub fn default_runoff_surface(&self) -> Option<SurfaceType> {
         let name_lower = self.name.to_lowercase();
 
@@ -1146,7 +1182,7 @@ impl Track {
             || name_lower.contains("rallycross")
             || name_lower.contains("grand prix")
         {
-            return Some(SurfaceType::Gravel);
+            return Some(SurfaceType::DeepGravel);
         }
 
         None
@@ -2074,15 +2110,15 @@ mod tests {
         let wps = vec![
             TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
             TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
             TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0)
                 .with_curbs(false, false)
-                .with_runoff_surfaces(Some(SurfaceType::Gravel), Some(SurfaceType::Asphalt))
+                .with_runoff_surfaces(Some(SurfaceType::PackedGravel), Some(SurfaceType::Asphalt))
                 .with_wall_distances(Some(6.0), Some(12.0)),
         ];
 
@@ -2101,12 +2137,12 @@ mod tests {
         // At y = 8.0 (3.0m off track to the left, inside the 6m left runoff corridor):
         assert_eq!(
             track.sample_surface(Vec2::new(50.0, 8.0)),
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
             "Left runoff corridor must resolve to Gravel"
         );
         assert_eq!(
             track.sample_surface_near(Vec2::new(50.0, 8.0), 50.0),
-            SurfaceType::Gravel,
+            SurfaceType::PackedGravel,
             "Left runoff corridor near-sample must resolve to Gravel"
         );
 
@@ -2154,16 +2190,16 @@ mod tests {
 
         // 1. GT Circuit -> Gravel
         let mut gt_track = make_track("Spa GP", CarCategory::Gt, SurfaceType::Grass, "gt");
-        assert_eq!(gt_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        assert_eq!(gt_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
         gt_track.apply_default_runoff_surfaces();
-        assert_eq!(gt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
-        assert_eq!(gt_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(gt_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
+        assert_eq!(gt_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::DeepGravel));
 
         // 2. Rallycross Circuit -> Gravel
         let mut rx_track = make_track("Holjes RX", CarCategory::Rally, SurfaceType::Grass, "rally");
-        assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::Gravel));
+        assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
         rx_track.apply_default_runoff_surfaces();
-        assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
 
         // 3. Kart Circuit -> Concrete
         let mut kart_track = make_track("Lonato Karting", CarCategory::Kart, SurfaceType::Grass, "kart");
@@ -2203,9 +2239,9 @@ mod tests {
         let mut custom_track = make_track("Nurburgring GP", CarCategory::Gt, SurfaceType::Grass, "gt");
         custom_track.spline.waypoints[1].left_runoff_surface = Some(SurfaceType::DeepSand);
         custom_track.apply_default_runoff_surfaces();
-        assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(custom_track.spline.waypoints[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
         assert_eq!(custom_track.spline.waypoints[1].left_runoff_surface, Some(SurfaceType::DeepSand));
-        assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::Gravel));
+        assert_eq!(custom_track.spline.waypoints[2].left_runoff_surface, Some(SurfaceType::DeepGravel));
     }
 
     #[test]

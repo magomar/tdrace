@@ -154,11 +154,12 @@ pub const RAMP_PITCH_RANGE: (f32, f32) = (1.0, 60.0);
 pub const GRID_SLOTS_RANGE: (f32, f32) = (1.0, 24.0);
 
 /// The one surface catalogue every inspector surface picker uses (order and names).
-pub const SURFACES: [SurfaceType; 14] = [
+pub const SURFACES: [SurfaceType; 15] = [
     SurfaceType::Asphalt,
     SurfaceType::Concrete,
     SurfaceType::Dirt,
-    SurfaceType::Gravel,
+    SurfaceType::PackedGravel,
+    SurfaceType::DeepGravel,
     SurfaceType::PackedSand,
     SurfaceType::DeepSand,
     SurfaceType::MudTrack,

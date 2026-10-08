@@ -43,7 +43,7 @@ fn build_fixture() -> Track {
     track.rebuild_geometry(8.0, BarrierType::Steel);
 
     let g = &mut track.geometry;
-    for (i, (x, surface)) in [(-40.0, SurfaceType::Gravel), (40.0, SurfaceType::Water)].into_iter().enumerate() {
+    for (i, (x, surface)) in [(-40.0, SurfaceType::PackedGravel), (40.0, SurfaceType::Water)].into_iter().enumerate() {
         let shape = SurfaceShape::OrientedBox { center: Vec2::new(x, 20.0), half_extents: Vec2::new(10.0, 6.0), angle: 0.0 };
         g.surface_zones.push(SurfaceZone::new(shape, surface, format!("Fixture Zone {}", i + 1)));
     }
@@ -370,17 +370,17 @@ fn wall_distance_is_set_per_side() {
 fn surface_wall_type_and_side_flags_apply_to_every_selected_waypoint() {
     let mut state = selected(&[0, 1, 2]);
     let mut tools = ToolSettings::default();
-    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::Gravel).unwrap();
+    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::PackedGravel).unwrap();
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpSurface, gravel));
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpWallType, 2));
     apply_edit(&mut state, &mut tools, Edit::Flag(Prop::WpLeftCurb, true));
     for i in 0..3 {
         let wp = &state.track.spline.waypoints[i];
-        assert_eq!(wp.surface, Some(SurfaceType::Gravel));
+        assert_eq!(wp.surface, Some(SurfaceType::PackedGravel));
         assert_eq!(wp.wall_type, Some(BarrierType::TireWall));
         assert!(wp.left_curb);
     }
-    assert_eq!(tools.active_surface, SurfaceType::Gravel);
+    assert_eq!(tools.active_surface, SurfaceType::PackedGravel);
     let model = build_inspector(&state, &tools).unwrap();
     assert!(matches!(find_row(&model, "Surface"), Row::Dropdown { value: Common::Same(i), .. } if *i == gravel));
 }
@@ -556,10 +556,10 @@ fn mixed_selection_reaches_every_kind_and_edits_only_that_kind() {
     let mut state = state;
     let zone_before = state.track.geometry.surface_zones[0].surface;
     let ramp_before = state.track.geometry.jump_ramps[0].surface;
-    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::Gravel).unwrap();
+    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::PackedGravel).unwrap();
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpSurface, gravel));
-    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::Gravel));
-    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::Gravel));
+    assert_eq!(state.track.spline.waypoints[0].surface, Some(SurfaceType::PackedGravel));
+    assert_eq!(state.track.spline.waypoints[1].surface, Some(SurfaceType::PackedGravel));
     assert_eq!(state.track.geometry.surface_zones[0].surface, zone_before);
     assert_eq!(state.track.geometry.jump_ramps[0].surface, ramp_before);
     apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampHeight, 2.5));
