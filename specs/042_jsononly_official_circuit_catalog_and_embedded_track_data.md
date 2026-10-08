@@ -179,7 +179,7 @@ Work is done in phases. Each phase leaves `make test` green.
 - **Rollback.** Phases 1–5 keep the Rust generators, so any phase can be reverted with `git revert`. Phase 6 is the point of no return in `tdrace`; the generators stay in git history.
 - **Build guard.** `build.rs` fails when `tracks/.track_order.json` is missing, when a module folder and `.track_order.json` disagree, when an alias points to an unknown id, or when a file fails to parse. The error names the file and, when data is missing, `git submodule update --init tracks`.
 - **Start-up log.** One line: `official circuits: <n> embedded, <m> from disk (dev)`.
-- **Binary size.** Embedded bundle target ≤ 8 MB. `build.rs` prints the size as a `cargo:warning` when it exceeds this.
+- **Binary size.** No size limit. The 8 MB target and its `cargo:warning` were removed on 2026-10-08 (the catalog is 16.1 MB, and Mario accepts that).
 
 ---
 

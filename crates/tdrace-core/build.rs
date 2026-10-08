@@ -52,7 +52,6 @@ fn main() {
 
     let mut generated = String::from("pub(crate) static CIRCUITS: &[EmbeddedCircuit] = &[\n");
     let mut ids = BTreeSet::new();
-    let mut compressed_total = 0usize;
 
     for (module, listed) in &order {
         let module_dir = tracks_dir.join(module);
@@ -88,7 +87,6 @@ fn main() {
             let value: serde_json::Value = read_json(&path);
             let compact = serde_json::to_vec(&value).unwrap();
             let compressed = miniz_oxide::deflate::compress_to_vec(&compact, 6);
-            compressed_total += compressed.len();
             let blob_path = blob_dir.join(format!("{}.deflate", id));
             fs::write(&blob_path, &compressed).unwrap();
 
@@ -121,12 +119,6 @@ fn main() {
 
     if ids.is_empty() {
         fail(format!("no circuits found in {}; {}", tracks_dir.display(), SUBMODULE_HINT));
-    }
-    if compressed_total > 8 * 1024 * 1024 {
-        println!(
-            "cargo:warning=embedded official circuits are {:.1} MB (target <= 8 MB)",
-            compressed_total as f64 / (1024.0 * 1024.0)
-        );
     }
     fs::write(out_dir.join("official_catalog.rs"), generated).unwrap();
 }
