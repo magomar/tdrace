@@ -49,7 +49,7 @@ class HumanViewer:
 
         # Scale RGB image to window size
         # Pygame surfarray expects (W, H, 3)
-        h, w, c = rgb_array.shape
+        h, w, _c = rgb_array.shape
         surf = pygame.surfarray.make_surface(np.transpose(rgb_array, (1, 0, 2)))
         if (w, h) != (self.width, self.height):
             surf = pygame.transform.scale(surf, (self.width, self.height))

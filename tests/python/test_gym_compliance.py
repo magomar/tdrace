@@ -54,7 +54,7 @@ def test_observation_space_shapes_and_types(env_id, expected_obs_shape, expected
 
 def test_render_rgb_array():
     env = gym.make("TDRace-v0", render_mode="rgb_array", render_width=128, render_height=128)
-    obs, info = env.reset()
+    _obs, _info = env.reset()
     frame = env.render()
     assert frame is not None
     assert frame.shape == (128, 128, 3)

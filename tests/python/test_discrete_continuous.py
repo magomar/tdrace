@@ -9,28 +9,28 @@ import numpy as np
 def test_discrete_action_space():
     """Tests all discrete actions in TDRace-Discrete-v0."""
     env = gym.make("TDRace-Discrete-v0")
-    obs, info = env.reset(seed=42)
+    _obs, info = env.reset(seed=42)
 
     # 0: do nothing
-    obs, r, term, trunc, info = env.step(0)
+    _obs, _r, term, _trunc, info = env.step(0)
     assert not term
 
     # 3: accelerate
     speed_init = info["speed_mps"]
     for _ in range(30):
-        obs, r, term, trunc, info = env.step(3)
+        _obs, _r, term, _trunc, info = env.step(3)
     assert info["speed_mps"] > speed_init
 
     # 4: brake
     speed_fast = info["speed_mps"]
     for _ in range(30):
-        obs, r, term, trunc, info = env.step(4)
+        _obs, _r, term, _trunc, info = env.step(4)
     assert info["speed_mps"] < speed_fast
 
     # 1: steer left
     angle_before = info["normalized_progress"]
     for _ in range(20):
-        obs, r, term, trunc, info = env.step(1)
+        _obs, _r, term, _trunc, info = env.step(1)
 
     env.close()
 
@@ -41,19 +41,19 @@ def test_continuous_action_formats():
     env.reset(seed=42)
 
     # 3D action
-    obs, r, term, trunc, info = env.step(np.array([0.2, 0.8, 0.0], dtype=np.float32))
+    obs, _r, _term, _trunc, _info = env.step(np.array([0.2, 0.8, 0.0], dtype=np.float32))
     assert obs.shape == (45,)
 
     # 2D action [steer, gas_brake]
-    obs, r, term, trunc, info = env.step(np.array([-0.5, 0.9], dtype=np.float32))
+    obs, _r, _term, _trunc, _info = env.step(np.array([-0.5, 0.9], dtype=np.float32))
     assert obs.shape == (45,)
 
     # 2D reverse/brake [steer, -0.8]
-    obs, r, term, trunc, info = env.step(np.array([0.0, -0.8], dtype=np.float32))
+    obs, _r, _term, _trunc, _info = env.step(np.array([0.0, -0.8], dtype=np.float32))
     assert obs.shape == (45,)
 
     # Out of bounds / extreme floats (engine should sanitize and clamp gracefully)
-    obs, r, term, trunc, info = env.step(np.array([10.0, 50.0, -10.0], dtype=np.float32))
+    obs, _r, _term, _trunc, _info = env.step(np.array([10.0, 50.0, -10.0], dtype=np.float32))
     assert np.all(np.isfinite(obs))
 
     env.close()

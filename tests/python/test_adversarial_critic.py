@@ -96,7 +96,7 @@ def test_discrete_env_out_of_bounds_action():
     # Valid actions are 0..4. If out of bounds integer is supplied, it should either raise or handle gracefully
     for act in [-10, 5, 100, 9999]:
         try:
-            obs, rew, term, trunc, info = env.step(act)
+            obs, _rew, _term, _trunc, _info = env.step(act)
             assert obs is not None
         except (IndexError, ValueError, KeyError):
             pass  # Raising standard python exception is acceptable for discrete space bounds
@@ -114,16 +114,16 @@ def test_reproducibility_across_multiple_seeds(seed):
     env1 = gym.make("TDRace-v0")
     env2 = gym.make("TDRace-v0")
 
-    obs1, info1 = env1.reset(seed=seed)
-    obs2, info2 = env2.reset(seed=seed)
+    obs1, _info1 = env1.reset(seed=seed)
+    obs2, _info2 = env2.reset(seed=seed)
 
     np.testing.assert_array_equal(obs1, obs2, err_msg=f"Seed {seed} reset mismatch")
 
     rng = np.random.RandomState(seed)
     for step in range(100):
         action = rng.uniform(low=[-1.0, 0.0, 0.0], high=[1.0, 1.0, 1.0])
-        o1, r1, t1, tr1, inf1 = env1.step(action)
-        o2, r2, t2, tr2, inf2 = env2.step(action)
+        o1, r1, t1, tr1, _inf1 = env1.step(action)
+        o2, r2, t2, tr2, _inf2 = env2.step(action)
 
         np.testing.assert_array_equal(o1, o2, err_msg=f"Step {step} obs mismatch with seed {seed}")
         assert r1 == r2, f"Step {step} reward mismatch with seed {seed}"
@@ -162,7 +162,7 @@ def test_teleport_car_supersonic_speed():
 
     # Teleport to 300 m/s
     env.unwrapped.set_state(0.0, 0.0, 300.0, 0.0, 0.0, 0.0)
-    obs, rew, term, trunc, info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+    obs, rew, _term, _trunc, _info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
 
     assert np.all(np.isfinite(obs))
     assert math.isfinite(rew)
@@ -180,7 +180,7 @@ def test_teleport_car_deep_inside_wall():
     # Teleport right onto track boundary wall
     env.unwrapped.set_state(25.0, 0.0, 20.0, 0.0, 0.0, 0.0)
     for _ in range(20):
-        obs, rew, term, trunc, info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+        obs, rew, _term, _trunc, _info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
         assert np.all(np.isfinite(obs))
         assert math.isfinite(rew)
 
@@ -193,7 +193,7 @@ def test_teleport_car_far_off_world():
     env.reset(seed=42)
 
     env.unwrapped.set_state(10000.0, 10000.0, 0.0, 0.0, 0.0, 0.0)
-    obs, rew, term, trunc, info = env.step(np.array([0.0, 0.0, 0.0], dtype=np.float32))
+    obs, rew, _term, _trunc, info = env.step(np.array([0.0, 0.0, 0.0], dtype=np.float32))
 
     assert np.all(np.isfinite(obs))
     assert math.isfinite(rew)
@@ -207,7 +207,7 @@ def test_teleport_car_far_off_world():
     env_pix = gym.make("TDRace-Pixels-v0")
     env_pix.reset(seed=42)
     env_pix.unwrapped.set_state(10000.0, 10000.0, 0.0, 0.0, 0.0, 0.0)
-    pix_obs, r, _, _, _ = env_pix.step(np.array([0.0, 0.0, 0.0], dtype=np.float32))
+    pix_obs, _r, _, _, _ = env_pix.step(np.array([0.0, 0.0, 0.0], dtype=np.float32))
     assert pix_obs.shape == (96, 96, 3)
     assert np.all(np.isfinite(pix_obs))
     env_pix.close()
@@ -228,14 +228,14 @@ def test_anti_exploit_stationary_donut_spinning():
     # Donut spinning: full steer + handbrake + full throttle
     donut_reward = 0.0
     for _ in range(300):
-        obs, rew, term, trunc, info = env.step(np.array([1.0, 1.0, 0.0, 1.0], dtype=np.float32))
+        _obs, rew, _term, _trunc, _info = env.step(np.array([1.0, 1.0, 0.0, 1.0], dtype=np.float32))
         donut_reward += rew
 
     env.reset(seed=42)
     # Forward driving
     forward_reward = 0.0
     for _ in range(300):
-        obs, rew, term, trunc, info = env.step(np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float32))
+        _obs, rew, _term, _trunc, _info = env.step(np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float32))
         forward_reward += rew
 
     # Forward driving must earn vastly more reward than stationary donuts in standard racing
@@ -254,7 +254,7 @@ def test_anti_exploit_wall_grinding_penalty():
     wall_reward = 0.0
     wall_hits = 0
     for _ in range(150):
-        obs, rew, term, trunc, info = env.step(np.array([-0.9, 1.0, 0.0], dtype=np.float32))
+        _obs, rew, _term, _trunc, info = env.step(np.array([-0.9, 1.0, 0.0], dtype=np.float32))
         wall_reward += rew
         if info["wall_hit"]:
             wall_hits += 1
@@ -282,7 +282,7 @@ def test_multi_agent_extreme_car_density():
     actions[:, 1] = 1.0  # full gas
 
     for step in range(100):
-        obs, rews, terms, truncs, infos = env.step(actions)
+        obs, rews, _terms, _truncs, _infos = env.step(actions)
         assert obs.shape == (16, env.unwrapped.engine.obs_dim)
         assert len(rews) == 16
         assert np.all(np.isfinite(obs))

@@ -11,8 +11,8 @@ def test_seed_determinism_vector():
     env1 = gym.make("TDRace-v0")
     env2 = gym.make("TDRace-v0")
 
-    obs1, info1 = env1.reset(seed=42)
-    obs2, info2 = env2.reset(seed=42)
+    obs1, _info1 = env1.reset(seed=42)
+    obs2, _info2 = env2.reset(seed=42)
 
     np.testing.assert_array_equal(obs1, obs2)
 
@@ -21,8 +21,8 @@ def test_seed_determinism_vector():
     actions = [rng.uniform(low=[-1.0, 0.0, 0.0], high=[1.0, 1.0, 1.0]) for _ in range(150)]
 
     for step, act in enumerate(actions):
-        next_obs1, r1, term1, trunc1, inf1 = env1.step(act)
-        next_obs2, r2, term2, trunc2, inf2 = env2.step(act)
+        next_obs1, r1, term1, trunc1, _inf1 = env1.step(act)
+        next_obs2, r2, term2, trunc2, _inf2 = env2.step(act)
 
         np.testing.assert_array_equal(
             next_obs1,
@@ -69,7 +69,7 @@ def test_state_save_and_restore():
         env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
 
     saved_state = env.unwrapped.get_state()
-    x, y, vx, vy, angle, ang_vel, steer = saved_state
+    x, y, vx, vy, angle, ang_vel, _steer = saved_state
     speed = np.hypot(vx, vy)
     assert speed > 2.0
 

@@ -500,7 +500,7 @@ def trace(circuit, segments=None, density_mode=MODE_ANGULAR_45):
         if circuit.profile:
             for where, _elev in circuit.profile:
                 if isinstance(where, tuple):
-                    pk, pfrac, *pextra = where
+                    pk, pfrac, *_pextra = where
                     if 0 <= pk < len(pieces) and 0.0 <= pfrac < 1.0:
                         profile_ts_per_piece[pk].append(float(pfrac))
 

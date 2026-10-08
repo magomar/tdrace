@@ -13,7 +13,7 @@ def test_progress_reward_forward_driving():
 
     total_reward = 0.0
     for _ in range(50):
-        obs, reward, term, trunc, info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+        _obs, reward, _term, _trunc, info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
         total_reward += reward
 
     assert total_reward > 0.0
@@ -33,7 +33,7 @@ def test_drift_score_reward():
     # Initiate drift with handbrake + hard steer
     drift_score_accum = 0.0
     for _ in range(40):
-        obs, reward, term, trunc, info = env.step(np.array([1.0, 0.8, 0.0, 1.0], dtype=np.float32))
+        _obs, _reward, _term, _trunc, info = env.step(np.array([1.0, 0.8, 0.0, 1.0], dtype=np.float32))
         drift_score_accum += info["step_drift_score"]
 
     assert info["drift_score"] > 0.0 or drift_score_accum > 0.0, "Drift score should accumulate"
@@ -48,7 +48,7 @@ def test_truncation_at_max_episode_steps():
 
     truncated_step = None
     for step in range(1, max_steps + 10):
-        obs, rew, term, trunc, info = env.step(np.array([0.0, 0.5, 0.0], dtype=np.float32))
+        _obs, _rew, _term, trunc, _info = env.step(np.array([0.0, 0.5, 0.0], dtype=np.float32))
         if trunc:
             truncated_step = step
             break
@@ -60,17 +60,17 @@ def test_truncation_at_max_episode_steps():
 def test_termination_wrong_way():
     """Tests that driving in the wrong direction for >3 seconds triggers episode termination."""
     env = gym.make("TDRace-v0")
-    obs, info = env.reset(seed=42)
+    _obs, _info = env.reset(seed=42)
 
     # Turn around 180 degrees from starting pose and drive backwards
     curr_state = env.unwrapped.get_state()
-    x, y, vx, vy, angle, ang_vel, steer = curr_state
+    x, y, _vx, _vy, angle, _ang_vel, _steer = curr_state
     # Point exactly opposite to track forward direction
     env.unwrapped.set_state(x, y, 0.0, 0.0, angle + np.pi, 0.0)
 
     terminated = False
     for _ in range(250):  # > 3 seconds at 60 Hz
-        obs, rew, term, trunc, info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+        _obs, _rew, term, _trunc, _info = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
         if term:
             terminated = True
             break

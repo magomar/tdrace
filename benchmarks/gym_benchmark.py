@@ -31,28 +31,28 @@ def benchmark_env(
     """Measures steady-state stepping throughput in steps per second."""
     env_kwargs = env_kwargs or {}
     env = gym.make(env_id, **env_kwargs)
-    obs, info = env.reset(seed=42)
+    _obs, _info = env.reset(seed=42)
 
     # Sample action to reuse in tight loop
     action = env.action_space.sample()
 
     # 1. Warmup
     for _ in range(warmup_steps):
-        obs, rew, term, trunc, info = env.step(action)
+        _obs, _rew, term, trunc, _info = env.step(action)
         is_done = bool(np.any(term)) or bool(np.any(trunc))
         if is_done:
-            obs, info = env.reset()
+            _obs, _info = env.reset()
 
     # 2. Timed Benchmark Run
     start_time = time.perf_counter()
     steps_completed = 0
 
     while steps_completed < num_steps:
-        obs, rew, term, trunc, info = env.step(action)
+        _obs, _rew, term, trunc, _info = env.step(action)
         steps_completed += 1
         is_done = bool(np.any(term)) or bool(np.any(trunc))
         if is_done:
-            obs, info = env.reset()
+            _obs, _info = env.reset()
 
     elapsed = time.perf_counter() - start_time
     env.close()
@@ -78,22 +78,22 @@ def benchmark_carracing(num_steps: int = 10_000, warmup_steps: int = 500) -> dic
     """Measures CarRacing-v3 baseline throughput."""
     try:
         env = gym.make("CarRacing-v3")
-        obs, info = env.reset(seed=42)
+        _obs, _info = env.reset(seed=42)
         action = np.array([0.0, 1.0, 0.0], dtype=np.float32)
 
         for _ in range(warmup_steps):
-            obs, rew, term, trunc, info = env.step(action)
+            _obs, _rew, term, trunc, _info = env.step(action)
             if term or trunc:
-                obs, info = env.reset()
+                _obs, _info = env.reset()
 
         start_time = time.perf_counter()
         steps_completed = 0
 
         while steps_completed < num_steps:
-            obs, rew, term, trunc, info = env.step(action)
+            _obs, _rew, term, trunc, _info = env.step(action)
             steps_completed += 1
             if term or trunc:
-                obs, info = env.reset()
+                _obs, _info = env.reset()
 
         elapsed = time.perf_counter() - start_time
         env.close()

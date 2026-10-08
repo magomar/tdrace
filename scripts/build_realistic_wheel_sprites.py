@@ -135,7 +135,7 @@ def build_gt_slick(ss=4):
     
     mask, z_base = create_base_carcass(W, H, tw_half, th_half, corner_r)
     
-    y_coords, x_coords = np.mgrid[0:H, 0:W]
+    _y_coords, x_coords = np.mgrid[0:H, 0:W]
     dx = np.abs(x_coords - cx)
     
     tread_h = np.zeros((H, W), dtype=np.float32)

@@ -31,7 +31,7 @@ def test_multi_agent_step_formats():
         ],
         dtype=np.float32,
     )
-    obs, rew, term, trunc, info = env.step(actions_arr)
+    obs, rew, term, trunc, _info = env.step(actions_arr)
     assert obs.shape == (3, env.unwrapped.engine.obs_dim)
     assert rew.shape == (3,)
     assert term.shape == (3,)
@@ -39,12 +39,12 @@ def test_multi_agent_step_formats():
 
     # 2. List of actions
     actions_list = [[0.1, 0.9, 0.0], [-0.1, 0.9, 0.0], [0.0, 0.0, 1.0]]
-    obs, rew, term, trunc, info = env.step(actions_list)
+    obs, rew, term, trunc, _info = env.step(actions_list)
     assert obs.shape == (3, env.unwrapped.engine.obs_dim)
 
     # 3. Dict of actions
     actions_dict = {0: [0.0, 1.0, 0.0], 1: [0.0, 1.0, 0.0], 2: [0.0, 1.0, 0.0]}
-    obs, rew, term, trunc, info = env.step(actions_dict)
+    obs, rew, term, trunc, _info = env.step(actions_dict)
     assert obs.shape == (3, env.unwrapped.engine.obs_dim)
 
     env.close()
@@ -64,9 +64,9 @@ def test_multi_car_collision_resolution():
     collided = False
     for step in range(30):
         # Steer straight forward
-        obs, rew, term, trunc, info = env.step([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
-        c0_x, c0_y, c0_vx, _, _, _, _ = env.unwrapped.engine.get_state(0)
-        c1_x, c1_y, c1_vx, _, _, _, _ = env.unwrapped.engine.get_state(1)
+        _obs, _rew, _term, _trunc, _info = env.step([[0.0, 1.0, 0.0], [0.0, 1.0, 0.0]])
+        _c0_x, _c0_y, c0_vx, _, _, _, _ = env.unwrapped.engine.get_state(0)
+        _c1_x, _c1_y, c1_vx, _, _, _, _ = env.unwrapped.engine.get_state(1)
 
         # After collision, velocities should reverse due to restitution
         if c0_vx < 0.0 and c1_vx > 0.0:

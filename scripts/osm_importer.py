@@ -1464,7 +1464,7 @@ def process_gt_circuit(cid, cache_dir):
     scale = cfg.get("scale", 0.5)
     target_circuit_len = cfg["fia_length"] * scale
     if cfg.get("nonlinear", True) and scale != 1.0:
-        scaled_pts, s_turn, s_straight = rescale_circuit_nonlinear(
+        scaled_pts, _s_turn, s_straight = rescale_circuit_nonlinear(
             rotated_pts, target_circuit_len, cfg["fia_length"], turn_preservation=cfg.get("turn_preservation", 0.95)
         )
         scale_factor = s_straight

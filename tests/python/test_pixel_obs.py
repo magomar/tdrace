@@ -10,7 +10,7 @@ import pytest
 def test_pixel_obs_shape_and_channels():
     """Tests default 96x96x3 RGB pixel observation rendering."""
     env = gym.make("TDRace-Pixels-v0")
-    obs, info = env.reset(seed=42)
+    obs, _info = env.reset(seed=42)
 
     assert obs.shape == (96, 96, 3)
     assert obs.dtype == np.uint8
@@ -42,7 +42,7 @@ def test_custom_pixel_resolutions(h, w):
     assert obs.shape == (h, w, 3)
     assert obs.dtype == np.uint8
 
-    obs, r, term, trunc, _ = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
+    obs, _r, _term, _trunc, _ = env.step(np.array([0.0, 1.0, 0.0], dtype=np.float32))
     assert obs.shape == (h, w, 3)
 
     env.close()
@@ -59,7 +59,7 @@ def test_pixel_rasterizer_skid_marks():
 
     # Steer hard with handbrake [steer, gas, brake, handbrake]
     for _ in range(25):
-        obs, _, _, _, info = env.step(np.array([1.0, 0.6, 0.0, 1.0], dtype=np.float32))
+        obs, _, _, _, _info = env.step(np.array([1.0, 0.6, 0.0, 1.0], dtype=np.float32))
 
     # Dark skid mark pixels [35, 35, 40] should exist in the frame
     dark_pixels = np.sum((obs[:, :, 0] <= 45) & (obs[:, :, 1] <= 45) & (obs[:, :, 2] <= 50))
